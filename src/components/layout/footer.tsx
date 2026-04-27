@@ -11,8 +11,16 @@ export function Footer() {
     return (
         <footer className="w-full border-t border-border bg-background py-8">
             <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="text-sm text-muted-foreground">
-                    {t("copyright", { year: currentYear })}
+                <div className="flex flex-col md:flex-row items-center gap-4">
+                    <div className="text-sm text-muted-foreground">
+                        {t("copyright", { year: currentYear })}
+                    </div>
+                    <Link
+                        href="/privacy-policy"
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline"
+                    >
+                        {t("privacy_policy")}
+                    </Link>
                 </div>
 
                 <div className="flex items-center gap-6">

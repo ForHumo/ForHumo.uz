@@ -12,17 +12,10 @@
     },
     "Projects": {
         "title": "Our Projects",
-        "esport_desc": "eSports platform organizing MLBB and PUBG tournaments with open registration.",
+        "nexus_desc": "Centralized control panel and system services network.",
         "ai_desc": "Advanced AI solutions and tools.",
-        "tv_desc": "Streaming service for entertainment and educational content.",
-        "book_desc": "Digital library and publishing platform for modern readers.",
-        "music_desc": "Platform for listening to music and discovering new artists.",
-        "home_desc": "Smart home integration and lifestyle solutions.",
-        "edu_desc": "Educational technology and online learning platform.",
-        "studio_desc": "Creative studio for digital art and media production.",
-        "social_desc": "Social network platform for community connection.",
-        "news_desc": "The latest news and official announcements of the ecosystem.",
-        "bank_desc": "Secure and modern digital banking services."
+        "esport_desc": "eSports platform organizing MLBB and PUBG tournaments with open registration.",
+        "support_desc": "Fast technical support and customer care service."
     },
     "Status": {
         "active": "Active",
@@ -41,7 +34,8 @@
         "copyright": "© {year} For Humo. All rights reserved.",
         "edit": "Edit",
         "save": "Save",
-        "optional": "optional"
+        "optional": "optional",
+        "privacy_policy": "Privacy Policy"
     },
     "Esport": {
         "hero_tag": "Humo eSport",
@@ -136,5 +130,18 @@
         "voluntarily_withdrawn": "{team} voluntarily withdrew from the tournament",
         "teams_label": "Teams",
         "tba": "TBA"
+    },
+    "Privacy": {
+        "title": "Privacy Policy",
+        "last_updated": "Last updated: April 27, 2026",
+        "intro": "At For Humo, we take your privacy seriously. This policy describes what information we collect and how we use it.",
+        "section1_title": "1. Information We Collect",
+        "section1_content": "We collect information you provide directly to us, such as when you create an account using Google or Telegram.",
+        "section2_title": "2. How We Use Information",
+        "section2_content": "We use the information we collect to provide, maintain, and improve our services, and to communicate with you.",
+        "section3_title": "3. Data Security",
+        "section3_content": "We take reasonable measures to help protect information about you from loss, theft, misuse and unauthorized access.",
+        "section4_title": "4. Contact Us",
+        "section4_content": "If you have any questions about this Privacy Policy, please contact us via Telegram @ForHumo."
     }
 }

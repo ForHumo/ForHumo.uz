@@ -12,17 +12,10 @@
     },
     "Projects": {
         "title": "Bizning Loyihalar",
-        "esport_desc": "MLBB va PUBG turnirlarini ochiq ro'yxatdan o'tish bilan tashkil etuvchi kiber sport platformasi.",
+        "nexus_desc": "Markazlashtirilgan boshqaruv paneli va tizim xizmatlari tarmog'i.",
         "ai_desc": "Ilg'or sun'iy intellekt yechimlari va vositalari.",
-        "tv_desc": "Ko'ngilochar va ta'limiy kontent uchun striming xizmati.",
-        "book_desc": "Zamonaviy kitobxonlar uchun raqamli kutubxona va nashriyot platformasi.",
-        "music_desc": "Musiqa tinglash va yangi ijodkorlarni kashf etish platformasi.",
-        "home_desc": "Aqlli uy integratsiyasi va turmush tarzi yechimlari.",
-        "edu_desc": "Ta'lim texnologiyalari va onlayn o'qitish platformasi.",
-        "studio_desc": "Raqamli san'at va media ishlab chiqarish uchun ijodiy studiya.",
-        "social_desc": "Jamiyat bilan bog'lanish uchun ijtimoiy tarmoq platformasi.",
-        "news_desc": "Ekotizimning eng so'nggi yangiliklari va rasmiy xabarlari.",
-        "bank_desc": "Xavfsiz va zamonaviy raqamli bank xizmatlari."
+        "esport_desc": "MLBB va PUBG turnirlarini ochiq ro'yxatdan o'tish bilan tashkil etuvchi kiber sport platformasi.",
+        "support_desc": "Tezkor texnik yordam va mijozlarni qo'llab-quvvatlash xizmati."
     },
     "Status": {
         "active": "Faol",
@@ -41,7 +34,8 @@
         "copyright": "© {year} For Humo. Barcha huquqlar himoyalangan.",
         "edit": "Tahrirlash",
         "save": "Saqlash",
-        "optional": "ixtiyoriy"
+        "optional": "ixtiyoriy",
+        "privacy_policy": "Maxfiylik Siyosati"
     },
     "Esport": {
         "hero_tag": "Humo eSport",
@@ -136,5 +130,18 @@
         "voluntarily_withdrawn": "{team} o'z xohishi bilan turnirni tark etdi",
         "teams_label": "Jamoalar",
         "tba": "Tez kunda"
+    },
+    "Privacy": {
+        "title": "Maxfiylik Siyosati",
+        "last_updated": "Oxirgi yangilanish: 27-aprel, 2026",
+        "intro": "For Humo'da biz sizning maxfiyligingizga jiddiy qaraymiz. Ushbu siyosat biz qanday ma'lumotlarni to'plashimiz va ulardan qanday foydalanishimizni tavsiflaydi.",
+        "section1_title": "1. Biz to'playdigan ma'lumotlar",
+        "section1_content": "Biz siz to'g'ridan-to'g'ri bizga taqdim etgan ma'lumotlarni to'playmiz, masalan, Google yoki Telegram orqali hisob yaratganingizda.",
+        "section2_title": "2. Ma'lumotlardan foydalanish",
+        "section2_content": "Biz to'plangan ma'lumotlardan xizmatlarimizni taqdim etish, qo'llab-quvvatlash va yaxshilash hamda siz bilan muloqot qilish uchun foydalanamiz.",
+        "section3_title": "3. Ma'lumotlar xavfsizligi",
+        "section3_content": "Biz siz haqingizdagi ma'lumotlarni yo'qolish, o'g'irlash, noto'g'ri foydalanish va ruxsatsiz kirishdan himoya qilish uchun oqilona choralar ko'ramiz.",
+        "section4_title": "4. Biz bilan bog'lanish",
+        "section4_content": "Ushbu Maxfiylik Siyosati bo'yicha savollaringiz bo'lsa, iltimos, Telegram orqali @ForHumo bilan bog'laning."
     }
 }
