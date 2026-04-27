@@ -131,6 +131,26 @@
         "teams_label": "Jamoalar",
         "tba": "Tez kunda"
     },
+    "Nexus": {
+        "hero_title": "O'yin-kulgi va Jamiyat Bir Joyda",
+        "hero_desc": "Filmlar ko'ring, do'stlar bilan muloqot qiling va lahzalarni ulashing. Humo Nexus - sizning yangi raqamli uyingiz.",
+        "cta_join": "Nexus'ga Qo'shilish",
+        "cta_watch": "Ko'rishni Boshlash",
+        "features": {
+            "streaming_title": "Kinematografik Striming",
+            "streaming_desc": "Eksklyuziv filmlar va seriallar yuqori sifatda.",
+            "social_title": "Ijtimoiy Qatlam",
+            "social_desc": "Sevimli kontentingizni muhokama qiling va ulashing.",
+            "messenger_title": "Humo Messenger",
+            "messenger_desc": "Telegram kabi xavfsiz chatlar va kanallar.",
+            "watch_together_title": "Birgalikda Ko'rish",
+            "watch_together_desc": "Do'stlaringiz bilan real vaqtda birga tomosha qiling.",
+            "ai_title": "Aqlli AI",
+            "ai_desc": "Faqat siz uchun moslashtirilgan kontent tavsiyalari.",
+            "gamification_title": "Mukofotlar Yuting",
+            "gamification_desc": "Faollik uchun nishonlar va darajalar oling."
+        }
+    },
     "Privacy": {
         "title": "Maxfiylik Siyosati",
         "last_updated": "Oxirgi yangilanish: 27-aprel, 2026",

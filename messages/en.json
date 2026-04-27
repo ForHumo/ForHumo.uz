@@ -131,6 +131,26 @@
         "teams_label": "Teams",
         "tba": "TBA"
     },
+    "Nexus": {
+        "hero_title": "Entertainment & Community in One Ecosystem",
+        "hero_desc": "Watch movies, chat with friends, and share moments. Humo Nexus is your new digital home.",
+        "cta_join": "Join Nexus",
+        "cta_watch": "Start Watching",
+        "features": {
+            "streaming_title": "Cinematic Streaming",
+            "streaming_desc": "Exclusive movies and series in high quality.",
+            "social_title": "Social Layer",
+            "social_desc": "Discuss and share your favorite content.",
+            "messenger_title": "Humo Messenger",
+            "messenger_desc": "Secure chats and channels like Telegram.",
+            "watch_together_title": "Watch Together",
+            "watch_together_desc": "Real-time co-watching with your friends.",
+            "ai_title": "Smart AI",
+            "ai_desc": "Personalized content recommendations just for you.",
+            "gamification_title": "Earn Rewards",
+            "gamification_desc": "Get badges and levels for being active."
+        }
+    },
     "Privacy": {
         "title": "Privacy Policy",
         "last_updated": "Last updated: April 27, 2026",
