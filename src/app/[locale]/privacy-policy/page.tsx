@@ -1,5 +1,4 @@
-import { useTranslations } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Shield } from "lucide-react";
 
 export default async function PrivacyPolicy({
@@ -9,7 +8,7 @@ export default async function PrivacyPolicy({
 }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    const t = useTranslations("Privacy");
+    const t = await getTranslations("Privacy");
 
     return (
         <div className="min-h-screen pt-24 pb-16">
