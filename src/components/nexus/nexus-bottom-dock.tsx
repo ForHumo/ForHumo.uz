@@ -19,18 +19,22 @@ import { cn } from "@/lib/utils";
 const DOCK_ITEMS = [
     { id: "nexus", icon: LayoutGrid, label: "Nexus" },
     { id: "chats", icon: MessageCircle, label: "Chats" },
-    { id: "films", icon: Film, label: "Films" },
+    { id: "gcinema", icon: Film, label: "G. Cinema" },
+    { id: "vcinema", icon: Video, label: "V. Cinema" },
     { id: "musics", icon: Music, label: "Musics" },
     { id: "blogs", icon: FileText, label: "Blogs" },
     { id: "gvideos", icon: Youtube, label: "G. Videos" },
     { id: "gstreams", icon: Radio, label: "G. Streams" },
     { id: "vvideos", icon: Smartphone, label: "V. Videos" },
     { id: "vstreams", icon: Video, label: "V. Streams" },
-    { id: "profile", icon: User, label: "Profile" },
 ];
 
-export function NexusBottomDock() {
-    const [activeTab, setActiveTab] = useState("nexus");
+interface NexusBottomDockProps {
+    activeTab: string;
+    onTabChange: (tab: string) => void;
+}
+
+export function NexusBottomDock({ activeTab, onTabChange }: NexusBottomDockProps) {
 
     return (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
@@ -46,7 +50,7 @@ export function NexusBottomDock() {
                     return (
                         <motion.button
                             key={item.id}
-                            onClick={() => setActiveTab(item.id)}
+                            onClick={() => onTabChange(item.id)}
                             whileHover={{ scale: 1.1, y: -5 }}
                             whileTap={{ scale: 0.9 }}
                             className={cn(

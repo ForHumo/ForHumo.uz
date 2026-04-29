@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
-import { Search, Bell, User, Menu, Hexagon } from "lucide-react";
+import { Search, Bell, User, Menu } from "lucide-react";
+import { Link } from "@/i18n/routing";
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 interface NexusTopBarProps {
@@ -12,19 +14,23 @@ interface NexusTopBarProps {
 export function NexusTopBar({ onMenuClick, onProfileClick }: NexusTopBarProps) {
     return (
         <header className="fixed top-0 left-0 right-0 h-20 z-50 glass-effect border-b border-white/5 flex items-center justify-between px-6">
-            {/* Left: Logo */}
-            <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-3 group">
                 <motion.div 
-                    whileHover={{ rotate: 180 }}
-                    transition={{ duration: 0.5 }}
-                    className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)]"
+                    whileHover={{ rotate: 10, scale: 1.1 }}
+                    className="relative w-10 h-10 overflow-hidden rounded-full shadow-lg shadow-primary/20 border border-white/10"
                 >
-                    <Hexagon className="w-6 h-6 text-primary fill-primary/20" />
+                    <Image
+                        src="/logo.png"
+                        alt="For Humo Logo"
+                        fill
+                        className="object-cover"
+                        priority
+                    />
                 </motion.div>
-                <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                    NEXUS
+                <span className="text-xl font-bold tracking-tight text-white group-hover:text-primary transition-colors">
+                    For Humo
                 </span>
-            </div>
+            </Link>
 
             {/* Center: Search Bar */}
             <div className="hidden md:flex items-center flex-1 max-w-2xl mx-12">

@@ -3,12 +3,14 @@
 import React from "react";
 import { ContentRow } from "./content-row";
 import { 
-    FilmCard, 
+    GCinemaCard, 
+    VCinemaCard,
     MusicCard, 
     PostCard, 
-    VideoCard, 
-    StreamCard, 
-    VerticalCard, 
+    GVideoCard, 
+    GStreamCard, 
+    VStreamCard,
+    VVideoCard, 
     ProfileCard 
 } from "./content-cards";
 import { motion } from "framer-motion";
@@ -49,13 +51,32 @@ export function NexusFeed() {
                 </div>
             </section>
 
-            {/* Films Row */}
-            <ContentRow title="Films">
+            {/* Cinema Row */}
+            <ContentRow title="Cinema">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <FilmCard 
+                    <GCinemaCard 
                         key={i} 
-                        title={`Futuristic Movie ${i}`} 
-                        image={`https://picsum.photos/seed/film${i}/400/600`} 
+                        title={`Cinematic Masterpiece ${i}`} 
+                        image={`https://picsum.photos/seed/cinema${i}/800/450`} 
+                        duration="2h 15m"
+                        views="1.2M"
+                        rating="4.8"
+                        likes="450k"
+                    />
+                ))}
+            </ContentRow>
+
+            {/* V. Cinema Row */}
+            <ContentRow title="V. Cinema">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <VCinemaCard 
+                        key={i} 
+                        title={`Vertical Tale ${i}`} 
+                        image={`https://picsum.photos/seed/vcinema${i}/400/600`} 
+                        duration="1h 05m"
+                        views="850k"
+                        rating="4.5"
+                        likes="120k"
                     />
                 ))}
             </ContentRow>
@@ -68,12 +89,16 @@ export function NexusFeed() {
                         title={`Sonic Echo ${i}`} 
                         artist={`Artist ${i}`} 
                         image={`https://picsum.photos/seed/music${i}/400/400`} 
+                        duration="3:45"
+                        rating="4.9"
+                        listens="2.5M"
+                        likes="800k"
                     />
                 ))}
             </ContentRow>
 
-            {/* Text Posts Row */}
-            <ContentRow title="Blogs & Thoughts">
+            {/* Blogs Row */}
+            <ContentRow title="Blogs">
                 {[1, 2, 3, 4, 5].map((i) => (
                     <PostCard 
                         key={i} 
@@ -84,52 +109,87 @@ export function NexusFeed() {
                 ))}
             </ContentRow>
 
-            {/* Horizontal Videos Row */}
-            <ContentRow title="YouTube Style">
+            {/* G. Videos Row */}
+            <ContentRow title="G. Videos">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <VideoCard 
+                    <GVideoCard 
                         key={i} 
                         title={`Deep Dive into Nexus Architecture: Part ${i}`} 
                         author="Nexus Dev" 
                         views={`${i * 10}k`} 
                         time={`${i} days ago`} 
                         image={`https://picsum.photos/seed/video${i}/800/450`} 
+                        duration="12:45"
                     />
                 ))}
             </ContentRow>
 
-            {/* Streams Row */}
-            <ContentRow title="Live Streams">
-                <StreamCard 
+            {/* G. Streams Row */}
+            <ContentRow title="G. Streams">
+                <GStreamCard 
                     title="Global Nexus Launch Event" 
                     author="Nexus Official" 
                     status="LIVE" 
                     viewers="14.2k" 
+                    startTime="10:00"
                     image="https://picsum.photos/seed/stream1/800/450" 
                 />
-                <StreamCard 
+                <GStreamCard 
                     title="Code with Nexus Agents" 
                     author="AgentX" 
                     status="UPCOMING" 
+                    waiting="5.4k"
                     image="https://picsum.photos/seed/stream2/800/450" 
                 />
-                <StreamCard 
+                <GStreamCard 
                     title="Nexus Community Q&A" 
                     author="Humo Team" 
                     status="ENDED" 
+                    viewers="45k"
+                    likes="12k"
                     image="https://picsum.photos/seed/stream3/800/450" 
                 />
             </ContentRow>
 
-            {/* Vertical Videos Row */}
-            <ContentRow title="Vertical Trends">
+            {/* V. Videos Row */}
+            <ContentRow title="V. Videos">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                    <VerticalCard 
+                    <VVideoCard 
                         key={i} 
                         author={`Creator_${i}`} 
                         image={`https://picsum.photos/seed/vert${i}/400/711`} 
+                        views="120k"
+                        likes="15k"
+                        duration="0:45"
                     />
                 ))}
+            </ContentRow>
+
+            {/* V. Streams Row */}
+            <ContentRow title="V. Streams">
+                <VStreamCard 
+                    title="Vertical Live Vibes" 
+                    author="V-Creator" 
+                    status="LIVE" 
+                    viewers="2.1k" 
+                    startTime="10:30"
+                    image="https://picsum.photos/seed/vstream1/400/711" 
+                />
+                <VStreamCard 
+                    title="Upcoming Vertical Show" 
+                    author="ShowRunner" 
+                    status="UPCOMING" 
+                    waiting="800"
+                    image="https://picsum.photos/seed/vstream2/400/711" 
+                />
+                <VStreamCard 
+                    title="Ended Vertical Stream" 
+                    author="HumoLive" 
+                    status="ENDED" 
+                    viewers="10k"
+                    likes="2.5k"
+                    image="https://picsum.photos/seed/vstream3/400/711" 
+                />
             </ContentRow>
 
             {/* Profile Recommendations */}

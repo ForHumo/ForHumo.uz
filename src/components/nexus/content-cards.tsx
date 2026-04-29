@@ -1,12 +1,40 @@
 "use client";
 
 import React from "react";
-import { Play, MessageCircle, Heart, Share2, MoreVertical, Music as MusicIcon, Radio } from "lucide-react";
+import { Play, MessageCircle, Heart, Share2, MoreVertical, Music as MusicIcon, Radio, Star, Eye, Clock, ThumbsUp, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-// 1. Movie / Film Card
-export function FilmCard({ title, image }: { title: string; image: string }) {
+// 1. Cinema Card (Horizontal - G. Cinema)
+export function GCinemaCard({ title, image, duration, views, rating, likes }: { title: string; image: string; duration: string; views: string; rating: string; likes: string }) {
+    return (
+        <motion.div 
+            whileHover={{ scale: 1.05, y: -5 }}
+            className="flex-shrink-0 w-64 md:w-80 group cursor-pointer"
+        >
+            <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 shadow-lg border border-white/5">
+                <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(var(--primary-rgb),0.5)]">
+                        <Play className="w-6 h-6 text-white fill-white ml-1" />
+                    </div>
+                </div>
+                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 backdrop-blur-md rounded text-[10px] font-bold border border-white/10">
+                    {duration}
+                </div>
+            </div>
+            <h4 className="font-bold text-sm truncate group-hover:text-primary transition-colors mb-1">{title}</h4>
+            <div className="flex items-center gap-3 text-gray-500 text-[10px]">
+                <div className="flex items-center gap-1"><Eye className="w-3 h-3" /> {views}</div>
+                <div className="flex items-center gap-1 text-yellow-500"><Star className="w-3 h-3 fill-yellow-500" /> {rating}</div>
+                <div className="flex items-center gap-1"><ThumbsUp className="w-3 h-3" /> {likes}</div>
+            </div>
+        </motion.div>
+    );
+}
+
+// 1.5. Cinema Card (Vertical - V. Cinema)
+export function VCinemaCard({ title, image, duration, views, rating, likes }: { title: string; image: string; duration: string; views: string; rating: string; likes: string }) {
     return (
         <motion.div 
             whileHover={{ scale: 1.05, y: -5 }}
@@ -19,15 +47,22 @@ export function FilmCard({ title, image }: { title: string; image: string }) {
                         <Play className="w-6 h-6 text-white fill-white ml-1" />
                     </div>
                 </div>
+                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 backdrop-blur-md rounded text-[10px] font-bold border border-white/10">
+                    {duration}
+                </div>
             </div>
-            <h4 className="font-bold text-sm truncate group-hover:text-primary transition-colors">{title}</h4>
-            <p className="text-[10px] text-gray-500">2h 15m • Action</p>
+            <h4 className="font-bold text-sm truncate group-hover:text-primary transition-colors mb-1">{title}</h4>
+            <div className="flex items-center gap-3 text-gray-500 text-[10px]">
+                <div className="flex items-center gap-1"><Eye className="w-3 h-3" /> {views}</div>
+                <div className="flex items-center gap-1 text-yellow-500"><Star className="w-3 h-3 fill-yellow-500" /> {rating}</div>
+                <div className="flex items-center gap-1"><ThumbsUp className="w-3 h-3" /> {likes}</div>
+            </div>
         </motion.div>
     );
 }
 
 // 2. Music / Album Card
-export function MusicCard({ title, artist, image }: { title: string; artist: string; image: string }) {
+export function MusicCard({ title, artist, image, duration, rating, listens, likes }: { title: string; artist: string; image: string; duration: string; rating: string; listens: string; likes: string }) {
     return (
         <motion.div 
             whileHover={{ scale: 1.05 }}
@@ -40,9 +75,17 @@ export function MusicCard({ title, artist, image }: { title: string; artist: str
                         <MusicIcon className="w-5 h-5 text-white" />
                     </div>
                 </div>
+                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 backdrop-blur-md rounded text-[10px] font-bold border border-white/10">
+                    {duration}
+                </div>
             </div>
-            <h4 className="font-bold text-xs truncate">{title}</h4>
-            <p className="text-[10px] text-gray-500 truncate">{artist}</p>
+            <h4 className="font-bold text-xs truncate mb-0.5">{title}</h4>
+            <p className="text-[10px] text-gray-500 truncate mb-1">{artist}</p>
+            <div className="flex flex-wrap items-center gap-2 text-gray-500 text-[9px]">
+                <div className="flex items-center gap-0.5 text-yellow-500"><Star className="w-2.5 h-2.5 fill-yellow-500" /> {rating}</div>
+                <div className="flex items-center gap-0.5"><Play className="w-2.5 h-2.5" /> {listens}</div>
+                <div className="flex items-center gap-0.5"><Heart className="w-2.5 h-2.5" /> {likes}</div>
+            </div>
         </motion.div>
     );
 }
@@ -73,8 +116,8 @@ export function PostCard({ author, content, time }: { author: string; content: s
     );
 }
 
-// 4. Horizontal Video Card
-export function VideoCard({ title, author, views, time, image }: { title: string; author: string; views: string; time: string; image: string }) {
+// 4. Horizontal Video Card (G. Videos)
+export function GVideoCard({ title, author, views, time, image, duration }: { title: string; author: string; views: string; time: string; image: string; duration: string }) {
     return (
         <motion.div 
             whileHover={{ scale: 1.02 }}
@@ -82,8 +125,8 @@ export function VideoCard({ title, author, views, time, image }: { title: string
         >
             <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 shadow-lg border border-white/5">
                 <img src={image} alt={title} className="w-full h-full object-cover" />
-                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 rounded text-[10px] font-bold">
-                    12:45
+                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 rounded text-[10px] font-bold border border-white/10">
+                    {duration}
                 </div>
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
             </div>
@@ -98,31 +141,66 @@ export function VideoCard({ title, author, views, time, image }: { title: string
     );
 }
 
-// 5. Stream Card
-export function StreamCard({ title, author, status, viewers, image }: { title: string; author: string; status: 'LIVE' | 'UPCOMING' | 'ENDED'; viewers?: string; image: string }) {
+// 5. Stream Card (G. Streams)
+export function GStreamCard({ title, author, status, viewers, waiting, image, startTime, likes }: { title: string; author: string; status: 'LIVE' | 'UPCOMING' | 'ENDED'; viewers?: string; waiting?: string; image: string; startTime?: string; likes?: string }) {
     return (
         <motion.div 
             whileHover={{ scale: 1.02 }}
             className="flex-shrink-0 w-64 md:w-80 group cursor-pointer"
         >
-            <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 shadow-lg border border-white/5">
+            <div className={cn(
+                "relative aspect-video rounded-2xl overflow-hidden mb-3 shadow-lg border-2 transition-colors",
+                status === 'LIVE' ? "border-red-600/50" : status === 'UPCOMING' ? "border-green-600/50" : "border-yellow-600/50"
+            )}>
                 <img src={image} alt={title} className="w-full h-full object-cover" />
                 
                 {status === 'LIVE' && (
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 bg-red-600 rounded-lg shadow-lg">
-                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                        <span className="text-[10px] font-bold">LIVE</span>
-                    </div>
+                    <>
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 bg-red-600 rounded-lg shadow-lg">
+                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                            <span className="text-[10px] font-bold">LIVE</span>
+                        </div>
+                        {startTime && (
+                            <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-red-600 text-[10px] font-bold text-red-500">
+                                Started: {startTime}
+                            </div>
+                        )}
+                    </>
                 )}
                 {status === 'UPCOMING' && (
-                    <div className="absolute top-3 left-3 px-2 py-1 bg-blue-600 rounded-lg shadow-lg text-[10px] font-bold">
-                        14:00 (In 2h)
+                    <div className="absolute top-3 left-3 px-2 py-1 bg-green-600 rounded-lg shadow-lg text-[10px] font-bold text-white">
+                        UPCOMING
+                    </div>
+                )}
+                {status === 'ENDED' && (
+                    <div className="absolute top-3 left-3 px-2 py-1 bg-yellow-600 rounded-lg shadow-lg text-[10px] font-bold text-black">
+                        ENDED
                     </div>
                 )}
                 
-                <div className="absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10">
-                    <Radio className="w-3 h-3 text-red-500" />
-                    <span className="text-[10px] font-bold">{viewers || '0'} watching</span>
+                <div className="absolute bottom-3 left-3 flex items-center gap-2 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10">
+                    {status === 'LIVE' ? (
+                        <>
+                            <Eye className="w-3 h-3 text-red-500" />
+                            <span className="text-[10px] font-bold">{viewers} watching</span>
+                        </>
+                    ) : status === 'UPCOMING' ? (
+                        <>
+                            <Users className="w-3 h-3 text-green-500" />
+                            <span className="text-[10px] font-bold">{waiting} waiting</span>
+                        </>
+                    ) : (
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1">
+                                <Eye className="w-3 h-3 text-yellow-500" />
+                                <span className="text-[10px] font-bold">{viewers}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <ThumbsUp className="w-3 h-3 text-yellow-500" />
+                                <span className="text-[10px] font-bold">{likes}</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             <h4 className="font-bold text-sm truncate mb-1">{title}</h4>
@@ -131,8 +209,78 @@ export function StreamCard({ title, author, status, viewers, image }: { title: s
     );
 }
 
-// 6. Vertical Content Card (Shorts/TikTok style)
-export function VerticalCard({ author, image }: { author: string; image: string }) {
+// 5.5. Vertical Stream Card (V. Streams)
+export function VStreamCard({ title, author, status, viewers, waiting, image, startTime, likes }: { title: string; author: string; status: 'LIVE' | 'UPCOMING' | 'ENDED'; viewers?: string; waiting?: string; image: string; startTime?: string; likes?: string }) {
+    return (
+        <motion.div 
+            whileHover={{ scale: 1.02 }}
+            className="flex-shrink-0 w-40 md:w-56 group cursor-pointer"
+        >
+            <div className={cn(
+                "relative aspect-[9/16] rounded-2xl overflow-hidden mb-3 shadow-lg border-2 transition-colors",
+                status === 'LIVE' ? "border-red-600/50" : status === 'UPCOMING' ? "border-green-600/50" : "border-yellow-600/50"
+            )}>
+                <img src={image} alt={title} className="w-full h-full object-cover" />
+                
+                {status === 'LIVE' && (
+                    <div className="absolute top-3 left-3 flex flex-col gap-2">
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-red-600 rounded-lg shadow-lg w-fit">
+                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                            <span className="text-[10px] font-bold">LIVE</span>
+                        </div>
+                        {startTime && (
+                            <div className="px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-red-600 text-[10px] font-bold text-red-500 w-fit">
+                                {startTime}
+                            </div>
+                        )}
+                    </div>
+                )}
+                {status === 'UPCOMING' && (
+                    <div className="absolute top-3 left-3 px-2 py-1 bg-green-600 rounded-lg shadow-lg text-[10px] font-bold text-white">
+                        UPCOMING
+                    </div>
+                )}
+                {status === 'ENDED' && (
+                    <div className="absolute top-3 left-3 px-2 py-1 bg-yellow-600 rounded-lg shadow-lg text-[10px] font-bold text-black">
+                        ENDED
+                    </div>
+                )}
+                
+                <div className="absolute bottom-3 left-3 right-3 flex flex-col gap-2 p-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/10">
+                    <h4 className="font-bold text-[10px] truncate">{title}</h4>
+                    <div className="flex items-center justify-between">
+                        {status === 'LIVE' ? (
+                            <div className="flex items-center gap-1">
+                                <Eye className="w-3 h-3 text-red-500" />
+                                <span className="text-[10px] font-bold">{viewers}</span>
+                            </div>
+                        ) : status === 'UPCOMING' ? (
+                            <div className="flex items-center gap-1">
+                                <Users className="w-3 h-3 text-green-500" />
+                                <span className="text-[10px] font-bold">{waiting}</span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-1">
+                                    <Eye className="w-3 h-3 text-yellow-500" />
+                                    <span className="text-[10px] font-bold">{viewers}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <ThumbsUp className="w-3 h-3 text-yellow-500" />
+                                    <span className="text-[10px] font-bold">{likes}</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+            <p className="text-[10px] text-center text-gray-500">{author}</p>
+        </motion.div>
+    );
+}
+
+// 6. Vertical Video Card (V. Videos)
+export function VVideoCard({ author, image, views, likes, duration }: { author: string; image: string; views: string; likes: string; duration: string }) {
     return (
         <motion.div 
             whileHover={{ scale: 1.05 }}
@@ -144,9 +292,19 @@ export function VerticalCard({ author, image }: { author: string; image: string 
                     <div className="w-6 h-6 rounded-full bg-white/20 border border-white/30" />
                     <span className="text-[10px] font-bold truncate">{author}</span>
                 </div>
-                <p className="text-[9px] text-gray-300 line-clamp-2 leading-snug">
-                    New futuristic vibes in Nexus! #SuperApp #Humo
-                </p>
+                <div className="flex items-center justify-between mt-auto">
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-white">
+                            <Eye className="w-3 h-3" /> {views}
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-white">
+                            <Heart className="w-3 h-3" /> {likes}
+                        </div>
+                    </div>
+                    <div className="px-1.5 py-0.5 bg-black/60 backdrop-blur-md rounded text-[9px] font-bold border border-white/10">
+                        {duration}
+                    </div>
+                </div>
             </div>
         </motion.div>
     );

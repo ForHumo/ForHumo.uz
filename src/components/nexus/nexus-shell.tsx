@@ -5,6 +5,7 @@ import { NexusTopBar } from "./nexus-top-bar";
 import { NexusBottomDock } from "./nexus-bottom-dock";
 import { NexusSidebar } from "./nexus-sidebar";
 import { NexusSettingsPanel } from "./nexus-settings-panel";
+import { ChatsView, GCinemaView, VCinemaView } from "./nexus-views";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface NexusShellProps {
@@ -14,6 +15,21 @@ interface NexusShellProps {
 export function NexusShell({ children }: NexusShellProps) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState("nexus");
+
+    const renderContent = () => {
+        switch (activeTab) {
+            case "chats":
+                return <ChatsView />;
+            case "gcinema":
+                return <GCinemaView />;
+            case "vcinema":
+                return <VCinemaView />;
+            case "nexus":
+            default:
+                return children;
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[#050505] text-white selection:bg-primary/30 selection:text-primary overflow-hidden flex flex-col relative">
@@ -32,7 +48,7 @@ export function NexusShell({ children }: NexusShellProps) {
             {/* Main Content Area */}
             <main className="flex-1 overflow-y-auto custom-scrollbar pt-20 pb-32">
                 <div className="container mx-auto px-4 md:px-6">
-                    {children}
+                    {renderContent()}
                 </div>
             </main>
 
@@ -44,7 +60,7 @@ export function NexusShell({ children }: NexusShellProps) {
             </AnimatePresence>
 
             {/* Bottom Dock */}
-            <NexusBottomDock />
+            <NexusBottomDock activeTab={activeTab} onTabChange={setActiveTab} />
 
             {/* Settings Panel */}
             <AnimatePresence>
