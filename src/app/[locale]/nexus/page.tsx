@@ -1,5 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
-import { NexusContent } from "@/components/nexus/nexus-content";
+import { NexusShell } from "@/components/nexus/nexus-shell";
+import { NexusFeed } from "@/components/nexus/nexus-feed";
 
 export default async function NexusPage({
     params
@@ -9,5 +10,9 @@ export default async function NexusPage({
     const { locale } = await params;
     setRequestLocale(locale);
 
-    return <NexusContent />;
+    return (
+        <NexusShell>
+            <NexusFeed />
+        </NexusShell>
+    );
 }
