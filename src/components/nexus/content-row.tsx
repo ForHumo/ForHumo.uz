@@ -6,10 +6,13 @@ import { motion } from "framer-motion";
 
 interface ContentRowProps {
     title: string;
+    subtitle?: string;
+    badge?: string | number;
     children: React.ReactNode;
+    onSeeAll?: () => void;
 }
 
-export function ContentRow({ title, children }: ContentRowProps) {
+export function ContentRow({ title, subtitle, badge, children, onSeeAll }: ContentRowProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const scroll = (direction: 'left' | 'right') => {
@@ -23,14 +26,27 @@ export function ContentRow({ title, children }: ContentRowProps) {
     return (
         <section className="mb-12 relative group/row">
             <div className="flex items-center justify-between mb-6 px-4">
-                <h3 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
-                    <div className="w-1.5 h-6 bg-primary rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]" />
-                    {title}
-                </h3>
-                <button className="text-xs font-bold text-gray-500 hover:text-primary transition-colors flex items-center gap-1 uppercase tracking-widest group">
-                    See All
-                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
+                <div className="flex items-center gap-4">
+                    {badge && (
+                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-primary/20">
+                            {badge}
+                        </div>
+                    )}
+                    <h3 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+                        {!badge && <div className="w-1.5 h-6 bg-primary rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]" />}
+                        {title}
+                        {subtitle && <span className="text-sm font-normal text-gray-500 ml-1">({subtitle})</span>}
+                    </h3>
+                </div>
+                {onSeeAll && (
+                    <button 
+                        onClick={onSeeAll}
+                        className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group"
+                    >
+                        Barchasini ko'rish
+                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                )}
             </div>
 
             {/* Scroll Buttons */}

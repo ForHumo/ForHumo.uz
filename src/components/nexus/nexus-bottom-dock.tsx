@@ -27,6 +27,7 @@ const DOCK_ITEMS = [
     { id: "gstreams", icon: Radio, label: "G. Streams" },
     { id: "vvideos", icon: Smartphone, label: "V. Videos" },
     { id: "vstreams", icon: Video, label: "V. Streams" },
+    { id: "humoid", icon: User, label: "Humo ID" },
 ];
 
 interface NexusBottomDockProps {

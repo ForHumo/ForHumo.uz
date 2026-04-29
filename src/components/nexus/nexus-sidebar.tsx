@@ -13,7 +13,9 @@ import {
     ListMusic, 
     History, 
     UserX,
-    ChevronRight
+    ChevronRight,
+    Bell,
+    Settings
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -22,6 +24,12 @@ interface NexusSidebarProps {
 }
 
 const SIDEBAR_SECTIONS = [
+    {
+        title: "Notifications",
+        items: [
+            { icon: Bell, label: "All Notifications", badge: "12" },
+        ]
+    },
     {
         title: "My Content",
         items: [
@@ -47,9 +55,10 @@ const SIDEBAR_SECTIONS = [
         ]
     },
     {
-        title: "Control",
+        title: "Nexus System",
         items: [
             { icon: UserX, label: "Blocked Users" },
+            { icon: Settings, label: "Settings" },
         ]
     }
 ];
@@ -76,7 +85,9 @@ export function NexusSidebar({ onClose }: NexusSidebarProps) {
             >
                 {/* Header */}
                 <div className="p-6 flex items-center justify-between border-b border-white/5">
-                    <h2 className="text-xl font-bold">Nexus Menu</h2>
+                    <h2 className="text-xl font-bold flex items-center gap-3">
+                        Nexus Menu
+                    </h2>
                     <button 
                         onClick={onClose}
                         className="p-2 hover:bg-white/5 rounded-xl transition-colors"
@@ -89,11 +100,11 @@ export function NexusSidebar({ onClose }: NexusSidebarProps) {
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                     {SIDEBAR_SECTIONS.map((section, idx) => (
                         <div key={idx} className="mb-8 last:mb-0">
-                            <h3 className="px-4 text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">
+                            <h3 className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-4 opacity-50">
                                 {section.title}
                             </h3>
                             <div className="space-y-1">
-                                {section.items.map((item, itemIdx) => {
+                                {section.items.map((item: any, itemIdx) => {
                                     const Icon = item.icon;
                                     return (
                                         <button 
@@ -101,14 +112,21 @@ export function NexusSidebar({ onClose }: NexusSidebarProps) {
                                             className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-white/5 group transition-all"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-primary/20 group-hover:text-primary transition-colors">
+                                                <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-primary/20 group-hover:text-primary transition-all">
                                                     <Icon className="w-4 h-4" />
                                                 </div>
-                                                <span className="text-sm font-medium text-gray-300 group-hover:text-white">
+                                                <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">
                                                     {item.label}
                                                 </span>
                                             </div>
-                                            <ChevronRight className="w-4 h-4 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <div className="flex items-center gap-2">
+                                                {item.badge && (
+                                                    <span className="px-1.5 py-0.5 bg-primary text-[10px] font-bold rounded-md">
+                                                        {item.badge}
+                                                    </span>
+                                                )}
+                                                <ChevronRight className="w-4 h-4 text-gray-600 opacity-0 group-hover:opacity-100 transition-all" />
+                                            </div>
                                         </button>
                                     );
                                 })}
@@ -118,11 +136,12 @@ export function NexusSidebar({ onClose }: NexusSidebarProps) {
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-white/5">
-                    <div className="bg-primary/10 rounded-2xl p-4 border border-primary/20">
-                        <p className="text-xs text-primary font-bold mb-1">PRO ACCESS</p>
-                        <p className="text-[10px] text-gray-400 leading-relaxed">
-                            Upgrade to Nexus Pro for unlimited cloud storage and advanced AI agents.
+                <div className="p-6 border-t border-white/5 bg-black/20">
+                    <div className="bg-gradient-to-br from-primary/20 to-blue-600/20 rounded-2xl p-5 border border-primary/20 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-primary/20 blur-2xl rounded-full -mr-10 -mt-10 group-hover:bg-primary/40 transition-colors" />
+                        <p className="text-[10px] text-primary font-bold mb-1 tracking-widest">NEXUS PRO</p>
+                        <p className="text-xs text-gray-300 leading-relaxed font-medium">
+                            Unlimited cloud storage and advanced AI agents.
                         </p>
                     </div>
                 </div>

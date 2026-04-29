@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { Play, MessageCircle, Heart, Share2, MoreVertical, Music as MusicIcon, Radio, Star, Eye, Clock, ThumbsUp, Users } from "lucide-react";
+import { Play, MessageCircle, Heart, Share2, MoreVertical, Music as MusicIcon, Radio, Star, Eye, Clock, ThumbsUp, Users, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 // 1. Cinema Card (Horizontal - G. Cinema)
-export function GCinemaCard({ title, image, duration, views, rating, likes }: { title: string; image: string; duration: string; views: string; rating: string; likes: string }) {
+export function GCinemaCard({ title, image, duration, views, rating, likes, year, postedTime }: { title: string; image: string; duration: string; views: string; rating: string; likes: string; year: string; postedTime: string }) {
     return (
         <motion.div 
             whileHover={{ scale: 1.05, y: -5 }}
@@ -24,17 +24,19 @@ export function GCinemaCard({ title, image, duration, views, rating, likes }: { 
                 </div>
             </div>
             <h4 className="font-bold text-sm truncate group-hover:text-primary transition-colors mb-1">{title}</h4>
-            <div className="flex items-center gap-3 text-gray-500 text-[10px]">
+            <div className="flex flex-wrap items-center gap-3 text-gray-500 text-[10px]">
                 <div className="flex items-center gap-1"><Eye className="w-3 h-3" /> {views}</div>
                 <div className="flex items-center gap-1 text-yellow-500"><Star className="w-3 h-3 fill-yellow-500" /> {rating}</div>
                 <div className="flex items-center gap-1"><ThumbsUp className="w-3 h-3" /> {likes}</div>
+                <div className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {year}</div>
+                <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> {postedTime}</div>
             </div>
         </motion.div>
     );
 }
 
 // 1.5. Cinema Card (Vertical - V. Cinema)
-export function VCinemaCard({ title, image, duration, views, rating, likes }: { title: string; image: string; duration: string; views: string; rating: string; likes: string }) {
+export function VCinemaCard({ title, image, duration, views, rating, likes, year, postedTime }: { title: string; image: string; duration: string; views: string; rating: string; likes: string; year: string; postedTime: string }) {
     return (
         <motion.div 
             whileHover={{ scale: 1.05, y: -5 }}
@@ -52,17 +54,19 @@ export function VCinemaCard({ title, image, duration, views, rating, likes }: { 
                 </div>
             </div>
             <h4 className="font-bold text-sm truncate group-hover:text-primary transition-colors mb-1">{title}</h4>
-            <div className="flex items-center gap-3 text-gray-500 text-[10px]">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-gray-500 text-[10px]">
                 <div className="flex items-center gap-1"><Eye className="w-3 h-3" /> {views}</div>
                 <div className="flex items-center gap-1 text-yellow-500"><Star className="w-3 h-3 fill-yellow-500" /> {rating}</div>
                 <div className="flex items-center gap-1"><ThumbsUp className="w-3 h-3" /> {likes}</div>
+                <div className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {year}</div>
+                <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> {postedTime}</div>
             </div>
         </motion.div>
     );
 }
 
 // 2. Music / Album Card
-export function MusicCard({ title, artist, image, duration, rating, listens, likes }: { title: string; artist: string; image: string; duration: string; rating: string; listens: string; likes: string }) {
+export function MusicCard({ title, artist, image, duration, rating, listens, likes, year, postedTime }: { title: string; artist: string; image: string; duration: string; rating: string; listens: string; likes: string; year: string; postedTime: string }) {
     return (
         <motion.div 
             whileHover={{ scale: 1.05 }}
@@ -81,10 +85,12 @@ export function MusicCard({ title, artist, image, duration, rating, listens, lik
             </div>
             <h4 className="font-bold text-xs truncate mb-0.5">{title}</h4>
             <p className="text-[10px] text-gray-500 truncate mb-1">{artist}</p>
-            <div className="flex flex-wrap items-center gap-2 text-gray-500 text-[9px]">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-gray-500 text-[9px]">
                 <div className="flex items-center gap-0.5 text-yellow-500"><Star className="w-2.5 h-2.5 fill-yellow-500" /> {rating}</div>
                 <div className="flex items-center gap-0.5"><Play className="w-2.5 h-2.5" /> {listens}</div>
                 <div className="flex items-center gap-0.5"><Heart className="w-2.5 h-2.5" /> {likes}</div>
+                <div className="flex items-center gap-0.5"><Calendar className="w-2.5 h-2.5" /> {year}</div>
+                <div className="flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> {postedTime}</div>
             </div>
         </motion.div>
     );
@@ -99,7 +105,10 @@ export function PostCard({ author, content, time }: { author: string; content: s
                     <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30" />
                     <div>
                         <h4 className="text-xs font-bold">{author}</h4>
-                        <p className="text-[9px] text-gray-500">{time}</p>
+                        <div className="flex items-center gap-1">
+                            <Clock className="w-2.5 h-2.5 text-gray-500" />
+                            <p className="text-[9px] text-gray-500">{time}</p>
+                        </div>
                     </div>
                 </div>
                 <MoreVertical className="w-4 h-4 text-gray-600" />
@@ -116,8 +125,39 @@ export function PostCard({ author, content, time }: { author: string; content: s
     );
 }
 
+// 3.1 Chat Preview Card (Horizontal list style)
+export function ChatPreviewCard({ name, avatar, message, time, unread, isGroup }: { name: string; avatar: string; message: string; time: string; unread?: boolean; isGroup?: boolean }) {
+    return (
+        <motion.div 
+            whileHover={{ scale: 1.02 }}
+            className="flex-shrink-0 w-64 md:w-72 bg-[#121212] hover:bg-[#1a1a1a] p-4 rounded-[1.5rem] border border-white/5 flex items-center gap-4 cursor-pointer transition-all relative group"
+        >
+            <div className="relative flex-shrink-0">
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border border-white/10 bg-white/5">
+                    <img src={avatar} alt={name} className="w-full h-full object-cover" />
+                </div>
+                {unread && (
+                    <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-blue-500 rounded-full border-2 border-[#121212]" />
+                )}
+            </div>
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                    <h4 className="font-bold text-sm truncate pr-2 flex items-center gap-1.5">
+                        {name}
+                        {isGroup && <Users className="w-3 h-3 text-primary" />}
+                    </h4>
+                    <span className="text-[10px] text-gray-500">{time}</span>
+                </div>
+                <p className="text-xs text-gray-400 truncate opacity-70 group-hover:opacity-100 transition-opacity">
+                    {message}
+                </p>
+            </div>
+        </motion.div>
+    );
+}
+
 // 4. Horizontal Video Card (G. Videos)
-export function GVideoCard({ title, author, views, time, image, duration }: { title: string; author: string; views: string; time: string; image: string; duration: string }) {
+export function GVideoCard({ title, author, views, time, image, duration, postedTime }: { title: string; author: string; views: string; time: string; image: string; duration: string; postedTime: string }) {
     return (
         <motion.div 
             whileHover={{ scale: 1.02 }}
@@ -125,16 +165,21 @@ export function GVideoCard({ title, author, views, time, image, duration }: { ti
         >
             <div className="relative aspect-video rounded-2xl overflow-hidden mb-3 shadow-lg border border-white/5">
                 <img src={image} alt={title} className="w-full h-full object-cover" />
-                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 rounded text-[10px] font-bold border border-white/10">
+                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 backdrop-blur-md rounded text-[10px] font-bold border border-white/10">
                     {duration}
                 </div>
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
             </div>
             <div className="flex gap-3">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/10" />
-                <div>
+                <div className="min-w-0">
                     <h4 className="font-bold text-sm line-clamp-2 leading-tight mb-1 group-hover:text-primary transition-colors">{title}</h4>
-                    <p className="text-[10px] text-gray-500">{author} • {views} views • {time}</p>
+                    <p className="text-[10px] text-gray-500 flex flex-wrap gap-x-2">
+                        <span>{author}</span>
+                        <span>• {views} views</span>
+                        <span>• {time} ago</span>
+                        <span className="flex items-center gap-1 text-primary/70 font-bold"><Clock className="w-2.5 h-2.5" /> {postedTime}</span>
+                    </p>
                 </div>
             </div>
         </motion.div>
@@ -142,7 +187,7 @@ export function GVideoCard({ title, author, views, time, image, duration }: { ti
 }
 
 // 5. Stream Card (G. Streams)
-export function GStreamCard({ title, author, status, viewers, waiting, image, startTime, likes }: { title: string; author: string; status: 'LIVE' | 'UPCOMING' | 'ENDED'; viewers?: string; waiting?: string; image: string; startTime?: string; likes?: string }) {
+export function GStreamCard({ title, author, status, viewers, waiting, image, startTime, likes, postedTime }: { title: string; author: string; status: 'LIVE' | 'UPCOMING' | 'ENDED'; viewers?: string; waiting?: string; image: string; startTime?: string; likes?: string; postedTime: string }) {
     return (
         <motion.div 
             whileHover={{ scale: 1.02 }}
@@ -204,13 +249,16 @@ export function GStreamCard({ title, author, status, viewers, waiting, image, st
                 </div>
             </div>
             <h4 className="font-bold text-sm truncate mb-1">{title}</h4>
-            <p className="text-[10px] text-gray-500">{author}</p>
+            <div className="flex items-center justify-between">
+                <p className="text-[10px] text-gray-500">{author}</p>
+                <p className="text-[10px] text-primary/70 font-bold flex items-center gap-1"><Clock className="w-2.5 h-2.5" /> {postedTime}</p>
+            </div>
         </motion.div>
     );
 }
 
 // 5.5. Vertical Stream Card (V. Streams)
-export function VStreamCard({ title, author, status, viewers, waiting, image, startTime, likes }: { title: string; author: string; status: 'LIVE' | 'UPCOMING' | 'ENDED'; viewers?: string; waiting?: string; image: string; startTime?: string; likes?: string }) {
+export function VStreamCard({ title, author, status, viewers, waiting, image, startTime, likes, postedTime }: { title: string; author: string; status: 'LIVE' | 'UPCOMING' | 'ENDED'; viewers?: string; waiting?: string; image: string; startTime?: string; likes?: string; postedTime: string }) {
     return (
         <motion.div 
             whileHover={{ scale: 1.02 }}
@@ -271,6 +319,7 @@ export function VStreamCard({ title, author, status, viewers, waiting, image, st
                                 </div>
                             </div>
                         )}
+                        <span className="text-[8px] text-white/50 font-bold">{postedTime}</span>
                     </div>
                 </div>
             </div>
@@ -280,7 +329,7 @@ export function VStreamCard({ title, author, status, viewers, waiting, image, st
 }
 
 // 6. Vertical Video Card (V. Videos)
-export function VVideoCard({ author, image, views, likes, duration }: { author: string; image: string; views: string; likes: string; duration: string }) {
+export function VVideoCard({ author, image, views, likes, duration, postedTime }: { author: string; image: string; views: string; likes: string; duration: string; postedTime: string }) {
     return (
         <motion.div 
             whileHover={{ scale: 1.05 }}
@@ -301,8 +350,11 @@ export function VVideoCard({ author, image, views, likes, duration }: { author: 
                             <Heart className="w-3 h-3" /> {likes}
                         </div>
                     </div>
-                    <div className="px-1.5 py-0.5 bg-black/60 backdrop-blur-md rounded text-[9px] font-bold border border-white/10">
-                        {duration}
+                    <div className="flex flex-col items-end gap-1">
+                        <div className="px-1.5 py-0.5 bg-black/60 backdrop-blur-md rounded text-[9px] font-bold border border-white/10">
+                            {duration}
+                        </div>
+                        <div className="text-[8px] text-white/50 font-bold">{postedTime}</div>
                     </div>
                 </div>
             </div>

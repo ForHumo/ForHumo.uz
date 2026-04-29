@@ -11,48 +11,65 @@ import {
     GStreamCard, 
     VStreamCard,
     VVideoCard, 
-    ProfileCard 
+    ProfileCard,
+    ChatPreviewCard
 } from "./content-cards";
 import { motion } from "framer-motion";
 
-export function NexusFeed() {
+interface NexusFeedProps {
+    onTabChange?: (tab: string) => void;
+}
+
+export function NexusFeed({ onTabChange }: NexusFeedProps) {
     return (
-        <div className="flex flex-col">
-            {/* Chats Preview Row (Mental model: circular avatars like stories but for chats) */}
-            <section className="mb-12 px-4">
-                <div className="flex items-center gap-6 overflow-x-auto custom-scrollbar-hide py-2">
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                        <motion.div 
-                            key={i}
-                            whileHover={{ scale: 1.1 }}
-                            className="flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer group"
-                        >
-                            <div className="relative">
-                                <div className="w-16 h-16 md:w-20 md:h-20 rounded-[2rem] bg-gradient-to-tr from-primary to-blue-600 p-[2px]">
-                                    <div className="w-full h-full rounded-[1.8rem] bg-black p-0.5 overflow-hidden">
-                                        <img 
-                                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`} 
-                                            className="w-full h-full object-cover rounded-[1.8rem]" 
-                                            alt="Chat avatar" 
-                                        />
-                                    </div>
-                                </div>
-                                {i < 4 && (
-                                    <div className="absolute top-0 right-0 w-5 h-5 bg-primary text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-[#050505] shadow-lg">
-                                        {i * 2}
-                                    </div>
-                                )}
-                            </div>
-                            <span className="text-[10px] font-medium text-gray-400 group-hover:text-white transition-colors">
-                                User {i}
-                            </span>
-                        </motion.div>
-                    ))}
-                </div>
-            </section>
+        <div className="flex flex-col gap-12">
+            {/* Top Avatars (Chats) */}
+            <ContentRow 
+                title="Chatlar" 
+                subtitle="oxirgi xabarlar" 
+                badge="1"
+                onSeeAll={() => onTabChange?.("chats")}
+            >
+                <ChatPreviewCard 
+                    name="Islomjon" 
+                    avatar="https://api.dicebear.com/7.x/avataaars/svg?seed=Islom" 
+                    message="Salom, yangi loyiha..." 
+                    time="14:32" 
+                    unread 
+                />
+                <ChatPreviewCard 
+                    name="Dizayn jamoasi" 
+                    avatar="https://api.dicebear.com/7.x/identicon/svg?seed=Design" 
+                    message="Fayl: mockup.fig" 
+                    time="12:45" 
+                    isGroup
+                />
+                <ChatPreviewCard 
+                    name="Madina" 
+                    avatar="https://api.dicebear.com/7.x/avataaars/svg?seed=Madina" 
+                    message="Rahmat! Juda zo'r 😍" 
+                    time="11:20" 
+                />
+                <ChatPreviewCard 
+                    name="Do'stlar" 
+                    avatar="https://api.dicebear.com/7.x/initials/svg?seed=Friends" 
+                    message="Sardor: Qayerdasiz?" 
+                    time="10:05" 
+                    isGroup
+                />
+                {[5, 6, 7, 8].map((i) => (
+                    <ChatPreviewCard 
+                        key={i}
+                        name={`User ${i}`} 
+                        avatar={`https://api.dicebear.com/7.x/avataaars/svg?seed=user${i}`} 
+                        message="Hey, how are you?" 
+                        time="09:00" 
+                    />
+                ))}
+            </ContentRow>
 
             {/* Cinema Row */}
-            <ContentRow title="Cinema">
+            <ContentRow title="Cinema" onSeeAll={() => onTabChange?.("gcinema")}>
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                     <GCinemaCard 
                         key={i} 
@@ -62,12 +79,14 @@ export function NexusFeed() {
                         views="1.2M"
                         rating="4.8"
                         likes="450k"
+                        year="2024"
+                        postedTime="2h ago"
                     />
                 ))}
             </ContentRow>
 
             {/* V. Cinema Row */}
-            <ContentRow title="V. Cinema">
+            <ContentRow title="V. Cinema" onSeeAll={() => onTabChange?.("vcinema")}>
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                     <VCinemaCard 
                         key={i} 
@@ -77,12 +96,14 @@ export function NexusFeed() {
                         views="850k"
                         rating="4.5"
                         likes="120k"
+                        year="2024"
+                        postedTime="1d ago"
                     />
                 ))}
             </ContentRow>
 
             {/* Music Row */}
-            <ContentRow title="Musics">
+            <ContentRow title="Musics" onSeeAll={() => onTabChange?.("musics")}>
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                     <MusicCard 
                         key={i} 
@@ -93,12 +114,14 @@ export function NexusFeed() {
                         rating="4.9"
                         listens="2.5M"
                         likes="800k"
+                        year="2023"
+                        postedTime="3h ago"
                     />
                 ))}
             </ContentRow>
 
             {/* Blogs Row */}
-            <ContentRow title="Blogs">
+            <ContentRow title="Blogs" onSeeAll={() => onTabChange?.("blogs")}>
                 {[1, 2, 3, 4, 5].map((i) => (
                     <PostCard 
                         key={i} 
@@ -110,7 +133,7 @@ export function NexusFeed() {
             </ContentRow>
 
             {/* G. Videos Row */}
-            <ContentRow title="G. Videos">
+            <ContentRow title="G. Videos" onSeeAll={() => onTabChange?.("gvideos")}>
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                     <GVideoCard 
                         key={i} 
@@ -120,12 +143,13 @@ export function NexusFeed() {
                         time={`${i} days ago`} 
                         image={`https://picsum.photos/seed/video${i}/800/450`} 
                         duration="12:45"
+                        postedTime="2d ago"
                     />
                 ))}
             </ContentRow>
 
             {/* G. Streams Row */}
-            <ContentRow title="G. Streams">
+            <ContentRow title="G. Streams" onSeeAll={() => onTabChange?.("gstreams")}>
                 <GStreamCard 
                     title="Global Nexus Launch Event" 
                     author="Nexus Official" 
@@ -133,6 +157,7 @@ export function NexusFeed() {
                     viewers="14.2k" 
                     startTime="10:00"
                     image="https://picsum.photos/seed/stream1/800/450" 
+                    postedTime="Now"
                 />
                 <GStreamCard 
                     title="Code with Nexus Agents" 
@@ -140,6 +165,7 @@ export function NexusFeed() {
                     status="UPCOMING" 
                     waiting="5.4k"
                     image="https://picsum.photos/seed/stream2/800/450" 
+                    postedTime="In 2h"
                 />
                 <GStreamCard 
                     title="Nexus Community Q&A" 
@@ -148,11 +174,12 @@ export function NexusFeed() {
                     viewers="45k"
                     likes="12k"
                     image="https://picsum.photos/seed/stream3/800/450" 
+                    postedTime="Yesterday"
                 />
             </ContentRow>
 
             {/* V. Videos Row */}
-            <ContentRow title="V. Videos">
+            <ContentRow title="V. Videos" onSeeAll={() => onTabChange?.("vvideos")}>
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                     <VVideoCard 
                         key={i} 
@@ -161,12 +188,13 @@ export function NexusFeed() {
                         views="120k"
                         likes="15k"
                         duration="0:45"
+                        postedTime="4h ago"
                     />
                 ))}
             </ContentRow>
 
             {/* V. Streams Row */}
-            <ContentRow title="V. Streams">
+            <ContentRow title="V. Streams" onSeeAll={() => onTabChange?.("vstreams")}>
                 <VStreamCard 
                     title="Vertical Live Vibes" 
                     author="V-Creator" 
@@ -174,6 +202,7 @@ export function NexusFeed() {
                     viewers="2.1k" 
                     startTime="10:30"
                     image="https://picsum.photos/seed/vstream1/400/711" 
+                    postedTime="Now"
                 />
                 <VStreamCard 
                     title="Upcoming Vertical Show" 
@@ -181,6 +210,7 @@ export function NexusFeed() {
                     status="UPCOMING" 
                     waiting="800"
                     image="https://picsum.photos/seed/vstream2/400/711" 
+                    postedTime="Tomorrow"
                 />
                 <VStreamCard 
                     title="Ended Vertical Stream" 
@@ -189,6 +219,7 @@ export function NexusFeed() {
                     viewers="10k"
                     likes="2.5k"
                     image="https://picsum.photos/seed/vstream3/400/711" 
+                    postedTime="2d ago"
                 />
             </ContentRow>
 
