@@ -606,7 +606,7 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
     </button>
     <nav class="topnav">
       <a class="tnlnk" href="/uz" target="_top">Bosh sahifa</a>
-      <a class="tnlnk" href="/uz/projects" target="_top">Loyihalar</a>
+      <a class="tnlnk" href="https://www.forhumo.uz/uz#projects" target="_top">Loyihalar</a>
       <a class="tnlnk" href="/uz/esport" target="_top">eSport</a>
       <a class="tnlnk" href="/uz/nexus" target="_top">Nexus</a>
       <a class="tnlnk" href="/uz/market" target="_top">Market</a>
@@ -844,7 +844,7 @@ const T={
       mem:"Xotira",memadd:"Yangi xotira qo’shish...",memsave:"Saqlash",memempty:"Xotira bo’sh",
       appearance:"Ko’rinish",theme_lbl:"Mavzu",lang_lbl:"Til",account:"Hisob",support_lbl:"Yordam markazi",about:"Ma’lumot",
       aicontext_lbl:"AI ga beriladigan savol",mem_copy:"Nusxa olish",mem_copied:"Nusxalandi!",
-      copyright:"© 2026 For Humo · Barcha huquqlar himoyalangan"},
+      wt:"kutilmoqda",lim:t('lim'),copyright:"© 2026 For Humo · Barcha huquqlar himoyalangan"},
   ru:{nc:"Новый чат",mc:"Мой контент",
       code:"Код",pic:"Изображение",vid:"Видео",mus:"Музыка",
       ch:"Чаты",set:"Настройки и помощь",
@@ -860,7 +860,7 @@ const T={
       mem:"Память",memadd:"Добавить воспоминание...",memsave:"Сохранить",memempty:"Память пуста",
       appearance:"Внешний вид",theme_lbl:"Тема",lang_lbl:"Язык",account:"Аккаунт",support_lbl:"Центр помощи",about:"О программе",
       aicontext_lbl:"Контекст для AI",mem_copy:"Копировать",mem_copied:"Скопировано!",
-      copyright:"© 2026 For Humo · Все права защищены"},
+      wt:"сек. ожидание",lim:"Лимит исчерпан. Подождите немного и повторите.",copyright:"© 2026 For Humo · Все права защищены"},
   en:{nc:"New chat",mc:"My content",code:"Code",pic:"Picture",vid:"Video",mus:"Music",
       ch:"Chats",set:"Settings & help",
       gs:"Welcome to Humo AI",gm:"What shall we do today?",
@@ -875,7 +875,7 @@ const T={
       mem:"Memory",memadd:"Add a memory...",memsave:"Save",memempty:"Memory is empty",
       appearance:"Appearance",theme_lbl:"Theme",lang_lbl:"Language",account:"Account",support_lbl:"Support center",about:"About",
       aicontext_lbl:"AI context",mem_copy:"Copy",mem_copied:"Copied!",
-      copyright:"© 2026 For Humo · All rights reserved"}
+      wt:"s waiting",lim:"Limit reached. Please wait a moment and try again.",copyright:"© 2026 For Humo · All rights reserved"}
 };
 let L='uz',TH='dark',SB=true,VIEW='home';
 const t=k=>T[L][k]||k;
@@ -1295,7 +1295,7 @@ async function streamAPI(txt,inner,scroll,tdiv,retry=0){
       if(retry<MAX){
         const w=Math.pow(2,retry)*10;
         const ld=tdiv.querySelector('.tdots');
-        if(ld)ld.innerHTML=`<span style="font-size:12px;color:var(--t3)">${w}s kutilmoqda...</span>`;
+        if(ld)ld.innerHTML=`<span style="font-size:12px;color:var(--t3)">${w}s ${t('wt')}...</span>`;
         await sleep(w*1000);
         return streamAPI(txt,inner,scroll,tdiv,retry+1);
       }
