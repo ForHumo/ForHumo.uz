@@ -7,18 +7,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  async rewrites() {
-    return [
-      {
-        source: '/:locale/ai/:path*',
-        destination: 'https://humo-ai-forhumo-projects.vercel.app/:path*',
-      },
-      {
-        source: '/:locale/ai',
-        destination: 'https://humo-ai-forhumo-projects.vercel.app',
-      },
-    ];
-  },
 };
 
 export default withNextIntl(nextConfig);
