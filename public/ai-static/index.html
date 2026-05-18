@@ -137,6 +137,14 @@ a{color:inherit;}
 .mem-ctx-copy:hover{background:var(--s2);color:var(--t1);}
 .mem-ctx-body{background:var(--s1);border:1px solid var(--b1);border-radius:7px;padding:7px 9px;font-size:11px;color:var(--t2);line-height:1.55;word-break:break-word;max-height:120px;overflow-y:auto;white-space:pre-wrap;font-family:'Consolas','Monaco',monospace;}
 .empty-hist{padding:8px 13px;font-size:12px;color:var(--t3);}
+.topnav{display:flex;align-items:center;gap:1px;overflow-x:auto;flex:1;padding:0 6px;scrollbar-width:none;}
+.topnav::-webkit-scrollbar{display:none;}
+.tnlnk{color:var(--t2);font-size:11.5px;font-weight:500;text-decoration:none;padding:4px 9px;border-radius:14px;white-space:nowrap;transition:background .15s,color .15s;}
+.tnlnk:hover{background:var(--s1);color:var(--t1);}
+.sb-social{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 10px;border-top:1px solid var(--b1);}
+.sb-soc-lnk{width:32px;height:32px;border-radius:8px;background:transparent;border:1px solid var(--b1);color:var(--t3);display:flex;align-items:center;justify-content:center;text-decoration:none;transition:background .15s,color .15s,border-color .15s;flex-shrink:0;}
+.sb-soc-lnk:hover{background:var(--s1);color:var(--t1);border-color:var(--b2);}
+.sb-soc-lnk svg{width:14px;height:14px;}
 .sb-bot{flex-shrink:0;border-top:1px solid var(--b1);padding:5px 7px;transition:border-color .3s;}
 .setrow{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;cursor:pointer;color:var(--t2);font-size:13px;white-space:nowrap;transition:background .15s,color .15s;}
 .setrow:hover{background:var(--s1);color:var(--t1);}
@@ -215,7 +223,7 @@ a{color:inherit;}
 .bbl p{margin:4px 0 0;}
 .mai{display:flex;gap:10px;padding:4px 0;animation:msgIn .2s ease-out;}
 @keyframes msgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-.ailsm{width:22px;height:22px;flex-shrink:0;margin-top:3px;color:var(--logo-color);transition:color .3s;}
+.ailsm{width:22px;height:22px;flex-shrink:0;margin-top:3px;object-fit:contain;border-radius:3px;}
 .aib{flex:1;min-width:0;}
 .aiacts{display:flex;gap:1px;margin-top:5px;opacity:0;transition:opacity .15s;}
 .mai:hover .aiacts{opacity:1;}
@@ -568,6 +576,20 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
     <div id="chatList"></div>
   </div>
 
+  <div class="sb-social">
+    <a class="sb-soc-lnk" href="https://t.me/ForHumo_AI" target="_blank" title="Telegram kanal">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.334 14.5l-2.948-.924c-.64-.203-.653-.64.136-.948l11.51-4.44c.537-.194 1.006.131.53.06z"/></svg>
+    </a>
+    <a class="sb-soc-lnk" href="https://t.me/ForHumo_AIBot" target="_blank" title="Telegram bot">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="7" r="4"/><path d="M9 11V7M15 11V7"/></svg>
+    </a>
+    <a class="sb-soc-lnk" href="https://www.youtube.com/@ForHumoAI" target="_blank" title="YouTube">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+    </a>
+    <a class="sb-soc-lnk" href="https://www.instagram.com/aihumo/" target="_blank" title="Instagram">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+    </a>
+  </div>
   <div class="sb-bot">
     <div class="setrow" onclick="openProfile()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -582,6 +604,15 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
     <button class="ib" onclick="toggleSB()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="5" width="18" height="2" rx="1"/><rect x="3" y="11" width="18" height="2" rx="1"/><rect x="3" y="17" width="18" height="2" rx="1"/></svg>
     </button>
+    <nav class="topnav">
+      <a class="tnlnk" href="/uz" target="_top">Bosh sahifa</a>
+      <a class="tnlnk" href="/uz/projects" target="_top">Loyihalar</a>
+      <a class="tnlnk" href="/uz/esport" target="_top">eSport</a>
+      <a class="tnlnk" href="/uz/nexus" target="_top">Nexus</a>
+      <a class="tnlnk" href="/uz/market" target="_top">Market</a>
+      <a class="tnlnk" href="/uz/pay" target="_top">Pay</a>
+      <a class="tnlnk" href="/uz/support" target="_top">Support</a>
+    </nav>
     <div class="tbr">
       <div class="switcher">
         <button class="swb" id="bSys" dt="system" onclick="setTheme('system')">Tizim</button>
@@ -878,7 +909,7 @@ function setTheme(th){
 function updateLogos(){
   const eff=TH==='system'?(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'):TH;
   const src=eff==='light'?'logo-black.avif':'logo-white.png';
-  document.querySelectorAll('#sidebarLogo,#welcomeLogo').forEach(el=>el.src=src);
+  document.querySelectorAll('#sidebarLogo,#welcomeLogo').forEach(el=>el.src=src);document.querySelectorAll('.ailsm.logo-img').forEach(el=>el.src=src);
 }
 function syncPP(){
   const tm={system:'ppSys',light:'ppDay',dark:'ppNight'};
@@ -1201,12 +1232,9 @@ function toast(msg,err=false){
   setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300);},3000);
 }
 function mkSVG(cls){
-  return`<svg class="${cls}" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M68 6L40 54L82 54L100 98L118 54L160 54L132 6L108 36L100 18L92 36Z" fill="currentColor"/>
-    <path d="M40 54L6 138L52 138L70 96L82 54Z" fill="currentColor"/>
-    <path d="M160 54L194 138L148 138L130 96L118 54Z" fill="currentColor"/>
-    <path d="M52 138L22 220L78 220L100 170L122 220L178 220L148 138L120 166L100 140L80 166Z" fill="currentColor"/>
-  </svg>`;
+  const eff=TH==='system'?(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'):TH;
+  const src=eff==='light'?'logo-black.avif':'logo-white.png';
+  return`<img class="${cls} logo-img" src="${src}" alt="Humo AI">`;
 }
 function mkActs(){
   return`<div class="aiacts">

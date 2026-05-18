@@ -2,7 +2,14 @@ export default function AIPage() {
   return (
     <iframe
       src="/ai-static/"
-      style={{ width: "100%", height: "100vh", border: "none", display: "block" }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        border: "none",
+        zIndex: 9999,
+      }}
       allow="microphone; camera"
     />
   );
