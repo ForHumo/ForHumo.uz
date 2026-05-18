@@ -20,7 +20,7 @@ export function AIContent() {
         <div className="w-full max-w-4xl mx-auto px-4">
             {/* Hero text */}
             <h1 className="text-4xl font-bold tracking-tight text-white mb-4">
-                {t("hero_title");}
+                {t("hero_title")}
             </h1>
             <p className="text-white/60 text-lg mb-10 max-w-xl mx-auto">
                 {t("hero_desc")}
