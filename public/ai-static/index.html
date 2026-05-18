@@ -605,13 +605,13 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="5" width="18" height="2" rx="1"/><rect x="3" y="11" width="18" height="2" rx="1"/><rect x="3" y="17" width="18" height="2" rx="1"/></svg>
     </button>
     <nav class="topnav">
-      <a class="tnlnk" href="/uz" target="_top">Bosh sahifa</a>
-      <a class="tnlnk" href="https://www.forhumo.uz/uz#projects" target="_top">Loyihalar</a>
-      <a class="tnlnk" href="/uz/esport" target="_top">eSport</a>
-      <a class="tnlnk" href="/uz/nexus" target="_top">Nexus</a>
-      <a class="tnlnk" href="/uz/market" target="_top">Market</a>
-      <a class="tnlnk" href="/uz/pay" target="_top">Pay</a>
-      <a class="tnlnk" href="/uz/support" target="_top">Support</a>
+      <a class="tnlnk" href="#" onclick="window.top.location.href=getUrl('');return false;">Bosh sahifa</a>
+      <a class="tnlnk" href="#" onclick="window.top.location.href='https://www.forhumo.uz/'+L+'#projects';return false;">Loyihalar</a>
+      <a class="tnlnk" href="#" onclick="window.top.location.href=getUrl('esport');return false;">eSport</a>
+      <a class="tnlnk" href="#" onclick="window.top.location.href=getUrl('nexus');return false;">Nexus</a>
+      <a class="tnlnk" href="#" onclick="window.top.location.href=getUrl('market');return false;">Market</a>
+      <a class="tnlnk" href="#" onclick="window.top.location.href=getUrl('pay');return false;">Pay</a>
+      <a class="tnlnk" href="#" onclick="window.top.location.href=getUrl('support');return false;">Support</a>
     </nav>
     <div class="tbr">
       <div class="switcher">
@@ -1706,7 +1706,7 @@ async function genCode(){
   const style=getCsel('codeStyleCsel');
   const styleMap={clean:'Toza, ixcham kod yoz.',commented:'Har bir muhim qator uchun izoh qo\'sh.',optimized:'Eng tezkor va optimallashtirilgan yechim yoz.',beginner:'Boshluvchilar tushunishi uchun oddiy va tushunarli kod yoz.'};
   const sysParts=`Faqat kod yoz, hech qanday tushuntirma berma. ${styleMap[style]||''} Til: ${lang}.`;
-  setGenLoading('codeBtn','codeStatus',true,'Kod yaratilmoqda...');
+  setGenLoading('codeBtn','codeStatus',true,t('gencd'));
   const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
   try{
     const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
@@ -1764,7 +1764,7 @@ async function genVideo(){
   if(!prompt){toast('Prompt kiriting',true);return;}
   const dur=parseInt(getCsel('vidDurCsel'));
   const ar=getCsel('vidARCsel');
-  setGenLoading('vidBtn','vidStatus',true,'Video yaratilmoqda (1-2 daqiqa)...');
+  setGenLoading('vidBtn','vidStatus',true,t('genvd'));
   try{
     const videos=await generateVideo(prompt,dur,ar);
     setGenLoading('vidBtn','vidStatus',false);
@@ -1794,7 +1794,7 @@ async function genMusic(){
   const prompt=document.getElementById('musPrompt').value.trim();
   if(!prompt){toast('Prompt kiriting',true);return;}
   const dur=parseInt(getCsel('musDurCsel'));
-  setGenLoading('musBtn','musStatus',true,'Musiqa yaratilmoqda...');
+  setGenLoading('musBtn','musStatus',true,t('genmu'));
   try{
     const tracks=await generateMusic(prompt,dur);
     setGenLoading('musBtn','musStatus',false);
