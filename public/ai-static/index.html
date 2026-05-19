@@ -1771,18 +1771,19 @@ async function genVideo(){
     const grid=document.getElementById('vidGrid');
     videos.forEach(v=>{
       const card=document.createElement('div');card.className='pic-card';
-      if(v.gcsUri){
-        card.innerHTML=`<div style="padding:14px;font-size:12px;color:var(--t2)">GCS: ${escH(v.gcsUri)}</div>
-          <div class="pic-cfoot"><span>${escH(prompt)}</span></div>`;
-      } else if(v.base64){
-        const src=`data:${v.mimeType};base64,${v.base64}`;
-        card.innerHTML=`<video controls style="width:100%;display:block;border-radius:8px 8px 0 0"><source src="${src}" type="${v.mimeType}"></video>
+      if(v.url||v.base64){
+        const src=v.url||`data:${v.mimeType};base64,${v.base64}`;
+        const dlName='video.mp4';
+        card.innerHTML=`<video controls style="width:100%;display:block;border-radius:8px 8px 0 0"><source src="${escH(src)}" type="${v.mimeType}"></video>
           <div class="pic-cfoot">
             <span>${escH(prompt)}</span>
-            <button class="pic-dl" onclick="dlFile('${src}','video.mp4')" title="Yuklab olish">
+            <button class="pic-dl" onclick="dlFile('${escH(src)}','${dlName}')" title="Yuklab olish">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             </button>
           </div>`;
+      } else if(v.gcsUri){
+        card.innerHTML=`<div style="padding:14px;font-size:12px;color:var(--t2)">GCS: ${escH(v.gcsUri)}</div>
+          <div class="pic-cfoot"><span>${escH(prompt)}</span></div>`;
       }
       grid.prepend(card);
     });
