@@ -360,13 +360,21 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
 .pic-dl{width:26px;height:26px;border-radius:6px;border:none;background:transparent;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s;}
 .pic-dl:hover{background:var(--s2);color:var(--t1);}
 .card-ctx{position:relative;flex-shrink:0;}
-.card-ctx-btn{width:26px;height:26px;border-radius:6px;border:none;background:transparent;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;font-size:16px;line-height:1;letter-spacing:1px;}
-.card-ctx-btn:hover{background:var(--s2);color:var(--t1);}
-.card-ctx-drop{position:absolute;bottom:100%;right:0;margin-bottom:4px;background:var(--s2);border:1px solid var(--b1);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.18);min-width:140px;overflow:hidden;z-index:100;display:none;animation:fadeIn .15s ease;}
+.card-ctx-btn{width:28px;height:28px;border-radius:7px;border:none;background:rgba(128,128,128,0.12);color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;font-size:18px;line-height:1;letter-spacing:2px;padding-bottom:4px;}
+.card-ctx-btn:hover{background:rgba(128,128,128,0.22);color:var(--t1);}
+.card-ctx-drop{position:absolute;bottom:calc(100% + 6px);right:0;background:var(--ctx-bg,#1e1e1e);border:1px solid var(--ctx-br,rgba(255,255,255,0.11));border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.45),0 2px 8px rgba(0,0,0,.25);min-width:180px;overflow:hidden;z-index:200;display:none;animation:ctxIn .14s ease;}
 .card-ctx-drop.open{display:block;}
-.card-ctx-item{display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:13px;color:var(--t1);cursor:pointer;transition:background .12s;}
-.card-ctx-item:hover{background:var(--s3);}
-.card-ctx-item svg{width:14px;height:14px;flex-shrink:0;color:var(--t2);}
+@keyframes ctxIn{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
+.card-ctx-sep{height:1px;background:var(--ctx-br,rgba(255,255,255,0.08));margin:3px 0;}
+.card-ctx-item{display:flex;align-items:center;gap:10px;padding:10px 15px;font-size:13px;color:var(--t1);cursor:pointer;transition:background .12s;user-select:none;}
+.card-ctx-item:first-child{border-radius:12px 12px 0 0;}
+.card-ctx-item:last-child{border-radius:0 0 12px 12px;}
+.card-ctx-item:hover{background:rgba(128,128,128,0.13);}
+.card-ctx-item.danger{color:#f87171;}
+.card-ctx-item.danger svg{color:#f87171;}
+.card-ctx-item svg{width:15px;height:15px;flex-shrink:0;color:var(--t2);opacity:.85;}
+.card-ctx-item:hover svg{opacity:1;}
 .mus-card{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
 .mus-card audio{width:100%;}
 .mus-cfoot{font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -853,7 +861,7 @@ const T={
       appearance:"Ko’rinish",theme_lbl:"Mavzu",lang_lbl:"Til",account:"Hisob",support_lbl:"Yordam markazi",about:"Ma’lumot",
       aicontext_lbl:"AI ga beriladigan savol",mem_copy:"Nusxa olish",mem_copied:"Nusxalandi!",
       wt:"kutilmoqda",lim:"Limit tugadi. Bir oz kutib qayta urinib ko'ring.",copyright:"© 2026 For Humo · Barcha huquqlar himoyalangan",
-      bs:"Bosh sahifa",loy:"Loyihalar",crtbtn:"Yaratish",dl:"Yuklab olish",
+      bs:"Bosh sahifa",loy:"Loyihalar",crtbtn:"Yaratish",dl:"Yuklab olish",fscrn:"To'liq ekran",cpprmt:"Promptni nusxalash",
       cp:"Nima yaratishni xohlaysiz? (masalan: React da login forma, Python da fayl o'qish funksiyasi)",
       pp:"Rasm tasvirini kiriting... (masalan: togʿ ustida botayotgan quyosh, akvarell uslubida)",
       vp:"Video sahnasini tasvirlang... (masalan: okeanda toʿlqinlar, sekin harakat)",
@@ -878,7 +886,7 @@ const T={
       appearance:"Внешний вид",theme_lbl:"Тема",lang_lbl:"Язык",account:"Аккаунт",support_lbl:"Центр помощи",about:"О программе",
       aicontext_lbl:"Контекст для AI",mem_copy:"Копировать",mem_copied:"Скопировано!",
       wt:"сек. ожидание",lim:"Лимит исчерпан. Подождите немного и повторите.",copyright:"© 2026 For Humo · Все права защищены",
-      bs:"Главная",loy:"Проекты",crtbtn:"Создать",dl:"Скачать",
+      bs:"Главная",loy:"Проекты",crtbtn:"Создать",dl:"Скачать",fscrn:"На весь экран",cpprmt:"Копировать промпт",
       cp:"Что создать? (например: форма входа на React, функция чтения файла на Python)",
       pp:"Опишите изображение... (например: закат над горами, акварельный стиль)",
       vp:"Опишите сцену видео... (например: волны в океане, замедленное движение)",
@@ -902,7 +910,7 @@ const T={
       appearance:"Appearance",theme_lbl:"Theme",lang_lbl:"Language",account:"Account",support_lbl:"Support center",about:"About",
       aicontext_lbl:"AI context",mem_copy:"Copy",mem_copied:"Copied!",
       wt:"s waiting",lim:"Limit reached. Please wait a moment and try again.",copyright:"© 2026 For Humo · All rights reserved",
-      bs:"Home",loy:"Projects",crtbtn:"Create",dl:"Download",
+      bs:"Home",loy:"Projects",crtbtn:"Create",dl:"Download",fscrn:"Full screen",cpprmt:"Copy prompt",
       cp:"What do you want to create? (e.g. React login form, Python file reader)",
       pp:"Describe the image... (e.g. sunset over mountains, watercolor style)",
       vp:"Describe the video scene... (e.g. ocean waves, slow motion)",
@@ -1012,6 +1020,8 @@ function toggleCtxMenu(btn){
   document.querySelectorAll('.card-ctx-drop.open').forEach(d=>d.classList.remove('open'));
   if(!isOpen)drop.classList.add('open');
 }
+function closeCtx(){document.querySelectorAll('.card-ctx-drop.open').forEach(d=>d.classList.remove('open'));}
+function cpText(text){navigator.clipboard.writeText(text).then(()=>toast('Nusxalandi ✓'));closeCtx();}
 document.addEventListener('click',e=>{
   if(!e.target.closest('.card-ctx'))document.querySelectorAll('.card-ctx-drop.open').forEach(d=>d.classList.remove('open'));
 });
@@ -1842,19 +1852,25 @@ async function genVideo(){
       if(v.url||v.base64){
         const src=v.url||`data:${v.mimeType};base64,${v.base64}`;
         const dlName='video.mp4';
-        card.innerHTML=`<video controls style="width:100%;display:block;border-radius:8px 8px 0 0"><source src="${escH(src)}" type="${v.mimeType}"></video>
-          <div class="pic-cfoot">
-            <span>${escH(prompt)}</span>
-            <div class="card-ctx">
-              <button class="card-ctx-btn" onclick="toggleCtxMenu(this)" title="Boshqa">···</button>
-              <div class="card-ctx-drop">
-                <div class="card-ctx-item" onclick="dlFile('${escH(src)}','${dlName}');document.querySelectorAll('.card-ctx-drop.open').forEach(d=>d.classList.remove('open'))">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  <span di="dl">Yuklab olish</span>
-                </div>
+        const vid=document.createElement('video');vid.controls=true;vid.style.cssText='width:100%;display:block;border-radius:8px 8px 0 0';
+        const src2=document.createElement('source');src2.src=src;src2.type=v.mimeType;vid.appendChild(src2);
+        const foot=document.createElement('div');foot.className='pic-cfoot';
+        foot.innerHTML=`<span>${escH(prompt)}</span>
+          <div class="card-ctx">
+            <button class="card-ctx-btn" onclick="toggleCtxMenu(this)">⋮</button>
+            <div class="card-ctx-drop">
+              <div class="card-ctx-item" onclick="this.closest('.pic-card').querySelector('video').requestFullscreen?.();closeCtx()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                <span di="fscrn">To'liq ekran</span>
+              </div>
+              <div class="card-ctx-sep"></div>
+              <div class="card-ctx-item" onclick="dlFile('${escH(src)}','${dlName}');closeCtx()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span di="dl">Yuklab olish</span>
               </div>
             </div>
           </div>`;
+        card.appendChild(vid);card.appendChild(foot);
       } else if(v.gcsUri){
         card.innerHTML=`<div style="padding:14px;font-size:12px;color:var(--t2)">GCS: ${escH(v.gcsUri)}</div>
           <div class="pic-cfoot"><span>${escH(prompt)}</span></div>`;
@@ -1877,15 +1893,20 @@ async function genMusic(){
     tracks.forEach(tr=>{
       const src=`data:${tr.mimeType};base64,${tr.base64}`;
       const card=document.createElement('div');card.className='mus-card';
-      card.innerHTML=`<audio controls><source src="${src}" type="${tr.mimeType}"></audio>
-        <div class="pic-cfoot" style="padding:0">
+      card.innerHTML=`<audio controls style="width:100%"><source src="${src}" type="${tr.mimeType}"></audio>
+        <div class="pic-cfoot" style="padding:8px 10px 8px">
           <span class="mus-cfoot">${escH(prompt)}</span>
           <div class="card-ctx">
-            <button class="card-ctx-btn" onclick="toggleCtxMenu(this)" title="Boshqa">···</button>
+            <button class="card-ctx-btn" onclick="toggleCtxMenu(this)">⋮</button>
             <div class="card-ctx-drop">
-              <div class="card-ctx-item" onclick="dlFile('${src}','musiqa.wav');document.querySelectorAll('.card-ctx-drop.open').forEach(d=>d.classList.remove('open'))">
+              <div class="card-ctx-item" onclick="dlFile('${src}','musiqa.wav');closeCtx()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 <span di="dl">Yuklab olish</span>
+              </div>
+              <div class="card-ctx-sep"></div>
+              <div class="card-ctx-item" onclick="cpText('${escH(prompt)}');closeCtx()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                <span di="cpprmt">Promptni nusxalash</span>
               </div>
             </div>
           </div>
