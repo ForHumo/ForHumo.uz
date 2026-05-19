@@ -844,7 +844,7 @@ const T={
       mem:"Xotira",memadd:"Yangi xotira qo’shish...",memsave:"Saqlash",memempty:"Xotira bo’sh",
       appearance:"Ko’rinish",theme_lbl:"Mavzu",lang_lbl:"Til",account:"Hisob",support_lbl:"Yordam markazi",about:"Ma’lumot",
       aicontext_lbl:"AI ga beriladigan savol",mem_copy:"Nusxa olish",mem_copied:"Nusxalandi!",
-      wt:"kutilmoqda",lim:t('lim'),copyright:"© 2026 For Humo · Barcha huquqlar himoyalangan"},
+      wt:"kutilmoqda",lim:"Limit tugadi. Bir oz kutib qayta urinib ko'ring.",copyright:"© 2026 For Humo · Barcha huquqlar himoyalangan"},
   ru:{nc:"Новый чат",mc:"Мой контент",
       code:"Код",pic:"Изображение",vid:"Видео",mus:"Музыка",
       ch:"Чаты",set:"Настройки и помощь",
@@ -1701,7 +1701,7 @@ function setGenLoading(btnId,statusId,loading,msg=''){
 
 async function genCode(){
   const prompt=document.getElementById('codePrompt').value.trim();
-  if(!prompt){toast('Prompt kiriting',true);return;}
+  if(!prompt){toast(t('prmpt'),true);return;}
   const lang=getCsel('codeLangCsel');
   const style=getCsel('codeStyleCsel');
   const styleMap={clean:'Toza, ixcham kod yoz.',commented:'Har bir muhim qator uchun izoh qo\'sh.',optimized:'Eng tezkor va optimallashtirilgan yechim yoz.',beginner:'Boshluvchilar tushunishi uchun oddiy va tushunarli kod yoz.'};
@@ -1735,10 +1735,10 @@ async function genCode(){
 
 async function genImage(){
   const prompt=document.getElementById('picPrompt').value.trim();
-  if(!prompt){toast('Prompt kiriting',true);return;}
+  if(!prompt){toast(t('prmpt'),true);return;}
   const ar=getCsel('picARCsel');
   const count=parseInt(getCsel('picCountCsel'));
-  setGenLoading('picBtn','picStatus',true,`${count} ta rasm yaratilmoqda...`);
+  setGenLoading('picBtn','picStatus',true,`${count} ${t('genim')}`);
   try{
     const images=await generateImage(prompt,ar,count);
     setGenLoading('picBtn','picStatus',false);
@@ -1761,7 +1761,7 @@ async function genImage(){
 
 async function genVideo(){
   const prompt=document.getElementById('vidPrompt').value.trim();
-  if(!prompt){toast('Prompt kiriting',true);return;}
+  if(!prompt){toast(t('prmpt'),true);return;}
   const dur=parseInt(getCsel('vidDurCsel'));
   const ar=getCsel('vidARCsel');
   setGenLoading('vidBtn','vidStatus',true,t('genvd'));
@@ -1792,7 +1792,7 @@ async function genVideo(){
 
 async function genMusic(){
   const prompt=document.getElementById('musPrompt').value.trim();
-  if(!prompt){toast('Prompt kiriting',true);return;}
+  if(!prompt){toast(t('prmpt'),true);return;}
   const dur=parseInt(getCsel('musDurCsel'));
   setGenLoading('musBtn','musStatus',true,t('genmu'));
   try{
