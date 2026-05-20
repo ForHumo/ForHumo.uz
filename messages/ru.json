@@ -2,6 +2,8 @@
   "Navigation": {
     "home": "Главная",
     "projects": "Проекты",
+    "id": "ID",
+    "ai": "AI",
     "nexus": "Nexus",
     "esport": "eSport",
     "market": "Market",
