@@ -701,7 +701,7 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
 <aside class="sidebar" id="sidebar">
   <div class="sb-head">
     <a class="sb-logo" onclick="newChat();return false;" href="#">
-      <img id="sidebarLogo" class="logo-img" src="logo-white.png" alt="Humo AI">
+      <img id="sidebarLogo" class="logo-img" src="logo-white.png" alt="Humo AI" onerror="this.style.display='none'">
       <span>Humo AI</span>
     </a>
     <button class="ib" onclick="toggleSB()">
@@ -735,7 +735,7 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
     <div class="sdiv"></div>
     <div class="slbl" di="ch">Chatlar</div>
     <div class="search-wrap">
-      <input class="search-inp" id="searchInp" type="text" placeholder="Chatda qidirish..." oninput="searchMsgs(this.value)">
+      <input class="search-inp" id="searchInp" type="text" placeholder="Chatda qidirish..." oninput="searchMsgs(this.value)" data-ph-key="srch">
       <button class="search-clear" id="searchClear" onclick="clearSearch()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
@@ -790,7 +790,7 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
   <!-- WELCOME -->
   <div class="welcome" id="welcome">
     <div class="lblk">
-      <img id="welcomeLogo" class="logo-img logo-float" src="logo-white.png" alt="Humo AI">
+      <img id="welcomeLogo" class="logo-img logo-float" src="logo-white.png" alt="Humo AI" onerror="this.style.display='none'">
     </div>
     <p class="gsub" id="gsub">Humo AI'ga xush kelibsiz</p>
     <h1 class="gmain" id="gmain">Bugun nima qilamiz?</h1>
@@ -807,8 +807,8 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
 
   <!-- SECTIONS -->
   <div class="secpg" id="secCode">
-    <div class="sptit">Kod yaratish</div>
-    <div class="spsub" style="margin-bottom:14px">Gemini yordamida kod yozing va muammolarni hal qiling</div>
+    <div class="sptit" id="codeTit">Kod yaratish</div>
+    <div class="spsub" id="codeSub" style="margin-bottom:14px">Gemini yordamida kod yozing va muammolarni hal qiling</div>
     <div class="gen-form">
       <textarea class="gen-ta" id="codePrompt" placeholder="Nima yaratishni xohlaysiz? (masalan: React da login forma, Python da fayl o'qish funksiyasi)"></textarea>
       <div class="gen-opts">
@@ -843,7 +843,7 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
         <button class="gen-btn" id="codeBtn" onclick="genCode()">
           <svg class="gen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
           <div class="gen-spin"></div>
-          Yaratish
+          <span id="codeBtnLbl">Yaratish</span>
         </button>
       </div>
     </div>
@@ -851,19 +851,19 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
     <div id="codeResults" style="display:flex;flex-direction:column;gap:10px;"></div>
   </div>
   <div class="secpg" id="secPic">
-    <div class="sptit">Rasm</div>
+    <div class="sptit" id="picTit">Rasm</div>
     <div class="mode-tabs">
       <button class="mode-tab on" id="picModeCreate" onclick="setPicMode('create')">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-.15em;margin-right:5px"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Yaratish
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-.15em;margin-right:5px"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span id="picCreateTabLbl">Yaratish</span>
       </button>
       <button class="mode-tab" id="picModeAnalyze" onclick="setPicMode('analyze')">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-.15em;margin-right:5px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Tahlil
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-.15em;margin-right:5px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span id="picAnalyzeTabLbl">Tahlil</span>
       </button>
     </div>
 
     <!-- Create form -->
     <div id="picCreateForm">
-      <div class="spsub" style="margin-bottom:14px">Imagen 3 yordamida yuqori sifatli rasmlar yarating</div>
+      <div class="spsub" id="picCreateSub" style="margin-bottom:14px">Imagen 3 yordamida yuqori sifatli rasmlar yarating</div>
       <div class="gen-form">
         <textarea class="gen-ta" id="picPrompt" placeholder="Rasm tasvirini kiriting... (masalan: togʻ ustida botayotgan quyosh, akvarell uslubida)"></textarea>
         <div class="gen-opts">
@@ -893,21 +893,21 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
           <button class="gen-btn" id="picBtn" onclick="genImage()">
             <svg class="gen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
             <div class="gen-spin"></div>
-            Yaratish
+            <span id="picBtnLbl">Yaratish</span>
           </button>
         </div>
       </div>
       <div id="picStatus"></div>
       <div class="gal-hdr" id="picGalHdr">
-        <span class="gal-hdr-lbl">Galereya</span>
-        <button class="gal-clear" onclick="clearGenType('images')">Hammasini o'chirish</button>
+        <span class="gal-hdr-lbl" id="picGalLbl">Galereya</span>
+        <button class="gal-clear" id="picGalClear" onclick="clearGenType('images')">Hammasini o'chirish</button>
       </div>
       <div class="spgrid" id="picGrid"></div>
     </div>
 
     <!-- Analyze form -->
     <div id="picAnalyzeForm">
-      <div class="spsub" style="margin-bottom:14px">Gemini Vision yordamida rasmlarni tahlil qiling</div>
+      <div class="spsub" id="picAnalyzeSub" style="margin-bottom:14px">Gemini Vision yordamida rasmlarni tahlil qiling</div>
       <div class="gen-form">
         <div class="upload-area" id="analyzeUpload"
           onclick="document.getElementById('analyzeFileInp').click()"
@@ -917,17 +917,17 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
           <input type="file" id="analyzeFileInp" accept="image/*" onchange="handleAnalyzeImg(this.files)">
           <div class="upload-ph" id="uploadPh">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-            <span>Rasm yuklash uchun bosing yoki tashlang</span>
+            <span id="uploadPhLbl">Rasm yuklash uchun bosing yoki tashlang</span>
           </div>
           <img class="upload-preview" id="uploadPreview" onclick="event.stopPropagation()" alt="">
-          <span class="upload-change" onclick="event.stopPropagation();document.getElementById('analyzeFileInp').click()">Almashtirish</span>
+          <span class="upload-change" id="uploadChangeLbl" onclick="event.stopPropagation();document.getElementById('analyzeFileInp').click()">Almashtirish</span>
         </div>
         <textarea class="gen-ta" id="analyzePrompt" placeholder="Rasm haqida savol bering... (masalan: Bu rasmda nima bor? Ranglarni tasvirla)"></textarea>
         <div class="gen-opts">
           <button class="gen-btn" id="analyzeBtn" onclick="analyzeImage()" style="margin-left:auto">
             <svg class="gen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <div class="gen-spin"></div>
-            Tahlil qil
+            <span id="analyzeBtnLbl">Tahlil qil</span>
           </button>
         </div>
       </div>
@@ -937,8 +937,8 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
   </div>
 
   <div class="secpg" id="secVid">
-    <div class="sptit">Video yaratish</div>
-    <div class="spsub" style="margin-bottom:14px">Veo 2 yordamida professional videolar yarating</div>
+    <div class="sptit" id="vidTit">Video yaratish</div>
+    <div class="spsub" id="vidSub" style="margin-bottom:14px">Veo 2 yordamida professional videolar yarating</div>
     <div class="gen-form">
       <textarea class="gen-ta" id="vidPrompt" placeholder="Video sahnasini tasvirlang... (masalan: okeanda to'lqinlar, sekin harakat)"></textarea>
       <div class="gen-opts">
@@ -966,21 +966,21 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
         <button class="gen-btn" id="vidBtn" onclick="genVideo()">
           <svg class="gen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="m10 9 5 3-5 3V9z"/></svg>
           <div class="gen-spin"></div>
-          Yaratish
+          <span id="vidBtnLbl">Yaratish</span>
         </button>
       </div>
     </div>
     <div id="vidStatus"></div>
     <div class="gal-hdr" id="vidGalHdr">
-      <span class="gal-hdr-lbl">Tarixi</span>
-      <button class="gal-clear" onclick="clearGenType('videos')">Hammasini o'chirish</button>
+      <span class="gal-hdr-lbl" id="vidHisLbl">Tarixi</span>
+      <button class="gal-clear" id="vidGalClear" onclick="clearGenType('videos')">Hammasini o'chirish</button>
     </div>
     <div class="spgrid" id="vidGrid"></div>
   </div>
 
   <div class="secpg" id="secMus">
-    <div class="sptit">Musiqa yaratish</div>
-    <div class="spsub" style="margin-bottom:14px">Lyria yordamida original musiqa treklar yarating</div>
+    <div class="sptit" id="musTit">Musiqa yaratish</div>
+    <div class="spsub" id="musSub" style="margin-bottom:14px">Lyria yordamida original musiqa treklar yarating</div>
     <div class="gen-form">
       <textarea class="gen-ta" id="musPrompt" placeholder="Musiqa uslubini tasvirlang... (masalan: tinch akustik gitara, bahor kayfiyati)"></textarea>
       <div class="gen-opts">
@@ -997,14 +997,14 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
         <button class="gen-btn" id="musBtn" onclick="genMusic()">
           <svg class="gen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
           <div class="gen-spin"></div>
-          Yaratish
+          <span id="musBtnLbl">Yaratish</span>
         </button>
       </div>
     </div>
     <div id="musStatus"></div>
     <div class="gal-hdr" id="musGalHdr">
-      <span class="gal-hdr-lbl">Tarixi</span>
-      <button class="gal-clear" onclick="clearGenType('music')">Hammasini o'chirish</button>
+      <span class="gal-hdr-lbl" id="musHisLbl">Tarixi</span>
+      <button class="gal-clear" id="musGalClear" onclick="clearGenType('music')">Hammasini o'chirish</button>
     </div>
     <div class="spgrid" id="musGrid"></div>
   </div>
@@ -1051,12 +1051,21 @@ const T={
   uz:{nc:"Yangi chat",mc:"Mening kontentim",code:"Kod",pic:"Rasm",vid:"Video",mus:"Musiqa",
       ch:"Chatlar",set:"Sozlamalar va yordam",
       gs:"Humo AI’ga xush kelibsiz",gm:"Bugun nima qilamiz?",
-      ph:"Humo AIdan so’rang...",
+      ph:"Humo AIdan so’rang...",srch:"Chatda qidirish...",
       fn:"Humo AI xato qilishi mumkin.",prv:"Maxfiylik",
-      ct:"Kod yaratish",cs:"Gemini yordamida kod yarating",
-      pt:"Rasm yaratish",ps:"Imagen 3 yordamida rasmlar yarating",
-      vt:"Video yaratish",vs:"Veo 2 yordamida videolar yarating",
-      mt:"Musiqa yaratish",ms:"Lyria yordamida musiqa yarating",
+      ct:"Kod yaratish",cs:"Gemini yordamida kod yozing va muammolarni hal qiling",
+      code_ph:"Nima yaratishni xohlaysiz? (masalan: React da login forma, Python da fayl o’qish)",
+      gen:"Yaratish",analyze:"Tahlil",analyze_btn:"Tahlil qil",
+      pt:"Rasm",ps:"Imagen 3 yordamida yuqori sifatli rasmlar yarating",
+      pic_ph:"Rasm tasvirini kiriting... (masalan: togʻ ustida botayotgan quyosh, akvarell uslubida)",
+      pic_analyze_sub:"Gemini Vision yordamida rasmlarni tahlil qiling",
+      upload_ph:"Rasm yuklash uchun bosing yoki tashlang",upload_change:"Almashtirish",
+      analyze_ph:"Rasm haqida savol bering... (masalan: Bu rasmda nima bor?)",
+      gallery:"Galereya",history:"Tarixi",clear_all:"Hammasini o’chirish",
+      vt:"Video yaratish",vs:"Veo 2 yordamida professional videolar yarating",
+      vid_ph:"Video sahnasini tasvirlang... (masalan: okeanda toʻlqinlar, sekin harakat)",
+      mt:"Musiqa yaratish",ms:"Lyria yordamida original musiqa treklar yarating",
+      mus_ph:"Musiqa uslubini tasvirlang... (masalan: tinch akustik gitara, bahor kayfiyati)",
       ni:"Hozircha bo’sh",ns:"Chat boshlang",nochats:"Chatlar yo’q",
       sy:"Tizim",dy:"Kunduz",nt:"Tungi",
       mem:"Xotira",memadd:"Yangi xotira qo’shish...",memsave:"Saqlash",memempty:"Xotira bo’sh",
@@ -1069,12 +1078,21 @@ const T={
       code:"Код",pic:"Изображение",vid:"Видео",mus:"Музыка",
       ch:"Чаты",set:"Настройки и помощь",
       gs:"Добро пожаловать в Humo AI",gm:"Чем займёмся сегодня?",
-      ph:"Спросите Humo AI...",
+      ph:"Спросите Humo AI...",srch:"Поиск чатов...",
       fn:"Humo AI может допускать ошибки.",prv:"Конфиденциальность",
-      ct:"Генерация кода",cs:"Пишите код с помощью Gemini",
-      pt:"Генерация изображений",ps:"Создавайте изображения с Imagen 3",
-      vt:"Генерация видео",vs:"Создавайте видео с Veo 2",
-      mt:"Генерация музыки",ms:"Создавайте музыку с Lyria",
+      ct:"Генерация кода",cs:"Пишите код с Gemini и решайте задачи",
+      code_ph:"Что хотите создать? (например: форма входа на React, чтение файлов на Python)",
+      gen:"Создать",analyze:"Анализ",analyze_btn:"Анализировать",
+      pt:"Изображение",ps:"Создавайте изображения высокого качества с Imagen 3",
+      pic_ph:"Опишите изображение... (например: закат над горами, акварельный стиль)",
+      pic_analyze_sub:"Анализируйте изображения с Gemini Vision",
+      upload_ph:"Нажмите или перетащите изображение",upload_change:"Заменить",
+      analyze_ph:"Задайте вопрос об изображении... (например: что на этом фото?)",
+      gallery:"Галерея",history:"История",clear_all:"Очистить всё",
+      vt:"Генерация видео",vs:"Создавайте профессиональные видео с Veo 2",
+      vid_ph:"Опишите сцену видео... (например: волны в океане, медленное движение)",
+      mt:"Генерация музыки",ms:"Создавайте оригинальные треки с Lyria",
+      mus_ph:"Опишите стиль музыки... (например: тихая акустическая гитара, весеннее настроение)",
       ni:"Пока пусто",ns:"Начните чат",nochats:"Нет чатов",
       sy:"Система",dy:"Светлая",nt:"Тёмная",
       mem:"Память",memadd:"Добавить воспоминание...",memsave:"Сохранить",memempty:"Память пуста",
@@ -1083,15 +1101,24 @@ const T={
       ai_settings:"Настройки AI",temp_lbl:"Креативность (Temperature)",temp_low:"Точно",temp_high:"Творчески",
       tokens_lbl:"Длина ответа",tokens_low:"Кратко",tokens_high:"Подробно",reset_def:"Сбросить",
       copyright:"© 2026 For Humo · Все права защищены"},
-  en:{nc:"New chat",mc:"My content",code:"Code",pic:"Picture",vid:"Video",mus:"Music",
+  en:{nc:"New chat",mc:"My content",code:"Code",pic:"Image",vid:"Video",mus:"Music",
       ch:"Chats",set:"Settings & help",
       gs:"Welcome to Humo AI",gm:"What shall we do today?",
-      ph:"Ask Humo AI...",
+      ph:"Ask Humo AI...",srch:"Search chats...",
       fn:"Humo AI may make mistakes.",prv:"Privacy",
-      ct:"Generate code",cs:"Write code with Gemini",
-      pt:"Generate images",ps:"Create images with Imagen 3",
-      vt:"Generate video",vs:"Create videos with Veo 2",
-      mt:"Generate music",ms:"Create music with Lyria",
+      ct:"Generate code",cs:"Write code with Gemini and solve problems",
+      code_ph:"What do you want to create? (e.g. login form in React, file reader in Python)",
+      gen:"Create",analyze:"Analyze",analyze_btn:"Analyze",
+      pt:"Image",ps:"Create high-quality images with Imagen 3",
+      pic_ph:"Describe the image... (e.g. sunset over mountains, watercolor style)",
+      pic_analyze_sub:"Analyze images with Gemini Vision",
+      upload_ph:"Click or drag an image here",upload_change:"Change",
+      analyze_ph:"Ask about the image... (e.g. what is in this photo?)",
+      gallery:"Gallery",history:"History",clear_all:"Clear all",
+      vt:"Generate video",vs:"Create professional videos with Veo 2",
+      vid_ph:"Describe the video scene... (e.g. ocean waves, slow motion)",
+      mt:"Generate music",ms:"Create original music tracks with Lyria",
+      mus_ph:"Describe the music style... (e.g. calm acoustic guitar, spring mood)",
       ni:"Nothing here yet",ns:"Start a chat",nochats:"No chats yet",
       sy:"System",dy:"Light",nt:"Dark",
       mem:"Memory",memadd:"Add a memory...",memsave:"Save",memempty:"Memory is empty",
@@ -1106,6 +1133,7 @@ const t=k=>T[L][k]||k;
 
 function applyLang(){
   document.querySelectorAll('[di]').forEach(e=>{const k=e.getAttribute('di');if(k)e.textContent=t(k);});
+  document.querySelectorAll('[data-ph-key]').forEach(e=>{const k=e.getAttribute('data-ph-key');if(k)e.placeholder=t(k);});
   document.getElementById('bSys').textContent=t('sy');
   document.getElementById('bDay').textContent=t('dy');
   document.getElementById('bNight').textContent=t('nt');
@@ -1117,6 +1145,20 @@ function applyLang(){
   const ppNight=document.getElementById('ppNight');if(ppNight)ppNight.textContent=t('nt');
   const mi=document.getElementById('memInp');if(mi)mi.placeholder=t('memadd');
   const mab=document.querySelector('.mem-add-btn');if(mab)mab.textContent=t('memsave');
+  // Section titles & subtitles
+  const ids={
+    codeTit:'ct',codeSub:'cs',codeBtnLbl:'gen',
+    picTit:'pt',picCreateSub:'ps',picCreateTabLbl:'gen',picAnalyzeTabLbl:'analyze',
+    picBtnLbl:'gen',analyzeBtnLbl:'analyze_btn',
+    picGalLbl:'gallery',picGalClear:'clear_all',
+    picAnalyzeSub:'pic_analyze_sub',uploadPhLbl:'upload_ph',uploadChangeLbl:'upload_change',
+    vidTit:'vt',vidSub:'vs',vidBtnLbl:'gen',vidHisLbl:'history',vidGalClear:'clear_all',
+    musTit:'mt',musSub:'ms',musBtnLbl:'gen',musHisLbl:'history',musGalClear:'clear_all',
+  };
+  Object.entries(ids).forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.textContent=t(key);});
+  // Placeholders
+  const phs={codePrompt:'code_ph',picPrompt:'pic_ph',analyzePrompt:'analyze_ph',vidPrompt:'vid_ph',musPrompt:'mus_ph'};
+  Object.entries(phs).forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.placeholder=t(key);});
   renderChatList();
   renderMemList();
   renderTemplates();
@@ -1135,6 +1177,7 @@ function updateLogos(){
   const eff=TH==='system'?(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'):TH;
   const src=eff==='light'?'logo-black.avif':'logo-white.png';
   document.querySelectorAll('#sidebarLogo,#welcomeLogo').forEach(el=>el.src=src);
+  document.querySelectorAll('img.ailsm').forEach(el=>el.src=src);
 }
 function syncPP(){
   const tm={system:'ppSys',light:'ppDay',dark:'ppNight'};
@@ -1508,12 +1551,9 @@ function toast(msg,err=false){
   setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300);},3000);
 }
 function mkSVG(cls){
-  return`<svg class="${cls}" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M68 6L40 54L82 54L100 98L118 54L160 54L132 6L108 36L100 18L92 36Z" fill="currentColor"/>
-    <path d="M40 54L6 138L52 138L70 96L82 54Z" fill="currentColor"/>
-    <path d="M160 54L194 138L148 138L130 96L118 54Z" fill="currentColor"/>
-    <path d="M52 138L22 220L78 220L100 170L122 220L178 220L148 138L120 166L100 140L80 166Z" fill="currentColor"/>
-  </svg>`;
+  const eff=TH==='system'?(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'):TH;
+  const src=eff==='light'?'logo-black.avif':'logo-white.png';
+  return`<img class="${cls} logo-img" src="${src}" alt="" style="object-fit:contain;flex-shrink:0;">`;
 }
 function mkActs(){
   return`<div class="aiacts">
