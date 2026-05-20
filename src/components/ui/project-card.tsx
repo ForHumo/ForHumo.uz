@@ -71,13 +71,13 @@ export function ProjectCard({ title, description, href, icon: Icon, status, inde
                 />
 
                 <div className="flex flex-col h-full overflow-hidden rounded-2xl
-                    border border-border
-                    bg-card/80 dark:bg-black/40
+                    border border-blue-200/70 dark:border-white/10
+                    bg-white dark:bg-black/40
                     backdrop-blur-xl p-7
-                    shadow-sm dark:shadow-xl
+                    shadow-[0_2px_16px_rgba(30,80,180,0.07)] dark:shadow-xl
                     transition-all duration-300
                     group-hover:translate-y-[-3px]
-                    group-hover:shadow-[0_8px_32px_-8px_rgba(0,136,255,0.25)]
+                    group-hover:shadow-[0_8px_32px_rgba(0,100,255,0.14)]
                     dark:group-hover:shadow-[0_10px_40px_-10px_rgba(59,130,246,0.3)]"
                 >
                     <div className="flex items-start justify-between mb-5">

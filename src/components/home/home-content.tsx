@@ -52,21 +52,21 @@ export function HomeContent() {
             description: tProjects("market_desc"),
             href: "/coming-soon",
             icon: ShoppingBag,
-            status: "coming-soon" as const,
+            status: "active" as const,
         },
         {
             title: "Humo Pay",
             description: tProjects("pay_desc"),
             href: "/coming-soon",
             icon: CreditCard,
-            status: "coming-soon" as const,
+            status: "active" as const,
         },
         {
             title: "Humo Support",
             description: tProjects("support_desc"),
             href: "/coming-soon",
             icon: Headset,
-            status: "coming-soon" as const,
+            status: "active" as const,
         },
     ];
 
@@ -143,7 +143,7 @@ export function HomeContent() {
                         className="flex flex-col sm:flex-row gap-4 justify-center items-center"
                     >
                         <a
-                            href="#ecosystem"
+                            href="#project"
                             className="group relative inline-flex h-13 items-center justify-center rounded-full
                                 bg-blue-500/10 dark:bg-primary/10
                                 px-9 font-bold
@@ -171,7 +171,7 @@ export function HomeContent() {
             </section>
 
             {/* Projects Grid */}
-            <section id="ecosystem" className="py-24 relative z-10">
+            <section id="project" className="py-24 relative z-10 scroll-mt-16">
                 <div className="container px-4 mx-auto max-w-6xl">
 
                     {/* Section header */}

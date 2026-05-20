@@ -254,7 +254,7 @@ export function Header() {
 
     const primaryNavItems = [
         { name: t("home"),     href: "/"          },
-        { name: t("projects"), href: "/#ecosystem" },
+        { name: t("projects"), href: "/#project" },
     ];
 
     // "Support" is a brand name — hardcoded, never translated

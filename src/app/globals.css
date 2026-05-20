@@ -35,33 +35,33 @@
 @layer base {
   :root {
     /* Light mode — For Humo blue brand palette */
-    --background: 214 60% 97%;
-    --foreground: 220 50% 10%;
+    --background: 210 72% 91%;
+    --foreground: 220 55% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 50% 10%;
+    --card-foreground: 220 55% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 50% 10%;
+    --popover-foreground: 220 55% 10%;
 
-    --primary: 210 100% 50%;
+    --primary: 210 100% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 50% 93%;
+    --secondary: 212 55% 87%;
     --secondary-foreground: 220 40% 15%;
 
-    --muted: 214 40% 94%;
-    --muted-foreground: 220 20% 45%;
+    --muted: 212 45% 88%;
+    --muted-foreground: 218 22% 42%;
 
-    --accent: 214 50% 91%;
+    --accent: 212 50% 85%;
     --accent-foreground: 220 40% 15%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 35% 86%;
-    --input: 214 35% 86%;
-    --ring: 210 100% 50%;
+    --border: 212 38% 78%;
+    --input: 212 38% 78%;
+    --ring: 210 100% 48%;
     --radius: 0.5rem;
   }
 
