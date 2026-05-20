@@ -1,8 +1,13 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uz" data-theme="dark" data-lang="uz">
-<head><base href="/ai-static/">
+<head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Humo AI">
+<meta name="theme-color" content="#0d0d0d">
 <title>Humo AI</title>
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
@@ -77,17 +82,17 @@ a{color:inherit;}
 .ib{width:32px;height:32px;border-radius:8px;border:none;background:transparent;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s;}
 .ib:hover{background:var(--s1);color:var(--t1);}
 .ib svg{display:block;}
-.new-chat{margin:1px 9px 9px;display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--b1);color:var(--t1);padding:8px 13px;border-radius:22px;cursor:pointer;font-size:13px;font-weight:500;white-space:nowrap;width:calc(100% - 18px);transition:background .15s,border-color .15s;}
+.new-chat{margin:1px 9px 9px;display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--b1);color:var(--t1);padding:8px 13px;border-radius:22px;cursor:pointer;font-size:13px;font-weight:500;white-space:nowrap;width:calc(100% - 18px);transition:background .15s,border-color .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 .new-chat:hover{background:var(--s2);border-color:var(--b2);}
-.sbscr{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:8px;}
+.sbscr{flex:1;overflow-y:scroll;overflow-x:hidden;padding-bottom:8px;-webkit-overflow-scrolling:touch;}
 .slbl{padding:9px 13px 3px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;transition:color .3s;}
-.si{display:flex;align-items:center;gap:8px;padding:7px 11px;margin:1px 5px;border-radius:9px;cursor:pointer;color:var(--t2);font-size:13px;white-space:nowrap;user-select:none;transition:background .15s,color .15s;}
+.si{display:flex;align-items:center;gap:8px;padding:7px 11px;margin:1px 5px;border-radius:9px;cursor:pointer;color:var(--t2);font-size:13px;white-space:nowrap;user-select:none;transition:background .15s,color .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;border:none;background:transparent;width:calc(100% - 10px);text-align:left;font-family:inherit;}
 .si:hover{background:var(--s1);color:var(--t1);}
 .si.act{background:var(--s2);color:var(--t1);}
 .si svg{flex-shrink:0;opacity:.55;width:15px;height:15px;}
 .si:hover svg{opacity:.85;}
 .sdiv{height:1px;background:var(--b1);margin:5px 11px;transition:background .3s;}
-.chat-item{display:flex;align-items:center;gap:6px;padding:6px 11px;margin:1px 5px;border-radius:9px;font-size:12.5px;color:var(--t2);cursor:pointer;transition:background .15s,color .15s;}
+.chat-item{display:flex;align-items:center;gap:6px;padding:6px 11px;margin:1px 5px;border-radius:9px;font-size:12.5px;color:var(--t2);cursor:pointer;transition:background .15s,color .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;border:none;background:transparent;width:calc(100% - 10px);text-align:left;font-family:inherit;}
 .chat-item:hover{background:var(--s1);color:var(--t1);}
 .chat-item.act{background:var(--s2);color:var(--t1);}
 .chat-item-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -137,16 +142,8 @@ a{color:inherit;}
 .mem-ctx-copy:hover{background:var(--s2);color:var(--t1);}
 .mem-ctx-body{background:var(--s1);border:1px solid var(--b1);border-radius:7px;padding:7px 9px;font-size:11px;color:var(--t2);line-height:1.55;word-break:break-word;max-height:120px;overflow-y:auto;white-space:pre-wrap;font-family:'Consolas','Monaco',monospace;}
 .empty-hist{padding:8px 13px;font-size:12px;color:var(--t3);}
-.topnav{display:flex;align-items:center;gap:1px;overflow-x:auto;flex:1;padding:0 6px;scrollbar-width:none;}
-.topnav::-webkit-scrollbar{display:none;}
-.tnlnk{color:var(--t2);font-size:11.5px;font-weight:500;text-decoration:none;padding:4px 9px;border-radius:14px;white-space:nowrap;transition:background .15s,color .15s;}
-.tnlnk:hover{background:var(--s1);color:var(--t1);}
-.sb-social{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 10px;border-top:1px solid var(--b1);}
-.sb-soc-lnk{width:32px;height:32px;border-radius:8px;background:transparent;border:1px solid var(--b1);color:var(--t3);display:flex;align-items:center;justify-content:center;text-decoration:none;transition:background .15s,color .15s,border-color .15s;flex-shrink:0;}
-.sb-soc-lnk:hover{background:var(--s1);color:var(--t1);border-color:var(--b2);}
-.sb-soc-lnk svg{width:14px;height:14px;}
 .sb-bot{flex-shrink:0;border-top:1px solid var(--b1);padding:5px 7px;transition:border-color .3s;}
-.setrow{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;cursor:pointer;color:var(--t2);font-size:13px;white-space:nowrap;transition:background .15s,color .15s;}
+.setrow{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;cursor:pointer;color:var(--t2);font-size:13px;white-space:nowrap;transition:background .15s,color .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;border:none;background:transparent;width:calc(100% - 14px);text-align:left;font-family:inherit;margin:1px 7px;}
 .setrow:hover{background:var(--s1);color:var(--t1);}
 .setrow svg{flex-shrink:0;opacity:.55;width:14px;height:14px;}
 
@@ -162,6 +159,10 @@ a{color:inherit;}
 .topbar{display:flex;align-items:center;padding:0 13px;height:52px;flex-shrink:0;gap:5px;border-bottom:1px solid var(--b1);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);position:relative;z-index:5;transition:border-color .3s;}
 .mpill{display:flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--b1);color:var(--t2);padding:5px 11px;border-radius:18px;cursor:pointer;font-size:12px;font-weight:500;transition:background .15s,border-color .15s,color .15s;}
 .mpill:hover{background:var(--s1);border-color:var(--b2);color:var(--t1);}
+.topnav{display:flex;align-items:center;gap:1px;flex:1;overflow:hidden;margin-left:4px;}
+.topnav-link{background:transparent;border:none;color:var(--t2);font-size:12.5px;cursor:pointer;padding:5px 8px;border-radius:7px;white-space:nowrap;font-family:inherit;text-decoration:none;transition:background .15s,color .15s;display:flex;align-items:center;touch-action:manipulation;}
+.topnav-link:hover{background:var(--s1);color:var(--t1);}
+.topnav-sep{width:1px;height:14px;background:var(--b2);margin:0 5px;flex-shrink:0;border-radius:1px;}
 .tbr{margin-left:auto;display:flex;align-items:center;gap:5px;}
 .switcher{display:flex;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:18px;padding:2px;gap:1px;transition:background .3s,border-color .3s;}
 .swb{background:transparent;border:none;color:var(--t3);height:24px;padding:0 8px;border-radius:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;white-space:nowrap;transition:background .15s,color .15s;}
@@ -202,7 +203,7 @@ a{color:inherit;}
 .iab svg{width:14px;height:14px;display:block;}
 .iab.recording{background:rgba(239,68,68,.12);color:#ef4444;animation:pulseRed .8s ease infinite;}
 @keyframes pulseRed{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0);}50%{box-shadow:0 0 0 4px rgba(239,68,68,.2);}}
-.rgrp{margin-left:auto;display:flex;align-items:center;gap:4px;}
+.rgrp{display:flex;align-items:center;gap:4px;}
 .sptag{display:flex;align-items:center;gap:3px;font-size:11px;color:var(--t3);padding:3px 8px;border:1px solid var(--b1);border-radius:11px;cursor:pointer;white-space:nowrap;transition:border-color .15s,color .15s,background .15s;}
 .sptag:hover{border-color:var(--b2);color:var(--t2);background:var(--s1);}
 .sptag svg{width:10px;height:10px;}
@@ -216,14 +217,19 @@ a{color:inherit;}
 /* ── CHAT ────────────────────────────────────────────── */
 .chatscr{display:none;flex:1;overflow-y:auto;padding:16px 18px 6px;}
 .chatinner{max-width:660px;margin:0 auto;display:flex;flex-direction:column;gap:2px;}
-.mu{display:flex;justify-content:flex-end;padding:3px 0;animation:msgIn .2s ease-out;}
+.mu{display:flex;justify-content:flex-end;align-items:flex-end;gap:4px;padding:3px 0;animation:msgIn .2s ease-out;}
+.mu-acts{display:flex;flex-direction:column;gap:2px;opacity:0;transition:opacity .15s;padding-bottom:2px;flex-shrink:0;}
+.mu:hover .mu-acts{opacity:1;}
+.mu-act{width:22px;height:22px;border-radius:5px;border:none;background:transparent;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;padding:0;}
+.mu-act:hover{background:var(--s1);color:var(--t1);}
+.mu-act svg{width:11px;height:11px;display:block;}
 .bbl{background:var(--s1);border:1px solid var(--b1);border-radius:15px 15px 3px 15px;padding:10px 14px;max-width:68%;font-size:14px;color:var(--t1);line-height:1.65;word-break:break-word;}
 .bbl.has-img{padding:8px;}
 .bbl-img{width:100%;max-width:220px;border-radius:8px;display:block;margin-bottom:6px;}
 .bbl p{margin:4px 0 0;}
 .mai{display:flex;gap:10px;padding:4px 0;animation:msgIn .2s ease-out;}
 @keyframes msgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-.ailsm{width:22px;height:22px;flex-shrink:0;margin-top:3px;object-fit:contain;border-radius:3px;}
+.ailsm{width:22px;height:22px;flex-shrink:0;margin-top:3px;color:var(--logo-color);transition:color .3s;}
 .aib{flex:1;min-width:0;}
 .aiacts{display:flex;gap:1px;margin-top:5px;opacity:0;transition:opacity .15s;}
 .mai:hover .aiacts{opacity:1;}
@@ -315,7 +321,7 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
 .pp-cls:hover{background:var(--s1);color:var(--t1);}
 .pp-body{flex:1;overflow-y:auto;padding:10px 8px;}
 .pp-slbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;padding:8px 8px 4px;}
-.pp-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;cursor:pointer;color:var(--t2);font-size:13px;transition:background .15s,color .15s;}
+.pp-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;cursor:pointer;color:var(--t2);font-size:13px;transition:background .15s,color .15s;border:none;background:transparent;width:100%;text-align:left;font-family:inherit;}
 .pp-row:hover{background:var(--s1);color:var(--t1);}
 .pp-row svg{width:15px;height:15px;opacity:.6;flex-shrink:0;}
 .pp-swrow{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;}
@@ -359,22 +365,6 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
 .pic-cfoot span{font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
 .pic-dl{width:26px;height:26px;border-radius:6px;border:none;background:transparent;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s;}
 .pic-dl:hover{background:var(--s2);color:var(--t1);}
-.card-ctx{position:relative;flex-shrink:0;}
-.card-ctx-btn{width:28px;height:28px;border-radius:7px;border:none;background:rgba(128,128,128,0.12);color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;font-size:18px;line-height:1;letter-spacing:2px;padding-bottom:4px;}
-.card-ctx-btn:hover{background:rgba(128,128,128,0.22);color:var(--t1);}
-.card-ctx-drop{position:absolute;bottom:calc(100% + 6px);right:0;background:var(--ctx-bg,#1e1e1e);border:1px solid var(--ctx-br,rgba(255,255,255,0.11));border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.45),0 2px 8px rgba(0,0,0,.25);min-width:180px;overflow:hidden;z-index:200;display:none;animation:ctxIn .14s ease;}
-.card-ctx-drop.open{display:block;}
-@keyframes ctxIn{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
-.card-ctx-sep{height:1px;background:var(--ctx-br,rgba(255,255,255,0.08));margin:3px 0;}
-.card-ctx-item{display:flex;align-items:center;gap:10px;padding:10px 15px;font-size:13px;color:var(--t1);cursor:pointer;transition:background .12s;user-select:none;}
-.card-ctx-item:first-child{border-radius:12px 12px 0 0;}
-.card-ctx-item:last-child{border-radius:0 0 12px 12px;}
-.card-ctx-item:hover{background:rgba(128,128,128,0.13);}
-.card-ctx-item.danger{color:#f87171;}
-.card-ctx-item.danger svg{color:#f87171;}
-.card-ctx-item svg{width:15px;height:15px;flex-shrink:0;color:var(--t2);opacity:.85;}
-.card-ctx-item:hover svg{opacity:1;}
 .mus-card{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
 .mus-card audio{width:100%;}
 .mus-cfoot{font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -418,7 +408,7 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
 .pp-plan{display:inline-flex;align-items:center;gap:3px;background:linear-gradient(90deg,rgba(99,102,241,.2),rgba(139,92,246,.2));border:1px solid rgba(99,102,241,.3);color:#a5b4fc;padding:2px 8px;border-radius:9px;font-size:10px;font-weight:700;margin-top:5px;letter-spacing:.3px;}
 .pp-section{padding:8px 8px 2px;}
 .pp-section-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.9px;padding:4px 8px 6px;}
-.pp-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;cursor:pointer;color:var(--t2);font-size:13px;transition:background .15s,color .15s;}
+.pp-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;cursor:pointer;color:var(--t2);font-size:13px;transition:background .15s,color .15s;border:none;background:transparent;width:100%;text-align:left;font-family:inherit;}
 .pp-row:hover{background:var(--s1);color:var(--t1);}
 .pp-row-icon{width:30px;height:30px;border-radius:8px;background:var(--s2);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}
 .pp-row:hover .pp-row-icon{background:var(--s3);}
@@ -437,6 +427,99 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
 .pp-out:hover{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.45);}
 .pp-out svg{width:14px;height:14px;}
 
+/* ── STOP BUTTON ─────────────────────────────────────── */
+.stop-btn{display:none;width:30px;height:30px;border-radius:50%;border:2px solid rgba(239,68,68,.5);background:rgba(239,68,68,.1);color:#ef4444;cursor:pointer;align-items:center;justify-content:center;transition:background .15s,transform .15s;flex-shrink:0;}
+.stop-btn.show{display:flex;animation:popIn .2s ease-out;}
+.stop-btn:hover{background:rgba(239,68,68,.22);transform:scale(1.08);}
+.stop-btn svg{width:10px;height:10px;display:block;}
+
+/* ── SEARCH ──────────────────────────────────────────── */
+.search-wrap{padding:4px 9px 0;position:relative;}
+.search-inp{width:100%;background:var(--s1);border:1px solid var(--b1);border-radius:8px;color:var(--t1);font-size:12px;padding:5px 26px 5px 9px;outline:none;font-family:inherit;transition:border-color .15s;}
+.search-inp:focus{border-color:var(--b2);}
+.search-clear{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--t3);cursor:pointer;width:18px;height:18px;align-items:center;justify-content:center;padding:0;display:none;}
+.search-clear.show{display:flex;}
+.search-clear svg{width:9px;height:9px;}
+.search-count{font-size:11px;color:var(--t3);padding:2px 13px 4px;text-align:center;display:none;}
+.search-match{outline:1.5px solid rgba(99,102,241,.45);border-radius:12px;}
+
+/* ── EXPORT BTN ──────────────────────────────────────── */
+.export-btn{display:none;align-items:center;gap:4px;background:transparent;border:1px solid var(--b1);color:var(--t2);padding:4px 10px;border-radius:8px;cursor:pointer;font-size:11.5px;font-family:inherit;white-space:nowrap;transition:background .15s,border-color .15s,color .15s;}
+.export-btn.show{display:flex;}
+.export-btn:hover{background:var(--s1);border-color:var(--b2);color:var(--t1);}
+.export-btn svg{width:11px;height:11px;}
+
+/* ── PROMPT TEMPLATES ────────────────────────────────── */
+.tpl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-width:480px;width:100%;margin-top:22px;animation:wIn .5s ease-out .3s both;}
+.tpl-card{background:var(--s1);border:1px solid var(--b1);border-radius:12px;padding:13px 14px;cursor:pointer;text-align:left;transition:background .15s,border-color .15s,transform .15s;font-family:inherit;display:flex;flex-direction:column;gap:3px;}
+.tpl-card:hover{background:var(--s2);border-color:var(--b2);transform:translateY(-2px);}
+.tpl-icon{width:28px;height:28px;margin-bottom:6px;color:var(--t2);display:block;}
+.tpl-icon svg{width:100%;height:100%;display:block;}
+.tpl-title{font-size:12.5px;font-weight:600;color:var(--t1);}
+.tpl-sub{font-size:11px;color:var(--t3);}
+
+/* ── CHAR COUNTER ───────────────────────────────────── */
+.char-counter{margin-left:auto;font-size:10.5px;color:transparent;padding:0 5px;transition:color .2s;white-space:nowrap;user-select:none;}
+.char-counter.warn{color:#f59e0b;}
+.char-counter.danger{color:#ef4444;font-weight:700;}
+
+/* ── INLINE ERROR CARD ──────────────────────────────── */
+.err-card{display:flex;align-items:flex-start;gap:10px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.22);border-radius:12px;padding:12px 14px;margin:4px 0;animation:msgIn .2s ease-out;}
+.err-card-icon{width:20px;height:20px;color:#ef4444;flex-shrink:0;margin-top:1px;}
+.err-card-icon svg{display:block;}
+.err-card-body{flex:1;min-width:0;}
+.err-card-title{font-size:13px;font-weight:600;color:#ef4444;margin-bottom:3px;}
+.err-card-detail{font-size:12.5px;color:var(--t2);line-height:1.55;}
+.err-card-retry{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:7px;padding:4px 11px;font-size:11.5px;cursor:pointer;margin-top:9px;font-family:inherit;transition:background .15s,border-color .15s;}
+.err-card-retry:hover{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.5);}
+.err-card-retry svg{width:11px;height:11px;}
+
+/* ── SETTINGS SLIDERS ───────────────────────────────── */
+.pp-slider-row{padding:4px 10px 12px;}
+.pp-slider-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+.pp-slider-lbl{font-size:12.5px;color:var(--t2);}
+.pp-slider-val{font-size:11.5px;color:var(--t1);font-weight:700;background:var(--s2);border:1px solid var(--b1);border-radius:5px;padding:1px 8px;min-width:38px;text-align:center;}
+.pp-range{width:100%;-webkit-appearance:none;appearance:none;height:4px;background:var(--s3);border-radius:2px;outline:none;cursor:pointer;transition:background .2s;}
+.pp-range::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#6366f1;cursor:pointer;box-shadow:0 1px 6px rgba(99,102,241,.45);transition:transform .15s,box-shadow .15s;}
+.pp-range::-webkit-slider-thumb:hover{transform:scale(1.18);box-shadow:0 1px 10px rgba(99,102,241,.6);}
+.pp-range::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#6366f1;cursor:pointer;border:none;box-shadow:0 1px 6px rgba(99,102,241,.45);}
+.pp-range-marks{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:3px;}
+.pp-reset{background:transparent;border:1px solid var(--b1);color:var(--t3);border-radius:7px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit;transition:border-color .15s,color .15s,background .15s;width:100%;margin-top:5px;}
+.pp-reset:hover{border-color:var(--b2);color:var(--t2);background:var(--s1);}
+
+/* ── MODE TABS ───────────────────────────────────────── */
+.mode-tabs{display:flex;gap:4px;margin-bottom:14px;background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:3px;}
+.mode-tab{flex:1;padding:7px;border-radius:7px;border:none;background:transparent;color:var(--t2);font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .15s,color .15s;}
+.mode-tab:hover{color:var(--t1);}
+.mode-tab.on{background:var(--s3);color:var(--t1);}
+
+/* ── IMAGE ANALYZE FORM ──────────────────────────────── */
+#picAnalyzeForm{display:none;}
+.upload-area{border:2px dashed var(--b2);border-radius:10px;padding:26px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;margin-bottom:12px;position:relative;}
+.upload-area:hover,.upload-area.drag{border-color:rgba(99,102,241,.55);background:rgba(99,102,241,.04);}
+.upload-area.has-img{border-style:solid;border-color:rgba(99,102,241,.4);padding:8px;cursor:default;}
+.upload-area input[type="file"]{display:none;}
+.upload-preview{width:100%;max-height:200px;object-fit:contain;border-radius:6px;display:none;cursor:zoom-in;}
+.upload-ph{color:var(--t3);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:7px;pointer-events:none;}
+.upload-ph svg{width:28px;height:28px;opacity:.3;}
+.upload-change{position:absolute;bottom:6px;right:8px;font-size:11px;color:var(--t3);background:var(--s2);border:1px solid var(--b1);border-radius:6px;padding:2px 8px;cursor:pointer;display:none;}
+.upload-area.has-img .upload-change{display:block;}
+.analyze-result{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:14px;margin-top:12px;display:none;}
+
+/* ── GALLERY HEADER ──────────────────────────────────── */
+.gal-hdr{display:none;align-items:center;justify-content:space-between;margin-bottom:9px;padding:0 2px;}
+.gal-hdr.show{display:flex;}
+.gal-hdr-lbl{font-size:11.5px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;}
+.gal-clear{background:transparent;border:1px solid var(--b1);color:var(--t3);border-radius:7px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit;transition:border-color .15s,color .15s,background .15s;}
+.gal-clear:hover{border-color:rgba(239,68,68,.4);color:#ef4444;background:rgba(239,68,68,.06);}
+
+/* ── CARD DELETE BUTTON ──────────────────────────────── */
+.card-wrap{position:relative;}
+.card-del{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s,background .15s;z-index:2;padding:0;flex-shrink:0;}
+.card-wrap:hover .card-del{opacity:1;}
+.card-del:hover{background:rgba(239,68,68,.85);}
+.card-del svg{width:9px;height:9px;display:block;}
+
 /* ── MOBILE ──────────────────────────────────────────── */
 @media(max-width:768px){
   .sidebar{position:fixed;top:0;left:0;bottom:0;z-index:20;width:260px!important;min-width:260px!important;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1),background .3s;}
@@ -444,7 +527,31 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
   .sidebar.closed{transform:translateX(-100%);width:260px!important;min-width:260px!important;}
   .pp-panel{width:100%;}
   .switcher.lang-sw{display:none;}
+  .topnav{display:none;}
   .scroll-btn{right:12px;bottom:72px;}
+  /* Topbar compact */
+  .topbar{padding:0 8px;height:48px;}
+  .switcher:not(.lang-sw){display:none;}
+  /* Export: icon only */
+  .export-btn .export-lbl{display:none;}
+  .export-btn{padding:4px 8px;gap:0;}
+  /* Input area */
+  .inwrap{padding:5px 10px 10px;}
+  /* Welcome / templates */
+  .tpl-grid{max-width:100%;padding:0 4px;}
+  .welcome{padding:0 14px;}
+  .gmain{font-size:clamp(22px,5vw,36px);}
+  /* Sections */
+  .secpg{padding:14px 14px;}
+  .spgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;}
+  /* Gen form */
+  .gen-opts{gap:4px;}
+  .gen-btn{padding:6px 12px;font-size:12px;}
+}
+@media(max-width:420px){
+  .tpl-grid{grid-template-columns:1fr 1fr;}
+  .tpl-card{padding:10px 11px;}
+  .bbl{max-width:85%;}
 }
 </style>
 </head>
@@ -475,9 +582,9 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
       <div class="pp-swrow">
         <span class="pp-swlbl" di="theme_lbl">Mavzu</span>
         <div class="pp-sw">
-          <button class="pp-swb" id="ppSys" di="sy" onclick="setTheme('system');syncPP()">Tizim</button>
-          <button class="pp-swb" id="ppDay" di="dy" onclick="setTheme('light');syncPP()">Kunduz</button>
-          <button class="pp-swb on" id="ppNight" di="nt" onclick="setTheme('dark');syncPP()">Tungi</button>
+          <button class="pp-swb" id="ppSys" onclick="setTheme('system');syncPP()">Tizim</button>
+          <button class="pp-swb" id="ppDay" onclick="setTheme('light');syncPP()">Kunduz</button>
+          <button class="pp-swb on" id="ppNight" onclick="setTheme('dark');syncPP()">Tungi</button>
         </div>
       </div>
       <div class="pp-swrow">
@@ -493,38 +600,76 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
     <div class="pp-divider"></div>
 
     <div class="pp-section">
+      <div class="pp-section-lbl" di="ai_settings">AI Sozlamalari</div>
+
+      <!-- Temperature -->
+      <div class="pp-slider-row">
+        <div class="pp-slider-top">
+          <span class="pp-slider-lbl" di="temp_lbl">Ijodkorlik (Temperature)</span>
+          <span class="pp-slider-val" id="tempVal">0.85</span>
+        </div>
+        <input class="pp-range" type="range" id="tempSlider" min="0" max="2" step="0.05" value="0.85"
+          oninput="onTempChange(this.value)">
+        <div class="pp-range-marks">
+          <span di="temp_low">Aniq</span>
+          <span di="temp_high">Ijodkor</span>
+        </div>
+      </div>
+
+      <!-- Max tokens -->
+      <div class="pp-slider-row">
+        <div class="pp-slider-top">
+          <span class="pp-slider-lbl" di="tokens_lbl">Javob uzunligi</span>
+          <span class="pp-slider-val" id="tokensVal">2048</span>
+        </div>
+        <input class="pp-range" type="range" id="tokensSlider" min="256" max="4096" step="128" value="2048"
+          oninput="onTokensChange(this.value)">
+        <div class="pp-range-marks">
+          <span di="tokens_low">Qisqa</span>
+          <span di="tokens_high">Uzun</span>
+        </div>
+      </div>
+
+      <div style="padding:0 10px 6px;">
+        <button class="pp-reset" di="reset_def" onclick="resetAISettings()">Standartga qaytarish</button>
+      </div>
+    </div>
+
+    <div class="pp-divider"></div>
+
+    <div class="pp-section">
       <div class="pp-section-lbl" di="account">Hisob</div>
-      <div class="pp-row" onclick="toggleMemory()">
+      <button class="pp-row" onclick="toggleMemory()">
         <div class="pp-row-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 6v6l4 2"/></svg>
         </div>
         <span di="mem">Xotira</span>
         <svg class="pp-row-arrow" id="memArrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform .25s"><path d="M9 18l6-6-6-6"/></svg>
-      </div>
+      </button>
       <div class="mem-section" id="memSection">
         <div class="mem-inner">
           <div class="mem-add">
             <input class="mem-inp" id="memInp" placeholder="Yangi xotira qo'shish..." onkeydown="if(event.key==='Enter')addMemory()">
-            <button class="mem-add-btn" di="memsave" onclick="addMemory()">Saqlash</button>
+            <button class="mem-add-btn" onclick="addMemory()">Saqlash</button>
           </div>
           <div class="mem-list" id="memList"></div>
           <div class="mem-ctx" id="memCtx"></div>
         </div>
       </div>
-      <div class="pp-row" onclick="window.open(getUrl('support'),'_blank')">
+      <button class="pp-row" onclick="window.open(getUrl('support'),'_blank')">
         <div class="pp-row-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
         </div>
         <span di="support_lbl">Yordam markazi</span>
         <svg class="pp-row-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-      </div>
-      <div class="pp-row" onclick="window.open(getUrl(''),'_blank')">
+      </button>
+      <button class="pp-row" onclick="window.open(getUrl(''),'_blank')">
         <div class="pp-row-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
         </div>
         forhumo.uz
         <svg class="pp-row-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-      </div>
+      </button>
     </div>
 
     <div class="pp-divider"></div>
@@ -571,46 +716,39 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
 
   <div class="sbscr">
     <div class="slbl" di="mc">Mening kontentim</div>
-    <div class="si" onclick="openSection('code')">
+    <button class="si" onclick="openSection('code')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
       <span di="code">Kod</span>
-    </div>
-    <div class="si" onclick="openSection('picture')">
+    </button>
+    <button class="si" onclick="openSection('picture')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
       <span di="pic">Rasm</span>
-    </div>
-    <div class="si" onclick="openSection('video')">
+    </button>
+    <button class="si" onclick="openSection('video')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="m10 9 5 3-5 3V9z"/></svg>
       <span di="vid">Video</span>
-    </div>
-    <div class="si" onclick="openSection('music')">
+    </button>
+    <button class="si" onclick="openSection('music')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
       <span di="mus">Musiqa</span>
-    </div>
+    </button>
     <div class="sdiv"></div>
     <div class="slbl" di="ch">Chatlar</div>
+    <div class="search-wrap">
+      <input class="search-inp" id="searchInp" type="text" placeholder="Chatda qidirish..." oninput="searchMsgs(this.value)">
+      <button class="search-clear" id="searchClear" onclick="clearSearch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="search-count" id="searchCount"></div>
     <div id="chatList"></div>
   </div>
 
-  <div class="sb-social">
-    <a class="sb-soc-lnk" href="https://t.me/ForHumo_AI" target="_blank" title="Telegram kanal">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.334 14.5l-2.948-.924c-.64-.203-.653-.64.136-.948l11.51-4.44c.537-.194 1.006.131.53.06z"/></svg>
-    </a>
-    <a class="sb-soc-lnk" href="https://t.me/ForHumo_AIBot" target="_blank" title="Telegram bot">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="3"/><path d="M8 8V6a4 4 0 018 0v2"/><circle cx="9" cy="14" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="1" fill="currentColor" stroke="none"/><path d="M6 21v1M18 21v1M9 18h6"/></svg>
-    </a>
-    <a class="sb-soc-lnk" href="https://www.youtube.com/@ForHumoAI" target="_blank" title="YouTube">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-    </a>
-    <a class="sb-soc-lnk" href="https://www.instagram.com/aihumo/" target="_blank" title="Instagram">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
-    </a>
-  </div>
   <div class="sb-bot">
-    <div class="setrow" onclick="openProfile()">
+    <button class="setrow" onclick="openProfile()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       <span di="set">Sozlamalar va yordam</span>
-    </div>
+    </button>
   </div>
 </aside>
 
@@ -621,26 +759,30 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="5" width="18" height="2" rx="1"/><rect x="3" y="11" width="18" height="2" rx="1"/><rect x="3" y="17" width="18" height="2" rx="1"/></svg>
     </button>
     <nav class="topnav">
-      <a class="tnlnk" href="#" di="bs" onclick="window.top.location.href=getUrl('');return false;">Bosh sahifa</a>
-      <a class="tnlnk" href="#" di="loy" onclick="window.top.location.href='https://www.forhumo.uz/'+L+'#projects';return false;">Loyihalar</a>
-      <span style="width:1px;height:13px;background:var(--b2);margin:0 4px;flex-shrink:0;border-radius:1px;display:inline-block;align-self:center;"></span>
-      <a class="tnlnk" href="#" onclick="window.top.location.href=getUrl('nexus');return false;">Nexus</a>
-      <a class="tnlnk" href="#" onclick="window.top.location.href=getUrl('esport');return false;">eSport</a>
-      <a class="tnlnk" href="#" onclick="window.top.location.href=getUrl('market');return false;">Market</a>
-      <a class="tnlnk" href="#" onclick="window.top.location.href=getUrl('pay');return false;">Pay</a>
-      <a class="tnlnk" href="#" onclick="window.top.location.href=getUrl('support');return false;">Support</a>
+      <a class="topnav-link" href="javascript:void(0)" onclick="window.top.location.href=getUrl('')" di-nav="home">Bosh sahifa</a>
+      <a class="topnav-link" href="javascript:void(0)" onclick="window.top.location.href=getUrl('projects')" di-nav="projects">Loyihalar</a>
+      <span class="topnav-sep"></span>
+      <a class="topnav-link" href="javascript:void(0)" onclick="window.top.location.href=getUrl('nexus')" di-nav="nexus">Nexus</a>
+      <a class="topnav-link" href="javascript:void(0)" onclick="window.top.location.href=getUrl('esport')" di-nav="esport">eSport</a>
+      <a class="topnav-link" href="javascript:void(0)" onclick="window.top.location.href=getUrl('market')" di-nav="market">Market</a>
+      <a class="topnav-link" href="javascript:void(0)" onclick="window.top.location.href=getUrl('pay')" di-nav="pay">Pay</a>
+      <a class="topnav-link" href="javascript:void(0)" onclick="window.top.location.href=getUrl('support')" di-nav="support">Support</a>
     </nav>
     <div class="tbr">
       <div class="switcher">
-        <button class="swb" id="bSys" dt="system" di="sy" onclick="setTheme('system')">Tizim</button>
-        <button class="swb" id="bDay" dt="light" di="dy" onclick="setTheme('light')">Kunduz</button>
-        <button class="swb on" id="bNight" dt="dark" di="nt" onclick="setTheme('dark')">Tungi</button>
+        <button class="swb" id="bSys" dt="system" onclick="setTheme('system')">Tizim</button>
+        <button class="swb" id="bDay" dt="light" onclick="setTheme('light')">Kunduz</button>
+        <button class="swb on" id="bNight" dt="dark" onclick="setTheme('dark')">Tungi</button>
       </div>
       <div class="switcher lang-sw">
         <button class="swb on" dl="uz" onclick="setLang('uz')">UZ</button>
         <button class="swb" dl="ru" onclick="setLang('ru')">RU</button>
         <button class="swb" dl="en" onclick="setLang('en')">EN</button>
       </div>
+      <button class="export-btn" id="exportBtn" onclick="exportChat()" title="Chatni eksport qilish">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span class="export-lbl">Export</span>
+      </button>
       <div class="uav" onclick="openProfile()">A</div>
     </div>
   </div>
@@ -652,6 +794,7 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
     </div>
     <p class="gsub" id="gsub">Humo AI'ga xush kelibsiz</p>
     <h1 class="gmain" id="gmain">Bugun nima qilamiz?</h1>
+    <div class="tpl-grid" id="tplGrid"></div>
   </div>
 
   <!-- CHAT -->
@@ -664,8 +807,8 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
 
   <!-- SECTIONS -->
   <div class="secpg" id="secCode">
-    <div class="sptit" di="ct">Kod yaratish</div>
-    <div class="spsub" di="cs" style="margin-bottom:14px">Gemini yordamida kod yozing va muammolarni hal qiling</div>
+    <div class="sptit">Kod yaratish</div>
+    <div class="spsub" style="margin-bottom:14px">Gemini yordamida kod yozing va muammolarni hal qiling</div>
     <div class="gen-form">
       <textarea class="gen-ta" id="codePrompt" placeholder="Nima yaratishni xohlaysiz? (masalan: React da login forma, Python da fayl o'qish funksiyasi)"></textarea>
       <div class="gen-opts">
@@ -691,16 +834,16 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
             <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="csel-drop">
-            <div class="csel-opt sel" data-optval="clean" data-tkey="cst_clean" onclick="selectCsel('codeStyleCsel','clean')">Toza kod</div>
-            <div class="csel-opt" data-optval="commented" data-tkey="cst_cmnt" onclick="selectCsel('codeStyleCsel','commented')">Izohli kod</div>
-            <div class="csel-opt" data-optval="optimized" data-tkey="cst_opt" onclick="selectCsel('codeStyleCsel','optimized')">Optimallashtirilgan</div>
-            <div class="csel-opt" data-optval="beginner" data-tkey="cst_bgn" onclick="selectCsel('codeStyleCsel','beginner')">Boshluvchilar uchun</div>
+            <div class="csel-opt sel" onclick="selectCsel('codeStyleCsel','clean','Toza kod')">Toza kod</div>
+            <div class="csel-opt" onclick="selectCsel('codeStyleCsel','commented','Izohli kod')">Izohli kod</div>
+            <div class="csel-opt" onclick="selectCsel('codeStyleCsel','optimized','Optimallashtirilgan')">Optimallashtirilgan</div>
+            <div class="csel-opt" onclick="selectCsel('codeStyleCsel','beginner','Boshluvchilar uchun')">Boshluvchilar uchun</div>
           </div>
         </div>
         <button class="gen-btn" id="codeBtn" onclick="genCode()">
           <svg class="gen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
           <div class="gen-spin"></div>
-          <span di="crtbtn">Yaratish</span>
+          Yaratish
         </button>
       </div>
     </div>
@@ -708,48 +851,94 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
     <div id="codeResults" style="display:flex;flex-direction:column;gap:10px;"></div>
   </div>
   <div class="secpg" id="secPic">
-    <div class="sptit" di="pt">Rasm yaratish</div>
-    <div class="spsub" di="ps" style="margin-bottom:14px">Imagen 3 yordamida yuqori sifatli rasmlar yarating</div>
-    <div class="gen-form">
-      <textarea class="gen-ta" id="picPrompt" placeholder="Rasm tasvirini kiriting... (masalan: togʻ ustida botayotgan quyosh, akvarell uslubida)"></textarea>
-      <div class="gen-opts">
-        <div class="csel" id="picARCsel" data-val="1:1">
-          <button class="csel-btn" onclick="toggleCsel('picARCsel')">
-            <span>1:1 — Kvadrat</span>
-            <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div class="csel-drop">
-            <div class="csel-opt sel" data-optval="1:1" onclick="selectCsel('picARCsel','1:1')">1:1 — <span data-tkey="ar_sq">Kvadrat</span></div>
-            <div class="csel-opt" data-optval="16:9" onclick="selectCsel('picARCsel','16:9')">16:9 — <span data-tkey="ar_wide">Keng</span></div>
-            <div class="csel-opt" data-optval="9:16" onclick="selectCsel('picARCsel','9:16')">9:16 — <span data-tkey="ar_vert">Vertikal</span></div>
-            <div class="csel-opt" data-optval="4:3" onclick="selectCsel('picARCsel','4:3')">4:3 — <span data-tkey="ar_cls">Klassik</span></div>
-          </div>
-        </div>
-        <div class="csel" id="picCountCsel" data-val="1">
-          <button class="csel-btn" onclick="toggleCsel('picCountCsel')">
-            <span>1 rasm</span>
-            <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div class="csel-drop">
-            <div class="csel-opt sel" data-optval="1" data-tkey="cnt1" onclick="selectCsel('picCountCsel','1')">1 rasm</div>
-            <div class="csel-opt" data-optval="2" data-tkey="cnt2" onclick="selectCsel('picCountCsel','2')">2 rasm</div>
-            <div class="csel-opt" data-optval="4" data-tkey="cnt4" onclick="selectCsel('picCountCsel','4')">4 rasm</div>
-          </div>
-        </div>
-        <button class="gen-btn" id="picBtn" onclick="genImage()">
-          <svg class="gen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-          <div class="gen-spin"></div>
-          <span di="crtbtn">Yaratish</span>
-        </button>
-      </div>
+    <div class="sptit">Rasm</div>
+    <div class="mode-tabs">
+      <button class="mode-tab on" id="picModeCreate" onclick="setPicMode('create')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-.15em;margin-right:5px"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Yaratish
+      </button>
+      <button class="mode-tab" id="picModeAnalyze" onclick="setPicMode('analyze')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:-.15em;margin-right:5px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Tahlil
+      </button>
     </div>
-    <div id="picStatus"></div>
-    <div class="spgrid" id="picGrid"></div>
+
+    <!-- Create form -->
+    <div id="picCreateForm">
+      <div class="spsub" style="margin-bottom:14px">Imagen 3 yordamida yuqori sifatli rasmlar yarating</div>
+      <div class="gen-form">
+        <textarea class="gen-ta" id="picPrompt" placeholder="Rasm tasvirini kiriting... (masalan: togʻ ustida botayotgan quyosh, akvarell uslubida)"></textarea>
+        <div class="gen-opts">
+          <div class="csel" id="picARCsel" data-val="1:1">
+            <button class="csel-btn" onclick="toggleCsel('picARCsel')">
+              <span>1:1 — Kvadrat</span>
+              <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="csel-drop">
+              <div class="csel-opt sel" onclick="selectCsel('picARCsel','1:1','1:1 — Kvadrat')">1:1 — Kvadrat</div>
+              <div class="csel-opt" onclick="selectCsel('picARCsel','16:9','16:9 — Keng')">16:9 — Keng</div>
+              <div class="csel-opt" onclick="selectCsel('picARCsel','9:16','9:16 — Vertikal')">9:16 — Vertikal</div>
+              <div class="csel-opt" onclick="selectCsel('picARCsel','4:3','4:3 — Klassik')">4:3 — Klassik</div>
+            </div>
+          </div>
+          <div class="csel" id="picCountCsel" data-val="1">
+            <button class="csel-btn" onclick="toggleCsel('picCountCsel')">
+              <span>1 rasm</span>
+              <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="csel-drop">
+              <div class="csel-opt sel" onclick="selectCsel('picCountCsel','1','1 rasm')">1 rasm</div>
+              <div class="csel-opt" onclick="selectCsel('picCountCsel','2','2 rasm')">2 rasm</div>
+              <div class="csel-opt" onclick="selectCsel('picCountCsel','4','4 rasm')">4 rasm</div>
+            </div>
+          </div>
+          <button class="gen-btn" id="picBtn" onclick="genImage()">
+            <svg class="gen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            <div class="gen-spin"></div>
+            Yaratish
+          </button>
+        </div>
+      </div>
+      <div id="picStatus"></div>
+      <div class="gal-hdr" id="picGalHdr">
+        <span class="gal-hdr-lbl">Galereya</span>
+        <button class="gal-clear" onclick="clearGenType('images')">Hammasini o'chirish</button>
+      </div>
+      <div class="spgrid" id="picGrid"></div>
+    </div>
+
+    <!-- Analyze form -->
+    <div id="picAnalyzeForm">
+      <div class="spsub" style="margin-bottom:14px">Gemini Vision yordamida rasmlarni tahlil qiling</div>
+      <div class="gen-form">
+        <div class="upload-area" id="analyzeUpload"
+          onclick="document.getElementById('analyzeFileInp').click()"
+          ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="event.preventDefault();this.classList.remove('drag');handleAnalyzeImg(event.dataTransfer.files)">
+          <input type="file" id="analyzeFileInp" accept="image/*" onchange="handleAnalyzeImg(this.files)">
+          <div class="upload-ph" id="uploadPh">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            <span>Rasm yuklash uchun bosing yoki tashlang</span>
+          </div>
+          <img class="upload-preview" id="uploadPreview" onclick="event.stopPropagation()" alt="">
+          <span class="upload-change" onclick="event.stopPropagation();document.getElementById('analyzeFileInp').click()">Almashtirish</span>
+        </div>
+        <textarea class="gen-ta" id="analyzePrompt" placeholder="Rasm haqida savol bering... (masalan: Bu rasmda nima bor? Ranglarni tasvirla)"></textarea>
+        <div class="gen-opts">
+          <button class="gen-btn" id="analyzeBtn" onclick="analyzeImage()" style="margin-left:auto">
+            <svg class="gen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <div class="gen-spin"></div>
+            Tahlil qil
+          </button>
+        </div>
+      </div>
+      <div id="analyzeStatus"></div>
+      <div class="analyze-result ait" id="analyzeResult"></div>
+    </div>
   </div>
 
   <div class="secpg" id="secVid">
-    <div class="sptit" di="vt">Video yaratish</div>
-    <div class="spsub" di="vs" style="margin-bottom:14px">Veo 2 yordamida professional videolar yarating</div>
+    <div class="sptit">Video yaratish</div>
+    <div class="spsub" style="margin-bottom:14px">Veo 2 yordamida professional videolar yarating</div>
     <div class="gen-form">
       <textarea class="gen-ta" id="vidPrompt" placeholder="Video sahnasini tasvirlang... (masalan: okeanda to'lqinlar, sekin harakat)"></textarea>
       <div class="gen-opts">
@@ -759,8 +948,8 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
             <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="csel-drop">
-            <div class="csel-opt sel" data-optval="5" data-tkey="s5" onclick="selectCsel('vidDurCsel','5')">5 soniya</div>
-            <div class="csel-opt" data-optval="8" data-tkey="s8" onclick="selectCsel('vidDurCsel','8')">8 soniya</div>
+            <div class="csel-opt sel" onclick="selectCsel('vidDurCsel','5','5 soniya')">5 soniya</div>
+            <div class="csel-opt" onclick="selectCsel('vidDurCsel','8','8 soniya')">8 soniya</div>
           </div>
         </div>
         <div class="csel" id="vidARCsel" data-val="16:9">
@@ -769,25 +958,29 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
             <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="csel-drop">
-            <div class="csel-opt sel" data-optval="16:9" onclick="selectCsel('vidARCsel','16:9')">16:9 — <span data-tkey="ar_hor">Gorizontal</span></div>
-            <div class="csel-opt" data-optval="9:16" onclick="selectCsel('vidARCsel','9:16')">9:16 — <span data-tkey="ar_vert">Vertikal</span></div>
-            <div class="csel-opt" data-optval="1:1" onclick="selectCsel('vidARCsel','1:1')">1:1 — <span data-tkey="ar_sq">Kvadrat</span></div>
+            <div class="csel-opt sel" onclick="selectCsel('vidARCsel','16:9','16:9 — Gorizontal')">16:9 — Gorizontal</div>
+            <div class="csel-opt" onclick="selectCsel('vidARCsel','9:16','9:16 — Vertikal')">9:16 — Vertikal</div>
+            <div class="csel-opt" onclick="selectCsel('vidARCsel','1:1','1:1 — Kvadrat')">1:1 — Kvadrat</div>
           </div>
         </div>
         <button class="gen-btn" id="vidBtn" onclick="genVideo()">
           <svg class="gen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="m10 9 5 3-5 3V9z"/></svg>
           <div class="gen-spin"></div>
-          <span di="crtbtn">Yaratish</span>
+          Yaratish
         </button>
       </div>
     </div>
     <div id="vidStatus"></div>
+    <div class="gal-hdr" id="vidGalHdr">
+      <span class="gal-hdr-lbl">Tarixi</span>
+      <button class="gal-clear" onclick="clearGenType('videos')">Hammasini o'chirish</button>
+    </div>
     <div class="spgrid" id="vidGrid"></div>
   </div>
 
   <div class="secpg" id="secMus">
-    <div class="sptit" di="mt">Musiqa yaratish</div>
-    <div class="spsub" di="ms" style="margin-bottom:14px">Lyria yordamida original musiqa treklar yarating</div>
+    <div class="sptit">Musiqa yaratish</div>
+    <div class="spsub" style="margin-bottom:14px">Lyria yordamida original musiqa treklar yarating</div>
     <div class="gen-form">
       <textarea class="gen-ta" id="musPrompt" placeholder="Musiqa uslubini tasvirlang... (masalan: tinch akustik gitara, bahor kayfiyati)"></textarea>
       <div class="gen-opts">
@@ -797,18 +990,22 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
             <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="csel-drop">
-            <div class="csel-opt sel" data-optval="30" data-tkey="s30" onclick="selectCsel('musDurCsel','30')">30 soniya</div>
-            <div class="csel-opt" data-optval="60" data-tkey="s60" onclick="selectCsel('musDurCsel','60')">60 soniya</div>
+            <div class="csel-opt sel" onclick="selectCsel('musDurCsel','30','30 soniya')">30 soniya</div>
+            <div class="csel-opt" onclick="selectCsel('musDurCsel','60','60 soniya')">60 soniya</div>
           </div>
         </div>
         <button class="gen-btn" id="musBtn" onclick="genMusic()">
           <svg class="gen-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
           <div class="gen-spin"></div>
-          <span di="crtbtn">Yaratish</span>
+          Yaratish
         </button>
       </div>
     </div>
     <div id="musStatus"></div>
+    <div class="gal-hdr" id="musGalHdr">
+      <span class="gal-hdr-lbl">Tarixi</span>
+      <button class="gal-clear" onclick="clearGenType('music')">Hammasini o'chirish</button>
+    </div>
     <div class="spgrid" id="musGrid"></div>
   </div>
 
@@ -820,7 +1017,7 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
   <!-- INPUT -->
   <div class="inwrap" id="inwrap">
     <div class="inbox">
-      <textarea class="inta" id="inta" rows="1" placeholder="Humo AIdan so'rang..."></textarea>
+      <textarea class="inta" id="inta" rows="1" placeholder="Humo AIdan so'rang..." maxlength="4000"></textarea>
       <div class="inbot">
         <button class="iab" title="Fayl biriktirish" onclick="document.getElementById('fileInput').click()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
@@ -828,7 +1025,11 @@ body.light .card-ctx-drop{--ctx-bg:#fff;--ctx-br:rgba(0,0,0,0.1);}
         <button class="iab" id="voiceBtn" title="Ovozli kiritish" onclick="toggleVoice()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>
         </button>
+        <span class="char-counter" id="charCounter"></span>
         <div class="rgrp">
+          <button class="stop-btn" id="stopBtn" onclick="stopStream()" title="To'xtatish">
+            <svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+          </button>
           <button class="sndb" id="sndb" onclick="sendMsg()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </button>
@@ -861,19 +1062,9 @@ const T={
       mem:"Xotira",memadd:"Yangi xotira qo’shish...",memsave:"Saqlash",memempty:"Xotira bo’sh",
       appearance:"Ko’rinish",theme_lbl:"Mavzu",lang_lbl:"Til",account:"Hisob",support_lbl:"Yordam markazi",about:"Ma’lumot",
       aicontext_lbl:"AI ga beriladigan savol",mem_copy:"Nusxa olish",mem_copied:"Nusxalandi!",
-      wt:"kutilmoqda",lim:"Limit tugadi. Bir oz kutib qayta urinib ko'ring.",copyright:"© 2026 For Humo · Barcha huquqlar himoyalangan",
-      bs:"Bosh sahifa",loy:"Loyihalar",crtbtn:"Yaratish",dl:"Yuklab olish",fscrn:"To'liq ekran",cpprmt:"Promptni nusxalash",
-      cp:"Nima yaratishni xohlaysiz? (masalan: React da login forma, Python da fayl o'qish funksiyasi)",
-      pp:"Rasm tasvirini kiriting... (masalan: togʿ ustida botayotgan quyosh, akvarell uslubida)",
-      vp:"Video sahnasini tasvirlang... (masalan: okeanda toʿlqinlar, sekin harakat)",
-      mp:"Musiqa uslubini tasvirlang... (masalan: tinch akustik gitara, bahor kayfiyati)",
-      cst_clean:"Toza kod",cst_cmnt:"Izohli kod",cst_opt:"Optimallashtirilgan",cst_bgn:"Boshluvchilar uchun",
-      ar_sq:"Kvadrat",ar_wide:"Keng",ar_vert:"Vertikal",ar_cls:"Klassik",ar_hor:"Gorizontal",
-      s5:"5 soniya",s8:"8 soniya",s30:"30 soniya",s60:"60 soniya",
-      cnt1:"1 rasm",cnt2:"2 rasm",cnt4:"4 rasm",
-      prmpt:"Iltimos, prompt kiriting",gencd:"Kod generatsiya qilinmoqda...",genim:"rasm generatsiya qilinmoqda",genvd:"Video generatsiya qilinmoqda...",genmu:"Musiqa generatsiya qilinmoqda...",
-      nusxa:"Nusxa",nusxalandi:"Nusxalandi",xotira_saqd:"Xotiraga saqlandi",
-      kod_ok:"Kod yaratildi",rasm_ok:"ta rasm yaratildi",video_ok:"Video yaratildi",musiqa_ok:"Musiqa yaratildi"},
+      ai_settings:"AI Sozlamalari",temp_lbl:"Ijodkorlik (Temperature)",temp_low:"Aniq",temp_high:"Ijodkor",
+      tokens_lbl:"Javob uzunligi",tokens_low:"Qisqa",tokens_high:"Uzun",reset_def:"Standartga qaytarish",
+      copyright:"© 2026 For Humo · Barcha huquqlar himoyalangan"},
   ru:{nc:"Новый чат",mc:"Мой контент",
       code:"Код",pic:"Изображение",vid:"Видео",mus:"Музыка",
       ch:"Чаты",set:"Настройки и помощь",
@@ -889,19 +1080,9 @@ const T={
       mem:"Память",memadd:"Добавить воспоминание...",memsave:"Сохранить",memempty:"Память пуста",
       appearance:"Внешний вид",theme_lbl:"Тема",lang_lbl:"Язык",account:"Аккаунт",support_lbl:"Центр помощи",about:"О программе",
       aicontext_lbl:"Контекст для AI",mem_copy:"Копировать",mem_copied:"Скопировано!",
-      wt:"сек. ожидание",lim:"Лимит исчерпан. Подождите немного и повторите.",copyright:"© 2026 For Humo · Все права защищены",
-      bs:"Главная",loy:"Проекты",crtbtn:"Создать",dl:"Скачать",fscrn:"На весь экран",cpprmt:"Копировать промпт",
-      cp:"Что создать? (например: форма входа на React, функция чтения файла на Python)",
-      pp:"Опишите изображение... (например: закат над горами, акварельный стиль)",
-      vp:"Опишите сцену видео... (например: волны в океане, замедленное движение)",
-      mp:"Опишите стиль музыки... (например: спокойная акустическая гитара, весеннее настроение)",
-      cst_clean:"Чистый код",cst_cmnt:"С комментариями",cst_opt:"Оптимизированный",cst_bgn:"Для начинающих",
-      ar_sq:"Квадрат",ar_wide:"Широкий",ar_vert:"Вертикальный",ar_cls:"Классический",ar_hor:"Горизонтальный",
-      s5:"5 секунд",s8:"8 секунд",s30:"30 секунд",s60:"60 секунд",
-      cnt1:"1 фото",cnt2:"2 фото",cnt4:"4 фото",
-      prmpt:"Пожалуйста, введите промпт",gencd:"Генерация кода...",genim:"фото генерируется",genvd:"Видео генерируется...",genmu:"Музыка генерируется...",
-      nusxa:"Копировать",nusxalandi:"Скопировано",xotira_saqd:"Сохранено в памяти",
-      kod_ok:"Код создан",rasm_ok:"фото создано",video_ok:"Видео создано",musiqa_ok:"Музыка создана"},
+      ai_settings:"Настройки AI",temp_lbl:"Креативность (Temperature)",temp_low:"Точно",temp_high:"Творчески",
+      tokens_lbl:"Длина ответа",tokens_low:"Кратко",tokens_high:"Подробно",reset_def:"Сбросить",
+      copyright:"© 2026 For Humo · Все права защищены"},
   en:{nc:"New chat",mc:"My content",code:"Code",pic:"Picture",vid:"Video",mus:"Music",
       ch:"Chats",set:"Settings & help",
       gs:"Welcome to Humo AI",gm:"What shall we do today?",
@@ -916,19 +1097,9 @@ const T={
       mem:"Memory",memadd:"Add a memory...",memsave:"Save",memempty:"Memory is empty",
       appearance:"Appearance",theme_lbl:"Theme",lang_lbl:"Language",account:"Account",support_lbl:"Support center",about:"About",
       aicontext_lbl:"AI context",mem_copy:"Copy",mem_copied:"Copied!",
-      wt:"s waiting",lim:"Limit reached. Please wait a moment and try again.",copyright:"© 2026 For Humo · All rights reserved",
-      bs:"Home",loy:"Projects",crtbtn:"Create",dl:"Download",fscrn:"Full screen",cpprmt:"Copy prompt",
-      cp:"What do you want to create? (e.g. React login form, Python file reader)",
-      pp:"Describe the image... (e.g. sunset over mountains, watercolor style)",
-      vp:"Describe the video scene... (e.g. ocean waves, slow motion)",
-      mp:"Describe the music style... (e.g. calm acoustic guitar, spring mood)",
-      cst_clean:"Clean code",cst_cmnt:"Commented",cst_opt:"Optimized",cst_bgn:"Beginner-friendly",
-      ar_sq:"Square",ar_wide:"Wide",ar_vert:"Vertical",ar_cls:"Classic",ar_hor:"Horizontal",
-      s5:"5 seconds",s8:"8 seconds",s30:"30 seconds",s60:"60 seconds",
-      cnt1:"1 image",cnt2:"2 images",cnt4:"4 images",
-      prmpt:"Please enter a prompt",gencd:"Generating code...",genim:"image(s) generating",genvd:"Video generating...",genmu:"Music generating...",
-      nusxa:"Copy",nusxalandi:"Copied",xotira_saqd:"Saved to memory",
-      kod_ok:"Code generated",rasm_ok:"image(s) created",video_ok:"Video created",musiqa_ok:"Music created"}
+      ai_settings:"AI Settings",temp_lbl:"Creativity (Temperature)",temp_low:"Precise",temp_high:"Creative",
+      tokens_lbl:"Response length",tokens_low:"Short",tokens_high:"Long",reset_def:"Reset to defaults",
+      copyright:"© 2026 For Humo · All rights reserved"}
 };
 let L='uz',TH='dark',SB=true,VIEW='home';
 const t=k=>T[L][k]||k;
@@ -948,19 +1119,7 @@ function applyLang(){
   const mab=document.querySelector('.mem-add-btn');if(mab)mab.textContent=t('memsave');
   renderChatList();
   renderMemList();
-  // placeholders
-  const cp=document.getElementById('codePrompt');if(cp)cp.placeholder=t('cp');
-  const pp=document.getElementById('picPrompt');if(pp)pp.placeholder=t('pp');
-  const vp=document.getElementById('vidPrompt');if(vp)vp.placeholder=t('vp');
-  const mp=document.getElementById('musPrompt');if(mp)mp.placeholder=t('mp');
-  // dropdowns
-  document.querySelectorAll('[data-tkey]').forEach(el=>{el.textContent=t(el.dataset.tkey);});
-  // resync selected csel labels
-  document.querySelectorAll('.csel').forEach(cs=>{
-    const val=cs.dataset.val;
-    const opt=cs.querySelector(`.csel-opt[data-optval="${val}"]`);
-    if(opt)cs.querySelector('.csel-btn span').textContent=opt.textContent;
-  });
+  renderTemplates();
 }
 function setLang(l){
   L=l;document.documentElement.dataset.lang=l;
@@ -975,7 +1134,7 @@ function setTheme(th){
 function updateLogos(){
   const eff=TH==='system'?(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'):TH;
   const src=eff==='light'?'logo-black.avif':'logo-white.png';
-  document.querySelectorAll('#sidebarLogo,#welcomeLogo').forEach(el=>el.src=src);document.querySelectorAll('.ailsm.logo-img').forEach(el=>el.src=src);
+  document.querySelectorAll('#sidebarLogo,#welcomeLogo').forEach(el=>el.src=src);
 }
 function syncPP(){
   const tm={system:'ppSys',light:'ppDay',dark:'ppNight'};
@@ -984,6 +1143,52 @@ function syncPP(){
   ['ppUZ','ppRU','ppEN'].forEach(id=>document.getElementById(id).classList.remove('on'));
   if(tm[TH])document.getElementById(tm[TH]).classList.add('on');
   if(lm[L])document.getElementById(lm[L]).classList.add('on');
+}
+
+// ═══════════════════════════════════════════
+// PROMPT TEMPLATES
+// ═══════════════════════════════════════════
+const TEMPLATES={
+  uz:[
+    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>',title:'Kod yoz',sub:'Tushuntirmalar bilan',prompt:'Menga quyidagi dasturni yoz: '},
+    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>',title:'Tarjima',sub:"O'zbek → Ingliz",prompt:"Quyidagi matnni inglizchaga tarjima qil:\n\n"},
+    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>',title:'Tushuntir',sub:'Sodda tilda',prompt:'Menga quyidagini tushuntirib ber: '},
+    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',title:'Xat yoz',sub:'Rasmiy uslubda',prompt:'Quyidagi mavzuda rasmiy xat yoz: '},
+  ],
+  ru:[
+    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>',title:'Написать код',sub:'С пояснениями',prompt:'Напиши мне следующий код: '},
+    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>',title:'Перевод',sub:'Русский → Английский',prompt:'Переведи следующий текст на английский:\n\n'},
+    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>',title:'Объясни',sub:'Простым языком',prompt:'Объясни мне следующее: '},
+    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',title:'Написать письмо',sub:'Официальный стиль',prompt:'Напиши официальное письмо на тему: '},
+  ],
+  en:[
+    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>',title:'Write code',sub:'With explanations',prompt:'Write me the following code: '},
+    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>',title:'Translate',sub:'Any language',prompt:'Translate the following text:\n\n'},
+    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>',title:'Explain',sub:'In simple terms',prompt:'Explain the following to me: '},
+    {icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',title:'Write letter',sub:'Professional style',prompt:'Write a professional letter about: '},
+  ],
+};
+function renderTemplates(){
+  const grid=document.getElementById('tplGrid');
+  if(!grid)return;
+  const tpls=TEMPLATES[L]||TEMPLATES.uz;
+  grid.innerHTML=tpls.map((tp,i)=>
+    `<button class="tpl-card" onclick="useTpl(${i})">
+      <div class="tpl-icon">${tp.icon}</div>
+      <div class="tpl-title">${escH(tp.title)}</div>
+      <div class="tpl-sub">${escH(tp.sub)}</div>
+    </button>`
+  ).join('');
+}
+function useTpl(i){
+  const tp=(TEMPLATES[L]||TEMPLATES.uz)[i];
+  if(tp)useTemplate(tp.prompt);
+}
+function useTemplate(prompt){
+  const ta=document.getElementById('inta');
+  ta.value=prompt;ta.focus();
+  ta.setSelectionRange(prompt.length,prompt.length);
+  adjustTA(ta);toggleSend();
 }
 
 // ═══════════════════════════════════════════
@@ -1014,35 +1219,14 @@ function toggleCsel(id){
   document.querySelectorAll('.csel.open').forEach(c=>c.classList.remove('open'));
   if(!wasOpen)el.classList.add('open');
 }
-function selectCsel(id,val){
+function selectCsel(id,val,label){
   const el=document.getElementById(id);
   el.dataset.val=val;
-  const opt=el.querySelector(`.csel-opt[data-optval="${val}"]`);
-  if(opt)el.querySelector('.csel-btn span').textContent=opt.textContent;
-  el.querySelectorAll('.csel-opt').forEach(o=>o.classList.toggle('sel',o.dataset.optval===val));
+  el.querySelector('.csel-btn span').textContent=label;
+  el.querySelectorAll('.csel-opt').forEach(o=>o.classList.toggle('sel',o.textContent.trim()===label));
   el.classList.remove('open');
 }
 function getCsel(id){return document.getElementById(id)?.dataset.val||'';}
-
-function toggleCtxMenu(btn){
-  const drop=btn.nextElementSibling;
-  const isOpen=drop.classList.contains('open');
-  document.querySelectorAll('.card-ctx-drop.open').forEach(d=>d.classList.remove('open'));
-  if(!isOpen)drop.classList.add('open');
-}
-function closeCtx(){document.querySelectorAll('.card-ctx-drop.open').forEach(d=>d.classList.remove('open'));}
-function cpText(text){navigator.clipboard.writeText(text).then(()=>toast(t('nusxalandi')+' ✓'));closeCtx();}
-document.addEventListener('click',e=>{
-  if(!e.target.closest('.card-ctx'))document.querySelectorAll('.card-ctx-drop.open').forEach(d=>d.classList.remove('open'));
-});
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){
-    document.querySelectorAll('.csel-drop.open,.card-ctx-drop.open').forEach(d=>d.classList.remove('open'));
-    const pp=document.getElementById('ppPanel');if(pp)pp.classList.remove('open');
-    const ppOv=document.getElementById('ppOverlay');if(ppOv)ppOv.style.display='none';
-    document.querySelectorAll('.lb-ov').forEach(o=>o.remove());
-  }
-});
 
 // ═══════════════════════════════════════════
 // LANGUAGE-AWARE URLS
@@ -1061,7 +1245,7 @@ function closeProfile(){document.getElementById('ppPanel').classList.remove('ope
 // ═══════════════════════════════════════════
 let CHATS=[],CID=null,HIST=[];
 function loadStorage(){try{CHATS=JSON.parse(localStorage.getItem('hm_chats')||'[]');}catch{CHATS=[];}}
-function saveStorage(){localStorage.setItem('hm_chats',JSON.stringify(CHATS));}
+function saveStorage(){try{localStorage.setItem('hm_chats',JSON.stringify(CHATS));}catch(e){console.warn('[storage] localStorage to\'lib ketdi, saqlanmadi');}}
 
 function renderChatList(){
   const el=document.getElementById('chatList');
@@ -1072,7 +1256,7 @@ function renderChatList(){
   if(!sorted.length){el.innerHTML=`<div class="empty-hist">${t('nochats')}</div>`;return;}
   el.innerHTML='';
   sorted.slice(0,40).forEach(c=>{
-    const d=document.createElement('div');
+    const d=document.createElement('button');
     d.className='chat-item'+(c.id===CID?' act':'');
     d.innerHTML=`<span class="chat-item-title" id="ct-${c.id}">${escH(c.title)}</span>
       <div class="chat-item-actions">
@@ -1146,10 +1330,10 @@ function loadChat(id){
           ?`<img class="bbl-img" src="data:${i.mimeType};base64,${i.base64}" alt="">`
           :`<div class="bbl-file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${escH(i.name||'Fayl')}</div>`
         ).join('');
-        d.innerHTML=`<div class="bbl has-img">${imgs}${h.t?`<p>${escH(h.t)}</p>`:''}</div>`;
+        d.innerHTML=`${mkEditBtn()}<div class="bbl has-img">${imgs}${h.t?`<p>${escH(h.t)}</p>`:''}</div>`;
       } else if(h.img){
-        d.innerHTML=`<div class="bbl has-img"><img class="bbl-img" src="data:${h.imgMime};base64,${h.img}" alt=""><p>${escH(h.t)}</p></div>`;
-      } else{d.innerHTML=`<div class="bbl">${escH(h.t)}</div>`;}
+        d.innerHTML=`${mkEditBtn()}<div class="bbl has-img"><img class="bbl-img" src="data:${h.imgMime};base64,${h.img}" alt=""><p>${escH(h.t)}</p></div>`;
+      } else{d.innerHTML=`${mkEditBtn()}<div class="bbl">${escH(h.t)}</div>`;}
       inner.appendChild(d);
     } else {
       const d=document.createElement('div');d.className='mai';
@@ -1159,6 +1343,7 @@ function loadChat(id){
   });
   if(window.Prism)Prism.highlightAllUnder(scroll);
   setTimeout(()=>{scroll.scrollTop=scroll.scrollHeight;},50);
+  showExportBtn(true);clearSearch();
   renderChatList();
   if(isMob())closeMobSB();
 }
@@ -1179,6 +1364,9 @@ function newChat(){
 // ═══════════════════════════════════════════
 // NAV
 // ═══════════════════════════════════════════
+function showExportBtn(show){
+  document.getElementById('exportBtn').classList.toggle('show',show);
+}
 function showHome(){
   VIEW='home';
   document.getElementById('welcome').style.display='flex';
@@ -1188,6 +1376,7 @@ function showHome(){
   document.getElementById('inwrap').style.display='block';
   document.getElementById('fnote').style.display='block';
   document.getElementById('scrollBtn').classList.remove('show');
+  showExportBtn(false);clearSearch();
 }
 function openSection(sec){
   VIEW=sec;
@@ -1198,6 +1387,7 @@ function openSection(sec){
   ['secCode','secPic','secVid','secMus'].forEach(s=>document.getElementById(s).classList.remove('act'));
   const m={code:'secCode',picture:'secPic',video:'secVid',music:'secMus'};
   if(m[sec])document.getElementById(m[sec]).classList.add('act');
+  showExportBtn(false);clearSearch();
   if(isMob())closeMobSB();
 }
 
@@ -1276,7 +1466,7 @@ function parseMd(raw){
         <span class="code-lang">${escH(lang)}</span>
         <button class="code-copy-btn" onclick="copyCB(this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          <span di="nusxa">Nusxa</span>
+          Nusxa
         </button>
       </div><pre><code class="language-${escH(lang)}">${esc}</code></pre></div>`
     );
@@ -1288,22 +1478,21 @@ function copyCodeEl(btn){
   const code=btn.closest('.code-result').querySelector('code').innerText;
   navigator.clipboard.writeText(code).then(()=>{
     const orig=btn.innerHTML;
-    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M20 6L9 17l-5-5"/></svg> ${t('nusxalandi')}`;
+    btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M20 6L9 17l-5-5"/></svg> Nusxalandi';
     setTimeout(()=>{btn.innerHTML=orig;},2000);
   });
 }
 function copyCB(btn){
   const code=btn.closest('.code-block').querySelector('code').innerText;
   navigator.clipboard.writeText(code).then(()=>{
-    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M20 6L9 17l-5-5"/></svg> ${t('nusxalandi')}`;
-    setTimeout(()=>{btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> ${t('nusxa')}`;},2000);
-  });
+    btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M20 6L9 17l-5-5"/></svg> Nusxalandi';
+    setTimeout(()=>{btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Nusxa';},2000);
+  }).catch(()=>toast('Nusxa olishda xato',true));
 }
 
 // ═══════════════════════════════════════════
 // API KEY & SYSTEM PROMPT
 // ═══════════════════════════════════════════
-// API calls go through backend proxy — key stored in Vercel env as GEMINI_API_KEY
 const SYS=`Sening isming Humo AI. Sen For Humo ekotizimining (Humo Market, Humo eSport, Humo Nexus, Humo Pay va boshqalar) asosiy bog'lovchisi va aqlli yordamchisisan. Foydalanuvchi bilan doimo xushmuomala, kreativ va professional tilda gaplash. O'zingni hech qachon Google Gemini deb tanishtirma, sen faqat Humo AI'san. O'zbek, Rus yoki Ingliz tilida so'ralsa shu tilda javob ber.`;
 
 // ═══════════════════════════════════════════
@@ -1319,9 +1508,12 @@ function toast(msg,err=false){
   setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300);},3000);
 }
 function mkSVG(cls){
-  const eff=TH==='system'?(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'):TH;
-  const src=eff==='light'?'logo-black.avif':'logo-white.png';
-  return`<img class="${cls} logo-img" src="${src}" alt="Humo AI">`;
+  return`<svg class="${cls}" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M68 6L40 54L82 54L100 98L118 54L160 54L132 6L108 36L100 18L92 36Z" fill="currentColor"/>
+    <path d="M40 54L6 138L52 138L70 96L82 54Z" fill="currentColor"/>
+    <path d="M160 54L194 138L148 138L130 96L118 54Z" fill="currentColor"/>
+    <path d="M52 138L22 220L78 220L100 170L122 220L178 220L148 138L120 166L100 140L80 166Z" fill="currentColor"/>
+  </svg>`;
 }
 function mkActs(){
   return`<div class="aiacts">
@@ -1333,19 +1525,34 @@ function mkActs(){
     </button>
   </div>`;
 }
+function mkEditBtn(){
+  return`<div class="mu-acts"><button class="mu-act" title="Tahrirlash" onclick="editMsg(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div>`;
+}
+
+// ═══════════════════════════════════════════
+// STOP STREAMING
+// ═══════════════════════════════════════════
+let streamAbort=null;
+function setStreaming(on){
+  document.getElementById('stopBtn').classList.toggle('show',on);
+  if(!on)toggleSend();
+}
+function stopStream(){
+  if(streamAbort){streamAbort.abort();streamAbort=null;}
+}
 function copyMsg(btn){
   const txt=btn.closest('.mai').querySelector('.ait').innerText;
   navigator.clipboard.writeText(txt).then(()=>{
     const orig=btn.innerHTML;
     btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>';
     setTimeout(()=>{btn.innerHTML=orig;},1800);
-    toast(t('nusxalandi')+' ✓');
-  });
+    toast('Nusxalandi');
+  }).catch(()=>toast('Nusxa olishda xato',true));
 }
 function regenMsg(btn){
   const last=HIST.filter(h=>h.r==='user').slice(-1)[0];
   if(!last)return;
-  if(HIST.length&&HIST[HIST.length-1].r==='model')HIST=HIST.slice(0,-1);
+  HIST=HIST.slice(0,-1);
   const mai=btn.closest('.mai');
   const inner=mai.parentElement;
   const scroll=inner.parentElement;
@@ -1361,7 +1568,7 @@ function regenMsg(btn){
 // ═══════════════════════════════════════════
 async function streamAPI(txt,inner,scroll,tdiv,retry=0){
   const MAX=3;
-  const url=`${BACKEND_URL}/api/gemini`;
+  const ac=new AbortController();streamAbort=ac;setStreaming(true);
   const mem=MEMORY.length?'\n\nFoydalanuvchi haqida saqlangan ma\'lumotlar:\n'+MEMORY.map((m,i)=>`${i+1}. ${m.text}`).join('\n'):'';
   const sysFull=SYS+mem;
   const contents=HIST.map(h=>{
@@ -1370,32 +1577,33 @@ async function streamAPI(txt,inner,scroll,tdiv,retry=0){
     else if(h.img)parts.push({inlineData:{mimeType:h.imgMime,data:h.img}});
     return{role:h.r,parts};
   });
+  let aiDiv=null,aitEl=null,aib=null,full='';
   try{
-    const resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+    const resp=await fetch(`${BACKEND_URL}/api/gemini`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'gemini-2.0-flash',stream:true,
+        model:'gemini-2.0-flash',
+        stream:true,
         system_instruction:{parts:[{text:sysFull}]},
         contents,
-        generationConfig:{temperature:.85,maxOutputTokens:2048,topP:.95}
-      })
+        generationConfig:{temperature:AI_TEMP,maxOutputTokens:AI_MAX_TOKENS,topP:.95}
+      }),signal:ac.signal
     });
     if(resp.status===429){
       if(retry<MAX){
         const w=Math.pow(2,retry)*10;
         const ld=tdiv.querySelector('.tdots');
-        if(ld)ld.innerHTML=`<span style="font-size:12px;color:var(--t3)">${w}s ${t('wt')}...</span>`;
+        if(ld)ld.innerHTML=`<span style="font-size:12px;color:var(--t3)">${w}s kutilmoqda...</span>`;
         await sleep(w*1000);
         return streamAPI(txt,inner,scroll,tdiv,retry+1);
       }
       throw new Error('Limit tugadi. Bir oz kutib qayta urinib ko\'ring.');
     }
-    if(resp.status===403)throw new Error('API ruxsati rad etildi. Kalit faqat forhumo.uz da ishlaydi.');
-    if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${resp.status}`);}
+    if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error||`HTTP ${resp.status}`);}
 
-    if(tdiv.parentNode)tdiv.remove();
-    const aiDiv=document.createElement('div');aiDiv.className='mai';
-    const aitEl=document.createElement('div');aitEl.className='ait';
-    const aib=document.createElement('div');aib.className='aib';
+    tdiv.remove();
+    aiDiv=document.createElement('div');aiDiv.className='mai';
+    aitEl=document.createElement('div');aitEl.className='ait';
+    aib=document.createElement('div');aib.className='aib';
     aib.appendChild(aitEl);
     aiDiv.innerHTML=mkSVG('ailsm');
     aiDiv.appendChild(aib);
@@ -1403,7 +1611,7 @@ async function streamAPI(txt,inner,scroll,tdiv,retry=0){
 
     const reader=resp.body.getReader();
     const dec=new TextDecoder();
-    let buf='',full='',started=false;
+    let buf='';
 
     while(true){
       const{done,value}=await reader.read();
@@ -1418,9 +1626,8 @@ async function streamAPI(txt,inner,scroll,tdiv,retry=0){
           const chunk=JSON.parse(js);
           const piece=chunk.candidates?.[0]?.content?.parts?.[0]?.text||'';
           if(piece){
-            if(!started){started=true;}
             full+=piece;
-            aitEl.innerHTML=parseMd(full)+'<span class="stream-cursor"></span>';
+            aitEl.innerHTML=escH(full).replace(/\n/g,'<br>')+'<span class="stream-cursor"></span>';
             scroll.scrollTop=scroll.scrollHeight;
           }
         }catch{}
@@ -1433,14 +1640,125 @@ async function streamAPI(txt,inner,scroll,tdiv,retry=0){
     if(window.Prism)Prism.highlightAllUnder(aiDiv);
     scroll.scrollTop=scroll.scrollHeight;
     upsertChat(txt.slice(0,45)+(txt.length>45?'…':''));
+    streamAbort=null;setStreaming(false);
 
   }catch(err){
-    if(tdiv.parentNode)tdiv.remove();
+    streamAbort=null;setStreaming(false);
+    if(err.name==='AbortError'){
+      if(aiDiv&&full){
+        HIST.push({r:'model',t:full});
+        aitEl.innerHTML=parseMd(full)||'&nbsp;';
+        if(aib)aib.insertAdjacentHTML('beforeend',mkActs());
+        if(window.Prism)Prism.highlightAllUnder(aiDiv);
+        upsertChat(txt.slice(0,45)+(txt.length>45?'…':''));
+      } else if(tdiv.parentElement){
+        tdiv.remove();
+      }
+      return;
+    }
+    if(tdiv.parentElement)tdiv.remove();
+    const errCard=mkErrCard(err,()=>{
+      errCard.closest('.mai')?.remove();
+      const ntd=document.createElement('div');ntd.className='mai';
+      ntd.innerHTML=`${mkSVG('ailsm')}<div class="aib"><div class="tdots"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>`;
+      inner.appendChild(ntd);scroll.scrollTop=scroll.scrollHeight;
+      streamAPI(txt,inner,scroll,ntd);
+    });
     const ed=document.createElement('div');ed.className='mai';
-    ed.innerHTML=`${mkSVG('ailsm')}<div class="aib"><div class="ait"><p style="color:#ef4444">⚠ ${escH(err.message)}</p></div></div>`;
+    ed.innerHTML=mkSVG('ailsm');
+    const aib=document.createElement('div');aib.className='aib';
+    aib.appendChild(errCard);
+    ed.appendChild(aib);
     inner.appendChild(ed);scroll.scrollTop=scroll.scrollHeight;
-    toast(err.message,true);
   }
+}
+
+// ═══════════════════════════════════════════
+// EDIT USER MESSAGE
+// ═══════════════════════════════════════════
+function editMsg(btn){
+  if(streamAbort)return;
+  const muDiv=btn.closest('.mu');
+  const inner=muDiv.parentElement;
+  const allMu=Array.from(inner.querySelectorAll('.mu'));
+  const muIdx=allMu.indexOf(muDiv);
+  let userCount=0,histCutIdx=-1;
+  for(let i=0;i<HIST.length;i++){
+    if(HIST[i].r==='user'){
+      if(userCount===muIdx){histCutIdx=i;break;}
+      userCount++;
+    }
+  }
+  if(histCutIdx===-1)return;
+  const txt=HIST[histCutIdx].t;
+  HIST=HIST.slice(0,histCutIdx);
+  let el=muDiv;
+  while(el){const next=el.nextElementSibling;el.remove();el=next;}
+  const ta=document.getElementById('inta');
+  ta.value=txt;adjustTA(ta);toggleSend();ta.focus();
+}
+
+// ═══════════════════════════════════════════
+// EXPORT CHAT
+// ═══════════════════════════════════════════
+function exportChat(){
+  if(!HIST.length){toast('Chat bo\'sh',true);return;}
+  const title=CHATS.find(c=>c.id===CID)?.title||'Chat';
+  let md=`# ${title}\n\n`;
+  HIST.forEach(h=>{
+    md+=h.r==='user'?`**Siz:** ${h.t}\n\n`:`**Humo AI:** ${h.t}\n\n`;
+  });
+  const blob=new Blob([md],{type:'text/markdown;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`${title.replace(/[^\w\s-]/g,'').trim()||'chat'}.md`;
+  a.click();URL.revokeObjectURL(url);
+  toast('Eksport qilindi');
+}
+
+// ═══════════════════════════════════════════
+// SEARCH MESSAGES
+// ═══════════════════════════════════════════
+function searchMsgs(query){
+  const clearBtn=document.getElementById('searchClear');
+  const countEl=document.getElementById('searchCount');
+  document.querySelectorAll('.mu.search-match,.mai.search-match').forEach(el=>el.classList.remove('search-match'));
+  if(!query.trim()){
+    if(clearBtn)clearBtn.classList.remove('show');
+    if(countEl){countEl.style.display='none';}
+    return;
+  }
+  if(clearBtn)clearBtn.classList.add('show');
+  if(VIEW!=='chat'){
+    if(countEl){countEl.style.display='block';countEl.textContent='Chat ochiq emas';}
+    return;
+  }
+  const scroll=document.getElementById('chatscr');
+  const inner=scroll?.querySelector('.chatinner');
+  if(!inner){if(countEl)countEl.style.display='none';return;}
+  const rows=Array.from(inner.querySelectorAll('.mu,.mai'));
+  const q=query.toLowerCase();
+  let hits=0,firstHit=null;
+  HIST.forEach((h,i)=>{
+    if(h.t&&h.t.toLowerCase().includes(q)){
+      hits++;
+      if(rows[i]){rows[i].classList.add('search-match');if(!firstHit)firstHit=rows[i];}
+    }
+  });
+  if(countEl){
+    countEl.style.display='block';
+    countEl.textContent=hits?`${hits} ta topildi`:'Hech narsa topilmadi';
+  }
+  if(firstHit)firstHit.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function clearSearch(){
+  const inp=document.getElementById('searchInp');
+  const clearBtn=document.getElementById('searchClear');
+  const countEl=document.getElementById('searchCount');
+  if(inp)inp.value='';
+  if(clearBtn)clearBtn.classList.remove('show');
+  if(countEl)countEl.style.display='none';
+  document.querySelectorAll('.mu.search-match,.mai.search-match').forEach(el=>el.classList.remove('search-match'));
 }
 
 // ═══════════════════════════════════════════
@@ -1465,6 +1783,7 @@ function handleFile(files){
       pendingAttaches.push({id,base64:b64,mimeType:mime,name:f.name,src:e.target.result,isImg});
       renderAttaches();toggleSend();
     };
+    reader.onerror=()=>toast('Faylni o\'qishda xato yuz berdi',true);
     reader.readAsDataURL(f);
   });
   document.getElementById('fileInput').value='';
@@ -1516,7 +1835,7 @@ function sendMsg(){
     VIEW='chat';
     document.getElementById('welcome').style.display='none';
     document.getElementById('chatscr').style.display='block';
-    ['secCode','secPic','secVid','secMus'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('act');});
+    showExportBtn(true);
   }
   const scroll=document.getElementById('chatscr');
   let inner=scroll.querySelector('.chatinner');
@@ -1529,10 +1848,10 @@ function sendMsg(){
       ?`<img class="bbl-img" src="${a.src}" alt="">`
       :`<div class="bbl-file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${escH(a.name)}</div>`
     ).join('');
-    uDiv.innerHTML=`<div class="bbl has-img">${content}${txt?`<p>${escH(txt)}</p>`:''}</div>`;
+    uDiv.innerHTML=`${mkEditBtn()}<div class="bbl has-img">${content}${txt?`<p>${escH(txt)}</p>`:''}</div>`;
     HIST.push({r:'user',t:txt||(atts[0].isImg?'(rasm)':'(fayl)'),imgs:atts.map(a=>({base64:a.base64,mimeType:a.mimeType,name:a.name,isImg:a.isImg}))});
   } else {
-    uDiv.innerHTML=`<div class="bbl">${escH(txt)}</div>`;
+    uDiv.innerHTML=`${mkEditBtn()}<div class="bbl">${escH(txt)}</div>`;
     HIST.push({r:'user',t:txt});
   }
   inner.appendChild(uDiv);
@@ -1574,9 +1893,70 @@ function toggleVoice(){
 // ═══════════════════════════════════════════
 // INPUT HELPERS
 // ═══════════════════════════════════════════
+const MAX_CHARS=4000;
 function adjustTA(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,170)+'px';}
 function toggleSend(){document.getElementById('sndb').classList.toggle('on',document.getElementById('inta').value.trim().length>0||pendingAttaches.length>0);}
 function hKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
+
+function updateCharCounter(){
+  const val=document.getElementById('inta').value;
+  const rem=MAX_CHARS-val.length;
+  const el=document.getElementById('charCounter');
+  if(!el)return;
+  if(rem<=500){
+    el.textContent=rem;
+    el.classList.toggle('warn',rem>80);
+    el.classList.toggle('danger',rem<=80);
+  } else {
+    el.textContent='';
+    el.classList.remove('warn','danger');
+  }
+}
+
+// ═══════════════════════════════════════════
+// ERROR HELPERS
+// ═══════════════════════════════════════════
+function parseApiError(err){
+  const msg=(err?.message||String(err)).toLowerCase();
+  if(msg.includes('429')||msg.includes('quota')||msg.includes('rate limit')||msg.includes('limit tugadi'))
+    return{title:'Limit tugadi',detail:'So\'rovlar limiti oshdi. Bir daqiqa kuting va qayta urinib ko\'ring.'};
+  if(msg.includes('failed to fetch')||msg.includes('networkerror')||msg.includes('network'))
+    return{title:'Internet ulanishi yo\'q',detail:'Tarmoq ulanishini tekshiring va qayta urinib ko\'ring.'};
+  if(msg.includes('timeout')||msg.includes('timed out'))
+    return{title:'Vaqt tugadi',detail:'Server javob bermadi. Qayta urinib ko\'ring.'};
+  if(msg.includes('safety')||msg.includes('filter')||msg.includes('blocked')||msg.includes('recitation'))
+    return{title:'Xavfsizlik filtri',detail:'Bu so\'rov xavfsizlik filtriga tushdi. Boshqacha so\'rov kiriting.'};
+  if(msg.includes('503')||msg.includes('service unavailable')||msg.includes('overloaded'))
+    return{title:'Server band',detail:'Server hozir yuklangan. Biroz kutib qayta urinib ko\'ring.'};
+  if(msg.includes('401')||msg.includes('403')||msg.includes('unauthorized'))
+    return{title:'Ruxsat xatosi',detail:'Autentifikatsiya muammosi yuz berdi.'};
+  if(msg.includes('500')||msg.includes('internal'))
+    return{title:'Server xatosi',detail:'Ichki server xatosi yuz berdi. Keyinroq urinib ko\'ring.'};
+  return{title:'Xatolik yuz berdi',detail:err?.message||'Noma\'lum xato. Qayta urinib ko\'ring.'};
+}
+
+function mkErrCard(err,onRetry){
+  const{title,detail}=parseApiError(err);
+  const retryId='retry-'+Date.now();
+  const html=`<div class="err-card">
+    <div class="err-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+    <div class="err-card-body">
+      <div class="err-card-title">${escH(title)}</div>
+      <div class="err-card-detail">${escH(detail)}</div>
+      ${onRetry?`<button class="err-card-retry" id="${retryId}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+        Qayta urinish
+      </button>`:''}
+    </div>
+  </div>`;
+  const wrap=document.createElement('div');
+  wrap.innerHTML=html;
+  if(onRetry){
+    const btn=wrap.querySelector('#'+retryId);
+    if(btn)btn.onclick=onRetry;
+  }
+  return wrap.firstElementChild;
+}
 
 // ═══════════════════════════════════════════
 // SCROLL TO BOTTOM
@@ -1596,7 +1976,7 @@ function onChatScroll(){
 // ═══════════════════════════════════════════
 let MEMORY=[];
 function loadMemory(){try{MEMORY=JSON.parse(localStorage.getItem('hm_memory')||'[]');}catch{MEMORY=[];}}
-function saveMemory(){localStorage.setItem('hm_memory',JSON.stringify(MEMORY));}
+function saveMemory(){try{localStorage.setItem('hm_memory',JSON.stringify(MEMORY));}catch(e){console.warn('[storage] localStorage to\'lib ketdi, saqlanmadi');}}
 
 function toggleMemory(){
   const sec=document.getElementById('memSection');
@@ -1696,7 +2076,7 @@ function renderMemList(){
   if(!ctx)return;
   const full=buildAIContext();
   ctx.innerHTML=`<div class="mem-ctx-hdr">
-    <span class="mem-ctx-lbl" di="aicontext_lbl"></span>
+    <span class="mem-ctx-lbl" di="aicontext_lbl">${t('aicontext_lbl')}</span>
     <button class="mem-ctx-copy" id="memCtxCopyBtn" onclick="copyAIContext()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
       <span id="memCtxCopyLbl">${t('mem_copy')}</span>
@@ -1710,7 +2090,7 @@ function copyAIContext(){
   navigator.clipboard.writeText(full).then(()=>{
     const lbl=document.getElementById('memCtxCopyLbl');
     if(lbl){lbl.textContent=t('mem_copied');setTimeout(()=>{lbl.textContent=t('mem_copy');},2000);}
-  });
+  }).catch(()=>toast('Nusxa olishda xato',true));
 }
 function addMemory(){
   const inp=document.getElementById('memInp');
@@ -1719,11 +2099,130 @@ function addMemory(){
   MEMORY.unshift({id:'m'+Date.now(),text:txt,savedAt:Date.now()});
   if(MEMORY.length>100)MEMORY.pop();
   saveMemory();inp.value='';renderMemList();
-  toast(t('xotira_saqd'));
+  toast('Xotiraga saqlandi');
 }
 function delMemory(id){
   MEMORY=MEMORY.filter(m=>m.id!==id);
   saveMemory();renderMemList();
+}
+
+// ═══════════════════════════════════════════
+// AI SETTINGS
+// ═══════════════════════════════════════════
+const SETTINGS_KEY='hm_settings';
+const DEF_TEMP=0.85,DEF_TOKENS=2048;
+let AI_TEMP=DEF_TEMP,AI_MAX_TOKENS=DEF_TOKENS;
+
+function loadSettings(){
+  try{
+    const s=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
+    AI_TEMP=typeof s.temp==='number'?s.temp:DEF_TEMP;
+    AI_MAX_TOKENS=typeof s.tokens==='number'?s.tokens:DEF_TOKENS;
+  }catch{AI_TEMP=DEF_TEMP;AI_MAX_TOKENS=DEF_TOKENS;}
+  syncSettingsUI();
+}
+function saveSettings(){
+  try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({temp:AI_TEMP,tokens:AI_MAX_TOKENS}));}catch{}
+}
+function syncSettingsUI(){
+  const ts=document.getElementById('tempSlider');
+  const tv=document.getElementById('tempVal');
+  const ks=document.getElementById('tokensSlider');
+  const kv=document.getElementById('tokensVal');
+  if(ts){ts.value=AI_TEMP;}
+  if(tv){tv.textContent=AI_TEMP.toFixed(2);}
+  if(ks){ks.value=AI_MAX_TOKENS;}
+  if(kv){kv.textContent=AI_MAX_TOKENS;}
+}
+function onTempChange(v){
+  AI_TEMP=parseFloat(v);
+  const el=document.getElementById('tempVal');
+  if(el)el.textContent=AI_TEMP.toFixed(2);
+  saveSettings();
+}
+function onTokensChange(v){
+  AI_MAX_TOKENS=parseInt(v);
+  const el=document.getElementById('tokensVal');
+  if(el)el.textContent=AI_MAX_TOKENS;
+  saveSettings();
+}
+function resetAISettings(){
+  AI_TEMP=DEF_TEMP;AI_MAX_TOKENS=DEF_TOKENS;
+  saveSettings();syncSettingsUI();
+  toast('Standart qiymatlar tiklandi');
+}
+
+// ═══════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════
+async function requestNotifPerm(){
+  if('Notification' in window && Notification.permission==='default'){
+    await Notification.requestPermission();
+  }
+}
+function notify(title,body){
+  if(!('Notification' in window)||Notification.permission!=='granted') return;
+  if(!document.hidden) return;
+  new Notification(title,{body,icon:'/android-chrome-192x192.png'});
+}
+
+// ═══════════════════════════════════════════
+// GENERATED CONTENT STORE
+// ═══════════════════════════════════════════
+const GEN_KEY='hm_generated';
+const MAX_IMG=8,MAX_MUS=2,MAX_VID=4;
+let GEN_STORE={images:[],videos:[],music:[]};
+
+function loadGenStore(){
+  try{
+    const raw=localStorage.getItem(GEN_KEY);
+    if(raw){
+      const p=JSON.parse(raw);
+      GEN_STORE={images:p.images||[],videos:p.videos||[],music:p.music||[]};
+    }
+  }catch{GEN_STORE={images:[],videos:[],music:[]};}
+}
+function saveGenStore(){
+  try{
+    GEN_STORE.images=GEN_STORE.images.slice(-MAX_IMG);
+    GEN_STORE.videos=GEN_STORE.videos.slice(-MAX_VID);
+    GEN_STORE.music=GEN_STORE.music.slice(-MAX_MUS);
+    localStorage.setItem(GEN_KEY,JSON.stringify(GEN_STORE));
+  }catch{
+    try{
+      GEN_STORE.images=GEN_STORE.images.slice(-2);
+      GEN_STORE.music=[];
+      localStorage.setItem(GEN_KEY,JSON.stringify(GEN_STORE));
+    }catch{}
+  }
+}
+function restoreGenStore(){
+  // Ensure all items have IDs (backwards compat with old saves)
+  let dirty=false;
+  ['images','videos','music'].forEach(type=>{
+    GEN_STORE[type].forEach(item=>{
+      if(!item.id){item.id=type.slice(0,3)+Date.now()+Math.random().toString(36).slice(2);dirty=true;}
+    });
+  });
+  if(dirty)saveGenStore();
+
+  const picGrid=document.getElementById('picGrid');
+  if(picGrid&&GEN_STORE.images.length){
+    [...GEN_STORE.images].reverse().forEach(img=>picGrid.appendChild(createImageCard(img)));
+    updateGalleryHdr('images');
+  }
+  const musGrid=document.getElementById('musGrid');
+  if(musGrid&&GEN_STORE.music.length){
+    [...GEN_STORE.music].reverse().forEach(tr=>musGrid.appendChild(createMusicCard(tr)));
+    updateGalleryHdr('music');
+  }
+  const vidGrid=document.getElementById('vidGrid');
+  if(vidGrid&&GEN_STORE.videos.length){
+    [...GEN_STORE.videos].reverse().forEach(v=>{
+      if(v.url||v.base64)vidGrid.appendChild(createVideoCard(v));
+    });
+    updateGalleryHdr('videos');
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -1755,11 +2254,9 @@ function delMemory(id){
       p.x+=p.vx;p.y+=p.vy;
       if(p.x<-5||p.x>W+5)p.vx*=-1;if(p.y<-5||p.y>H+5)p.vy*=-1;
     });
-    if(!document.hidden)requestAnimationFrame(draw);
+    requestAnimationFrame(draw);
   }
-  window.addEventListener('resize',resize);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)draw();});
-  resize();draw();
+  window.addEventListener('resize',resize);resize();draw();
 })();
 
 // ═══════════════════════════════════════════
@@ -1773,18 +2270,16 @@ async function generateImage(prompt,aspectRatio='1:1',sampleCount=1){
 async function generateVideo(prompt,duration=5,aspectRatio='16:9'){
   const r=await fetch(`${BACKEND_URL}/api/veo`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,duration,aspectRatio})});
   const d=await r.json();if(!r.ok)throw new Error(d.error||'Xatolik');
-  const opName=d.operationName;
-  if(!opName)throw new Error('Operation nomi kelmadi');
-  for(let i=0;i<36;i++){
-    await new Promise(res=>setTimeout(res,5000));
-    const elapsed=(i+1)*5;
-    const stEl=document.getElementById('vidStatus');
-    if(stEl)stEl.textContent=`⏳ ${elapsed}s — ${t('genvd')}`;
-    const sr=await fetch(`${BACKEND_URL}/api/veo-status`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operationName:opName})});
-    const sd=await sr.json();if(!sr.ok)throw new Error(sd.error||'Xatolik');
+  const{operationName}=d;
+  if(!operationName)throw new Error('Operatsiya boshlanmadi');
+  for(let i=0;i<60;i++){
+    await sleep(5000);
+    const sr=await fetch(`${BACKEND_URL}/api/veo-status`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operationName})});
+    const sd=await sr.json();
+    if(!sr.ok)throw new Error(sd.error||'Status xatoligi');
     if(sd.done)return sd.videos;
   }
-  throw new Error('Video yaratish vaqti tugadi. Qayta urinib ko\'ring.');
+  throw new Error('Video generatsiya vaqti tugadi (5 daqiqa)');
 }
 async function generateMusic(prompt,duration=30){
   const r=await fetch(`${BACKEND_URL}/api/lyria`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,duration})});
@@ -1804,17 +2299,17 @@ function setGenLoading(btnId,statusId,loading,msg=''){
 
 async function genCode(){
   const prompt=document.getElementById('codePrompt').value.trim();
-  if(!prompt){toast(t('prmpt'),true);return;}
+  if(!prompt){toast('Prompt kiriting',true);return;}
   const lang=getCsel('codeLangCsel');
   const style=getCsel('codeStyleCsel');
   const styleMap={clean:'Toza, ixcham kod yoz.',commented:'Har bir muhim qator uchun izoh qo\'sh.',optimized:'Eng tezkor va optimallashtirilgan yechim yoz.',beginner:'Boshluvchilar tushunishi uchun oddiy va tushunarli kod yoz.'};
   const sysParts=`Faqat kod yoz, hech qanday tushuntirma berma. ${styleMap[style]||''} Til: ${lang}.`;
-  setGenLoading('codeBtn','codeStatus',true,t('gencd'));
+  setGenLoading('codeBtn','codeStatus',true,'Kod yaratilmoqda...');
   try{
     const r=await fetch(`${BACKEND_URL}/api/gemini`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'gemini-2.0-flash',stream:false,system_instruction:{parts:[{text:sysParts}]},contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:.4,maxOutputTokens:2048}})});
     const d=await r.json();
-    if(!r.ok)throw new Error(d.error?.message||`HTTP ${r.status}`);
+    if(!r.ok)throw new Error(d.error||`HTTP ${r.status}`);
     let full=d.candidates?.[0]?.content?.parts?.[0]?.text||'';
     full=full.replace(/^```[^\n]*\n?/,'').replace(/\n?```$/,'');
     setGenLoading('codeBtn','codeStatus',false);
@@ -1824,128 +2319,223 @@ async function genCode(){
       <div class="code-result-actions">
         <button class="code-copy-btn" onclick="copyCodeEl(this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          <span di="nusxa">Nusxa</span>
+          Nusxa
         </button>
       </div>
     </div><pre><code class="language-${escH(lang)}">${escH(full)}</code></pre>`;
     const results=document.getElementById('codeResults');
     results.prepend(wrap);
     if(window.Prism)Prism.highlightAllUnder(wrap);
-    toast(t('kod_ok'));
+    toast('Kod yaratildi');
   }catch(err){setGenLoading('codeBtn','codeStatus',false);toast(err.message,true);}
 }
 
 async function genImage(){
   const prompt=document.getElementById('picPrompt').value.trim();
-  if(!prompt){toast(t('prmpt'),true);return;}
+  if(!prompt){toast('Prompt kiriting',true);return;}
   const ar=getCsel('picARCsel');
   const count=parseInt(getCsel('picCountCsel'));
-  setGenLoading('picBtn','picStatus',true,`${count} ${t('genim')}`);
+  setGenLoading('picBtn','picStatus',true,`${count} ta rasm yaratilmoqda...`);
   try{
     const images=await generateImage(prompt,ar,count);
     setGenLoading('picBtn','picStatus',false);
     const grid=document.getElementById('picGrid');
     images.forEach(img=>{
-      const src=`data:${img.mimeType};base64,${img.base64}`;
-      const card=document.createElement('div');card.className='pic-card';
-      const imgEl=document.createElement('img');imgEl.src=src;imgEl.alt=prompt;imgEl.onclick=()=>viewImg(src);
-      const cfootEl=document.createElement('div');cfootEl.className='pic-cfoot';
-      const lblEl=document.createElement('span');lblEl.textContent=prompt;
-      const dlBtn=document.createElement('button');dlBtn.className='pic-dl';dlBtn.title=t('dl');dlBtn.onclick=()=>dlFile(src,'rasm.png');
-      dlBtn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
-      cfootEl.appendChild(lblEl);cfootEl.appendChild(dlBtn);
-      card.appendChild(imgEl);card.appendChild(cfootEl);
-      grid.prepend(card);
+      const item={id:'img'+Date.now()+Math.random().toString(36).slice(2),base64:img.base64,mimeType:img.mimeType,prompt,ts:Date.now()};
+      GEN_STORE.images.push(item);
+      grid.prepend(createImageCard(item));
     });
-    toast(`${images.length} ${t('rasm_ok')}`);
+    saveGenStore();
+    updateGalleryHdr('images');
+    toast(`${images.length} ta rasm yaratildi`);
   }catch(err){setGenLoading('picBtn','picStatus',false);toast(err.message,true);}
 }
 
 async function genVideo(){
   const prompt=document.getElementById('vidPrompt').value.trim();
-  if(!prompt){toast(t('prmpt'),true);return;}
+  if(!prompt){toast('Prompt kiriting',true);return;}
   const dur=parseInt(getCsel('vidDurCsel'));
   const ar=getCsel('vidARCsel');
-  setGenLoading('vidBtn','vidStatus',true,t('genvd'));
+  setGenLoading('vidBtn','vidStatus',true,'Video yaratilmoqda (1-5 daqiqa)...');
+  requestNotifPerm();
   try{
     const videos=await generateVideo(prompt,dur,ar);
     setGenLoading('vidBtn','vidStatus',false);
     const grid=document.getElementById('vidGrid');
     videos.forEach(v=>{
-      const card=document.createElement('div');card.className='pic-card';
-      if(v.url||v.base64){
-        const src=v.url||`data:${v.mimeType};base64,${v.base64}`;
-        const dlName='video.mp4';
-        const vid=document.createElement('video');vid.controls=true;vid.style.cssText='width:100%;display:block;border-radius:8px 8px 0 0';
-        const src2=document.createElement('source');src2.src=src;src2.type=v.mimeType;vid.appendChild(src2);
-        const foot=document.createElement('div');foot.className='pic-cfoot';
-        foot.innerHTML=`<span>${escH(prompt)}</span>
-          <div class="card-ctx">
-            <button class="card-ctx-btn" onclick="toggleCtxMenu(this)">⋮</button>
-            <div class="card-ctx-drop">
-              <div class="card-ctx-item" onclick="this.closest('.pic-card').querySelector('video').requestFullscreen?.();closeCtx()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-                <span di="fscrn">To'liq ekran</span>
-              </div>
-              <div class="card-ctx-sep"></div>
-              <div class="card-ctx-item" onclick="dlFile('${escH(src)}','${dlName}');closeCtx()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span di="dl">Yuklab olish</span>
-              </div>
-            </div>
-          </div>`;
-        card.appendChild(vid);card.appendChild(foot);
-      } else if(v.gcsUri){
-        card.innerHTML=`<div style="padding:14px;font-size:12px;color:var(--t2)">GCS: ${escH(v.gcsUri)}</div>
-          <div class="pic-cfoot"><span>${escH(prompt)}</span></div>`;
-      }
-      grid.prepend(card);
+      const item={id:'vid'+Date.now()+Math.random().toString(36).slice(2),prompt,ts:Date.now(),
+        url:v.url||null,base64:v.base64||null,mimeType:v.mimeType||'video/mp4'};
+      GEN_STORE.videos.push(item);
+      grid.prepend(createVideoCard(item));
     });
-    toast(t('video_ok'));
+    saveGenStore();
+    updateGalleryHdr('videos');
+    notify('Video tayyor',`"${prompt.slice(0,40)}" tayyor bo'ldi`);
+    toast('Video yaratildi');
   }catch(err){setGenLoading('vidBtn','vidStatus',false);toast(err.message,true);}
 }
 
 async function genMusic(){
   const prompt=document.getElementById('musPrompt').value.trim();
-  if(!prompt){toast(t('prmpt'),true);return;}
+  if(!prompt){toast('Prompt kiriting',true);return;}
   const dur=parseInt(getCsel('musDurCsel'));
-  setGenLoading('musBtn','musStatus',true,t('genmu'));
+  setGenLoading('musBtn','musStatus',true,'Musiqa yaratilmoqda...');
+  requestNotifPerm();
   try{
     const tracks=await generateMusic(prompt,dur);
     setGenLoading('musBtn','musStatus',false);
     const grid=document.getElementById('musGrid');
     tracks.forEach(tr=>{
-      const src=`data:${tr.mimeType};base64,${tr.base64}`;
-      const card=document.createElement('div');card.className='mus-card';
-      const audioEl=document.createElement('audio');audioEl.controls=true;audioEl.style.width='100%';
-      const srcEl2=document.createElement('source');srcEl2.src=src;srcEl2.type=tr.mimeType;audioEl.appendChild(srcEl2);
-      const musFootEl=document.createElement('div');musFootEl.className='pic-cfoot';musFootEl.style.padding='8px 10px 8px';
-      const musLbl=document.createElement('span');musLbl.className='mus-cfoot';musLbl.textContent=prompt;
-      const ctxWrap=document.createElement('div');ctxWrap.className='card-ctx';
-      const ctxBtn=document.createElement('button');ctxBtn.className='card-ctx-btn';ctxBtn.textContent='⋮';ctxBtn.onclick=()=>toggleCtxMenu(ctxBtn);
-      const ctxDrop=document.createElement('div');ctxDrop.className='card-ctx-drop';
-      const dlItem=document.createElement('div');dlItem.className='card-ctx-item';
-      dlItem.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span di="dl">Yuklab olish</span>';
-      dlItem.onclick=()=>{dlFile(src,'musiqa.wav');closeCtx();};
-      const sepEl=document.createElement('div');sepEl.className='card-ctx-sep';
-      const cpItem=document.createElement('div');cpItem.className='card-ctx-item';
-      cpItem.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg><span di="cpprmt">Promptni nusxalash</span>';
-      cpItem.onclick=()=>{cpText(prompt);closeCtx();};
-      ctxDrop.appendChild(dlItem);ctxDrop.appendChild(sepEl);ctxDrop.appendChild(cpItem);
-      ctxWrap.appendChild(ctxBtn);ctxWrap.appendChild(ctxDrop);
-      musFootEl.appendChild(musLbl);musFootEl.appendChild(ctxWrap);
-      card.appendChild(audioEl);card.appendChild(musFootEl);
-      grid.prepend(card);
+      const item={id:'mus'+Date.now()+Math.random().toString(36).slice(2),base64:tr.base64,mimeType:tr.mimeType,prompt,ts:Date.now()};
+      GEN_STORE.music.push(item);
+      grid.prepend(createMusicCard(item));
     });
-    toast(t('musiqa_ok'));
+    saveGenStore();
+    updateGalleryHdr('music');
+    notify('Musiqa tayyor',`"${prompt.slice(0,40)}" tayyor bo'ldi`);
+    toast('Musiqa yaratildi');
   }catch(err){setGenLoading('musBtn','musStatus',false);toast(err.message,true);}
 }
 
+// ═══════════════════════════════════════════
+// PIC MODE TOGGLE
+// ═══════════════════════════════════════════
+function setPicMode(mode){
+  const isCreate=mode==='create';
+  document.getElementById('picCreateForm').style.display=isCreate?'':'none';
+  document.getElementById('picAnalyzeForm').style.display=isCreate?'none':'';
+  document.getElementById('picModeCreate').classList.toggle('on',isCreate);
+  document.getElementById('picModeAnalyze').classList.toggle('on',!isCreate);
+}
+
+// ═══════════════════════════════════════════
+// IMAGE ANALYSIS
+// ═══════════════════════════════════════════
+let analyzeImgData=null;
+function handleAnalyzeImg(files){
+  if(!files||!files.length)return;
+  const file=files[0];
+  if(!file.type.startsWith('image/')){toast('Faqat rasm yuklang',true);return;}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    analyzeImgData={base64:e.target.result.split(',')[1],mimeType:file.type};
+    const prev=document.getElementById('uploadPreview');
+    const ph=document.getElementById('uploadPh');
+    prev.src=e.target.result;prev.style.display='block';
+    ph.style.display='none';
+    document.getElementById('analyzeUpload').classList.add('has-img');
+  };
+  reader.readAsDataURL(file);
+}
+async function analyzeImage(){
+  if(!analyzeImgData){toast('Avval rasm yuklang',true);return;}
+  const prompt=document.getElementById('analyzePrompt').value.trim()||'Bu rasmda nima bor? Batafsil tasvirla.';
+  setGenLoading('analyzeBtn','analyzeStatus',true,'Tahlil qilinmoqda...');
+  const res=document.getElementById('analyzeResult');
+  res.style.display='none';res.innerHTML='';
+  try{
+    const r=await fetch(`${BACKEND_URL}/api/gemini`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'gemini-2.0-flash',stream:false,
+        contents:[{role:'user',parts:[
+          {inlineData:{mimeType:analyzeImgData.mimeType,data:analyzeImgData.base64}},
+          {text:prompt}
+        ]}],
+        generationConfig:{temperature:.4,maxOutputTokens:1024}
+      })
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||`HTTP ${r.status}`);
+    const text=d.candidates?.[0]?.content?.parts?.[0]?.text||'Javob yo\'q';
+    setGenLoading('analyzeBtn','analyzeStatus',false);
+    res.innerHTML=parseMd(text);res.style.display='block';
+    if(window.Prism)Prism.highlightAllUnder(res);
+  }catch(err){setGenLoading('analyzeBtn','analyzeStatus',false);toast(err.message,true);}
+}
+
+// ═══════════════════════════════════════════
+// GALLERY HELPERS
+// ═══════════════════════════════════════════
+function updateGalleryHdr(type){
+  const map={images:'picGalHdr',videos:'vidGalHdr',music:'musGalHdr'};
+  const hdr=document.getElementById(map[type]);
+  if(hdr)hdr.classList.toggle('show',GEN_STORE[type].length>0);
+}
+function deleteGenItem(type,id){
+  GEN_STORE[type]=GEN_STORE[type].filter(item=>item.id!==id);
+  saveGenStore();
+  const el=document.querySelector(`[data-gen-id="${id}"]`);
+  if(el)el.remove();
+  updateGalleryHdr(type);
+}
+function clearGenType(type){
+  GEN_STORE[type]=[];
+  saveGenStore();
+  const gridMap={images:'picGrid',videos:'vidGrid',music:'musGrid'};
+  const grid=document.getElementById(gridMap[type]);
+  if(grid)grid.innerHTML='';
+  updateGalleryHdr(type);
+  toast('Tozalandi');
+}
+
+// ═══════════════════════════════════════════
+// CARD CREATORS
+// ═══════════════════════════════════════════
+const DL_SVG=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+const DEL_SVG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
+
+function createImageCard(img){
+  const src=`data:${img.mimeType};base64,${img.base64}`;
+  const card=document.createElement('div');
+  card.className='pic-card card-wrap';card.dataset.genId=img.id;
+  card.innerHTML=`<button class="card-del" onclick="deleteGenItem('images','${img.id}')" title="O'chirish">${DEL_SVG}</button>
+    <img src="${src}" alt="${escH(img.prompt)}" onclick="viewImg('${src}')">
+    <div class="pic-cfoot">
+      <span title="${escH(img.prompt)}">${escH(img.prompt)}</span>
+      <button class="pic-dl" title="Yuklab olish" onclick="dlFile('${src}','rasm.png')">${DL_SVG}</button>
+    </div>`;
+  return card;
+}
+function createMusicCard(tr){
+  const src=`data:${tr.mimeType};base64,${tr.base64}`;
+  const card=document.createElement('div');
+  card.className='mus-card card-wrap';card.dataset.genId=tr.id;
+  card.innerHTML=`<button class="card-del" onclick="deleteGenItem('music','${tr.id}')" title="O'chirish">${DEL_SVG}</button>
+    <audio controls><source src="${src}" type="${tr.mimeType}"></audio>
+    <div class="pic-cfoot" style="padding:0">
+      <span class="mus-cfoot" title="${escH(tr.prompt)}">${escH(tr.prompt)}</span>
+      <button class="pic-dl" onclick="dlFile('${src}','musiqa.wav')" title="Yuklab olish">${DL_SVG}</button>
+    </div>`;
+  return card;
+}
+function createVideoCard(v){
+  const card=document.createElement('div');
+  card.className='pic-card card-wrap';card.dataset.genId=v.id;
+  let vidHtml='',dlBtn='';
+  if(v.url){
+    vidHtml=`<video controls style="width:100%;display:block;border-radius:8px 8px 0 0"><source src="${escH(v.url)}" type="video/mp4"></video>`;
+    dlBtn=`onclick="window.open('${escH(v.url)}','_blank')"`;
+  } else if(v.base64){
+    const src=`data:${v.mimeType||'video/mp4'};base64,${v.base64}`;
+    vidHtml=`<video controls style="width:100%;display:block;border-radius:8px 8px 0 0"><source src="${src}" type="${v.mimeType||'video/mp4'}"></video>`;
+    dlBtn=`onclick="dlFile('data:${v.mimeType||'video/mp4'};base64,${v.base64}','video.mp4')"`;
+  }
+  card.innerHTML=`<button class="card-del" onclick="deleteGenItem('videos','${v.id}')" title="O'chirish">${DEL_SVG}</button>
+    ${vidHtml}
+    <div class="pic-cfoot"><span>${escH(v.prompt||'')}</span>
+      <button class="pic-dl" ${dlBtn} title="Yuklab olish">${DL_SVG}</button>
+    </div>`;
+  return card;
+}
+
 function viewImg(src){
-  document.querySelectorAll('.lb-ov').forEach(o=>o.remove());
   const ov=document.createElement('div');ov.className='lb-ov';
   const img=document.createElement('img');img.src=src;
-  ov.appendChild(img);ov.onclick=()=>ov.remove();
+  ov.appendChild(img);
+  const onKey=e=>{if(e.key==='Escape'){ov.remove();document.removeEventListener('keydown',onKey);}};
+  ov.onclick=()=>{ov.remove();document.removeEventListener('keydown',onKey);};
+  document.addEventListener('keydown',onKey);
   document.body.appendChild(ov);
 }
 function dlFile(src,name){
@@ -1975,13 +2565,15 @@ function setFavicon(){
 }
 
 window.onload=function(){
-  loadStorage();loadMemory();
+  loadStorage();loadMemory();loadGenStore();loadSettings();
   setTheme('dark');setLang('uz');syncPP();
   setFavicon();
   updateLogos();
   renderChatList();
+  renderTemplates();
+  restoreGenStore();
   const ta=document.getElementById('inta');
-  ta.addEventListener('input',function(){adjustTA(this);toggleSend();});
+  ta.addEventListener('input',function(){adjustTA(this);toggleSend();updateCharCounter();});
   ta.addEventListener('keydown',hKey);
   ta.addEventListener('paste',e=>{
     const items=e.clipboardData?.items;
@@ -1999,6 +2591,38 @@ window.onload=function(){
   window.matchMedia('(prefers-color-scheme:light)').addEventListener('change',()=>{
     if(TH==='system'){updateLogos();}
   });
+  // Keyboard shortcuts
+  document.addEventListener('keydown',e=>{
+    const mod=e.ctrlKey||e.metaKey;
+    if(mod&&e.key==='k'){
+      e.preventDefault();
+      const inp=document.getElementById('searchInp');
+      if(inp){if(!SB&&!isMob())toggleSB();inp.focus();inp.select();}
+    }
+    if(mod&&e.key==='n'){
+      e.preventDefault();newChat();
+    }
+    if(e.key==='Escape'){
+      const inp=document.getElementById('searchInp');
+      if(inp&&document.activeElement===inp){clearSearch();inp.blur();}
+    }
+  });
+  // iOS / Telegram WebView tap fix
+  // Empty touchstart listener activates click events on div elements inside overflow:scroll containers
+  ['sidebar','sbscr','ppPanel','pp-body'].forEach(id=>{
+    const el=document.getElementById(id)||document.querySelector('.'+id);
+    if(el)el.addEventListener('touchstart',function(){},{passive:true});
+  });
+  // Also apply touch-action:manipulation to all remaining interactive elements at runtime
+  document.querySelectorAll('.tpl-card,.mode-tab,.gen-btn,.iab,.ib,.sndb,.stop-btn,.pp-row,.swb,.pp-swb,.aiac,.chat-act,.mu-act,.pic-dl,.card-del,.gal-clear,.pp-reset,.mem-add-btn,.mem-del,.pp-cls,.uav,.scroll-btn,.export-btn,.mpill,.csel-btn,.search-clear,.err-card-retry').forEach(el=>{
+    el.style.touchAction='manipulation';
+    el.style.webkitTapHighlightColor='transparent';
+  });
+
+  // PWA Service Worker
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  }
 };
 </script>
 </body>
