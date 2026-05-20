@@ -1,6 +1,6 @@
 'use server';
 
-import db from '@/lib/db';
+import { prisma as db } from '@/lib/prisma';
 import { Tournament } from '@/lib/esport-types';
 
 const AUTUMN_2025: Tournament = {
@@ -84,7 +84,7 @@ export const TournamentsRepository = {
                     teams: true,
                     matches: { include: { teamA: true, teamB: true, winner: true } },
                     standings: true
-                }
+                } as any
             });
             if (tournaments.length === 0) return [AUTUMN_2025];
             return tournaments.map(mapPrismaToTournament);
@@ -103,8 +103,8 @@ export const TournamentsRepository = {
                 include: {
                     teams: true,
                     matches: { include: { teamA: true, teamB: true, winner: true } },
-                    standings: true
-                }
+                    standings: true,
+                } as any
             });
             if (!tournament) return undefined;
             return mapPrismaToTournament(tournament);

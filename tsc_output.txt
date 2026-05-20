@@ -1,6 +1,0 @@
-src/lib/repositories/players.repository.ts(28,39): error TS2339: Property 'playerProfile' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
-src/lib/repositories/players.repository.ts(39,38): error TS2339: Property 'playerProfile' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
-src/lib/repositories/teams.repository.ts(41,43): error TS2353: Object literal may only specify known properties, and 'requests' does not exist in type 'TeamInclude<DefaultArgs>'.
-src/lib/repositories/teams.repository.ts(55,43): error TS2353: Object literal may only specify known properties, and 'requests' does not exist in type 'TeamInclude<DefaultArgs>'.
-src/lib/repositories/tournaments.repository.ts(85,21): error TS2353: Object literal may only specify known properties, and 'matches' does not exist in type 'TournamentInclude<DefaultArgs>'.
-src/lib/repositories/tournaments.repository.ts(105,21): error TS2353: Object literal may only specify known properties, and 'matches' does not exist in type 'TournamentInclude<DefaultArgs>'.

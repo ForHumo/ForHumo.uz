@@ -1,6 +1,0 @@
-src/app/api/tournaments/[id]/register/route.ts(57,13): error TS2322: Type '{ tournamentId: string; teamId: any; }' is not assignable to type '(Without<TournamentTeamCreateInput, TournamentTeamUncheckedCreateInput> & TournamentTeamUncheckedCreateInput) | (Without<...> & TournamentTeamCreateInput)'.
-  Type '{ tournamentId: string; teamId: any; }' is not assignable to type 'Without<TournamentTeamCreateInput, TournamentTeamUncheckedCreateInput> & TournamentTeamUncheckedCreateInput'.
-    Property 'snapshotName' is missing in type '{ tournamentId: string; teamId: any; }' but required in type 'TournamentTeamUncheckedCreateInput'.
-src/app/api/tournaments/create/route.ts(27,13): error TS2322: Type '{ name: any; slug: any; game: any; maxTeams: number; startDate: Date; status: "UPCOMING"; }' is not assignable to type '(Without<TournamentCreateInput, TournamentUncheckedCreateInput> & TournamentUncheckedCreateInput) | (Without<...> & TournamentCreateInput)'.
-  Type '{ name: any; slug: any; game: any; maxTeams: number; startDate: Date; status: "UPCOMING"; }' is not assignable to type 'Without<TournamentUncheckedCreateInput, TournamentCreateInput> & TournamentCreateInput'.
-    Type '{ name: any; slug: any; game: any; maxTeams: number; startDate: Date; status: "UPCOMING"; }' is missing the following properties from type 'TournamentCreateInput': season, prizePool

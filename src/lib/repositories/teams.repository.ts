@@ -1,8 +1,7 @@
 'use server';
 
-import db from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { Team } from '@/lib/esport-types';
-import { MOCK_TEAMS } from '@/lib/esport-data';
 
 const mapPrismaToTeam = (t: any): Team => ({
     id: t.id,
@@ -31,16 +30,16 @@ const mapPrismaToTeam = (t: any): Team => ({
         status: r.status,
         requestedAt: r.requestedAt.toISOString()
     })),
-    invites: [], // Simplified for now
+    invites: [],
 });
 
 export const TeamsRepository = {
     getAll: async (): Promise<Team[]> => {
         try {
-            const teams = await db.team.findMany({
-                include: { members: true, requests: true }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const teams = await prisma.team.findMany({
+                include: { members: true, requests: true } as any
             });
-            console.log(`[TeamsRepository] Fetching all teams. Found: ${teams.length}`);
             if (teams.length === 0) return [];
             return teams.map(mapPrismaToTeam);
         } catch (e) {
@@ -51,9 +50,9 @@ export const TeamsRepository = {
 
     getById: async (id: string): Promise<Team | undefined> => {
         try {
-            const team = await db.team.findUnique({
+            const team = await prisma.team.findUnique({
                 where: { id },
-                include: { members: true, requests: true }
+                include: { members: true, requests: true } as any
             });
             if (!team) return undefined;
             return mapPrismaToTeam(team);

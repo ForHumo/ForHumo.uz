@@ -1,10 +1,9 @@
 'use server';
 
-import db from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { Player } from '@/lib/esport-types';
-import { MOCK_PLAYERS } from '@/lib/esport-data';
 
-// Helper to map Prisma User to our Player type
+// Helper to map Prisma PlayerProfile to our Player type
 const mapPrismaToPlayer = (p: any): Player => ({
     id: p.id,
     nickname: p.nickname,
@@ -25,19 +24,21 @@ const mapPrismaToPlayer = (p: any): Player => ({
 export const PlayersRepository = {
     getAll: async (): Promise<Player[]> => {
         try {
-            const profiles = await db.playerProfile.findMany();
-            if (profiles.length === 0) return []; // Fallback for demo
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const profiles = await (prisma as any).playerProfile.findMany();
+            if (profiles.length === 0) return [];
             return profiles.map(mapPrismaToPlayer);
         } catch (e) {
             console.error("DB Error (Players):", e);
-            return []; // Fallback
+            return [];
         }
     },
 
     getById: async (id: string): Promise<Player | undefined> => {
         try {
-            const profile = await db.playerProfile.findUnique({ where: { id } });
-            if (!profile) return undefined; // Fallback
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const profile = await (prisma as any).playerProfile.findUnique({ where: { id } });
+            if (!profile) return undefined;
             return mapPrismaToPlayer(profile);
         } catch (e) {
             return undefined;

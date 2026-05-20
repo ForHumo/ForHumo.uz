@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic';
 
 import { useTranslations } from 'next-intl';
 import { TeamsGrid } from '@/components/esport/teams/TeamsGrid';
-import { DbDebugger } from '@/components/debug/DbDebugger';
 
 export default function TeamsPage() {
     const t = useTranslations('Esport');
