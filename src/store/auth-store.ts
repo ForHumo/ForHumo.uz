@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { CurrentUser } from '@/lib/esport-types';
-import { MOCK_USERS } from '@/lib/mock-users';
 
 interface AuthState {
     currentUser: CurrentUser | null;

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,28 +9,19 @@ export async function GET(req: Request) {
 
     if (confirm !== 'YES') {
         return NextResponse.json({
-            error: "Safety Lock Active. To delete ALL teams, visit this URL with '?confirm=YES' at the end."
+            error: "Safety Lock Active. Add '?confirm=YES' to proceed."
         }, { status: 400 });
     }
 
     try {
-        const prisma = new PrismaClient();
+        await prisma.joinRequest.deleteMany({});
+        await prisma.teamMember.deleteMany({});
+        const deleted = await prisma.team.deleteMany({});
 
-        try {
-            // Delete in order of dependencies (though cascade might handle it, better explicit)
-            await prisma.joinRequest.deleteMany({});
-            await prisma.teamMember.deleteMany({});
-            const deleted = await prisma.team.deleteMany({});
-
-            return NextResponse.json({
-                success: true,
-                message: `Deleted ${deleted.count} teams. Database is clean.`,
-                nextStep: "Go back to /esport/teams and create your fresh team!"
-            });
-
-        } finally {
-            await prisma.$disconnect();
-        }
+        return NextResponse.json({
+            success: true,
+            message: `Deleted ${deleted.count} teams. Database is clean.`
+        });
 
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
