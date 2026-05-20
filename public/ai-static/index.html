@@ -701,7 +701,7 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
 <aside class="sidebar" id="sidebar">
   <div class="sb-head">
     <a class="sb-logo" onclick="newChat();return false;" href="#">
-      <img id="sidebarLogo" class="logo-img" src="logo-white.png" alt="Humo AI" onerror="this.style.display='none'">
+      <svg class="sb-logo" style="width:28px;height:28px;flex-shrink:0;color:var(--logo-color);transition:color .3s;" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M68 6L40 54L82 54L100 98L118 54L160 54L132 6L108 36L100 18L92 36Z" fill="currentColor"/><path d="M40 54L6 138L52 138L70 96L82 54Z" fill="currentColor"/><path d="M160 54L194 138L148 138L130 96L118 54Z" fill="currentColor"/><path d="M52 138L22 220L78 220L100 170L122 220L178 220L148 138L120 166L100 140L80 166Z" fill="currentColor"/></svg>
       <span>Humo AI</span>
     </a>
     <button class="ib" onclick="toggleSB()">
@@ -790,7 +790,7 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
   <!-- WELCOME -->
   <div class="welcome" id="welcome">
     <div class="lblk">
-      <img id="welcomeLogo" class="logo-img logo-float" src="logo-white.png" alt="Humo AI" onerror="this.style.display='none'">
+      <svg id="welcomeLogo" class="logo-float" style="width:88px;height:88px;color:var(--logo-color);transition:color .3s;" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M68 6L40 54L82 54L100 98L118 54L160 54L132 6L108 36L100 18L92 36Z" fill="currentColor"/><path d="M40 54L6 138L52 138L70 96L82 54Z" fill="currentColor"/><path d="M160 54L194 138L148 138L130 96L118 54Z" fill="currentColor"/><path d="M52 138L22 220L78 220L100 170L122 220L178 220L148 138L120 166L100 140L80 166Z" fill="currentColor"/></svg>
     </div>
     <p class="gsub" id="gsub">Humo AI'ga xush kelibsiz</p>
     <h1 class="gmain" id="gmain">Bugun nima qilamiz?</h1>
@@ -834,10 +834,10 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
             <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="csel-drop">
-            <div class="csel-opt sel" onclick="selectCsel('codeStyleCsel','clean','Toza kod')">Toza kod</div>
-            <div class="csel-opt" onclick="selectCsel('codeStyleCsel','commented','Izohli kod')">Izohli kod</div>
-            <div class="csel-opt" onclick="selectCsel('codeStyleCsel','optimized','Optimallashtirilgan')">Optimallashtirilgan</div>
-            <div class="csel-opt" onclick="selectCsel('codeStyleCsel','beginner','Boshluvchilar uchun')">Boshluvchilar uchun</div>
+            <div class="csel-opt sel" data-val="clean" data-key="code_clean" onclick="selectCsel('codeStyleCsel','clean','code_clean')">Toza kod</div>
+            <div class="csel-opt" data-val="commented" data-key="code_commented" onclick="selectCsel('codeStyleCsel','commented','code_commented')">Izohli kod</div>
+            <div class="csel-opt" data-val="optimized" data-key="code_optimized" onclick="selectCsel('codeStyleCsel','optimized','code_optimized')">Optimallashtirilgan</div>
+            <div class="csel-opt" data-val="beginner" data-key="code_beginner" onclick="selectCsel('codeStyleCsel','beginner','code_beginner')">Boshluvchilar uchun</div>
           </div>
         </div>
         <button class="gen-btn" id="codeBtn" onclick="genCode()">
@@ -873,10 +873,10 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
               <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
             </button>
             <div class="csel-drop">
-              <div class="csel-opt sel" onclick="selectCsel('picARCsel','1:1','1:1 — Kvadrat')">1:1 — Kvadrat</div>
-              <div class="csel-opt" onclick="selectCsel('picARCsel','16:9','16:9 — Keng')">16:9 — Keng</div>
-              <div class="csel-opt" onclick="selectCsel('picARCsel','9:16','9:16 — Vertikal')">9:16 — Vertikal</div>
-              <div class="csel-opt" onclick="selectCsel('picARCsel','4:3','4:3 — Klassik')">4:3 — Klassik</div>
+              <div class="csel-opt sel" data-val="1:1" data-key="ar_square" onclick="selectCsel('picARCsel','1:1','ar_square')">1:1 — Kvadrat</div>
+              <div class="csel-opt" data-val="16:9" data-key="ar_wide" onclick="selectCsel('picARCsel','16:9','ar_wide')">16:9 — Keng</div>
+              <div class="csel-opt" data-val="9:16" data-key="ar_vertical" onclick="selectCsel('picARCsel','9:16','ar_vertical')">9:16 — Vertikal</div>
+              <div class="csel-opt" data-val="4:3" data-key="ar_classic" onclick="selectCsel('picARCsel','4:3','ar_classic')">4:3 — Klassik</div>
             </div>
           </div>
           <div class="csel" id="picCountCsel" data-val="1">
@@ -885,9 +885,9 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
               <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
             </button>
             <div class="csel-drop">
-              <div class="csel-opt sel" onclick="selectCsel('picCountCsel','1','1 rasm')">1 rasm</div>
-              <div class="csel-opt" onclick="selectCsel('picCountCsel','2','2 rasm')">2 rasm</div>
-              <div class="csel-opt" onclick="selectCsel('picCountCsel','4','4 rasm')">4 rasm</div>
+              <div class="csel-opt sel" data-val="1" data-key="count_1_img" onclick="selectCsel('picCountCsel','1','count_1_img')">1 rasm</div>
+              <div class="csel-opt" data-val="2" data-key="count_2_img" onclick="selectCsel('picCountCsel','2','count_2_img')">2 rasm</div>
+              <div class="csel-opt" data-val="4" data-key="count_4_img" onclick="selectCsel('picCountCsel','4','count_4_img')">4 rasm</div>
             </div>
           </div>
           <button class="gen-btn" id="picBtn" onclick="genImage()">
@@ -948,8 +948,8 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
             <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="csel-drop">
-            <div class="csel-opt sel" onclick="selectCsel('vidDurCsel','5','5 soniya')">5 soniya</div>
-            <div class="csel-opt" onclick="selectCsel('vidDurCsel','8','8 soniya')">8 soniya</div>
+            <div class="csel-opt sel" data-val="5" data-key="dur_5s" onclick="selectCsel('vidDurCsel','5','dur_5s')">5 soniya</div>
+            <div class="csel-opt" data-val="8" data-key="dur_8s" onclick="selectCsel('vidDurCsel','8','dur_8s')">8 soniya</div>
           </div>
         </div>
         <div class="csel" id="vidARCsel" data-val="16:9">
@@ -958,9 +958,9 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
             <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="csel-drop">
-            <div class="csel-opt sel" onclick="selectCsel('vidARCsel','16:9','16:9 — Gorizontal')">16:9 — Gorizontal</div>
-            <div class="csel-opt" onclick="selectCsel('vidARCsel','9:16','9:16 — Vertikal')">9:16 — Vertikal</div>
-            <div class="csel-opt" onclick="selectCsel('vidARCsel','1:1','1:1 — Kvadrat')">1:1 — Kvadrat</div>
+            <div class="csel-opt sel" data-val="16:9" data-key="ar_horizontal" onclick="selectCsel('vidARCsel','16:9','ar_horizontal')">16:9 — Gorizontal</div>
+            <div class="csel-opt" data-val="9:16" data-key="ar_vertical" onclick="selectCsel('vidARCsel','9:16','ar_vertical')">9:16 — Vertikal</div>
+            <div class="csel-opt" data-val="1:1" data-key="ar_square" onclick="selectCsel('vidARCsel','1:1','ar_square')">1:1 — Kvadrat</div>
           </div>
         </div>
         <button class="gen-btn" id="vidBtn" onclick="genVideo()">
@@ -990,8 +990,8 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
             <svg class="csel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="csel-drop">
-            <div class="csel-opt sel" onclick="selectCsel('musDurCsel','30','30 soniya')">30 soniya</div>
-            <div class="csel-opt" onclick="selectCsel('musDurCsel','60','60 soniya')">60 soniya</div>
+            <div class="csel-opt sel" data-val="30" data-key="dur_30s" onclick="selectCsel('musDurCsel','30','dur_30s')">30 soniya</div>
+            <div class="csel-opt" data-val="60" data-key="dur_60s" onclick="selectCsel('musDurCsel','60','dur_60s')">60 soniya</div>
           </div>
         </div>
         <button class="gen-btn" id="musBtn" onclick="genMusic()">
@@ -1073,7 +1073,11 @@ const T={
       aicontext_lbl:"AI ga beriladigan savol",mem_copy:"Nusxa olish",mem_copied:"Nusxalandi!",
       ai_settings:"AI Sozlamalari",temp_lbl:"Ijodkorlik (Temperature)",temp_low:"Aniq",temp_high:"Ijodkor",
       tokens_lbl:"Javob uzunligi",tokens_low:"Qisqa",tokens_high:"Uzun",reset_def:"Standartga qaytarish",
-      copyright:"© 2026 For Humo · Barcha huquqlar himoyalangan"},
+      copyright:"© 2026 For Humo · Barcha huquqlar himoyalangan",
+      code_clean:"Toza kod",code_commented:"Izohli kod",code_optimized:"Optimallashtirilgan",code_beginner:"Boshluvchilar uchun",
+      ar_square:"1:1 — Kvadrat",ar_wide:"16:9 — Keng",ar_vertical:"9:16 — Vertikal",ar_classic:"4:3 — Klassik",ar_horizontal:"16:9 — Gorizontal",
+      count_1_img:"1 rasm",count_2_img:"2 rasm",count_4_img:"4 rasm",
+      dur_5s:"5 soniya",dur_8s:"8 soniya",dur_30s:"30 soniya",dur_60s:"60 soniya"},
   ru:{nc:"Новый чат",mc:"Мой контент",
       code:"Код",pic:"Изображение",vid:"Видео",mus:"Музыка",
       ch:"Чаты",set:"Настройки и помощь",
@@ -1100,7 +1104,11 @@ const T={
       aicontext_lbl:"Контекст для AI",mem_copy:"Копировать",mem_copied:"Скопировано!",
       ai_settings:"Настройки AI",temp_lbl:"Креативность (Temperature)",temp_low:"Точно",temp_high:"Творчески",
       tokens_lbl:"Длина ответа",tokens_low:"Кратко",tokens_high:"Подробно",reset_def:"Сбросить",
-      copyright:"© 2026 For Humo · Все права защищены"},
+      copyright:"© 2026 For Humo · Все права защищены",
+      code_clean:"Чистый код",code_commented:"С комментариями",code_optimized:"Оптимизированный",code_beginner:"Для начинающих",
+      ar_square:"1:1 — Квадрат",ar_wide:"16:9 — Широкий",ar_vertical:"9:16 — Вертикальный",ar_classic:"4:3 — Классика",ar_horizontal:"16:9 — Горизонтальный",
+      count_1_img:"1 фото",count_2_img:"2 фото",count_4_img:"4 фото",
+      dur_5s:"5 секунд",dur_8s:"8 секунд",dur_30s:"30 секунд",dur_60s:"60 секунд"},
   en:{nc:"New chat",mc:"My content",code:"Code",pic:"Image",vid:"Video",mus:"Music",
       ch:"Chats",set:"Settings & help",
       gs:"Welcome to Humo AI",gm:"What shall we do today?",
@@ -1126,7 +1134,11 @@ const T={
       aicontext_lbl:"AI context",mem_copy:"Copy",mem_copied:"Copied!",
       ai_settings:"AI Settings",temp_lbl:"Creativity (Temperature)",temp_low:"Precise",temp_high:"Creative",
       tokens_lbl:"Response length",tokens_low:"Short",tokens_high:"Long",reset_def:"Reset to defaults",
-      copyright:"© 2026 For Humo · All rights reserved"}
+      copyright:"© 2026 For Humo · All rights reserved",
+      code_clean:"Clean code",code_commented:"With comments",code_optimized:"Optimized",code_beginner:"Beginner-friendly",
+      ar_square:"1:1 — Square",ar_wide:"16:9 — Wide",ar_vertical:"9:16 — Vertical",ar_classic:"4:3 — Classic",ar_horizontal:"16:9 — Horizontal",
+      count_1_img:"1 image",count_2_img:"2 images",count_4_img:"4 images",
+      dur_5s:"5 seconds",dur_8s:"8 seconds",dur_30s:"30 seconds",dur_60s:"60 seconds"}
 };
 let L='uz',TH='dark',SB=true,VIEW='home';
 const t=k=>T[L][k]||k;
@@ -1159,6 +1171,10 @@ function applyLang(){
   // Placeholders
   const phs={codePrompt:'code_ph',picPrompt:'pic_ph',analyzePrompt:'analyze_ph',vidPrompt:'vid_ph',musPrompt:'mus_ph'};
   Object.entries(phs).forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.placeholder=t(key);});
+  // Dropdown option texts
+  document.querySelectorAll('.csel-opt[data-key]').forEach(o=>{const k=o.getAttribute('data-key');if(k)o.textContent=t(k);});
+  // Update each csel button label from selected opt
+  document.querySelectorAll('.csel').forEach(cs=>{const sel=cs.querySelector('.csel-opt.sel');if(sel){const k=sel.getAttribute('data-key');if(k)cs.querySelector('.csel-btn span').textContent=t(k);}});
   renderChatList();
   renderMemList();
   renderTemplates();
@@ -1173,12 +1189,7 @@ function setTheme(th){
   document.querySelectorAll('.swb[dt]').forEach(b=>b.classList.toggle('on',b.getAttribute('dt')===th));
   syncPP();updateLogos();
 }
-function updateLogos(){
-  const eff=TH==='system'?(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'):TH;
-  const src=eff==='light'?'logo-black.avif':'logo-white.png';
-  document.querySelectorAll('#sidebarLogo,#welcomeLogo').forEach(el=>el.src=src);
-  document.querySelectorAll('img.ailsm').forEach(el=>el.src=src);
-}
+function updateLogos(){}
 function syncPP(){
   const tm={system:'ppSys',light:'ppDay',dark:'ppNight'};
   const lm={uz:'ppUZ',ru:'ppRU',en:'ppEN'};
@@ -1262,11 +1273,12 @@ function toggleCsel(id){
   document.querySelectorAll('.csel.open').forEach(c=>c.classList.remove('open'));
   if(!wasOpen)el.classList.add('open');
 }
-function selectCsel(id,val,label){
+function selectCsel(id,val,keyOrLabel){
   const el=document.getElementById(id);
   el.dataset.val=val;
-  el.querySelector('.csel-btn span').textContent=label;
-  el.querySelectorAll('.csel-opt').forEach(o=>o.classList.toggle('sel',o.textContent.trim()===label));
+  const displayLabel=T[L][keyOrLabel]||keyOrLabel;
+  el.querySelector('.csel-btn span').textContent=displayLabel;
+  el.querySelectorAll('.csel-opt').forEach(o=>o.classList.toggle('sel',o.dataset.val===val));
   el.classList.remove('open');
 }
 function getCsel(id){return document.getElementById(id)?.dataset.val||'';}
@@ -1551,9 +1563,7 @@ function toast(msg,err=false){
   setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300);},3000);
 }
 function mkSVG(cls){
-  const eff=TH==='system'?(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'):TH;
-  const src=eff==='light'?'logo-black.avif':'logo-white.png';
-  return`<img class="${cls} logo-img" src="${src}" alt="" style="object-fit:contain;flex-shrink:0;">`;
+  return`<svg class="${cls}" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M68 6L40 54L82 54L100 98L118 54L160 54L132 6L108 36L100 18L92 36Z" fill="currentColor"/><path d="M40 54L6 138L52 138L70 96L82 54Z" fill="currentColor"/><path d="M160 54L194 138L148 138L130 96L118 54Z" fill="currentColor"/><path d="M52 138L22 220L78 220L100 170L122 220L178 220L148 138L120 166L100 140L80 166Z" fill="currentColor"/></svg>`;
 }
 function mkActs(){
   return`<div class="aiacts">
