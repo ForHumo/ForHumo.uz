@@ -13,10 +13,17 @@ export function Header() {
     const [isOpen, setIsOpen] = useState(false);
     const t = useTranslations("Navigation");
 
-    const navItems = [
+    const primaryNavItems = [
         { name: t("home"), href: "/" },
-        { name: t("ecosystem"), href: "#ecosystem" },
+        { name: t("projects"), href: "/#ecosystem" },
+    ];
+
+    const secondaryNavItems = [
+        { name: t("nexus"), href: "/nexus" },
         { name: t("esport"), href: "/esport" },
+        { name: t("market"), href: "/coming-soon" },
+        { name: t("pay"), href: "/coming-soon" },
+        { name: t("support"), href: "/coming-soon" },
     ];
 
     return (
@@ -43,12 +50,22 @@ export function Header() {
                 </div>
 
                 {/* Desktop Navigation */}
-                <nav className="hidden md:flex items-center gap-6">
-                    {navItems.map((item) => (
+                <nav className="hidden md:flex items-center gap-1">
+                    {primaryNavItems.map((item) => (
                         <Link
-                            key={item.href}
+                            key={item.name}
                             href={item.href}
-                            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-all hover:translate-y-[-1px]"
+                            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-all hover:translate-y-[-1px] px-3 py-1.5 rounded-md hover:bg-accent"
+                        >
+                            {item.name}
+                        </Link>
+                    ))}
+                    <div className="h-5 w-[1px] bg-border/70 mx-2 flex-shrink-0" />
+                    {secondaryNavItems.map((item) => (
+                        <Link
+                            key={item.name}
+                            href={item.href}
+                            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-all hover:translate-y-[-1px] px-3 py-1.5 rounded-md hover:bg-accent"
                         >
                             {item.name}
                         </Link>
@@ -82,17 +99,17 @@ export function Header() {
                         exit={{ opacity: 0, height: 0 }}
                         className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl overflow-hidden"
                     >
-                        <nav className="flex flex-col p-4 gap-4">
-                            {navItems.map((item, index) => (
+                        <nav className="flex flex-col p-4 gap-1">
+                            {[...primaryNavItems, ...secondaryNavItems].map((item, index) => (
                                 <motion.div
-                                    key={item.href}
+                                    key={item.name}
                                     initial={{ x: -20, opacity: 0 }}
                                     animate={{ x: 0, opacity: 1 }}
-                                    transition={{ delay: index * 0.1 }}
+                                    transition={{ delay: index * 0.05 }}
                                 >
                                     <Link
                                         href={item.href}
-                                        className="text-base font-medium text-foreground hover:text-primary transition-colors block py-2"
+                                        className="text-base font-medium text-foreground hover:text-primary transition-colors block py-2 px-3 rounded-md hover:bg-accent"
                                         onClick={() => setIsOpen(false)}
                                     >
                                         {item.name}

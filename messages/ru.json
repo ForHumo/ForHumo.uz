@@ -1,8 +1,12 @@
 {
   "Navigation": {
     "home": "Главная",
-    "ecosystem": "Экосистема",
-    "esport": "eSport"
+    "projects": "Проекты",
+    "nexus": "Nexus",
+    "esport": "eSport",
+    "market": "Market",
+    "pay": "Pay",
+    "support": "Поддержка"
   },
   "Hero": {
     "title_prefix": "For Humo",

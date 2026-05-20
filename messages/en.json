@@ -1,8 +1,12 @@
 {
   "Navigation": {
     "home": "Home",
-    "ecosystem": "Ecosystem",
-    "esport": "eSport"
+    "projects": "Projects",
+    "nexus": "Nexus",
+    "esport": "eSport",
+    "market": "Market",
+    "pay": "Pay",
+    "support": "Support"
   },
   "Hero": {
     "title_prefix": "For Humo",

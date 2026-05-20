@@ -1,8 +1,12 @@
 {
   "Navigation": {
     "home": "Bosh Sahifa",
-    "ecosystem": "Ekotizim",
-    "esport": "eSport"
+    "projects": "Loyihalar",
+    "nexus": "Nexus",
+    "esport": "eSport",
+    "market": "Market",
+    "pay": "Pay",
+    "support": "Support"
   },
   "Hero": {
     "title_prefix": "For Humo",
