@@ -229,7 +229,7 @@ a{color:inherit;}
 .bbl p{margin:4px 0 0;}
 .mai{display:flex;gap:10px;padding:4px 0;animation:msgIn .2s ease-out;}
 @keyframes msgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-.ailsm{width:22px;height:22px;flex-shrink:0;margin-top:3px;color:var(--logo-color);transition:color .3s;}
+.ailsm{width:22px;height:22px;flex-shrink:0;margin-top:3px;object-fit:contain;}
 .aib{flex:1;min-width:0;}
 .aiacts{display:flex;gap:1px;margin-top:5px;opacity:0;transition:opacity .15s;}
 .mai:hover .aiacts{opacity:1;}
@@ -701,7 +701,7 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
 <aside class="sidebar" id="sidebar">
   <div class="sb-head">
     <a class="sb-logo" onclick="newChat();return false;" href="#">
-      <svg class="sb-logo" style="width:28px;height:28px;flex-shrink:0;color:var(--logo-color);transition:color .3s;" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M68 6L40 54L82 54L100 98L118 54L160 54L132 6L108 36L100 18L92 36Z" fill="currentColor"/><path d="M40 54L6 138L52 138L70 96L82 54Z" fill="currentColor"/><path d="M160 54L194 138L148 138L130 96L118 54Z" fill="currentColor"/><path d="M52 138L22 220L78 220L100 170L122 220L178 220L148 138L120 166L100 140L80 166Z" fill="currentColor"/></svg>
+      <img id="sidebarLogo" class="logo-img" src="logo-white.png" alt="Humo AI">
       <span>Humo AI</span>
     </a>
     <button class="ib" onclick="toggleSB()">
@@ -790,7 +790,7 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
   <!-- WELCOME -->
   <div class="welcome" id="welcome">
     <div class="lblk">
-      <svg id="welcomeLogo" class="logo-float" style="width:88px;height:88px;color:var(--logo-color);transition:color .3s;" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M68 6L40 54L82 54L100 98L118 54L160 54L132 6L108 36L100 18L92 36Z" fill="currentColor"/><path d="M40 54L6 138L52 138L70 96L82 54Z" fill="currentColor"/><path d="M160 54L194 138L148 138L130 96L118 54Z" fill="currentColor"/><path d="M52 138L22 220L78 220L100 170L122 220L178 220L148 138L120 166L100 140L80 166Z" fill="currentColor"/></svg>
+      <img id="welcomeLogo" class="logo-float logo-img" style="width:88px;height:88px;" src="logo-white.png" alt="Humo AI">
     </div>
     <p class="gsub" id="gsub">Humo AI'ga xush kelibsiz</p>
     <h1 class="gmain" id="gmain">Bugun nima qilamiz?</h1>
@@ -1189,7 +1189,12 @@ function setTheme(th){
   document.querySelectorAll('.swb[dt]').forEach(b=>b.classList.toggle('on',b.getAttribute('dt')===th));
   syncPP();updateLogos();
 }
-function updateLogos(){}
+function updateLogos(){
+  const eff=TH==='system'?(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'):TH;
+  const src=eff==='light'?'logo-black.png':'logo-white.png';
+  document.querySelectorAll('#sidebarLogo,#welcomeLogo').forEach(el=>el.src=src);
+  document.querySelectorAll('img.ailsm').forEach(el=>el.src=src);
+}
 function syncPP(){
   const tm={system:'ppSys',light:'ppDay',dark:'ppNight'};
   const lm={uz:'ppUZ',ru:'ppRU',en:'ppEN'};
@@ -1563,7 +1568,9 @@ function toast(msg,err=false){
   setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300);},3000);
 }
 function mkSVG(cls){
-  return`<svg class="${cls}" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M68 6L40 54L82 54L100 98L118 54L160 54L132 6L108 36L100 18L92 36Z" fill="currentColor"/><path d="M40 54L6 138L52 138L70 96L82 54Z" fill="currentColor"/><path d="M160 54L194 138L148 138L130 96L118 54Z" fill="currentColor"/><path d="M52 138L22 220L78 220L100 170L122 220L178 220L148 138L120 166L100 140L80 166Z" fill="currentColor"/></svg>`;
+  const eff=TH==='system'?(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'):TH;
+  const src=eff==='light'?'logo-black.png':'logo-white.png';
+  return`<img class="${cls}" src="${src}" alt="Humo AI">`;
 }
 function mkActs(){
   return`<div class="aiacts">
