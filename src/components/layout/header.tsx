@@ -9,9 +9,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { useSession, signOut } from "next-auth/react";
-import { useTheme } from "next-themes";
 
-// ── Humo AI social links for dropdown ──────────────────────────────────────
+// ── SVG Icons ────────────────────────────────────────────────────────────────
 
 function TelegramIcon({ size = 14 }: { size?: number }) {
     return (
@@ -37,49 +36,75 @@ function InstagramIcon({ size = 14 }: { size?: number }) {
     );
 }
 
-// ── Two-line brand nav item ─────────────────────────────────────────────────
+// ── Social links data ─────────────────────────────────────────────────────────
+
+interface SocialSet {
+    channel: string;
+    bot: string;
+    youtube: string;
+    instagram: string;
+}
+
+const SOCIALS: Record<string, SocialSet> = {
+    forhumo: {
+        channel: "https://t.me/ForHumo",
+        bot: "https://t.me/ForHumoBot",
+        youtube: "https://www.youtube.com/@forhumo",
+        instagram: "https://www.instagram.com/forhumo/",
+    },
+    ai: {
+        channel: "https://t.me/ForHumo_AI",
+        bot: "https://t.me/ForHumo_AIBot",
+        youtube: "https://www.youtube.com/@ForHumo_AI",
+        instagram: "https://www.instagram.com/forhumo_ai/",
+    },
+    nexus: {
+        channel: "https://t.me/ForHumo_Nexus",
+        bot: "https://t.me/ForHumo_NexusBot",
+        youtube: "https://www.youtube.com/@ForHumo_Nexus",
+        instagram: "https://www.instagram.com/forhumo_nexus/",
+    },
+    esport: {
+        channel: "https://t.me/ForHumo_eSport",
+        bot: "https://t.me/ForHumo_eSportBot",
+        youtube: "https://www.youtube.com/@ForHumo_eSport",
+        instagram: "https://www.instagram.com/forhumo_esport/",
+    },
+    market: {
+        channel: "https://t.me/ForHumo_Market",
+        bot: "https://t.me/ForHumo_MarketBot",
+        youtube: "https://www.youtube.com/@ForHumo_Market",
+        instagram: "https://www.instagram.com/forhumo_market/",
+    },
+    pay: {
+        channel: "https://t.me/ForHumo_Pay",
+        bot: "https://t.me/ForHumo_PayBot",
+        youtube: "https://www.youtube.com/@ForHumo_Pay",
+        instagram: "https://www.instagram.com/forhumo_pay/",
+    },
+    support: {
+        channel: "https://t.me/ForHumo_Support",
+        bot: "https://t.me/ForHumo_SupportBot",
+        youtube: "https://www.youtube.com/@ForHumo_Support",
+        instagram: "https://www.instagram.com/forhumo_support/",
+    },
+};
+
+// ── Brand nav item with optional social dropdown ──────────────────────────────
 
 interface BrandNavItemProps {
     href: string;
     productName: string;
-    external?: boolean;
-    onClick?: () => void;
+    socialKey?: keyof typeof SOCIALS;
+    channelLabel?: string;
+    botLabel?: string;
+    onClose?: () => void;
 }
 
-function BrandNavItem({ href, productName, external, onClick }: BrandNavItemProps) {
-    const linkClass =
-        "flex flex-col items-center gap-0 px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all group";
-
-    if (external) {
-        return (
-            <a href={href} target="_blank" rel="noopener noreferrer" className={linkClass} onClick={onClick}>
-                <span className="text-[9px] font-bold leading-none tracking-widest uppercase opacity-50 group-hover:opacity-70 transition-opacity">
-                    Humo
-                </span>
-                <span className="text-[13px] font-semibold leading-tight">{productName}</span>
-            </a>
-        );
-    }
-
-    return (
-        <Link href={href} className={linkClass} onClick={onClick}>
-            <span className="text-[9px] font-bold leading-none tracking-widest uppercase opacity-50 group-hover:opacity-70 transition-opacity">
-                Humo
-            </span>
-            <span className="text-[13px] font-semibold leading-tight">{productName}</span>
-        </Link>
-    );
-}
-
-// ── Humo AI nav item with social dropdown ──────────────────────────────────
-
-function AiNavItem({ onClick }: { onClick?: () => void }) {
+function BrandNavItem({ href, productName, socialKey, channelLabel = "Telegram kanal", botLabel = "Telegram bot", onClose }: BrandNavItemProps) {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
-    const { resolvedTheme } = useTheme();
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => { setMounted(true); }, []);
+    const hasSocials = !!socialKey;
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {
@@ -89,32 +114,49 @@ function AiNavItem({ onClick }: { onClick?: () => void }) {
         return () => document.removeEventListener("mousedown", handler);
     }, []);
 
-    const socials = [
-        { label: "Humo AI", href: "/ai", icon: null, isMain: true },
-        { label: "Telegram kanal", href: "https://t.me/ForHumo_AI", icon: <TelegramIcon />, isMain: false },
-        { label: "Telegram bot", href: "https://t.me/ForHumo_AIBot", icon: <TelegramIcon />, isMain: false },
-        { label: "YouTube", href: "https://www.youtube.com/@ForHumoAI", icon: <YoutubeIcon />, isMain: false },
-        { label: "Instagram", href: "https://www.instagram.com/aihumo/", icon: <InstagramIcon />, isMain: false },
+    const baseClass =
+        "flex flex-col items-center gap-0 px-2.5 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all group";
+
+    const innerLabel = (
+        <>
+            <span className="text-[9px] font-bold leading-none tracking-widest uppercase opacity-45 group-hover:opacity-65 transition-opacity">
+                Humo
+            </span>
+            <span className="text-[12.5px] font-semibold leading-tight flex items-center gap-0.5">
+                {productName}
+                {hasSocials && (
+                    <ChevronDown
+                        size={9}
+                        className={`ml-0.5 transition-transform ${open ? "rotate-180" : ""}`}
+                    />
+                )}
+            </span>
+        </>
+    );
+
+    if (!hasSocials) {
+        return (
+            <Link href={href} className={baseClass} onClick={onClose}>
+                {innerLabel}
+            </Link>
+        );
+    }
+
+    const s = SOCIALS[socialKey];
+    const dropItems = [
+        { label: channelLabel, href: s.channel, icon: <TelegramIcon /> },
+        { label: botLabel, href: s.bot, icon: <TelegramIcon /> },
+        { label: "YouTube", href: s.youtube, icon: <YoutubeIcon /> },
+        { label: "Instagram", href: s.instagram, icon: <InstagramIcon /> },
     ];
 
     return (
         <div className="relative" ref={ref}>
             <button
                 onClick={() => setOpen(!open)}
-                className="flex flex-col items-center gap-0 px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all group"
+                className={baseClass}
             >
-                <span className="text-[9px] font-bold leading-none tracking-widest uppercase opacity-50 group-hover:opacity-70 transition-opacity">
-                    Humo
-                </span>
-                {/* Logo: white for dark mode, black for light mode — swap /humo-ai-logo.png files if available */}
-                {mounted ? (
-                    <span className="text-[13px] font-semibold leading-tight flex items-center gap-1">
-                        AI
-                        <ChevronDown size={10} className={`transition-transform ${open ? "rotate-180" : ""}`} />
-                    </span>
-                ) : (
-                    <span className="text-[13px] font-semibold leading-tight">AI</span>
-                )}
+                {innerLabel}
             </button>
 
             <AnimatePresence>
@@ -123,38 +165,35 @@ function AiNavItem({ onClick }: { onClick?: () => void }) {
                         initial={{ opacity: 0, y: -6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-48 origin-top rounded-xl border border-border bg-popover p-1.5 shadow-xl z-50"
+                        transition={{ duration: 0.14 }}
+                        className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-52 origin-top rounded-xl border border-border bg-popover p-1.5 shadow-xl z-50"
                     >
-                        {socials.map((s) => {
-                            const cls = `flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-sm transition-colors ${
-                                s.isMain
-                                    ? "text-foreground font-semibold hover:bg-accent"
-                                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                            }`;
+                        {/* Main page link */}
+                        <Link
+                            href={href}
+                            className="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-sm font-semibold text-foreground hover:bg-accent transition-colors"
+                            onClick={() => { setOpen(false); onClose?.(); }}
+                        >
+                            <span className="w-3.5" />
+                            Humo {productName}
+                        </Link>
 
-                            if (s.isMain) {
-                                return (
-                                    <Link key={s.label} href={s.href} className={cls} onClick={() => { setOpen(false); onClick?.(); }}>
-                                        <span className="w-[14px]" />
-                                        {s.label}
-                                    </Link>
-                                );
-                            }
-                            return (
-                                <a
-                                    key={s.label}
-                                    href={s.href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={cls}
-                                    onClick={() => setOpen(false)}
-                                >
-                                    <span className="text-muted-foreground/70">{s.icon}</span>
-                                    {s.label}
-                                </a>
-                            );
-                        })}
+                        <div className="h-px bg-border my-1" />
+
+                        {/* Social links */}
+                        {dropItems.map((item) => (
+                            <a
+                                key={item.href}
+                                href={item.href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2.5 w-full rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                                onClick={() => setOpen(false)}
+                            >
+                                <span className="text-muted-foreground/60 w-3.5 flex-shrink-0">{item.icon}</span>
+                                {item.label}
+                            </a>
+                        ))}
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -162,7 +201,7 @@ function AiNavItem({ onClick }: { onClick?: () => void }) {
     );
 }
 
-// ── Profile (Humo ID) button ────────────────────────────────────────────────
+// ── Profile (Humo ID) button ──────────────────────────────────────────────────
 
 function ProfileButton() {
     const { data: session } = useSession();
@@ -186,9 +225,9 @@ function ProfileButton() {
         <div className="relative" ref={ref}>
             <button
                 onClick={() => setOpen(!open)}
-                aria-label="Humo ID profil"
+                aria-label="Humo ID"
                 title="Humo ID"
-                className="w-9 h-9 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors flex items-center justify-center bg-muted text-foreground font-bold text-sm flex-shrink-0"
+                className="w-8 h-8 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors flex items-center justify-center bg-muted text-foreground font-bold text-xs flex-shrink-0"
             >
                 {image ? (
                     <img src={image} alt={name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -203,12 +242,11 @@ function ProfileButton() {
                         initial={{ opacity: 0, y: -6, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-2 w-64 origin-top-right rounded-xl border border-border bg-popover p-2 shadow-xl z-50"
+                        transition={{ duration: 0.14 }}
+                        className="absolute right-0 top-full mt-2 w-60 origin-top-right rounded-xl border border-border bg-popover p-2 shadow-xl z-50"
                     >
-                        {/* User info */}
                         <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
-                            <div className="w-10 h-10 rounded-full overflow-hidden border border-border flex-shrink-0 flex items-center justify-center bg-muted font-bold text-sm">
+                            <div className="w-9 h-9 rounded-full overflow-hidden border border-border flex-shrink-0 flex items-center justify-center bg-muted font-bold text-xs">
                                 {image ? (
                                     <img src={image} alt={name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                 ) : (
@@ -220,15 +258,12 @@ function ProfileButton() {
                                 <p className="text-xs text-muted-foreground truncate">{email}</p>
                             </div>
                         </div>
-
                         <div className="h-px bg-border my-1" />
-
-                        {/* Sign out */}
                         <button
                             onClick={() => { setOpen(false); signOut(); }}
                             className="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                         >
-                            <LogOut size={14} />
+                            <LogOut size={13} />
                             Chiqish
                         </button>
                     </motion.div>
@@ -238,25 +273,27 @@ function ProfileButton() {
     );
 }
 
-// ── Main Header ─────────────────────────────────────────────────────────────
+// ── Main Header ───────────────────────────────────────────────────────────────
 
 export function Header() {
     const [isOpen, setIsOpen] = useState(false);
     const t = useTranslations("Navigation");
+    const close = () => setIsOpen(false);
+
+    // All brand items in order with their social keys
+    const brandItems = [
+        { key: "id",      product: t("id"),      href: "/id",           socialKey: undefined          },
+        { key: "ai",      product: t("ai"),      href: "/ai",           socialKey: "ai" as const       },
+        { key: "nexus",   product: t("nexus"),   href: "/nexus",        socialKey: "nexus" as const    },
+        { key: "esport",  product: t("esport"),  href: "/esport",       socialKey: "esport" as const   },
+        { key: "market",  product: t("market"),  href: "/coming-soon",  socialKey: "market" as const   },
+        { key: "pay",     product: t("pay"),     href: "/coming-soon",  socialKey: "pay" as const      },
+        { key: "support", product: t("support"), href: "/coming-soon",  socialKey: "support" as const  },
+    ];
 
     const primaryNavItems = [
         { name: t("home"), href: "/" },
         { name: t("projects"), href: "/#ecosystem" },
-    ];
-
-    // Secondary brand items (after separator): ID first, then products
-    const brandItems = [
-        { key: "id", product: t("id"), href: "/id" },
-        { key: "nexus", product: t("nexus"), href: "/nexus" },
-        { key: "esport", product: t("esport"), href: "/esport" },
-        { key: "market", product: t("market"), href: "/coming-soon" },
-        { key: "pay", product: t("pay"), href: "/coming-soon" },
-        { key: "support", product: t("support"), href: "/coming-soon" },
     ];
 
     return (
@@ -264,73 +301,64 @@ export function Header() {
             <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
 
                 {/* Logo */}
-                <div className="flex items-center gap-4">
-                    <Link href="/" className="flex items-center gap-2">
-                        <motion.div
-                            whileHover={{ rotate: 10, scale: 1.1 }}
-                            className="relative h-9 w-9 overflow-hidden rounded-full shadow-lg shadow-primary/20"
-                        >
-                            <Image
-                                src="/logo.png"
-                                alt="For Humo Logo"
-                                fill
-                                className="object-cover"
-                                priority
-                            />
-                        </motion.div>
-                        <span className="text-lg font-bold tracking-tight text-foreground hover:text-primary transition-colors hidden sm:block">
-                            For Humo
-                        </span>
-                    </Link>
-                </div>
+                <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
+                    <motion.div
+                        whileHover={{ rotate: 8, scale: 1.08 }}
+                        className="relative h-9 w-9 overflow-hidden rounded-full shadow-md shadow-primary/20"
+                    >
+                        <Image src="/logo.png" alt="For Humo" fill className="object-cover" priority />
+                    </motion.div>
+                    <span className="text-[17px] font-bold tracking-tight text-foreground hover:text-primary transition-colors hidden sm:block">
+                        For Humo
+                    </span>
+                </Link>
 
-                {/* Desktop Navigation */}
-                <nav className="hidden md:flex items-center gap-1">
-                    {/* Primary: Bosh Sahifa, Loyihalar */}
+                {/* Desktop nav */}
+                <nav className="hidden md:flex items-center gap-0.5">
+                    {/* Primary */}
                     {primaryNavItems.map((item) => (
                         <Link
                             key={item.name}
                             href={item.href}
-                            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-all hover:translate-y-[-1px] px-3 py-1.5 rounded-md hover:bg-accent"
+                            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-all px-3 py-1.5 rounded-md hover:bg-accent"
                         >
                             {item.name}
                         </Link>
                     ))}
 
-                    <div className="h-5 w-[1px] bg-border/70 mx-1 flex-shrink-0" />
+                    <div className="h-5 w-px bg-border/70 mx-1.5 flex-shrink-0" />
 
-                    {/* Humo ID — first */}
-                    <BrandNavItem href="/id" productName={t("id")} />
-
-                    {/* Humo AI — with dropdown */}
-                    <AiNavItem />
-
-                    {/* Rest of products */}
-                    {brandItems.slice(1).map((item) => (
-                        <BrandNavItem key={item.key} href={item.href} productName={item.product} />
+                    {/* Brand items */}
+                    {brandItems.map((item) => (
+                        <BrandNavItem
+                            key={item.key}
+                            href={item.href}
+                            productName={item.product}
+                            socialKey={item.socialKey}
+                        />
                     ))}
 
-                    <div className="h-5 w-[1px] bg-border/60 mx-1 flex-shrink-0" />
+                    <div className="h-5 w-px bg-border/60 mx-1.5 flex-shrink-0" />
 
-                    {/* Theme + Language */}
+                    {/* Controls */}
                     <div className="flex items-center gap-1">
                         <ThemeToggle />
                         <LanguageSwitcher />
                     </div>
 
-                    <div className="h-5 w-[1px] bg-border/60 mx-1 flex-shrink-0" />
+                    <div className="h-5 w-px bg-border/60 mx-1.5 flex-shrink-0" />
 
-                    {/* Humo ID Profile circle */}
+                    {/* Humo ID profile */}
                     <ProfileButton />
                 </nav>
 
-                {/* Mobile: theme + lang + burger */}
+                {/* Mobile controls */}
                 <div className="flex items-center gap-2 md:hidden">
                     <ThemeToggle />
                     <LanguageSwitcher />
                     <ProfileButton />
                     <button
-                        className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                        className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
                         onClick={() => setIsOpen(!isOpen)}
                         aria-label="Menu"
                     >
@@ -339,7 +367,7 @@ export function Header() {
                 </div>
             </div>
 
-            {/* Mobile Navigation */}
+            {/* Mobile menu */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
@@ -348,52 +376,41 @@ export function Header() {
                         exit={{ opacity: 0, height: 0 }}
                         className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl overflow-hidden"
                     >
-                        <nav className="flex flex-col p-4 gap-1">
-                            {[
-                                ...primaryNavItems,
-                                { name: `Humo ${t("id")}`, href: "/id" },
-                                { name: `Humo ${t("ai")}`, href: "/ai" },
-                                ...brandItems.slice(1).map((b) => ({ name: `Humo ${b.product}`, href: b.href })),
-                            ].map((item, index) => (
-                                <motion.div
-                                    key={item.name}
-                                    initial={{ x: -16, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    transition={{ delay: index * 0.04 }}
-                                >
-                                    <Link
-                                        href={item.href}
-                                        className="text-base font-medium text-foreground hover:text-primary transition-colors block py-2 px-3 rounded-md hover:bg-accent"
-                                        onClick={() => setIsOpen(false)}
-                                    >
+                        <nav className="flex flex-col p-4 gap-0.5">
+                            {primaryNavItems.map((item, i) => (
+                                <motion.div key={item.name} initial={{ x: -16, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: i * 0.04 }}>
+                                    <Link href={item.href} className="text-base font-medium text-foreground hover:text-primary block py-2 px-3 rounded-md hover:bg-accent transition-colors" onClick={close}>
                                         {item.name}
                                     </Link>
                                 </motion.div>
                             ))}
 
-                            {/* Humo AI socials in mobile */}
-                            <div className="mt-2 pt-2 border-t border-border">
-                                <p className="text-xs text-muted-foreground px-3 mb-1 font-semibold uppercase tracking-wider">
-                                    Humo AI
-                                </p>
-                                {[
-                                    { label: "Telegram kanal", href: "https://t.me/ForHumo_AI" },
-                                    { label: "Telegram bot", href: "https://t.me/ForHumo_AIBot" },
-                                    { label: "YouTube", href: "https://www.youtube.com/@ForHumoAI" },
-                                    { label: "Instagram", href: "https://www.instagram.com/aihumo/" },
-                                ].map((s) => (
-                                    <a
-                                        key={s.href}
-                                        href={s.href}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-sm text-muted-foreground hover:text-foreground transition-colors block py-1.5 px-3 rounded-md hover:bg-accent"
-                                        onClick={() => setIsOpen(false)}
-                                    >
-                                        {s.label}
-                                    </a>
-                                ))}
-                            </div>
+                            <div className="h-px bg-border my-2" />
+
+                            {brandItems.map((item, i) => {
+                                const s = item.socialKey ? SOCIALS[item.socialKey] : null;
+                                return (
+                                    <motion.div key={item.key} initial={{ x: -16, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: (i + 2) * 0.04 }}>
+                                        <Link href={item.href} className="text-base font-medium text-foreground hover:text-primary block py-2 px-3 rounded-md hover:bg-accent transition-colors" onClick={close}>
+                                            Humo {item.product}
+                                        </Link>
+                                        {s && (
+                                            <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0">
+                                                {[
+                                                    { label: "Telegram kanal", href: s.channel },
+                                                    { label: "Telegram bot", href: s.bot },
+                                                    { label: "YouTube", href: s.youtube },
+                                                    { label: "Instagram", href: s.instagram },
+                                                ].map((sl) => (
+                                                    <a key={sl.href} href={sl.href} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground py-1 px-3 rounded-md hover:bg-accent transition-colors" onClick={close}>
+                                                        {sl.label}
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                );
+                            })}
                         </nav>
                     </motion.div>
                 )}

@@ -17,11 +17,14 @@
     "explore": "Explore Ecosystem"
   },
   "Projects": {
-    "title": "Our Projects",
-    "nexus_desc": "Centralized control panel and system services network.",
-    "ai_desc": "Advanced AI solutions and tools.",
+    "title": "Projects",
+    "id_desc": "Single sign-on for all For Humo services. Sign in with Google — your name, photo and details are filled automatically.",
+    "ai_desc": "The intelligent assistant of the For Humo ecosystem. Ask questions, find tasks, get help across all projects.",
+    "nexus_desc": "Global community, content and social network platform. Connect with friends worldwide.",
     "esport_desc": "eSports platform organizing MLBB and PUBG tournaments with open registration.",
-    "support_desc": "Fast technical support and customer care service."
+    "market_desc": "Global online marketplace. Pay via Humo Pay and enjoy exclusive ecosystem discounts.",
+    "pay_desc": "For Humo's unified payment system. Top up with local cards, use across all projects.",
+    "support_desc": "Unified help center for all For Humo projects. Fast responses, multiple languages."
   },
   "Status": {
     "active": "Active",

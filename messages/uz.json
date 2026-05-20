@@ -17,11 +17,14 @@
     "explore": "Ekotizimni Keshf Etish"
   },
   "Projects": {
-    "title": "Bizning Loyihalar",
-    "nexus_desc": "Markazlashtirilgan boshqaruv paneli va tizim xizmatlari tarmog'i.",
-    "ai_desc": "Ilg'or sun'iy intellekt yechimlari va vositalari.",
+    "title": "Loyihalar",
+    "id_desc": "Barcha For Humo xizmatlariga yagona kirish. Google orqali ro'yxatdan o'ting — ism, rasm va ma'lumotlaringiz avtomatik to'ldiriladi.",
+    "ai_desc": "For Humo ekosistemining aqlli yordamchisi. Savol bering, vazifa toping, loyihalaringizda yordam oling.",
+    "nexus_desc": "Global hamjamiyat, kontent va ijtimoiy tarmoq platformasi. Do'stlar bilan ulaning.",
     "esport_desc": "MLBB va PUBG turnirlarini ochiq ro'yxatdan o'tish bilan tashkil etuvchi kiber sport platformasi.",
-    "support_desc": "Tezkor texnik yordam va mijozlarni qo'llab-quvvatlash xizmati."
+    "market_desc": "Global onlayn bozor. Humo Pay orqali to'lov qiling va eksklyuziv chegirmalardan foydalaning.",
+    "pay_desc": "For Humo'ning yagona to'lov tizimi. Milliy kartalar bilan to'ldiring, barcha loyihalarda ishlating.",
+    "support_desc": "Barcha For Humo loyihalari uchun yagona yordam markazi. Tez javob, ko'p til."
   },
   "Status": {
     "active": "Faol",

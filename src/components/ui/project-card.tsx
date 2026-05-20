@@ -19,7 +19,7 @@ interface ProjectCardProps {
 
 export function ProjectCard({ title, description, href, icon: Icon, status, index = 0, className }: ProjectCardProps) {
     const t = useTranslations("Status");
-    
+
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
 
@@ -34,67 +34,104 @@ export function ProjectCard({ title, description, href, icon: Icon, status, inde
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.6, delay: index * 0.1, type: "spring", stiffness: 100 }}
+            transition={{ duration: 0.5, delay: index * 0.08, type: "spring", stiffness: 100 }}
             className={cn("h-full group relative", className)}
             onMouseMove={handleMouseMove}
         >
             <Link href={href} className="block relative h-full">
-                {/* Spotlight Background Effect */}
+                {/* Hover spotlight */}
                 <motion.div
                     className="pointer-events-none absolute -inset-px rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                     style={{
                         background: useMotionTemplate`
                             radial-gradient(
-                            600px circle at ${mouseX}px ${mouseY}px,
-                            rgba(59, 130, 246, 0.15),
-                            transparent 80%
+                                500px circle at ${mouseX}px ${mouseY}px,
+                                rgba(0, 136, 255, 0.12),
+                                transparent 80%
                             )
                         `,
                     }}
                 />
+                {/* Hover border glow */}
                 <motion.div
                     className="pointer-events-none absolute -inset-px rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                     style={{
-                        border: '1px solid transparent',
+                        border: "1px solid transparent",
                         background: useMotionTemplate`
                             radial-gradient(
-                            400px circle at ${mouseX}px ${mouseY}px,
-                            rgba(59, 130, 246, 0.5),
-                            transparent 80%
+                                350px circle at ${mouseX}px ${mouseY}px,
+                                rgba(0, 136, 255, 0.45),
+                                transparent 80%
                             ) border-box
                         `,
-                        WebkitMask: 'linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)',
-                        WebkitMaskComposite: 'xor',
-                        maskComposite: 'exclude',
+                        WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
+                        WebkitMaskComposite: "xor",
+                        maskComposite: "exclude",
                     }}
                 />
 
-                <div className="flex flex-col h-full overflow-hidden rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-8 shadow-xl transition-all duration-300 group-hover:translate-y-[-4px] group-hover:shadow-[0_10px_40px_-10px_rgba(59,130,246,0.3)]">
-                    <div className="flex items-start justify-between mb-6">
-                        <div className="relative rounded-xl bg-blue-500/10 p-4 text-blue-400 group-hover:text-blue-300 transition-colors shadow-[inset_0_0_20px_rgba(59,130,246,0.1)] group-hover:shadow-[inset_0_0_30px_rgba(59,130,246,0.2),0_0_15px_rgba(59,130,246,0.4)]">
-                            <Icon size={28} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                <div className="flex flex-col h-full overflow-hidden rounded-2xl
+                    border border-border
+                    bg-card/80 dark:bg-black/40
+                    backdrop-blur-xl p-7
+                    shadow-sm dark:shadow-xl
+                    transition-all duration-300
+                    group-hover:translate-y-[-3px]
+                    group-hover:shadow-[0_8px_32px_-8px_rgba(0,136,255,0.25)]
+                    dark:group-hover:shadow-[0_10px_40px_-10px_rgba(59,130,246,0.3)]"
+                >
+                    <div className="flex items-start justify-between mb-5">
+                        {/* Icon */}
+                        <div className="relative rounded-xl
+                            bg-blue-500/10 dark:bg-blue-500/10
+                            border border-blue-500/20 dark:border-transparent
+                            p-3.5 text-blue-600 dark:text-blue-400
+                            group-hover:text-blue-500 dark:group-hover:text-blue-300
+                            transition-colors
+                            shadow-none group-hover:shadow-[0_0_12px_rgba(0,136,255,0.3)]"
+                        >
+                            <Icon size={26} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
                         </div>
+
+                        {/* Status badge */}
                         {status === "active" ? (
-                            <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                            <span className="text-xs font-bold px-3 py-1.5 rounded-full
+                                bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
+                                border border-emerald-500/20">
                                 {t("active")}
                             </span>
                         ) : (
-                            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white/5 text-muted-foreground border border-white/10">
+                            <span className="text-xs font-semibold px-3 py-1.5 rounded-full
+                                bg-muted text-muted-foreground
+                                border border-border">
                                 {t("coming_soon")}
                             </span>
                         )}
                     </div>
 
-                    <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-cyan-300 transition-all duration-300">
+                    <h3 className="text-xl font-bold text-foreground mb-2.5
+                        group-hover:text-transparent
+                        group-hover:bg-clip-text
+                        group-hover:bg-gradient-to-r
+                        group-hover:from-blue-500
+                        group-hover:to-cyan-400
+                        transition-all duration-300"
+                    >
                         {title}
                     </h3>
-                    <p className="text-base text-muted-foreground/80 leading-relaxed line-clamp-3 mb-6 flex-grow">
+
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 mb-5 flex-grow">
                         {description}
                     </p>
 
-                    <div className="mt-auto flex items-center justify-between text-blue-400 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-[-10px] group-hover:translate-x-0">
-                        <span className="text-sm font-bold tracking-wide uppercase">Batafsil</span>
-                        <span className="text-xl group-hover:translate-x-1 transition-transform duration-300">→</span>
+                    <div className="mt-auto flex items-center justify-between
+                        text-blue-500 dark:text-blue-400
+                        opacity-0 group-hover:opacity-100
+                        transition-all duration-300
+                        transform translate-x-[-8px] group-hover:translate-x-0"
+                    >
+                        <span className="text-xs font-bold tracking-wide uppercase">Batafsil</span>
+                        <span className="text-lg group-hover:translate-x-1 transition-transform duration-300">→</span>
                     </div>
                 </div>
             </Link>
