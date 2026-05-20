@@ -64,7 +64,7 @@ a{color:inherit;}
 #bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
 
 /* ── LAYOUT ──────────────────────────────────────────── */
-.app{display:flex;height:100vh;position:relative;z-index:1;}
+.app{display:flex;height:100vh;position:relative;}
 
 /* ── SIDEBAR ─────────────────────────────────────────── */
 .sidebar{
@@ -79,7 +79,7 @@ a{color:inherit;}
 .sb-logo{display:flex;align-items:center;gap:8px;text-decoration:none;cursor:pointer;white-space:nowrap;color:var(--t1);}
 .sb-logo svg{width:22px;height:22px;flex-shrink:0;color:var(--logo-color);transition:color .3s;}
 .sb-logo span{font-size:15px;font-weight:700;letter-spacing:-.3px;transition:color .3s;}
-.ib{width:32px;height:32px;border-radius:8px;border:none;background:transparent;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s;}
+.ib{width:32px;height:32px;border-radius:8px;border:none;background:transparent;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 .ib:hover{background:var(--s1);color:var(--t1);}
 .ib svg{display:block;}
 .new-chat{margin:1px 9px 9px;display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--b1);color:var(--t1);padding:8px 13px;border-radius:22px;cursor:pointer;font-size:13px;font-weight:500;white-space:nowrap;width:calc(100% - 18px);transition:background .15s,border-color .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
@@ -1257,9 +1257,11 @@ function useTemplate(prompt){
 function isMob(){return window.innerWidth<768;}
 function toggleSB(){
   if(isMob()){
-    const open=!document.getElementById('sidebar').classList.contains('mob-open');
-    document.getElementById('sidebar').classList.toggle('mob-open',open);
-    document.getElementById('mobOverlay').classList.toggle('open',open);
+    const sb=document.getElementById('sidebar');
+    const isOpen=sb.classList.contains('mob-open');
+    if(!isOpen) sb.classList.remove('closed');
+    sb.classList.toggle('mob-open',!isOpen);
+    document.getElementById('mobOverlay').classList.toggle('open',!isOpen);
   } else {
     SB=!SB;
     document.getElementById('sidebar').classList.toggle('closed',!SB);
