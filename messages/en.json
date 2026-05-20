@@ -10,6 +10,14 @@
     "pay": "Pay",
     "support": "Support"
   },
+  "Social": {
+    "telegram_channel": "Telegram channel",
+    "telegram_bot": "Telegram bot",
+    "youtube": "YouTube",
+    "instagram": "Instagram",
+    "edit_profile": "Edit profile",
+    "sign_out": "Sign out"
+  },
   "Hero": {
     "title_prefix": "For Humo",
     "title_suffix": "",

@@ -3,7 +3,7 @@
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, LogOut, ChevronDown } from "lucide-react";
+import { Menu, X, LogOut, ChevronDown, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -46,64 +46,28 @@ interface SocialSet {
 }
 
 const SOCIALS: Record<string, SocialSet> = {
-    forhumo: {
-        channel: "https://t.me/ForHumo",
-        bot: "https://t.me/ForHumoBot",
-        youtube: "https://www.youtube.com/@forhumo",
-        instagram: "https://www.instagram.com/forhumo/",
-    },
-    ai: {
-        channel: "https://t.me/ForHumo_AI",
-        bot: "https://t.me/ForHumo_AIBot",
-        youtube: "https://www.youtube.com/@ForHumo_AI",
-        instagram: "https://www.instagram.com/forhumo_ai/",
-    },
-    nexus: {
-        channel: "https://t.me/ForHumo_Nexus",
-        bot: "https://t.me/ForHumo_NexusBot",
-        youtube: "https://www.youtube.com/@ForHumo_Nexus",
-        instagram: "https://www.instagram.com/forhumo_nexus/",
-    },
-    esport: {
-        channel: "https://t.me/ForHumo_eSport",
-        bot: "https://t.me/ForHumo_eSportBot",
-        youtube: "https://www.youtube.com/@ForHumo_eSport",
-        instagram: "https://www.instagram.com/forhumo_esport/",
-    },
-    market: {
-        channel: "https://t.me/ForHumo_Market",
-        bot: "https://t.me/ForHumo_MarketBot",
-        youtube: "https://www.youtube.com/@ForHumo_Market",
-        instagram: "https://www.instagram.com/forhumo_market/",
-    },
-    pay: {
-        channel: "https://t.me/ForHumo_Pay",
-        bot: "https://t.me/ForHumo_PayBot",
-        youtube: "https://www.youtube.com/@ForHumo_Pay",
-        instagram: "https://www.instagram.com/forhumo_pay/",
-    },
-    support: {
-        channel: "https://t.me/ForHumo_Support",
-        bot: "https://t.me/ForHumo_SupportBot",
-        youtube: "https://www.youtube.com/@ForHumo_Support",
-        instagram: "https://www.instagram.com/forhumo_support/",
-    },
+    ai:      { channel: "https://t.me/ForHumo_AI",      bot: "https://t.me/ForHumo_AIBot",      youtube: "https://www.youtube.com/@ForHumo_AI",      instagram: "https://www.instagram.com/forhumo_ai/"      },
+    nexus:   { channel: "https://t.me/ForHumo_Nexus",   bot: "https://t.me/ForHumo_NexusBot",   youtube: "https://www.youtube.com/@ForHumo_Nexus",   instagram: "https://www.instagram.com/forhumo_nexus/"   },
+    esport:  { channel: "https://t.me/ForHumo_eSport",  bot: "https://t.me/ForHumo_eSportBot",  youtube: "https://www.youtube.com/@ForHumo_eSport",  instagram: "https://www.instagram.com/forhumo_esport/"  },
+    market:  { channel: "https://t.me/ForHumo_Market",  bot: "https://t.me/ForHumo_MarketBot",  youtube: "https://www.youtube.com/@ForHumo_Market",  instagram: "https://www.instagram.com/forhumo_market/"  },
+    pay:     { channel: "https://t.me/ForHumo_Pay",     bot: "https://t.me/ForHumo_PayBot",     youtube: "https://www.youtube.com/@ForHumo_Pay",     instagram: "https://www.instagram.com/forhumo_pay/"     },
+    support: { channel: "https://t.me/ForHumo_Support", bot: "https://t.me/ForHumo_SupportBot", youtube: "https://www.youtube.com/@ForHumo_Support", instagram: "https://www.instagram.com/forhumo_support/" },
 };
 
 // ── Brand nav item with optional social dropdown ──────────────────────────────
 
 interface BrandNavItemProps {
     href: string;
+    /** Always the English brand name (e.g. "Support") — never translated */
     productName: string;
     socialKey?: keyof typeof SOCIALS;
-    channelLabel?: string;
-    botLabel?: string;
     onClose?: () => void;
 }
 
-function BrandNavItem({ href, productName, socialKey, channelLabel = "Telegram kanal", botLabel = "Telegram bot", onClose }: BrandNavItemProps) {
+function BrandNavItem({ href, productName, socialKey, onClose }: BrandNavItemProps) {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+    const tSocial = useTranslations("Social");
     const hasSocials = !!socialKey;
 
     useEffect(() => {
@@ -117,7 +81,7 @@ function BrandNavItem({ href, productName, socialKey, channelLabel = "Telegram k
     const baseClass =
         "flex flex-col items-center gap-0 px-2.5 py-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all group";
 
-    const innerLabel = (
+    const innerContent = (
         <>
             <span className="text-[9px] font-bold leading-none tracking-widest uppercase opacity-45 group-hover:opacity-65 transition-opacity">
                 Humo
@@ -125,10 +89,7 @@ function BrandNavItem({ href, productName, socialKey, channelLabel = "Telegram k
             <span className="text-[12.5px] font-semibold leading-tight flex items-center gap-0.5">
                 {productName}
                 {hasSocials && (
-                    <ChevronDown
-                        size={9}
-                        className={`ml-0.5 transition-transform ${open ? "rotate-180" : ""}`}
-                    />
+                    <ChevronDown size={9} className={`ml-0.5 transition-transform ${open ? "rotate-180" : ""}`} />
                 )}
             </span>
         </>
@@ -137,26 +98,23 @@ function BrandNavItem({ href, productName, socialKey, channelLabel = "Telegram k
     if (!hasSocials) {
         return (
             <Link href={href} className={baseClass} onClick={onClose}>
-                {innerLabel}
+                {innerContent}
             </Link>
         );
     }
 
     const s = SOCIALS[socialKey];
     const dropItems = [
-        { label: channelLabel, href: s.channel, icon: <TelegramIcon /> },
-        { label: botLabel, href: s.bot, icon: <TelegramIcon /> },
-        { label: "YouTube", href: s.youtube, icon: <YoutubeIcon /> },
-        { label: "Instagram", href: s.instagram, icon: <InstagramIcon /> },
+        { label: tSocial("telegram_channel"), href: s.channel, icon: <TelegramIcon /> },
+        { label: tSocial("telegram_bot"),     href: s.bot,     icon: <TelegramIcon /> },
+        { label: tSocial("youtube"),           href: s.youtube, icon: <YoutubeIcon /> },
+        { label: tSocial("instagram"),         href: s.instagram, icon: <InstagramIcon /> },
     ];
 
     return (
         <div className="relative" ref={ref}>
-            <button
-                onClick={() => setOpen(!open)}
-                className={baseClass}
-            >
-                {innerLabel}
+            <button onClick={() => setOpen(!open)} className={baseClass}>
+                {innerContent}
             </button>
 
             <AnimatePresence>
@@ -180,7 +138,6 @@ function BrandNavItem({ href, productName, socialKey, channelLabel = "Telegram k
 
                         <div className="h-px bg-border my-1" />
 
-                        {/* Social links */}
                         {dropItems.map((item) => (
                             <a
                                 key={item.href}
@@ -207,6 +164,7 @@ function ProfileButton() {
     const { data: session } = useSession();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+    const tSocial = useTranslations("Social");
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {
@@ -216,10 +174,17 @@ function ProfileButton() {
         return () => document.removeEventListener("mousedown", handler);
     }, []);
 
-    const name = session?.user?.name ?? "";
-    const email = session?.user?.email ?? "";
-    const image = session?.user?.image ?? null;
+    const name    = session?.user?.name  ?? "";
+    const email   = session?.user?.email ?? "";
+    const image   = session?.user?.image ?? null;
     const initials = name.trim().split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
+
+    const Avatar = ({ cls }: { cls: string }) =>
+        image ? (
+            <img src={image} alt={name} className={`${cls} object-cover`} referrerPolicy="no-referrer" />
+        ) : (
+            <span className={cls + " flex items-center justify-center font-bold text-xs"}>{initials}</span>
+        );
 
     return (
         <div className="relative" ref={ref}>
@@ -227,13 +192,9 @@ function ProfileButton() {
                 onClick={() => setOpen(!open)}
                 aria-label="Humo ID"
                 title="Humo ID"
-                className="w-8 h-8 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors flex items-center justify-center bg-muted text-foreground font-bold text-xs flex-shrink-0"
+                className="w-8 h-8 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors flex items-center justify-center bg-muted text-foreground text-xs flex-shrink-0"
             >
-                {image ? (
-                    <img src={image} alt={name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                ) : (
-                    <span>{initials}</span>
-                )}
+                <Avatar cls="w-full h-full rounded-full" />
             </button>
 
             <AnimatePresence>
@@ -243,28 +204,38 @@ function ProfileButton() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.96 }}
                         transition={{ duration: 0.14 }}
-                        className="absolute right-0 top-full mt-2 w-60 origin-top-right rounded-xl border border-border bg-popover p-2 shadow-xl z-50"
+                        className="absolute right-0 top-full mt-2 w-62 origin-top-right rounded-xl border border-border bg-popover p-2 shadow-xl z-50"
                     >
+                        {/* User info */}
                         <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
-                            <div className="w-9 h-9 rounded-full overflow-hidden border border-border flex-shrink-0 flex items-center justify-center bg-muted font-bold text-xs">
-                                {image ? (
-                                    <img src={image} alt={name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                ) : (
-                                    <span>{initials}</span>
-                                )}
+                            <div className="w-9 h-9 rounded-full overflow-hidden border border-border flex-shrink-0 bg-muted">
+                                <Avatar cls="w-full h-full rounded-full" />
                             </div>
                             <div className="min-w-0">
                                 <p className="text-sm font-semibold text-foreground truncate">{name}</p>
                                 <p className="text-xs text-muted-foreground truncate">{email}</p>
                             </div>
                         </div>
+
                         <div className="h-px bg-border my-1" />
+
+                        {/* Edit profile */}
+                        <Link
+                            href="/id/edit"
+                            className="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            onClick={() => setOpen(false)}
+                        >
+                            <Pencil size={13} />
+                            {tSocial("edit_profile")}
+                        </Link>
+
+                        {/* Sign out */}
                         <button
                             onClick={() => { setOpen(false); signOut(); }}
                             className="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                         >
                             <LogOut size={13} />
-                            Chiqish
+                            {tSocial("sign_out")}
                         </button>
                     </motion.div>
                 )}
@@ -278,22 +249,23 @@ function ProfileButton() {
 export function Header() {
     const [isOpen, setIsOpen] = useState(false);
     const t = useTranslations("Navigation");
+    const tSocial = useTranslations("Social");
     const close = () => setIsOpen(false);
 
-    // All brand items in order with their social keys
-    const brandItems = [
-        { key: "id",      product: t("id"),      href: "/id",           socialKey: undefined          },
-        { key: "ai",      product: t("ai"),      href: "/ai",           socialKey: "ai" as const       },
-        { key: "nexus",   product: t("nexus"),   href: "/nexus",        socialKey: "nexus" as const    },
-        { key: "esport",  product: t("esport"),  href: "/esport",       socialKey: "esport" as const   },
-        { key: "market",  product: t("market"),  href: "/coming-soon",  socialKey: "market" as const   },
-        { key: "pay",     product: t("pay"),     href: "/coming-soon",  socialKey: "pay" as const      },
-        { key: "support", product: t("support"), href: "/coming-soon",  socialKey: "support" as const  },
+    const primaryNavItems = [
+        { name: t("home"),     href: "/"          },
+        { name: t("projects"), href: "/#ecosystem" },
     ];
 
-    const primaryNavItems = [
-        { name: t("home"), href: "/" },
-        { name: t("projects"), href: "/#ecosystem" },
+    // "Support" is a brand name — hardcoded, never translated
+    const brandItems: { key: string; product: string; href: string; socialKey?: keyof typeof SOCIALS }[] = [
+        { key: "id",      product: t("id"),      href: "/id",          socialKey: undefined    },
+        { key: "ai",      product: t("ai"),      href: "/ai",          socialKey: "ai"         },
+        { key: "nexus",   product: t("nexus"),   href: "/nexus",       socialKey: "nexus"      },
+        { key: "esport",  product: t("esport"),  href: "/esport",      socialKey: "esport"     },
+        { key: "market",  product: t("market"),  href: "/coming-soon", socialKey: "market"     },
+        { key: "pay",     product: t("pay"),     href: "/coming-soon", socialKey: "pay"        },
+        { key: "support", product: "Support",    href: "/coming-soon", socialKey: "support"    }, // brand name, NOT translated
     ];
 
     return (
@@ -315,7 +287,6 @@ export function Header() {
 
                 {/* Desktop nav */}
                 <nav className="hidden md:flex items-center gap-0.5">
-                    {/* Primary */}
                     {primaryNavItems.map((item) => (
                         <Link
                             key={item.name}
@@ -328,7 +299,6 @@ export function Header() {
 
                     <div className="h-5 w-px bg-border/70 mx-1.5 flex-shrink-0" />
 
-                    {/* Brand items */}
                     {brandItems.map((item) => (
                         <BrandNavItem
                             key={item.key}
@@ -340,7 +310,6 @@ export function Header() {
 
                     <div className="h-5 w-px bg-border/60 mx-1.5 flex-shrink-0" />
 
-                    {/* Controls */}
                     <div className="flex items-center gap-1">
                         <ThemeToggle />
                         <LanguageSwitcher />
@@ -348,7 +317,6 @@ export function Header() {
 
                     <div className="h-5 w-px bg-border/60 mx-1.5 flex-shrink-0" />
 
-                    {/* Humo ID profile */}
                     <ProfileButton />
                 </nav>
 
@@ -395,12 +363,12 @@ export function Header() {
                                             Humo {item.product}
                                         </Link>
                                         {s && (
-                                            <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0">
+                                            <div className="ml-4 flex flex-col">
                                                 {[
-                                                    { label: "Telegram kanal", href: s.channel },
-                                                    { label: "Telegram bot", href: s.bot },
-                                                    { label: "YouTube", href: s.youtube },
-                                                    { label: "Instagram", href: s.instagram },
+                                                    { label: tSocial("telegram_channel"), href: s.channel },
+                                                    { label: tSocial("telegram_bot"),     href: s.bot     },
+                                                    { label: tSocial("youtube"),           href: s.youtube },
+                                                    { label: tSocial("instagram"),         href: s.instagram },
                                                 ].map((sl) => (
                                                     <a key={sl.href} href={sl.href} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground py-1 px-3 rounded-md hover:bg-accent transition-colors" onClick={close}>
                                                         {sl.label}

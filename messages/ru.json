@@ -8,7 +8,15 @@
     "esport": "eSport",
     "market": "Market",
     "pay": "Pay",
-    "support": "Поддержка"
+    "support": "Support"
+  },
+  "Social": {
+    "telegram_channel": "Telegram канал",
+    "telegram_bot": "Telegram бот",
+    "youtube": "YouTube",
+    "instagram": "Instagram",
+    "edit_profile": "Редактировать профиль",
+    "sign_out": "Выйти"
   },
   "Hero": {
     "title_prefix": "For Humo",
