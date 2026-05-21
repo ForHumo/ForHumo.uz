@@ -4,6 +4,7 @@ import { useState } from "react";
 import { NxHeader } from "./nx-header";
 import { NxDock, type NxTab } from "./nx-dock";
 import { NxStories } from "./nx-stories";
+import { NxHero } from "./nx-hero";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NexusShell — asosiy qobiq
@@ -28,7 +29,9 @@ export function NexusShell() {
                 {/* ── 4-qadam: Stories Bar ──────────────────────────── */}
                 <NxStories />
 
-                {/* 5-qadam: Hero Banner */}
+                {/* ── 5-qadam: Hero Banner ──────────────────────────── */}
+                <NxHero />
+
                 {/* 6-qadam: Content Rows */}
             </main>
 
