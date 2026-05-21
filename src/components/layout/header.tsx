@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { Menu, X, LogOut, ChevronDown, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { useSession, signOut } from "next-auth/react";
@@ -54,11 +53,10 @@ const SOCIALS: Record<string, SocialSet> = {
     support: { channel: "https://t.me/ForHumo_Support", bot: "https://t.me/ForHumo_SupportBot", youtube: "https://www.youtube.com/@ForHumo_Support", instagram: "https://www.instagram.com/forhumo_support/" },
 };
 
-// ── Brand nav item with optional social dropdown ──────────────────────────────
+// ── Brand nav item with dropdown ──────────────────────────────────────────────
 
 interface BrandNavItemProps {
     href: string;
-    /** Always the English brand name (e.g. "Support") — never translated */
     productName: string;
     socialKey?: keyof typeof SOCIALS;
     onClose?: () => void;
@@ -89,7 +87,7 @@ function BrandNavItem({ href, productName, socialKey, onClose }: BrandNavItemPro
             <span className="text-[12.5px] font-semibold leading-tight flex items-center gap-0.5">
                 {productName}
                 {hasSocials && (
-                    <ChevronDown size={9} className={`ml-0.5 transition-transform ${open ? "rotate-180" : ""}`} />
+                    <ChevronDown size={9} className={`ml-0.5 transition-transform duration-150 ${open ? "rotate-180" : ""}`} />
                 )}
             </span>
         </>
@@ -113,52 +111,112 @@ function BrandNavItem({ href, productName, socialKey, onClose }: BrandNavItemPro
 
     return (
         <div className="relative" ref={ref}>
-            <button onClick={() => setOpen(!open)} className={baseClass}>
+            <button onClick={() => setOpen(v => !v)} className={baseClass}>
                 {innerContent}
             </button>
 
-            <AnimatePresence>
-                {open && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        transition={{ duration: 0.14 }}
-                        className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-52 origin-top rounded-xl border border-border bg-popover p-1.5 shadow-xl z-50"
+            {/* CSS transition dropdown — always in DOM to allow transition */}
+            <div className={`absolute left-1/2 -translate-x-1/2 top-full mt-2 w-52 origin-top rounded-xl border border-border bg-popover p-1.5 shadow-xl z-50
+                transition-all duration-150
+                ${open ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}>
+                <Link
+                    href={href}
+                    className="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-sm font-semibold text-foreground hover:bg-accent transition-colors"
+                    onClick={() => { setOpen(false); onClose?.(); }}
+                >
+                    <span className="w-3.5" />
+                    Humo {productName}
+                </Link>
+
+                <div className="h-px bg-border my-1" />
+
+                {dropItems.map((item) => (
+                    <a
+                        key={item.href}
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2.5 w-full rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        onClick={() => setOpen(false)}
                     >
-                        {/* Main page link */}
-                        <Link
-                            href={href}
-                            className="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-sm font-semibold text-foreground hover:bg-accent transition-colors"
-                            onClick={() => { setOpen(false); onClose?.(); }}
-                        >
-                            <span className="w-3.5" />
-                            Humo {productName}
-                        </Link>
-
-                        <div className="h-px bg-border my-1" />
-
-                        {dropItems.map((item) => (
-                            <a
-                                key={item.href}
-                                href={item.href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2.5 w-full rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                                onClick={() => setOpen(false)}
-                            >
-                                <span className="text-muted-foreground/60 w-3.5 flex-shrink-0">{item.icon}</span>
-                                {item.label}
-                            </a>
-                        ))}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        <span className="text-muted-foreground/60 w-3.5 flex-shrink-0">{item.icon}</span>
+                        {item.label}
+                    </a>
+                ))}
+            </div>
         </div>
     );
 }
 
-// ── Profile (Humo ID) button ──────────────────────────────────────────────────
+// ── Mobile accordion brand item ───────────────────────────────────────────────
+
+function MobileAccordionItem({
+    item,
+    tSocial,
+    onClose,
+}: {
+    item: { key: string; product: string; href: string; socialKey?: keyof typeof SOCIALS };
+    tSocial: ReturnType<typeof useTranslations<"Social">>;
+    onClose: () => void;
+}) {
+    const [open, setOpen] = useState(false);
+    const s = item.socialKey ? SOCIALS[item.socialKey] : null;
+
+    return (
+        <div className="rounded-md overflow-hidden">
+            <div className="flex items-center">
+                <Link
+                    href={item.href}
+                    className="flex-1 text-base font-medium text-foreground hover:text-primary py-3 px-3 rounded-md hover:bg-accent transition-colors"
+                    onClick={onClose}
+                >
+                    Humo {item.product}
+                </Link>
+                {s && (
+                    <button
+                        onClick={() => setOpen(p => !p)}
+                        className="p-3 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="Toggle socials"
+                    >
+                        <ChevronDown
+                            size={15}
+                            className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+                        />
+                    </button>
+                )}
+            </div>
+
+            {/* CSS grid height animation */}
+            <div className={`grid transition-all duration-200 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                <div className="overflow-hidden">
+                    {s && (
+                        <div className="ml-3 mb-1 flex flex-col border-l border-border pl-3">
+                            {[
+                                { label: tSocial("telegram_channel"), href: s.channel },
+                                { label: tSocial("telegram_bot"),     href: s.bot     },
+                                { label: tSocial("youtube"),          href: s.youtube },
+                                { label: tSocial("instagram"),        href: s.instagram },
+                            ].map((sl) => (
+                                <a
+                                    key={sl.href}
+                                    href={sl.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-muted-foreground hover:text-foreground py-2 px-2 rounded-md hover:bg-accent transition-colors"
+                                    onClick={onClose}
+                                >
+                                    {sl.label}
+                                </a>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ── Profile button ────────────────────────────────────────────────────────────
 
 function ProfileButton() {
     const { data: session } = useSession();
@@ -174,72 +232,60 @@ function ProfileButton() {
         return () => document.removeEventListener("mousedown", handler);
     }, []);
 
-    const name    = session?.user?.name  ?? "";
-    const email   = session?.user?.email ?? "";
-    const image   = session?.user?.image ?? null;
-    const initials = name.trim().split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
+    const name     = session?.user?.name  ?? "";
+    const email    = session?.user?.email ?? "";
+    const image    = session?.user?.image ?? null;
+    const initials = name.trim().split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "U";
 
     const Avatar = ({ cls }: { cls: string }) =>
         image ? (
             <img src={image} alt={name} className={`${cls} object-cover`} referrerPolicy="no-referrer" />
         ) : (
-            <span className={cls + " flex items-center justify-center font-bold text-xs"}>{initials}</span>
+            <span className={`${cls} flex items-center justify-center font-bold text-xs`}>{initials}</span>
         );
 
     return (
         <div className="relative" ref={ref}>
             <button
-                onClick={() => setOpen(!open)}
+                onClick={() => setOpen(v => !v)}
                 aria-label="Humo ID"
-                title="Humo ID"
-                className="w-8 h-8 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors flex items-center justify-center bg-muted text-foreground text-xs flex-shrink-0"
+                className="w-9 h-9 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors flex items-center justify-center bg-muted text-foreground text-xs flex-shrink-0"
             >
                 <Avatar cls="w-full h-full rounded-full" />
             </button>
 
-            <AnimatePresence>
-                {open && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                        transition={{ duration: 0.14 }}
-                        className="absolute right-0 top-full mt-2 w-62 origin-top-right rounded-xl border border-border bg-popover p-2 shadow-xl z-50"
-                    >
-                        {/* User info */}
-                        <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
-                            <div className="w-9 h-9 rounded-full overflow-hidden border border-border flex-shrink-0 bg-muted">
-                                <Avatar cls="w-full h-full rounded-full" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-sm font-semibold text-foreground truncate">{name}</p>
-                                <p className="text-xs text-muted-foreground truncate">{email}</p>
-                            </div>
-                        </div>
+            <div className={`absolute right-0 top-full mt-2 w-60 origin-top-right rounded-xl border border-border bg-popover p-2 shadow-xl z-50
+                transition-all duration-150
+                ${open ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}>
+                <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
+                    <div className="w-9 h-9 rounded-full overflow-hidden border border-border flex-shrink-0 bg-muted">
+                        <Avatar cls="w-full h-full rounded-full" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{email}</p>
+                    </div>
+                </div>
 
-                        <div className="h-px bg-border my-1" />
+                <div className="h-px bg-border my-1" />
 
-                        {/* Edit profile */}
-                        <Link
-                            href="/id/edit"
-                            className="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                            onClick={() => setOpen(false)}
-                        >
-                            <Pencil size={13} />
-                            {tSocial("edit_profile")}
-                        </Link>
+                <Link
+                    href="/id/edit"
+                    className="flex items-center gap-2.5 w-full rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    onClick={() => setOpen(false)}
+                >
+                    <Pencil size={13} />
+                    {tSocial("edit_profile")}
+                </Link>
 
-                        {/* Sign out */}
-                        <button
-                            onClick={() => { setOpen(false); signOut(); }}
-                            className="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                        >
-                            <LogOut size={13} />
-                            {tSocial("sign_out")}
-                        </button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                <button
+                    onClick={() => { setOpen(false); signOut(); }}
+                    className="flex items-center gap-2.5 w-full rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                >
+                    <LogOut size={13} />
+                    {tSocial("sign_out")}
+                </button>
+            </div>
         </div>
     );
 }
@@ -252,20 +298,27 @@ export function Header() {
     const tSocial = useTranslations("Social");
     const close = () => setIsOpen(false);
 
+    // Close mobile menu on resize to desktop
+    useEffect(() => {
+        const mq = window.matchMedia("(min-width: 768px)");
+        const handler = (e: MediaQueryListEvent) => { if (e.matches) setIsOpen(false); };
+        mq.addEventListener("change", handler);
+        return () => mq.removeEventListener("change", handler);
+    }, []);
+
     const primaryNavItems = [
-        { name: t("home"),     href: "/"          },
+        { name: t("home"),     href: "/"         },
         { name: t("projects"), href: "/#project" },
     ];
 
-    // "Support" is a brand name — hardcoded, never translated
     const brandItems: { key: string; product: string; href: string; socialKey?: keyof typeof SOCIALS }[] = [
-        { key: "id",      product: t("id"),      href: "/id",          socialKey: undefined    },
-        { key: "ai",      product: t("ai"),      href: "/ai",          socialKey: "ai"         },
-        { key: "nexus",   product: t("nexus"),   href: "/nexus",       socialKey: "nexus"      },
-        { key: "esport",  product: t("esport"),  href: "/esport",      socialKey: "esport"     },
-        { key: "market",  product: t("market"),  href: "/coming-soon", socialKey: "market"     },
-        { key: "pay",     product: t("pay"),     href: "/coming-soon", socialKey: "pay"        },
-        { key: "support", product: "Support",    href: "/coming-soon", socialKey: "support"    }, // brand name, NOT translated
+        { key: "id",      product: t("id"),      href: "/id",          socialKey: undefined  },
+        { key: "ai",      product: t("ai"),      href: "/ai",          socialKey: "ai"       },
+        { key: "nexus",   product: t("nexus"),   href: "/nexus",       socialKey: "nexus"    },
+        { key: "esport",  product: t("esport"),  href: "/esport",      socialKey: "esport"   },
+        { key: "market",  product: t("market"),  href: "/coming-soon", socialKey: "market"   },
+        { key: "pay",     product: t("pay"),     href: "/coming-soon", socialKey: "pay"      },
+        { key: "support", product: "Support",    href: "/support",     socialKey: "support"  },
     ];
 
     return (
@@ -273,13 +326,10 @@ export function Header() {
             <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
 
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
-                    <motion.div
-                        whileHover={{ rotate: 8, scale: 1.08 }}
-                        className="relative h-9 w-9 overflow-hidden rounded-full shadow-md shadow-primary/20"
-                    >
+                <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 group">
+                    <div className="relative h-9 w-9 overflow-hidden rounded-full shadow-md shadow-primary/20 transition-transform duration-200 group-hover:rotate-[8deg] group-hover:scale-[1.08]">
                         <Image src="/logo.png" alt="For Humo" fill className="object-cover" priority />
-                    </motion.div>
+                    </div>
                     <span className="text-[17px] font-bold tracking-tight text-foreground hover:text-primary transition-colors hidden sm:block">
                         For Humo
                     </span>
@@ -321,13 +371,13 @@ export function Header() {
                 </nav>
 
                 {/* Mobile controls */}
-                <div className="flex items-center gap-2 md:hidden">
+                <div className="flex items-center gap-1 md:hidden">
                     <ThemeToggle />
                     <LanguageSwitcher />
                     <ProfileButton />
                     <button
-                        className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                        onClick={() => setIsOpen(!isOpen)}
+                        className="p-2.5 text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={() => setIsOpen(v => !v)}
                         aria-label="Menu"
                     >
                         {isOpen ? <X size={22} /> : <Menu size={22} />}
@@ -335,54 +385,34 @@ export function Header() {
                 </div>
             </div>
 
-            {/* Mobile menu */}
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl overflow-hidden"
-                    >
-                        <nav className="flex flex-col p-4 gap-0.5">
-                            {primaryNavItems.map((item, i) => (
-                                <motion.div key={item.name} initial={{ x: -16, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: i * 0.04 }}>
-                                    <Link href={item.href} className="text-base font-medium text-foreground hover:text-primary block py-2 px-3 rounded-md hover:bg-accent transition-colors" onClick={close}>
-                                        {item.name}
-                                    </Link>
-                                </motion.div>
-                            ))}
+            {/* Mobile menu — CSS grid height animation */}
+            <div className={`md:hidden border-t border-border bg-background/95 backdrop-blur-xl grid transition-all duration-300 ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                <div className="overflow-hidden">
+                    <nav className="flex flex-col p-4 gap-0.5">
+                        {primaryNavItems.map((item) => (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                className="text-base font-medium text-foreground hover:text-primary block py-3 px-3 rounded-md hover:bg-accent transition-colors"
+                                onClick={close}
+                            >
+                                {item.name}
+                            </Link>
+                        ))}
 
-                            <div className="h-px bg-border my-2" />
+                        <div className="h-px bg-border my-2" />
 
-                            {brandItems.map((item, i) => {
-                                const s = item.socialKey ? SOCIALS[item.socialKey] : null;
-                                return (
-                                    <motion.div key={item.key} initial={{ x: -16, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: (i + 2) * 0.04 }}>
-                                        <Link href={item.href} className="text-base font-medium text-foreground hover:text-primary block py-2 px-3 rounded-md hover:bg-accent transition-colors" onClick={close}>
-                                            Humo {item.product}
-                                        </Link>
-                                        {s && (
-                                            <div className="ml-4 flex flex-col">
-                                                {[
-                                                    { label: tSocial("telegram_channel"), href: s.channel },
-                                                    { label: tSocial("telegram_bot"),     href: s.bot     },
-                                                    { label: tSocial("youtube"),           href: s.youtube },
-                                                    { label: tSocial("instagram"),         href: s.instagram },
-                                                ].map((sl) => (
-                                                    <a key={sl.href} href={sl.href} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground py-1 px-3 rounded-md hover:bg-accent transition-colors" onClick={close}>
-                                                        {sl.label}
-                                                    </a>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </motion.div>
-                                );
-                            })}
-                        </nav>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        {brandItems.map((item) => (
+                            <MobileAccordionItem
+                                key={item.key}
+                                item={item}
+                                tSocial={tSocial}
+                                onClose={close}
+                            />
+                        ))}
+                    </nav>
+                </div>
+            </div>
         </header>
     );
 }

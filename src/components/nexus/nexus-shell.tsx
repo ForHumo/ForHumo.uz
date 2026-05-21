@@ -1,151 +1,112 @@
 "use client";
 
-import React, { useState } from "react";
-import { 
-    ChatsView, 
-    GCinemaView, 
-    VCinemaView, 
-    MusicsView, 
-    BlogsView, 
-    GVideosView, 
-    GStreamsView, 
-    VVideosView, 
-    VStreamsView, 
-    HumoIDView 
-} from "./nexus-views";
+import { useState } from "react";
+import { Search, Menu } from "lucide-react";
+import Image from "next/image";
+import { Link } from "@/i18n/routing";
+import { NexusFeed } from "./nexus-feed";
 import { NexusBottomDock } from "./nexus-bottom-dock";
 import { NexusSidebar } from "./nexus-sidebar";
 import { NexusSettingsPanel } from "./nexus-settings-panel";
-import { Search, Menu } from "lucide-react";
-import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "@/i18n/routing";
+import {
+    ChatsView, GCinemaView, VCinemaView, MusicsView, BlogsView,
+    GVideosView, GStreamsView, VVideosView, VStreamsView, HumoIDView,
+} from "./nexus-views";
 
-interface NexusShellProps {
-    children: React.ReactNode;
+type Tab =
+    | "nexus" | "chats" | "gcinema" | "vcinema"
+    | "musics" | "blogs" | "gvideos" | "gstreams"
+    | "vvideos" | "vstreams" | "humoid";
+
+function renderView(tab: Tab, onTabChange: (t: string) => void) {
+    switch (tab) {
+        case "chats":    return <ChatsView />;
+        case "gcinema":  return <GCinemaView />;
+        case "vcinema":  return <VCinemaView />;
+        case "musics":   return <MusicsView />;
+        case "blogs":    return <BlogsView />;
+        case "gvideos":  return <GVideosView />;
+        case "gstreams": return <GStreamsView />;
+        case "vvideos":  return <VVideosView />;
+        case "vstreams": return <VStreamsView />;
+        case "humoid":   return <HumoIDView />;
+        default:         return <NexusFeed onTabChange={onTabChange} />;
+    }
 }
 
-export function NexusShell({ children }: NexusShellProps) {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+export function NexusShell() {
+    const [activeTab,      setActiveTab]      = useState<Tab>("nexus");
+    const [isSidebarOpen,  setIsSidebarOpen]  = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState("nexus");
-
-    const renderContent = () => {
-        switch (activeTab) {
-            case "chats": return <ChatsView />;
-            case "gcinema": return <GCinemaView />;
-            case "vcinema": return <VCinemaView />;
-            case "musics": return <MusicsView />;
-            case "blogs": return <BlogsView />;
-            case "gvideos": return <GVideosView />;
-            case "gstreams": return <GStreamsView />;
-            case "vvideos": return <VVideosView />;
-            case "vstreams": return <VStreamsView />;
-            case "humoid": return <HumoIDView />;
-            case "nexus":
-            default:
-                return React.cloneElement(children as React.ReactElement, { onTabChange: setActiveTab } as any);
-        }
-    };
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white selection:bg-primary/30 selection:text-primary overflow-hidden flex flex-col relative">
-            {/* Futuristic Gradient Background */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 blur-[120px] rounded-full animate-pulse" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/10 blur-[120px] rounded-full animate-pulse delay-1000" />
+        <div className="w-full h-full flex flex-col overflow-hidden bg-[#050505] text-white select-none">
+
+            {/* ── Gradient background blobs ─────────────────────────── */}
+            <div className="fixed inset-0 pointer-events-none z-0" aria-hidden>
+                <div className="absolute top-[-8%] left-[-8%] w-[45%] h-[45%] bg-blue-600/10 blur-[120px] rounded-full animate-pulse" />
+                <div className="absolute bottom-[-8%] right-[-8%] w-[45%] h-[45%] bg-primary/10 blur-[120px] rounded-full animate-pulse [animation-delay:1000ms]" />
             </div>
 
-            {/* Content Logo and Search (Previously in TopBar) */}
-            <div className="container mx-auto px-4 md:px-6 pt-8 pb-4">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-                    <Link href="/" className="flex items-center gap-3 group">
-                        <motion.div 
-                            whileHover={{ rotate: 10, scale: 1.1 }}
-                            className="relative w-12 h-12 overflow-hidden rounded-full shadow-lg shadow-primary/20 border border-white/10"
-                        >
-                            <Image src="/logo.png" alt="Logo" fill className="object-cover" priority />
-                        </motion.div>
-                        <span className="text-2xl font-bold tracking-tight text-white group-hover:text-primary transition-colors">
-                            For Humo
+            {/* ── Top bar ───────────────────────────────────────────── */}
+            <header className="relative z-10 flex-shrink-0 border-b border-white/5">
+                <div className="flex items-center gap-4 px-4 md:px-6 py-3">
+
+                    {/* Logo */}
+                    <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
+                        <div className="relative w-9 h-9 overflow-hidden rounded-full border border-white/10 shadow-lg shadow-primary/20 group-hover:border-primary/40 transition-colors duration-200">
+                            <Image src="/logo.png" alt="For Humo" fill className="object-cover" priority />
+                        </div>
+                        <span className="hidden md:block text-lg font-bold tracking-tight group-hover:text-primary transition-colors duration-200">
+                            Nexus
                         </span>
                     </Link>
 
-                    <div className="flex-1 max-w-2xl w-full">
-                        <div className="relative group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-primary transition-colors" />
-                            <input 
-                                type="text" 
-                                placeholder="Search for content, creators, or agents..." 
-                                className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 outline-none focus:border-primary/50 focus:bg-white/10 transition-all text-sm font-medium shadow-inner"
-                            />
-                        </div>
+                    {/* Search */}
+                    <div className="flex-1 max-w-2xl relative group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-primary transition-colors duration-150 pointer-events-none" />
+                        <input
+                            type="text"
+                            placeholder="Kontent, ijodkor yoki agent qidirish..."
+                            className="w-full h-11 bg-white/5 border border-white/8 rounded-2xl pl-11 pr-4 outline-none focus:border-primary/40 focus:bg-white/8 transition-all text-sm placeholder:text-gray-600"
+                        />
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <motion.button 
-                            onClick={() => setIsSidebarOpen(true)}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
-                        >
-                            <Menu className="w-6 h-6 text-white" />
-                        </motion.button>
-                    </div>
+                    {/* Menu */}
+                    <button
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-2xl bg-white/5 border border-white/8 hover:bg-white/10 hover:border-white/15 transition-all duration-150 active:scale-95"
+                    >
+                        <Menu className="w-5 h-5" />
+                    </button>
                 </div>
-            </div>
+            </header>
 
-            {/* Main Content Area */}
-            <main className="flex-1 overflow-y-auto custom-scrollbar pb-32">
-                <div className="container mx-auto px-4 md:px-6">
-                    {renderContent()}
+            {/* ── Main content area ─────────────────────────────────── */}
+            <main className="relative z-10 flex-1 overflow-y-auto nx-scrollbar">
+                <div className="container mx-auto px-4 md:px-6 pt-5 pb-28">
+                    {renderView(activeTab, (t) => setActiveTab(t as Tab))}
                 </div>
             </main>
 
-            {/* Sidebar Toggle Panel */}
-            <AnimatePresence>
-                {isSidebarOpen && (
-                    <NexusSidebar onClose={() => setIsSidebarOpen(false)} />
-                )}
-            </AnimatePresence>
+            {/* ── Bottom dock ───────────────────────────────────────── */}
+            <NexusBottomDock activeTab={activeTab} onTabChange={(t) => setActiveTab(t as Tab)} />
 
-            {/* Bottom Dock */}
-            <NexusBottomDock activeTab={activeTab} onTabChange={setActiveTab} />
+            {/* ── Sidebar (always in DOM — CSS transition) ─────────── */}
+            <NexusSidebar
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+                onOpenSettings={() => {
+                    setIsSidebarOpen(false);
+                    setIsSettingsOpen(true);
+                }}
+            />
 
-            {/* Settings Panel */}
-            <AnimatePresence>
-                {isSettingsOpen && (
-                    <NexusSettingsPanel onClose={() => setIsSettingsOpen(false)} />
-                )}
-            </AnimatePresence>
-            
-            <style jsx global>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 6px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 10px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255, 255, 255, 0.2);
-                }
-                .glass-effect {
-                    background: rgba(255, 255, 255, 0.03);
-                    backdrop-filter: blur(12px);
-                    -webkit-backdrop-filter: blur(12px);
-                    border: 1px solid rgba(255, 255, 255, 0.05);
-                }
-                .glass-effect-heavy {
-                    background: rgba(0, 0, 0, 0.6);
-                    backdrop-filter: blur(20px);
-                    -webkit-backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                }
-            `}</style>
+            {/* ── Settings panel (always in DOM — CSS transition) ───── */}
+            <NexusSettingsPanel
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+            />
         </div>
     );
 }

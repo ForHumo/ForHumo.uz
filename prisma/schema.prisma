@@ -7,6 +7,91 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ── Humo ID — unified identity across all For Humo services ──────────────────
+
+model UserProfile {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  googleId      String?  @unique
+
+  // Name fields
+  name          String?            // display name (editable)
+  firstName     String?
+  lastName      String?
+  fatherName    String?            // Otasining ismi
+
+  // Identity
+  username      String?  @unique   // @handle — e.g. "forhumo_ali"
+  humoId        String?  @unique   // e.g. "UZ4829341"
+  country       String?  @default("UZ")  // ISO alpha-2
+
+  // Profile
+  image         String?            // custom avatar URL (null = use Google photo)
+  coverImage    String?            // background/banner image URL
+  bio           String?            // max 160 chars
+  birthday      DateTime?
+  city          String?            // legacy short city name
+  location      String?            // AES-256-GCM encrypted full address
+  locationIv    String?            // base64 IV for location decryption
+
+  // Contact
+  phone         String?
+
+  // Verification level:  0 = basic (Google only)
+  //                      1 = email confirmed
+  //                      2 = KYC (biometric, future)
+  level         Int      @default(0)
+  emailVerified Boolean  @default(false)
+
+  // Onboarding
+  onboardingDone Boolean @default(false)
+
+  // Rate-limit: user-initiated profile edits allowed once per 14 days
+  profileEditedAt DateTime?
+
+  lastLoginAt   DateTime?
+  loginEvents   LoginEvent[]
+  supportTickets SupportTicket[]
+
+  emailCodes    EmailVerificationCode[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model LoginEvent {
+  id          String      @id @default(cuid())
+  profileId   String
+  profile     UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime    @default(now())
+}
+
+model SupportTicket {
+  id          String       @id @default(cuid())
+  profileId   String?
+  profile     UserProfile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  email       String
+  subject     String
+  message     String
+  status      String       @default("open")
+  createdAt   DateTime     @default(now())
+}
+
+model EmailVerificationCode {
+  id          String      @id @default(cuid())
+  profileId   String
+  profile     UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  correct     Int         // e.g. 74  — the right answer
+  options     Int[]       // e.g. [23, 74, 51, 38] shown on screen
+
+  expiresAt   DateTime
+  used        Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+}
+
 model User {
   id        String   @id @default(cuid())
   nickname  String   @unique

@@ -1,131 +1,131 @@
 "use client";
 
-import React from "react";
-import { 
-    X, 
-    Monitor, 
-    Users, 
-    Bot, 
-    PlayCircle, 
-    Clock, 
-    ThumbsUp, 
-    ThumbsDown, 
-    ListMusic, 
-    History, 
-    UserX,
-    ChevronRight,
-    Bell,
-    Settings
+import {
+    X, Monitor, Users, Bot, PlayCircle, Clock,
+    ThumbsUp, ThumbsDown, ListMusic, History,
+    UserX, ChevronRight, Bell, Settings, Zap,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
-interface NexusSidebarProps {
-    onClose: () => void;
+interface SidebarItem {
+    icon: React.ElementType;
+    label: string;
+    badge?: string;
+    isSettings?: boolean;
 }
 
-const SIDEBAR_SECTIONS = [
+interface SidebarSection {
+    title: string;
+    items: SidebarItem[];
+}
+
+const SECTIONS: SidebarSection[] = [
     {
-        title: "Notifications",
+        title: "Bildirishnomalar",
         items: [
-            { icon: Bell, label: "All Notifications", badge: "12" },
-        ]
+            { icon: Bell, label: "Barcha bildirishnomalar", badge: "12" },
+        ],
     },
     {
-        title: "My Content",
+        title: "Mening kontentim",
         items: [
-            { icon: Monitor, label: "My Channels" },
-            { icon: Users, label: "My Groups" },
-            { icon: Bot, label: "My Agents (bots)" },
-        ]
+            { icon: Monitor,    label: "Mening kanallarim" },
+            { icon: Users,      label: "Mening guruhlarim" },
+            { icon: Bot,        label: "AI Agentlarim"     },
+        ],
     },
     {
-        title: "Activity",
+        title: "Faollik",
         items: [
-            { icon: PlayCircle, label: "Subscriptions" },
-            { icon: History, label: "Recently Watched" },
-            { icon: ThumbsUp, label: "Liked" },
-            { icon: ThumbsDown, label: "Disliked" },
-        ]
+            { icon: PlayCircle, label: "Obunalar"          },
+            { icon: History,    label: "Ko'rilganlar"      },
+            { icon: ThumbsUp,   label: "Yoqtirilganlar"   },
+            { icon: ThumbsDown, label: "Yoqtirilmaganlar" },
+        ],
     },
     {
-        title: "Saved",
+        title: "Saqlangan",
         items: [
-            { icon: ListMusic, label: "Playlists" },
-            { icon: Clock, label: "Watch Later" },
-        ]
+            { icon: ListMusic, label: "Pleylistlar"  },
+            { icon: Clock,     label: "Keyinroq ko'rish" },
+        ],
     },
     {
-        title: "Nexus System",
+        title: "Nexus tizimi",
         items: [
-            { icon: UserX, label: "Blocked Users" },
-            { icon: Settings, label: "Settings" },
-        ]
-    }
+            { icon: UserX,    label: "Bloklangan foydalanuvchilar" },
+            { icon: Settings, label: "Sozlamalar", isSettings: true },
+        ],
+    },
 ];
 
-export function NexusSidebar({ onClose }: NexusSidebarProps) {
+interface Props {
+    isOpen: boolean;
+    onClose: () => void;
+    onOpenSettings: () => void;
+}
+
+export function NexusSidebar({ isOpen, onClose, onOpenSettings }: Props) {
     return (
         <>
             {/* Backdrop */}
-            <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+            <div
+                className={cn(
+                    "fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] transition-opacity duration-300",
+                    isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                )}
                 onClick={onClose}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
             />
 
-            {/* Sidebar Panel */}
-            <motion.aside
-                initial={{ x: "100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="fixed top-0 right-0 bottom-0 w-80 z-[70] glass-effect-heavy border-l border-white/10 flex flex-col"
+            {/* Panel */}
+            <aside
+                className={cn(
+                    "fixed top-0 right-0 bottom-0 w-72 z-[70] nx-glass-heavy border-l border-white/10 flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                    isOpen ? "translate-x-0" : "translate-x-full"
+                )}
             >
                 {/* Header */}
-                <div className="p-6 flex items-center justify-between border-b border-white/5">
-                    <h2 className="text-xl font-bold flex items-center gap-3">
-                        Nexus Menu
-                    </h2>
-                    <button 
+                <div className="p-5 flex items-center justify-between border-b border-white/5 flex-shrink-0">
+                    <h2 className="text-lg font-bold">Nexus Menyu</h2>
+                    <button
                         onClick={onClose}
-                        className="p-2 hover:bg-white/5 rounded-xl transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white/5 transition-colors"
                     >
-                        <X className="w-5 h-5 text-gray-400" />
+                        <X className="w-4 h-4 text-gray-400" />
                     </button>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                    {SIDEBAR_SECTIONS.map((section, idx) => (
-                        <div key={idx} className="mb-8 last:mb-0">
-                            <h3 className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-4 opacity-50">
+                <div className="flex-1 overflow-y-auto p-3 nx-scrollbar">
+                    {SECTIONS.map((section, si) => (
+                        <div key={si} className="mb-6 last:mb-0">
+                            <p className="px-3 text-[9px] font-bold uppercase tracking-[0.18em] text-gray-600 mb-2">
                                 {section.title}
-                            </h3>
-                            <div className="space-y-1">
-                                {section.items.map((item: any, itemIdx) => {
+                            </p>
+                            <div className="space-y-0.5">
+                                {section.items.map((item, ii) => {
                                     const Icon = item.icon;
                                     return (
-                                        <button 
-                                            key={itemIdx}
-                                            className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-white/5 group transition-all"
+                                        <button
+                                            key={ii}
+                                            onClick={item.isSettings ? () => { onClose(); onOpenSettings(); } : undefined}
+                                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 group transition-all duration-150"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-primary/20 group-hover:text-primary transition-all">
-                                                    <Icon className="w-4 h-4" />
+                                                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-primary/20 group-hover:text-primary transition-all duration-150 flex-shrink-0">
+                                                    <Icon className="w-3.5 h-3.5" />
                                                 </div>
-                                                <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">
+                                                <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors duration-150 text-left">
                                                     {item.label}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 flex-shrink-0">
                                                 {item.badge && (
-                                                    <span className="px-1.5 py-0.5 bg-primary text-[10px] font-bold rounded-md">
+                                                    <span className="px-1.5 py-0.5 bg-primary text-[9px] font-bold rounded-md min-w-[18px] text-center">
                                                         {item.badge}
                                                     </span>
                                                 )}
-                                                <ChevronRight className="w-4 h-4 text-gray-600 opacity-0 group-hover:opacity-100 transition-all" />
+                                                <ChevronRight className="w-3.5 h-3.5 text-gray-600 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-150" />
                                             </div>
                                         </button>
                                     );
@@ -135,17 +135,20 @@ export function NexusSidebar({ onClose }: NexusSidebarProps) {
                     ))}
                 </div>
 
-                {/* Footer */}
-                <div className="p-6 border-t border-white/5 bg-black/20">
-                    <div className="bg-gradient-to-br from-primary/20 to-blue-600/20 rounded-2xl p-5 border border-primary/20 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-primary/20 blur-2xl rounded-full -mr-10 -mt-10 group-hover:bg-primary/40 transition-colors" />
-                        <p className="text-[10px] text-primary font-bold mb-1 tracking-widest">NEXUS PRO</p>
-                        <p className="text-xs text-gray-300 leading-relaxed font-medium">
-                            Unlimited cloud storage and advanced AI agents.
+                {/* Footer — Nexus Pro promo */}
+                <div className="p-4 border-t border-white/5 flex-shrink-0">
+                    <div className="bg-gradient-to-br from-primary/15 to-blue-600/15 rounded-2xl p-4 border border-primary/20 relative overflow-hidden group cursor-pointer hover:border-primary/40 transition-colors duration-200">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-primary/20 blur-2xl rounded-full -mr-8 -mt-8 group-hover:bg-primary/30 transition-colors duration-300" />
+                        <div className="flex items-center gap-2 mb-1.5 relative">
+                            <Zap className="w-3.5 h-3.5 text-primary" />
+                            <p className="text-[10px] text-primary font-bold tracking-widest">NEXUS PRO</p>
+                        </div>
+                        <p className="text-xs text-gray-300 leading-relaxed relative">
+                            Cheksiz bulut xotira va kengaytirilgan AI agentlar.
                         </p>
                     </div>
                 </div>
-            </motion.aside>
+            </aside>
         </>
     );
 }

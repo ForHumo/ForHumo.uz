@@ -3,6 +3,10 @@
 import { useSession, signIn } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { OnboardingWizard } from "./onboarding-wizard";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 // Premium loading screen
 function LoadingScreen() {
@@ -69,6 +73,10 @@ function LoadingScreen() {
 
 export function AuthBarrier({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();
+    const params = useParams();
+    const locale = (params?.locale as string) ?? "uz";
+    const t = useTranslations("Auth");
+    const tCommon = useTranslations("Common");
 
     if (status === "loading") {
         return <LoadingScreen />;
@@ -82,6 +90,11 @@ export function AuthBarrier({ children }: { children: React.ReactNode }) {
                 <div className="absolute top-0 left-0 w-full h-full opacity-25 pointer-events-none">
                     <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/20 blur-[120px] rounded-full animate-pulse" />
                     <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-400/15 blur-[120px] rounded-full animate-pulse delay-1000" />
+                </div>
+
+                {/* Language switcher */}
+                <div className="absolute top-4 right-4 z-10">
+                    <LanguageSwitcher />
                 </div>
 
                 <motion.div
@@ -107,7 +120,7 @@ export function AuthBarrier({ children }: { children: React.ReactNode }) {
                                 For Humo
                             </h1>
                             <p className="text-sm text-muted-foreground mt-1 font-medium">
-                                Humo ID orqali kiring
+                                {t("signin_subtitle")}
                             </p>
                         </div>
                     </motion.div>
@@ -120,7 +133,7 @@ export function AuthBarrier({ children }: { children: React.ReactNode }) {
                         className="bg-card/60 backdrop-blur-2xl border border-border/60 p-6 rounded-2xl shadow-2xl space-y-4"
                     >
                         <p className="text-sm text-muted-foreground text-left font-medium">
-                            Humo ID — barcha For Humo loyihalariga kirish
+                            {t("signin_desc")}
                         </p>
 
                         <button
@@ -132,19 +145,35 @@ export function AuthBarrier({ children }: { children: React.ReactNode }) {
                                 alt="Google"
                                 className="w-5 h-5"
                             />
-                            Google orqali kirish
+                            {t("signin_google")}
                         </button>
 
                         <p className="text-xs text-muted-foreground/70 text-center leading-relaxed">
-                            Kirib, siz For Humo{" "}
-                            <a href="/privacy-policy" className="underline hover:text-foreground transition-colors">
-                                Maxfiylik Siyosati
+                            {t("privacy_agree")}{" "}
+                            <a href={`/${locale}/privacy-policy`} className="underline hover:text-foreground transition-colors">
+                                {tCommon("privacy_policy")}
                             </a>
-                            ga rozilik bildirasiz.
+                            {locale === "uz" ? "ga rozilik bildirasiz." : locale === "ru" ? " For Humo." : "."}
                         </p>
                     </motion.div>
                 </motion.div>
             </div>
+        );
+    }
+
+    // Show onboarding wizard if user hasn't completed it yet
+    const onboardingDone = (session.user as { onboardingDone?: boolean })?.onboardingDone;
+    if (!onboardingDone) {
+        return (
+            <OnboardingWizard
+                locale={locale}
+                onComplete={() => {
+                    // Reload the current page — JWT callback re-fetches
+                    // onboardingDone from DB (while it's false) so the reloaded
+                    // page sees true and AuthBarrier renders children.
+                    window.location.reload();
+                }}
+            />
         );
     }
 

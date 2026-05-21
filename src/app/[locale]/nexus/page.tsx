@@ -1,18 +1,12 @@
-import { setRequestLocale } from 'next-intl/server';
+import type { Metadata } from "next";
 import { NexusShell } from "@/components/nexus/nexus-shell";
-import { NexusFeed } from "@/components/nexus/nexus-feed";
 
-export default async function NexusPage({
-    params
-}: {
-    params: Promise<{ locale: string }>;
-}) {
-    const { locale } = await params;
-    setRequestLocale(locale);
+export const dynamic = "force-dynamic";
 
-    return (
-        <NexusShell>
-            <NexusFeed />
-        </NexusShell>
-    );
+export async function generateMetadata(): Promise<Metadata> {
+    return { title: "Humo Nexus" };
+}
+
+export default function NexusPage() {
+    return <NexusShell />;
 }

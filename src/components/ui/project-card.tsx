@@ -1,24 +1,28 @@
 "use client";
 
+import React, { MouseEvent } from "react";
 import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
 import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { MouseEvent } from "react";
+import Image from "next/image";
 
 interface ProjectCardProps {
     title: string;
     description: string;
     href: string;
-    icon: LucideIcon;
+    icon: LucideIcon | React.ComponentType<{ size?: number; className?: string }>;
+    logoSrc?: string;
+    logoSrcDark?: string;
     status: "active" | "coming-soon";
     index?: number;
     className?: string;
 }
 
-export function ProjectCard({ title, description, href, icon: Icon, status, index = 0, className }: ProjectCardProps) {
+export function ProjectCard({ title, description, href, icon: Icon, logoSrc, logoSrcDark, status, index = 0, className }: ProjectCardProps) {
     const t = useTranslations("Status");
+    const tCommon = useTranslations("Common");
 
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
@@ -81,17 +85,40 @@ export function ProjectCard({ title, description, href, icon: Icon, status, inde
                     dark:group-hover:shadow-[0_10px_40px_-10px_rgba(59,130,246,0.3)]"
                 >
                     <div className="flex items-start justify-between mb-5">
-                        {/* Icon */}
-                        <div className="relative rounded-xl
-                            bg-blue-500/10 dark:bg-blue-500/10
-                            border border-blue-500/20 dark:border-transparent
-                            p-3.5 text-blue-600 dark:text-blue-400
-                            group-hover:text-blue-500 dark:group-hover:text-blue-300
-                            transition-colors
-                            shadow-none group-hover:shadow-[0_0_12px_rgba(0,136,255,0.3)]"
-                        >
-                            <Icon size={26} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                        </div>
+                        {/* Icon or Logo */}
+                        {logoSrc ? (
+                            <div className="relative w-[78px] h-[78px] flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                                {/* Light mode logo */}
+                                <Image
+                                    src={logoSrc}
+                                    alt={title}
+                                    fill
+                                    sizes="78px"
+                                    className={`object-contain ${logoSrcDark ? "block dark:hidden" : ""}`}
+                                />
+                                {/* Dark mode logo (only if provided) */}
+                                {logoSrcDark && (
+                                    <Image
+                                        src={logoSrcDark}
+                                        alt={title}
+                                        fill
+                                        sizes="78px"
+                                        className="object-contain hidden dark:block"
+                                    />
+                                )}
+                            </div>
+                        ) : (
+                            <div className="relative rounded-xl
+                                bg-blue-500/10 dark:bg-blue-500/10
+                                border border-blue-500/20 dark:border-transparent
+                                p-3.5 text-blue-600 dark:text-blue-400
+                                group-hover:text-blue-500 dark:group-hover:text-blue-300
+                                transition-colors
+                                shadow-none group-hover:shadow-[0_0_12px_rgba(0,136,255,0.3)]"
+                            >
+                                <Icon size={26} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                            </div>
+                        )}
 
                         {/* Status badge */}
                         {status === "active" ? (
@@ -130,7 +157,7 @@ export function ProjectCard({ title, description, href, icon: Icon, status, inde
                         transition-all duration-300
                         transform translate-x-[-8px] group-hover:translate-x-0"
                     >
-                        <span className="text-xs font-bold tracking-wide uppercase">Batafsil</span>
+                        <span className="text-xs font-bold tracking-wide uppercase">{tCommon("details")}</span>
                         <span className="text-lg group-hover:translate-x-1 transition-transform duration-300">→</span>
                     </div>
                 </div>

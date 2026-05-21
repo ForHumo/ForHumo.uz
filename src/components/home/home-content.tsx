@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -18,55 +19,71 @@ export function HomeContent() {
     const tHero = useTranslations("Hero");
     const tProjects = useTranslations("Projects");
 
-    const projectsData = [
+    const projectsData: {
+        title: string;
+        description: string;
+        href: string;
+        icon: React.ComponentType<{ size?: number; className?: string }>;
+        logoSrc: string;
+        logoSrcDark?: string;
+        status: "active" | "coming-soon";
+    }[] = [
         {
             title: "Humo ID",
             description: tProjects("id_desc"),
             href: "/id",
             icon: Fingerprint,
-            status: "active" as const,
+            logoSrc: "/logos/humo-id.png",
+            status: "active",
         },
         {
             title: "Humo AI",
             description: tProjects("ai_desc"),
             href: "/ai",
             icon: Brain,
-            status: "active" as const,
+            logoSrc: "/logos/humo-ai-black.png",
+            logoSrcDark: "/logos/humo-ai-white.png",
+            status: "active",
         },
         {
             title: "Humo Nexus",
             description: tProjects("nexus_desc"),
             href: "/nexus",
             icon: Server,
-            status: "active" as const,
+            logoSrc: "/logos/humo-nexus.png",
+            status: "active",
         },
         {
             title: "Humo eSport",
             description: tProjects("esport_desc"),
             href: "/esport",
             icon: Gamepad2,
-            status: "active" as const,
+            logoSrc: "/logos/humo-esport.png",
+            status: "active",
         },
         {
             title: "Humo Market",
             description: tProjects("market_desc"),
             href: "/coming-soon",
             icon: ShoppingBag,
-            status: "active" as const,
+            logoSrc: "/logos/humo-market.png",
+            status: "active",
         },
         {
             title: "Humo Pay",
             description: tProjects("pay_desc"),
             href: "/coming-soon",
             icon: CreditCard,
-            status: "active" as const,
+            logoSrc: "/logos/humo-pay.png",
+            status: "active",
         },
         {
             title: "Humo Support",
             description: tProjects("support_desc"),
             href: "/coming-soon",
             icon: Headset,
-            status: "active" as const,
+            logoSrc: "/logos/humo-support.png",
+            status: "active",
         },
     ];
 
@@ -119,10 +136,7 @@ export function HomeContent() {
                             bg-gradient-to-br from-foreground via-foreground/90 to-muted-foreground
                             drop-shadow-sm"
                     >
-                        {tHero("title_prefix")}{" "}
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400">
-                            {tHero("title_suffix")}
-                        </span>
+                        {tHero("title_prefix")}
                     </motion.h1>
 
                     {/* Description */}
@@ -198,7 +212,9 @@ export function HomeContent() {
                                 title={project.title}
                                 description={project.description}
                                 href={project.href}
-                                icon={project.icon}
+                                icon={project.icon as React.ComponentType<{ size?: number; className?: string }>}
+                                logoSrc={project.logoSrc}
+                                logoSrcDark={project.logoSrcDark}
                                 status={project.status}
                                 index={index}
                             />
@@ -213,7 +229,9 @@ export function HomeContent() {
                                 title={projectsData[6].title}
                                 description={projectsData[6].description}
                                 href={projectsData[6].href}
-                                icon={projectsData[6].icon}
+                                icon={projectsData[6].icon as React.ComponentType<{ size?: number; className?: string }>}
+                                logoSrc={projectsData[6].logoSrc}
+                                logoSrcDark={projectsData[6].logoSrcDark}
                                 status={projectsData[6].status}
                                 index={6}
                             />
