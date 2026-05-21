@@ -1,13 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { Search, Bell, ChevronDown } from "lucide-react";
+import { Search, Bell, ChevronDown, Menu } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NxHeader — 2-qadam
+// NxHeader — asosiy header
 // ─────────────────────────────────────────────────────────────────────────────
-export function NxHeader() {
+interface NxHeaderProps {
+    onMenuOpen?: () => void;
+    onSettingsOpen?: () => void;
+}
+
+export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHeaderProps) {
     const { data: session } = useSession();
 
     return (
@@ -20,6 +25,26 @@ export function NxHeader() {
                 borderBottom: "1px solid rgba(43,62,232,0.18)",
             }}
         >
+            {/* ── Menu button ───────────────────────────────────────── */}
+            <button
+                onClick={onMenuOpen}
+                className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
+                style={{
+                    background: "rgba(43,62,232,0.08)",
+                    border: "1px solid rgba(43,62,232,0.18)",
+                }}
+                onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.18)";
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)";
+                }}
+                onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)";
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)";
+                }}
+            >
+                <Menu className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+            </button>
+
             {/* ── Logo ──────────────────────────────────────────────── */}
             <div className="flex items-center gap-2.5 flex-shrink-0">
                 <div className="relative w-8 h-8 flex-shrink-0">

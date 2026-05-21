@@ -3,15 +3,31 @@
 import { useState } from "react";
 import { NxHeader } from "./nx-header";
 import { NxDock, type NxTab } from "./nx-dock";
-import { NxStories } from "./nx-stories";
-import { NxHero } from "./nx-hero";
-import { NxFeed } from "./nx-feed";
+import { NxSidebar } from "./nx-sidebar";
+import { NxSettings } from "./nx-settings";
+import { FeedView, VideoView, LiveView, MediaView, SocialView, ProfileView } from "./nx-views";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab-ga mos view
+// ─────────────────────────────────────────────────────────────────────────────
+function renderView(tab: NxTab) {
+    switch (tab) {
+        case "video":   return <VideoView />;
+        case "live":    return <LiveView />;
+        case "media":   return <MediaView />;
+        case "social":  return <SocialView />;
+        case "profile": return <ProfileView />;
+        default:        return <FeedView />;
+    }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NexusShell — asosiy qobiq
 // ─────────────────────────────────────────────────────────────────────────────
 export function NexusShell() {
-    const [activeTab, setActiveTab] = useState<NxTab>("feed");
+    const [activeTab, setActiveTab]       = useState<NxTab>("feed");
+    const [sidebarOpen, setSidebarOpen]   = useState(false);
+    const [settingsOpen, setSettingsOpen] = useState(false);
 
     return (
         <div
@@ -21,24 +37,32 @@ export function NexusShell() {
             {/* ── Ambient background ────────────────────────────────── */}
             <NexusBackground />
 
-            {/* ── 2-qadam: Header ───────────────────────────────────── */}
-            <NxHeader />
+            {/* ── Header ────────────────────────────────────────────── */}
+            <NxHeader
+                onMenuOpen={() => setSidebarOpen(true)}
+                onSettingsOpen={() => setSettingsOpen(true)}
+            />
 
             {/* ── Asosiy kontent ────────────────────────────────────── */}
             <main className="relative z-10 flex-1 overflow-y-auto">
-
-                {/* ── 4-qadam: Stories Bar ──────────────────────────── */}
-                <NxStories />
-
-                {/* ── 5-qadam: Hero Banner ──────────────────────────── */}
-                <NxHero />
-
-                {/* ── 6-qadam: Content Rows ─────────────────────────── */}
-                <NxFeed />
+                {renderView(activeTab)}
             </main>
 
-            {/* ── 3-qadam: Dock ─────────────────────────────────────── */}
+            {/* ── Dock ──────────────────────────────────────────────── */}
             <NxDock active={activeTab} onChange={setActiveTab} />
+
+            {/* ── Sidebar (right drawer) ────────────────────────────── */}
+            <NxSidebar
+                open={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+                onOpenSettings={() => { setSidebarOpen(false); setSettingsOpen(true); }}
+            />
+
+            {/* ── Settings modal ────────────────────────────────────── */}
+            <NxSettings
+                open={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+            />
         </div>
     );
 }
