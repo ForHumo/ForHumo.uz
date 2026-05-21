@@ -1,6 +1,7 @@
 "use client";
 
 import { Play, Eye, Star, Heart, Radio, BookOpen, Music2, Clock } from "lucide-react";
+import { useNxPlayer, type NxVideo, type NxTrack, type NxShort } from "./nx-player-ctx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Umumiy yordamchilar
@@ -39,8 +40,10 @@ export function VideoCard({ title, image, views, duration, author, avatar }: {
     title: string; image: string; views: string; duration: string;
     author: string; avatar: string;
 }) {
+    const { openVideo } = useNxPlayer();
+    const video: NxVideo = { title, image, author, avatar, views, duration };
     return (
-        <div className="flex-shrink-0 w-60 md:w-72 group cursor-pointer">
+        <div className="flex-shrink-0 w-60 md:w-72 group cursor-pointer" onClick={() => openVideo(video)}>
             {/* Thumbnail */}
             <div
                 className="relative aspect-video rounded-xl overflow-hidden mb-2.5"
@@ -79,11 +82,12 @@ export function VideoCard({ title, image, views, duration, author, avatar }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // ShortCard — 9:16 (Reels/Shorts)
 // ─────────────────────────────────────────────────────────────────────────────
-export function ShortCard({ image, author, views, likes, duration }: {
-    image: string; author: string; views: string; likes: string; duration: string;
+export function ShortCard({ image, author, views, likes, duration, onClick }: {
+    image: string; author: string; views: string; likes: string; duration: string; onClick?: () => void;
 }) {
     return (
         <div
+            onClick={onClick}
             className="flex-shrink-0 w-[120px] md:w-[140px] aspect-[9/16] relative rounded-2xl overflow-hidden group cursor-pointer"
             style={{ border: "1px solid rgba(43,62,232,0.20)" }}
         >
@@ -132,8 +136,14 @@ export function ShortCard({ image, author, views, likes, duration }: {
 export function LiveCard({ title, image, author, viewers, category }: {
     title: string; image: string; author: string; viewers: string; category: string;
 }) {
+    const { openVideo } = useNxPlayer();
+    const video: NxVideo = {
+        title, image, author,
+        avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${author}`,
+        views: viewers, duration: "LIVE", category,
+    };
     return (
-        <div className="flex-shrink-0 w-60 md:w-72 group cursor-pointer">
+        <div className="flex-shrink-0 w-60 md:w-72 group cursor-pointer" onClick={() => openVideo(video)}>
             <div
                 className="relative aspect-video rounded-xl overflow-hidden mb-2.5"
                 style={{ border: "2px solid rgba(239,68,68,0.50)", boxShadow: "0 0 16px rgba(239,68,68,0.18)" }}
@@ -190,8 +200,12 @@ export function LiveCard({ title, image, author, viewers, category }: {
 export function MusicCard({ title, artist, image, duration, listens }: {
     title: string; artist: string; image: string; duration: string; listens: string;
 }) {
+    const { playTrack } = useNxPlayer();
+    const durationParts = duration.split(":").map(Number);
+    const durationSec   = (durationParts[0] ?? 0) * 60 + (durationParts[1] ?? 0);
+    const track: NxTrack = { title, artist, image, duration, durationSec };
     return (
-        <div className="flex-shrink-0 w-36 md:w-44 group cursor-pointer">
+        <div className="flex-shrink-0 w-36 md:w-44 group cursor-pointer" onClick={() => playTrack(track)}>
             <div
                 className="relative aspect-square rounded-2xl overflow-hidden mb-2.5"
                 style={{ border: "1px solid rgba(43,62,232,0.20)" }}

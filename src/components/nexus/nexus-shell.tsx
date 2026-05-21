@@ -5,6 +5,12 @@ import { NxHeader } from "./nx-header";
 import { NxDock, type NxTab } from "./nx-dock";
 import { NxSidebar } from "./nx-sidebar";
 import { NxSettings } from "./nx-settings";
+import { NxPlayerProvider } from "./nx-player-ctx";
+import { NxMusicPlayer } from "./nx-music-player";
+import { NxVideoPlayer } from "./nx-video-player";
+import { NxShortsPlayer } from "./nx-shorts-player";
+import { NxSearch } from "./nx-search";
+import { NxCreatorStudio } from "./nx-creator-studio";
 import { FeedView, VideoView, LiveView, MediaView, SocialView, ProfileView } from "./nx-views";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,40 +36,57 @@ export function NexusShell() {
     const [settingsOpen, setSettingsOpen] = useState(false);
 
     return (
-        <div
-            className="w-full h-full flex flex-col overflow-hidden text-white select-none"
-            style={{ background: "#050818" }}
-        >
-            {/* ── Ambient background ────────────────────────────────── */}
-            <NexusBackground />
+        <NxPlayerProvider>
+            <div
+                className="w-full h-full flex flex-col overflow-hidden text-white select-none"
+                style={{ background: "#050818" }}
+            >
+                {/* ── Ambient background ────────────────────────────────── */}
+                <NexusBackground />
 
-            {/* ── Header ────────────────────────────────────────────── */}
-            <NxHeader
-                onMenuOpen={() => setSidebarOpen(true)}
-                onSettingsOpen={() => setSettingsOpen(true)}
-            />
+                {/* ── Header ────────────────────────────────────────────── */}
+                <NxHeader
+                    onMenuOpen={() => setSidebarOpen(true)}
+                    onSettingsOpen={() => setSettingsOpen(true)}
+                />
 
-            {/* ── Asosiy kontent ────────────────────────────────────── */}
-            <main className="relative z-10 flex-1 overflow-y-auto">
-                {renderView(activeTab)}
-            </main>
+                {/* ── Asosiy kontent ────────────────────────────────────── */}
+                <main className="relative z-10 flex-1 overflow-y-auto">
+                    {renderView(activeTab)}
+                </main>
 
-            {/* ── Dock ──────────────────────────────────────────────── */}
-            <NxDock active={activeTab} onChange={setActiveTab} />
+                {/* ── Dock ──────────────────────────────────────────────── */}
+                <NxDock active={activeTab} onChange={setActiveTab} />
 
-            {/* ── Sidebar (right drawer) ────────────────────────────── */}
-            <NxSidebar
-                open={sidebarOpen}
-                onClose={() => setSidebarOpen(false)}
-                onOpenSettings={() => { setSidebarOpen(false); setSettingsOpen(true); }}
-            />
+                {/* ── Musiqa mini-player ────────────────────────────────── */}
+                <NxMusicPlayer />
 
-            {/* ── Settings modal ────────────────────────────────────── */}
-            <NxSettings
-                open={settingsOpen}
-                onClose={() => setSettingsOpen(false)}
-            />
-        </div>
+                {/* ── Sidebar ───────────────────────────────────────────── */}
+                <NxSidebar
+                    open={sidebarOpen}
+                    onClose={() => setSidebarOpen(false)}
+                    onOpenSettings={() => { setSidebarOpen(false); setSettingsOpen(true); }}
+                />
+
+                {/* ── Settings ──────────────────────────────────────────── */}
+                <NxSettings
+                    open={settingsOpen}
+                    onClose={() => setSettingsOpen(false)}
+                />
+
+                {/* ── Video player ──────────────────────────────────────── */}
+                <NxVideoPlayer />
+
+                {/* ── Shorts player ─────────────────────────────────────── */}
+                <NxShortsPlayer />
+
+                {/* ── Qidiruv ───────────────────────────────────────────── */}
+                <NxSearch />
+
+                {/* ── Creator Studio ────────────────────────────────────── */}
+                <NxCreatorStudio />
+            </div>
+        </NxPlayerProvider>
     );
 }
 

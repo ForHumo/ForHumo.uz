@@ -2,11 +2,22 @@
 
 import { NxRow } from "./nx-row";
 import { VideoCard, ShortCard, LiveCard, MusicCard, BookCard } from "./nx-cards";
+import { useNxPlayer, type NxShort } from "./nx-player-ctx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxFeed — barcha content rowlar
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxFeed() {
+    const { openShorts } = useNxPlayer();
+
+    const SHORTS_DATA: NxShort[] = Array.from({ length: 10 }, (_, i) => ({
+        image:    `https://picsum.photos/seed/short${i + 30}/400/711`,
+        author:   `@creator_${i + 1}`,
+        views:    `${(i + 1) * 120}K`,
+        likes:    `${(i + 1) * 18}K`,
+        duration: `0:${String(15 + i * 5).padStart(2, "0")}`,
+    }));
+
     return (
         <div className="pb-32">
 
@@ -52,14 +63,15 @@ export function NxFeed() {
             </NxRow>
 
             {/* ── Shorts / Reels ────────────────────────────────────── */}
-            <NxRow title="Shorts" accent="linear-gradient(180deg,#8B5CF6,#6366F1)" onSeeAll={() => {}}>
-                {Array.from({ length: 10 }, (_, i) => (
+            <NxRow title="Shorts" accent="linear-gradient(180deg,#8B5CF6,#6366F1)" onSeeAll={() => openShorts(SHORTS_DATA, 0)}>
+                {SHORTS_DATA.map((s, i) => (
                     <ShortCard key={i}
-                        image={`https://picsum.photos/seed/short${i + 30}/400/711`}
-                        author={`@creator_${i + 1}`}
-                        views={`${(i + 1) * 120}K`}
-                        likes={`${(i + 1) * 18}K`}
-                        duration={`0:${String(15 + i * 5).padStart(2, "0")}`}
+                        image={s.image}
+                        author={s.author}
+                        views={s.views}
+                        likes={s.likes}
+                        duration={s.duration}
+                        onClick={() => openShorts(SHORTS_DATA, i)}
                     />
                 ))}
             </NxRow>

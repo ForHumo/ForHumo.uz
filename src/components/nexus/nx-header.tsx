@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { Search, Bell, ChevronDown, Menu } from "lucide-react";
+import { Search, Bell, ChevronDown, Menu, PlusSquare } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useNxPlayer } from "./nx-player-ctx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxHeader — asosiy header
@@ -14,6 +15,7 @@ interface NxHeaderProps {
 
 export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHeaderProps) {
     const { data: session } = useSession();
+    const { setSearchOpen, setStudioOpen } = useNxPlayer();
 
     return (
         <header
@@ -72,33 +74,50 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
             {/* ── Search ────────────────────────────────────────────── */}
             <div className="flex-1 max-w-xl relative group">
                 <Search
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none transition-colors duration-150"
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
                     style={{ color: "rgba(43,62,232,0.50)" }}
                 />
                 <input
                     type="text"
+                    readOnly
                     placeholder="Kontent, kreator, kanal..."
-                    className="w-full h-9 rounded-xl pl-9 pr-4 text-sm outline-none text-white transition-all duration-200"
+                    className="w-full h-9 rounded-xl pl-9 pr-4 text-sm outline-none text-white cursor-pointer transition-all duration-200"
                     style={{
                         background: "rgba(43,62,232,0.08)",
                         border: "1px solid rgba(43,62,232,0.18)",
-                        caretColor: "#00CEC8",
                     }}
-                    onFocus={e => {
-                        e.currentTarget.style.background = "rgba(43,62,232,0.14)";
-                        e.currentTarget.style.borderColor = "rgba(43,62,232,0.50)";
-                        (e.currentTarget.previousElementSibling as HTMLElement).style.color = "#00CEC8";
-                    }}
-                    onBlur={e => {
-                        e.currentTarget.style.background = "rgba(43,62,232,0.08)";
-                        e.currentTarget.style.borderColor = "rgba(43,62,232,0.18)";
-                        (e.currentTarget.previousElementSibling as HTMLElement).style.color = "rgba(43,62,232,0.50)";
-                    }}
+                    onClick={() => setSearchOpen(true)}
                 />
             </div>
 
             {/* ── Right actions ─────────────────────────────────────── */}
             <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+
+                {/* Kontent yaratish */}
+                <button
+                    onClick={() => setStudioOpen(true)}
+                    className="hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-xl transition-all duration-150 active:scale-95"
+                    style={{
+                        background: "linear-gradient(135deg,rgba(43,62,232,0.20),rgba(0,206,200,0.12))",
+                        border: "1px solid rgba(43,62,232,0.30)",
+                    }}
+                    onMouseEnter={e => {
+                        (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg,rgba(43,62,232,0.30),rgba(0,206,200,0.18))";
+                    }}
+                    onMouseLeave={e => {
+                        (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg,rgba(43,62,232,0.20),rgba(0,206,200,0.12))";
+                    }}
+                >
+                    <PlusSquare className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                    <span className="text-xs font-black" style={{
+                        background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                    }}>
+                        Yaratish
+                    </span>
+                </button>
 
                 {/* Bildirishnoma */}
                 <BellButton />
