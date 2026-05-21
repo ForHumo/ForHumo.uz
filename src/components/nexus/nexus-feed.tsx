@@ -22,10 +22,10 @@ export function NexusFeed({ onTabChange }: Props) {
                 badge="3"
                 onSeeAll={() => onTabChange?.("chats")}
             >
-                <ChatPreviewCard name="Islomjon"      avatar="https://api.dicebear.com/7.x/avataaars/svg?seed=Islom"   message="Salom, yangi loyiha haqida..."  time="14:32" unread  />
+                <ChatPreviewCard name="Islomjon"       avatar="https://api.dicebear.com/7.x/avataaars/svg?seed=Islom"   message="Salom, yangi loyiha haqida..."  time="14:32" unread  />
                 <ChatPreviewCard name="Dizayn jamoasi" avatar="https://api.dicebear.com/7.x/identicon/svg?seed=Design"  message="Fayl: mockup.fig yuklab olindi"  time="12:45" isGroup />
                 <ChatPreviewCard name="Madina"         avatar="https://api.dicebear.com/7.x/avataaars/svg?seed=Madina"  message="Rahmat! Juda ajoyib chiqibdi"    time="11:20" unread  />
-                <ChatPreviewCard name="Do'stlar"       avatar="https://api.dicebear.com/7.x/initials/svg?seed=Friends"  message="Sardor: Qayerdasiz?"             time="10:05" isGroup />
+                <ChatPreviewCard name="Do'stlar"        avatar="https://api.dicebear.com/7.x/initials/svg?seed=Friends"  message="Sardor: Qayerdasiz?"             time="10:05" isGroup />
                 {[5, 6, 7, 8].map(i => (
                     <ChatPreviewCard
                         key={i}

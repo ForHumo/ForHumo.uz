@@ -46,8 +46,8 @@ const SECTIONS: SidebarSection[] = [
     {
         title: "Saqlangan",
         items: [
-            { icon: ListMusic, label: "Pleylistlar"  },
-            { icon: Clock,     label: "Keyinroq ko'rish" },
+            { icon: ListMusic, label: "Pleylistlar"       },
+            { icon: Clock,     label: "Keyinroq ko'rish"  },
         ],
     },
     {
@@ -71,27 +71,38 @@ export function NexusSidebar({ isOpen, onClose, onOpenSettings }: Props) {
             {/* Backdrop */}
             <div
                 className={cn(
-                    "fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] transition-opacity duration-300",
+                    "fixed inset-0 z-[60] transition-opacity duration-300",
                     isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                 )}
+                style={{ background: "rgba(6,11,26,0.75)", backdropFilter: "blur(6px)" }}
                 onClick={onClose}
             />
 
             {/* Panel */}
             <aside
                 className={cn(
-                    "fixed top-0 right-0 bottom-0 w-72 z-[70] nx-glass-heavy border-l border-white/10 flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                    "fixed top-0 right-0 bottom-0 w-72 z-[70] flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isOpen ? "translate-x-0" : "translate-x-full"
                 )}
+                style={{
+                    background: "rgba(6,11,26,0.94)",
+                    backdropFilter: "blur(28px)",
+                    WebkitBackdropFilter: "blur(28px)",
+                    borderLeft: "1px solid rgba(43,62,232,0.25)",
+                }}
             >
                 {/* Header */}
-                <div className="p-5 flex items-center justify-between border-b border-white/5 flex-shrink-0">
-                    <h2 className="text-lg font-bold">Nexus Menyu</h2>
+                <div className="p-5 flex items-center justify-between flex-shrink-0"
+                    style={{ borderBottom: "1px solid rgba(43,62,232,0.15)" }}>
+                    <h2 className="text-lg font-bold nx-gradient-text">Nexus Menyu</h2>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white/5 transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-xl transition-colors duration-150"
+                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.22)"}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.10)"}
                     >
-                        <X className="w-4 h-4 text-gray-400" />
+                        <X className="w-4 h-4 text-[#a0b0e0]" />
                     </button>
                 </div>
 
@@ -99,7 +110,8 @@ export function NexusSidebar({ isOpen, onClose, onOpenSettings }: Props) {
                 <div className="flex-1 overflow-y-auto p-3 nx-scrollbar">
                     {SECTIONS.map((section, si) => (
                         <div key={si} className="mb-6 last:mb-0">
-                            <p className="px-3 text-[9px] font-bold uppercase tracking-[0.18em] text-gray-600 mb-2">
+                            <p className="px-3 text-[9px] font-bold uppercase tracking-[0.18em] mb-2"
+                                style={{ color: "rgba(43,62,232,0.70)" }}>
                                 {section.title}
                             </p>
                             <div className="space-y-0.5">
@@ -109,23 +121,27 @@ export function NexusSidebar({ isOpen, onClose, onOpenSettings }: Props) {
                                         <button
                                             key={ii}
                                             onClick={item.isSettings ? () => { onClose(); onOpenSettings(); } : undefined}
-                                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 group transition-all duration-150"
+                                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-150 group"
+                                            style={{}}
+                                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.10)"}
+                                            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-primary/20 group-hover:text-primary transition-all duration-150 flex-shrink-0">
+                                                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-150 text-[#4a5a8a] group-hover:text-[#7dd3fc]"
+                                                    style={{ background: "rgba(11,20,45,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}>
                                                     <Icon className="w-3.5 h-3.5" />
                                                 </div>
-                                                <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors duration-150 text-left">
+                                                <span className="text-sm font-medium text-[#8090b0] group-hover:text-white transition-colors duration-150 text-left">
                                                     {item.label}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-2 flex-shrink-0">
                                                 {item.badge && (
-                                                    <span className="px-1.5 py-0.5 bg-primary text-[9px] font-bold rounded-md min-w-[18px] text-center">
+                                                    <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-md min-w-[18px] text-center text-white nx-gradient">
                                                         {item.badge}
                                                     </span>
                                                 )}
-                                                <ChevronRight className="w-3.5 h-3.5 text-gray-600 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-150" />
+                                                <ChevronRight className="w-3.5 h-3.5 text-[#4a5a8a] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-150" />
                                             </div>
                                         </button>
                                     );
@@ -136,14 +152,25 @@ export function NexusSidebar({ isOpen, onClose, onOpenSettings }: Props) {
                 </div>
 
                 {/* Footer — Nexus Pro promo */}
-                <div className="p-4 border-t border-white/5 flex-shrink-0">
-                    <div className="bg-gradient-to-br from-primary/15 to-blue-600/15 rounded-2xl p-4 border border-primary/20 relative overflow-hidden group cursor-pointer hover:border-primary/40 transition-colors duration-200">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-primary/20 blur-2xl rounded-full -mr-8 -mt-8 group-hover:bg-primary/30 transition-colors duration-300" />
+                <div className="p-4 flex-shrink-0"
+                    style={{ borderTop: "1px solid rgba(43,62,232,0.15)" }}>
+                    <div
+                        className="rounded-2xl p-4 relative overflow-hidden cursor-pointer group transition-all duration-200"
+                        style={{
+                            background: "linear-gradient(135deg, rgba(43,62,232,0.18) 0%, rgba(0,206,200,0.12) 100%)",
+                            border: "1px solid rgba(43,62,232,0.30)",
+                        }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.55)"}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.30)"}
+                    >
+                        {/* Background shimmer */}
+                        <div className="absolute top-0 right-0 w-24 h-24 rounded-full -mr-10 -mt-10 pointer-events-none"
+                            style={{ background: "radial-gradient(circle, rgba(43,62,232,0.35) 0%, transparent 70%)" }} />
                         <div className="flex items-center gap-2 mb-1.5 relative">
-                            <Zap className="w-3.5 h-3.5 text-primary" />
-                            <p className="text-[10px] text-primary font-bold tracking-widest">NEXUS PRO</p>
+                            <Zap className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                            <p className="text-[10px] font-bold tracking-widest nx-gradient-text">NEXUS PRO</p>
                         </div>
-                        <p className="text-xs text-gray-300 leading-relaxed relative">
+                        <p className="text-xs text-[#8090b0] leading-relaxed relative">
                             Cheksiz bulut xotira va kengaytirilgan AI agentlar.
                         </p>
                     </div>

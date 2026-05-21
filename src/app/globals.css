@@ -162,21 +162,45 @@
 }
 
 /* ── Nexus app-shell utilities ────────────────────────────────────────────── */
+
+/* Navy-tinted glass — primary surface */
 .nx-glass {
-  background: rgba(255,255,255,0.03);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(11, 20, 45, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(43, 62, 232, 0.18);
 }
+
+/* Heavier glass — sidebars, overlays */
 .nx-glass-heavy {
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(6, 11, 26, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(43, 62, 232, 0.22);
 }
+
+/* Blue-to-cyan gradient fill */
+.nx-gradient {
+  background: linear-gradient(135deg, #2B3EE8 0%, #00CEC8 100%);
+}
+
+/* Gradient text */
+.nx-gradient-text {
+  background: linear-gradient(135deg, #2B3EE8 0%, #00CEC8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gradient glow shadow */
+.nx-glow {
+  box-shadow: 0 0 32px rgba(43, 62, 232, 0.45), 0 0 80px rgba(0, 206, 200, 0.12);
+}
+
+/* Thin scrollbar — navy-tinted thumb */
 .nx-scrollbar::-webkit-scrollbar          { width: 5px; }
 .nx-scrollbar::-webkit-scrollbar-track    { background: transparent; }
-.nx-scrollbar::-webkit-scrollbar-thumb    { background: rgba(255,255,255,0.10); border-radius: 10px; }
-.nx-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.20); }
+.nx-scrollbar::-webkit-scrollbar-thumb    { background: rgba(43,62,232,0.25); border-radius: 10px; }
+.nx-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(43,62,232,0.45); }
 .nx-hide-scrollbar                        { scrollbar-width: none; -ms-overflow-style: none; }
 .nx-hide-scrollbar::-webkit-scrollbar     { display: none; }
