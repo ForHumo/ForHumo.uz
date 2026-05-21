@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { NxHeader } from "./nx-header";
 import { NxDock, type NxTab } from "./nx-dock";
+import { NxStories } from "./nx-stories";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NexusShell — asosiy qobiq
@@ -23,7 +24,10 @@ export function NexusShell() {
 
             {/* ── Asosiy kontent ────────────────────────────────────── */}
             <main className="relative z-10 flex-1 overflow-y-auto">
-                {/* 4-qadam: Stories */}
+
+                {/* ── 4-qadam: Stories Bar ──────────────────────────── */}
+                <NxStories />
+
                 {/* 5-qadam: Hero Banner */}
                 {/* 6-qadam: Content Rows */}
             </main>
