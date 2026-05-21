@@ -5,6 +5,7 @@ import { NxHeader } from "./nx-header";
 import { NxDock, type NxTab } from "./nx-dock";
 import { NxStories } from "./nx-stories";
 import { NxHero } from "./nx-hero";
+import { NxFeed } from "./nx-feed";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NexusShell — asosiy qobiq
@@ -32,7 +33,8 @@ export function NexusShell() {
                 {/* ── 5-qadam: Hero Banner ──────────────────────────── */}
                 <NxHero />
 
-                {/* 6-qadam: Content Rows */}
+                {/* ── 6-qadam: Content Rows ─────────────────────────── */}
+                <NxFeed />
             </main>
 
             {/* ── 3-qadam: Dock ─────────────────────────────────────── */}
