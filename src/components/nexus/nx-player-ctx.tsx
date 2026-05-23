@@ -11,6 +11,7 @@ import {
 export interface NxTrack {
     title: string; artist: string; image: string;
     duration: string; durationSec: number;
+    src?: string;        // haqiqiy MP3/audio URL
 }
 export interface NxVideo {
     title: string; author: string; avatar: string;
@@ -18,6 +19,7 @@ export interface NxVideo {
 }
 export interface NxShort {
     image: string; author: string; views: string; likes: string; duration: string;
+    videoSrc?: string;   // haqiqiy MP4 URL
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,6 +60,10 @@ interface PlayerCtx {
     // Studio
     studioOpen:    boolean;
     setStudioOpen: (v: boolean) => void;
+
+    // Pro obuna
+    proOpen:    boolean;
+    setProOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -72,51 +78,98 @@ export function useNxPlayer(): PlayerCtx {
 // Provider
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxPlayerProvider({ children }: { children: ReactNode }) {
-    /* ── Musiqa ── */
-    const [track,          setTrack]         = useState<NxTrack | null>(null);
-    const [isPlaying,      setIsPlaying]     = useState(false);
-    const [progress,       setProgress]      = useState(0);
-    const [volume,         setVolume]        = useState(80);
-    const [musicExpanded,  setMusicExpanded] = useState(false);
+    /* ── Musiqa state ── */
+    const [track,         setTrack]        = useState<NxTrack | null>(null);
+    const [isPlaying,     setIsPlaying]    = useState(false);
+    const [progress,      setProgress]     = useState(0);
+    const [volume,        setVolume]       = useState(80);
+    const [musicExpanded, setMusicExpanded] = useState(false);
 
     /* ── Video ── */
     const [video,     setVideo]    = useState<NxVideo | null>(null);
     const [videoOpen, setVideoOpen] = useState(false);
 
     /* ── Shorts ── */
-    const [shorts,      setShorts]      = useState<NxShort[]>([]);
-    const [shortIndex,  setShortIndex]  = useState(0);
-    const [shortsOpen,  setShortsOpen]  = useState(false);
+    const [shorts,     setShorts]    = useState<NxShort[]>([]);
+    const [shortIndex, setShortIndex] = useState(0);
+    const [shortsOpen, setShortsOpen] = useState(false);
 
     /* ── Boshqalar ── */
     const [searchOpen, setSearchOpen] = useState(false);
     const [studioOpen, setStudioOpen] = useState(false);
+    const [proOpen,    setProOpen]    = useState(false);
 
-    /* ── Progress simulatsiya ── */
-    const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+    /* ── Haqiqiy Audio engine (client-only, imperative) ── */
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
-        if (isPlaying && track) {
-            timer.current = setInterval(() => {
-                setProgress(p => {
-                    const next = p + 100 / track.durationSec;
-                    if (next >= 100) { setIsPlaying(false); return 0; }
-                    return next;
-                });
-            }, 1000);
-        } else {
-            if (timer.current) clearInterval(timer.current);
-        }
-        return () => { if (timer.current) clearInterval(timer.current); };
-    }, [isPlaying, track]);
+        // SSR-safe: faqat brauzerda ishga tushadi
+        const audio = new Audio();
+        audio.volume = 0.8;
+        audio.preload = "auto";
+        audioRef.current = audio;
+
+        const onTimeUpdate = () => {
+            if (audio.duration > 0) {
+                setProgress((audio.currentTime / audio.duration) * 100);
+            }
+        };
+        const onEnded = () => { setIsPlaying(false); setProgress(0); };
+
+        audio.addEventListener("timeupdate", onTimeUpdate);
+        audio.addEventListener("ended", onEnded);
+
+        return () => {
+            audio.removeEventListener("timeupdate", onTimeUpdate);
+            audio.removeEventListener("ended", onEnded);
+            audio.pause();
+            audio.src = "";
+        };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     /* ── Callbacklar ── */
-    const playTrack  = useCallback((t: NxTrack) => {
-        setTrack(t); setIsPlaying(true); setProgress(0);
+    const playTrack = useCallback((t: NxTrack) => {
+        setTrack(t);
+        setProgress(0);
+        setIsPlaying(true);
+        const audio = audioRef.current;
+        if (!audio) return;
+        if (t.src) {
+            audio.src = t.src;
+            audio.currentTime = 0;
+            audio.play().catch(e => console.warn("[NxAudio] play:", e));
+        } else {
+            audio.src = "";
+            audio.pause();
+        }
     }, []);
-    const togglePlay = useCallback(() => setIsPlaying(p => !p), []);
-    const seek       = useCallback((pct: number) => setProgress(Math.max(0, Math.min(100, pct))), []);
-    const setVol     = useCallback((v: number)   => setVolume(Math.max(0, Math.min(100, v))), []);
+
+    const togglePlay = useCallback(() => {
+        setIsPlaying(prev => {
+            const next = !prev;
+            const audio = audioRef.current;
+            if (audio) {
+                if (next) audio.play().catch(e => console.warn("[NxAudio] resume:", e));
+                else      audio.pause();
+            }
+            return next;
+        });
+    }, []);
+
+    const seek = useCallback((pct: number) => {
+        const clamped = Math.max(0, Math.min(100, pct));
+        setProgress(clamped);
+        const audio = audioRef.current;
+        if (audio && audio.duration > 0) {
+            audio.currentTime = (clamped / 100) * audio.duration;
+        }
+    }, []);
+
+    const setVol = useCallback((v: number) => {
+        const clamped = Math.max(0, Math.min(100, v));
+        setVolume(clamped);
+        if (audioRef.current) audioRef.current.volume = clamped / 100;
+    }, []);
 
     const openVideo  = useCallback((v: NxVideo) => { setVideo(v); setVideoOpen(true); }, []);
     const closeVideo = useCallback(() => setVideoOpen(false), []);
@@ -138,6 +191,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             shorts, shortIndex, shortsOpen, openShorts, closeShorts, nextShort, prevShort,
             searchOpen, setSearchOpen,
             studioOpen, setStudioOpen,
+            proOpen, setProOpen,
         }}>
             {children}
         </Ctx.Provider>

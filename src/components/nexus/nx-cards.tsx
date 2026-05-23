@@ -197,13 +197,14 @@ export function LiveCard({ title, image, author, viewers, category }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // MusicCard — kvadrat
 // ─────────────────────────────────────────────────────────────────────────────
-export function MusicCard({ title, artist, image, duration, listens }: {
+export function MusicCard({ title, artist, image, duration, listens, track: trackProp }: {
     title: string; artist: string; image: string; duration: string; listens: string;
+    track?: NxTrack;
 }) {
     const { playTrack } = useNxPlayer();
     const durationParts = duration.split(":").map(Number);
     const durationSec   = (durationParts[0] ?? 0) * 60 + (durationParts[1] ?? 0);
-    const track: NxTrack = { title, artist, image, duration, durationSec };
+    const track: NxTrack = trackProp ?? { title, artist, image, duration, durationSec };
     return (
         <div className="flex-shrink-0 w-36 md:w-44 group cursor-pointer" onClick={() => playTrack(track)}>
             <div

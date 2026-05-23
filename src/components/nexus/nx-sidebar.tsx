@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Home, Play, Radio, Library, MessageCircle, UserCircle,
     Settings, HelpCircle, Star, Bookmark, History, TrendingUp,
@@ -36,6 +37,7 @@ const MY_ITEMS = [
 
 export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
     const { data: session } = useSession();
+    const { setProOpen } = useNxPlayer();
     const name   = session?.user?.name  ?? "Mehmon";
     const image  = session?.user?.image ?? null;
     const email  = session?.user?.email ?? "";
@@ -131,6 +133,7 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
                     <div className="px-4 pb-4">
                         <div
                             className="relative overflow-hidden rounded-2xl p-4 cursor-pointer group"
+                            onClick={() => { onClose(); setProOpen(true); }}
                             style={{
                                 background: "linear-gradient(135deg, rgba(43,62,232,0.25) 0%, rgba(0,206,200,0.12) 100%)",
                                 border: "1px solid rgba(43,62,232,0.35)",

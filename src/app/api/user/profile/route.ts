@@ -61,24 +61,9 @@ export async function PATCH(req: Request) {
         onboardingDone?: boolean;
     };
 
-    // 14-day rate limit for user-initiated profile edits (skip during onboarding)
+    // Rate limit o'chirilgan — test rejimi
     const RATE_LIMITED_FIELDS = ["firstName", "lastName", "fatherName", "username", "bio", "birthday", "phone", "location"] as const;
     const isProfileEdit = RATE_LIMITED_FIELDS.some((f) => f in body) && body.onboardingDone !== true;
-
-    if (isProfileEdit) {
-        const existing = await prisma.userProfile.findUnique({
-            where: { email: session.user.email },
-            select: { profileEditedAt: true },
-        });
-        if (existing?.profileEditedAt) {
-            const elapsed = Date.now() - existing.profileEditedAt.getTime();
-            const FOURTEEN_DAYS = 14 * 24 * 60 * 60 * 1000;
-            if (elapsed < FOURTEEN_DAYS) {
-                const nextEditDate = new Date(existing.profileEditedAt.getTime() + FOURTEEN_DAYS);
-                return NextResponse.json({ error: "edit_cooldown", nextEditDate: nextEditDate.toISOString() }, { status: 429 });
-            }
-        }
-    }
 
     // Validate username if provided
     const RESERVED_USERNAMES = new Set([

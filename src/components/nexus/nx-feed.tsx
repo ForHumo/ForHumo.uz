@@ -2,7 +2,28 @@
 
 import { NxRow } from "./nx-row";
 import { VideoCard, ShortCard, LiveCard, MusicCard, BookCard } from "./nx-cards";
-import { useNxPlayer, type NxShort } from "./nx-player-ctx";
+import { useNxPlayer, type NxShort, type NxTrack } from "./nx-player-ctx";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Demo audio URL lari — SoundHelix (bepul, ochiq lisenziya)
+// ─────────────────────────────────────────────────────────────────────────────
+const AUDIO_SRCS = Array.from({ length: 8 }, (_, i) =>
+    `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${i + 1}.mp3`
+);
+
+// Demo video URL lari — Google public test bucket
+const SHORTS_VIDEO_SRCS = [
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4",
+];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxFeed — barcha content rowlar
@@ -16,6 +37,19 @@ export function NxFeed() {
         views:    `${(i + 1) * 120}K`,
         likes:    `${(i + 1) * 18}K`,
         duration: `0:${String(15 + i * 5).padStart(2, "0")}`,
+        videoSrc: SHORTS_VIDEO_SRCS[i % SHORTS_VIDEO_SRCS.length],
+    }));
+
+    const MUSIC_TRACKS: NxTrack[] = [
+        "Bahor Ohangi", "Tun Yulduzi", "Sevgi Qo'shig'i", "Uzoq Yo'l",
+        "Yurak Tori", "Osmon Osti", "Erkin Qush", "Yangi Kun",
+    ].map((title, i) => ({
+        title,
+        artist: ["Madina", "Sardor", "Kamola", "Bobur", "Dilnoza", "Jasur", "Zulfiya", "Islom"][i],
+        image:  `https://picsum.photos/seed/music${i + 50}/400/400`,
+        duration: `${3 + i % 2}:${String(20 + i * 5 % 40).padStart(2, "0")}`,
+        durationSec: (3 + i % 2) * 60 + (20 + i * 5 % 40),
+        src: AUDIO_SRCS[i % AUDIO_SRCS.length],
     }));
 
     return (
@@ -99,13 +133,14 @@ export function NxFeed() {
 
             {/* ── Musiqa ────────────────────────────────────────────── */}
             <NxRow title="Musiqa" accent="linear-gradient(180deg,#10B981,#00CEC8)" onSeeAll={() => {}}>
-                {Array.from({ length: 8 }, (_, i) => (
+                {MUSIC_TRACKS.map((track, i) => (
                     <MusicCard key={i}
-                        title={["Bahor Ohangi", "Tun Yulduzi", "Sevgi Qo'shig'i", "Uzoq Yo'l", "Yurak Tori", "Osmon Osti", "Erkin Qush", "Yangi Kun"][i]}
-                        artist={["Madina", "Sardor", "Kamola", "Bobur", "Dilnoza", "Jasur", "Zulfiya", "Islom"][i]}
-                        image={`https://picsum.photos/seed/music${i + 50}/400/400`}
-                        duration={`${3 + i % 2}:${String(20 + i * 5 % 40).padStart(2, "0")}`}
+                        title={track.title}
+                        artist={track.artist}
+                        image={track.image}
+                        duration={track.duration}
                         listens={`${(i + 1) * 450}K`}
+                        track={track}
                     />
                 ))}
             </NxRow>

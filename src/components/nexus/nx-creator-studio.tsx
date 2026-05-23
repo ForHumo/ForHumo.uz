@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useSession, signIn } from "next-auth/react";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Upload, Play, Music, BookOpen, Mic, Radio,
     FileText, Image as ImageIcon, Tag, DollarSign,
-    Globe, Lock, Check, ChevronRight, Loader2,
+    Globe, Lock, Check, ChevronRight, Loader2, LogIn,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28,6 +29,7 @@ type UploadState = "idle" | "uploading" | "processing" | "done";
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxCreatorStudio() {
     const { studioOpen, setStudioOpen } = useNxPlayer();
+    const { status } = useSession();
     const [step,       setStep]       = useState<1 | 2 | 3>(1);
     const [typeId,     setTypeId]     = useState<ContentTypeId>("video");
     const [uploadState, setUploadState] = useState<UploadState>("idle");
@@ -68,6 +70,55 @@ export function NxCreatorStudio() {
     };
 
     if (!studioOpen) return null;
+
+    /* ── Auth gate ─────────────────────────────────────────────────────── */
+    if (status === "unauthenticated") {
+        return (
+            <>
+                <div
+                    className="fixed inset-0 z-50"
+                    style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(8px)" }}
+                    onClick={handleClose}
+                />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div
+                        className="relative w-full max-w-sm flex flex-col items-center rounded-3xl overflow-hidden p-8 text-center"
+                        style={{
+                            background: "rgba(8,12,32,0.98)",
+                            border: "1px solid rgba(43,62,232,0.25)",
+                            boxShadow: "0 32px 80px rgba(0,0,0,0.60)",
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={handleClose}
+                            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-xl"
+                            style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}
+                        >
+                            <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                        </button>
+                        <div
+                            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}
+                        >
+                            <LogIn className="w-7 h-7 text-white" />
+                        </div>
+                        <h2 className="text-lg font-black text-white mb-2">Kirish talab etiladi</h2>
+                        <p className="text-sm mb-6" style={{ color: "rgba(140,160,210,0.80)" }}>
+                            Creator Studio foydalanish uchun Humo hisobingizga kiring
+                        </p>
+                        <button
+                            onClick={() => signIn()}
+                            className="w-full py-3 rounded-xl text-sm font-black text-white transition-all duration-200"
+                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 0 20px rgba(43,62,232,0.35)" }}
+                        >
+                            Kirish
+                        </button>
+                    </div>
+                </div>
+            </>
+        );
+    }
 
     return (
         <>
