@@ -24,8 +24,26 @@ export function NxVideoPlayer() {
     const [saved,     setSaved]     = useState(false);
     const [showCtrl,  setShowCtrl]  = useState(true);
 
-    const timer      = useRef<ReturnType<typeof setInterval> | null>(null);
-    const hideTimer  = useRef<ReturnType<typeof setTimeout>  | null>(null);
+    const timer        = useRef<ReturnType<typeof setInterval> | null>(null);
+    const hideTimer    = useRef<ReturnType<typeof setTimeout>  | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    /* Fullscreen o'zgarishini kuzatish */
+    useEffect(() => {
+        const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener("fullscreenchange", onFsChange);
+        return () => document.removeEventListener("fullscreenchange", onFsChange);
+    }, []);
+
+    const toggleFullscreen = async () => {
+        if (!containerRef.current) return;
+        if (!document.fullscreenElement) {
+            await containerRef.current.requestFullscreen?.();
+        } else {
+            await document.exitFullscreen?.();
+        }
+    };
 
     /* Ochilganda reset */
     useEffect(() => {
@@ -87,6 +105,7 @@ export function NxVideoPlayer() {
             >
                 {/* ── Video tomoshabin ────────────────────────────── */}
                 <div
+                    ref={containerRef}
                     className="relative flex-1 bg-black flex items-center justify-center"
                     onMouseMove={resetHide}
                     onClick={() => { setPlaying(p => !p); resetHide(); }}
@@ -218,8 +237,9 @@ export function NxVideoPlayer() {
                                 <div className="h-full rounded-full" style={{ width: `${muted ? 0 : volume}%`, background: "linear-gradient(90deg,#2B3EE8,#00CEC8)" }} />
                             </div>
 
-                            <button>
-                                <Maximize2 className="w-4 h-4 text-white/70" />
+                            <button onClick={e => { e.stopPropagation(); toggleFullscreen(); }}>
+                                <Maximize2 className="w-4 h-4 transition-colors duration-150"
+                                    style={{ color: isFullscreen ? "#00CEC8" : "rgba(255,255,255,0.70)" }} />
                             </button>
                         </div>
                     </div>

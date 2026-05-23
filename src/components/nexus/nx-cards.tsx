@@ -40,7 +40,7 @@ export function VideoCard({ title, image, views, duration, author, avatar }: {
     title: string; image: string; views: string; duration: string;
     author: string; avatar: string;
 }) {
-    const { openVideo } = useNxPlayer();
+    const { openVideo, openChannel } = useNxPlayer();
     const video: NxVideo = { title, image, author, avatar, views, duration };
     return (
         <div className="flex-shrink-0 w-60 md:w-72 group cursor-pointer" onClick={() => openVideo(video)}>
@@ -57,10 +57,11 @@ export function VideoCard({ title, image, views, duration, author, avatar }: {
 
             {/* Info */}
             <div className="flex gap-2.5">
-                {/* Avatar */}
+                {/* Avatar — click opens channel */}
                 <div
-                    className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden mt-0.5"
+                    className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden mt-0.5 cursor-pointer hover:ring-2 hover:ring-[#2B3EE8] transition-all duration-150"
                     style={{ background: "linear-gradient(135deg,rgba(43,62,232,0.40),rgba(0,206,200,0.30))", border: "1px solid rgba(43,62,232,0.25)" }}
+                    onClick={e => { e.stopPropagation(); openChannel(author); }}
                 >
                     <img src={avatar} alt={author} className="w-full h-full object-cover" />
                 </div>
@@ -69,7 +70,10 @@ export function VideoCard({ title, image, views, duration, author, avatar }: {
                         {title}
                     </h4>
                     <p className="text-[10px] flex items-center gap-2" style={{ color: "rgba(100,120,170,0.80)" }}>
-                        <span>{author}</span>
+                        <span
+                            className="hover:text-[#00CEC8] transition-colors cursor-pointer"
+                            onClick={e => { e.stopPropagation(); openChannel(author); }}
+                        >{author}</span>
                         <span>·</span>
                         <span className="flex items-center gap-0.5"><Eye className="w-2.5 h-2.5" />{views}</span>
                     </p>
@@ -197,16 +201,20 @@ export function LiveCard({ title, image, author, viewers, category }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // MusicCard — kvadrat
 // ─────────────────────────────────────────────────────────────────────────────
-export function MusicCard({ title, artist, image, duration, listens, track: trackProp }: {
+export function MusicCard({ title, artist, image, duration, listens, track: trackProp, allTracks, trackIndex }: {
     title: string; artist: string; image: string; duration: string; listens: string;
-    track?: NxTrack;
+    track?: NxTrack; allTracks?: NxTrack[]; trackIndex?: number;
 }) {
-    const { playTrack } = useNxPlayer();
+    const { playTrack, playQueue } = useNxPlayer();
     const durationParts = duration.split(":").map(Number);
     const durationSec   = (durationParts[0] ?? 0) * 60 + (durationParts[1] ?? 0);
     const track: NxTrack = trackProp ?? { title, artist, image, duration, durationSec };
+    const handleClick = () => {
+        if (allTracks && trackIndex !== undefined) playQueue(allTracks, trackIndex);
+        else playTrack(track);
+    };
     return (
-        <div className="flex-shrink-0 w-36 md:w-44 group cursor-pointer" onClick={() => playTrack(track)}>
+        <div className="flex-shrink-0 w-36 md:w-44 group cursor-pointer" onClick={handleClick}>
             <div
                 className="relative aspect-square rounded-2xl overflow-hidden mb-2.5"
                 style={{ border: "1px solid rgba(43,62,232,0.20)" }}

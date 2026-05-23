@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useNxPlayer } from "./nx-player-ctx";
+import { useNxPlayer, type NxVideo, type NxTrack } from "./nx-player-ctx";
 import { Search, X, TrendingUp, Clock, Play, Music, BookOpen, Radio, ChevronRight } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,7 +62,29 @@ type Filter = typeof FILTERS[number];
 // NxSearch — to'liq ekran qidiruv overlay
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxSearch() {
-    const { searchOpen, setSearchOpen } = useNxPlayer();
+    const { searchOpen, setSearchOpen, openVideo, playTrack } = useNxPlayer();
+
+    const handleResultClick = (r: Result) => {
+        setSearchOpen(false);
+        if (r.type === "music") {
+            const durationParts = "3:30".split(":").map(Number);
+            const t: NxTrack = {
+                title: r.title, artist: r.sub,
+                image: `https://picsum.photos/seed/${r.image}/400/400`,
+                duration: "3:30", durationSec: 210,
+            };
+            playTrack(t);
+        } else {
+            const v: NxVideo = {
+                title: r.title, author: r.sub,
+                avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${r.sub}`,
+                image: `https://picsum.photos/seed/${r.image}/800/450`,
+                views: r.meta, duration: r.type === "live" ? "LIVE" : "10:00",
+                category: r.type === "live" ? "Live" : undefined,
+            };
+            openVideo(v);
+        }
+    };
     const [query,  setQuery]  = useState("");
     const [filter, setFilter] = useState<Filter>("Barchasi");
     const inputRef = useRef<HTMLInputElement>(null);
@@ -227,6 +249,7 @@ export function NxSearch() {
                                 return (
                                     <button
                                         key={i}
+                                        onClick={() => handleResultClick(r)}
                                         className="w-full flex items-center gap-3 p-2.5 rounded-xl mb-1 text-left transition-all duration-150 hover:bg-blue-500/5 group"
                                     >
                                         {/* Thumbnail */}

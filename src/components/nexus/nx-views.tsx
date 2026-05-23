@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useState, useEffect, useCallback } from "react";
+import { useSession, signOut } from "next-auth/react";
 import {
     Search, TrendingUp, Flame, Clock, Zap,
     Film, Music2, Headphones, BookOpen, Mic2,
     Radio, Users, Hash, MessageCircle, Bot,
     Shield, Heart, UserCheck, CreditCard,
     Settings, LogOut, BadgeCheck, Plus, ChevronRight,
+    Edit3, Save, X, Loader2, Trash2,
 } from "lucide-react";
+import { useNxPlayer } from "./nx-player-ctx";
 import { NxRow } from "./nx-row";
 import { VideoCard, ShortCard, LiveCard, MusicCard, BookCard } from "./nx-cards";
 import { NxStories } from "./nx-stories";
@@ -540,18 +542,78 @@ export function SocialView() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROFILE VIEW — Humo ID
+// PROFILE VIEW — Humo ID + real data + edit modal
 // ─────────────────────────────────────────────────────────────────────────────
+interface ProfileData {
+    name?: string | null; firstName?: string | null; lastName?: string | null;
+    bio?: string | null; username?: string | null; city?: string | null;
+    image?: string | null;
+}
+
 export function ProfileView() {
     const { data: session } = useSession();
-    const name    = session?.user?.name  ?? "Mehmon";
-    const email   = session?.user?.email ?? "—";
-    const image   = session?.user?.image ?? null;
-    const initial = name[0].toUpperCase();
+    const { watchHistory, clearHistory } = useNxPlayer();
+
+    const sessionName  = session?.user?.name  ?? "Mehmon";
+    const sessionEmail = session?.user?.email ?? "—";
+    const sessionImage = session?.user?.image ?? null;
+
+    const [profile,     setProfile]     = useState<ProfileData | null>(null);
+    const [editOpen,    setEditOpen]    = useState(false);
+    const [editFirst,   setEditFirst]   = useState("");
+    const [editLast,    setEditLast]    = useState("");
+    const [editBio,     setEditBio]     = useState("");
+    const [saving,      setSaving]      = useState(false);
+    const [saveError,   setSaveError]   = useState("");
+
+    /* Real profil ma'lumotlarini yuklash */
+    const fetchProfile = useCallback(async () => {
+        if (!session?.user?.email) return;
+        try {
+            const res = await fetch("/api/user/profile");
+            if (res.ok) setProfile(await res.json());
+        } catch { /* ignore */ }
+    }, [session?.user?.email]);
+
+    useEffect(() => { fetchProfile(); }, [fetchProfile]);
+
+    /* Edit modal ochilganda mavjud qiymatlarni to'ldirish */
+    const openEdit = () => {
+        setEditFirst(profile?.firstName ?? sessionName.split(" ")[0] ?? "");
+        setEditLast(profile?.lastName  ?? sessionName.split(" ")[1] ?? "");
+        setEditBio(profile?.bio ?? "");
+        setSaveError("");
+        setEditOpen(true);
+    };
+
+    const handleSave = async () => {
+        setSaving(true); setSaveError("");
+        try {
+            const res = await fetch("/api/user/profile", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ firstName: editFirst, lastName: editLast, bio: editBio }),
+            });
+            if (!res.ok) {
+                const d = await res.json().catch(() => ({}));
+                setSaveError(d?.error ?? "Xatolik yuz berdi");
+            } else {
+                setProfile(await res.json());
+                setEditOpen(false);
+            }
+        } catch { setSaveError("Tarmoq xatosi"); }
+        finally { setSaving(false); }
+    };
+
+    const displayName  = profile?.firstName
+        ? [profile.firstName, profile.lastName].filter(Boolean).join(" ")
+        : sessionName;
+    const displayImage = profile?.image ?? sessionImage;
+    const initial      = displayName[0]?.toUpperCase() ?? "U";
 
     return (
         <ViewShell>
-            {/* Profil kartasi */}
+            {/* ── Profil kartasi ────────────────────────────────────────── */}
             <div className="mx-4 mt-4 rounded-2xl p-6 relative overflow-hidden"
                 style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
                 <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
@@ -564,19 +626,27 @@ export function ProfileView() {
                     <div className="w-20 h-20 rounded-2xl p-[2.5px] flex-shrink-0"
                         style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 0 32px rgba(43,62,232,0.45)" }}>
                         <div className="w-full h-full rounded-[14px] bg-[#050818] overflow-hidden flex items-center justify-center text-2xl font-black text-white">
-                            {image
-                                ? <img src={image} alt={name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            {displayImage
+                                ? <img src={displayImage} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                 : initial}
                         </div>
                     </div>
 
                     <div className="flex-1 text-center sm:text-left">
-                        <h2 className="text-2xl font-black text-white mb-0.5">{name}</h2>
-                        <p className="text-sm font-mono mb-3" style={{ color: "rgba(100,120,170,0.80)" }}>{email}</p>
+                        <h2 className="text-2xl font-black text-white mb-0.5">{displayName}</h2>
+                        {profile?.username && (
+                            <p className="text-xs font-mono mb-1" style={{ color: "#00CEC8" }}>@{profile.username}</p>
+                        )}
+                        <p className="text-sm font-mono mb-2" style={{ color: "rgba(100,120,170,0.80)" }}>{sessionEmail}</p>
+                        {profile?.bio && (
+                            <p className="text-xs mb-3 leading-relaxed" style={{ color: "rgba(140,160,210,0.80)" }}>
+                                {profile.bio}
+                            </p>
+                        )}
                         <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                             {[
-                                { icon: Shield,     label: "Tasdiqlangan",  color: "#00CEC8"  },
-                                { icon: BadgeCheck, label: "Nexus Member",  color: "#10B981"  },
+                                { icon: Shield,     label: "Tasdiqlangan", color: "#00CEC8" },
+                                { icon: BadgeCheck, label: "Nexus Member", color: "#10B981" },
                             ].map(({ icon: Icon, label, color }, i) => (
                                 <span key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white"
                                     style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}>
@@ -587,22 +657,26 @@ export function ProfileView() {
                         </div>
                     </div>
 
-                    <button className="flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity duration-150 hover:opacity-85 active:scale-95"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 18px rgba(43,62,232,0.45)" }}>
+                    <button
+                        onClick={openEdit}
+                        className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity duration-150 hover:opacity-85 active:scale-95"
+                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 18px rgba(43,62,232,0.45)" }}
+                    >
+                        <Edit3 className="w-3.5 h-3.5" />
                         Tahrirlash
                     </button>
                 </div>
             </div>
 
-            {/* Statistika */}
+            {/* ── Statistika ────────────────────────────────────────────── */}
             <div className="mx-4 mt-3 grid grid-cols-2 gap-3">
                 {[
-                    { icon: Heart,      label: "Layklar",   value: "1.2M",  gradient: "from-red-500 to-pink-600"     },
-                    { icon: UserCheck,  label: "Obunachi",  value: "8.4K",  gradient: "from-[#2B3EE8] to-[#00CEC8]" },
-                    { icon: CreditCard, label: "Hamyon",    value: "₩ 240K", gradient: "from-emerald-500 to-teal-600" },
-                    { icon: Shield,     label: "Xavfsizlik",value: "Yuqori", gradient: "from-violet-500 to-indigo-600" },
+                    { icon: Heart,      label: "Layklar",    value: "1.2M",  gradient: "from-red-500 to-pink-600"      },
+                    { icon: UserCheck,  label: "Obunachi",   value: "8.4K",  gradient: "from-[#2B3EE8] to-[#00CEC8]"  },
+                    { icon: CreditCard, label: "Hamyon",     value: "240K",  gradient: "from-emerald-500 to-teal-600"  },
+                    { icon: Shield,     label: "Xavfsizlik", value: "Yuqori",gradient: "from-violet-500 to-indigo-600" },
                 ].map(({ icon: Icon, label, value, gradient }, i) => (
-                    <div key={i} className="flex items-center gap-3 p-4 rounded-2xl transition-all duration-200"
+                    <div key={i} className="flex items-center gap-3 p-4 rounded-2xl"
                         style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}>
                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${gradient}`}>
                             <Icon className="w-5 h-5 text-white" />
@@ -615,7 +689,41 @@ export function ProfileView() {
                 ))}
             </div>
 
-            {/* Sozlamalar */}
+            {/* ── Ko'rish tarixi ────────────────────────────────────────── */}
+            {watchHistory.length > 0 && (
+                <div className="mx-4 mt-3 rounded-2xl overflow-hidden"
+                    style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                    <div className="flex items-center justify-between px-5 py-3"
+                        style={{ borderBottom: "1px solid rgba(43,62,232,0.12)" }}>
+                        <h3 className="text-sm font-black text-white flex items-center gap-2">
+                            <Clock className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                            Ko'rish tarixi ({watchHistory.length})
+                        </h3>
+                        <button onClick={clearHistory}
+                            className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg"
+                            style={{ color: "rgba(239,68,68,0.80)", background: "rgba(239,68,68,0.08)" }}>
+                            <Trash2 className="w-3 h-3" />
+                            Tozalash
+                        </button>
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto px-4 py-3" style={{ scrollbarWidth: "none" }}>
+                        {watchHistory.slice(0, 12).map((v, i) => (
+                            <div key={i} className="flex-shrink-0 w-32 group cursor-pointer">
+                                <div className="relative aspect-video rounded-lg overflow-hidden mb-1"
+                                    style={{ border: "1px solid rgba(43,62,232,0.15)" }}>
+                                    <img src={v.image} alt={v.title} className="w-full h-full object-cover" />
+                                    <div className="absolute bottom-1 right-1 px-1 py-0.5 rounded text-[8px] font-bold"
+                                        style={{ background: "rgba(5,8,24,0.80)" }}>{v.duration}</div>
+                                </div>
+                                <p className="text-[10px] font-bold text-white line-clamp-2 leading-snug">{v.title}</p>
+                                <p className="text-[9px] mt-0.5" style={{ color: "rgba(80,100,150,0.80)" }}>{v.author}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ── Sozlamalar ────────────────────────────────────────────── */}
             <div className="mx-4 mt-3 rounded-2xl p-5"
                 style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.20)" }}>
                 <h3 className="text-sm font-black text-white mb-3 flex items-center gap-2">
@@ -634,7 +742,9 @@ export function ProfileView() {
                             </div>
                         </div>
                     ))}
-                    <button className="w-full flex items-center justify-between p-3 rounded-xl font-bold text-sm text-red-400 transition-colors duration-150 group"
+                    <button
+                        onClick={() => signOut()}
+                        className="w-full flex items-center justify-between p-3 rounded-xl font-bold text-sm text-red-400 transition-colors duration-150 group"
                         style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.18)" }}
                         onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.14)"}
                         onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.08)"}
@@ -644,6 +754,117 @@ export function ProfileView() {
                     </button>
                 </div>
             </div>
+
+            {/* ── Profil tahrirlash modali ───────────────────────────────── */}
+            {editOpen && (
+                <>
+                    <div
+                        className="fixed inset-0 z-[60]"
+                        style={{ background: "rgba(5,8,24,0.80)", backdropFilter: "blur(8px)" }}
+                        onClick={() => setEditOpen(false)}
+                    />
+                    <div
+                        className="fixed inset-x-4 bottom-0 z-[60] rounded-t-3xl overflow-hidden md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[420px] md:rounded-3xl"
+                        style={{
+                            background: "rgba(8,12,32,0.98)",
+                            border: "1px solid rgba(43,62,232,0.25)",
+                            boxShadow: "0 32px 80px rgba(0,0,0,0.60)",
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-5 py-4"
+                            style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                            <h3 className="text-base font-black text-white">Profilni tahrirlash</h3>
+                            <button
+                                onClick={() => setEditOpen(false)}
+                                className="w-8 h-8 flex items-center justify-center rounded-xl"
+                                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}
+                            >
+                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                            </button>
+                        </div>
+
+                        {/* Fields */}
+                        <div className="px-5 py-5 space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5"
+                                        style={{ color: "rgba(43,62,232,0.70)" }}>Ism</label>
+                                    <input
+                                        value={editFirst}
+                                        onChange={e => setEditFirst(e.target.value)}
+                                        placeholder="Ism"
+                                        className="w-full h-10 px-3 rounded-xl text-sm text-white outline-none"
+                                        style={{
+                                            background: "rgba(5,8,24,0.70)",
+                                            border: "1px solid rgba(43,62,232,0.25)",
+                                            caretColor: "#00CEC8",
+                                        }}
+                                        onFocus={e => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.55)")}
+                                        onBlur={e  => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.25)")}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5"
+                                        style={{ color: "rgba(43,62,232,0.70)" }}>Familiya</label>
+                                    <input
+                                        value={editLast}
+                                        onChange={e => setEditLast(e.target.value)}
+                                        placeholder="Familiya"
+                                        className="w-full h-10 px-3 rounded-xl text-sm text-white outline-none"
+                                        style={{
+                                            background: "rgba(5,8,24,0.70)",
+                                            border: "1px solid rgba(43,62,232,0.25)",
+                                            caretColor: "#00CEC8",
+                                        }}
+                                        onFocus={e => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.55)")}
+                                        onBlur={e  => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.25)")}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5"
+                                    style={{ color: "rgba(43,62,232,0.70)" }}>Bio ({editBio.length}/160)</label>
+                                <textarea
+                                    value={editBio}
+                                    onChange={e => setEditBio(e.target.value.slice(0, 160))}
+                                    placeholder="O'zingiz haqingizda..."
+                                    rows={3}
+                                    className="w-full px-3 py-2.5 rounded-xl text-sm text-white outline-none resize-none"
+                                    style={{
+                                        background: "rgba(5,8,24,0.70)",
+                                        border: "1px solid rgba(43,62,232,0.25)",
+                                        caretColor: "#00CEC8",
+                                    }}
+                                    onFocus={e => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.55)")}
+                                    onBlur={e  => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.25)")}
+                                />
+                            </div>
+
+                            {saveError && (
+                                <p className="text-xs text-red-400 font-bold">{saveError}</p>
+                            )}
+
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 transition-opacity duration-150"
+                                style={{
+                                    background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                                    boxShadow: "0 4px 18px rgba(43,62,232,0.40)",
+                                    opacity: saving ? 0.70 : 1,
+                                }}
+                            >
+                                {saving
+                                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                                    : <><Save className="w-4 h-4" />Saqlash</>}
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
         </ViewShell>
     );
 }

@@ -12,6 +12,7 @@ import { NxShortsPlayer } from "./nx-shorts-player";
 import { NxSearch } from "./nx-search";
 import { NxCreatorStudio } from "./nx-creator-studio";
 import { NxPro } from "./nx-pro";
+import { NxChannel } from "./nx-channel";
 import { FeedView, VideoView, LiveView, MediaView, SocialView, ProfileView } from "./nx-views";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -89,6 +90,9 @@ export function NexusShell() {
 
                 {/* ── Nexus Pro obuna ───────────────────────────────────── */}
                 <NxPro />
+
+                {/* ── Kanal modali ───────────────────────────────────────── */}
+                <NxChannel />
             </div>
         </NxPlayerProvider>
     );

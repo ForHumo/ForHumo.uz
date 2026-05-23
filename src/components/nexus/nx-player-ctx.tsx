@@ -11,7 +11,7 @@ import {
 export interface NxTrack {
     title: string; artist: string; image: string;
     duration: string; durationSec: number;
-    src?: string;        // haqiqiy MP3/audio URL
+    src?: string;
 }
 export interface NxVideo {
     title: string; author: string; avatar: string;
@@ -19,7 +19,7 @@ export interface NxVideo {
 }
 export interface NxShort {
     image: string; author: string; views: string; likes: string; duration: string;
-    videoSrc?: string;   // haqiqiy MP4 URL
+    videoSrc?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -29,14 +29,23 @@ interface PlayerCtx {
     // Musiqa
     track: NxTrack | null;
     isPlaying: boolean;
-    progress: number;          // 0–100
-    volume: number;            // 0–100
+    progress: number;
+    volume: number;
     musicExpanded: boolean;
+    queue: NxTrack[];
+    queueIndex: number;
+    shuffle: boolean;
+    repeat: boolean;
     playTrack:        (t: NxTrack) => void;
+    playQueue:        (list: NxTrack[], idx: number) => void;
     togglePlay:       () => void;
     seek:             (pct: number) => void;
     setVol:           (v: number) => void;
     setMusicExpanded: (v: boolean) => void;
+    nextTrack:        () => void;
+    prevTrack:        () => void;
+    toggleShuffle:    () => void;
+    toggleRepeat:     () => void;
 
     // Video
     video: NxVideo | null;
@@ -64,6 +73,20 @@ interface PlayerCtx {
     // Pro obuna
     proOpen:    boolean;
     setProOpen: (v: boolean) => void;
+
+    // Kanal
+    channelAuthor: string | null;
+    openChannel:   (author: string) => void;
+    closeChannel:  () => void;
+
+    // Saqlangan (localStorage)
+    savedIds:    Set<string>;
+    toggleSaved: (id: string) => void;
+
+    // Ko'rish tarixi (localStorage)
+    watchHistory: NxVideo[];
+    addToHistory: (v: NxVideo) => void;
+    clearHistory: () => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -75,15 +98,53 @@ export function useNxPlayer(): PlayerCtx {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// localStorage yordamchilari
+// ─────────────────────────────────────────────────────────────────────────────
+const LS_SAVED   = "nx_saved_ids";
+const LS_HISTORY = "nx_watch_history";
+
+function loadSaved(): Set<string> {
+    if (typeof window === "undefined") return new Set();
+    try { return new Set(JSON.parse(localStorage.getItem(LS_SAVED) ?? "[]")); }
+    catch { return new Set(); }
+}
+function saveSavedLS(s: Set<string>) {
+    localStorage.setItem(LS_SAVED, JSON.stringify([...s]));
+}
+function loadHistory(): NxVideo[] {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(localStorage.getItem(LS_HISTORY) ?? "[]"); }
+    catch { return []; }
+}
+function saveHistoryLS(h: NxVideo[]) {
+    localStorage.setItem(LS_HISTORY, JSON.stringify(h.slice(0, 50)));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Provider
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxPlayerProvider({ children }: { children: ReactNode }) {
     /* ── Musiqa state ── */
-    const [track,         setTrack]        = useState<NxTrack | null>(null);
-    const [isPlaying,     setIsPlaying]    = useState(false);
-    const [progress,      setProgress]     = useState(0);
-    const [volume,        setVolume]       = useState(80);
+    const [track,         setTrack]         = useState<NxTrack | null>(null);
+    const [isPlaying,     setIsPlaying]     = useState(false);
+    const [progress,      setProgress]      = useState(0);
+    const [volume,        setVolume]        = useState(80);
     const [musicExpanded, setMusicExpanded] = useState(false);
+    const [queue,         setQueue]         = useState<NxTrack[]>([]);
+    const [queueIndex,    setQueueIndex]    = useState(0);
+    const [shuffle,       setShuffle]       = useState(false);
+    const [repeat,        setRepeat]        = useState(false);
+
+    /* ── Refs — audio callbacklar uchun "live" qiymatlar ── */
+    const queueRef      = useRef<NxTrack[]>([]);
+    const queueIndexRef = useRef(0);
+    const shuffleRef    = useRef(false);
+    const repeatRef     = useRef(false);
+
+    useEffect(() => { queueRef.current = queue; },         [queue]);
+    useEffect(() => { queueIndexRef.current = queueIndex; },[queueIndex]);
+    useEffect(() => { shuffleRef.current = shuffle; },      [shuffle]);
+    useEffect(() => { repeatRef.current = repeat; },        [repeat]);
 
     /* ── Video ── */
     const [video,     setVideo]    = useState<NxVideo | null>(null);
@@ -99,11 +160,19 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     const [studioOpen, setStudioOpen] = useState(false);
     const [proOpen,    setProOpen]    = useState(false);
 
-    /* ── Haqiqiy Audio engine (client-only, imperative) ── */
+    /* ── Kanal ── */
+    const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
+
+    /* ── Saqlangan ── */
+    const [savedIds, setSavedIds] = useState<Set<string>>(() => loadSaved());
+
+    /* ── Tarix ── */
+    const [watchHistory, setWatchHistory] = useState<NxVideo[]>(() => loadHistory());
+
+    /* ── Haqiqiy Audio engine ── */
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
-        // SSR-safe: faqat brauzerda ishga tushadi
         const audio = new Audio();
         audio.volume = 0.8;
         audio.preload = "auto";
@@ -114,21 +183,64 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
                 setProgress((audio.currentTime / audio.duration) * 100);
             }
         };
-        const onEnded = () => { setIsPlaying(false); setProgress(0); };
+
+        const onEnded = () => {
+            const q     = queueRef.current;
+            const idx   = queueIndexRef.current;
+            const rep   = repeatRef.current;
+            const shuf  = shuffleRef.current;
+
+            if (rep) {
+                audio.currentTime = 0;
+                audio.play().catch(() => {});
+                return;
+            }
+
+            let nextIdx: number;
+            if (shuf && q.length > 1) {
+                do { nextIdx = Math.floor(Math.random() * q.length); }
+                while (nextIdx === idx);
+            } else {
+                nextIdx = idx + 1;
+            }
+
+            if (nextIdx < q.length) {
+                const next = q[nextIdx];
+                queueIndexRef.current = nextIdx;
+                setQueueIndex(nextIdx);
+                setTrack(next);
+                setProgress(0);
+                setIsPlaying(true);
+                if (next.src) {
+                    audio.src = next.src;
+                    audio.currentTime = 0;
+                    audio.play().catch(() => {});
+                }
+            } else {
+                setIsPlaying(false);
+                setProgress(0);
+            }
+        };
 
         audio.addEventListener("timeupdate", onTimeUpdate);
-        audio.addEventListener("ended", onEnded);
+        audio.addEventListener("ended",      onEnded);
 
         return () => {
             audio.removeEventListener("timeupdate", onTimeUpdate);
-            audio.removeEventListener("ended", onEnded);
+            audio.removeEventListener("ended",      onEnded);
             audio.pause();
             audio.src = "";
         };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     /* ── Callbacklar ── */
-    const playTrack = useCallback((t: NxTrack) => {
+    const _playAt = useCallback((list: NxTrack[], idx: number) => {
+        const t = list[idx];
+        if (!t) return;
+        setQueue(list);
+        setQueueIndex(idx);
+        queueRef.current      = list;
+        queueIndexRef.current = idx;
         setTrack(t);
         setProgress(0);
         setIsPlaying(true);
@@ -143,6 +255,30 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             audio.pause();
         }
     }, []);
+
+    const playTrack = useCallback((t: NxTrack) => _playAt([t], 0), [_playAt]);
+    const playQueue = useCallback((list: NxTrack[], idx: number) => _playAt(list, idx), [_playAt]);
+
+    const nextTrack = useCallback(() => {
+        const q    = queueRef.current;
+        const idx  = queueIndexRef.current;
+        const shuf = shuffleRef.current;
+        let nextIdx = shuf && q.length > 1
+            ? (() => { let r; do { r = Math.floor(Math.random() * q.length); } while (r === idx); return r; })()
+            : idx + 1;
+        if (nextIdx < q.length) _playAt(q, nextIdx);
+    }, [_playAt]);
+
+    const prevTrack = useCallback(() => {
+        const q   = queueRef.current;
+        const idx = queueIndexRef.current;
+        const audio = audioRef.current;
+        if (audio && audio.currentTime > 3) {
+            audio.currentTime = 0;
+            return;
+        }
+        if (idx > 0) _playAt(q, idx - 1);
+    }, [_playAt]);
 
     const togglePlay = useCallback(() => {
         setIsPlaying(prev => {
@@ -171,7 +307,20 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
         if (audioRef.current) audioRef.current.volume = clamped / 100;
     }, []);
 
-    const openVideo  = useCallback((v: NxVideo) => { setVideo(v); setVideoOpen(true); }, []);
+    const toggleShuffle = useCallback(() => setShuffle(p => !p), []);
+    const toggleRepeat  = useCallback(() => setRepeat(p => !p),  []);
+
+    const openVideo  = useCallback((v: NxVideo) => {
+        setVideo(v);
+        setVideoOpen(true);
+        // Tarixga qo'shish
+        setWatchHistory(prev => {
+            const filtered = prev.filter(h => h.title !== v.title);
+            const updated  = [v, ...filtered].slice(0, 50);
+            saveHistoryLS(updated);
+            return updated;
+        });
+    }, []);
     const closeVideo = useCallback(() => setVideoOpen(false), []);
 
     const openShorts  = useCallback((list: NxShort[], idx: number) => {
@@ -179,19 +328,58 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     }, []);
     const closeShorts = useCallback(() => setShortsOpen(false), []);
     const nextShort   = useCallback(() =>
-        setShortIndex(i => Math.min(i + 1, shorts.length - 1)), [shorts.length]);
+        setShortIndex(i => Math.min(i + 1, queueRef.current.length - 1 > 0 ? i + 1 : i + 1)), []);
     const prevShort   = useCallback(() =>
+        setShortIndex(i => Math.max(i - 1, 0)), []);
+
+    const openChannel  = useCallback((author: string) => setChannelAuthor(author), []);
+    const closeChannel = useCallback(() => setChannelAuthor(null), []);
+
+    const toggleSaved = useCallback((id: string) => {
+        setSavedIds(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            saveSavedLS(next);
+            return next;
+        });
+    }, []);
+
+    const addToHistory = useCallback((v: NxVideo) => {
+        setWatchHistory(prev => {
+            const filtered = prev.filter(h => h.title !== v.title);
+            const updated  = [v, ...filtered].slice(0, 50);
+            saveHistoryLS(updated);
+            return updated;
+        });
+    }, []);
+
+    const clearHistory = useCallback(() => {
+        setWatchHistory([]);
+        localStorage.removeItem(LS_HISTORY);
+    }, []);
+
+    // nextShort needs to know shorts.length — fix the closure
+    const nextShortFn = useCallback(() =>
+        setShortIndex(i => Math.min(i + 1, shorts.length - 1)), [shorts.length]);
+    const prevShortFn = useCallback(() =>
         setShortIndex(i => Math.max(i - 1, 0)), []);
 
     return (
         <Ctx.Provider value={{
             track, isPlaying, progress, volume, musicExpanded,
-            playTrack, togglePlay, seek, setVol, setMusicExpanded,
+            queue, queueIndex, shuffle, repeat,
+            playTrack, playQueue, togglePlay, seek, setVol, setMusicExpanded,
+            nextTrack, prevTrack, toggleShuffle, toggleRepeat,
             video, videoOpen, openVideo, closeVideo,
-            shorts, shortIndex, shortsOpen, openShorts, closeShorts, nextShort, prevShort,
+            shorts, shortIndex, shortsOpen,
+            openShorts, closeShorts,
+            nextShort: nextShortFn, prevShort: prevShortFn,
             searchOpen, setSearchOpen,
             studioOpen, setStudioOpen,
             proOpen, setProOpen,
+            channelAuthor, openChannel, closeChannel,
+            savedIds, toggleSaved,
+            watchHistory, addToHistory, clearHistory,
         }}>
             {children}
         </Ctx.Provider>

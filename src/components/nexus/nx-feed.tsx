@@ -4,6 +4,7 @@ import { NxRow } from "./nx-row";
 import { VideoCard, ShortCard, LiveCard, MusicCard, BookCard } from "./nx-cards";
 import { useNxPlayer, type NxShort, type NxTrack } from "./nx-player-ctx";
 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Demo audio URL lari — SoundHelix (bepul, ochiq lisenziya)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -29,7 +30,7 @@ const SHORTS_VIDEO_SRCS = [
 // NxFeed — barcha content rowlar
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxFeed() {
-    const { openShorts } = useNxPlayer();
+    const { openShorts, playQueue } = useNxPlayer();
 
     const SHORTS_DATA: NxShort[] = Array.from({ length: 10 }, (_, i) => ({
         image:    `https://picsum.photos/seed/short${i + 30}/400/711`,
@@ -132,7 +133,7 @@ export function NxFeed() {
             </NxRow>
 
             {/* ── Musiqa ────────────────────────────────────────────── */}
-            <NxRow title="Musiqa" accent="linear-gradient(180deg,#10B981,#00CEC8)" onSeeAll={() => {}}>
+            <NxRow title="Musiqa" accent="linear-gradient(180deg,#10B981,#00CEC8)" onSeeAll={() => playQueue(MUSIC_TRACKS, 0)}>
                 {MUSIC_TRACKS.map((track, i) => (
                     <MusicCard key={i}
                         title={track.title}
@@ -141,6 +142,8 @@ export function NxFeed() {
                         duration={track.duration}
                         listens={`${(i + 1) * 450}K`}
                         track={track}
+                        allTracks={MUSIC_TRACKS}
+                        trackIndex={i}
                     />
                 ))}
             </NxRow>

@@ -146,6 +146,14 @@
   animation: orb-pulse-2 18s 2s infinite ease-in-out;
 }
 
+/* ── Nexus Shorts: double-tap heart ──────────────────────────────────────── */
+@keyframes nx-heart-pop {
+  0%   { opacity: 0;   transform: scale(0.3); }
+  40%  { opacity: 1;   transform: scale(1.25); }
+  70%  { opacity: 0.9; transform: scale(1.0); }
+  100% { opacity: 0;   transform: scale(1.1); }
+}
+
 /* ── Leaflet attribution — make it tiny and non-intrusive ─────────────────── */
 .leaflet-control-attribution {
   font-size: 9px !important;

@@ -13,15 +13,17 @@ import {
 export function NxShortsPlayer() {
     const { shorts, shortIndex, shortsOpen, closeShorts, nextShort, prevShort } = useNxPlayer();
 
-    const [playing,  setPlaying]  = useState(true);
-    const [muted,    setMuted]    = useState(true);   // mobil autoplay — dastlab ovozisiz
-    const [progress, setProgress] = useState(0);
-    const [liked,    setLiked]    = useState<Record<number, boolean>>({});
-    const [saved,    setSaved]    = useState<Record<number, boolean>>({});
+    const [playing,     setPlaying]     = useState(true);
+    const [muted,       setMuted]       = useState(true);
+    const [progress,    setProgress]    = useState(0);
+    const [liked,       setLiked]       = useState<Record<number, boolean>>({});
+    const [saved,       setSaved]       = useState<Record<number, boolean>>({});
+    const [heartAnim,   setHeartAnim]   = useState(false);  // double-tap animatsiya
 
     const videoRef    = useRef<HTMLVideoElement>(null);
     const touchStart  = useRef(0);
     const isDragging  = useRef(false);
+    const lastTap     = useRef(0);          // double-tap uchun
 
     /* Yangi short ga o'tganda video reset */
     useEffect(() => {
@@ -96,7 +98,18 @@ export function NxShortsPlayer() {
             <div
                 className="relative h-full max-h-screen"
                 style={{ aspectRatio: "9/16", maxWidth: "calc(100vh * 9 / 16)" }}
-                onClick={() => setPlaying(p => !p)}
+                onClick={() => {
+                    const now = Date.now();
+                    if (now - lastTap.current < 300) {
+                        // Double tap — like
+                        setLiked(p => ({ ...p, [shortIndex]: true }));
+                        setHeartAnim(true);
+                        setTimeout(() => setHeartAnim(false), 700);
+                    } else {
+                        setPlaying(p => !p);
+                    }
+                    lastTap.current = now;
+                }}
             >
                 {/* ── Haqiqiy video yoki fallback rasm ── */}
                 {short.videoSrc ? (
@@ -133,6 +146,21 @@ export function NxShortsPlayer() {
                 <div className="absolute inset-0 pointer-events-none" style={{
                     background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 50%, rgba(0,0,0,0.30) 100%)"
                 }} />
+
+                {/* Double-tap heart animatsiya */}
+                {heartAnim && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                        style={{ zIndex: 5 }}>
+                        <Heart
+                            className="w-24 h-24"
+                            style={{
+                                color: "#EF4444",
+                                fill: "#EF4444",
+                                animation: "nx-heart-pop 0.7s ease-out forwards",
+                            }}
+                        />
+                    </div>
+                )}
 
                 {/* Progress bar */}
                 <div className="absolute top-0 left-0 right-0 h-0.5"
