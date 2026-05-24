@@ -191,6 +191,10 @@ interface PlayerCtx {
     // Kim kuzatish kerak
     suggestionsOpen:    boolean;
     setSuggestionsOpen: (v: boolean) => void;
+
+    // Watch Party
+    watchPartyOpen:    boolean;
+    setWatchPartyOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -344,6 +348,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Tavsiyalar ── */
     const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+
+    /* ── Watch Party ── */
+    const [watchPartyOpen, setWatchPartyOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -590,6 +597,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             leaderboardOpen, setLeaderboardOpen,
             createPostOpen, setCreatePostOpen,
             suggestionsOpen, setSuggestionsOpen,
+            watchPartyOpen, setWatchPartyOpen,
         }}>
             {children}
         </Ctx.Provider>

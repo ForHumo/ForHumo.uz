@@ -39,6 +39,7 @@ import { NxGifts }           from "./nx-gifts";
 import { NxLeaderboard }     from "./nx-leaderboard";
 import { NxCreatePost }      from "./nx-create-post";
 import { NxSuggestions }     from "./nx-suggestions";
+import { NxWatchParty }      from "./nx-watch-party";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -193,6 +194,9 @@ export function NexusShell() {
 
                 {/* ── Tavsiyalar (kim kuzatish) ─────────────────────────── */}
                 <NxSuggestions />
+
+                {/* ── Watch Party (birga tomosha) ───────────────────────── */}
+                <NxWatchParty />
             </div>
         </NxPlayerProvider>
     );

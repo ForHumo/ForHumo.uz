@@ -7,7 +7,7 @@ import {
     Settings, HelpCircle, Star, Bookmark, History, TrendingUp,
     Music, Film, BookOpen, Mic, Crown, ChevronRight, LogOut,
     Compass, ListMusic, Bell, BarChart2, Hash, Phone, Users, Headphones,
-    ShoppingBag, Wallet, Calendar, Download, Briefcase, Bot, Gift, Trophy, UserPlus,
+    ShoppingBag, Wallet, Calendar, Download, Briefcase, Bot, Gift, Trophy, UserPlus, Tv,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ const MY_ITEMS = [
 
 export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
     const { data: session } = useSession();
-    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen, setGoLiveOpen, setGiftsOpen, setLeaderboardOpen, setSuggestionsOpen } = useNxPlayer();
+    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen, setGoLiveOpen, setGiftsOpen, setLeaderboardOpen, setSuggestionsOpen, setWatchPartyOpen } = useNxPlayer();
     const name   = session?.user?.name  ?? "Mehmon";
     const image  = session?.user?.image ?? null;
     const email  = session?.user?.email ?? "";
@@ -204,6 +204,7 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
                         <SidebarItem icon={ListMusic}     label="Pleylistlar"             onClick={() => { onClose(); setPlaylistsOpen(true); }} />
                         <SidebarItem icon={BarChart2}     label="Analitika"               onClick={() => { onClose(); setAnalyticsOpen(true); }} />
                         <SidebarItem icon={Trophy}        label="Leaderboard"             onClick={() => { onClose(); setLeaderboardOpen(true); }} />
+                        <SidebarItem icon={Tv}            label="Watch Party"             onClick={() => { onClose(); setWatchPartyOpen(true); }} />
                     </SidebarSection>
 
                     <SidebarSection title="Mening Nexus">
