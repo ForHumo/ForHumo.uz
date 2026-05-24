@@ -6,7 +6,7 @@ import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Upload, Play, Music, BookOpen, Mic, Radio,
     FileText, Image as ImageIcon, Tag, DollarSign,
-    Globe, Lock, Check, ChevronRight, Loader2, LogIn,
+    Globe, Lock, Check, ChevronRight, Loader2, LogIn, BarChart2,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28,7 +28,7 @@ type UploadState = "idle" | "uploading" | "processing" | "done";
 // NxCreatorStudio — kontent yuklash modal
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxCreatorStudio() {
-    const { studioOpen, setStudioOpen } = useNxPlayer();
+    const { studioOpen, setStudioOpen, setAnalyticsOpen } = useNxPlayer();
     const { status } = useSession();
     const [step,       setStep]       = useState<1 | 2 | 3>(1);
     const [typeId,     setTypeId]     = useState<ContentTypeId>("video");
@@ -187,6 +187,22 @@ export function NxCreatorStudio() {
                     {/* ── Bosqich 1: Tur tanlash ───────────────────── */}
                     {step === 1 && (
                         <div className="flex-1 overflow-y-auto px-6 py-4" style={{ scrollbarWidth: "none" }}>
+                            {/* Analytics shortcut */}
+                            <button
+                                onClick={() => { handleClose(); setAnalyticsOpen(true); }}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl mb-4 transition-all duration-150 active:scale-95"
+                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.20)" }}
+                            >
+                                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    <BarChart2 className="w-4 h-4 text-white" />
+                                </div>
+                                <div className="flex-1 text-left">
+                                    <p className="text-xs font-black text-white">Analitika</p>
+                                    <p className="text-[10px]" style={{ color: "rgba(120,140,190,0.75)" }}>Ko'rishlar, daromad va statistika</p>
+                                </div>
+                                <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.50)" }} />
+                            </button>
                             <p className="text-xs mb-4" style={{ color: "rgba(140,160,210,0.80)" }}>
                                 Qanday kontent yaratmoqchisiz?
                             </p>

@@ -123,6 +123,10 @@ interface PlayerCtx {
     storiesViewerIndex: number;
     openStoriesViewer:  (idx: number) => void;
     closeStoriesViewer: () => void;
+
+    // Saqlangan panel
+    savedOpen:    boolean;
+    setSavedOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -225,6 +229,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     const [storiesViewerIndex, setStoriesViewerIndex] = useState(0);
     const openStoriesViewer  = useCallback((idx: number) => { setStoriesViewerIndex(idx); setStoriesViewerOpen(true); }, []);
     const closeStoriesViewer = useCallback(() => setStoriesViewerOpen(false), []);
+
+    /* ── Saqlangan panel ── */
+    const [savedOpen, setSavedOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -454,6 +461,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             playlistsOpen, setPlaylistsOpen,
             analyticsOpen, setAnalyticsOpen,
             storiesViewerOpen, storiesViewerIndex, openStoriesViewer, closeStoriesViewer,
+            savedOpen, setSavedOpen,
         }}>
             {children}
         </Ctx.Provider>

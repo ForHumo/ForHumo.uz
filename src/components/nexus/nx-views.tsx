@@ -9,7 +9,7 @@ import {
     Shield, Heart, UserCheck, CreditCard,
     Settings, LogOut, BadgeCheck, Plus, ChevronRight,
     Edit3, Save, X, Loader2, Trash2,
-    ListMusic, BarChart2, Compass,
+    ListMusic, BarChart2, Compass, Bookmark,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxRow } from "./nx-row";
@@ -251,6 +251,7 @@ const MEDIA_TABS = [
 
 export function MediaView() {
     const [sub, setSub] = useState("cinema");
+    const { setPlaylistsOpen } = useNxPlayer();
 
     return (
         <ViewShell>
@@ -307,7 +308,25 @@ export function MediaView() {
 
             {sub === "music" && (
                 <>
-                    <NxRow title="Top Treklarr" accent="linear-gradient(180deg,#10B981,#00CEC8)" onSeeAll={() => {}}>
+                    {/* Pleylist tez-havola */}
+                    <div className="mx-4 mb-3">
+                        <button
+                            onClick={() => setPlaylistsOpen(true)}
+                            className="w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-150 active:scale-95"
+                            style={{ background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.25)" }}
+                        >
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                                style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
+                                <ListMusic className="w-5 h-5 text-white" />
+                            </div>
+                            <div className="flex-1 text-left">
+                                <p className="text-sm font-black text-white">Mening pleylistlarim</p>
+                                <p className="text-[10px]" style={{ color: "rgba(80,180,140,0.80)" }}>Treklarni boshqarish va yangi to'plam yaratish</p>
+                            </div>
+                            <ChevronRight className="w-4 h-4" style={{ color: "rgba(16,185,129,0.60)" }} />
+                        </button>
+                    </div>
+                    <NxRow title="Top Treklar" accent="linear-gradient(180deg,#10B981,#00CEC8)" onSeeAll={() => {}}>
                         {Array.from({ length: 8 }, (_, i) => (
                             <MusicCard key={i}
                                 title={["Bahor Ohangi", "Tun Yulduzi", "Sevgi Qo'shig'i", "Uzoq Yo'l", "Yurak Tori", "Osmon Osti", "Erkin Qush", "Yangi Kun"][i]}
@@ -559,7 +578,7 @@ interface ProfileData {
 
 export function ProfileView() {
     const { data: session } = useSession();
-    const { watchHistory, clearHistory } = useNxPlayer();
+    const { watchHistory, clearHistory, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen } = useNxPlayer();
 
     const sessionName  = session?.user?.name  ?? "Mehmon";
     const sessionEmail = session?.user?.email ?? "—";
@@ -673,6 +692,58 @@ export function ProfileView() {
                         Tahrirlash
                     </button>
                 </div>
+            </div>
+
+            {/* ── Follower / Following ──────────────────────────────────── */}
+            <div className="mx-4 mt-3 grid grid-cols-3 gap-3">
+                {[
+                    { label: "Kuzatuvchilar", value: "8.4K" },
+                    { label: "Kuzatilmoqda",  value: "312"  },
+                    { label: "Postlar",        value: "47"   },
+                ].map(({ label, value }, i) => (
+                    <div key={i} className="flex flex-col items-center py-4 rounded-2xl"
+                        style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                        <p className="text-2xl font-black text-white">{value}</p>
+                        <p className="text-[10px] mt-0.5 font-bold" style={{ color: "rgba(100,120,170,0.75)" }}>{label}</p>
+                    </div>
+                ))}
+            </div>
+
+            {/* ── Tezkor havolalar ──────────────────────────────────────── */}
+            <div className="mx-4 mt-3 grid grid-cols-3 gap-3">
+                <button
+                    onClick={() => setSavedOpen(true)}
+                    className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-150 active:scale-95"
+                    style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
+                >
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        style={{ background: "linear-gradient(135deg,#F59E0B,#EF4444)" }}>
+                        <Bookmark className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-xs font-black text-white">Saqlangan</p>
+                </button>
+                <button
+                    onClick={() => setPlaylistsOpen(true)}
+                    className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-150 active:scale-95"
+                    style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
+                >
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
+                        <ListMusic className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-xs font-black text-white">Pleylistlar</p>
+                </button>
+                <button
+                    onClick={() => setAnalyticsOpen(true)}
+                    className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-150 active:scale-95"
+                    style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
+                >
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        <BarChart2 className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-xs font-black text-white">Analitika</p>
+                </button>
             </div>
 
             {/* ── Statistika ────────────────────────────────────────────── */}

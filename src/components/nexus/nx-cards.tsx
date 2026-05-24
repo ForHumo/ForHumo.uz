@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, Eye, Star, Heart, Radio, BookOpen, Music2, Clock } from "lucide-react";
+import { Play, Eye, Star, Heart, Radio, BookOpen, Music2, Clock, MessageSquare } from "lucide-react";
 import { useNxPlayer, type NxVideo, type NxTrack, type NxShort } from "./nx-player-ctx";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ export function VideoCard({ title, image, views, duration, author, avatar }: {
     title: string; image: string; views: string; duration: string;
     author: string; avatar: string;
 }) {
-    const { openVideo, openChannel } = useNxPlayer();
+    const { openVideo, openChannel, openComments } = useNxPlayer();
     const video: NxVideo = { title, image, author, avatar, views, duration };
     return (
         <div className="flex-shrink-0 w-60 md:w-72 group cursor-pointer" onClick={() => openVideo(video)}>
@@ -69,14 +69,24 @@ export function VideoCard({ title, image, views, duration, author, avatar }: {
                     <h4 className="text-sm font-bold text-white leading-snug line-clamp-2 mb-1 group-hover:text-[#00CEC8] transition-colors duration-200">
                         {title}
                     </h4>
-                    <p className="text-[10px] flex items-center gap-2" style={{ color: "rgba(100,120,170,0.80)" }}>
-                        <span
-                            className="hover:text-[#00CEC8] transition-colors cursor-pointer"
-                            onClick={e => { e.stopPropagation(); openChannel(author); }}
-                        >{author}</span>
-                        <span>·</span>
-                        <span className="flex items-center gap-0.5"><Eye className="w-2.5 h-2.5" />{views}</span>
-                    </p>
+                    <div className="flex items-center justify-between mt-1">
+                        <p className="text-[10px] flex items-center gap-2" style={{ color: "rgba(100,120,170,0.80)" }}>
+                            <span
+                                className="hover:text-[#00CEC8] transition-colors cursor-pointer"
+                                onClick={e => { e.stopPropagation(); openChannel(author); }}
+                            >{author}</span>
+                            <span>·</span>
+                            <span className="flex items-center gap-0.5"><Eye className="w-2.5 h-2.5" />{views}</span>
+                        </p>
+                        <button
+                            onClick={e => { e.stopPropagation(); openComments(title); }}
+                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg transition-all duration-150 active:scale-90"
+                            style={{ background: "rgba(43,62,232,0.08)", color: "rgba(100,140,220,0.70)" }}
+                        >
+                            <MessageSquare className="w-2.5 h-2.5" />
+                            <span className="text-[9px] font-bold">42</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

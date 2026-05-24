@@ -1,13 +1,13 @@
 "use client";
 
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Play, Users, Heart, Eye, BadgeCheck, ChevronRight, Share2 } from "lucide-react";
+import { X, Play, Users, Heart, Eye, BadgeCheck, ChevronRight, Share2, MessageCircle } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxChannel — kreator kanal sahifasi (modal)
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxChannel() {
-    const { channelAuthor, closeChannel, openVideo } = useNxPlayer();
+    const { channelAuthor, closeChannel, openVideo, setMessagesOpen } = useNxPlayer();
 
     if (!channelAuthor) return null;
 
@@ -102,8 +102,17 @@ export function NxChannel() {
                                 Obuna
                             </button>
                             <button
-                                className="w-9 h-9 flex items-center justify-center rounded-xl"
+                                onClick={() => { closeChannel(); setMessagesOpen(true); }}
+                                className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
                                 style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}
+                                title="Xabar yuborish"
+                            >
+                                <MessageCircle className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                            </button>
+                            <button
+                                className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
+                                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}
+                                title="Ulashish"
                             >
                                 <Share2 className="w-4 h-4" style={{ color: "rgba(140,160,210,0.80)" }} />
                             </button>

@@ -22,6 +22,7 @@ import { NxPlaylist }        from "./nx-playlist";
 import { NxAnalytics }       from "./nx-analytics";
 import { NxStoriesViewer }   from "./nx-stories-viewer";
 import { NxExplore }         from "./nx-explore";
+import { NxSaved }           from "./nx-saved";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -125,6 +126,9 @@ export function NexusShell() {
 
                 {/* ── Explore / Kashfiyot ───────────────────────────────── */}
                 <NxExplore />
+
+                {/* ── Saqlangan ─────────────────────────────────────────── */}
+                <NxSaved />
             </div>
         </NxPlayerProvider>
     );

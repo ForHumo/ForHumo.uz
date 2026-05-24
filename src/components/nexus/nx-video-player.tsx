@@ -5,14 +5,14 @@ import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Play, Pause, Volume2, VolumeX, Maximize2,
     ThumbsUp, ThumbsDown, Share2, Bookmark, Eye,
-    ChevronRight, Settings,
+    ChevronRight, Settings, MessageSquare, Radio,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxVideoPlayer — to'liq ekran video modal
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxVideoPlayer() {
-    const { video, videoOpen, closeVideo } = useNxPlayer();
+    const { video, videoOpen, closeVideo, openComments, setLiveChatOpen } = useNxPlayer();
 
     const [playing,   setPlaying]   = useState(false);
     const [progress,  setProgress]  = useState(0);
@@ -311,13 +311,31 @@ export function NxVideoPlayer() {
                             </button>
                             <button
                                 onClick={() => setSaved(p => !p)}
-                                className="ml-auto flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-150"
+                                className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-150"
                                 style={{
                                     background: saved ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)",
                                     border: `1px solid ${saved ? "rgba(43,62,232,0.40)" : "rgba(43,62,232,0.14)"}`,
                                 }}
                             >
                                 <Bookmark className="w-3.5 h-3.5" style={{ color: saved ? "#00CEC8" : "rgba(160,176,224,0.80)", fill: saved ? "#00CEC8" : "none" }} />
+                            </button>
+                        </div>
+
+                        {/* Izohlar + Jonli chat */}
+                        <div className="flex gap-2 mt-2">
+                            <button
+                                onClick={() => openComments(video.title)}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-all duration-150 active:scale-95"
+                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(160,176,224,0.85)" }}
+                            >
+                                <MessageSquare className="w-3.5 h-3.5" /> Izohlar
+                            </button>
+                            <button
+                                onClick={() => setLiveChatOpen(true)}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-all duration-150 active:scale-95"
+                                style={{ background: "rgba(255,68,68,0.10)", border: "1px solid rgba(255,68,68,0.25)", color: "rgba(255,120,120,0.90)" }}
+                            >
+                                <Radio className="w-3.5 h-3.5" /> Jonli chat
                             </button>
                         </div>
                     </div>

@@ -2,6 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useNxPlayer } from "./nx-player-ctx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock stories ma'lumotlari
@@ -24,6 +25,7 @@ const STORIES = [
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxStories() {
     const { data: session } = useSession();
+    const { openStoriesViewer } = useNxPlayer();
     const myName   = session?.user?.name?.split(" ")[0] ?? "Siz";
     const myImage  = session?.user?.image ?? null;
     const myLetter = myName[0].toUpperCase();
@@ -46,8 +48,8 @@ export function NxStories() {
                 <MyStory name={myName} image={myImage} letter={myLetter} />
 
                 {/* ── Boshqa foydalanuvchilar ────────────────────── */}
-                {STORIES.map(story => (
-                    <StoryItem key={story.id} {...story} />
+                {STORIES.map((story, idx) => (
+                    <StoryItem key={story.id} {...story} index={idx} onOpen={openStoriesViewer} />
                 ))}
 
                 {/* Scroll uchun bo'shliq */}
@@ -104,11 +106,11 @@ function MyStory({ name, image, letter }: { name: string; image: string | null; 
 // ─────────────────────────────────────────────────────────────────────────────
 // Oddiy story elementi
 // ─────────────────────────────────────────────────────────────────────────────
-function StoryItem({ name, avatar, seen, live }: {
-    name: string; avatar: string; seen: boolean; live: boolean;
+function StoryItem({ name, avatar, seen, live, index, onOpen }: {
+    name: string; avatar: string; seen: boolean; live: boolean; index: number; onOpen: (idx: number) => void;
 }) {
     return (
-        <button className="flex flex-col items-center gap-1.5 flex-shrink-0 group active:scale-95 transition-transform duration-150">
+        <button onClick={() => onOpen(index)} className="flex flex-col items-center gap-1.5 flex-shrink-0 group active:scale-95 transition-transform duration-150">
             <div className="relative">
                 {/* Gradient ring yoki seen ring */}
                 <div
