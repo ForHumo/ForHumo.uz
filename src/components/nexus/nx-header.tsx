@@ -15,7 +15,7 @@ interface NxHeaderProps {
 
 export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHeaderProps) {
     const { data: session } = useSession();
-    const { setSearchOpen, setStudioOpen, setNotifOpen, setMessagesOpen, setExploreOpen } = useNxPlayer();
+    const { setSearchOpen, setStudioOpen, setNotifOpen, setMessagesOpen, setExploreOpen, setCreatePostOpen } = useNxPlayer();
 
     return (
         <header
@@ -95,7 +95,7 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
 
                 {/* Kontent yaratish */}
                 <button
-                    onClick={() => setStudioOpen(true)}
+                    onClick={() => setCreatePostOpen(true)}
                     className="hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-xl transition-all duration-150 active:scale-95"
                     style={{
                         background: "linear-gradient(135deg,rgba(43,62,232,0.20),rgba(0,206,200,0.12))",

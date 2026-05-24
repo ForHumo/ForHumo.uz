@@ -37,6 +37,7 @@ import { NxAI }              from "./nx-ai";
 import { NxGoLive }          from "./nx-go-live";
 import { NxGifts }           from "./nx-gifts";
 import { NxLeaderboard }     from "./nx-leaderboard";
+import { NxCreatePost }      from "./nx-create-post";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -185,6 +186,9 @@ export function NexusShell() {
 
                 {/* ── Leaderboard ───────────────────────────────────────── */}
                 <NxLeaderboard />
+
+                {/* ── Post yaratish ─────────────────────────────────────── */}
+                <NxCreatePost />
             </div>
         </NxPlayerProvider>
     );

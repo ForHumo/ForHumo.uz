@@ -2,9 +2,10 @@
 
 import {
     Home, Play, Radio, Library,
-    MessageCircle, UserCircle,
+    MessageCircle, UserCircle, Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNxPlayer } from "./nx-player-ctx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tablar ro'yxati
@@ -35,6 +36,10 @@ interface Props {
 // NxDock — floating pill
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxDock({ active, onChange }: Props) {
+    const { setCreatePostOpen } = useNxPlayer();
+    const tabs = TABS;
+    const midIdx = Math.floor(tabs.length / 2); // insert "+" between 3rd and 4th tabs
+
     return (
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50">
             <nav
@@ -52,19 +57,32 @@ export function NxDock({ active, onChange }: Props) {
                     ].join(","),
                 }}
             >
-                {TABS.map(({ id, icon: Icon, label }) => {
-                    const isActive = active === id;
-                    return (
+                {tabs.map(({ id, icon: Icon, label }, i) => (
+                    <>
+                        {i === midIdx && (
+                            /* ── Centre "+" create button ── */
+                            <button
+                                key="create"
+                                onClick={() => setCreatePostOpen(true)}
+                                className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 active:scale-90 mx-1"
+                                style={{
+                                    background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                                    boxShadow: "0 0 20px rgba(43,62,232,0.45), 0 4px 16px rgba(0,0,0,0.40)",
+                                }}
+                            >
+                                <Plus className="w-5 h-5 text-white" />
+                            </button>
+                        )}
                         <DockItem
                             key={id}
                             id={id}
                             Icon={Icon}
                             label={label}
-                            isActive={isActive}
+                            isActive={active === id}
                             onClick={() => onChange(id)}
                         />
-                    );
-                })}
+                    </>
+                ))}
             </nav>
         </div>
     );

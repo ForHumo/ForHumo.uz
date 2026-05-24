@@ -183,6 +183,10 @@ interface PlayerCtx {
     // Leaderboard
     leaderboardOpen:    boolean;
     setLeaderboardOpen: (v: boolean) => void;
+
+    // Post yaratish
+    createPostOpen:    boolean;
+    setCreatePostOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -330,6 +334,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Leaderboard ── */
     const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+
+    /* ── Post yaratish ── */
+    const [createPostOpen, setCreatePostOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -574,6 +581,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             goLiveOpen, setGoLiveOpen,
             giftsOpen, setGiftsOpen,
             leaderboardOpen, setLeaderboardOpen,
+            createPostOpen, setCreatePostOpen,
         }}>
             {children}
         </Ctx.Provider>
