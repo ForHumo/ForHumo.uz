@@ -8,6 +8,7 @@ import {
     Music, Film, BookOpen, Mic, Crown, ChevronRight, LogOut,
     Compass, ListMusic, Bell, BarChart2, Hash, Phone, Users, Headphones,
     ShoppingBag, Wallet, Calendar, Download, Briefcase, Bot, Gift, Trophy, UserPlus, Tv,
+    Scissors, Zap, Grid3X3,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,7 +40,7 @@ const MY_ITEMS = [
 
 export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
     const { data: session } = useSession();
-    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen, setGoLiveOpen, setGiftsOpen, setLeaderboardOpen, setSuggestionsOpen, setWatchPartyOpen, setCommunityOpen } = useNxPlayer();
+    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen, setGoLiveOpen, setGiftsOpen, setLeaderboardOpen, setSuggestionsOpen, setWatchPartyOpen, setCommunityOpen, setClipsOpen, setAchievementsOpen, setMiniAppsOpen } = useNxPlayer();
     const name   = session?.user?.name  ?? "Mehmon";
     const image  = session?.user?.image ?? null;
     const email  = session?.user?.email ?? "";
@@ -206,6 +207,9 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
                         <SidebarItem icon={Trophy}        label="Leaderboard"             onClick={() => { onClose(); setLeaderboardOpen(true); }} />
                         <SidebarItem icon={Tv}            label="Watch Party"             onClick={() => { onClose(); setWatchPartyOpen(true); }} />
                         <SidebarItem icon={Users}         label="Jamiyat"                 onClick={() => { onClose(); setCommunityOpen(true); }} />
+                        <SidebarItem icon={Scissors}      label="Kliplar"                 onClick={() => { onClose(); setClipsOpen(true); }} />
+                        <SidebarItem icon={Trophy}        label="Yutuqlar"                onClick={() => { onClose(); setAchievementsOpen(true); }} />
+                        <SidebarItem icon={Grid3X3}       label="Mini Ilovalar"           onClick={() => { onClose(); setMiniAppsOpen(true); }} />
                     </SidebarSection>
 
                     <SidebarSection title="Mening Nexus">

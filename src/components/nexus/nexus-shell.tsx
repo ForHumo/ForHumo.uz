@@ -44,6 +44,10 @@ import { NxHighlights }      from "./nx-highlights";
 import { NxLyrics }          from "./nx-lyrics";
 import { NxQrShare }         from "./nx-qr-share";
 import { NxCommunity }       from "./nx-community";
+import { NxClips }           from "./nx-clips";
+import { NxSuperChat }       from "./nx-super-chat";
+import { NxAchievements }    from "./nx-achievements";
+import { NxMiniApps }        from "./nx-mini-apps";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -213,6 +217,18 @@ export function NexusShell() {
 
                 {/* ── Community (yaratuvchi jamiyati) ───────────────────── */}
                 <NxCommunity />
+
+                {/* ── Kliplar ───────────────────────────────────────────── */}
+                <NxClips />
+
+                {/* ── Super Chat ────────────────────────────────────────── */}
+                <NxSuperChat />
+
+                {/* ── Yutuqlar ──────────────────────────────────────────── */}
+                <NxAchievements />
+
+                {/* ── Mini Ilovalar ─────────────────────────────────────── */}
+                <NxMiniApps />
             </div>
         </NxPlayerProvider>
     );

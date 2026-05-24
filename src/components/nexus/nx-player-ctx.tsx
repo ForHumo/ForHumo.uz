@@ -211,6 +211,22 @@ interface PlayerCtx {
     // Community posts
     communityOpen:    boolean;
     setCommunityOpen: (v: boolean) => void;
+
+    // Kliplar
+    clipsOpen:    boolean;
+    setClipsOpen: (v: boolean) => void;
+
+    // Super Chat
+    superChatOpen:    boolean;
+    setSuperChatOpen: (v: boolean) => void;
+
+    // Yutuqlar (Achievements)
+    achievementsOpen:    boolean;
+    setAchievementsOpen: (v: boolean) => void;
+
+    // Mini Ilovalar
+    miniAppsOpen:    boolean;
+    setMiniAppsOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -379,6 +395,18 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Community ── */
     const [communityOpen, setCommunityOpen] = useState(false);
+
+    /* ── Clips ── */
+    const [clipsOpen, setClipsOpen] = useState(false);
+
+    /* ── Super Chat ── */
+    const [superChatOpen, setSuperChatOpen] = useState(false);
+
+    /* ── Achievements ── */
+    const [achievementsOpen, setAchievementsOpen] = useState(false);
+
+    /* ── Mini Apps ── */
+    const [miniAppsOpen, setMiniAppsOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -630,6 +658,10 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             lyricsOpen, setLyricsOpen,
             qrShareOpen, setQrShareOpen,
             communityOpen, setCommunityOpen,
+            clipsOpen, setClipsOpen,
+            superChatOpen, setSuperChatOpen,
+            achievementsOpen, setAchievementsOpen,
+            miniAppsOpen, setMiniAppsOpen,
         }}>
             {children}
         </Ctx.Provider>
