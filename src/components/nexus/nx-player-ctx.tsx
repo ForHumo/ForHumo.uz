@@ -131,6 +131,18 @@ interface PlayerCtx {
     // Guruhlar va kanallar
     groupsOpen:    boolean;
     setGroupsOpen: (v: boolean) => void;
+
+    // Qo'ng'iroqlar
+    callsOpen:    boolean;
+    setCallsOpen: (v: boolean) => void;
+
+    // Obunalar / Followers
+    subsOpen:    boolean;
+    setSubsOpen: (v: boolean) => void;
+
+    // Audio Spaces
+    spacesOpen:    boolean;
+    setSpacesOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -239,6 +251,15 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Guruhlar va kanallar ── */
     const [groupsOpen, setGroupsOpen] = useState(false);
+
+    /* ── Qo'ng'iroqlar ── */
+    const [callsOpen, setCallsOpen] = useState(false);
+
+    /* ── Obunalar ── */
+    const [subsOpen, setSubsOpen] = useState(false);
+
+    /* ── Spaces ── */
+    const [spacesOpen, setSpacesOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -470,6 +491,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             storiesViewerOpen, storiesViewerIndex, openStoriesViewer, closeStoriesViewer,
             savedOpen, setSavedOpen,
             groupsOpen, setGroupsOpen,
+            callsOpen, setCallsOpen,
+            subsOpen, setSubsOpen,
+            spacesOpen, setSpacesOpen,
         }}>
             {children}
         </Ctx.Provider>

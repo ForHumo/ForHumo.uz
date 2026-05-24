@@ -24,6 +24,9 @@ import { NxStoriesViewer }   from "./nx-stories-viewer";
 import { NxExplore }         from "./nx-explore";
 import { NxSaved }           from "./nx-saved";
 import { NxGroups }          from "./nx-groups";
+import { NxCalls }           from "./nx-calls";
+import { NxSubscriptions }   from "./nx-subscriptions";
+import { NxSpaces }          from "./nx-spaces";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -133,6 +136,15 @@ export function NexusShell() {
 
                 {/* ── Guruhlar va kanallar ──────────────────────────────── */}
                 <NxGroups />
+
+                {/* ── Qo'ng'iroqlar ─────────────────────────────────────── */}
+                <NxCalls />
+
+                {/* ── Obunalar ──────────────────────────────────────────── */}
+                <NxSubscriptions />
+
+                {/* ── Spaces (audio rooms) ──────────────────────────────── */}
+                <NxSpaces />
             </div>
         </NxPlayerProvider>
     );

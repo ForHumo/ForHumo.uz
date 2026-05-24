@@ -9,9 +9,9 @@ import {
     Shield, Heart, UserCheck, CreditCard,
     Settings, LogOut, BadgeCheck, Plus, ChevronRight,
     Edit3, Save, X, Loader2, Trash2,
-    ListMusic, BarChart2, Compass, Bookmark,
+    ListMusic, BarChart2, Compass, Bookmark, Phone,
 } from "lucide-react";
-import { useNxPlayer } from "./nx-player-ctx";
+import { useNxPlayer, type NxShort } from "./nx-player-ctx";
 import { NxRow } from "./nx-row";
 import { VideoCard, ShortCard, LiveCard, MusicCard, BookCard } from "./nx-cards";
 import { NxStories } from "./nx-stories";
@@ -119,7 +119,16 @@ export function FeedView() {
 // ─────────────────────────────────────────────────────────────────────────────
 // VIDEO VIEW
 // ─────────────────────────────────────────────────────────────────────────────
+const VIDEO_SHORTS: NxShort[] = Array.from({ length: 10 }, (_, i) => ({
+    image:    `https://picsum.photos/seed/vs${i + 80}/400/711`,
+    author:   `@talent_${i + 1}`,
+    views:    `${(i + 1) * 200}K`,
+    likes:    `${(i + 1) * 25}K`,
+    duration: `0:${String(20 + i * 4).padStart(2, "0")}`,
+}));
+
 export function VideoView() {
+    const { openShorts } = useNxPlayer();
     return (
         <ViewShell>
             <ViewHeader
@@ -152,14 +161,9 @@ export function VideoView() {
                 ))}
             </NxRow>
 
-            <NxRow title="Shorts" accent="linear-gradient(180deg,#8B5CF6,#6366F1)" onSeeAll={() => {}}>
-                {Array.from({ length: 10 }, (_, i) => (
-                    <ShortCard key={i}
-                        image={`https://picsum.photos/seed/vs${i + 80}/400/711`}
-                        author={`@talent_${i + 1}`}
-                        views={`${(i + 1) * 200}K`} likes={`${(i + 1) * 25}K`}
-                        duration={`0:${String(20 + i * 4).padStart(2, "0")}`}
-                    />
+            <NxRow title="Shorts" accent="linear-gradient(180deg,#8B5CF6,#6366F1)" onSeeAll={() => openShorts(VIDEO_SHORTS, 0)}>
+                {VIDEO_SHORTS.map((s, i) => (
+                    <ShortCard key={i} {...s} onClick={() => openShorts(VIDEO_SHORTS, i)} />
                 ))}
             </NxRow>
 
@@ -400,7 +404,7 @@ const CHAT_LIST = [
 
 export function SocialView() {
     const [sub, setSub] = useState("posts");
-    const { setMessagesOpen, setExploreOpen } = useNxPlayer();
+    const { setMessagesOpen, setExploreOpen, setGroupsOpen } = useNxPlayer();
 
     return (
         <ViewShell>
@@ -483,48 +487,70 @@ export function SocialView() {
             )}
 
             {sub === "channel" && (
-                <div className="mx-4 flex flex-col gap-2">
-                    {["Nexus Rasmiy", "Tech UZ", "Humo AI News", "Kino Dunyo", "Sport Live", "Biznes UZ"].map((name, i) => (
-                        <button key={i}
-                            className="flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-150 group"
-                            style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
-                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)"}
-                            onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)"}
-                        >
-                            <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0"
-                                style={{ background: "linear-gradient(135deg,rgba(43,62,232,0.40),rgba(0,206,200,0.30))" }}>
-                                <img src={`https://api.dicebear.com/9.x/identicon/svg?seed=${name}`} alt={name} className="w-full h-full" />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-sm font-bold text-white group-hover:text-[#00CEC8] transition-colors duration-150">{name}</p>
-                                <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.80)" }}>{(i + 1) * 12.4}K a'zo</p>
-                            </div>
-                            <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.50)" }} />
-                        </button>
-                    ))}
+                <div className="mx-4">
+                    <button
+                        onClick={() => setGroupsOpen(true)}
+                        className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-sm font-bold text-white mb-3 transition-all duration-150 active:scale-95"
+                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.40)" }}
+                    >
+                        <Hash className="w-5 h-5" />
+                        Kanallar va Guruhlarni ochish
+                    </button>
+                    <div className="flex flex-col gap-2">
+                        {["Nexus Rasmiy", "Tech UZ", "Humo AI News", "Kino Dunyo", "Sport Live", "Biznes UZ"].map((name, i) => (
+                            <button key={i}
+                                onClick={() => setGroupsOpen(true)}
+                                className="flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-150 group"
+                                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
+                                onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)"}
+                                onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)"}
+                            >
+                                <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0"
+                                    style={{ background: "linear-gradient(135deg,rgba(43,62,232,0.40),rgba(0,206,200,0.30))" }}>
+                                    <img src={`https://api.dicebear.com/9.x/identicon/svg?seed=${name}`} alt={name} className="w-full h-full" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm font-bold text-white group-hover:text-[#00CEC8] transition-colors duration-150">{name}</p>
+                                    <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.80)" }}>{(i + 1) * 12.4}K a'zo</p>
+                                </div>
+                                <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.50)" }} />
+                            </button>
+                        ))}
+                    </div>
                 </div>
             )}
 
             {sub === "group" && (
-                <div className="mx-4 flex flex-col gap-2">
-                    {["Nexus Kreatorlar", "O'zbek Dasturchilar", "Dizaynerlar Jamoasi", "Marketing Professionals", "Startup Founders UZ"].map((name, i) => (
-                        <button key={i}
-                            className="flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-150 group"
-                            style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
-                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)"}
-                            onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)"}
-                        >
-                            <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                                <Users className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-sm font-bold text-white group-hover:text-[#00CEC8] transition-colors duration-150">{name}</p>
-                                <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.80)" }}>{(i + 1) * 340} a'zo</p>
-                            </div>
-                            <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.50)" }} />
-                        </button>
-                    ))}
+                <div className="mx-4">
+                    <button
+                        onClick={() => setGroupsOpen(true)}
+                        className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-sm font-bold text-white mb-3 transition-all duration-150 active:scale-95"
+                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.40)" }}
+                    >
+                        <Users className="w-5 h-5" />
+                        Guruhlarni ochish
+                    </button>
+                    <div className="flex flex-col gap-2">
+                        {["Nexus Kreatorlar", "O'zbek Dasturchilar", "Dizaynerlar Jamoasi", "Marketing Professionals", "Startup Founders UZ"].map((name, i) => (
+                            <button key={i}
+                                onClick={() => setGroupsOpen(true)}
+                                className="flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-150 group"
+                                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
+                                onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)"}
+                                onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)"}
+                            >
+                                <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center"
+                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    <Users className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm font-bold text-white group-hover:text-[#00CEC8] transition-colors duration-150">{name}</p>
+                                    <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.80)" }}>{(i + 1) * 340} a'zo</p>
+                                </div>
+                                <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.50)" }} />
+                            </button>
+                        ))}
+                    </div>
                 </div>
             )}
 
@@ -578,7 +604,7 @@ interface ProfileData {
 
 export function ProfileView() {
     const { data: session } = useSession();
-    const { watchHistory, clearHistory, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen } = useNxPlayer();
+    const { watchHistory, clearHistory, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setSubsOpen, setCallsOpen, setSpacesOpen } = useNxPlayer();
 
     const sessionName  = session?.user?.name  ?? "Mehmon";
     const sessionEmail = session?.user?.email ?? "—";
@@ -697,53 +723,45 @@ export function ProfileView() {
             {/* ── Follower / Following ──────────────────────────────────── */}
             <div className="mx-4 mt-3 grid grid-cols-3 gap-3">
                 {[
-                    { label: "Kuzatuvchilar", value: "8.4K" },
-                    { label: "Kuzatilmoqda",  value: "312"  },
-                    { label: "Postlar",        value: "47"   },
-                ].map(({ label, value }, i) => (
-                    <div key={i} className="flex flex-col items-center py-4 rounded-2xl"
-                        style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                    { label: "Kuzatuvchilar", value: "8.4K", action: () => setSubsOpen(true) },
+                    { label: "Kuzatilmoqda",  value: "312",  action: () => setSubsOpen(true) },
+                    { label: "Postlar",        value: "47",   action: undefined },
+                ].map(({ label, value, action }, i) => (
+                    <button key={i} onClick={action}
+                        className="flex flex-col items-center py-4 rounded-2xl transition-all duration-150"
+                        style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)", cursor: action ? "pointer" : "default" }}
+                        onMouseEnter={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)")}
+                        onMouseLeave={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)")}
+                    >
                         <p className="text-2xl font-black text-white">{value}</p>
                         <p className="text-[10px] mt-0.5 font-bold" style={{ color: "rgba(100,120,170,0.75)" }}>{label}</p>
-                    </div>
+                    </button>
                 ))}
             </div>
 
             {/* ── Tezkor havolalar ──────────────────────────────────────── */}
             <div className="mx-4 mt-3 grid grid-cols-3 gap-3">
-                <button
-                    onClick={() => setSavedOpen(true)}
-                    className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-150 active:scale-95"
-                    style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
-                >
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ background: "linear-gradient(135deg,#F59E0B,#EF4444)" }}>
-                        <Bookmark className="w-5 h-5 text-white" />
-                    </div>
-                    <p className="text-xs font-black text-white">Saqlangan</p>
-                </button>
-                <button
-                    onClick={() => setPlaylistsOpen(true)}
-                    className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-150 active:scale-95"
-                    style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
-                >
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
-                        <ListMusic className="w-5 h-5 text-white" />
-                    </div>
-                    <p className="text-xs font-black text-white">Pleylistlar</p>
-                </button>
-                <button
-                    onClick={() => setAnalyticsOpen(true)}
-                    className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-150 active:scale-95"
-                    style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
-                >
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                        <BarChart2 className="w-5 h-5 text-white" />
-                    </div>
-                    <p className="text-xs font-black text-white">Analitika</p>
-                </button>
+                {[
+                    { label: "Saqlangan",   icon: Bookmark,  grad: "linear-gradient(135deg,#F59E0B,#EF4444)",  action: () => setSavedOpen(true)    },
+                    { label: "Pleylistlar", icon: ListMusic,  grad: "linear-gradient(135deg,#10B981,#0D9488)",  action: () => setPlaylistsOpen(true) },
+                    { label: "Analitika",   icon: BarChart2,  grad: "linear-gradient(135deg,#2B3EE8,#00CEC8)",  action: () => setAnalyticsOpen(true) },
+                    { label: "Obunalar",    icon: Users,      grad: "linear-gradient(135deg,#8B5CF6,#6366F1)",  action: () => setSubsOpen(true)      },
+                    { label: "Qo'ng'iroq",  icon: Phone,      grad: "linear-gradient(135deg,#10B981,#00CEC8)",  action: () => setCallsOpen(true)     },
+                    { label: "Spaces",      icon: Headphones, grad: "linear-gradient(135deg,#8B5CF6,#EC4899)",  action: () => setSpacesOpen(true)    },
+                ].map(({ label, icon: Icon, grad, action }, i) => (
+                    <button key={i}
+                        onClick={action}
+                        className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-150 active:scale-95"
+                        style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
+                        onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)")}
+                        onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)")}
+                    >
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: grad }}>
+                            <Icon className="w-5 h-5 text-white" />
+                        </div>
+                        <p className="text-xs font-black text-white">{label}</p>
+                    </button>
+                ))}
             </div>
 
             {/* ── Statistika ────────────────────────────────────────────── */}

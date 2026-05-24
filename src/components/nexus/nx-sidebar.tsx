@@ -6,7 +6,7 @@ import {
     X, Home, Play, Radio, Library, MessageCircle, UserCircle,
     Settings, HelpCircle, Star, Bookmark, History, TrendingUp,
     Music, Film, BookOpen, Mic, Crown, ChevronRight, LogOut,
-    Compass, ListMusic, Bell, BarChart2, Hash,
+    Compass, ListMusic, Bell, BarChart2, Hash, Phone, Users, Headphones,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ const MY_ITEMS = [
 
 export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
     const { data: session } = useSession();
-    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen } = useNxPlayer();
+    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen } = useNxPlayer();
     const name   = session?.user?.name  ?? "Mehmon";
     const image  = session?.user?.image ?? null;
     const email  = session?.user?.email ?? "";
@@ -191,19 +191,21 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
                     </SidebarSection>
 
                     <SidebarSection title="Kashfiyot">
-                        <SidebarItem icon={Compass}    label="Explore / Kashfiyot"   onClick={() => { onClose(); setExploreOpen(true); }} />
-                        <SidebarItem icon={MessageCircle} label="Xabarlar (DM)"      onClick={() => { onClose(); setMessagesOpen(true); }} badge="3" />
-                        <SidebarItem icon={Hash}       label="Guruhlar va Kanallar"   onClick={() => { onClose(); setGroupsOpen(true); }} badge="2" />
-                        <SidebarItem icon={Bell}       label="Bildirishnomalar"       onClick={() => { onClose(); setNotifOpen(true); }} badge="5" />
-                        <SidebarItem icon={ListMusic}  label="Pleylistlar"            onClick={() => { onClose(); setPlaylistsOpen(true); }} />
-                        <SidebarItem icon={BarChart2}  label="Analitika"              onClick={() => { onClose(); setAnalyticsOpen(true); }} />
+                        <SidebarItem icon={Compass}       label="Explore / Kashfiyot"   onClick={() => { onClose(); setExploreOpen(true); }} />
+                        <SidebarItem icon={MessageCircle} label="Xabarlar (DM)"         onClick={() => { onClose(); setMessagesOpen(true); }} badge="3" />
+                        <SidebarItem icon={Hash}          label="Guruhlar va Kanallar"   onClick={() => { onClose(); setGroupsOpen(true); }} badge="2" />
+                        <SidebarItem icon={Phone}         label="Qo'ng'iroqlar"          onClick={() => { onClose(); setCallsOpen(true); }} />
+                        <SidebarItem icon={Headphones}    label="Spaces (Audio)"         onClick={() => { onClose(); setSpacesOpen(true); }} />
+                        <SidebarItem icon={Bell}          label="Bildirishnomalar"        onClick={() => { onClose(); setNotifOpen(true); }} badge="5" />
+                        <SidebarItem icon={ListMusic}     label="Pleylistlar"             onClick={() => { onClose(); setPlaylistsOpen(true); }} />
+                        <SidebarItem icon={BarChart2}     label="Analitika"               onClick={() => { onClose(); setAnalyticsOpen(true); }} />
                     </SidebarSection>
 
                     <SidebarSection title="Mening Nexus">
-                        <SidebarItem icon={Bookmark}  label="Saqlangan"           onClick={() => { onClose(); setSavedOpen(true); }} />
-                        <SidebarItem icon={History}   label="Ko'rish tarixi" />
+                        <SidebarItem icon={Bookmark}   label="Saqlangan"       onClick={() => { onClose(); setSavedOpen(true); }} />
+                        <SidebarItem icon={History}    label="Ko'rish tarixi" />
                         <SidebarItem icon={TrendingUp} label="Mening kanalim" />
-                        <SidebarItem icon={Star}      label="Obunalarim" />
+                        <SidebarItem icon={Users}      label="Obunalar"        onClick={() => { onClose(); setSubsOpen(true); }} />
                     </SidebarSection>
 
                     {/* ── Settings / Logout ─────────────────────────── */}

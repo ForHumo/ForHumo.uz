@@ -150,14 +150,15 @@ export function ShortCard({ image, author, views, likes, duration, onClick }: {
 export function LiveCard({ title, image, author, viewers, category }: {
     title: string; image: string; author: string; viewers: string; category: string;
 }) {
-    const { openVideo } = useNxPlayer();
+    const { openVideo, setLiveChatOpen } = useNxPlayer();
     const video: NxVideo = {
         title, image, author,
         avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${author}`,
         views: viewers, duration: "LIVE", category,
     };
+    const handleLiveClick = () => { openVideo(video); setLiveChatOpen(true); };
     return (
-        <div className="flex-shrink-0 w-60 md:w-72 group cursor-pointer" onClick={() => openVideo(video)}>
+        <div className="flex-shrink-0 w-60 md:w-72 group cursor-pointer" onClick={handleLiveClick}>
             <div
                 className="relative aspect-video rounded-xl overflow-hidden mb-2.5"
                 style={{ border: "2px solid rgba(239,68,68,0.50)", boxShadow: "0 0 16px rgba(239,68,68,0.18)" }}
