@@ -7,7 +7,7 @@ import {
     Settings, HelpCircle, Star, Bookmark, History, TrendingUp,
     Music, Film, BookOpen, Mic, Crown, ChevronRight, LogOut,
     Compass, ListMusic, Bell, BarChart2, Hash, Phone, Users, Headphones,
-    ShoppingBag, Wallet, Calendar,
+    ShoppingBag, Wallet, Calendar, Download, Briefcase,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ const MY_ITEMS = [
 
 export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
     const { data: session } = useSession();
-    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen } = useNxPlayer();
+    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen } = useNxPlayer();
     const name   = session?.user?.name  ?? "Mehmon";
     const image  = session?.user?.image ?? null;
     const email  = session?.user?.email ?? "";
@@ -210,6 +210,8 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
                         <SidebarItem icon={ShoppingBag}  label="Nexus Market"    onClick={() => { onClose(); setMarketOpen(true); }} />
                         <SidebarItem icon={Wallet}       label="Hamyon"          onClick={() => { onClose(); setWalletOpen(true); }} />
                         <SidebarItem icon={Calendar}     label="Tadbirlar"       onClick={() => { onClose(); setEventsOpen(true); }} />
+                        <SidebarItem icon={Download}     label="Yuklangan"       onClick={() => { onClose(); setDownloadsOpen(true); }} />
+                        <SidebarItem icon={Briefcase}    label="Nexus Jobs"      onClick={() => { onClose(); setJobsOpen(true); }} />
                     </SidebarSection>
 
                     {/* ── Settings / Logout ─────────────────────────── */}

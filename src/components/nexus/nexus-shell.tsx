@@ -30,6 +30,8 @@ import { NxSpaces }          from "./nx-spaces";
 import { NxMarketplace }     from "./nx-marketplace";
 import { NxWallet }          from "./nx-wallet";
 import { NxEvents }          from "./nx-events";
+import { NxDownloads }       from "./nx-downloads";
+import { NxJobs }            from "./nx-jobs";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -157,6 +159,12 @@ export function NexusShell() {
 
                 {/* ── Tadbirlar (Events) ────────────────────────────────── */}
                 <NxEvents />
+
+                {/* ── Yuklangan (Downloads) ─────────────────────────────── */}
+                <NxDownloads />
+
+                {/* ── Ish o'rinlari (Jobs) ──────────────────────────────── */}
+                <NxJobs />
             </div>
         </NxPlayerProvider>
     );

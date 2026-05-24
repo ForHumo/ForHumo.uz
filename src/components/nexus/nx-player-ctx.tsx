@@ -155,6 +155,14 @@ interface PlayerCtx {
     // Tadbirlar (Events)
     eventsOpen:    boolean;
     setEventsOpen: (v: boolean) => void;
+
+    // Yuklangan (Downloads)
+    downloadsOpen:    boolean;
+    setDownloadsOpen: (v: boolean) => void;
+
+    // Ish o'rinlari (Jobs)
+    jobsOpen:    boolean;
+    setJobsOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -281,6 +289,12 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Events ── */
     const [eventsOpen, setEventsOpen] = useState(false);
+
+    /* ── Downloads ── */
+    const [downloadsOpen, setDownloadsOpen] = useState(false);
+
+    /* ── Jobs ── */
+    const [jobsOpen, setJobsOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -518,6 +532,8 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             marketOpen, setMarketOpen,
             walletOpen, setWalletOpen,
             eventsOpen, setEventsOpen,
+            downloadsOpen, setDownloadsOpen,
+            jobsOpen, setJobsOpen,
         }}>
             {children}
         </Ctx.Provider>
