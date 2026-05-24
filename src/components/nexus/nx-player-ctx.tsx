@@ -187,6 +187,10 @@ interface PlayerCtx {
     // Post yaratish
     createPostOpen:    boolean;
     setCreatePostOpen: (v: boolean) => void;
+
+    // Kim kuzatish kerak
+    suggestionsOpen:    boolean;
+    setSuggestionsOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -337,6 +341,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Post yaratish ── */
     const [createPostOpen, setCreatePostOpen] = useState(false);
+
+    /* ── Tavsiyalar ── */
+    const [suggestionsOpen, setSuggestionsOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -582,6 +589,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             giftsOpen, setGiftsOpen,
             leaderboardOpen, setLeaderboardOpen,
             createPostOpen, setCreatePostOpen,
+            suggestionsOpen, setSuggestionsOpen,
         }}>
             {children}
         </Ctx.Provider>

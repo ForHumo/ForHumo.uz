@@ -38,6 +38,7 @@ import { NxGoLive }          from "./nx-go-live";
 import { NxGifts }           from "./nx-gifts";
 import { NxLeaderboard }     from "./nx-leaderboard";
 import { NxCreatePost }      from "./nx-create-post";
+import { NxSuggestions }     from "./nx-suggestions";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -189,6 +190,9 @@ export function NexusShell() {
 
                 {/* ── Post yaratish ─────────────────────────────────────── */}
                 <NxCreatePost />
+
+                {/* ── Tavsiyalar (kim kuzatish) ─────────────────────────── */}
+                <NxSuggestions />
             </div>
         </NxPlayerProvider>
     );
