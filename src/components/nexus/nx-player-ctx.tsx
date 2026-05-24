@@ -127,6 +127,10 @@ interface PlayerCtx {
     // Saqlangan panel
     savedOpen:    boolean;
     setSavedOpen: (v: boolean) => void;
+
+    // Guruhlar va kanallar
+    groupsOpen:    boolean;
+    setGroupsOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -232,6 +236,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Saqlangan panel ── */
     const [savedOpen, setSavedOpen] = useState(false);
+
+    /* ── Guruhlar va kanallar ── */
+    const [groupsOpen, setGroupsOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -462,6 +469,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             analyticsOpen, setAnalyticsOpen,
             storiesViewerOpen, storiesViewerIndex, openStoriesViewer, closeStoriesViewer,
             savedOpen, setSavedOpen,
+            groupsOpen, setGroupsOpen,
         }}>
             {children}
         </Ctx.Provider>

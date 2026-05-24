@@ -23,6 +23,7 @@ import { NxAnalytics }       from "./nx-analytics";
 import { NxStoriesViewer }   from "./nx-stories-viewer";
 import { NxExplore }         from "./nx-explore";
 import { NxSaved }           from "./nx-saved";
+import { NxGroups }          from "./nx-groups";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -129,6 +130,9 @@ export function NexusShell() {
 
                 {/* ── Saqlangan ─────────────────────────────────────────── */}
                 <NxSaved />
+
+                {/* ── Guruhlar va kanallar ──────────────────────────────── */}
+                <NxGroups />
             </div>
         </NxPlayerProvider>
     );

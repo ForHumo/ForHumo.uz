@@ -6,7 +6,7 @@ import {
     X, Home, Play, Radio, Library, MessageCircle, UserCircle,
     Settings, HelpCircle, Star, Bookmark, History, TrendingUp,
     Music, Film, BookOpen, Mic, Crown, ChevronRight, LogOut,
-    Compass, ListMusic, Bell, BarChart2,
+    Compass, ListMusic, Bell, BarChart2, Hash,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ const MY_ITEMS = [
 
 export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
     const { data: session } = useSession();
-    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen } = useNxPlayer();
+    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen } = useNxPlayer();
     const name   = session?.user?.name  ?? "Mehmon";
     const image  = session?.user?.image ?? null;
     const email  = session?.user?.email ?? "";
@@ -193,6 +193,7 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
                     <SidebarSection title="Kashfiyot">
                         <SidebarItem icon={Compass}    label="Explore / Kashfiyot"   onClick={() => { onClose(); setExploreOpen(true); }} />
                         <SidebarItem icon={MessageCircle} label="Xabarlar (DM)"      onClick={() => { onClose(); setMessagesOpen(true); }} badge="3" />
+                        <SidebarItem icon={Hash}       label="Guruhlar va Kanallar"   onClick={() => { onClose(); setGroupsOpen(true); }} badge="2" />
                         <SidebarItem icon={Bell}       label="Bildirishnomalar"       onClick={() => { onClose(); setNotifOpen(true); }} badge="5" />
                         <SidebarItem icon={ListMusic}  label="Pleylistlar"            onClick={() => { onClose(); setPlaylistsOpen(true); }} />
                         <SidebarItem icon={BarChart2}  label="Analitika"              onClick={() => { onClose(); setAnalyticsOpen(true); }} />
