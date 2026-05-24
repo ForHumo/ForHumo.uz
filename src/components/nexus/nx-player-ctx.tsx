@@ -179,6 +179,10 @@ interface PlayerCtx {
     // Virtual sovg'alar
     giftsOpen:    boolean;
     setGiftsOpen: (v: boolean) => void;
+
+    // Leaderboard
+    leaderboardOpen:    boolean;
+    setLeaderboardOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -323,6 +327,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Gifts ── */
     const [giftsOpen, setGiftsOpen] = useState(false);
+
+    /* ── Leaderboard ── */
+    const [leaderboardOpen, setLeaderboardOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -566,6 +573,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             aiOpen, setAiOpen,
             goLiveOpen, setGoLiveOpen,
             giftsOpen, setGiftsOpen,
+            leaderboardOpen, setLeaderboardOpen,
         }}>
             {children}
         </Ctx.Provider>

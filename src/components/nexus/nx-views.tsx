@@ -5,7 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import {
     Search, TrendingUp, Flame, Clock, Zap,
     Film, Music2, Headphones, BookOpen, Mic2,
-    Radio, Users, Hash, MessageCircle, Bot, Gift,
+    Radio, Users, Hash, MessageCircle, Bot, Gift, Trophy,
     Shield, Heart, UserCheck, CreditCard,
     Settings, LogOut, BadgeCheck, Plus, ChevronRight,
     Edit3, Save, X, Loader2, Trash2,
@@ -108,7 +108,7 @@ function FilterChips({ items }: { items: { icon: React.ElementType; label: strin
 // FEED VIEW — bosh sahifa
 // ─────────────────────────────────────────────────────────────────────────────
 export function FeedView() {
-    const { setMarketOpen, setEventsOpen, setJobsOpen, setSpacesOpen, setTrendingOpen, setAiOpen } = useNxPlayer();
+    const { setMarketOpen, setEventsOpen, setJobsOpen, setSpacesOpen, setTrendingOpen, setAiOpen, setLeaderboardOpen } = useNxPlayer();
     return (
         <ViewShell>
             <NxStories />
@@ -121,7 +121,8 @@ export function FeedView() {
                     { label: "Nexus Market", icon: ShoppingBag, grad: "linear-gradient(135deg,#F59E0B,#F97316)", action: () => setMarketOpen(true)  },
                     { label: "Tadbirlar",    icon: Calendar,    grad: "linear-gradient(135deg,#EC4899,#8B5CF6)", action: () => setEventsOpen(true)  },
                     { label: "Nexus Jobs",   icon: Briefcase,   grad: "linear-gradient(135deg,#0EA5E9,#2B3EE8)", action: () => setJobsOpen(true)    },
-                    { label: "Spaces",       icon: Headphones,  grad: "linear-gradient(135deg,#8B5CF6,#EC4899)", action: () => setSpacesOpen(true)  },
+                    { label: "Spaces",       icon: Headphones,  grad: "linear-gradient(135deg,#8B5CF6,#EC4899)", action: () => setSpacesOpen(true)      },
+                    { label: "Leaderboard",  icon: Trophy,      grad: "linear-gradient(135deg,#F59E0B,#F97316)", action: () => setLeaderboardOpen(true) },
                 ].map(({ label, icon: Icon, grad, action }) => (
                     <button key={label} onClick={action}
                         className="flex items-center gap-2 px-3 py-2 rounded-xl flex-shrink-0 transition-all duration-150 active:scale-95"
@@ -629,7 +630,7 @@ interface ProfileData {
 
 export function ProfileView() {
     const { data: session } = useSession();
-    const { watchHistory, clearHistory, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setSubsOpen, setCallsOpen, setSpacesOpen, setWalletOpen, setMarketOpen, setDownloadsOpen, setJobsOpen, setEventsOpen, setGoLiveOpen, setGiftsOpen, setTrendingOpen, setAiOpen } = useNxPlayer();
+    const { watchHistory, clearHistory, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setSubsOpen, setCallsOpen, setSpacesOpen, setWalletOpen, setMarketOpen, setDownloadsOpen, setJobsOpen, setEventsOpen, setGoLiveOpen, setGiftsOpen, setTrendingOpen, setAiOpen, setLeaderboardOpen } = useNxPlayer();
 
     const sessionName  = session?.user?.name  ?? "Mehmon";
     const sessionEmail = session?.user?.email ?? "—";
@@ -791,6 +792,7 @@ export function ProfileView() {
                     { label: "Sovg'alar",   icon: Gift,         grad: "linear-gradient(135deg,#F59E0B,#EF4444)",  action: () => setGiftsOpen(true)      },
                     { label: "Trendlar",    icon: TrendingUp,   grad: "linear-gradient(135deg,#F97316,#EF4444)",  action: () => setTrendingOpen(true)   },
                     { label: "Nexus AI",    icon: Bot,          grad: "linear-gradient(135deg,#8B5CF6,#EC4899)",  action: () => setAiOpen(true)         },
+                    { label: "Leaderboard", icon: Trophy,       grad: "linear-gradient(135deg,#F59E0B,#F97316)",  action: () => setLeaderboardOpen(true)},
                 ].map(({ label, icon: Icon, grad, action }, i) => (
                     <button key={i}
                         onClick={action}

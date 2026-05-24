@@ -36,6 +36,7 @@ import { NxTrending }        from "./nx-trending";
 import { NxAI }              from "./nx-ai";
 import { NxGoLive }          from "./nx-go-live";
 import { NxGifts }           from "./nx-gifts";
+import { NxLeaderboard }     from "./nx-leaderboard";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -181,6 +182,9 @@ export function NexusShell() {
 
                 {/* ── Virtual sovg'alar ─────────────────────────────────── */}
                 <NxGifts />
+
+                {/* ── Leaderboard ───────────────────────────────────────── */}
+                <NxLeaderboard />
             </div>
         </NxPlayerProvider>
     );
