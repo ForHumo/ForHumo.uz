@@ -27,6 +27,9 @@ import { NxGroups }          from "./nx-groups";
 import { NxCalls }           from "./nx-calls";
 import { NxSubscriptions }   from "./nx-subscriptions";
 import { NxSpaces }          from "./nx-spaces";
+import { NxMarketplace }     from "./nx-marketplace";
+import { NxWallet }          from "./nx-wallet";
+import { NxEvents }          from "./nx-events";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -145,6 +148,15 @@ export function NexusShell() {
 
                 {/* ── Spaces (audio rooms) ──────────────────────────────── */}
                 <NxSpaces />
+
+                {/* ── Bozor (Marketplace) ───────────────────────────────── */}
+                <NxMarketplace />
+
+                {/* ── Hamyon (Wallet) ───────────────────────────────────── */}
+                <NxWallet />
+
+                {/* ── Tadbirlar (Events) ────────────────────────────────── */}
+                <NxEvents />
             </div>
         </NxPlayerProvider>
     );

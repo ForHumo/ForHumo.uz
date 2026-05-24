@@ -7,6 +7,7 @@ import {
     Settings, HelpCircle, Star, Bookmark, History, TrendingUp,
     Music, Film, BookOpen, Mic, Crown, ChevronRight, LogOut,
     Compass, ListMusic, Bell, BarChart2, Hash, Phone, Users, Headphones,
+    ShoppingBag, Wallet, Calendar,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,7 +39,7 @@ const MY_ITEMS = [
 
 export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
     const { data: session } = useSession();
-    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen } = useNxPlayer();
+    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen } = useNxPlayer();
     const name   = session?.user?.name  ?? "Mehmon";
     const image  = session?.user?.image ?? null;
     const email  = session?.user?.email ?? "";
@@ -202,10 +203,13 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
                     </SidebarSection>
 
                     <SidebarSection title="Mening Nexus">
-                        <SidebarItem icon={Bookmark}   label="Saqlangan"       onClick={() => { onClose(); setSavedOpen(true); }} />
-                        <SidebarItem icon={History}    label="Ko'rish tarixi" />
-                        <SidebarItem icon={TrendingUp} label="Mening kanalim" />
-                        <SidebarItem icon={Users}      label="Obunalar"        onClick={() => { onClose(); setSubsOpen(true); }} />
+                        <SidebarItem icon={Bookmark}     label="Saqlangan"       onClick={() => { onClose(); setSavedOpen(true); }} />
+                        <SidebarItem icon={History}      label="Ko'rish tarixi" />
+                        <SidebarItem icon={TrendingUp}   label="Mening kanalim" />
+                        <SidebarItem icon={Users}        label="Obunalar"        onClick={() => { onClose(); setSubsOpen(true); }} />
+                        <SidebarItem icon={ShoppingBag}  label="Nexus Market"    onClick={() => { onClose(); setMarketOpen(true); }} />
+                        <SidebarItem icon={Wallet}       label="Hamyon"          onClick={() => { onClose(); setWalletOpen(true); }} />
+                        <SidebarItem icon={Calendar}     label="Tadbirlar"       onClick={() => { onClose(); setEventsOpen(true); }} />
                     </SidebarSection>
 
                     {/* ── Settings / Logout ─────────────────────────── */}

@@ -143,6 +143,18 @@ interface PlayerCtx {
     // Audio Spaces
     spacesOpen:    boolean;
     setSpacesOpen: (v: boolean) => void;
+
+    // Bozor (Marketplace)
+    marketOpen:    boolean;
+    setMarketOpen: (v: boolean) => void;
+
+    // Hamyon (Wallet)
+    walletOpen:    boolean;
+    setWalletOpen: (v: boolean) => void;
+
+    // Tadbirlar (Events)
+    eventsOpen:    boolean;
+    setEventsOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -260,6 +272,15 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Spaces ── */
     const [spacesOpen, setSpacesOpen] = useState(false);
+
+    /* ── Marketplace ── */
+    const [marketOpen, setMarketOpen] = useState(false);
+
+    /* ── Wallet ── */
+    const [walletOpen, setWalletOpen] = useState(false);
+
+    /* ── Events ── */
+    const [eventsOpen, setEventsOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -494,6 +515,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             callsOpen, setCallsOpen,
             subsOpen, setSubsOpen,
             spacesOpen, setSpacesOpen,
+            marketOpen, setMarketOpen,
+            walletOpen, setWalletOpen,
+            eventsOpen, setEventsOpen,
         }}>
             {children}
         </Ctx.Provider>
