@@ -255,6 +255,18 @@ interface PlayerCtx {
     // Hamkorlik (Collab)
     collabOpen:    boolean;
     setCollabOpen: (v: boolean) => void;
+
+    // Eslatmalar (Reminders)
+    remindersOpen:    boolean;
+    setRemindersOpen: (v: boolean) => void;
+
+    // So'rovnomalar (Polls)
+    pollsOpen:    boolean;
+    setPollsOpen: (v: boolean) => void;
+
+    // Statistika (Stats)
+    statsOpen:    boolean;
+    setStatsOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -456,6 +468,15 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Collab ── */
     const [collabOpen, setCollabOpen] = useState(false);
+
+    /* ── Reminders ── */
+    const [remindersOpen, setRemindersOpen] = useState(false);
+
+    /* ── Polls ── */
+    const [pollsOpen, setPollsOpen] = useState(false);
+
+    /* ── Stats ── */
+    const [statsOpen, setStatsOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -718,6 +739,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             forumOpen, setForumOpen,
             podcastsOpen, setPodcastsOpen,
             collabOpen, setCollabOpen,
+            remindersOpen, setRemindersOpen,
+            pollsOpen, setPollsOpen,
+            statsOpen, setStatsOpen,
         }}>
             {children}
         </Ctx.Provider>

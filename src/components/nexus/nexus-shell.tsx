@@ -55,6 +55,9 @@ import { NxFundraiser }      from "./nx-fundraiser";
 import { NxForum }           from "./nx-forum";
 import { NxPodcasts }        from "./nx-podcasts";
 import { NxCollab }          from "./nx-collab";
+import { NxReminders }       from "./nx-reminders";
+import { NxPolls }           from "./nx-polls";
+import { NxStats }           from "./nx-stats";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -257,6 +260,15 @@ export function NexusShell() {
 
                 {/* ── Hamkorlik ─────────────────────────────────────────── */}
                 <NxCollab />
+
+                {/* ── Eslatmalar ────────────────────────────────────────── */}
+                <NxReminders />
+
+                {/* ── So'rovnomalar ─────────────────────────────────────── */}
+                <NxPolls />
+
+                {/* ── Statistika ────────────────────────────────────────── */}
+                <NxStats />
             </div>
         </NxPlayerProvider>
     );
