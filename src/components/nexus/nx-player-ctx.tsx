@@ -243,6 +243,18 @@ interface PlayerCtx {
     // Moliyalashtirish (Fundraiser)
     fundraiserOpen:    boolean;
     setFundraiserOpen: (v: boolean) => void;
+
+    // Forum (Reddit uslubi muhokama)
+    forumOpen:    boolean;
+    setForumOpen: (v: boolean) => void;
+
+    // Podkastlar
+    podcastsOpen:    boolean;
+    setPodcastsOpen: (v: boolean) => void;
+
+    // Hamkorlik (Collab)
+    collabOpen:    boolean;
+    setCollabOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -435,6 +447,15 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Fundraiser ── */
     const [fundraiserOpen, setFundraiserOpen] = useState(false);
+
+    /* ── Forum ── */
+    const [forumOpen, setForumOpen] = useState(false);
+
+    /* ── Podcasts ── */
+    const [podcastsOpen, setPodcastsOpen] = useState(false);
+
+    /* ── Collab ── */
+    const [collabOpen, setCollabOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -694,6 +715,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             shopOpen, setShopOpen,
             readerOpen, setReaderOpen,
             fundraiserOpen, setFundraiserOpen,
+            forumOpen, setForumOpen,
+            podcastsOpen, setPodcastsOpen,
+            collabOpen, setCollabOpen,
         }}>
             {children}
         </Ctx.Provider>
