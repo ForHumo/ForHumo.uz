@@ -267,6 +267,18 @@ interface PlayerCtx {
     // Statistika (Stats)
     statsOpen:    boolean;
     setStatsOpen: (v: boolean) => void;
+
+    // Qoralamalar (Drafts)
+    draftsOpen:    boolean;
+    setDraftsOpen: (v: boolean) => void;
+
+    // Nishonlar (Badges)
+    badgesOpen:    boolean;
+    setBadgesOpen: (v: boolean) => void;
+
+    // Shikoyat (Report)
+    reportOpen:    boolean;
+    setReportOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -477,6 +489,15 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Stats ── */
     const [statsOpen, setStatsOpen] = useState(false);
+
+    /* ── Drafts ── */
+    const [draftsOpen, setDraftsOpen] = useState(false);
+
+    /* ── Badges ── */
+    const [badgesOpen, setBadgesOpen] = useState(false);
+
+    /* ── Report ── */
+    const [reportOpen, setReportOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -742,6 +763,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             remindersOpen, setRemindersOpen,
             pollsOpen, setPollsOpen,
             statsOpen, setStatsOpen,
+            draftsOpen, setDraftsOpen,
+            badgesOpen, setBadgesOpen,
+            reportOpen, setReportOpen,
         }}>
             {children}
         </Ctx.Provider>

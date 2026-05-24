@@ -10,6 +10,7 @@ import {
     ShoppingBag, Wallet, Calendar, Download, Briefcase, Bot, Gift, Trophy, UserPlus, Tv,
     Scissors, Zap, Grid3X3, CalendarDays, Store, BookText, HeartHandshake,
     MessagesSquare, Mic2, Handshake, BellRing, BarChart3, ChartLine,
+    FileStack, BadgeCheck, Flag,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ const MY_ITEMS = [
 
 export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
     const { data: session } = useSession();
-    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen, setGoLiveOpen, setGiftsOpen, setLeaderboardOpen, setSuggestionsOpen, setWatchPartyOpen, setCommunityOpen, setClipsOpen, setAchievementsOpen, setMiniAppsOpen, setScheduleOpen, setShopOpen, setReaderOpen, setFundraiserOpen, setForumOpen, setPodcastsOpen, setCollabOpen, setRemindersOpen, setPollsOpen, setStatsOpen } = useNxPlayer();
+    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen, setGoLiveOpen, setGiftsOpen, setLeaderboardOpen, setSuggestionsOpen, setWatchPartyOpen, setCommunityOpen, setClipsOpen, setAchievementsOpen, setMiniAppsOpen, setScheduleOpen, setShopOpen, setReaderOpen, setFundraiserOpen, setForumOpen, setPodcastsOpen, setCollabOpen, setRemindersOpen, setPollsOpen, setStatsOpen, setDraftsOpen, setBadgesOpen, setReportOpen } = useNxPlayer();
     const name   = session?.user?.name  ?? "Mehmon";
     const image  = session?.user?.image ?? null;
     const email  = session?.user?.email ?? "";
@@ -235,6 +236,9 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
                         <SidebarItem icon={BellRing}       label="Eslatmalar"        onClick={() => { onClose(); setRemindersOpen(true); }} />
                         <SidebarItem icon={BarChart3}      label="So'rovnomalar"     onClick={() => { onClose(); setPollsOpen(true); }} />
                         <SidebarItem icon={ChartLine}      label="Statistikam"       onClick={() => { onClose(); setStatsOpen(true); }} />
+                        <SidebarItem icon={FileStack}      label="Qoralamalar"       onClick={() => { onClose(); setDraftsOpen(true); }} />
+                        <SidebarItem icon={BadgeCheck}     label="Nishonlarim"       onClick={() => { onClose(); setBadgesOpen(true); }} />
+                        <SidebarItem icon={Flag}           label="Shikoyat"          onClick={() => { onClose(); setReportOpen(true); }} />
                     </SidebarSection>
 
                     {/* ── Settings / Logout ─────────────────────────── */}

@@ -58,6 +58,9 @@ import { NxCollab }          from "./nx-collab";
 import { NxReminders }       from "./nx-reminders";
 import { NxPolls }           from "./nx-polls";
 import { NxStats }           from "./nx-stats";
+import { NxDrafts }          from "./nx-drafts";
+import { NxBadges }          from "./nx-badges";
+import { NxReport }          from "./nx-report";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -269,6 +272,15 @@ export function NexusShell() {
 
                 {/* ── Statistika ────────────────────────────────────────── */}
                 <NxStats />
+
+                {/* ── Qoralamalar ───────────────────────────────────────── */}
+                <NxDrafts />
+
+                {/* ── Nishonlar ─────────────────────────────────────────── */}
+                <NxBadges />
+
+                {/* ── Shikoyat ──────────────────────────────────────────── */}
+                <NxReport />
             </div>
         </NxPlayerProvider>
     );
