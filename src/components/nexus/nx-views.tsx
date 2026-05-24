@@ -5,7 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import {
     Search, TrendingUp, Flame, Clock, Zap,
     Film, Music2, Headphones, BookOpen, Mic2,
-    Radio, Users, Hash, MessageCircle, Bot,
+    Radio, Users, Hash, MessageCircle, Bot, Gift,
     Shield, Heart, UserCheck, CreditCard,
     Settings, LogOut, BadgeCheck, Plus, ChevronRight,
     Edit3, Save, X, Loader2, Trash2,
@@ -629,7 +629,7 @@ interface ProfileData {
 
 export function ProfileView() {
     const { data: session } = useSession();
-    const { watchHistory, clearHistory, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setSubsOpen, setCallsOpen, setSpacesOpen, setWalletOpen, setMarketOpen, setDownloadsOpen, setJobsOpen, setEventsOpen } = useNxPlayer();
+    const { watchHistory, clearHistory, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setSubsOpen, setCallsOpen, setSpacesOpen, setWalletOpen, setMarketOpen, setDownloadsOpen, setJobsOpen, setEventsOpen, setGoLiveOpen, setGiftsOpen, setTrendingOpen, setAiOpen } = useNxPlayer();
 
     const sessionName  = session?.user?.name  ?? "Mehmon";
     const sessionEmail = session?.user?.email ?? "—";
@@ -734,14 +734,24 @@ export function ProfileView() {
                         </div>
                     </div>
 
-                    <button
-                        onClick={openEdit}
-                        className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity duration-150 hover:opacity-85 active:scale-95"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 18px rgba(43,62,232,0.45)" }}
-                    >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        Tahrirlash
-                    </button>
+                    <div className="flex flex-col gap-2 flex-shrink-0">
+                        <button
+                            onClick={openEdit}
+                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity duration-150 hover:opacity-85 active:scale-95"
+                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 18px rgba(43,62,232,0.45)" }}
+                        >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            Tahrirlash
+                        </button>
+                        <button
+                            onClick={() => setGoLiveOpen(true)}
+                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity duration-150 hover:opacity-85 active:scale-95"
+                            style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}
+                        >
+                            <Radio className="w-3.5 h-3.5" />
+                            Go Live
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -778,6 +788,9 @@ export function ProfileView() {
                     { label: "Tadbirlar",   icon: Calendar,     grad: "linear-gradient(135deg,#EC4899,#8B5CF6)",  action: () => setEventsOpen(true)     },
                     { label: "Yuklangan",   icon: Download,     grad: "linear-gradient(135deg,#2B3EE8,#6366F1)",  action: () => setDownloadsOpen(true)  },
                     { label: "Jobs",        icon: Briefcase,    grad: "linear-gradient(135deg,#0EA5E9,#2B3EE8)",  action: () => setJobsOpen(true)       },
+                    { label: "Sovg'alar",   icon: Gift,         grad: "linear-gradient(135deg,#F59E0B,#EF4444)",  action: () => setGiftsOpen(true)      },
+                    { label: "Trendlar",    icon: TrendingUp,   grad: "linear-gradient(135deg,#F97316,#EF4444)",  action: () => setTrendingOpen(true)   },
+                    { label: "Nexus AI",    icon: Bot,          grad: "linear-gradient(135deg,#8B5CF6,#EC4899)",  action: () => setAiOpen(true)         },
                 ].map(({ label, icon: Icon, grad, action }, i) => (
                     <button key={i}
                         onClick={action}

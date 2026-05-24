@@ -171,6 +171,14 @@ interface PlayerCtx {
     // AI yordamchi
     aiOpen:    boolean;
     setAiOpen: (v: boolean) => void;
+
+    // Go Live
+    goLiveOpen:    boolean;
+    setGoLiveOpen: (v: boolean) => void;
+
+    // Virtual sovg'alar
+    giftsOpen:    boolean;
+    setGiftsOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -309,6 +317,12 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── AI ── */
     const [aiOpen, setAiOpen] = useState(false);
+
+    /* ── Go Live ── */
+    const [goLiveOpen, setGoLiveOpen] = useState(false);
+
+    /* ── Gifts ── */
+    const [giftsOpen, setGiftsOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -550,6 +564,8 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             jobsOpen, setJobsOpen,
             trendingOpen, setTrendingOpen,
             aiOpen, setAiOpen,
+            goLiveOpen, setGoLiveOpen,
+            giftsOpen, setGiftsOpen,
         }}>
             {children}
         </Ctx.Provider>

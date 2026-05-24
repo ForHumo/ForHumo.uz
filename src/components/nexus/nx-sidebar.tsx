@@ -7,7 +7,7 @@ import {
     Settings, HelpCircle, Star, Bookmark, History, TrendingUp,
     Music, Film, BookOpen, Mic, Crown, ChevronRight, LogOut,
     Compass, ListMusic, Bell, BarChart2, Hash, Phone, Users, Headphones,
-    ShoppingBag, Wallet, Calendar, Download, Briefcase, Bot,
+    ShoppingBag, Wallet, Calendar, Download, Briefcase, Bot, Gift,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ const MY_ITEMS = [
 
 export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
     const { data: session } = useSession();
-    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen } = useNxPlayer();
+    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen, setGoLiveOpen, setGiftsOpen } = useNxPlayer();
     const name   = session?.user?.name  ?? "Mehmon";
     const image  = session?.user?.image ?? null;
     const email  = session?.user?.email ?? "";
@@ -214,6 +214,8 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
                         <SidebarItem icon={Calendar}     label="Tadbirlar"       onClick={() => { onClose(); setEventsOpen(true); }} />
                         <SidebarItem icon={Download}     label="Yuklangan"       onClick={() => { onClose(); setDownloadsOpen(true); }} />
                         <SidebarItem icon={Briefcase}    label="Nexus Jobs"      onClick={() => { onClose(); setJobsOpen(true); }} />
+                        <SidebarItem icon={Gift}         label="Sovg'alar"       onClick={() => { onClose(); setGiftsOpen(true); }} />
+                        <SidebarItem icon={Radio}        label="Jonli efir"      onClick={() => { onClose(); setGoLiveOpen(true); }} />
                     </SidebarSection>
 
                     {/* ── Settings / Logout ─────────────────────────── */}

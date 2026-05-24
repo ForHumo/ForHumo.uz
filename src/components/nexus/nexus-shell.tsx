@@ -34,6 +34,8 @@ import { NxDownloads }       from "./nx-downloads";
 import { NxJobs }            from "./nx-jobs";
 import { NxTrending }        from "./nx-trending";
 import { NxAI }              from "./nx-ai";
+import { NxGoLive }          from "./nx-go-live";
+import { NxGifts }           from "./nx-gifts";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -173,6 +175,12 @@ export function NexusShell() {
 
                 {/* ── AI yordamchi ──────────────────────────────────────── */}
                 <NxAI />
+
+                {/* ── Go Live ───────────────────────────────────────────── */}
+                <NxGoLive />
+
+                {/* ── Virtual sovg'alar ─────────────────────────────────── */}
+                <NxGifts />
             </div>
         </NxPlayerProvider>
     );
