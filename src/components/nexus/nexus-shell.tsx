@@ -48,6 +48,7 @@ import { NxClips }           from "./nx-clips";
 import { NxSuperChat }       from "./nx-super-chat";
 import { NxAchievements }    from "./nx-achievements";
 import { NxMiniApps }        from "./nx-mini-apps";
+import { NxSchedule }        from "./nx-schedule";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -229,6 +230,9 @@ export function NexusShell() {
 
                 {/* ── Mini Ilovalar ─────────────────────────────────────── */}
                 <NxMiniApps />
+
+                {/* ── Kontent jadvali ───────────────────────────────────── */}
+                <NxSchedule />
             </div>
         </NxPlayerProvider>
     );

@@ -227,6 +227,10 @@ interface PlayerCtx {
     // Mini Ilovalar
     miniAppsOpen:    boolean;
     setMiniAppsOpen: (v: boolean) => void;
+
+    // Kontent jadvali (Schedule)
+    scheduleOpen:    boolean;
+    setScheduleOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -407,6 +411,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Mini Apps ── */
     const [miniAppsOpen, setMiniAppsOpen] = useState(false);
+
+    /* ── Schedule ── */
+    const [scheduleOpen, setScheduleOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -662,6 +669,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             superChatOpen, setSuperChatOpen,
             achievementsOpen, setAchievementsOpen,
             miniAppsOpen, setMiniAppsOpen,
+            scheduleOpen, setScheduleOpen,
         }}>
             {children}
         </Ctx.Provider>
