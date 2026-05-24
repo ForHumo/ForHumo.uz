@@ -195,6 +195,22 @@ interface PlayerCtx {
     // Watch Party
     watchPartyOpen:    boolean;
     setWatchPartyOpen: (v: boolean) => void;
+
+    // Highlights
+    highlightsOpen:    boolean;
+    setHighlightsOpen: (v: boolean) => void;
+
+    // Lyrics
+    lyricsOpen:    boolean;
+    setLyricsOpen: (v: boolean) => void;
+
+    // QR Share
+    qrShareOpen:    boolean;
+    setQrShareOpen: (v: boolean) => void;
+
+    // Community posts
+    communityOpen:    boolean;
+    setCommunityOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -351,6 +367,18 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Watch Party ── */
     const [watchPartyOpen, setWatchPartyOpen] = useState(false);
+
+    /* ── Highlights ── */
+    const [highlightsOpen, setHighlightsOpen] = useState(false);
+
+    /* ── Lyrics ── */
+    const [lyricsOpen, setLyricsOpen] = useState(false);
+
+    /* ── QR Share ── */
+    const [qrShareOpen, setQrShareOpen] = useState(false);
+
+    /* ── Community ── */
+    const [communityOpen, setCommunityOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -598,6 +626,10 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             createPostOpen, setCreatePostOpen,
             suggestionsOpen, setSuggestionsOpen,
             watchPartyOpen, setWatchPartyOpen,
+            highlightsOpen, setHighlightsOpen,
+            lyricsOpen, setLyricsOpen,
+            qrShareOpen, setQrShareOpen,
+            communityOpen, setCommunityOpen,
         }}>
             {children}
         </Ctx.Provider>

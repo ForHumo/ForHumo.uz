@@ -40,6 +40,10 @@ import { NxLeaderboard }     from "./nx-leaderboard";
 import { NxCreatePost }      from "./nx-create-post";
 import { NxSuggestions }     from "./nx-suggestions";
 import { NxWatchParty }      from "./nx-watch-party";
+import { NxHighlights }      from "./nx-highlights";
+import { NxLyrics }          from "./nx-lyrics";
+import { NxQrShare }         from "./nx-qr-share";
+import { NxCommunity }       from "./nx-community";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -197,6 +201,18 @@ export function NexusShell() {
 
                 {/* ── Watch Party (birga tomosha) ───────────────────────── */}
                 <NxWatchParty />
+
+                {/* ── Highlights (story kolleksiyalar) ──────────────────── */}
+                <NxHighlights />
+
+                {/* ── Lyrics (qo'shiq so'zlari) ─────────────────────────── */}
+                <NxLyrics />
+
+                {/* ── QR Share (profil ulashish) ────────────────────────── */}
+                <NxQrShare />
+
+                {/* ── Community (yaratuvchi jamiyati) ───────────────────── */}
+                <NxCommunity />
             </div>
         </NxPlayerProvider>
     );
