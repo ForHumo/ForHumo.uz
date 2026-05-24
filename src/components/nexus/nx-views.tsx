@@ -9,6 +9,7 @@ import {
     Shield, Heart, UserCheck, CreditCard,
     Settings, LogOut, BadgeCheck, Plus, ChevronRight,
     Edit3, Save, X, Loader2, Trash2,
+    ListMusic, BarChart2, Compass,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxRow } from "./nx-row";
@@ -16,6 +17,7 @@ import { VideoCard, ShortCard, LiveCard, MusicCard, BookCard } from "./nx-cards"
 import { NxStories } from "./nx-stories";
 import { NxHero } from "./nx-hero";
 import { NxFeed } from "./nx-feed";
+import { NxSocialFeed } from "./nx-social-feed";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Umumiy yordamchi komponentlar
@@ -356,9 +358,10 @@ export function MediaView() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SOCIAL VIEW — Chat, Kanal, Guruh, Bot
+// SOCIAL VIEW — Postlar, Chat, Kanal, Guruh, Bot
 // ─────────────────────────────────────────────────────────────────────────────
 const SOCIAL_TABS = [
+    { id: "posts",   icon: Flame,         label: "Postlar"  },
     { id: "chat",    icon: MessageCircle, label: "Chatlar"  },
     { id: "channel", icon: Hash,          label: "Kanallar" },
     { id: "group",   icon: Users,         label: "Guruhlar" },
@@ -377,7 +380,8 @@ const CHAT_LIST = [
 ];
 
 export function SocialView() {
-    const [sub, setSub] = useState("chat");
+    const [sub, setSub] = useState("posts");
+    const { setMessagesOpen, setExploreOpen } = useNxPlayer();
 
     return (
         <ViewShell>
@@ -402,57 +406,60 @@ export function SocialView() {
                 ))}
             </div>
 
+            {sub === "posts" && <NxSocialFeed />}
+
             {sub === "chat" && (
-                <div
-                    className="mx-4 rounded-2xl overflow-hidden"
-                    style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.20)" }}
-                >
-                    {/* Search */}
-                    <div className="p-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.12)" }}>
-                        <SearchBar placeholder="Suhbat qidirish..." />
-                    </div>
-                    {/* List */}
-                    {CHAT_LIST.map((c, i) => (
-                        <button
-                            key={i}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150 group"
-                            style={{ borderBottom: i < CHAT_LIST.length - 1 ? "1px solid rgba(43,62,232,0.08)" : "none" }}
-                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)"}
-                            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
-                        >
-                            {/* Avatar */}
-                            <div className="relative flex-shrink-0">
-                                <div className="w-11 h-11 rounded-2xl overflow-hidden"
-                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", padding: "2px" }}>
-                                    <div className="w-full h-full rounded-[14px] bg-[#050818] overflow-hidden">
-                                        <img src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${c.name}`} alt={c.name} className="w-full h-full object-cover" />
+                <div className="mx-4">
+                    <button
+                        onClick={() => setMessagesOpen(true)}
+                        className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-sm font-bold text-white transition-all duration-150 active:scale-95 mb-3"
+                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.40)" }}
+                    >
+                        <MessageCircle className="w-5 h-5" />
+                        Xabarlarni ochish
+                    </button>
+                    <div className="rounded-2xl overflow-hidden"
+                        style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                        {CHAT_LIST.map((c, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setMessagesOpen(true)}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150 group"
+                                style={{ borderBottom: i < CHAT_LIST.length - 1 ? "1px solid rgba(43,62,232,0.08)" : "none" }}
+                                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)"}
+                                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
+                            >
+                                <div className="relative flex-shrink-0">
+                                    <div className="w-11 h-11 rounded-2xl overflow-hidden"
+                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", padding: "2px" }}>
+                                        <div className="w-full h-full rounded-[14px] bg-[#050818] overflow-hidden">
+                                            <img src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${c.name}`} alt={c.name} className="w-full h-full object-cover" />
+                                        </div>
                                     </div>
+                                    {c.online && (
+                                        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
+                                            style={{ background: "#10B981", borderColor: "#050818" }} />
+                                    )}
                                 </div>
-                                {c.online && (
-                                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
-                                        style={{ background: "#10B981", borderColor: "#050818" }} />
-                                )}
-                            </div>
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-0.5">
-                                    <span className="text-sm font-bold text-white flex items-center gap-1.5 group-hover:text-[#00CEC8] transition-colors duration-150">
-                                        {c.name}
-                                        {c.group && <Users className="w-3 h-3" style={{ color: "#00CEC8" }} />}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-0.5">
+                                        <span className="text-sm font-bold text-white flex items-center gap-1.5 group-hover:text-[#00CEC8] transition-colors duration-150">
+                                            {c.name}
+                                            {c.group && <Users className="w-3 h-3" style={{ color: "#00CEC8" }} />}
+                                        </span>
+                                        <span className="text-[10px] flex-shrink-0" style={{ color: "rgba(80,100,150,0.80)" }}>{c.time}</span>
+                                    </div>
+                                    <p className="text-xs truncate" style={{ color: "rgba(100,120,170,0.75)" }}>{c.msg}</p>
+                                </div>
+                                {c.unread > 0 && (
+                                    <span className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white"
+                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                        {c.unread}
                                     </span>
-                                    <span className="text-[10px] flex-shrink-0" style={{ color: "rgba(80,100,150,0.80)" }}>{c.time}</span>
-                                </div>
-                                <p className="text-xs truncate" style={{ color: "rgba(100,120,170,0.75)" }}>{c.msg}</p>
-                            </div>
-                            {/* Unread */}
-                            {c.unread > 0 && (
-                                <span className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white"
-                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                                    {c.unread}
-                                </span>
-                            )}
-                        </button>
-                    ))}
+                                )}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             )}
 

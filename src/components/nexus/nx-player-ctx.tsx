@@ -87,6 +87,42 @@ interface PlayerCtx {
     watchHistory: NxVideo[];
     addToHistory: (v: NxVideo) => void;
     clearHistory: () => void;
+
+    // Bildirishnomalar
+    notifOpen:    boolean;
+    setNotifOpen: (v: boolean) => void;
+
+    // Xabarlar / DM
+    messagesOpen:    boolean;
+    setMessagesOpen: (v: boolean) => void;
+
+    // Izohlar
+    commentsOpen:    boolean;
+    commentsFor:     string | null;
+    openComments:    (target: string) => void;
+    closeComments:   () => void;
+
+    // Jonli efir chat
+    liveChatOpen:    boolean;
+    setLiveChatOpen: (v: boolean) => void;
+
+    // Explore
+    exploreOpen:    boolean;
+    setExploreOpen: (v: boolean) => void;
+
+    // Playlist
+    playlistsOpen:    boolean;
+    setPlaylistsOpen: (v: boolean) => void;
+
+    // Analytics
+    analyticsOpen:    boolean;
+    setAnalyticsOpen: (v: boolean) => void;
+
+    // Stories viewer
+    storiesViewerOpen:  boolean;
+    storiesViewerIndex: number;
+    openStoriesViewer:  (idx: number) => void;
+    closeStoriesViewer: () => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -159,6 +195,36 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     const [searchOpen, setSearchOpen] = useState(false);
     const [studioOpen, setStudioOpen] = useState(false);
     const [proOpen,    setProOpen]    = useState(false);
+
+    /* ── Bildirishnomalar ── */
+    const [notifOpen, setNotifOpen] = useState(false);
+
+    /* ── Xabarlar / DM ── */
+    const [messagesOpen, setMessagesOpen] = useState(false);
+
+    /* ── Izohlar ── */
+    const [commentsOpen, setCommentsOpen] = useState(false);
+    const [commentsFor,  setCommentsFor]  = useState<string | null>(null);
+    const openComments  = useCallback((target: string) => { setCommentsFor(target); setCommentsOpen(true); }, []);
+    const closeComments = useCallback(() => setCommentsOpen(false), []);
+
+    /* ── Jonli efir chat ── */
+    const [liveChatOpen, setLiveChatOpen] = useState(false);
+
+    /* ── Explore ── */
+    const [exploreOpen, setExploreOpen] = useState(false);
+
+    /* ── Playlist ── */
+    const [playlistsOpen, setPlaylistsOpen] = useState(false);
+
+    /* ── Analytics ── */
+    const [analyticsOpen, setAnalyticsOpen] = useState(false);
+
+    /* ── Stories viewer ── */
+    const [storiesViewerOpen,  setStoriesViewerOpen]  = useState(false);
+    const [storiesViewerIndex, setStoriesViewerIndex] = useState(0);
+    const openStoriesViewer  = useCallback((idx: number) => { setStoriesViewerIndex(idx); setStoriesViewerOpen(true); }, []);
+    const closeStoriesViewer = useCallback(() => setStoriesViewerOpen(false), []);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -380,6 +446,14 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             channelAuthor, openChannel, closeChannel,
             savedIds, toggleSaved,
             watchHistory, addToHistory, clearHistory,
+            notifOpen, setNotifOpen,
+            messagesOpen, setMessagesOpen,
+            commentsOpen, commentsFor, openComments, closeComments,
+            liveChatOpen, setLiveChatOpen,
+            exploreOpen, setExploreOpen,
+            playlistsOpen, setPlaylistsOpen,
+            analyticsOpen, setAnalyticsOpen,
+            storiesViewerOpen, storiesViewerIndex, openStoriesViewer, closeStoriesViewer,
         }}>
             {children}
         </Ctx.Provider>

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Search, Bell, ChevronDown, Menu, PlusSquare } from "lucide-react";
+import { Search, Bell, ChevronDown, Menu, PlusSquare, MessageCircle, Compass } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useNxPlayer } from "./nx-player-ctx";
 
@@ -15,7 +15,7 @@ interface NxHeaderProps {
 
 export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHeaderProps) {
     const { data: session } = useSession();
-    const { setSearchOpen, setStudioOpen } = useNxPlayer();
+    const { setSearchOpen, setStudioOpen, setNotifOpen, setMessagesOpen, setExploreOpen } = useNxPlayer();
 
     return (
         <header
@@ -119,8 +119,32 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
                     </span>
                 </button>
 
+                {/* Kashfiyot */}
+                <button
+                    onClick={() => setExploreOpen(true)}
+                    className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
+                    style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.18)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)"; }}
+                >
+                    <Compass className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                </button>
+
+                {/* Xabarlar */}
+                <button
+                    onClick={() => setMessagesOpen(true)}
+                    className="relative w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
+                    style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.18)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)"; }}
+                >
+                    <MessageCircle className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+                        style={{ background: "#10B981", boxShadow: "0 0 6px rgba(16,185,129,0.80)" }} />
+                </button>
+
                 {/* Bildirishnoma */}
-                <BellButton />
+                <BellButton onOpen={() => setNotifOpen(true)} />
 
                 {/* Profil */}
                 <ProfileButton session={session} />
@@ -130,9 +154,10 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
 }
 
 // ── Bell ──────────────────────────────────────────────────────────────────────
-function BellButton() {
+function BellButton({ onOpen }: { onOpen: () => void }) {
     return (
         <button
+            onClick={onOpen}
             className="relative w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
             style={{
                 background: "rgba(43,62,232,0.08)",
@@ -148,8 +173,6 @@ function BellButton() {
             }}
         >
             <Bell className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
-
-            {/* Unread dot */}
             <span
                 className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
                 style={{

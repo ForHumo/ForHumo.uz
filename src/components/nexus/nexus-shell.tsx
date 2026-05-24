@@ -14,6 +14,14 @@ import { NxCreatorStudio } from "./nx-creator-studio";
 import { NxPro } from "./nx-pro";
 import { NxChannel } from "./nx-channel";
 import { FeedView, VideoView, LiveView, MediaView, SocialView, ProfileView } from "./nx-views";
+import { NxNotifications }  from "./nx-notifications";
+import { NxMessages }        from "./nx-messages";
+import { NxComments }        from "./nx-comments";
+import { NxLiveChat }        from "./nx-live-chat";
+import { NxPlaylist }        from "./nx-playlist";
+import { NxAnalytics }       from "./nx-analytics";
+import { NxStoriesViewer }   from "./nx-stories-viewer";
+import { NxExplore }         from "./nx-explore";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -93,6 +101,30 @@ export function NexusShell() {
 
                 {/* ── Kanal modali ───────────────────────────────────────── */}
                 <NxChannel />
+
+                {/* ── Bildirishnomalar ───────────────────────────────────── */}
+                <NxNotifications />
+
+                {/* ── Xabarlar / DM ─────────────────────────────────────── */}
+                <NxMessages />
+
+                {/* ── Izohlar ───────────────────────────────────────────── */}
+                <NxComments />
+
+                {/* ── Jonli efir chat ───────────────────────────────────── */}
+                <NxLiveChat />
+
+                {/* ── Playlistlar ───────────────────────────────────────── */}
+                <NxPlaylist />
+
+                {/* ── Analitika ─────────────────────────────────────────── */}
+                <NxAnalytics />
+
+                {/* ── Stories viewer ────────────────────────────────────── */}
+                <NxStoriesViewer />
+
+                {/* ── Explore / Kashfiyot ───────────────────────────────── */}
+                <NxExplore />
             </div>
         </NxPlayerProvider>
     );
