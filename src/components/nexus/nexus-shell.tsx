@@ -49,6 +49,9 @@ import { NxSuperChat }       from "./nx-super-chat";
 import { NxAchievements }    from "./nx-achievements";
 import { NxMiniApps }        from "./nx-mini-apps";
 import { NxSchedule }        from "./nx-schedule";
+import { NxShop }            from "./nx-shop";
+import { NxReader }          from "./nx-reader";
+import { NxFundraiser }      from "./nx-fundraiser";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -233,6 +236,15 @@ export function NexusShell() {
 
                 {/* ── Kontent jadvali ───────────────────────────────────── */}
                 <NxSchedule />
+
+                {/* ── Do'kon ────────────────────────────────────────────── */}
+                <NxShop />
+
+                {/* ── Maqolalar / Reader ────────────────────────────────── */}
+                <NxReader />
+
+                {/* ── Moliyalashtirish ──────────────────────────────────── */}
+                <NxFundraiser />
             </div>
         </NxPlayerProvider>
     );

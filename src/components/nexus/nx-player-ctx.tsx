@@ -231,6 +231,18 @@ interface PlayerCtx {
     // Kontent jadvali (Schedule)
     scheduleOpen:    boolean;
     setScheduleOpen: (v: boolean) => void;
+
+    // Do'kon (Shop)
+    shopOpen:    boolean;
+    setShopOpen: (v: boolean) => void;
+
+    // Maqolalar (Reader)
+    readerOpen:    boolean;
+    setReaderOpen: (v: boolean) => void;
+
+    // Moliyalashtirish (Fundraiser)
+    fundraiserOpen:    boolean;
+    setFundraiserOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -414,6 +426,15 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Schedule ── */
     const [scheduleOpen, setScheduleOpen] = useState(false);
+
+    /* ── Shop ── */
+    const [shopOpen, setShopOpen] = useState(false);
+
+    /* ── Reader ── */
+    const [readerOpen, setReaderOpen] = useState(false);
+
+    /* ── Fundraiser ── */
+    const [fundraiserOpen, setFundraiserOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -670,6 +691,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             achievementsOpen, setAchievementsOpen,
             miniAppsOpen, setMiniAppsOpen,
             scheduleOpen, setScheduleOpen,
+            shopOpen, setShopOpen,
+            readerOpen, setReaderOpen,
+            fundraiserOpen, setFundraiserOpen,
         }}>
             {children}
         </Ctx.Provider>
