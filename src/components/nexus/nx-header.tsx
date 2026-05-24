@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useRef, useCallback } from "react";
 import Image from "next/image";
 import { Search, Bell, ChevronDown, Menu, PlusSquare, MessageCircle, Compass } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -15,7 +16,7 @@ interface NxHeaderProps {
 
 export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHeaderProps) {
     const { data: session } = useSession();
-    const { setSearchOpen, setStudioOpen, setNotifOpen, setMessagesOpen, setExploreOpen, setCreatePostOpen } = useNxPlayer();
+    const { setSearchOpen, setStudioOpen: _setStudioOpen, setNotifOpen, setMessagesOpen, setExploreOpen, setCreatePostOpen } = useNxPlayer();
 
     return (
         <header
@@ -28,24 +29,11 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
             }}
         >
             {/* ── Menu button ───────────────────────────────────────── */}
-            <button
-                onClick={onMenuOpen}
-                className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
-                style={{
-                    background: "rgba(43,62,232,0.08)",
-                    border: "1px solid rgba(43,62,232,0.18)",
-                }}
-                onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.18)";
-                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)";
-                }}
-                onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)";
-                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)";
-                }}
-            >
-                <Menu className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
-            </button>
+            <HeaderIconBtn
+                onClick={onMenuOpen ?? (() => {})}
+                icon={Menu}
+                iconColor="rgba(160,176,224,0.80)"
+            />
 
             {/* ── Logo ──────────────────────────────────────────────── */}
             <div className="flex items-center gap-2.5 flex-shrink-0">
@@ -94,54 +82,23 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
             <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
 
                 {/* Kontent yaratish */}
-                <button
-                    onClick={() => setCreatePostOpen(true)}
-                    className="hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-xl transition-all duration-150 active:scale-95"
-                    style={{
-                        background: "linear-gradient(135deg,rgba(43,62,232,0.20),rgba(0,206,200,0.12))",
-                        border: "1px solid rgba(43,62,232,0.30)",
-                    }}
-                    onMouseEnter={e => {
-                        (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg,rgba(43,62,232,0.30),rgba(0,206,200,0.18))";
-                    }}
-                    onMouseLeave={e => {
-                        (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg,rgba(43,62,232,0.20),rgba(0,206,200,0.12))";
-                    }}
-                >
-                    <PlusSquare className="w-4 h-4" style={{ color: "#00CEC8" }} />
-                    <span className="text-xs font-black" style={{
-                        background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                    }}>
-                        Yaratish
-                    </span>
-                </button>
+                <CreateBtn onClick={() => setCreatePostOpen(true)} />
 
                 {/* Kashfiyot */}
-                <button
+                <HeaderIconBtn
                     onClick={() => setExploreOpen(true)}
-                    className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
-                    style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.18)"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)"; }}
-                >
-                    <Compass className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
-                </button>
+                    icon={Compass}
+                    iconColor="rgba(160,176,224,0.80)"
+                    className="hidden sm:flex"
+                />
 
                 {/* Xabarlar */}
-                <button
+                <HeaderIconBtn
                     onClick={() => setMessagesOpen(true)}
-                    className="relative w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
-                    style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.18)"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)"; }}
-                >
-                    <MessageCircle className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-                        style={{ background: "#10B981", boxShadow: "0 0 6px rgba(16,185,129,0.80)" }} />
-                </button>
+                    icon={MessageCircle}
+                    iconColor="rgba(160,176,224,0.80)"
+                    badge={{ color: "#10B981", glow: "rgba(16,185,129,0.80)" }}
+                />
 
                 {/* Bildirishnoma */}
                 <BellButton onOpen={() => setNotifOpen(true)} />
@@ -153,12 +110,43 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
     );
 }
 
-// ── Bell ──────────────────────────────────────────────────────────────────────
-function BellButton({ onOpen }: { onOpen: () => void }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Reusable animated icon button
+// ─────────────────────────────────────────────────────────────────────────────
+interface HeaderIconBtnProps {
+    onClick: () => void;
+    icon: React.ElementType;
+    iconColor?: string;
+    badge?: { color: string; glow: string };
+    className?: string;
+}
+
+function HeaderIconBtn({ onClick, icon: Icon, iconColor, badge, className = "" }: HeaderIconBtnProps) {
+    const iconRef = useRef<SVGSVGElement>(null);
+
+    const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        // Spring pop on icon
+        if (iconRef.current) {
+            iconRef.current.classList.remove("nx-pop");
+            void (iconRef.current as unknown as HTMLElement).offsetWidth;
+            iconRef.current.classList.add("nx-pop");
+        }
+        // Ripple at click coordinates
+        const btn = e.currentTarget;
+        const rect = btn.getBoundingClientRect();
+        const dot = document.createElement("span");
+        dot.className = "nx-ripple-dot";
+        dot.style.left = `${e.clientX - rect.left}px`;
+        dot.style.top  = `${e.clientY - rect.top}px`;
+        btn.appendChild(dot);
+        dot.addEventListener("animationend", () => dot.remove());
+        onClick();
+    }, [onClick]);
+
     return (
         <button
-            onClick={onOpen}
-            className="relative w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
+            onClick={handleClick}
+            className={`nx-ripple-wrap nx-press relative w-9 h-9 flex items-center justify-center rounded-xl ${className}`}
             style={{
                 background: "rgba(43,62,232,0.08)",
                 border: "1px solid rgba(43,62,232,0.18)",
@@ -172,7 +160,121 @@ function BellButton({ onOpen }: { onOpen: () => void }) {
                 (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)";
             }}
         >
-            <Bell className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+            <Icon
+                ref={iconRef as React.Ref<SVGSVGElement>}
+                className="w-4 h-4"
+                style={{ color: iconColor ?? "rgba(160,176,224,0.80)" }}
+            />
+            {badge && (
+                <span
+                    className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+                    style={{ background: badge.color, boxShadow: `0 0 6px ${badge.glow}` }}
+                />
+            )}
+        </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Create button — pill with gradient text
+// ─────────────────────────────────────────────────────────────────────────────
+function CreateBtn({ onClick }: { onClick: () => void }) {
+    const iconRef = useRef<SVGSVGElement>(null);
+
+    const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        if (iconRef.current) {
+            iconRef.current.classList.remove("nx-pop");
+            void (iconRef.current as unknown as HTMLElement).offsetWidth;
+            iconRef.current.classList.add("nx-pop");
+        }
+        const btn = e.currentTarget;
+        const rect = btn.getBoundingClientRect();
+        const dot = document.createElement("span");
+        dot.className = "nx-ripple-dot";
+        dot.style.left = `${e.clientX - rect.left}px`;
+        dot.style.top  = `${e.clientY - rect.top}px`;
+        btn.appendChild(dot);
+        dot.addEventListener("animationend", () => dot.remove());
+        onClick();
+    }, [onClick]);
+
+    return (
+        <button
+            onClick={handleClick}
+            className="nx-ripple-wrap nx-press hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-xl"
+            style={{
+                background: "linear-gradient(135deg,rgba(43,62,232,0.20),rgba(0,206,200,0.12))",
+                border: "1px solid rgba(43,62,232,0.30)",
+            }}
+            onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg,rgba(43,62,232,0.30),rgba(0,206,200,0.18))";
+            }}
+            onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg,rgba(43,62,232,0.20),rgba(0,206,200,0.12))";
+            }}
+        >
+            <PlusSquare
+                ref={iconRef as React.Ref<SVGSVGElement>}
+                className="w-4 h-4 flex-shrink-0"
+                style={{ color: "#00CEC8" }}
+            />
+            <span className="text-xs font-black" style={{
+                background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+            }}>
+                Yaratish
+            </span>
+        </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bell — animated ring on click
+// ─────────────────────────────────────────────────────────────────────────────
+function BellButton({ onOpen }: { onOpen: () => void }) {
+    const bellRef = useRef<SVGSVGElement>(null);
+
+    const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        if (bellRef.current) {
+            bellRef.current.classList.remove("nx-pop");
+            void (bellRef.current as unknown as HTMLElement).offsetWidth;
+            bellRef.current.classList.add("nx-pop");
+        }
+        const btn = e.currentTarget;
+        const rect = btn.getBoundingClientRect();
+        const dot = document.createElement("span");
+        dot.className = "nx-ripple-dot";
+        dot.style.left = `${e.clientX - rect.left}px`;
+        dot.style.top  = `${e.clientY - rect.top}px`;
+        btn.appendChild(dot);
+        dot.addEventListener("animationend", () => dot.remove());
+        onOpen();
+    }, [onOpen]);
+
+    return (
+        <button
+            onClick={handleClick}
+            className="nx-ripple-wrap nx-press relative w-9 h-9 flex items-center justify-center rounded-xl"
+            style={{
+                background: "rgba(43,62,232,0.08)",
+                border: "1px solid rgba(43,62,232,0.18)",
+            }}
+            onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.18)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)";
+            }}
+            onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)";
+            }}
+        >
+            <Bell
+                ref={bellRef as React.Ref<SVGSVGElement>}
+                className="w-4 h-4"
+                style={{ color: "rgba(160,176,224,0.80)" }}
+            />
             <span
                 className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
                 style={{
@@ -184,7 +286,9 @@ function BellButton({ onOpen }: { onOpen: () => void }) {
     );
 }
 
-// ── Profile ───────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Profile avatar button
+// ─────────────────────────────────────────────────────────────────────────────
 function ProfileButton({ session }: { session: ReturnType<typeof useSession>["data"] }) {
     const name   = session?.user?.name  ?? null;
     const image  = session?.user?.image ?? null;
@@ -192,7 +296,7 @@ function ProfileButton({ session }: { session: ReturnType<typeof useSession>["da
 
     return (
         <button
-            className="flex items-center gap-2 h-9 pl-1 pr-2.5 rounded-xl transition-all duration-150 active:scale-95"
+            className="nx-press flex items-center gap-2 h-9 pl-1 pr-2.5 rounded-xl transition-colors duration-150"
             style={{
                 background: "rgba(43,62,232,0.08)",
                 border: "1px solid rgba(43,62,232,0.18)",

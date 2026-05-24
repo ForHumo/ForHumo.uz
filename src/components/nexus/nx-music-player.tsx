@@ -1,11 +1,11 @@
 "use client";
 
+import React, { useState, useRef, useCallback } from "react";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
     Play, Pause, SkipBack, SkipForward, Volume2, VolumeX,
     Heart, ChevronDown, Shuffle, Repeat, ListMusic, X, Music2,
 } from "lucide-react";
-import { useState, useRef } from "react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxMusicPlayer() {
@@ -157,14 +157,7 @@ function ExpandedPlayer() {
                         <h2 className="text-xl font-black text-white truncate">{track.title}</h2>
                         <p className="text-sm mt-1 truncate" style={{ color: "rgba(100,120,170,0.85)" }}>{track.artist}</p>
                     </div>
-                    <button
-                        onClick={() => setLiked(p => !p)}
-                        className="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200"
-                        style={{ background: liked ? "rgba(239,68,68,0.15)" : "rgba(43,62,232,0.10)" }}
-                    >
-                        <Heart className="w-5 h-5 transition-all duration-200"
-                            style={{ color: liked ? "#EF4444" : "rgba(160,176,224,0.70)", fill: liked ? "#EF4444" : "none" }} />
-                    </button>
+                    <HeartBtn liked={liked} onToggle={() => setLiked(p => !p)} />
                 </div>
 
                 {/* Progress */}
@@ -193,34 +186,9 @@ function ExpandedPlayer() {
                             style={{ color: shuffle ? "#00CEC8" : "rgba(100,120,170,0.60)" }} />
                     </button>
 
-                    <button
-                        onClick={prevTrack}
-                        className="w-12 h-12 flex items-center justify-center rounded-full transition-all active:scale-90"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)" }}
-                    >
-                        <SkipBack className="w-5 h-5 fill-white text-white" />
-                    </button>
-
-                    <button
-                        onClick={togglePlay}
-                        className="w-16 h-16 flex items-center justify-center rounded-full transition-all duration-200 active:scale-90"
-                        style={{
-                            background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
-                            boxShadow: "0 0 32px rgba(43,62,232,0.50), 0 0 64px rgba(0,206,200,0.20)",
-                        }}
-                    >
-                        {isPlaying
-                            ? <Pause className="w-7 h-7 text-white fill-white" />
-                            : <Play  className="w-7 h-7 text-white fill-white ml-1" />}
-                    </button>
-
-                    <button
-                        onClick={nextTrack}
-                        className="w-12 h-12 flex items-center justify-center rounded-full transition-all active:scale-90"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)" }}
-                    >
-                        <SkipForward className="w-5 h-5 fill-white text-white" />
-                    </button>
+                    <SkipBtn onClick={prevTrack} direction="back" />
+                    <PlayPauseBtn isPlaying={isPlaying} onToggle={togglePlay} />
+                    <SkipBtn onClick={nextTrack} direction="forward" />
 
                     <button onClick={toggleRepeat}>
                         <Repeat className="w-5 h-5 transition-colors duration-200"
@@ -309,14 +277,117 @@ function ExpandedPlayer() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Mini-player icon button — spring press + ripple
+// ─────────────────────────────────────────────────────────────────────────────
 function IconBtn({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+    const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        const btn = e.currentTarget;
+        const rect = btn.getBoundingClientRect();
+        const dot = document.createElement("span");
+        dot.className = "nx-ripple-dot";
+        dot.style.left = `${e.clientX - rect.left}px`;
+        dot.style.top  = `${e.clientY - rect.top}px`;
+        btn.appendChild(dot);
+        dot.addEventListener("animationend", () => dot.remove());
+        onClick();
+    }, [onClick]);
+
     return (
         <button
-            onClick={onClick}
-            className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-90"
+            onClick={handleClick}
+            className="nx-ripple-wrap nx-press w-9 h-9 flex items-center justify-center rounded-xl"
             style={{ background: "rgba(43,62,232,0.10)" }}
         >
             {children}
+        </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Heart/like button in expanded player
+// ─────────────────────────────────────────────────────────────────────────────
+function HeartBtn({ liked, onToggle }: { liked: boolean; onToggle: () => void }) {
+    const heartRef = useRef<SVGSVGElement>(null);
+
+    const handleClick = useCallback(() => {
+        if (heartRef.current) {
+            heartRef.current.classList.remove("nx-heart-pop");
+            void (heartRef.current as unknown as HTMLElement).offsetWidth;
+            heartRef.current.classList.add("nx-heart-pop");
+        }
+        onToggle();
+    }, [onToggle]);
+
+    return (
+        <button
+            onClick={handleClick}
+            className="nx-press w-10 h-10 flex items-center justify-center rounded-full transition-colors duration-200"
+            style={{ background: liked ? "rgba(239,68,68,0.15)" : "rgba(43,62,232,0.10)" }}
+        >
+            <Heart
+                ref={heartRef as React.Ref<SVGSVGElement>}
+                className="w-5 h-5"
+                style={{ color: liked ? "#EF4444" : "rgba(160,176,224,0.70)", fill: liked ? "#EF4444" : "none" }}
+            />
+        </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Play / Pause button — large, gradient, spring pop
+// ─────────────────────────────────────────────────────────────────────────────
+function PlayPauseBtn({ isPlaying, onToggle }: { isPlaying: boolean; onToggle: () => void }) {
+    const iconRef = useRef<SVGSVGElement>(null);
+
+    const handleClick = useCallback(() => {
+        if (iconRef.current) {
+            iconRef.current.classList.remove("nx-pop");
+            void (iconRef.current as unknown as HTMLElement).offsetWidth;
+            iconRef.current.classList.add("nx-pop");
+        }
+        onToggle();
+    }, [onToggle]);
+
+    return (
+        <button
+            onClick={handleClick}
+            className="nx-press w-16 h-16 flex items-center justify-center rounded-full"
+            style={{
+                background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                boxShadow: "0 0 32px rgba(43,62,232,0.50), 0 0 64px rgba(0,206,200,0.20)",
+            }}
+        >
+            {isPlaying
+                ? <Pause ref={iconRef as React.Ref<SVGSVGElement>} className="w-7 h-7 text-white fill-white" />
+                : <Play  ref={iconRef as React.Ref<SVGSVGElement>} className="w-7 h-7 text-white fill-white ml-1" />}
+        </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Skip forward / back buttons
+// ─────────────────────────────────────────────────────────────────────────────
+function SkipBtn({ onClick, direction }: { onClick: () => void; direction: "back" | "forward" }) {
+    const iconRef = useRef<SVGSVGElement>(null);
+
+    const handleClick = useCallback(() => {
+        if (iconRef.current) {
+            iconRef.current.classList.remove("nx-pop");
+            void (iconRef.current as unknown as HTMLElement).offsetWidth;
+            iconRef.current.classList.add("nx-pop");
+        }
+        onClick();
+    }, [onClick]);
+
+    return (
+        <button
+            onClick={handleClick}
+            className="nx-press w-12 h-12 flex items-center justify-center rounded-full transition-colors duration-150"
+            style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)" }}
+        >
+            {direction === "back"
+                ? <SkipBack    ref={iconRef as React.Ref<SVGSVGElement>} className="w-5 h-5 fill-white text-white" />
+                : <SkipForward ref={iconRef as React.Ref<SVGSVGElement>} className="w-5 h-5 fill-white text-white" />}
         </button>
     );
 }

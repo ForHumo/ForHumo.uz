@@ -43,7 +43,7 @@ export function VideoCard({ title, image, views, duration, author, avatar }: {
     const { openVideo, openChannel, openComments } = useNxPlayer();
     const video: NxVideo = { title, image, author, avatar, views, duration };
     return (
-        <div className="flex-shrink-0 w-60 md:w-72 group cursor-pointer" onClick={() => openVideo(video)}>
+        <div className="nx-press flex-shrink-0 w-60 md:w-72 group cursor-pointer" onClick={() => openVideo(video)}>
             {/* Thumbnail */}
             <div
                 className="relative aspect-video rounded-xl overflow-hidden mb-2.5"
@@ -102,7 +102,7 @@ export function ShortCard({ image, author, views, likes, duration, onClick }: {
     return (
         <div
             onClick={onClick}
-            className="flex-shrink-0 w-[120px] md:w-[140px] aspect-[9/16] relative rounded-2xl overflow-hidden group cursor-pointer"
+            className="nx-press flex-shrink-0 w-[120px] md:w-[140px] aspect-[9/16] relative rounded-2xl overflow-hidden group cursor-pointer"
             style={{ border: "1px solid rgba(43,62,232,0.20)" }}
         >
             <img src={image} alt={author} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -158,7 +158,7 @@ export function LiveCard({ title, image, author, viewers, category }: {
     };
     const handleLiveClick = () => { openVideo(video); setLiveChatOpen(true); };
     return (
-        <div className="flex-shrink-0 w-60 md:w-72 group cursor-pointer" onClick={handleLiveClick}>
+        <div className="nx-press flex-shrink-0 w-60 md:w-72 group cursor-pointer" onClick={handleLiveClick}>
             <div
                 className="relative aspect-video rounded-xl overflow-hidden mb-2.5"
                 style={{ border: "2px solid rgba(239,68,68,0.50)", boxShadow: "0 0 16px rgba(239,68,68,0.18)" }}
@@ -225,7 +225,7 @@ export function MusicCard({ title, artist, image, duration, listens, track: trac
         else playTrack(track);
     };
     return (
-        <div className="flex-shrink-0 w-36 md:w-44 group cursor-pointer" onClick={handleClick}>
+        <div className="nx-press flex-shrink-0 w-36 md:w-44 group cursor-pointer" onClick={handleClick}>
             <div
                 className="relative aspect-square rounded-2xl overflow-hidden mb-2.5"
                 style={{ border: "1px solid rgba(43,62,232,0.20)" }}
@@ -258,7 +258,7 @@ export function BookCard({ title, author, image, rating, pages, type }: {
     title: string; author: string; image: string; rating: string; pages: string; type: "ebook" | "audio";
 }) {
     return (
-        <div className="flex-shrink-0 w-32 md:w-40 group cursor-pointer">
+        <div className="nx-press flex-shrink-0 w-32 md:w-40 group cursor-pointer">
             <div
                 className="relative aspect-[2/3] rounded-xl overflow-hidden mb-2.5"
                 style={{ border: "1px solid rgba(43,62,232,0.20)", boxShadow: "4px 4px 16px rgba(0,0,0,0.40)" }}

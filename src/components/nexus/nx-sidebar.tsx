@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useSession } from "next-auth/react";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
@@ -308,42 +309,83 @@ function SidebarItem({
     onClick?: () => void;
     badge?: string;
 }) {
+    const iconRef = React.useRef<SVGSVGElement>(null);
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        // Spring pop on icon
+        if (iconRef.current) {
+            iconRef.current.classList.remove("nx-pop");
+            void (iconRef.current as unknown as HTMLElement).offsetWidth;
+            iconRef.current.classList.add("nx-pop");
+        }
+        // Ripple
+        const btn = e.currentTarget;
+        const dot = document.createElement("span");
+        const rect = btn.getBoundingClientRect();
+        dot.className = "nx-ripple-dot";
+        dot.style.left = `${e.clientX - rect.left}px`;
+        dot.style.top  = `${e.clientY - rect.top}px`;
+        dot.style.width  = "8px";
+        dot.style.height = "8px";
+        btn.appendChild(dot);
+        dot.addEventListener("animationend", () => dot.remove());
+
+        onClick?.();
+    };
+
     return (
         <button
-            onClick={onClick}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 text-left transition-all duration-150 group"
+            onClick={handleClick}
+            className="nx-ripple-wrap nx-press w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 text-left group"
             style={{
                 background: "transparent",
                 border: "1px solid transparent",
+                transition: "background 0.18s ease, border-color 0.18s ease, transform 0.12s cubic-bezier(0.34,1.56,0.64,1)",
             }}
             onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.16)";
+                (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.09)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.20)";
             }}
             onMouseLeave={e => {
                 (e.currentTarget as HTMLElement).style.background = "transparent";
                 (e.currentTarget as HTMLElement).style.borderColor = "transparent";
             }}
         >
+            {/* Icon container with gradient on hover */}
             <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(43,62,232,0.12)" }}
+                className="w-7 h-7 rounded-[10px] flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:scale-110"
+                style={{
+                    background: "rgba(43,62,232,0.13)",
+                    border: "1px solid rgba(43,62,232,0.15)",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.25)",
+                }}
             >
-                <Icon className="w-3.5 h-3.5" style={{ color: "rgba(100,140,220,0.90)" }} />
+                <Icon
+                    ref={iconRef as React.Ref<SVGSVGElement>}
+                    className="w-3.5 h-3.5 transition-colors duration-200 group-hover:text-[#00CEC8]"
+                    style={{ color: "rgba(110,145,230,0.90)" }}
+                    strokeWidth={1.8}
+                />
             </div>
-            <span className="flex-1 text-sm font-medium" style={{ color: "rgba(180,195,235,0.90)" }}>
+
+            <span className="flex-1 text-[13px] font-semibold transition-colors duration-200 group-hover:text-white"
+                style={{ color: "rgba(175,192,235,0.88)" }}>
                 {label}
             </span>
+
             {badge && (
                 <span
-                    className="px-1.5 py-0.5 rounded-full text-[9px] font-black"
-                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}
+                    className="px-1.5 py-0.5 rounded-full text-[9px] font-black text-white"
+                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 0 8px rgba(43,62,232,0.50)" }}
                 >
                     {badge}
                 </span>
             )}
-            <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0"
-                style={{ color: "rgba(43,62,232,0.50)" }} />
+
+            <ChevronRight
+                className="w-3 h-3 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 group-hover:translate-x-0.5"
+                style={{ color: "rgba(43,62,232,0.60)" }}
+            />
         </button>
     );
 }

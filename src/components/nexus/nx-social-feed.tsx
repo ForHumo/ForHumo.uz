@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
     Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
@@ -287,33 +287,11 @@ function PostCard({ post: p, onLike, onSave, onComment, onAuthor }: {
             {/* Harakatlar */}
             <div className="flex items-center gap-1 px-4 pb-4 pt-1"
                 style={{ borderTop: "1px solid rgba(43,62,232,0.08)" }}>
-                {/* Like */}
-                <button onClick={onLike}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95"
-                    style={{ color: p.liked ? "#EF4444" : "rgba(80,100,150,0.80)" }}>
-                    <Heart className={`w-4 h-4 transition-transform ${p.liked ? "scale-125 fill-current" : ""}`} />
-                    {formatCount(p.likes)}
-                </button>
-                {/* Comment */}
-                <button onClick={onComment}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95"
-                    style={{ color: "rgba(80,100,150,0.80)" }}>
-                    <MessageCircle className="w-4 h-4" />
-                    {formatCount(p.comments)}
-                </button>
-                {/* Share */}
-                <button className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95"
-                    style={{ color: "rgba(80,100,150,0.80)" }}>
-                    <Share2 className="w-4 h-4" />
-                    {formatCount(p.shares)}
-                </button>
+                <LikeBtn liked={p.liked} count={p.likes} onClick={onLike} />
+                <ActionBtn icon={MessageCircle} count={p.comments} onClick={onComment} />
+                <ActionBtn icon={Share2} count={p.shares} onClick={() => {}} />
                 <div className="flex-1" />
-                {/* Save */}
-                <button onClick={onSave}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
-                    style={{ color: p.saved ? "#00CEC8" : "rgba(80,100,150,0.80)" }}>
-                    <Bookmark className={`w-4 h-4 ${p.saved ? "fill-current" : ""}`} />
-                </button>
+                <SaveBtn saved={p.saved} onClick={onSave} />
             </div>
         </div>
     );
@@ -323,4 +301,122 @@ function formatCount(n: number) {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
     if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}K`;
     return n.toString();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Like button — heart pop animation
+// ─────────────────────────────────────────────────────────────────────────────
+function LikeBtn({ liked, count, onClick }: { liked: boolean; count: number; onClick: () => void }) {
+    const heartRef = useRef<SVGSVGElement>(null);
+
+    const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        if (heartRef.current) {
+            heartRef.current.classList.remove("nx-heart-pop");
+            void (heartRef.current as unknown as HTMLElement).offsetWidth;
+            heartRef.current.classList.add("nx-heart-pop");
+        }
+        // Ripple
+        const btn = e.currentTarget;
+        const rect = btn.getBoundingClientRect();
+        const dot = document.createElement("span");
+        dot.className = "nx-ripple-dot";
+        dot.style.left = `${e.clientX - rect.left}px`;
+        dot.style.top  = `${e.clientY - rect.top}px`;
+        dot.style.background = "rgba(239,68,68,0.35)";
+        btn.appendChild(dot);
+        dot.addEventListener("animationend", () => dot.remove());
+        onClick();
+    }, [onClick]);
+
+    return (
+        <button
+            onClick={handleClick}
+            className="nx-ripple-wrap nx-press flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold"
+            style={{ color: liked ? "#EF4444" : "rgba(80,100,150,0.80)" }}
+        >
+            <Heart
+                ref={heartRef as React.Ref<SVGSVGElement>}
+                className="w-4 h-4 flex-shrink-0"
+                style={{ fill: liked ? "#EF4444" : "none", color: liked ? "#EF4444" : "rgba(80,100,150,0.80)" }}
+            />
+            {formatCount(count)}
+        </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Generic action button (comment, share) — spring icon pop
+// ─────────────────────────────────────────────────────────────────────────────
+function ActionBtn({ icon: Icon, count, onClick }: { icon: React.ElementType; count: number; onClick: () => void }) {
+    const iconRef = useRef<SVGSVGElement>(null);
+
+    const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        if (iconRef.current) {
+            iconRef.current.classList.remove("nx-pop");
+            void (iconRef.current as unknown as HTMLElement).offsetWidth;
+            iconRef.current.classList.add("nx-pop");
+        }
+        const btn = e.currentTarget;
+        const rect = btn.getBoundingClientRect();
+        const dot = document.createElement("span");
+        dot.className = "nx-ripple-dot";
+        dot.style.left = `${e.clientX - rect.left}px`;
+        dot.style.top  = `${e.clientY - rect.top}px`;
+        btn.appendChild(dot);
+        dot.addEventListener("animationend", () => dot.remove());
+        onClick();
+    }, [onClick]);
+
+    return (
+        <button
+            onClick={handleClick}
+            className="nx-ripple-wrap nx-press flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold"
+            style={{ color: "rgba(80,100,150,0.80)" }}
+        >
+            <Icon
+                ref={iconRef as React.Ref<SVGSVGElement>}
+                className="w-4 h-4 flex-shrink-0"
+            />
+            {formatCount(count)}
+        </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Save/bookmark button — spring pop
+// ─────────────────────────────────────────────────────────────────────────────
+function SaveBtn({ saved, onClick }: { saved: boolean; onClick: () => void }) {
+    const bookRef = useRef<SVGSVGElement>(null);
+
+    const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        if (bookRef.current) {
+            bookRef.current.classList.remove("nx-pop");
+            void (bookRef.current as unknown as HTMLElement).offsetWidth;
+            bookRef.current.classList.add("nx-pop");
+        }
+        const btn = e.currentTarget;
+        const rect = btn.getBoundingClientRect();
+        const dot = document.createElement("span");
+        dot.className = "nx-ripple-dot";
+        dot.style.left = `${e.clientX - rect.left}px`;
+        dot.style.top  = `${e.clientY - rect.top}px`;
+        dot.style.background = "rgba(0,206,200,0.35)";
+        btn.appendChild(dot);
+        dot.addEventListener("animationend", () => dot.remove());
+        onClick();
+    }, [onClick]);
+
+    return (
+        <button
+            onClick={handleClick}
+            className="nx-ripple-wrap nx-press w-9 h-9 flex items-center justify-center rounded-xl"
+            style={{ color: saved ? "#00CEC8" : "rgba(80,100,150,0.80)" }}
+        >
+            <Bookmark
+                ref={bookRef as React.Ref<SVGSVGElement>}
+                className="w-4 h-4"
+                style={{ fill: saved ? "#00CEC8" : "none", color: saved ? "#00CEC8" : "rgba(80,100,150,0.80)" }}
+            />
+        </button>
+    );
 }
