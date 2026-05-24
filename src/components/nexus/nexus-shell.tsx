@@ -61,6 +61,9 @@ import { NxStats }           from "./nx-stats";
 import { NxDrafts }          from "./nx-drafts";
 import { NxBadges }          from "./nx-badges";
 import { NxReport }          from "./nx-report";
+import { NxAffiliate }       from "./nx-affiliate";
+import { NxAlbums }          from "./nx-albums";
+import { NxStoryCreate }     from "./nx-story-create";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -281,6 +284,15 @@ export function NexusShell() {
 
                 {/* ── Shikoyat ──────────────────────────────────────────── */}
                 <NxReport />
+
+                {/* ── Tavsiya dasturi (Affiliate) ───────────────────────── */}
+                <NxAffiliate />
+
+                {/* ── Albomlar ──────────────────────────────────────────── */}
+                <NxAlbums />
+
+                {/* ── Story yaratish ────────────────────────────────────── */}
+                <NxStoryCreate />
             </div>
         </NxPlayerProvider>
     );

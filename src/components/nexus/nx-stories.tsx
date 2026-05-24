@@ -25,7 +25,7 @@ const STORIES = [
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxStories() {
     const { data: session } = useSession();
-    const { openStoriesViewer } = useNxPlayer();
+    const { openStoriesViewer, setStoryCreateOpen } = useNxPlayer();
     const myName   = session?.user?.name?.split(" ")[0] ?? "Siz";
     const myImage  = session?.user?.image ?? null;
     const myLetter = myName[0].toUpperCase();
@@ -45,7 +45,7 @@ export function NxStories() {
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
 
                 {/* ── Sizning hikoyangiz ─────────────────────────── */}
-                <MyStory name={myName} image={myImage} letter={myLetter} />
+                <MyStory name={myName} image={myImage} letter={myLetter} onCreate={() => setStoryCreateOpen(true)} />
 
                 {/* ── Boshqa foydalanuvchilar ────────────────────── */}
                 {STORIES.map((story, idx) => (
@@ -62,9 +62,9 @@ export function NxStories() {
 // ─────────────────────────────────────────────────────────────────────────────
 // "Sizning hikoyangiz" — birinchi element
 // ─────────────────────────────────────────────────────────────────────────────
-function MyStory({ name, image, letter }: { name: string; image: string | null; letter: string }) {
+function MyStory({ name, image, letter, onCreate }: { name: string; image: string | null; letter: string; onCreate: () => void }) {
     return (
-        <button className="flex flex-col items-center gap-1.5 flex-shrink-0 group active:scale-95 transition-transform duration-150">
+        <button onClick={onCreate} className="flex flex-col items-center gap-1.5 flex-shrink-0 group active:scale-95 transition-transform duration-150">
             <div className="relative">
                 {/* Avatar doirasi */}
                 <div

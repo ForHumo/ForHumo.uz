@@ -279,6 +279,18 @@ interface PlayerCtx {
     // Shikoyat (Report)
     reportOpen:    boolean;
     setReportOpen: (v: boolean) => void;
+
+    // Tavsiya dasturi (Affiliate)
+    affiliateOpen:    boolean;
+    setAffiliateOpen: (v: boolean) => void;
+
+    // Albomlar
+    albumsOpen:    boolean;
+    setAlbumsOpen: (v: boolean) => void;
+
+    // Story yaratish
+    storyCreateOpen:    boolean;
+    setStoryCreateOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -498,6 +510,15 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Report ── */
     const [reportOpen, setReportOpen] = useState(false);
+
+    /* ── Affiliate ── */
+    const [affiliateOpen, setAffiliateOpen] = useState(false);
+
+    /* ── Albums ── */
+    const [albumsOpen, setAlbumsOpen] = useState(false);
+
+    /* ── Story yaratish ── */
+    const [storyCreateOpen, setStoryCreateOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -766,6 +787,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             draftsOpen, setDraftsOpen,
             badgesOpen, setBadgesOpen,
             reportOpen, setReportOpen,
+            affiliateOpen, setAffiliateOpen,
+            albumsOpen, setAlbumsOpen,
+            storyCreateOpen, setStoryCreateOpen,
         }}>
             {children}
         </Ctx.Provider>

@@ -3,14 +3,14 @@
 import { useSession } from "next-auth/react";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
-    X, Home, Play, Radio, Library, MessageCircle, UserCircle,
-    Settings, HelpCircle, Star, Bookmark, History, TrendingUp,
+    X, Home, Play, Radio, MessageCircle,
+    Settings, HelpCircle, Bookmark, History, TrendingUp,
     Music, Film, BookOpen, Mic, Crown, ChevronRight, LogOut,
     Compass, ListMusic, Bell, BarChart2, Hash, Phone, Users, Headphones,
     ShoppingBag, Wallet, Calendar, Download, Briefcase, Bot, Gift, Trophy, UserPlus, Tv,
     Scissors, Zap, Grid3X3, CalendarDays, Store, BookText, HeartHandshake,
     MessagesSquare, Mic2, Handshake, BellRing, BarChart3, ChartLine,
-    FileStack, BadgeCheck, Flag,
+    FileStack, BadgeCheck, Flag, UserCheck, Images, PlusSquare,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,16 +33,9 @@ const NAV_ITEMS = [
     { icon: MessageCircle, label: "Chatlar va kanallar", section: "social" },
 ];
 
-const MY_ITEMS = [
-    { icon: Bookmark,   label: "Saqlangan"        },
-    { icon: History,    label: "Ko'rish tarixi"   },
-    { icon: TrendingUp, label: "Mening kanalim"   },
-    { icon: Star,       label: "Obunalarim"       },
-];
-
 export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
     const { data: session } = useSession();
-    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen, setGoLiveOpen, setGiftsOpen, setLeaderboardOpen, setSuggestionsOpen, setWatchPartyOpen, setCommunityOpen, setClipsOpen, setAchievementsOpen, setMiniAppsOpen, setScheduleOpen, setShopOpen, setReaderOpen, setFundraiserOpen, setForumOpen, setPodcastsOpen, setCollabOpen, setRemindersOpen, setPollsOpen, setStatsOpen, setDraftsOpen, setBadgesOpen, setReportOpen } = useNxPlayer();
+    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen, setGoLiveOpen, setGiftsOpen, setLeaderboardOpen, setSuggestionsOpen, setWatchPartyOpen, setCommunityOpen, setClipsOpen, setAchievementsOpen, setMiniAppsOpen, setScheduleOpen, setShopOpen, setReaderOpen, setFundraiserOpen, setForumOpen, setPodcastsOpen, setCollabOpen, setRemindersOpen, setPollsOpen, setStatsOpen, setDraftsOpen, setBadgesOpen, setReportOpen, setAffiliateOpen, setAlbumsOpen, setStoryCreateOpen } = useNxPlayer();
     const name   = session?.user?.name  ?? "Mehmon";
     const image  = session?.user?.image ?? null;
     const email  = session?.user?.email ?? "";
@@ -52,7 +45,7 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
         <>
             {/* ── Backdrop ──────────────────────────────────────────── */}
             <div
-                className="fixed inset-0 z-40 transition-opacity duration-300"
+                className="fixed inset-0 z-[52] transition-opacity duration-300"
                 style={{
                     background: "rgba(5,8,24,0.70)",
                     backdropFilter: "blur(4px)",
@@ -64,7 +57,7 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
 
             {/* ── Drawer ────────────────────────────────────────────── */}
             <aside
-                className="fixed top-0 right-0 bottom-0 z-50 flex flex-col w-72 max-w-[88vw] transition-transform duration-300"
+                className="fixed top-0 right-0 bottom-0 z-[56] flex flex-col w-72 max-w-[88vw] transition-transform duration-300"
                 style={{
                     background: "rgba(8,12,32,0.97)",
                     backdropFilter: "blur(24px)",
@@ -210,7 +203,7 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
                         <SidebarItem icon={Tv}            label="Watch Party"             onClick={() => { onClose(); setWatchPartyOpen(true); }} />
                         <SidebarItem icon={Users}         label="Jamiyat"                 onClick={() => { onClose(); setCommunityOpen(true); }} />
                         <SidebarItem icon={Scissors}      label="Kliplar"                 onClick={() => { onClose(); setClipsOpen(true); }} />
-                        <SidebarItem icon={Trophy}        label="Yutuqlar"                onClick={() => { onClose(); setAchievementsOpen(true); }} />
+                        <SidebarItem icon={Zap}           label="Yutuqlar"                onClick={() => { onClose(); setAchievementsOpen(true); }} />
                         <SidebarItem icon={Grid3X3}       label="Mini Ilovalar"           onClick={() => { onClose(); setMiniAppsOpen(true); }} />
                         <SidebarItem icon={CalendarDays}  label="Kontent jadvali"         onClick={() => { onClose(); setScheduleOpen(true); }} />
                     </SidebarSection>
@@ -239,6 +232,9 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
                         <SidebarItem icon={FileStack}      label="Qoralamalar"       onClick={() => { onClose(); setDraftsOpen(true); }} />
                         <SidebarItem icon={BadgeCheck}     label="Nishonlarim"       onClick={() => { onClose(); setBadgesOpen(true); }} />
                         <SidebarItem icon={Flag}           label="Shikoyat"          onClick={() => { onClose(); setReportOpen(true); }} />
+                        <SidebarItem icon={UserCheck}      label="Tavsiya dasturi"   onClick={() => { onClose(); setAffiliateOpen(true); }} />
+                        <SidebarItem icon={Images}         label="Albomlarim"        onClick={() => { onClose(); setAlbumsOpen(true); }} />
+                        <SidebarItem icon={PlusSquare}     label="Story yaratish"    onClick={() => { onClose(); setStoryCreateOpen(true); }} />
                     </SidebarSection>
 
                     {/* ── Settings / Logout ─────────────────────────── */}

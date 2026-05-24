@@ -23,7 +23,7 @@ const CHATS: ChatItem[] = [
     { id: 4, name: "Islomjon",      msg: "Yangi loyiha haqida...",      time: "10:05", unread: 0, online: false },
     { id: 5, name: "Kamola",        msg: "Ha, yaxshi g'oya!",          time: "09:30", unread: 0, online: true  },
     { id: 6, name: "Do'stlar",      msg: "Sardor: Qayerdasiz?",        time: "Kecha", unread: 0, online: false, group: true },
-    { id: 7, name: "Nexus Support", msg: "Muammoingiz hal qilindi",    time: "Kecha", unread: 0, online: true  },
+    { id: 7, name: "Humo Support",  msg: "Muammoingiz hal qilindi",    time: "Kecha", unread: 0, online: true  },
     { id: 8, name: "Dev Guruh",     msg: "Bobur: PR merge qilindi",    time: "Dush",  unread: 3, online: false, group: true },
 ];
 

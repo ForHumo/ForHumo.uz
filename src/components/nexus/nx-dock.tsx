@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
     Home, Play, Radio, Library,
     MessageCircle, UserCircle, Plus,
@@ -58,11 +59,10 @@ export function NxDock({ active, onChange }: Props) {
                 }}
             >
                 {tabs.map(({ id, icon: Icon, label }, i) => (
-                    <>
+                    <React.Fragment key={id}>
                         {i === midIdx && (
                             /* ── Centre "+" create button ── */
                             <button
-                                key="create"
                                 onClick={() => setCreatePostOpen(true)}
                                 className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 active:scale-90 mx-1"
                                 style={{
@@ -74,14 +74,13 @@ export function NxDock({ active, onChange }: Props) {
                             </button>
                         )}
                         <DockItem
-                            key={id}
                             id={id}
                             Icon={Icon}
                             label={label}
                             isActive={active === id}
                             onClick={() => onChange(id)}
                         />
-                    </>
+                    </React.Fragment>
                 ))}
             </nav>
         </div>

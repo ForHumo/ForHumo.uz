@@ -27,7 +27,7 @@ const MINI_APPS: MiniApp[] = [
     { id: "ma4",  name: "Ob-havo",          description: "Shahar ob-havo ma'lumotlari",       icon: "W",  category: "tool",    color: "#2B3EE8", users: "89K",  rating: 4.7, featured: true,  isNew: false },
     { id: "ma5",  name: "Tarjimon",         description: "Matn va ovoz tarjimoni",            icon: "T",  category: "tool",    color: "#06B6D4", users: "210K", rating: 4.9, featured: false, isNew: true  },
     { id: "ma6",  name: "Rasm Muharrir",    description: "Rasmlarni tahrirlash va filtrlash", icon: "P",  category: "media",   color: "#EC4899", users: "67K",  rating: 4.5, featured: false, isNew: true  },
-    { id: "ma7",  name: "Ovoz Yozuvchi",    description: "Ovoz yozing va almashing",          icon: "M",  category: "media",   color: "#EF4444", users: "#38K", rating: 4.4, featured: false, isNew: false },
+    { id: "ma7",  name: "Ovoz Yozuvchi",    description: "Ovoz yozing va almashing",          icon: "M",  category: "media",   color: "#EF4444", users: "38K",  rating: 4.4, featured: false, isNew: false },
     { id: "ma8",  name: "Nexus Polls",      description: "So'rovnoma yarating",               icon: "V",  category: "social",  color: "#F97316", users: "55K",  rating: 4.6, featured: false, isNew: false },
     { id: "ma9",  name: "Daromad Tracker",  description: "Yaratuvchi daromadini hisoblang",   icon: "D",  category: "finance", color: "#10B981", users: "28K",  rating: 4.7, featured: false, isNew: true  },
     { id: "ma10", name: "Tetris Nexus",     description: "Klassik Tetris o'yini",             icon: "N",  category: "game",    color: "#8B5CF6", users: "91K",  rating: 4.8, featured: false, isNew: false },

@@ -423,7 +423,7 @@ const CHAT_LIST = [
     { name: "Madina",        msg: "Rahmat! Juda ajoyib",           time: "11:20", unread: 1,  online: true  },
     { name: "Do'stlar",      msg: "Sardor: Qayerdasiz?",           time: "10:05", unread: 0,  online: false, group: true },
     { name: "Sardor",        msg: "Ertaga uchrashamiz?",           time: "09:30", unread: 0,  online: false },
-    { name: "Nexus Support", msg: "Muammoingiz hal qilindi",       time: "Kecha", unread: 0,  online: true  },
+    { name: "Humo Support",  msg: "Muammoingiz hal qilindi",       time: "Kecha", unread: 0,  online: true  },
     { name: "Kamola",        msg: "Ha, yaxshi g'oya!",             time: "Kecha", unread: 0,  online: false },
     { name: "Dev Guruh",     msg: "Bobur: PR merge qilindi",       time: "Dush",  unread: 5,  online: false, group: true },
 ];
