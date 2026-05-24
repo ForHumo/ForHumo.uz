@@ -10,6 +10,7 @@ import {
     Settings, LogOut, BadgeCheck, Plus, ChevronRight,
     Edit3, Save, X, Loader2, Trash2,
     ListMusic, BarChart2, Compass, Bookmark, Phone,
+    ShoppingBag, Wallet, Download, Briefcase, Calendar,
 } from "lucide-react";
 import { useNxPlayer, type NxShort } from "./nx-player-ctx";
 import { NxRow } from "./nx-row";
@@ -107,10 +108,30 @@ function FilterChips({ items }: { items: { icon: React.ElementType; label: strin
 // FEED VIEW — bosh sahifa
 // ─────────────────────────────────────────────────────────────────────────────
 export function FeedView() {
+    const { setMarketOpen, setEventsOpen, setJobsOpen, setSpacesOpen } = useNxPlayer();
     return (
         <ViewShell>
             <NxStories />
             <NxHero />
+            {/* ── Tezkor xususiyatlar ─────────────────────────────────── */}
+            <div className="px-4 pb-2 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                {[
+                    { label: "Nexus Market",  icon: ShoppingBag, grad: "linear-gradient(135deg,#F59E0B,#F97316)", action: () => setMarketOpen(true) },
+                    { label: "Tadbirlar",     icon: Calendar,    grad: "linear-gradient(135deg,#EC4899,#8B5CF6)", action: () => setEventsOpen(true) },
+                    { label: "Nexus Jobs",    icon: Briefcase,   grad: "linear-gradient(135deg,#0EA5E9,#2B3EE8)", action: () => setJobsOpen(true)   },
+                    { label: "Spaces",        icon: Headphones,  grad: "linear-gradient(135deg,#8B5CF6,#EC4899)", action: () => setSpacesOpen(true) },
+                ].map(({ label, icon: Icon, grad, action }) => (
+                    <button key={label} onClick={action}
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl flex-shrink-0 transition-all duration-150 active:scale-95"
+                        style={{ background: "rgba(11,18,40,0.70)", border: "1px solid rgba(43,62,232,0.20)" }}
+                    >
+                        <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: grad }}>
+                            <Icon className="w-3.5 h-3.5 text-white" />
+                        </div>
+                        <span className="text-xs font-bold" style={{ color: "rgba(180,195,235,0.90)" }}>{label}</span>
+                    </button>
+                ))}
+            </div>
             <NxFeed />
         </ViewShell>
     );
@@ -604,7 +625,7 @@ interface ProfileData {
 
 export function ProfileView() {
     const { data: session } = useSession();
-    const { watchHistory, clearHistory, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setSubsOpen, setCallsOpen, setSpacesOpen } = useNxPlayer();
+    const { watchHistory, clearHistory, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setSubsOpen, setCallsOpen, setSpacesOpen, setWalletOpen, setMarketOpen, setDownloadsOpen, setJobsOpen, setEventsOpen } = useNxPlayer();
 
     const sessionName  = session?.user?.name  ?? "Mehmon";
     const sessionEmail = session?.user?.email ?? "—";
@@ -742,12 +763,17 @@ export function ProfileView() {
             {/* ── Tezkor havolalar ──────────────────────────────────────── */}
             <div className="mx-4 mt-3 grid grid-cols-3 gap-3">
                 {[
-                    { label: "Saqlangan",   icon: Bookmark,  grad: "linear-gradient(135deg,#F59E0B,#EF4444)",  action: () => setSavedOpen(true)    },
-                    { label: "Pleylistlar", icon: ListMusic,  grad: "linear-gradient(135deg,#10B981,#0D9488)",  action: () => setPlaylistsOpen(true) },
-                    { label: "Analitika",   icon: BarChart2,  grad: "linear-gradient(135deg,#2B3EE8,#00CEC8)",  action: () => setAnalyticsOpen(true) },
-                    { label: "Obunalar",    icon: Users,      grad: "linear-gradient(135deg,#8B5CF6,#6366F1)",  action: () => setSubsOpen(true)      },
-                    { label: "Qo'ng'iroq",  icon: Phone,      grad: "linear-gradient(135deg,#10B981,#00CEC8)",  action: () => setCallsOpen(true)     },
-                    { label: "Spaces",      icon: Headphones, grad: "linear-gradient(135deg,#8B5CF6,#EC4899)",  action: () => setSpacesOpen(true)    },
+                    { label: "Saqlangan",   icon: Bookmark,     grad: "linear-gradient(135deg,#F59E0B,#EF4444)",  action: () => setSavedOpen(true)      },
+                    { label: "Pleylistlar", icon: ListMusic,    grad: "linear-gradient(135deg,#10B981,#0D9488)",  action: () => setPlaylistsOpen(true)  },
+                    { label: "Analitika",   icon: BarChart2,    grad: "linear-gradient(135deg,#2B3EE8,#00CEC8)",  action: () => setAnalyticsOpen(true)  },
+                    { label: "Obunalar",    icon: Users,        grad: "linear-gradient(135deg,#8B5CF6,#6366F1)",  action: () => setSubsOpen(true)       },
+                    { label: "Qo'ng'iroq",  icon: Phone,        grad: "linear-gradient(135deg,#10B981,#00CEC8)",  action: () => setCallsOpen(true)      },
+                    { label: "Spaces",      icon: Headphones,   grad: "linear-gradient(135deg,#8B5CF6,#EC4899)",  action: () => setSpacesOpen(true)     },
+                    { label: "Hamyon",      icon: Wallet,       grad: "linear-gradient(135deg,#10B981,#14B8A6)",  action: () => setWalletOpen(true)     },
+                    { label: "Market",      icon: ShoppingBag,  grad: "linear-gradient(135deg,#F59E0B,#F97316)",  action: () => setMarketOpen(true)     },
+                    { label: "Tadbirlar",   icon: Calendar,     grad: "linear-gradient(135deg,#EC4899,#8B5CF6)",  action: () => setEventsOpen(true)     },
+                    { label: "Yuklangan",   icon: Download,     grad: "linear-gradient(135deg,#2B3EE8,#6366F1)",  action: () => setDownloadsOpen(true)  },
+                    { label: "Jobs",        icon: Briefcase,    grad: "linear-gradient(135deg,#0EA5E9,#2B3EE8)",  action: () => setJobsOpen(true)       },
                 ].map(({ label, icon: Icon, grad, action }, i) => (
                     <button key={i}
                         onClick={action}
@@ -767,13 +793,17 @@ export function ProfileView() {
             {/* ── Statistika ────────────────────────────────────────────── */}
             <div className="mx-4 mt-3 grid grid-cols-2 gap-3">
                 {[
-                    { icon: Heart,      label: "Layklar",    value: "1.2M",  gradient: "from-red-500 to-pink-600"      },
-                    { icon: UserCheck,  label: "Obunachi",   value: "8.4K",  gradient: "from-[#2B3EE8] to-[#00CEC8]"  },
-                    { icon: CreditCard, label: "Hamyon",     value: "240K",  gradient: "from-emerald-500 to-teal-600"  },
-                    { icon: Shield,     label: "Xavfsizlik", value: "Yuqori",gradient: "from-violet-500 to-indigo-600" },
-                ].map(({ icon: Icon, label, value, gradient }, i) => (
-                    <div key={i} className="flex items-center gap-3 p-4 rounded-2xl"
-                        style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                    { icon: Heart,      label: "Layklar",    value: "1.2M",  gradient: "from-red-500 to-pink-600",      action: undefined                 },
+                    { icon: UserCheck,  label: "Obunachi",   value: "8.4K",  gradient: "from-[#2B3EE8] to-[#00CEC8]",  action: () => setSubsOpen(true)   },
+                    { icon: CreditCard, label: "Hamyon",     value: "240K",  gradient: "from-emerald-500 to-teal-600",  action: () => setWalletOpen(true) },
+                    { icon: Shield,     label: "Xavfsizlik", value: "Yuqori",gradient: "from-violet-500 to-indigo-600", action: undefined                 },
+                ].map(({ icon: Icon, label, value, gradient, action }, i) => (
+                    <button key={i} onClick={action}
+                        className="flex items-center gap-3 p-4 rounded-2xl transition-all duration-150 text-left"
+                        style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)", cursor: action ? "pointer" : "default" }}
+                        onMouseEnter={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)")}
+                        onMouseLeave={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)")}
+                    >
                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${gradient}`}>
                             <Icon className="w-5 h-5 text-white" />
                         </div>
@@ -781,7 +811,7 @@ export function ProfileView() {
                             <p className="text-[9px] font-bold uppercase tracking-widest mb-0.5" style={{ color: "rgba(80,100,150,0.80)" }}>{label}</p>
                             <p className="text-lg font-black text-white">{value}</p>
                         </div>
-                    </div>
+                    </button>
                 ))}
             </div>
 
