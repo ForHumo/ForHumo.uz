@@ -7,7 +7,7 @@ import {
     Settings, HelpCircle, Star, Bookmark, History, TrendingUp,
     Music, Film, BookOpen, Mic, Crown, ChevronRight, LogOut,
     Compass, ListMusic, Bell, BarChart2, Hash, Phone, Users, Headphones,
-    ShoppingBag, Wallet, Calendar, Download, Briefcase,
+    ShoppingBag, Wallet, Calendar, Download, Briefcase, Bot,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ const MY_ITEMS = [
 
 export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
     const { data: session } = useSession();
-    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen } = useNxPlayer();
+    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen } = useNxPlayer();
     const name   = session?.user?.name  ?? "Mehmon";
     const image  = session?.user?.image ?? null;
     const email  = session?.user?.email ?? "";
@@ -193,6 +193,8 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
 
                     <SidebarSection title="Kashfiyot">
                         <SidebarItem icon={Compass}       label="Explore / Kashfiyot"   onClick={() => { onClose(); setExploreOpen(true); }} />
+                        <SidebarItem icon={TrendingUp}    label="Trendlar"               onClick={() => { onClose(); setTrendingOpen(true); }} />
+                        <SidebarItem icon={Bot}           label="Nexus AI"               onClick={() => { onClose(); setAiOpen(true); }} />
                         <SidebarItem icon={MessageCircle} label="Xabarlar (DM)"         onClick={() => { onClose(); setMessagesOpen(true); }} badge="3" />
                         <SidebarItem icon={Hash}          label="Guruhlar va Kanallar"   onClick={() => { onClose(); setGroupsOpen(true); }} badge="2" />
                         <SidebarItem icon={Phone}         label="Qo'ng'iroqlar"          onClick={() => { onClose(); setCallsOpen(true); }} />

@@ -32,6 +32,8 @@ import { NxWallet }          from "./nx-wallet";
 import { NxEvents }          from "./nx-events";
 import { NxDownloads }       from "./nx-downloads";
 import { NxJobs }            from "./nx-jobs";
+import { NxTrending }        from "./nx-trending";
+import { NxAI }              from "./nx-ai";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -165,6 +167,12 @@ export function NexusShell() {
 
                 {/* ── Ish o'rinlari (Jobs) ──────────────────────────────── */}
                 <NxJobs />
+
+                {/* ── Trendlar ──────────────────────────────────────────── */}
+                <NxTrending />
+
+                {/* ── AI yordamchi ──────────────────────────────────────── */}
+                <NxAI />
             </div>
         </NxPlayerProvider>
     );

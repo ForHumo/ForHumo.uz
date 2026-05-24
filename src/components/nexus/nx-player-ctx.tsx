@@ -163,6 +163,14 @@ interface PlayerCtx {
     // Ish o'rinlari (Jobs)
     jobsOpen:    boolean;
     setJobsOpen: (v: boolean) => void;
+
+    // Trendlar
+    trendingOpen:    boolean;
+    setTrendingOpen: (v: boolean) => void;
+
+    // AI yordamchi
+    aiOpen:    boolean;
+    setAiOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -295,6 +303,12 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Jobs ── */
     const [jobsOpen, setJobsOpen] = useState(false);
+
+    /* ── Trending ── */
+    const [trendingOpen, setTrendingOpen] = useState(false);
+
+    /* ── AI ── */
+    const [aiOpen, setAiOpen] = useState(false);
 
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
@@ -534,6 +548,8 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             eventsOpen, setEventsOpen,
             downloadsOpen, setDownloadsOpen,
             jobsOpen, setJobsOpen,
+            trendingOpen, setTrendingOpen,
+            aiOpen, setAiOpen,
         }}>
             {children}
         </Ctx.Provider>

@@ -108,7 +108,7 @@ function FilterChips({ items }: { items: { icon: React.ElementType; label: strin
 // FEED VIEW — bosh sahifa
 // ─────────────────────────────────────────────────────────────────────────────
 export function FeedView() {
-    const { setMarketOpen, setEventsOpen, setJobsOpen, setSpacesOpen } = useNxPlayer();
+    const { setMarketOpen, setEventsOpen, setJobsOpen, setSpacesOpen, setTrendingOpen, setAiOpen } = useNxPlayer();
     return (
         <ViewShell>
             <NxStories />
@@ -116,14 +116,18 @@ export function FeedView() {
             {/* ── Tezkor xususiyatlar ─────────────────────────────────── */}
             <div className="px-4 pb-2 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
                 {[
-                    { label: "Nexus Market",  icon: ShoppingBag, grad: "linear-gradient(135deg,#F59E0B,#F97316)", action: () => setMarketOpen(true) },
-                    { label: "Tadbirlar",     icon: Calendar,    grad: "linear-gradient(135deg,#EC4899,#8B5CF6)", action: () => setEventsOpen(true) },
-                    { label: "Nexus Jobs",    icon: Briefcase,   grad: "linear-gradient(135deg,#0EA5E9,#2B3EE8)", action: () => setJobsOpen(true)   },
-                    { label: "Spaces",        icon: Headphones,  grad: "linear-gradient(135deg,#8B5CF6,#EC4899)", action: () => setSpacesOpen(true) },
+                    { label: "Nexus AI",     icon: Bot,         grad: "linear-gradient(135deg,#8B5CF6,#EC4899)", action: () => setAiOpen(true)      },
+                    { label: "Trendlar",     icon: TrendingUp,  grad: "linear-gradient(135deg,#F97316,#EF4444)", action: () => setTrendingOpen(true)},
+                    { label: "Nexus Market", icon: ShoppingBag, grad: "linear-gradient(135deg,#F59E0B,#F97316)", action: () => setMarketOpen(true)  },
+                    { label: "Tadbirlar",    icon: Calendar,    grad: "linear-gradient(135deg,#EC4899,#8B5CF6)", action: () => setEventsOpen(true)  },
+                    { label: "Nexus Jobs",   icon: Briefcase,   grad: "linear-gradient(135deg,#0EA5E9,#2B3EE8)", action: () => setJobsOpen(true)    },
+                    { label: "Spaces",       icon: Headphones,  grad: "linear-gradient(135deg,#8B5CF6,#EC4899)", action: () => setSpacesOpen(true)  },
                 ].map(({ label, icon: Icon, grad, action }) => (
                     <button key={label} onClick={action}
                         className="flex items-center gap-2 px-3 py-2 rounded-xl flex-shrink-0 transition-all duration-150 active:scale-95"
                         style={{ background: "rgba(11,18,40,0.70)", border: "1px solid rgba(43,62,232,0.20)" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.45)"}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.20)"}
                     >
                         <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: grad }}>
                             <Icon className="w-3.5 h-3.5 text-white" />
