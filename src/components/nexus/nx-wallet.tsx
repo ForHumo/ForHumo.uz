@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import {
     X, Wallet, ArrowUpRight, ArrowDownLeft, Plus, QrCode,
-    CreditCard, TrendingUp, Gift, Zap, Clock, ChevronRight,
-    Star, Copy, Check,
+    CreditCard, TrendingUp, Gift, Zap,
+    Star, Copy, Check, Send, User, Smartphone, ChevronLeft,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 
@@ -21,20 +21,25 @@ const TRANSACTIONS = [
     { id:"t7", type:"in",  from:"Nexus Cashback",  amount:12500,  desc:"Cashback 5%",     time:"26 May",          icon: Gift    },
 ];
 
-const QUICK_ACTIONS = [
-    { icon: ArrowUpRight,  label: "Yuborish",  color: "#2B3EE8" },
-    { icon: ArrowDownLeft, label: "Qabul",     color: "#10B981" },
-    { icon: Plus,          label: "To'ldirish",color: "#00CEC8" },
-    { icon: QrCode,        label: "QR kod",    color: "#8B5CF6" },
+type WalletAction = "send" | "receive" | "topup" | "qr";
+
+const QUICK_ACTIONS: { icon: React.ElementType; label: string; color: string; action: WalletAction }[] = [
+    { icon: ArrowUpRight,  label: "Yuborish",   color: "#2B3EE8", action: "send"    },
+    { icon: ArrowDownLeft, label: "Qabul",       color: "#10B981", action: "receive" },
+    { icon: Plus,          label: "To'ldirish",  color: "#00CEC8", action: "topup"   },
+    { icon: QrCode,        label: "QR kod",      color: "#8B5CF6", action: "qr"      },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxWallet
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxWallet() {
-    const { walletOpen, setWalletOpen } = useNxPlayer();
-    const [copied, setCopied] = useState(false);
-    const [tab,    setTab]    = useState<"all" | "in" | "out">("all");
+    const { walletOpen, setWalletOpen, setQrShareOpen } = useNxPlayer();
+    const [copied,     setCopied]     = useState(false);
+    const [tab,        setTab]        = useState<"all" | "in" | "out">("all");
+    const [action,     setAction]     = useState<WalletAction | null>(null);
+    const [sendAmount, setSendAmount] = useState("");
+    const [sendTo,     setSendTo]     = useState("");
 
     if (!walletOpen) return null;
 
@@ -152,18 +157,211 @@ export function NxWallet() {
 
                     {/* Quick actions */}
                     <div className="grid grid-cols-4 gap-3 mb-5">
-                        {QUICK_ACTIONS.map(({ icon: Icon, label, color }, i) => (
-                            <button key={i} className="flex flex-col items-center gap-2 group">
-                                <div
-                                    className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 group-active:scale-90"
-                                    style={{ background: `rgba(${color === "#2B3EE8" ? "43,62,232" : color === "#10B981" ? "16,185,129" : color === "#00CEC8" ? "0,206,200" : "139,92,246"},0.15)`, border: `1px solid ${color}40` }}
+                        {QUICK_ACTIONS.map(({ icon: Icon, label, color, action: act }) => {
+                            const rgba = color === "#2B3EE8" ? "43,62,232"
+                                       : color === "#10B981" ? "16,185,129"
+                                       : color === "#00CEC8" ? "0,206,200"
+                                       : "139,92,246";
+                            const isActive = action === act;
+                            return (
+                                <button
+                                    key={act}
+                                    onClick={() => {
+                                        if (act === "qr") { setQrShareOpen(true); return; }
+                                        setAction(action === act ? null : act);
+                                    }}
+                                    className="flex flex-col items-center gap-2 group"
                                 >
-                                    <Icon className="w-5 h-5" style={{ color }} />
-                                </div>
-                                <span className="text-[9px] font-bold" style={{ color: "rgba(120,140,190,0.85)" }}>{label}</span>
-                            </button>
-                        ))}
+                                    <div
+                                        className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 group-active:scale-90"
+                                        style={{
+                                            background: isActive
+                                                ? `rgba(${rgba},0.30)`
+                                                : `rgba(${rgba},0.15)`,
+                                            border: `1px solid ${color}${isActive ? "99" : "40"}`,
+                                            boxShadow: isActive ? `0 0 12px rgba(${rgba},0.35)` : "none",
+                                        }}
+                                    >
+                                        <Icon className="w-5 h-5" style={{ color }} />
+                                    </div>
+                                    <span className="text-[9px] font-bold transition-colors duration-150"
+                                        style={{ color: isActive ? color : "rgba(120,140,190,0.85)" }}>
+                                        {label}
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </div>
+
+                    {/* Inline action panel */}
+                    {action && (
+                        <div
+                            className="mb-5 p-4 rounded-2xl"
+                            style={{
+                                background: "rgba(43,62,232,0.07)",
+                                border: "1px solid rgba(43,62,232,0.20)",
+                            }}
+                        >
+                            {/* Panel header */}
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setAction(null)}
+                                        className="w-6 h-6 flex items-center justify-center rounded-lg transition-opacity hover:opacity-70"
+                                        style={{ background: "rgba(43,62,232,0.15)" }}
+                                    >
+                                        <ChevronLeft className="w-3.5 h-3.5 text-white" />
+                                    </button>
+                                    <p className="text-sm font-black text-white">
+                                        {action === "send"    && "Pul yuborish"}
+                                        {action === "receive" && "Pul qabul qilish"}
+                                        {action === "topup"   && "Hamyonni to'ldirish"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* SEND */}
+                            {action === "send" && (
+                                <div className="flex flex-col gap-3">
+                                    <div className="relative">
+                                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+                                            style={{ color: "rgba(43,62,232,0.55)" }} />
+                                        <input
+                                            type="text"
+                                            placeholder="Foydalanuvchi nomi yoki raqam..."
+                                            value={sendTo}
+                                            onChange={e => setSendTo(e.target.value)}
+                                            className="w-full h-10 rounded-xl pl-9 pr-3 text-sm text-white outline-none"
+                                            style={{
+                                                background: "rgba(43,62,232,0.10)",
+                                                border: "1px solid rgba(43,62,232,0.25)",
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black"
+                                            style={{ color: "rgba(43,62,232,0.70)" }}>₴</span>
+                                        <input
+                                            type="number"
+                                            placeholder="Summa (so'm)"
+                                            value={sendAmount}
+                                            onChange={e => setSendAmount(e.target.value)}
+                                            className="w-full h-10 rounded-xl pl-8 pr-3 text-sm text-white outline-none"
+                                            style={{
+                                                background: "rgba(43,62,232,0.10)",
+                                                border: "1px solid rgba(43,62,232,0.25)",
+                                            }}
+                                        />
+                                    </div>
+                                    {/* Quick amount chips */}
+                                    <div className="flex gap-2">
+                                        {[10000, 50000, 100000, 200000].map(amt => (
+                                            <button
+                                                key={amt}
+                                                onClick={() => setSendAmount(String(amt))}
+                                                className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 active:scale-95"
+                                                style={{
+                                                    background: sendAmount === String(amt)
+                                                        ? "linear-gradient(135deg,#2B3EE8,#00CEC8)"
+                                                        : "rgba(43,62,232,0.12)",
+                                                    color: sendAmount === String(amt) ? "#fff" : "rgba(140,160,210,0.85)",
+                                                }}
+                                            >
+                                                {(amt / 1000)}k
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button
+                                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black text-white transition-all duration-150 active:scale-95"
+                                        style={{
+                                            background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                                            opacity: sendTo && sendAmount ? 1 : 0.45,
+                                        }}
+                                        disabled={!sendTo || !sendAmount}
+                                        onClick={() => { setSendTo(""); setSendAmount(""); setAction(null); }}
+                                    >
+                                        <Send className="w-4 h-4" />
+                                        Yuborish
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* RECEIVE */}
+                            {action === "receive" && (
+                                <div className="flex flex-col items-center gap-3">
+                                    {/* Decorative QR placeholder */}
+                                    <div
+                                        className="w-36 h-36 rounded-2xl flex flex-col items-center justify-center gap-2"
+                                        style={{
+                                            background: "rgba(139,92,246,0.10)",
+                                            border: "2px dashed rgba(139,92,246,0.35)",
+                                        }}
+                                    >
+                                        <QrCode className="w-16 h-16" style={{ color: "rgba(139,92,246,0.70)" }} />
+                                        <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: "rgba(139,92,246,0.60)" }}>QR kod</p>
+                                    </div>
+                                    <p className="text-xs text-center" style={{ color: "rgba(120,140,190,0.80)" }}>
+                                        Ushbu QR kodni skanerlang yoki raqamni ulashing
+                                    </p>
+                                    <div
+                                        className="w-full flex items-center gap-2 p-3 rounded-xl"
+                                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}
+                                    >
+                                        <Smartphone className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                        <span className="flex-1 text-sm font-mono text-white">+998 90 123 45 67</span>
+                                        <button
+                                            onClick={() => {}}
+                                            className="flex items-center justify-center w-6 h-6 rounded-lg"
+                                            style={{ background: "rgba(0,206,200,0.18)" }}
+                                        >
+                                            <Copy className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TOP-UP */}
+                            {action === "topup" && (
+                                <div className="flex flex-col gap-3">
+                                    <p className="text-xs" style={{ color: "rgba(120,140,190,0.80)" }}>
+                                        To'ldirish miqdorini tanlang
+                                    </p>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[50000, 100000, 200000, 500000, 1000000, 2000000].map(amt => (
+                                            <button
+                                                key={amt}
+                                                onClick={() => setSendAmount(String(amt))}
+                                                className="py-2.5 rounded-xl text-[11px] font-black transition-all duration-150 active:scale-95"
+                                                style={{
+                                                    background: sendAmount === String(amt)
+                                                        ? "linear-gradient(135deg,rgba(0,206,200,0.30),rgba(43,62,232,0.25))"
+                                                        : "rgba(43,62,232,0.10)",
+                                                    border: `1px solid ${sendAmount === String(amt) ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.20)"}`,
+                                                    color: sendAmount === String(amt) ? "#00CEC8" : "rgba(140,160,210,0.85)",
+                                                }}
+                                            >
+                                                {amt >= 1000000 ? `${amt / 1000000}M` : `${amt / 1000}k`}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button
+                                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black text-white transition-all duration-150 active:scale-95"
+                                        style={{
+                                            background: "linear-gradient(135deg,#10B981,#0D9488)",
+                                            opacity: sendAmount ? 1 : 0.45,
+                                        }}
+                                        disabled={!sendAmount}
+                                        onClick={() => { setSendAmount(""); setAction(null); }}
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        {sendAmount
+                                            ? `${parseInt(sendAmount).toLocaleString()} so'm to'ldirish`
+                                            : "To'ldirish"}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Transactions */}
                     <div className="mb-6">
@@ -223,6 +421,7 @@ export function NxWallet() {
                 {/* Bottom CTA */}
                 <div className="px-5 pb-6 flex-shrink-0" style={{ borderTop: "1px solid rgba(43,62,232,0.12)" }}>
                     <button
+                        onClick={() => { setSendAmount(""); setAction("topup"); }}
                         className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-sm font-bold text-white mt-4 transition-all duration-150 active:scale-95"
                         style={{
                             background: "linear-gradient(135deg,#10B981,#0D9488)",
