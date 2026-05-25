@@ -1,8 +1,9 @@
 "use client";
 
+import { Mic2, Eye, Heart, BadgeCheck } from "lucide-react";
 import { NxRow } from "./nx-row";
 import { VideoCard, ShortCard, LiveCard, MusicCard, BookCard } from "./nx-cards";
-import { useNxPlayer, type NxShort, type NxTrack } from "./nx-player-ctx";
+import { useNxPlayer, type NxShort, type NxTrack, type NxVideo } from "./nx-player-ctx";
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,7 +31,7 @@ const SHORTS_VIDEO_SRCS = [
 // NxFeed — barcha content rowlar
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxFeed() {
-    const { openShorts, playQueue } = useNxPlayer();
+    const { openShorts, playQueue, setExploreOpen, setReaderOpen, setPodcastsOpen, setSuggestionsOpen } = useNxPlayer();
 
     const SHORTS_DATA: NxShort[] = Array.from({ length: 10 }, (_, i) => ({
         image:    `https://picsum.photos/seed/short${i + 30}/400/711`,
@@ -76,7 +77,7 @@ export function NxFeed() {
             </NxRow>
 
             {/* ── G. Videolar ───────────────────────────────────────── */}
-            <NxRow title="G. Videolar" onSeeAll={() => {}}>
+            <NxRow title="G. Videolar" onSeeAll={() => setExploreOpen(true)}>
                 {Array.from({ length: 7 }, (_, i) => (
                     <VideoCard key={i}
                         title={[
@@ -112,7 +113,7 @@ export function NxFeed() {
             </NxRow>
 
             {/* ── Kinolar ───────────────────────────────────────────── */}
-            <NxRow title="Kinolar" accent="linear-gradient(180deg,#F59E0B,#EF4444)" onSeeAll={() => {}}>
+            <NxRow title="Kinolar" accent="linear-gradient(180deg,#F59E0B,#EF4444)" onSeeAll={() => setExploreOpen(true)}>
                 {Array.from({ length: 6 }, (_, i) => (
                     <VideoCard key={i}
                         title={[
@@ -149,7 +150,7 @@ export function NxFeed() {
             </NxRow>
 
             {/* ── Kitoblar ──────────────────────────────────────────── */}
-            <NxRow title="Kitoblar & Audiokitoblar" accent="linear-gradient(180deg,#F59E0B,#D97706)" onSeeAll={() => {}}>
+            <NxRow title="Kitoblar & Audiokitoblar" accent="linear-gradient(180deg,#F59E0B,#D97706)" onSeeAll={() => setReaderOpen(true)}>
                 {[
                     { title: "Raqamli Ozodlik",       author: "A. Karimov",   rating: "4.8", pages: "6s",   type: "ebook"  as const },
                     { title: "AI va Biznes Kelajagi",  author: "M. Toshmatov", rating: "4.9", pages: "8s",   type: "audio"  as const },
@@ -169,6 +170,124 @@ export function NxFeed() {
                 ))}
             </NxRow>
 
+            {/* ── Podkastlar ────────────────────────────────────────── */}
+            <NxRow title="Podkastlar" accent="linear-gradient(180deg,#F59E0B,#D97706)" onSeeAll={() => setPodcastsOpen(true)}>
+                {[
+                    { title: "Startup UZ",          host: "Bobur Alimov",    ep: "82-epizod",  dur: "1s 24d", listens: "48K",  image: "pod1"  },
+                    { title: "AI va Texnologiya",   host: "Sardor Dev",      ep: "55-epizod",  dur: "58d",    listens: "31K",  image: "pod2"  },
+                    { title: "Kitob Tavsiyalari",   host: "Dilnoza Yusup",   ep: "120-epizod", dur: "42d",    listens: "22K",  image: "pod3"  },
+                    { title: "Sog'liq Siri",        host: "Dr. Karimov",     ep: "38-epizod",  dur: "1s 05d", listens: "67K",  image: "pod4"  },
+                    { title: "Marketing Secrets",   host: "Kamola F.",       ep: "17-epizod",  dur: "34d",    listens: "15K",  image: "pod5"  },
+                    { title: "Pul va Investitsiya", host: "Jasur N.",        ep: "29-epizod",  dur: "1s 12d", listens: "39K",  image: "pod6"  },
+                ].map((p, i) => {
+                    const vid: NxVideo = {
+                        title: p.title, author: p.host,
+                        avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${p.host}`,
+                        image: `https://picsum.photos/seed/${p.image}/400/400`,
+                        views: p.listens, duration: p.dur,
+                    };
+                    return (
+                        <PodcastCard key={i} title={p.title} host={p.host} ep={p.ep} dur={p.dur} listens={p.listens}
+                            image={`https://picsum.photos/seed/${p.image}/400/400`} video={vid} />
+                    );
+                })}
+            </NxRow>
+
+            {/* ── Tavsiya etilgan kreatorlar ─────────────────────────── */}
+            <NxRow title="Top Kreatorlar" accent="linear-gradient(180deg,#00CEC8,#2B3EE8)" onSeeAll={() => setSuggestionsOpen(true)}>
+                {[
+                    { name: "Humo Official",  handle: "@humo",         subs: "845K", cat: "Tech",   verified: true  },
+                    { name: "Madina Ergash",  handle: "@madina_music",  subs: "420K", cat: "Musiqa", verified: true  },
+                    { name: "Sardor Dev",     handle: "@sardor_dev",    subs: "230K", cat: "Ta'lim", verified: false },
+                    { name: "Tech UZ",        handle: "@tech_uz",       subs: "180K", cat: "Tech",   verified: true  },
+                    { name: "Sport Live",     handle: "@sport_live_uz", subs: "560K", cat: "Sport",  verified: true  },
+                    { name: "Film Lab",       handle: "@filmlab",       subs: "95K",  cat: "Kino",   verified: false },
+                    { name: "AI Hub UZ",      handle: "@ai_hub_uz",     subs: "78K",  cat: "AI",     verified: false },
+                ].map((c, i) => (
+                    <CreatorCard key={i} name={c.name} handle={c.handle} subs={c.subs} cat={c.cat} verified={c.verified} seed={c.handle.replace("@", "")} />
+                ))}
+            </NxRow>
+
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PodcastCard
+// ─────────────────────────────────────────────────────────────────────────────
+function PodcastCard({ title, host, ep, dur, listens, image, video }: {
+    title: string; host: string; ep: string; dur: string; listens: string; image: string; video: NxVideo;
+}) {
+    const { openVideo } = useNxPlayer();
+    return (
+        <div
+            onClick={() => openVideo(video)}
+            className="nx-press flex-shrink-0 w-40 cursor-pointer group"
+        >
+            <div className="relative w-40 h-40 rounded-2xl overflow-hidden mb-2"
+                style={{ border: "1px solid rgba(43,62,232,0.20)" }}>
+                <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div className="absolute inset-0" style={{ background: "rgba(5,8,24,0.20)" }} />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    style={{ background: "rgba(5,8,24,0.55)" }}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center"
+                        style={{ background: "linear-gradient(135deg,#F59E0B,#D97706)" }}>
+                        <Mic2 className="w-5 h-5 text-white" />
+                    </div>
+                </div>
+                <div className="absolute top-2 left-2 px-2 py-0.5 rounded-lg text-[9px] font-black text-white"
+                    style={{ background: "rgba(245,158,11,0.85)" }}>PODCAST</div>
+                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold"
+                    style={{ background: "rgba(5,8,24,0.80)" }}>{dur}</div>
+            </div>
+            <p className="text-xs font-black text-white line-clamp-2 leading-snug mb-0.5 group-hover:text-[#F59E0B] transition-colors">{title}</p>
+            <p className="text-[10px] font-medium" style={{ color: "rgba(100,120,170,0.75)" }}>{host}</p>
+            <div className="flex items-center gap-2 mt-1">
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md"
+                    style={{ background: "rgba(245,158,11,0.12)", color: "rgba(245,158,11,0.85)" }}>{ep}</span>
+                <span className="flex items-center gap-0.5 text-[9px]" style={{ color: "rgba(80,100,150,0.70)" }}>
+                    <Eye className="w-2.5 h-2.5" />{listens}
+                </span>
+            </div>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CreatorCard
+// ─────────────────────────────────────────────────────────────────────────────
+function CreatorCard({ name, handle, subs, cat, verified, seed }: {
+    name: string; handle: string; subs: string; cat: string; verified: boolean; seed: string;
+}) {
+    const { openChannel } = useNxPlayer();
+    return (
+        <div
+            onClick={() => openChannel(name)}
+            className="nx-press flex-shrink-0 w-36 cursor-pointer group"
+        >
+            <div className="relative w-36 h-36 rounded-2xl overflow-hidden mb-2"
+                style={{
+                    border: "1px solid rgba(43,62,232,0.20)",
+                    background: "linear-gradient(135deg,rgba(43,62,232,0.15),rgba(0,206,200,0.10))",
+                }}>
+                <img
+                    src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}`}
+                    alt={name}
+                    className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    style={{ background: "linear-gradient(to top, rgba(43,62,232,0.50), transparent)" }} />
+            </div>
+            <div className="flex items-center gap-1 mb-0.5">
+                <p className="text-xs font-black text-white truncate group-hover:text-[#00CEC8] transition-colors">{name}</p>
+                {verified && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+            </div>
+            <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.75)" }}>{handle}</p>
+            <div className="flex items-center gap-2 mt-1">
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md"
+                    style={{ background: "rgba(43,62,232,0.12)", color: "rgba(120,150,220,0.85)" }}>{subs}</span>
+                <span className="text-[9px]" style={{ color: "rgba(80,100,150,0.70)" }}>{cat}</span>
+            </div>
         </div>
     );
 }

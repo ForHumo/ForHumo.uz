@@ -79,7 +79,7 @@ const ARTICLES: Article[] = [
 // NxReader
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxReader() {
-    const { readerOpen, setReaderOpen } = useNxPlayer();
+    const { readerOpen, setReaderOpen, openShareSheet } = useNxPlayer();
     const [reading, setReading] = useState<Article | null>(null);
     const [fontSize, setFontSize] = useState<"sm" | "base" | "lg">("base");
     const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
@@ -178,7 +178,7 @@ export function NxReader() {
                                 <Bookmark className={`w-5 h-5 ${savedIds.has(reading.id) ? "fill-blue-500" : ""}`}
                                     style={{ color: savedIds.has(reading.id) ? "#2B3EE8" : "rgba(140,160,210,0.60)" }} />
                             </button>
-                            <button className="flex items-center gap-1.5 ml-auto">
+                            <button onClick={() => openShareSheet(reading.title)} className="flex items-center gap-1.5 ml-auto">
                                 <Share2 className="w-5 h-5" style={{ color: "rgba(140,160,210,0.60)" }} />
                             </button>
                         </div>

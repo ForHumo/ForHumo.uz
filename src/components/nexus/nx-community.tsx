@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Heart, MessageSquare, Share2, Bookmark, MoreHorizontal, Users, Star, TrendingUp, Image, PenLine } from "lucide-react";
+import { X, Heart, MessageSquare, Share2, Bookmark, MoreHorizontal, Users, Star, TrendingUp, Image, PenLine, Pin, Send, ChevronDown, BarChart2 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,12 +22,13 @@ interface CommunityPost {
     comments: number;
     liked: boolean;
     saved: boolean;
+    pinned?: boolean;
 }
 
 const MOCK_POSTS: CommunityPost[] = [
     {
         id: "cp1", author: "Dilnoza Yusupova", avatar: "https://picsum.photos/seed/cp1/80/80",
-        verified: true, timeAgo: "2 soat oldin", type: "text",
+        verified: true, timeAgo: "2 soat oldin", type: "text", pinned: true,
         text: "Yangi albom ustida ish boshlandi! Juda hayajonliman. Bu safar butunlay boshqacha sound bo'ladi — an'anaviy o'zbek milliy cholg'ulari zamonaviy elektron musiqa bilan qo'shiladi. Kutib turing!",
         likes: 12400, comments: 843, liked: false, saved: false,
     },
@@ -78,10 +79,12 @@ function fmtNum(n: number): string {
 // NxCommunity
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxCommunity() {
-    const { communityOpen, setCommunityOpen } = useNxPlayer();
-    const [posts, setPosts] = useState(MOCK_POSTS);
-    const [tab, setTab] = useState<"feed" | "popular">("feed");
+    const { communityOpen, setCommunityOpen, openShareSheet } = useNxPlayer();
+    const [posts,      setPosts]      = useState(MOCK_POSTS);
+    const [tab,        setTab]        = useState<"feed" | "popular">("feed");
     const [votedPolls, setVotedPolls] = useState<Record<string, number>>({});
+    const [composerOpen, setComposerOpen] = useState(false);
+    const [newText,      setNewText]      = useState("");
 
     const toggleLike = (id: string) => {
         setPosts(prev => prev.map(p => p.id === id
@@ -102,6 +105,18 @@ export function NxCommunity() {
             );
             return { ...p, poll: { ...p.poll, options: opts, totalVotes: p.poll.totalVotes + 1 } };
         }));
+    };
+
+    const submitPost = () => {
+        if (!newText.trim()) return;
+        const newPost: CommunityPost = {
+            id: `cp${Date.now()}`, author: "Siz", avatar: "https://api.dicebear.com/9.x/avataaars/svg?seed=me",
+            verified: false, timeAgo: "Hozir", type: "text",
+            text: newText.trim(), likes: 0, comments: 0, liked: false, saved: false,
+        };
+        setPosts(prev => [newPost, ...prev]);
+        setNewText("");
+        setComposerOpen(false);
     };
 
     const displayed = tab === "popular"
@@ -171,12 +186,82 @@ export function NxCommunity() {
 
                 {/* Posts */}
                 <div className="flex-1 overflow-y-auto px-5 pb-6" style={{ scrollbarWidth: "none" }}>
+                    {/* Inline post composer */}
+                    <div className="mb-4">
+                        {!composerOpen ? (
+                            <button
+                                onClick={() => setComposerOpen(true)}
+                                className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-150 active:scale-[0.99]"
+                                style={{ background: "rgba(43,62,232,0.07)", border: "1px dashed rgba(43,62,232,0.28)" }}>
+                                <div className="w-7 h-7 rounded-xl overflow-hidden flex-shrink-0"
+                                    style={{ border: "1.5px solid rgba(43,62,232,0.30)" }}>
+                                    <img src="https://api.dicebear.com/9.x/avataaars/svg?seed=me" alt="" className="w-full h-full object-cover bg-white" />
+                                </div>
+                                <span className="text-sm flex-1" style={{ color: "rgba(120,140,190,0.55)" }}>
+                                    Jamiyat bilan ulashing...
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <Image className="w-4 h-4" style={{ color: "rgba(43,62,232,0.40)" }} />
+                                    <BarChart2 className="w-4 h-4" style={{ color: "rgba(43,62,232,0.40)" }} />
+                                </div>
+                            </button>
+                        ) : (
+                            <div className="p-4 rounded-2xl"
+                                style={{ background: "rgba(11,18,40,0.70)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                <textarea
+                                    autoFocus rows={3} value={newText}
+                                    onChange={e => setNewText(e.target.value)}
+                                    placeholder="Nima haqida o'ylayapsiz?"
+                                    className="w-full bg-transparent text-sm text-white outline-none resize-none"
+                                    style={{ caretColor: "#00CEC8" }}
+                                />
+                                <div className="flex items-center gap-2 mt-3 pt-3"
+                                    style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                                    <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold"
+                                        style={{ background: "rgba(43,62,232,0.10)", color: "rgba(140,160,210,0.70)" }}>
+                                        <Image className="w-3.5 h-3.5" /> Rasm
+                                    </button>
+                                    <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold"
+                                        style={{ background: "rgba(43,62,232,0.10)", color: "rgba(140,160,210,0.70)" }}>
+                                        <BarChart2 className="w-3.5 h-3.5" /> So'rovnoma
+                                    </button>
+                                    <div className="flex-1" />
+                                    <button onClick={() => { setComposerOpen(false); setNewText(""); }}
+                                        className="px-3 py-1.5 rounded-lg text-[11px] font-bold"
+                                        style={{ color: "rgba(100,120,170,0.70)" }}>
+                                        Bekor
+                                    </button>
+                                    <button
+                                        onClick={submitPost}
+                                        disabled={!newText.trim()}
+                                        className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[11px] font-black text-white transition-all duration-150"
+                                        style={newText.trim()
+                                            ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }
+                                            : { background: "rgba(43,62,232,0.15)", color: "rgba(140,160,210,0.40)" }
+                                        }>
+                                        <Send className="w-3.5 h-3.5" /> Ulashish
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="flex flex-col gap-4">
                         {displayed.map(post => (
                             <div key={post.id}
                                 className="p-4 rounded-2xl"
                                 style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.14)" }}>
 
+                                {/* Pinned badge */}
+                                {post.pinned && (
+                                    <div className="flex items-center gap-1.5 mb-2 px-2 py-1 rounded-lg w-fit"
+                                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                                        <Pin className="w-3 h-3" style={{ color: "rgba(43,62,232,0.70)" }} />
+                                        <span className="text-[9px] font-bold" style={{ color: "rgba(43,62,232,0.70)" }}>
+                                            Mahkamlangan post
+                                        </span>
+                                    </div>
+                                )}
                                 {/* Author row */}
                                 <div className="flex items-center gap-3 mb-3">
                                     <img src={post.avatar} alt={post.author}
@@ -292,7 +377,9 @@ export function NxCommunity() {
                                         <Bookmark className={`w-4 h-4 transition-colors duration-200 ${post.saved ? "fill-blue-500" : ""}`}
                                             style={{ color: post.saved ? "#2B3EE8" : "rgba(140,160,210,0.60)" }} />
                                     </button>
-                                    <button className="flex items-center gap-1.5 text-xs ml-auto">
+                                    <button
+                                        onClick={() => openShareSheet(post.text.slice(0, 60))}
+                                        className="flex items-center gap-1.5 text-xs ml-auto">
                                         <Share2 className="w-4 h-4" style={{ color: "rgba(140,160,210,0.60)" }} />
                                     </button>
                                 </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     X, Phone, Video, PhoneCall, PhoneOff, Mic, MicOff,
     Camera, CameraOff, Volume2, VolumeX, UserPlus,
@@ -46,10 +46,10 @@ function ActiveCall({ caller, type, onEnd }: {
     const [duration, setDuration] = useState(0);
 
     // Simple timer
-    useState(() => {
+    useEffect(() => {
         const id = setInterval(() => setDuration(d => d + 1), 1000);
         return () => clearInterval(id);
-    });
+    }, []);
 
     const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 

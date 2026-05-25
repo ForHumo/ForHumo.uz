@@ -10,7 +10,7 @@ import {
     Settings, LogOut, BadgeCheck, Plus, ChevronRight,
     Edit3, Save, X, Loader2, Trash2,
     ListMusic, BarChart2, Compass, Bookmark, Phone,
-    ShoppingBag, Wallet, Download, Briefcase, Calendar,
+    ShoppingBag, Wallet, Download, Briefcase, Calendar, Video, Play,
 } from "lucide-react";
 import { useNxPlayer, type NxShort } from "./nx-player-ctx";
 import { NxRow } from "./nx-row";
@@ -154,7 +154,7 @@ const VIDEO_SHORTS: NxShort[] = Array.from({ length: 10 }, (_, i) => ({
 }));
 
 export function VideoView() {
-    const { openShorts } = useNxPlayer();
+    const { openShorts, setExploreOpen, setSubsOpen } = useNxPlayer();
     return (
         <ViewShell>
             <ViewHeader
@@ -175,7 +175,7 @@ export function VideoView() {
                 </div>
             </ViewHeader>
 
-            <NxRow title="Tavsiya etilgan" onSeeAll={() => {}}>
+            <NxRow title="Tavsiya etilgan" onSeeAll={() => setExploreOpen(true)}>
                 {Array.from({ length: 7 }, (_, i) => (
                     <VideoCard key={i}
                         title={["Nexus SDK — To'liq qo'llanma", "O'zbekiston AI ekotizimi", "React 19 amaliy", "Kino yaratish asoslari", "Musiqa produksiyasi", "Startup qurish", "UX dizayn sirlari"][i]}
@@ -193,7 +193,7 @@ export function VideoView() {
                 ))}
             </NxRow>
 
-            <NxRow title="Obuna bo'lganlar" onSeeAll={() => {}}>
+            <NxRow title="Obuna bo'lganlar" onSeeAll={() => setSubsOpen(true)}>
                 {Array.from({ length: 6 }, (_, i) => (
                     <VideoCard key={i}
                         title={`Yangi video — ${["Humo Dev", "Sardor", "Kamola", "Tech UZ", "Beat Lab", "Film School"][i]}`}
@@ -281,7 +281,7 @@ const MEDIA_TABS = [
 
 export function MediaView() {
     const [sub, setSub] = useState("cinema");
-    const { setPlaylistsOpen } = useNxPlayer();
+    const { setPlaylistsOpen, setReaderOpen, setPodcastsOpen, setAlbumsOpen, setTrendingOpen } = useNxPlayer();
 
     return (
         <ViewShell>
@@ -313,7 +313,7 @@ export function MediaView() {
 
             {sub === "cinema" && (
                 <>
-                    <NxRow title="Trendda — Kinolar" accent="linear-gradient(180deg,#F59E0B,#EF4444)" onSeeAll={() => {}}>
+                    <NxRow title="Trendda — Kinolar" accent="linear-gradient(180deg,#F59E0B,#EF4444)" onSeeAll={() => setTrendingOpen(true)}>
                         {Array.from({ length: 6 }, (_, i) => (
                             <VideoCard key={i}
                                 title={["Abadiyat Soyasida", "Ko'k Osmon", "Yolg'iz Qadam", "Toshkent Tuni", "Shamol Bilan", "Ikki Dunyo"][i]}
@@ -323,7 +323,7 @@ export function MediaView() {
                                 avatar="https://api.dicebear.com/9.x/avataaars/svg?seed=cinema" />
                         ))}
                     </NxRow>
-                    <NxRow title="Seriallar" onSeeAll={() => {}}>
+                    <NxRow title="Seriallar" onSeeAll={() => setTrendingOpen(true)}>
                         {Array.from({ length: 6 }, (_, i) => (
                             <VideoCard key={i}
                                 title={`Serial ${i + 1} — Yangi mavsum`}
@@ -356,7 +356,7 @@ export function MediaView() {
                             <ChevronRight className="w-4 h-4" style={{ color: "rgba(16,185,129,0.60)" }} />
                         </button>
                     </div>
-                    <NxRow title="Top Treklar" accent="linear-gradient(180deg,#10B981,#00CEC8)" onSeeAll={() => {}}>
+                    <NxRow title="Top Treklar" accent="linear-gradient(180deg,#10B981,#00CEC8)" onSeeAll={() => setPlaylistsOpen(true)}>
                         {Array.from({ length: 8 }, (_, i) => (
                             <MusicCard key={i}
                                 title={["Bahor Ohangi", "Tun Yulduzi", "Sevgi Qo'shig'i", "Uzoq Yo'l", "Yurak Tori", "Osmon Osti", "Erkin Qush", "Yangi Kun"][i]}
@@ -366,7 +366,7 @@ export function MediaView() {
                                 listens={`${(i + 1) * 380}K`} />
                         ))}
                     </NxRow>
-                    <NxRow title="Yangi Albomlar" onSeeAll={() => {}}>
+                    <NxRow title="Yangi Albomlar" onSeeAll={() => setAlbumsOpen(true)}>
                         {Array.from({ length: 6 }, (_, i) => (
                             <MusicCard key={i}
                                 title={`Yangi Albom ${i + 1}`} artist={`Artist ${i + 1}`}
@@ -378,7 +378,7 @@ export function MediaView() {
             )}
 
             {(sub === "podcast" || sub === "audiobook") && (
-                <NxRow title={sub === "podcast" ? "Mashhur Podcastlar" : "Audiokitoblar"} accent="linear-gradient(180deg,#8B5CF6,#6366F1)" onSeeAll={() => {}}>
+                <NxRow title={sub === "podcast" ? "Mashhur Podcastlar" : "Audiokitoblar"} accent="linear-gradient(180deg,#8B5CF6,#6366F1)" onSeeAll={() => sub === "podcast" ? setPodcastsOpen(true) : setReaderOpen(true)}>
                     {Array.from({ length: 6 }, (_, i) => (
                         <BookCard key={i}
                             title={sub === "podcast" ? `Podcast — ${["Biznes", "Tech", "Psixologiya", "Tarix", "Fan", "Sport"][i]}` : `Audiokitob ${i + 1}`}
@@ -392,7 +392,7 @@ export function MediaView() {
             )}
 
             {sub === "book" && (
-                <NxRow title="E-Kitoblar" accent="linear-gradient(180deg,#F59E0B,#D97706)" onSeeAll={() => {}}>
+                <NxRow title="E-Kitoblar" accent="linear-gradient(180deg,#F59E0B,#D97706)" onSeeAll={() => setReaderOpen(true)}>
                     {Array.from({ length: 6 }, (_, i) => (
                         <BookCard key={i}
                             title={["Raqamli Ozodlik", "AI va Biznes", "Kreator Iqtisodiyoti", "O'zbek Texnologiyasi", "Dasturchi Orzusi", "Muvaffaqiyat"][i]}
@@ -630,7 +630,7 @@ interface ProfileData {
 
 export function ProfileView() {
     const { data: session } = useSession();
-    const { watchHistory, clearHistory, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setSubsOpen, setCallsOpen, setSpacesOpen, setWalletOpen, setMarketOpen, setDownloadsOpen, setJobsOpen, setEventsOpen, setGoLiveOpen, setGiftsOpen, setTrendingOpen, setAiOpen, setLeaderboardOpen } = useNxPlayer();
+    const { watchHistory, clearHistory, openVideo, openSavedHistory, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setSubsOpen, setCallsOpen, setSpacesOpen, setWalletOpen, setMarketOpen, setDownloadsOpen, setJobsOpen, setEventsOpen, setGoLiveOpen, setGiftsOpen, setTrendingOpen, setAiOpen, setLeaderboardOpen, setMeetingOpen } = useNxPlayer();
 
     const sessionName  = session?.user?.name  ?? "Mehmon";
     const sessionEmail = session?.user?.email ?? "—";
@@ -793,6 +793,7 @@ export function ProfileView() {
                     { label: "Trendlar",    icon: TrendingUp,   grad: "linear-gradient(135deg,#F97316,#EF4444)",  action: () => setTrendingOpen(true)   },
                     { label: "Nexus AI",    icon: Bot,          grad: "linear-gradient(135deg,#8B5CF6,#EC4899)",  action: () => setAiOpen(true)         },
                     { label: "Leaderboard", icon: Trophy,       grad: "linear-gradient(135deg,#F59E0B,#F97316)",  action: () => setLeaderboardOpen(true)},
+                    { label: "Video Majlis",icon: Video,        grad: "linear-gradient(135deg,#2B3EE8,#00CEC8)",  action: () => setMeetingOpen(true)    },
                 ].map(({ label, icon: Icon, grad, action }, i) => (
                     <button key={i}
                         onClick={action}
@@ -844,25 +845,40 @@ export function ProfileView() {
                             <Clock className="w-4 h-4" style={{ color: "#00CEC8" }} />
                             Ko'rish tarixi ({watchHistory.length})
                         </h3>
-                        <button onClick={clearHistory}
-                            className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg"
-                            style={{ color: "rgba(239,68,68,0.80)", background: "rgba(239,68,68,0.08)" }}>
-                            <Trash2 className="w-3 h-3" />
-                            Tozalash
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button onClick={openSavedHistory}
+                                className="text-[10px] font-bold px-2.5 py-1 rounded-lg"
+                                style={{ color: "#00CEC8", background: "rgba(0,206,200,0.08)" }}>
+                                Barchasi
+                            </button>
+                            <button onClick={clearHistory}
+                                className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg"
+                                style={{ color: "rgba(239,68,68,0.80)", background: "rgba(239,68,68,0.08)" }}>
+                                <Trash2 className="w-3 h-3" />
+                                Tozalash
+                            </button>
+                        </div>
                     </div>
                     <div className="flex gap-3 overflow-x-auto px-4 py-3" style={{ scrollbarWidth: "none" }}>
                         {watchHistory.slice(0, 12).map((v, i) => (
-                            <div key={i} className="flex-shrink-0 w-32 group cursor-pointer">
+                            <button
+                                key={i}
+                                onClick={() => openVideo(v)}
+                                className="flex-shrink-0 w-32 group text-left"
+                            >
                                 <div className="relative aspect-video rounded-lg overflow-hidden mb-1"
                                     style={{ border: "1px solid rgba(43,62,232,0.15)" }}>
-                                    <img src={v.image} alt={v.title} className="w-full h-full object-cover" />
+                                    <img src={v.image} alt={v.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                        style={{ background: "rgba(5,8,24,0.50)" }}>
+                                        <Play className="w-5 h-5 text-white fill-white" />
+                                    </div>
                                     <div className="absolute bottom-1 right-1 px-1 py-0.5 rounded text-[8px] font-bold"
                                         style={{ background: "rgba(5,8,24,0.80)" }}>{v.duration}</div>
                                 </div>
-                                <p className="text-[10px] font-bold text-white line-clamp-2 leading-snug">{v.title}</p>
+                                <p className="text-[10px] font-bold text-white line-clamp-2 leading-snug group-hover:text-[#00CEC8] transition-colors">{v.title}</p>
                                 <p className="text-[9px] mt-0.5" style={{ color: "rgba(80,100,150,0.80)" }}>{v.author}</p>
-                            </div>
+                            </button>
                         ))}
                     </div>
                 </div>

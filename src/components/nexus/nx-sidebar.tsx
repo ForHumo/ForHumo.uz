@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Home, Play, Radio, MessageCircle,
@@ -12,6 +12,7 @@ import {
     Scissors, Zap, Grid3X3, CalendarDays, Store, BookText, HeartHandshake,
     MessagesSquare, Mic2, Handshake, BellRing, BarChart3, ChartLine,
     FileStack, BadgeCheck, Flag, UserCheck, Images, PlusSquare,
+    Video,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -36,7 +37,7 @@ const NAV_ITEMS = [
 
 export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
     const { data: session } = useSession();
-    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen, setGoLiveOpen, setGiftsOpen, setLeaderboardOpen, setSuggestionsOpen, setWatchPartyOpen, setCommunityOpen, setClipsOpen, setAchievementsOpen, setMiniAppsOpen, setScheduleOpen, setShopOpen, setReaderOpen, setFundraiserOpen, setForumOpen, setPodcastsOpen, setCollabOpen, setRemindersOpen, setPollsOpen, setStatsOpen, setDraftsOpen, setBadgesOpen, setReportOpen, setAffiliateOpen, setAlbumsOpen, setStoryCreateOpen } = useNxPlayer();
+    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, openSavedHistory, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen, setGoLiveOpen, setGiftsOpen, setLeaderboardOpen, setSuggestionsOpen, setWatchPartyOpen, setCommunityOpen, setClipsOpen, setAchievementsOpen, setMiniAppsOpen, setScheduleOpen, setShopOpen, setReaderOpen, setFundraiserOpen, setForumOpen, setPodcastsOpen, setCollabOpen, setRemindersOpen, setPollsOpen, setStatsOpen, setDraftsOpen, setBadgesOpen, setReportOpen, setAffiliateOpen, setAlbumsOpen, setStoryCreateOpen, setMeetingOpen, openChannel } = useNxPlayer();
     const name   = session?.user?.name  ?? "Mehmon";
     const image  = session?.user?.image ?? null;
     const email  = session?.user?.email ?? "";
@@ -177,15 +178,17 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
 
                     {/* ── Navigation ────────────────────────────────── */}
                     <SidebarSection title="Kontent">
-                        {NAV_ITEMS.filter(i => i.section === "main").map((item, i) => (
-                            <SidebarItem key={i} icon={item.icon} label={item.label} />
-                        ))}
+                        <SidebarItem icon={Home}          label="Asosiy lenta"       onClick={onClose} />
+                        <SidebarItem icon={Play}          label="Videolar"            onClick={onClose} />
+                        <SidebarItem icon={Radio}         label="Jonli efirlar"       onClick={onClose} />
                     </SidebarSection>
 
                     <SidebarSection title="Media">
-                        {NAV_ITEMS.filter(i => i.section === "media").map((item, i) => (
-                            <SidebarItem key={i} icon={item.icon} label={item.label} />
-                        ))}
+                        <SidebarItem icon={Film}          label="Kino va seriallar"   onClick={onClose} />
+                        <SidebarItem icon={Music}         label="Musiqa"              onClick={onClose} />
+                        <SidebarItem icon={Mic}           label="Podkastlar"          onClick={() => { onClose(); setPodcastsOpen(true); }} />
+                        <SidebarItem icon={BookOpen}      label="Kitoblar"            onClick={() => { onClose(); setReaderOpen(true); }} />
+                        <SidebarItem icon={MessageCircle} label="Chatlar va kanallar" onClick={() => { onClose(); setGroupsOpen(true); }} />
                     </SidebarSection>
 
                     <SidebarSection title="Kashfiyot">
@@ -196,6 +199,7 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
                         <SidebarItem icon={MessageCircle} label="Xabarlar (DM)"         onClick={() => { onClose(); setMessagesOpen(true); }} badge="3" />
                         <SidebarItem icon={Hash}          label="Guruhlar va Kanallar"   onClick={() => { onClose(); setGroupsOpen(true); }} badge="2" />
                         <SidebarItem icon={Phone}         label="Qo'ng'iroqlar"          onClick={() => { onClose(); setCallsOpen(true); }} />
+                        <SidebarItem icon={Video}         label="Majlislar (Meeting)"    onClick={() => { onClose(); setMeetingOpen(true); }} badge="Yangi" />
                         <SidebarItem icon={Headphones}    label="Spaces (Audio)"         onClick={() => { onClose(); setSpacesOpen(true); }} />
                         <SidebarItem icon={Bell}          label="Bildirishnomalar"        onClick={() => { onClose(); setNotifOpen(true); }} badge="5" />
                         <SidebarItem icon={ListMusic}     label="Pleylistlar"             onClick={() => { onClose(); setPlaylistsOpen(true); }} />
@@ -211,8 +215,8 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
 
                     <SidebarSection title="Mening Nexus">
                         <SidebarItem icon={Bookmark}     label="Saqlangan"       onClick={() => { onClose(); setSavedOpen(true); }} />
-                        <SidebarItem icon={History}      label="Ko'rish tarixi" />
-                        <SidebarItem icon={TrendingUp}   label="Mening kanalim" />
+                        <SidebarItem icon={History}      label="Ko'rish tarixi"  onClick={() => { onClose(); openSavedHistory(); }} />
+                        <SidebarItem icon={TrendingUp}   label="Mening kanalim"  onClick={() => { onClose(); openChannel(name); }} />
                         <SidebarItem icon={Users}        label="Obunalar"        onClick={() => { onClose(); setSubsOpen(true); }} />
                         <SidebarItem icon={ShoppingBag}  label="Nexus Market"    onClick={() => { onClose(); setMarketOpen(true); }} />
                         <SidebarItem icon={Wallet}       label="Hamyon"          onClick={() => { onClose(); setWalletOpen(true); }} />
@@ -251,7 +255,8 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
                     style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}
                 >
                     <button
-                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-150"
+                        onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+                        className="nx-press w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-colors duration-150"
                         style={{
                             background: "rgba(239,68,68,0.06)",
                             border: "1px solid rgba(239,68,68,0.15)",

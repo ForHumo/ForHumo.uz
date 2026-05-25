@@ -291,6 +291,20 @@ interface PlayerCtx {
     // Story yaratish
     storyCreateOpen:    boolean;
     setStoryCreateOpen: (v: boolean) => void;
+
+    // Video Meetings (Zoom/Meet uslubi)
+    meetingOpen:    boolean;
+    setMeetingOpen: (v: boolean) => void;
+
+    // Saqlangan panel — tab tanlash
+    savedDefaultTab: "all" | "history";
+    openSavedHistory: () => void;
+
+    // Ulashish (Share Sheet)
+    shareSheetOpen:  boolean;
+    shareSheetTitle: string;
+    openShareSheet:  (title: string) => void;
+    closeShareSheet: () => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -520,6 +534,22 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     /* ── Story yaratish ── */
     const [storyCreateOpen, setStoryCreateOpen] = useState(false);
 
+    /* ── Meeting ── */
+    const [meetingOpen, setMeetingOpen] = useState(false);
+
+    /* ── Saqlangan default tab ── */
+    const [savedDefaultTab, setSavedDefaultTab] = useState<"all" | "history">("all");
+    const openSavedHistory = useCallback(() => {
+        setSavedDefaultTab("history");
+        setSavedOpen(true);
+    }, []);
+
+    /* ── Share Sheet ── */
+    const [shareSheetOpen,  setShareSheetOpen]  = useState(false);
+    const [shareSheetTitle, setShareSheetTitle] = useState("");
+    const openShareSheet  = useCallback((title: string) => { setShareSheetTitle(title); setShareSheetOpen(true); }, []);
+    const closeShareSheet = useCallback(() => setShareSheetOpen(false), []);
+
     /* ── Kanal ── */
     const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
 
@@ -687,10 +717,6 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
         setShorts(list); setShortIndex(idx); setShortsOpen(true);
     }, []);
     const closeShorts = useCallback(() => setShortsOpen(false), []);
-    const nextShort   = useCallback(() =>
-        setShortIndex(i => Math.min(i + 1, queueRef.current.length - 1 > 0 ? i + 1 : i + 1)), []);
-    const prevShort   = useCallback(() =>
-        setShortIndex(i => Math.max(i - 1, 0)), []);
 
     const openChannel  = useCallback((author: string) => setChannelAuthor(author), []);
     const closeChannel = useCallback(() => setChannelAuthor(null), []);
@@ -718,10 +744,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem(LS_HISTORY);
     }, []);
 
-    // nextShort needs to know shorts.length — fix the closure
-    const nextShortFn = useCallback(() =>
+    const nextShort = useCallback(() =>
         setShortIndex(i => Math.min(i + 1, shorts.length - 1)), [shorts.length]);
-    const prevShortFn = useCallback(() =>
+    const prevShort = useCallback(() =>
         setShortIndex(i => Math.max(i - 1, 0)), []);
 
     return (
@@ -733,7 +758,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             video, videoOpen, openVideo, closeVideo,
             shorts, shortIndex, shortsOpen,
             openShorts, closeShorts,
-            nextShort: nextShortFn, prevShort: prevShortFn,
+            nextShort, prevShort,
             searchOpen, setSearchOpen,
             studioOpen, setStudioOpen,
             proOpen, setProOpen,
@@ -790,6 +815,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             affiliateOpen, setAffiliateOpen,
             albumsOpen, setAlbumsOpen,
             storyCreateOpen, setStoryCreateOpen,
+            meetingOpen, setMeetingOpen,
+            savedDefaultTab, openSavedHistory,
+            shareSheetOpen, shareSheetTitle, openShareSheet, closeShareSheet,
         }}>
             {children}
         </Ctx.Provider>

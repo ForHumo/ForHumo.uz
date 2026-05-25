@@ -74,7 +74,7 @@ const TRENDING_TAGS = [
 // NxSocialFeed
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxSocialFeed() {
-    const { openComments, openChannel } = useNxPlayer();
+    const { openComments, openChannel, openShareSheet } = useNxPlayer();
     const [posts, setPosts] = useState<Post[]>(POSTS);
     const [postText, setPostText] = useState("");
     const [postSending, setPostSending] = useState(false);
@@ -197,6 +197,7 @@ export function NxSocialFeed() {
                         onSave={() => toggleSave(p.id)}
                         onComment={() => openComments(p.text.slice(0, 40) + "...")}
                         onAuthor={() => openChannel(p.handle)}
+                        onShare={() => openShareSheet(p.text.slice(0, 60))}
                     />
                 ))}
             </div>
@@ -207,10 +208,10 @@ export function NxSocialFeed() {
 // ─────────────────────────────────────────────────────────────────────────────
 // PostCard
 // ─────────────────────────────────────────────────────────────────────────────
-function PostCard({ post: p, onLike, onSave, onComment, onAuthor }: {
+function PostCard({ post: p, onLike, onSave, onComment, onAuthor, onShare }: {
     post: Post;
     onLike: () => void; onSave: () => void;
-    onComment: () => void; onAuthor: () => void;
+    onComment: () => void; onAuthor: () => void; onShare: () => void;
 }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [imgLoaded, setImgLoaded] = useState(false);
@@ -289,7 +290,7 @@ function PostCard({ post: p, onLike, onSave, onComment, onAuthor }: {
                 style={{ borderTop: "1px solid rgba(43,62,232,0.08)" }}>
                 <LikeBtn liked={p.liked} count={p.likes} onClick={onLike} />
                 <ActionBtn icon={MessageCircle} count={p.comments} onClick={onComment} />
-                <ActionBtn icon={Share2} count={p.shares} onClick={() => {}} />
+                <ActionBtn icon={Share2} count={p.shares} onClick={onShare} />
                 <div className="flex-1" />
                 <SaveBtn saved={p.saved} onClick={onSave} />
             </div>

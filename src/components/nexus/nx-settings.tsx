@@ -33,7 +33,7 @@ export function NxSettings({ open, onClose }: Props) {
         <>
             {/* ── Backdrop ──────────────────────────────────────────── */}
             <div
-                className="fixed inset-0 z-50 transition-opacity duration-300"
+                className="fixed inset-0 z-[60] transition-opacity duration-300"
                 style={{
                     background: "rgba(5,8,24,0.80)",
                     backdropFilter: "blur(8px)",
@@ -45,7 +45,7 @@ export function NxSettings({ open, onClose }: Props) {
 
             {/* ── Modal ─────────────────────────────────────────────── */}
             <div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+                className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none"
             >
                 <div
                     className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl overflow-hidden pointer-events-auto transition-all duration-300"

@@ -62,8 +62,10 @@ export function NxStoriesViewer() {
     const [progress, setProgress] = useState(0);
     const [paused, setPaused]     = useState(false);
     const [muted, setMuted]       = useState(true);
-    const [replyText, setReplyText] = useState("");
-    const [liked, setLiked]       = useState<Record<string, boolean>>({});
+    const [replyText,    setReplyText]    = useState("");
+    const [liked,        setLiked]        = useState<Record<string, boolean>>({});
+    const [sentReaction, setSentReaction] = useState<Record<string, string>>({});
+    const [showEmojis,   setShowEmojis]   = useState(false);
 
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -242,20 +244,46 @@ export function NxStoriesViewer() {
                     </p>
                 </div>
 
+                {/* Quick emoji reactions */}
+                {showEmojis && (
+                    <div className="absolute bottom-20 left-3 right-3 flex items-center justify-center gap-3 z-20">
+                        {["❤️","😂","😮","😢","😡","🔥"].map(emoji => {
+                            const reacted = sentReaction[likeKey] === emoji;
+                            return (
+                                <button key={emoji}
+                                    onClick={() => {
+                                        setSentReaction(prev => ({ ...prev, [likeKey]: emoji }));
+                                        setShowEmojis(false);
+                                    }}
+                                    className="text-2xl transition-all duration-150 active:scale-110"
+                                    style={{
+                                        filter: reacted ? "drop-shadow(0 0 8px rgba(255,255,255,0.80))" : "none",
+                                        transform: reacted ? "scale(1.25)" : "scale(1)",
+                                    }}>
+                                    {emoji}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+
                 {/* Bottom actions */}
                 <div className="absolute bottom-4 left-3 right-3 flex items-center gap-2 z-10">
                     <input
                         type="text" value={replyText}
-                        onChange={e => setReplyText(e.target.value)}
-                        onFocus={() => setPaused(true)}
-                        onBlur={() => setPaused(false)}
+                        onChange={e => { setReplyText(e.target.value); if (!e.target.value) setShowEmojis(false); }}
+                        onFocus={() => { setPaused(true); setShowEmojis(true); }}
+                        onBlur={() => { setPaused(false); setTimeout(() => setShowEmojis(false), 200); }}
                         placeholder="Javob yozing..."
                         className="flex-1 h-9 rounded-full px-4 text-sm text-white outline-none"
                         style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.30)", caretColor: "#00CEC8" }}
                     />
+                    {sentReaction[likeKey] && (
+                        <span className="text-xl">{sentReaction[likeKey]}</span>
+                    )}
                     <button
                         onClick={() => { setLiked(prev => ({ ...prev, [likeKey]: !prev[likeKey] })); }}
-                        className="w-9 h-9 flex items-center justify-center rounded-full"
+                        className="w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200"
                         style={{ background: liked[likeKey] ? "rgba(239,68,68,0.80)" : "rgba(255,255,255,0.15)" }}>
                         <Heart className={`w-4 h-4 text-white ${liked[likeKey] ? "fill-white" : ""}`} />
                     </button>

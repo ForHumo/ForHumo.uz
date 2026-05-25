@@ -12,7 +12,7 @@ import {
 // NxVideoPlayer — to'liq ekran video modal
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxVideoPlayer() {
-    const { video, videoOpen, closeVideo, openComments, setLiveChatOpen } = useNxPlayer();
+    const { video, videoOpen, closeVideo, openComments, setLiveChatOpen, openShareSheet, setSavedOpen } = useNxPlayer();
 
     const [playing,   setPlaying]   = useState(false);
     const [progress,  setProgress]  = useState(0);
@@ -304,13 +304,14 @@ export function NxVideoPlayer() {
                                 </button>
                             ))}
                             <button
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150"
+                                onClick={() => openShareSheet(video.title)}
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 active:scale-95"
                                 style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(160,176,224,0.80)" }}
                             >
                                 <Share2 className="w-3.5 h-3.5" /> Ulash
                             </button>
                             <button
-                                onClick={() => setSaved(p => !p)}
+                                onClick={() => { setSaved(p => !p); if (!saved) setSavedOpen(true); }}
                                 className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-150"
                                 style={{
                                     background: saved ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)",

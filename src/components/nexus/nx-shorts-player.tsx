@@ -11,7 +11,7 @@ import {
 // NxShortsPlayer — haqiqiy video bilan to'liq ekran vertikal swipe player
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxShortsPlayer() {
-    const { shorts, shortIndex, shortsOpen, closeShorts, nextShort, prevShort } = useNxPlayer();
+    const { shorts, shortIndex, shortsOpen, closeShorts, nextShort, prevShort, openShareSheet, openComments } = useNxPlayer();
 
     const [playing,     setPlaying]     = useState(true);
     const [muted,       setMuted]       = useState(true);
@@ -236,8 +236,8 @@ export function NxShortsPlayer() {
                         active={isLiked} activeColor="#EF4444" fill={isLiked}
                         onClick={() => setLiked(p => ({ ...p, [shortIndex]: !p[shortIndex] }))}
                     />
-                    <ActionBtn icon={MessageCircle} label="Sharh" />
-                    <ActionBtn icon={Share2}        label="Ulash" />
+                    <ActionBtn icon={MessageCircle} label="Sharh" onClick={() => openComments(short.author)} />
+                    <ActionBtn icon={Share2} label="Ulash" onClick={() => openShareSheet(short.author)} />
                     <ActionBtn
                         icon={Bookmark} label="Saqlash"
                         active={isSaved} activeColor="#00CEC8" fill={isSaved}

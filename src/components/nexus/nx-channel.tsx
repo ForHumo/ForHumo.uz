@@ -1,17 +1,23 @@
 "use client";
 
+import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Play, Users, Heart, Eye, BadgeCheck, ChevronRight, Share2, MessageCircle } from "lucide-react";
+import { X, Play, Users, Heart, Eye, BadgeCheck, Share2, MessageCircle, Edit3, BarChart2 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxChannel — kreator kanal sahifasi (modal)
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxChannel() {
-    const { channelAuthor, closeChannel, openVideo, setMessagesOpen } = useNxPlayer();
+    const { channelAuthor, closeChannel, openVideo, setMessagesOpen, setAnalyticsOpen, openShareSheet } = useNxPlayer();
+    const { data: session } = useSession();
+    const [subscribed, setSubscribed] = useState(false);
 
     if (!channelAuthor) return null;
 
-    const seed      = channelAuthor.replace(/^@/, "");
+    const myName   = session?.user?.name ?? "";
+    const isOwn    = !!myName && channelAuthor.toLowerCase() === myName.toLowerCase();
+    const seed     = channelAuthor.replace(/^@/, "");
     const avatar    = `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}`;
     const cover     = `https://picsum.photos/seed/cover${seed}/800/200`;
 
@@ -94,22 +100,49 @@ export function NxChannel() {
 
                         {/* Tugmalar */}
                         <div className="flex gap-2 ml-auto">
+                            {isOwn ? (
+                                <>
+                                    <button
+                                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-black text-white transition-all duration-150 active:scale-95"
+                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 14px rgba(43,62,232,0.40)" }}
+                                    >
+                                        <Edit3 className="w-3.5 h-3.5" />
+                                        Tahrirlash
+                                    </button>
+                                    <button
+                                        onClick={() => { closeChannel(); setAnalyticsOpen(true); }}
+                                        className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
+                                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}
+                                        title="Analitika"
+                                    >
+                                        <BarChart2 className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={() => setSubscribed(p => !p)}
+                                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-black text-white transition-all duration-150 active:scale-95"
+                                        style={subscribed
+                                            ? { background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.35)" }
+                                            : { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 14px rgba(43,62,232,0.40)" }
+                                        }
+                                    >
+                                        <Users className="w-3.5 h-3.5" />
+                                        {subscribed ? "Obunada" : "Obuna"}
+                                    </button>
+                                    <button
+                                        onClick={() => { closeChannel(); setMessagesOpen(true); }}
+                                        className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
+                                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}
+                                        title="Xabar yuborish"
+                                    >
+                                        <MessageCircle className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                    </button>
+                                </>
+                            )}
                             <button
-                                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-black text-white"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 14px rgba(43,62,232,0.40)" }}
-                            >
-                                <Users className="w-3.5 h-3.5" />
-                                Obuna
-                            </button>
-                            <button
-                                onClick={() => { closeChannel(); setMessagesOpen(true); }}
-                                className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
-                                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}
-                                title="Xabar yuborish"
-                            >
-                                <MessageCircle className="w-4 h-4" style={{ color: "#00CEC8" }} />
-                            </button>
-                            <button
+                                onClick={() => openShareSheet(channelAuthor)}
                                 className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95"
                                 style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}
                                 title="Ulashish"

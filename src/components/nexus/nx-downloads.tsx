@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
     X, Download, Music2, Film, BookOpen, Mic2, Trash2,
     Play, HardDrive, Wifi, WifiOff, CheckCircle2, Clock, ChevronRight,
+    ArrowDownUp, SortAsc, SortDesc,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 
@@ -42,6 +43,7 @@ const TYPE_COLORS = {
 
 const FILTERS = ["Barchasi", "Musiqa", "Video", "Kitob", "Podcast"] as const;
 type Filter = typeof FILTERS[number];
+type SortKey = "date" | "size" | "name";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxDownloads
@@ -51,6 +53,8 @@ export function NxDownloads() {
     const [filter,    setFilter]    = useState<Filter>("Barchasi");
     const [items,     setItems]     = useState<Downloaded[]>(MOCK_DOWNLOADS);
     const [offline,   setOffline]   = useState(false);
+    const [sortKey,   setSortKey]   = useState<SortKey>("date");
+    const [sortAsc,   setSortAsc]   = useState(false);
 
     if (!downloadsOpen) return null;
 
@@ -58,9 +62,16 @@ export function NxDownloads() {
         Barchasi: null, Musiqa: "music", Video: "video", Kitob: "book", Podcast: "podcast",
     };
 
-    const filtered = items.filter(d =>
-        !typeMap[filter] || d.type === typeMap[filter]
-    );
+    const dateOrder = ["Bugun", "Kecha", "2 kun oldin", "3 kun oldin", "4 kun oldin"];
+    const filtered = items
+        .filter(d => !typeMap[filter] || d.type === typeMap[filter])
+        .sort((a, b) => {
+            let cmp = 0;
+            if (sortKey === "date")  cmp = dateOrder.indexOf(a.date) - dateOrder.indexOf(b.date);
+            if (sortKey === "size")  cmp = parseFloat(a.size) - parseFloat(b.size);
+            if (sortKey === "name")  cmp = a.title.localeCompare(b.title);
+            return sortAsc ? cmp : -cmp;
+        });
 
     const totalSize = items.reduce((acc, d) => {
         const n = parseFloat(d.size);
@@ -159,6 +170,31 @@ export function NxDownloads() {
                             </button>
                         </div>
                     </div>
+                </div>
+
+                {/* Sort + clear bar */}
+                <div className="px-5 pb-2 flex items-center gap-2 flex-shrink-0">
+                    <span className="text-[10px] font-bold flex-shrink-0" style={{ color: "rgba(80,100,150,0.70)" }}>Saralash:</span>
+                    {(["date", "size", "name"] as SortKey[]).map(k => (
+                        <button key={k}
+                            onClick={() => { if (sortKey === k) setSortAsc(p => !p); else { setSortKey(k); setSortAsc(true); } }}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold flex-shrink-0 transition-all duration-150"
+                            style={sortKey === k ? {
+                                background: "rgba(43,62,232,0.22)", color: "white", border: "1px solid rgba(43,62,232,0.40)",
+                            } : {
+                                background: "rgba(43,62,232,0.08)", color: "rgba(140,160,210,0.70)", border: "1px solid rgba(43,62,232,0.15)",
+                            }}>
+                            {sortKey === k ? (sortAsc ? <SortAsc className="w-3 h-3" /> : <SortDesc className="w-3 h-3" />) : <ArrowDownUp className="w-3 h-3" />}
+                            {k === "date" ? "Sana" : k === "size" ? "Hajm" : "Nom"}
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => setItems([])}
+                        className="ml-auto flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold flex-shrink-0"
+                        style={{ background: "rgba(239,68,68,0.10)", color: "rgba(239,68,68,0.75)", border: "1px solid rgba(239,68,68,0.20)" }}>
+                        <Trash2 className="w-3 h-3" />
+                        Tozalash
+                    </button>
                 </div>
 
                 {/* Filter tabs */}

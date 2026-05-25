@@ -59,7 +59,7 @@ function QrVisual({ color }: { color: string }) {
 const PROFILE_URL = "https://nexus.humo.uz/@user";
 
 export function NxQrShare() {
-    const { qrShareOpen, setQrShareOpen } = useNxPlayer();
+    const { qrShareOpen, setQrShareOpen, openShareSheet } = useNxPlayer();
     const [copied, setCopied] = useState(false);
     const [qrColor, setQrColor] = useState("#2B3EE8");
 
@@ -163,6 +163,7 @@ export function NxQrShare() {
                             Saqlash
                         </button>
                         <button
+                            onClick={() => openShareSheet("Mening profilim")}
                             className="flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all duration-150"
                             style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(140,160,210,0.85)" }}>
                             <Share2 className="w-3.5 h-3.5" />

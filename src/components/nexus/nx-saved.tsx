@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Bookmark, Film, Music2, FileText, Heart, Share2, Trash2, Play } from "lucide-react";
+import { X, Bookmark, Film, Music2, FileText, Heart, Share2, Trash2, Play, History, Clock } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock saved items
@@ -66,26 +66,32 @@ const TYPE_ICONS = {
 };
 
 const TYPE_LABELS: Record<string, string> = {
-    all:   "Barchasi",
-    video: "Videolar",
-    music: "Musiqa",
-    book:  "Kitoblar",
-    post:  "Postlar",
+    all:     "Saqlangan",
+    video:   "Videolar",
+    music:   "Musiqa",
+    book:    "Kitoblar",
+    post:    "Postlar",
+    history: "Ko'rish tarixi",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxSaved — saqlangan kontentlar paneli
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxSaved() {
-    const { savedOpen, setSavedOpen } = useNxPlayer();
-    const [filter, setFilter]       = useState("all");
+    const { savedOpen, setSavedOpen, watchHistory, clearHistory, savedDefaultTab, openShareSheet } = useNxPlayer();
+    const [filter, setFilter]       = useState<string>(savedDefaultTab);
     const [removed, setRemoved]     = useState<Set<string>>(new Set());
+
+    // Har safar panel ochilganda kontekstdan kelgan default tabga qaytarish
+    useEffect(() => {
+        if (savedOpen) setFilter(savedDefaultTab);
+    }, [savedOpen, savedDefaultTab]);
 
     if (!savedOpen) return null;
 
-    const visible = MOCK_SAVED.filter(
-        item => !removed.has(item.id) && (filter === "all" || item.type === filter)
-    );
+    const isHistory    = filter === "history";
+    const savedItems   = MOCK_SAVED.filter(item => !removed.has(item.id) && (filter === "all" || item.type === filter));
+    const visibleCount = isHistory ? watchHistory.length : savedItems.length;
 
     const remove = (id: string) => setRemoved(prev => new Set([...prev, id]));
 
@@ -116,16 +122,32 @@ export function NxSaved() {
                 >
                     <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                            <Bookmark className="w-4 h-4 text-white" />
+                            style={{ background: isHistory ? "linear-gradient(135deg,#8B5CF6,#6366F1)" : "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            {isHistory
+                                ? <History className="w-4 h-4 text-white" />
+                                : <Bookmark className="w-4 h-4 text-white" />
+                            }
                         </div>
                         <div>
-                            <h2 className="text-sm font-black text-white">Saqlangan</h2>
+                            <h2 className="text-sm font-black text-white">
+                                {isHistory ? "Ko'rish tarixi" : "Saqlangan"}
+                            </h2>
                             <p className="text-[10px]" style={{ color: "rgba(100,120,170,0.70)" }}>
-                                {visible.length} ta element
+                                {visibleCount} ta element
                             </p>
                         </div>
                     </div>
+                    {/* History clear button */}
+                    {isHistory && watchHistory.length > 0 && (
+                        <button
+                            onClick={clearHistory}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 active:scale-95"
+                            style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", color: "#EF4444" }}
+                        >
+                            <Trash2 className="w-3 h-3" />
+                            Tozalash
+                        </button>
+                    )}
                     <button
                         onClick={() => setSavedOpen(false)}
                         className="w-8 h-8 flex items-center justify-center rounded-xl"
@@ -158,19 +180,54 @@ export function NxSaved() {
 
                 {/* List */}
                 <div className="flex-1 overflow-y-auto px-4 pb-6" style={{ scrollbarWidth: "none" }}>
-                    {visible.length === 0 && (
+                    {visibleCount === 0 && (
                         <div className="flex flex-col items-center justify-center py-16 gap-3">
                             <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                                style={{ background: "rgba(43,62,232,0.10)" }}>
-                                <Bookmark className="w-7 h-7" style={{ color: "rgba(43,62,232,0.50)" }} />
+                                style={{ background: isHistory ? "rgba(139,92,246,0.10)" : "rgba(43,62,232,0.10)" }}>
+                                {isHistory
+                                    ? <Clock className="w-7 h-7" style={{ color: "rgba(139,92,246,0.50)" }} />
+                                    : <Bookmark className="w-7 h-7" style={{ color: "rgba(43,62,232,0.50)" }} />
+                                }
                             </div>
-                            <p className="text-sm font-bold text-white">Hali hech narsa saqlanmagan</p>
+                            <p className="text-sm font-bold text-white">
+                                {isHistory ? "Ko'rish tarixi bo'sh" : "Hali hech narsa saqlanmagan"}
+                            </p>
                             <p className="text-xs text-center" style={{ color: "rgba(100,120,170,0.70)" }}>
-                                Video, musiqa yoki postlardagi saqlash tugmasini bosing
+                                {isHistory
+                                    ? "Video yoki kontent ko'rganingizda bu yerda ko'rinadi"
+                                    : "Video, musiqa yoki postlardagi saqlash tugmasini bosing"}
                             </p>
                         </div>
                     )}
-                    {visible.map(item => {
+
+                    {/* Watch history items */}
+                    {isHistory && watchHistory.map((v, idx) => {
+                        const vid = v as { title: string; author: string; image: string; views: string; duration: string };
+                        return (
+                            <div key={idx}
+                                className="flex gap-3 py-3 transition-all duration-150 group"
+                                style={{ borderBottom: "1px solid rgba(43,62,232,0.08)" }}>
+                                <div className="relative flex-shrink-0 w-24 h-14 rounded-xl overflow-hidden"
+                                    style={{ border: "1px solid rgba(43,62,232,0.15)" }}>
+                                    <img src={vid.image} alt={vid.title} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                        style={{ background: "rgba(5,8,24,0.55)" }}>
+                                        <Play className="w-4 h-4 text-white fill-white" />
+                                    </div>
+                                    <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[9px] font-bold text-white"
+                                        style={{ background: "rgba(5,8,24,0.80)" }}>{vid.duration}</div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-white leading-snug line-clamp-2 mb-0.5">{vid.title}</p>
+                                    <p className="text-[10px] font-medium" style={{ color: "rgba(100,120,170,0.75)" }}>{vid.author}</p>
+                                    <p className="text-[9px] mt-1" style={{ color: "rgba(80,100,150,0.70)" }}>{vid.views} ko'rish</p>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {/* Saved items */}
+                    {!isHistory && savedItems.map(item => {
                         const TypeIcon = TYPE_ICONS[item.type];
                         const isMusic  = item.type === "music";
                         return (
@@ -212,6 +269,7 @@ export function NxSaved() {
                                 {/* Actions */}
                                 <div className="flex flex-col gap-1.5 flex-shrink-0">
                                     <button
+                                        onClick={() => openShareSheet(item.title)}
                                         className="w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-blue-500/10"
                                         title="Ulashish"
                                     >

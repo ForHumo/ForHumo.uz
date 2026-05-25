@@ -36,7 +36,7 @@ const TRENDING_CLIPS: Clip[] = [
 // NxClips
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxClips() {
-    const { clipsOpen, setClipsOpen } = useNxPlayer();
+    const { clipsOpen, setClipsOpen, openShareSheet } = useNxPlayer();
     const [tab, setTab] = useState<"mine" | "trending">("trending");
     const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -193,7 +193,9 @@ export function NxClips() {
                                                 : <Copy className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.70)" }} />
                                             }
                                         </button>
-                                        <button className="w-7 h-7 flex items-center justify-center rounded-lg"
+                                        <button
+                                            onClick={() => openShareSheet(clip.title)}
+                                            className="w-7 h-7 flex items-center justify-center rounded-lg"
                                             style={{ background: "rgba(43,62,232,0.12)" }}>
                                             <Share2 className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.70)" }} />
                                         </button>

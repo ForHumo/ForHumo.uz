@@ -159,6 +159,7 @@ export function NxNotifications() {
                         return (
                             <button
                                 key={n.id}
+                                onClick={() => setNotifs(p => p.map(x => x.id === n.id ? { ...x, unread: false } : x))}
                                 className="w-full flex items-start gap-3 px-4 py-3.5 text-left transition-all duration-150"
                                 style={{
                                     background:   n.unread ? "rgba(43,62,232,0.06)" : "transparent",

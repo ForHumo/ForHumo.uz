@@ -57,6 +57,7 @@ const TOPICS = ["Hammasi", "Tech", "Biznes", "Musiqa", "AI", "Sport", "Dizayn", 
 // Faol Space oynasi
 // ─────────────────────────────────────────────────────────────────────────────
 function ActiveSpace({ space, onLeave }: { space: Space; onLeave: () => void }) {
+    const { openShareSheet } = useNxPlayer();
     const [muted,    setMuted]    = useState(true);
     const [hand,     setHand]     = useState(false);
     const [likes,    setLikes]    = useState(space.likes);
@@ -259,7 +260,7 @@ function ActiveSpace({ space, onLeave }: { space: Space; onLeave: () => void }) 
                         <span className="text-[9px]" style={{ color: "rgba(100,120,170,0.70)" }}>{likes}</span>
                     </button>
 
-                    <button className="flex flex-col items-center gap-1">
+                    <button onClick={() => openShareSheet(space.title)} className="flex flex-col items-center gap-1">
                         <div className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 active:scale-90"
                             style={{ background: "rgba(43,62,232,0.15)", border: "2px solid rgba(43,62,232,0.40)" }}
                         >

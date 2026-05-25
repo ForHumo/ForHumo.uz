@@ -64,6 +64,8 @@ import { NxReport }          from "./nx-report";
 import { NxAffiliate }       from "./nx-affiliate";
 import { NxAlbums }          from "./nx-albums";
 import { NxStoryCreate }     from "./nx-story-create";
+import { NxMeeting }         from "./nx-meeting";
+import { NxShare }           from "./nx-share";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -293,6 +295,12 @@ export function NexusShell() {
 
                 {/* ── Story yaratish ────────────────────────────────────── */}
                 <NxStoryCreate />
+
+                {/* ── Video Majlis (Zoom/Meet uslubi) ───────────────────── */}
+                <NxMeeting />
+
+                {/* ── Universal ulashish modali ──────────────────────────── */}
+                <NxShare />
             </div>
         </NxPlayerProvider>
     );

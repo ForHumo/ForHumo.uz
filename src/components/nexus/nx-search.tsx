@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useNxPlayer, type NxVideo, type NxTrack } from "./nx-player-ctx";
-import { Search, X, TrendingUp, Clock, Play, Music, BookOpen, Radio, ChevronRight } from "lucide-react";
+import { Search, X, TrendingUp, Clock, Play, Music, BookOpen, Radio, ChevronRight, UserCircle2, BadgeCheck } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock ma'lumotlar
@@ -19,7 +19,7 @@ const TRENDING = [
 const RECENT = ["Nexus arxitektura", "Bahor ohangi", "Toshkent kino"];
 
 interface Result {
-    type: "video" | "music" | "book" | "live";
+    type: "video" | "music" | "book" | "live" | "creator";
     title: string;
     sub: string;
     image: string;
@@ -27,47 +27,54 @@ interface Result {
 }
 
 const ALL_RESULTS: Result[] = [
-    { type: "video", title: "Nexus Arxitekturasi: Zamonaviy Super-App",   sub: "Nexus Dev",    image: "vid20",  meta: "85K ko'rish"   },
-    { type: "video", title: "O'zbekiston 2026 — Texnologiya bo'yicha",    sub: "Tech UZ",      image: "vid21",  meta: "170K ko'rish"  },
-    { type: "music", title: "Bahor Ohangi",                               sub: "Madina",       image: "music50",meta: "450K tinglash" },
-    { type: "music", title: "Tun Yulduzi",                                sub: "Sardor",       image: "music51",meta: "900K tinglash" },
-    { type: "live",  title: "Nexus Launch Event 2026",                    sub: "Humo Official",image: "live10", meta: "18.5K tomoshabin"},
-    { type: "book",  title: "Raqamli Ozodlik",                            sub: "A. Karimov",   image: "book60", meta: "4.8 reyting"   },
-    { type: "video", title: "React 19 yangiliklari va amaliy misollar",   sub: "Sardor",       image: "vid22",  meta: "255K ko'rish"  },
-    { type: "music", title: "Sevgi Qo'shig'i",                            sub: "Kamola",       image: "music52",meta: "1.35M tinglash"},
-    { type: "book",  title: "AI va Biznes Kelajagi",                      sub: "M. Toshmatov", image: "book61", meta: "4.9 reyting"   },
-    { type: "live",  title: "Pro Gaming Tournament Final",                sub: "eSport UZ",    image: "live11", meta: "9.2K tomoshabin"},
-    { type: "video", title: "Musiqa yaratish: bepul vositalar",           sub: "Madina",       image: "vid23",  meta: "340K ko'rish"  },
-    { type: "book",  title: "Kreator Iqtisodiyoti",                       sub: "S. Ergashev",  image: "book62", meta: "4.7 reyting"   },
+    { type: "video",   title: "Nexus Arxitekturasi: Zamonaviy Super-App",   sub: "Nexus Dev",    image: "vid20",    meta: "85K ko'rish"       },
+    { type: "video",   title: "O'zbekiston 2026 — Texnologiya bo'yicha",    sub: "Tech UZ",      image: "vid21",    meta: "170K ko'rish"      },
+    { type: "music",   title: "Bahor Ohangi",                               sub: "Madina",       image: "music50",  meta: "450K tinglash"     },
+    { type: "music",   title: "Tun Yulduzi",                                sub: "Sardor",       image: "music51",  meta: "900K tinglash"     },
+    { type: "live",    title: "Nexus Launch Event 2026",                    sub: "Humo Official",image: "live10",   meta: "18.5K tomoshabin"  },
+    { type: "book",    title: "Raqamli Ozodlik",                            sub: "A. Karimov",   image: "book60",   meta: "4.8 reyting"       },
+    { type: "video",   title: "React 19 yangiliklari va amaliy misollar",   sub: "Sardor",       image: "vid22",    meta: "255K ko'rish"      },
+    { type: "music",   title: "Sevgi Qo'shig'i",                            sub: "Kamola",       image: "music52",  meta: "1.35M tinglash"    },
+    { type: "book",    title: "AI va Biznes Kelajagi",                      sub: "M. Toshmatov", image: "book61",   meta: "4.9 reyting"       },
+    { type: "live",    title: "Pro Gaming Tournament Final",                sub: "eSport UZ",    image: "live11",   meta: "9.2K tomoshabin"   },
+    { type: "video",   title: "Musiqa yaratish: bepul vositalar",           sub: "Madina",       image: "vid23",    meta: "340K ko'rish"      },
+    { type: "book",    title: "Kreator Iqtisodiyoti",                       sub: "S. Ergashev",  image: "book62",   meta: "4.7 reyting"       },
+    { type: "creator", title: "Sardor Dev",                                 sub: "@sardor_dev",  image: "cr_seed1", meta: "128K obunachilar"  },
+    { type: "creator", title: "Madina Ergash",                              sub: "@madina_music",image: "cr_seed2", meta: "890K obunachilar"  },
+    { type: "creator", title: "Tech UZ",                                    sub: "@tech_uz",     image: "cr_seed3", meta: "320K obunachilar"  },
+    { type: "creator", title: "Humo Official",                              sub: "@humo",        image: "cr_seed4", meta: "1.2M obunachilar"  },
 ];
 
 const TYPE_ICONS = {
-    video: Play,
-    music: Music,
-    book:  BookOpen,
-    live:  Radio,
+    video:   Play,
+    music:   Music,
+    book:    BookOpen,
+    live:    Radio,
+    creator: UserCircle2,
 } as const;
 
 const TYPE_COLORS = {
-    video: "rgba(43,62,232,0.70)",
-    music: "rgba(16,185,129,0.70)",
-    book:  "rgba(245,158,11,0.70)",
-    live:  "rgba(239,68,68,0.70)",
+    video:   "rgba(43,62,232,0.70)",
+    music:   "rgba(16,185,129,0.70)",
+    book:    "rgba(245,158,11,0.70)",
+    live:    "rgba(239,68,68,0.70)",
+    creator: "rgba(139,92,246,0.70)",
 } as const;
 
-const FILTERS = ["Barchasi", "Video", "Musiqa", "Jonli", "Kitob"] as const;
+const FILTERS = ["Barchasi", "Video", "Musiqa", "Jonli", "Kitob", "Kreatorlar"] as const;
 type Filter = typeof FILTERS[number];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxSearch — to'liq ekran qidiruv overlay
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxSearch() {
-    const { searchOpen, setSearchOpen, openVideo, playTrack } = useNxPlayer();
+    const { searchOpen, setSearchOpen, openVideo, playTrack, openChannel } = useNxPlayer();
 
     const handleResultClick = (r: Result) => {
         setSearchOpen(false);
-        if (r.type === "music") {
-            const durationParts = "3:30".split(":").map(Number);
+        if (r.type === "creator") {
+            openChannel(r.title);
+        } else if (r.type === "music") {
             const t: NxTrack = {
                 title: r.title, artist: r.sub,
                 image: `https://picsum.photos/seed/${r.image}/400/400`,
@@ -110,11 +117,12 @@ export function NxSearch() {
 
     /* Filtrlangan natijalar */
     const typeMap: Record<Filter, Result["type"] | null> = {
-        "Barchasi": null,
-        "Video":    "video",
-        "Musiqa":   "music",
-        "Jonli":    "live",
-        "Kitob":    "book",
+        "Barchasi":   null,
+        "Video":      "video",
+        "Musiqa":     "music",
+        "Jonli":      "live",
+        "Kitob":      "book",
+        "Kreatorlar": "creator",
     };
 
     const results = ALL_RESULTS.filter(r => {
@@ -245,32 +253,50 @@ export function NxSearch() {
                                 {results.length} ta natija
                             </p>
                             {results.map((r, i) => {
-                                const Icon = TYPE_ICONS[r.type];
+                                const Icon  = TYPE_ICONS[r.type];
+                                const color = TYPE_COLORS[r.type];
+                                const isCreator = r.type === "creator";
                                 return (
                                     <button
                                         key={i}
                                         onClick={() => handleResultClick(r)}
                                         className="w-full flex items-center gap-3 p-2.5 rounded-xl mb-1 text-left transition-all duration-150 hover:bg-blue-500/5 group"
                                     >
-                                        {/* Thumbnail */}
-                                        <div className="relative w-14 h-9 rounded-lg overflow-hidden flex-shrink-0"
-                                            style={{ border: "1px solid rgba(43,62,232,0.15)" }}>
-                                            <img
-                                                src={`https://picsum.photos/seed/${r.image}/200/112`}
-                                                alt={r.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                                                style={{ background: "rgba(5,8,24,0.55)" }}>
-                                                <Icon className="w-3.5 h-3.5" style={{ color: "#fff" }} />
+                                        {/* Thumbnail / Avatar */}
+                                        {isCreator ? (
+                                            <div className="relative w-9 h-9 rounded-full overflow-hidden flex-shrink-0"
+                                                style={{ border: "2px solid rgba(139,92,246,0.35)" }}>
+                                                <img
+                                                    src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${r.title}`}
+                                                    alt={r.title}
+                                                    className="w-full h-full object-cover bg-white"
+                                                />
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <div className="relative w-14 h-9 rounded-lg overflow-hidden flex-shrink-0"
+                                                style={{ border: "1px solid rgba(43,62,232,0.15)" }}>
+                                                <img
+                                                    src={`https://picsum.photos/seed/${r.image}/200/112`}
+                                                    alt={r.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                                                    style={{ background: "rgba(5,8,24,0.55)" }}>
+                                                    <Icon className="w-3.5 h-3.5" style={{ color: "#fff" }} />
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* Ma'lumot */}
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[13px] font-bold text-white truncate group-hover:text-[#00CEC8] transition-colors">
-                                                {r.title}
-                                            </p>
+                                            <div className="flex items-center gap-1">
+                                                <p className="text-[13px] font-bold text-white truncate group-hover:text-[#00CEC8] transition-colors">
+                                                    {r.title}
+                                                </p>
+                                                {isCreator && (
+                                                    <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                                )}
+                                            </div>
                                             <p className="text-[10px] truncate mt-0.5" style={{ color: "rgba(100,120,170,0.70)" }}>
                                                 {r.sub} · {r.meta}
                                             </p>
@@ -279,9 +305,9 @@ export function NxSearch() {
                                         {/* Tur belgisi */}
                                         <div
                                             className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
-                                            style={{ background: TYPE_COLORS[r.type].replace("0.70", "0.15") }}
+                                            style={{ background: color.replace("0.70", "0.15") }}
                                         >
-                                            <Icon className="w-3 h-3" style={{ color: TYPE_COLORS[r.type] }} />
+                                            <Icon className="w-3 h-3" style={{ color }} />
                                         </div>
                                     </button>
                                 );

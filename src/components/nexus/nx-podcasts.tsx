@@ -78,7 +78,7 @@ const MOCK_PODCASTS: Podcast[] = [
 // NxPodcasts
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxPodcasts() {
-    const { podcastsOpen, setPodcastsOpen } = useNxPlayer();
+    const { podcastsOpen, setPodcastsOpen, openShareSheet } = useNxPlayer();
 
     const [detail,     setDetail]     = useState<Podcast | null>(null);
     const [playing,    setPlaying]    = useState<string | null>(null);
@@ -223,7 +223,9 @@ export function NxPodcasts() {
                                                 <Download className="w-3.5 h-3.5" />
                                                 Yuklash
                                             </button>
-                                            <button className="flex items-center gap-1.5 text-[10px] font-semibold"
+                                            <button
+                                                onClick={() => openShareSheet(ep.title)}
+                                                className="flex items-center gap-1.5 text-[10px] font-semibold"
                                                 style={{ color: "rgba(100,120,170,0.60)" }}>
                                                 <Share2 className="w-3.5 h-3.5" />
                                                 Ulashish
