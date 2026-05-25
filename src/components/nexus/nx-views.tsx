@@ -212,6 +212,8 @@ export function VideoView() {
 // LIVE VIEW
 // ─────────────────────────────────────────────────────────────────────────────
 export function LiveView() {
+    const { setGoLiveOpen } = useNxPlayer();
+
     return (
         <ViewShell>
             <ViewHeader
@@ -228,6 +230,42 @@ export function LiveView() {
                     { icon: Hash,   label: "Ta'lim"     },
                 ]} />
             </ViewHeader>
+
+            {/* ── Go Live CTA ─────────────────────────────────────── */}
+            <div className="mx-4 mt-3 mb-1">
+                <button
+                    onClick={() => setGoLiveOpen(true)}
+                    className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200 active:scale-[0.99] group"
+                    style={{
+                        background: "linear-gradient(135deg, rgba(239,68,68,0.18) 0%, rgba(249,115,22,0.12) 100%)",
+                        border: "1px solid rgba(239,68,68,0.35)",
+                        boxShadow: "0 4px 24px rgba(239,68,68,0.12)",
+                    }}
+                >
+                    {/* Pulse dot */}
+                    <div className="relative flex-shrink-0">
+                        <div className="w-11 h-11 rounded-xl flex items-center justify-center"
+                            style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
+                            <Radio className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 flex items-center justify-center">
+                            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                        </span>
+                    </div>
+
+                    {/* Text */}
+                    <div className="flex-1 text-left">
+                        <p className="text-sm font-black text-white leading-tight">Jonli Efir Boshlash</p>
+                        <p className="text-[11px] mt-0.5" style={{ color: "rgba(200,120,100,0.85)" }}>
+                            Auditoriyangizga real vaqtda ulaning
+                        </p>
+                    </div>
+
+                    {/* Arrow */}
+                    <ChevronRight className="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5"
+                        style={{ color: "rgba(239,68,68,0.70)" }} />
+                </button>
+            </div>
 
             <NxRow title="Hozir Jonli" accent="linear-gradient(180deg,#EF4444,#F97316)">
                 {[

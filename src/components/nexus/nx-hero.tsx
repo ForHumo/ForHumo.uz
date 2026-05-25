@@ -5,6 +5,7 @@ import {
     Play, Star, Eye, ChevronLeft, ChevronRight,
     Flame, Radio, Music2, BookOpen,
 } from "lucide-react";
+import { useNxPlayer } from "./nx-player-ctx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Featured kontentlar
@@ -79,10 +80,49 @@ export function NxHero() {
     const [current, setCurrent] = useState(0);
     const [paused,  setPaused]  = useState(false);
 
+    const {
+        openVideo,
+        playTrack,
+        setGoLiveOpen,
+        setReaderOpen,
+    } = useNxPlayer();
+
     const next = useCallback(() =>
         setCurrent(c => (c + 1) % FEATURED.length), []);
     const prev = useCallback(() =>
         setCurrent(c => (c - 1 + FEATURED.length) % FEATURED.length), []);
+
+    const handleAction = useCallback(() => {
+        const item = FEATURED[current];
+        switch (item.type) {
+            case "KINO":
+                openVideo({
+                    title:    item.title,
+                    author:   "@NexusStudios",
+                    avatar:   `https://api.dicebear.com/9.x/avataaars/svg?seed=NexusStudios`,
+                    image:    item.image,
+                    views:    item.views,
+                    duration: item.duration,
+                });
+                break;
+            case "JONLI":
+                setGoLiveOpen(true);
+                break;
+            case "MUSIQA":
+                playTrack({
+                    title:       item.title,
+                    artist:      "Turli ijrochilar",
+                    image:       item.image,
+                    src:         "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+                    duration:    "3:30",
+                    durationSec: 210,
+                });
+                break;
+            case "KITOB":
+                setReaderOpen(true);
+                break;
+        }
+    }, [current, openVideo, playTrack, setGoLiveOpen, setReaderOpen]);
 
     // Auto-rotate every 5s
     useEffect(() => {
@@ -198,6 +238,7 @@ export function NxHero() {
 
                     {/* Play / Action tugmasi */}
                     <button
+                        onClick={e => { e.stopPropagation(); handleAction(); }}
                         className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white transition-all duration-150 active:scale-95"
                         style={{
                             background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
