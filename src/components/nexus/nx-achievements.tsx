@@ -42,7 +42,8 @@ const LEVEL_PROGRESS = (TOTAL_XP % 300) / 300 * 100;
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxAchievements() {
     const { achievementsOpen, setAchievementsOpen } = useNxPlayer();
-    const [filter, setFilter] = useState<"all" | "unlocked" | "locked">("all");
+    const [filter,   setFilter]   = useState<"all" | "unlocked" | "locked">("all");
+    const [expanded, setExpanded] = useState<string | null>(null);
 
     const filtered = ACHIEVEMENTS.filter(a =>
         filter === "all" ? true : filter === "unlocked" ? a.unlocked : !a.unlocked
@@ -144,14 +145,19 @@ export function NxAchievements() {
                     <div className="flex flex-col gap-3">
                         {filtered.map(a => {
                             const AIcon = a.icon;
+                            const isExpanded = expanded === a.id;
                             return (
-                                <div key={a.id}
-                                    className="flex items-center gap-3 p-3 rounded-2xl transition-all duration-200"
+                                <button key={a.id}
+                                    onClick={() => setExpanded(isExpanded ? null : a.id)}
+                                    className="flex flex-col gap-0 rounded-2xl transition-all duration-200 text-left w-full"
                                     style={{
                                         background: a.unlocked ? "rgba(11,18,40,0.80)" : "rgba(11,18,40,0.40)",
-                                        border: `1px solid ${a.unlocked ? `${a.color}30` : "rgba(43,62,232,0.10)"}`,
+                                        border: `1px solid ${isExpanded ? `${a.color}60` : a.unlocked ? `${a.color}30` : "rgba(43,62,232,0.10)"}`,
                                         opacity: a.unlocked ? 1 : 0.75,
-                                    }}>
+                                        boxShadow: isExpanded ? `0 0 16px ${a.color}20` : "none",
+                                    }}
+                                >
+                                <div className="flex items-center gap-3 p-3">
                                     {/* Icon */}
                                     <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 relative"
                                         style={{
@@ -210,6 +216,28 @@ export function NxAchievements() {
                                         </span>
                                     ) : null}
                                 </div>
+                                {/* Expanded detail */}
+                                {isExpanded && (
+                                    <div className="px-3 pb-3 border-t"
+                                        style={{ borderColor: `${a.color}20` }}>
+                                        <p className="text-[11px] mt-2 leading-relaxed"
+                                            style={{ color: "rgba(140,160,210,0.80)" }}>
+                                            {a.unlocked
+                                                ? `Bu nishon ${a.unlockedAt ?? "oldin"} da olindi. Siz +${a.xp} XP yig'indingiz.`
+                                                : `Bu nishonni qo'lga kiritish uchun ${a.progress !== undefined ? `${a.progress}% bajarildi` : "shartlarni bajaring"}.`}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 mt-2">
+                                            <span className="text-[10px] font-black px-2 py-0.5 rounded-lg"
+                                                style={{ background: `${a.color}20`, color: a.color }}>
+                                                +{a.xp} XP
+                                            </span>
+                                            <span className="text-[10px]" style={{ color: "rgba(80,100,150,0.60)" }}>
+                                                Oddiy daraja
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                                </button>
                             );
                         })}
                     </div>
