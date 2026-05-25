@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Crown, Check, Zap, Music, Video, Star,
@@ -217,11 +218,12 @@ function PlanCard({
     const isPro     = plan.id === "pro";
     const isCreator = plan.id === "creator";
     const isFree    = plan.id === "free";
+    const [selected, setSelected] = useState(false);
 
     const handleCta = () => {
-        if (!isFree) {
-            // Test rejimi: haqiqiy to'lov yo'q
-            alert(`"${plan.name}" tanlandi. To'lov tizimi hali tayyor emas — test rejimi.`);
+        if (!isFree && !selected) {
+            setSelected(true);
+            setTimeout(() => setSelected(false), 3000);
         }
     };
 
@@ -299,9 +301,13 @@ function PlanCard({
                 {/* CTA button */}
                 <button
                     onClick={handleCta}
-                    disabled={isFree}
-                    className="w-full py-3 rounded-xl text-sm font-black transition-all duration-200 flex items-center justify-center gap-2"
-                    style={isFree ? {
+                    disabled={isFree || selected}
+                    className="w-full py-3 rounded-xl text-sm font-black transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
+                    style={selected ? {
+                        background: "linear-gradient(135deg,#10B981,#0D9488)",
+                        boxShadow: "0 0 20px rgba(16,185,129,0.40)",
+                        color: "#fff",
+                    } : isFree ? {
                         background: "rgba(43,62,232,0.08)",
                         border: "1px solid rgba(43,62,232,0.18)",
                         color: "rgba(100,120,170,0.70)",
@@ -316,8 +322,11 @@ function PlanCard({
                         color: "#fff",
                     }}
                 >
-                    {plan.cta}
-                    {!isFree && <ChevronRight className="w-4 h-4" />}
+                    {selected ? (
+                        <><Check className="w-4 h-4" /> Tanlandi! To'lov tizimi tez kunda</>
+                    ) : (
+                        <>{plan.cta}{!isFree && <ChevronRight className="w-4 h-4" />}</>
+                    )}
                 </button>
             </div>
         </div>
