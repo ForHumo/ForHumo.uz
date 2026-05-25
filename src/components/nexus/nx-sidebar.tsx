@@ -22,6 +22,7 @@ interface Props {
     open: boolean;
     onClose: () => void;
     onOpenSettings: () => void;
+    onNavigate?: (tab: "feed" | "video" | "live" | "media" | "social" | "profile") => void;
 }
 
 const NAV_ITEMS = [
@@ -35,7 +36,7 @@ const NAV_ITEMS = [
     { icon: MessageCircle, label: "Chatlar va kanallar", section: "social" },
 ];
 
-export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
+export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) {
     const { data: session } = useSession();
     const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, openSavedHistory, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen, setGoLiveOpen, setGiftsOpen, setLeaderboardOpen, setSuggestionsOpen, setWatchPartyOpen, setCommunityOpen, setClipsOpen, setAchievementsOpen, setMiniAppsOpen, setScheduleOpen, setShopOpen, setReaderOpen, setFundraiserOpen, setForumOpen, setPodcastsOpen, setCollabOpen, setRemindersOpen, setPollsOpen, setStatsOpen, setDraftsOpen, setBadgesOpen, setReportOpen, setAffiliateOpen, setAlbumsOpen, setStoryCreateOpen, setMeetingOpen, openChannel } = useNxPlayer();
     const name   = session?.user?.name  ?? "Mehmon";
@@ -178,17 +179,17 @@ export function NxSidebar({ open, onClose, onOpenSettings }: Props) {
 
                     {/* ── Navigation ────────────────────────────────── */}
                     <SidebarSection title="Kontent">
-                        <SidebarItem icon={Home}          label="Asosiy lenta"       onClick={onClose} />
-                        <SidebarItem icon={Play}          label="Videolar"            onClick={onClose} />
-                        <SidebarItem icon={Radio}         label="Jonli efirlar"       onClick={onClose} />
+                        <SidebarItem icon={Home}          label="Asosiy lenta"       onClick={() => { onClose(); onNavigate?.("feed");   }} />
+                        <SidebarItem icon={Play}          label="Videolar"            onClick={() => { onClose(); onNavigate?.("video");  }} />
+                        <SidebarItem icon={Radio}         label="Jonli efirlar"       onClick={() => { onClose(); onNavigate?.("live");   }} />
                     </SidebarSection>
 
                     <SidebarSection title="Media">
-                        <SidebarItem icon={Film}          label="Kino va seriallar"   onClick={onClose} />
-                        <SidebarItem icon={Music}         label="Musiqa"              onClick={onClose} />
+                        <SidebarItem icon={Film}          label="Kino va seriallar"   onClick={() => { onClose(); onNavigate?.("media");  }} />
+                        <SidebarItem icon={Music}         label="Musiqa"              onClick={() => { onClose(); onNavigate?.("media");  }} />
                         <SidebarItem icon={Mic}           label="Podkastlar"          onClick={() => { onClose(); setPodcastsOpen(true); }} />
                         <SidebarItem icon={BookOpen}      label="Kitoblar"            onClick={() => { onClose(); setReaderOpen(true); }} />
-                        <SidebarItem icon={MessageCircle} label="Chatlar va kanallar" onClick={() => { onClose(); setGroupsOpen(true); }} />
+                        <SidebarItem icon={MessageCircle} label="Chatlar va kanallar" onClick={() => { onClose(); onNavigate?.("social"); }} />
                     </SidebarSection>
 
                     <SidebarSection title="Kashfiyot">

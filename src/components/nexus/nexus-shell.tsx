@@ -120,6 +120,7 @@ export function NexusShell() {
                     open={sidebarOpen}
                     onClose={() => setSidebarOpen(false)}
                     onOpenSettings={() => { setSidebarOpen(false); setSettingsOpen(true); }}
+                    onNavigate={tab => { setSidebarOpen(false); setActiveTab(tab); }}
                 />
 
                 {/* ── Settings ──────────────────────────────────────────── */}
