@@ -63,7 +63,7 @@ const CAT_ICONS: Record<string, React.ElementType> = {
 // NxTrending
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxTrending() {
-    const { trendingOpen, setTrendingOpen } = useNxPlayer();
+    const { trendingOpen, setTrendingOpen, setSearchOpen } = useNxPlayer();
     const [cat,  setCat]  = useState<Cat>("Barchasi");
     const [tab,  setTab]  = useState<"trends" | "news">("trends");
     const [q,    setQ]    = useState("");
@@ -180,6 +180,7 @@ export function NxTrending() {
                                 const CatIcon = CAT_ICONS[t.category] ?? CAT_ICONS.default;
                                 return (
                                     <button key={t.id}
+                                        onClick={() => { setSearchOpen(true); setTrendingOpen(false); }}
                                         className="flex items-center gap-3 p-3 rounded-2xl w-full text-left transition-all duration-150 group"
                                         style={{ background: "rgba(11,18,40,0.50)", border: "1px solid rgba(43,62,232,0.12)" }}
                                         onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.30)"}
