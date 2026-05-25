@@ -270,6 +270,16 @@ export function NxBadges() {
                 </div>
 
                 {/* Badge grid */}
+                {visible.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-16 gap-3 px-4">
+                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.15)" }}>
+                            <Shield className="w-6 h-6" style={{ color: "rgba(43,62,232,0.40)" }} />
+                        </div>
+                        <p className="text-sm font-bold text-white">Nishon topilmadi</p>
+                        <p className="text-[11px]" style={{ color: "rgba(80,100,150,0.70)" }}>Boshqa filtr tanlang</p>
+                    </div>
+                )}
                 <div className="px-4 pb-8 grid grid-cols-2 gap-3">
                     {visible.map(b => {
                         const Icon   = b.icon;

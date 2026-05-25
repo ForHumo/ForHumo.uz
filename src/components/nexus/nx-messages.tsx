@@ -161,6 +161,16 @@ export function NxMessages() {
                     </div>
                     {/* Chat list */}
                     <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+                        {filteredChats.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-16 gap-3">
+                                <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                                    style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.15)" }}>
+                                    <Search className="w-6 h-6" style={{ color: "rgba(43,62,232,0.40)" }} />
+                                </div>
+                                <p className="text-sm font-bold text-white">Suhbat topilmadi</p>
+                                <p className="text-[11px]" style={{ color: "rgba(80,100,150,0.70)" }}>Boshqa nom bilan qidiring</p>
+                            </div>
+                        )}
                         {filteredChats.map(c => (
                             <button key={c.id} onClick={() => setSelected(c)}
                                 className="w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all duration-150"
