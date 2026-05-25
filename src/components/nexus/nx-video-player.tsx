@@ -12,7 +12,7 @@ import {
 // NxVideoPlayer — to'liq ekran video modal
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxVideoPlayer() {
-    const { video, videoOpen, closeVideo, openComments, setLiveChatOpen, openShareSheet, setSavedOpen } = useNxPlayer();
+    const { video, videoOpen, closeVideo, openComments, setLiveChatOpen, openShareSheet, setSavedOpen, openVideo } = useNxPlayer();
 
     const [playing,   setPlaying]   = useState(false);
     const [progress,  setProgress]  = useState(0);
@@ -346,8 +346,23 @@ export function NxVideoPlayer() {
                         <p className="text-[9px] font-black uppercase tracking-widest mb-3" style={{ color: "rgba(43,62,232,0.55)" }}>
                             Keyingi videolar
                         </p>
-                        {Array.from({ length: 6 }, (_, i) => (
-                            <div key={i} className="flex gap-2.5 mb-3 cursor-pointer group">
+                        {Array.from({ length: 6 }, (_, i) => {
+                            const recTitles = ["Nexus platformasi bilan tanishing","O'zbek texnologiyasi 2026","React 19 va Server Actions","AI bilan ishlaymiz","Mobile birinchi yondashuv","Creator Economy"];
+                            const recAuthors = ["Nexus Dev","Tech UZ","Sardor","AI Studio","Humo","Creator"];
+                            const recTitle  = recTitles[i];
+                            const recAuthor = recAuthors[i];
+                            return (
+                            <button key={i}
+                                onClick={() => openVideo({
+                                    title:    recTitle,
+                                    author:   recAuthor,
+                                    avatar:   `https://api.dicebear.com/9.x/avataaars/svg?seed=${recAuthor}`,
+                                    image:    `https://picsum.photos/seed/rec${i + 80}/800/450`,
+                                    views:    `${(i + 1) * 45}K`,
+                                    duration: `${8 + i * 2}:${String(i * 13 % 60).padStart(2, "0")}`,
+                                })}
+                                className="w-full flex gap-2.5 mb-3 group text-left"
+                            >
                                 <div className="relative w-24 aspect-video rounded-lg overflow-hidden flex-shrink-0"
                                     style={{ border: "1px solid rgba(43,62,232,0.15)" }}>
                                     <img
@@ -361,10 +376,10 @@ export function NxVideoPlayer() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[11px] font-bold text-white leading-snug line-clamp-2 mb-1 group-hover:text-[#00CEC8] transition-colors">
-                                        {["Nexus platformasi bilan tanishing","O'zbek texnologiyasi 2026","React 19 va Server Actions","AI bilan ishlaymiz","Mobile birinchi yondashuv","Creator Economy"][i]}
+                                        {recTitle}
                                     </p>
                                     <p className="text-[9px]" style={{ color: "rgba(100,120,170,0.70)" }}>
-                                        {["Nexus Dev","Tech UZ","Sardor","AI Studio","Humo","Creator"][i]}
+                                        {recAuthor}
                                     </p>
                                     <div className="flex items-center gap-1 mt-0.5">
                                         <ChevronRight className="w-2.5 h-2.5" style={{ color: "rgba(43,62,232,0.40)" }} />
@@ -373,8 +388,9 @@ export function NxVideoPlayer() {
                                         </span>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            </button>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
