@@ -681,6 +681,10 @@ export function ProfileView() {
     const [editBio,     setEditBio]     = useState("");
     const [saving,      setSaving]      = useState(false);
     const [saveError,   setSaveError]   = useState("");
+    const [toggles,     setToggles]     = useState([true, true, false]); // ochiq profil, 2FA, bildirishnomalar
+
+    const flipToggle = (i: number) =>
+        setToggles(prev => prev.map((v, idx) => idx === i ? !v : v));
 
     /* Real profil ma'lumotlarini yuklash */
     const fetchProfile = useCallback(async () => {
@@ -934,11 +938,14 @@ export function ProfileView() {
                         <div key={i} className="flex items-center justify-between p-3 rounded-xl"
                             style={{ background: "rgba(5,8,24,0.50)", border: "1px solid rgba(43,62,232,0.12)" }}>
                             <span className="text-sm font-medium" style={{ color: "rgba(140,160,210,0.85)" }}>{label}</span>
-                            <div className="w-9 h-5 rounded-full relative cursor-pointer"
-                                style={{ background: i < 2 ? "linear-gradient(90deg,#2B3EE8,#00CEC8)" : "rgba(43,62,232,0.20)" }}>
+                            <button
+                                onClick={() => flipToggle(i)}
+                                className="w-9 h-5 rounded-full relative transition-all duration-200 flex-shrink-0"
+                                style={{ background: toggles[i] ? "linear-gradient(90deg,#2B3EE8,#00CEC8)" : "rgba(43,62,232,0.20)" }}
+                            >
                                 <div className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-200"
-                                    style={{ [i < 2 ? "right" : "left"]: "2px" }} />
-                            </div>
+                                    style={{ [toggles[i] ? "right" : "left"]: "2px" }} />
+                            </button>
                         </div>
                     ))}
                     <button
