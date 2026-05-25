@@ -290,12 +290,14 @@ function BellButton({ onOpen }: { onOpen: () => void }) {
 // Profile avatar button
 // ─────────────────────────────────────────────────────────────────────────────
 function ProfileButton({ session }: { session: ReturnType<typeof useSession>["data"] }) {
+    const { openChannel } = useNxPlayer();
     const name   = session?.user?.name  ?? null;
     const image  = session?.user?.image ?? null;
     const letter = name ? name[0].toUpperCase() : "?";
 
     return (
         <button
+            onClick={() => name && openChannel(name)}
             className="nx-press flex items-center gap-2 h-9 pl-1 pr-2.5 rounded-xl transition-colors duration-150"
             style={{
                 background: "rgba(43,62,232,0.08)",

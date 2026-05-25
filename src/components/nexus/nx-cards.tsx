@@ -257,8 +257,9 @@ export function MusicCard({ title, artist, image, duration, listens, track: trac
 export function BookCard({ title, author, image, rating, pages, type }: {
     title: string; author: string; image: string; rating: string; pages: string; type: "ebook" | "audio";
 }) {
+    const { setReaderOpen } = useNxPlayer();
     return (
-        <div className="nx-press flex-shrink-0 w-32 md:w-40 group cursor-pointer">
+        <div className="nx-press flex-shrink-0 w-32 md:w-40 group cursor-pointer" onClick={() => setReaderOpen(true)}>
             <div
                 className="relative aspect-[2/3] rounded-xl overflow-hidden mb-2.5"
                 style={{ border: "1px solid rgba(43,62,232,0.20)", boxShadow: "4px 4px 16px rgba(0,0,0,0.40)" }}
