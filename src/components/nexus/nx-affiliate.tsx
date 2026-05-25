@@ -59,7 +59,7 @@ function nextTier(count: number): TierInfo | null {
 // NxAffiliate
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxAffiliate() {
-    const { affiliateOpen, setAffiliateOpen } = useNxPlayer();
+    const { affiliateOpen, setAffiliateOpen, setWalletOpen } = useNxPlayer();
 
     const [copiedCode, setCopiedCode] = useState(false);
     const [copiedLink, setCopiedLink] = useState(false);
@@ -280,7 +280,9 @@ export function NxAffiliate() {
                             </p>
                         </div>
 
-                        <button className="w-full py-3.5 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2"
+                        <button
+                            onClick={() => { setAffiliateOpen(false); setWalletOpen(true); }}
+                            className="w-full py-3.5 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2 transition-all duration-150 active:scale-95"
                             style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
                             <Gift className="w-4 h-4" />
                             Hamyonga o'tkazish
