@@ -79,12 +79,13 @@ function fmtNum(n: number): string {
 // NxCommunity
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxCommunity() {
-    const { communityOpen, setCommunityOpen, openShareSheet } = useNxPlayer();
-    const [posts,      setPosts]      = useState(MOCK_POSTS);
-    const [tab,        setTab]        = useState<"feed" | "popular">("feed");
-    const [votedPolls, setVotedPolls] = useState<Record<string, number>>({});
+    const { communityOpen, setCommunityOpen, openShareSheet, setPollsOpen, openComments } = useNxPlayer();
+    const [posts,       setPosts]       = useState(MOCK_POSTS);
+    const [tab,         setTab]         = useState<"feed" | "popular">("feed");
+    const [votedPolls,  setVotedPolls]  = useState<Record<string, number>>({});
     const [composerOpen, setComposerOpen] = useState(false);
     const [newText,      setNewText]      = useState("");
+    const [menuPostId,   setMenuPostId]   = useState<string | null>(null);
 
     const toggleLike = (id: string) => {
         setPosts(prev => prev.map(p => p.id === id
@@ -217,11 +218,15 @@ export function NxCommunity() {
                                 />
                                 <div className="flex items-center gap-2 mt-3 pt-3"
                                     style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
-                                    <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold"
+                                    <button
+                                        onClick={() => setNewText(t => t + " 🖼️")}
+                                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-150 active:scale-95"
                                         style={{ background: "rgba(43,62,232,0.10)", color: "rgba(140,160,210,0.70)" }}>
                                         <Image className="w-3.5 h-3.5" /> Rasm
                                     </button>
-                                    <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold"
+                                    <button
+                                        onClick={() => { setComposerOpen(false); setNewText(""); setCommunityOpen(false); setPollsOpen(true); }}
+                                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-150 active:scale-95"
                                         style={{ background: "rgba(43,62,232,0.10)", color: "rgba(140,160,210,0.70)" }}>
                                         <BarChart2 className="w-3.5 h-3.5" /> So'rovnoma
                                     </button>
@@ -280,8 +285,10 @@ export function NxCommunity() {
                                             {post.timeAgo}
                                         </p>
                                     </div>
-                                    <button className="w-7 h-7 flex items-center justify-center rounded-full"
-                                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                                    <button
+                                        onClick={() => setMenuPostId(menuPostId === post.id ? null : post.id)}
+                                        className="w-7 h-7 flex items-center justify-center rounded-full transition-all duration-150 active:scale-90 relative"
+                                        style={{ background: menuPostId === post.id ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.10)" }}>
                                         <MoreHorizontal className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.60)" }} />
                                     </button>
                                 </div>
@@ -369,7 +376,9 @@ export function NxCommunity() {
                                             {fmtNum(post.likes)}
                                         </span>
                                     </button>
-                                    <button className="flex items-center gap-1.5 text-xs font-bold">
+                                    <button
+                                        onClick={() => openComments(post.text.slice(0, 50))}
+                                        className="flex items-center gap-1.5 text-xs font-bold transition-all duration-150 active:scale-95">
                                         <MessageSquare className="w-4 h-4" style={{ color: "rgba(140,160,210,0.60)" }} />
                                         <span style={{ color: "rgba(140,160,210,0.70)" }}>{fmtNum(post.comments)}</span>
                                     </button>

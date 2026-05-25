@@ -61,13 +61,19 @@ const AUTO_REPLIES = [
 // NxMessages
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxMessages() {
-    const { messagesOpen, setMessagesOpen } = useNxPlayer();
-    const [selected, setSelected]       = useState<ChatItem | null>(null);
-    const [msgs, setMsgs]               = useState<Record<number, Msg[]>>(INIT_MSGS);
-    const [input, setInput]             = useState("");
-    const [query, setQuery]             = useState("");
-    const [typing, setTyping]           = useState(false);
+    const { messagesOpen, setMessagesOpen, setCallsOpen, setMeetingOpen } = useNxPlayer();
+    const [selected,   setSelected]   = useState<ChatItem | null>(null);
+    const [msgs,       setMsgs]       = useState<Record<number, Msg[]>>(INIT_MSGS);
+    const [input,      setInput]      = useState("");
+    const [query,      setQuery]      = useState("");
+    const [typing,     setTyping]     = useState(false);
+    const [showEmoji,  setShowEmoji]  = useState(false);
+    const [infoOpen,   setInfoOpen]   = useState(false);
     const endRef = useRef<HTMLDivElement>(null);
+
+    const EMOJI_LIST = ["😊","👍","❤️","😂","🔥","✅","🎉","👏","😍","🤝","💯","🚀"];
+
+    const insertEmoji = (e: string) => { setInput(p => p + e); setShowEmoji(false); };
 
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -219,16 +225,22 @@ export function NxMessages() {
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
-                                <button className="w-8 h-8 flex items-center justify-center rounded-xl"
+                                <button
+                                    onClick={() => { setMessagesOpen(false); setCallsOpen(true); }}
+                                    className="w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-90"
                                     style={{ background: "rgba(43,62,232,0.08)" }}>
                                     <Phone className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.75)" }} />
                                 </button>
-                                <button className="w-8 h-8 flex items-center justify-center rounded-xl"
+                                <button
+                                    onClick={() => { setMessagesOpen(false); setMeetingOpen(true); }}
+                                    className="w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-90"
                                     style={{ background: "rgba(43,62,232,0.08)" }}>
                                     <Video className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.75)" }} />
                                 </button>
-                                <button className="w-8 h-8 flex items-center justify-center rounded-xl"
-                                    style={{ background: "rgba(43,62,232,0.08)" }}>
+                                <button
+                                    onClick={() => setInfoOpen(p => !p)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-90"
+                                    style={{ background: infoOpen ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)" }}>
                                     <MoreHorizontal className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.75)" }} />
                                 </button>
                             </div>
@@ -292,14 +304,55 @@ export function NxMessages() {
                             <div ref={endRef} />
                         </div>
 
+                        {/* Contact info panel */}
+                        {infoOpen && selected && (
+                            <div className="flex-shrink-0 px-4 py-3 flex items-center gap-3"
+                                style={{ borderTop: "1px solid rgba(43,62,232,0.14)", background: "rgba(43,62,232,0.05)" }}>
+                                <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0"
+                                    style={{ border: "2px solid rgba(43,62,232,0.30)" }}>
+                                    <img src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${selected.name}`}
+                                        alt="" className="w-full h-full object-cover bg-white" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-white">{selected.name}</p>
+                                    <p className="text-[10px]" style={{ color: selected.online ? "#10B981" : "rgba(80,100,150,0.70)" }}>
+                                        {selected.online ? "● Online" : "○ Offline"} {selected.group ? "· Guruh" : "· Shaxsiy"}
+                                    </p>
+                                </div>
+                                <button onClick={() => setInfoOpen(false)}
+                                    className="text-[10px] px-2.5 py-1 rounded-lg"
+                                    style={{ background: "rgba(43,62,232,0.12)", color: "rgba(140,160,210,0.70)" }}>
+                                    Yopish
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Emoji picker */}
+                        {showEmoji && (
+                            <div className="flex-shrink-0 px-4 py-2 flex flex-wrap gap-2"
+                                style={{ borderTop: "1px solid rgba(43,62,232,0.10)" }}>
+                                {EMOJI_LIST.map(e => (
+                                    <button key={e} onClick={() => insertEmoji(e)}
+                                        className="w-8 h-8 flex items-center justify-center rounded-lg text-lg transition-all duration-100 active:scale-90"
+                                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                                        {e}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
                         {/* Input */}
                         <div className="flex-shrink-0 px-4 py-3 flex items-center gap-2"
                             style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
-                            <button className="w-8 h-8 flex items-center justify-center rounded-xl flex-shrink-0"
-                                style={{ background: "rgba(43,62,232,0.08)" }}>
-                                <Smile className="w-4 h-4" style={{ color: "rgba(140,160,210,0.60)" }} />
+                            <button
+                                onClick={() => setShowEmoji(p => !p)}
+                                className="w-8 h-8 flex items-center justify-center rounded-xl flex-shrink-0 transition-all duration-150 active:scale-90"
+                                style={{ background: showEmoji ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)" }}>
+                                <Smile className="w-4 h-4" style={{ color: showEmoji ? "#00CEC8" : "rgba(140,160,210,0.60)" }} />
                             </button>
-                            <button className="w-8 h-8 flex items-center justify-center rounded-xl flex-shrink-0"
+                            <button
+                                onClick={() => insertEmoji("🖼️")}
+                                className="w-8 h-8 flex items-center justify-center rounded-xl flex-shrink-0 transition-all duration-150 active:scale-90"
                                 style={{ background: "rgba(43,62,232,0.08)" }}>
                                 <ImgIcon className="w-4 h-4" style={{ color: "rgba(140,160,210,0.60)" }} />
                             </button>
