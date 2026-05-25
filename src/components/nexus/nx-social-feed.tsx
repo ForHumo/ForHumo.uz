@@ -213,8 +213,9 @@ function PostCard({ post: p, onLike, onSave, onComment, onAuthor, onShare }: {
     onLike: () => void; onSave: () => void;
     onComment: () => void; onAuthor: () => void; onShare: () => void;
 }) {
-    const [menuOpen, setMenuOpen] = useState(false);
-    const [imgLoaded, setImgLoaded] = useState(false);
+    const [menuOpen,   setMenuOpen]   = useState(false);
+    const [imgLoaded,  setImgLoaded]  = useState(false);
+    const [following,  setFollowing]  = useState(false);
 
     return (
         <div
@@ -245,10 +246,19 @@ function PostCard({ post: p, onLike, onSave, onComment, onAuthor, onShare }: {
                 </div>
                 <div className="flex items-center gap-2">
                     <button
+                        onClick={() => setFollowing(f => !f)}
                         className="px-3 py-1 rounded-xl text-[10px] font-black transition-all duration-150 active:scale-95"
-                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)", color: "#2B3EE8" }}
+                        style={following ? {
+                            background: "rgba(43,62,232,0.08)",
+                            border: "1px solid rgba(43,62,232,0.22)",
+                            color: "rgba(140,160,210,0.75)",
+                        } : {
+                            background: "rgba(43,62,232,0.12)",
+                            border: "1px solid rgba(43,62,232,0.30)",
+                            color: "#2B3EE8",
+                        }}
                     >
-                        Kuzatish
+                        {following ? "Kuzatilmoqda" : "Kuzatish"}
                     </button>
                     <button onClick={() => setMenuOpen(!menuOpen)}
                         className="w-7 h-7 flex items-center justify-center rounded-lg"

@@ -66,9 +66,24 @@ const TYPE_LABELS: Record<string, string> = {
 // NxExplore
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxExplore() {
-    const { exploreOpen, setExploreOpen, openChannel, openVideo } = useNxPlayer();
-    const [query, setQuery]     = useState("");
+    const { exploreOpen, setExploreOpen, openChannel, openVideo, setGoLiveOpen, playTrack, setReaderOpen } = useNxPlayer();
+    const [query,    setQuery]    = useState("");
     const [category, setCategory] = useState("all");
+    const [followed, setFollowed] = useState<Set<string>>(new Set());
+
+    const toggleFollow = (handle: string) =>
+        setFollowed(prev => {
+            const next = new Set(prev);
+            next.has(handle) ? next.delete(handle) : next.add(handle);
+            return next;
+        });
+
+    const openContent = (item: typeof TRENDING_CONTENT[number]) => {
+        if (item.type === "live")  { setGoLiveOpen(true); return; }
+        if (item.type === "music") { playTrack({ title: item.title, artist: "Nexus", image: item.image, duration: "3:30", durationSec: 210, src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }); return; }
+        if (item.type === "book")  { setReaderOpen(true); return; }
+        openVideo({ title: item.title, author: "Nexus Creator", avatar: "https://api.dicebear.com/9.x/avataaars/svg?seed=nexus", image: item.image, views: item.views, duration: "12:34" });
+    };
 
     if (!exploreOpen) return null;
 
@@ -209,11 +224,18 @@ export function NxExplore() {
                                         </div>
                                     </div>
                                     <button
-                                        className="px-3 py-1.5 rounded-xl text-[11px] font-black text-white flex-shrink-0"
-                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}
-                                        onClick={e => e.stopPropagation()}
+                                        className="px-3 py-1.5 rounded-xl text-[11px] font-black flex-shrink-0 transition-all duration-150"
+                                        style={followed.has(c.handle) ? {
+                                            background: "rgba(43,62,232,0.15)",
+                                            border: "1px solid rgba(43,62,232,0.35)",
+                                            color: "rgba(160,180,240,0.90)",
+                                        } : {
+                                            background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                                            color: "#fff",
+                                        }}
+                                        onClick={e => { e.stopPropagation(); toggleFollow(c.handle); }}
                                     >
-                                        Kuzatish
+                                        {followed.has(c.handle) ? "Kuzatilmoqda" : "Kuzatish"}
                                     </button>
                                 </button>
                             ))}
@@ -231,10 +253,7 @@ export function NxExplore() {
                         <div className="grid grid-cols-2 gap-2">
                             {TRENDING_CONTENT.map((c, i) => (
                                 <button key={i}
-                                    onClick={() => {
-                                        openVideo({ title: c.title, author: "Kreator", avatar: "https://api.dicebear.com/9.x/avataaars/svg?seed=ex", image: c.image, views: c.views, duration: c.type === "live" ? "LIVE" : "10:00", category: TYPE_LABELS[c.type] });
-                                        setExploreOpen(false);
-                                    }}
+                                    onClick={() => { openContent(c); setExploreOpen(false); }}
                                     className="group relative rounded-xl overflow-hidden text-left transition-all duration-150"
                                     style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.14)", aspectRatio: c.type === "music" || c.type === "book" ? "1/1" : "16/9" }}
                                 >

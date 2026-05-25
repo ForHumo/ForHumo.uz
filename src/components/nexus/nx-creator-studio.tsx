@@ -30,16 +30,17 @@ type UploadState = "idle" | "uploading" | "processing" | "done";
 export function NxCreatorStudio() {
     const { studioOpen, setStudioOpen, setAnalyticsOpen } = useNxPlayer();
     const { status } = useSession();
-    const [step,       setStep]       = useState<1 | 2 | 3>(1);
-    const [typeId,     setTypeId]     = useState<ContentTypeId>("video");
-    const [uploadState, setUploadState] = useState<UploadState>("idle");
-    const [uploadPct,  setUploadPct]  = useState(0);
-    const [title,      setTitle]      = useState("");
-    const [desc,       setDesc]       = useState("");
-    const [tags,       setTags]       = useState("");
-    const [price,      setPrice]      = useState("0");
-    const [privacy,    setPrivacy]    = useState<"public"|"private">("public");
-    const [category,   setCategory]  = useState("Texnologiya");
+    const [step,         setStep]         = useState<1 | 2 | 3>(1);
+    const [typeId,       setTypeId]       = useState<ContentTypeId>("video");
+    const [uploadState,  setUploadState]  = useState<UploadState>("idle");
+    const [uploadPct,    setUploadPct]    = useState(0);
+    const [title,        setTitle]        = useState("");
+    const [desc,         setDesc]         = useState("");
+    const [tags,         setTags]         = useState("");
+    const [price,        setPrice]        = useState("0");
+    const [privacy,      setPrivacy]      = useState<"public"|"private">("public");
+    const [category,     setCategory]     = useState("Texnologiya");
+    const [fileSelected, setFileSelected] = useState(false);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const chosenType = CONTENT_TYPES.find(t => t.id === typeId)!;
@@ -47,7 +48,7 @@ export function NxCreatorStudio() {
     const resetAll = () => {
         setStep(1); setUploadState("idle"); setUploadPct(0);
         setTitle(""); setDesc(""); setTags(""); setPrice("0");
-        setPrivacy("public"); setCategory("Texnologiya");
+        setPrivacy("public"); setCategory("Texnologiya"); setFileSelected(false);
         if (timerRef.current) clearInterval(timerRef.current);
     };
 
@@ -250,26 +251,36 @@ export function NxCreatorStudio() {
                     {step === 2 && (
                         <div className="flex-1 overflow-y-auto px-6 py-4" style={{ scrollbarWidth: "none" }}>
                             {/* Yuklash zonasi */}
-                            <div
-                                className="flex flex-col items-center justify-center py-8 rounded-2xl mb-4 cursor-pointer transition-all duration-150 hover:border-blue-500/40"
+                            <button
+                                onClick={() => setFileSelected(f => !f)}
+                                className="w-full flex flex-col items-center justify-center py-8 rounded-2xl mb-4 transition-all duration-200"
                                 style={{
-                                    border: "2px dashed rgba(43,62,232,0.30)",
-                                    background: "rgba(43,62,232,0.04)",
+                                    border: fileSelected
+                                        ? `2px solid ${chosenType.color}80`
+                                        : "2px dashed rgba(43,62,232,0.30)",
+                                    background: fileSelected
+                                        ? `${chosenType.color}12`
+                                        : "rgba(43,62,232,0.04)",
                                 }}
                             >
                                 <div
-                                    className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3"
-                                    style={{ background: `${chosenType.color}20` }}
+                                    className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 transition-all duration-200"
+                                    style={{ background: fileSelected ? `${chosenType.color}30` : `${chosenType.color}20` }}
                                 >
-                                    <Upload className="w-6 h-6" style={{ color: chosenType.color }} />
+                                    {fileSelected
+                                        ? <Check className="w-6 h-6" style={{ color: chosenType.color }} />
+                                        : <Upload className="w-6 h-6" style={{ color: chosenType.color }} />
+                                    }
                                 </div>
                                 <p className="text-sm font-bold text-white mb-1">
-                                    {chosenType.label} faylini tanlang
+                                    {fileSelected
+                                        ? `demo-${chosenType.id}.mp4`
+                                        : `${chosenType.label} faylini tanlang`}
                                 </p>
-                                <p className="text-[10px]" style={{ color: "rgba(100,120,170,0.60)" }}>
-                                    {chosenType.desc}
+                                <p className="text-[10px]" style={{ color: fileSelected ? `${chosenType.color}99` : "rgba(100,120,170,0.60)" }}>
+                                    {fileSelected ? "Fayl tanlandi — davom etish uchun to'ldiring" : chosenType.desc}
                                 </p>
-                            </div>
+                            </button>
 
                             {/* Sarlavha */}
                             <StudioField icon={FileText} label="Sarlavha" placeholder="Kontent sarlavhasi...">
