@@ -22,6 +22,7 @@ export function NxVideoPlayer() {
     const [showQMenu, setShowQMenu] = useState(false);
     const [liked,     setLiked]     = useState<"up"|"down"|null>(null);
     const [saved,     setSaved]     = useState(false);
+    const [subbed,    setSubbed]    = useState(false);
     const [showCtrl,  setShowCtrl]  = useState(true);
 
     const timer        = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -276,10 +277,13 @@ export function NxVideoPlayer() {
                                 </p>
                             </div>
                             <button
-                                className="ml-auto px-3 py-1.5 rounded-lg text-[10px] font-black"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}
+                                onClick={() => setSubbed(p => !p)}
+                                className="ml-auto px-3 py-1.5 rounded-lg text-[10px] font-black transition-all duration-150 active:scale-95"
+                                style={subbed
+                                    ? { background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.35)", color: "rgba(160,180,240,0.90)" }
+                                    : { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }}
                             >
-                                Obuna
+                                {subbed ? "Obunada" : "Obuna"}
                             </button>
                         </div>
 
