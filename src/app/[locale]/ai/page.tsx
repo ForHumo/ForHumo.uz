@@ -29,10 +29,11 @@ export default function AIPage() {
 
         // Build the profile object the AI app expects
         const profile = {
-            name:      u.username ?? u.name ?? "Foydalanuvchi",
+            name:      u.name ?? u.username ?? "Foydalanuvchi",
+            username:  u.username ?? "",          // stored separately for @handle display
             email:     u.email ?? "",
             humoId:    u.humoId ?? "",
-            avatar:    u.image ?? "",
+            avatar:    u.image ?? "",             // Google profile photo URL
             joinedAt:  new Date().toISOString().slice(0, 10),
             // lock flag — ai-static edit form won't persist over this
             _humoIdLinked: true,

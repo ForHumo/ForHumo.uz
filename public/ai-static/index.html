@@ -621,6 +621,7 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
       </div>
+      <div class="prof-username" style="font-size:11px;font-weight:600;color:rgba(96,165,250,0.85);margin-bottom:2px;display:none;"></div>
       <div class="pp-email prof-email" style="min-height:14px;"></div>
       <div class="prof-humoid" style="font-size:10.5px;color:rgba(255,255,255,.38);font-family:'Consolas',monospace;margin-top:3px;letter-spacing:.4px;"></div>
       <div class="pp-plan" di="plan_free" style="margin-top:6px;">Humo AI Free</div>
@@ -1401,7 +1402,7 @@ function closeProfile(){document.getElementById('ppPanel').classList.remove('ope
 // USER PROFILE (localStorage)
 // ═══════════════════════════════════════════
 const PROF_KEY='humo_profile';
-let PROF={name:'Foydalanuvchi',email:'',humoId:'',joinedAt:''};
+let PROF={name:'Foydalanuvchi',username:'',email:'',humoId:'',joinedAt:'',avatar:''};
 
 function loadProf(){
   try{const s=localStorage.getItem(PROF_KEY);if(s)PROF={...PROF,...JSON.parse(s)};}catch(e){}
@@ -1421,13 +1422,40 @@ function _saveProf(){
 function syncProfUI(){
   const n=PROF.name||'Foydalanuvchi';
   const init=n.trim()[0]?.toUpperCase()||'F';
-  document.querySelectorAll('.av-init').forEach(el=>el.textContent=init);
-  document.querySelectorAll('.prof-name').forEach(el=>el.textContent=n);
-  document.querySelectorAll('.prof-email').forEach(el=>el.textContent=PROF.email||'');
-  document.querySelectorAll('.prof-humoid').forEach(el=>el.textContent=PROF.humoId||'');
+
+  // Avatar: show real photo if available, else show initial letter
+  document.querySelectorAll('.av-init').forEach(function(el){
+    // Clear previous content safely
+    while(el.firstChild)el.removeChild(el.firstChild);
+    if(PROF.avatar){
+      var img=document.createElement('img');
+      img.src=PROF.avatar;
+      img.alt=n;
+      img.style.cssText='width:100%;height:100%;border-radius:inherit;object-fit:cover;display:block;';
+      el.appendChild(img);
+      el.style.background='transparent';
+      el.style.boxShadow='none';
+    }else{
+      el.textContent=init;
+      el.style.background='';
+      el.style.boxShadow='';
+    }
+  });
+
+  document.querySelectorAll('.prof-name').forEach(function(el){el.textContent=n;});
+
+  // @username — shown below display name when present
+  document.querySelectorAll('.prof-username').forEach(function(el){
+    if(PROF.username){el.textContent='@'+PROF.username;el.style.display='';}
+    else{el.textContent='';el.style.display='none';}
+  });
+
+  document.querySelectorAll('.prof-email').forEach(function(el){el.textContent=PROF.email||'';});
+  document.querySelectorAll('.prof-humoid').forEach(function(el){el.textContent=PROF.humoId||'';});
+
   // Show/hide edit button based on Humo ID link status
-  const editBtn=document.querySelector('.pp-edit-btn');
-  const linkedBadge=document.getElementById('humoIdBadge');
+  var editBtn=document.querySelector('.pp-edit-btn');
+  var linkedBadge=document.getElementById('humoIdBadge');
   if(PROF._humoIdLinked){
     if(editBtn)editBtn.style.display='none';
     if(linkedBadge)linkedBadge.style.display='inline-flex';
