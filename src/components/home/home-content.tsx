@@ -4,15 +4,16 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { Gamepad2, Brain, Server, GraduationCap } from "lucide-react";
+import {
+    Gamepad2,
+    Brain,
+    Server,
+    Headset,
+    Fingerprint,
+    ShoppingBag,
+} from "lucide-react";
 import { ProjectCard } from "@/components/ui/project-card";
 import { AlkhGemIcon } from "@/components/icons/AlkhGemIcon";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Module order (finalized 2026):
-//   Humo AI → Humo Nexus → Humo eSport → Humo EDU → ALKH Pay
-// Only Humo eSport is active/clickable in v1.0.
-// ─────────────────────────────────────────────────────────────────────────────
 
 export function HomeContent() {
     const tHero     = useTranslations("Hero");
@@ -28,21 +29,29 @@ export function HomeContent() {
         status: "active" | "coming-soon";
     }[] = [
         {
+            title: "Humo ID",
+            description: tProjects("id_desc"),
+            href: "/id",
+            icon: Fingerprint,
+            logoSrc: "/logos/humo-id.png",
+            status: "active",
+        },
+        {
             title: "Humo AI",
             description: tProjects("ai_desc"),
-            href: "/coming-soon",
+            href: "/ai",
             icon: Brain,
             logoSrc: "/logos/humo-ai-black.png",
             logoSrcDark: "/logos/humo-ai-white.png",
-            status: "coming-soon",
+            status: "active",
         },
         {
             title: "Humo Nexus",
             description: tProjects("nexus_desc"),
-            href: "/coming-soon",
+            href: "/nexus",
             icon: Server,
             logoSrc: "/logos/humo-nexus.png",
-            status: "coming-soon",
+            status: "active",
         },
         {
             title: "Humo eSport",
@@ -53,18 +62,28 @@ export function HomeContent() {
             status: "active",
         },
         {
-            title: "Humo EDU",
-            description: tProjects("edu_desc"),
-            href: "/coming-soon",
-            icon: GraduationCap,
-            status: "coming-soon",
+            title: "Humo Market",
+            description: tProjects("market_desc"),
+            href: "/market",
+            icon: ShoppingBag,
+            logoSrc: "/logos/humo-market.png",
+            status: "active",
         },
         {
             title: "ALKH Pay",
             description: tProjects("pay_desc"),
-            href: "/coming-soon",
+            href: "/pay",
             icon: AlkhGemIcon,
-            status: "coming-soon",
+            logoSrc: "/logos/alkh-pay.png",
+            status: "active",
+        },
+        {
+            title: "Humo Support",
+            description: tProjects("support_desc"),
+            href: "/support",
+            icon: Headset,
+            logoSrc: "/logos/humo-support.png",
+            status: "active",
         },
     ];
 
@@ -164,7 +183,7 @@ export function HomeContent() {
                 </div>
             </section>
 
-            {/* Projects Grid — 5 core modules */}
+            {/* Projects Grid */}
             <section id="project" className="py-24 relative z-10 scroll-mt-16">
                 <div className="container px-4 mx-auto max-w-6xl">
 
@@ -183,9 +202,9 @@ export function HomeContent() {
                         />
                     </div>
 
-                    {/* Row 1: first 3 cards */}
+                    {/* 7-card grid: 3 col on lg, last card centered */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {projectsData.slice(0, 3).map((project, index) => (
+                        {projectsData.slice(0, 6).map((project, index) => (
                             <ProjectCard
                                 key={project.title}
                                 title={project.title}
@@ -200,25 +219,21 @@ export function HomeContent() {
                         ))}
                     </div>
 
-                    {/* Row 2: last 2 cards — centred */}
-                    <div className="mt-6 flex flex-col sm:flex-row justify-center gap-6">
-                        {projectsData.slice(3).map((project, i) => (
-                            <div
-                                key={project.title}
-                                className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.33%-16px)]"
-                            >
-                                <ProjectCard
-                                    title={project.title}
-                                    description={project.description}
-                                    href={project.href}
-                                    icon={project.icon as React.ComponentType<{ size?: number; className?: string }>}
-                                    logoSrc={project.logoSrc}
-                                    logoSrcDark={project.logoSrcDark}
-                                    status={project.status}
-                                    index={3 + i}
-                                />
-                            </div>
-                        ))}
+                    {/* 7th card — centered below */}
+                    <div className="mt-6 flex justify-center">
+                        <div className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.33%-16px)]">
+                            <ProjectCard
+                                key={projectsData[6].title}
+                                title={projectsData[6].title}
+                                description={projectsData[6].description}
+                                href={projectsData[6].href}
+                                icon={projectsData[6].icon as React.ComponentType<{ size?: number; className?: string }>}
+                                logoSrc={projectsData[6].logoSrc}
+                                logoSrcDark={projectsData[6].logoSrcDark}
+                                status={projectsData[6].status}
+                                index={6}
+                            />
+                        </div>
                     </div>
 
                 </div>
