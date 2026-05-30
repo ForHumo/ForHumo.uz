@@ -7,7 +7,7 @@
     "nexus": "Nexus",
     "esport": "eSport",
     "market": "Market",
-    "pay": "Pay",
+    "pay": "ALKH Pay",
     "support": "Support"
   },
   "Social": {
@@ -29,8 +29,9 @@
     "ai_desc": "The intelligent assistant of the For Humo ecosystem. Ask questions, find tasks, get help across all projects.",
     "nexus_desc": "Global community, content and social network platform. Connect with friends worldwide.",
     "esport_desc": "eSports platform organizing MLBB and PUBG tournaments with open registration.",
-    "market_desc": "Global online marketplace. Pay via Humo Pay and enjoy exclusive ecosystem discounts.",
-    "pay_desc": "For Humo's unified payment system. Top up with local cards, use across all projects.",
+    "market_desc": "Global online marketplace. Pay via ALKH Pay and enjoy exclusive ecosystem discounts.",
+    "pay_desc": "ALKH Pay — the ecosystem wallet powered by Zij. Top up via Uzum, Click or Payme. Spend across Nexus, eSport and EDU.",
+    "edu_desc": "Interactive learning platform powered by AI. Earn Zij rewards for completing courses and challenges."
     "support_desc": "Unified help center for all For Humo projects. Fast responses, multiple languages."
   },
   "Status": {
@@ -254,7 +255,35 @@
     "humoid_generating": "Generating...",
     "file_invalid": "Please select an image file",
     "file_too_large": "File must be smaller than 8 MB",
-    "upload_error": "Upload failed"
+    "upload_error": "Upload failed",
+    "age_gate_title": "Age & Agreements",
+    "age_gate_desc": "Verify your age and accept our community rules before continuing",
+    "age_label": "Date of Birth",
+    "age_birthday_required": "Please enter your date of birth",
+    "age_error": "You must be at least 16 years old to use For Humo",
+    "consents_required": "Please agree to all terms to continue",
+    "tos_agree": "I have read and agree to the Terms of Service",
+    "privacy_agree_check": "I have read and agree to the Privacy Policy",
+    "humo_law_agree": "I understand and agree to Humo Law (Community Rules)",
+    "humo_law": "Humo Law"
+  },
+  "AlkhPay": {
+    "title": "ALKH Pay",
+    "subtitle": "Ecosystem Wallet · Powered by Zij",
+    "currency": "ZIJ",
+    "balance_label": "Balance",
+    "topup_label": "Top Up",
+    "topup_uzum": "Top up via Uzum",
+    "topup_click": "Top up via Click",
+    "topup_payme": "Top up via Payme",
+    "no_withdrawal": "ZIJ is an ecosystem utility token. Fiat cash-out is not available in v1.0.",
+    "spend_nexus": "Nexus Premium",
+    "spend_esport": "eSport Entry Fee",
+    "spend_edu": "EDU Rewards",
+    "spend_donation": "Creator Support",
+    "history_title": "Transaction History",
+    "empty_history": "No transactions yet",
+    "format_zij": "{amount} ZIJ"
   },
   "HumoID": {
     "title": "Humo ID",

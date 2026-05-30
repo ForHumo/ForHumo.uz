@@ -359,8 +359,15 @@ export function OnboardingWizard({ onComplete, locale }: WizardProps) {
     const [step2Error, setStep2Error] = useState("");
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // Step 1 (NEW) — Age gate + legal consents
+    // birthday is also sent to the profile API in handleFinish
+    const [birthday,       setBirthday]       = useState("");
+    const [tosAccepted,    setTosAccepted]    = useState(false);
+    const [privacyAccepted,setPrivacyAccepted]= useState(false);
+    const [humoLawAccepted,setHumoLawAccepted]= useState(false);
+    const [ageGateError,   setAgeGateError]   = useState("");
+
     // Step 3 — optional extras
-    const [birthday, setBirthday] = useState("");
     const [location, setLocation] = useState("");
     const [bio, setBio] = useState("");
     const [finishError, setFinishError] = useState("");
@@ -402,6 +409,21 @@ export function OnboardingWizard({ onComplete, locale }: WizardProps) {
         if (!firstName.trim()) { setStep1Error(t("firstname_required")); return false; }
         setStep1Error(""); return true;
     }
+
+    function validateAgeGate() {
+        if (!birthday) { setAgeGateError(t("age_birthday_required")); return false; }
+        const dob   = new Date(birthday);
+        const today = new Date();
+        let age     = today.getFullYear() - dob.getFullYear();
+        const m     = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+        if (age < 16) { setAgeGateError(t("age_error")); return false; }
+        if (!tosAccepted || !privacyAccepted || !humoLawAccepted) {
+            setAgeGateError(t("consents_required")); return false;
+        }
+        setAgeGateError(""); return true;
+    }
+
     function validateStep2() {
         if (!username.trim() || usernameStatus !== "available") { setStep2Error(t("username_required")); return false; }
         if (!humoId) { setStep2Error(t("humoid_generating")); return false; }
@@ -417,16 +439,21 @@ export function OnboardingWizard({ onComplete, locale }: WizardProps) {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    firstName: firstName.trim(),
-                    lastName: lastName.trim() || undefined,
-                    fatherName: fatherName.trim() || undefined,
-                    username: username.trim(),
+                    firstName:      firstName.trim(),
+                    lastName:       lastName.trim()   || undefined,
+                    fatherName:     fatherName.trim() || undefined,
+                    username:       username.trim(),
                     humoId,
                     country,
-                    birthday: birthday || undefined,
-                    location: location.trim() || undefined,
-                    bio: bio.trim() || undefined,
+                    birthday:       birthday || undefined,
+                    location:       location.trim() || undefined,
+                    bio:            bio.trim()      || undefined,
                     onboardingDone: true,
+                    // Legal consents
+                    tosAccepted,
+                    privacyAccepted,
+                    humoLawAccepted,
+                    consentedAt: new Date().toISOString(),
                 }),
             });
             if (!res.ok) {
@@ -435,7 +462,7 @@ export function OnboardingWizard({ onComplete, locale }: WizardProps) {
                 return;
             }
             // Only show done screen when DB save confirmed
-            setStep(3);
+            setStep(4);
         } catch {
             setFinishError("save_error");
         } finally {
@@ -443,7 +470,7 @@ export function OnboardingWizard({ onComplete, locale }: WizardProps) {
         }
     }
 
-    const TOTAL = 3;
+    const TOTAL = 4;
 
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-background/95 backdrop-blur-sm p-4 overflow-x-hidden overflow-y-auto">
@@ -516,17 +543,98 @@ export function OnboardingWizard({ onComplete, locale }: WizardProps) {
                     </motion.div>
                 )}
 
-                {/* ── STEP 1: Humo ID ── */}
+                {/* ── STEP 1: Age Gate + Legal Consents ── */}
                 {step === 1 && (
                     <motion.div
-                        key="step1"
+                        key="step1-agegate"
                         initial={{ opacity: 0, x: 40 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -40 }}
                         transition={{ duration: 0.25 }}
                         className="w-full max-w-md"
                     >
-                        <WizardCard step={1} total={TOTAL} title={t("step2_title")} desc={t("step2_desc")}>
+                        <WizardCard step={1} total={TOTAL} title={t("age_gate_title")} desc={t("age_gate_desc")}>
+                            <div className="space-y-4">
+                                {/* Birthday — required for age verification */}
+                                <Field label={t("age_label")} required>
+                                    <DatePickerCalendar
+                                        value={birthday}
+                                        onChange={setBirthday}
+                                        maxDate={new Date()}
+                                    />
+                                </Field>
+
+                                {/* Legal consents */}
+                                <div className="space-y-3 pt-1">
+                                    {/* ToS */}
+                                    <label className="flex items-start gap-3 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            checked={tosAccepted}
+                                            onChange={e => setTosAccepted(e.target.checked)}
+                                            className="mt-0.5 w-4 h-4 rounded border-border accent-blue-500 shrink-0"
+                                        />
+                                        <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors leading-relaxed">
+                                            {t("tos_agree")}
+                                        </span>
+                                    </label>
+
+                                    {/* Privacy Policy */}
+                                    <label className="flex items-start gap-3 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            checked={privacyAccepted}
+                                            onChange={e => setPrivacyAccepted(e.target.checked)}
+                                            className="mt-0.5 w-4 h-4 rounded border-border accent-blue-500 shrink-0"
+                                        />
+                                        <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors leading-relaxed">
+                                            {t("privacy_agree_check")}
+                                        </span>
+                                    </label>
+
+                                    {/* Humo Law */}
+                                    <label className="flex items-start gap-3 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            checked={humoLawAccepted}
+                                            onChange={e => setHumoLawAccepted(e.target.checked)}
+                                            className="mt-0.5 w-4 h-4 rounded border-border accent-blue-500 shrink-0"
+                                        />
+                                        <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors leading-relaxed">
+                                            {t("humo_law_agree")}
+                                        </span>
+                                    </label>
+                                </div>
+
+                                {ageGateError && (
+                                    <p className="text-xs text-red-500 font-medium">{ageGateError}</p>
+                                )}
+
+                                <div className="flex gap-3">
+                                    <SecondaryButton onClick={() => setStep(0)}>{t("back")}</SecondaryButton>
+                                    <PrimaryButton
+                                        onClick={() => { if (validateAgeGate()) setStep(2); }}
+                                        className="flex-1"
+                                    >
+                                        {t("next")}
+                                    </PrimaryButton>
+                                </div>
+                            </div>
+                        </WizardCard>
+                    </motion.div>
+                )}
+
+                {/* ── STEP 2: Humo ID ── */}
+                {step === 2 && (
+                    <motion.div
+                        key="step2"
+                        initial={{ opacity: 0, x: 40 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -40 }}
+                        transition={{ duration: 0.25 }}
+                        className="w-full max-w-md"
+                    >
+                        <WizardCard step={2} total={TOTAL} title={t("step2_title")} desc={t("step2_desc")}>
                             <div className="space-y-4">
                                 {/* Username */}
                                 <Field label={t("username_label")} required>
@@ -603,9 +711,9 @@ export function OnboardingWizard({ onComplete, locale }: WizardProps) {
                                 {step2Error && <p className="text-xs text-red-500">{step2Error}</p>}
 
                                 <div className="flex gap-3">
-                                    <SecondaryButton onClick={() => setStep(0)}>{t("back")}</SecondaryButton>
+                                    <SecondaryButton onClick={() => setStep(1)}>{t("back")}</SecondaryButton>
                                     <PrimaryButton
-                                        onClick={() => { if (validateStep2()) setStep(2); }}
+                                        onClick={() => { if (validateStep2()) setStep(3); }}
                                         className="flex-1"
                                     >
                                         {t("next")}
@@ -616,26 +724,18 @@ export function OnboardingWizard({ onComplete, locale }: WizardProps) {
                     </motion.div>
                 )}
 
-                {/* ── STEP 2: Optional extras ── */}
-                {step === 2 && (
+                {/* ── STEP 3: Optional extras ── */}
+                {step === 3 && (
                     <motion.div
-                        key="step2"
+                        key="step3"
                         initial={{ opacity: 0, x: 40 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -40 }}
                         transition={{ duration: 0.25 }}
                         className="w-full max-w-md"
                     >
-                        <WizardCard step={2} total={TOTAL} title={t("step3_title")} desc={t("step3_desc")}>
+                        <WizardCard step={3} total={TOTAL} title={t("step3_title")} desc={t("step3_desc")}>
                             <div className="space-y-4">
-                                <Field label={t("birthday_label")} optional>
-                                    <DatePickerCalendar
-                                        value={birthday}
-                                        onChange={setBirthday}
-                                        maxDate={new Date()}
-                                    />
-                                </Field>
-
                                 <Field label={t("location_label")} optional>
                                     <LocationPicker
                                         value={location}
@@ -661,7 +761,7 @@ export function OnboardingWizard({ onComplete, locale }: WizardProps) {
                                 )}
 
                                 <div className="flex gap-3">
-                                    <SecondaryButton onClick={() => setStep(1)}>{t("back")}</SecondaryButton>
+                                    <SecondaryButton onClick={() => setStep(2)}>{t("back")}</SecondaryButton>
                                     <PrimaryButton onClick={handleFinish} loading={saving} className="flex-1">
                                         {t("finish")}
                                     </PrimaryButton>
@@ -672,7 +772,7 @@ export function OnboardingWizard({ onComplete, locale }: WizardProps) {
                 )}
 
                 {/* ── DONE ── */}
-                {step === 3 && (
+                {step === 4 && (
                     <motion.div
                         key="done"
                         initial={{ opacity: 0, scale: 0.9 }}

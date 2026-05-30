@@ -4,19 +4,18 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import {
-    Gamepad2,
-    Brain,
-    Server,
-    Headset,
-    Fingerprint,
-    ShoppingBag,
-    CreditCard,
-} from "lucide-react";
+import { Gamepad2, Brain, Server, GraduationCap } from "lucide-react";
 import { ProjectCard } from "@/components/ui/project-card";
+import { AlkhGemIcon } from "@/components/icons/AlkhGemIcon";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Module order (finalized 2026):
+//   Humo AI → Humo Nexus → Humo eSport → Humo EDU → ALKH Pay
+// Only Humo eSport is active/clickable in v1.0.
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function HomeContent() {
-    const tHero = useTranslations("Hero");
+    const tHero     = useTranslations("Hero");
     const tProjects = useTranslations("Projects");
 
     const projectsData: {
@@ -24,34 +23,26 @@ export function HomeContent() {
         description: string;
         href: string;
         icon: React.ComponentType<{ size?: number; className?: string }>;
-        logoSrc: string;
+        logoSrc?: string;
         logoSrcDark?: string;
         status: "active" | "coming-soon";
     }[] = [
         {
-            title: "Humo ID",
-            description: tProjects("id_desc"),
-            href: "/id",
-            icon: Fingerprint,
-            logoSrc: "/logos/humo-id.png",
-            status: "active",
-        },
-        {
             title: "Humo AI",
             description: tProjects("ai_desc"),
-            href: "/ai",
+            href: "/coming-soon",
             icon: Brain,
             logoSrc: "/logos/humo-ai-black.png",
             logoSrcDark: "/logos/humo-ai-white.png",
-            status: "active",
+            status: "coming-soon",
         },
         {
             title: "Humo Nexus",
             description: tProjects("nexus_desc"),
-            href: "/nexus",
+            href: "/coming-soon",
             icon: Server,
             logoSrc: "/logos/humo-nexus.png",
-            status: "active",
+            status: "coming-soon",
         },
         {
             title: "Humo eSport",
@@ -62,28 +53,18 @@ export function HomeContent() {
             status: "active",
         },
         {
-            title: "Humo Market",
-            description: tProjects("market_desc"),
+            title: "Humo EDU",
+            description: tProjects("edu_desc"),
             href: "/coming-soon",
-            icon: ShoppingBag,
-            logoSrc: "/logos/humo-market.png",
-            status: "active",
+            icon: GraduationCap,
+            status: "coming-soon",
         },
         {
-            title: "Humo Pay",
+            title: "ALKH Pay",
             description: tProjects("pay_desc"),
             href: "/coming-soon",
-            icon: CreditCard,
-            logoSrc: "/logos/humo-pay.png",
-            status: "active",
-        },
-        {
-            title: "Humo Support",
-            description: tProjects("support_desc"),
-            href: "/coming-soon",
-            icon: Headset,
-            logoSrc: "/logos/humo-support.png",
-            status: "active",
+            icon: AlkhGemIcon,
+            status: "coming-soon",
         },
     ];
 
@@ -106,7 +87,6 @@ export function HomeContent() {
                             transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut" }}
                             className="relative w-full h-full"
                         >
-                            {/* Glow ring - adapts to theme */}
                             <div className="absolute inset-0 rounded-full
                                 bg-blue-500/25 dark:bg-primary/30
                                 blur-3xl
@@ -184,7 +164,7 @@ export function HomeContent() {
                 </div>
             </section>
 
-            {/* Projects Grid */}
+            {/* Projects Grid — 5 core modules */}
             <section id="project" className="py-24 relative z-10 scroll-mt-16">
                 <div className="container px-4 mx-auto max-w-6xl">
 
@@ -194,8 +174,7 @@ export function HomeContent() {
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, margin: "-100px" }}
-                            className="text-4xl md:text-5xl font-bold mb-5
-                                text-foreground"
+                            className="text-4xl md:text-5xl font-bold mb-5 text-foreground"
                         >
                             {tProjects("title")}
                         </motion.h2>
@@ -204,9 +183,9 @@ export function HomeContent() {
                         />
                     </div>
 
-                    {/* 7-card grid: 3 col on lg, last card centered */}
+                    {/* Row 1: first 3 cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {projectsData.slice(0, 6).map((project, index) => (
+                        {projectsData.slice(0, 3).map((project, index) => (
                             <ProjectCard
                                 key={project.title}
                                 title={project.title}
@@ -221,21 +200,25 @@ export function HomeContent() {
                         ))}
                     </div>
 
-                    {/* 7th card — centered below */}
-                    <div className="mt-6 flex justify-center">
-                        <div className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.33%-16px)]">
-                            <ProjectCard
-                                key={projectsData[6].title}
-                                title={projectsData[6].title}
-                                description={projectsData[6].description}
-                                href={projectsData[6].href}
-                                icon={projectsData[6].icon as React.ComponentType<{ size?: number; className?: string }>}
-                                logoSrc={projectsData[6].logoSrc}
-                                logoSrcDark={projectsData[6].logoSrcDark}
-                                status={projectsData[6].status}
-                                index={6}
-                            />
-                        </div>
+                    {/* Row 2: last 2 cards — centred */}
+                    <div className="mt-6 flex flex-col sm:flex-row justify-center gap-6">
+                        {projectsData.slice(3).map((project, i) => (
+                            <div
+                                key={project.title}
+                                className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.33%-16px)]"
+                            >
+                                <ProjectCard
+                                    title={project.title}
+                                    description={project.description}
+                                    href={project.href}
+                                    icon={project.icon as React.ComponentType<{ size?: number; className?: string }>}
+                                    logoSrc={project.logoSrc}
+                                    logoSrcDark={project.logoSrcDark}
+                                    status={project.status}
+                                    index={3 + i}
+                                />
+                            </div>
+                        ))}
                     </div>
 
                 </div>
