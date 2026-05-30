@@ -604,9 +604,7 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
 <!-- Profile -->
 <div class="pp-overlay" id="ppOverlay" onclick="closeProfile()"></div>
 <div class="pp-panel" id="ppPanel">
-  <!-- Cover image banner — hidden until Humo ID cover is available -->
-  <div id="ppCoverBanner" style="display:none;height:88px;width:100%;position:relative;overflow:hidden;flex-shrink:0;border-radius:12px 12px 0 0;"></div>
-  <div class="pp-hdr" style="display:flex;align-items:flex-start;gap:13px;">
+  <div class="pp-hdr" id="ppHdr" style="display:flex;align-items:flex-end;gap:13px;">
     <div class="pp-av-wrap">
       <div class="pp-av av-init">F</div>
       <div class="pp-badge"></div>
@@ -1455,22 +1453,23 @@ function syncProfUI(){
   document.querySelectorAll('.prof-email').forEach(function(el){el.textContent=PROF.email||'';});
   document.querySelectorAll('.prof-humoid').forEach(function(el){el.textContent=PROF.humoId||'';});
 
-  // Cover image banner
-  var coverBanner=document.getElementById('ppCoverBanner');
-  if(coverBanner){
-    while(coverBanner.firstChild)coverBanner.removeChild(coverBanner.firstChild);
+  // Cover image — applied directly as background of pp-hdr
+  var ppHdr=document.getElementById('ppHdr');
+  if(ppHdr){
     if(PROF.coverImage){
-      var cvImg=document.createElement('img');
-      cvImg.src=PROF.coverImage;
-      cvImg.alt='cover';
-      cvImg.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;';
-      var cvOvl=document.createElement('div');
-      cvOvl.style.cssText='position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.08) 0%,rgba(0,0,0,0.52) 100%);';
-      coverBanner.appendChild(cvImg);
-      coverBanner.appendChild(cvOvl);
-      coverBanner.style.display='';
+      ppHdr.style.backgroundImage='linear-gradient(to bottom,rgba(0,0,0,0.05) 0%,rgba(0,0,0,0.75) 100%),url('+PROF.coverImage+')';
+      ppHdr.style.backgroundSize='cover';
+      ppHdr.style.backgroundPosition='center top';
+      ppHdr.style.minHeight='130px';
+      ppHdr.style.borderRadius='0';
+      ppHdr.style.alignItems='flex-end';
+      ppHdr.style.paddingBottom='14px';
     }else{
-      coverBanner.style.display='none';
+      ppHdr.style.backgroundImage='';
+      ppHdr.style.minHeight='';
+      ppHdr.style.borderRadius='';
+      ppHdr.style.alignItems='flex-end';
+      ppHdr.style.paddingBottom='';
     }
   }
 

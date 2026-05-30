@@ -68,7 +68,7 @@ export const authOptions: NextAuthOptions = {
         // Re-fetch from DB while onboardingDone is still false so that a plain
         // page reload after wizard completion sees the updated value immediately.
         async jwt({ token, trigger }) {
-            if (trigger === "signIn" || trigger === "update" || !token.onboardingDone) {
+            if (trigger === "signIn" || trigger === "update" || !token.onboardingDone || token.coverImage === undefined) {
                 if (token.email) {
                     try {
                         const profile = await prisma.userProfile.findUnique({
