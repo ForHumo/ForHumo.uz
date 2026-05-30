@@ -11,12 +11,12 @@ import {
     Headset,
     Fingerprint,
     ShoppingBag,
+    CreditCard,
 } from "lucide-react";
 import { ProjectCard } from "@/components/ui/project-card";
-import { AlkhGemIcon } from "@/components/icons/AlkhGemIcon";
 
 export function HomeContent() {
-    const tHero     = useTranslations("Hero");
+    const tHero = useTranslations("Hero");
     const tProjects = useTranslations("Projects");
 
     const projectsData: {
@@ -24,7 +24,7 @@ export function HomeContent() {
         description: string;
         href: string;
         icon: React.ComponentType<{ size?: number; className?: string }>;
-        logoSrc?: string;
+        logoSrc: string;
         logoSrcDark?: string;
         status: "active" | "coming-soon";
     }[] = [
@@ -64,7 +64,7 @@ export function HomeContent() {
         {
             title: "Humo Market",
             description: tProjects("market_desc"),
-            href: "/market",
+            href: "/coming-soon",
             icon: ShoppingBag,
             logoSrc: "/logos/humo-market.png",
             status: "active",
@@ -72,15 +72,15 @@ export function HomeContent() {
         {
             title: "ALKH Pay",
             description: tProjects("pay_desc"),
-            href: "/pay",
-            icon: AlkhGemIcon,
+            href: "/coming-soon",
+            icon: CreditCard,
             logoSrc: "/logos/alkh-pay.png",
             status: "active",
         },
         {
             title: "Humo Support",
             description: tProjects("support_desc"),
-            href: "/support",
+            href: "/coming-soon",
             icon: Headset,
             logoSrc: "/logos/humo-support.png",
             status: "active",
@@ -106,6 +106,7 @@ export function HomeContent() {
                             transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut" }}
                             className="relative w-full h-full"
                         >
+                            {/* Glow ring - adapts to theme */}
                             <div className="absolute inset-0 rounded-full
                                 bg-blue-500/25 dark:bg-primary/30
                                 blur-3xl
@@ -193,7 +194,8 @@ export function HomeContent() {
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, margin: "-100px" }}
-                            className="text-4xl md:text-5xl font-bold mb-5 text-foreground"
+                            className="text-4xl md:text-5xl font-bold mb-5
+                                text-foreground"
                         >
                             {tProjects("title")}
                         </motion.h2>

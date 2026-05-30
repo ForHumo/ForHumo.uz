@@ -43,15 +43,8 @@ model UserProfile {
   level         Int      @default(0)
   emailVerified Boolean  @default(false)
 
-  // Role
-  isAdmin       Boolean  @default(false)
-
-  // Onboarding — age gate + legal consents (v1.1)
-  onboardingDone    Boolean  @default(false)
-  tosAccepted       Boolean  @default(false)
-  privacyAccepted   Boolean  @default(false)
-  humoLawAccepted   Boolean  @default(false)
-  consentedAt       DateTime?
+  // Onboarding
+  onboardingDone Boolean @default(false)
 
   // Rate-limit: user-initiated profile edits allowed once per 14 days
   profileEditedAt DateTime?
@@ -59,79 +52,11 @@ model UserProfile {
   lastLoginAt   DateTime?
   loginEvents   LoginEvent[]
   supportTickets SupportTicket[]
-  emailCodes    EmailVerificationCode[]
 
-  // ALKH Pay
-  wallet        Wallet?
-  credential    UserCredential?
+  emailCodes    EmailVerificationCode[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-}
-
-// ── ALKH Pay — Closed-Loop Wallet (v1.0: deposit only, NO fiat withdrawal) ────
-
-model Wallet {
-  id           String      @id @default(cuid())
-  profileId    String      @unique
-  profile      UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  /// ZIJ balance — single float, no sub-units. Format: "12.5 ZIJ"
-  balance      Float       @default(0.0)
-
-  transactions Transaction[]
-
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
-model Transaction {
-  id          String            @id @default(cuid())
-  walletId    String
-  wallet      Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
-
-  /// Positive = credit, negative = debit (in ZIJ)
-  amount      Float
-  type        TransactionType
-  source      TransactionSource
-  description String?
-  /// Extra metadata: tournamentId, contentId, etc.
-  meta        Json?
-
-  createdAt   DateTime @default(now())
-}
-
-enum TransactionType {
-  CREDIT   // ZIJ added to wallet
-  DEBIT    // ZIJ spent from wallet
-}
-
-/// Legal guardrail: NO WITHDRAWAL source exists — ZIJ is utility-only (v1.0).
-/// Fiat in: TOPUP_* sources only. Fiat out: forbidden until v2.0 + CBU license.
-enum TransactionSource {
-  TOPUP_UZUM           // UZS → ZIJ via Uzum webhook
-  TOPUP_CLICK          // UZS → ZIJ via Click webhook
-  TOPUP_PAYME          // UZS → ZIJ via Payme webhook
-  NEXUS_SUBSCRIPTION   // Nexus Pro / Creator Pro purchase
-  NEXUS_DONATION       // Content creator tip/donation on Nexus
-  ESPORT_ENTRY_FEE     // Tournament registration payment
-  EDU_REWARD           // Earned from completing Humo EDU activities
-  SYSTEM_REWARD        // Admin / promotional grant
-  REFUND               // System-initiated refund (credit)
-}
-
-// ── Email / Password credentials (fallback to Google OAuth) ───────────────────
-
-model UserCredential {
-  id           String      @id @default(cuid())
-  profileId    String      @unique
-  profile      UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  /// bcryptjs hash — NEVER store plaintext passwords
-  passwordHash String
-
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
 }
 
 model LoginEvent {

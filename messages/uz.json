@@ -7,7 +7,7 @@
     "nexus": "Nexus",
     "esport": "eSport",
     "market": "Market",
-    "pay": "ALKH Pay",
+    "pay": "Pay",
     "support": "Support"
   },
   "Social": {
@@ -29,9 +29,8 @@
     "ai_desc": "For Humo ekosistemining aqlli yordamchisi. Savol bering, vazifa toping, loyihalaringizda yordam oling.",
     "nexus_desc": "Global hamjamiyat, kontent va ijtimoiy tarmoq platformasi. Do'stlar bilan ulaning.",
     "esport_desc": "MLBB va PUBG turnirlarini ochiq ro'yxatdan o'tish bilan tashkil etuvchi kiber sport platformasi.",
-    "market_desc": "Global onlayn bozor. ALKH Pay orqali to'lov qiling va eksklyuziv chegirmalardan foydalaning.",
-    "pay_desc": "ALKH Pay — Zij bilan ishlayotgan ekotizim hamyoni. Uzum, Click yoki Payme orqali to'ldiring. Nexus, eSport va EDU bo'ylab sarflang.",
-    "edu_desc": "AI tomonidan quvvatlangan interaktiv ta'lim platformasi. Kurslarni bajaring va Zij mukofotlari qozoning.",
+    "market_desc": "Global onlayn bozor. Humo Pay orqali to'lov qiling va eksklyuziv chegirmalardan foydalaning.",
+    "pay_desc": "For Humo'ning yagona to'lov tizimi. Milliy kartalar bilan to'ldiring, barcha loyihalarda ishlating.",
     "support_desc": "Barcha For Humo loyihalari uchun yagona yordam markazi. Tez javob, ko'p til."
   },
   "Status": {
@@ -255,35 +254,7 @@
     "humoid_generating": "Yaratilmoqda...",
     "file_invalid": "Rasm fayl tanlang",
     "file_too_large": "Fayl 8 MB dan kichik bo'lishi kerak",
-    "upload_error": "Yuklashda xatolik",
-    "age_gate_title": "Yosh va Kelishuvlar",
-    "age_gate_desc": "Davom etishdan oldin yoshingizni tasdiqlang va qoidalarimizga rozi bo'ling",
-    "age_label": "Tug'ilgan sana",
-    "age_birthday_required": "Iltimos, tug'ilgan sanangizni kiriting",
-    "age_error": "For Humoni ishlatish uchun kamida 16 yoshda bo'lishingiz kerak",
-    "consents_required": "Davom etish uchun barcha shartlarga rozi bo'lishingiz kerak",
-    "tos_agree": "Men Foydalanish Shartlarini o'qidim va roziman",
-    "privacy_agree_check": "Men Maxfiylik Siyosatini o'qidim va roziman",
-    "humo_law_agree": "Men Humo Qonunini (Hamjamiyat Qoidalarini) tushunaman va roziman",
-    "humo_law": "Humo Qonuni"
-  },
-  "AlkhPay": {
-    "title": "ALKH Pay",
-    "subtitle": "Ekotizim Hamyoni · Zij bilan quvvatlangan",
-    "currency": "ZIJ",
-    "balance_label": "Balans",
-    "topup_label": "To'ldirish",
-    "topup_uzum": "Uzum orqali to'ldirish",
-    "topup_click": "Click orqali to'ldirish",
-    "topup_payme": "Payme orqali to'ldirish",
-    "no_withdrawal": "ZIJ ekotizim utility tokeni hisoblanadi. Naqd pulga almashtirish v1.0 da mavjud emas.",
-    "spend_nexus": "Nexus Premium",
-    "spend_esport": "eSport turnir kirish to'lovi",
-    "spend_edu": "EDU mukofotlari",
-    "spend_donation": "Yaratuvchi qo'llab-quvvatlash",
-    "history_title": "Tranzaksiyalar tarixi",
-    "empty_history": "Hali tranzaksiyalar yo'q",
-    "format_zij": "{amount} ZIJ"
+    "upload_error": "Yuklashda xatolik"
   },
   "HumoID": {
     "title": "Humo ID",
