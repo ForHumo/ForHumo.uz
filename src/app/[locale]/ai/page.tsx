@@ -24,17 +24,19 @@ export default function AIPage() {
             image?:         string | null;
             humoId?:        string | null;
             username?:      string | null;
+            coverImage?:    string | null;
             onboardingDone?: boolean;
         };
 
         // Build the profile object the AI app expects
         const profile = {
-            name:      u.name ?? u.username ?? "Foydalanuvchi",
-            username:  u.username ?? "",          // stored separately for @handle display
-            email:     u.email ?? "",
-            humoId:    u.humoId ?? "",
-            avatar:    u.image ?? "",             // Google profile photo URL
-            joinedAt:  new Date().toISOString().slice(0, 10),
+            name:       u.name ?? u.username ?? "Foydalanuvchi",
+            username:   u.username  ?? "",   // @handle display
+            email:      u.email     ?? "",
+            humoId:     u.humoId    ?? "",
+            avatar:     u.image     ?? "",   // Google profile photo
+            coverImage: u.coverImage ?? "",  // Humo ID cover/banner
+            joinedAt:   new Date().toISOString().slice(0, 10),
             // lock flag — ai-static edit form won't persist over this
             _humoIdLinked: true,
         };

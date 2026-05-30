@@ -604,6 +604,8 @@ code[class*="language-"]{background:transparent!important;font-family:'Consolas'
 <!-- Profile -->
 <div class="pp-overlay" id="ppOverlay" onclick="closeProfile()"></div>
 <div class="pp-panel" id="ppPanel">
+  <!-- Cover image banner — hidden until Humo ID cover is available -->
+  <div id="ppCoverBanner" style="display:none;height:88px;width:100%;position:relative;overflow:hidden;flex-shrink:0;border-radius:12px 12px 0 0;"></div>
   <div class="pp-hdr" style="display:flex;align-items:flex-start;gap:13px;">
     <div class="pp-av-wrap">
       <div class="pp-av av-init">F</div>
@@ -1402,7 +1404,7 @@ function closeProfile(){document.getElementById('ppPanel').classList.remove('ope
 // USER PROFILE (localStorage)
 // ═══════════════════════════════════════════
 const PROF_KEY='humo_profile';
-let PROF={name:'Foydalanuvchi',username:'',email:'',humoId:'',joinedAt:'',avatar:''};
+let PROF={name:'Foydalanuvchi',username:'',email:'',humoId:'',joinedAt:'',avatar:'',coverImage:''};
 
 function loadProf(){
   try{const s=localStorage.getItem(PROF_KEY);if(s)PROF={...PROF,...JSON.parse(s)};}catch(e){}
@@ -1452,6 +1454,25 @@ function syncProfUI(){
 
   document.querySelectorAll('.prof-email').forEach(function(el){el.textContent=PROF.email||'';});
   document.querySelectorAll('.prof-humoid').forEach(function(el){el.textContent=PROF.humoId||'';});
+
+  // Cover image banner
+  var coverBanner=document.getElementById('ppCoverBanner');
+  if(coverBanner){
+    while(coverBanner.firstChild)coverBanner.removeChild(coverBanner.firstChild);
+    if(PROF.coverImage){
+      var cvImg=document.createElement('img');
+      cvImg.src=PROF.coverImage;
+      cvImg.alt='cover';
+      cvImg.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;';
+      var cvOvl=document.createElement('div');
+      cvOvl.style.cssText='position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.08) 0%,rgba(0,0,0,0.52) 100%);';
+      coverBanner.appendChild(cvImg);
+      coverBanner.appendChild(cvOvl);
+      coverBanner.style.display='';
+    }else{
+      coverBanner.style.display='none';
+    }
+  }
 
   // Show/hide edit button based on Humo ID link status
   var editBtn=document.querySelector('.pp-edit-btn');
