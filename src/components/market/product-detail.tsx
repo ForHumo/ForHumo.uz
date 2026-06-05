@@ -77,9 +77,9 @@ export function ProductDetail({ slug }: { slug: string }) {
         <div className="container mx-auto px-4 max-w-6xl py-8">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/30 mb-6">
-                <Link href={`/${locale}/market`} className="hover:text-green-600 dark:hover:text-green-400 transition-colors">Market</Link>
+                <Link href={`/market`} className="hover:text-green-600 dark:hover:text-green-400 transition-colors">Market</Link>
                 <ChevronRight size={11} />
-                <Link href={`/${locale}/market/catalog?cat=${product.category}`} className="hover:text-green-600 dark:hover:text-green-400 transition-colors capitalize">{product.category}</Link>
+                <Link href={`/market/catalog?cat=${product.category}`} className="hover:text-green-600 dark:hover:text-green-400 transition-colors capitalize">{product.category}</Link>
                 <ChevronRight size={11} />
                 <span className="text-gray-600 dark:text-white/50 truncate max-w-48">{product.name}</span>
             </nav>
@@ -124,7 +124,7 @@ export function ProductDetail({ slug }: { slug: string }) {
                 {/* Ma'lumot bloki */}
                 <div className="flex flex-col">
                     {/* Brend */}
-                    <Link href={`/${locale}/market/brand/${product.brand.slug}`}
+                    <Link href={`/market/brand/${product.brand.slug}`}
                         className="flex items-center gap-2 mb-3 group w-fit">
                         <span className="text-sm font-semibold text-gray-500 dark:text-white/40
                             group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">

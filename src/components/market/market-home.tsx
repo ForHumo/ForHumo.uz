@@ -73,7 +73,7 @@ function CategoryPills() {
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.04 }}>
-                        <Link href={`/${locale}/market/catalog?cat=${cat.slug}`}
+                        <Link href={`/market/catalog?cat=${cat.slug}`}
                             className="flex items-center gap-2 px-4 py-2.5 rounded-2xl
                                 bg-white/80 dark:bg-white/[0.04]
                                 border border-gray-100 dark:border-white/[0.06]
@@ -150,13 +150,13 @@ export function MarketHome() {
                                 To'lov — <span className="text-white font-bold">Ƶ Zij</span> bilan.
                             </p>
                             <div className="flex gap-3">
-                                <Link href={`/${locale}/market/catalog`}
+                                <Link href={`/market/catalog`}
                                     className="flex items-center gap-2 px-6 py-3 rounded-2xl
                                         bg-white text-green-700 font-bold text-sm
                                         hover:bg-green-50 transition-all shadow-lg shadow-black/10">
                                     <Tag size={16} /> Katalogni ko'rish
                                 </Link>
-                                <Link href={`/${locale}/market/brand/create`}
+                                <Link href={`/market/brand/create`}
                                     className="flex items-center gap-2 px-6 py-3 rounded-2xl
                                         bg-white/15 border border-white/25 text-white font-bold text-sm
                                         hover:bg-white/20 transition-all">
@@ -183,7 +183,7 @@ export function MarketHome() {
                                     Eng mashhur mahsulotlar
                                 </h2>
                             </div>
-                            <Link href={`/${locale}/market/catalog?featured=1`}
+                            <Link href={`/market/catalog?featured=1`}
                                 className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400
                                     hover:text-green-700 font-semibold transition-colors">
                                 Barchasi <ChevronRight size={14} />
@@ -240,7 +240,7 @@ export function MarketHome() {
                                 Mahsulotlaringizni Humo Market da soting. Brendingiz tasdiqlansa —
                                 rasmiy belgini olasiz va mijozlar ishonchi oshadi.
                             </p>
-                            <Link href={`/${locale}/market/brand/create`}
+                            <Link href={`/market/brand/create`}
                                 className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl
                                     bg-gradient-to-r from-green-600 to-emerald-500
                                     text-white font-bold text-sm

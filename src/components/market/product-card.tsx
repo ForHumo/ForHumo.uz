@@ -55,7 +55,7 @@ export function ProductCard({
                 transition-all duration-300"
         >
             {/* Rasm */}
-            <Link href={`/${locale}/market/product/${product.slug}`}>
+            <Link href={`/market/product/${product.slug}`}>
                 <div className={`relative ${compact ? "h-32" : "h-44"} bg-gray-50 dark:bg-white/[0.02] overflow-hidden`}>
                     {product.images[0] ? (
                         <Image src={product.images[0]} alt={product.name} fill
@@ -88,7 +88,7 @@ export function ProductCard({
                 </div>
 
                 {/* Nom */}
-                <Link href={`/${locale}/market/product/${product.slug}`}>
+                <Link href={`/market/product/${product.slug}`}>
                     <p className={`text-gray-900 dark:text-white font-semibold line-clamp-2 leading-tight mb-2
                         group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors
                         ${compact ? "text-xs" : "text-sm"}`}>

@@ -12,7 +12,7 @@ export function HumoIdNavbar() {
 
     // Verifikatsiya darajasi badge (extra slot)
     const levelBadge = session ? (
-        <Link href={`/${locale}/id/verify`}
+        <Link href={`/id/verify`}
             className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full
                 bg-blue-50 dark:bg-blue-500/10
                 border border-blue-200/80 dark:border-blue-500/20

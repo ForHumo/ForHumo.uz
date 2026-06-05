@@ -99,7 +99,7 @@ export function MarketCart() {
                 </div>
                 <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Buyurtma qabul qilindi!</h2>
                 <p className="text-gray-500 dark:text-white/40 mb-6">Jami: {fz(total)} Ƶ to'landi</p>
-                <Link href={`/${locale}/market`}
+                <Link href={`/market`}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl
                         bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold text-sm
                         shadow-lg shadow-green-500/20 transition-all hover:from-green-500 hover:to-emerald-400">
@@ -114,7 +114,7 @@ export function MarketCart() {
             <ShoppingCart size={48} className="text-gray-200 dark:text-white/10 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Savat bo'sh</h2>
             <p className="text-gray-400 dark:text-white/30 mb-6 text-sm">Mahsulot qo'shing va xarid qiling</p>
-            <Link href={`/${locale}/market`}
+            <Link href={`/market`}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl
                     bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold text-sm">
                 <ArrowLeft size={16} /> Marketga o'tish
@@ -126,7 +126,7 @@ export function MarketCart() {
         <div className="container mx-auto px-4 max-w-5xl py-8">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-6">
-                <Link href={`/${locale}/market`} className="hover:text-green-600 transition-colors">Market</Link>
+                <Link href={`/market`} className="hover:text-green-600 transition-colors">Market</Link>
                 <ChevronRight size={11} /><span className="text-gray-600 dark:text-white/50">Savat</span>
             </nav>
 
@@ -148,7 +148,7 @@ export function MarketCart() {
                                     border border-gray-100 dark:border-white/[0.06]
                                     rounded-2xl p-4">
                                 {/* Rasm */}
-                                <Link href={`/${locale}/market/product/${item.product.slug}`}
+                                <Link href={`/market/product/${item.product.slug}`}
                                     className="w-20 h-20 rounded-xl overflow-hidden bg-gray-50 dark:bg-white/[0.03] shrink-0">
                                     {item.product.images[0] ? (
                                         <Image src={item.product.images[0]} alt={item.product.name}
@@ -166,7 +166,7 @@ export function MarketCart() {
                                         <span className="text-xs text-gray-400 dark:text-white/25">{item.product.brand.name}</span>
                                         {item.product.brand.verified && <VerifiedBadge size={11} />}
                                     </div>
-                                    <Link href={`/${locale}/market/product/${item.product.slug}`}>
+                                    <Link href={`/market/product/${item.product.slug}`}>
                                         <p className="text-sm font-semibold text-gray-900 dark:text-white
                                             hover:text-green-600 dark:hover:text-green-400 transition-colors line-clamp-2 mb-2">
                                             {item.product.name}
@@ -254,7 +254,7 @@ export function MarketCart() {
                                         <div className="text-xs text-red-600 dark:text-red-400">
                                             <p className="font-semibold">Balans yetarli emas</p>
                                             <p>Kerak: {fz(total - balance)} Ƶ ko'proq</p>
-                                            <Link href={`/${locale}/pay`} className="underline mt-0.5 inline-block">
+                                            <Link href={`/pay`} className="underline mt-0.5 inline-block">
                                                 ALKH Pay da to'ldirish
                                             </Link>
                                         </div>

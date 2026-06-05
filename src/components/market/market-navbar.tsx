@@ -75,7 +75,7 @@ function CatalogMegaMenu({ onClose }: { onClose: () => void }) {
                     <div className="grid grid-cols-3 gap-x-8 gap-y-1">
                         {activeCat.subcategories.map((sub) => (
                             <Link key={sub.slug}
-                                href={`/${locale}/market/catalog?cat=${activeCat.slug}&sub=${sub.slug}`}
+                                href={`/market/catalog?cat=${activeCat.slug}&sub=${sub.slug}`}
                                 onClick={onClose}
                                 className="text-sm text-gray-500 dark:text-white/40
                                     hover:text-green-600 dark:hover:text-green-400
@@ -87,7 +87,7 @@ function CatalogMegaMenu({ onClose }: { onClose: () => void }) {
                     </div>
 
                     {/* Barcha ko'rish */}
-                    <Link href={`/${locale}/market/catalog?cat=${activeCat.slug}`}
+                    <Link href={`/market/catalog?cat=${activeCat.slug}`}
                         onClick={onClose}
                         className="inline-flex items-center gap-1.5 mt-5 text-xs font-semibold
                             text-green-600 dark:text-green-400
@@ -145,7 +145,7 @@ export function MarketNavbar() {
                                 <span className="text-xs font-medium hidden sm:block">For Humo</span>
                             </Link>
                             <ChevronRight size={11} className="text-gray-300 dark:text-white/15" />
-                            <Link href={`/${locale}/market`}
+                            <Link href={`/market`}
                                 className="flex items-center gap-2 group">
                                 <div className="relative">
                                     <motion.div
@@ -203,7 +203,7 @@ export function MarketNavbar() {
 
                         {/* O'ng: cart + til + tema + avatar */}
                         <div className="flex items-center gap-2 shrink-0">
-                            <Link href={`/${locale}/market/cart`}
+                            <Link href={`/market/cart`}
                                 className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl
                                     bg-green-50 dark:bg-green-900/15
                                     hover:bg-green-100 dark:hover:bg-green-900/25

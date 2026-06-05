@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { Link } from "@/i18n/routing";
 import {
     SlidersHorizontal, ChevronRight, Loader2,
@@ -30,9 +29,7 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 ];
 
 export function MarketCatalog() {
-    const locale       = useLocale();
     const params       = useSearchParams();
-    const router       = useRouter();
 
     const catSlug  = params.get("cat")  ?? "";
     const subSlug  = params.get("sub")  ?? "";
@@ -75,7 +72,7 @@ export function MarketCatalog() {
         <div className="container mx-auto px-4 max-w-6xl py-8">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-6">
-                <Link href={`/${locale}/market`} className="hover:text-green-600 transition-colors">Market</Link>
+                <Link href={`/market`} className="hover:text-green-600 transition-colors">Market</Link>
                 <ChevronRight size={11} />
                 <span className="text-gray-600 dark:text-white/50">
                     {currentCat?.name ?? "Barcha mahsulotlar"}
@@ -112,7 +109,7 @@ export function MarketCatalog() {
                                         </button>
                                         {active && cat.subcategories.map(sub => (
                                             <Link key={sub.slug}
-                                                href={`/${locale}/market/catalog?cat=${cat.slug}&sub=${sub.slug}`}
+                                                href={`/market/catalog?cat=${cat.slug}&sub=${sub.slug}`}
                                                 className={`block pl-9 pr-3 py-1.5 text-xs rounded-xl transition-all
                                                     ${subSlug === sub.slug
                                                         ? "text-green-600 dark:text-green-400 font-semibold"

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import {
@@ -42,7 +42,7 @@ export function CreateBrand() {
             });
             const data = await res.json();
             if (!res.ok) { setError(data.error); }
-            else { setDone(true); setTimeout(() => router.push(`/${locale}/market`), 2500); }
+            else { setDone(true); setTimeout(() => router.push("/market"), 2500); }
         } catch { setError("Xatolik yuz berdi"); } finally { setLoading(false); }
     }
 
@@ -50,7 +50,7 @@ export function CreateBrand() {
         <div className="container mx-auto px-4 max-w-xl py-10">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-8">
-                <Link href={`/${locale}/market`} className="hover:text-green-600 transition-colors">Market</Link>
+                <Link href={`/market`} className="hover:text-green-600 transition-colors">Market</Link>
                 <ChevronRight size={11} />
                 <span className="text-gray-600 dark:text-white/50">Brend yaratish</span>
             </nav>
