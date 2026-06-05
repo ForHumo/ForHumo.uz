@@ -14,7 +14,7 @@ import {
     Shield, Lock, Unlock,
     Wallet, BarChart3,
     Landmark, Plane, Smartphone, Gamepad2, Home,
-    GraduationCap, Gem, Car, Sun, Dumbbell, PiggyBank,
+    GraduationCap, Gem, Car, Sun, Dumbbell, Cat,
 } from "lucide-react";
 import { AlkhPayNavbar } from "@/components/pay/alkh-pay-navbar";
 
@@ -75,7 +75,7 @@ const SAFE_ICONS: { key: SafeIconKey; icon: React.ElementType; color: string; la
     { key: "car",        icon: Car,           color: "#14B8A6", label: "Mashina"   },
     { key: "sun",        icon: Sun,           color: "#FBBF24", label: "Dam olish" },
     { key: "dumbbell",   icon: Dumbbell,      color: "#EF4444", label: "Sport"     },
-    { key: "piggybank",  icon: PiggyBank,     color: "#F97316", label: "Boshqa"   },
+    { key: "piggybank",  icon: Cat,            color: "#F97316", label: "Boshqa"   },
     { key: "shield",     icon: Shield,        color: "#3B82F6", label: "Sug'urta"  },
 ];
 
