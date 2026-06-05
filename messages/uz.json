@@ -406,5 +406,27 @@
       "memory_title": "Xotira",
       "memory_desc": "Suhbat tarixini saqlash va kontekstni eslab qolish."
     }
+  },
+  "Pay": {
+    "title": "ALKH Pay",
+    "subtitle": "Zij hamyoningiz",
+    "balance_label": "Balans",
+    "currency": "Ƶ",
+    "deposit_btn": "Hisobni to'ldirish",
+    "deposit_title": "Zij kiritish",
+    "deposit_desc": "Test rejimi — haqiqiy pul o'tkazilmaydi",
+    "deposit_amount_label": "Miqdor (Ƶ)",
+    "deposit_amount_placeholder": "Masalan: 100",
+    "deposit_submit": "Kiritish",
+    "deposit_success": "Muvaffaqiyatli kiritildi!",
+    "deposit_error": "Xatolik yuz berdi",
+    "history_title": "Tranzaksiyalar",
+    "history_empty": "Hali tranzaksiya yo'q",
+    "tx_deposit": "Kiritish",
+    "tx_withdraw": "Chiqarish",
+    "tx_purchase": "Xarid",
+    "tx_reward": "Mukofot",
+    "withdraw_soon": "Tez orada",
+    "test_mode_banner": "Test rejimi — bu Zij haqiqiy pul emas. Tizim sinovdan o'tkazilmoqda."
   }
 }

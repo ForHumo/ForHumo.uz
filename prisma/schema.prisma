@@ -52,8 +52,8 @@ model UserProfile {
   lastLoginAt   DateTime?
   loginEvents   LoginEvent[]
   supportTickets SupportTicket[]
-
   emailCodes    EmailVerificationCode[]
+  zijWallet     ZijWallet?
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -276,4 +276,41 @@ enum TournamentStatus {
   LIVE
   COMPLETED
   CANCELLED
+}
+
+// ── ALKH Pay — Zij valyuta hamyoni ───────────────────────────────────────────
+
+model ZijWallet {
+  id          String   @id @default(cuid())
+  profileId   String   @unique
+  profile     UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  balance     Decimal  @default(0) @db.Decimal(18, 2)  // Zij miqdori
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  transactions ZijTransaction[]
+}
+
+model ZijTransaction {
+  id          String             @id @default(cuid())
+  walletId    String
+  wallet      ZijWallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  type        ZijTransactionType
+  amount      Decimal            @db.Decimal(18, 2)   // musbat son
+  balanceAfter Decimal           @db.Decimal(18, 2)   // tranzaksiyadan keyin balans
+
+  description String?            // "Test to'ldirish", "eSport turnir kirish badali" va h.k.
+  ref         String?            // tashqi ref (kelajakda: turnir ID, order ID)
+
+  createdAt   DateTime @default(now())
+}
+
+enum ZijTransactionType {
+  DEPOSIT    // pul kirish (test rejim)
+  WITHDRAW   // pul chiqish (hozircha o'chirilgan)
+  PURCHASE   // xarid (turnir, Nexus Pro va h.k.)
+  REWARD     // mukofot (turnir yutug'i, cashback)
 }

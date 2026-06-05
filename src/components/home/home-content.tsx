@@ -72,7 +72,7 @@ export function HomeContent() {
         {
             title: "ALKH Pay",
             description: tProjects("pay_desc"),
-            href: "/coming-soon",
+            href: "/pay",
             icon: CreditCard,
             logoSrc: "/logos/alkh-pay.png",
             status: "active",

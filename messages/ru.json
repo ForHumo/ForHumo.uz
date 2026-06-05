@@ -406,5 +406,27 @@
       "memory_title": "Память",
       "memory_desc": "Сохранение истории разговоров и контекста."
     }
+  },
+  "Pay": {
+    "title": "ALKH Pay",
+    "subtitle": "Ваш Zij кошелёк",
+    "balance_label": "Баланс",
+    "currency": "Ƶ",
+    "deposit_btn": "Пополнить",
+    "deposit_title": "Добавить Zij",
+    "deposit_desc": "Тестовый режим — реальные деньги не переводятся",
+    "deposit_amount_label": "Сумма (Ƶ)",
+    "deposit_amount_placeholder": "Например: 100",
+    "deposit_submit": "Внести",
+    "deposit_success": "Успешно внесено!",
+    "deposit_error": "Произошла ошибка",
+    "history_title": "Транзакции",
+    "history_empty": "Транзакций пока нет",
+    "tx_deposit": "Пополнение",
+    "tx_withdraw": "Вывод",
+    "tx_purchase": "Покупка",
+    "tx_reward": "Награда",
+    "withdraw_soon": "Скоро",
+    "test_mode_banner": "Тестовый режим — Zij не является реальными деньгами. Система тестируется."
   }
 }

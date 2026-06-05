@@ -406,5 +406,27 @@
       "memory_title": "Memory",
       "memory_desc": "Save conversation history and remember context."
     }
+  },
+  "Pay": {
+    "title": "ALKH Pay",
+    "subtitle": "Your Zij Wallet",
+    "balance_label": "Balance",
+    "currency": "Ƶ",
+    "deposit_btn": "Top Up",
+    "deposit_title": "Add Zij",
+    "deposit_desc": "Test mode — no real money transferred",
+    "deposit_amount_label": "Amount (Ƶ)",
+    "deposit_amount_placeholder": "e.g. 100",
+    "deposit_submit": "Deposit",
+    "deposit_success": "Successfully deposited!",
+    "deposit_error": "An error occurred",
+    "history_title": "Transactions",
+    "history_empty": "No transactions yet",
+    "tx_deposit": "Deposit",
+    "tx_withdraw": "Withdraw",
+    "tx_purchase": "Purchase",
+    "tx_reward": "Reward",
+    "withdraw_soon": "Coming soon",
+    "test_mode_banner": "Test mode — Zij is not real money. System is being tested."
   }
 }
