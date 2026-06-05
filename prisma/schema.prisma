@@ -204,6 +204,8 @@ model Tournament {
   status      TournamentStatus @default(UPCOMING)
   startDate   DateTime
   endDate     DateTime?
+  // Zij kirish badali (0 = bepul). 1 Zij = 1 USD, o'zgarmas.
+  entryFee    Decimal          @default(0) @db.Decimal(18, 2)
   createdAt   DateTime         @default(now())
 
   teams       TournamentTeam[]
