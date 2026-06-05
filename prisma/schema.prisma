@@ -296,6 +296,7 @@ model ZijWallet {
   updatedAt   DateTime @updatedAt
 
   transactions ZijTransaction[]
+  safes        ZijSafe[]
 }
 
 model ZijTransaction {
@@ -318,4 +319,24 @@ enum ZijTransactionType {
   WITHDRAW   // pul chiqish (hozircha o'chirilgan)
   PURCHASE   // xarid (turnir, Nexus Pro va h.k.)
   REWARD     // mukofot (turnir yutug'i, cashback)
+  TRANSFER_OUT  // do'stga yuborish
+  TRANSFER_IN   // do'stdan qabul qilish
+  SAFE_IN       // seyfga o'tkazish
+  SAFE_OUT      // seyfdan chiqarish
+}
+
+// Virtual seyf — maqsadli jamg'arma
+model ZijSafe {
+  id          String   @id @default(cuid())
+  walletId    String
+  wallet      ZijWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  name        String              // "Parij sayohati", "Yangi telefon" va h.k.
+  emoji       String   @default("🏦")
+  targetAmount Decimal @db.Decimal(18, 2)   // maqsad summa
+  balance     Decimal  @default(0) @db.Decimal(18, 2)  // hozirgi balans
+  isCompleted Boolean  @default(false)      // to'lgan yoki yo'q
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

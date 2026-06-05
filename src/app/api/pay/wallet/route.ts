@@ -21,24 +21,21 @@ export async function GET() {
     let wallet = await prisma.zijWallet.findUnique({
         where: { profileId: profile.id },
         include: {
-            transactions: {
-                orderBy: { createdAt: "desc" },
-                take: 20,
-            },
+            transactions: { orderBy: { createdAt: "desc" }, take: 50 },
+            safes: { orderBy: { createdAt: "desc" } },
         },
     });
 
     if (!wallet) {
         wallet = await prisma.zijWallet.create({
             data: { profileId: profile.id },
-            include: {
-                transactions: true,
-            },
+            include: { transactions: true, safes: true },
         });
     }
 
     return NextResponse.json({
         balance: wallet.balance,
         transactions: wallet.transactions,
+        safes: wallet.safes,
     });
 }
