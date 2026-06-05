@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useSpring, useTransform, useMotionValue } from "framer-motion";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import { AlkhPayNavbar } from "@/components/pay/alkh-pay-navbar";
 import {
     ArrowDownLeft, ArrowUpRight, Gift, Zap,
     TrendingUp, Plus, AlertCircle, CheckCircle2, Loader2,
@@ -597,37 +598,12 @@ export function AlkhPayContent() {
             <AnimatedBackground />
 
             <div className="min-h-screen">
-                {/* Header zone */}
-                <div className="pt-8 pb-0">
-                    <div className="container mx-auto px-4 max-w-xl">
+                {/* ALKH Pay Navbar */}
+                <AlkhPayNavbar />
 
-                        {/* Logo + brand */}
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex items-center gap-3 mb-5"
-                        >
-                            <div className="relative">
-                                <motion.div
-                                    className="absolute inset-0 rounded-2xl bg-blue-400/30 blur-lg"
-                                    animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
-                                    transition={{ duration: 3, repeat: Infinity }}
-                                />
-                                <Image
-                                    src="/logos/alkh-pay.png"
-                                    alt="ALKH Pay"
-                                    width={44}
-                                    height={44}
-                                    className="relative rounded-2xl"
-                                />
-                            </div>
-                            <div>
-                                <h1 className="text-gray-900 dark:text-white font-black text-2xl tracking-tight">
-                                    {t("title")}
-                                </h1>
-                                <p className="text-gray-400 dark:text-white/30 text-xs">{t("subtitle")}</p>
-                            </div>
-                        </motion.div>
+                {/* Header zone */}
+                <div className="pt-6 pb-0">
+                    <div className="container mx-auto px-4 max-w-xl">
 
                         {/* Test mode banner */}
                         <motion.div
