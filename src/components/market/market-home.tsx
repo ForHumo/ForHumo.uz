@@ -4,12 +4,11 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
-import Image from "next/image";
 import {
-    Star, ShoppingCart, BadgeCheck, TrendingUp,
-    ArrowRight, Flame, Zap, Tag, ChevronRight,
+    BadgeCheck, TrendingUp, ArrowRight, Flame, Zap, Tag, ChevronRight,
 } from "lucide-react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
+import { ProductCard } from "./product-card";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -57,118 +56,6 @@ function MarketBg() {
                     backgroundSize: "56px 56px",
                 }} />
         </div>
-    );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ProductCard
-// ─────────────────────────────────────────────────────────────────────────────
-function ProductCard({ product, index }: { product: Product; index: number }) {
-    const locale = useLocale();
-    const disc = discount(product.price, product.oldPrice);
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.06, type: "spring", stiffness: 300, damping: 25 }}
-            whileHover={{ y: -4 }}
-            className="group relative bg-white/70 dark:bg-white/[0.03]
-                border border-gray-100 dark:border-white/[0.06]
-                hover:border-green-200 dark:hover:border-green-700/30
-                hover:shadow-xl hover:shadow-green-500/8
-                backdrop-blur-sm rounded-2xl overflow-hidden
-                transition-all duration-300 cursor-pointer"
-        >
-            {/* Rasm */}
-            <Link href={`/${locale}/market/product/${product.slug}`}>
-                <div className="relative h-44 bg-gray-50 dark:bg-white/[0.03] overflow-hidden">
-                    {product.images[0] ? (
-                        <Image src={product.images[0]} alt={product.name}
-                            fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <ShoppingCart size={32} className="text-gray-200 dark:text-white/10" />
-                        </div>
-                    )}
-                    {/* Chegirma badge */}
-                    {disc && (
-                        <div className="absolute top-2 left-2 bg-red-500 text-white
-                            text-xs font-black px-2 py-0.5 rounded-lg">
-                            -{disc}%
-                        </div>
-                    )}
-                    {product.isFeatured && (
-                        <div className="absolute top-2 right-2 bg-green-500 text-white
-                            text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
-                            <Flame size={10} /> Top
-                        </div>
-                    )}
-                </div>
-            </Link>
-
-            {/* Info */}
-            <div className="p-4">
-                {/* Brend */}
-                <div className="flex items-center gap-1.5 mb-1.5">
-                    <span className="text-xs text-gray-400 dark:text-white/25 font-medium">
-                        {product.brand.name}
-                    </span>
-                    {product.brand.verified && (
-                        <BadgeCheck size={12} className="text-green-500" />
-                    )}
-                </div>
-
-                {/* Nom */}
-                <Link href={`/${locale}/market/product/${product.slug}`}>
-                    <p className="text-gray-900 dark:text-white text-sm font-semibold
-                        line-clamp-2 leading-tight mb-2
-                        group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors">
-                        {product.name}
-                    </p>
-                </Link>
-
-                {/* Reyting */}
-                <div className="flex items-center gap-1.5 mb-3">
-                    <Star size={12} className="text-amber-400 fill-amber-400" />
-                    <span className="text-xs font-semibold text-gray-700 dark:text-white/60">
-                        {product.rating}
-                    </span>
-                    <span className="text-xs text-gray-400 dark:text-white/25">
-                        ({product.reviewCount})
-                    </span>
-                    <span className="text-xs text-gray-300 dark:text-white/15 ml-auto">
-                        {fz(product.sold)} sotilgan
-                    </span>
-                </div>
-
-                {/* Narx + Savat */}
-                <div className="flex items-end justify-between gap-2">
-                    <div>
-                        <div className="flex items-baseline gap-1.5">
-                            <span className="font-black text-lg
-                                text-transparent bg-clip-text
-                                bg-gradient-to-r from-green-600 to-emerald-500
-                                dark:from-green-400 dark:to-emerald-300">
-                                {fz(product.price)}
-                            </span>
-                            <span className="text-sm font-bold text-green-500 dark:text-green-400">Ƶ</span>
-                        </div>
-                        {product.oldPrice && (
-                            <span className="text-xs text-gray-400 line-through">{fz(product.oldPrice)} Ƶ</span>
-                        )}
-                    </div>
-                    <motion.button
-                        whileTap={{ scale: 0.9 }}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center
-                            bg-green-500 hover:bg-green-400
-                            text-white shadow-md shadow-green-500/25
-                            transition-all duration-200">
-                        <ShoppingCart size={15} />
-                    </motion.button>
-                </div>
-            </div>
-        </motion.div>
     );
 }
 
