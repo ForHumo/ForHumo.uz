@@ -273,6 +273,92 @@ model TournamentStanding {
   team        TournamentTeam @relation(fields: [teamId], references: [id])
 }
 
+// ── Humo Market ──────────────────────────────────────────────────────────────
+
+model MarketBrand {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  logo        String?
+  description String?
+  verified    Boolean  @default(false)  // rasmiy tasdiqlangan brend
+  ownerId     String                    // UserProfile.id
+  createdAt   DateTime @default(now())
+
+  products    MarketProduct[]
+}
+
+model MarketProduct {
+  id          String   @id @default(cuid())
+  brandId     String
+  brand       MarketBrand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  name        String
+  slug        String   @unique
+  description String?
+  images      String[]          // URL massiv
+  price       Decimal  @db.Decimal(18, 2)   // Zij narxi
+  oldPrice    Decimal? @db.Decimal(18, 2)   // chegirma bo'lsa eski narx
+  stock       Int      @default(0)
+  sold        Int      @default(0)
+  rating      Float    @default(0)
+  reviewCount Int      @default(0)
+
+  category    String            // asosiy kategoriya slug
+  subcategory String?           // kichik kategoriya slug
+
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cartItems   MarketCartItem[]
+  orderItems  MarketOrderItem[]
+}
+
+model MarketCartItem {
+  id        String   @id @default(cuid())
+  profileId String
+  productId String
+  product   MarketProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@unique([profileId, productId])
+}
+
+model MarketOrder {
+  id          String   @id @default(cuid())
+  profileId   String
+  total       Decimal  @db.Decimal(18, 2)
+  status      MarketOrderStatus @default(PENDING)
+  address     String?
+  note        String?
+  createdAt   DateTime @default(now())
+
+  items       MarketOrderItem[]
+}
+
+model MarketOrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      MarketOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String
+  product    MarketProduct @relation(fields: [productId], references: [id])
+  quantity   Int
+  price      Decimal  @db.Decimal(18, 2)   // sotib olingan paytdagi narx
+}
+
+enum MarketOrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
 enum TournamentStatus {
   UPCOMING
   LIVE

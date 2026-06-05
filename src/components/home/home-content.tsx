@@ -64,7 +64,7 @@ export function HomeContent() {
         {
             title: "Humo Market",
             description: tProjects("market_desc"),
-            href: "/coming-soon",
+            href: "/market",
             icon: ShoppingBag,
             logoSrc: "/logos/humo-market.png",
             status: "active",
