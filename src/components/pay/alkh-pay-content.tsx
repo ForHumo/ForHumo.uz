@@ -10,9 +10,11 @@ import Image from "next/image";
 import {
     ArrowDownLeft, ArrowUpRight, Gift, Zap,
     TrendingUp, Plus, AlertCircle, CheckCircle2, Loader2,
-    Clock, ShoppingBag, X, Send, User, StickyNote,
-    Shield, Lock, Unlock, Target, ChevronRight,
+    Clock, ShoppingBag, X, Send, StickyNote,
+    Shield, Lock, Unlock,
     Wallet, BarChart3,
+    Landmark, Plane, Smartphone, Gamepad2, Home,
+    GraduationCap, Gem, Car, Sun, Dumbbell, PiggyBank,
 } from "lucide-react";
 import { AlkhPayNavbar } from "@/components/pay/alkh-pay-navbar";
 
@@ -58,7 +60,28 @@ const IN_TYPES:  TxType[] = ["DEPOSIT", "REWARD", "TRANSFER_IN", "SAFE_OUT"];
 const OUT_TYPES: TxType[] = ["WITHDRAW", "PURCHASE", "TRANSFER_OUT", "SAFE_IN"];
 
 const QUICK_AMOUNTS = [10, 50, 100, 500, 1000, 5000];
-const SAFE_EMOJIS = ["🏦", "✈️", "📱", "🎮", "🏠", "🎓", "💍", "🚗", "🌴", "💪"];
+// Seyf ikonkalari — emoji yo'q, faqat Lucide ikonkalar
+type SafeIconKey = "landmark" | "plane" | "smartphone" | "gamepad" | "home"
+    | "graduation" | "gem" | "car" | "sun" | "dumbbell" | "piggybank" | "shield";
+
+const SAFE_ICONS: { key: SafeIconKey; icon: React.ElementType; color: string; label: string }[] = [
+    { key: "landmark",   icon: Landmark,      color: "#0099FF", label: "Jamgarma"  },
+    { key: "plane",      icon: Plane,         color: "#00C8FF", label: "Sayohat"   },
+    { key: "smartphone", icon: Smartphone,    color: "#6366F1", label: "Texnika"   },
+    { key: "gamepad",    icon: Gamepad2,      color: "#10B981", label: "O'yin"     },
+    { key: "home",       icon: Home,          color: "#F59E0B", label: "Uy"        },
+    { key: "graduation", icon: GraduationCap, color: "#8B5CF6", label: "Ta'lim"   },
+    { key: "gem",        icon: Gem,           color: "#EC4899", label: "Zargarlik" },
+    { key: "car",        icon: Car,           color: "#14B8A6", label: "Mashina"   },
+    { key: "sun",        icon: Sun,           color: "#FBBF24", label: "Dam olish" },
+    { key: "dumbbell",   icon: Dumbbell,      color: "#EF4444", label: "Sport"     },
+    { key: "piggybank",  icon: PiggyBank,     color: "#F97316", label: "Boshqa"   },
+    { key: "shield",     icon: Shield,        color: "#3B82F6", label: "Sug'urta"  },
+];
+
+function getSafeIcon(key: string) {
+    return SAFE_ICONS.find(i => i.key === key) ?? SAFE_ICONS[0];
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -415,7 +438,16 @@ function SafeCard({ safe, walletBalance, onAction }: {
                 hover:bg-white/80 dark:hover:bg-white/[0.06] backdrop-blur-sm rounded-2xl p-4 transition-colors">
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5">
-                    <span className="text-2xl">{safe.emoji}</span>
+                    {(() => {
+                        const si = getSafeIcon(safe.emoji);
+                        const Icon = si.icon;
+                        return (
+                            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                                style={{ backgroundColor: si.color + "20" }}>
+                                <Icon size={18} style={{ color: si.color }} />
+                            </div>
+                        );
+                    })()}
                     <div>
                         <p className="text-gray-900 dark:text-white font-bold text-sm">{safe.name}</p>
                         <p className="text-gray-400 dark:text-white/30 text-xs">
@@ -490,9 +522,9 @@ function CreateSafeModal({ onClose, onCreate }: {
     onClose: () => void;
     onCreate: (safe: ZijSafe) => void;
 }) {
-    const [name, setName]     = useState("");
-    const [emoji, setEmoji]   = useState("🏦");
-    const [target, setTarget] = useState("");
+    const [name, setName]       = useState("");
+    const [iconKey, setIconKey] = useState<SafeIconKey>("landmark");
+    const [target, setTarget]   = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError]   = useState("");
 
@@ -504,7 +536,7 @@ function CreateSafeModal({ onClose, onCreate }: {
         try {
             const res = await fetch("/api/pay/safe", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: name.trim(), emoji, targetAmount: Number(target) }),
+                body: JSON.stringify({ name: name.trim(), emoji: iconKey, targetAmount: Number(target) }),
             });
             const data = await res.json();
             if (!res.ok) { setError(data.error); }
@@ -524,18 +556,32 @@ function CreateSafeModal({ onClose, onCreate }: {
                 </button>
             </div>
             <form onSubmit={submit} className="space-y-4">
-                {/* Emoji tanlash */}
+                {/* Ikonka tanlash */}
                 <div>
-                    <p className="text-gray-500 dark:text-white/40 text-xs mb-2">Emoji</p>
-                    <div className="flex flex-wrap gap-2">
-                        {SAFE_EMOJIS.map((e) => (
-                            <button key={e} type="button" onClick={() => setEmoji(e)}
-                                className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center transition
-                                    ${emoji === e ? "bg-blue-500/20 ring-2 ring-blue-400/50 scale-110" : "bg-gray-100/80 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10"}`}>
-                                {e}
-                            </button>
-                        ))}
+                    <p className="text-gray-500 dark:text-white/40 text-xs mb-2">Ikonka</p>
+                    <div className="grid grid-cols-6 gap-2">
+                        {SAFE_ICONS.map((si) => {
+                            const Icon = si.icon;
+                            const active = iconKey === si.key;
+                            return (
+                                <button key={si.key} type="button" onClick={() => setIconKey(si.key)}
+                                    title={si.label}
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-150
+                                        ${active ? "ring-2 scale-110" : "bg-gray-100/80 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10"}`}
+                                    style={active ? {
+                                        backgroundColor: si.color + "22",
+                                        boxShadow: `0 0 0 2px ${si.color}60`,
+                                    } : {}}>
+                                    <Icon size={18} style={{ color: active ? si.color : undefined }}
+                                        className={active ? "" : "text-gray-400 dark:text-white/30"} />
+                                </button>
+                            );
+                        })}
                     </div>
+                    {/* Tanlangan ikonka nomi */}
+                    <p className="text-xs text-gray-400 dark:text-white/25 mt-1.5">
+                        {SAFE_ICONS.find(i => i.key === iconKey)?.label}
+                    </p>
                 </div>
                 {/* Nom */}
                 <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40}
