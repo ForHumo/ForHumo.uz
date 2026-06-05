@@ -427,6 +427,7 @@
     "tx_purchase": "Xarid",
     "tx_reward": "Mukofot",
     "withdraw_soon": "Tez orada",
-    "test_mode_banner": "Test rejimi — bu Zij haqiqiy pul emas. Tizim sinovdan o'tkazilmoqda."
+    "test_mode_banner": "Test rejimi — bu Zij haqiqiy pul emas. Tizim sinovdan o'tkazilmoqda.",
+    "rate_label": "1 Ƶ = 1 USD (o'zgarmas)"
   }
 }

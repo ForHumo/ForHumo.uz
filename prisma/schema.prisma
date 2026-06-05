@@ -279,6 +279,11 @@ enum TournamentStatus {
 }
 
 // ── ALKH Pay — Zij valyuta hamyoni ───────────────────────────────────────────
+//
+// Zij (Ƶ) — ALKH Pay ichki valyutasi.
+// Al-Xorazmiy kitoblari ("Zij") nomidan olingan.
+// Kurs: 1 Ƶ = 1 USD — bu kurs O'ZGARMAS, tizim tomonidan qat'iy belgilangan.
+// Kelajakda ham bu nisbat saqlanadi.
 
 model ZijWallet {
   id          String   @id @default(cuid())

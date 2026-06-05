@@ -248,12 +248,19 @@ export function AlkhPayContent() {
                                 <span className="text-white/40 text-sm">Yuklanmoqda...</span>
                             </div>
                         ) : (
-                            <div className="flex items-end gap-2">
-                                <span className="text-amber-400 text-5xl font-black tracking-tighter">
-                                    {wallet ? formatZij(wallet.balance) : "0"}
-                                </span>
-                                <span className="text-amber-400/60 text-2xl font-bold mb-1">Ƶ</span>
-                            </div>
+                            <>
+                                <div className="flex items-end gap-2">
+                                    <span className="text-amber-400 text-5xl font-black tracking-tighter">
+                                        {wallet ? formatZij(wallet.balance) : "0"}
+                                    </span>
+                                    <span className="text-amber-400/60 text-2xl font-bold mb-1">Ƶ</span>
+                                </div>
+                                {/* Dollar ekvivalenti — 1 Ƶ = 1 $ (o'zgarmas kurs) */}
+                                <p className="text-white/30 text-xs mt-1">
+                                    ≈ ${wallet ? formatZij(wallet.balance) : "0"} USD &nbsp;·&nbsp;
+                                    <span className="text-white/20">1 Ƶ = 1 $ (o&apos;zgarmas)</span>
+                                </p>
+                            </>
                         )}
 
                         {/* Action tugmalari */}

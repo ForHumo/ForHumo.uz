@@ -427,6 +427,7 @@
     "tx_purchase": "Purchase",
     "tx_reward": "Reward",
     "withdraw_soon": "Coming soon",
-    "test_mode_banner": "Test mode — Zij is not real money. System is being tested."
+    "test_mode_banner": "Test mode — Zij is not real money. System is being tested.",
+    "rate_label": "1 Ƶ = 1 USD (fixed rate)"
   }
 }
