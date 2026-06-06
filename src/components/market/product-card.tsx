@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
-import { Star, ShoppingCart, Flame, CheckCircle2, Loader2 } from "lucide-react";
+import { Star, ShoppingCart, Flame, CheckCircle2, Loader2, Heart } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 
 interface Product {
@@ -21,12 +20,28 @@ function disc(p: string, o: string | null) {
 }
 
 export function ProductCard({
-    product, index = 0, compact = false,
-}: { product: Product; index?: number; compact?: boolean }) {
-    const locale = useLocale();
+    product, index = 0, compact = false, initialLiked = false,
+}: { product: Product; index?: number; compact?: boolean; initialLiked?: boolean }) {
     const d = disc(product.price, product.oldPrice);
-    const [adding, setAdding] = useState(false);
-    const [added, setAdded]   = useState(false);
+    const [adding, setAdding]   = useState(false);
+    const [added, setAdded]     = useState(false);
+    const [liked, setLiked]     = useState(initialLiked);
+    const [liking, setLiking]   = useState(false);
+
+    useEffect(() => { setLiked(initialLiked); }, [initialLiked]);
+
+    async function toggleWishlist(e: React.MouseEvent) {
+        e.preventDefault();
+        setLiking(true);
+        try {
+            const res = await fetch("/api/market/wishlist", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productId: product.id }),
+            });
+            if (res.ok) { const d = await res.json(); setLiked(d.liked); }
+        } finally { setLiking(false); }
+    }
 
     async function addToCart(e: React.MouseEvent) {
         e.preventDefault();
@@ -74,6 +89,23 @@ export function ProductCard({
                         <div className="absolute top-2 right-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
                             <Flame size={9} />Top
                         </div>
+                    )}
+                    {/* Heart tugmasi */}
+                    {!compact && (
+                        <motion.button
+                            onClick={toggleWishlist}
+                            disabled={liking}
+                            whileTap={{ scale: 0.8 }}
+                            className={`absolute top-2 ${product.isFeatured ? "right-14" : "right-2"}
+                                w-7 h-7 rounded-full flex items-center justify-center
+                                bg-white/80 dark:bg-black/40 backdrop-blur-sm
+                                shadow-sm transition-all duration-200
+                                opacity-0 group-hover:opacity-100`}
+                        >
+                            <Heart size={14}
+                                className={liked ? "text-red-500 fill-red-500" : "text-gray-400"}
+                            />
+                        </motion.button>
                     )}
                 </div>
             </Link>

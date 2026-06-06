@@ -2,16 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import {
     Star, ShoppingCart, Plus, Minus, ChevronRight,
     Package, Truck, RotateCcw, Shield, Loader2,
-    CheckCircle2, AlertCircle, TrendingUp,
+    CheckCircle2, AlertCircle, TrendingUp, Heart,
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 import { ProductCard } from "./product-card";
+import { ProductReviews } from "./product-reviews";
 
 interface Brand { id: string; name: string; slug: string; verified: boolean; logo: string | null; description: string | null; }
 interface Product {
@@ -29,7 +29,6 @@ function disc(p: string, o: string | null) {
 }
 
 export function ProductDetail({ slug }: { slug: string }) {
-    const locale = useLocale();
     const [product, setProduct]   = useState<Product | null>(null);
     const [similar, setSimilar]   = useState<Product[]>([]);
     const [loading, setLoading]   = useState(true);
@@ -38,6 +37,7 @@ export function ProductDetail({ slug }: { slug: string }) {
     const [added, setAdded]       = useState(false);
     const [addErr, setAddErr]     = useState("");
     const [imgIdx, setImgIdx]     = useState(0);
+    const [liked, setLiked]       = useState(false);
 
     useEffect(() => {
         fetch(`/api/market/products/${slug}`)
@@ -45,6 +45,15 @@ export function ProductDetail({ slug }: { slug: string }) {
             .then(d => { setProduct(d.product); setSimilar(d.similar ?? []); })
             .finally(() => setLoading(false));
     }, [slug]);
+
+    async function toggleWishlist() {
+        if (!product) return;
+        setLiked(v => !v); // optimistik
+        await fetch("/api/market/wishlist", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId: product.id }),
+        });
+    }
 
     async function addToCart() {
         if (!product) return;
@@ -224,6 +233,17 @@ export function ProductDetail({ slug }: { slug: string }) {
                                     : added ? <><CheckCircle2 size={16} /> Savatda!</>
                                     : <><ShoppingCart size={16} /> Savatga qo'shish</>}
                             </motion.button>
+
+                            {/* Sevimli */}
+                            <motion.button onClick={toggleWishlist}
+                                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9 }}
+                                className={`w-11 h-11 rounded-2xl flex items-center justify-center
+                                    border transition-all duration-200
+                                    ${liked
+                                        ? "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30"
+                                        : "bg-gray-100/80 dark:bg-white/[0.05] border-gray-200 dark:border-white/[0.08] hover:border-red-300"}`}>
+                                <Heart size={18} className={liked ? "text-red-500 fill-red-500" : "text-gray-400 dark:text-white/30"} />
+                            </motion.button>
                         </div>
                     )}
 
@@ -251,6 +271,9 @@ export function ProductDetail({ slug }: { slug: string }) {
                     </div>
                 </div>
             </div>
+
+            {/* Sharhlar */}
+            <ProductReviews productId={product.id} />
 
             {/* O'xshash mahsulotlar */}
             {similar.length > 0 && (

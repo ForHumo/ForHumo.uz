@@ -281,11 +281,34 @@ model MarketBrand {
   name        String
   logo        String?
   description String?
-  verified    Boolean  @default(false)  // rasmiy tasdiqlangan brend
-  ownerId     String                    // UserProfile.id
+  category    String?           // brend yo'nalishi: elektronika, kiyim, oziq-ovqat ...
+  verified    Boolean  @default(false)
+  ownerId     String
+  isPaid      Boolean  @default(false)  // 2-chi+ brend pullik
   createdAt   DateTime @default(now())
 
   products    MarketProduct[]
+}
+
+model MarketWishlist {
+  id        String   @id @default(cuid())
+  profileId String
+  productId String
+  product   MarketProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([profileId, productId])
+}
+
+model MarketReview {
+  id        String   @id @default(cuid())
+  profileId String
+  productId String
+  product   MarketProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderId   String        // faqat harid qilganlar sharh yoza oladi
+  rating    Int           // 1-5
+  text      String?
+  createdAt DateTime @default(now())
+  @@unique([profileId, productId])
 }
 
 model MarketProduct {
@@ -315,6 +338,8 @@ model MarketProduct {
 
   cartItems   MarketCartItem[]
   orderItems  MarketOrderItem[]
+  wishlists   MarketWishlist[]
+  reviews     MarketReview[]
 }
 
 model MarketCartItem {
@@ -329,15 +354,22 @@ model MarketCartItem {
 }
 
 model MarketOrder {
-  id          String   @id @default(cuid())
-  profileId   String
-  total       Decimal  @db.Decimal(18, 2)
-  status      MarketOrderStatus @default(PENDING)
-  address     String?
-  note        String?
-  createdAt   DateTime @default(now())
+  id            String              @id @default(cuid())
+  profileId     String
+  total         Decimal             @db.Decimal(18, 2)
+  status        MarketOrderStatus   @default(PENDING)
+  paymentMethod MarketPaymentMethod @default(ZIJ)
+  address       String              // manzil majburiy
+  note          String?
+  createdAt     DateTime            @default(now())
 
-  items       MarketOrderItem[]
+  items         MarketOrderItem[]
+}
+
+enum MarketPaymentMethod {
+  ZIJ              // Zij bilan to'landi
+  CASH_ON_DELIVERY // Yetkazishda naqd
+  CARD_ON_DELIVERY // Yetkazishda karta
 }
 
 model MarketOrderItem {
