@@ -41,7 +41,8 @@ export async function POST(req: Request) {
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
     const body = await req.json();
-    const { brandSlug, name, description, price, oldPrice, stock, category, subcategory, images } = body;
+    const { brandSlug, name, description, price, oldPrice, stock, category, subcategory, images, videos } = body;
+    const videoArr: string[] = Array.isArray(videos) ? videos.filter((x: unknown) => typeof x === "string") : [];
 
     if (!brandSlug) return NextResponse.json({ error: "Brend tanlang" }, { status: 400 });
     if (!name?.trim()) return NextResponse.json({ error: "Mahsulot nomi kerak" }, { status: 400 });
@@ -70,6 +71,7 @@ export async function POST(req: Request) {
             slug,
             description: description?.trim() ?? null,
             images: finalImages,
+            videos: videoArr,
             price: Number(price),
             oldPrice: oldPrice ? Number(oldPrice) : null,
             stock: stock ? Number(stock) : 0,

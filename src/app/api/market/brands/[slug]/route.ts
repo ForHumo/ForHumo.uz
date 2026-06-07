@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/market/brands/[slug] — brend profili + mahsulotlari + statistika
@@ -36,11 +38,36 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
         brand: {
             id: brand.id, slug: brand.slug, name: brand.name,
             logo: brand.logo, description: brand.description,
-            category: brand.category, verified: brand.verified,
+            category: brand.category, categories: brand.categories, verified: brand.verified,
             createdAt: brand.createdAt,
         },
         owner,
         products,
         stats: { productCount: products.length, totalSales, totalReviews, avgRating },
     });
+}
+
+// PATCH — brendni tahrirlash (faqat egasi)
+export async function PATCH(req: Request, { params }: { params: Promise<{ slug: string }> }) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { slug } = await params;
+    const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
+    if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+
+    const brand = await prisma.marketBrand.findUnique({ where: { slug } });
+    if (!brand) return NextResponse.json({ error: "Brend topilmadi" }, { status: 404 });
+    if (brand.ownerId !== profile.id) return NextResponse.json({ error: "Bu brend sizniki emas" }, { status: 403 });
+
+    const b = await req.json();
+    const data: Record<string, unknown> = {};
+    if (typeof b.name === "string" && b.name.trim()) data.name = b.name.trim();
+    if (b.description !== undefined) data.description = b.description?.trim() || null;
+    if (b.logo !== undefined) data.logo = b.logo || null;
+    if (Array.isArray(b.categories) && b.categories.length) {
+        const cats = b.categories.filter((x: unknown) => typeof x === "string");
+        data.categories = cats; data.category = cats[0];
+    }
+    const updated = await prisma.marketBrand.update({ where: { id: brand.id }, data });
+    return NextResponse.json({ brand: updated });
 }

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ImageUploader } from "./image-uploader";
+import { MediaUploader } from "./media-uploader";
 
 interface Brand { id: string; slug: string; name: string; category: string | null; }
 
@@ -28,6 +29,7 @@ export function ProductAdd() {
     const [cat, setCat]         = useState("");
     const [sub, setSub]         = useState("");
     const [images, setImages]   = useState<string[]>([]);
+    const [videos, setVideos]   = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError]     = useState("");
     const [done, setDone]       = useState(false);
@@ -56,7 +58,7 @@ export function ProductAdd() {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     brandSlug, name, description: desc, price, oldPrice: oldPrice || null,
-                    stock: stock || 0, category: cat, subcategory: sub || null, images,
+                    stock: stock || 0, category: cat, subcategory: sub || null, images, videos,
                 }),
             });
             const data = await res.json();
@@ -208,6 +210,14 @@ export function ProductAdd() {
                     {/* Rasmlar — qurilmadan yuklash */}
                     <ImageUploader kind="product" images={images} onChange={setImages} max={5}
                         label="Mahsulot rasmlari (qurilmangizdan yuklang)" />
+
+                    {/* Video (ixtiyoriy) */}
+                    <div>
+                        <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">
+                            Mahsulot videosi (ixtiyoriy, maks 2)
+                        </label>
+                        <MediaUploader kind="product" accept="video" media={videos} onChange={setVideos} max={2} />
+                    </div>
 
                     {/* Tavsif */}
                     <div>

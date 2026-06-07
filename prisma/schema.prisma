@@ -281,7 +281,8 @@ model MarketBrand {
   name        String
   logo        String?
   description String?
-  category    String?           // brend yo'nalishi: elektronika, kiyim, oziq-ovqat ...
+  category    String?           // (eski — birinchi yo'nalish, backward compat)
+  categories  String[] @default([])   // bir nechta yo'nalish
   verified    Boolean  @default(false)
   ownerId     String
   isPaid      Boolean  @default(false)  // 2-chi+ brend pullik
@@ -382,7 +383,8 @@ model MarketProduct {
   name        String
   slug        String   @unique
   description String?
-  images      String[]          // URL massiv
+  images      String[]          // rasm URL massiv
+  videos      String[] @default([])   // video URL massiv
   price       Decimal  @db.Decimal(18, 2)   // Zij narxi
   oldPrice    Decimal? @db.Decimal(18, 2)   // chegirma bo'lsa eski narx
   stock       Int      @default(0)

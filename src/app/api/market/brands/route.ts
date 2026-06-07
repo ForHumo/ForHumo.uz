@@ -39,11 +39,12 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { name, slug, description, category, logo } = await req.json();
+    const { name, slug, description, categories, logo } = await req.json();
+    const cats: string[] = Array.isArray(categories) ? categories.filter((x: unknown) => typeof x === "string") : [];
     if (!name?.trim() || !slug?.trim())
         return NextResponse.json({ error: "Nom va slug kerak" }, { status: 400 });
-    if (!category)
-        return NextResponse.json({ error: "Yo'nalish tanlang" }, { status: 400 });
+    if (!cats.length)
+        return NextResponse.json({ error: "Kamida bitta yo'nalish tanlang" }, { status: 400 });
 
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
                 data: {
                     slug, name: name.trim(),
                     description: description?.trim() ?? null,
-                    category, logo: logo ?? null,
+                    category: cats[0], categories: cats, logo: logo ?? null,
                     ownerId: profile.id,
                     isPaid: true,
                     verified: isFounder,
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
         data: {
             slug, name: name.trim(),
             description: description?.trim() ?? null,
-            category, logo: logo ?? null,
+            category: cats[0], categories: cats, logo: logo ?? null,
             ownerId: profile.id,
             isPaid: existingCount > 0 && !isFounder,
             verified: isFounder,

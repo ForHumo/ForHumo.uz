@@ -53,6 +53,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ slug: 
     if (b.category) data.category = b.category;
     if (b.subcategory !== undefined) data.subcategory = b.subcategory || null;
     if (Array.isArray(b.images) && b.images.length) data.images = b.images;
+    if (Array.isArray(b.videos)) data.videos = b.videos.filter((x: unknown) => typeof x === "string");
     if (typeof b.isActive === "boolean") data.isActive = b.isActive;
 
     const updated = await prisma.marketProduct.update({ where: { id: product.id }, data });

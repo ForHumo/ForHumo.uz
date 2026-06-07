@@ -25,8 +25,12 @@ function CreateBrandForm({ onCreated, nextPrice }: { onCreated: (b: Brand) => vo
     const [name, setName]   = useState("");
     const [slug, setSlug]   = useState("");
     const [desc, setDesc]   = useState("");
-    const [cat, setCat]     = useState("");
+    const [cats, setCats]   = useState<string[]>([]);
     const [logo, setLogo]   = useState<string[]>([]);
+
+    function toggleCat(slug: string) {
+        setCats(prev => prev.includes(slug) ? prev.filter(c => c !== slug) : [...prev, slug]);
+    }
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [done, setDone]   = useState(false);
@@ -40,17 +44,17 @@ function CreateBrandForm({ onCreated, nextPrice }: { onCreated: (b: Brand) => vo
         e.preventDefault(); setError("");
         if (!name.trim()) { setError("Nom kerak"); return; }
         if (!slug.trim()) { setError("Slug kerak"); return; }
-        if (!cat) { setError("Yo'nalish tanlang"); return; }
+        if (!cats.length) { setError("Kamida bitta yo'nalish tanlang"); return; }
         if (!logo.length) { setError("Brend logosini yuklang"); return; }
         setLoading(true);
         try {
             const res = await fetch("/api/market/brands", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, slug, description: desc, category: cat, logo: logo[0] }),
+                body: JSON.stringify({ name, slug, description: desc, categories: cats, logo: logo[0] }),
             });
             const data = await res.json();
             if (!res.ok) { setError(data.error); }
-            else { setDone(true); onCreated(data.brand); setTimeout(() => { setOpen(false); setDone(false); setName(""); setSlug(""); setDesc(""); setCat(""); setLogo([]); }, 1800); }
+            else { setDone(true); onCreated(data.brand); setTimeout(() => { setOpen(false); setDone(false); setName(""); setSlug(""); setDesc(""); setCats([]); setLogo([]); }, 1800); }
         } catch { setError("Xatolik"); } finally { setLoading(false); }
     }
 
@@ -115,16 +119,19 @@ function CreateBrandForm({ onCreated, nextPrice }: { onCreated: (b: Brand) => vo
                                             <ImageUploader kind="brand" images={logo} onChange={setLogo} max={1}
                                                 label="Brend logosi * (qurilmangizdan yuklang)" />
 
-                                            {/* Yo'nalish */}
+                                            {/* Yo'nalishlar (bir nechta) */}
                                             <div>
-                                                <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1 block">Yo'nalish *</label>
+                                                <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1 block">
+                                                    Yo'nalishlar * <span className="text-gray-300 dark:text-white/20">(bir nechta tanlash mumkin)</span>
+                                                </label>
                                                 <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto">
                                                     {MARKET_CATEGORIES.map(c => {
                                                         const Icon = c.icon;
+                                                        const on = cats.includes(c.slug);
                                                         return (
-                                                            <button key={c.slug} type="button" onClick={() => setCat(c.slug)}
+                                                            <button key={c.slug} type="button" onClick={() => toggleCat(c.slug)}
                                                                 className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-left text-xs font-semibold transition-all
-                                                                    ${cat === c.slug
+                                                                    ${on
                                                                         ? "border-green-400/60 bg-green-50 dark:bg-green-900/15 text-green-700 dark:text-green-400"
                                                                         : "border-gray-200 dark:border-white/[0.07] text-gray-600 dark:text-white/40 hover:bg-gray-50 dark:hover:bg-white/[0.04]"}`}>
                                                                 <Icon size={13} style={{ color: c.color }} />

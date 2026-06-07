@@ -7,10 +7,11 @@ import { Loader2, ImagePlus, Video, X, AlertCircle } from "lucide-react";
 import { MarketCropModal } from "./market-crop-modal";
 
 interface Props {
-    kind: "review" | "reply";
+    kind: "review" | "reply" | "product";
     media: string[];
     onChange: (urls: string[]) => void;
     max?: number;
+    accept?: "all" | "video";   // "video" = faqat video (mahsulot videosi)
 }
 
 export function isVideoUrl(url: string) {
@@ -18,7 +19,7 @@ export function isVideoUrl(url: string) {
 }
 
 // Sharh/javob uchun: rasm (crop) + video (to'g'ridan) yuklash
-export function MediaUploader({ kind, media, onChange, max = 4 }: Props) {
+export function MediaUploader({ kind, media, onChange, max = 4, accept = "all" }: Props) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState("");
@@ -74,7 +75,7 @@ export function MediaUploader({ kind, media, onChange, max = 4 }: Props) {
                     </button>
                 )}
             </div>
-            <input ref={inputRef} type="file" accept="image/*,video/*" onChange={e => pick(e.target.files)} className="hidden" />
+            <input ref={inputRef} type="file" accept={accept === "video" ? "video/*" : "image/*,video/*"} onChange={e => pick(e.target.files)} className="hidden" />
             {error && <p className="text-red-500 text-xs flex items-center gap-1"><AlertCircle size={11} />{error}</p>}
 
             <AnimatePresence>

@@ -21,7 +21,7 @@ interface Product {
 interface BrandData {
     brand: {
         id: string; slug: string; name: string; logo: string | null;
-        description: string | null; category: string | null; verified: boolean; createdAt: string;
+        description: string | null; category: string | null; categories?: string[]; verified: boolean; createdAt: string;
     };
     owner: { name: string | null; username: string | null; image: string | null } | null;
     products: Product[];
@@ -54,7 +54,8 @@ export function BrandProfile({ slug }: { slug: string }) {
     );
 
     const { brand, owner, products, stats } = data;
-    const cat = brand.category ? getCategoryBySlug(brand.category) : null;
+    const catSlugs = (brand.categories?.length ? brand.categories : (brand.category ? [brand.category] : []));
+    const cats = catSlugs.map(getCategoryBySlug).filter(Boolean);
 
     const STAT_ITEMS = [
         { icon: Package,    label: "Mahsulot",  value: fz(stats.productCount) },
@@ -100,7 +101,15 @@ export function BrandProfile({ slug }: { slug: string }) {
                             <h1 className="text-2xl font-black text-gray-900 dark:text-white">{brand.name}</h1>
                             {brand.verified && <VerifiedBadge size={18} />}
                         </div>
-                        {cat && <p className="text-sm text-gray-400 dark:text-white/30">{cat.name}</p>}
+                        {cats.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                                {cats.map(c => c && (
+                                    <span key={c.slug} className="text-xs px-2 py-0.5 rounded-full bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 font-medium">
+                                        {c.name}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 

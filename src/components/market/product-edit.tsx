@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ImageUploader } from "./image-uploader";
+import { MediaUploader } from "./media-uploader";
 
 export function ProductEdit({ slug }: { slug: string }) {
     const router = useRouter();
@@ -21,6 +22,7 @@ export function ProductEdit({ slug }: { slug: string }) {
     const [cat, setCat] = useState("");
     const [sub, setSub] = useState("");
     const [images, setImages] = useState<string[]>([]);
+    const [videos, setVideos] = useState<string[]>([]);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [done, setDone] = useState(false);
@@ -32,7 +34,7 @@ export function ProductEdit({ slug }: { slug: string }) {
                 setName(p.name); setDesc(p.description ?? "");
                 setPrice(String(p.price)); setOldPrice(p.oldPrice ? String(p.oldPrice) : "");
                 setStock(String(p.stock)); setCat(p.category); setSub(p.subcategory ?? "");
-                setImages(p.images ?? []);
+                setImages(p.images ?? []); setVideos(p.videos ?? []);
             })
             .catch(() => setNotFound(true))
             .finally(() => setLoading(false));
@@ -48,7 +50,7 @@ export function ProductEdit({ slug }: { slug: string }) {
         try {
             const res = await fetch(`/api/market/products/${slug}`, {
                 method: "PATCH", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, description: desc, price, oldPrice: oldPrice || null, stock, category: cat, subcategory: sub || null, images }),
+                body: JSON.stringify({ name, description: desc, price, oldPrice: oldPrice || null, stock, category: cat, subcategory: sub || null, images, videos }),
             });
             const d = await res.json();
             if (!res.ok) setError(d.error);
@@ -99,6 +101,11 @@ export function ProductEdit({ slug }: { slug: string }) {
 
             <form onSubmit={save} className="space-y-5">
                 <ImageUploader kind="product" images={images} onChange={setImages} max={5} label="Mahsulot rasmlari" />
+
+                <div>
+                    <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">Video (ixtiyoriy, maks 2)</label>
+                    <MediaUploader kind="product" accept="video" media={videos} onChange={setVideos} max={2} />
+                </div>
 
                 <div>
                     <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">Nomi *</label>

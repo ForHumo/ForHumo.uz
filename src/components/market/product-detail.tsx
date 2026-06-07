@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
     Star, ShoppingCart, Plus, Minus, ChevronRight,
     Package, Truck, RotateCcw, Shield, Loader2,
-    CheckCircle2, AlertCircle, TrendingUp, Heart, Pencil,
+    CheckCircle2, AlertCircle, TrendingUp, Heart, Pencil, Play,
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 import { ProductCard } from "./product-card";
@@ -16,11 +16,13 @@ import { ProductReviews } from "./product-reviews";
 interface Brand { id: string; name: string; slug: string; verified: boolean; logo: string | null; description: string | null; }
 interface Product {
     id: string; name: string; slug: string; description: string | null;
-    images: string[]; price: string; oldPrice: string | null;
+    images: string[]; videos?: string[]; price: string; oldPrice: string | null;
     stock: number; sold: number; rating: number; reviewCount: number;
     category: string; subcategory: string | null; isFeatured: boolean;
     brand: Brand;
 }
+
+const isVid = (u: string) => /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(u);
 
 function fz(v: string | number) { return Number(v).toLocaleString(); }
 function disc(p: string, o: string | null) {
@@ -95,41 +97,41 @@ export function ProductDetail({ slug }: { slug: string }) {
             </nav>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-14">
-                {/* Rasm bloki */}
+                {/* Media bloki (rasm + video) */}
+                {(() => {
+                    const gallery = [...product.images, ...(product.videos ?? [])];
+                    const current = gallery[imgIdx];
+                    return (
                 <div>
-                    <motion.div
-                        key={imgIdx}
-                        initial={{ opacity: 0, scale: 0.97 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="relative aspect-square rounded-3xl overflow-hidden
-                            bg-gray-50 dark:bg-white/[0.03]
-                            border border-gray-100 dark:border-white/[0.06] mb-3">
-                        {product.images[imgIdx] ? (
-                            <Image src={product.images[imgIdx]} alt={product.name}
-                                fill className="object-cover" />
+                    <motion.div key={imgIdx} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
+                        className="relative aspect-square rounded-3xl overflow-hidden bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] mb-3">
+                        {current ? (
+                            isVid(current)
+                                ? <video src={current} controls className="w-full h-full object-cover" />
+                                : <Image src={current} alt={product.name} fill className="object-cover" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center">
                                 <ShoppingCart size={48} className="text-gray-200 dark:text-white/10" />
                             </div>
                         )}
-                        {d && (
-                            <div className="absolute top-4 left-4 bg-red-500 text-white
-                                font-black text-sm px-3 py-1 rounded-xl">-{d}%</div>
-                        )}
+                        {d && <div className="absolute top-4 left-4 bg-red-500 text-white font-black text-sm px-3 py-1 rounded-xl">-{d}%</div>}
                     </motion.div>
-                    {/* Thumbnail row */}
-                    {product.images.length > 1 && (
-                        <div className="flex gap-2">
-                            {product.images.map((img, i) => (
+                    {gallery.length > 1 && (
+                        <div className="flex gap-2 flex-wrap">
+                            {gallery.map((m, i) => (
                                 <button key={i} onClick={() => setImgIdx(i)}
-                                    className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all
+                                    className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition-all
                                         ${imgIdx === i ? "border-green-500" : "border-transparent opacity-60 hover:opacity-100"}`}>
-                                    <Image src={img} alt="" width={64} height={64} className="w-full h-full object-cover" />
+                                    {isVid(m)
+                                        ? <><video src={m} className="w-full h-full object-cover" /><Play size={16} className="absolute inset-0 m-auto text-white drop-shadow" /></>
+                                        : <Image src={m} alt="" width={64} height={64} className="w-full h-full object-cover" />}
                                 </button>
                             ))}
                         </div>
                     )}
                 </div>
+                    );
+                })()}
 
                 {/* Ma'lumot bloki */}
                 <div className="flex flex-col">

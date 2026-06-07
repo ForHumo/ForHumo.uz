@@ -9,7 +9,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import {
     Home, ChevronRight, Search, ShoppingCart,
-    ChevronDown, X, Layers, Bell,
+    ChevronDown, X, Layers, Bell, Clock,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
@@ -119,16 +119,33 @@ export function MarketNavbar() {
     const [sug, setSug] = useState<Suggestions>({ brands: [], products: [] });
     const [sugOpen, setSugOpen] = useState(false);
     const [unread, setUnread] = useState(0);
+    const [history, setHistory] = useState<string[]>([]);
     const navRef = useRef<HTMLDivElement>(null);
+
+    // Qidiruv tarixi (localStorage)
+    useEffect(() => {
+        try { setHistory(JSON.parse(localStorage.getItem("market_search_history") || "[]")); } catch { /* */ }
+    }, []);
+    function saveHistory(q: string) {
+        setHistory(prev => {
+            const next = [q, ...prev.filter(x => x.toLowerCase() !== q.toLowerCase())].slice(0, 8);
+            try { localStorage.setItem("market_search_history", JSON.stringify(next)); } catch { /* */ }
+            return next;
+        });
+    }
+    function clearHistory() {
+        setHistory([]);
+        try { localStorage.removeItem("market_search_history"); } catch { /* */ }
+    }
 
     useEffect(() => {
         if (!session?.user) return;
         fetch("/api/market/notifications").then(r => r.json()).then(d => setUnread(d.unread ?? 0)).catch(() => {});
     }, [session?.user]);
 
-    function runSearch() {
-        const q = search.trim();
-        if (q) { setSugOpen(false); router.push(`/market/catalog?q=${encodeURIComponent(q)}`); }
+    function runSearch(term?: string) {
+        const q = (term ?? search).trim();
+        if (q) { saveHistory(q); setSugOpen(false); router.push(`/market/catalog?q=${encodeURIComponent(q)}`); }
     }
 
     // Jonli takliflar (debounce)
@@ -224,7 +241,7 @@ export function MarketNavbar() {
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                                 onKeyDown={e => e.key === "Enter" && runSearch()}
-                                onFocus={() => { if (sug.brands.length || sug.products.length) setSugOpen(true); }}
+                                onFocus={() => setSugOpen(true)}
                                 placeholder="Mahsulot, brend yoki kategoriya..."
                                 className="w-full bg-gray-50/90 dark:bg-white/[0.05]
                                     border border-gray-200/80 dark:border-white/[0.08]
@@ -235,9 +252,9 @@ export function MarketNavbar() {
                                     outline-none transition-all duration-200"
                             />
 
-                            {/* Jonli takliflar dropdown */}
+                            {/* Jonli takliflar / qidiruv tarixi dropdown */}
                             <AnimatePresence>
-                                {sugOpen && (sug.brands.length > 0 || sug.products.length > 0) && (
+                                {sugOpen && (sug.brands.length > 0 || sug.products.length > 0 || (search.trim().length < 2 && history.length > 0)) && (
                                     <motion.div
                                         initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
                                         transition={{ duration: 0.15 }}
@@ -245,6 +262,23 @@ export function MarketNavbar() {
                                             bg-white/95 dark:bg-[#0a1a0d]/97 backdrop-blur-xl
                                             border border-green-100 dark:border-green-900/30
                                             rounded-2xl shadow-2xl shadow-green-900/10 overflow-hidden py-2">
+
+                                        {/* Qidiruv tarixi (qisqa so'rov) */}
+                                        {search.trim().length < 2 && history.length > 0 && (
+                                            <div className="px-2 pb-1">
+                                                <div className="flex items-center justify-between px-2 py-1">
+                                                    <p className="text-[10px] font-bold text-gray-400 dark:text-white/25 uppercase">Qidiruv tarixi</p>
+                                                    <button onClick={clearHistory} className="text-[10px] text-gray-400 hover:text-red-500 transition">Tozalash</button>
+                                                </div>
+                                                {history.map(h => (
+                                                    <button key={h} onClick={() => { setSearch(h); runSearch(h); }}
+                                                        className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/15 transition-colors text-left">
+                                                        <Clock size={13} className="text-gray-400 dark:text-white/25 shrink-0" />
+                                                        <span className="text-sm text-gray-700 dark:text-white/60 truncate flex-1">{h}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                         {/* Brendlar */}
                                         {sug.brands.length > 0 && (
                                             <div className="px-2 pb-1">
