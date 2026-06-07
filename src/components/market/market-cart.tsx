@@ -10,6 +10,7 @@ import {
     MapPin, CreditCard, Banknote, Clock, Package, ChevronDown,
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
+import { LocationPicker } from "@/components/ui/location-picker";
 
 interface CartProduct {
     id: string; name: string; slug: string; price: string;
@@ -309,21 +310,12 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                         </>
                                     ) : (
                                         <div className="space-y-3">
-                                            {/* Manzil */}
+                                            {/* Manzil — xarita orqali (qo'lda yozish emas) */}
                                             <div>
                                                 <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">
-                                                    Yetkazib berish manzili *
+                                                    Yetkazib berish manzili * (xaritadan tanlang)
                                                 </label>
-                                                <div className="relative">
-                                                    <MapPin size={14} className="absolute left-3 top-3.5 text-gray-400 pointer-events-none" />
-                                                    <input value={address} onChange={e => setAddress(e.target.value)}
-                                                        placeholder="Shahar, ko'cha, uy raqami..."
-                                                        className="w-full bg-gray-50 dark:bg-white/[0.05]
-                                                            border border-gray-200 dark:border-white/[0.08]
-                                                            focus:border-green-400 dark:focus:border-green-500/50
-                                                            rounded-xl pl-9 pr-4 py-2.5 text-sm text-gray-900 dark:text-white
-                                                            placeholder:text-gray-400 dark:placeholder:text-white/20 outline-none transition" />
-                                                </div>
+                                                <LocationPicker value={address} onChange={setAddress} />
                                             </div>
 
                                             {/* To'lov usuli */}

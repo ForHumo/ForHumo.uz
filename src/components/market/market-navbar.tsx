@@ -13,6 +13,12 @@ import {
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
+import { VerifiedBadge } from "./verified-badge";
+
+interface Suggestions {
+    brands: { slug: string; name: string; logo: string | null; verified: boolean }[];
+    products: { slug: string; name: string; price: string; images: string[] }[];
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CatalogMegaMenu — Uzum uslubidagi katta katalog
@@ -110,18 +116,33 @@ export function MarketNavbar() {
     const router = useRouter();
     const [catalogOpen, setCatalogOpen] = useState(false);
     const [search, setSearch] = useState("");
+    const [sug, setSug] = useState<Suggestions>({ brands: [], products: [] });
+    const [sugOpen, setSugOpen] = useState(false);
     const navRef = useRef<HTMLDivElement>(null);
 
     function runSearch() {
         const q = search.trim();
-        if (q) router.push(`/market/catalog?q=${encodeURIComponent(q)}`);
+        if (q) { setSugOpen(false); router.push(`/market/catalog?q=${encodeURIComponent(q)}`); }
     }
+
+    // Jonli takliflar (debounce)
+    useEffect(() => {
+        const q = search.trim();
+        if (q.length < 2) { setSug({ brands: [], products: [] }); setSugOpen(false); return; }
+        const t = setTimeout(() => {
+            fetch(`/api/market/search?q=${encodeURIComponent(q)}`)
+                .then(r => r.json())
+                .then(d => { setSug({ brands: d.brands ?? [], products: d.products ?? [] }); setSugOpen(true); })
+                .catch(() => {});
+        }, 250);
+        return () => clearTimeout(t);
+    }, [search]);
 
     // Tashqarida bosilsa yopiladi
     useEffect(() => {
         function handler(e: MouseEvent) {
             if (navRef.current && !navRef.current.contains(e.target as Node)) {
-                setCatalogOpen(false);
+                setCatalogOpen(false); setSugOpen(false);
             }
         }
         document.addEventListener("mousedown", handler);
@@ -197,6 +218,7 @@ export function MarketNavbar() {
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                                 onKeyDown={e => e.key === "Enter" && runSearch()}
+                                onFocus={() => { if (sug.brands.length || sug.products.length) setSugOpen(true); }}
                                 placeholder="Mahsulot, brend yoki kategoriya..."
                                 className="w-full bg-gray-50/90 dark:bg-white/[0.05]
                                     border border-gray-200/80 dark:border-white/[0.08]
@@ -206,6 +228,53 @@ export function MarketNavbar() {
                                     placeholder:text-gray-400 dark:placeholder:text-white/20
                                     outline-none transition-all duration-200"
                             />
+
+                            {/* Jonli takliflar dropdown */}
+                            <AnimatePresence>
+                                {sugOpen && (sug.brands.length > 0 || sug.products.length > 0) && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="absolute top-full left-0 right-0 mt-2 z-50
+                                            bg-white/95 dark:bg-[#0a1a0d]/97 backdrop-blur-xl
+                                            border border-green-100 dark:border-green-900/30
+                                            rounded-2xl shadow-2xl shadow-green-900/10 overflow-hidden py-2">
+                                        {/* Brendlar */}
+                                        {sug.brands.length > 0 && (
+                                            <div className="px-2 pb-1">
+                                                <p className="text-[10px] font-bold text-gray-400 dark:text-white/25 uppercase px-2 py-1">Brendlar</p>
+                                                {sug.brands.map(b => (
+                                                    <Link key={b.slug} href={`/market/brand/${b.slug}`} onClick={() => setSugOpen(false)}
+                                                        className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/15 transition-colors">
+                                                        <div className="w-7 h-7 rounded-lg overflow-hidden bg-green-500/10 flex items-center justify-center shrink-0">
+                                                            {b.logo ? <Image src={b.logo} alt="" width={28} height={28} className="w-full h-full object-cover" />
+                                                                : <span className="text-green-500 text-xs font-bold">{b.name[0]}</span>}
+                                                        </div>
+                                                        <span className="text-sm text-gray-700 dark:text-white/70 truncate flex-1">{b.name}</span>
+                                                        {b.verified && <VerifiedBadge size={12} />}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {/* Mahsulotlar */}
+                                        {sug.products.length > 0 && (
+                                            <div className="px-2 pt-1 border-t border-gray-100 dark:border-white/[0.06]">
+                                                <p className="text-[10px] font-bold text-gray-400 dark:text-white/25 uppercase px-2 py-1">Mahsulotlar</p>
+                                                {sug.products.map(p => (
+                                                    <Link key={p.slug} href={`/market/product/${p.slug}`} onClick={() => setSugOpen(false)}
+                                                        className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/15 transition-colors">
+                                                        <div className="w-7 h-7 rounded-lg overflow-hidden bg-gray-100 dark:bg-white/[0.05] shrink-0">
+                                                            {p.images?.[0] && <Image src={p.images[0]} alt="" width={28} height={28} className="w-full h-full object-cover" />}
+                                                        </div>
+                                                        <span className="text-sm text-gray-700 dark:text-white/70 truncate flex-1">{p.name}</span>
+                                                        <span className="text-xs font-bold text-green-600 dark:text-green-400 shrink-0">{Number(p.price).toLocaleString()} Ƶ</span>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
 
                         {/* O'ng: cart + til + tema + avatar */}

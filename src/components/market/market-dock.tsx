@@ -23,7 +23,7 @@ const DOCK_ITEMS: DockItem[] = [
     { icon: Plus,         label: "Qo'shish", href: "/market/product/add", key: "add", accent: true },
     { icon: ShoppingCart, label: "Savat",    href: "/market/cart",     key: "cart"     },
     { icon: Store,        label: "Brend",    href: "/market/brand/manage", key: "brand" },
-    { icon: User,         label: "Profil",   href: "/id",              key: "profile"  },
+    { icon: User,         label: "Profil",   href: "/market/profile",  key: "profile"  },
 ];
 
 export function MarketDock() {
