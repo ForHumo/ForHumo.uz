@@ -4,8 +4,8 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import {
-    Star, MessageSquare, Loader2, Send, CheckCircle2,
-    AlertCircle, Lock, ThumbsUp, Reply as ReplyIcon, Store,
+    Star, MessageSquare, Loader2, Send, Lock, ThumbsUp,
+    Reply as ReplyIcon, Store, Pencil, Trash2, AlertCircle,
 } from "lucide-react";
 import { MediaUploader, isVideoUrl } from "./media-uploader";
 
@@ -56,7 +56,31 @@ function timeAgo(d: string) {
     return new Date(d).toLocaleDateString("uz-UZ");
 }
 
-// ── Javob formi ───────────────────────────────────────────────────────────────
+// ── O'z elementini boshqarish (tahrir / o'chirish) ─────────────────────────────
+function MineActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void | Promise<void> }) {
+    const [confirm, setConfirm] = useState(false);
+    if (confirm) return (
+        <span className="inline-flex items-center gap-1.5 text-xs">
+            <span className="text-gray-500 dark:text-white/40">O&apos;chirilsinmi?</span>
+            <button onClick={onDelete} className="font-bold text-red-500 hover:text-red-600">Ha</button>
+            <button onClick={() => setConfirm(false)} className="text-gray-400 dark:text-white/30">Yo&apos;q</button>
+        </span>
+    );
+    return (
+        <>
+            <button onClick={onEdit}
+                className="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-white/30 hover:text-green-600 dark:hover:text-green-400 transition">
+                <Pencil size={11} /> Tahrirlash
+            </button>
+            <button onClick={() => setConfirm(true)}
+                className="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-white/30 hover:text-red-500 transition">
+                <Trash2 size={11} /> O&apos;chirish
+            </button>
+        </>
+    );
+}
+
+// ── Javob formi (yangi) ────────────────────────────────────────────────────────
 function ReplyForm({ reviewId, parentId, onDone }: { reviewId: string; parentId: string | null; onDone: (r: ReplyT) => void }) {
     const [text, setText] = useState("");
     const [media, setMedia] = useState<string[]>([]);
@@ -91,38 +115,94 @@ function ReplyForm({ reviewId, parentId, onDone }: { reviewId: string; parentId:
     );
 }
 
+// ── Javobni tahrirlash ─────────────────────────────────────────────────────────
+function ReplyEditForm({ reviewId, reply, onSaved, onCancel }: {
+    reviewId: string; reply: ReplyT; onSaved: () => void; onCancel: () => void;
+}) {
+    const [text, setText] = useState(reply.text ?? "");
+    const [media, setMedia] = useState<string[]>(reply.media ?? []);
+    const [busy, setBusy] = useState(false);
+
+    async function save() {
+        if (!text.trim() && !media.length) return;
+        setBusy(true);
+        try {
+            const res = await fetch(`/api/market/reviews/${reviewId}/replies/${reply.id}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text, media }),
+            });
+            if (res.ok) onSaved();
+        } finally { setBusy(false); }
+    }
+
+    return (
+        <div className="mt-1">
+            <textarea value={text} onChange={e => setText(e.target.value)} rows={2} maxLength={500}
+                className="w-full bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
+                    focus:border-green-400 dark:focus:border-green-500/50 rounded-xl px-3 py-2 text-sm
+                    text-gray-900 dark:text-white outline-none transition resize-none mb-2" />
+            <MediaUploader kind="reply" media={media} onChange={setMedia} max={3} />
+            <div className="flex gap-2 mt-2">
+                <button onClick={save} disabled={busy}
+                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-green-500 hover:bg-green-400 text-white font-semibold text-xs disabled:opacity-40 transition">
+                    {busy ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />} Saqlash
+                </button>
+                <button onClick={onCancel} className="px-4 py-1.5 text-xs text-gray-400 dark:text-white/30 hover:text-gray-600 transition">Bekor</button>
+            </div>
+        </div>
+    );
+}
+
 // ── Recursiv javob tuguni ─────────────────────────────────────────────────────
-function ReplyNode({ reply, reviewId, childrenOf, onNewReply }: {
+function ReplyNode({ reply, reviewId, childrenOf, onNewReply, onChanged }: {
     reply: ReplyT; reviewId: string;
     childrenOf: (parentId: string) => ReplyT[];
     onNewReply: (r: ReplyT) => void;
+    onChanged: () => void;
 }) {
     const [open, setOpen] = useState(false);
+    const [editing, setEditing] = useState(false);
     const kids = childrenOf(reply.id);
+
+    async function del() {
+        const res = await fetch(`/api/market/reviews/${reviewId}/replies/${reply.id}`, { method: "DELETE" });
+        if (res.ok) onChanged();
+    }
+
     return (
         <div className="mt-3">
             <div className="flex gap-2.5">
                 <Avatar author={reply.author} size={28} />
                 <div className="flex-1 min-w-0">
-                    <div className={`rounded-2xl px-3 py-2 ${reply.isAuthor
-                        ? "bg-green-50 dark:bg-green-900/15 border border-green-200/60 dark:border-green-800/30"
-                        : "bg-gray-50 dark:bg-white/[0.04]"}`}>
-                        <p className="text-xs font-semibold text-gray-900 dark:text-white flex items-center gap-1.5 flex-wrap">
-                            {reply.author?.name ?? reply.author?.username ?? "Foydalanuvchi"}
-                            {reply.isAuthor && (
-                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-500 text-white text-[9px] font-bold">
-                                    <Store size={9} /> Sotuvchi
-                                </span>
-                            )}
-                            <span className="text-gray-300 dark:text-white/20 font-normal">{timeAgo(reply.createdAt)}</span>
-                        </p>
-                        {reply.text && <p className="text-sm text-gray-600 dark:text-white/60 mt-0.5">{reply.text}</p>}
-                        <MediaGrid media={reply.media} />
-                    </div>
-                    <button onClick={() => setOpen(v => !v)}
-                        className="flex items-center gap-1 text-xs text-gray-400 dark:text-white/30 hover:text-green-600 dark:hover:text-green-400 mt-1 ml-1 transition">
-                        <ReplyIcon size={11} /> Javob berish
-                    </button>
+                    {editing ? (
+                        <ReplyEditForm reviewId={reviewId} reply={reply}
+                            onSaved={() => { setEditing(false); onChanged(); }} onCancel={() => setEditing(false)} />
+                    ) : (
+                        <div className={`rounded-2xl px-3 py-2 ${reply.isAuthor
+                            ? "bg-green-50 dark:bg-green-900/15 border border-green-200/60 dark:border-green-800/30"
+                            : "bg-gray-50 dark:bg-white/[0.04]"}`}>
+                            <p className="text-xs font-semibold text-gray-900 dark:text-white flex items-center gap-1.5 flex-wrap">
+                                {reply.author?.name ?? reply.author?.username ?? "Foydalanuvchi"}
+                                {reply.isAuthor && (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-500 text-white text-[9px] font-bold">
+                                        <Store size={9} /> Sotuvchi
+                                    </span>
+                                )}
+                                <span className="text-gray-300 dark:text-white/20 font-normal">{timeAgo(reply.createdAt)}</span>
+                            </p>
+                            {reply.text && <p className="text-sm text-gray-600 dark:text-white/60 mt-0.5">{reply.text}</p>}
+                            <MediaGrid media={reply.media} />
+                        </div>
+                    )}
+                    {!editing && (
+                        <div className="flex items-center gap-3 mt-1 ml-1">
+                            <button onClick={() => setOpen(v => !v)}
+                                className="flex items-center gap-1 text-xs text-gray-400 dark:text-white/30 hover:text-green-600 dark:hover:text-green-400 transition">
+                                <ReplyIcon size={11} /> Javob berish
+                            </button>
+                            {reply.isMine && <MineActions onEdit={() => setEditing(true)} onDelete={del} />}
+                        </div>
+                    )}
                     <AnimatePresence>
                         {open && (
                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
@@ -133,9 +213,51 @@ function ReplyNode({ reply, reviewId, childrenOf, onNewReply }: {
 
                     {/* Ichki javoblar (cheksiz) */}
                     {kids.map(k => (
-                        <ReplyNode key={k.id} reply={k} reviewId={reviewId} childrenOf={childrenOf} onNewReply={onNewReply} />
+                        <ReplyNode key={k.id} reply={k} reviewId={reviewId} childrenOf={childrenOf} onNewReply={onNewReply} onChanged={onChanged} />
                     ))}
                 </div>
+            </div>
+        </div>
+    );
+}
+
+// ── Sharhni tahrirlash ─────────────────────────────────────────────────────────
+function ReviewEditForm({ review, onSaved, onCancel }: { review: Review; onSaved: () => void; onCancel: () => void }) {
+    const [rating, setRating] = useState(review.rating);
+    const [hover, setHover] = useState(0);
+    const [text, setText] = useState(review.text ?? "");
+    const [media, setMedia] = useState<string[]>(review.media ?? []);
+    const [busy, setBusy] = useState(false);
+
+    async function save() {
+        setBusy(true);
+        try {
+            const res = await fetch(`/api/market/reviews/${review.id}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ rating, text, media }),
+            });
+            if (res.ok) onSaved();
+        } finally { setBusy(false); }
+    }
+
+    return (
+        <div className="bg-gray-50/60 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] rounded-2xl p-4">
+            <div className="flex items-center gap-1 mb-3">
+                {[1,2,3,4,5].map(s => (
+                    <button key={s} type="button" onMouseEnter={() => setHover(s)} onMouseLeave={() => setHover(0)} onClick={() => setRating(s)}>
+                        <Star size={24} className={s <= (hover || rating) ? "text-amber-400 fill-amber-400" : "text-gray-200 dark:text-white/10"} />
+                    </button>
+                ))}
+            </div>
+            <textarea value={text} onChange={e => setText(e.target.value)} rows={3} maxLength={500}
+                className="w-full bg-white dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08] focus:border-green-400 dark:focus:border-green-500/50 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white outline-none transition resize-none mb-3" />
+            <MediaUploader kind="review" media={media} onChange={setMedia} max={4} />
+            <div className="flex gap-2 mt-3">
+                <button onClick={save} disabled={busy}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold text-sm disabled:opacity-40 transition-all">
+                    {busy ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />} Saqlash
+                </button>
+                <button onClick={onCancel} className="px-5 py-2.5 text-sm text-gray-400 dark:text-white/30 hover:text-gray-600 transition-colors">Bekor</button>
             </div>
         </div>
     );
@@ -155,6 +277,7 @@ export function ProductReviews({ productId }: { productId: string }) {
     const [error, setError]       = useState("");
     const [showForm, setShowForm] = useState(false);
     const [replyOpen, setReplyOpen] = useState<string | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     function load() {
         fetch(`/api/market/reviews?productId=${productId}`).then(r => r.json())
@@ -185,6 +308,11 @@ export function ProductReviews({ productId }: { productId: string }) {
         } catch { setError("Xatolik"); } finally { setSubmitting(false); }
     }
 
+    async function deleteReview(id: string) {
+        const res = await fetch(`/api/market/reviews/${id}`, { method: "DELETE" });
+        if (res.ok) load();
+    }
+
     // Yangi javobni mahalliy holatga qo'shish
     function addReply(reviewId: string, reply: ReplyT) {
         setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, replies: [...r.replies, reply] } : r));
@@ -212,7 +340,7 @@ export function ProductReviews({ productId }: { productId: string }) {
                 </div>
             )}
 
-            {/* Sharh formi */}
+            {/* Sharh formi (yangi) */}
             <AnimatePresence>
                 {showForm && (
                     <motion.form onSubmit={submit} initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mb-6">
@@ -227,7 +355,7 @@ export function ProductReviews({ productId }: { productId: string }) {
                             <textarea value={text} onChange={e => setText(e.target.value)} rows={3} maxLength={500}
                                 placeholder="Mahsulot haqida fikringiz..."
                                 className="w-full bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08] focus:border-green-400 dark:focus:border-green-500/50 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/15 outline-none transition resize-none mb-3" />
-                            <p className="text-xs text-gray-400 dark:text-white/30 mb-2">Rasm yoki video qo'shing:</p>
+                            <p className="text-xs text-gray-400 dark:text-white/30 mb-2">Rasm yoki video qo&apos;shing:</p>
                             <MediaUploader kind="review" media={media} onChange={setMedia} max={4} />
                             {error && <p className="text-red-500 text-xs flex items-center gap-1.5 my-2"><AlertCircle size={12} />{error}</p>}
                             <div className="flex gap-2 mt-3">
@@ -246,7 +374,7 @@ export function ProductReviews({ productId }: { productId: string }) {
             {loading ? (
                 <div className="flex justify-center py-8"><Loader2 size={22} className="animate-spin text-green-500/50" /></div>
             ) : !reviews.length ? (
-                <p className="text-sm text-gray-400 dark:text-white/25 py-6 text-center">Hali sharhlar yo'q</p>
+                <p className="text-sm text-gray-400 dark:text-white/25 py-6 text-center">Hali sharhlar yo&apos;q</p>
             ) : (
                 <div className="space-y-4">
                     {reviews.map((r, i) => {
@@ -255,34 +383,42 @@ export function ProductReviews({ productId }: { productId: string }) {
                         return (
                             <motion.div key={r.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                                 className="bg-white/60 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05] rounded-2xl p-4">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <Avatar author={r.author} />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{r.author?.name ?? r.author?.username ?? "Foydalanuvchi"}</p>
-                                        <div className="flex items-center gap-0.5">
-                                            {[1,2,3,4,5].map(s => <Star key={s} size={11} className={s <= r.rating ? "text-amber-400 fill-amber-400" : "text-gray-200 dark:text-white/10"} />)}
+                                {editingId === r.id ? (
+                                    <ReviewEditForm review={r}
+                                        onSaved={() => { setEditingId(null); load(); }} onCancel={() => setEditingId(null)} />
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <Avatar author={r.author} />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{r.author?.name ?? r.author?.username ?? "Foydalanuvchi"}</p>
+                                                <div className="flex items-center gap-0.5">
+                                                    {[1,2,3,4,5].map(s => <Star key={s} size={11} className={s <= r.rating ? "text-amber-400 fill-amber-400" : "text-gray-200 dark:text-white/10"} />)}
+                                                </div>
+                                            </div>
+                                            <span className="text-xs text-gray-300 dark:text-white/20">{timeAgo(r.createdAt)}</span>
                                         </div>
-                                    </div>
-                                    <span className="text-xs text-gray-300 dark:text-white/20">{timeAgo(r.createdAt)}</span>
-                                </div>
-                                {r.text && <p className="text-sm text-gray-600 dark:text-white/50 leading-relaxed">{r.text}</p>}
-                                <MediaGrid media={r.media} />
+                                        {r.text && <p className="text-sm text-gray-600 dark:text-white/50 leading-relaxed">{r.text}</p>}
+                                        <MediaGrid media={r.media} />
 
-                                {/* Like + javob */}
-                                <div className="flex items-center gap-2 mt-2">
-                                    <button onClick={() => toggleLike(r)} disabled={r.isMine}
-                                        className={`inline-flex items-center gap-1.5 text-xs font-semibold rounded-lg px-2.5 py-1 transition-all
-                                            ${r.likedByMe ? "bg-green-500/15 text-green-600 dark:text-green-400" : "bg-gray-100 dark:bg-white/[0.05] text-gray-500 dark:text-white/35 hover:bg-gray-200 dark:hover:bg-white/[0.08]"}
-                                            ${r.isMine ? "opacity-50 cursor-default" : ""}`}>
-                                        <ThumbsUp size={12} className={r.likedByMe ? "fill-current" : ""} />
-                                        Qo&apos;shilaman{r.likeCount > 0 ? ` · ${r.likeCount}` : ""}
-                                    </button>
-                                    <button onClick={() => setReplyOpen(replyOpen === r.id ? null : r.id)}
-                                        className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-lg px-2.5 py-1
-                                            bg-gray-100 dark:bg-white/[0.05] text-gray-500 dark:text-white/35 hover:bg-gray-200 dark:hover:bg-white/[0.08] transition">
-                                        <ReplyIcon size={12} /> Javob
-                                    </button>
-                                </div>
+                                        {/* Like + javob + (o'ziniki bo'lsa) tahrir/o'chirish */}
+                                        <div className="flex items-center gap-2 flex-wrap mt-2">
+                                            <button onClick={() => toggleLike(r)} disabled={r.isMine}
+                                                className={`inline-flex items-center gap-1.5 text-xs font-semibold rounded-lg px-2.5 py-1 transition-all
+                                                    ${r.likedByMe ? "bg-green-500/15 text-green-600 dark:text-green-400" : "bg-gray-100 dark:bg-white/[0.05] text-gray-500 dark:text-white/35 hover:bg-gray-200 dark:hover:bg-white/[0.08]"}
+                                                    ${r.isMine ? "opacity-50 cursor-default" : ""}`}>
+                                                <ThumbsUp size={12} className={r.likedByMe ? "fill-current" : ""} />
+                                                Qo&apos;shilaman{r.likeCount > 0 ? ` · ${r.likeCount}` : ""}
+                                            </button>
+                                            <button onClick={() => setReplyOpen(replyOpen === r.id ? null : r.id)}
+                                                className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-lg px-2.5 py-1
+                                                    bg-gray-100 dark:bg-white/[0.05] text-gray-500 dark:text-white/35 hover:bg-gray-200 dark:hover:bg-white/[0.08] transition">
+                                                <ReplyIcon size={12} /> Javob
+                                            </button>
+                                            {r.isMine && <MineActions onEdit={() => setEditingId(r.id)} onDelete={() => deleteReview(r.id)} />}
+                                        </div>
+                                    </>
+                                )}
 
                                 <AnimatePresence>
                                     {replyOpen === r.id && (
@@ -296,7 +432,7 @@ export function ProductReviews({ productId }: { productId: string }) {
                                 {topReplies.length > 0 && (
                                     <div className="mt-1 pl-2">
                                         {topReplies.map(rep => (
-                                            <ReplyNode key={rep.id} reply={rep} reviewId={r.id} childrenOf={childrenOf} onNewReply={(nr) => addReply(r.id, nr)} />
+                                            <ReplyNode key={rep.id} reply={rep} reviewId={r.id} childrenOf={childrenOf} onNewReply={(nr) => addReply(r.id, nr)} onChanged={load} />
                                         ))}
                                     </div>
                                 )}

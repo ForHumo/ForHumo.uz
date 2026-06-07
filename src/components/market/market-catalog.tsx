@@ -16,7 +16,7 @@ type SortKey = "popular" | "price_asc" | "price_desc" | "rating" | "newest";
 interface Product {
     id: string; name: string; slug: string; price: string; oldPrice: string | null;
     images: string[]; rating: number; reviewCount: number; sold: number; isFeatured: boolean;
-    category: string;
+    category: string; stock?: number;
     brand: { name: string; slug: string; verified: boolean };
 }
 
@@ -35,8 +35,13 @@ export function MarketCatalog() {
     const subSlug  = params.get("sub")  ?? "";
     const featured = params.get("featured") === "1";
 
+    const PAGE = 24;
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading]   = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [total, setTotal]       = useState(0);
+    const [offset, setOffset]     = useState(0);
+    const [hasMore, setHasMore]   = useState(false);
     const [search, setSearch]     = useState(params.get("q") ?? "");
     const [sort, setSort]         = useState<SortKey>("popular");
     const [activeCat, setActiveCat] = useState(catSlug);
@@ -44,6 +49,7 @@ export function MarketCatalog() {
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
     const sortRef = useRef<HTMLDivElement>(null);
+    const sentinelRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         function h(e: MouseEvent) { if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false); }
@@ -51,38 +57,58 @@ export function MarketCatalog() {
         return () => document.removeEventListener("mousedown", h);
     }, []);
 
-    // Narx filtri — client-side (refetch shart emas)
-    const visibleProducts = products.filter(p => {
-        const pr = Number(p.price);
-        if (minPrice && pr < Number(minPrice)) return false;
-        if (maxPrice && pr > Number(maxPrice)) return false;
-        return true;
-    });
-
-    const loadProducts = useCallback(async () => {
-        setLoading(true);
+    const buildParams = useCallback((off: number) => {
         const sp = new URLSearchParams();
         if (activeCat)  sp.set("cat", activeCat);
         if (subSlug)    sp.set("sub", subSlug);
         if (featured)   sp.set("featured", "1");
         if (search)     sp.set("q", search);
-        sp.set("limit", "60");
-        const data = await fetch(`/api/market/products?${sp}`).then(r => r.json());
-        let prods: Product[] = data.products ?? [];
+        if (sort)       sp.set("sort", sort);
+        if (minPrice)   sp.set("min", minPrice);
+        if (maxPrice)   sp.set("max", maxPrice);
+        sp.set("limit", String(PAGE));
+        sp.set("offset", String(off));
+        return sp;
+    }, [activeCat, subSlug, featured, search, sort, minPrice, maxPrice]);
 
-        // Client-side sort
-        prods = [...prods].sort((a, b) => {
-            if (sort === "price_asc")  return Number(a.price) - Number(b.price);
-            if (sort === "price_desc") return Number(b.price) - Number(a.price);
-            if (sort === "rating")     return b.rating - a.rating;
-            if (sort === "popular")    return b.sold - a.sold;
-            return 0;
-        });
+    // Filtr/sort/qidiruv o'zgarsa — boshidan yuklash (debounce bilan)
+    const loadFirst = useCallback(async () => {
+        setLoading(true);
+        const data = await fetch(`/api/market/products?${buildParams(0)}`).then(r => r.json());
+        const prods: Product[] = data.products ?? [];
         setProducts(prods);
+        setTotal(data.total ?? prods.length);
+        setHasMore(data.hasMore ?? false);
+        setOffset(prods.length);
         setLoading(false);
-    }, [activeCat, subSlug, featured, search, sort]);
+    }, [buildParams]);
 
-    useEffect(() => { loadProducts(); }, [loadProducts]);
+    useEffect(() => {
+        const t = setTimeout(loadFirst, 300);
+        return () => clearTimeout(t);
+    }, [loadFirst]);
+
+    const loadMore = useCallback(async () => {
+        setLoadingMore(true);
+        const data = await fetch(`/api/market/products?${buildParams(offset)}`).then(r => r.json());
+        const prods: Product[] = data.products ?? [];
+        setProducts(prev => [...prev, ...prods]);
+        setHasMore(data.hasMore ?? false);
+        setOffset(prev => prev + prods.length);
+        setLoadingMore(false);
+    }, [buildParams, offset]);
+
+    // Infinite scroll — sentinel ko'rinsa keyingisini yuklaydi
+    useEffect(() => {
+        if (!hasMore || loading) return;
+        const el = sentinelRef.current;
+        if (!el) return;
+        const obs = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && !loadingMore) loadMore();
+        }, { rootMargin: "500px" });
+        obs.observe(el);
+        return () => obs.disconnect();
+    }, [hasMore, loading, loadingMore, loadMore]);
 
     const currentCat = MARKET_CATEGORIES.find(c => c.slug === activeCat);
 
@@ -174,7 +200,7 @@ export function MarketCatalog() {
                         <div className="relative flex-1 min-w-48">
                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                             <input value={search} onChange={e => setSearch(e.target.value)}
-                                onKeyDown={e => e.key === "Enter" && loadProducts()}
+                                onKeyDown={e => e.key === "Enter" && loadFirst()}
                                 placeholder="Qidirish..."
                                 className="w-full bg-gray-50/90 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
                                     focus:border-green-400 dark:focus:border-green-500/50
@@ -227,7 +253,7 @@ export function MarketCatalog() {
 
                         {/* Natija soni */}
                         <span className="text-sm text-gray-400 dark:text-white/25 ml-auto">
-                            {loading ? "" : `${visibleProducts.length} ta mahsulot`}
+                            {loading ? "" : `${total} ta mahsulot`}
                         </span>
                     </div>
 
@@ -238,17 +264,31 @@ export function MarketCatalog() {
                                 <div key={i} className="h-64 rounded-2xl bg-gray-100 dark:bg-white/[0.03] animate-pulse" />
                             ))}
                         </div>
-                    ) : visibleProducts.length === 0 ? (
+                    ) : products.length === 0 ? (
                         <div className="text-center py-20">
                             <SlidersHorizontal size={36} className="text-gray-200 dark:text-white/10 mx-auto mb-3" />
                             <p className="text-gray-400 dark:text-white/30 text-sm">Mahsulot topilmadi</p>
                         </div>
                     ) : (
-                        <motion.div
-                            className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4"
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                            {visibleProducts.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
-                        </motion.div>
+                        <>
+                            <motion.div
+                                className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4"
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                                {products.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+                            </motion.div>
+
+                            {/* Infinite scroll sentinel + ko'proq yuklash */}
+                            {hasMore && (
+                                <div ref={sentinelRef} className="flex justify-center py-8">
+                                    {loadingMore
+                                        ? <Loader2 size={22} className="animate-spin text-green-500/50" />
+                                        : <button onClick={loadMore}
+                                            className="px-6 py-2.5 rounded-xl bg-green-500/10 text-green-600 dark:text-green-400 font-semibold text-sm hover:bg-green-500/20 transition-all">
+                                            Ko&apos;proq yuklash
+                                        </button>}
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

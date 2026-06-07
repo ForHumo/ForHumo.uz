@@ -10,6 +10,7 @@ import { VerifiedBadge } from "./verified-badge";
 interface Product {
     id: string; name: string; slug: string; price: string; oldPrice: string | null;
     images: string[]; rating: number; reviewCount: number; sold: number; isFeatured: boolean;
+    stock?: number;
     brand: { name: string; slug: string; verified: boolean };
 }
 
@@ -23,6 +24,7 @@ export function ProductCard({
     product, index = 0, compact = false, initialLiked = false,
 }: { product: Product; index?: number; compact?: boolean; initialLiked?: boolean }) {
     const d = disc(product.price, product.oldPrice);
+    const out = (product.stock ?? 1) <= 0;
     const [adding, setAdding]   = useState(false);
     const [added, setAdded]     = useState(false);
     const [liked, setLiked]     = useState(initialLiked);
@@ -45,6 +47,7 @@ export function ProductCard({
 
     async function addToCart(e: React.MouseEvent) {
         e.preventDefault();
+        if (out) return;
         setAdding(true);
         try {
             const res = await fetch("/api/market/cart", {
@@ -107,6 +110,11 @@ export function ProductCard({
                             />
                         </motion.button>
                     )}
+                    {out && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <span className="bg-white/90 dark:bg-black/70 text-gray-800 dark:text-white text-xs font-bold px-3 py-1 rounded-lg">Tugadi</span>
+                        </div>
+                    )}
                 </div>
             </Link>
 
@@ -154,11 +162,12 @@ export function ProductCard({
                             <span className="text-[10px] text-gray-400 line-through">{fz(product.oldPrice)} Ƶ</span>
                         )}
                     </div>
-                    <motion.button onClick={addToCart} disabled={adding}
-                        whileTap={{ scale: 0.85 }}
-                        className={`${compact ? "w-7 h-7" : "w-9 h-9"} rounded-xl flex items-center justify-center
-                            ${added ? "bg-emerald-500" : "bg-green-500 hover:bg-green-400"}
-                            text-white shadow-sm shadow-green-500/20 transition-all`}>
+                    <motion.button onClick={addToCart} disabled={adding || out}
+                        whileTap={{ scale: out ? 1 : 0.85 }}
+                        title={out ? "Mahsulot tugadi" : "Savatga"}
+                        className={`${compact ? "w-7 h-7" : "w-9 h-9"} rounded-xl flex items-center justify-center transition-all
+                            ${out ? "bg-gray-200 dark:bg-white/10 text-gray-400 dark:text-white/25 cursor-not-allowed"
+                                : `text-white shadow-sm shadow-green-500/20 ${added ? "bg-emerald-500" : "bg-green-500 hover:bg-green-400"}`}`}>
                         {adding ? <Loader2 size={compact ? 11 : 14} className="animate-spin" />
                             : added ? <CheckCircle2 size={compact ? 11 : 14} />
                             : <ShoppingCart size={compact ? 11 : 14} />}
