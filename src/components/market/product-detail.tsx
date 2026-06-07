@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
     Star, ShoppingCart, Plus, Minus, ChevronRight,
     Package, Truck, RotateCcw, Shield, Loader2,
-    CheckCircle2, AlertCircle, TrendingUp, Heart,
+    CheckCircle2, AlertCircle, TrendingUp, Heart, Pencil,
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 import { ProductCard } from "./product-card";
@@ -38,11 +38,12 @@ export function ProductDetail({ slug }: { slug: string }) {
     const [addErr, setAddErr]     = useState("");
     const [imgIdx, setImgIdx]     = useState(0);
     const [liked, setLiked]       = useState(false);
+    const [isOwner, setIsOwner]   = useState(false);
 
     useEffect(() => {
         fetch(`/api/market/products/${slug}`)
             .then(r => r.json())
-            .then(d => { setProduct(d.product); setSimilar(d.similar ?? []); })
+            .then(d => { setProduct(d.product); setSimilar(d.similar ?? []); setIsOwner(d.isOwner ?? false); })
             .finally(() => setLoading(false));
     }, [slug]);
 
@@ -142,10 +143,20 @@ export function ProductDetail({ slug }: { slug: string }) {
                         {product.brand.verified && <VerifiedBadge size={16} />}
                     </Link>
 
-                    {/* Nom */}
-                    <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-3 leading-tight">
-                        {product.name}
-                    </h1>
+                    {/* Nom + egaga tahrirlash */}
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                        <h1 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">
+                            {product.name}
+                        </h1>
+                        {isOwner && (
+                            <Link href={`/market/product/${product.slug}/edit`}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl shrink-0
+                                    bg-green-500/10 text-green-600 dark:text-green-400 font-semibold text-xs
+                                    hover:bg-green-500/20 transition">
+                                <Pencil size={12} /> Tahrirlash
+                            </Link>
+                        )}
+                    </div>
 
                     {/* Reyting + sotilgan */}
                     <div className="flex items-center gap-3 mb-5">
