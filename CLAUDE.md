@@ -95,9 +95,9 @@ Bu qismni tushunish uchun bir nechta faylni birga o'qish kerak. Eng muhim naqshl
 
 **Humo ID:** `UserProfile`, `LoginEvent`, `SupportTicket`, `EmailVerificationCode`
 **Esport:** `User`, `PlayerProfile`, `Team`, `TeamInvite`, `TeamMember`, `JoinRequest`, `Tournament`, `TournamentTeam`, `TournamentMatch`, `TournamentStanding`
-**Market:** `MarketBrand`, `MarketWishlist`, `MarketReview`, `MarketProduct`, `MarketCartItem`, `MarketOrder`, `MarketOrderItem`
+**Market:** `MarketBrand` (+`categories[]`), `MarketProduct` (+`videos[]`), `MarketCartItem`, `MarketOrder`, `MarketOrderItem`, `MarketWishlist`, `MarketReview` (+`media[]`), `MarketReviewReply` (cheksiz ichma-ich, `parentId`), `MarketReviewLike`, `MarketBrandReview`, `MarketNotification`
 **Pay:** `ZijWallet`, `ZijTransaction`, `ZijSafe`
-**Enum'lar:** `TeamRole`, `JoinRequestStatus`, `UserRole`, `TournamentStatus`, `MarketPaymentMethod`, `MarketOrderStatus`, `ZijTransactionType`
+**Enum'lar:** `TeamRole`, `JoinRequestStatus`, `UserRole`, `TournamentStatus`, `MarketPaymentMethod`, `MarketOrderStatus`, `MarketNotifType`, `ZijTransactionType`
 
 > Eslatma: **Nexus** uchun DB modeli yo'q — u to'liq frontend (mock ma'lumotlar). Nexus sovg'alaridagi "coins" (`nx-gifts.tsx`) — bu tizim valyutasi emas, `useState` dagi demo holat (narxlar UZS da).
 
@@ -107,7 +107,7 @@ Bu qismni tushunish uchun bir nechta faylni birga o'qish kerak. Eng muhim naqshl
 |---|---|---|---|---|
 | **Humo ID** | `/id`, `/id/edit`, `/id/[username]`, `/id/verify` | `api/user/*` to'liq | ✅ Tayyor | Profil, edit (642 qator), onboarding, avatar/cover upload, account delete |
 | **Esport** | `/esport`, `/teams`, `/players`, `/tournaments`, `/esport/admin`, `/history` | `api/teams/*`, `api/tournaments/*` + repositories | ✅ Tayyor | Role-based admin, jamoa invite/join, turnir registratsiya |
-| **Market** | `/market`, `/catalog`, `/cart`, `/orders`, `/wishlist`, `/product/[slug]`, `/product/add`, `/brand/manage`, `/brand/[slug]` | `api/market/*` to'liq | 🟢 Deyarli tayyor | Dock navbar, wishlist (heart), sharhlar (harid qilganlar), brend yaratish+yo'nalish, mahsulot qo'shish, savat (manzil majburiy + Zij/naqd/karta), buyurtma tarixi |
+| **Market** | `/market`, `/catalog`, `/cart`, `/orders`, `/wishlist`, `/product/[slug]`, `/product/add`, `/brand/manage`, `/brand/[slug]`, `/profile`, `/profile/activity`, `/notifications` | `api/market/*` to'liq | 🟢 Deyarli tayyor | Wishlist (heart), harid-gate sharhlar+rasm/video, cheksiz ichma-ich javoblar, like ("qo'shilaman"), sotuvchi badge (`isAuthor`), brend yaratish/tahrirlash (ko'p yo'nalish), founder bepul brend, mahsulot qo'shish/tahrirlash+video, savat (manzil+Zij/naqd/karta), bildirishnomalar, profil statistika+faoliyat. **Qoldi:** sharh/javob tahrirlash+o'chirish, pagination |
 | **Pay (ALKH)** | `/pay` | `api/pay/*` (deposit/transfer/safe/wallet) | 🟡 Funksional | Deposit **test rejim**, withdraw o'chirilgan |
 | **Nexus** | `/nexus` | ❌ Backend yo'q | 🟠 UI demo | 72 komponent / ~24k qator, lekin DB/API yo'q — mock |
 | **AI** | `/ai` | `lib/ai-moderator.ts` | 🟡 Wrapper | `/ai-static/` ga iframe; session'ni localStorage orqali uzatadi |
@@ -147,6 +147,11 @@ VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
 - **Prisma client:** doimo `src/lib/prisma.ts` singleton orqali import qil (yangi `PrismaClient()` yaratma).
 - **Profil tahriri:** `UserProfile.profileEditedAt` — foydalanuvchi profilini **14 kunda 1 marta** tahrir qila oladi (rate-limit).
 - **Manzil:** `location`/`locationIv` shifrlangan — `src/lib/crypto.ts` siz to'g'ridan o'qib/yozib bo'lmaydi.
+- **Tailwind v4 dark mode (KRITIK):** v4 da config fayli yo'q — `dark:` default'da OS media query'ga bog'lanadi, `.dark` class'ga **emas**. `src/app/globals.css` da `@custom-variant dark (&:where(.dark, .dark *));` bo'lishi SHART. Yo'qolsa dark-mode toggle butun ilovada ishlamaydi.
+- **Founder hisoblar:** `FOUNDER_HUMO_IDS = ["UZ6889574","UZ3549920"]`, `FOUNDER_USERNAMES = ["abduvoris","aaa"]` (`api/market/brands/route.ts`) — avto-verified + 1-brend bepul. Brend narxi: 1-bepul, 2=25, 3=50, 4=100, 5+=200 Ƶ (atomik tranzaksiya).
+- **Media yuklash:** rasm/video → `MediaUploader` (`isVideoUrl()` export qiladi), rasmni crop → `MarketCropModal` (`aspect`+`outW` prop; 1:1 mahsulot, 3:1 cover), device rasm → `ImageUploader`. Hammasi `api/market/upload` (Vercel Blob). ⚠️ Vercel serverless yuklash limiti ~4.5MB — katta video uchun client-side blob upload kerak.
+- **LocationPicker:** `accent="green"` (Market) yoki `"blue"` (onboarding) prop bilan modul rangiga moslanadi. Til/xarita kabi umumiy komponentlar modul rangiga moslanishi kerak (ko'k = asosiy sayt rangi, Market = yashil).
+- **Reply/like ajratish:** API javoblarda `isMine` (o'zimnikimi) + `isAuthor` (mahsulot brend egasimi = sotuvchi) hisoblanadi — sotuvchi javoblari "Sotuvchi" badge + boshqa fon bilan ko'rsatiladi.
 
 ## Ish uslubi (workflow) — MUHIM
 
@@ -158,3 +163,5 @@ VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
 - **Zij simvoli:** `Ƶ` (Al-Xorazmiy → ALKH). Kurs `1 Ƶ = 1 USD` o'zgarmas.
 - **Mock rasm:** mahsulot/kontent rasmi kerak bo'lsa `https://picsum.photos/seed/<slug>/600/600`.
 - **Token tejash:** keraksiz fayllarni qayta o'qima; faqat kerakli qismni o'qi. Katta `.json`/`.claude.json` ni to'liq o'qimasdan `python3`/`grep` bilan tahlil qil.
+- **Glob/grep timeout:** loyiha OneDrive'da + `node_modules` katta — `**/CLAUDE.md` kabi keng Glob timeout bo'ladi. Aniq yo'l ber (`prisma/`, `src/...`) yoki Grep'da `path` ko'rsat.
+- **Docs-only o'zgarish:** faqat CLAUDE.md/markdown o'zgarsa commit+push yetadi, `vercel deploy` shart emas (build chiqimiga ta'sir qilmaydi).
