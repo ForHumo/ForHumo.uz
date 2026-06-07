@@ -12,6 +12,7 @@ import {
 import { VerifiedBadge } from "./verified-badge";
 import { ProductCard } from "./product-card";
 import { ProductReviews } from "./product-reviews";
+import { ProductQA } from "./product-qa";
 
 interface Brand { id: string; name: string; slug: string; verified: boolean; logo: string | null; description: string | null; }
 interface Product {
@@ -281,6 +282,9 @@ export function ProductDetail({ slug }: { slug: string }) {
                     </div>
                 </div>
             </div>
+
+            {/* Savol-javob */}
+            <ProductQA productId={product.id} />
 
             {/* Sharhlar */}
             <ProductReviews productId={product.id} />

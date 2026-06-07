@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 
 type NotifType =
     | "REVIEW_LIKE" | "PRODUCT_REVIEW" | "BRAND_REVIEW"
-    | "ORDER_DELIVERED" | "ORDER_ACCEPTED" | "ORDER_UPDATE" | "REVIEW_REMINDER" | "REPLY";
+    | "ORDER_DELIVERED" | "ORDER_ACCEPTED" | "ORDER_UPDATE" | "REVIEW_REMINDER" | "REPLY"
+    | "QUESTION" | "ANSWER";
 
 interface NotifInput {
     type: NotifType;

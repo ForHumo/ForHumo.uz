@@ -362,6 +362,8 @@ enum MarketNotifType {
   ORDER_UPDATE
   REVIEW_REMINDER
   REPLY
+  QUESTION
+  ANSWER
 }
 
 // Brendga sharh + baho (faqat shu brenddan harid qilganlar)
@@ -406,6 +408,30 @@ model MarketProduct {
   orderItems  MarketOrderItem[]
   wishlists   MarketWishlist[]
   reviews     MarketReview[]
+  questions   MarketProductQuestion[]
+}
+
+// Mahsulotga savol (harid shart emas — sotib olishdan oldin so'raladi)
+model MarketProductQuestion {
+  id        String   @id @default(cuid())
+  productId String
+  product   MarketProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  profileId String
+  text      String
+  createdAt DateTime @default(now())
+  answers   MarketProductAnswer[]
+  @@index([productId])
+}
+
+// Savolga javob (har kim; sotuvchi javobi ajratiladi)
+model MarketProductAnswer {
+  id         String   @id @default(cuid())
+  questionId String
+  question   MarketProductQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  profileId  String
+  text       String
+  createdAt  DateTime @default(now())
+  @@index([questionId])
 }
 
 model MarketCartItem {
