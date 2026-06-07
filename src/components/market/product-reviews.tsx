@@ -5,12 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import {
     Star, MessageSquare, Loader2, Send, CheckCircle2,
-    AlertCircle, Lock,
+    AlertCircle, Lock, ThumbsUp,
 } from "lucide-react";
 
 interface Review {
     id: string; rating: number; text: string | null; createdAt: string;
     author: { name: string | null; username: string | null; image: string | null } | null;
+    likeCount: number; likedByMe: boolean; isMine: boolean;
 }
 
 export function ProductReviews({ productId }: { productId: string }) {
@@ -38,6 +39,18 @@ export function ProductReviews({ productId }: { productId: string }) {
             .finally(() => setLoading(false));
     }
     useEffect(load, [productId]);
+
+    // "Qo'shilaman" — optimistik toggle
+    async function toggleLike(r: Review) {
+        if (r.isMine) return; // o'z sharhiga like bosolmaydi
+        setReviews(prev => prev.map(x => x.id === r.id
+            ? { ...x, likedByMe: !x.likedByMe, likeCount: x.likeCount + (x.likedByMe ? -1 : 1) }
+            : x));
+        try {
+            const res = await fetch(`/api/market/reviews/${r.id}/like`, { method: "POST" });
+            if (res.ok) { const d = await res.json(); setReviews(prev => prev.map(x => x.id === r.id ? { ...x, likedByMe: d.liked, likeCount: d.count } : x)); }
+        } catch { /* revert keyingi load'da */ }
+    }
 
     async function submit(e: React.FormEvent) {
         e.preventDefault(); setError("");
@@ -171,7 +184,17 @@ export function ProductReviews({ productId }: { productId: string }) {
                                     {new Date(r.createdAt).toLocaleDateString("uz-UZ")}
                                 </span>
                             </div>
-                            {r.text && <p className="text-sm text-gray-600 dark:text-white/50 leading-relaxed">{r.text}</p>}
+                            {r.text && <p className="text-sm text-gray-600 dark:text-white/50 leading-relaxed mb-2">{r.text}</p>}
+                            {/* "Qo'shilaman" — necha kishi rozi */}
+                            <button onClick={() => toggleLike(r)} disabled={r.isMine}
+                                className={`inline-flex items-center gap-1.5 text-xs font-semibold rounded-lg px-2.5 py-1 transition-all
+                                    ${r.likedByMe
+                                        ? "bg-green-500/15 text-green-600 dark:text-green-400"
+                                        : "bg-gray-100 dark:bg-white/[0.05] text-gray-500 dark:text-white/35 hover:bg-gray-200 dark:hover:bg-white/[0.08]"}
+                                    ${r.isMine ? "opacity-50 cursor-default" : ""}`}>
+                                <ThumbsUp size={12} className={r.likedByMe ? "fill-current" : ""} />
+                                Qo&apos;shilaman{r.likeCount > 0 ? ` · ${r.likeCount}` : ""}
+                            </button>
                         </motion.div>
                     ))}
                 </div>

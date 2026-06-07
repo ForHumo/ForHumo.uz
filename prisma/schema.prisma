@@ -288,6 +288,7 @@ model MarketBrand {
   createdAt   DateTime @default(now())
 
   products    MarketProduct[]
+  reviews     MarketBrandReview[]
 }
 
 model MarketWishlist {
@@ -308,7 +309,30 @@ model MarketReview {
   rating    Int           // 1-5
   text      String?
   createdAt DateTime @default(now())
+  likes     MarketReviewLike[]
   @@unique([profileId, productId])
+}
+
+// Sharhga "qo'shilaman" (like) — necha kishi rozi. Avtomatik, qo'lda emas.
+model MarketReviewLike {
+  id        String   @id @default(cuid())
+  reviewId  String
+  review    MarketReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  profileId String
+  createdAt DateTime @default(now())
+  @@unique([reviewId, profileId])
+}
+
+// Brendga sharh + baho (faqat shu brenddan harid qilganlar)
+model MarketBrandReview {
+  id        String   @id @default(cuid())
+  brandId   String
+  brand     MarketBrand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  profileId String
+  rating    Int           // 1-5
+  text      String?
+  createdAt DateTime @default(now())
+  @@unique([brandId, profileId])
 }
 
 model MarketProduct {

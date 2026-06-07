@@ -13,16 +13,19 @@ export async function GET(req: Request) {
         where: { productId },
         orderBy: { createdAt: "desc" },
         take: 50,
+        include: { _count: { select: { likes: true } } },
     });
 
-    // Foydalanuvchi sharh yoza oladimi? (harid qilgan + hali yozmagan)
+    // Foydalanuvchi sharh yoza oladimi? (harid qilgan + hali yozmagan) + qaysilarni like qilgan
     let canReview = false;
     let alreadyReviewed = false;
+    let myProfileId: string | null = null;
+    let likedIds: string[] = [];
     const session = await getServerSession(authOptions);
     if (session?.user?.email) {
         const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
         if (profile) {
-            // Bu mahsulotni harid qilganmi?
+            myProfileId = profile.id;
             const purchased = await prisma.marketOrderItem.findFirst({
                 where: { productId, order: { profileId: profile.id } },
             });
@@ -31,10 +34,14 @@ export async function GET(req: Request) {
             });
             alreadyReviewed = !!existing;
             canReview = !!purchased && !existing;
+            const myLikes = await prisma.marketReviewLike.findMany({
+                where: { profileId: profile.id, reviewId: { in: reviews.map(r => r.id) } },
+                select: { reviewId: true },
+            });
+            likedIds = myLikes.map(l => l.reviewId);
         }
     }
 
-    // Sharh muallifi ismlarini olish
     const profileIds = [...new Set(reviews.map(r => r.profileId))];
     const profiles = await prisma.userProfile.findMany({
         where: { id: { in: profileIds } },
@@ -43,8 +50,11 @@ export async function GET(req: Request) {
     const pMap = Object.fromEntries(profiles.map(p => [p.id, p]));
 
     const enriched = reviews.map(r => ({
-        ...r,
+        id: r.id, rating: r.rating, text: r.text, createdAt: r.createdAt,
         author: pMap[r.profileId] ?? null,
+        likeCount: r._count.likes,
+        likedByMe: likedIds.includes(r.id),
+        isMine: r.profileId === myProfileId,
     }));
 
     return NextResponse.json({ reviews: enriched, canReview, alreadyReviewed });

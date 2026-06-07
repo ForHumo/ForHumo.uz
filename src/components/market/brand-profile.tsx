@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 import { ProductCard } from "./product-card";
+import { BrandReviews } from "./brand-reviews";
 import { getCategoryBySlug } from "@/lib/market-categories";
 
 interface Product {
@@ -146,6 +147,9 @@ export function BrandProfile({ slug }: { slug: string }) {
                         {products.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
                     </div>
                 )}
+
+                {/* Brend sharhlari */}
+                <BrandReviews slug={brand.slug} />
             </div>
         </div>
     );
