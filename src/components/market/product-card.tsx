@@ -111,11 +111,13 @@ export function ProductCard({
             </Link>
 
             <div className={compact ? "p-2.5" : "p-4"}>
-                {/* Brend */}
+                {/* Brend — bosilsa brend sahifasi ochiladi */}
                 <div className="flex items-center gap-1 mb-1">
-                    <span className={`${compact ? "text-[10px]" : "text-xs"} text-gray-400 dark:text-white/25 font-medium truncate`}>
+                    <Link href={`/market/brand/${product.brand.slug}`}
+                        className={`${compact ? "text-[10px]" : "text-xs"} text-gray-400 dark:text-white/25 font-medium truncate
+                            hover:text-green-600 dark:hover:text-green-400 transition-colors`}>
                         {product.brand.name}
-                    </span>
+                    </Link>
                     {product.brand.verified && <VerifiedBadge size={compact ? 10 : 12} />}
                 </div>
 

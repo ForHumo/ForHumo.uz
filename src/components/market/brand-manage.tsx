@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
+import { ImageUploader } from "./image-uploader";
 
 interface Brand {
     id: string; slug: string; name: string; description: string | null;
@@ -17,12 +18,13 @@ interface Brand {
 }
 
 // ─── Yangi brend formi ────────────────────────────────────────────────────────
-function CreateBrandForm({ onCreated }: { onCreated: (b: Brand) => void }) {
+function CreateBrandForm({ onCreated, nextPrice }: { onCreated: (b: Brand) => void; nextPrice: number }) {
     const [open, setOpen]   = useState(false);
     const [name, setName]   = useState("");
     const [slug, setSlug]   = useState("");
     const [desc, setDesc]   = useState("");
     const [cat, setCat]     = useState("");
+    const [logo, setLogo]   = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [done, setDone]   = useState(false);
@@ -37,15 +39,16 @@ function CreateBrandForm({ onCreated }: { onCreated: (b: Brand) => void }) {
         if (!name.trim()) { setError("Nom kerak"); return; }
         if (!slug.trim()) { setError("Slug kerak"); return; }
         if (!cat) { setError("Yo'nalish tanlang"); return; }
+        if (!logo.length) { setError("Brend logosini yuklang"); return; }
         setLoading(true);
         try {
             const res = await fetch("/api/market/brands", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, slug, description: desc, category: cat }),
+                body: JSON.stringify({ name, slug, description: desc, category: cat, logo: logo[0] }),
             });
             const data = await res.json();
             if (!res.ok) { setError(data.error); }
-            else { setDone(true); onCreated(data.brand); setTimeout(() => { setOpen(false); setDone(false); setName(""); setSlug(""); setDesc(""); setCat(""); }, 1800); }
+            else { setDone(true); onCreated(data.brand); setTimeout(() => { setOpen(false); setDone(false); setName(""); setSlug(""); setDesc(""); setCat(""); setLogo([]); }, 1800); }
         } catch { setError("Xatolik"); } finally { setLoading(false); }
     }
 
@@ -106,6 +109,10 @@ function CreateBrandForm({ onCreated }: { onCreated: (b: Brand) => void }) {
                                                         text-gray-900 dark:text-white font-semibold placeholder:text-gray-300 dark:placeholder:text-white/15 outline-none transition" />
                                             </div>
 
+                                            {/* Logo — qurilmadan */}
+                                            <ImageUploader kind="brand" images={logo} onChange={setLogo} max={1}
+                                                label="Brend logosi * (qurilmangizdan yuklang)" />
+
                                             {/* Yo'nalish */}
                                             <div>
                                                 <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1 block">Yo'nalish *</label>
@@ -145,6 +152,16 @@ function CreateBrandForm({ onCreated }: { onCreated: (b: Brand) => void }) {
                                                     text-gray-900 dark:text-white text-sm placeholder:text-gray-300 dark:placeholder:text-white/15
                                                     outline-none transition resize-none" />
 
+                                            {/* Narx banner */}
+                                            <div className={`rounded-xl px-3 py-2 text-xs font-semibold text-center
+                                                ${nextPrice === 0
+                                                    ? "bg-green-50 dark:bg-green-900/15 text-green-700 dark:text-green-400"
+                                                    : "bg-amber-50 dark:bg-amber-900/15 text-amber-700 dark:text-amber-400"}`}>
+                                                {nextPrice === 0
+                                                    ? "Bu brend BEPUL"
+                                                    : `Bu brendni ochish narxi: ${nextPrice} Ƶ (hamyondan yechiladi)`}
+                                            </div>
+
                                             {error && (
                                                 <p className="text-red-500 text-xs flex items-center gap-1.5">
                                                     <AlertCircle size={12} />{error}
@@ -156,7 +173,7 @@ function CreateBrandForm({ onCreated }: { onCreated: (b: Brand) => void }) {
                                                     text-white font-bold text-sm shadow-lg shadow-green-500/25 disabled:opacity-40
                                                     flex items-center justify-center gap-2 transition-all">
                                                 {loading ? <Loader2 size={16} className="animate-spin" /> : <Store size={16} />}
-                                                Brend yaratish
+                                                {nextPrice === 0 ? "Brend yaratish (bepul)" : `${nextPrice} Ƶ to'lab yaratish`}
                                             </motion.button>
                                         </form>
                                     </>
@@ -173,13 +190,16 @@ function CreateBrandForm({ onCreated }: { onCreated: (b: Brand) => void }) {
 // ─── Asosiy sahifa ─────────────────────────────────────────────────────────
 export function BrandManage() {
     const [brands, setBrands] = useState<Brand[]>([]);
+    const [nextPrice, setNextPrice] = useState(0);
+    const [isFounder, setIsFounder] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    function reload() {
         fetch("/api/market/brands").then(r => r.json())
-            .then(d => setBrands(d.brands ?? []))
+            .then(d => { setBrands(d.brands ?? []); setNextPrice(d.nextPrice ?? 0); setIsFounder(d.isFounder ?? false); })
             .finally(() => setLoading(false));
-    }, []);
+    }
+    useEffect(reload, []);
 
     return (
         <div className="container mx-auto px-4 max-w-4xl py-8">
@@ -194,7 +214,7 @@ export function BrandManage() {
                     <Store size={22} className="text-green-500" />
                     <h1 className="text-2xl font-black text-gray-900 dark:text-white">Mening brendlarim</h1>
                 </div>
-                <CreateBrandForm onCreated={b => setBrands(prev => [b as Brand, ...prev])} />
+                <CreateBrandForm nextPrice={nextPrice} onCreated={() => reload()} />
             </div>
 
             {/* Ma'lumot: birinchi bepul */}
@@ -202,8 +222,13 @@ export function BrandManage() {
                 rounded-2xl p-4 mb-6 flex items-start gap-3">
                 <BadgeCheck size={16} className="text-green-500 mt-0.5 shrink-0" />
                 <div className="text-xs text-gray-600 dark:text-white/50 leading-relaxed">
-                    <span className="font-bold text-green-700 dark:text-green-400">Birinchi brend bepul.</span>
-                    {" "}Qo'shimcha brendlar kelajakda pullik bo'ladi. Test rejimida barcha brendlar bepul.
+                    {isFounder ? (
+                        <><span className="font-bold text-green-700 dark:text-green-400">Asoschi hisobi.</span>
+                        {" "}Barcha brendlaringiz bepul va avtomatik tasdiqlangan.</>
+                    ) : (
+                        <><span className="font-bold text-green-700 dark:text-green-400">1-brend bepul.</span>
+                        {" "}Keyingilari: 2-chi 25 Ƶ · 3-chi 50 Ƶ · 4-chi 100 Ƶ · 5+ 200 Ƶ (hamyondan yechiladi).</>
+                    )}
                 </div>
             </div>
 

@@ -4,12 +4,12 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useRouter } from "@/i18n/routing";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
 import {
     Package, ChevronRight, Loader2, AlertCircle, CheckCircle2,
-    Plus, X, ImagePlus, Store,
+    Plus, Store,
 } from "lucide-react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
+import { ImageUploader } from "./image-uploader";
 
 interface Brand { id: string; slug: string; name: string; category: string | null; }
 
@@ -28,7 +28,6 @@ export function ProductAdd() {
     const [cat, setCat]         = useState("");
     const [sub, setSub]         = useState("");
     const [images, setImages]   = useState<string[]>([]);
-    const [imgInput, setImgInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError]     = useState("");
     const [done, setDone]       = useState(false);
@@ -44,11 +43,6 @@ export function ProductAdd() {
     }, [presetBrand]);
 
     const currentCat = MARKET_CATEGORIES.find(c => c.slug === cat);
-
-    function addImage() {
-        const url = imgInput.trim();
-        if (url && images.length < 5) { setImages([...images, url]); setImgInput(""); }
-    }
 
     async function submit(e: React.FormEvent) {
         e.preventDefault(); setError("");
@@ -211,38 +205,9 @@ export function ProductAdd() {
                         </div>
                     )}
 
-                    {/* Rasmlar */}
-                    <div>
-                        <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">
-                            Rasmlar (URL, maks 5) — bo'sh qoldirsangiz test rasmi qo'yiladi
-                        </label>
-                        <div className="flex gap-2 mb-2">
-                            <input value={imgInput} onChange={e => setImgInput(e.target.value)}
-                                onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addImage())}
-                                placeholder="https://..."
-                                className="flex-1 bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
-                                    focus:border-green-400 dark:focus:border-green-500/50 rounded-2xl px-4 py-2.5 text-sm
-                                    text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/15 outline-none transition" />
-                            <button type="button" onClick={addImage}
-                                className="px-4 py-2.5 rounded-2xl bg-green-500/10 text-green-600 dark:text-green-400 font-bold text-sm hover:bg-green-500/20 transition">
-                                <ImagePlus size={16} />
-                            </button>
-                        </div>
-                        {images.length > 0 && (
-                            <div className="flex gap-2 flex-wrap">
-                                {images.map((img, i) => (
-                                    <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 dark:bg-white/[0.05]">
-                                        <Image src={img} alt="" width={64} height={64} className="w-full h-full object-cover"
-                                            onError={() => {}} />
-                                        <button type="button" onClick={() => setImages(images.filter((_, idx) => idx !== i))}
-                                            className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 flex items-center justify-center">
-                                            <X size={10} className="text-white" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    {/* Rasmlar — qurilmadan yuklash */}
+                    <ImageUploader kind="product" images={images} onChange={setImages} max={5}
+                        label="Mahsulot rasmlari (qurilmangizdan yuklang)" />
 
                     {/* Tavsif */}
                     <div>
