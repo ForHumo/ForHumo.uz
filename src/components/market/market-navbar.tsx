@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useLocale } from "next-intl";
@@ -107,9 +107,15 @@ function CatalogMegaMenu({ onClose }: { onClose: () => void }) {
 export function MarketNavbar() {
     const { data: session } = useSession();
     const locale = useLocale();
+    const router = useRouter();
     const [catalogOpen, setCatalogOpen] = useState(false);
     const [search, setSearch] = useState("");
     const navRef = useRef<HTMLDivElement>(null);
+
+    function runSearch() {
+        const q = search.trim();
+        if (q) router.push(`/market/catalog?q=${encodeURIComponent(q)}`);
+    }
 
     // Tashqarida bosilsa yopiladi
     useEffect(() => {
@@ -190,6 +196,7 @@ export function MarketNavbar() {
                             <input
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
+                                onKeyDown={e => e.key === "Enter" && runSearch()}
                                 placeholder="Mahsulot, brend yoki kategoriya..."
                                 className="w-full bg-gray-50/90 dark:bg-white/[0.05]
                                     border border-gray-200/80 dark:border-white/[0.08]

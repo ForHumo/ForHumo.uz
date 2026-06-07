@@ -180,9 +180,6 @@ export function ProductDetail({ slug }: { slug: string }) {
                             <span className="text-lg text-gray-400 line-through">{fz(product.oldPrice)} Ƶ</span>
                         )}
                     </div>
-                    <p className="text-xs text-gray-400 dark:text-white/25 -mt-4 mb-6">
-                        ≈ ${fz(product.price)} USD · 1 Ƶ = 1 $ (o'zgarmas kurs)
-                    </p>
 
                     {/* Tavsif */}
                     {product.description && (
