@@ -10,6 +10,7 @@ import Image from "next/image";
 import { DatePickerCalendar } from "@/components/ui/date-picker-calendar";
 import { LocationPicker } from "@/components/ui/location-picker";
 import { ImageCropModal } from "@/components/ui/image-crop-modal";
+import { MarketCropModal } from "@/components/market/market-crop-modal";
 import { CountrySelect, type Country } from "@/components/ui/country-select";
 
 // ── Country data ───────────────────────────────────────────────────────────────
@@ -108,6 +109,7 @@ export default function EditProfilePage() {
     // Avatar
     const [avatarLoading, setAvatarLoading] = useState(false);
     const [cropSrc, setCropSrc]         = useState<string | null>(null);
+    const [coverCropSrc, setCoverCropSrc] = useState<string | null>(null);
     const fileRef                       = useRef<HTMLInputElement>(null);
 
     // Cover
@@ -226,12 +228,11 @@ export default function EditProfilePage() {
     };
 
     // ── Cover handlers ─────────────────────────────────────────────────────────
-    const handleCoverSelected = async (file: File) => {
-        if (!file.type.startsWith("image/")) return;
-        if (file.size > 8 * 1024 * 1024) return;
+    // Crop'dan keyin chiqqan 3:1 blobni yuklash
+    const uploadCoverBlob = async (blob: Blob) => {
         setCoverLoading(true);
         const fd = new FormData();
-        fd.append("file", file);
+        fd.append("file", new File([blob], `cover_${Date.now()}.jpg`, { type: "image/jpeg" }));
         try {
             const res = await fetch("/api/user/cover-image", { method: "POST", body: fd });
             const data = await res.json();
@@ -395,7 +396,9 @@ export default function EditProfilePage() {
                         className="hidden"
                         onChange={(e) => {
                             const f = e.target.files?.[0];
-                            if (f) handleCoverSelected(f);
+                            if (f && f.type.startsWith("image/") && f.size <= 8 * 1024 * 1024) {
+                                setCoverCropSrc(URL.createObjectURL(f));
+                            }
                             e.target.value = "";
                         }}
                     />
@@ -629,12 +632,27 @@ export default function EditProfilePage() {
                 </div>
             </div>
 
-            {/* Crop modal */}
+            {/* Avatar crop modal (doira) */}
             {cropSrc && (
                 <ImageCropModal
                     imageSrc={cropSrc}
                     onConfirm={handleCropConfirm}
                     onCancel={() => { setCropSrc(null); URL.revokeObjectURL(cropSrc); }}
+                />
+            )}
+
+            {/* Muqova crop modal (3:1 banner — barcha bo'limda bir xil o'lcham) */}
+            {coverCropSrc && (
+                <MarketCropModal
+                    imageSrc={coverCropSrc}
+                    aspect={3}
+                    outW={1500}
+                    onConfirm={async (blob) => {
+                        await uploadCoverBlob(blob);
+                        URL.revokeObjectURL(coverCropSrc);
+                        setCoverCropSrc(null);
+                    }}
+                    onCancel={() => { URL.revokeObjectURL(coverCropSrc); setCoverCropSrc(null); }}
                 />
             )}
         </div>

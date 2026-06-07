@@ -8,19 +8,22 @@ import { Loader2, Check, X, ZoomIn } from "lucide-react";
 
 interface Props {
     imageSrc: string;                  // tanlangan faylning object URL'i
-    onConfirm: (blob: Blob) => void;   // qirqilgan kvadrat rasm
+    onConfirm: (blob: Blob) => void;   // qirqilgan rasm
     onCancel: () => void;
+    aspect?: number;                   // 1 = kvadrat (mahsulot), 3 = banner (muqova)
+    outW?: number;                     // chiqish kengligi (px)
 }
 
-// Kvadrat (1:1) qirqim — doira emas, 800x800 JPEG
-async function getCroppedBlob(src: string, crop: Area, size = 800): Promise<Blob> {
+// Belgilangan aspect bo'yicha qirqim → JPEG
+async function getCroppedBlob(src: string, crop: Area, outW: number, aspect: number): Promise<Blob> {
+    const outH = Math.round(outW / aspect);
     return new Promise((resolve, reject) => {
         const img = new window.Image();
         img.onload = () => {
             const canvas = document.createElement("canvas");
-            canvas.width = size; canvas.height = size;
+            canvas.width = outW; canvas.height = outH;
             const ctx = canvas.getContext("2d")!;
-            ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, size, size);
+            ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, outW, outH);
             canvas.toBlob(b => (b ? resolve(b) : reject(new Error("empty"))), "image/jpeg", 0.9);
         };
         img.onerror = reject;
@@ -29,7 +32,7 @@ async function getCroppedBlob(src: string, crop: Area, size = 800): Promise<Blob
     });
 }
 
-export function MarketCropModal({ imageSrc, onConfirm, onCancel }: Props) {
+export function MarketCropModal({ imageSrc, onConfirm, onCancel, aspect = 1, outW = 800 }: Props) {
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [pix, setPix] = useState<Area | null>(null);
@@ -40,7 +43,7 @@ export function MarketCropModal({ imageSrc, onConfirm, onCancel }: Props) {
     async function confirm() {
         if (!pix) return;
         setWorking(true);
-        try { onConfirm(await getCroppedBlob(imageSrc, pix)); }
+        try { onConfirm(await getCroppedBlob(imageSrc, pix, outW, aspect)); }
         finally { setWorking(false); }
     }
 
@@ -64,7 +67,7 @@ export function MarketCropModal({ imageSrc, onConfirm, onCancel }: Props) {
                 {/* Crop maydoni */}
                 <div className="relative h-72 bg-gray-900">
                     <Cropper
-                        image={imageSrc} crop={crop} zoom={zoom} aspect={1}
+                        image={imageSrc} crop={crop} zoom={zoom} aspect={aspect}
                         onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={onComplete}
                         showGrid />
                 </div>

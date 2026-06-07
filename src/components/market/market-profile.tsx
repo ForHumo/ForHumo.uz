@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import {
@@ -27,6 +28,7 @@ interface ProfileData {
 function fz(v: number | string) { return Number(v).toLocaleString(); }
 
 export function MarketProfile() {
+    const { data: session } = useSession();
     const [data, setData] = useState<ProfileData | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -46,6 +48,9 @@ export function MarketProfile() {
 
     const { profile, brands, stats } = data;
     const displayName = profile.name ?? [profile.firstName, profile.fatherName].filter(Boolean).join(" ") ?? "Foydalanuvchi";
+    // DB rasmi bo'lmasa session (navbar bilan bir manba)
+    const avatarSrc = profile.image || session?.user?.image || null;
+    const coverSrc = profile.coverImage || null;
 
     const STATS = [
         { icon: Store,        label: "Brendlar",      value: fz(stats.brandCount),    color: "#10B981" },
@@ -56,10 +61,10 @@ export function MarketProfile() {
 
     return (
         <div>
-            {/* Cover banner (Humo ID dan) */}
-            <div className="relative h-40 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 overflow-hidden">
-                {profile.coverImage && (
-                    <Image src={profile.coverImage} alt="" fill className="object-cover opacity-90" />
+            {/* Cover banner (Humo ID dan) — barcha bo'limda 3:1 aspect bilan bir xil */}
+            <div className="relative w-full aspect-[3/1] max-h-52 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 overflow-hidden">
+                {coverSrc && (
+                    <Image src={coverSrc} alt="" fill className="object-cover object-center opacity-90" />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
             </div>
@@ -69,8 +74,8 @@ export function MarketProfile() {
                 <div className="flex items-end gap-4 -mt-12 relative z-10 mb-2">
                     <div className="w-24 h-24 rounded-3xl overflow-hidden shrink-0
                         bg-white dark:bg-[#0a1a0d] border-4 border-white dark:border-[#050F07] shadow-xl">
-                        {profile.image ? (
-                            <Image src={profile.image} alt={displayName} width={96} height={96} className="w-full h-full object-cover" />
+                        {avatarSrc ? (
+                            <Image src={avatarSrc} alt={displayName} width={96} height={96} className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center text-white text-3xl font-black">
                                 {displayName[0]?.toUpperCase()}
