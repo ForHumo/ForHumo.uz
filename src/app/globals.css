@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Tailwind v4: dark: utilitalari OS media query emas, .dark klassiga ergashsin
+   (next-themes attribute="class" bilan ishlashi uchun MAJBURIY) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));

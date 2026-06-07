@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import {
@@ -105,9 +106,10 @@ export function MarketHome() {
                             backgroundSize: "200% 200%",
                         }} />
 
-                    <div className="relative container mx-auto px-4 max-w-6xl py-14">
+                    <div className="relative container mx-auto px-4 max-w-6xl py-14
+                        flex items-center justify-between gap-8">
                         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, type: "spring" }}>
+                            transition={{ duration: 0.6, type: "spring" }} className="flex-1 min-w-0">
                             <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm
                                 border border-white/20 rounded-full px-4 py-1.5 mb-5">
                                 <Zap size={13} className="text-yellow-300" />
@@ -134,6 +136,19 @@ export function MarketHome() {
                                     + Brend ochish
                                 </Link>
                             </div>
+                        </motion.div>
+
+                        {/* Katta logo (o'ng tomon) */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.8, rotate: -8 }}
+                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                            transition={{ duration: 0.7, type: "spring", stiffness: 120 }}
+                            className="hidden md:block shrink-0">
+                            <motion.div animate={{ y: [0, -12, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
+                                <Image src="/logos/humo-market.png" alt="Humo Market"
+                                    width={180} height={180}
+                                    className="w-44 h-44 object-contain drop-shadow-2xl" priority />
+                            </motion.div>
                         </motion.div>
                     </div>
                 </section>

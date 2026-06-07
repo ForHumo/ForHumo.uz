@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { Link } from "@/i18n/routing";
 import {
     SlidersHorizontal, ChevronRight, Loader2,
-    Search, X, ArrowUpDown,
+    Search, X, ArrowUpDown, ChevronDown, Check,
 } from "lucide-react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ProductCard } from "./product-card";
@@ -40,6 +40,24 @@ export function MarketCatalog() {
     const [search, setSearch]     = useState(params.get("q") ?? "");
     const [sort, setSort]         = useState<SortKey>("popular");
     const [activeCat, setActiveCat] = useState(catSlug);
+    const [sortOpen, setSortOpen] = useState(false);
+    const [minPrice, setMinPrice] = useState("");
+    const [maxPrice, setMaxPrice] = useState("");
+    const sortRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function h(e: MouseEvent) { if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false); }
+        document.addEventListener("mousedown", h);
+        return () => document.removeEventListener("mousedown", h);
+    }, []);
+
+    // Narx filtri — client-side (refetch shart emas)
+    const visibleProducts = products.filter(p => {
+        const pr = Number(p.price);
+        if (minPrice && pr < Number(minPrice)) return false;
+        if (maxPrice && pr > Number(maxPrice)) return false;
+        return true;
+    });
 
     const loadProducts = useCallback(async () => {
         setLoading(true);
@@ -121,6 +139,30 @@ export function MarketCatalog() {
                                 );
                             })}
                         </div>
+
+                        {/* Narx filtri */}
+                        <div className="mt-6 pt-5 border-t border-gray-100 dark:border-white/[0.06]">
+                            <h3 className="font-bold text-gray-900 dark:text-white mb-3 text-sm">Narx (Ƶ)</h3>
+                            <div className="flex items-center gap-2">
+                                <input type="number" min={0} value={minPrice} onChange={e => setMinPrice(e.target.value)}
+                                    placeholder="dan"
+                                    className="w-full bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
+                                        focus:border-green-400 dark:focus:border-green-500/50 rounded-xl px-3 py-2 text-sm
+                                        text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/20 outline-none transition" />
+                                <span className="text-gray-300 dark:text-white/20">—</span>
+                                <input type="number" min={0} value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
+                                    placeholder="gacha"
+                                    className="w-full bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
+                                        focus:border-green-400 dark:focus:border-green-500/50 rounded-xl px-3 py-2 text-sm
+                                        text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/20 outline-none transition" />
+                            </div>
+                            {(minPrice || maxPrice) && (
+                                <button onClick={() => { setMinPrice(""); setMaxPrice(""); }}
+                                    className="mt-2 text-xs text-green-600 dark:text-green-400 hover:underline">
+                                    Narx filtrini tozalash
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </aside>
 
@@ -146,21 +188,46 @@ export function MarketCatalog() {
                             )}
                         </div>
 
-                        {/* Sort */}
-                        <div className="relative">
-                            <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl
-                                bg-gray-50/90 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]">
+                        {/* Sort — custom dropdown (Market theme) */}
+                        <div className="relative" ref={sortRef}>
+                            <button onClick={() => setSortOpen(v => !v)}
+                                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl
+                                    bg-gray-50/90 dark:bg-white/[0.05]
+                                    border border-gray-200 dark:border-white/[0.08]
+                                    hover:border-green-300 dark:hover:border-green-600/40
+                                    text-sm text-gray-700 dark:text-white/60 transition-all">
                                 <ArrowUpDown size={13} className="text-gray-400" />
-                                <select value={sort} onChange={e => setSort(e.target.value as SortKey)}
-                                    className="bg-transparent text-sm text-gray-700 dark:text-white/60 outline-none cursor-pointer pr-1">
-                                    {SORT_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
-                                </select>
-                            </div>
+                                {SORT_OPTIONS.find(o => o.key === sort)?.label}
+                                <ChevronDown size={13} className={`text-gray-400 transition-transform ${sortOpen ? "rotate-180" : ""}`} />
+                            </button>
+                            <AnimatePresence>
+                                {sortOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="absolute right-0 top-full mt-2 w-56 z-50 py-1.5
+                                            bg-white/95 dark:bg-[#0a1a0d]/97 backdrop-blur-xl
+                                            border border-green-100 dark:border-green-900/30
+                                            rounded-2xl shadow-2xl shadow-green-900/10">
+                                        {SORT_OPTIONS.map(o => (
+                                            <button key={o.key}
+                                                onClick={() => { setSort(o.key); setSortOpen(false); }}
+                                                className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors
+                                                    ${sort === o.key
+                                                        ? "text-green-600 dark:text-green-400 font-semibold bg-green-50 dark:bg-green-900/15"
+                                                        : "text-gray-600 dark:text-white/50 hover:bg-gray-50 dark:hover:bg-white/[0.04]"}`}>
+                                                {o.label}
+                                                {sort === o.key && <Check size={14} />}
+                                            </button>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
 
                         {/* Natija soni */}
                         <span className="text-sm text-gray-400 dark:text-white/25 ml-auto">
-                            {loading ? "" : `${products.length} ta mahsulot`}
+                            {loading ? "" : `${visibleProducts.length} ta mahsulot`}
                         </span>
                     </div>
 
@@ -171,7 +238,7 @@ export function MarketCatalog() {
                                 <div key={i} className="h-64 rounded-2xl bg-gray-100 dark:bg-white/[0.03] animate-pulse" />
                             ))}
                         </div>
-                    ) : products.length === 0 ? (
+                    ) : visibleProducts.length === 0 ? (
                         <div className="text-center py-20">
                             <SlidersHorizontal size={36} className="text-gray-200 dark:text-white/10 mx-auto mb-3" />
                             <p className="text-gray-400 dark:text-white/30 text-sm">Mahsulot topilmadi</p>
@@ -180,7 +247,7 @@ export function MarketCatalog() {
                         <motion.div
                             className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4"
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                            {products.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+                            {visibleProducts.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
                         </motion.div>
                     )}
                 </div>

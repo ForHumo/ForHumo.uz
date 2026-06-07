@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "@/i18n/routing";
+import Image from "next/image";
 import {
     Store, Plus, ChevronRight, BadgeCheck, Package,
     Loader2, CheckCircle2, AlertCircle, X, ArrowRight,
@@ -13,6 +14,7 @@ import { ImageUploader } from "./image-uploader";
 
 interface Brand {
     id: string; slug: string; name: string; description: string | null;
+    logo: string | null;
     category: string | null; verified: boolean; isPaid: boolean; createdAt: string;
     _count: { products: number };
 }
@@ -249,8 +251,10 @@ export function BrandManage() {
                                 hover:border-green-200 dark:hover:border-green-800/30 rounded-2xl p-5 transition-all">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3 min-w-0">
-                                    <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center shrink-0">
-                                        <Store size={20} className="text-green-500" />
+                                    <div className="w-12 h-12 rounded-2xl overflow-hidden bg-green-500/10 flex items-center justify-center shrink-0">
+                                        {brand.logo
+                                            ? <Image src={brand.logo} alt={brand.name} width={48} height={48} className="w-full h-full object-cover" />
+                                            : <Store size={20} className="text-green-500" />}
                                     </div>
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2">
