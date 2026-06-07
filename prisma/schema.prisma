@@ -323,6 +323,30 @@ model MarketReviewLike {
   @@unique([reviewId, profileId])
 }
 
+// Bildirishnomalar (avtomatik yaratiladi)
+model MarketNotification {
+  id        String          @id @default(cuid())
+  profileId String          // qabul qiluvchi
+  type      MarketNotifType
+  title     String
+  body      String?
+  link      String?         // bosilganda o'tadigan manzil
+  image     String?
+  read      Boolean         @default(false)
+  createdAt DateTime        @default(now())
+  @@index([profileId, read])
+}
+
+enum MarketNotifType {
+  REVIEW_LIKE
+  PRODUCT_REVIEW
+  BRAND_REVIEW
+  ORDER_DELIVERED
+  ORDER_ACCEPTED
+  REVIEW_REMINDER
+  REPLY
+}
+
 // Brendga sharh + baho (faqat shu brenddan harid qilganlar)
 model MarketBrandReview {
   id        String   @id @default(cuid())

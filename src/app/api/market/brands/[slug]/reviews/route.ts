@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/market-notify";
 
 async function brandBySlug(slug: string) {
     return prisma.marketBrand.findUnique({ where: { slug }, select: { id: true } });
@@ -63,7 +64,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     const { rating, text } = await req.json();
     if (!rating || rating < 1 || rating > 5) return NextResponse.json({ error: "Baho 1-5" }, { status: 400 });
 
-    const brand = await brandBySlug(slug);
+    const brand = await prisma.marketBrand.findUnique({ where: { slug }, select: { id: true, name: true, ownerId: true, logo: true } });
     if (!brand) return NextResponse.json({ error: "Brend topilmadi" }, { status: 404 });
 
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
@@ -82,5 +83,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     const review = await prisma.marketBrandReview.create({
         data: { brandId: brand.id, profileId: profile.id, rating, text: text?.trim() ?? null },
     });
+
+    // Brend egasiga bildirishnoma (o'ziga emas)
+    if (brand.ownerId !== profile.id) {
+        await notify(brand.ownerId, {
+            type: "BRAND_REVIEW",
+            title: `Brendingizga ${rating}★ sharh`,
+            body: `${profile.name ?? "Mijoz"}: ${brand.name}`,
+            link: `/market/brand/${slug}`,
+            image: brand.logo ?? undefined,
+        });
+    }
+
     return NextResponse.json({ review });
 }

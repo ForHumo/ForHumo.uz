@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/market-notify";
 
 // GET /api/market/reviews?productId=...
 export async function GET(req: Request) {
@@ -99,6 +100,21 @@ export async function POST(req: Request) {
         where: { id: productId },
         data: { rating: agg._avg.rating ?? 0, reviewCount: agg._count },
     });
+
+    // Brend egasiga bildirishnoma (o'z mahsulotiga emas)
+    const prod = await prisma.marketProduct.findUnique({
+        where: { id: productId },
+        select: { slug: true, name: true, images: true, brand: { select: { ownerId: true } } },
+    });
+    if (prod && prod.brand.ownerId !== profile.id) {
+        await notify(prod.brand.ownerId, {
+            type: "PRODUCT_REVIEW",
+            title: `Mahsulotingizga ${rating}★ sharh`,
+            body: `${profile.name ?? "Mijoz"}: ${prod.name}`,
+            link: `/market/product/${prod.slug}`,
+            image: prod.images?.[0],
+        });
+    }
 
     return NextResponse.json({ review });
 }

@@ -9,7 +9,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import {
     Home, ChevronRight, Search, ShoppingCart,
-    ChevronDown, X, Layers,
+    ChevronDown, X, Layers, Bell,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
@@ -118,7 +118,13 @@ export function MarketNavbar() {
     const [search, setSearch] = useState("");
     const [sug, setSug] = useState<Suggestions>({ brands: [], products: [] });
     const [sugOpen, setSugOpen] = useState(false);
+    const [unread, setUnread] = useState(0);
     const navRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!session?.user) return;
+        fetch("/api/market/notifications").then(r => r.json()).then(d => setUnread(d.unread ?? 0)).catch(() => {});
+    }, [session?.user]);
 
     function runSearch() {
         const q = search.trim();
@@ -288,6 +294,22 @@ export function MarketNavbar() {
                                 <ShoppingCart size={16} />
                                 <span className="hidden sm:block">Savat</span>
                             </Link>
+
+                            {/* Bildirishnoma */}
+                            {session?.user && (
+                                <Link href="/market/notifications"
+                                    className="relative p-2 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20
+                                        text-gray-500 dark:text-white/50 hover:text-green-600 dark:hover:text-green-400 transition-all">
+                                    <Bell size={18} />
+                                    {unread > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1
+                                            bg-red-500 rounded-full flex items-center justify-center">
+                                            <span className="text-[9px] font-black text-white">{unread > 9 ? "9+" : unread}</span>
+                                        </span>
+                                    )}
+                                </Link>
+                            )}
+
                             <LanguageSwitcher />
                             <ThemeToggle />
                             {session?.user && (

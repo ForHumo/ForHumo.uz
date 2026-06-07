@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/market-notify";
 
 // POST /api/market/reviews/[id]/like — toggle "qo'shilaman"
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -20,6 +21,20 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         await prisma.marketReviewLike.delete({ where: { id: existing.id } });
     } else {
         await prisma.marketReviewLike.create({ data: { reviewId: id, profileId: profile.id } });
+        // Sharh muallifiga bildirishnoma (o'ziga emas)
+        const review = await prisma.marketReview.findUnique({
+            where: { id },
+            include: { product: { select: { slug: true, name: true, images: true } } },
+        });
+        if (review && review.profileId !== profile.id) {
+            await notify(review.profileId, {
+                type: "REVIEW_LIKE",
+                title: `${profile.name ?? "Kimdir"} sharhingizga qo'shildi`,
+                body: review.product.name,
+                link: `/market/product/${review.product.slug}`,
+                image: review.product.images?.[0],
+            });
+        }
     }
 
     const count = await prisma.marketReviewLike.count({ where: { reviewId: id } });

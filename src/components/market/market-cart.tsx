@@ -83,6 +83,11 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
         });
     }
 
+    async function acceptOrder(orderId: string) {
+        const res = await fetch(`/api/market/orders/${orderId}/accept`, { method: "POST" });
+        if (res.ok) setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: "DELIVERED" } : o));
+    }
+
     async function removeItem(productId: string) {
         setItems(prev => prev.filter(i => i.productId !== productId));
         await fetch("/api/market/cart", {
@@ -428,6 +433,16 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                     <div className="flex items-center gap-1"><MapPin size={11} />{order.address}</div>
                                     <span>{order.paymentMethod === "ZIJ" ? "Zij" : order.paymentMethod === "CASH_ON_DELIVERY" ? "Naqd" : "Karta"}</span>
                                 </div>
+
+                                {/* Qabul qilish — DELIVERED/CANCELLED bo'lmasa */}
+                                {order.status !== "DELIVERED" && order.status !== "CANCELLED" && (
+                                    <button onClick={() => acceptOrder(order.id)}
+                                        className="mt-3 w-full py-2.5 rounded-xl bg-gradient-to-r from-green-600 to-emerald-500
+                                            text-white font-bold text-sm flex items-center justify-center gap-2
+                                            hover:from-green-500 hover:to-emerald-400 transition-all">
+                                        <CheckCircle2 size={15} /> Qabul qildim
+                                    </button>
+                                )}
                             </motion.div>
                         );
                     })}
