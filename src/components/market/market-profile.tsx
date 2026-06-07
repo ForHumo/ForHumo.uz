@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import {
-    Store, Package, ShoppingBag, Star, ThumbsUp, Loader2,
+    Store, Package, ShoppingBag, Star, ThumbsUp, Loader2, Heart,
     ChevronRight, Pencil, Wallet, TrendingUp, TrendingDown,
     ShieldCheck, Plus, MessageSquare,
 } from "lucide-react";
@@ -22,7 +22,7 @@ interface ProfileData {
         username: string | null; humoId: string | null; image: string | null; coverImage: string | null; phone: string | null;
     };
     brands: BrandRow[];
-    stats: { brandCount: number; reviewsGiven: number; likesReceived: number; ordersCount: number; zijSpent: number; zijEarned: number };
+    stats: { brandCount: number; reviewsGiven: number; likesReceived: number; likesGiven: number; ordersCount: number; zijSpent: number; zijEarned: number };
 }
 
 function fz(v: number | string) { return Number(v).toLocaleString(); }
@@ -53,10 +53,11 @@ export function MarketProfile() {
     const coverSrc = profile.coverImage || null;
 
     const STATS = [
-        { icon: Store,        label: "Brendlar",      value: fz(stats.brandCount),    color: "#10B981" },
-        { icon: ShoppingBag,  label: "Haridlar",      value: fz(stats.ordersCount),   color: "#3B82F6" },
-        { icon: MessageSquare,label: "Sharhlar",      value: fz(stats.reviewsGiven),  color: "#8B5CF6" },
-        { icon: ThumbsUp,     label: "Qo'shilishlar", value: fz(stats.likesReceived), color: "#F59E0B" },
+        { icon: Store,        label: "Brendlar",      value: fz(stats.brandCount),    color: "#10B981", href: "/market/brand/manage" },
+        { icon: ShoppingBag,  label: "Haridlar",      value: fz(stats.ordersCount),   color: "#3B82F6", href: "/market/orders" },
+        { icon: MessageSquare,label: "Sharhlar",      value: fz(stats.reviewsGiven),  color: "#8B5CF6", href: "/market/profile/activity?tab=reviews" },
+        { icon: Star,         label: "Baholar",       value: fz(stats.reviewsGiven),  color: "#EC4899", href: "/market/profile/activity?tab=ratings" },
+        { icon: ThumbsUp,     label: "Qo'shilishlar", value: fz(stats.likesGiven),    color: "#F59E0B", href: "/market/profile/activity?tab=likes" },
     ];
 
     return (
@@ -104,34 +105,40 @@ export function MarketProfile() {
                     </Link>
                 </div>
 
-                {/* Asosiy statistika */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                {/* Asosiy statistika — bosiladigan */}
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-4">
                     {STATS.map((s, i) => (
-                        <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                            className="bg-white/70 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] rounded-2xl p-4 text-center">
-                            <s.icon size={18} className="mx-auto mb-1.5" style={{ color: s.color }} />
-                            <p className="text-xl font-black text-gray-900 dark:text-white">{s.value}</p>
-                            <p className="text-xs text-gray-400 dark:text-white/30">{s.label}</p>
+                        <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                            <Link href={s.href}
+                                className="block bg-white/70 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06]
+                                    hover:border-green-300 dark:hover:border-green-700/40 hover:bg-white dark:hover:bg-white/[0.05]
+                                    rounded-2xl p-4 text-center transition-all">
+                                <s.icon size={18} className="mx-auto mb-1.5" style={{ color: s.color }} />
+                                <p className="text-xl font-black text-gray-900 dark:text-white">{s.value}</p>
+                                <p className="text-xs text-gray-400 dark:text-white/30">{s.label}</p>
+                            </Link>
                         </motion.div>
                     ))}
                 </div>
 
-                {/* Zij — ishlatilgan / ishlab olingan */}
+                {/* Zij — ishlatilgan / ishlab olingan (bosiladigan) */}
                 <div className="grid grid-cols-2 gap-3 mb-8">
-                    <div className="bg-red-50/70 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-2xl p-4">
+                    <Link href="/market/profile/activity?tab=spent"
+                        className="bg-red-50/70 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 hover:border-red-300 dark:hover:border-red-800/40 rounded-2xl p-4 transition-all">
                         <div className="flex items-center gap-1.5 mb-1">
                             <TrendingDown size={14} className="text-red-500" />
                             <span className="text-xs text-gray-500 dark:text-white/40">Sarflangan</span>
                         </div>
                         <p className="text-xl font-black text-red-500 dark:text-red-400">{fz(stats.zijSpent)} <span className="text-sm">Ƶ</span></p>
-                    </div>
-                    <div className="bg-green-50/70 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20 rounded-2xl p-4">
+                    </Link>
+                    <Link href="/market/profile/activity?tab=earned"
+                        className="bg-green-50/70 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-800/40 rounded-2xl p-4 transition-all">
                         <div className="flex items-center gap-1.5 mb-1">
                             <TrendingUp size={14} className="text-green-500" />
                             <span className="text-xs text-gray-500 dark:text-white/40">Ishlab olingan</span>
                         </div>
                         <p className="text-xl font-black text-green-600 dark:text-green-400">{fz(stats.zijEarned)} <span className="text-sm">Ƶ</span></p>
-                    </div>
+                    </Link>
                 </div>
 
                 {/* Tezkor havolalar */}
@@ -144,7 +151,7 @@ export function MarketProfile() {
                     <Link href="/market/wishlist" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl
                         bg-gray-100/80 dark:bg-white/[0.05] hover:bg-gray-200 dark:hover:bg-white/[0.08]
                         text-gray-700 dark:text-white/60 font-semibold text-sm transition-all">
-                        <Star size={15} /> Sevimlilar
+                        <Heart size={15} /> Sevimlilar
                     </Link>
                 </div>
 

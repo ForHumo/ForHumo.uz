@@ -5,14 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import {
     Star, MessageSquare, Loader2, Send, CheckCircle2,
-    AlertCircle, Lock, ThumbsUp, Reply as ReplyIcon,
+    AlertCircle, Lock, ThumbsUp, Reply as ReplyIcon, Store,
 } from "lucide-react";
 import { MediaUploader, isVideoUrl } from "./media-uploader";
 
 interface Author { name: string | null; username: string | null; image: string | null }
 interface ReplyT {
     id: string; parentId: string | null; text: string | null; media: string[];
-    createdAt: string; author: Author | null; isMine: boolean;
+    createdAt: string; author: Author | null; isMine: boolean; isAuthor?: boolean;
 }
 interface Review {
     id: string; rating: number; text: string | null; media: string[]; createdAt: string;
@@ -104,10 +104,17 @@ function ReplyNode({ reply, reviewId, childrenOf, onNewReply }: {
             <div className="flex gap-2.5">
                 <Avatar author={reply.author} size={28} />
                 <div className="flex-1 min-w-0">
-                    <div className="bg-gray-50 dark:bg-white/[0.04] rounded-2xl px-3 py-2">
-                        <p className="text-xs font-semibold text-gray-900 dark:text-white">
+                    <div className={`rounded-2xl px-3 py-2 ${reply.isAuthor
+                        ? "bg-green-50 dark:bg-green-900/15 border border-green-200/60 dark:border-green-800/30"
+                        : "bg-gray-50 dark:bg-white/[0.04]"}`}>
+                        <p className="text-xs font-semibold text-gray-900 dark:text-white flex items-center gap-1.5 flex-wrap">
                             {reply.author?.name ?? reply.author?.username ?? "Foydalanuvchi"}
-                            <span className="text-gray-300 dark:text-white/20 font-normal ml-2">{timeAgo(reply.createdAt)}</span>
+                            {reply.isAuthor && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-500 text-white text-[9px] font-bold">
+                                    <Store size={9} /> Sotuvchi
+                                </span>
+                            )}
+                            <span className="text-gray-300 dark:text-white/20 font-normal">{timeAgo(reply.createdAt)}</span>
                         </p>
                         {reply.text && <p className="text-sm text-gray-600 dark:text-white/60 mt-0.5">{reply.text}</p>}
                         <MediaGrid media={reply.media} />

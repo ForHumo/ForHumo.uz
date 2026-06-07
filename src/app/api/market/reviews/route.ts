@@ -43,6 +43,12 @@ export async function GET(req: Request) {
         }
     }
 
+    // Mahsulot brend egasi (sotuvchi) — javoblarni ajratish uchun
+    const prodForOwner = await prisma.marketProduct.findUnique({
+        where: { id: productId }, select: { brand: { select: { ownerId: true } } },
+    });
+    const sellerId = prodForOwner?.brand.ownerId ?? null;
+
     // Javoblar (barcha sharhlar uchun, flat — klient daraxt quradi)
     const replies = await prisma.marketReviewReply.findMany({
         where: { reviewId: { in: reviews.map(r => r.id) } },
@@ -61,6 +67,7 @@ export async function GET(req: Request) {
         (replyMap[rp.reviewId] ??= []).push({
             id: rp.id, parentId: rp.parentId, text: rp.text, media: rp.media, createdAt: rp.createdAt,
             author: pMap[rp.profileId] ?? null, isMine: rp.profileId === myProfileId,
+            isAuthor: sellerId != null && rp.profileId === sellerId,
         });
     }
 

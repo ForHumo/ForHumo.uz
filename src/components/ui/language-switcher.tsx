@@ -48,7 +48,7 @@ export function LanguageSwitcher() {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-40 origin-top-right rounded-xl border border-border bg-popover p-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                <div className="absolute right-0 mt-2 w-40 origin-top-right rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-zinc-900 p-1 shadow-xl z-50">
                     {languages.map((lang) => (
                         <button
                             key={lang.code}
@@ -56,8 +56,8 @@ export function LanguageSwitcher() {
                             className={cn(
                                 "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                                 locale === lang.code
-                                    ? "bg-primary/10 text-primary font-semibold"
-                                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                                    ? "bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white font-semibold"
+                                    : "text-gray-500 dark:text-white/50 hover:bg-gray-50 dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-white"
                             )}
                         >
                             <span>{lang.name}</span>

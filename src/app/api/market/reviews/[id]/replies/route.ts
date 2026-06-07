@@ -20,9 +20,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const review = await prisma.marketReview.findUnique({
         where: { id },
-        include: { product: { select: { slug: true, name: true, images: true } } },
+        include: { product: { select: { slug: true, name: true, images: true, brand: { select: { ownerId: true } } } } },
     });
     if (!review) return NextResponse.json({ error: "Sharh topilmadi" }, { status: 404 });
+    const isAuthor = review.product.brand.ownerId === profile.id;
 
     const reply = await prisma.marketReviewReply.create({
         data: { reviewId: id, parentId: parentId ?? null, profileId: profile.id, text: text?.trim() ?? null, media: mediaArr },
@@ -48,7 +49,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         reply: {
             id: reply.id, parentId: reply.parentId, text: reply.text, media: reply.media, createdAt: reply.createdAt,
             author: { name: profile.name, username: profile.username, image: profile.image },
-            isMine: true,
+            isMine: true, isAuthor,
         },
     });
 }

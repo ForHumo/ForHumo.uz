@@ -45,6 +45,7 @@ export async function GET() {
     const likesReceived = await prisma.marketReviewLike.count({
         where: { review: { profileId: profile.id } },
     });
+    const likesGiven = await prisma.marketReviewLike.count({ where: { profileId: profile.id } });
 
     // ── Haridlar + sarflangan Zij ──
     const orders = await prisma.marketOrder.findMany({
@@ -74,6 +75,7 @@ export async function GET() {
             brandCount: brands.length,
             reviewsGiven: reviewsGiven + brandReviewsGiven,
             likesReceived,
+            likesGiven,
             ordersCount,
             zijSpent: Number(zijSpent.toFixed(2)),
             zijEarned: Number(zijEarned.toFixed(2)),

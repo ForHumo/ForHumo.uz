@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 interface Props {
     value: string;
     onChange: (val: string) => void;
+    accent?: "blue" | "green";   // green = Humo Market
 }
 
 const DEFAULT_LAT = 41.2995;
@@ -26,7 +27,8 @@ function injectLeafletCss() {
     document.head.appendChild(link);
 }
 
-export function LocationPicker({ value, onChange }: Props) {
+export function LocationPicker({ value, onChange, accent = "blue" }: Props) {
+    const confirmBtn = accent === "green" ? "bg-green-600 hover:bg-green-500" : "bg-blue-600 hover:bg-blue-500";
     const t = useTranslations("Onboarding");
     const tCommon = useTranslations("Common");
 
@@ -314,7 +316,7 @@ export function LocationPicker({ value, onChange }: Props) {
                                     <button
                                         type="button"
                                         onClick={confirmLocation}
-                                        className="flex-1 h-10 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[.98] text-white text-sm font-semibold transition-all"
+                                        className={`flex-1 h-10 rounded-xl ${confirmBtn} active:scale-[.98] text-white text-sm font-semibold transition-all`}
                                     >
                                         {tCommon("confirm")}
                                     </button>

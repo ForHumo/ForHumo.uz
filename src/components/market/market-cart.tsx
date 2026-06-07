@@ -320,7 +320,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                                 <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">
                                                     Yetkazib berish manzili * (xaritadan tanlang)
                                                 </label>
-                                                <LocationPicker value={address} onChange={setAddress} />
+                                                <LocationPicker value={address} onChange={setAddress} accent="green" />
                                             </div>
 
                                             {/* To'lov usuli */}

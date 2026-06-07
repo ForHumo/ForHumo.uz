@@ -6,16 +6,17 @@ import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import {
     Store, Plus, ChevronRight, BadgeCheck, Package,
-    Loader2, CheckCircle2, AlertCircle, X, ArrowRight,
+    Loader2, CheckCircle2, AlertCircle, X, ArrowRight, Pencil,
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ImageUploader } from "./image-uploader";
+import { BrandEditModal } from "./brand-edit-modal";
 
 interface Brand {
     id: string; slug: string; name: string; description: string | null;
     logo: string | null;
-    category: string | null; verified: boolean; isPaid: boolean; createdAt: string;
+    category: string | null; categories?: string[]; verified: boolean; isPaid: boolean; createdAt: string;
     _count: { products: number };
 }
 
@@ -202,6 +203,7 @@ export function BrandManage() {
     const [nextPrice, setNextPrice] = useState(0);
     const [isFounder, setIsFounder] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [editBrand, setEditBrand] = useState<Brand | null>(null);
 
     function reload() {
         fetch("/api/market/brands").then(r => r.json())
@@ -283,8 +285,14 @@ export function BrandManage() {
                                         className="flex items-center gap-1.5 px-4 py-2 rounded-xl
                                             bg-green-500/10 hover:bg-green-500/20
                                             text-green-600 dark:text-green-400 font-semibold text-xs transition-all">
-                                        <Plus size={13} />Mahsulot qo'shish
+                                        <Plus size={13} />Mahsulot
                                     </Link>
+                                    <button onClick={() => setEditBrand(brand)}
+                                        className="flex items-center gap-1 px-3 py-2 rounded-xl
+                                            border border-gray-200 dark:border-white/[0.07] hover:border-green-300
+                                            text-gray-500 dark:text-white/40 text-xs transition-all">
+                                        <Pencil size={12} />Tahrirlash
+                                    </button>
                                     <Link href={`/market/brand/${brand.slug}`}
                                         className="flex items-center gap-1 px-3 py-2 rounded-xl
                                             border border-gray-200 dark:border-white/[0.07] hover:border-green-300
@@ -297,6 +305,12 @@ export function BrandManage() {
                     ))}
                 </div>
             )}
+
+            <AnimatePresence>
+                {editBrand && (
+                    <BrandEditModal brand={editBrand} onClose={() => setEditBrand(null)} onSaved={() => reload()} />
+                )}
+            </AnimatePresence>
         </div>
     );
 }
