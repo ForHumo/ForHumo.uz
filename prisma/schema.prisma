@@ -308,9 +308,24 @@ model MarketReview {
   orderId   String        // faqat harid qilganlar sharh yoza oladi
   rating    Int           // 1-5
   text      String?
+  media     String[] @default([])   // rasm + video URL'lar
   createdAt DateTime @default(now())
   likes     MarketReviewLike[]
+  replies   MarketReviewReply[]
   @@unique([profileId, productId])
+}
+
+// Sharhga javob — cheksiz ichma-ich (parentId orqali)
+model MarketReviewReply {
+  id        String   @id @default(cuid())
+  reviewId  String
+  review    MarketReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  parentId  String?       // null = sharhga to'g'ridan; aks holda javobga javob
+  profileId String
+  text      String?
+  media     String[] @default([])
+  createdAt DateTime @default(now())
+  @@index([reviewId])
 }
 
 // Sharhga "qo'shilaman" (like) — necha kishi rozi. Avtomatik, qo'lda emas.

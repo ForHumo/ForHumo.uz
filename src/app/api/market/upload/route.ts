@@ -22,10 +22,19 @@ export async function POST(req: Request) {
     const file = formData.get("file") as File | null;
     const kind = (formData.get("kind") as string) || "product";
 
-    if (!file || !file.type.startsWith("image/"))
-        return NextResponse.json({ error: "Faqat rasm yuklash mumkin" }, { status: 400 });
-    if (file.size > 5 * 1024 * 1024)
+    if (!file) return NextResponse.json({ error: "Fayl yo'q" }, { status: 400 });
+
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+    // Video faqat sharh/javob va mahsulot uchun
+    const videoAllowed = ["review", "reply", "product"].includes(kind);
+
+    if (!isImage && !(isVideo && videoAllowed))
+        return NextResponse.json({ error: "Faqat rasm" + (videoAllowed ? " yoki video" : "") + " yuklash mumkin" }, { status: 400 });
+    if (isImage && file.size > 5 * 1024 * 1024)
         return NextResponse.json({ error: "Rasm 5 MB dan katta" }, { status: 413 });
+    if (isVideo && file.size > 50 * 1024 * 1024)
+        return NextResponse.json({ error: "Video 50 MB dan katta" }, { status: 413 });
 
     const ext = file.name.split(".").pop() ?? "jpg";
     const safe = session.user.email.replace(/[^a-z0-9]/gi, "_");

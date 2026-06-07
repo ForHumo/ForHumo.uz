@@ -43,19 +43,34 @@ export async function GET(req: Request) {
         }
     }
 
-    const profileIds = [...new Set(reviews.map(r => r.profileId))];
+    // Javoblar (barcha sharhlar uchun, flat — klient daraxt quradi)
+    const replies = await prisma.marketReviewReply.findMany({
+        where: { reviewId: { in: reviews.map(r => r.id) } },
+        orderBy: { createdAt: "asc" },
+    });
+
+    const profileIds = [...new Set([...reviews.map(r => r.profileId), ...replies.map(r => r.profileId)])];
     const profiles = await prisma.userProfile.findMany({
         where: { id: { in: profileIds } },
         select: { id: true, name: true, username: true, image: true },
     });
     const pMap = Object.fromEntries(profiles.map(p => [p.id, p]));
 
+    const replyMap: Record<string, unknown[]> = {};
+    for (const rp of replies) {
+        (replyMap[rp.reviewId] ??= []).push({
+            id: rp.id, parentId: rp.parentId, text: rp.text, media: rp.media, createdAt: rp.createdAt,
+            author: pMap[rp.profileId] ?? null, isMine: rp.profileId === myProfileId,
+        });
+    }
+
     const enriched = reviews.map(r => ({
-        id: r.id, rating: r.rating, text: r.text, createdAt: r.createdAt,
+        id: r.id, rating: r.rating, text: r.text, media: r.media, createdAt: r.createdAt,
         author: pMap[r.profileId] ?? null,
         likeCount: r._count.likes,
         likedByMe: likedIds.includes(r.id),
         isMine: r.profileId === myProfileId,
+        replies: replyMap[r.id] ?? [],
     }));
 
     return NextResponse.json({ reviews: enriched, canReview, alreadyReviewed });
@@ -66,9 +81,10 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { productId, rating, text } = await req.json();
+    const { productId, rating, text, media } = await req.json();
     if (!productId) return NextResponse.json({ error: "productId kerak" }, { status: 400 });
     if (!rating || rating < 1 || rating > 5) return NextResponse.json({ error: "Baho 1-5 oralig'ida" }, { status: 400 });
+    const mediaArr: string[] = Array.isArray(media) ? media.filter((x: unknown) => typeof x === "string") : [];
 
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
@@ -87,7 +103,7 @@ export async function POST(req: Request) {
     if (existing) return NextResponse.json({ error: "Siz allaqachon sharh qoldirgansiz" }, { status: 409 });
 
     const review = await prisma.marketReview.create({
-        data: { profileId: profile.id, productId, orderId: purchased.orderId, rating, text: text?.trim() ?? null },
+        data: { profileId: profile.id, productId, orderId: purchased.orderId, rating, text: text?.trim() ?? null, media: mediaArr },
     });
 
     // Mahsulot reytingini qayta hisoblash
