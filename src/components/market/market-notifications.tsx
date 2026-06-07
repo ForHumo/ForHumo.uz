@@ -6,11 +6,11 @@ import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import {
     Bell, ThumbsUp, MessageSquare, Star, Package,
-    CheckCircle2, Loader2, ChevronRight, BadgeCheck,
+    CheckCircle2, Loader2, ChevronRight, BadgeCheck, Truck,
 } from "lucide-react";
 
 type NotifType = "REVIEW_LIKE" | "PRODUCT_REVIEW" | "BRAND_REVIEW"
-    | "ORDER_DELIVERED" | "ORDER_ACCEPTED" | "REVIEW_REMINDER" | "REPLY";
+    | "ORDER_DELIVERED" | "ORDER_ACCEPTED" | "ORDER_UPDATE" | "REVIEW_REMINDER" | "REPLY";
 
 interface Notif {
     id: string; type: NotifType; title: string; body: string | null;
@@ -23,6 +23,7 @@ const META: Record<NotifType, { icon: React.ElementType; color: string }> = {
     BRAND_REVIEW:    { icon: BadgeCheck,   color: "#10B981" },
     ORDER_DELIVERED: { icon: Package,      color: "#3B82F6" },
     ORDER_ACCEPTED:  { icon: CheckCircle2, color: "#10B981" },
+    ORDER_UPDATE:    { icon: Truck,        color: "#3B82F6" },
     REVIEW_REMINDER: { icon: Star,         color: "#F59E0B" },
     REPLY:           { icon: MessageSquare, color: "#06B6D4" },
 };

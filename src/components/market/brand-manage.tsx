@@ -6,12 +6,13 @@ import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import {
     Store, Plus, ChevronRight, BadgeCheck, Package,
-    Loader2, CheckCircle2, AlertCircle, X, ArrowRight, Pencil,
+    Loader2, CheckCircle2, AlertCircle, X, ArrowRight, Pencil, Inbox,
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ImageUploader } from "./image-uploader";
 import { BrandEditModal } from "./brand-edit-modal";
+import { SellerOrders } from "./seller-orders";
 
 interface Brand {
     id: string; slug: string; name: string; description: string | null;
@@ -303,6 +304,17 @@ export function BrandManage() {
                             </div>
                         </motion.div>
                     ))}
+                </div>
+            )}
+
+            {/* Kelgan buyurtmalar (sotuvchi) */}
+            {!loading && brands.length > 0 && (
+                <div className="mt-10">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Inbox size={20} className="text-green-500" />
+                        <h2 className="text-xl font-black text-gray-900 dark:text-white">Kelgan buyurtmalar</h2>
+                    </div>
+                    <SellerOrders />
                 </div>
             )}
 

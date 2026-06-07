@@ -8,6 +8,7 @@ import {
     ShoppingCart, Trash2, Plus, Minus, Loader2, ShoppingBag,
     AlertCircle, CheckCircle2, Wallet, ChevronRight, ArrowLeft,
     MapPin, CreditCard, Banknote, Clock, Package, ChevronDown,
+    Truck, XCircle,
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 import { LocationPicker } from "@/components/ui/location-picker";
@@ -38,6 +39,56 @@ const ORDER_STATUS: Record<string, { label: string; color: string }> = {
     DELIVERED:  { label: "Yetkazildi",    color: "text-emerald-600" },
     CANCELLED:  { label: "Bekor qilindi", color: "text-red-500"     },
 };
+
+// Buyurtma bosqichlari (stepper)
+const STEPS = [
+    { key: "placed",     label: "Buyurtma",      icon: ShoppingBag },
+    { key: "processing", label: "Tayyorlanmoqda", icon: Package },
+    { key: "shipped",    label: "Yo'lda",        icon: Truck },
+    { key: "delivered",  label: "Yetkazildi",    icon: CheckCircle2 },
+];
+function statusStep(status: string): number {
+    if (status === "PENDING" || status === "PAID") return 0;
+    if (status === "PROCESSING") return 1;
+    if (status === "SHIPPED") return 2;
+    if (status === "DELIVERED") return 3;
+    return -1; // CANCELLED
+}
+
+function OrderTimeline({ status }: { status: string }) {
+    if (status === "CANCELLED") {
+        return (
+            <div className="flex items-center gap-2 text-red-500 bg-red-50 dark:bg-red-500/10 rounded-xl px-3 py-2 my-3 text-sm font-semibold">
+                <XCircle size={15} /> Buyurtma bekor qilindi
+            </div>
+        );
+    }
+    const cur = statusStep(status);
+    return (
+        <div className="flex items-center my-4">
+            {STEPS.map((s, i) => {
+                const done = i <= cur;
+                const Icon = s.icon;
+                return (
+                    <React.Fragment key={s.key}>
+                        <div className="flex flex-col items-center gap-1 shrink-0">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors
+                                ${done ? "bg-green-500 text-white" : "bg-gray-100 dark:bg-white/[0.06] text-gray-300 dark:text-white/20"}`}>
+                                <Icon size={15} />
+                            </div>
+                            <span className={`text-[10px] font-semibold text-center leading-tight ${done ? "text-green-600 dark:text-green-400" : "text-gray-400 dark:text-white/25"}`}>
+                                {s.label}
+                            </span>
+                        </div>
+                        {i < STEPS.length - 1 && (
+                            <div className={`flex-1 h-0.5 mx-1 mb-4 rounded-full transition-colors ${i < cur ? "bg-green-500" : "bg-gray-100 dark:bg-white/[0.06]"}`} />
+                        )}
+                    </React.Fragment>
+                );
+            })}
+        </div>
+    );
+}
 
 const PAY_METHODS: { key: PayMethod; label: string; desc: string; icon: React.ElementType }[] = [
     { key: "ZIJ",              label: "Zij bilan to'lash", desc: "Darhol Zij hamyondan yechiladi",          icon: Wallet   },
@@ -86,6 +137,14 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
     async function acceptOrder(orderId: string) {
         const res = await fetch(`/api/market/orders/${orderId}/accept`, { method: "POST" });
         if (res.ok) setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: "DELIVERED" } : o));
+    }
+
+    async function cancelOrder(orderId: string) {
+        const res = await fetch(`/api/market/orders/${orderId}/status`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "CANCELLED" }),
+        });
+        if (res.ok) setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: "CANCELLED" } : o));
     }
 
     async function removeItem(productId: string) {
@@ -434,15 +493,28 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                     <span>{order.paymentMethod === "ZIJ" ? "Zij" : order.paymentMethod === "CASH_ON_DELIVERY" ? "Naqd" : "Karta"}</span>
                                 </div>
 
-                                {/* Qabul qilish — DELIVERED/CANCELLED bo'lmasa */}
-                                {order.status !== "DELIVERED" && order.status !== "CANCELLED" && (
-                                    <button onClick={() => acceptOrder(order.id)}
-                                        className="mt-3 w-full py-2.5 rounded-xl bg-gradient-to-r from-green-600 to-emerald-500
-                                            text-white font-bold text-sm flex items-center justify-center gap-2
-                                            hover:from-green-500 hover:to-emerald-400 transition-all">
-                                        <CheckCircle2 size={15} /> Qabul qildim
-                                    </button>
-                                )}
+                                {/* Holat bosqichlari */}
+                                <OrderTimeline status={order.status} />
+
+                                {/* Amallar */}
+                                <div className="flex gap-2">
+                                    {order.status === "SHIPPED" && (
+                                        <button onClick={() => acceptOrder(order.id)}
+                                            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-600 to-emerald-500
+                                                text-white font-bold text-sm flex items-center justify-center gap-2
+                                                hover:from-green-500 hover:to-emerald-400 transition-all">
+                                            <CheckCircle2 size={15} /> Qabul qildim
+                                        </button>
+                                    )}
+                                    {["PENDING", "PAID", "PROCESSING"].includes(order.status) && (
+                                        <button onClick={() => cancelOrder(order.id)}
+                                            className="flex-1 py-2.5 rounded-xl border border-red-200 dark:border-red-500/20
+                                                text-red-500 font-semibold text-sm flex items-center justify-center gap-2
+                                                hover:bg-red-50 dark:hover:bg-red-500/10 transition-all">
+                                            <XCircle size={15} /> Bekor qilish
+                                        </button>
+                                    )}
+                                </div>
                             </motion.div>
                         );
                     })}
