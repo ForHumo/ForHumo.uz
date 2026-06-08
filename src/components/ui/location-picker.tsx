@@ -29,6 +29,11 @@ function injectLeafletCss() {
 
 export function LocationPicker({ value, onChange, accent = "blue" }: Props) {
     const confirmBtn = accent === "green" ? "bg-green-600 hover:bg-green-500" : "bg-blue-600 hover:bg-blue-500";
+    const mapOnly = accent === "green";                       // Market: faqat xarita, qo'lda yozish yo'q
+    const markerColor = accent === "green" ? "16,185,129" : "59,130,246";
+    const ringAccent = accent === "green" ? "focus:ring-green-500/40 focus:border-green-500/60" : "focus:ring-blue-500/40 focus:border-blue-500/60";
+    const iconAccent = accent === "green" ? "text-green-500" : "text-blue-400";
+    const spinAccent = accent === "green" ? "border-green-500" : "border-blue-500";
     const t = useTranslations("Onboarding");
     const tCommon = useTranslations("Common");
 
@@ -107,14 +112,14 @@ export function LocationPicker({ value, onChange, accent = "blue" }: Props) {
             streetLayerRef.current = street;
             satLayerRef.current = sat;
 
-            const blueIcon = L.divIcon({
+            const pinIcon = L.divIcon({
                 className: "",
-                html: `<div style="width:22px;height:22px;background:rgb(59,130,246);border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.4)"></div>`,
+                html: `<div style="width:22px;height:22px;background:rgb(${markerColor});border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.4)"></div>`,
                 iconSize: [22, 22],
                 iconAnchor: [11, 11],
             });
 
-            const marker = L.marker([DEFAULT_LAT, DEFAULT_LNG], { draggable: true, icon: blueIcon }).addTo(map);
+            const marker = L.marker([DEFAULT_LAT, DEFAULT_LNG], { draggable: true, icon: pinIcon }).addTo(map);
 
             marker.on("dragend", async () => {
                 const { lat, lng } = marker.getLatLng();
@@ -198,26 +203,43 @@ export function LocationPicker({ value, onChange, accent = "blue" }: Props) {
 
     return (
         <div className="space-y-2">
-            {/* Text input */}
-            <textarea
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                placeholder={t("location_full_ph")}
-                rows={3}
-                className="w-full bg-background/60 border border-border/60 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/60 transition-all resize-none"
-            />
-
-            {/* Single button */}
-            <button
-                type="button"
-                onClick={openMap}
-                className="w-full flex items-center justify-center gap-2 h-10 rounded-xl border border-border/60 hover:bg-muted/50 text-xs font-medium text-muted-foreground hover:text-foreground transition-all"
-            >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-10l6-3m0 13l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4" />
-                </svg>
-                {t("location_select")}
-            </button>
+            {mapOnly ? (
+                /* Market: manzil faqat xaritadan tanlanadi (qo'lda yozish yo'q) */
+                <button
+                    type="button"
+                    onClick={openMap}
+                    className="w-full flex items-start gap-2 text-left rounded-xl border border-gray-200 dark:border-white/[0.08] hover:border-green-400 dark:hover:border-green-500/50 bg-gray-50 dark:bg-white/[0.05] px-4 py-3 transition-all"
+                >
+                    <svg className="w-4 h-4 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span className={`text-sm ${value ? "text-gray-900 dark:text-white" : "text-gray-400 dark:text-white/30"}`}>
+                        {value || "Manzilni xaritadan tanlang"}
+                    </span>
+                </button>
+            ) : (
+                <>
+                    {/* Text input (onboarding) */}
+                    <textarea
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        placeholder={t("location_full_ph")}
+                        rows={3}
+                        className={`w-full bg-background/60 border border-border/60 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 ${ringAccent} transition-all resize-none`}
+                    />
+                    <button
+                        type="button"
+                        onClick={openMap}
+                        className="w-full flex items-center justify-center gap-2 h-10 rounded-xl border border-border/60 hover:bg-muted/50 text-xs font-medium text-muted-foreground hover:text-foreground transition-all"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-10l6-3m0 13l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4" />
+                        </svg>
+                        {t("location_select")}
+                    </button>
+                </>
+            )}
 
             {/* ── MAP MODAL ── */}
             <AnimatePresence>
@@ -278,7 +300,7 @@ export function LocationPicker({ value, onChange, accent = "blue" }: Props) {
                                     className="w-full flex items-center justify-center gap-2 h-9 rounded-xl border border-border/60 hover:bg-muted/50 text-xs font-medium text-muted-foreground hover:text-foreground transition-all disabled:opacity-60"
                                 >
                                     {geoLoading ? (
-                                        <div className="w-3.5 h-3.5 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                                        <div className={`w-3.5 h-3.5 rounded-full border-2 ${spinAccent} border-t-transparent animate-spin`} />
                                     ) : (
                                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -290,19 +312,25 @@ export function LocationPicker({ value, onChange, accent = "blue" }: Props) {
 
                                 {geoError && <p className="text-xs text-red-500">{geoError}</p>}
 
-                                {/* Editable address */}
+                                {/* Tanlangan manzil */}
                                 <div className="flex items-start gap-2">
-                                    <svg className="w-4 h-4 text-blue-400 shrink-0 mt-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <svg className={`w-4 h-4 ${iconAccent} shrink-0 mt-2.5`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
-                                    <textarea
-                                        value={pendingAddress}
-                                        onChange={(e) => setPendingAddress(e.target.value)}
-                                        placeholder={t("location_address_ph")}
-                                        rows={2}
-                                        className="flex-1 bg-muted/40 border border-border/60 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-blue-500/40 resize-none transition-all"
-                                    />
+                                    {mapOnly ? (
+                                        <div className="flex-1 bg-muted/40 border border-border/60 rounded-lg px-3 py-2 text-sm text-foreground min-h-[2.5rem] flex items-center">
+                                            {pendingAddress || <span className="text-muted-foreground/70">Xaritani bosib manzilni tanlang</span>}
+                                        </div>
+                                    ) : (
+                                        <textarea
+                                            value={pendingAddress}
+                                            onChange={(e) => setPendingAddress(e.target.value)}
+                                            placeholder={t("location_address_ph")}
+                                            rows={2}
+                                            className={`flex-1 bg-muted/40 border border-border/60 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 ${ringAccent} resize-none transition-all`}
+                                        />
+                                    )}
                                 </div>
 
                                 <div className="flex gap-2">

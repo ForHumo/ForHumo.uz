@@ -1,10 +1,11 @@
 import { MarketNavbar } from "@/components/market/market-navbar";
 import { MarketDock } from "@/components/market/market-dock";
+import { MarketFooter } from "@/components/market/market-footer";
 
 export default function MarketLayout({ children }: { children: React.ReactNode }) {
     return (
         <div className="fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden
-            bg-gradient-to-br from-white via-green-50/40 to-emerald-50/60
+            bg-gradient-to-br from-white via-green-50 to-emerald-50
             dark:from-[#020C05] dark:via-[#030F06] dark:to-[#051209]">
 
             {/* Jonli fon orb'lari — position:absolute, layout div ichida */}
@@ -23,7 +24,10 @@ export default function MarketLayout({ children }: { children: React.ReactNode }
 
             <div className="relative z-10">
                 <MarketNavbar />
-                <main className="pb-24">{children}</main>
+                <main className="pb-24">
+                    {children}
+                    <MarketFooter />
+                </main>
             </div>
 
             <MarketDock />
