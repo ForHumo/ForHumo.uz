@@ -2,7 +2,7 @@
 // Kalit: GEMINI_API_KEY (Google AI Studio'dan bepul). Model: GEMINI_MODEL (default gemini-2.0-flash)
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
 
 export function aiAvailable() { return !!GEMINI_KEY; }
 
@@ -22,15 +22,25 @@ async function generate(parts: Part[], opts: GenOpts = {}): Promise<string> {
     };
     if (opts.system) body.systemInstruction = { parts: [{ text: opts.system }] };
 
-    const res = await fetch(url, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
-    });
-    if (!res.ok) {
+    // 503/429 (vaqtinchalik yuklama) — qisqa kutib qayta urinish
+    let lastErr = "AI_ERR";
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const res = await fetch(url, {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+        });
+        if (res.ok) {
+            const data = await res.json();
+            return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+        }
+        lastErr = `AI_ERR ${res.status}`;
+        if (res.status === 503 || res.status === 429) {
+            await new Promise(r => setTimeout(r, 700 * (attempt + 1)));
+            continue;
+        }
         const t = await res.text().catch(() => "");
         throw new Error(`AI_ERR ${res.status}: ${t.slice(0, 300)}`);
     }
-    const data = await res.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    throw new Error(`${lastErr} — model band, birozdan keyin urinib ko'ring`);
 }
 
 export async function aiText(prompt: string, opts: GenOpts = {}): Promise<string> {
