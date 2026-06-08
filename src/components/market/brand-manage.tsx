@@ -14,6 +14,7 @@ import { ImageUploader } from "./image-uploader";
 import { BrandEditModal } from "./brand-edit-modal";
 import { SellerOrders } from "./seller-orders";
 import { PromoManager } from "./promo-manager";
+import { AdminModerationCard } from "./admin-moderation-card";
 
 interface Brand {
     id: string; slug: string; name: string; description: string | null;
@@ -330,6 +331,9 @@ export function BrandManage() {
 
             {/* Promokodlar (faqat asoschilar) */}
             <PromoManager />
+
+            {/* Moderatsiya markazi (faqat asoschilar) */}
+            <AdminModerationCard />
 
             <AnimatePresence>
                 {editBrand && (

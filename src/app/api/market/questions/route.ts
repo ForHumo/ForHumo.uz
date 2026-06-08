@@ -16,10 +16,10 @@ export async function GET(req: Request) {
     const sellerId = product?.brand.ownerId ?? null;
 
     const questions = await prisma.marketProductQuestion.findMany({
-        where: { productId },
+        where: { productId, hidden: false },
         orderBy: { createdAt: "desc" },
         take: 50,
-        include: { answers: { orderBy: { createdAt: "asc" } } },
+        include: { answers: { where: { hidden: false }, orderBy: { createdAt: "asc" } } },
     });
 
     let myId: string | null = null;

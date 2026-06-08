@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     if (!productId) return NextResponse.json({ reviews: [], canReview: false });
 
     const reviews = await prisma.marketReview.findMany({
-        where: { productId },
+        where: { productId, hidden: false },
         orderBy: { createdAt: "desc" },
         take: 50,
         include: { _count: { select: { likes: true } } },
@@ -51,7 +51,7 @@ export async function GET(req: Request) {
 
     // Javoblar (barcha sharhlar uchun, flat — klient daraxt quradi)
     const replies = await prisma.marketReviewReply.findMany({
-        where: { reviewId: { in: reviews.map(r => r.id) } },
+        where: { reviewId: { in: reviews.map(r => r.id) }, hidden: false },
         orderBy: { createdAt: "asc" },
     });
 

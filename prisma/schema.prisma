@@ -310,6 +310,7 @@ model MarketReview {
   rating    Int           // 1-5
   text      String?
   media     String[] @default([])   // rasm + video URL'lar
+  hidden    Boolean  @default(false) // moderatsiya — yashirilgan
   createdAt DateTime @default(now())
   likes     MarketReviewLike[]
   replies   MarketReviewReply[]
@@ -325,6 +326,7 @@ model MarketReviewReply {
   profileId String
   text      String?
   media     String[] @default([])
+  hidden    Boolean  @default(false) // moderatsiya
   createdAt DateTime @default(now())
   @@index([reviewId])
 }
@@ -437,6 +439,7 @@ model MarketProductQuestion {
   product   MarketProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
   profileId String
   text      String
+  hidden    Boolean  @default(false) // moderatsiya
   createdAt DateTime @default(now())
   answers   MarketProductAnswer[]
   @@index([productId])
@@ -449,29 +452,46 @@ model MarketProductAnswer {
   question   MarketProductQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
   profileId  String
   text       String
+  hidden     Boolean  @default(false) // moderatsiya
   createdAt  DateTime @default(now())
   @@index([questionId])
 }
 
-// Shikoyat / flag — haqoratli kontentni xabar qilish (moderatsiya uchun)
-model MarketReport {
-  id         String             @id @default(cuid())
-  profileId  String             // xabar beruvchi
-  targetType MarketReportTarget
-  targetId   String             // sharh/javob/savol/mahsulot id
-  reason     String?
-  resolved   Boolean            @default(false)
-  createdAt  DateTime           @default(now())
-  @@unique([profileId, targetType, targetId])
-  @@index([targetType, targetId])
+// Moderatsiya flagi — foydalanuvchi shikoyati + AI xulosasi (Market+Nexus yagona)
+model ModerationFlag {
+  id           String             @id @default(cuid())
+  module       String             // "MARKET" | "NEXUS"
+  targetType   String             // PRODUCT/REVIEW/REPLY/QUESTION/ANSWER/POST/COMMENT
+  targetId     String
+  // foydalanuvchi shikoyatlari
+  reportCount  Int                @default(0)
+  lastReason   String?
+  // AI xulosasi
+  aiVerdict    ModerationVerdict?
+  aiCategories String[]           @default([])
+  aiSeverity   Float?
+  aiReason     String?
+  // hal qilish holati
+  status       ModerationStatus   @default(PENDING)
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  @@unique([module, targetType, targetId])
+  @@index([status])
 }
 
-enum MarketReportTarget {
-  PRODUCT
+enum ModerationStatus {
+  PENDING      // admin ko'rishi kutilmoqda
+  KEPT         // ko'rib chiqildi — saqlandi
+  HIDDEN       // admin yashirdi
+  AUTO_HIDDEN  // AI avtomatik yashirdi (jiddiy)
+}
+
+enum ModerationVerdict {
+  OK
   REVIEW
-  REPLY
-  QUESTION
-  ANSWER
+  BLOCK
 }
 
 model MarketCartItem {
@@ -566,6 +586,7 @@ model NexusPost {
   hashtags        String[] @default([])
   marketProductId String?                         // ixtiyoriy — postga biriktirilgan Market mahsuloti ("Sotib olish")
   shareCount      Int      @default(0)
+  hidden          Boolean  @default(false) // moderatsiya
   createdAt       DateTime @default(now())
 
   likes    NexusLike[]
@@ -601,6 +622,7 @@ model NexusComment {
   parentId  String?                               // cheksiz ichma-ich javob uchun
   profileId String
   text      String
+  hidden    Boolean  @default(false) // moderatsiya
   createdAt DateTime @default(now())
   @@index([postId])
 }

@@ -1,12 +1,10 @@
 // Nexus umumiy yordamchilar
 
-const FOUNDER_USERNAMES = ["abduvoris", "aaa"];
-const FOUNDER_HUMO_IDS = ["UZ6889574", "UZ3549920"];
+import { isFounderProfile } from "@/lib/founders";
 
-// Tasdiqlangan (ko'k belgi) — hozircha asoschilar
+// Tasdiqlangan (ko'k belgi) — hozircha asoschilar (founder ro'yxati lib/founders.ts da)
 export function isVerifiedProfile(p: { username: string | null; humoId: string | null }) {
-    return (!!p.username && FOUNDER_USERNAMES.includes(p.username))
-        || (!!p.humoId && FOUNDER_HUMO_IDS.includes(p.humoId));
+    return isFounderProfile(p);
 }
 
 // Matndan #hashtag larni ajratish (maks 10 ta)
