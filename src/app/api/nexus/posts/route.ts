@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { isVerifiedProfile, extractHashtags } from "@/lib/nexus";
+import { after } from "next/server";
+import { moderateOnCreate } from "@/lib/moderation";
 
 async function myProfileId(): Promise<string | null> {
     const session = await getServerSession(authOptions);
@@ -37,7 +39,7 @@ export async function GET(req: Request) {
 
     const myId = await myProfileId();
 
-    const where: Prisma.NexusPostWhereInput = {};
+    const where: Prisma.NexusPostWhereInput = { hidden: false };
     if (tag) where.hashtags = { has: tag };
     if (author) {
         const a = await prisma.userProfile.findUnique({ where: { username: author }, select: { id: true } });
@@ -114,6 +116,12 @@ export async function POST(req: Request) {
             marketProductId: attachId,
         },
     });
+
+    // Pre-publish moderatsiya (javob yuborilgach — jiddiy bo'lsa avto-yashiradi)
+    after(() => moderateOnCreate({
+        module: "NEXUS", targetType: "POST", targetId: post.id,
+        text: post.text, imageUrl: mediaArr[0] || null, kind: "post",
+    }));
 
     const prodMap = await loadAttachedProducts([attachId]);
 

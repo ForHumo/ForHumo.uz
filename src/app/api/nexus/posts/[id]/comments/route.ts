@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
+import { after } from "next/server";
+import { moderateOnCreate } from "@/lib/moderation";
 
 // GET /api/nexus/posts/[id]/comments — izohlar (flat; klient daraxt quradi)
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -16,7 +18,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     }
 
     const comments = await prisma.nexusComment.findMany({
-        where: { postId: id }, orderBy: { createdAt: "asc" }, take: 200,
+        where: { postId: id, hidden: false }, orderBy: { createdAt: "asc" }, take: 200,
     });
     const profileIds = [...new Set(comments.map(c => c.profileId))];
     const profiles = await prisma.userProfile.findMany({
@@ -53,6 +55,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const comment = await prisma.nexusComment.create({
         data: { postId: id, profileId: profile.id, parentId: parentId ?? null, text: text.trim() },
     });
+
+    // Pre-publish moderatsiya
+    after(() => moderateOnCreate({
+        module: "NEXUS", targetType: "COMMENT", targetId: comment.id,
+        text: comment.text, kind: "izoh",
+    }));
+
     return NextResponse.json({
         comment: {
             id: comment.id, parentId: comment.parentId, text: comment.text, createdAt: comment.createdAt,

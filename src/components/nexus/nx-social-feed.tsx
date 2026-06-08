@@ -6,7 +6,7 @@ import { upload } from "@vercel/blob/client";
 import { Link } from "@/i18n/routing";
 import {
     Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
-    BadgeCheck, Image as ImgIcon, Loader2, Trash2, Send, X,
+    BadgeCheck, Image as ImgIcon, Loader2, Trash2, Send, X, Flag,
     ShoppingBag, Search,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
@@ -247,6 +247,7 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump }: {
     const [menuOpen, setMenuOpen] = useState(false);
     const [following, setFollowing] = useState(false);
     const [showComments, setShowComments] = useState(false);
+    const [reported, setReported] = useState(false);
 
     async function toggleFollow() {
         if (!p.author?.username) return;
@@ -254,6 +255,15 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump }: {
         await fetch("/api/nexus/follow", {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: p.author.username }),
+        }).catch(() => {});
+    }
+
+    async function reportPost() {
+        if (reported) return;
+        setReported(true);
+        await fetch("/api/nexus/report", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ targetType: "POST", targetId: p.id }),
         }).catch(() => {});
     }
 
@@ -287,21 +297,27 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump }: {
                             {following ? "Kuzatilmoqda" : "Kuzatish"}
                         </button>
                     )}
-                    {p.isMine && (
-                        <div className="relative">
-                            <button onClick={() => setMenuOpen(!menuOpen)} className="w-7 h-7 flex items-center justify-center rounded-lg"
-                                style={{ background: menuOpen ? "rgba(43,62,232,0.12)" : "transparent" }}>
-                                <MoreHorizontal className="w-4 h-4" style={{ color: "rgba(80,100,150,0.70)" }} />
-                            </button>
-                            {menuOpen && (
+                    <div className="relative">
+                        <button onClick={() => setMenuOpen(!menuOpen)} className="w-7 h-7 flex items-center justify-center rounded-lg"
+                            style={{ background: menuOpen ? "rgba(43,62,232,0.12)" : "transparent" }}>
+                            <MoreHorizontal className="w-4 h-4" style={{ color: "rgba(80,100,150,0.70)" }} />
+                        </button>
+                        {menuOpen && (
+                            p.isMine ? (
                                 <button onClick={() => { setMenuOpen(false); onDelete(); }}
                                     className="absolute right-0 top-8 z-10 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap"
                                     style={{ background: "rgba(8,14,32,0.98)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444" }}>
                                     <Trash2 className="w-3.5 h-3.5" /> O&apos;chirish
                                 </button>
-                            )}
-                        </div>
-                    )}
+                            ) : (
+                                <button onClick={() => { setMenuOpen(false); reportPost(); }} disabled={reported}
+                                    className="absolute right-0 top-8 z-10 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap"
+                                    style={{ background: "rgba(8,14,32,0.98)", border: "1px solid rgba(245,158,11,0.3)", color: "#F59E0B" }}>
+                                    <Flag className="w-3.5 h-3.5" /> {reported ? "Yuborildi" : "Shikoyat"}
+                                </button>
+                            )
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -377,6 +393,16 @@ function CommentsSection({ postId, onAdded }: { postId: string; onAdded: () => v
     const [loading, setLoading] = useState(true);
     const [text, setText] = useState("");
     const [busy, setBusy] = useState(false);
+    const [reportedC, setReportedC] = useState<Set<string>>(new Set());
+
+    async function reportComment(id: string) {
+        if (reportedC.has(id)) return;
+        setReportedC(prev => new Set(prev).add(id));
+        await fetch("/api/nexus/report", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ targetType: "COMMENT", targetId: id }),
+        }).catch(() => {});
+    }
 
     useEffect(() => {
         fetch(`/api/nexus/posts/${postId}/comments`).then(r => r.json())
@@ -410,6 +436,13 @@ function CommentsSection({ postId, onAdded }: { postId: string; onAdded: () => v
                                     <span className="text-xs font-bold text-white">{c.author?.name ?? c.author?.username ?? "Foydalanuvchi"}</span>
                                     {c.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
                                     <span className="text-[9px]" style={{ color: "rgba(80,100,150,0.7)" }}>{timeAgo(c.createdAt)}</span>
+                                    {!c.isMine && (
+                                        <button onClick={() => reportComment(c.id)} disabled={reportedC.has(c.id)} title="Shikoyat"
+                                            className="ml-auto flex items-center gap-0.5 text-[9px] active:scale-95"
+                                            style={{ color: reportedC.has(c.id) ? "rgba(80,100,150,0.6)" : "#F59E0B" }}>
+                                            <Flag className="w-2.5 h-2.5" />{reportedC.has(c.id) ? " Yuborildi" : ""}
+                                        </button>
+                                    )}
                                 </div>
                                 <p className="text-xs mt-0.5" style={{ color: "rgba(200,215,245,0.85)" }}>{c.text}</p>
                             </div>
