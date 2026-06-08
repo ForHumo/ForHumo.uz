@@ -10,7 +10,7 @@ import Image from "next/image";
 import {
     ArrowDownLeft, ArrowUpRight, Gift, Zap,
     TrendingUp, Plus, AlertCircle, CheckCircle2, Loader2,
-    Clock, ShoppingBag, X, Send, StickyNote,
+    Clock, ShoppingBag, X, Send, StickyNote, Store,
     Shield, Lock, Unlock,
     Wallet, BarChart3,
     Landmark, Plane, Smartphone, Gamepad2, Home,
@@ -21,7 +21,7 @@ import { AlkhPayNavbar } from "@/components/pay/alkh-pay-navbar";
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
-type TxType = "DEPOSIT" | "WITHDRAW" | "PURCHASE" | "REWARD"
+type TxType = "DEPOSIT" | "WITHDRAW" | "PURCHASE" | "REWARD" | "REFUND" | "SALE"
     | "TRANSFER_OUT" | "TRANSFER_IN" | "SAFE_IN" | "SAFE_OUT";
 
 type TxFilter = "all" | "in" | "out";
@@ -50,13 +50,15 @@ const TX_META: Record<TxType, { icon: React.ElementType; color: string; sign: "+
     WITHDRAW:     { icon: ArrowUpRight,  color: "#FF4466", sign: "-", label: "Chiqarish" },
     PURCHASE:     { icon: ShoppingBag,   color: "#FF9500", sign: "-", label: "Xarid" },
     REWARD:       { icon: Gift,          color: "#00E5C8", sign: "+", label: "Mukofot" },
+    REFUND:       { icon: ArrowDownLeft, color: "#00D97E", sign: "+", label: "Qaytarildi" },
+    SALE:         { icon: Store,         color: "#10B981", sign: "+", label: "Sotuv" },
     TRANSFER_OUT: { icon: Send,          color: "#FF6B6B", sign: "-", label: "Yuborildi" },
     TRANSFER_IN:  { icon: ArrowDownLeft, color: "#00D97E", sign: "+", label: "Qabul" },
     SAFE_IN:      { icon: Lock,          color: "#8B5CF6", sign: "-", label: "Seyfga" },
     SAFE_OUT:     { icon: Unlock,        color: "#A78BFA", sign: "+", label: "Seyfdan" },
 };
 
-const IN_TYPES:  TxType[] = ["DEPOSIT", "REWARD", "TRANSFER_IN", "SAFE_OUT"];
+const IN_TYPES:  TxType[] = ["DEPOSIT", "REWARD", "REFUND", "SALE", "TRANSFER_IN", "SAFE_OUT"];
 const OUT_TYPES: TxType[] = ["WITHDRAW", "PURCHASE", "TRANSFER_OUT", "SAFE_IN"];
 
 const QUICK_AMOUNTS = [10, 50, 100, 500, 1000, 5000];
@@ -837,7 +839,7 @@ export function AlkhPayContent() {
                                         <p className="text-sm">{t("history_empty")}</p>
                                     </div>
                                 ) : filteredTx.map((tx, i) => {
-                                    const meta = TX_META[tx.type];
+                                    const meta = TX_META[tx.type] ?? { icon: Zap, color: "#9CA3AF", sign: "+" as const, label: tx.type };
                                     const Icon = meta.icon;
                                     return (
                                         <motion.div key={tx.id}

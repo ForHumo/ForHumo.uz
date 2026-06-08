@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { notify } from "@/lib/market-notify";
+import { settleOrder } from "@/lib/market-settle";
 
 type Status = "PENDING" | "PAID" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
@@ -64,6 +65,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         await prisma.$transaction(ops);
     } else {
         await prisma.marketOrder.update({ where: { id }, data: { status } });
+        // Yetkazildi → sotuvchilarga to'lov
+        if (status === "DELIVERED") await settleOrder(id);
     }
 
     // Bildirishnoma

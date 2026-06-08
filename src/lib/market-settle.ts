@@ -1,0 +1,69 @@
+import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import { notify } from "@/lib/market-notify";
+
+// Platforma komissiyasi (sotuvchidan ushlab qolinadi)
+export const MARKET_COMMISSION = 0.05; // 5%
+
+// Buyurtma yetkazilganda sotuvchilarga Zij to'lash (komissiya ayirib).
+// Faqat ZIJ to'langan buyurtmalar uchun (naqd/karta — sotuvchi to'g'ridan oladi).
+// settledAt orqali ikki marta to'lashdan himoyalangan.
+export async function settleOrder(orderId: string) {
+    const order = await prisma.marketOrder.findUnique({
+        where: { id: orderId },
+        include: {
+            items: {
+                select: {
+                    quantity: true, price: true,
+                    product: { select: { brand: { select: { ownerId: true } } } },
+                },
+            },
+        },
+    });
+    if (!order) return;
+    if (order.settledAt) return;                       // allaqachon to'langan
+    if (order.status !== "DELIVERED") return;          // faqat yetkazilgan
+    if (order.paymentMethod !== "ZIJ") {               // naqd/karta — Zij harakati yo'q, faqat belgilaymiz
+        await prisma.marketOrder.update({ where: { id: orderId }, data: { settledAt: new Date() } });
+        return;
+    }
+
+    // Sotuvchi bo'yicha summalar
+    const perSeller = new Map<string, number>();
+    for (const it of order.items) {
+        const owner = it.product.brand.ownerId;
+        perSeller.set(owner, (perSeller.get(owner) ?? 0) + Number(it.price) * it.quantity);
+    }
+
+    const short = `#${order.id.slice(-8).toUpperCase()}`;
+    const payouts: { ownerId: string; net: number }[] = [];
+    const ops: Prisma.PrismaPromise<unknown>[] = [];
+
+    for (const [ownerId, gross] of perSeller) {
+        const net = Math.round(gross * (1 - MARKET_COMMISSION) * 100) / 100;
+        if (net <= 0) continue;
+        let wallet = await prisma.zijWallet.findUnique({ where: { profileId: ownerId } });
+        if (!wallet) wallet = await prisma.zijWallet.create({ data: { profileId: ownerId } });
+        const newBalance = Number(wallet.balance) + net;
+        ops.push(prisma.zijWallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }));
+        ops.push(prisma.zijTransaction.create({
+            data: {
+                walletId: wallet.id, type: "SALE", amount: net, balanceAfter: newBalance,
+                description: `Market sotuv ${short}`, ref: order.id,
+            },
+        }));
+        payouts.push({ ownerId, net });
+    }
+    ops.push(prisma.marketOrder.update({ where: { id: orderId }, data: { settledAt: new Date() } }));
+    await prisma.$transaction(ops);
+
+    // Sotuvchilarga bildirishnoma (bloklamaydi)
+    for (const p of payouts) {
+        await notify(p.ownerId, {
+            type: "ORDER_UPDATE",
+            title: `Sotuvdan daromad: +${p.net} Ƶ`,
+            body: `${short} yetkazildi — hamyoningizga tushdi`,
+            link: `/market/dashboard`,
+        });
+    }
+}

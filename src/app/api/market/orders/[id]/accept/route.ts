@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/market-notify";
+import { settleOrder } from "@/lib/market-settle";
 
 // POST /api/market/orders/[id]/accept — xaridor buyurtmani qabul qildi
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -23,6 +24,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         return NextResponse.json({ error: "Allaqachon qabul qilingan" }, { status: 400 });
 
     await prisma.marketOrder.update({ where: { id }, data: { status: "DELIVERED" } });
+
+    // Sotuvchilarga to'lov (komissiya ayirib) — yetkazildi
+    await settleOrder(id);
 
     // Qabul qilindi bildirishnomasi
     await notify(profile.id, {
