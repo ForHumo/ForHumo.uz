@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/market-notify";
+import { after } from "next/server";
+import { moderateOnCreate } from "@/lib/moderation";
 
 // POST /api/market/reviews/[id]/replies — javob (cheksiz ichma-ich)
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -28,6 +30,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const reply = await prisma.marketReviewReply.create({
         data: { reviewId: id, parentId: parentId ?? null, profileId: profile.id, text: text?.trim() ?? null, media: mediaArr },
     });
+
+    // Pre-publish moderatsiya
+    after(() => moderateOnCreate({
+        module: "MARKET", targetType: "REPLY", targetId: reply.id,
+        text: reply.text, imageUrl: mediaArr[0] || null, kind: "javob",
+    }));
 
     // Kimga javob berilganini aniqlab, bildirishnoma
     let targetProfileId = review.profileId;

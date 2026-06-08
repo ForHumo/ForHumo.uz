@@ -101,3 +101,20 @@ export async function applyModeration(opts: {
 
     return { flagged: true, autoHidden: autoHide, result };
 }
+
+// Pre-publish: yangi yaratilgan kontentni tekshiradi.
+// Hech qachon xato tashlamaydi — moderatsiya muammosi kontent yaratishni buzmasligi kerak.
+export async function moderateOnCreate(opts: {
+    module: ModModule;
+    targetType: ModTargetType;
+    targetId: string;
+    text?: string | null;
+    imageUrl?: string | null;
+    kind?: string;
+}): Promise<void> {
+    try {
+        await applyModeration(opts);
+    } catch {
+        /* fail-open */
+    }
+}

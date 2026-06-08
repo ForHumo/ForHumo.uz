@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/market-notify";
+import { after } from "next/server";
+import { moderateOnCreate } from "@/lib/moderation";
 
 // POST /api/market/questions/[id]/answers — savolga javob
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -27,6 +29,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const answer = await prisma.marketProductAnswer.create({
         data: { questionId: id, profileId: profile.id, text: text.trim() },
     });
+
+    // Pre-publish moderatsiya
+    after(() => moderateOnCreate({
+        module: "MARKET", targetType: "ANSWER", targetId: answer.id,
+        text: answer.text, kind: "javob",
+    }));
 
     // Savol bergan kishiga bildirishnoma
     if (question.profileId !== profile.id) {

@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { after } from "next/server";
+import { moderateOnCreate } from "@/lib/moderation";
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -124,5 +126,13 @@ export async function POST(req: Request) {
             } : {}),
         },
     });
+
+    // Pre-publish moderatsiya (javob yuborilgach — jiddiy bo'lsa avto-yashiradi)
+    const userImg = (Array.isArray(images) && images.filter(Boolean).length) ? finalImages[0] : null;
+    after(() => moderateOnCreate({
+        module: "MARKET", targetType: "PRODUCT", targetId: product.id,
+        text: `${product.name}\n${product.description || ""}`, imageUrl: userImg, kind: "mahsulot",
+    }));
+
     return NextResponse.json({ product });
 }

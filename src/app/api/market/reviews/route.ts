@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/market-notify";
+import { after } from "next/server";
+import { moderateOnCreate } from "@/lib/moderation";
 
 // GET /api/market/reviews?productId=...
 export async function GET(req: Request) {
@@ -112,6 +114,12 @@ export async function POST(req: Request) {
     const review = await prisma.marketReview.create({
         data: { profileId: profile.id, productId, orderId: purchased.orderId, rating, text: text?.trim() ?? null, media: mediaArr },
     });
+
+    // Pre-publish moderatsiya
+    after(() => moderateOnCreate({
+        module: "MARKET", targetType: "REVIEW", targetId: review.id,
+        text: review.text, imageUrl: mediaArr[0] || null, kind: "sharh",
+    }));
 
     // Mahsulot reytingini qayta hisoblash
     const agg = await prisma.marketReview.aggregate({

@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/lib/market-notify";
+import { after } from "next/server";
+import { moderateOnCreate } from "@/lib/moderation";
 
 // GET /api/market/questions?productId=...
 export async function GET(req: Request) {
@@ -73,6 +75,12 @@ export async function POST(req: Request) {
     const question = await prisma.marketProductQuestion.create({
         data: { productId, profileId: profile.id, text: text.trim() },
     });
+
+    // Pre-publish moderatsiya
+    after(() => moderateOnCreate({
+        module: "MARKET", targetType: "QUESTION", targetId: question.id,
+        text: question.text, kind: "savol",
+    }));
 
     // Sotuvchiga bildirishnoma
     if (product.brand.ownerId !== profile.id) {
