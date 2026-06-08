@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useRouter } from "@/i18n/routing";
 import {
-    Package, ChevronRight, Loader2, AlertCircle, CheckCircle2, Save, Trash2,
+    Package, ChevronRight, Loader2, AlertCircle, CheckCircle2, Save, Trash2, Sparkles,
 } from "lucide-react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ImageUploader } from "./image-uploader";
@@ -30,6 +30,21 @@ export function ProductEdit({ slug }: { slug: string }) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [done, setDone] = useState(false);
+    const [aiBusy, setAiBusy] = useState(false);
+    const [aiErr, setAiErr] = useState("");
+
+    async function aiFill() {
+        if (!name.trim() && !images.length) { setAiErr("Avval nom yoki rasm kiriting"); return; }
+        setAiBusy(true); setAiErr("");
+        try {
+            const res = await fetch("/api/ai/listing", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, category: cat, imageUrl: images[0] ?? null, brief: desc }),
+            });
+            const d = await res.json();
+            if (!res.ok) setAiErr(d.error || "AI xatosi"); else setDesc(d.description);
+        } catch { setAiErr("Xatolik"); } finally { setAiBusy(false); }
+    }
 
     useEffect(() => {
         fetch(`/api/market/products/${slug}`).then(r => r.ok ? r.json() : Promise.reject())
@@ -209,10 +224,20 @@ export function ProductEdit({ slug }: { slug: string }) {
                 )}
 
                 <div>
-                    <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">Tavsif</label>
+                    <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-gray-500 dark:text-white/40 block">Tavsif</label>
+                        <button type="button" onClick={aiFill} disabled={aiBusy}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold
+                                bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 text-violet-600 dark:text-violet-300
+                                hover:from-violet-500/25 hover:to-fuchsia-500/25 disabled:opacity-50 transition-all">
+                            {aiBusy ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                            AI bilan yozish
+                        </button>
+                    </div>
                     <textarea value={desc} onChange={e => setDesc(e.target.value)} rows={3} maxLength={500}
                         className="w-full bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
                             focus:border-green-400 dark:focus:border-green-500/50 rounded-2xl px-4 py-3 text-sm text-gray-900 dark:text-white outline-none transition resize-none" />
+                    {aiErr && <p className="text-amber-600 dark:text-amber-400 text-xs flex items-center gap-1.5 mt-1"><AlertCircle size={12} />{aiErr}</p>}
                 </div>
 
                 {error && <p className="text-red-500 text-sm flex items-center gap-1.5"><AlertCircle size={14} />{error}</p>}
