@@ -1,6 +1,8 @@
 import { MarketNavbar } from "@/components/market/market-navbar";
 import { MarketDock } from "@/components/market/market-dock";
 import { MarketFooter } from "@/components/market/market-footer";
+import { Link } from "@/i18n/routing";
+import { Bot } from "lucide-react";
 
 export default function MarketLayout({ children }: { children: React.ReactNode }) {
     return (
@@ -29,6 +31,15 @@ export default function MarketLayout({ children }: { children: React.ReactNode }
                     <MarketFooter />
                 </main>
             </div>
+
+            {/* Suzuvchi AI yordamchi tugmasi */}
+            <Link href="/market/assistant" title="AI yordamchi"
+                className="fixed bottom-28 right-4 sm:right-6 z-30 rounded-2xl flex items-center justify-center
+                    bg-gradient-to-br from-violet-600 to-fuchsia-500 shadow-lg shadow-violet-500/30
+                    hover:scale-105 active:scale-95 transition-transform"
+                style={{ width: 52, height: 52 }}>
+                <Bot size={24} className="text-white" />
+            </Link>
 
             <MarketDock />
         </div>

@@ -1,0 +1,119 @@
+"use client";
+
+import React, { useState, useRef, useEffect } from "react";
+import { Link } from "@/i18n/routing";
+import { Sparkles, Send, Loader2, ChevronRight, Bot } from "lucide-react";
+import { ProductCard } from "./product-card";
+
+interface Product {
+    id: string; name: string; slug: string; price: string; oldPrice: string | null;
+    images: string[]; rating: number; reviewCount: number; sold: number; isFeatured: boolean;
+    stock?: number; brand: { name: string; slug: string; verified: boolean };
+}
+interface Msg { role: "user" | "assistant"; content: string; products?: Product[] }
+
+const GREETING = "Salom! Men Humo Market yordamchisiman. Nima qidiryapsiz? Masalan: \"onamga tug'ilgan kun sovg'asi\" yoki \"500 minggacha telefon\".";
+const SUGGESTIONS = ["Onamga sovg'a top", "Arzon quloqchin kerak", "Sovuqqa kiyim tavsiya qil"];
+
+export function MarketAssistant() {
+    const [messages, setMessages] = useState<Msg[]>([{ role: "assistant", content: GREETING }]);
+    const [input, setInput] = useState("");
+    const [loading, setLoading] = useState(false);
+    const endRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+
+    async function send(text?: string) {
+        const content = (text ?? input).trim();
+        if (!content || loading) return;
+        const userMsg: Msg = { role: "user", content };
+        const next = [...messages, userMsg];
+        setMessages(next); setInput(""); setLoading(true);
+        try {
+            const res = await fetch("/api/ai/chat", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messages: next.map(m => ({ role: m.role, content: m.content })) }),
+            });
+            const d = await res.json();
+            if (!res.ok) setMessages(m => [...m, { role: "assistant", content: d.error || "Kechirasiz, xatolik yuz berdi." }]);
+            else setMessages(m => [...m, { role: "assistant", content: d.reply, products: d.products ?? [] }]);
+        } catch {
+            setMessages(m => [...m, { role: "assistant", content: "Internet xatosi, qayta urinib ko'ring." }]);
+        } finally { setLoading(false); }
+    }
+
+    return (
+        <div className="container mx-auto px-4 max-w-3xl py-8 flex flex-col" style={{ minHeight: "calc(100vh - 80px)" }}>
+            <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
+                <Link href="/market" className="hover:text-green-600 transition-colors">Market</Link>
+                <ChevronRight size={11} />
+                <span className="text-gray-600 dark:text-white/50">AI yordamchi</span>
+            </nav>
+
+            <div className="flex items-center gap-2 mb-5">
+                <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 flex items-center justify-center">
+                    <Bot size={18} className="text-white" />
+                </div>
+                <div>
+                    <h1 className="text-lg font-black text-gray-900 dark:text-white leading-tight">AI yordamchi</h1>
+                    <p className="text-xs text-gray-400 dark:text-white/30 leading-tight">Sizga mos mahsulotni topib beraman</p>
+                </div>
+            </div>
+
+            {/* Suhbat */}
+            <div className="flex-1 space-y-4 mb-4">
+                {messages.map((m, i) => (
+                    <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
+                        <div className={m.role === "user" ? "max-w-[80%]" : "max-w-[92%] w-full"}>
+                            <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${m.role === "user"
+                                ? "bg-gradient-to-r from-green-600 to-emerald-500 text-white"
+                                : "bg-white/70 dark:bg-white/[0.04] border border-gray-100 dark:border-white/[0.06] text-gray-800 dark:text-white/80"}`}>
+                                {m.content}
+                            </div>
+                            {/* Tavsiya qilingan mahsulotlar */}
+                            {m.products && m.products.length > 0 && (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                                    {m.products.map((p, k) => <ProductCard key={p.id} product={p} index={k} compact />)}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ))}
+                {loading && (
+                    <div className="flex justify-start">
+                        <div className="rounded-2xl px-4 py-3 bg-white/70 dark:bg-white/[0.04] border border-gray-100 dark:border-white/[0.06]">
+                            <Loader2 size={16} className="animate-spin text-violet-500" />
+                        </div>
+                    </div>
+                )}
+                <div ref={endRef} />
+            </div>
+
+            {/* Takliflar (faqat boshda) */}
+            {messages.length === 1 && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                    {SUGGESTIONS.map(s => (
+                        <button key={s} onClick={() => send(s)}
+                            className="px-3 py-1.5 rounded-xl text-xs font-medium bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition">
+                            {s}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {/* Kirish */}
+            <div className="flex gap-2 sticky bottom-4">
+                <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
+                    placeholder="Xabar yozing..." disabled={loading}
+                    className="flex-1 bg-white dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
+                        focus:border-violet-400 dark:focus:border-violet-500/50 rounded-2xl px-4 py-3 text-sm
+                        text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/20 outline-none transition" />
+                <button onClick={() => send()} disabled={loading || !input.trim()}
+                    className="px-5 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white font-bold
+                        disabled:opacity-40 flex items-center transition-all">
+                    {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                </button>
+            </div>
+        </div>
+    );
+}

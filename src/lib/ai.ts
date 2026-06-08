@@ -10,11 +10,13 @@ type Part = { text: string } | { inline_data: { mime_type: string; data: string 
 
 interface GenOpts { system?: string; json?: boolean; temperature?: number }
 
-async function generate(parts: Part[], opts: GenOpts = {}): Promise<string> {
+type Content = { role?: "user" | "model"; parts: Part[] };
+
+async function callGemini(contents: Content[], opts: GenOpts = {}): Promise<string> {
     if (!GEMINI_KEY) throw new Error("AI_NO_KEY");
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`;
     const body: Record<string, unknown> = {
-        contents: [{ parts }],
+        contents,
         generationConfig: {
             temperature: opts.temperature ?? 0.7,
             ...(opts.json ? { responseMimeType: "application/json" } : {}),
@@ -43,8 +45,20 @@ async function generate(parts: Part[], opts: GenOpts = {}): Promise<string> {
     throw new Error(`${lastErr} — model band, birozdan keyin urinib ko'ring`);
 }
 
+async function generate(parts: Part[], opts: GenOpts = {}): Promise<string> {
+    return callGemini([{ parts }], opts);
+}
+
 export async function aiText(prompt: string, opts: GenOpts = {}): Promise<string> {
     return generate([{ text: prompt }], opts);
+}
+
+// Ko'p-turli suhbat (chat) + JSON javob
+export interface ChatMsg { role: "user" | "model"; text: string }
+export async function aiChatJSON<T>(messages: ChatMsg[], opts: GenOpts = {}): Promise<T | null> {
+    const contents: Content[] = messages.map(m => ({ role: m.role, parts: [{ text: m.text }] }));
+    const txt = await callGemini(contents, { ...opts, json: true });
+    return parseJson<T>(txt);
 }
 
 function parseJson<T>(txt: string): T | null {
