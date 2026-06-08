@@ -557,6 +557,63 @@ enum TournamentStatus {
   CANCELLED
 }
 
+// ── Nexus — ijtimoiy tarmoq (postlar, feed, like, izoh, follow) ──────────────
+model NexusPost {
+  id              String   @id @default(cuid())
+  profileId       String                          // muallif (UserProfile.id)
+  text            String?
+  media           String[] @default([])           // rasm/video URL'lar
+  hashtags        String[] @default([])
+  marketProductId String?                         // ixtiyoriy — postga biriktirilgan Market mahsuloti ("Sotib olish")
+  shareCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  likes    NexusLike[]
+  comments NexusComment[]
+  saves    NexusSave[]
+
+  @@index([profileId])
+  @@index([createdAt])
+}
+
+model NexusLike {
+  id        String   @id @default(cuid())
+  postId    String
+  post      NexusPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  profileId String
+  createdAt DateTime @default(now())
+  @@unique([postId, profileId])
+}
+
+model NexusSave {
+  id        String   @id @default(cuid())
+  postId    String
+  post      NexusPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  profileId String
+  createdAt DateTime @default(now())
+  @@unique([postId, profileId])
+}
+
+model NexusComment {
+  id        String   @id @default(cuid())
+  postId    String
+  post      NexusPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentId  String?                               // cheksiz ichma-ich javob uchun
+  profileId String
+  text      String
+  createdAt DateTime @default(now())
+  @@index([postId])
+}
+
+model NexusFollow {
+  id          String   @id @default(cuid())
+  followerId  String                              // kim follow qilyapti
+  followingId String                              // kimni
+  createdAt   DateTime @default(now())
+  @@unique([followerId, followingId])
+  @@index([followingId])
+}
+
 // ── ALKH Pay — Zij valyuta hamyoni ───────────────────────────────────────────
 //
 // Zij (Ƶ) — ALKH Pay ichki valyutasi.

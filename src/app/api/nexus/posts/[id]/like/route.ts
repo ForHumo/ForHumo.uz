@@ -1,0 +1,20 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+// POST /api/nexus/posts/[id]/like — like toggle
+export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+    if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+
+    const { id } = await params;
+    const existing = await prisma.nexusLike.findUnique({ where: { postId_profileId: { postId: id, profileId: profile.id } } });
+    if (existing) await prisma.nexusLike.delete({ where: { id: existing.id } });
+    else await prisma.nexusLike.create({ data: { postId: id, profileId: profile.id } });
+
+    const count = await prisma.nexusLike.count({ where: { postId: id } });
+    return NextResponse.json({ liked: !existing, count });
+}
