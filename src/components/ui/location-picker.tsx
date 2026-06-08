@@ -287,8 +287,14 @@ export function LocationPicker({ value, onChange, accent = "blue" }: Props) {
                                 </div>
                             </div>
 
-                            {/* Leaflet map */}
-                            <div ref={mapContainerRef} className="flex-1 min-h-[280px]" style={{ height: 300 }} />
+                            {/* Leaflet map (+ Market yashil tint) */}
+                            <div className="relative flex-1 min-h-[280px]" style={{ height: 300 }}>
+                                <div ref={mapContainerRef} className="absolute inset-0" />
+                                {mapOnly && (
+                                    <div className="absolute inset-0 pointer-events-none z-[401]"
+                                        style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.18), rgba(5,150,105,0.10))", mixBlendMode: "multiply" }} />
+                                )}
+                            </div>
 
                             {/* Bottom panel */}
                             <div className="px-4 py-3 border-t border-border/60 space-y-3 shrink-0">
