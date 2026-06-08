@@ -111,7 +111,7 @@ Bu qismni tushunish uchun bir nechta faylni birga o'qish kerak. Eng muhim naqshl
 | **Market** | `/market`, `/catalog`, `/cart`, `/orders`, `/wishlist`, `/product/[slug]`(+`/edit`), `/product/add`, `/brand/manage`, `/brand/[slug]`, `/profile`, `/profile/activity`, `/notifications`, `/dashboard`, `/u/[username]` | `api/market/*` to'liq | ✅ Tayyor (test) | Sharh tahrir/o'chirish, pagination, **variantlar** (rang/o'lcham, narx+stock), **Q&A**, **buyurtma kuzatuvi** (stepper+sotuvchi boshqaruvi), bekor→Zij qaytarish, oversell guard (atomik), **promokod** (founder), **sotuvchi dashboard**, **payout** (escrow 5%), shikoyat/flag, ommaviy profil. **Real launch'ga qoldi:** to'lov gateway, KYC, yetkazish |
 | **Pay (ALKH)** | `/pay` | `api/pay/*` (deposit/transfer/safe/wallet) | 🟡 Funksional | Deposit **test rejim**, withdraw o'chirilgan. ⚠️ `alkh-pay-content.tsx` `TX_META` har bir `ZijTransactionType`ni qamrashi shart (fallback bor) |
 | **Nexus** | `/nexus` (feed: `nx-views` → "posts") | `api/nexus/*` (core) | 🟡 Core real | Feed/post/like/save/izoh/follow + **Nexus×Market** ("Sotib olish") real. Qolgan ~60 komponent hali mock |
-| **AI** | `/ai` | `lib/ai-moderator.ts` | 🟡 Wrapper | `/ai-static/` ga iframe; session'ni localStorage orqali uzatadi |
+| **AI** | `/ai` (iframe), `api/ai/*` (Gemini) | `lib/ai.ts` (Gemini), `lib/ai-moderator.ts` (esport evristik) | 🟢 Real (Market) | Market AI: listing yordamchisi, NL qidiruv, chat yordamchi — Gemini orqali. `/ai-static/` esa alohida iframe ilova |
 | **Statik** | `/faq`, `/support`, `/privacy-policy`, `/coming-soon` | `api/support/contact` | ✅ Tayyor | — |
 
 ## Environment o'zgaruvchilari
@@ -125,6 +125,8 @@ NEXTAUTH_URL
 GOOGLE_CLIENT_ID          # GoogleProvider (auth.ts)
 GOOGLE_CLIENT_SECRET
 BLOB_READ_WRITE_TOKEN     # Vercel Blob (avatar / cover upload)
+GEMINI_API_KEY            # Gemini (AI funksiyalar: listing/qidiruv/chat) — Google AI Studio, paid prepay
+GEMINI_MODEL              # ixtiyoriy — default "gemini-2.5-flash-lite" (lib/ai.ts)
 LOCATION_ENCRYPTION_KEY   # ixtiyoriy — AES-256-GCM kaliti (crypto.ts); bo'lmasa NEXTAUTH_SECRET dan derive
 TELEGRAM_CLIENT_ID        # .env.local da bor, LEKIN auth.ts da hali ulanmagan
 TELEGRAM_CLIENT_SECRET    # (yuqoridagidek)
@@ -163,6 +165,7 @@ VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
 - **Nexus×Market (shoppable):** `NexusPost.marketProductId` → feed API postni mahsulot ma'lumoti bilan boyitadi → post kartasida "Sotib olish" → `/market/product/[slug]`.
 - **Google rasm backfill:** `auth.ts signIn` da `image` null bo'lsa Google rasmi yoziladi (boshqalar sharh/postlarda ko'rishi uchun). Eski hisoblar uchun re-login kerak.
 - **Verified (ko'k belgi):** `src/lib/nexus.ts isVerifiedProfile()` — hozircha founders.
+- **AI (Gemini):** `src/lib/ai.ts` — REST wrapper (`aiText`/`aiJSON`/`aiVisionJSON`/`aiChatJSON`), 503/429 retry. Endpointlar: `api/ai/listing` (mahsulot tavsifi+vision), `api/ai/search` (NL→filtr→mahsulot), `api/ai/chat` (suhbat+tavsiya). Kalit yo'q bo'lsa 503 (`aiAvailable()`). ⚠️ **Model nomi eskiradi**: `gemini-2.0-flash` 2026'da retired (404) → `gemini-2.5-flash-lite`. Yangi model kerak bo'lsa: `GET .../v1beta/models?key=` bilan ro'yxatni tekshir, `GEMINI_MODEL` env bilan o'zgartir. UI: product-add/edit "AI bilan yozish", navbar ✨ → `/market/ai-search`, suzuvchi Bot → `/market/assistant`.
 
 ## Ish uslubi (workflow) — MUHIM
 
