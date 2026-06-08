@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { validatePromo } from "@/lib/market-promo";
 
 type PaymentMethod = "ZIJ" | "CASH_ON_DELIVERY" | "CARD_ON_DELIVERY";
@@ -50,10 +49,6 @@ export async function POST(req: Request) {
         promoId = pr.promoId ?? null;
     }
     const total = Math.max(0, Math.round((subtotal - discount) * 100) / 100);
-    const promoOps: Prisma.PrismaPromise<unknown>[] = promoId
-        ? [prisma.marketPromoCode.update({ where: { id: promoId }, data: { usedCount: { increment: 1 } } })]
-        : [];
-
     const orderItemsData = cartItems.map(i => ({
         productId: i.productId,
         variantId: i.variantId,
@@ -62,20 +57,8 @@ export async function POST(req: Request) {
         price: unitPrice(i),
     }));
 
-    // Stock kamaytirish: variant bo'lsa variant stock, bo'lmasa product stock; product.sold doim oshadi
-    const stockOps: Prisma.PrismaPromise<unknown>[] = cartItems.flatMap(i => {
-        const ops: Prisma.PrismaPromise<unknown>[] = [
-            prisma.marketProduct.update({ where: { id: i.productId }, data: { sold: { increment: i.quantity } } }),
-        ];
-        if (i.variantId) {
-            ops.push(prisma.marketProductVariant.update({ where: { id: i.variantId }, data: { stock: { decrement: i.quantity } } }));
-        } else {
-            ops.push(prisma.marketProduct.update({ where: { id: i.productId }, data: { stock: { decrement: i.quantity } } }));
-        }
-        return ops;
-    });
-
-    // Zij to'lov uchun balans tekshirish
+    // Zij to'lovida balansni oldindan tekshirish (do'stona xabar uchun)
+    let walletId: string | null = null;
     if (paymentMethod === "ZIJ") {
         let wallet = await prisma.zijWallet.findUnique({ where: { profileId: profile.id } });
         if (!wallet) wallet = await prisma.zijWallet.create({ data: { profileId: profile.id } });
@@ -85,48 +68,60 @@ export async function POST(req: Request) {
                 code: "INSUFFICIENT_ZIJ", required: total, available: Number(wallet.balance),
             }, { status: 400 });
         }
+        walletId = wallet.id;
+    }
 
-        const newBalance = Number(wallet.balance) - total;
-        const [order] = await prisma.$transaction([
-            prisma.marketOrder.create({
+    // Interaktiv tranzaksiya — atomik stock kamaytirish (oversell oldini oladi)
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            for (const i of cartItems) {
+                if (i.variantId) {
+                    const r = await tx.marketProductVariant.updateMany({
+                        where: { id: i.variantId, stock: { gte: i.quantity } },
+                        data: { stock: { decrement: i.quantity } },
+                    });
+                    if (r.count === 0) throw new Error(`"${i.product.name}": yetarli stock yo'q`);
+                    await tx.marketProduct.update({ where: { id: i.productId }, data: { sold: { increment: i.quantity } } });
+                } else {
+                    const r = await tx.marketProduct.updateMany({
+                        where: { id: i.productId, stock: { gte: i.quantity } },
+                        data: { stock: { decrement: i.quantity }, sold: { increment: i.quantity } },
+                    });
+                    if (r.count === 0) throw new Error(`"${i.product.name}": yetarli stock yo'q`);
+                }
+            }
+
+            let newBalance: number | null = null;
+            if (paymentMethod === "ZIJ" && walletId) {
+                const w = await tx.zijWallet.findUnique({ where: { id: walletId } });
+                if (!w || Number(w.balance) < total) throw new Error("INSUFFICIENT_ZIJ");
+                newBalance = Number(w.balance) - total;
+                await tx.zijWallet.update({ where: { id: walletId }, data: { balance: newBalance } });
+                await tx.zijTransaction.create({
+                    data: { walletId, type: "PURCHASE", amount: total, balanceAfter: newBalance, description: `Humo Market — ${cartItems.length} ta mahsulot` },
+                });
+            }
+
+            if (promoId) await tx.marketPromoCode.update({ where: { id: promoId }, data: { usedCount: { increment: 1 } } });
+
+            const order = await tx.marketOrder.create({
                 data: {
                     profileId: profile.id, total, discount, promoCode: appliedCode,
-                    status: "PAID",
-                    paymentMethod: "ZIJ",
+                    status: paymentMethod === "ZIJ" ? "PAID" : "PENDING",
+                    paymentMethod,
                     address: address.trim(),
                     note: note?.trim() ?? null,
                     items: { create: orderItemsData },
                 },
-            }),
-            prisma.zijWallet.update({ where: { id: wallet!.id }, data: { balance: newBalance } }),
-            prisma.zijTransaction.create({
-                data: {
-                    walletId: wallet!.id, type: "PURCHASE", amount: total, balanceAfter: newBalance,
-                    description: `Humo Market — ${cartItems.length} ta mahsulot`,
-                },
-            }),
-            ...stockOps,
-            ...promoOps,
-            prisma.marketCartItem.deleteMany({ where: { profileId: profile.id } }),
-        ]);
-        return NextResponse.json({ order, newBalance });
-    }
+            });
 
-    // Naqd / Karta (yetkazishda to'lash)
-    const [order] = await prisma.$transaction([
-        prisma.marketOrder.create({
-            data: {
-                profileId: profile.id, total, discount, promoCode: appliedCode,
-                status: "PENDING",
-                paymentMethod: paymentMethod as "CASH_ON_DELIVERY" | "CARD_ON_DELIVERY",
-                address: address.trim(),
-                note: note?.trim() ?? null,
-                items: { create: orderItemsData },
-            },
-        }),
-        ...stockOps,
-        ...promoOps,
-        prisma.marketCartItem.deleteMany({ where: { profileId: profile.id } }),
-    ]);
-    return NextResponse.json({ order, newBalance: null });
+            await tx.marketCartItem.deleteMany({ where: { profileId: profile.id } });
+            return { order, newBalance };
+        });
+        return NextResponse.json(result);
+    } catch (e) {
+        const msg = (e as Error).message;
+        if (msg === "INSUFFICIENT_ZIJ") return NextResponse.json({ error: "Balans yetarli emas" }, { status: 400 });
+        return NextResponse.json({ error: msg || "Xatolik yuz berdi" }, { status: 400 });
+    }
 }

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { HelpCircle, Loader2, Send, Store, MessageCircle, Lock } from "lucide-react";
+import { ReportButton } from "./report-button";
 
 interface Author { name: string | null; username: string | null; image: string | null }
 interface AnswerT { id: string; text: string; createdAt: string; author: Author | null; isMine: boolean; isAuthor: boolean }
@@ -185,12 +186,15 @@ export function ProductQA({ productId }: { productId: string }) {
                                         </div>
                                     ))}
 
-                                    {canAsk && (
-                                        <button onClick={() => setAnswerOpen(answerOpen === q.id ? null : q.id)}
-                                            className="flex items-center gap-1 text-xs text-gray-400 dark:text-white/30 hover:text-green-600 dark:hover:text-green-400 mt-2 transition">
-                                            <MessageCircle size={11} /> Javob berish
-                                        </button>
-                                    )}
+                                    <div className="flex items-center gap-3 mt-2">
+                                        {canAsk && (
+                                            <button onClick={() => setAnswerOpen(answerOpen === q.id ? null : q.id)}
+                                                className="flex items-center gap-1 text-xs text-gray-400 dark:text-white/30 hover:text-green-600 dark:hover:text-green-400 transition">
+                                                <MessageCircle size={11} /> Javob berish
+                                            </button>
+                                        )}
+                                        {!q.isMine && <ReportButton targetType="QUESTION" targetId={q.id} />}
+                                    </div>
                                     <AnimatePresence>
                                         {answerOpen === q.id && (
                                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">

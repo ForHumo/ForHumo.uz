@@ -453,6 +453,27 @@ model MarketProductAnswer {
   @@index([questionId])
 }
 
+// Shikoyat / flag — haqoratli kontentni xabar qilish (moderatsiya uchun)
+model MarketReport {
+  id         String             @id @default(cuid())
+  profileId  String             // xabar beruvchi
+  targetType MarketReportTarget
+  targetId   String             // sharh/javob/savol/mahsulot id
+  reason     String?
+  resolved   Boolean            @default(false)
+  createdAt  DateTime           @default(now())
+  @@unique([profileId, targetType, targetId])
+  @@index([targetType, targetId])
+}
+
+enum MarketReportTarget {
+  PRODUCT
+  REVIEW
+  REPLY
+  QUESTION
+  ANSWER
+}
+
 model MarketCartItem {
   id        String   @id @default(cuid())
   profileId String
@@ -575,6 +596,7 @@ enum ZijTransactionType {
   DEPOSIT    // pul kirish (test rejim)
   WITHDRAW   // pul chiqish (hozircha o'chirilgan)
   PURCHASE   // xarid (turnir, Nexus Pro va h.k.)
+  REFUND     // buyurtma bekor qilinganda qaytarish
   REWARD     // mukofot (turnir yutug'i, cashback)
   TRANSFER_OUT  // do'stga yuborish
   TRANSFER_IN   // do'stdan qabul qilish

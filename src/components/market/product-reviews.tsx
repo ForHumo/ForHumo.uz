@@ -9,6 +9,7 @@ import {
     Reply as ReplyIcon, Store, Pencil, Trash2, AlertCircle,
 } from "lucide-react";
 import { MediaUploader, isVideoUrl } from "./media-uploader";
+import { ReportButton } from "./report-button";
 
 interface Author { name: string | null; username: string | null; image: string | null }
 interface ReplyT {
@@ -215,7 +216,9 @@ function ReplyNode({ reply, reviewId, childrenOf, onNewReply, onChanged }: {
                                 className="flex items-center gap-1 text-xs text-gray-400 dark:text-white/30 hover:text-green-600 dark:hover:text-green-400 transition">
                                 <ReplyIcon size={11} /> Javob berish
                             </button>
-                            {reply.isMine && <MineActions onEdit={() => setEditing(true)} onDelete={del} />}
+                            {reply.isMine
+                                ? <MineActions onEdit={() => setEditing(true)} onDelete={del} />
+                                : <ReportButton targetType="REPLY" targetId={reply.id} />}
                         </div>
                     )}
                     <AnimatePresence>
@@ -430,7 +433,9 @@ export function ProductReviews({ productId }: { productId: string }) {
                                                     bg-gray-100 dark:bg-white/[0.05] text-gray-500 dark:text-white/35 hover:bg-gray-200 dark:hover:bg-white/[0.08] transition">
                                                 <ReplyIcon size={12} /> Javob
                                             </button>
-                                            {r.isMine && <MineActions onEdit={() => setEditingId(r.id)} onDelete={() => deleteReview(r.id)} />}
+                                            {r.isMine
+                                                ? <MineActions onEdit={() => setEditingId(r.id)} onDelete={() => deleteReview(r.id)} />
+                                                : <ReportButton targetType="REVIEW" targetId={r.id} />}
                                         </div>
                                     </>
                                 )}

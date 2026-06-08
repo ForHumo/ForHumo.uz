@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { notify } from "@/lib/market-notify";
 
 type Status = "PENDING" | "PAID" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
@@ -23,7 +24,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const order = await prisma.marketOrder.findUnique({
         where: { id },
-        include: { items: { select: { product: { select: { brand: { select: { ownerId: true } } } } } } },
+        include: { items: { select: { productId: true, variantId: true, quantity: true, product: { select: { brand: { select: { ownerId: true } } } } } } },
     });
     if (!order) return NextResponse.json({ error: "Buyurtma topilmadi" }, { status: 404 });
 
@@ -38,7 +39,32 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!sellerCan && !buyerCanCancel && !buyerCanReceive)
         return NextResponse.json({ error: "Bu amalga ruxsat yo'q" }, { status: 403 });
 
-    await prisma.marketOrder.update({ where: { id }, data: { status } });
+    if (status === "CANCELLED" && order.status !== "CANCELLED" && order.status !== "DELIVERED") {
+        // Bekor qilish: status + stock tiklash + sold kamaytirish + (ZIJ bo'lsa) Zij qaytarish — atomik
+        const ops: Prisma.PrismaPromise<unknown>[] = [
+            prisma.marketOrder.update({ where: { id }, data: { status: "CANCELLED" } }),
+        ];
+        for (const it of order.items) {
+            ops.push(prisma.marketProduct.update({ where: { id: it.productId }, data: { sold: { decrement: it.quantity } } }));
+            if (it.variantId) ops.push(prisma.marketProductVariant.update({ where: { id: it.variantId }, data: { stock: { increment: it.quantity } } }));
+            else ops.push(prisma.marketProduct.update({ where: { id: it.productId }, data: { stock: { increment: it.quantity } } }));
+        }
+        if (order.paymentMethod === "ZIJ" && Number(order.total) > 0) {
+            let wallet = await prisma.zijWallet.findUnique({ where: { profileId: order.profileId } });
+            if (!wallet) wallet = await prisma.zijWallet.create({ data: { profileId: order.profileId } });
+            const newBalance = Number(wallet.balance) + Number(order.total);
+            ops.push(prisma.zijWallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }));
+            ops.push(prisma.zijTransaction.create({
+                data: {
+                    walletId: wallet.id, type: "REFUND", amount: Number(order.total), balanceAfter: newBalance,
+                    description: `Buyurtma bekor qilindi — qaytarildi`, ref: order.id,
+                },
+            }));
+        }
+        await prisma.$transaction(ops);
+    } else {
+        await prisma.marketOrder.update({ where: { id }, data: { status } });
+    }
 
     // Bildirishnoma
     const short = `#${order.id.slice(-8).toUpperCase()}`;
