@@ -9,7 +9,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import {
     Home, ChevronRight, Search, ShoppingCart,
-    ChevronDown, X, Layers, Bell, Clock,
+    ChevronDown, X, Layers, Bell, Clock, Sparkles,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
@@ -253,11 +253,18 @@ export function MarketNavbar() {
                                 className="w-full bg-gray-50/90 dark:bg-white/[0.05]
                                     border border-gray-200/80 dark:border-white/[0.08]
                                     focus:border-green-400 dark:focus:border-green-500/50
-                                    rounded-xl pl-10 pr-4 py-2.5
+                                    rounded-xl pl-10 pr-11 py-2.5
                                     text-gray-900 dark:text-white text-sm
                                     placeholder:text-gray-400 dark:placeholder:text-white/20
                                     outline-none transition-all duration-200"
                             />
+                            {/* AI qidiruv */}
+                            <Link href="/market/ai-search" title="AI qidiruv"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center
+                                    bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 text-violet-500 dark:text-violet-300
+                                    hover:from-violet-500/25 hover:to-fuchsia-500/25 transition-all">
+                                <Sparkles size={14} />
+                            </Link>
 
                             {/* Jonli takliflar / qidiruv tarixi dropdown */}
                             <AnimatePresence>
