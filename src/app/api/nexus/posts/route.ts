@@ -12,6 +12,20 @@ async function myProfileId(): Promise<string | null> {
     return p?.id ?? null;
 }
 
+interface AttachedProduct { slug: string; name: string; image: string | null; price: string; oldPrice: string | null }
+async function loadAttachedProducts(ids: (string | null)[]): Promise<Record<string, AttachedProduct>> {
+    const productIds = [...new Set(ids.filter((x): x is string => !!x))];
+    if (!productIds.length) return {};
+    const prods = await prisma.marketProduct.findMany({
+        where: { id: { in: productIds }, isActive: true },
+        select: { id: true, slug: true, name: true, images: true, price: true, oldPrice: true },
+    });
+    return Object.fromEntries(prods.map(p => [p.id, {
+        slug: p.slug, name: p.name, image: p.images?.[0] ?? null,
+        price: String(p.price), oldPrice: p.oldPrice ? String(p.oldPrice) : null,
+    }]));
+}
+
 // GET /api/nexus/posts?tab=explore|following&offset=&limit=
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -59,11 +73,15 @@ export async function GET(req: Request) {
         savedIds = saves.map(s => s.postId);
     }
 
+    // Biriktirilgan Market mahsulotlari ("Sotib olish")
+    const prodMap = await loadAttachedProducts(posts.map(p => p.marketProductId));
+
     const enriched = posts.map(p => {
         const a = pMap[p.profileId];
         return {
             id: p.id, text: p.text, media: p.media, hashtags: p.hashtags,
             marketProductId: p.marketProductId, shareCount: p.shareCount, createdAt: p.createdAt,
+            product: p.marketProductId ? prodMap[p.marketProductId] ?? null : null,
             author: a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a) } : null,
             likes: p._count.likes, comments: p._count.comments,
             liked: likedIds.includes(p.id), saved: savedIds.includes(p.id),
@@ -86,20 +104,24 @@ export async function POST(req: Request) {
     const clean = typeof text === "string" ? text.trim() : "";
     if (!clean && !mediaArr.length) return NextResponse.json({ error: "Post bo'sh bo'lmasin" }, { status: 400 });
 
+    const attachId = typeof marketProductId === "string" && marketProductId ? marketProductId : null;
     const post = await prisma.nexusPost.create({
         data: {
             profileId: profile.id,
             text: clean || null,
             media: mediaArr,
             hashtags: extractHashtags(clean),
-            marketProductId: typeof marketProductId === "string" && marketProductId ? marketProductId : null,
+            marketProductId: attachId,
         },
     });
+
+    const prodMap = await loadAttachedProducts([attachId]);
 
     return NextResponse.json({
         post: {
             id: post.id, text: post.text, media: post.media, hashtags: post.hashtags,
             marketProductId: post.marketProductId, shareCount: 0, createdAt: post.createdAt,
+            product: attachId ? prodMap[attachId] ?? null : null,
             author: { name: profile.name, username: profile.username, image: profile.image, verified: isVerifiedProfile(profile) },
             likes: 0, comments: 0, liked: false, saved: false, isMine: true,
         },
