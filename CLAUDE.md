@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Humo ID** — yagona identity (Google OAuth, `@username` handle, `UZxxxxxxx` Humo ID)
 - **Esport** — jamoalar, o'yinchilar, turnirlar, role-based admin panel
 - **Market** — brendlar, mahsulotlar, savat, buyurtmalar
-- **Nexus** — ijtimoiy tarmoq (feed, stories, live, kanal, kino, musiqa) — hozircha UI demo
+- **Nexus** — ijtimoiy tarmoq. **Core feed real** (post/like/izoh/follow + Nexus×Market "Sotib olish"); qolgan 60+ komponent hali mock
 - **Pay (ALKH Pay)** — Zij valyutali hamyon, o'tkazma, seyf
 - **AI** — `/ai-static/` ichki ilovasiga iframe orqali ulanadi
 
@@ -95,11 +95,12 @@ Bu qismni tushunish uchun bir nechta faylni birga o'qish kerak. Eng muhim naqshl
 
 **Humo ID:** `UserProfile`, `LoginEvent`, `SupportTicket`, `EmailVerificationCode`
 **Esport:** `User`, `PlayerProfile`, `Team`, `TeamInvite`, `TeamMember`, `JoinRequest`, `Tournament`, `TournamentTeam`, `TournamentMatch`, `TournamentStanding`
-**Market:** `MarketBrand` (+`categories[]`), `MarketProduct` (+`videos[]`), `MarketCartItem`, `MarketOrder`, `MarketOrderItem`, `MarketWishlist`, `MarketReview` (+`media[]`), `MarketReviewReply` (cheksiz ichma-ich, `parentId`), `MarketReviewLike`, `MarketBrandReview`, `MarketNotification`
+**Market:** `MarketBrand` (+`categories[]`), `MarketProduct` (+`videos[]`, `variantLabel`), `MarketProductVariant` (narx/stock har biriga), `MarketCartItem` (+`variantId`), `MarketOrder` (+`discount`/`promoCode`/`settledAt`), `MarketOrderItem` (+`variantId`/`variantName`), `MarketWishlist`, `MarketReview` (+`media[]`), `MarketReviewReply` (cheksiz ichma-ich `parentId`), `MarketReviewLike`, `MarketBrandReview`, `MarketProductQuestion`, `MarketProductAnswer`, `MarketNotification`, `MarketPromoCode`, `MarketReport`
+**Nexus:** `NexusPost` (+`marketProductId` — shoppable), `NexusLike`, `NexusSave`, `NexusComment` (`parentId`), `NexusFollow`
 **Pay:** `ZijWallet`, `ZijTransaction`, `ZijSafe`
-**Enum'lar:** `TeamRole`, `JoinRequestStatus`, `UserRole`, `TournamentStatus`, `MarketPaymentMethod`, `MarketOrderStatus`, `MarketNotifType`, `ZijTransactionType`
+**Enum'lar:** `TeamRole`, `JoinRequestStatus`, `UserRole`, `TournamentStatus`, `MarketPaymentMethod`, `MarketOrderStatus`, `MarketNotifType` (+ORDER_UPDATE/QUESTION/ANSWER), `MarketPromoType`, `MarketReportTarget`, `ZijTransactionType` (+REFUND/SALE)
 
-> Eslatma: **Nexus** uchun DB modeli yo'q — u to'liq frontend (mock ma'lumotlar). Nexus sovg'alaridagi "coins" (`nx-gifts.tsx`) — bu tizim valyutasi emas, `useState` dagi demo holat (narxlar UZS da).
+> Eslatma: Nexus'ning **core feed**i (post/like/izoh/follow) real DB'da. Qolgan komponentlar (stories/live/music/...) hali mock. "coins" (`nx-gifts.tsx`) — tizim valyutasi emas, demo `useState` (UZS da).
 
 ## Module Status
 
@@ -107,9 +108,9 @@ Bu qismni tushunish uchun bir nechta faylni birga o'qish kerak. Eng muhim naqshl
 |---|---|---|---|---|
 | **Humo ID** | `/id`, `/id/edit`, `/id/[username]`, `/id/verify` | `api/user/*` to'liq | ✅ Tayyor | Profil, edit (642 qator), onboarding, avatar/cover upload, account delete |
 | **Esport** | `/esport`, `/teams`, `/players`, `/tournaments`, `/esport/admin`, `/history` | `api/teams/*`, `api/tournaments/*` + repositories | ✅ Tayyor | Role-based admin, jamoa invite/join, turnir registratsiya |
-| **Market** | `/market`, `/catalog`, `/cart`, `/orders`, `/wishlist`, `/product/[slug]`, `/product/add`, `/brand/manage`, `/brand/[slug]`, `/profile`, `/profile/activity`, `/notifications` | `api/market/*` to'liq | 🟢 Deyarli tayyor | Wishlist (heart), harid-gate sharhlar+rasm/video, cheksiz ichma-ich javoblar, like ("qo'shilaman"), sotuvchi badge (`isAuthor`), brend yaratish/tahrirlash (ko'p yo'nalish), founder bepul brend, mahsulot qo'shish/tahrirlash+video, savat (manzil+Zij/naqd/karta), bildirishnomalar, profil statistika+faoliyat. **Qoldi:** sharh/javob tahrirlash+o'chirish, pagination |
-| **Pay (ALKH)** | `/pay` | `api/pay/*` (deposit/transfer/safe/wallet) | 🟡 Funksional | Deposit **test rejim**, withdraw o'chirilgan |
-| **Nexus** | `/nexus` | ❌ Backend yo'q | 🟠 UI demo | 72 komponent / ~24k qator, lekin DB/API yo'q — mock |
+| **Market** | `/market`, `/catalog`, `/cart`, `/orders`, `/wishlist`, `/product/[slug]`(+`/edit`), `/product/add`, `/brand/manage`, `/brand/[slug]`, `/profile`, `/profile/activity`, `/notifications`, `/dashboard`, `/u/[username]` | `api/market/*` to'liq | ✅ Tayyor (test) | Sharh tahrir/o'chirish, pagination, **variantlar** (rang/o'lcham, narx+stock), **Q&A**, **buyurtma kuzatuvi** (stepper+sotuvchi boshqaruvi), bekor→Zij qaytarish, oversell guard (atomik), **promokod** (founder), **sotuvchi dashboard**, **payout** (escrow 5%), shikoyat/flag, ommaviy profil. **Real launch'ga qoldi:** to'lov gateway, KYC, yetkazish |
+| **Pay (ALKH)** | `/pay` | `api/pay/*` (deposit/transfer/safe/wallet) | 🟡 Funksional | Deposit **test rejim**, withdraw o'chirilgan. ⚠️ `alkh-pay-content.tsx` `TX_META` har bir `ZijTransactionType`ni qamrashi shart (fallback bor) |
+| **Nexus** | `/nexus` (feed: `nx-views` → "posts") | `api/nexus/*` (core) | 🟡 Core real | Feed/post/like/save/izoh/follow + **Nexus×Market** ("Sotib olish") real. Qolgan ~60 komponent hali mock |
 | **AI** | `/ai` | `lib/ai-moderator.ts` | 🟡 Wrapper | `/ai-static/` ga iframe; session'ni localStorage orqali uzatadi |
 | **Statik** | `/faq`, `/support`, `/privacy-policy`, `/coming-soon` | `api/support/contact` | ✅ Tayyor | — |
 
@@ -135,7 +136,8 @@ VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
 - [ ] **Telegram OAuth ulash** — `TELEGRAM_CLIENT_ID/SECRET` `.env.local` da bor, ammo `src/lib/auth.ts` da faqat `GoogleProvider` ulangan. Telegram provider hali qo'shilmagan.
 - [ ] **Pay'ni real rejimga o'tkazish** — `ZijTransactionType.DEPOSIT` test rejimda, `WITHDRAW` o'chirilgan. Haqiqiy to'lov integratsiyasi kerak.
 - [ ] **KYC level 2** — `UserProfile.level == 2` (biometrik) `schema.prisma` da "future" deb belgilangan, implementatsiya yo'q.
-- [ ] **Nexus backend** — 72 ta UI komponenti mock ma'lumot bilan ishlaydi; DB modellari va API route'lari yo'q.
+- [ ] **Nexus N4+** — core feed real; stories/live/music/spaces/... hali mock (DB/API yo'q).
+- [ ] **Market go-live** — to'lov gateway (Click/Payme), KYC, yetkazish/logistika; naqd/karta buyurtmada komissiya ushlanmaydi.
 - [ ] **`.env.example` qo'shish** — yangi ishchilar uchun namuna fayl yo'q.
 
 ## Muhim qoidalar
@@ -143,7 +145,7 @@ VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
 - **EMOJI ISHLATMA.** UI'da hech qachon emoji yo'q — faqat **Lucide ikonkalar**. (Foydalanuvchi qat'iy talabi; diniy sezgirlik ham bor — masalan cho'chqa ikonkasi ishlatilmaydi.)
 - **i18n:** har qanday yangi UI matni `messages/uz.json`, `ru.json`, `en.json` ga **uchalasiga** qo'shilishi shart; `useTranslations()` ishlat.
 - **Locale Link gotcha:** `import { Link } from "@/i18n/routing"` locale'ni **avtomatik** qo'shadi. `href="/market"` yoz, `/${locale}/market` **EMAS** (ikki marta chiqadi: `/uz/uz/...`). `useRouter` ham `@/i18n/routing` dan import qilinadi.
-- **Modul shell pattern:** Har modul `src/app/[locale]/<modul>/layout.tsx` da `fixed inset-0 z-[100]` + o'z navbari bilan o'raladi (global header'ni yopadi). Navbar uchun `src/components/layout/module-navbar.tsx` (`ModuleNavbar`) config bilan ishlatiladi. Mavjud: eSport, ID, AI, Pay, Market.
+- **Modul shell pattern:** Har modul `src/app/[locale]/<modul>/layout.tsx` da `fixed inset-0 z-[100]` + o'z navbari bilan o'raladi (global header/footer'ni yopadi). Mavjud: eSport, ID, AI, Pay, Market, Nexus. ⚠️ Overlay foni **qattiq (opaque)** bo'lishi shart — yarim-shaffof bo'lsa global footer kunduzi sizib chiqadi (Market'da `from-white via-green-50 to-emerald-50`). Market'ning o'z footer'i `market-footer.tsx`.
 - **Prisma client:** doimo `src/lib/prisma.ts` singleton orqali import qil (yangi `PrismaClient()` yaratma).
 - **Profil tahriri:** `UserProfile.profileEditedAt` — foydalanuvchi profilini **14 kunda 1 marta** tahrir qila oladi (rate-limit).
 - **Manzil:** `location`/`locationIv` shifrlangan — `src/lib/crypto.ts` siz to'g'ridan o'qib/yozib bo'lmaydi.
@@ -152,13 +154,23 @@ VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
 - **Media yuklash:** rasm/video → `MediaUploader` (`isVideoUrl()` export qiladi), rasmni crop → `MarketCropModal` (`aspect`+`outW` prop; 1:1 mahsulot, 3:1 cover), device rasm → `ImageUploader`. Hammasi `api/market/upload` (Vercel Blob). ⚠️ Vercel serverless yuklash limiti ~4.5MB — katta video uchun client-side blob upload kerak.
 - **LocationPicker:** `accent="green"` (Market) yoki `"blue"` (onboarding) prop bilan modul rangiga moslanadi. Til/xarita kabi umumiy komponentlar modul rangiga moslanishi kerak (ko'k = asosiy sayt rangi, Market = yashil).
 - **Reply/like ajratish:** API javoblarda `isMine` (o'zimnikimi) + `isAuthor` (mahsulot brend egasimi = sotuvchi) hisoblanadi — sotuvchi javoblari "Sotuvchi" badge + boshqa fon bilan ko'rsatiladi.
+- **Sotuvchi payout (escrow):** `src/lib/market-settle.ts` → `settleOrder()`. Checkout xaridor Zij'ini **ushlaydi**; buyurtma **DELIVERED** bo'lganda sotuvchiga (komissiya `MARKET_COMMISSION=5%` ayirib) Zij `SALE` tranzaksiyasi bilan o'tadi. `MarketOrder.settledAt` ikki marta to'lashni bloklaydi. Faqat ZIJ buyurtmalar uchun. `accept` + `status(DELIVERED)` route'larida chaqiriladi.
+- **Bekor qilish:** `status` route CANCELLED'da atomik — stock tiklash + `sold` kamaytirish + (ZIJ bo'lsa) Zij `REFUND`. Checkout **interaktiv tranzaksiya** + shartli `updateMany(where stock>=qty)` bilan oversell oldini oladi.
+- **Variantlar:** `MarketProductVariant` (narx/stock har biriga). Variant bo'lsa `MarketProduct.price`=eng arzon, `stock`=yig'indi. Savat `(profil,mahsulot,variant)` bo'yicha; cart PATCH/DELETE **item.id** bilan (productId emas).
+- **Pay TX_META:** `alkh-pay-content.tsx` `TX_META` **har bir** `ZijTransactionType`ni qamrashi shart — aks holda tranzaksiya ro'yxati crash bo'ladi (fallback qo'shilgan, lekin yangi tip qo'shsang META'ga ham qo'sh).
+- **Katta media upload:** `@vercel/blob/client` `upload()` + `/api/market/upload/client-token` (handleUpload) — 4.5MB serverless limitini chetlab o'tadi, rasm+video. Nexus post media va Market video shu yo'l bilan.
+- **Promokod:** `MarketPromoCode` (PERCENT/FIXED), founder yaratadi (`api/market/promo`), checkout'da `validatePromo` (`src/lib/market-promo.ts`) qo'llaydi + `usedCount++` atomik.
+- **Nexus×Market (shoppable):** `NexusPost.marketProductId` → feed API postni mahsulot ma'lumoti bilan boyitadi → post kartasida "Sotib olish" → `/market/product/[slug]`.
+- **Google rasm backfill:** `auth.ts signIn` da `image` null bo'lsa Google rasmi yoziladi (boshqalar sharh/postlarda ko'rishi uchun). Eski hisoblar uchun re-login kerak.
+- **Verified (ko'k belgi):** `src/lib/nexus.ts isVerifiedProfile()` — hozircha founders.
 
 ## Ish uslubi (workflow) — MUHIM
 
 - **Har o'zgarishdan keyin avtomatik:** `git add -A && git commit -m "..."` → `git push origin main` → `npx vercel deploy --prod`. Foydalanuvchi har safar so'ramaydi — bu doimiy talab.
 - **TS tekshiruvi:** deploy oldidan `npx tsc --noEmit` bilan xatolarni tekshir.
 - **DB o'zgarishi:** `prisma migrate dev` **interaktiv** (bu muhitda ishlamaydi). O'rniga:
-  `DATABASE_URL="<.env.local dagi URL>" npx prisma db push` ishlat.
+  `DATABASE_URL="<.env.local dagi URL>" npx prisma db push` ishlat. Unique constraint o'zgarsa `--accept-data-loss` kerak bo'ladi (test rejimda xavfsiz).
+- **PowerShell:** ish papkasi loyiha emas (uy papkasi) — buyruq oldidan `Set-Location "C:\Users\abduv\OneDrive\Рабочий стол\ForHumo.uz";` qo'sh. (`tsc`, `prisma`, `vercel` shu tarzda ishga tushiriladi.) Bash tool'da esa `cd "..." && ...` ishlaydi.
 - **Test rejim (vaqtincha):** Pay (Zij pul), Market (mahsulotlar), Nexus (kontent) — **mock** ma'lumot. Qolgan hamma narsa (auth, DB, API, deploy) **real**. Mock'ni faqat keyin real qilamiz; boshqa hech narsa o'zgarmaydi.
 - **Zij simvoli:** `Ƶ` (Al-Xorazmiy → ALKH). Kurs `1 Ƶ = 1 USD` o'zgarmas.
 - **Mock rasm:** mahsulot/kontent rasmi kerak bo'lsa `https://picsum.photos/seed/<slug>/600/600`.
