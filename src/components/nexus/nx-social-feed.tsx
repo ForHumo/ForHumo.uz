@@ -41,7 +41,8 @@ function avatarOf(a: Author | null) {
 // ─────────────────────────────────────────────────────────────────────────────
 // NxSocialFeed
 // ─────────────────────────────────────────────────────────────────────────────
-export function NxSocialFeed() {
+export function NxSocialFeed({ authorUsername }: { authorUsername?: string } = {}) {
+    const profileMode = !!authorUsername;
     const { openShareSheet } = useNxPlayer();
     const { data: session } = useSession();
     const PAGE = 15;
@@ -63,17 +64,23 @@ export function NxSocialFeed() {
 
     const loadFirst = useCallback(async () => {
         setLoading(true);
-        const data = await fetch(`/api/nexus/posts?tab=${tab}&limit=${PAGE}&offset=0`).then(r => r.json());
+        const url = authorUsername
+            ? `/api/nexus/posts?author=${encodeURIComponent(authorUsername)}&limit=${PAGE}&offset=0`
+            : `/api/nexus/posts?tab=${tab}&limit=${PAGE}&offset=0`;
+        const data = await fetch(url).then(r => r.json());
         const list: Post[] = data.posts ?? [];
         setPosts(list); setOffset(list.length); setHasMore(data.hasMore ?? false);
         setLoading(false);
-    }, [tab]);
+    }, [tab, authorUsername]);
 
     useEffect(() => { loadFirst(); }, [loadFirst]);
 
     async function loadMore() {
         setLoadingMore(true);
-        const data = await fetch(`/api/nexus/posts?tab=${tab}&limit=${PAGE}&offset=${offset}`).then(r => r.json());
+        const url = authorUsername
+            ? `/api/nexus/posts?author=${encodeURIComponent(authorUsername)}&limit=${PAGE}&offset=${offset}`
+            : `/api/nexus/posts?tab=${tab}&limit=${PAGE}&offset=${offset}`;
+        const data = await fetch(url).then(r => r.json());
         const list: Post[] = data.posts ?? [];
         setPosts(prev => [...prev, ...list]); setOffset(o => o + list.length); setHasMore(data.hasMore ?? false);
         setLoadingMore(false);
@@ -128,7 +135,8 @@ export function NxSocialFeed() {
 
     return (
         <div className="max-w-2xl mx-auto">
-            {/* ── Tab ── */}
+            {/* ── Tab (faqat umumiy feed) ── */}
+            {!profileMode && (
             <div className="flex gap-0 mx-4 mt-4 mb-3 rounded-2xl overflow-hidden"
                 style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.18)" }}>
                 {(["following", "explore"] as const).map(t => (
@@ -140,8 +148,10 @@ export function NxSocialFeed() {
                     </button>
                 ))}
             </div>
+            )}
 
-            {/* ── Post yaratish ── */}
+            {/* ── Post yaratish (faqat umumiy feed) ── */}
+            {!profileMode && (
             <div className="mx-4 mb-4 p-4 rounded-2xl"
                 style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.18)" }}>
                 <div className="flex gap-3">
@@ -205,16 +215,19 @@ export function NxSocialFeed() {
 
                 {pickerOpen && <ProductPicker onPick={(p) => { setAttached(p); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />}
             </div>
+            )}
 
             {/* ── Postlar ── */}
             {loading ? (
                 <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: "#2B3EE8" }} /></div>
             ) : posts.length === 0 ? (
                 <div className="text-center py-16 px-4">
-                    <p className="text-sm font-bold text-white/70 mb-1">{tab === "following" ? "Obunalaringizdan post yo'q" : "Hali post yo'q"}</p>
-                    <p className="text-xs" style={{ color: "rgba(80,100,150,0.75)" }}>
-                        {tab === "following" ? "Odamlarni kuzating yoki Kashfiyotga o'ting" : "Birinchi bo'lib post ulashing!"}
-                    </p>
+                    <p className="text-sm font-bold text-white/70 mb-1">{profileMode ? "Hali post yo'q" : tab === "following" ? "Obunalaringizdan post yo'q" : "Hali post yo'q"}</p>
+                    {!profileMode && (
+                        <p className="text-xs" style={{ color: "rgba(80,100,150,0.75)" }}>
+                            {tab === "following" ? "Odamlarni kuzating yoki Kashfiyotga o'ting" : "Birinchi bo'lib post ulashing!"}
+                        </p>
+                    )}
                 </div>
             ) : (
                 <div className="flex flex-col gap-3 px-4 pb-4">
@@ -271,14 +284,28 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump }: {
         <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.18)" }}>
             {/* Header */}
             <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-                <div className="relative flex-shrink-0">
-                    <div className="w-10 h-10 rounded-2xl overflow-hidden" style={{ border: "2px solid rgba(43,62,232,0.30)" }}>
-                        <img src={avatarOf(p.author)} alt="" className="w-full h-full object-cover bg-white" />
+                {p.author?.username ? (
+                    <Link href={`/nexus/u/${p.author.username}`} className="relative flex-shrink-0">
+                        <div className="w-10 h-10 rounded-2xl overflow-hidden" style={{ border: "2px solid rgba(43,62,232,0.30)" }}>
+                            <img src={avatarOf(p.author)} alt="" className="w-full h-full object-cover bg-white" />
+                        </div>
+                    </Link>
+                ) : (
+                    <div className="relative flex-shrink-0">
+                        <div className="w-10 h-10 rounded-2xl overflow-hidden" style={{ border: "2px solid rgba(43,62,232,0.30)" }}>
+                            <img src={avatarOf(p.author)} alt="" className="w-full h-full object-cover bg-white" />
+                        </div>
                     </div>
-                </div>
+                )}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-bold text-white truncate">{p.author?.name ?? p.author?.username ?? "Foydalanuvchi"}</span>
+                        {p.author?.username ? (
+                            <Link href={`/nexus/u/${p.author.username}`} className="text-sm font-bold text-white truncate hover:underline">
+                                {p.author?.name ?? p.author.username}
+                            </Link>
+                        ) : (
+                            <span className="text-sm font-bold text-white truncate">{p.author?.name ?? "Foydalanuvchi"}</span>
+                        )}
                         {p.author?.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "rgba(80,100,150,0.75)" }}>
