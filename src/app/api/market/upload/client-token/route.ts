@@ -18,6 +18,7 @@ export async function POST(req: Request): Promise<NextResponse> {
                     allowedContentTypes: [
                         "video/mp4", "video/webm", "video/quicktime",
                         "video/x-m4v", "video/ogg", "video/x-msvideo", "video/x-matroska",
+                        "image/jpeg", "image/png", "image/webp", "image/gif",
                     ],
                     maximumSizeInBytes: 100 * 1024 * 1024, // 100MB
                     tokenPayload: JSON.stringify({ email: session.user.email }),
