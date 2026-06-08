@@ -10,8 +10,9 @@ import {
     Settings, LogOut, BadgeCheck, Plus, ChevronRight,
     Edit3, Save, X, Loader2, Trash2,
     ListMusic, BarChart2, Compass, Bookmark, Phone,
-    ShoppingBag, Wallet, Download, Briefcase, Calendar, Video, Play,
+    ShoppingBag, Wallet, Download, Briefcase, Calendar, Video, Play, ExternalLink,
 } from "lucide-react";
+import { Link } from "@/i18n/routing";
 import { useNxPlayer, type NxShort } from "./nx-player-ctx";
 import { NxRow } from "./nx-row";
 import { VideoCard, ShortCard, LiveCard, MusicCard, BookCard } from "./nx-cards";
@@ -19,6 +20,7 @@ import { NxStories } from "./nx-stories";
 import { NxHero } from "./nx-hero";
 import { NxFeed } from "./nx-feed";
 import { NxSocialFeed } from "./nx-social-feed";
+import { NexusFollowList } from "./nexus-follow-list";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Umumiy yordamchi komponentlar
@@ -682,6 +684,8 @@ export function ProfileView() {
     const [saving,      setSaving]      = useState(false);
     const [saveError,   setSaveError]   = useState("");
     const [toggles,     setToggles]     = useState([true, true, false]); // ochiq profil, 2FA, bildirishnomalar
+    const [nx,          setNx]          = useState<{ posts: number; followers: number; following: number } | null>(null);
+    const [followList,  setFollowList]  = useState<"followers" | "following" | null>(null);
 
     const flipToggle = (i: number) =>
         setToggles(prev => prev.map((v, idx) => idx === i ? !v : v));
@@ -696,6 +700,15 @@ export function ProfileView() {
     }, [session?.user?.email]);
 
     useEffect(() => { fetchProfile(); }, [fetchProfile]);
+
+    /* Nexus real statistika (post/kuzatuvchi/kuzatilmoqda) */
+    useEffect(() => {
+        if (!session?.user?.email) return;
+        fetch("/api/nexus/profile")
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.stats) setNx(d.stats); })
+            .catch(() => { });
+    }, [session?.user?.email]);
 
     /* Edit modal ochilganda mavjud qiymatlarni to'ldirish */
     const openEdit = () => {
@@ -794,6 +807,14 @@ export function ProfileView() {
                             <Radio className="w-3.5 h-3.5" />
                             Go Live
                         </button>
+                        {profile?.username && (
+                            <Link href={`/nexus/u/${profile.username}`}
+                                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity duration-150 hover:opacity-85 active:scale-95"
+                                style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                <ExternalLink className="w-3.5 h-3.5" />
+                                Ommaviy profil
+                            </Link>
+                        )}
                     </div>
                 </div>
             </div>
@@ -801,9 +822,9 @@ export function ProfileView() {
             {/* ── Follower / Following ──────────────────────────────────── */}
             <div className="mx-4 mt-3 grid grid-cols-3 gap-3">
                 {[
-                    { label: "Kuzatuvchilar", value: "8.4K", action: () => setSubsOpen(true) },
-                    { label: "Kuzatilmoqda",  value: "312",  action: () => setSubsOpen(true) },
-                    { label: "Postlar",        value: "47",   action: undefined },
+                    { label: "Kuzatuvchilar", value: nx ? String(nx.followers) : "—", action: profile?.username ? () => setFollowList("followers") : undefined },
+                    { label: "Kuzatilmoqda",  value: nx ? String(nx.following) : "—", action: profile?.username ? () => setFollowList("following") : undefined },
+                    { label: "Postlar",        value: nx ? String(nx.posts) : "—",     action: undefined },
                 ].map(({ label, value, action }, i) => (
                     <button key={i} onClick={action}
                         className="flex flex-col items-center py-4 rounded-2xl transition-all duration-150"
@@ -856,7 +877,7 @@ export function ProfileView() {
             <div className="mx-4 mt-3 grid grid-cols-2 gap-3">
                 {[
                     { icon: Heart,      label: "Layklar",    value: "1.2M",  gradient: "from-red-500 to-pink-600",      action: undefined                 },
-                    { icon: UserCheck,  label: "Obunachi",   value: "8.4K",  gradient: "from-[#2B3EE8] to-[#00CEC8]",  action: () => setSubsOpen(true)   },
+                    { icon: UserCheck,  label: "Obunachi",   value: nx ? String(nx.followers) : "—",  gradient: "from-[#2B3EE8] to-[#00CEC8]",  action: profile?.username ? () => setFollowList("followers") : undefined },
                     { icon: CreditCard, label: "Hamyon",     value: "240K",  gradient: "from-emerald-500 to-teal-600",  action: () => setWalletOpen(true) },
                     { icon: Shield,     label: "Xavfsizlik", value: "Yuqori",gradient: "from-violet-500 to-indigo-600", action: undefined                 },
                 ].map(({ icon: Icon, label, value, gradient, action }, i) => (
@@ -1070,6 +1091,10 @@ export function ProfileView() {
                         </div>
                     </div>
                 </>
+            )}
+
+            {followList && profile?.username && (
+                <NexusFollowList username={profile.username} type={followList} onClose={() => setFollowList(null)} />
             )}
         </ViewShell>
     );
