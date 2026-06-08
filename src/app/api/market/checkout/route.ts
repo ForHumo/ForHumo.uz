@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { validatePromo } from "@/lib/market-promo";
 
 type PaymentMethod = "ZIJ" | "CASH_ON_DELIVERY" | "CARD_ON_DELIVERY";
 
@@ -10,8 +11,8 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { address, note, paymentMethod = "ZIJ" }: {
-        address?: string; note?: string; paymentMethod?: PaymentMethod;
+    const { address, note, paymentMethod = "ZIJ", promoCode }: {
+        address?: string; note?: string; paymentMethod?: PaymentMethod; promoCode?: string;
     } = await req.json();
 
     if (!address?.trim())
@@ -35,7 +36,23 @@ export async function POST(req: Request) {
 
     // Narx variant bo'lsa variantdan
     const unitPrice = (i: typeof cartItems[number]) => Number(i.variant ? i.variant.price : i.product.price);
-    const total = cartItems.reduce((s, i) => s + unitPrice(i) * i.quantity, 0);
+    const subtotal = cartItems.reduce((s, i) => s + unitPrice(i) * i.quantity, 0);
+
+    // Promokod (ixtiyoriy)
+    let discount = 0;
+    let appliedCode: string | null = null;
+    let promoId: string | null = null;
+    if (promoCode?.trim()) {
+        const pr = await validatePromo(promoCode, subtotal);
+        if (pr.error) return NextResponse.json({ error: pr.error }, { status: 400 });
+        discount = pr.discount ?? 0;
+        appliedCode = pr.code ?? null;
+        promoId = pr.promoId ?? null;
+    }
+    const total = Math.max(0, Math.round((subtotal - discount) * 100) / 100);
+    const promoOps: Prisma.PrismaPromise<unknown>[] = promoId
+        ? [prisma.marketPromoCode.update({ where: { id: promoId }, data: { usedCount: { increment: 1 } } })]
+        : [];
 
     const orderItemsData = cartItems.map(i => ({
         productId: i.productId,
@@ -73,7 +90,7 @@ export async function POST(req: Request) {
         const [order] = await prisma.$transaction([
             prisma.marketOrder.create({
                 data: {
-                    profileId: profile.id, total,
+                    profileId: profile.id, total, discount, promoCode: appliedCode,
                     status: "PAID",
                     paymentMethod: "ZIJ",
                     address: address.trim(),
@@ -89,6 +106,7 @@ export async function POST(req: Request) {
                 },
             }),
             ...stockOps,
+            ...promoOps,
             prisma.marketCartItem.deleteMany({ where: { profileId: profile.id } }),
         ]);
         return NextResponse.json({ order, newBalance });
@@ -98,7 +116,7 @@ export async function POST(req: Request) {
     const [order] = await prisma.$transaction([
         prisma.marketOrder.create({
             data: {
-                profileId: profile.id, total,
+                profileId: profile.id, total, discount, promoCode: appliedCode,
                 status: "PENDING",
                 paymentMethod: paymentMethod as "CASH_ON_DELIVERY" | "CARD_ON_DELIVERY",
                 address: address.trim(),
@@ -107,6 +125,7 @@ export async function POST(req: Request) {
             },
         }),
         ...stockOps,
+        ...promoOps,
         prisma.marketCartItem.deleteMany({ where: { profileId: profile.id } }),
     ]);
     return NextResponse.json({ order, newBalance: null });

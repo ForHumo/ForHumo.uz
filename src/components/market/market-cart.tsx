@@ -8,7 +8,7 @@ import {
     ShoppingCart, Trash2, Plus, Minus, Loader2, ShoppingBag,
     AlertCircle, CheckCircle2, Wallet, ChevronRight, ArrowLeft,
     MapPin, CreditCard, Banknote, Clock, Package, ChevronDown,
-    Truck, XCircle,
+    Truck, XCircle, Tag,
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 import { LocationPicker } from "@/components/ui/location-picker";
@@ -110,6 +110,11 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
     const [done, setDone]           = useState(false);
     const [error, setError]         = useState("");
     const [balance, setBalance]     = useState<number | null>(null);
+    const [promo, setPromo]         = useState("");
+    const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+    const [promoDiscount, setPromoDiscount] = useState(0);
+    const [promoMsg, setPromoMsg]   = useState("");
+    const [promoBusy, setPromoBusy] = useState(false);
 
     useEffect(() => {
         Promise.all([
@@ -125,6 +130,22 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
 
     const itemPrice = (i: CartItem) => Number(i.variant ? i.variant.price : i.product.price);
     const total = items.reduce((s, i) => s + itemPrice(i) * i.quantity, 0);
+    const finalTotal = Math.max(0, total - promoDiscount);
+
+    async function applyPromo() {
+        if (!promo.trim()) return;
+        setPromoBusy(true); setPromoMsg("");
+        try {
+            const res = await fetch("/api/market/promo/validate", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: promo, subtotal: total }),
+            });
+            const d = await res.json();
+            if (!res.ok) { setPromoMsg(d.error); setPromoDiscount(0); setAppliedPromo(null); }
+            else { setPromoDiscount(d.discount); setAppliedPromo(d.code); setPromoMsg(""); }
+        } catch { setPromoMsg("Xatolik"); } finally { setPromoBusy(false); }
+    }
+    function clearPromo() { setPromo(""); setAppliedPromo(null); setPromoDiscount(0); setPromoMsg(""); }
 
     async function updateQty(item: CartItem, delta: number) {
         const newQty = item.quantity + delta;
@@ -164,7 +185,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
         try {
             const res = await fetch("/api/market/checkout", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ address: address.trim(), note: note.trim() || undefined, paymentMethod: payMethod }),
+                body: JSON.stringify({ address: address.trim(), note: note.trim() || undefined, paymentMethod: payMethod, promoCode: appliedPromo || undefined }),
             });
             const data = await res.json();
             if (!res.ok) { setError(data.error); }
@@ -197,7 +218,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                 <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Buyurtma qabul qilindi!</h2>
                 <p className="text-gray-500 dark:text-white/40 mb-1">Manzil: {address}</p>
                 <p className="text-gray-400 dark:text-white/30 text-sm mb-6">
-                    {payMethod === "ZIJ" ? `${fz(total)} Ƶ to'landi` : "Yetkazishda to'lanadi"}
+                    {payMethod === "ZIJ" ? `${fz(finalTotal)} Ƶ to'landi` : "Yetkazishda to'lanadi"}
                 </p>
                 <div className="flex gap-3 justify-center">
                     <Link href="/market"
@@ -345,23 +366,55 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                     <div className="flex justify-between text-sm text-gray-500 dark:text-white/40 mb-2">
                                         <span>Mahsulotlar ({items.length})</span><span>{fz(total)} Ƶ</span>
                                     </div>
-                                    <div className="flex justify-between text-sm text-gray-500 dark:text-white/40 mb-4">
+                                    <div className="flex justify-between text-sm text-gray-500 dark:text-white/40 mb-3">
                                         <span>Yetkazib berish</span>
                                         <span className="text-green-500 font-semibold">Bepul</span>
                                     </div>
+
+                                    {/* Promokod */}
+                                    <div className="mb-3">
+                                        {appliedPromo ? (
+                                            <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/15 rounded-xl px-3 py-2">
+                                                <span className="text-xs font-bold text-green-700 dark:text-green-400 flex items-center gap-1.5">
+                                                    <Tag size={12} />{appliedPromo}
+                                                </span>
+                                                <button onClick={clearPromo} className="text-xs text-gray-400 dark:text-white/30 hover:text-red-500 transition">Olib tashlash</button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex gap-2">
+                                                <input value={promo} onChange={e => setPromo(e.target.value.toUpperCase())}
+                                                    placeholder="Promokod" maxLength={24}
+                                                    className="flex-1 min-w-0 bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
+                                                        focus:border-green-400 dark:focus:border-green-500/50 rounded-xl px-3 py-2 text-sm
+                                                        text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/20 outline-none uppercase transition" />
+                                                <button onClick={applyPromo} disabled={promoBusy || !promo.trim()}
+                                                    className="px-4 rounded-xl bg-green-500/10 text-green-600 dark:text-green-400 font-semibold text-sm shrink-0 disabled:opacity-40 hover:bg-green-500/20 transition">
+                                                    {promoBusy ? <Loader2 size={14} className="animate-spin" /> : "Qo'llash"}
+                                                </button>
+                                            </div>
+                                        )}
+                                        {promoMsg && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle size={11} />{promoMsg}</p>}
+                                    </div>
+
+                                    {promoDiscount > 0 && (
+                                        <div className="flex justify-between text-sm font-semibold text-green-600 dark:text-green-400 mb-3">
+                                            <span>Chegirma</span><span>−{fz(promoDiscount)} Ƶ</span>
+                                        </div>
+                                    )}
+
                                     <div className="border-t border-gray-100 dark:border-white/[0.06] pt-4 mb-5">
                                         <div className="flex justify-between font-black text-gray-900 dark:text-white">
                                             <span>Jami</span>
                                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-500 dark:from-green-400 dark:to-emerald-300">
-                                                {fz(total)} Ƶ
+                                                {fz(finalTotal)} Ƶ
                                             </span>
                                         </div>
-                                        <p className="text-xs text-gray-400 dark:text-white/25 mt-0.5">≈ ${fz(total)} USD</p>
+                                        <p className="text-xs text-gray-400 dark:text-white/25 mt-0.5">≈ ${fz(finalTotal)} USD</p>
                                     </div>
 
                                     {!checkout ? (
                                         <>
-                                            {balance !== null && balance < total && payMethod === "ZIJ" && (
+                                            {balance !== null && balance < finalTotal && payMethod === "ZIJ" && (
                                                 <div className="flex items-start gap-2 bg-red-50 dark:bg-red-500/8
                                                     border border-red-200/80 dark:border-red-500/20 rounded-xl p-3 mb-3">
                                                     <AlertCircle size={13} className="text-red-500 mt-0.5 shrink-0" />
@@ -434,7 +487,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                                     flex items-center justify-center gap-2">
                                                 {paying ? <Loader2 size={16} className="animate-spin" /> :
                                                     payMethod === "ZIJ" ? <Wallet size={16} /> : <Package size={16} />}
-                                                {payMethod === "ZIJ" ? `${fz(total)} Ƶ to'lash` : "Buyurtmani tasdiqlash"}
+                                                {payMethod === "ZIJ" ? `${fz(finalTotal)} Ƶ to'lash` : "Buyurtmani tasdiqlash"}
                                             </motion.button>
                                             <button onClick={() => setCheckout(false)}
                                                 className="w-full py-2 text-sm text-gray-400 dark:text-white/30 hover:text-gray-600 transition-colors">

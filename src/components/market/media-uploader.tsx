@@ -4,6 +4,7 @@ import React, { useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence } from "framer-motion";
 import { Loader2, ImagePlus, Video, X, AlertCircle } from "lucide-react";
+import { upload } from "@vercel/blob/client";
 import { MarketCropModal } from "./market-crop-modal";
 
 interface Props {
@@ -25,6 +26,7 @@ export function MediaUploader({ kind, media, onChange, max = 4, accept = "all" }
     const [error, setError] = useState("");
     const [cropSrc, setCropSrc] = useState<string | null>(null);
 
+    // Rasm — server orqali (crop qilingan, kichik)
     async function uploadFile(file: Blob, name: string) {
         setUploading(true); setError("");
         try {
@@ -39,15 +41,29 @@ export function MediaUploader({ kind, media, onChange, max = 4, accept = "all" }
         finally { setUploading(false); }
     }
 
+    // Video — to'g'ridan brauzerdan blobga (katta fayllar uchun, 4.5MB limitsiz)
+    async function uploadVideo(file: File) {
+        setUploading(true); setError("");
+        try {
+            const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+            const blob = await upload(`market/${kind}/${Date.now()}-${safe}`, file, {
+                access: "public",
+                handleUploadUrl: "/api/market/upload/client-token",
+            });
+            onChange([...media, blob.url]);
+        } catch (e) { setError((e as Error).message || "Video yuklashda xatolik"); }
+        finally { setUploading(false); }
+    }
+
     function pick(files: FileList | null) {
         if (!files?.length) return;
         setError("");
         if (media.length >= max) { setError(`Maksimal ${max} ta`); return; }
         const file = files[0];
         if (file.type.startsWith("image/")) {
-            setCropSrc(URL.createObjectURL(file));   // rasm → crop
+            setCropSrc(URL.createObjectURL(file));   // rasm → crop → server
         } else if (file.type.startsWith("video/")) {
-            uploadFile(file, file.name);             // video → to'g'ridan
+            uploadVideo(file);                       // video → to'g'ridan blobga
         }
         if (inputRef.current) inputRef.current.value = "";
     }

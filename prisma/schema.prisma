@@ -469,7 +469,9 @@ model MarketCartItem {
 model MarketOrder {
   id            String              @id @default(cuid())
   profileId     String
-  total         Decimal             @db.Decimal(18, 2)
+  total         Decimal             @db.Decimal(18, 2)   // chegirmadan keyingi yakuniy summa
+  discount      Decimal             @default(0) @db.Decimal(18, 2)
+  promoCode     String?
   status        MarketOrderStatus   @default(PENDING)
   paymentMethod MarketPaymentMethod @default(ZIJ)
   address       String              // manzil majburiy
@@ -477,6 +479,26 @@ model MarketOrder {
   createdAt     DateTime            @default(now())
 
   items         MarketOrderItem[]
+}
+
+// Promokod / kupon (platforma darajasida — asoschilar yaratadi)
+model MarketPromoCode {
+  id          String          @id @default(cuid())
+  code        String          @unique
+  type        MarketPromoType
+  value       Decimal         @db.Decimal(18, 2)   // PERCENT: 1-100, FIXED: Ƶ miqdori
+  minOrder    Decimal         @default(0) @db.Decimal(18, 2)
+  maxDiscount Decimal?        @db.Decimal(18, 2)   // PERCENT uchun yuqori chegara
+  usageLimit  Int?            // null = cheksiz
+  usedCount   Int             @default(0)
+  expiresAt   DateTime?
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+}
+
+enum MarketPromoType {
+  PERCENT
+  FIXED
 }
 
 enum MarketPaymentMethod {

@@ -6,13 +6,14 @@ import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import {
     Store, Plus, ChevronRight, BadgeCheck, Package,
-    Loader2, CheckCircle2, AlertCircle, X, ArrowRight, Pencil, Inbox,
+    Loader2, CheckCircle2, AlertCircle, X, ArrowRight, Pencil, Inbox, LayoutDashboard,
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ImageUploader } from "./image-uploader";
 import { BrandEditModal } from "./brand-edit-modal";
 import { SellerOrders } from "./seller-orders";
+import { PromoManager } from "./promo-manager";
 
 interface Brand {
     id: string; slug: string; name: string; description: string | null;
@@ -226,7 +227,16 @@ export function BrandManage() {
                     <Store size={22} className="text-green-500" />
                     <h1 className="text-2xl font-black text-gray-900 dark:text-white">Mening brendlarim</h1>
                 </div>
-                <CreateBrandForm nextPrice={nextPrice} onCreated={() => reload()} />
+                <div className="flex items-center gap-2">
+                    {brands.length > 0 && (
+                        <Link href="/market/dashboard"
+                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl border border-gray-200 dark:border-white/[0.08]
+                                hover:border-green-300 dark:hover:border-green-600/40 text-gray-600 dark:text-white/50 font-semibold text-sm transition-all">
+                            <LayoutDashboard size={15} /> Dashboard
+                        </Link>
+                    )}
+                    <CreateBrandForm nextPrice={nextPrice} onCreated={() => reload()} />
+                </div>
             </div>
 
             {/* Ma'lumot: birinchi bepul */}
@@ -317,6 +327,9 @@ export function BrandManage() {
                     <SellerOrders />
                 </div>
             )}
+
+            {/* Promokodlar (faqat asoschilar) */}
+            <PromoManager />
 
             <AnimatePresence>
                 {editBrand && (
