@@ -64,13 +64,22 @@ export async function POST(req: Request) {
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
     const body = await req.json();
-    const { brandSlug, name, description, price, oldPrice, stock, category, subcategory, images, videos } = body;
+    const { brandSlug, name, description, price, oldPrice, stock, category, subcategory, images, videos, variantLabel } = body;
     const videoArr: string[] = Array.isArray(videos) ? videos.filter((x: unknown) => typeof x === "string") : [];
+
+    const variantsInput: Array<{ name?: string; price?: number; oldPrice?: number; stock?: number; image?: string }> =
+        Array.isArray(body.variants) ? body.variants.filter((v: { name?: string }) => v?.name?.trim()) : [];
+    const hasVariants = variantsInput.length > 0;
 
     if (!brandSlug) return NextResponse.json({ error: "Brend tanlang" }, { status: 400 });
     if (!name?.trim()) return NextResponse.json({ error: "Mahsulot nomi kerak" }, { status: 400 });
-    if (!price || Number(price) < 1) return NextResponse.json({ error: "Narx kerak (kamida 1 Ƶ)" }, { status: 400 });
+    if (!hasVariants && (!price || Number(price) < 1)) return NextResponse.json({ error: "Narx kerak (kamida 1 Ƶ)" }, { status: 400 });
     if (!category) return NextResponse.json({ error: "Kategoriya tanlang" }, { status: 400 });
+
+    // Variant narx/stock dan mahsulot narx (eng arzon) va stock (yig'indi)
+    const variantPrices = variantsInput.map(v => Number(v.price) || 0).filter(p => p > 0);
+    const basePrice = hasVariants ? (variantPrices.length ? Math.min(...variantPrices) : 0) : Number(price);
+    const baseStock = hasVariants ? variantsInput.reduce((s, v) => s + Math.max(0, Number(v.stock) || 0), 0) : (stock ? Number(stock) : 0);
 
     // Brend egasi tekshiruvi — faqat o'z brendiga qo'sha oladi
     const brand = await prisma.marketBrand.findUnique({ where: { slug: brandSlug } });
@@ -95,11 +104,24 @@ export async function POST(req: Request) {
             description: description?.trim() ?? null,
             images: finalImages,
             videos: videoArr,
-            price: Number(price),
+            price: basePrice,
             oldPrice: oldPrice ? Number(oldPrice) : null,
-            stock: stock ? Number(stock) : 0,
+            stock: baseStock,
             category,
             subcategory: subcategory ?? null,
+            variantLabel: hasVariants ? (variantLabel?.trim() || null) : null,
+            ...(hasVariants ? {
+                variants: {
+                    create: variantsInput.map((v, i) => ({
+                        name: String(v.name ?? "").trim() || `Variant ${i + 1}`,
+                        price: Number(v.price) || 0,
+                        oldPrice: v.oldPrice ? Number(v.oldPrice) : null,
+                        stock: Math.max(0, Number(v.stock) || 0),
+                        image: v.image || null,
+                        sort: i,
+                    })),
+                },
+            } : {}),
         },
     });
     return NextResponse.json({ product });

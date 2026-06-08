@@ -9,6 +9,7 @@ import {
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ImageUploader } from "./image-uploader";
 import { MediaUploader } from "./media-uploader";
+import { VariantEditor, VariantDraft } from "./variant-editor";
 
 export function ProductEdit({ slug }: { slug: string }) {
     const router = useRouter();
@@ -23,6 +24,9 @@ export function ProductEdit({ slug }: { slug: string }) {
     const [sub, setSub] = useState("");
     const [images, setImages] = useState<string[]>([]);
     const [videos, setVideos] = useState<string[]>([]);
+    const [hasVariants, setHasVariants] = useState(false);
+    const [variantLabel, setVariantLabel] = useState("");
+    const [variants, setVariants] = useState<VariantDraft[]>([]);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [done, setDone] = useState(false);
@@ -35,6 +39,14 @@ export function ProductEdit({ slug }: { slug: string }) {
                 setPrice(String(p.price)); setOldPrice(p.oldPrice ? String(p.oldPrice) : "");
                 setStock(String(p.stock)); setCat(p.category); setSub(p.subcategory ?? "");
                 setImages(p.images ?? []); setVideos(p.videos ?? []);
+                const vs = p.variants ?? [];
+                if (vs.length) {
+                    setHasVariants(true);
+                    setVariantLabel(p.variantLabel ?? "");
+                    setVariants(vs.map((v: { name: string; price: string; oldPrice: string | null; stock: number }) => ({
+                        name: v.name, price: String(v.price), oldPrice: v.oldPrice ? String(v.oldPrice) : "", stock: String(v.stock),
+                    })));
+                }
             })
             .catch(() => setNotFound(true))
             .finally(() => setLoading(false));
@@ -45,12 +57,25 @@ export function ProductEdit({ slug }: { slug: string }) {
     async function save(e: React.FormEvent) {
         e.preventDefault(); setError("");
         if (!name.trim()) { setError("Nom kerak"); return; }
-        if (!price || Number(price) < 1) { setError("Narx kerak"); return; }
+        if (hasVariants) {
+            const valid = variants.filter(v => v.name.trim() && Number(v.price) >= 1);
+            if (!valid.length) { setError("Kamida bitta to'liq variant kiriting (nom + narx)"); return; }
+        } else if (!price || Number(price) < 1) { setError("Narx kerak"); return; }
         setSaving(true);
         try {
             const res = await fetch(`/api/market/products/${slug}`, {
                 method: "PATCH", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, description: desc, price, oldPrice: oldPrice || null, stock, category: cat, subcategory: sub || null, images, videos }),
+                body: JSON.stringify({
+                    name, description: desc, price, oldPrice: oldPrice || null, stock,
+                    category: cat, subcategory: sub || null, images, videos,
+                    variantLabel: hasVariants ? variantLabel : null,
+                    variants: hasVariants
+                        ? variants.filter(v => v.name.trim()).map(v => ({
+                            name: v.name, price: Number(v.price) || 0,
+                            oldPrice: v.oldPrice ? Number(v.oldPrice) : null, stock: Number(v.stock) || 0,
+                        }))
+                        : [],
+                }),
             });
             const d = await res.json();
             if (!res.ok) setError(d.error);
@@ -115,26 +140,42 @@ export function ProductEdit({ slug }: { slug: string }) {
                             text-gray-900 dark:text-white font-semibold outline-none transition" />
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                {/* Variant rejimi */}
+                <div className="flex items-center justify-between bg-gray-50/80 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] rounded-2xl px-4 py-3">
                     <div>
-                        <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">Narx (Ƶ) *</label>
-                        <input type="number" min={1} value={price} onChange={e => setPrice(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
-                                focus:border-green-400 dark:focus:border-green-500/50 rounded-2xl px-4 py-3 text-gray-900 dark:text-white font-bold outline-none transition" />
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Variantlar</p>
+                        <p className="text-xs text-gray-400 dark:text-white/30">Rang/o&apos;lcham/xotira — har biriga alohida narx va stock</p>
                     </div>
-                    <div>
-                        <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">Eski narx</label>
-                        <input type="number" min={0} value={oldPrice} onChange={e => setOldPrice(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
-                                focus:border-green-400 dark:focus:border-green-500/50 rounded-2xl px-4 py-3 text-gray-900 dark:text-white outline-none transition" />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">Zaxira</label>
-                        <input type="number" min={0} value={stock} onChange={e => setStock(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
-                                focus:border-green-400 dark:focus:border-green-500/50 rounded-2xl px-4 py-3 text-gray-900 dark:text-white outline-none transition" />
-                    </div>
+                    <button type="button" onClick={() => setHasVariants(v => !v)}
+                        className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${hasVariants ? "bg-green-500" : "bg-gray-300 dark:bg-white/15"}`}>
+                        <span className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white transition-transform ${hasVariants ? "translate-x-5" : ""}`} />
+                    </button>
                 </div>
+
+                {hasVariants ? (
+                    <VariantEditor label={variantLabel} onLabel={setVariantLabel} variants={variants} onChange={setVariants} />
+                ) : (
+                    <div className="grid grid-cols-3 gap-3">
+                        <div>
+                            <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">Narx (Ƶ) *</label>
+                            <input type="number" min={1} value={price} onChange={e => setPrice(e.target.value)}
+                                className="w-full bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
+                                    focus:border-green-400 dark:focus:border-green-500/50 rounded-2xl px-4 py-3 text-gray-900 dark:text-white font-bold outline-none transition" />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">Eski narx</label>
+                            <input type="number" min={0} value={oldPrice} onChange={e => setOldPrice(e.target.value)}
+                                className="w-full bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
+                                    focus:border-green-400 dark:focus:border-green-500/50 rounded-2xl px-4 py-3 text-gray-900 dark:text-white outline-none transition" />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">Zaxira</label>
+                            <input type="number" min={0} value={stock} onChange={e => setStock(e.target.value)}
+                                className="w-full bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
+                                    focus:border-green-400 dark:focus:border-green-500/50 rounded-2xl px-4 py-3 text-gray-900 dark:text-white outline-none transition" />
+                        </div>
+                    </div>
+                )}
 
                 <div>
                     <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">Kategoriya *</label>

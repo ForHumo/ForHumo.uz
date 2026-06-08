@@ -8,7 +8,7 @@ import { Inbox, Loader2, MapPin, Package, Truck, CheckCircle2, XCircle } from "l
 interface SellerOrder {
     id: string; status: string; createdAt: string; address: string; paymentMethod: string;
     buyer: { name: string | null; username: string | null } | null;
-    items: { quantity: number; price: string; product: { name: string; images: string[] } }[];
+    items: { quantity: number; price: string; variantName: string | null; product: { name: string; images: string[] } }[];
     sellerTotal: number;
 }
 
@@ -88,7 +88,10 @@ export function SellerOrders() {
                                             ? <Image src={it.product.images[0]} alt={it.product.name} width={40} height={40} className="w-full h-full object-cover" />
                                             : <div className="w-full h-full" />}
                                     </div>
-                                    <p className="text-sm text-gray-700 dark:text-white/60 flex-1 truncate">{it.product.name}</p>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-gray-700 dark:text-white/60 truncate">{it.product.name}</p>
+                                        {it.variantName && <p className="text-xs text-green-600 dark:text-green-400">{it.variantName}</p>}
+                                    </div>
                                     <span className="text-xs text-gray-400 dark:text-white/30">×{it.quantity}</span>
                                 </div>
                             ))}

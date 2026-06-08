@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 import Image from "next/image";
 import { Star, ShoppingCart, Flame, CheckCircle2, Loader2, Heart } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
@@ -23,6 +23,7 @@ function disc(p: string, o: string | null) {
 export function ProductCard({
     product, index = 0, compact = false, initialLiked = false,
 }: { product: Product; index?: number; compact?: boolean; initialLiked?: boolean }) {
+    const router = useRouter();
     const d = disc(product.price, product.oldPrice);
     const out = (product.stock ?? 1) <= 0;
     const [adding, setAdding]   = useState(false);
@@ -56,6 +57,11 @@ export function ProductCard({
                 body: JSON.stringify({ productId: product.id, quantity: 1 }),
             });
             if (res.ok) { setAdded(true); setTimeout(() => setAdded(false), 2500); }
+            else {
+                const data = await res.json().catch(() => ({}));
+                // Variant tanlash kerak — mahsulot sahifasiga o'tamiz
+                if (data.error && /variant/i.test(data.error)) router.push(`/market/product/${product.slug}`);
+            }
         } finally { setAdding(false); }
     }
 

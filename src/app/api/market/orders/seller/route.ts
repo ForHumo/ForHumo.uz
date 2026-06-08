@@ -37,7 +37,7 @@ export async function GET() {
             id: o.id, status: o.status, createdAt: o.createdAt, address: o.address,
             paymentMethod: o.paymentMethod,
             buyer: bMap[o.profileId] ?? null,
-            items: mine.map(it => ({ quantity: it.quantity, price: it.price, product: it.product })),
+            items: mine.map(it => ({ quantity: it.quantity, price: it.price, variantName: it.variantName, product: it.product })),
             sellerTotal,
         };
     });

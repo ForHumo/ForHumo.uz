@@ -7,7 +7,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ slug: stri
     const { slug } = await params;
     const product = await prisma.marketProduct.findUnique({
         where: { slug, isActive: true },
-        include: { brand: true },
+        include: { brand: true, variants: { orderBy: { sort: "asc" } } },
     });
     if (!product) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -55,8 +55,37 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ slug: 
     if (Array.isArray(b.images) && b.images.length) data.images = b.images;
     if (Array.isArray(b.videos)) data.videos = b.videos.filter((x: unknown) => typeof x === "string");
     if (typeof b.isActive === "boolean") data.isActive = b.isActive;
+    if (b.variantLabel !== undefined) data.variantLabel = b.variantLabel?.trim() || null;
 
-    const updated = await prisma.marketProduct.update({ where: { id: product.id }, data });
+    // Variantlar (berilsa — to'liq almashtiriladi)
+    const variantsInput: Array<{ name?: string; price?: number; oldPrice?: number; stock?: number; image?: string }> | null =
+        Array.isArray(b.variants) ? b.variants : null;
+
+    const updated = await prisma.$transaction(async (tx) => {
+        if (variantsInput) {
+            await tx.marketProductVariant.deleteMany({ where: { productId: product.id } });
+            if (variantsInput.length) {
+                await tx.marketProductVariant.createMany({
+                    data: variantsInput.map((v, i) => ({
+                        productId: product.id,
+                        name: String(v.name ?? "").trim() || `Variant ${i + 1}`,
+                        price: Number(v.price) || 0,
+                        oldPrice: v.oldPrice ? Number(v.oldPrice) : null,
+                        stock: Math.max(0, Number(v.stock) || 0),
+                        image: v.image || null,
+                        sort: i,
+                    })),
+                });
+                // Ro'yxat narxi = eng arzon variant; stock = variantlar yig'indisi
+                const prices = variantsInput.map(v => Number(v.price) || 0).filter(p => p > 0);
+                if (prices.length) data.price = Math.min(...prices);
+                data.stock = variantsInput.reduce((s, v) => s + Math.max(0, Number(v.stock) || 0), 0);
+            } else {
+                data.variantLabel = null;
+            }
+        }
+        return tx.marketProduct.update({ where: { id: product.id }, data });
+    });
     return NextResponse.json({ product: updated });
 }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 type PaymentMethod = "ZIJ" | "CASH_ON_DELIVERY" | "CARD_ON_DELIVERY";
 
@@ -21,16 +22,41 @@ export async function POST(req: Request) {
 
     const cartItems = await prisma.marketCartItem.findMany({
         where: { profileId: profile.id },
-        include: { product: true },
+        include: { product: true, variant: true },
     });
     if (!cartItems.length) return NextResponse.json({ error: "Savat bo'sh" }, { status: 400 });
 
+    // Stock tekshiruvi (variant bo'lsa variant stock'i)
     for (const item of cartItems) {
-        if (item.product.stock < item.quantity)
+        const avail = item.variant ? item.variant.stock : item.product.stock;
+        if (avail < item.quantity)
             return NextResponse.json({ error: `"${item.product.name}": yetarli stock yo'q` }, { status: 400 });
     }
 
-    const total = cartItems.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
+    // Narx variant bo'lsa variantdan
+    const unitPrice = (i: typeof cartItems[number]) => Number(i.variant ? i.variant.price : i.product.price);
+    const total = cartItems.reduce((s, i) => s + unitPrice(i) * i.quantity, 0);
+
+    const orderItemsData = cartItems.map(i => ({
+        productId: i.productId,
+        variantId: i.variantId,
+        variantName: i.variant?.name ?? null,
+        quantity: i.quantity,
+        price: unitPrice(i),
+    }));
+
+    // Stock kamaytirish: variant bo'lsa variant stock, bo'lmasa product stock; product.sold doim oshadi
+    const stockOps: Prisma.PrismaPromise<unknown>[] = cartItems.flatMap(i => {
+        const ops: Prisma.PrismaPromise<unknown>[] = [
+            prisma.marketProduct.update({ where: { id: i.productId }, data: { sold: { increment: i.quantity } } }),
+        ];
+        if (i.variantId) {
+            ops.push(prisma.marketProductVariant.update({ where: { id: i.variantId }, data: { stock: { decrement: i.quantity } } }));
+        } else {
+            ops.push(prisma.marketProduct.update({ where: { id: i.productId }, data: { stock: { decrement: i.quantity } } }));
+        }
+        return ops;
+    });
 
     // Zij to'lov uchun balans tekshirish
     if (paymentMethod === "ZIJ") {
@@ -52,7 +78,7 @@ export async function POST(req: Request) {
                     paymentMethod: "ZIJ",
                     address: address.trim(),
                     note: note?.trim() ?? null,
-                    items: { create: cartItems.map(i => ({ productId: i.productId, quantity: i.quantity, price: i.product.price })) },
+                    items: { create: orderItemsData },
                 },
             }),
             prisma.zijWallet.update({ where: { id: wallet!.id }, data: { balance: newBalance } }),
@@ -62,10 +88,7 @@ export async function POST(req: Request) {
                     description: `Humo Market — ${cartItems.length} ta mahsulot`,
                 },
             }),
-            ...cartItems.map(i => prisma.marketProduct.update({
-                where: { id: i.productId },
-                data: { stock: { decrement: i.quantity }, sold: { increment: i.quantity } },
-            })),
+            ...stockOps,
             prisma.marketCartItem.deleteMany({ where: { profileId: profile.id } }),
         ]);
         return NextResponse.json({ order, newBalance });
@@ -80,13 +103,10 @@ export async function POST(req: Request) {
                 paymentMethod: paymentMethod as "CASH_ON_DELIVERY" | "CARD_ON_DELIVERY",
                 address: address.trim(),
                 note: note?.trim() ?? null,
-                items: { create: cartItems.map(i => ({ productId: i.productId, quantity: i.quantity, price: i.product.price })) },
+                items: { create: orderItemsData },
             },
         }),
-        ...cartItems.map(i => prisma.marketProduct.update({
-            where: { id: i.productId },
-            data: { stock: { decrement: i.quantity }, sold: { increment: i.quantity } },
-        })),
+        ...stockOps,
         prisma.marketCartItem.deleteMany({ where: { profileId: profile.id } }),
     ]);
     return NextResponse.json({ order, newBalance: null });

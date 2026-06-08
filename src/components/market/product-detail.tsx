@@ -15,11 +15,13 @@ import { ProductReviews } from "./product-reviews";
 import { ProductQA } from "./product-qa";
 
 interface Brand { id: string; name: string; slug: string; verified: boolean; logo: string | null; description: string | null; }
+interface Variant { id: string; name: string; price: string; oldPrice: string | null; stock: number; image: string | null; }
 interface Product {
     id: string; name: string; slug: string; description: string | null;
     images: string[]; videos?: string[]; price: string; oldPrice: string | null;
     stock: number; sold: number; rating: number; reviewCount: number;
     category: string; subcategory: string | null; isFeatured: boolean;
+    variantLabel?: string | null; variants?: Variant[];
     brand: Brand;
 }
 
@@ -42,11 +44,16 @@ export function ProductDetail({ slug }: { slug: string }) {
     const [imgIdx, setImgIdx]     = useState(0);
     const [liked, setLiked]       = useState(false);
     const [isOwner, setIsOwner]   = useState(false);
+    const [selVariant, setSelVariant] = useState<string | null>(null);
 
     useEffect(() => {
         fetch(`/api/market/products/${slug}`)
             .then(r => r.json())
-            .then(d => { setProduct(d.product); setSimilar(d.similar ?? []); setIsOwner(d.isOwner ?? false); })
+            .then(d => {
+                setProduct(d.product); setSimilar(d.similar ?? []); setIsOwner(d.isOwner ?? false);
+                const vs: Variant[] = d.product?.variants ?? [];
+                if (vs.length) setSelVariant((vs.find(v => v.stock > 0) ?? vs[0]).id);
+            })
             .finally(() => setLoading(false));
     }, [slug]);
 
@@ -66,7 +73,7 @@ export function ProductDetail({ slug }: { slug: string }) {
             const res = await fetch("/api/market/cart", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productId: product.id, quantity: qty }),
+                body: JSON.stringify({ productId: product.id, quantity: qty, variantId: selVariant }),
             });
             const data = await res.json();
             if (!res.ok) { setAddErr(data.error); }
@@ -83,8 +90,14 @@ export function ProductDetail({ slug }: { slug: string }) {
         <div className="text-center py-20 text-gray-400">Mahsulot topilmadi</div>
     );
 
-    const d = disc(product.price, product.oldPrice);
-    const inStock = product.stock > 0;
+    const variants = product.variants ?? [];
+    const hasVariants = variants.length > 0;
+    const activeVariant = hasVariants ? (variants.find(v => v.id === selVariant) ?? null) : null;
+    const curPrice = activeVariant ? activeVariant.price : product.price;
+    const curOld = activeVariant ? activeVariant.oldPrice : product.oldPrice;
+    const curStock = activeVariant ? activeVariant.stock : product.stock;
+    const inStock = hasVariants ? (activeVariant ? activeVariant.stock > 0 : variants.some(v => v.stock > 0)) : product.stock > 0;
+    const d = disc(curPrice, curOld);
 
     return (
         <div className="container mx-auto px-4 max-w-6xl py-8">
@@ -184,14 +197,15 @@ export function ProductDetail({ slug }: { slug: string }) {
 
                     {/* Narx */}
                     <div className="flex items-baseline gap-3 mb-6">
+                        {hasVariants && !activeVariant && <span className="text-sm text-gray-400 dark:text-white/30">dan</span>}
                         <span className="text-4xl font-black text-transparent bg-clip-text
                             bg-gradient-to-r from-green-600 to-emerald-500
                             dark:from-green-400 dark:to-emerald-300">
-                            {fz(product.price)}
+                            {fz(curPrice)}
                         </span>
                         <span className="text-xl font-bold text-green-500 dark:text-green-400">Ƶ</span>
-                        {product.oldPrice && (
-                            <span className="text-lg text-gray-400 line-through">{fz(product.oldPrice)} Ƶ</span>
+                        {curOld && (
+                            <span className="text-lg text-gray-400 line-through">{fz(curOld)} Ƶ</span>
                         )}
                     </div>
 
@@ -203,11 +217,35 @@ export function ProductDetail({ slug }: { slug: string }) {
                         </p>
                     )}
 
+                    {/* Variant tanlash */}
+                    {hasVariants && (
+                        <div className="mb-5">
+                            {product.variantLabel && (
+                                <p className="text-sm font-semibold text-gray-700 dark:text-white/60 mb-2">{product.variantLabel}:</p>
+                            )}
+                            <div className="flex flex-wrap gap-2">
+                                {variants.map(v => {
+                                    const on = v.id === selVariant;
+                                    const oos = v.stock <= 0;
+                                    return (
+                                        <button key={v.id} onClick={() => !oos && setSelVariant(v.id)} disabled={oos}
+                                            className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-all
+                                                ${on ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                                                    : oos ? "border-gray-200 dark:border-white/[0.06] text-gray-300 dark:text-white/15 line-through cursor-not-allowed"
+                                                        : "border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-white/50 hover:border-green-300 dark:hover:border-green-600/40"}`}>
+                                            {v.name}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Stock */}
                     <div className={`flex items-center gap-2 mb-5 text-sm font-semibold
                         ${inStock ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
                         <Package size={15} />
-                        {inStock ? `Mavjud (${product.stock} ta)` : "Tugagan"}
+                        {inStock ? `Mavjud (${curStock} ta)` : "Tugagan"}
                     </div>
 
                     {/* Miqdor + Savatga */}
@@ -223,7 +261,7 @@ export function ProductDetail({ slug }: { slug: string }) {
                                     <Minus size={15} />
                                 </button>
                                 <span className="w-10 text-center font-bold text-gray-900 dark:text-white text-sm">{qty}</span>
-                                <button onClick={() => setQty(q => Math.min(product.stock, q + 1))}
+                                <button onClick={() => setQty(q => Math.min(curStock, q + 1))}
                                     className="w-11 h-11 flex items-center justify-center
                                         text-gray-500 hover:text-gray-800 dark:text-white/40 dark:hover:text-white
                                         hover:bg-gray-200/80 dark:hover:bg-white/[0.08] transition-colors">

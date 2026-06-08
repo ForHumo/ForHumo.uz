@@ -18,7 +18,8 @@ interface CartProduct {
     images: string[]; stock: number;
     brand: { name: string; slug: string; verified: boolean };
 }
-interface CartItem { id: string; productId: string; quantity: number; product: CartProduct; }
+interface CartVariant { id: string; name: string; price: string; stock: number; image: string | null; }
+interface CartItem { id: string; productId: string; quantity: number; product: CartProduct; variant?: CartVariant | null; }
 
 interface Order {
     id: string; total: string; status: string; paymentMethod: string;
@@ -122,15 +123,16 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
         }).finally(() => setLoading(false));
     }, []);
 
-    const total = items.reduce((s, i) => s + Number(i.product.price) * i.quantity, 0);
+    const itemPrice = (i: CartItem) => Number(i.variant ? i.variant.price : i.product.price);
+    const total = items.reduce((s, i) => s + itemPrice(i) * i.quantity, 0);
 
     async function updateQty(item: CartItem, delta: number) {
         const newQty = item.quantity + delta;
-        if (newQty < 1) return removeItem(item.productId);
-        setItems(prev => prev.map(i => i.productId === item.productId ? { ...i, quantity: newQty } : i));
+        if (newQty < 1) return removeItem(item.id);
+        setItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
         await fetch("/api/market/cart", {
             method: "PATCH", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productId: item.productId, quantity: newQty }),
+            body: JSON.stringify({ id: item.id, quantity: newQty }),
         });
     }
 
@@ -147,11 +149,11 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
         if (res.ok) setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: "CANCELLED" } : o));
     }
 
-    async function removeItem(productId: string) {
-        setItems(prev => prev.filter(i => i.productId !== productId));
+    async function removeItem(id: string) {
+        setItems(prev => prev.filter(i => i.id !== id));
         await fetch("/api/market/cart", {
             method: "DELETE", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productId }),
+            body: JSON.stringify({ id }),
         });
     }
 
@@ -258,7 +260,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                             <div className="lg:col-span-2 space-y-3">
                                 <AnimatePresence>
                                     {items.map((item) => (
-                                        <motion.div key={item.productId} layout
+                                        <motion.div key={item.id} layout
                                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, x: -20 }}
                                             className="flex gap-4 bg-white/70 dark:bg-white/[0.03]
@@ -282,10 +284,15 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                                 </div>
                                                 <Link href={`/market/product/${item.product.slug}`}>
                                                     <p className="text-sm font-semibold text-gray-900 dark:text-white
-                                                        hover:text-green-600 dark:hover:text-green-400 transition-colors line-clamp-2 mb-2">
+                                                        hover:text-green-600 dark:hover:text-green-400 transition-colors line-clamp-2 mb-1">
                                                         {item.product.name}
                                                     </p>
                                                 </Link>
+                                                {item.variant && (
+                                                    <span className="inline-block text-[11px] font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/15 rounded-lg px-2 py-0.5 mb-2">
+                                                        {item.variant.name}
+                                                    </span>
+                                                )}
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center bg-gray-100 dark:bg-white/[0.05] rounded-xl overflow-hidden">
                                                         <button onClick={() => updateQty(item, -1)}
@@ -300,11 +307,11 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                                     </div>
                                                     <span className="font-black text-transparent bg-clip-text
                                                         bg-gradient-to-r from-green-600 to-emerald-500 dark:from-green-400 dark:to-emerald-300">
-                                                        {fz(Number(item.product.price) * item.quantity)} Ƶ
+                                                        {fz(itemPrice(item) * item.quantity)} Ƶ
                                                     </span>
                                                 </div>
                                             </div>
-                                            <button onClick={() => removeItem(item.productId)}
+                                            <button onClick={() => removeItem(item.id)}
                                                 className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center
                                                     text-gray-400 dark:text-white/25 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all">
                                                 <Trash2 size={15} />

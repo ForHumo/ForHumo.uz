@@ -398,6 +398,8 @@ model MarketProduct {
   category    String            // asosiy kategoriya slug
   subcategory String?           // kichik kategoriya slug
 
+  variantLabel String?          // variant guruh nomi, masalan "O'lcham" yoki "Rang" (null = variantsiz)
+
   isActive    Boolean  @default(true)
   isFeatured  Boolean  @default(false)
 
@@ -409,6 +411,23 @@ model MarketProduct {
   wishlists   MarketWishlist[]
   reviews     MarketReview[]
   questions   MarketProductQuestion[]
+  variants    MarketProductVariant[]
+}
+
+// Mahsulot varianti (rang/o'lcham/xotira...) — har biriga alohida narx va stock
+model MarketProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  product   MarketProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String        // ko'rsatiladigan nom: "Qora / XL", "256 GB"
+  price     Decimal  @db.Decimal(18, 2)
+  oldPrice  Decimal? @db.Decimal(18, 2)
+  stock     Int      @default(0)
+  image     String?
+  sort      Int      @default(0)
+  createdAt DateTime @default(now())
+  cartItems MarketCartItem[]
+  @@index([productId])
 }
 
 // Mahsulotga savol (harid shart emas — sotib olishdan oldin so'raladi)
@@ -439,10 +458,12 @@ model MarketCartItem {
   profileId String
   productId String
   product   MarketProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId String?
+  variant   MarketProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
   quantity  Int      @default(1)
   createdAt DateTime @default(now())
 
-  @@unique([profileId, productId])
+  @@unique([profileId, productId, variantId])
 }
 
 model MarketOrder {
@@ -465,13 +486,15 @@ enum MarketPaymentMethod {
 }
 
 model MarketOrderItem {
-  id         String   @id @default(cuid())
-  orderId    String
-  order      MarketOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId  String
-  product    MarketProduct @relation(fields: [productId], references: [id])
-  quantity   Int
-  price      Decimal  @db.Decimal(18, 2)   // sotib olingan paytdagi narx
+  id          String   @id @default(cuid())
+  orderId     String
+  order       MarketOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     MarketProduct @relation(fields: [productId], references: [id])
+  variantId   String?       // tanlangan variant (agar bor bo'lsa)
+  variantName String?       // denormalizatsiya — variant o'chsa ham tarix saqlanadi
+  quantity    Int
+  price       Decimal  @db.Decimal(18, 2)   // sotib olingan paytdagi narx
 }
 
 enum MarketOrderStatus {
