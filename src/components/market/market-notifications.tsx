@@ -6,7 +6,7 @@ import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import {
     Bell, ThumbsUp, MessageSquare, Star, Package,
-    CheckCircle2, Loader2, ChevronRight, BadgeCheck, Truck, HelpCircle,
+    CheckCircle2, Loader2, ChevronRight, BadgeCheck, Truck, HelpCircle, CheckCheck,
 } from "lucide-react";
 
 type NotifType = "REVIEW_LIKE" | "PRODUCT_REVIEW" | "BRAND_REVIEW"
@@ -43,14 +43,32 @@ function timeAgo(d: string) {
 export function MarketNotifications() {
     const [items, setItems] = useState<Notif[]>([]);
     const [loading, setLoading] = useState(true);
+    const [marking, setMarking] = useState(false);
 
     useEffect(() => {
         fetch("/api/market/notifications").then(r => r.json())
             .then(d => setItems(d.items ?? []))
             .finally(() => setLoading(false));
-        // Ochilganda barchasini o'qilgan deb belgilash
-        fetch("/api/market/notifications/read", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
     }, []);
+
+    const unreadCount = items.filter(n => !n.read).length;
+
+    async function markAll() {
+        setMarking(true);
+        try {
+            const res = await fetch("/api/market/notifications/read", {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: "{}",
+            });
+            if (res.ok) setItems(prev => prev.map(n => ({ ...n, read: true })));
+        } finally { setMarking(false); }
+    }
+
+    function markOne(id: string) {
+        setItems(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+        fetch("/api/market/notifications/read", {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }),
+        }).catch(() => {});
+    }
 
     return (
         <div className="container mx-auto px-4 max-w-2xl py-8">
@@ -60,9 +78,22 @@ export function MarketNotifications() {
                 <span className="text-gray-600 dark:text-white/50">Bildirishnomalar</span>
             </nav>
 
-            <div className="flex items-center gap-3 mb-6">
-                <Bell size={20} className="text-green-500" />
-                <h1 className="text-2xl font-black text-gray-900 dark:text-white">Bildirishnomalar</h1>
+            <div className="flex items-center justify-between gap-3 mb-6">
+                <div className="flex items-center gap-3">
+                    <Bell size={20} className="text-green-500" />
+                    <h1 className="text-2xl font-black text-gray-900 dark:text-white">Bildirishnomalar</h1>
+                    {unreadCount > 0 && (
+                        <span className="text-xs font-bold bg-green-500 text-white rounded-full px-2 py-0.5">{unreadCount}</span>
+                    )}
+                </div>
+                {unreadCount > 0 && (
+                    <button onClick={markAll} disabled={marking}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-500/10 text-green-600 dark:text-green-400
+                            font-semibold text-xs hover:bg-green-500/20 disabled:opacity-40 transition-all shrink-0">
+                        {marking ? <Loader2 size={13} className="animate-spin" /> : <CheckCheck size={13} />}
+                        Barchasini o&apos;qilgan
+                    </button>
+                )}
             </div>
 
             {loading ? (
@@ -97,7 +128,8 @@ export function MarketNotifications() {
                             </div>
                         );
                         return (
-                            <motion.div key={n.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}>
+                            <motion.div key={n.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
+                                onClick={() => { if (!n.read) markOne(n.id); }} className="cursor-pointer">
                                 {n.link ? <Link href={n.link}>{inner}</Link> : inner}
                             </motion.div>
                         );

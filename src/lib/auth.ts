@@ -33,8 +33,16 @@ export const authOptions: NextAuthOptions = {
                             lastLoginAt: new Date(),
                             ...(isGoogle ? { emailVerified: true } : {}),
                         },
-                        select: { id: true, level: true },
+                        select: { id: true, level: true, image: true },
                     });
+                    // Google profil rasmini saqlash (boshqalar sharh/brendlarda ko'rishi uchun).
+                    // Faqat hali avatar bo'lmasa — qo'lda yuklangan avatarni qoplamaymiz.
+                    if (user.image && !profile.image) {
+                        await prisma.userProfile.update({
+                            where: { id: profile.id },
+                            data:  { image: user.image },
+                        });
+                    }
                     // Promote to level 1 (email verified) without downgrading KYC users
                     if (isGoogle && profile.level < 1) {
                         await prisma.userProfile.update({

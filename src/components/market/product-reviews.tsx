@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { Link } from "@/i18n/routing";
 import {
     Star, MessageSquare, Loader2, Send, Lock, ThumbsUp,
     Reply as ReplyIcon, Store, Pencil, Trash2, AlertCircle,
@@ -54,6 +55,20 @@ function timeAgo(d: string) {
     const h = Math.floor(m / 60);
     if (h < 24) return `${h} soat`;
     return new Date(d).toLocaleDateString("uz-UZ");
+}
+
+// Muallif ismi — username bo'lsa ommaviy profilga havola
+function AuthorName({ author, className }: { author: Author | null; className?: string }) {
+    const label = author?.name ?? author?.username ?? "Foydalanuvchi";
+    if (author?.username) {
+        return (
+            <Link href={`/market/u/${author.username}`} onClick={e => e.stopPropagation()}
+                className={`hover:text-green-600 dark:hover:text-green-400 hover:underline transition-colors ${className ?? ""}`}>
+                {label}
+            </Link>
+        );
+    }
+    return <span className={className}>{label}</span>;
 }
 
 // ── O'z elementini boshqarish (tahrir / o'chirish) ─────────────────────────────
@@ -182,7 +197,7 @@ function ReplyNode({ reply, reviewId, childrenOf, onNewReply, onChanged }: {
                             ? "bg-green-50 dark:bg-green-900/15 border border-green-200/60 dark:border-green-800/30"
                             : "bg-gray-50 dark:bg-white/[0.04]"}`}>
                             <p className="text-xs font-semibold text-gray-900 dark:text-white flex items-center gap-1.5 flex-wrap">
-                                {reply.author?.name ?? reply.author?.username ?? "Foydalanuvchi"}
+                                <AuthorName author={reply.author} />
                                 {reply.isAuthor && (
                                     <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-500 text-white text-[9px] font-bold">
                                         <Store size={9} /> Sotuvchi
@@ -391,7 +406,7 @@ export function ProductReviews({ productId }: { productId: string }) {
                                         <div className="flex items-center gap-3 mb-2">
                                             <Avatar author={r.author} />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{r.author?.name ?? r.author?.username ?? "Foydalanuvchi"}</p>
+                                                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate"><AuthorName author={r.author} /></p>
                                                 <div className="flex items-center gap-0.5">
                                                     {[1,2,3,4,5].map(s => <Star key={s} size={11} className={s <= r.rating ? "text-amber-400 fill-amber-400" : "text-gray-200 dark:text-white/10"} />)}
                                                 </div>

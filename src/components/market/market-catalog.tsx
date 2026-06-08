@@ -200,6 +200,8 @@ export function MarketCatalog() {
                         <div className="relative flex-1 min-w-48">
                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                             <input value={search} onChange={e => setSearch(e.target.value)}
+                                type="search" name="catalog-search" autoComplete="off" autoCorrect="off" spellCheck={false}
+                                data-1p-ignore data-lpignore="true"
                                 onKeyDown={e => e.key === "Enter" && loadFirst()}
                                 placeholder="Qidirish..."
                                 className="w-full bg-gray-50/90 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]

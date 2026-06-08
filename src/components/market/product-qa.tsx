@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { Link } from "@/i18n/routing";
 import { HelpCircle, Loader2, Send, Store, MessageCircle, Lock } from "lucide-react";
 
 interface Author { name: string | null; username: string | null; image: string | null }
@@ -25,6 +26,19 @@ function timeAgo(d: string) {
     const h = Math.floor(m / 60);
     if (h < 24) return `${h} soat`;
     return new Date(d).toLocaleDateString("uz-UZ");
+}
+
+function AuthorName({ author }: { author: Author | null }) {
+    const label = author?.name ?? author?.username ?? "Foydalanuvchi";
+    if (author?.username) {
+        return (
+            <Link href={`/market/u/${author.username}`}
+                className="hover:text-green-600 dark:hover:text-green-400 hover:underline transition-colors">
+                {label}
+            </Link>
+        );
+    }
+    return <>{label}</>;
 }
 
 function AnswerForm({ questionId, onDone }: { questionId: string; onDone: (a: AnswerT) => void }) {
@@ -145,7 +159,7 @@ export function ProductQA({ productId }: { productId: string }) {
                                 <Avatar author={q.author} />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
-                                        {q.author?.name ?? q.author?.username ?? "Foydalanuvchi"}
+                                        <AuthorName author={q.author} />
                                         <span className="text-gray-300 dark:text-white/20 font-normal text-xs">{timeAgo(q.createdAt)}</span>
                                     </p>
                                     <p className="text-sm text-gray-700 dark:text-white/70 mt-0.5 font-medium">{q.text}</p>
@@ -158,7 +172,7 @@ export function ProductQA({ productId }: { productId: string }) {
                                                 ? "bg-green-50 dark:bg-green-900/15 border border-green-200/60 dark:border-green-800/30"
                                                 : "bg-gray-50 dark:bg-white/[0.04]"}`}>
                                                 <p className="text-xs font-semibold text-gray-900 dark:text-white flex items-center gap-1.5 flex-wrap">
-                                                    {a.author?.name ?? a.author?.username ?? "Foydalanuvchi"}
+                                                    <AuthorName author={a.author} />
                                                     {a.isAuthor && (
                                                         <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-500 text-white text-[9px] font-bold">
                                                             <Store size={9} /> Sotuvchi

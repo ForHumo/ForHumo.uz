@@ -238,6 +238,13 @@ export function MarketNavbar() {
                                 className="absolute left-3.5 top-1/2 -translate-y-1/2
                                     text-gray-400 dark:text-white/25 pointer-events-none" />
                             <input
+                                type="search"
+                                name="market-search"
+                                autoComplete="off"
+                                autoCorrect="off"
+                                spellCheck={false}
+                                data-1p-ignore
+                                data-lpignore="true"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                                 onKeyDown={e => e.key === "Enter" && runSearch()}

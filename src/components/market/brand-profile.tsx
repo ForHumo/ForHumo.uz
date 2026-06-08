@@ -132,12 +132,24 @@ export function BrandProfile({ slug }: { slug: string }) {
 
                 {/* Egasi + sana */}
                 <div className="flex items-center gap-4 mb-8 text-xs text-gray-400 dark:text-white/30">
-                    {owner && (
-                        <span className="flex items-center gap-1.5">
-                            <Users size={12} />
-                            {owner.name ?? `@${owner.username}`}
-                        </span>
-                    )}
+                    {owner && (() => {
+                        const inner = (
+                            <>
+                                {owner.image
+                                    ? <Image src={owner.image} alt="" width={20} height={20} className="w-5 h-5 rounded-full object-cover" />
+                                    : <Users size={12} />}
+                                {owner.name ?? `@${owner.username}`}
+                            </>
+                        );
+                        return owner.username ? (
+                            <Link href={`/market/u/${owner.username}`}
+                                className="flex items-center gap-1.5 hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                                {inner}
+                            </Link>
+                        ) : (
+                            <span className="flex items-center gap-1.5">{inner}</span>
+                        );
+                    })()}
                     <span className="flex items-center gap-1.5">
                         <Calendar size={12} />
                         Humo Market'da: {new Date(brand.createdAt).toLocaleDateString("uz-UZ")}
