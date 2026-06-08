@@ -95,10 +95,11 @@ Bu qismni tushunish uchun bir nechta faylni birga o'qish kerak. Eng muhim naqshl
 
 **Humo ID:** `UserProfile`, `LoginEvent`, `SupportTicket`, `EmailVerificationCode`
 **Esport:** `User`, `PlayerProfile`, `Team`, `TeamInvite`, `TeamMember`, `JoinRequest`, `Tournament`, `TournamentTeam`, `TournamentMatch`, `TournamentStanding`
-**Market:** `MarketBrand` (+`categories[]`), `MarketProduct` (+`videos[]`, `variantLabel`), `MarketProductVariant` (narx/stock har biriga), `MarketCartItem` (+`variantId`), `MarketOrder` (+`discount`/`promoCode`/`settledAt`), `MarketOrderItem` (+`variantId`/`variantName`), `MarketWishlist`, `MarketReview` (+`media[]`), `MarketReviewReply` (cheksiz ichma-ich `parentId`), `MarketReviewLike`, `MarketBrandReview`, `MarketProductQuestion`, `MarketProductAnswer`, `MarketNotification`, `MarketPromoCode`, `MarketReport`
+**Market:** `MarketBrand` (+`categories[]`), `MarketProduct` (+`videos[]`, `variantLabel`), `MarketProductVariant` (narx/stock har biriga), `MarketCartItem` (+`variantId`), `MarketOrder` (+`discount`/`promoCode`/`settledAt`), `MarketOrderItem` (+`variantId`/`variantName`), `MarketWishlist`, `MarketReview` (+`media[]`), `MarketReviewReply` (cheksiz ichma-ich `parentId`), `MarketReviewLike`, `MarketBrandReview`, `MarketProductQuestion`, `MarketProductAnswer`, `MarketNotification`, `MarketPromoCode`
 **Nexus:** `NexusPost` (+`marketProductId` — shoppable), `NexusLike`, `NexusSave`, `NexusComment` (`parentId`), `NexusFollow`
+**Moderatsiya:** `ModerationFlag` (Market+Nexus yagona — eski `MarketReport` o'rnida; AI verdict + shikoyat soni + status). `hidden` boolean qo'shilgan: `MarketReview`/`MarketReviewReply`/`MarketProductQuestion`/`MarketProductAnswer`/`NexusPost`/`NexusComment` (mahsulot uchun mavjud `isActive`)
 **Pay:** `ZijWallet`, `ZijTransaction`, `ZijSafe`
-**Enum'lar:** `TeamRole`, `JoinRequestStatus`, `UserRole`, `TournamentStatus`, `MarketPaymentMethod`, `MarketOrderStatus`, `MarketNotifType` (+ORDER_UPDATE/QUESTION/ANSWER), `MarketPromoType`, `MarketReportTarget`, `ZijTransactionType` (+REFUND/SALE)
+**Enum'lar:** `TeamRole`, `JoinRequestStatus`, `UserRole`, `TournamentStatus`, `MarketPaymentMethod`, `MarketOrderStatus`, `MarketNotifType` (+ORDER_UPDATE/QUESTION/ANSWER), `MarketPromoType`, `ModerationStatus` (PENDING/KEPT/HIDDEN/AUTO_HIDDEN), `ModerationVerdict` (OK/REVIEW/BLOCK), `ZijTransactionType` (+REFUND/SALE)
 
 > Eslatma: Nexus'ning **core feed**i (post/like/izoh/follow) real DB'da. Qolgan komponentlar (stories/live/music/...) hali mock. "coins" (`nx-gifts.tsx`) — tizim valyutasi emas, demo `useState` (UZS da).
 
@@ -111,7 +112,8 @@ Bu qismni tushunish uchun bir nechta faylni birga o'qish kerak. Eng muhim naqshl
 | **Market** | `/market`, `/catalog`, `/cart`, `/orders`, `/wishlist`, `/product/[slug]`(+`/edit`), `/product/add`, `/brand/manage`, `/brand/[slug]`, `/profile`, `/profile/activity`, `/notifications`, `/dashboard`, `/u/[username]` | `api/market/*` to'liq | ✅ Tayyor (test) | Sharh tahrir/o'chirish, pagination, **variantlar** (rang/o'lcham, narx+stock), **Q&A**, **buyurtma kuzatuvi** (stepper+sotuvchi boshqaruvi), bekor→Zij qaytarish, oversell guard (atomik), **promokod** (founder), **sotuvchi dashboard**, **payout** (escrow 5%), shikoyat/flag, ommaviy profil. **Real launch'ga qoldi:** to'lov gateway, KYC, yetkazish |
 | **Pay (ALKH)** | `/pay` | `api/pay/*` (deposit/transfer/safe/wallet) | 🟡 Funksional | Deposit **test rejim**, withdraw o'chirilgan. ⚠️ `alkh-pay-content.tsx` `TX_META` har bir `ZijTransactionType`ni qamrashi shart (fallback bor) |
 | **Nexus** | `/nexus` (feed: `nx-views` → "posts") | `api/nexus/*` (core) | 🟡 Core real | Feed/post/like/save/izoh/follow + **Nexus×Market** ("Sotib olish") real. Qolgan ~60 komponent hali mock |
-| **AI** | `/ai` (iframe), `api/ai/*` (Gemini) | `lib/ai.ts` (Gemini), `lib/ai-moderator.ts` (esport evristik) | 🟢 Real (Market) | Market AI: listing yordamchisi, NL qidiruv, chat yordamchi — Gemini orqali. `/ai-static/` esa alohida iframe ilova |
+| **AI** | `/ai` (iframe), `api/ai/*` (Gemini) | `lib/ai.ts`, `lib/ai-moderate.ts` (kontent moderatsiya), `lib/moderation.ts` | 🟢 Real | Market AI: listing/NL qidiruv/chat. **AI moderatsiya:** pre-publish + reaktiv (shikoyat) + avto-yashirish. ⚠️ `lib/ai-moderator.ts` boshqa narsa (esport o'yin evristikasi) |
+| **Admin** | `/admin/moderation` | `api/admin/moderation/*` | 🟢 Real | Founder-gated moderatsiya navbati (`lib/admin-guard.ts` + `lib/founders.ts`). AI verdict + shikoyatlar; Saqlash/Yashirish |
 | **Statik** | `/faq`, `/support`, `/privacy-policy`, `/coming-soon` | `api/support/contact` | ✅ Tayyor | — |
 
 ## Environment o'zgaruvchilari
@@ -166,6 +168,7 @@ VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
 - **Google rasm backfill:** `auth.ts signIn` da `image` null bo'lsa Google rasmi yoziladi (boshqalar sharh/postlarda ko'rishi uchun). Eski hisoblar uchun re-login kerak.
 - **Verified (ko'k belgi):** `src/lib/nexus.ts isVerifiedProfile()` — hozircha founders.
 - **AI (Gemini):** `src/lib/ai.ts` — REST wrapper (`aiText`/`aiJSON`/`aiVisionJSON`/`aiChatJSON`), 503/429 retry. Endpointlar: `api/ai/listing` (mahsulot tavsifi+vision), `api/ai/search` (NL→filtr→mahsulot), `api/ai/chat` (suhbat+tavsiya). Kalit yo'q bo'lsa 503 (`aiAvailable()`). ⚠️ **Model nomi eskiradi**: `gemini-2.0-flash` 2026'da retired (404) → `gemini-2.5-flash-lite`. Yangi model kerak bo'lsa: `GET .../v1beta/models?key=` bilan ro'yxatni tekshir, `GEMINI_MODEL` env bilan o'zgartir. UI: product-add/edit "AI bilan yozish", navbar ✨ → `/market/ai-search`, suzuvchi Bot → `/market/assistant`.
+- **AI moderatsiya:** `lib/ai-moderate.ts` `moderateContent()` (Gemini vision, fail-open→`null`), `lib/moderation.ts` `applyModeration()`/`moderateOnCreate()`/`hideTarget()`. Tetik: **pre-publish** (yaratish route'larida Next 15 `after()` bilan — javobni kechiktirmaydi) + **reaktiv** (`api/market/report`, `api/nexus/report`). `BLOCK`+severity≥`AUTO_HIDE_SEVERITY`(0.8) → avto-yashirish (mahsulot `isActive=false`, qolgani `hidden=true`); aks holda `ModerationFlag` PENDING. ⚠️ Yangi kontent o'qish so'rovi `hidden:false` (mahsulot `isActive:true`) bilan filtrlanishi SHART. Admin navbat: `/admin/moderation` (founder-gated, `lib/admin-guard.ts`). `lib/founders.ts` — yagona founder ro'yxati (`nexus.ts` shundan oladi).
 
 ## Ish uslubi (workflow) — MUHIM
 
