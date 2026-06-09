@@ -14,6 +14,7 @@ export interface NxTrack {
     src?: string;
 }
 export interface NxVideo {
+    id?: string;                                    // real video id (NxVideoPlayer shu bo'yicha yuklaydi)
     title: string; author: string; avatar: string;
     image: string; views: string; duration: string; category?: string;
 }

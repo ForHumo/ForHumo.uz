@@ -714,6 +714,59 @@ model NexusMessage {
   @@index([conversationId, createdAt])
 }
 
+// ── Nexus Video — to'liq video (LONG) va Shorts (SHORT) ──────────────────────
+model NexusVideo {
+  id          String         @id @default(cuid())
+  profileId   String                                // kanal / yuklovchi
+  title       String
+  description String?
+  videoUrl    String                                // Vercel Blob MP4 URL
+  thumbUrl    String?                               // client'da olingan thumbnail
+  durationSec Int            @default(0)
+  kind        NexusVideoKind @default(LONG)
+  category    String?
+  views       Int            @default(0)
+  hidden      Boolean        @default(false)         // moderatsiya
+  createdAt   DateTime       @default(now())
+  likes       NexusVideoLike[]
+  comments    NexusVideoComment[]
+  @@index([kind, createdAt])
+  @@index([profileId, createdAt])
+}
+
+enum NexusVideoKind {
+  LONG
+  SHORT
+}
+
+model NexusVideoView {
+  id        String   @id @default(cuid())
+  videoId   String
+  profileId String
+  createdAt DateTime @default(now())
+  @@unique([videoId, profileId])
+  @@index([videoId])
+}
+
+model NexusVideoLike {
+  id        String     @id @default(cuid())
+  videoId   String
+  video     NexusVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  profileId String
+  createdAt DateTime   @default(now())
+  @@unique([videoId, profileId])
+}
+
+model NexusVideoComment {
+  id        String     @id @default(cuid())
+  videoId   String
+  video     NexusVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  profileId String
+  text      String
+  createdAt DateTime   @default(now())
+  @@index([videoId, createdAt])
+}
+
 // ── ALKH Pay — Zij valyuta hamyoni ───────────────────────────────────────────
 //
 // Zij (Ƶ) — ALKH Pay ichki valyutasi.

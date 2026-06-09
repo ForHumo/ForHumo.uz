@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import {
-    Search, TrendingUp, Flame, Clock, Zap,
+    TrendingUp, Flame, Clock,
     Film, Music2, Headphones, BookOpen, Mic2,
     Radio, Users, Hash, MessageCircle, Bot, Gift, Trophy,
     Shield, Heart, UserCheck, CreditCard,
@@ -13,9 +13,9 @@ import {
     ShoppingBag, Wallet, Download, Briefcase, Calendar, Video, Play, ExternalLink,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
-import { useNxPlayer, type NxShort } from "./nx-player-ctx";
+import { useNxPlayer } from "./nx-player-ctx";
 import { NxRow } from "./nx-row";
-import { VideoCard, ShortCard, LiveCard, MusicCard, BookCard } from "./nx-cards";
+import { VideoCard, LiveCard, MusicCard, BookCard } from "./nx-cards";
 import { NxStories } from "./nx-stories";
 import { NxHero } from "./nx-hero";
 import { NxFeed } from "./nx-feed";
@@ -53,31 +53,7 @@ function ViewHeader({ title, accent, desc, children }: {
     );
 }
 
-function SearchBar({ placeholder }: { placeholder: string }) {
-    return (
-        <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgba(43,62,232,0.55)" }} />
-            <input
-                type="text"
-                placeholder={placeholder}
-                className="w-full h-11 rounded-xl pl-11 pr-4 text-sm text-white outline-none transition-all duration-200"
-                style={{
-                    background: "rgba(5,8,24,0.60)",
-                    border: "1px solid rgba(43,62,232,0.22)",
-                    caretColor: "#00CEC8",
-                }}
-                onFocus={e => {
-                    e.currentTarget.style.borderColor = "rgba(43,62,232,0.55)";
-                    e.currentTarget.style.background = "rgba(5,8,24,0.80)";
-                }}
-                onBlur={e => {
-                    e.currentTarget.style.borderColor = "rgba(43,62,232,0.22)";
-                    e.currentTarget.style.background = "rgba(5,8,24,0.60)";
-                }}
-            />
-        </div>
-    );
-}
+// SearchBar Video bo'limi bilan birga nx-video-view.tsx ga ko'chirildi
 
 function FilterChips({ items }: { items: { icon: React.ElementType; label: string }[] }) {
     const [active, setActive] = useState(0);
@@ -145,70 +121,9 @@ export function FeedView() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VIDEO VIEW
+// VIDEO VIEW — real (nx-video-view.tsx)
 // ─────────────────────────────────────────────────────────────────────────────
-const VIDEO_SHORTS: NxShort[] = Array.from({ length: 10 }, (_, i) => ({
-    image:    `https://picsum.photos/seed/vs${i + 80}/400/711`,
-    author:   `@talent_${i + 1}`,
-    views:    `${(i + 1) * 200}K`,
-    likes:    `${(i + 1) * 25}K`,
-    duration: `0:${String(20 + i * 4).padStart(2, "0")}`,
-}));
-
-export function VideoView() {
-    const { openShorts, setExploreOpen, setSubsOpen } = useNxPlayer();
-    return (
-        <ViewShell>
-            <ViewHeader
-                title={<>Video <span style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Dunyo</span></>}
-                desc="G. videolar, Shorts va professional kontentlar"
-            >
-                <div className="flex flex-col gap-3">
-                    <SearchBar placeholder="Video yoki kanal qidiring..." />
-                    <FilterChips items={[
-                        { icon: Flame,      label: "Trendda"    },
-                        { icon: Zap,        label: "Yangi"      },
-                        { icon: TrendingUp, label: "O'sish"     },
-                        { icon: Clock,      label: "Ko'rilmagan"},
-                        { icon: Hash,       label: "Gaming"     },
-                        { icon: Hash,       label: "Tech"       },
-                        { icon: Hash,       label: "Ta'lim"     },
-                    ]} />
-                </div>
-            </ViewHeader>
-
-            <NxRow title="Tavsiya etilgan" onSeeAll={() => setExploreOpen(true)}>
-                {Array.from({ length: 7 }, (_, i) => (
-                    <VideoCard key={i}
-                        title={["Nexus SDK — To'liq qo'llanma", "O'zbekiston AI ekotizimi", "React 19 amaliy", "Kino yaratish asoslari", "Musiqa produksiyasi", "Startup qurish", "UX dizayn sirlari"][i]}
-                        image={`https://picsum.photos/seed/vv${i + 70}/800/450`}
-                        views={`${(i + 2) * 78}K`} duration={`${12 + i * 2}:${String(i * 11 % 60).padStart(2, "0")}`}
-                        author={["Dev UZ", "AI Hub", "Sardor K.", "Film Lab", "Beat Studio", "Startup UZ", "UX School"][i]}
-                        avatar={`https://api.dicebear.com/9.x/avataaars/svg?seed=vauthor${i}`}
-                    />
-                ))}
-            </NxRow>
-
-            <NxRow title="Shorts" accent="linear-gradient(180deg,#8B5CF6,#6366F1)" onSeeAll={() => openShorts(VIDEO_SHORTS, 0)}>
-                {VIDEO_SHORTS.map((s, i) => (
-                    <ShortCard key={i} {...s} onClick={() => openShorts(VIDEO_SHORTS, i)} />
-                ))}
-            </NxRow>
-
-            <NxRow title="Obuna bo'lganlar" onSeeAll={() => setSubsOpen(true)}>
-                {Array.from({ length: 6 }, (_, i) => (
-                    <VideoCard key={i}
-                        title={`Yangi video — ${["Humo Dev", "Sardor", "Kamola", "Tech UZ", "Beat Lab", "Film School"][i]}`}
-                        image={`https://picsum.photos/seed/sub${i + 90}/800/450`}
-                        views={`${(i + 1) * 45}K`} duration={`${8 + i}:00`}
-                        author={["Humo Dev", "Sardor", "Kamola", "Tech UZ", "Beat Lab", "Film School"][i]}
-                        avatar={`https://api.dicebear.com/9.x/avataaars/svg?seed=sub${i}`}
-                    />
-                ))}
-            </NxRow>
-        </ViewShell>
-    );
-}
+export { VideoView } from "./nx-video-view";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LIVE VIEW

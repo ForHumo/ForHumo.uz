@@ -7,7 +7,7 @@ import { moderateContent, AUTO_HIDE_SEVERITY, type ModResult } from "@/lib/ai-mo
 export type ModModule = "MARKET" | "NEXUS";
 export type ModTargetType =
     | "PRODUCT" | "REVIEW" | "REPLY" | "QUESTION" | "ANSWER" // Market
-    | "POST" | "COMMENT";                                    // Nexus
+    | "POST" | "COMMENT" | "VIDEO";                          // Nexus
 
 // targetType → tegishli modelda yashirish/ko'rsatish.
 // updateMany ishlatamiz: kontent o'chirilgan bo'lsa ham xato bermaydi.
@@ -33,6 +33,9 @@ export async function hideTarget(targetType: ModTargetType, targetId: string, hi
             break;
         case "COMMENT":
             await prisma.nexusComment.updateMany({ where: { id: targetId }, data: { hidden } });
+            break;
+        case "VIDEO":
+            await prisma.nexusVideo.updateMany({ where: { id: targetId }, data: { hidden } });
             break;
     }
 }

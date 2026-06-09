@@ -1,403 +1,228 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
-    X, Play, Pause, Volume2, VolumeX, Maximize2,
-    ThumbsUp, ThumbsDown, Share2, Bookmark, Eye,
-    ChevronRight, Settings, MessageSquare, Radio,
+    X, Eye, ThumbsUp, Share2, Loader2, Send, BadgeCheck,
+    MessageSquare, UserPlus, UserCheck, Play, Trash2,
 } from "lucide-react";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// NxVideoPlayer — to'liq ekran video modal
-// ─────────────────────────────────────────────────────────────────────────────
+interface VAuthor { name: string | null; username: string | null; image: string | null; verified: boolean }
+interface VData {
+    id: string; title: string; description: string | null; videoUrl: string; thumbUrl: string | null;
+    durationSec: number; views: number; createdAt: string; likeCount: number; commentCount: number;
+    isLiked: boolean; isSubscribed: boolean; isMine: boolean; author: VAuthor | null;
+}
+interface Rec { id: string; title: string; thumbUrl: string | null; durationSec: number; views: number; author: { name: string | null; username: string | null; image: string | null } | null }
+interface VComment { id: string; text: string; createdAt: string; isMine: boolean; author: VAuthor | null }
+
+function fmtViews(n: number) {
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+    return String(n);
+}
+function fmtDur(s: number) { const m = Math.floor(s / 60), sec = Math.floor(s % 60); return `${m}:${String(sec).padStart(2, "0")}`; }
+function timeAgo(d: string) {
+    const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+    if (m < 1) return "hozir"; if (m < 60) return `${m} daq`;
+    const h = Math.floor(m / 60); if (h < 24) return `${h} soat`;
+    return new Date(d).toLocaleDateString("uz-UZ");
+}
+function avatarOf(a: { username?: string | null; name?: string | null; image?: string | null } | null) {
+    return a?.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(a?.username || a?.name || "u")}`;
+}
+
 export function NxVideoPlayer() {
-    const { video, videoOpen, closeVideo, openComments, setLiveChatOpen, openShareSheet, setSavedOpen, openVideo } = useNxPlayer();
+    const { video, videoOpen, closeVideo, openVideo, openShareSheet } = useNxPlayer();
+    const [data, setData] = useState<VData | null>(null);
+    const [rec, setRec] = useState<Rec[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [liked, setLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(0);
+    const [subscribed, setSubscribed] = useState(false);
+    const [showComments, setShowComments] = useState(false);
+    const [comments, setComments] = useState<VComment[]>([]);
+    const [cInput, setCInput] = useState("");
+    const [cBusy, setCBusy] = useState(false);
 
-    const [playing,   setPlaying]   = useState(false);
-    const [progress,  setProgress]  = useState(0);
-    const [volume,    setVolume]    = useState(80);
-    const [muted,     setMuted]     = useState(false);
-    const [quality,   setQuality]   = useState("1080p");
-    const [showQMenu, setShowQMenu] = useState(false);
-    const [liked,     setLiked]     = useState<"up"|"down"|null>(null);
-    const [saved,     setSaved]     = useState(false);
-    const [subbed,    setSubbed]    = useState(false);
-    const [showCtrl,  setShowCtrl]  = useState(true);
+    const vid = video?.id ?? null;
 
-    const timer        = useRef<ReturnType<typeof setInterval> | null>(null);
-    const hideTimer    = useRef<ReturnType<typeof setTimeout>  | null>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [isFullscreen, setIsFullscreen] = useState(false);
-
-    /* Fullscreen o'zgarishini kuzatish */
     useEffect(() => {
-        const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
-        document.addEventListener("fullscreenchange", onFsChange);
-        return () => document.removeEventListener("fullscreenchange", onFsChange);
-    }, []);
+        if (!videoOpen || !vid) return;
+        setLoading(true); setData(null); setShowComments(false); setComments([]);
+        fetch(`/api/nexus/videos/${vid}`)
+            .then(r => r.json())
+            .then(d => {
+                if (d.video) {
+                    setData(d.video); setRec(d.recommended ?? []);
+                    setLiked(d.video.isLiked); setLikeCount(d.video.likeCount); setSubscribed(d.video.isSubscribed);
+                }
+            })
+            .finally(() => setLoading(false));
+        fetch(`/api/nexus/videos/${vid}/view`, { method: "POST" }).catch(() => { });
+    }, [videoOpen, vid]);
 
-    const toggleFullscreen = async () => {
-        if (!containerRef.current) return;
-        if (!document.fullscreenElement) {
-            await containerRef.current.requestFullscreen?.();
-        } else {
-            await document.exitFullscreen?.();
-        }
-    };
+    const loadComments = useCallback(() => {
+        if (!vid) return;
+        fetch(`/api/nexus/videos/${vid}/comments`).then(r => r.json()).then(d => setComments(d.comments ?? [])).catch(() => { });
+    }, [vid]);
+    useEffect(() => { if (showComments) loadComments(); }, [showComments, loadComments]);
 
-    /* Ochilganda reset */
-    useEffect(() => {
-        if (videoOpen) { setPlaying(false); setProgress(0); setShowCtrl(true); }
-    }, [videoOpen]);
+    async function toggleLike() {
+        if (!vid) return;
+        const next = !liked;
+        setLiked(next); setLikeCount(c => Math.max(0, c + (next ? 1 : -1)));
+        try { const r = await fetch(`/api/nexus/videos/${vid}/like`, { method: "POST" }); if (r.ok) { const d = await r.json(); setLiked(d.liked); setLikeCount(d.count); } } catch { /* noop */ }
+    }
+    async function toggleSub() {
+        if (!data?.author?.username) return;
+        setSubscribed(s => !s);
+        await fetch("/api/nexus/follow", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: data.author.username }) }).catch(() => { });
+    }
+    async function sendComment() {
+        if (!vid || !cInput.trim() || cBusy) return;
+        setCBusy(true); const text = cInput.trim(); setCInput("");
+        try {
+            const r = await fetch(`/api/nexus/videos/${vid}/comments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+            if (r.ok) { const d = await r.json(); setComments(c => [d.comment, ...c]); }
+        } finally { setCBusy(false); }
+    }
+    async function del() {
+        if (!vid) return;
+        await fetch(`/api/nexus/videos/${vid}`, { method: "DELETE" }).catch(() => { });
+        closeVideo();
+    }
 
-    /* Progress sim */
-    useEffect(() => {
-        if (playing) {
-            timer.current = setInterval(() => {
-                setProgress(p => p >= 100 ? (setPlaying(false), 0) : p + 100 / 600);
-            }, 1000);
-        } else {
-            if (timer.current) clearInterval(timer.current);
-        }
-        return () => { if (timer.current) clearInterval(timer.current); };
-    }, [playing]);
+    if (!videoOpen || !video) return null;
 
-    /* Nazorat avtoyashirish */
-    const resetHide = () => {
-        setShowCtrl(true);
-        if (hideTimer.current) clearTimeout(hideTimer.current);
-        hideTimer.current = setTimeout(() => { if (playing) setShowCtrl(false); }, 3000);
-    };
-
-    const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-        const r = e.currentTarget.getBoundingClientRect();
-        setProgress(((e.clientX - r.left) / r.width) * 100);
-    };
-
-    const formatTime = (pct: number, total = 600) => {
-        const s = Math.floor(total * pct / 100);
-        return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-    };
-
-    if (!video) return null;
+    const title = data?.title ?? video.title;
+    const author = data?.author ?? null;
 
     return (
-        <>
-            {/* Backdrop */}
-            <div
-                className="fixed inset-0 z-50 transition-opacity duration-300"
-                style={{
-                    background: "rgba(5,8,24,0.90)",
-                    backdropFilter: "blur(8px)",
-                    opacity: videoOpen ? 1 : 0,
-                    pointerEvents: videoOpen ? "auto" : "none",
-                }}
-            />
+        <div className="fixed inset-0 z-50 flex flex-col md:flex-row" style={{ background: "rgba(5,8,24,0.97)" }}>
+            <button onClick={closeVideo} className="absolute top-3 right-3 z-30 w-10 h-10 flex items-center justify-center rounded-full"
+                style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)" }}>
+                <X className="w-5 h-5 text-white" />
+            </button>
 
-            {/* Modal */}
-            <div
-                className="fixed inset-0 z-50 flex flex-col md:flex-row overflow-hidden transition-all duration-300"
-                style={{
-                    opacity: videoOpen ? 1 : 0,
-                    pointerEvents: videoOpen ? "auto" : "none",
-                    transform: videoOpen ? "scale(1)" : "scale(0.97)",
-                }}
-            >
-                {/* ── Video tomoshabin ────────────────────────────── */}
-                <div
-                    ref={containerRef}
-                    className="relative flex-1 bg-black flex items-center justify-center"
-                    onMouseMove={resetHide}
-                    onClick={() => { setPlaying(p => !p); resetHide(); }}
-                >
-                    {/* Thumbnail (fake video) */}
-                    <img
-                        src={video.image}
-                        alt={video.title}
-                        className="w-full h-full object-cover"
-                        style={{ filter: playing ? "none" : "brightness(0.55)" }}
-                    />
+            {/* Video */}
+            <div className="flex-1 bg-black flex items-center justify-center min-h-0">
+                {data?.videoUrl ? (
+                    <video key={data.id} src={data.videoUrl} poster={data.thumbUrl || undefined} controls autoPlay playsInline
+                        className="w-full h-full max-h-screen object-contain" />
+                ) : loading ? (
+                    <Loader2 className="w-10 h-10 animate-spin text-white/60" />
+                ) : video.image ? (
+                    <img src={video.image} alt={title} className="max-w-full max-h-full object-contain opacity-60" />
+                ) : (
+                    <Play className="w-12 h-12 text-white/30" />
+                )}
+            </div>
 
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-0" style={{
-                        background: "linear-gradient(to top, rgba(5,8,24,0.90) 0%, transparent 40%, rgba(5,8,24,0.40) 100%)"
-                    }} />
+            {/* Info panel */}
+            <div className="md:w-96 flex flex-col overflow-y-auto flex-shrink-0" style={{ background: "rgba(8,12,32,0.98)", borderLeft: "1px solid rgba(43,62,232,0.18)", scrollbarWidth: "none", maxHeight: "100vh" }}>
+                <div className="px-4 pt-5 pb-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                    <h3 className="text-base font-black text-white leading-snug mb-1">{title}</h3>
+                    <p className="text-[11px] mb-3 flex items-center gap-2" style={{ color: "rgba(100,120,170,0.8)" }}>
+                        <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{fmtViews(data?.views ?? 0)} ko&apos;rish</span>
+                        {data && <><span>·</span><span>{timeAgo(data.createdAt)}</span></>}
+                    </p>
 
-                    {/* Play/Pause icon — markazda */}
-                    <div
-                        className="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300"
-                        style={{ opacity: !playing || !showCtrl ? 1 : 0 }}
-                    >
-                        <div
-                            className="w-16 h-16 rounded-full flex items-center justify-center"
-                            style={{
-                                background: "rgba(43,62,232,0.80)",
-                                backdropFilter: "blur(8px)",
-                                boxShadow: "0 0 40px rgba(43,62,232,0.50)",
-                            }}
-                        >
-                            {playing
-                                ? <Pause className="w-7 h-7 text-white fill-white" />
-                                : <Play  className="w-7 h-7 text-white fill-white ml-1" />}
-                        </div>
-                    </div>
-
-                    {/* Tepada — yopish + sarlavha */}
-                    <div
-                        className="absolute top-0 left-0 right-0 px-4 pt-4 flex items-center gap-3 transition-opacity duration-300"
-                        style={{ opacity: showCtrl ? 1 : 0 }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <button
-                            onClick={closeVideo}
-                            className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
-                            style={{ background: "rgba(5,8,24,0.70)", backdropFilter: "blur(8px)", border: "1px solid rgba(43,62,232,0.25)" }}
-                        >
-                            <X className="w-4 h-4 text-white" />
-                        </button>
-                        <p className="text-sm font-bold text-white truncate flex-1">{video.title}</p>
-                        {/* Quality */}
-                        <div className="relative" onClick={e => e.stopPropagation()}>
-                            <button
-                                onClick={() => setShowQMenu(p => !p)}
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-black"
-                                style={{ background: "rgba(5,8,24,0.70)", border: "1px solid rgba(43,62,232,0.25)", color: "#00CEC8" }}
-                            >
-                                <Settings className="w-3 h-3" /> {quality}
-                            </button>
-                            {showQMenu && (
-                                <div
-                                    className="absolute top-full right-0 mt-1 rounded-xl overflow-hidden"
-                                    style={{ background: "rgba(8,12,32,0.96)", border: "1px solid rgba(43,62,232,0.25)", minWidth: "80px" }}
-                                >
-                                    {["4K","1080p","720p","480p"].map(q => (
-                                        <button
-                                            key={q}
-                                            onClick={() => { setQuality(q); setShowQMenu(false); }}
-                                            className="w-full px-3 py-2 text-[11px] font-bold text-left transition-colors duration-150 hover:bg-blue-500/10"
-                                            style={{ color: q === quality ? "#00CEC8" : "rgba(180,190,220,0.80)" }}
-                                        >
-                                            {q}
-                                        </button>
-                                    ))}
+                    {/* Author + obuna */}
+                    {author && (
+                        <div className="flex items-center gap-2.5 mb-3">
+                            <Link href={author.username ? `/nexus/u/${author.username}` : "/nexus"} onClick={closeVideo} className="flex items-center gap-2.5 flex-1 min-w-0">
+                                <img src={avatarOf(author)} alt="" className="w-9 h-9 rounded-full object-cover bg-white" style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
+                                <div className="min-w-0 flex items-center gap-1">
+                                    <span className="text-sm font-bold text-white truncate">{author.name || author.username || "Foydalanuvchi"}</span>
+                                    {author.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
                                 </div>
+                            </Link>
+                            {!data?.isMine && (
+                                <button onClick={toggleSub} className="px-3.5 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1 flex-shrink-0"
+                                    style={subscribed
+                                        ? { background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.35)", color: "rgba(160,180,240,0.9)" }
+                                        : { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }}>
+                                    {subscribed ? <><UserCheck className="w-3.5 h-3.5" /> Obunada</> : <><UserPlus className="w-3.5 h-3.5" /> Obuna</>}
+                                </button>
                             )}
                         </div>
+                    )}
+
+                    {/* Amallar */}
+                    <div className="flex items-center gap-2">
+                        <button onClick={toggleLike} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold"
+                            style={{ background: liked ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)", border: `1px solid ${liked ? "rgba(43,62,232,0.40)" : "rgba(43,62,232,0.14)"}`, color: liked ? "#00CEC8" : "rgba(160,176,224,0.85)" }}>
+                            <ThumbsUp className="w-3.5 h-3.5" style={{ fill: liked ? "#00CEC8" : "none" }} /> {fmtViews(likeCount)}
+                        </button>
+                        <button onClick={() => setShowComments(s => !s)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold"
+                            style={{ background: showComments ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(160,176,224,0.85)" }}>
+                            <MessageSquare className="w-3.5 h-3.5" /> {fmtViews(data?.commentCount ?? 0)}
+                        </button>
+                        <button onClick={() => openShareSheet(title)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold"
+                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(160,176,224,0.85)" }}>
+                            <Share2 className="w-3.5 h-3.5" /> Ulash
+                        </button>
+                        {data?.isMine && (
+                            <button onClick={del} className="ml-auto flex items-center justify-center w-8 h-8 rounded-lg" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                                <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                            </button>
+                        )}
                     </div>
 
-                    {/* Pastda — nazorat */}
-                    <div
-                        className="absolute bottom-0 left-0 right-0 px-4 pb-4 transition-opacity duration-300"
-                        style={{ opacity: showCtrl ? 1 : 0 }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {/* Progress xat */}
-                        <div
-                            className="relative h-1.5 rounded-full mb-3 cursor-pointer group"
-                            style={{ background: "rgba(255,255,255,0.20)" }}
-                            onClick={handleSeek}
-                        >
-                            <div
-                                className="h-full rounded-full"
-                                style={{ width: `${progress}%`, background: "linear-gradient(90deg,#2B3EE8,#00CEC8)" }}
-                            />
-                            <div
-                                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                style={{ left: `calc(${progress}% - 8px)`, boxShadow: "0 0 8px rgba(43,62,232,0.60)" }}
-                            />
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => setPlaying(p => !p)}>
-                                {playing
-                                    ? <Pause className="w-5 h-5 text-white fill-white" />
-                                    : <Play  className="w-5 h-5 text-white fill-white ml-0.5" />}
-                            </button>
-
-                            <span className="text-xs text-white/70">
-                                {formatTime(progress)} / {video.duration}
-                            </span>
-
-                            <div className="flex-1" />
-
-                            {/* Volume */}
-                            <button onClick={() => setMuted(p => !p)}>
-                                {muted || volume === 0
-                                    ? <VolumeX className="w-4 h-4 text-white/70" />
-                                    : <Volume2 className="w-4 h-4 text-white/70" />}
-                            </button>
-                            <div
-                                className="hidden md:block w-20 h-1.5 rounded-full cursor-pointer"
-                                style={{ background: "rgba(255,255,255,0.20)" }}
-                                onClick={e => {
-                                    const r = e.currentTarget.getBoundingClientRect();
-                                    setVolume(Math.round(((e.clientX - r.left) / r.width) * 100));
-                                }}
-                            >
-                                <div className="h-full rounded-full" style={{ width: `${muted ? 0 : volume}%`, background: "linear-gradient(90deg,#2B3EE8,#00CEC8)" }} />
-                            </div>
-
-                            <button onClick={e => { e.stopPropagation(); toggleFullscreen(); }}>
-                                <Maximize2 className="w-4 h-4 transition-colors duration-150"
-                                    style={{ color: isFullscreen ? "#00CEC8" : "rgba(255,255,255,0.70)" }} />
-                            </button>
-                        </div>
-                    </div>
+                    {data?.description && <p className="text-xs mt-3 leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(180,195,235,0.8)" }}>{data.description}</p>}
                 </div>
 
-                {/* ── O'ng panel — info + tavsiya ──────────────────── */}
-                <div
-                    className="hidden md:flex flex-col w-80 overflow-y-auto"
-                    style={{
-                        background: "rgba(8,12,32,0.98)",
-                        borderLeft: "1px solid rgba(43,62,232,0.18)",
-                        scrollbarWidth: "none",
-                    }}
-                >
-                    {/* Yopish */}
-                    <div className="px-4 pt-4 pb-3 flex items-center justify-between flex-shrink-0">
-                        <span className="text-xs font-black uppercase tracking-widest" style={{ color: "rgba(43,62,232,0.60)" }}>Video ma'lumot</span>
-                        <button onClick={closeVideo}>
-                            <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.60)" }} />
-                        </button>
-                    </div>
-
-                    {/* Video meta */}
-                    <div className="px-4 pb-4 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
-                        <h3 className="text-sm font-black text-white leading-snug mb-2">{video.title}</h3>
-                        <div className="flex items-center gap-2 mb-3">
-                            <img src={video.avatar} alt={video.author}
-                                className="w-7 h-7 rounded-full"
-                                style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
-                            <div>
-                                <p className="text-[11px] font-bold text-white">{video.author}</p>
-                                <p className="text-[9px]" style={{ color: "rgba(100,120,170,0.70)" }}>
-                                    <Eye className="inline w-2.5 h-2.5 mr-0.5" />{video.views} ko'rish
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setSubbed(p => !p)}
-                                className="ml-auto px-3 py-1.5 rounded-lg text-[10px] font-black transition-all duration-150 active:scale-95"
-                                style={subbed
-                                    ? { background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.35)", color: "rgba(160,180,240,0.90)" }
-                                    : { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }}
-                            >
-                                {subbed ? "Obunada" : "Obuna"}
+                {/* Izohlar */}
+                {showComments && (
+                    <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                        <div className="flex gap-2 mb-3">
+                            <input value={cInput} onChange={e => setCInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendComment()}
+                                placeholder="Izoh yozing..." className="flex-1 h-9 rounded-xl px-3 text-sm text-white outline-none"
+                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "#00CEC8" }} />
+                            <button onClick={sendComment} disabled={cBusy || !cInput.trim()} className="w-9 h-9 flex items-center justify-center rounded-xl text-white disabled:opacity-40" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                {cBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                             </button>
                         </div>
-
-                        {/* Like / Dislike / Share / Save */}
-                        <div className="flex items-center gap-2">
-                            {([
-                                { icon: ThumbsUp,   label: "4.2K", action: () => setLiked(p => p === "up"   ? null : "up"),   active: liked === "up"   },
-                                { icon: ThumbsDown, label: "",      action: () => setLiked(p => p === "down" ? null : "down"), active: liked === "down" },
-                            ] as const).map(({ icon: Icon, label, action, active }, i) => (
-                                <button
-                                    key={i}
-                                    onClick={action}
-                                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150"
-                                    style={{
-                                        background: active ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)",
-                                        border: `1px solid ${active ? "rgba(43,62,232,0.40)" : "rgba(43,62,232,0.14)"}`,
-                                        color: active ? "#00CEC8" : "rgba(160,176,224,0.80)",
-                                    }}
-                                >
-                                    <Icon className="w-3.5 h-3.5" />
-                                    {label}
-                                </button>
-                            ))}
-                            <button
-                                onClick={() => openShareSheet(video.title)}
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150 active:scale-95"
-                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(160,176,224,0.80)" }}
-                            >
-                                <Share2 className="w-3.5 h-3.5" /> Ulash
-                            </button>
-                            <button
-                                onClick={() => { setSaved(p => !p); if (!saved) setSavedOpen(true); }}
-                                className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-150"
-                                style={{
-                                    background: saved ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)",
-                                    border: `1px solid ${saved ? "rgba(43,62,232,0.40)" : "rgba(43,62,232,0.14)"}`,
-                                }}
-                            >
-                                <Bookmark className="w-3.5 h-3.5" style={{ color: saved ? "#00CEC8" : "rgba(160,176,224,0.80)", fill: saved ? "#00CEC8" : "none" }} />
-                            </button>
-                        </div>
-
-                        {/* Izohlar + Jonli chat */}
-                        <div className="flex gap-2 mt-2">
-                            <button
-                                onClick={() => openComments(video.title)}
-                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-all duration-150 active:scale-95"
-                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(160,176,224,0.85)" }}
-                            >
-                                <MessageSquare className="w-3.5 h-3.5" /> Izohlar
-                            </button>
-                            <button
-                                onClick={() => setLiveChatOpen(true)}
-                                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold transition-all duration-150 active:scale-95"
-                                style={{ background: "rgba(255,68,68,0.10)", border: "1px solid rgba(255,68,68,0.25)", color: "rgba(255,120,120,0.90)" }}
-                            >
-                                <Radio className="w-3.5 h-3.5" /> Jonli chat
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Tavsiya etilgan videolar */}
-                    <div className="flex-1 px-4 py-3">
-                        <p className="text-[9px] font-black uppercase tracking-widest mb-3" style={{ color: "rgba(43,62,232,0.55)" }}>
-                            Keyingi videolar
-                        </p>
-                        {Array.from({ length: 6 }, (_, i) => {
-                            const recTitles = ["Nexus platformasi bilan tanishing","O'zbek texnologiyasi 2026","React 19 va Server Actions","AI bilan ishlaymiz","Mobile birinchi yondashuv","Creator Economy"];
-                            const recAuthors = ["Nexus Dev","Tech UZ","Sardor","AI Studio","Humo","Creator"];
-                            const recTitle  = recTitles[i];
-                            const recAuthor = recAuthors[i];
-                            return (
-                            <button key={i}
-                                onClick={() => openVideo({
-                                    title:    recTitle,
-                                    author:   recAuthor,
-                                    avatar:   `https://api.dicebear.com/9.x/avataaars/svg?seed=${recAuthor}`,
-                                    image:    `https://picsum.photos/seed/rec${i + 80}/800/450`,
-                                    views:    `${(i + 1) * 45}K`,
-                                    duration: `${8 + i * 2}:${String(i * 13 % 60).padStart(2, "0")}`,
-                                })}
-                                className="w-full flex gap-2.5 mb-3 group text-left"
-                            >
-                                <div className="relative w-24 aspect-video rounded-lg overflow-hidden flex-shrink-0"
-                                    style={{ border: "1px solid rgba(43,62,232,0.15)" }}>
-                                    <img
-                                        src={`https://picsum.photos/seed/rec${i + 80}/400/225`}
-                                        alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                        style={{ background: "rgba(5,8,24,0.50)" }}>
-                                        <Play className="w-4 h-4 text-white fill-white" />
+                        {comments.length === 0 ? (
+                            <p className="text-xs text-center py-3" style={{ color: "rgba(120,140,185,0.6)" }}>Birinchi izohni qoldiring</p>
+                        ) : comments.map(c => (
+                            <div key={c.id} className="flex gap-2 py-2">
+                                <img src={avatarOf(c.author)} alt="" className="w-7 h-7 rounded-lg object-cover bg-white flex-shrink-0" />
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-xs font-bold text-white">{c.author?.name || c.author?.username || "Foydalanuvchi"}</span>
+                                        {c.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
+                                        <span className="text-[9px]" style={{ color: "rgba(80,100,150,0.7)" }}>{timeAgo(c.createdAt)}</span>
                                     </div>
+                                    <p className="text-xs mt-0.5" style={{ color: "rgba(200,215,245,0.85)" }}>{c.text}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Tavsiya */}
+                {rec.length > 0 && (
+                    <div className="px-4 py-3">
+                        <p className="text-[9px] font-black uppercase tracking-widest mb-3" style={{ color: "rgba(43,62,232,0.55)" }}>Keyingi videolar</p>
+                        {rec.map(r => (
+                            <button key={r.id} onClick={() => openVideo({ id: r.id, title: r.title, image: r.thumbUrl || "", author: r.author?.name || r.author?.username || "", avatar: avatarOf(r.author), views: fmtViews(r.views), duration: fmtDur(r.durationSec) })}
+                                className="w-full flex gap-2.5 mb-3 group text-left">
+                                <div className="relative w-24 aspect-video rounded-lg overflow-hidden flex-shrink-0" style={{ border: "1px solid rgba(43,62,232,0.15)", background: "rgba(43,62,232,0.08)" }}>
+                                    {r.thumbUrl ? <img src={r.thumbUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Play className="w-4 h-4 text-white/30" /></div>}
+                                    {r.durationSec > 0 && <span className="absolute bottom-1 right-1 px-1 rounded text-[8px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(r.durationSec)}</span>}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-bold text-white leading-snug line-clamp-2 mb-1 group-hover:text-[#00CEC8] transition-colors">
-                                        {recTitle}
-                                    </p>
-                                    <p className="text-[9px]" style={{ color: "rgba(100,120,170,0.70)" }}>
-                                        {recAuthor}
-                                    </p>
-                                    <div className="flex items-center gap-1 mt-0.5">
-                                        <ChevronRight className="w-2.5 h-2.5" style={{ color: "rgba(43,62,232,0.40)" }} />
-                                        <span className="text-[9px]" style={{ color: "rgba(80,100,150,0.70)" }}>
-                                            {(i + 1) * 45}K ko'rish
-                                        </span>
-                                    </div>
+                                    <p className="text-[11px] font-bold text-white leading-snug line-clamp-2 group-hover:text-[#00CEC8] transition-colors">{r.title}</p>
+                                    <p className="text-[9px] mt-1" style={{ color: "rgba(100,120,170,0.7)" }}>{r.author?.name || r.author?.username || ""} · {fmtViews(r.views)} ko&apos;rish</p>
                                 </div>
                             </button>
-                            );
-                        })}
+                        ))}
                     </div>
-                </div>
+                )}
             </div>
-        </>
+        </div>
     );
 }
