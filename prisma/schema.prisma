@@ -657,6 +657,36 @@ enum NexusNotifType {
   REPLY
 }
 
+// Story — 24 soatlik vaqtinchalik kontent
+model NexusStory {
+  id        String              @id @default(cuid())
+  profileId String
+  mediaUrl  String
+  mediaType NexusStoryMediaType @default(IMAGE)
+  caption   String?
+  createdAt DateTime            @default(now())
+  expiresAt DateTime                              // = createdAt + 24 soat
+  views     NexusStoryView[]
+  @@index([profileId, expiresAt])
+  @@index([expiresAt])
+}
+
+enum NexusStoryMediaType {
+  IMAGE
+  VIDEO
+}
+
+// Story ko'rilganligi — halqa (seen) + ko'rganlar soni uchun
+model NexusStoryView {
+  id        String     @id @default(cuid())
+  storyId   String
+  story     NexusStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  profileId String                                // kim ko'rdi
+  createdAt DateTime   @default(now())
+  @@unique([storyId, profileId])
+  @@index([storyId])
+}
+
 // ── ALKH Pay — Zij valyuta hamyoni ───────────────────────────────────────────
 //
 // Zij (Ƶ) — ALKH Pay ichki valyutasi.
