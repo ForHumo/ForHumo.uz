@@ -36,7 +36,7 @@ function processVideo(file: File): Promise<{ thumb: Blob | null; durationSec: nu
     });
 }
 
-export function NxVideoCreate({ open, onClose, onCreated, kind = "LONG" }: {
+export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "LONG" }: {
     open: boolean; onClose: () => void; onCreated?: () => void; kind?: "LONG" | "SHORT";
 }) {
     const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -48,13 +48,14 @@ export function NxVideoCreate({ open, onClose, onCreated, kind = "LONG" }: {
     const [uploading, setUploading] = useState(false);
     const [posting, setPosting] = useState(false);
     const [err, setErr] = useState<string | null>(null);
+    const [kind, setKind] = useState<"LONG" | "SHORT">(defaultKind);
     const fileRef = useRef<HTMLInputElement>(null);
 
     if (!open) return null;
 
     function close() {
         setVideoUrl(null); setThumbUrl(null); setDurationSec(0);
-        setTitle(""); setDesc(""); setCategory(""); setUploading(false); setPosting(false); setErr(null);
+        setTitle(""); setDesc(""); setCategory(""); setUploading(false); setPosting(false); setErr(null); setKind(defaultKind);
         onClose();
     }
 
@@ -133,6 +134,14 @@ export function NxVideoCreate({ open, onClose, onCreated, kind = "LONG" }: {
                                     className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(0,0,0,0.6)" }}>
                                     <Trash2 className="w-4 h-4 text-white" />
                                 </button>
+                            </div>
+                            <div className="flex gap-2">
+                                {(["LONG", "SHORT"] as const).map(k => (
+                                    <button key={k} onClick={() => setKind(k)} className="flex-1 py-2 rounded-xl text-xs font-black transition"
+                                        style={kind === k ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" } : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", color: "rgba(140,160,210,0.8)" }}>
+                                        {k === "LONG" ? "Video" : "Short"}
+                                    </button>
+                                ))}
                             </div>
                             <input value={title} onChange={e => setTitle(e.target.value.slice(0, 200))} placeholder="Sarlavha *"
                                 className="w-full h-10 px-3 rounded-xl text-sm text-white outline-none"

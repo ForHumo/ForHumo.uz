@@ -24,6 +24,7 @@ export function NxShortsPlayer() {
     const touchStart  = useRef(0);
     const isDragging  = useRef(false);
     const lastTap     = useRef(0);          // double-tap uchun
+    const viewedRef   = useRef<Set<string>>(new Set());
 
     /* Yangi short ga o'tganda video reset */
     useEffect(() => {
@@ -32,6 +33,14 @@ export function NxShortsPlayer() {
         const v = videoRef.current;
         if (v) { v.currentTime = 0; v.play().catch(() => {}); }
     }, [shortIndex]);
+
+    /* Ko'rishni hisoblash (real video) */
+    useEffect(() => {
+        const s = shorts[shortIndex];
+        if (!shortsOpen || !s?.id || viewedRef.current.has(s.id)) return;
+        viewedRef.current.add(s.id);
+        fetch(`/api/nexus/videos/${s.id}/view`, { method: "POST" }).catch(() => {});
+    }, [shortIndex, shortsOpen, shorts]);
 
     /* Play/Pause sinxronizatsiya */
     useEffect(() => {
@@ -59,6 +68,11 @@ export function NxShortsPlayer() {
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
     }, [shortsOpen, nextShort, prevShort, closeShorts]);
+
+    async function likeShort(s: { id?: string }) {
+        if (!s.id) return;
+        fetch(`/api/nexus/videos/${s.id}/like`, { method: "POST" }).catch(() => { });
+    }
 
     if (shorts.length === 0) return null;
 
@@ -103,6 +117,7 @@ export function NxShortsPlayer() {
                     if (now - lastTap.current < 300) {
                         // Double tap — like
                         setLiked(p => ({ ...p, [shortIndex]: true }));
+                        likeShort(short);
                         setHeartAnim(true);
                         setTimeout(() => setHeartAnim(false), 700);
                     } else {
@@ -234,7 +249,7 @@ export function NxShortsPlayer() {
                     <ActionBtn
                         icon={Heart} label={short.likes}
                         active={isLiked} activeColor="#EF4444" fill={isLiked}
-                        onClick={() => setLiked(p => ({ ...p, [shortIndex]: !p[shortIndex] }))}
+                        onClick={() => { setLiked(p => ({ ...p, [shortIndex]: !p[shortIndex] })); likeShort(short); }}
                     />
                     <ActionBtn icon={MessageCircle} label="Sharh" onClick={() => openComments(short.author)} />
                     <ActionBtn icon={Share2} label="Ulash" onClick={() => openShareSheet(short.author)} />

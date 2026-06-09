@@ -31,8 +31,9 @@ function fmtDur(s: number) { const m = Math.floor(s / 60), sec = Math.floor(s % 
 function avatarOf(a: VAuthor | null) { return a?.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(a?.username || a?.name || "u")}`; }
 
 export function VideoView() {
-    const { openVideo } = useNxPlayer();
+    const { openVideo, openShorts } = useNxPlayer();
     const [videos, setVideos] = useState<Vid[]>([]);
+    const [shorts, setShorts] = useState<Vid[]>([]);
     const [loading, setLoading] = useState(true);
     const [query, setQuery] = useState("");
     const [filter, setFilter] = useState<string>("trend");
@@ -51,6 +52,15 @@ export function VideoView() {
     }, [query, filter]);
 
     useEffect(() => { const t = setTimeout(load, query ? 300 : 0); return () => clearTimeout(t); }, [load, query]);
+    useEffect(() => { fetch("/api/nexus/videos?kind=SHORT&sort=trend&limit=20").then(r => r.json()).then(d => setShorts(d.videos ?? [])).catch(() => { }); }, []);
+
+    function openShortsAt(idx: number) {
+        const list = shorts.map(s => ({
+            id: s.id, image: s.thumbUrl || "", author: s.author?.name || s.author?.username || "Foydalanuvchi",
+            views: fmtViews(s.views), likes: fmtViews(s.likeCount), duration: fmtDur(s.durationSec), videoSrc: s.videoUrl,
+        }));
+        openShorts(list, idx);
+    }
 
     function open(v: Vid) {
         openVideo({
@@ -88,6 +98,26 @@ export function VideoView() {
                     ))}
                 </div>
             </div>
+
+            {/* Shorts qatori */}
+            {!query && shorts.length > 0 && (
+                <div className="mb-5">
+                    <div className="px-4 mb-2"><span className="text-sm font-black text-white">Shorts</span></div>
+                    <div className="flex gap-3 overflow-x-auto px-4 pb-1" style={{ scrollbarWidth: "none" }}>
+                        {shorts.map((s, i) => (
+                            <button key={s.id} onClick={() => openShortsAt(i)} className="flex-shrink-0 w-[120px] aspect-[9/16] relative rounded-2xl overflow-hidden group"
+                                style={{ border: "1px solid rgba(43,62,232,0.20)", background: "rgba(43,62,232,0.08)" }}>
+                                {s.thumbUrl ? <img src={s.thumbUrl} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" /> : <div className="w-full h-full flex items-center justify-center"><Play className="w-6 h-6 text-white/40" /></div>}
+                                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(5,8,24,0.9) 0%, transparent 55%)" }} />
+                                <div className="absolute bottom-0 left-0 right-0 p-2">
+                                    <p className="text-[10px] font-bold text-white truncate mb-0.5">{s.title}</p>
+                                    <span className="flex items-center gap-0.5 text-[9px]" style={{ color: "rgba(160,180,220,0.8)" }}><Eye className="w-2.5 h-2.5" />{fmtViews(s.views)}</span>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Grid */}
             {loading ? (

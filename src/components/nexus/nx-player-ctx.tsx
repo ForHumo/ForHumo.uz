@@ -19,6 +19,7 @@ export interface NxVideo {
     image: string; views: string; duration: string; category?: string;
 }
 export interface NxShort {
+    id?: string;                                    // real video id (like/view shu bo'yicha)
     image: string; author: string; views: string; likes: string; duration: string;
     videoSrc?: string;
 }
