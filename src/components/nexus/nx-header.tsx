@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useState, useEffect } from "react";
 import Image from "next/image";
 import { Search, Bell, ChevronDown, Menu, PlusSquare, MessageCircle, Compass } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -235,6 +235,20 @@ function CreateBtn({ onClick }: { onClick: () => void }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function BellButton({ onOpen }: { onOpen: () => void }) {
     const bellRef = useRef<SVGSVGElement>(null);
+    const { notifOpen } = useNxPlayer();
+    const [unread, setUnread] = useState(0);
+
+    useEffect(() => {
+        if (notifOpen) return; // panel ochiq — yopilganda yangilaymiz
+        let cancel = false;
+        const fetchCount = () => fetch("/api/nexus/notifications/count")
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (!cancel && d) setUnread(d.unread ?? 0); })
+            .catch(() => { });
+        fetchCount();
+        const t = setInterval(fetchCount, 60000);
+        return () => { cancel = true; clearInterval(t); };
+    }, [notifOpen]);
 
     const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         if (bellRef.current) {
@@ -275,13 +289,14 @@ function BellButton({ onOpen }: { onOpen: () => void }) {
                 className="w-4 h-4"
                 style={{ color: "rgba(160,176,224,0.80)" }}
             />
-            <span
-                className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-                style={{
-                    background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
-                    boxShadow: "0 0 6px rgba(0,206,200,0.8)",
-                }}
-            />
+            {unread > 0 && (
+                <span
+                    className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-black text-white"
+                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 0 6px rgba(0,206,200,0.8)" }}
+                >
+                    {unread > 9 ? "9+" : unread}
+                </span>
+            )}
         </button>
     );
 }
