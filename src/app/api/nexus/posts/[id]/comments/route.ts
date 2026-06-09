@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { after } from "next/server";
 import { moderateOnCreate } from "@/lib/moderation";
+import { nexusNotify } from "@/lib/nexus-notify";
 
 // GET /api/nexus/posts/[id]/comments — izohlar (flat; klient daraxt quradi)
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -49,7 +50,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { text, parentId } = await req.json();
     if (!text?.trim()) return NextResponse.json({ error: "Izoh bo'sh bo'lmasin" }, { status: 400 });
 
-    const post = await prisma.nexusPost.findUnique({ where: { id }, select: { id: true } });
+    const post = await prisma.nexusPost.findUnique({ where: { id }, select: { id: true, profileId: true } });
     if (!post) return NextResponse.json({ error: "Post topilmadi" }, { status: 404 });
 
     const comment = await prisma.nexusComment.create({
@@ -61,6 +62,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         module: "NEXUS", targetType: "COMMENT", targetId: comment.id,
         text: comment.text, kind: "izoh",
     }));
+
+    // Bildirishnoma — izoh post egasiga, javob ota-izoh egasiga
+    after(async () => {
+        if (parentId) {
+            const parent = await prisma.nexusComment.findUnique({ where: { id: parentId }, select: { profileId: true } });
+            if (parent) await nexusNotify({ recipientId: parent.profileId, actorId: profile.id, type: "REPLY", postId: id, commentId: comment.id });
+        } else {
+            await nexusNotify({ recipientId: post.profileId, actorId: profile.id, type: "COMMENT", postId: id });
+        }
+    });
 
     return NextResponse.json({
         comment: {

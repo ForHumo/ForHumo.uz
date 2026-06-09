@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { after } from "next/server";
+import { nexusNotify } from "@/lib/nexus-notify";
 
 // POST /api/nexus/posts/[id]/like — like toggle
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -13,7 +15,11 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     const { id } = await params;
     const existing = await prisma.nexusLike.findUnique({ where: { postId_profileId: { postId: id, profileId: profile.id } } });
     if (existing) await prisma.nexusLike.delete({ where: { id: existing.id } });
-    else await prisma.nexusLike.create({ data: { postId: id, profileId: profile.id } });
+    else {
+        await prisma.nexusLike.create({ data: { postId: id, profileId: profile.id } });
+        const post = await prisma.nexusPost.findUnique({ where: { id }, select: { profileId: true } });
+        if (post) after(() => nexusNotify({ recipientId: post.profileId, actorId: profile.id, type: "LIKE", postId: id }));
+    }
 
     const count = await prisma.nexusLike.count({ where: { postId: id } });
     return NextResponse.json({ liked: !existing, count });

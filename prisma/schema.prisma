@@ -636,6 +636,27 @@ model NexusFollow {
   @@index([followingId])
 }
 
+// Bildirishnoma — like/izoh/follow/javob (relation yo'q, MarketNotification kabi)
+model NexusNotification {
+  id          String         @id @default(cuid())
+  recipientId String                              // kim oladi (UserProfile.id)
+  actorId     String                              // kim qildi
+  type        NexusNotifType
+  postId      String?
+  commentId   String?
+  read        Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  @@index([recipientId, read])
+  @@index([recipientId, createdAt])
+}
+
+enum NexusNotifType {
+  LIKE
+  COMMENT
+  FOLLOW
+  REPLY
+}
+
 // ── ALKH Pay — Zij valyuta hamyoni ───────────────────────────────────────────
 //
 // Zij (Ƶ) — ALKH Pay ichki valyutasi.

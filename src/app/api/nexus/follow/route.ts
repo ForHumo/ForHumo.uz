@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { after } from "next/server";
+import { nexusNotify } from "@/lib/nexus-notify";
 
 // POST /api/nexus/follow — follow toggle ({ username } yoki { profileId })
 export async function POST(req: Request) {
@@ -23,7 +25,10 @@ export async function POST(req: Request) {
         where: { followerId_followingId: { followerId: me.id, followingId: targetId } },
     });
     if (existing) await prisma.nexusFollow.delete({ where: { id: existing.id } });
-    else await prisma.nexusFollow.create({ data: { followerId: me.id, followingId: targetId } });
+    else {
+        await prisma.nexusFollow.create({ data: { followerId: me.id, followingId: targetId } });
+        after(() => nexusNotify({ recipientId: targetId, actorId: me.id, type: "FOLLOW" }));
+    }
 
     const followerCount = await prisma.nexusFollow.count({ where: { followingId: targetId } });
     return NextResponse.json({ following: !existing, followerCount });
