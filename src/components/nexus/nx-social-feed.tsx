@@ -41,8 +41,8 @@ function avatarOf(a: Author | null) {
 // ─────────────────────────────────────────────────────────────────────────────
 // NxSocialFeed
 // ─────────────────────────────────────────────────────────────────────────────
-export function NxSocialFeed({ authorUsername }: { authorUsername?: string } = {}) {
-    const profileMode = !!authorUsername;
+export function NxSocialFeed({ authorUsername, tag }: { authorUsername?: string; tag?: string } = {}) {
+    const profileMode = !!authorUsername || !!tag;
     const { openShareSheet } = useNxPlayer();
     const { data: session } = useSession();
     const PAGE = 15;
@@ -66,12 +66,14 @@ export function NxSocialFeed({ authorUsername }: { authorUsername?: string } = {
         setLoading(true);
         const url = authorUsername
             ? `/api/nexus/posts?author=${encodeURIComponent(authorUsername)}&limit=${PAGE}&offset=0`
-            : `/api/nexus/posts?tab=${tab}&limit=${PAGE}&offset=0`;
+            : tag
+                ? `/api/nexus/posts?tag=${encodeURIComponent(tag)}&limit=${PAGE}&offset=0`
+                : `/api/nexus/posts?tab=${tab}&limit=${PAGE}&offset=0`;
         const data = await fetch(url).then(r => r.json());
         const list: Post[] = data.posts ?? [];
         setPosts(list); setOffset(list.length); setHasMore(data.hasMore ?? false);
         setLoading(false);
-    }, [tab, authorUsername]);
+    }, [tab, authorUsername, tag]);
 
     useEffect(() => { loadFirst(); }, [loadFirst]);
 
@@ -79,7 +81,9 @@ export function NxSocialFeed({ authorUsername }: { authorUsername?: string } = {
         setLoadingMore(true);
         const url = authorUsername
             ? `/api/nexus/posts?author=${encodeURIComponent(authorUsername)}&limit=${PAGE}&offset=${offset}`
-            : `/api/nexus/posts?tab=${tab}&limit=${PAGE}&offset=${offset}`;
+            : tag
+                ? `/api/nexus/posts?tag=${encodeURIComponent(tag)}&limit=${PAGE}&offset=${offset}`
+                : `/api/nexus/posts?tab=${tab}&limit=${PAGE}&offset=${offset}`;
         const data = await fetch(url).then(r => r.json());
         const list: Post[] = data.posts ?? [];
         setPosts(prev => [...prev, ...list]); setOffset(o => o + list.length); setHasMore(data.hasMore ?? false);
@@ -354,7 +358,7 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump }: {
                     <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(200,215,245,0.90)" }}>{p.text}</p>
                     {p.hashtags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
-                            {p.hashtags.map(h => <span key={h} className="text-xs font-bold" style={{ color: "#2B3EE8" }}>#{h}</span>)}
+                            {p.hashtags.map(h => <Link key={h} href={`/nexus/tag/${h}`} className="text-xs font-bold hover:underline" style={{ color: "#2B3EE8" }}>#{h}</Link>)}
                         </div>
                     )}
                 </div>
