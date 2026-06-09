@@ -93,12 +93,7 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
                 />
 
                 {/* Xabarlar */}
-                <HeaderIconBtn
-                    onClick={() => setMessagesOpen(true)}
-                    icon={MessageCircle}
-                    iconColor="rgba(160,176,224,0.80)"
-                    badge={{ color: "#10B981", glow: "rgba(16,185,129,0.80)" }}
-                />
+                <MessagesButton onOpen={() => setMessagesOpen(true)} />
 
                 {/* Bildirishnoma */}
                 <BellButton onOpen={() => setNotifOpen(true)} />
@@ -294,6 +289,62 @@ function BellButton({ onOpen }: { onOpen: () => void }) {
                     className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-black text-white"
                     style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 0 6px rgba(0,206,200,0.8)" }}
                 >
+                    {unread > 9 ? "9+" : unread}
+                </span>
+            )}
+        </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Messages — real o'qilmagan badge
+// ─────────────────────────────────────────────────────────────────────────────
+function MessagesButton({ onOpen }: { onOpen: () => void }) {
+    const iconRef = useRef<SVGSVGElement>(null);
+    const { messagesOpen } = useNxPlayer();
+    const [unread, setUnread] = useState(0);
+
+    useEffect(() => {
+        if (messagesOpen) return;
+        let cancel = false;
+        const fetchCount = () => fetch("/api/nexus/messages/count")
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (!cancel && d) setUnread(d.unread ?? 0); })
+            .catch(() => { });
+        fetchCount();
+        const t = setInterval(fetchCount, 60000);
+        return () => { cancel = true; clearInterval(t); };
+    }, [messagesOpen]);
+
+    const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        if (iconRef.current) {
+            iconRef.current.classList.remove("nx-pop");
+            void (iconRef.current as unknown as HTMLElement).offsetWidth;
+            iconRef.current.classList.add("nx-pop");
+        }
+        const btn = e.currentTarget;
+        const rect = btn.getBoundingClientRect();
+        const dot = document.createElement("span");
+        dot.className = "nx-ripple-dot";
+        dot.style.left = `${e.clientX - rect.left}px`;
+        dot.style.top = `${e.clientY - rect.top}px`;
+        btn.appendChild(dot);
+        dot.addEventListener("animationend", () => dot.remove());
+        onOpen();
+    }, [onOpen]);
+
+    return (
+        <button
+            onClick={handleClick}
+            className="nx-ripple-wrap nx-press relative w-9 h-9 flex items-center justify-center rounded-xl"
+            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.18)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)"; }}
+        >
+            <MessageCircle ref={iconRef as React.Ref<SVGSVGElement>} className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+            {unread > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-black text-white"
+                    style={{ background: "#10B981", boxShadow: "0 0 6px rgba(16,185,129,0.8)" }}>
                     {unread > 9 ? "9+" : unread}
                 </span>
             )}

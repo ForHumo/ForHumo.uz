@@ -457,17 +457,6 @@ const SOCIAL_TABS = [
     { id: "bot",     icon: Bot,           label: "Botlar"   },
 ];
 
-const CHAT_LIST = [
-    { name: "Islomjon",      msg: "Yangi loyiha haqida...",        time: "14:32", unread: 3,  online: true  },
-    { name: "Dizayn Jamoa",  msg: "Fayl: mockup.fig yuklandi",     time: "12:45", unread: 0,  online: false, group: true },
-    { name: "Madina",        msg: "Rahmat! Juda ajoyib",           time: "11:20", unread: 1,  online: true  },
-    { name: "Do'stlar",      msg: "Sardor: Qayerdasiz?",           time: "10:05", unread: 0,  online: false, group: true },
-    { name: "Sardor",        msg: "Ertaga uchrashamiz?",           time: "09:30", unread: 0,  online: false },
-    { name: "Humo Support",  msg: "Muammoingiz hal qilindi",       time: "Kecha", unread: 0,  online: true  },
-    { name: "Kamola",        msg: "Ha, yaxshi g'oya!",             time: "Kecha", unread: 0,  online: false },
-    { name: "Dev Guruh",     msg: "Bobur: PR merge qilindi",       time: "Dush",  unread: 5,  online: false, group: true },
-];
-
 export function SocialView() {
     const [sub, setSub] = useState("posts");
     const { setMessagesOpen, setExploreOpen, setGroupsOpen } = useNxPlayer();
@@ -507,48 +496,7 @@ export function SocialView() {
                         <MessageCircle className="w-5 h-5" />
                         Xabarlarni ochish
                     </button>
-                    <div className="rounded-2xl overflow-hidden"
-                        style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.20)" }}>
-                        {CHAT_LIST.map((c, i) => (
-                            <button
-                                key={i}
-                                onClick={() => setMessagesOpen(true)}
-                                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150 group"
-                                style={{ borderBottom: i < CHAT_LIST.length - 1 ? "1px solid rgba(43,62,232,0.08)" : "none" }}
-                                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)"}
-                                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
-                            >
-                                <div className="relative flex-shrink-0">
-                                    <div className="w-11 h-11 rounded-2xl overflow-hidden"
-                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", padding: "2px" }}>
-                                        <div className="w-full h-full rounded-[14px] bg-[#050818] overflow-hidden">
-                                            <img src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${c.name}`} alt={c.name} className="w-full h-full object-cover" />
-                                        </div>
-                                    </div>
-                                    {c.online && (
-                                        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
-                                            style={{ background: "#10B981", borderColor: "#050818" }} />
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-0.5">
-                                        <span className="text-sm font-bold text-white flex items-center gap-1.5 group-hover:text-[#00CEC8] transition-colors duration-150">
-                                            {c.name}
-                                            {c.group && <Users className="w-3 h-3" style={{ color: "#00CEC8" }} />}
-                                        </span>
-                                        <span className="text-[10px] flex-shrink-0" style={{ color: "rgba(80,100,150,0.80)" }}>{c.time}</span>
-                                    </div>
-                                    <p className="text-xs truncate" style={{ color: "rgba(100,120,170,0.75)" }}>{c.msg}</p>
-                                </div>
-                                {c.unread > 0 && (
-                                    <span className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white"
-                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                                        {c.unread}
-                                    </span>
-                                )}
-                            </button>
-                        ))}
-                    </div>
+                    <p className="text-center text-xs px-4" style={{ color: "rgba(120,140,185,0.7)" }}>Suhbatlaringiz xabarlar oynasida ko&apos;rinadi</p>
                 </div>
             )}
 

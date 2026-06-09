@@ -33,6 +33,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     const [newQuery, setNewQuery] = useState("");
     const [newResults, setNewResults] = useState<SUser[]>([]);
     const endRef = useRef<HTMLDivElement>(null);
+    const consumedRef = useRef<string | null>(null);
 
     const loadConvs = useCallback(() => {
         fetch("/api/nexus/messages").then(r => r.json()).then(d => setConversations(d.conversations ?? [])).catch(() => { });
@@ -45,7 +46,8 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     useEffect(() => {
         if (!messagesOpen) { setSelected(null); setNewOpen(false); setQuery(""); return; }
         loadConvs();
-        if (openWithUsername) {
+        if (openWithUsername && consumedRef.current !== openWithUsername) {
+            consumedRef.current = openWithUsername;
             fetch("/api/nexus/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: openWithUsername }) })
                 .then(r => r.json()).then(d => { if (d.conversationId) setSelected({ conversationId: d.conversationId, other: d.other ?? null }); }).catch(() => { });
         }

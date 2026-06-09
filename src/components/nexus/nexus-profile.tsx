@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Link, useRouter } from "@/i18n/routing";
-import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle } from "lucide-react";
 import { NxPlayerProvider } from "./nx-player-ctx";
 import { NxSocialFeed } from "./nx-social-feed";
 import { NxShare } from "./nx-share";
@@ -111,13 +111,20 @@ export function NexusProfile({ username }: { username: string }) {
                                         <Edit3 className="w-3.5 h-3.5" /> Tahrirlash
                                     </Link>
                                 ) : (
-                                    <button onClick={toggleFollow} disabled={busy}
-                                        className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-black mb-1 active:scale-95 transition disabled:opacity-60"
-                                        style={following
-                                            ? { background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.30)", color: "rgba(140,160,210,0.9)" }
-                                            : { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff", boxShadow: "0 4px 18px rgba(43,62,232,0.4)" }}>
-                                        {following ? <><UserCheck className="w-4 h-4" /> Kuzatilmoqda</> : <><UserPlus className="w-4 h-4" /> Kuzatish</>}
-                                    </button>
+                                    <div className="flex gap-2 mb-1">
+                                        <button onClick={toggleFollow} disabled={busy}
+                                            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-black active:scale-95 transition disabled:opacity-60"
+                                            style={following
+                                                ? { background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.30)", color: "rgba(140,160,210,0.9)" }
+                                                : { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff", boxShadow: "0 4px 18px rgba(43,62,232,0.4)" }}>
+                                            {following ? <><UserCheck className="w-4 h-4" /> Kuzatilmoqda</> : <><UserPlus className="w-4 h-4" /> Kuzatish</>}
+                                        </button>
+                                        <Link href={`/nexus?dm=${username}`} title="Xabar"
+                                            className="flex items-center justify-center w-11 rounded-xl active:scale-95 transition"
+                                            style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                            <MessageCircle className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} />
+                                        </Link>
+                                    </div>
                                 )}
                             </div>
 

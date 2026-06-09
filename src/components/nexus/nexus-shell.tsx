@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NxHeader } from "./nx-header";
 import { NxDock, type NxTab } from "./nx-dock";
 import { NxSidebar } from "./nx-sidebar";
 import { NxSettings } from "./nx-settings";
-import { NxPlayerProvider } from "./nx-player-ctx";
+import { NxPlayerProvider, useNxPlayer } from "./nx-player-ctx";
 import { NxMusicPlayer } from "./nx-music-player";
 import { NxVideoPlayer } from "./nx-video-player";
 import { NxShortsPlayer } from "./nx-shorts-player";
@@ -151,7 +151,7 @@ export function NexusShell() {
                 <NxNotifications />
 
                 {/* ── Xabarlar / DM ─────────────────────────────────────── */}
-                <NxMessages />
+                <MessagesWithBridge />
 
                 {/* ── Izohlar ───────────────────────────────────────────── */}
                 <NxComments />
@@ -305,6 +305,26 @@ export function NexusShell() {
             </div>
         </NxPlayerProvider>
     );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DM ko'prigi — /nexus?dm=username → xabarlar panelini shu suhbatga ochadi
+// ─────────────────────────────────────────────────────────────────────────────
+function MessagesWithBridge() {
+    const { setMessagesOpen } = useNxPlayer();
+    const [dmUser, setDmUser] = useState<string | null>(null);
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const dm = params.get("dm");
+        if (dm) {
+            setDmUser(dm);
+            setMessagesOpen(true);
+            params.delete("dm");
+            const qs = params.toString();
+            window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : ""));
+        }
+    }, [setMessagesOpen]);
+    return <NxMessages openWithUsername={dmUser} />;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
