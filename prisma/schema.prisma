@@ -687,6 +687,33 @@ model NexusStoryView {
   @@index([storyId])
 }
 
+// Shaxsiy yozishma (1:1) — user1Id < user2Id normalizatsiya
+model NexusConversation {
+  id              String    @id @default(cuid())
+  user1Id         String
+  user2Id         String
+  lastMessageAt   DateTime  @default(now())
+  lastMessageText String?
+  lastSenderId    String?
+  user1ReadAt     DateTime?
+  user2ReadAt     DateTime?
+  createdAt       DateTime  @default(now())
+  messages        NexusMessage[]
+  @@unique([user1Id, user2Id])
+  @@index([user1Id, lastMessageAt])
+  @@index([user2Id, lastMessageAt])
+}
+
+model NexusMessage {
+  id             String            @id @default(cuid())
+  conversationId String
+  conversation   NexusConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  text           String
+  createdAt      DateTime          @default(now())
+  @@index([conversationId, createdAt])
+}
+
 // ── ALKH Pay — Zij valyuta hamyoni ───────────────────────────────────────────
 //
 // Zij (Ƶ) — ALKH Pay ichki valyutasi.
