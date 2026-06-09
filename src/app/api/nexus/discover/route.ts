@@ -1,0 +1,51 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { isVerifiedProfile } from "@/lib/nexus";
+
+// GET /api/nexus/discover — trenddagi hashtaglar + tavsiya qilingan odamlar
+export async function GET() {
+    const session = await getServerSession(authOptions);
+    let meId: string | null = null;
+    if (session?.user?.email) {
+        const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+        meId = me?.id ?? null;
+    }
+
+    // ── Trenddagi hashtaglar (so'nggi 300 post) ──
+    const recent = await prisma.nexusPost.findMany({
+        where: { hidden: false, hashtags: { isEmpty: false } },
+        select: { hashtags: true }, orderBy: { createdAt: "desc" }, take: 300,
+    });
+    const counts = new Map<string, number>();
+    for (const r of recent) for (const t of r.hashtags) counts.set(t, (counts.get(t) || 0) + 1);
+    const trendingTags = [...counts.entries()]
+        .sort((a, b) => b[1] - a[1]).slice(0, 10).map(([tag, count]) => ({ tag, count }));
+
+    // ── Tavsiya qilingan odamlar — so'nggi post mualliflari, men emas, kuzatmaganlarim ──
+    const myFollowing = meId
+        ? new Set((await prisma.nexusFollow.findMany({ where: { followerId: meId }, select: { followingId: true } })).map(f => f.followingId))
+        : new Set<string>();
+    const recentPosts = await prisma.nexusPost.findMany({
+        where: { hidden: false }, select: { profileId: true }, orderBy: { createdAt: "desc" }, take: 100,
+    });
+    const seen = new Set<string>();
+    const candidateIds: string[] = [];
+    for (const p of recentPosts) {
+        if (p.profileId === meId || myFollowing.has(p.profileId) || seen.has(p.profileId)) continue;
+        seen.add(p.profileId); candidateIds.push(p.profileId);
+        if (candidateIds.length >= 8) break;
+    }
+    const profs = await prisma.userProfile.findMany({
+        where: { id: { in: candidateIds }, username: { not: null } },
+        select: { id: true, name: true, username: true, image: true, humoId: true },
+    });
+    const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
+    const suggestedUsers = candidateIds
+        .map(id => pMap[id])
+        .filter((u): u is NonNullable<typeof u> => !!u)
+        .map(u => ({ name: u.name, username: u.username, image: u.image, verified: isVerifiedProfile(u), isFollowing: false, isMe: false }));
+
+    return NextResponse.json({ trendingTags, suggestedUsers });
+}
