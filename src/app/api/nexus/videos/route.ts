@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { Prisma } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isVerifiedProfile } from "@/lib/nexus";
+import { isVerifiedProfile, isAdultBirthday } from "@/lib/nexus";
 import { moderateOnCreate } from "@/lib/moderation";
 
 // POST /api/nexus/videos — yangi video
@@ -76,26 +76,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ video });
 }
 
-// GET /api/nexus/videos — ro'yxat (kind/sort/q/category/scope/author)
+// GET /api/nexus/videos — ro'yxat (kind/orientation/free/sort/q/category/scope/author)
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
-    const kind = searchParams.get("kind") === "SHORT" ? "SHORT" : "LONG";
+    const kindParam = searchParams.get("kind");
+    const orientParam = searchParams.get("orientation");
     const sort = searchParams.get("sort") === "trend" ? "trend" : "new";
     const q = (searchParams.get("q") || "").trim();
     const category = searchParams.get("category") || "";
     const scope = searchParams.get("scope") || "all";
     const author = searchParams.get("author") || "";
-    const limit = Math.min(Number(searchParams.get("limit") ?? 24), 40);
+    const free = searchParams.get("free") === "1";
+    const limit = Math.min(Number(searchParams.get("limit") ?? 24), 60);
     const offset = Math.max(Number(searchParams.get("offset") ?? 0), 0);
 
     const session = await getServerSession(authOptions);
     let meId: string | null = null;
+    let adult = false;
     if (session?.user?.email) {
-        const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+        const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, birthday: true } });
         meId = me?.id ?? null;
+        adult = isAdultBirthday(me?.birthday);
     }
 
-    const where: Prisma.NexusVideoWhereInput = { hidden: false, kind };
+    const where: Prisma.NexusVideoWhereInput = { hidden: false };
+    if (kindParam === "SHORT" || kindParam === "LONG") where.kind = kindParam;
+    if (orientParam === "HORIZONTAL" || orientParam === "VERTICAL") where.orientation = orientParam;
+    if (free) where.priceZij = 0;
     if (category) where.category = category;
     if (q) where.OR = [
         { title: { contains: q, mode: "insensitive" } },
@@ -110,6 +117,8 @@ export async function GET(req: Request) {
     } else if (scope === "mine" && meId) {
         where.profileId = meId;
     }
+    // 18+ — faqat tasdiqlangan kattalar ko'radi (o'z videolari bundan mustasno)
+    if (!adult && !(scope === "mine" && meId)) where.isMature = false;
 
     const videos = await prisma.nexusVideo.findMany({
         where,
@@ -124,11 +133,22 @@ export async function GET(req: Request) {
     });
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 
+    // "Keyinroq ko'rish" holati (kartadagi bookmark uchun)
+    let savedIds = new Set<string>();
+    if (meId && videos.length) {
+        const wl = await prisma.nexusWatchLater.findMany({
+            where: { profileId: meId, videoId: { in: videos.map(v => v.id) } }, select: { videoId: true },
+        });
+        savedIds = new Set(wl.map(w => w.videoId));
+    }
+
     const out = videos.map(v => {
         const p = pMap[v.profileId];
         return {
             id: v.id, title: v.title, thumbUrl: v.thumbUrl, videoUrl: v.videoUrl,
-            durationSec: v.durationSec, kind: v.kind, views: v.views, createdAt: v.createdAt,
+            durationSec: v.durationSec, kind: v.kind, orientation: v.orientation,
+            priceZij: v.priceZij, isMature: v.isMature, isSaved: savedIds.has(v.id),
+            views: v.views, createdAt: v.createdAt,
             likeCount: v._count.likes, commentCount: v._count.comments,
             author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,
         };

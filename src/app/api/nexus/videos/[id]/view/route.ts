@@ -17,6 +17,11 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         });
         if (created.count > 0) {
             await prisma.nexusVideo.update({ where: { id }, data: { views: { increment: 1 } } });
+        } else {
+            // Qayta ko'rish — "so'nggi ko'rilgan" tarixida tepaga chiqsin
+            await prisma.nexusVideoView.updateMany({
+                where: { videoId: id, profileId: me.id }, data: { createdAt: new Date() },
+            });
         }
     } catch { /* video o'chgan bo'lishi mumkin */ }
 

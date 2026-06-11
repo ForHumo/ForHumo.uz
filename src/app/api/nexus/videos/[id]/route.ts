@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isVerifiedProfile } from "@/lib/nexus";
+import { isVerifiedProfile, isAdultBirthday } from "@/lib/nexus";
 
 // GET /api/nexus/videos/[id] — bitta video + tavsiya
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -15,11 +15,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     const session = await getServerSession(authOptions);
     let meId: string | null = null;
+    let adult = false;
     if (session?.user?.email) {
-        const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+        const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, birthday: true } });
         meId = me?.id ?? null;
+        adult = isAdultBirthday(me?.birthday);
     }
     if (video.hidden && video.profileId !== meId) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
+    // 18+ — faqat tasdiqlangan kattalar (ega bundan mustasno)
+    if (video.isMature && video.profileId !== meId && !adult) {
+        return NextResponse.json({ error: "Bu kontent 18+ — yosh cheklovi" }, { status: 403 });
+    }
 
     const author = await prisma.userProfile.findUnique({
         where: { id: video.profileId }, select: { id: true, name: true, username: true, image: true, humoId: true },
@@ -51,7 +57,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         video: {
             id: video.id, title: video.title, description: video.description,
             videoUrl: video.videoUrl, thumbUrl: video.thumbUrl, durationSec: video.durationSec,
-            kind: video.kind, category: video.category, views: video.views, createdAt: video.createdAt,
+            kind: video.kind, orientation: video.orientation, category: video.category,
+            tags: video.tags, descImages: video.descImages, isMature: video.isMature,
+            priceZij: video.priceZij, prevVideoId: video.prevVideoId,
+            views: video.views, createdAt: video.createdAt,
             likeCount: video._count.likes, commentCount: video._count.comments,
             isLiked, isSubscribed, isMine: video.profileId === meId,
             author: author ? { name: author.name, username: author.username, image: author.image, verified: isVerifiedProfile(author) } : null,
