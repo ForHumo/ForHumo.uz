@@ -14,20 +14,56 @@ export async function POST(req: Request) {
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
-    const { title, description, videoUrl, thumbUrl, durationSec, kind, category } = await req.json();
+    const body = await req.json();
+    const {
+        title, description, videoUrl, thumbUrl, durationSec, category,
+        orientation, width, height, tags, descImages, isMature, priceZij, prevVideoId,
+    } = body;
     if (!videoUrl || typeof videoUrl !== "string") return NextResponse.json({ error: "Video kerak" }, { status: 400 });
     if (!title?.trim()) return NextResponse.json({ error: "Sarlavha kerak" }, { status: 400 });
+
+    // Orientation: G.Video (gorizontal) / V.Video (vertikal). kind shundan kelib chiqadi.
+    const orient: "HORIZONTAL" | "VERTICAL" = orientation === "VERTICAL" ? "VERTICAL" : "HORIZONTAL";
+
+    // Teglar: # ni olib tashlash, bo'sh emas, takror emas (cheksiz)
+    const cleanTags = Array.isArray(tags)
+        ? [...new Set(tags.map((t: unknown) => String(t).replace(/^#+/, "").trim()).filter(Boolean).map((t: string) => t.slice(0, 50)))].slice(0, 50)
+        : [];
+
+    // Tavsifdagi dalil rasmlari (URL massiv)
+    const cleanDescImages = Array.isArray(descImages)
+        ? descImages.filter((u: unknown) => typeof u === "string" && u).map((u: string) => u).slice(0, 30)
+        : [];
+
+    // Narx (Ƶ) — 0 = bepul
+    const price = Number.isFinite(priceZij) ? Math.max(0, Math.min(10_000_000, Math.round(Number(priceZij)))) : 0;
+
+    // Series — avvalgi qism faqat o'zimning mavjud videom bo'lishi mumkin
+    let prevId: string | null = null;
+    if (typeof prevVideoId === "string" && prevVideoId) {
+        const prev = await prisma.nexusVideo.findFirst({ where: { id: prevVideoId, profileId: profile.id }, select: { id: true } });
+        prevId = prev?.id ?? null;
+    }
 
     const video = await prisma.nexusVideo.create({
         data: {
             profileId: profile.id,
-            title: String(title).trim().slice(0, 200),
-            description: typeof description === "string" && description.trim() ? description.trim().slice(0, 2000) : null,
+            title: String(title).trim().slice(0, 300),
+            // Tavsif cheksiz (xavfsizlik uchun 100k belgi shifti)
+            description: typeof description === "string" && description.trim() ? description.trim().slice(0, 100_000) : null,
             videoUrl,
             thumbUrl: typeof thumbUrl === "string" && thumbUrl ? thumbUrl : null,
             durationSec: Number.isFinite(durationSec) ? Math.max(0, Math.round(Number(durationSec))) : 0,
-            kind: kind === "SHORT" ? "SHORT" : "LONG",
+            kind: orient === "VERTICAL" ? "SHORT" : "LONG",
+            orientation: orient,
+            width: Number.isFinite(width) ? Math.round(Number(width)) : null,
+            height: Number.isFinite(height) ? Math.round(Number(height)) : null,
             category: typeof category === "string" && category ? category : null,
+            tags: cleanTags,
+            descImages: cleanDescImages,
+            isMature: isMature === true,
+            priceZij: price,
+            prevVideoId: prevId,
         },
     });
 
@@ -71,6 +107,8 @@ export async function GET(req: Request) {
     } else if (scope === "following" && meId) {
         const follows = await prisma.nexusFollow.findMany({ where: { followerId: meId }, select: { followingId: true } });
         where.profileId = { in: follows.map(f => f.followingId) };
+    } else if (scope === "mine" && meId) {
+        where.profileId = meId;
     }
 
     const videos = await prisma.nexusVideo.findMany({

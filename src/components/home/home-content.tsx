@@ -14,6 +14,7 @@ import {
     CreditCard,
 } from "lucide-react";
 import { ProjectCard } from "@/components/ui/project-card";
+import { LiveBackground } from "@/components/home/live-background";
 
 export function HomeContent() {
     const tHero = useTranslations("Hero");
@@ -89,6 +90,9 @@ export function HomeContent() {
 
     return (
         <div className="flex flex-col min-h-screen bg-background relative selection:bg-primary/20">
+
+            {/* Jonli fon — yulduz turkumi + aurora */}
+            <LiveBackground />
 
             {/* Hero Section */}
             <section className="relative flex flex-col items-center justify-center min-h-[82vh] py-20 overflow-hidden z-10">

@@ -20,7 +20,9 @@ export async function POST(req: Request): Promise<NextResponse> {
                         "video/x-m4v", "video/ogg", "video/x-msvideo", "video/x-matroska",
                         "image/jpeg", "image/png", "image/webp", "image/gif",
                     ],
-                    maximumSizeInBytes: 100 * 1024 * 1024, // 100MB
+                    // Cheksiz hajm — multipart bilan katta videolar (30 soatlik ham) yuklanadi.
+                    // (maximumSizeInBytes ko'rsatilmaganda Blok SDK cheklov qo'ymaydi.)
+                    maximumSizeInBytes: 5 * 1024 * 1024 * 1024 * 1024, // 5 TB (amalda cheksiz)
                     tokenPayload: JSON.stringify({ email: session.user.email }),
                 };
             },
