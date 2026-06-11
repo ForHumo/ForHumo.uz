@@ -813,6 +813,58 @@ model NexusVideoComment {
   @@index([videoId, createdAt])
 }
 
+// ── Nexus Live — jonli efirlar ───────────────────────────────────────────────
+// Faza 1: lifecycle + chat + ko'ruvchi heartbeat. Video transport keyingi faza.
+model NexusLiveStream {
+  id          String           @id @default(cuid())
+  profileId   String                                  // streamer
+  title       String
+  category    String?
+  privacy     NexusLivePrivacy @default(PUBLIC)
+  status      NexusLiveStatus  @default(LIVE)
+  scheduledAt DateTime?                               // UPCOMING uchun
+  startedAt   DateTime?
+  endedAt     DateTime?
+  peakViewers Int              @default(0)
+  likes       Int              @default(0)
+  createdAt   DateTime         @default(now())
+  messages    NexusLiveMessage[]
+  @@index([status, createdAt])
+  @@index([profileId, createdAt])
+}
+
+enum NexusLiveStatus {
+  UPCOMING
+  LIVE
+  ENDED
+}
+
+enum NexusLivePrivacy {
+  PUBLIC
+  FRIENDS
+  PRIVATE
+}
+
+model NexusLiveMessage {
+  id        String          @id @default(cuid())
+  streamId  String
+  stream    NexusLiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  profileId String
+  text      String
+  createdAt DateTime        @default(now())
+  @@index([streamId, createdAt])
+}
+
+// Jonli ko'ruvchi — heartbeat (lastSeenAt > now-30s = onlayn)
+model NexusLiveViewer {
+  id         String   @id @default(cuid())
+  streamId   String
+  profileId  String
+  lastSeenAt DateTime @default(now())
+  @@unique([streamId, profileId])
+  @@index([streamId, lastSeenAt])
+}
+
 // Pullik video xaridi — Zij avtorning hamyoniga tushadi
 model NexusVideoPurchase {
   id        String     @id @default(cuid())
