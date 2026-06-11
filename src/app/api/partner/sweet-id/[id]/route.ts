@@ -1,47 +1,55 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { partnerAuthorized } from "@/lib/partner-auth";
+import { authPartner } from "@/lib/partner-auth";
 
-// Hamkor faqat SWEET profillarni o'qiy/yangilay oladi — Google (For Humo)
-// foydalanuvchilarining ma'lumotiga teginmaydi.
-async function loadSweet(id: string) {
+// Hamkor faqat O'ZI yaratgan SWEET profillarni o'qiy/yangilay oladi
+// (accountType SWEET + origin = tasdiqlangan hamkor). Google (For Humo)
+// foydalanuvchilariga yoki boshqa hamkor profillariga teginmaydi.
+async function loadOwned(id: string, partner: string) {
   const p = await prisma.userProfile.findUnique({ where: { id } });
-  return p && p.accountType === "SWEET" ? p : null;
+  return p && p.accountType === "SWEET" && p.origin === partner ? p : null;
 }
 
-// GET /api/partner/sweet-id/:id — profilni o'qish
+// GET /api/partner/sweet-id/:id
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!partnerAuthorized(req)) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const partner = authPartner(req, "");
+  if (!partner) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
   const { id } = await params;
-  const profile = await loadSweet(id);
+  const profile = await loadOwned(id, partner);
   if (!profile) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
   return NextResponse.json({
     profileId: profile.id,
+    humoId: profile.humoId,
     name: profile.name,
     image: profile.image,
     phone: profile.phone,
   });
 }
 
-// PATCH /api/partner/sweet-id/:id — telefon/ismni yangilash (PII Humo ID'da saqlanadi)
+// PATCH /api/partner/sweet-id/:id — telefon/ismni yangilash (PII Humo ID'da)
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!partnerAuthorized(req)) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const raw = await req.text();
+  const partner = authPartner(req, raw);
+  if (!partner) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
   const { id } = await params;
-  const profile = await loadSweet(id);
+  const profile = await loadOwned(id, partner);
   if (!profile) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
-  const body = await req.json().catch(() => null);
+  let body: Record<string, unknown> | null = null;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    body = null;
+  }
   const data: { phone?: string; name?: string } = {};
   if (typeof body?.phone === "string") data.phone = body.phone.trim();
   if (typeof body?.name === "string" && body.name.trim()) data.name = body.name.trim();

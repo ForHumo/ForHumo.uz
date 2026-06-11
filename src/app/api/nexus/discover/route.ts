@@ -38,7 +38,7 @@ export async function GET() {
         if (candidateIds.length >= 8) break;
     }
     const profs = await prisma.userProfile.findMany({
-        where: { id: { in: candidateIds }, username: { not: null } },
+        where: { id: { in: candidateIds }, username: { not: null }, accountType: "GOOGLE" },
         select: { id: true, name: true, username: true, image: true, humoId: true },
     });
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
