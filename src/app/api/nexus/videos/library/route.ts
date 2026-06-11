@@ -44,12 +44,20 @@ export async function GET() {
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
     const savedSet = new Set(wlRows.map(w => w.videoId));
 
+    // Xarid holati (pullik video qulfi uchun)
+    const allIds = [...vidMap.keys()];
+    const purchases = allIds.length
+        ? await prisma.nexusVideoPurchase.findMany({ where: { buyerId: me.id, videoId: { in: allIds } }, select: { videoId: true } })
+        : [];
+    const boughtSet = new Set(purchases.map(p => p.videoId));
+
     function shape(v: VideoWithCount) {
         const p = pMap[v.profileId] as (typeof profs)[number] | undefined;
+        const locked = v.priceZij > 0 && v.profileId !== me!.id && !boughtSet.has(v.id);
         return {
-            id: v.id, title: v.title, thumbUrl: v.thumbUrl, videoUrl: v.videoUrl,
+            id: v.id, title: v.title, thumbUrl: v.thumbUrl, videoUrl: locked ? "" : v.videoUrl,
             durationSec: v.durationSec, kind: v.kind, orientation: v.orientation,
-            priceZij: v.priceZij, isMature: v.isMature, isSaved: savedSet.has(v.id),
+            priceZij: v.priceZij, isMature: v.isMature, isSaved: savedSet.has(v.id), locked,
             views: v.views, createdAt: v.createdAt,
             likeCount: v._count.likes, commentCount: v._count.comments,
             author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,

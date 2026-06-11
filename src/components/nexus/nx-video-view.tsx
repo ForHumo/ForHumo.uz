@@ -14,6 +14,7 @@ interface Vid {
     id: string; title: string; thumbUrl: string | null; videoUrl: string;
     durationSec: number; views: number; createdAt: string;
     orientation: "HORIZONTAL" | "VERTICAL"; priceZij: number; isMature: boolean; isSaved: boolean;
+    locked: boolean;
     likeCount: number; commentCount: number; author: VAuthor | null;
 }
 interface Library { mine: Vid[]; watchLater: Vid[]; history: Vid[] }
@@ -92,10 +93,11 @@ export function VideoView() {
         fetch("/api/nexus/videos?kind=SHORT&sort=trend&limit=20").then(r => r.json()).then(d => setShorts(d.videos ?? [])).catch(() => { });
     }, []);
 
-    // Vertikal video → shorts player (joriy ro'yxatning vertikal qismi bilan)
+    // Vertikal video → shorts player (joriy ro'yxatning vertikal qismi bilan).
+    // Qulflangan (pullik, sotib olinmagan) — har doim video player (paywall) orqali.
     function openItem(v: Vid, list: Vid[]) {
-        if (v.orientation === "VERTICAL") {
-            const verts = list.filter(x => x.orientation === "VERTICAL");
+        if (v.orientation === "VERTICAL" && !v.locked) {
+            const verts = list.filter(x => x.orientation === "VERTICAL" && !x.locked);
             const idx = Math.max(0, verts.findIndex(x => x.id === v.id));
             openShorts(verts.map(s => ({
                 id: s.id, image: s.thumbUrl || "", author: s.author?.name || s.author?.username || "Foydalanuvchi",

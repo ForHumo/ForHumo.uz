@@ -133,21 +133,27 @@ export async function GET(req: Request) {
     });
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 
-    // "Keyinroq ko'rish" holati (kartadagi bookmark uchun)
+    // "Keyinroq ko'rish" + xarid holati
     let savedIds = new Set<string>();
+    let boughtIds = new Set<string>();
     if (meId && videos.length) {
-        const wl = await prisma.nexusWatchLater.findMany({
-            where: { profileId: meId, videoId: { in: videos.map(v => v.id) } }, select: { videoId: true },
-        });
+        const ids = videos.map(v => v.id);
+        const [wl, pu] = await Promise.all([
+            prisma.nexusWatchLater.findMany({ where: { profileId: meId, videoId: { in: ids } }, select: { videoId: true } }),
+            prisma.nexusVideoPurchase.findMany({ where: { buyerId: meId, videoId: { in: ids } }, select: { videoId: true } }),
+        ]);
         savedIds = new Set(wl.map(w => w.videoId));
+        boughtIds = new Set(pu.map(p => p.videoId));
     }
 
     const out = videos.map(v => {
         const p = pMap[v.profileId];
+        // Pullik video — sotib olinmaguncha videoUrl chiqmaydi (paywall bypass'ini yopadi)
+        const locked = v.priceZij > 0 && v.profileId !== meId && !boughtIds.has(v.id);
         return {
-            id: v.id, title: v.title, thumbUrl: v.thumbUrl, videoUrl: v.videoUrl,
+            id: v.id, title: v.title, thumbUrl: v.thumbUrl, videoUrl: locked ? "" : v.videoUrl,
             durationSec: v.durationSec, kind: v.kind, orientation: v.orientation,
-            priceZij: v.priceZij, isMature: v.isMature, isSaved: savedIds.has(v.id),
+            priceZij: v.priceZij, isMature: v.isMature, isSaved: savedIds.has(v.id), locked,
             views: v.views, createdAt: v.createdAt,
             likeCount: v._count.likes, commentCount: v._count.comments,
             author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,

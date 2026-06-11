@@ -31,14 +31,18 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         where: { id: video.profileId }, select: { id: true, name: true, username: true, image: true, humoId: true },
     });
 
-    let isLiked = false, isSubscribed = false;
+    let isLiked = false, isSubscribed = false, isPurchased = false;
     if (meId) {
-        const [lk, fl] = await Promise.all([
+        const [lk, fl, pu] = await Promise.all([
             prisma.nexusVideoLike.findUnique({ where: { videoId_profileId: { videoId: id, profileId: meId } } }),
             prisma.nexusFollow.findUnique({ where: { followerId_followingId: { followerId: meId, followingId: video.profileId } } }),
+            prisma.nexusVideoPurchase.findUnique({ where: { videoId_buyerId: { videoId: id, buyerId: meId } } }),
         ]);
-        isLiked = !!lk; isSubscribed = !!fl;
+        isLiked = !!lk; isSubscribed = !!fl; isPurchased = !!pu;
     }
+
+    // Pullik video — sotib olinmaguncha videoUrl berilmaydi
+    const locked = video.priceZij > 0 && video.profileId !== meId && !isPurchased;
 
     // Tavsiya — shu turdagi boshqa videolar
     const recRows = await prisma.nexusVideo.findMany({
@@ -56,10 +60,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({
         video: {
             id: video.id, title: video.title, description: video.description,
-            videoUrl: video.videoUrl, thumbUrl: video.thumbUrl, durationSec: video.durationSec,
+            videoUrl: locked ? "" : video.videoUrl, thumbUrl: video.thumbUrl, durationSec: video.durationSec,
             kind: video.kind, orientation: video.orientation, category: video.category,
             tags: video.tags, descImages: video.descImages, isMature: video.isMature,
-            priceZij: video.priceZij, prevVideoId: video.prevVideoId,
+            priceZij: video.priceZij, prevVideoId: video.prevVideoId, locked,
             views: video.views, createdAt: video.createdAt,
             likeCount: video._count.likes, commentCount: video._count.comments,
             isLiked, isSubscribed, isMine: video.profileId === meId,

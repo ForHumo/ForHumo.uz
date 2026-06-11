@@ -5,13 +5,14 @@ import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Eye, ThumbsUp, Share2, Loader2, Send, BadgeCheck,
-    MessageSquare, UserPlus, UserCheck, Play, Trash2,
+    MessageSquare, UserPlus, UserCheck, Play, Trash2, Lock, Coins,
 } from "lucide-react";
 
 interface VAuthor { name: string | null; username: string | null; image: string | null; verified: boolean }
 interface VData {
     id: string; title: string; description: string | null; videoUrl: string; thumbUrl: string | null;
     durationSec: number; views: number; createdAt: string; likeCount: number; commentCount: number;
+    priceZij: number; locked: boolean;
     isLiked: boolean; isSubscribed: boolean; isMine: boolean; author: VAuthor | null;
 }
 interface Rec { id: string; title: string; thumbUrl: string | null; durationSec: number; views: number; author: { name: string | null; username: string | null; image: string | null } | null }
@@ -45,12 +46,14 @@ export function NxVideoPlayer() {
     const [comments, setComments] = useState<VComment[]>([]);
     const [cInput, setCInput] = useState("");
     const [cBusy, setCBusy] = useState(false);
+    const [buying, setBuying] = useState(false);
+    const [buyErr, setBuyErr] = useState<string | null>(null);
 
     const vid = video?.id ?? null;
 
-    useEffect(() => {
-        if (!videoOpen || !vid) return;
-        setLoading(true); setData(null); setShowComments(false); setComments([]);
+    const loadDetail = useCallback(() => {
+        if (!vid) return;
+        setLoading(true);
         fetch(`/api/nexus/videos/${vid}`)
             .then(r => r.json())
             .then(d => {
@@ -60,8 +63,27 @@ export function NxVideoPlayer() {
                 }
             })
             .finally(() => setLoading(false));
+    }, [vid]);
+
+    useEffect(() => {
+        if (!videoOpen || !vid) return;
+        setData(null); setShowComments(false); setComments([]); setBuyErr(null);
+        loadDetail();
         fetch(`/api/nexus/videos/${vid}/view`, { method: "POST" }).catch(() => { });
-    }, [videoOpen, vid]);
+    }, [videoOpen, vid, loadDetail]);
+
+    // Pullik videoni sotib olish — muvaffaqiyatda videoUrl ochiladi
+    async function buy() {
+        if (!vid || buying) return;
+        setBuying(true); setBuyErr(null);
+        try {
+            const r = await fetch(`/api/nexus/videos/${vid}/purchase`, { method: "POST" });
+            const d = await r.json().catch(() => ({}));
+            if (r.ok) loadDetail();
+            else setBuyErr(d.error || "Xarid amalga oshmadi");
+        } catch { setBuyErr("Tarmoq xatosi"); }
+        finally { setBuying(false); }
+    }
 
     const loadComments = useCallback(() => {
         if (!vid) return;
@@ -108,7 +130,26 @@ export function NxVideoPlayer() {
 
             {/* Video */}
             <div className="flex-1 bg-black flex items-center justify-center min-h-0">
-                {data?.videoUrl ? (
+                {data?.locked ? (
+                    <div className="relative w-full h-full flex items-center justify-center p-4">
+                        {data.thumbUrl && <img src={data.thumbUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" style={{ filter: "blur(20px)" }} />}
+                        <div className="relative z-10 flex flex-col items-center gap-4 p-8 rounded-2xl text-center w-full" style={{ background: "rgba(8,12,32,0.92)", border: "1px solid rgba(43,62,232,0.30)", maxWidth: 380 }}>
+                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                <Lock className="w-7 h-7 text-white" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-black text-white mb-1">Pullik video</p>
+                                <p className="text-xs leading-relaxed" style={{ color: "rgba(150,170,220,0.8)" }}>Sotib olganingizdan so&apos;ng video ochiladi, pul avtorning ALKH Pay hisobiga tushadi.</p>
+                            </div>
+                            <button onClick={buy} disabled={buying}
+                                className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-60"
+                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                {buying ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Coins className="w-4 h-4" /> Sotib olish — {data.priceZij} Ƶ</>}
+                            </button>
+                            {buyErr && <p className="text-xs text-red-400 font-bold">{buyErr}</p>}
+                        </div>
+                    </div>
+                ) : data?.videoUrl ? (
                     <video key={data.id} src={data.videoUrl} poster={data.thumbUrl || undefined} controls autoPlay playsInline
                         className="w-full h-full max-h-screen object-contain" />
                 ) : loading ? (
