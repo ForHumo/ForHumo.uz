@@ -6,13 +6,16 @@ import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Eye, ThumbsUp, Share2, Loader2, Send, BadgeCheck,
     MessageSquare, UserPlus, UserCheck, Play, Trash2, Lock, Coins,
+    ChevronLeft, ChevronRight,
 } from "lucide-react";
 
 interface VAuthor { name: string | null; username: string | null; image: string | null; verified: boolean }
+interface SeriesPart { id: string; title: string; thumbUrl: string | null; durationSec: number; views: number }
 interface VData {
     id: string; title: string; description: string | null; videoUrl: string; thumbUrl: string | null;
     durationSec: number; views: number; createdAt: string; likeCount: number; commentCount: number;
     priceZij: number; locked: boolean;
+    series?: { prev: SeriesPart | null; next: SeriesPart | null };
     isLiked: boolean; isSubscribed: boolean; isMine: boolean; author: VAuthor | null;
 }
 interface Rec { id: string; title: string; thumbUrl: string | null; durationSec: number; views: number; author: { name: string | null; username: string | null; image: string | null } | null }
@@ -211,6 +214,28 @@ export function NxVideoPlayer() {
                             </button>
                         )}
                     </div>
+
+                    {/* Seriya — oldingi/keyingi qism */}
+                    {(data?.series?.prev || data?.series?.next) && (
+                        <div className="flex gap-2 mt-3">
+                            {([["prev", data.series?.prev, ChevronLeft, "Oldingi qism"], ["next", data.series?.next, ChevronRight, "Keyingi qism"]] as const).map(([key, part, Icon, label]) => part && (
+                                <button key={key}
+                                    onClick={() => openVideo({ id: part.id, title: part.title, image: part.thumbUrl || "", author: data?.author?.name || data?.author?.username || "", avatar: avatarOf(data?.author ?? null), views: fmtViews(part.views), duration: fmtDur(part.durationSec) })}
+                                    className="flex-1 flex items-center gap-2 p-2 rounded-xl text-left min-w-0"
+                                    style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                                    {key === "prev" && <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                    <div className="w-12 h-7 rounded overflow-hidden flex-shrink-0" style={{ background: "rgba(43,62,232,0.15)" }}>
+                                        {part.thumbUrl && <img src={part.thumbUrl} alt="" className="w-full h-full object-cover" />}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-[9px] font-black uppercase tracking-wide" style={{ color: "rgba(0,206,200,0.8)" }}>{label}</p>
+                                        <p className="text-[11px] font-bold text-white truncate">{part.title}</p>
+                                    </div>
+                                    {key === "next" && <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
                     {data?.description && <p className="text-xs mt-3 leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(180,195,235,0.8)" }}>{data.description}</p>}
                 </div>

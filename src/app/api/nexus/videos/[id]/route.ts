@@ -44,9 +44,18 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     // Pullik video — sotib olinmaguncha videoUrl berilmaydi
     const locked = video.priceZij > 0 && video.profileId !== meId && !isPurchased;
 
-    // Tavsiya — shu turdagi boshqa videolar
+    // Seriya — oldingi/keyingi qism
+    const partSelect = { id: true, title: true, thumbUrl: true, durationSec: true, views: true } as const;
+    const [prevPart, nextPart] = await Promise.all([
+        video.prevVideoId
+            ? prisma.nexusVideo.findFirst({ where: { id: video.prevVideoId, hidden: false }, select: partSelect })
+            : Promise.resolve(null),
+        prisma.nexusVideo.findFirst({ where: { prevVideoId: id, hidden: false }, orderBy: { createdAt: "asc" }, select: partSelect }),
+    ]);
+
+    // Tavsiya — shu turdagi boshqa videolar (18+ ham shu yerda filtrlanadi)
     const recRows = await prisma.nexusVideo.findMany({
-        where: { hidden: false, kind: video.kind, id: { not: id } },
+        where: { hidden: false, kind: video.kind, id: { not: id }, ...(adult ? {} : { isMature: false }) },
         orderBy: [{ views: "desc" }, { createdAt: "desc" }], take: 8,
     });
     const recAuthorIds = [...new Set(recRows.map(r => r.profileId))];
@@ -64,6 +73,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             kind: video.kind, orientation: video.orientation, category: video.category,
             tags: video.tags, descImages: video.descImages, isMature: video.isMature,
             priceZij: video.priceZij, prevVideoId: video.prevVideoId, locked,
+            series: { prev: prevPart, next: nextPart },
             views: video.views, createdAt: video.createdAt,
             likeCount: video._count.likes, commentCount: video._count.comments,
             isLiked, isSubscribed, isMine: video.profileId === meId,
