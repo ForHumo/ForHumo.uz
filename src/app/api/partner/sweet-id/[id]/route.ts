@@ -64,3 +64,22 @@ export async function PATCH(
   const updated = await prisma.userProfile.update({ where: { id }, data });
   return NextResponse.json({ ok: true, profileId: updated.id, phone: updated.phone });
 }
+
+// DELETE /api/partner/sweet-id/:id — to'liq o'chirish (erasure / GDPR-uslubi).
+// SWEET profil + uning identitylari (Identity onDelete: Cascade) o'chiriladi.
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const partner = authPartner(req, "");
+  if (!partner) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!withinRateLimit(partner))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+
+  const { id } = await params;
+  const profile = await loadOwned(id, partner);
+  if (!profile) return NextResponse.json({ error: "not_found" }, { status: 404 });
+
+  await prisma.userProfile.delete({ where: { id } });
+  return NextResponse.json({ ok: true, deleted: id });
+}

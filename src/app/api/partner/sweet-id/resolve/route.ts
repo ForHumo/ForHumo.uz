@@ -92,6 +92,7 @@ export async function POST(req: Request) {
     }
   }
 
+  // PII minimal: telefonни qaytarmaymiz (Sevinch unга muhtoj emas; kerak bo'lsa GET).
   return NextResponse.json({
     ok: true,
     profileId: profile.id,
@@ -99,7 +100,6 @@ export async function POST(req: Request) {
     accountType: profile.accountType,
     name: profile.name,
     image: profile.image,
-    phone: profile.phone,
     username,
   });
 }
