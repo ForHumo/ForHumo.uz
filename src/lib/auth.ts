@@ -23,6 +23,7 @@ export const authOptions: NextAuthOptions = {
                         create: {
                             email: user.email,
                             googleId: user.id ?? null,
+                            accountType: "GOOGLE",
                             name: user.name ?? null,
                             image: user.image ?? null,
                             emailVerified: isGoogle,

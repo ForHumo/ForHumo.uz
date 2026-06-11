@@ -9,10 +9,37 @@ datasource db {
 
 // ── Humo ID — unified identity across all For Humo services ──────────────────
 
+enum AccountType {
+  GOOGLE   // To'liq Humo ID — Google bilan (For Humo loyihalari)
+  SWEET    // Sweet ID — hamkor (Sevinch Sweets), Telegram bilan; ma'lumotni Humo ID saqlaydi
+}
+
+enum AuthProvider {
+  GOOGLE
+  TELEGRAM
+}
+
+// Bitta Humo ID profili ↔ login usuli(lar)i. SWEET profil uchun bu TELEGRAM
+// identity bo'ladi; bu Sevinch Sweets ↔ Humo ID "ko'prigi" (Sweet ID).
+model Identity {
+  id         String       @id @default(cuid())
+  profileId  String
+  profile    UserProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  provider   AuthProvider
+  providerId String        // Google "sub" yoki Telegram user id (string)
+  username   String?
+  photoUrl   String?
+  createdAt  DateTime     @default(now())
+
+  @@unique([provider, providerId])
+  @@index([profileId])
+}
+
 model UserProfile {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  googleId      String?  @unique
+  id            String      @id @default(cuid())
+  email         String?     @unique   // SWEET (Telegram) profillarda bo'lmaydi
+  googleId      String?     @unique
+  accountType   AccountType @default(GOOGLE)
 
   // Name fields
   name          String?            // display name (editable)
@@ -53,6 +80,7 @@ model UserProfile {
   loginEvents   LoginEvent[]
   supportTickets SupportTicket[]
   emailCodes    EmailVerificationCode[]
+  identities    Identity[]
   zijWallet     ZijWallet?
 
   createdAt     DateTime @default(now())
@@ -719,24 +747,41 @@ model NexusVideo {
   id          String         @id @default(cuid())
   profileId   String                                // kanal / yuklovchi
   title       String
-  description String?
+  description String?                               // cheksiz uzunlik
   videoUrl    String                                // Vercel Blob MP4 URL
-  thumbUrl    String?                               // client'da olingan thumbnail
+  thumbUrl    String?                               // muqova (custom yoki client thumbnail)
   durationSec Int            @default(0)
   kind        NexusVideoKind @default(LONG)
-  category    String?
+  orientation NexusVideoOrientation @default(HORIZONTAL)  // G.Video (gorizontal) / V.Video (vertikal)
+  width       Int?                                  // video o'lchami — orientation aniqlash
+  height      Int?
+  category    String?                               // kino / musiqa / gaming ...
+  tags        String[]                              // foydalanuvchi #teglari (cheksiz)
+  descImages  String[]                              // tavsifdagi dalil rasmlari
+  isMature    Boolean        @default(false)        // 18+ — voyaga yetmaganlardan yashiriladi
+  priceZij    Int            @default(0)            // 0 = bepul, >0 = pullik (Ƶ)
+  prevVideoId String?                               // series — avvalgi qism (joylangan bo'lishi shart)
+  prevVideo   NexusVideo?    @relation("VideoSeries", fields: [prevVideoId], references: [id], onDelete: SetNull)
+  nextParts   NexusVideo[]   @relation("VideoSeries")
   views       Int            @default(0)
   hidden      Boolean        @default(false)         // moderatsiya
   createdAt   DateTime       @default(now())
   likes       NexusVideoLike[]
   comments    NexusVideoComment[]
+  purchases   NexusVideoPurchase[]
   @@index([kind, createdAt])
+  @@index([orientation, createdAt])
   @@index([profileId, createdAt])
 }
 
 enum NexusVideoKind {
   LONG
   SHORT
+}
+
+enum NexusVideoOrientation {
+  HORIZONTAL    // G.Video
+  VERTICAL      // V.Video (reels)
 }
 
 model NexusVideoView {
@@ -765,6 +810,28 @@ model NexusVideoComment {
   text      String
   createdAt DateTime   @default(now())
   @@index([videoId, createdAt])
+}
+
+// Pullik video xaridi — Zij avtorning hamyoniga tushadi
+model NexusVideoPurchase {
+  id        String     @id @default(cuid())
+  videoId   String
+  video     NexusVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  buyerId   String                                  // UserProfile id
+  priceZij  Int                                     // to'langan summa (Ƶ)
+  createdAt DateTime   @default(now())
+  @@unique([videoId, buyerId])
+  @@index([buyerId, createdAt])
+}
+
+// "Keyinroq ko'rish" ro'yxati
+model NexusWatchLater {
+  id        String   @id @default(cuid())
+  profileId String
+  videoId   String
+  createdAt DateTime @default(now())
+  @@unique([profileId, videoId])
+  @@index([profileId, createdAt])
 }
 
 // ── ALKH Pay — Zij valyuta hamyoni ───────────────────────────────────────────
