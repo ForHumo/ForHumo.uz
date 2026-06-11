@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { authPartner } from "@/lib/partner-auth";
+import { authPartner, withinRateLimit } from "@/lib/partner-auth";
 
 // Hamkor faqat O'ZI yaratgan SWEET profillarni o'qiy/yangilay oladi
 // (accountType SWEET + origin = tasdiqlangan hamkor). Google (For Humo)
@@ -17,6 +17,8 @@ export async function GET(
 ) {
   const partner = authPartner(req, "");
   if (!partner) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!withinRateLimit(partner))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   const { id } = await params;
   const profile = await loadOwned(id, partner);
@@ -39,6 +41,8 @@ export async function PATCH(
   const raw = await req.text();
   const partner = authPartner(req, raw);
   if (!partner) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!withinRateLimit(partner))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   const { id } = await params;
   const profile = await loadOwned(id, partner);

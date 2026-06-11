@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { authPartner } from "@/lib/partner-auth";
+import { authPartner, withinRateLimit } from "@/lib/partner-auth";
 
 // POST /api/partner/sweet-id/resolve
 //
@@ -13,6 +13,9 @@ export async function POST(req: Request) {
   const partner = authPartner(req, raw);
   if (!partner) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  if (!withinRateLimit(partner)) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
   const body = safeParse(raw);
@@ -39,6 +42,9 @@ export async function POST(req: Request) {
       data: {
         name: displayName ?? identity.profile.name ?? undefined,
         image: photoUrl ?? identity.profile.image ?? undefined,
+        // origin'ni to'ldirish — origin maydoni qo'shilishidan oldin yaratilgan
+        // profillar (origin=null) [id] route'larida "yetim" qolmasligi uchun.
+        origin: identity.profile.origin ?? partner,
         lastLoginAt: new Date(),
       },
     });
@@ -49,24 +55,41 @@ export async function POST(req: Request) {
       });
     }
   } else {
-    profile = await prisma.userProfile.create({
-      data: {
-        accountType: "SWEET",
-        origin: partner,
-        humoId: await genSweetHumoId(),
-        name: displayName,
-        firstName,
-        lastName,
-        image: photoUrl,
-        emailVerified: false,
-        level: 0,
-        onboardingDone: true,
-        lastLoginAt: new Date(),
-        identities: {
-          create: { provider: "TELEGRAM", providerId: telegramId, username, photoUrl },
+    try {
+      profile = await prisma.userProfile.create({
+        data: {
+          accountType: "SWEET",
+          origin: partner,
+          humoId: await genSweetHumoId(),
+          name: displayName,
+          firstName,
+          lastName,
+          image: photoUrl,
+          emailVerified: false,
+          level: 0,
+          onboardingDone: true,
+          lastLoginAt: new Date(),
+          identities: {
+            create: { provider: "TELEGRAM", providerId: telegramId, username, photoUrl },
+          },
         },
-      },
-    });
+      });
+    } catch {
+      // Poyga: bir vaqtda boshqa so'rov shu identity'ni yaratdi — qayta topamiz.
+      const again = await prisma.identity.findUnique({
+        where: { provider_providerId: { provider: "TELEGRAM", providerId: telegramId } },
+        include: { profile: true },
+      });
+      if (!again) {
+        return NextResponse.json({ error: "conflict" }, { status: 409 });
+      }
+      profile = again.profile.origin
+        ? again.profile
+        : await prisma.userProfile.update({
+            where: { id: again.profileId },
+            data: { origin: partner },
+          });
+    }
   }
 
   return NextResponse.json({

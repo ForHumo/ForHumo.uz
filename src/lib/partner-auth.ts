@@ -48,3 +48,18 @@ export function authPartner(req: Request, rawBody: string): string | null {
   }
   return null;
 }
+
+// Yengil rate-limit (sliding window). DIQQAT: bu xotirada, INSTANCE bo'yicha —
+// serverless'da bir necha instance bo'lishi mumkin, shuning uchun bu mutlaq emas,
+// faqat sodda flood'ga to'siq. To'liq himoya uchun shared store (Upstash) kerak.
+const WINDOW_MS = 10_000;
+const MAX_PER_WINDOW = 120;
+const hits = new Map<string, number[]>();
+
+export function withinRateLimit(partner: string): boolean {
+  const now = Date.now();
+  const recent = (hits.get(partner) ?? []).filter((t) => now - t < WINDOW_MS);
+  recent.push(now);
+  hits.set(partner, recent);
+  return recent.length <= MAX_PER_WINDOW;
+}
