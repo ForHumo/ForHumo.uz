@@ -3,12 +3,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
+import { getHiddenAuthorIds } from "@/lib/nexus-block";
 
-// GET /api/nexus/search?q=X — foydalanuvchi / post / hashtag qidirish
+function fmtDur(s: number) { const m = Math.floor(s / 60), sec = Math.floor(s % 60); return `${m}:${String(sec).padStart(2, "0")}`; }
+
+// GET /api/nexus/search?q=X — foydalanuvchi / post / hashtag / video / audio / jonli qidirish
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const q = (searchParams.get("q") || "").trim();
-    if (!q) return NextResponse.json({ users: [], posts: [], tags: [] });
+    if (!q) return NextResponse.json({ users: [], posts: [], tags: [], videos: [], tracks: [], lives: [] });
 
     // Sessiya egasi (isFollowing uchun)
     const session = await getServerSession(authOptions);
@@ -18,11 +21,16 @@ export async function GET(req: Request) {
         meId = me?.id ?? null;
     }
 
+    // Bloklangan/mute mualliflar — qidiruvdan ham chiqarib tashlanadi
+    const hidden = await getHiddenAuthorIds(meId);
+    const notHidden = hidden.length ? { profileId: { notIn: hidden } } : {};
+
     // ── Foydalanuvchilar ──
     const userRows = await prisma.userProfile.findMany({
         where: {
             accountType: "GOOGLE", // SWEET (hamkor) profillar For Humo ijtimoiy yuzasida ko'rinmaydi
             username: { not: null },
+            ...(hidden.length ? { id: { notIn: hidden } } : {}),
             OR: [
                 { name: { contains: q, mode: "insensitive" } },
                 { username: { contains: q, mode: "insensitive" } },
@@ -45,7 +53,7 @@ export async function GET(req: Request) {
 
     // ── Postlar ──
     const postRows = await prisma.nexusPost.findMany({
-        where: { hidden: false, text: { contains: q, mode: "insensitive" } },
+        where: { hidden: false, ...notHidden, text: { contains: q, mode: "insensitive" } },
         orderBy: { createdAt: "desc" }, take: 8,
         include: { _count: { select: { likes: true, comments: true } } },
     });
@@ -77,5 +85,47 @@ export async function GET(req: Request) {
         .slice(0, 8)
         .map(([tag, count]) => ({ tag, count }));
 
-    return NextResponse.json({ users, posts, tags });
+    // ── Videolar / Audio / Jonli (parallel) ──
+    const [vidRows, trackRows, liveRows] = await Promise.all([
+        prisma.nexusVideo.findMany({
+            where: { hidden: false, isMature: false, ...notHidden, title: { contains: q, mode: "insensitive" } },
+            orderBy: [{ views: "desc" }, { createdAt: "desc" }], take: 6,
+            select: { id: true, title: true, thumbUrl: true, durationSec: true, orientation: true, views: true, priceZij: true, profileId: true },
+        }),
+        prisma.nexusTrack.findMany({
+            where: { hidden: false, ...notHidden, OR: [{ title: { contains: q, mode: "insensitive" } }, { artist: { contains: q, mode: "insensitive" } }] },
+            orderBy: [{ plays: "desc" }, { createdAt: "desc" }], take: 6,
+            select: { id: true, title: true, artist: true, coverUrl: true, audioUrl: true, durationSec: true, kind: true, plays: true, profileId: true },
+        }),
+        prisma.nexusLiveStream.findMany({
+            where: { hidden: false, privacy: "PUBLIC", status: { in: ["LIVE", "UPCOMING"] }, ...notHidden, title: { contains: q, mode: "insensitive" } },
+            orderBy: { createdAt: "desc" }, take: 5,
+            select: { id: true, title: true, status: true, profileId: true },
+        }),
+    ]);
+
+    // Media mualliflari
+    const mediaAuthorIds = [...new Set([...vidRows, ...trackRows, ...liveRows].map(r => r.profileId))];
+    const mediaAuthors = mediaAuthorIds.length
+        ? await prisma.userProfile.findMany({ where: { id: { in: mediaAuthorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true } })
+        : [];
+    const mMap = Object.fromEntries(mediaAuthors.map(a => [a.id, a]));
+    const authorOf = (pid: string) => {
+        const a = mMap[pid];
+        return a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a) } : null;
+    };
+
+    const videos = vidRows.map(v => ({
+        id: v.id, title: v.title, thumbUrl: v.thumbUrl, duration: fmtDur(v.durationSec),
+        orientation: v.orientation, views: v.views, priceZij: v.priceZij, author: authorOf(v.profileId),
+    }));
+    const tracks = trackRows.map(t => ({
+        id: t.id, title: t.title, artist: t.artist, coverUrl: t.coverUrl, audioUrl: t.audioUrl,
+        duration: fmtDur(t.durationSec), durationSec: t.durationSec, kind: t.kind, plays: t.plays, author: authorOf(t.profileId),
+    }));
+    const lives = liveRows.map(s => ({
+        id: s.id, title: s.title, status: s.status, author: authorOf(s.profileId),
+    }));
+
+    return NextResponse.json({ users, posts, tags, videos, tracks, lives });
 }

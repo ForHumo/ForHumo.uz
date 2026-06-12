@@ -2,24 +2,36 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "@/i18n/routing";
-import { useNxPlayer } from "./nx-player-ctx";
+import { useNxPlayer, type NxTrack } from "./nx-player-ctx";
 import {
     Search, X, Hash, BadgeCheck, Loader2,
-    UserPlus, UserCheck, MessageCircle, Heart,
+    UserPlus, UserCheck, MessageCircle, Heart, Play, Eye, Music2, Radio, Lock,
 } from "lucide-react";
 
+interface SAuthor { name: string | null; username: string | null; image?: string | null; verified: boolean }
 interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isFollowing: boolean; isMe: boolean }
 interface SPost { id: string; text: string | null; createdAt: string; likes: number; comments: number; author: { name: string | null; username: string | null; image: string | null; verified: boolean } | null }
 interface STag { tag: string; count: number }
+interface SVideo { id: string; title: string; thumbUrl: string | null; duration: string; orientation: string; views: number; priceZij: number; author: SAuthor | null }
+interface STrack { id: string; title: string; artist: string | null; coverUrl: string | null; audioUrl: string; duration: string; durationSec: number; kind: string; plays: number; author: SAuthor | null }
+interface SLive { id: string; title: string; status: string; author: SAuthor | null }
+
+type SResults = { users: SUser[]; posts: SPost[]; tags: STag[]; videos: SVideo[]; tracks: STrack[]; lives: SLive[] };
+const EMPTY_RESULTS: SResults = { users: [], posts: [], tags: [], videos: [], tracks: [], lives: [] };
+function fmtN(n: number) {
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+    return String(n);
+}
 
 function avatarOf(image: string | null, seed: string | null) {
     return image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(seed || "user")}`;
 }
 
 export function NxSearch() {
-    const { searchOpen, setSearchOpen } = useNxPlayer();
+    const { searchOpen, setSearchOpen, openVideo, openShorts, playTrack } = useNxPlayer();
     const [query, setQuery] = useState("");
-    const [results, setResults] = useState<{ users: SUser[]; posts: SPost[]; tags: STag[] }>({ users: [], posts: [], tags: [] });
+    const [results, setResults] = useState<SResults>(EMPTY_RESULTS);
     const [discover, setDiscover] = useState<{ trendingTags: STag[]; suggestedUsers: SUser[] }>({ trendingTags: [], suggestedUsers: [] });
     const [loading, setLoading] = useState(false);
     const [followBusy, setFollowBusy] = useState<string | null>(null);
@@ -32,7 +44,7 @@ export function NxSearch() {
             setTimeout(() => inputRef.current?.focus(), 100);
             fetch("/api/nexus/discover").then(r => r.json()).then(setDiscover).catch(() => { });
         } else {
-            setQuery(""); setResults({ users: [], posts: [], tags: [] });
+            setQuery(""); setResults(EMPTY_RESULTS);
         }
     }, [searchOpen]);
 
@@ -46,12 +58,15 @@ export function NxSearch() {
     /* Debounced qidiruv */
     useEffect(() => {
         const q = query.trim();
-        if (!q) { setResults({ users: [], posts: [], tags: [] }); setLoading(false); return; }
+        if (!q) { setResults(EMPTY_RESULTS); setLoading(false); return; }
         setLoading(true);
         const t = setTimeout(async () => {
             try {
                 const d = await fetch(`/api/nexus/search?q=${encodeURIComponent(q)}`).then(r => r.json());
-                setResults({ users: d.users ?? [], posts: d.posts ?? [], tags: d.tags ?? [] });
+                setResults({
+                    users: d.users ?? [], posts: d.posts ?? [], tags: d.tags ?? [],
+                    videos: d.videos ?? [], tracks: d.tracks ?? [], lives: d.lives ?? [],
+                });
             } finally { setLoading(false); }
         }, 300);
         return () => clearTimeout(t);
@@ -72,6 +87,28 @@ export function NxSearch() {
     const close = () => setSearchOpen(false);
     const hasQuery = query.trim().length > 0;
     const isFollowingNow = (u: SUser) => u.isFollowing || (!!u.username && followed.has(u.username));
+    const hasAny = results.users.length || results.posts.length || results.tags.length || results.videos.length || results.tracks.length || results.lives.length;
+
+    function avatarA(a: SAuthor | null) {
+        return a?.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(a?.username || a?.name || "u")}`;
+    }
+    function playVideo(v: SVideo) {
+        close();
+        if (v.orientation === "VERTICAL" && v.priceZij === 0) {
+            openShorts([{ id: v.id, image: v.thumbUrl || "", author: v.author?.name || v.author?.username || "Foydalanuvchi", views: fmtN(v.views), likes: "0", duration: v.duration, videoSrc: "" }], 0);
+            return;
+        }
+        openVideo({ id: v.id, title: v.title, image: v.thumbUrl || "", author: v.author?.name || v.author?.username || "Foydalanuvchi", avatar: avatarA(v.author), views: fmtN(v.views), duration: v.duration });
+    }
+    function listenTrack(t: STrack) {
+        close();
+        const tr: NxTrack = {
+            id: t.id, title: t.title, artist: t.artist || t.author?.name || t.author?.username || "Noma'lum",
+            image: t.coverUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${encodeURIComponent(t.id)}`,
+            duration: t.duration, durationSec: t.durationSec, src: t.audioUrl,
+        };
+        playTrack(tr);
+    }
 
     function UserRow({ u }: { u: SUser }) {
         return (
@@ -130,7 +167,7 @@ export function NxSearch() {
                 <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.12)" }}>
                     <Search className="w-5 h-5 flex-shrink-0" style={{ color: "rgba(43,62,232,0.60)" }} />
                     <input ref={inputRef} type="text" value={query} onChange={e => setQuery(e.target.value)}
-                        placeholder="Odamlar, postlar, #hashtag..."
+                        placeholder="Odamlar, video, audio, jonli, #hashtag..."
                         className="flex-1 bg-transparent text-white text-base outline-none" style={{ caretColor: "#00CEC8" }} />
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#00CEC8" }} />
                         : query && <button onClick={() => setQuery("")}><X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.60)" }} /></button>}
@@ -166,9 +203,9 @@ export function NxSearch() {
                                 <p className="text-center py-12 text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>Qidirishni boshlang...</p>
                             )}
                         </>
-                    ) : loading && results.users.length === 0 && results.posts.length === 0 && results.tags.length === 0 ? (
+                    ) : loading && !hasAny ? (
                         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>
-                    ) : (results.users.length === 0 && results.posts.length === 0 && results.tags.length === 0) ? (
+                    ) : !hasAny ? (
                         <div className="flex flex-col items-center justify-center py-14">
                             <Search className="w-10 h-10 mb-3" style={{ color: "rgba(43,62,232,0.25)" }} />
                             <p className="text-sm font-bold text-white/40">Natija topilmadi</p>
@@ -212,6 +249,61 @@ export function NxSearch() {
                                                     <span className="flex items-center gap-1"><Heart className="w-3 h-3" />{p.likes}</span>
                                                     <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" />{p.comments}</span>
                                                 </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </Section>
+                            )}
+                            {results.videos.length > 0 && (
+                                <Section label="Videolar">
+                                    {results.videos.map(v => (
+                                        <button key={v.id} onClick={() => playVideo(v)} className="w-full flex items-center gap-3 px-2 py-2 rounded-xl text-left active:scale-[0.99] transition">
+                                            <div className="relative w-20 h-12 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "rgba(11,18,40,0.7)" }}>
+                                                {v.thumbUrl ? <img src={v.thumbUrl} alt="" className="w-full h-full object-cover" />
+                                                    : <div className="w-full h-full flex items-center justify-center"><Play className="w-4 h-4" style={{ color: "rgba(120,140,185,0.4)" }} /></div>}
+                                                {v.priceZij > 0 && <span className="absolute top-0.5 left-0.5 flex items-center gap-0.5 px-1 rounded text-[8px] font-black text-white" style={{ background: "rgba(43,62,232,0.9)" }}><Lock className="w-2 h-2" />{fmtN(v.priceZij)}</span>}
+                                                <span className="absolute bottom-0.5 right-0.5 px-1 rounded text-[8px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{v.duration}</span>
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-xs font-bold text-white line-clamp-2 leading-snug">{v.title}</p>
+                                                <p className="text-[10px] mt-0.5 flex items-center gap-1.5" style={{ color: "rgba(120,140,185,0.7)" }}>
+                                                    {v.author?.name || v.author?.username || "Foydalanuvchi"} · <Eye className="w-2.5 h-2.5" />{fmtN(v.views)}
+                                                </p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </Section>
+                            )}
+                            {results.tracks.length > 0 && (
+                                <Section label="Audio">
+                                    {results.tracks.map(t => (
+                                        <button key={t.id} onClick={() => listenTrack(t)} className="w-full flex items-center gap-3 px-2 py-2 rounded-xl text-left active:scale-[0.99] transition">
+                                            <div className="relative w-11 h-11 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "rgba(43,62,232,0.15)" }}>
+                                                {t.coverUrl ? <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
+                                                    : <div className="w-full h-full flex items-center justify-center"><Music2 className="w-4 h-4" style={{ color: "rgba(120,140,185,0.5)" }} /></div>}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-bold text-white truncate">{t.title}</p>
+                                                <p className="text-[11px] truncate" style={{ color: "rgba(120,140,185,0.75)" }}>{t.artist || t.author?.name || "Noma'lum"}</p>
+                                            </div>
+                                            <span className="text-[10px] flex items-center gap-1 flex-shrink-0" style={{ color: "rgba(100,120,170,0.7)" }}><Play className="w-2.5 h-2.5" />{fmtN(t.plays)}</span>
+                                        </button>
+                                    ))}
+                                </Section>
+                            )}
+                            {results.lives.length > 0 && (
+                                <Section label="Jonli efirlar">
+                                    {results.lives.map(s => (
+                                        <Link key={s.id} href={`/nexus/live/${s.id}`} onClick={close} className="flex items-center gap-3 px-2 py-2 rounded-xl">
+                                            <div className="relative w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(40,10,20,0.9), rgba(30,15,50,0.9))" }}>
+                                                <img src={avatarA(s.author)} alt="" className="w-7 h-7 rounded-full object-cover bg-white" />
+                                                {s.status === "LIVE" && <span className="absolute -bottom-px inset-x-0 text-center text-[7px] font-black text-white py-px" style={{ background: "#EF4444" }}>LIVE</span>}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-bold text-white truncate">{s.title}</p>
+                                                <p className="text-[11px] flex items-center gap-1" style={{ color: "rgba(120,140,185,0.75)" }}>
+                                                    <Radio className="w-2.5 h-2.5" />{s.status === "LIVE" ? "Hozir jonli" : "Tez orada"} · {s.author?.name || s.author?.username || "Streamer"}
+                                                </p>
                                             </div>
                                         </Link>
                                     ))}
