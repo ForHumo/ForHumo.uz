@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { upload } from "@vercel/blob/client";
 import {
     X, Film, Loader2, Send, Trash2, ImageIcon, Plus, Hash, ShieldAlert,
-    Coins, Layers, Check, ChevronDown, RectangleHorizontal, RectangleVertical,
+    Coins, Layers, Check, ChevronDown, RectangleHorizontal, RectangleVertical, Sparkles,
 } from "lucide-react";
 
 const CATEGORIES = [
@@ -81,6 +81,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
     const [descBusy, setDescBusy] = useState(false);
     const [posting, setPosting] = useState(false);
     const [err, setErr] = useState<string | null>(null);
+    const [aiBusy, setAiBusy] = useState<null | "caption" | "tags">(null);
 
     const coverRef = useRef<HTMLInputElement>(null);
     const descImgRef = useRef<HTMLInputElement>(null);
@@ -104,6 +105,26 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
         setUploading(false); setUploadPct(0); setCoverBusy(false); setDescBusy(false); setPosting(false); setErr(null);
     }
     function close() { reset(); onClose(); }
+
+    // AI yordam — sarlavhadan tavsif / teglar
+    async function aiAssist(action: "caption" | "tags") {
+        if (aiBusy) return;
+        const input = (action === "caption" ? title : (desc || title)).trim();
+        if (!input) { setErr("Avval sarlavha kiriting"); return; }
+        setAiBusy(action); setErr(null);
+        try {
+            const res = await fetch("/api/nexus/ai-assist", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action, input, kind: "video" }),
+            });
+            const d = await res.json();
+            if (!res.ok) { setErr(d.error || "AI xatosi"); return; }
+            if (action === "caption" && d.result) setDesc(d.result);
+            if (action === "tags" && Array.isArray(d.tags)) setTags(prev => [...new Set([...prev, ...d.tags])].slice(0, 50));
+        } catch {
+            setErr("AI javob bermadi");
+        } finally { setAiBusy(null); }
+    }
 
     async function pickVideo(files: FileList | null) {
         const file = files?.[0];
@@ -262,6 +283,21 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                             <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Tavsif — cheksiz uzunlikda yozishingiz mumkin" rows={4}
                                 className="w-full px-3 py-2.5 rounded-xl text-sm text-white outline-none resize-y"
                                 style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", caretColor: "#00CEC8", minHeight: 90 }} />
+
+                            {/* AI yordam (Humo AI) — sarlavhadan tavsif/teglar */}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-black mr-0.5" style={{ color: "#00CEC8" }}><Sparkles className="w-3 h-3" />AI</span>
+                                <button onClick={() => aiAssist("caption")} disabled={!!aiBusy}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition active:scale-95 disabled:opacity-50"
+                                    style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)", color: "rgba(150,230,225,0.95)" }}>
+                                    {aiBusy === "caption" ? <Loader2 className="w-3 h-3 animate-spin" /> : null}Tavsif yoz
+                                </button>
+                                <button onClick={() => aiAssist("tags")} disabled={!!aiBusy}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition active:scale-95 disabled:opacity-50"
+                                    style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)", color: "rgba(150,230,225,0.95)" }}>
+                                    {aiBusy === "tags" ? <Loader2 className="w-3 h-3 animate-spin" /> : null}Teglar
+                                </button>
+                            </div>
 
                             {/* Tavsif dalil rasmlari */}
                             <div>

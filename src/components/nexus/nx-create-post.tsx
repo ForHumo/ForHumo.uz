@@ -5,8 +5,18 @@ import { upload } from "@vercel/blob/client";
 import {
     X, Plus, Image as ImgIcon, Film, Hash, MapPin,
     Users, Globe, Lock, ChevronDown, Send, Loader2, CheckCircle2,
-    AlignLeft, BarChart2, Trash2, Star,
+    AlignLeft, BarChart2, Trash2, Star, Sparkles,
 } from "lucide-react";
+
+function AiBtn({ busy, onClick, label }: { busy: boolean; onClick: () => void; label: string }) {
+    return (
+        <button onClick={onClick} disabled={busy}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition active:scale-95 disabled:opacity-50"
+            style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)", color: "rgba(150,230,225,0.95)" }}>
+            {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : null}{label}
+        </button>
+    );
+}
 import { useNxPlayer } from "./nx-player-ctx";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,6 +68,7 @@ export function NxCreatePost() {
     const [published, setPublished] = useState(false);
     const [err, setErr] = useState<string | null>(null);
     const [canSub, setCanSub] = useState(false);    // pullik obuna yoqilgan ijodkormanmi
+    const [aiBusy, setAiBusy] = useState<null | "caption" | "tags" | "translate">(null);
     const fileRef = useRef<HTMLInputElement>(null);
 
     // Trending teglar — real (kashfiyot API)
@@ -95,6 +106,27 @@ export function NxCreatePost() {
 
     const toggleTag = (tag: string) =>
         setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+
+    // AI yordam (Gemini) — tavsif yozish / teglar / tarjima
+    async function aiAssist(action: "caption" | "tags" | "translate", to?: "uz" | "ru" | "en") {
+        if (aiBusy) return;
+        const input = text.trim();
+        if (!input) { setErr("Avval bir necha so'z yozing — AI uni rivojlantiradi"); return; }
+        setAiBusy(action); setErr(null);
+        try {
+            const res = await fetch("/api/nexus/ai-assist", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action, input, kind: "post", to }),
+            });
+            const d = await res.json();
+            if (!res.ok) { setErr(d.error || "AI xatosi"); return; }
+            if (action === "caption" && d.result) setText(d.result);
+            if (action === "translate" && d.result) setText(d.result);
+            if (action === "tags" && Array.isArray(d.tags)) setTags(prev => [...new Set([...prev, ...d.tags])].slice(0, 12));
+        } catch {
+            setErr("AI javob bermadi");
+        } finally { setAiBusy(null); }
+    }
 
     const addPollOption = () => { if (pollOptions.length < 4) setPollOptions(prev => [...prev, ""]); };
     const updatePollOption = (i: number, val: string) =>
@@ -236,9 +268,21 @@ export function NxCreatePost() {
                             "So'rovnoma savolingizni kiriting..."
                         }
                         rows={4}
-                        className="w-full bg-transparent text-sm text-white placeholder:text-[rgba(80,100,150,0.60)] outline-none resize-none mb-3"
+                        className="w-full bg-transparent text-sm text-white placeholder:text-[rgba(80,100,150,0.60)] outline-none resize-none mb-2"
                         style={{ minHeight: 80 }}
                     />
+
+                    {/* AI yordam (Humo AI) */}
+                    {postType !== "poll" && (
+                        <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-black mr-0.5" style={{ color: "#00CEC8" }}><Sparkles className="w-3 h-3" />AI</span>
+                            <AiBtn busy={aiBusy === "caption"} onClick={() => aiAssist("caption")} label="Tavsif yoz" />
+                            <AiBtn busy={aiBusy === "tags"} onClick={() => aiAssist("tags")} label="Teglar" />
+                            <AiBtn busy={aiBusy === "translate"} onClick={() => aiAssist("translate", "ru")} label="RU" />
+                            <AiBtn busy={aiBusy === "translate"} onClick={() => aiAssist("translate", "en")} label="EN" />
+                            <AiBtn busy={aiBusy === "translate"} onClick={() => aiAssist("translate", "uz")} label="UZ" />
+                        </div>
+                    )}
 
                     {/* Media yuklash (rasm 9 tagacha / video 1 ta) */}
                     {(postType === "photo" || postType === "video") && (
