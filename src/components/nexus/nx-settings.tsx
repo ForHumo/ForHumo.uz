@@ -48,7 +48,7 @@ export function NxSettings({ open, onClose }: Props) {
                 className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none"
             >
                 <div
-                    className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl overflow-hidden pointer-events-auto transition-all duration-300"
+                    className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl overflow-hidden transition-all duration-300"
                     style={{
                         background: "rgba(8,12,32,0.98)",
                         backdropFilter: "blur(24px)",
@@ -56,6 +56,8 @@ export function NxSettings({ open, onClose }: Props) {
                         border: "1px solid rgba(43,62,232,0.25)",
                         boxShadow: "0 32px 80px rgba(0,0,0,0.60), 0 0 0 1px rgba(43,62,232,0.10), inset 0 1px 0 rgba(43,62,232,0.15)",
                         opacity: open ? 1 : 0,
+                        // MUHIM: yopiq holatda ko'rinmas panel bosishlarni yutmasin (opacity:0 pointer-events'ni o'chirmaydi)
+                        pointerEvents: open ? "auto" : "none",
                         transform: open ? "scale(1) translateY(0)" : "scale(0.96) translateY(8px)",
                     }}
                 >
