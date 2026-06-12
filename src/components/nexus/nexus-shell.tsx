@@ -89,6 +89,16 @@ export function NexusShell() {
     const [sidebarOpen, setSidebarOpen]   = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
 
+    // Header avatari kabi tashqi joylardan tab almashtirish
+    useEffect(() => {
+        const h = (e: Event) => {
+            const tab = (e as CustomEvent).detail as NxTab | undefined;
+            if (tab) setActiveTab(tab);
+        };
+        window.addEventListener("nexus:navigate", h);
+        return () => window.removeEventListener("nexus:navigate", h);
+    }, []);
+
     return (
         <NxPlayerProvider>
             <div

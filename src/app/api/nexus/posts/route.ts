@@ -32,6 +32,7 @@ async function loadAttachedProducts(ids: (string | null)[]): Promise<Record<stri
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const tab = searchParams.get("tab") ?? "explore";
+    const scope = searchParams.get("scope") ?? "";              // saved = mening saqlanganlarim
     const tag = searchParams.get("tag") ?? undefined;          // hashtag bo'yicha filtr
     const author = searchParams.get("author") ?? undefined;     // username bo'yicha profil posti
     const limit = Math.min(Number(searchParams.get("limit") ?? 15), 30);
@@ -47,6 +48,10 @@ export async function GET(req: Request) {
     }
 
     const where: Prisma.NexusPostWhereInput = { hidden: false };
+    if (scope === "saved") {
+        if (!myId) return NextResponse.json({ posts: [], total: 0, hasMore: false });
+        where.saves = { some: { profileId: myId } };
+    }
     if (tag) where.hashtags = { has: tag };
     if (author) {
         const a = await prisma.userProfile.findUnique({ where: { username: author }, select: { id: true } });

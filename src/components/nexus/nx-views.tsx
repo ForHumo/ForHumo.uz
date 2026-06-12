@@ -4,19 +4,16 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import {
     TrendingUp, Flame, Clock,
-    Headphones,
-    Radio, Users, Hash, MessageCircle, Bot, Gift, Trophy,
+    Radio, Users, Hash, MessageCircle, Bot,
     Shield, Heart, UserCheck, CreditCard,
     Settings, LogOut, BadgeCheck,
     Edit3, Save, X, Loader2, Trash2,
-    ListMusic, BarChart2, Bookmark, Phone,
-    ShoppingBag, Wallet, Download, Briefcase, Calendar, Video, Play, ExternalLink,
+    Bookmark, ShoppingBag, Wallet, Play, ExternalLink,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxStories } from "./nx-stories";
-import { NxHero } from "./nx-hero";
-import { NxFeed } from "./nx-feed";
+import { NxHomeRows } from "./nx-home-rows";
 import { NxSocialFeed } from "./nx-social-feed";
 import { NexusFollowList } from "./nexus-follow-list";
 
@@ -37,36 +34,13 @@ function ViewShell({ children }: { children: React.ReactNode }) {
 // FEED VIEW — bosh sahifa
 // ─────────────────────────────────────────────────────────────────────────────
 export function FeedView() {
-    const { setMarketOpen, setEventsOpen, setJobsOpen, setSpacesOpen, setTrendingOpen, setAiOpen, setLeaderboardOpen } = useNxPlayer();
     return (
         <ViewShell>
             <NxStories />
-            <NxHero />
-            {/* ── Tezkor xususiyatlar ─────────────────────────────────── */}
-            <div className="px-4 pb-2 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-                {[
-                    { label: "Nexus AI",     icon: Bot,         grad: "linear-gradient(135deg,#8B5CF6,#EC4899)", action: () => setAiOpen(true)      },
-                    { label: "Trendlar",     icon: TrendingUp,  grad: "linear-gradient(135deg,#F97316,#EF4444)", action: () => setTrendingOpen(true)},
-                    { label: "Nexus Market", icon: ShoppingBag, grad: "linear-gradient(135deg,#F59E0B,#F97316)", action: () => setMarketOpen(true)  },
-                    { label: "Tadbirlar",    icon: Calendar,    grad: "linear-gradient(135deg,#EC4899,#8B5CF6)", action: () => setEventsOpen(true)  },
-                    { label: "Nexus Jobs",   icon: Briefcase,   grad: "linear-gradient(135deg,#0EA5E9,#2B3EE8)", action: () => setJobsOpen(true)    },
-                    { label: "Spaces",       icon: Headphones,  grad: "linear-gradient(135deg,#8B5CF6,#EC4899)", action: () => setSpacesOpen(true)      },
-                    { label: "Leaderboard",  icon: Trophy,      grad: "linear-gradient(135deg,#F59E0B,#F97316)", action: () => setLeaderboardOpen(true) },
-                ].map(({ label, icon: Icon, grad, action }) => (
-                    <button key={label} onClick={action}
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl flex-shrink-0 transition-all duration-150 active:scale-95"
-                        style={{ background: "rgba(11,18,40,0.70)", border: "1px solid rgba(43,62,232,0.20)" }}
-                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.45)"}
-                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.20)"}
-                    >
-                        <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: grad }}>
-                            <Icon className="w-3.5 h-3.5 text-white" />
-                        </div>
-                        <span className="text-xs font-bold" style={{ color: "rgba(180,195,235,0.90)" }}>{label}</span>
-                    </button>
-                ))}
-            </div>
-            <NxFeed />
+            {/* Real kontent qatorlari: jonli / yangi video / yangi musiqa */}
+            <NxHomeRows />
+            {/* Real postlar lentasi (composer bilan) */}
+            <NxSocialFeed />
         </ViewShell>
     );
 }
@@ -173,7 +147,7 @@ interface ProfileData {
 
 export function ProfileView() {
     const { data: session } = useSession();
-    const { watchHistory, clearHistory, openVideo, openSavedHistory, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, setSubsOpen, setCallsOpen, setSpacesOpen, setWalletOpen, setMarketOpen, setDownloadsOpen, setJobsOpen, setEventsOpen, setGoLiveOpen, setGiftsOpen, setTrendingOpen, setAiOpen, setLeaderboardOpen, setMeetingOpen } = useNxPlayer();
+    const { watchHistory, clearHistory, openVideo, openSavedHistory, setSavedOpen, setSubsOpen, setExploreOpen, setGoLiveOpen, setWalletOpen } = useNxPlayer();
 
     const sessionName  = session?.user?.name  ?? "Mehmon";
     const sessionEmail = session?.user?.email ?? "—";
@@ -359,39 +333,30 @@ export function ProfileView() {
                 ))}
             </div>
 
-            {/* ── Tezkor havolalar ──────────────────────────────────────── */}
+            {/* ── Tezkor havolalar (faqat real ishlaydiganlar) ──────────── */}
             <div className="mx-4 mt-3 grid grid-cols-3 gap-3">
                 {[
-                    { label: "Saqlangan",   icon: Bookmark,     grad: "linear-gradient(135deg,#F59E0B,#EF4444)",  action: () => setSavedOpen(true)      },
-                    { label: "Pleylistlar", icon: ListMusic,    grad: "linear-gradient(135deg,#10B981,#0D9488)",  action: () => setPlaylistsOpen(true)  },
-                    { label: "Analitika",   icon: BarChart2,    grad: "linear-gradient(135deg,#2B3EE8,#00CEC8)",  action: () => setAnalyticsOpen(true)  },
-                    { label: "Obunalar",    icon: Users,        grad: "linear-gradient(135deg,#8B5CF6,#6366F1)",  action: () => setSubsOpen(true)       },
-                    { label: "Qo'ng'iroq",  icon: Phone,        grad: "linear-gradient(135deg,#10B981,#00CEC8)",  action: () => setCallsOpen(true)      },
-                    { label: "Spaces",      icon: Headphones,   grad: "linear-gradient(135deg,#8B5CF6,#EC4899)",  action: () => setSpacesOpen(true)     },
-                    { label: "Hamyon",      icon: Wallet,       grad: "linear-gradient(135deg,#10B981,#14B8A6)",  action: () => setWalletOpen(true)     },
-                    { label: "Market",      icon: ShoppingBag,  grad: "linear-gradient(135deg,#F59E0B,#F97316)",  action: () => setMarketOpen(true)     },
-                    { label: "Tadbirlar",   icon: Calendar,     grad: "linear-gradient(135deg,#EC4899,#8B5CF6)",  action: () => setEventsOpen(true)     },
-                    { label: "Yuklangan",   icon: Download,     grad: "linear-gradient(135deg,#2B3EE8,#6366F1)",  action: () => setDownloadsOpen(true)  },
-                    { label: "Jobs",        icon: Briefcase,    grad: "linear-gradient(135deg,#0EA5E9,#2B3EE8)",  action: () => setJobsOpen(true)       },
-                    { label: "Sovg'alar",   icon: Gift,         grad: "linear-gradient(135deg,#F59E0B,#EF4444)",  action: () => setGiftsOpen(true)      },
-                    { label: "Trendlar",    icon: TrendingUp,   grad: "linear-gradient(135deg,#F97316,#EF4444)",  action: () => setTrendingOpen(true)   },
-                    { label: "Nexus AI",    icon: Bot,          grad: "linear-gradient(135deg,#8B5CF6,#EC4899)",  action: () => setAiOpen(true)         },
-                    { label: "Leaderboard", icon: Trophy,       grad: "linear-gradient(135deg,#F59E0B,#F97316)",  action: () => setLeaderboardOpen(true)},
-                    { label: "Video Majlis",icon: Video,        grad: "linear-gradient(135deg,#2B3EE8,#00CEC8)",  action: () => setMeetingOpen(true)    },
-                ].map(({ label, icon: Icon, grad, action }, i) => (
-                    <button key={i}
-                        onClick={action}
-                        className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-150 active:scale-95"
-                        style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
-                        onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)")}
-                        onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)")}
-                    >
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: grad }}>
-                            <Icon className="w-5 h-5 text-white" />
-                        </div>
-                        <p className="text-xs font-black text-white">{label}</p>
-                    </button>
-                ))}
+                    { label: "Saqlangan", icon: Bookmark,    grad: "linear-gradient(135deg,#F59E0B,#EF4444)", action: () => setSavedOpen(true) },
+                    { label: "Obunalar",  icon: Users,       grad: "linear-gradient(135deg,#8B5CF6,#6366F1)", action: () => setSubsOpen(true) },
+                    { label: "Kashfiyot", icon: TrendingUp,  grad: "linear-gradient(135deg,#F97316,#EF4444)", action: () => setExploreOpen(true) },
+                    { label: "Hamyon",    icon: Wallet,      grad: "linear-gradient(135deg,#10B981,#14B8A6)", href: "/pay" },
+                    { label: "Market",    icon: ShoppingBag, grad: "linear-gradient(135deg,#F59E0B,#F97316)", href: "/market" },
+                    { label: "Jonli efir",icon: Radio,       grad: "linear-gradient(135deg,#EF4444,#F97316)", action: () => setGoLiveOpen(true) },
+                ].map(({ label, icon: Icon, grad, action, href }, i) => {
+                    const inner = (
+                        <>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: grad }}>
+                                <Icon className="w-5 h-5 text-white" />
+                            </div>
+                            <p className="text-xs font-black text-white">{label}</p>
+                        </>
+                    );
+                    const cls = "flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-150 active:scale-95";
+                    const st = { background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" };
+                    return href
+                        ? <Link key={i} href={href} className={cls} style={st}>{inner}</Link>
+                        : <button key={i} onClick={action} className={cls} style={st}>{inner}</button>;
+                })}
             </div>
 
             {/* ── Statistika (REAL) ─────────────────────────────────────── */}

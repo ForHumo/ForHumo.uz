@@ -1,285 +1,136 @@
 "use client";
 
-import React from "react";
 import { useSession, signOut } from "next-auth/react";
-import { useNxPlayer } from "./nx-player-ctx";
+import { Link } from "@/i18n/routing";
 import {
-    X, Home, Play, Radio, MessageCircle,
-    Settings, HelpCircle, Bookmark, History, TrendingUp,
-    Music, Film, BookOpen, Mic, Crown, ChevronRight, LogOut,
-    Compass, ListMusic, Bell, BarChart2, Hash, Phone, Users, Headphones,
-    ShoppingBag, Wallet, Calendar, Download, Briefcase, Bot, Gift, Trophy, UserPlus, Tv,
-    Scissors, Zap, Grid3X3, CalendarDays, Store, BookText, HeartHandshake,
-    MessagesSquare, Mic2, Handshake, BellRing, BarChart3, ChartLine,
-    FileStack, BadgeCheck, Flag, UserCheck, Images, PlusSquare,
-    Video,
+    X, Home, Play, Radio, LibraryBig, MessagesSquare,
+    Compass, MessageCircle, Bell,
+    Bookmark, History, Users, PlusSquare,
+    Wallet, ShoppingBag, Fingerprint,
+    Settings, HelpCircle, LogOut,
 } from "lucide-react";
+import { useNxPlayer } from "./nx-player-ctx";
+import type { NxTab } from "./nx-dock";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NxSidebar — o'ng tomondan chiqadigan drawer
+// NxSidebar — faqat REAL manzillar: tablar, real panellar va boshqa modullar.
+// Mock modallarga olib boruvchi eshiklar olib tashlangan.
 // ─────────────────────────────────────────────────────────────────────────────
+
 interface Props {
     open: boolean;
     onClose: () => void;
-    onOpenSettings: () => void;
-    onNavigate?: (tab: "feed" | "video" | "live" | "media" | "social" | "profile") => void;
+    onOpenSettings?: () => void;
+    onNavigate?: (tab: NxTab) => void;
 }
-
-const NAV_ITEMS = [
-    { icon: Home,          label: "Asosiy lenta",       section: "main" },
-    { icon: Play,          label: "Videolar",            section: "main" },
-    { icon: Radio,         label: "Jonli efirlar",       section: "main" },
-    { icon: Film,          label: "Kino va seriallar",   section: "media" },
-    { icon: Music,         label: "Musiqa",              section: "media" },
-    { icon: Mic,           label: "Podkastlar",          section: "media" },
-    { icon: BookOpen,      label: "Kitoblar",            section: "media" },
-    { icon: MessageCircle, label: "Chatlar va kanallar", section: "social" },
-];
 
 export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) {
     const { data: session } = useSession();
-    const { setProOpen, setExploreOpen, setMessagesOpen, setNotifOpen, setPlaylistsOpen, setAnalyticsOpen, setSavedOpen, openSavedHistory, setGroupsOpen, setCallsOpen, setSubsOpen, setSpacesOpen, setMarketOpen, setWalletOpen, setEventsOpen, setDownloadsOpen, setJobsOpen, setTrendingOpen, setAiOpen, setGoLiveOpen, setGiftsOpen, setLeaderboardOpen, setSuggestionsOpen, setWatchPartyOpen, setCommunityOpen, setClipsOpen, setAchievementsOpen, setMiniAppsOpen, setScheduleOpen, setShopOpen, setReaderOpen, setFundraiserOpen, setForumOpen, setPodcastsOpen, setCollabOpen, setRemindersOpen, setPollsOpen, setStatsOpen, setDraftsOpen, setBadgesOpen, setReportOpen, setAffiliateOpen, setAlbumsOpen, setStoryCreateOpen, setMeetingOpen, openChannel } = useNxPlayer();
-    const name   = session?.user?.name  ?? "Mehmon";
-    const image  = session?.user?.image ?? null;
-    const email  = session?.user?.email ?? "";
-    const letter = name[0].toUpperCase();
+    const { setExploreOpen, setMessagesOpen, setNotifOpen, setSavedOpen, openSavedHistory, setSubsOpen, setGoLiveOpen, setStoryCreateOpen } = useNxPlayer();
+    const name = session?.user?.name ?? "Mehmon";
+    const image = session?.user?.image ?? null;
+    const email = session?.user?.email ?? "";
+    const letter = name[0]?.toUpperCase() ?? "U";
 
     return (
         <>
-            {/* ── Backdrop ──────────────────────────────────────────── */}
+            {/* Backdrop */}
             <div
                 className="fixed inset-0 z-[52] transition-opacity duration-300"
                 style={{
-                    background: "rgba(5,8,24,0.70)",
-                    backdropFilter: "blur(4px)",
-                    opacity: open ? 1 : 0,
-                    pointerEvents: open ? "auto" : "none",
+                    background: "rgba(5,8,24,0.70)", backdropFilter: "blur(4px)",
+                    opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none",
                 }}
                 onClick={onClose}
             />
 
-            {/* ── Drawer ────────────────────────────────────────────── */}
+            {/* Drawer */}
             <aside
                 className="fixed top-0 right-0 bottom-0 z-[56] flex flex-col w-72 max-w-[88vw] transition-transform duration-300"
                 style={{
                     background: "rgba(8,12,32,0.97)",
-                    backdropFilter: "blur(24px)",
-                    WebkitBackdropFilter: "blur(24px)",
+                    backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
                     borderLeft: "1px solid rgba(43,62,232,0.22)",
                     boxShadow: "-8px 0 48px rgba(43,62,232,0.12)",
                     transform: open ? "translateX(0)" : "translateX(100%)",
                 }}
             >
-                {/* ── Header ────────────────────────────────────────── */}
-                <div
-                    className="flex items-center justify-between px-5 h-[60px] flex-shrink-0"
-                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}
-                >
-                    <span
-                        className="text-base font-black tracking-tight"
-                        style={{
-                            background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            backgroundClip: "text",
-                        }}
-                    >
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 h-[60px] flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    <span className="text-base font-black tracking-tight"
+                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
                         Humo Nexus
                     </span>
-                    <button
-                        onClick={onClose}
+                    <button onClick={onClose}
                         className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 active:scale-90"
-                        style={{
-                            background: "rgba(43,62,232,0.10)",
-                            border: "1px solid rgba(43,62,232,0.20)",
-                        }}
-                    >
+                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}>
                         <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
                     </button>
                 </div>
 
-                {/* ── Scroll area ───────────────────────────────────── */}
+                {/* Scroll */}
                 <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
-
-                    {/* ── User card ─────────────────────────────────── */}
+                    {/* User card (real sessiya) */}
                     <div className="px-4 pt-4 pb-3">
-                        <div
-                            className="flex items-center gap-3 p-3.5 rounded-2xl"
-                            style={{
-                                background: "rgba(43,62,232,0.08)",
-                                border: "1px solid rgba(43,62,232,0.18)",
-                            }}
-                        >
-                            {/* Avatar */}
-                            <div
-                                className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center text-base font-black text-white"
-                                style={{
-                                    background: image ? "transparent" : "linear-gradient(135deg,#2B3EE8,#00CEC8)",
-                                    border: "2px solid rgba(43,62,232,0.35)",
-                                }}
-                            >
+                        <button onClick={() => { onClose(); onNavigate?.("profile"); }}
+                            className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-150 active:scale-[0.99]"
+                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                            <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center text-base font-black text-white"
+                                style={{ background: image ? "transparent" : "linear-gradient(135deg,#2B3EE8,#00CEC8)", border: "2px solid rgba(43,62,232,0.35)" }}>
                                 {image
                                     ? <img src={image} alt={name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                    : letter
-                                }
+                                    : letter}
                             </div>
                             <div className="min-w-0 flex-1">
                                 <p className="text-sm font-bold text-white truncate">{name}</p>
                                 <p className="text-[10px] truncate mt-0.5" style={{ color: "rgba(100,120,170,0.80)" }}>{email}</p>
                             </div>
-                        </div>
+                        </button>
                     </div>
 
-                    {/* ── Nexus Pro promo ───────────────────────────── */}
-                    <div className="px-4 pb-4">
-                        <div
-                            className="relative overflow-hidden rounded-2xl p-4 cursor-pointer group"
-                            onClick={() => { onClose(); setProOpen(true); }}
-                            style={{
-                                background: "linear-gradient(135deg, rgba(43,62,232,0.25) 0%, rgba(0,206,200,0.12) 100%)",
-                                border: "1px solid rgba(43,62,232,0.35)",
-                            }}
-                        >
-                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                style={{ background: "linear-gradient(135deg,rgba(43,62,232,0.15),rgba(0,206,200,0.08))" }} />
-                            <div className="relative flex items-center gap-3">
-                                <div
-                                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}
-                                >
-                                    <Crown className="w-4.5 h-4.5 text-white" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-black text-white">Nexus Pro</p>
-                                    <p className="text-[10px] leading-tight mt-0.5" style={{ color: "rgba(140,160,210,0.90)" }}>
-                                        Reklamasiz, lossless sifat
-                                    </p>
-                                </div>
-                                <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.60)" }} />
-                            </div>
-                            <div className="relative mt-3 flex items-center gap-2">
-                                <div
-                                    className="flex-1 h-1 rounded-full overflow-hidden"
-                                    style={{ background: "rgba(43,62,232,0.20)" }}
-                                >
-                                    <div
-                                        className="h-full rounded-full"
-                                        style={{
-                                            width: "35%",
-                                            background: "linear-gradient(90deg,#2B3EE8,#00CEC8)",
-                                        }}
-                                    />
-                                </div>
-                                <span className="text-[9px] font-bold" style={{ color: "rgba(0,206,200,0.80)" }}>
-                                    7 kun bepul
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* ── Navigation ────────────────────────────────── */}
+                    {/* Kontent */}
                     <SidebarSection title="Kontent">
-                        <SidebarItem icon={Home}          label="Asosiy lenta"       onClick={() => { onClose(); onNavigate?.("feed");   }} />
-                        <SidebarItem icon={Play}          label="Videolar"            onClick={() => { onClose(); onNavigate?.("video");  }} />
-                        <SidebarItem icon={Radio}         label="Jonli efirlar"       onClick={() => { onClose(); onNavigate?.("live");   }} />
+                        <SidebarItem icon={Home} label="Asosiy lenta" onClick={() => { onClose(); onNavigate?.("feed"); }} />
+                        <SidebarItem icon={Play} label="Videolar" onClick={() => { onClose(); onNavigate?.("video"); }} />
+                        <SidebarItem icon={Radio} label="Jonli efirlar" onClick={() => { onClose(); onNavigate?.("live"); }} />
+                        <SidebarItem icon={LibraryBig} label="Media — musiqa, podkast" onClick={() => { onClose(); onNavigate?.("media"); }} />
+                        <SidebarItem icon={MessagesSquare} label="Ijtimoiy — postlar, chat" onClick={() => { onClose(); onNavigate?.("social"); }} />
                     </SidebarSection>
 
-                    <SidebarSection title="Media">
-                        <SidebarItem icon={Film}          label="Kino va seriallar"   onClick={() => { onClose(); onNavigate?.("media");  }} />
-                        <SidebarItem icon={Music}         label="Musiqa"              onClick={() => { onClose(); onNavigate?.("media");  }} />
-                        <SidebarItem icon={Mic}           label="Podkastlar"          onClick={() => { onClose(); setPodcastsOpen(true); }} />
-                        <SidebarItem icon={BookOpen}      label="Kitoblar"            onClick={() => { onClose(); setReaderOpen(true); }} />
-                        <SidebarItem icon={MessageCircle} label="Chatlar va kanallar" onClick={() => { onClose(); onNavigate?.("social"); }} />
-                    </SidebarSection>
-
+                    {/* Kashfiyot */}
                     <SidebarSection title="Kashfiyot">
-                        <SidebarItem icon={Compass}       label="Explore / Kashfiyot"   onClick={() => { onClose(); setExploreOpen(true); }} />
-                        <SidebarItem icon={TrendingUp}    label="Trendlar"               onClick={() => { onClose(); setTrendingOpen(true); }} />
-                        <SidebarItem icon={UserPlus}      label="Kimni kuzatish"         onClick={() => { onClose(); setSuggestionsOpen(true); }} />
-                        <SidebarItem icon={Bot}           label="Nexus AI"               onClick={() => { onClose(); setAiOpen(true); }} />
-                        <SidebarItem icon={MessageCircle} label="Xabarlar (DM)"         onClick={() => { onClose(); setMessagesOpen(true); }} badge="3" />
-                        <SidebarItem icon={Hash}          label="Guruhlar va Kanallar"   onClick={() => { onClose(); setGroupsOpen(true); }} badge="2" />
-                        <SidebarItem icon={Phone}         label="Qo'ng'iroqlar"          onClick={() => { onClose(); setCallsOpen(true); }} />
-                        <SidebarItem icon={Video}         label="Majlislar (Meeting)"    onClick={() => { onClose(); setMeetingOpen(true); }} badge="Yangi" />
-                        <SidebarItem icon={Headphones}    label="Spaces (Audio)"         onClick={() => { onClose(); setSpacesOpen(true); }} />
-                        <SidebarItem icon={Bell}          label="Bildirishnomalar"        onClick={() => { onClose(); setNotifOpen(true); }} badge="5" />
-                        <SidebarItem icon={ListMusic}     label="Pleylistlar"             onClick={() => { onClose(); setPlaylistsOpen(true); }} />
-                        <SidebarItem icon={BarChart2}     label="Analitika"               onClick={() => { onClose(); setAnalyticsOpen(true); }} />
-                        <SidebarItem icon={Trophy}        label="Leaderboard"             onClick={() => { onClose(); setLeaderboardOpen(true); }} />
-                        <SidebarItem icon={Tv}            label="Watch Party"             onClick={() => { onClose(); setWatchPartyOpen(true); }} />
-                        <SidebarItem icon={Users}         label="Jamiyat"                 onClick={() => { onClose(); setCommunityOpen(true); }} />
-                        <SidebarItem icon={Scissors}      label="Kliplar"                 onClick={() => { onClose(); setClipsOpen(true); }} />
-                        <SidebarItem icon={Zap}           label="Yutuqlar"                onClick={() => { onClose(); setAchievementsOpen(true); }} />
-                        <SidebarItem icon={Grid3X3}       label="Mini Ilovalar"           onClick={() => { onClose(); setMiniAppsOpen(true); }} />
-                        <SidebarItem icon={CalendarDays}  label="Kontent jadvali"         onClick={() => { onClose(); setScheduleOpen(true); }} />
+                        <SidebarItem icon={Compass} label="Kashfiyot" onClick={() => { onClose(); setExploreOpen(true); }} />
+                        <SidebarItem icon={MessageCircle} label="Xabarlar (DM)" onClick={() => { onClose(); setMessagesOpen(true); }} />
+                        <SidebarItem icon={Bell} label="Bildirishnomalar" onClick={() => { onClose(); setNotifOpen(true); }} />
                     </SidebarSection>
 
+                    {/* Mening Nexus */}
                     <SidebarSection title="Mening Nexus">
-                        <SidebarItem icon={Bookmark}     label="Saqlangan"       onClick={() => { onClose(); setSavedOpen(true); }} />
-                        <SidebarItem icon={History}      label="Ko'rish tarixi"  onClick={() => { onClose(); openSavedHistory(); }} />
-                        <SidebarItem icon={TrendingUp}   label="Mening kanalim"  onClick={() => { onClose(); openChannel(name); }} />
-                        <SidebarItem icon={Users}        label="Obunalar"        onClick={() => { onClose(); setSubsOpen(true); }} />
-                        <SidebarItem icon={ShoppingBag}  label="Nexus Market"    onClick={() => { onClose(); setMarketOpen(true); }} />
-                        <SidebarItem icon={Wallet}       label="Hamyon"          onClick={() => { onClose(); setWalletOpen(true); }} />
-                        <SidebarItem icon={Calendar}     label="Tadbirlar"       onClick={() => { onClose(); setEventsOpen(true); }} />
-                        <SidebarItem icon={Download}     label="Yuklangan"       onClick={() => { onClose(); setDownloadsOpen(true); }} />
-                        <SidebarItem icon={Briefcase}    label="Nexus Jobs"      onClick={() => { onClose(); setJobsOpen(true); }} />
-                        <SidebarItem icon={Gift}         label="Sovg'alar"       onClick={() => { onClose(); setGiftsOpen(true); }} />
-                        <SidebarItem icon={Radio}         label="Jonli efir"      onClick={() => { onClose(); setGoLiveOpen(true); }} />
-                        <SidebarItem icon={Store}         label="Nexus Do'kon"    onClick={() => { onClose(); setShopOpen(true); }} />
-                        <SidebarItem icon={BookText}      label="Maqolalar"       onClick={() => { onClose(); setReaderOpen(true); }} />
-                        <SidebarItem icon={HeartHandshake} label="Moliyalashtirish" onClick={() => { onClose(); setFundraiserOpen(true); }} />
-                        <SidebarItem icon={MessagesSquare} label="Forum"             onClick={() => { onClose(); setForumOpen(true); }} />
-                        <SidebarItem icon={Mic2}           label="Podkastlar"        onClick={() => { onClose(); setPodcastsOpen(true); }} />
-                        <SidebarItem icon={Handshake}      label="Hamkorlik"         onClick={() => { onClose(); setCollabOpen(true); }} />
-                        <SidebarItem icon={BellRing}       label="Eslatmalar"        onClick={() => { onClose(); setRemindersOpen(true); }} />
-                        <SidebarItem icon={BarChart3}      label="So'rovnomalar"     onClick={() => { onClose(); setPollsOpen(true); }} />
-                        <SidebarItem icon={ChartLine}      label="Statistikam"       onClick={() => { onClose(); setStatsOpen(true); }} />
-                        <SidebarItem icon={FileStack}      label="Qoralamalar"       onClick={() => { onClose(); setDraftsOpen(true); }} />
-                        <SidebarItem icon={BadgeCheck}     label="Nishonlarim"       onClick={() => { onClose(); setBadgesOpen(true); }} />
-                        <SidebarItem icon={Flag}           label="Shikoyat"          onClick={() => { onClose(); setReportOpen(true); }} />
-                        <SidebarItem icon={UserCheck}      label="Tavsiya dasturi"   onClick={() => { onClose(); setAffiliateOpen(true); }} />
-                        <SidebarItem icon={Images}         label="Albomlarim"        onClick={() => { onClose(); setAlbumsOpen(true); }} />
-                        <SidebarItem icon={PlusSquare}     label="Story yaratish"    onClick={() => { onClose(); setStoryCreateOpen(true); }} />
+                        <SidebarItem icon={Bookmark} label="Saqlangan" onClick={() => { onClose(); setSavedOpen(true); }} />
+                        <SidebarItem icon={History} label="Ko'rish tarixi" onClick={() => { onClose(); openSavedHistory(); }} />
+                        <SidebarItem icon={Users} label="Obunalarim" onClick={() => { onClose(); setSubsOpen(true); }} />
+                        <SidebarItem icon={Radio} label="Jonli efir boshlash" onClick={() => { onClose(); setGoLiveOpen(true); }} />
+                        <SidebarItem icon={PlusSquare} label="Story yaratish" onClick={() => { onClose(); setStoryCreateOpen(true); }} />
                     </SidebarSection>
 
-                    {/* ── Settings / Logout ─────────────────────────── */}
-                    <div className="px-4 pb-2">
-                        <SidebarItem icon={Settings} label="Sozlamalar" onClick={onOpenSettings} />
-                        <SidebarItem icon={HelpCircle} label="Yordam va aloqa" />
-                    </div>
-                </div>
+                    {/* Boshqa For Humo modullari */}
+                    <SidebarSection title="For Humo">
+                        <SidebarLink icon={Wallet} label="ALKH Pay — hamyon" href="/pay" onClose={onClose} />
+                        <SidebarLink icon={ShoppingBag} label="Humo Market" href="/market" onClose={onClose} />
+                        <SidebarLink icon={Fingerprint} label="Humo ID" href="/id" onClose={onClose} />
+                    </SidebarSection>
 
-                {/* ── Footer ────────────────────────────────────────── */}
-                <div
-                    className="flex-shrink-0 px-4 py-3"
-                    style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}
-                >
-                    <button
-                        onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                        className="nx-press w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-colors duration-150"
-                        style={{
-                            background: "rgba(239,68,68,0.06)",
-                            border: "1px solid rgba(239,68,68,0.15)",
-                        }}
-                        onMouseEnter={e => {
-                            (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.12)";
-                            (e.currentTarget as HTMLElement).style.borderColor = "rgba(239,68,68,0.30)";
-                        }}
-                        onMouseLeave={e => {
-                            (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.06)";
-                            (e.currentTarget as HTMLElement).style.borderColor = "rgba(239,68,68,0.15)";
-                        }}
-                    >
-                        <LogOut className="w-4 h-4" style={{ color: "rgba(239,68,68,0.80)" }} />
-                        <span className="text-sm font-semibold" style={{ color: "rgba(239,68,68,0.80)" }}>
+                    {/* Sozlamalar / Yordam / Chiqish */}
+                    <div className="px-4 pb-4 pt-1">
+                        <SidebarItem icon={Settings} label="Sozlamalar" onClick={() => { onClose(); onOpenSettings?.(); }} />
+                        <SidebarLink icon={HelpCircle} label="Yordam va aloqa" href="/support" onClose={onClose} />
+                        <button onClick={() => signOut()}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-400 transition-colors duration-150 mt-1"
+                            style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.16)" }}>
+                            <LogOut className="w-4 h-4" />
                             Chiqish
-                        </span>
-                    </button>
-
-                    <p className="text-center text-[9px] mt-2.5" style={{ color: "rgba(60,80,130,0.70)" }}>
-                        Humo Nexus v1.0.0 · Humo Digital 2026
-                    </p>
+                        </button>
+                    </div>
                 </div>
             </aside>
         </>
@@ -287,111 +138,33 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Ichki komponentlar
-// ─────────────────────────────────────────────────────────────────────────────
 function SidebarSection({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-        <div className="px-4 mb-1">
-            <p
-                className="text-[9px] font-black uppercase tracking-widest mb-1.5 px-1"
-                style={{ color: "rgba(43,62,232,0.55)" }}
-            >
-                {title}
-            </p>
-            {children}
-            <div className="mt-2 mb-3 h-px" style={{ background: "rgba(43,62,232,0.10)" }} />
+        <div className="px-4 pb-3">
+            <p className="px-2 pb-1.5 text-[9px] font-black uppercase tracking-widest" style={{ color: "rgba(43,62,232,0.60)" }}>{title}</p>
+            <div className="flex flex-col gap-0.5">{children}</div>
         </div>
     );
 }
 
-function SidebarItem({
-    icon: Icon,
-    label,
-    onClick,
-    badge,
-}: {
-    icon: React.ElementType;
-    label: string;
-    onClick?: () => void;
-    badge?: string;
-}) {
-    const iconRef = React.useRef<SVGSVGElement>(null);
-
-    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-        // Spring pop on icon
-        if (iconRef.current) {
-            iconRef.current.classList.remove("nx-pop");
-            void (iconRef.current as unknown as HTMLElement).offsetWidth;
-            iconRef.current.classList.add("nx-pop");
-        }
-        // Ripple
-        const btn = e.currentTarget;
-        const dot = document.createElement("span");
-        const rect = btn.getBoundingClientRect();
-        dot.className = "nx-ripple-dot";
-        dot.style.left = `${e.clientX - rect.left}px`;
-        dot.style.top  = `${e.clientY - rect.top}px`;
-        dot.style.width  = "8px";
-        dot.style.height = "8px";
-        btn.appendChild(dot);
-        dot.addEventListener("animationend", () => dot.remove());
-
-        onClick?.();
-    };
-
+function SidebarItem({ icon: Icon, label, onClick }: { icon: React.ElementType; label: string; onClick?: () => void }) {
     return (
-        <button
-            onClick={handleClick}
-            className="nx-ripple-wrap nx-press w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 text-left group"
-            style={{
-                background: "transparent",
-                border: "1px solid transparent",
-                transition: "background 0.18s ease, border-color 0.18s ease, transform 0.12s cubic-bezier(0.34,1.56,0.64,1)",
-            }}
-            onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.09)";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.20)";
-            }}
-            onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = "transparent";
-                (e.currentTarget as HTMLElement).style.borderColor = "transparent";
-            }}
-        >
-            {/* Icon container with gradient on hover */}
-            <div
-                className="w-7 h-7 rounded-[10px] flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:scale-110"
-                style={{
-                    background: "rgba(43,62,232,0.13)",
-                    border: "1px solid rgba(43,62,232,0.15)",
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.25)",
-                }}
-            >
-                <Icon
-                    ref={iconRef as React.Ref<SVGSVGElement>}
-                    className="w-3.5 h-3.5 transition-colors duration-200 group-hover:text-[#00CEC8]"
-                    style={{ color: "rgba(110,145,230,0.90)" }}
-                    strokeWidth={1.8}
-                />
-            </div>
-
-            <span className="flex-1 text-[13px] font-semibold transition-colors duration-200 group-hover:text-white"
-                style={{ color: "rgba(175,192,235,0.88)" }}>
-                {label}
-            </span>
-
-            {badge && (
-                <span
-                    className="px-1.5 py-0.5 rounded-full text-[9px] font-black text-white"
-                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 0 8px rgba(43,62,232,0.50)" }}
-                >
-                    {badge}
-                </span>
-            )}
-
-            <ChevronRight
-                className="w-3 h-3 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 group-hover:translate-x-0.5"
-                style={{ color: "rgba(43,62,232,0.60)" }}
-            />
+        <button onClick={onClick}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-left transition-all duration-150 hover:bg-white/5 active:scale-[0.99]"
+            style={{ color: "rgba(190,205,240,0.88)" }}>
+            <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.85)" }} />
+            <span className="truncate">{label}</span>
         </button>
+    );
+}
+
+function SidebarLink({ icon: Icon, label, href, onClose }: { icon: React.ElementType; label: string; href: string; onClose: () => void }) {
+    return (
+        <Link href={href} onClick={onClose}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-left transition-all duration-150 hover:bg-white/5 active:scale-[0.99]"
+            style={{ color: "rgba(190,205,240,0.88)" }}>
+            <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.85)" }} />
+            <span className="truncate">{label}</span>
+        </Link>
     );
 }
