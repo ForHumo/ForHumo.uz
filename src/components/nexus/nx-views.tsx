@@ -15,7 +15,7 @@ import {
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxRow } from "./nx-row";
-import { VideoCard, LiveCard, MusicCard, BookCard } from "./nx-cards";
+import { VideoCard, MusicCard, BookCard } from "./nx-cards";
 import { NxStories } from "./nx-stories";
 import { NxHero } from "./nx-hero";
 import { NxFeed } from "./nx-feed";
@@ -33,54 +33,7 @@ function ViewShell({ children }: { children: React.ReactNode }) {
     );
 }
 
-function ViewHeader({ title, accent, desc, children }: {
-    title: React.ReactNode; accent?: string; desc?: string; children?: React.ReactNode;
-}) {
-    return (
-        <div
-            className="mx-4 mt-4 mb-1 p-5 md:p-7 rounded-2xl relative overflow-hidden"
-            style={{
-                background: "rgba(11,18,40,0.60)",
-                border: "1px solid rgba(43,62,232,0.22)",
-            }}
-        >
-            <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full pointer-events-none"
-                style={{ background: accent ?? "radial-gradient(circle, rgba(43,62,232,0.22) 0%, transparent 70%)" }} />
-            <h2 className="text-2xl md:text-3xl font-black text-white mb-1 relative">{title}</h2>
-            {desc && <p className="text-sm relative" style={{ color: "rgba(120,140,190,0.85)" }}>{desc}</p>}
-            {children && <div className="mt-4 relative">{children}</div>}
-        </div>
-    );
-}
-
-// SearchBar Video bo'limi bilan birga nx-video-view.tsx ga ko'chirildi
-
-function FilterChips({ items }: { items: { icon: React.ElementType; label: string }[] }) {
-    const [active, setActive] = useState(0);
-    return (
-        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-            {items.map(({ icon: Icon, label }, i) => (
-                <button
-                    key={i}
-                    onClick={() => setActive(i)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold flex-shrink-0 transition-all duration-200 active:scale-95"
-                    style={active === i ? {
-                        background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
-                        color: "white",
-                        boxShadow: "0 4px 14px rgba(43,62,232,0.40)",
-                    } : {
-                        background: "rgba(43,62,232,0.10)",
-                        border: "1px solid rgba(43,62,232,0.22)",
-                        color: "rgba(140,160,210,0.85)",
-                    }}
-                >
-                    <Icon className="w-3 h-3" />
-                    {label}
-                </button>
-            ))}
-        </div>
-    );
-}
+// SearchBar, FilterChips va ViewHeader Video/Live bo'limlari bilan birga o'z fayllariga ko'chirildi
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FEED VIEW — bosh sahifa
@@ -126,102 +79,9 @@ export function FeedView() {
 export { VideoView } from "./nx-video-view";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LIVE VIEW
+// LIVE VIEW — real (nx-live-view.tsx)
 // ─────────────────────────────────────────────────────────────────────────────
-export function LiveView() {
-    const { setGoLiveOpen } = useNxPlayer();
-
-    return (
-        <ViewShell>
-            <ViewHeader
-                title={<>Jonli <span style={{ background: "linear-gradient(135deg,#EF4444,#F97316)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Efirlar</span></>}
-                desc="Real vaqtda dunyo bo'ylab kontentlar"
-                accent="radial-gradient(circle, rgba(239,68,68,0.25) 0%, transparent 70%)"
-            >
-                <FilterChips items={[
-                    { icon: Radio,  label: "Hammasi"    },
-                    { icon: Hash,   label: "Gaming"     },
-                    { icon: Hash,   label: "Musiqa"     },
-                    { icon: Hash,   label: "Dasturlash" },
-                    { icon: Hash,   label: "Sport"      },
-                    { icon: Hash,   label: "Ta'lim"     },
-                ]} />
-            </ViewHeader>
-
-            {/* ── Go Live CTA ─────────────────────────────────────── */}
-            <div className="mx-4 mt-3 mb-1">
-                <button
-                    onClick={() => setGoLiveOpen(true)}
-                    className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200 active:scale-[0.99] group"
-                    style={{
-                        background: "linear-gradient(135deg, rgba(239,68,68,0.18) 0%, rgba(249,115,22,0.12) 100%)",
-                        border: "1px solid rgba(239,68,68,0.35)",
-                        boxShadow: "0 4px 24px rgba(239,68,68,0.12)",
-                    }}
-                >
-                    {/* Pulse dot */}
-                    <div className="relative flex-shrink-0">
-                        <div className="w-11 h-11 rounded-xl flex items-center justify-center"
-                            style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
-                            <Radio className="w-5 h-5 text-white" />
-                        </div>
-                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 flex items-center justify-center">
-                            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                        </span>
-                    </div>
-
-                    {/* Text */}
-                    <div className="flex-1 text-left">
-                        <p className="text-sm font-black text-white leading-tight">Jonli Efir Boshlash</p>
-                        <p className="text-[11px] mt-0.5" style={{ color: "rgba(200,120,100,0.85)" }}>
-                            Auditoriyangizga real vaqtda ulaning
-                        </p>
-                    </div>
-
-                    {/* Arrow */}
-                    <ChevronRight className="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5"
-                        style={{ color: "rgba(239,68,68,0.70)" }} />
-                </button>
-            </div>
-
-            <NxRow title="Hozir Jonli" accent="linear-gradient(180deg,#EF4444,#F97316)">
-                {[
-                    { title: "Nexus Launch Event",      author: "Humo Official",  viewers: "18.5K", category: "Tech"      },
-                    { title: "Pro Gaming Finals",        author: "eSport UZ",      viewers: "9.2K",  category: "Gaming"    },
-                    { title: "Milliy Musiqa Festivali",  author: "Madina Ergash",  viewers: "5.8K",  category: "Musiqa"    },
-                    { title: "React Native Workshop",    author: "Dev Sardor",     viewers: "3.1K",  category: "Kod"       },
-                    { title: "Futbol — Real vs Barca",   author: "Sport UZ",       viewers: "42K",   category: "Sport"     },
-                    { title: "AI Chat bilan suhbat",     author: "Humo AI",        viewers: "7.6K",  category: "AI"        },
-                ].map((s, i) => (
-                    <LiveCard key={i} title={s.title}
-                        image={`https://picsum.photos/seed/lv${i + 100}/800/450`}
-                        author={s.author} viewers={s.viewers} category={s.category} />
-                ))}
-            </NxRow>
-
-            <NxRow title="Tez kunda boshlanadi" accent="linear-gradient(180deg,#10B981,#00CEC8)">
-                {Array.from({ length: 5 }, (_, i) => (
-                    <LiveCard key={i}
-                        title={`Kutilayotgan Efir ${i + 1}`}
-                        image={`https://picsum.photos/seed/upcoming${i + 110}/800/450`}
-                        author={`Kreator ${i + 1}`} viewers={`${(i + 1) * 800}`} category="Tayyor" />
-                ))}
-            </NxRow>
-
-            <NxRow title="Yaqinda tugagan" accent="linear-gradient(180deg,#6366F1,#8B5CF6)">
-                {Array.from({ length: 5 }, (_, i) => (
-                    <VideoCard key={i}
-                        title={`Efir yozuvi — ${i + 1}-son`}
-                        image={`https://picsum.photos/seed/rec${i + 120}/800/450`}
-                        views={`${(i + 1) * 5.2}K`} duration={`${1 + i}s ${i * 10}d`}
-                        author={`Streamer ${i + 1}`}
-                        avatar={`https://api.dicebear.com/9.x/avataaars/svg?seed=stream${i}`}
-                    />
-                ))}
-            </NxRow>
-        </ViewShell>
-    );
-}
+export { LiveView } from "./nx-live-view";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MEDIA VIEW — Kino / Musiqa / Podcast / AudioKitob / Kitob
