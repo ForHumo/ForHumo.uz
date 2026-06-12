@@ -7,7 +7,7 @@ import {
     Headphones,
     Radio, Users, Hash, MessageCircle, Bot, Gift, Trophy,
     Shield, Heart, UserCheck, CreditCard,
-    Settings, LogOut, BadgeCheck, Plus, ChevronRight,
+    Settings, LogOut, BadgeCheck,
     Edit3, Save, X, Loader2, Trash2,
     ListMusic, BarChart2, Bookmark, Phone,
     ShoppingBag, Wallet, Download, Briefcase, Calendar, Video, Play, ExternalLink,
@@ -99,7 +99,7 @@ const SOCIAL_TABS = [
 
 export function SocialView() {
     const [sub, setSub] = useState("posts");
-    const { setMessagesOpen, setExploreOpen, setGroupsOpen } = useNxPlayer();
+    const { setMessagesOpen } = useNxPlayer();
 
     return (
         <ViewShell>
@@ -140,107 +140,22 @@ export function SocialView() {
                 </div>
             )}
 
-            {sub === "channel" && (
-                <div className="mx-4">
-                    <button
-                        onClick={() => setGroupsOpen(true)}
-                        className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-sm font-bold text-white mb-3 transition-all duration-150 active:scale-95"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.40)" }}
-                    >
-                        <Hash className="w-5 h-5" />
-                        Kanallar va Guruhlarni ochish
-                    </button>
-                    <div className="flex flex-col gap-2">
-                        {["Nexus Rasmiy", "Tech UZ", "Humo AI News", "Kino Dunyo", "Sport Live", "Biznes UZ"].map((name, i) => (
-                            <button key={i}
-                                onClick={() => setGroupsOpen(true)}
-                                className="flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-150 group"
-                                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
-                                onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)"}
-                                onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)"}
-                            >
-                                <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0"
-                                    style={{ background: "linear-gradient(135deg,rgba(43,62,232,0.40),rgba(0,206,200,0.30))" }}>
-                                    <img src={`https://api.dicebear.com/9.x/identicon/svg?seed=${name}`} alt={name} className="w-full h-full" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-bold text-white group-hover:text-[#00CEC8] transition-colors duration-150">{name}</p>
-                                    <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.80)" }}>{(i + 1) * 12.4}K a&apos;zo</p>
-                                </div>
-                                <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.50)" }} />
-                            </button>
-                        ))}
+            {/* Kanallar / Guruhlar / Botlar — backend hali qurilmagan, halol holat */}
+            {(sub === "channel" || sub === "group" || sub === "bot") && (
+                <div className="mx-4 flex flex-col items-center justify-center py-14 px-6 text-center rounded-2xl"
+                    style={{ background: "rgba(11,18,40,0.50)", border: "1px dashed rgba(43,62,232,0.25)" }}>
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
+                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                        {sub === "channel" ? <Hash className="w-6 h-6" style={{ color: "rgba(43,62,232,0.55)" }} />
+                            : sub === "group" ? <Users className="w-6 h-6" style={{ color: "rgba(43,62,232,0.55)" }} />
+                                : <Bot className="w-6 h-6" style={{ color: "rgba(43,62,232,0.55)" }} />}
                     </div>
-                </div>
-            )}
-
-            {sub === "group" && (
-                <div className="mx-4">
-                    <button
-                        onClick={() => setGroupsOpen(true)}
-                        className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-sm font-bold text-white mb-3 transition-all duration-150 active:scale-95"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.40)" }}
-                    >
-                        <Users className="w-5 h-5" />
-                        Guruhlarni ochish
-                    </button>
-                    <div className="flex flex-col gap-2">
-                        {["Nexus Kreatorlar", "O'zbek Dasturchilar", "Dizaynerlar Jamoasi", "Marketing Professionals", "Startup Founders UZ"].map((name, i) => (
-                            <button key={i}
-                                onClick={() => setGroupsOpen(true)}
-                                className="flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-150 group"
-                                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
-                                onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)"}
-                                onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)"}
-                            >
-                                <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center"
-                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                                    <Users className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-bold text-white group-hover:text-[#00CEC8] transition-colors duration-150">{name}</p>
-                                    <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.80)" }}>{(i + 1) * 340} a&apos;zo</p>
-                                </div>
-                                <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.50)" }} />
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {sub === "bot" && (
-                <div className="mx-4 flex flex-col gap-2">
-                    {[
-                        { name: "Humo Assistant",  desc: "AI yordamchi — savol-javob, kontent tavsiya" },
-                        { name: "Nexus Publisher", desc: "Kontent nashr qilish — bitta bosish" },
-                        { name: "Analytics Bot",   desc: "Statistika va daromad hisoboti" },
-                        { name: "Pay Bot",         desc: "To'lov tizimi — Payme, Click" },
-                    ].map((b, i) => (
-                        <button key={i}
-                            className="flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-150 group"
-                            style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}
-                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)"}
-                            onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)"}
-                        >
-                            <div className="w-11 h-11 rounded-2xl flex-shrink-0 flex items-center justify-center"
-                                style={{ background: "linear-gradient(135deg,#8B5CF6,#6366F1)" }}>
-                                <Bot className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-sm font-bold text-white group-hover:text-[#00CEC8] transition-colors duration-150">{b.name}</p>
-                                <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.80)" }}>{b.desc}</p>
-                            </div>
-                            <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.50)" }} />
-                        </button>
-                    ))}
-                    {/* Bot yaratish */}
-                    <button
-                        className="flex items-center justify-center gap-2 p-3.5 rounded-2xl text-sm font-bold text-white transition-all duration-200 active:scale-98 mt-2"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.40)" }}
-                    >
-                        <Plus className="w-4 h-4" />
-                        Yangi bot yaratish
-                    </button>
+                    <p className="text-sm font-black text-white mb-1">
+                        {sub === "channel" ? "Kanallar" : sub === "group" ? "Guruhlar" : "Botlar"} — tez kunda
+                    </p>
+                    <p className="text-xs max-w-xs leading-relaxed" style={{ color: "rgba(120,140,190,0.75)" }}>
+                        Bu bo&apos;lim keyingi bosqichda quriladi. Hozircha Postlar va Chatlar to&apos;liq ishlaydi.
+                    </p>
                 </div>
             )}
         </ViewShell>
@@ -253,7 +168,7 @@ export function SocialView() {
 interface ProfileData {
     name?: string | null; firstName?: string | null; lastName?: string | null;
     bio?: string | null; username?: string | null; city?: string | null;
-    image?: string | null;
+    image?: string | null; humoId?: string | null; emailVerified?: boolean;
 }
 
 export function ProfileView() {
@@ -271,12 +186,10 @@ export function ProfileView() {
     const [editBio,     setEditBio]     = useState("");
     const [saving,      setSaving]      = useState(false);
     const [saveError,   setSaveError]   = useState("");
-    const [toggles,     setToggles]     = useState([true, true, false]); // ochiq profil, 2FA, bildirishnomalar
-    const [nx,          setNx]          = useState<{ posts: number; followers: number; following: number } | null>(null);
+    const [nx,          setNx]          = useState<{ posts: number; followers: number; following: number; likes?: number } | null>(null);
+    const [verified,    setVerified]    = useState(false);
+    const [balance,     setBalance]     = useState<number | null>(null);
     const [followList,  setFollowList]  = useState<"followers" | "following" | null>(null);
-
-    const flipToggle = (i: number) =>
-        setToggles(prev => prev.map((v, idx) => idx === i ? !v : v));
 
     /* Real profil ma'lumotlarini yuklash */
     const fetchProfile = useCallback(async () => {
@@ -289,12 +202,20 @@ export function ProfileView() {
 
     useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
-    /* Nexus real statistika (post/kuzatuvchi/kuzatilmoqda) */
+    /* Nexus real statistika (post/kuzatuvchi/layk) + tasdiq belgisi */
     useEffect(() => {
         if (!session?.user?.email) return;
         fetch("/api/nexus/profile")
             .then(r => r.ok ? r.json() : null)
-            .then(d => { if (d?.stats) setNx(d.stats); })
+            .then(d => {
+                if (d?.stats) setNx(d.stats);
+                if (d?.profile) setVerified(!!d.profile.verified);
+            })
+            .catch(() => { });
+        // Real Zij balansi (ALKH Pay)
+        fetch("/api/pay/wallet")
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (d && d.balance != null) setBalance(Number(d.balance)); })
             .catch(() => { });
     }, [session?.user?.email]);
 
@@ -364,17 +285,29 @@ export function ProfileView() {
                                 {profile.bio}
                             </p>
                         )}
+                        {/* Real badge'lar: tasdiq (founder/verified), Humo ID, email holati */}
                         <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                            {[
-                                { icon: Shield,     label: "Tasdiqlangan", color: "#00CEC8" },
-                                { icon: BadgeCheck, label: "Nexus Member", color: "#10B981" },
-                            ].map(({ icon: Icon, label, color }, i) => (
-                                <span key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white"
-                                    style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}>
-                                    <Icon className="w-3 h-3" style={{ color }} />
-                                    {label}
+                            {verified && (
+                                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white"
+                                    style={{ background: "rgba(0,206,200,0.14)", border: "1px solid rgba(0,206,200,0.35)" }}>
+                                    <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                    Tasdiqlangan
                                 </span>
-                            ))}
+                            )}
+                            {profile?.humoId && (
+                                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white font-mono"
+                                    style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                    <Shield className="w-3 h-3" style={{ color: "#2B3EE8" }} />
+                                    {profile.humoId}
+                                </span>
+                            )}
+                            {profile?.emailVerified && (
+                                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white"
+                                    style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.30)" }}>
+                                    <UserCheck className="w-3 h-3" style={{ color: "#10B981" }} />
+                                    Email tasdiqlangan
+                                </span>
+                            )}
                         </div>
                     </div>
 
@@ -461,13 +394,13 @@ export function ProfileView() {
                 ))}
             </div>
 
-            {/* ── Statistika ────────────────────────────────────────────── */}
+            {/* ── Statistika (REAL) ─────────────────────────────────────── */}
             <div className="mx-4 mt-3 grid grid-cols-2 gap-3">
                 {[
-                    { icon: Heart,      label: "Layklar",    value: "1.2M",  gradient: "from-red-500 to-pink-600",      action: undefined                 },
+                    { icon: Heart,      label: "Olingan layklar", value: nx?.likes != null ? String(nx.likes) : "—", gradient: "from-red-500 to-pink-600", action: undefined },
                     { icon: UserCheck,  label: "Obunachi",   value: nx ? String(nx.followers) : "—",  gradient: "from-[#2B3EE8] to-[#00CEC8]",  action: profile?.username ? () => setFollowList("followers") : undefined },
-                    { icon: CreditCard, label: "Hamyon",     value: "240K",  gradient: "from-emerald-500 to-teal-600",  action: () => setWalletOpen(true) },
-                    { icon: Shield,     label: "Xavfsizlik", value: "Yuqori",gradient: "from-violet-500 to-indigo-600", action: undefined                 },
+                    { icon: CreditCard, label: "Hamyon",     value: balance != null ? `${balance.toLocaleString()} Ƶ` : "—", gradient: "from-emerald-500 to-teal-600", action: () => setWalletOpen(true) },
+                    { icon: Shield,     label: "Xavfsizlik", value: profile?.emailVerified ? "Yaxshi" : "Boshlang'ich", gradient: "from-violet-500 to-indigo-600", action: undefined },
                 ].map(({ icon: Icon, label, value, gradient, action }, i) => (
                     <button key={i} onClick={action}
                         className="flex items-center gap-3 p-4 rounded-2xl transition-all duration-150 text-left"
@@ -535,28 +468,20 @@ export function ProfileView() {
                 </div>
             )}
 
-            {/* ── Sozlamalar ────────────────────────────────────────────── */}
+            {/* ── Hisob ─────────────────────────────────────────────────── */}
             <div className="mx-4 mt-3 rounded-2xl p-5"
                 style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.20)" }}>
                 <h3 className="text-sm font-black text-white mb-3 flex items-center gap-2">
                     <Settings className="w-4 h-4" style={{ color: "#00CEC8" }} />
-                    Tezkor sozlamalar
+                    Hisob
                 </h3>
                 <div className="space-y-2">
-                    {["Ochiq profil", "Ikki bosqichli tasdiqlash", "Bildirishnomalar"].map((label, i) => (
-                        <div key={i} className="flex items-center justify-between p-3 rounded-xl"
-                            style={{ background: "rgba(5,8,24,0.50)", border: "1px solid rgba(43,62,232,0.12)" }}>
-                            <span className="text-sm font-medium" style={{ color: "rgba(140,160,210,0.85)" }}>{label}</span>
-                            <button
-                                onClick={() => flipToggle(i)}
-                                className="w-9 h-5 rounded-full relative transition-all duration-200 flex-shrink-0"
-                                style={{ background: toggles[i] ? "linear-gradient(90deg,#2B3EE8,#00CEC8)" : "rgba(43,62,232,0.20)" }}
-                            >
-                                <div className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-200"
-                                    style={{ [toggles[i] ? "right" : "left"]: "2px" }} />
-                            </button>
-                        </div>
-                    ))}
+                    <Link href="/id"
+                        className="flex items-center justify-between p-3 rounded-xl text-sm font-medium transition-colors duration-150"
+                        style={{ background: "rgba(5,8,24,0.50)", border: "1px solid rgba(43,62,232,0.12)", color: "rgba(140,160,210,0.85)" }}>
+                        <span>Humo ID sozlamalari</span>
+                        <ExternalLink className="w-4 h-4" style={{ color: "rgba(43,62,232,0.6)" }} />
+                    </Link>
                     <button
                         onClick={() => signOut()}
                         className="w-full flex items-center justify-between p-3 rounded-xl font-bold text-sm text-red-400 transition-colors duration-150 group"

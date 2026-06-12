@@ -26,10 +26,11 @@ export async function GET(req: Request) {
 
     if (!target) return NextResponse.json({ error: "Foydalanuvchi topilmadi" }, { status: 404 });
 
-    const [posts, followers, following] = await prisma.$transaction([
+    const [posts, followers, following, likes] = await prisma.$transaction([
         prisma.nexusPost.count({ where: { profileId: target.id, hidden: false } }),
         prisma.nexusFollow.count({ where: { followingId: target.id } }),
         prisma.nexusFollow.count({ where: { followerId: target.id } }),
+        prisma.nexusLike.count({ where: { post: { profileId: target.id, hidden: false } } }),
     ]);
 
     let isFollowing = false;
@@ -46,7 +47,7 @@ export async function GET(req: Request) {
             coverImage: target.coverImage, bio: target.bio, humoId: target.humoId,
             verified: isVerifiedProfile(target),
         },
-        stats: { posts, followers, following },
+        stats: { posts, followers, following, likes },
         isFollowing,
         isMe: meId === target.id,
     });
