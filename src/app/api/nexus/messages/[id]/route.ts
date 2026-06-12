@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { otherId } from "@/lib/nexus-dm";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { isBlockedBetween } from "@/lib/nexus-block";
 
 async function meAndConv(email: string, id: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true } });
@@ -51,6 +52,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
     if (!conv) return NextResponse.json({ error: "Suhbat topilmadi" }, { status: 404 });
     if (conv.user1Id !== me.id && conv.user2Id !== me.id) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+
+    if (await isBlockedBetween(me.id, otherId(conv, me.id))) return NextResponse.json({ error: "Bu suhbatga yoza olmaysiz" }, { status: 403 });
 
     const { text } = await req.json();
     if (!text?.trim()) return NextResponse.json({ error: "Xabar bo'sh bo'lmasin" }, { status: 400 });

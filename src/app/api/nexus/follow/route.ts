@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { after } from "next/server";
 import { nexusNotify } from "@/lib/nexus-notify";
+import { isBlockedBetween } from "@/lib/nexus-block";
 
 // POST /api/nexus/follow — follow toggle ({ username } yoki { profileId })
 export async function POST(req: Request) {
@@ -20,6 +21,7 @@ export async function POST(req: Request) {
     }
     if (!targetId) return NextResponse.json({ error: "Foydalanuvchi topilmadi" }, { status: 404 });
     if (targetId === me.id) return NextResponse.json({ error: "O'zingizni follow qila olmaysiz" }, { status: 400 });
+    if (await isBlockedBetween(me.id, targetId)) return NextResponse.json({ error: "Bu foydalanuvchini kuzata olmaysiz" }, { status: 403 });
 
     const existing = await prisma.nexusFollow.findUnique({
         where: { followerId_followingId: { followerId: me.id, followingId: targetId } },

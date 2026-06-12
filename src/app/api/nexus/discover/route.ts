@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
+import { getHiddenAuthorIds } from "@/lib/nexus-block";
 
 // GET /api/nexus/discover — trenddagi hashtaglar + tavsiya qilingan odamlar
 export async function GET() {
@@ -30,10 +31,11 @@ export async function GET() {
     const recentPosts = await prisma.nexusPost.findMany({
         where: { hidden: false }, select: { profileId: true }, orderBy: { createdAt: "desc" }, take: 100,
     });
+    const hidden = new Set(await getHiddenAuthorIds(meId));
     const seen = new Set<string>();
     const candidateIds: string[] = [];
     for (const p of recentPosts) {
-        if (p.profileId === meId || myFollowing.has(p.profileId) || seen.has(p.profileId)) continue;
+        if (p.profileId === meId || myFollowing.has(p.profileId) || seen.has(p.profileId) || hidden.has(p.profileId)) continue;
         seen.add(p.profileId); candidateIds.push(p.profileId);
         if (candidateIds.length >= 8) break;
     }

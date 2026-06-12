@@ -688,6 +688,29 @@ model NexusFollow {
   @@index([followingId])
 }
 
+// Bloklash — ikki tomonlama ko'rinmaslik. A B'ni bloklasa: B A'ning kontentini
+// ko'rmaydi, DM yoza olmaydi, follow qila olmaydi (va aksincha). Mavjud follow'lar uziladi.
+model NexusBlock {
+  id        String   @id @default(cuid())
+  blockerId String                                // kim bloklayapti (UserProfile.id)
+  blockedId String                                // kimni
+  createdAt DateTime @default(now())
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+// Ovozsizlantirish — yumshoq, bir tomonlama. A B'ni mute qilsa: A B'ning kontentini
+// tasmada ko'rmaydi, lekin B bilmaydi va bemalol o'zaro aloqa qila oladi.
+model NexusMute {
+  id        String   @id @default(cuid())
+  muterId   String                                // kim mute qilyapti (UserProfile.id)
+  mutedId   String                                // kimni
+  createdAt DateTime @default(now())
+  @@unique([muterId, mutedId])
+  @@index([muterId])
+}
+
 // Bildirishnoma — like/izoh/follow/javob (relation yo'q, MarketNotification kabi)
 model NexusNotification {
   id          String         @id @default(cuid())

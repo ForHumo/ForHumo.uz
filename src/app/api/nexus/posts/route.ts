@@ -7,6 +7,7 @@ import { isVerifiedProfile, extractHashtags } from "@/lib/nexus";
 import { after } from "next/server";
 import { moderateOnCreate } from "@/lib/moderation";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { getHiddenAuthorIds } from "@/lib/nexus-block";
 
 async function myProfileId(): Promise<string | null> {
     const session = await getServerSession(authOptions);
@@ -68,6 +69,10 @@ export async function GET(req: Request) {
         if (followingIds.length) privacyOr.push({ privacy: "FOLLOWERS", profileId: { in: followingIds } });
     }
     where.AND = [{ OR: privacyOr }];
+
+    // Bloklangan/mute qilingan mualliflarni tasmadan chiqarib tashlash (o'zimni emas)
+    const hiddenIds = (await getHiddenAuthorIds(myId)).filter(id => id !== myId);
+    if (hiddenIds.length) (where.AND as Prisma.NexusPostWhereInput[]).push({ profileId: { notIn: hiddenIds } });
 
     const [posts, total] = await prisma.$transaction([
         prisma.nexusPost.findMany({

@@ -33,12 +33,18 @@ export async function GET(req: Request) {
         prisma.nexusLike.count({ where: { post: { profileId: target.id, hidden: false } } }),
     ]);
 
-    let isFollowing = false;
+    let isFollowing = false, iBlocked = false, blockedMe = false, iMuted = false;
     if (meId && meId !== target.id) {
-        const f = await prisma.nexusFollow.findUnique({
-            where: { followerId_followingId: { followerId: meId, followingId: target.id } },
-        });
+        const [f, bOut, bIn, m] = await prisma.$transaction([
+            prisma.nexusFollow.findUnique({ where: { followerId_followingId: { followerId: meId, followingId: target.id } } }),
+            prisma.nexusBlock.findUnique({ where: { blockerId_blockedId: { blockerId: meId, blockedId: target.id } } }),
+            prisma.nexusBlock.findUnique({ where: { blockerId_blockedId: { blockerId: target.id, blockedId: meId } } }),
+            prisma.nexusMute.findUnique({ where: { muterId_mutedId: { muterId: meId, mutedId: target.id } } }),
+        ]);
         isFollowing = !!f;
+        iBlocked = !!bOut;
+        blockedMe = !!bIn;
+        iMuted = !!m;
     }
 
     return NextResponse.json({
@@ -50,5 +56,6 @@ export async function GET(req: Request) {
         stats: { posts, followers, following, likes },
         isFollowing,
         isMe: meId === target.id,
+        iBlocked, blockedMe, iMuted,
     });
 }

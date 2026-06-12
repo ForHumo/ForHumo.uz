@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Link, useRouter } from "@/i18n/routing";
-import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle, MoreHorizontal, Ban, VolumeX, Volume2, ShieldAlert } from "lucide-react";
 import { NxPlayerProvider } from "./nx-player-ctx";
 import { NxSocialFeed } from "./nx-social-feed";
 import { NxShare } from "./nx-share";
@@ -13,7 +13,7 @@ interface ProfileData {
     coverImage: string | null; bio: string | null; humoId: string | null; verified: boolean;
 }
 interface Stats { posts: number; followers: number; following: number }
-interface ProfileResp { profile: ProfileData; stats: Stats; isFollowing: boolean; isMe: boolean }
+interface ProfileResp { profile: ProfileData; stats: Stats; isFollowing: boolean; isMe: boolean; iBlocked: boolean; blockedMe: boolean; iMuted: boolean }
 
 function fzNum(n: number) {
     if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
@@ -30,6 +30,10 @@ export function NexusProfile({ username }: { username: string }) {
     const [followerCount, setFollowerCount] = useState(0);
     const [busy, setBusy] = useState(false);
     const [listType, setListType] = useState<"followers" | "following" | null>(null);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [iBlocked, setIBlocked] = useState(false);
+    const [blockedMe, setBlockedMe] = useState(false);
+    const [iMuted, setIMuted] = useState(false);
 
     const load = useCallback(async () => {
         setLoading(true); setNotFound(false);
@@ -38,9 +42,32 @@ export function NexusProfile({ username }: { username: string }) {
             if (!res.ok) { setNotFound(true); return; }
             const d: ProfileResp = await res.json();
             setData(d); setFollowing(d.isFollowing); setFollowerCount(d.stats.followers);
+            setIBlocked(d.iBlocked); setBlockedMe(d.blockedMe); setIMuted(d.iMuted);
         } catch { setNotFound(true); } finally { setLoading(false); }
     }, [username]);
     useEffect(() => { load(); }, [load]);
+
+    async function toggleBlock() {
+        if (busy) return; setBusy(true); setMenuOpen(false);
+        const next = !iBlocked; setIBlocked(next);
+        if (next) { setFollowing(false); } // bloklash follow'ni uzadi
+        try {
+            const res = await fetch("/api/nexus/block", {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username }),
+            });
+            if (res.ok) { const r = await res.json(); setIBlocked(r.blocked); }
+        } finally { setBusy(false); }
+    }
+    async function toggleMute() {
+        if (busy) return; setBusy(true); setMenuOpen(false);
+        const next = !iMuted; setIMuted(next);
+        try {
+            const res = await fetch("/api/nexus/mute", {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username }),
+            });
+            if (res.ok) { const r = await res.json(); setIMuted(r.muted); }
+        } finally { setBusy(false); }
+    }
 
     async function toggleFollow() {
         if (busy || !data) return;
@@ -111,19 +138,57 @@ export function NexusProfile({ username }: { username: string }) {
                                         <Edit3 className="w-3.5 h-3.5" /> Tahrirlash
                                     </Link>
                                 ) : (
-                                    <div className="flex gap-2 mb-1">
-                                        <button onClick={toggleFollow} disabled={busy}
-                                            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-black active:scale-95 transition disabled:opacity-60"
-                                            style={following
-                                                ? { background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.30)", color: "rgba(140,160,210,0.9)" }
-                                                : { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff", boxShadow: "0 4px 18px rgba(43,62,232,0.4)" }}>
-                                            {following ? <><UserCheck className="w-4 h-4" /> Kuzatilmoqda</> : <><UserPlus className="w-4 h-4" /> Kuzatish</>}
-                                        </button>
-                                        <Link href={`/nexus?dm=${username}`} title="Xabar"
-                                            className="flex items-center justify-center w-11 rounded-xl active:scale-95 transition"
-                                            style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
-                                            <MessageCircle className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} />
-                                        </Link>
+                                    <div className="flex gap-2 mb-1 items-center">
+                                        {iBlocked ? (
+                                            <button onClick={toggleBlock} disabled={busy}
+                                                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-black active:scale-95 transition disabled:opacity-60"
+                                                style={{ background: "rgba(232,43,62,0.12)", border: "1px solid rgba(232,43,62,0.35)", color: "rgba(245,150,160,0.95)" }}>
+                                                <Ban className="w-4 h-4" /> Blokdan chiqarish
+                                            </button>
+                                        ) : (
+                                            <button onClick={toggleFollow} disabled={busy || blockedMe}
+                                                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-black active:scale-95 transition disabled:opacity-60"
+                                                style={following
+                                                    ? { background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.30)", color: "rgba(140,160,210,0.9)" }
+                                                    : { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff", boxShadow: "0 4px 18px rgba(43,62,232,0.4)" }}>
+                                                {following ? <><UserCheck className="w-4 h-4" /> Kuzatilmoqda</> : <><UserPlus className="w-4 h-4" /> Kuzatish</>}
+                                            </button>
+                                        )}
+                                        {!iBlocked && !blockedMe && (
+                                            <Link href={`/nexus?dm=${username}`} title="Xabar"
+                                                className="flex items-center justify-center w-11 h-11 rounded-xl active:scale-95 transition"
+                                                style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                                <MessageCircle className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} />
+                                            </Link>
+                                        )}
+                                        {/* Ko'proq menyu — mute / block */}
+                                        <div className="relative">
+                                            <button onClick={() => setMenuOpen(o => !o)} title="Ko'proq"
+                                                className="flex items-center justify-center w-11 h-11 rounded-xl active:scale-95 transition"
+                                                style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                                <MoreHorizontal className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} />
+                                            </button>
+                                            {menuOpen && (
+                                                <>
+                                                    <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
+                                                    <div className="absolute right-0 mt-2 w-52 rounded-2xl overflow-hidden z-40 backdrop-blur-xl"
+                                                        style={{ background: "rgba(10,16,40,0.97)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 40px rgba(0,0,0,0.5)" }}>
+                                                        {!iBlocked && (
+                                                            <button onClick={toggleMute} disabled={busy}
+                                                                className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-white active:bg-white/5 transition">
+                                                                {iMuted ? <Volume2 className="w-4 h-4" style={{ color: "#00CEC8" }} /> : <VolumeX className="w-4 h-4" style={{ color: "rgba(180,195,235,0.9)" }} />}
+                                                                {iMuted ? "Ovozni qaytarish" : "Ovozsizlantirish"}
+                                                            </button>
+                                                        )}
+                                                        <button onClick={toggleBlock} disabled={busy}
+                                                            className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold active:bg-white/5 transition"
+                                                            style={{ color: iBlocked ? "rgba(180,195,235,0.9)" : "#ff8a96" }}>
+                                                            <Ban className="w-4 h-4" /> {iBlocked ? "Blokdan chiqarish" : "Bloklash"}
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -154,15 +219,34 @@ export function NexusProfile({ username }: { username: string }) {
                             </div>
                         </div>
 
-                        {/* Ajratgich */}
-                        <div className="mt-5 mx-4 pb-1" style={{ borderBottom: "1px solid rgba(43,62,232,0.15)" }}>
-                            <span className="text-xs font-black" style={{ color: "#00CEC8" }}>Postlar</span>
-                        </div>
+                        {iBlocked || blockedMe ? (
+                            <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
+                                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+                                    style={{ background: "rgba(232,43,62,0.10)", border: "1px solid rgba(232,43,62,0.25)" }}>
+                                    {iBlocked ? <Ban className="w-6 h-6" style={{ color: "rgba(245,150,160,0.9)" }} /> : <ShieldAlert className="w-6 h-6" style={{ color: "rgba(245,150,160,0.9)" }} />}
+                                </div>
+                                <p className="text-sm font-black text-white/85">
+                                    {iBlocked ? "Siz bu foydalanuvchini bloklagansiz" : "Kontent mavjud emas"}
+                                </p>
+                                <p className="text-xs mt-1.5 max-w-xs" style={{ color: "rgba(120,140,185,0.75)" }}>
+                                    {iBlocked
+                                        ? "Postlari, xabarlari va profili sizga ko'rinmaydi. Blokdan chiqarsangiz qaytadan ko'rinadi."
+                                        : "Bu foydalanuvchining postlarini ko'ra olmaysiz."}
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Ajratgich */}
+                                <div className="mt-5 mx-4 pb-1" style={{ borderBottom: "1px solid rgba(43,62,232,0.15)" }}>
+                                    <span className="text-xs font-black" style={{ color: "#00CEC8" }}>Postlar</span>
+                                </div>
 
-                        {/* Postlar (NxSocialFeed reuse) */}
-                        <div className="pb-28">
-                            <NxSocialFeed authorUsername={username} />
-                        </div>
+                                {/* Postlar (NxSocialFeed reuse) */}
+                                <div className="pb-28">
+                                    <NxSocialFeed authorUsername={username} />
+                                </div>
+                            </>
+                        )}
                     </>
                 )}
 
