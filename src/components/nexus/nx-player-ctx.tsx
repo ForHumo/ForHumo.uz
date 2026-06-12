@@ -9,9 +9,15 @@ import {
 // Turlar
 // ─────────────────────────────────────────────────────────────────────────────
 export interface NxTrack {
+    id?: string;                                    // real trek id (tinglash hisobi shu bo'yicha)
     title: string; artist: string; image: string;
     duration: string; durationSec: number;
     src?: string;
+}
+
+// Tinglashni hisoblash — fire-and-forget (foydalanuvchi bo'yicha dedup server tomonda)
+function countTrackPlay(t: NxTrack | null | undefined) {
+    if (t?.id) fetch(`/api/nexus/tracks/${t.id}/play`, { method: "POST" }).catch(() => { });
 }
 export interface NxVideo {
     id?: string;                                    // real video id (NxVideoPlayer shu bo'yicha yuklaydi)
@@ -603,6 +609,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
                 setTrack(next);
                 setProgress(0);
                 setIsPlaying(true);
+                countTrackPlay(next);
                 if (next.src) {
                     audio.src = next.src;
                     audio.currentTime = 0;
@@ -636,6 +643,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
         setTrack(t);
         setProgress(0);
         setIsPlaying(true);
+        countTrackPlay(t);
         const audio = audioRef.current;
         if (!audio) return;
         if (t.src) {
@@ -655,7 +663,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
         const q    = queueRef.current;
         const idx  = queueIndexRef.current;
         const shuf = shuffleRef.current;
-        let nextIdx = shuf && q.length > 1
+        const nextIdx = shuf && q.length > 1
             ? (() => { let r; do { r = Math.floor(Math.random() * q.length); } while (r === idx); return r; })()
             : idx + 1;
         if (nextIdx < q.length) _playAt(q, nextIdx);

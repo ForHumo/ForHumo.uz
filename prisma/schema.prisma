@@ -910,6 +910,52 @@ model NexusWatchLater {
   @@index([profileId, createdAt])
 }
 
+// ── Nexus Media — audio treklar (musiqa / podkast / audiokitob) ──────────────
+model NexusTrack {
+  id          String         @id @default(cuid())
+  profileId   String                              // yuklovchi
+  title       String
+  artist      String?                             // ijrochi/muallif ko'rinadigan nomi
+  audioUrl    String                              // Vercel Blob audio
+  coverUrl    String?                             // muqova rasmi
+  durationSec Int            @default(0)
+  kind        NexusTrackKind @default(MUSIC)
+  genre       String?
+  plays       Int            @default(0)
+  hidden      Boolean        @default(false)      // moderatsiya
+  createdAt   DateTime       @default(now())
+  likes       NexusTrackLike[]
+  @@index([kind, createdAt])
+  @@index([kind, plays])
+  @@index([profileId, createdAt])
+}
+
+enum NexusTrackKind {
+  MUSIC
+  PODCAST
+  AUDIOBOOK
+}
+
+// Tinglash — foydalanuvchi bo'yicha bir marta hisoblanadi
+model NexusTrackPlay {
+  id        String   @id @default(cuid())
+  trackId   String
+  profileId String
+  createdAt DateTime @default(now())
+  @@unique([trackId, profileId])
+  @@index([trackId])
+}
+
+model NexusTrackLike {
+  id        String     @id @default(cuid())
+  trackId   String
+  track     NexusTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  profileId String
+  createdAt DateTime   @default(now())
+  @@unique([trackId, profileId])
+  @@index([profileId, createdAt])
+}
+
 // ── ALKH Pay — Zij valyuta hamyoni ───────────────────────────────────────────
 //
 // Zij (Ƶ) — ALKH Pay ichki valyutasi.

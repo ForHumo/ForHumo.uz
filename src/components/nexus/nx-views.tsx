@@ -4,18 +4,16 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import {
     TrendingUp, Flame, Clock,
-    Film, Music2, Headphones, BookOpen, Mic2,
+    Headphones,
     Radio, Users, Hash, MessageCircle, Bot, Gift, Trophy,
     Shield, Heart, UserCheck, CreditCard,
     Settings, LogOut, BadgeCheck, Plus, ChevronRight,
     Edit3, Save, X, Loader2, Trash2,
-    ListMusic, BarChart2, Compass, Bookmark, Phone,
+    ListMusic, BarChart2, Bookmark, Phone,
     ShoppingBag, Wallet, Download, Briefcase, Calendar, Video, Play, ExternalLink,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { NxRow } from "./nx-row";
-import { VideoCard, MusicCard, BookCard } from "./nx-cards";
 import { NxStories } from "./nx-stories";
 import { NxHero } from "./nx-hero";
 import { NxFeed } from "./nx-feed";
@@ -84,142 +82,9 @@ export { VideoView } from "./nx-video-view";
 export { LiveView } from "./nx-live-view";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MEDIA VIEW — Kino / Musiqa / Podcast / AudioKitob / Kitob
+// MEDIA VIEW — real (nx-media-view.tsx)
 // ─────────────────────────────────────────────────────────────────────────────
-const MEDIA_TABS = [
-    { id: "cinema",    icon: Film,       label: "Kino"       },
-    { id: "music",     icon: Music2,     label: "Musiqa"     },
-    { id: "podcast",   icon: Mic2,       label: "Podcast"    },
-    { id: "audiobook", icon: Headphones, label: "Audiokitob" },
-    { id: "book",      icon: BookOpen,   label: "Kitob"      },
-];
-
-export function MediaView() {
-    const [sub, setSub] = useState("cinema");
-    const { setPlaylistsOpen, setReaderOpen, setPodcastsOpen, setAlbumsOpen, setTrendingOpen } = useNxPlayer();
-
-    return (
-        <ViewShell>
-            {/* Sub-tablar */}
-            <div
-                className="mx-4 mt-4 mb-2 flex gap-2 overflow-x-auto pb-1"
-                style={{ scrollbarWidth: "none" }}
-            >
-                {MEDIA_TABS.map(({ id, icon: Icon, label }) => (
-                    <button
-                        key={id}
-                        onClick={() => setSub(id)}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold flex-shrink-0 transition-all duration-200 active:scale-95"
-                        style={sub === id ? {
-                            background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
-                            color: "white",
-                            boxShadow: "0 4px 16px rgba(43,62,232,0.40)",
-                        } : {
-                            background: "rgba(11,18,40,0.60)",
-                            border: "1px solid rgba(43,62,232,0.22)",
-                            color: "rgba(140,160,210,0.85)",
-                        }}
-                    >
-                        <Icon className="w-4 h-4" />
-                        {label}
-                    </button>
-                ))}
-            </div>
-
-            {sub === "cinema" && (
-                <>
-                    <NxRow title="Trendda — Kinolar" accent="linear-gradient(180deg,#F59E0B,#EF4444)" onSeeAll={() => setTrendingOpen(true)}>
-                        {Array.from({ length: 6 }, (_, i) => (
-                            <VideoCard key={i}
-                                title={["Abadiyat Soyasida", "Ko'k Osmon", "Yolg'iz Qadam", "Toshkent Tuni", "Shamol Bilan", "Ikki Dunyo"][i]}
-                                image={`https://picsum.photos/seed/cin${i + 130}/800/450`}
-                                views={`${(i + 1) * 1.4}M`} duration={`2s ${i * 8 + 5}d`}
-                                author="Humo Cinema"
-                                avatar="https://api.dicebear.com/9.x/avataaars/svg?seed=cinema" />
-                        ))}
-                    </NxRow>
-                    <NxRow title="Seriallar" onSeeAll={() => setTrendingOpen(true)}>
-                        {Array.from({ length: 6 }, (_, i) => (
-                            <VideoCard key={i}
-                                title={`Serial ${i + 1} — Yangi mavsum`}
-                                image={`https://picsum.photos/seed/ser${i + 136}/800/450`}
-                                views={`${(i + 1) * 800}K`} duration={`${i + 1} fasl`}
-                                author="Humo Cinema"
-                                avatar="https://api.dicebear.com/9.x/avataaars/svg?seed=serial" />
-                        ))}
-                    </NxRow>
-                </>
-            )}
-
-            {sub === "music" && (
-                <>
-                    {/* Pleylist tez-havola */}
-                    <div className="mx-4 mb-3">
-                        <button
-                            onClick={() => setPlaylistsOpen(true)}
-                            className="w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-150 active:scale-95"
-                            style={{ background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.25)" }}
-                        >
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                                style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
-                                <ListMusic className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="flex-1 text-left">
-                                <p className="text-sm font-black text-white">Mening pleylistlarim</p>
-                                <p className="text-[10px]" style={{ color: "rgba(80,180,140,0.80)" }}>Treklarni boshqarish va yangi to'plam yaratish</p>
-                            </div>
-                            <ChevronRight className="w-4 h-4" style={{ color: "rgba(16,185,129,0.60)" }} />
-                        </button>
-                    </div>
-                    <NxRow title="Top Treklar" accent="linear-gradient(180deg,#10B981,#00CEC8)" onSeeAll={() => setPlaylistsOpen(true)}>
-                        {Array.from({ length: 8 }, (_, i) => (
-                            <MusicCard key={i}
-                                title={["Bahor Ohangi", "Tun Yulduzi", "Sevgi Qo'shig'i", "Uzoq Yo'l", "Yurak Tori", "Osmon Osti", "Erkin Qush", "Yangi Kun"][i]}
-                                artist={["Madina", "Sardor", "Kamola", "Bobur", "Dilnoza", "Jasur", "Zulfiya", "Islom"][i]}
-                                image={`https://picsum.photos/seed/mus${i + 150}/400/400`}
-                                duration={`${3 + i % 2}:${String(20 + i * 7 % 40).padStart(2, "0")}`}
-                                listens={`${(i + 1) * 380}K`} />
-                        ))}
-                    </NxRow>
-                    <NxRow title="Yangi Albomlar" onSeeAll={() => setAlbumsOpen(true)}>
-                        {Array.from({ length: 6 }, (_, i) => (
-                            <MusicCard key={i}
-                                title={`Yangi Albom ${i + 1}`} artist={`Artist ${i + 1}`}
-                                image={`https://picsum.photos/seed/alb${i + 160}/400/400`}
-                                duration={`${10 + i * 2} trek`} listens={`${(i + 1) * 120}K`} />
-                        ))}
-                    </NxRow>
-                </>
-            )}
-
-            {(sub === "podcast" || sub === "audiobook") && (
-                <NxRow title={sub === "podcast" ? "Mashhur Podcastlar" : "Audiokitoblar"} accent="linear-gradient(180deg,#8B5CF6,#6366F1)" onSeeAll={() => sub === "podcast" ? setPodcastsOpen(true) : setReaderOpen(true)}>
-                    {Array.from({ length: 6 }, (_, i) => (
-                        <BookCard key={i}
-                            title={sub === "podcast" ? `Podcast — ${["Biznes", "Tech", "Psixologiya", "Tarix", "Fan", "Sport"][i]}` : `Audiokitob ${i + 1}`}
-                            author={`Muallif ${i + 1}`}
-                            image={`https://picsum.photos/seed/pod${i + 170}/400/600`}
-                            rating={`4.${6 + i % 4}`}
-                            pages={`${i + 1}s ${i * 20 + 10}d`}
-                            type="audio" />
-                    ))}
-                </NxRow>
-            )}
-
-            {sub === "book" && (
-                <NxRow title="E-Kitoblar" accent="linear-gradient(180deg,#F59E0B,#D97706)" onSeeAll={() => setReaderOpen(true)}>
-                    {Array.from({ length: 6 }, (_, i) => (
-                        <BookCard key={i}
-                            title={["Raqamli Ozodlik", "AI va Biznes", "Kreator Iqtisodiyoti", "O'zbek Texnologiyasi", "Dasturchi Orzusi", "Muvaffaqiyat"][i]}
-                            author={`Muallif ${i + 1}`}
-                            image={`https://picsum.photos/seed/book${i + 180}/400/600`}
-                            rating={`4.${5 + i % 5}`} pages={`${250 + i * 50} bet`} type="ebook" />
-                    ))}
-                </NxRow>
-            )}
-        </ViewShell>
-    );
-}
+export { MediaView } from "./nx-media-view";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SOCIAL VIEW — Postlar, Chat, Kanal, Guruh, Bot
@@ -300,7 +165,7 @@ export function SocialView() {
                                 </div>
                                 <div className="flex-1">
                                     <p className="text-sm font-bold text-white group-hover:text-[#00CEC8] transition-colors duration-150">{name}</p>
-                                    <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.80)" }}>{(i + 1) * 12.4}K a'zo</p>
+                                    <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.80)" }}>{(i + 1) * 12.4}K a&apos;zo</p>
                                 </div>
                                 <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.50)" }} />
                             </button>
@@ -334,7 +199,7 @@ export function SocialView() {
                                 </div>
                                 <div className="flex-1">
                                     <p className="text-sm font-bold text-white group-hover:text-[#00CEC8] transition-colors duration-150">{name}</p>
-                                    <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.80)" }}>{(i + 1) * 340} a'zo</p>
+                                    <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.80)" }}>{(i + 1) * 340} a&apos;zo</p>
                                 </div>
                                 <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(43,62,232,0.50)" }} />
                             </button>
@@ -629,7 +494,7 @@ export function ProfileView() {
                         style={{ borderBottom: "1px solid rgba(43,62,232,0.12)" }}>
                         <h3 className="text-sm font-black text-white flex items-center gap-2">
                             <Clock className="w-4 h-4" style={{ color: "#00CEC8" }} />
-                            Ko'rish tarixi ({watchHistory.length})
+                            Ko&apos;rish tarixi ({watchHistory.length})
                         </h3>
                         <div className="flex items-center gap-2">
                             <button onClick={openSavedHistory}
