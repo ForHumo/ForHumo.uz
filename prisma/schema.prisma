@@ -943,6 +943,21 @@ enum NexusTipTarget {
   LIVE
 }
 
+// Humo ID SSO — "Humo ID bilan kirish". Foydalanuvchi rozilik bergach qisqa muddatli
+// kod yaratiladi; hamkor uni server-aro (HMAC) profilga almashtiradi (OAuth code-flow uslubi).
+model HumoSsoCode {
+  id          String   @id @default(cuid())
+  code        String   @unique               // tasodifiy kod (token exchange uchun)
+  profileId   String                          // rozilik bergan foydalanuvchi (UserProfile.id)
+  clientId    String                          // hamkor ilova id
+  redirectUri String                          // tasdiqlangan redirect
+  scope       String                          // bo'sh bilan ajratilgan: profile email nexus
+  expiresAt   DateTime                        // 5 daqiqa
+  usedAt      DateTime?                       // bir martalik
+  createdAt   DateTime @default(now())
+  @@index([profileId, createdAt])
+}
+
 // Verifikatsiya arizasi — ijodkor ko'k belgi so'raydi; founder ko'rib chiqadi.
 model NexusVerifyRequest {
   id          String   @id @default(cuid())
