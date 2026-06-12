@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { nexusNotify } from "@/lib/nexus-notify";
 import { isBlockedBetween } from "@/lib/nexus-block";
 import { SUB_DAYS } from "@/lib/nexus-sub";
+import { roundMoney, convert, currencyForCountry, type Currency } from "@/lib/money";
+
+const cur = (c: string): Currency => c === "USD" ? "USD" : "UZS";
 
 // GET /api/nexus/subscribe?creator=<username> — obuna holati
 export async function GET(req: Request) {
@@ -42,12 +45,13 @@ export async function POST(req: Request) {
     const { creatorUsername, creatorId } = await req.json();
     let cId: string | null = creatorId ?? null;
     let price = 0;
+    let creatorCountry: string | null = null;
     if (cId) {
-        const c = await prisma.userProfile.findUnique({ where: { id: cId }, select: { id: true, subPriceZij: true } });
-        cId = c?.id ?? null; price = c?.subPriceZij ?? 0;
+        const c = await prisma.userProfile.findUnique({ where: { id: cId }, select: { id: true, subPriceZij: true, country: true } });
+        cId = c?.id ?? null; price = c?.subPriceZij ?? 0; creatorCountry = c?.country ?? null;
     } else if (creatorUsername) {
-        const c = await prisma.userProfile.findUnique({ where: { username: creatorUsername }, select: { id: true, subPriceZij: true } });
-        cId = c?.id ?? null; price = c?.subPriceZij ?? 0;
+        const c = await prisma.userProfile.findUnique({ where: { username: creatorUsername }, select: { id: true, subPriceZij: true, country: true } });
+        cId = c?.id ?? null; price = c?.subPriceZij ?? 0; creatorCountry = c?.country ?? null;
     }
     if (!cId) return NextResponse.json({ error: "Ijodkor topilmadi" }, { status: 404 });
     if (cId === me.id) return NextResponse.json({ error: "O'zingizga obuna bo'la olmaysiz" }, { status: 400 });
@@ -58,24 +62,29 @@ export async function POST(req: Request) {
 
     try {
         const result = await prisma.$transaction(async tx => {
+            // Ijodkor hamyoni/valyutasi (narx shu valyutada)
+            let aw = await tx.zijWallet.findUnique({ where: { profileId: creatorId2 } });
+            if (!aw) aw = await tx.zijWallet.create({ data: { profileId: creatorId2, currency: currencyForCountry(creatorCountry) } });
+            const aCur = cur(aw.currency);
+
             const wallet = await tx.zijWallet.findUnique({ where: { profileId: me.id } });
+            const bCur = cur(wallet?.currency ?? "UZS");
+            const buyerPays = convert(price, aCur, bCur);   // obunachi o'z valyutasida to'laydi
             const bal = Number(wallet?.balance ?? 0);
-            if (!wallet || bal < price) return "no_funds" as const;
+            if (!wallet || bal < buyerPays) return "no_funds" as const;
 
             // Obunachi — TRANSFER_OUT
-            const newBuyerBal = Math.round((bal - price) * 100) / 100;
+            const newBuyerBal = roundMoney(bal - buyerPays, bCur);
             await tx.zijWallet.update({ where: { id: wallet.id }, data: { balance: newBuyerBal } });
             await tx.zijTransaction.create({
-                data: { walletId: wallet.id, type: "TRANSFER_OUT", amount: price, balanceAfter: newBuyerBal, description: "Nexus pullik obuna", ref: creatorId2 },
+                data: { walletId: wallet.id, type: "TRANSFER_OUT", amount: buyerPays, currency: bCur, balanceAfter: newBuyerBal, description: "Nexus pullik obuna", ref: creatorId2 },
             });
 
-            // Ijodkor — TRANSFER_IN
-            let aw = await tx.zijWallet.findUnique({ where: { profileId: creatorId2 } });
-            if (!aw) aw = await tx.zijWallet.create({ data: { profileId: creatorId2 } });
-            const newAuthorBal = Math.round((Number(aw.balance) + price) * 100) / 100;
+            // Ijodkor — TRANSFER_IN (narxni to'liq o'z valyutasida oladi)
+            const newAuthorBal = roundMoney(Number(aw.balance) + price, aCur);
             await tx.zijWallet.update({ where: { id: aw.id }, data: { balance: newAuthorBal } });
             await tx.zijTransaction.create({
-                data: { walletId: aw.id, type: "TRANSFER_IN", amount: price, balanceAfter: newAuthorBal, description: "Nexus obuna daromadi", ref: me.id },
+                data: { walletId: aw.id, type: "TRANSFER_IN", amount: price, currency: aCur, balanceAfter: newAuthorBal, description: "Nexus obuna daromadi", ref: me.id },
             });
 
             // Obuna yozuvi — faol bo'lsa uzaytiramiz, aks holda now+30

@@ -8,13 +8,14 @@ import {
     MessageSquare, UserPlus, UserCheck, Play, Trash2, Lock, Coins,
     ChevronLeft, ChevronRight,
 } from "lucide-react";
+import { formatMoney } from "@/lib/money";
 
 interface VAuthor { name: string | null; username: string | null; image: string | null; verified: boolean }
 interface SeriesPart { id: string; title: string; thumbUrl: string | null; durationSec: number; views: number }
 interface VData {
     id: string; title: string; description: string | null; videoUrl: string; thumbUrl: string | null;
     durationSec: number; views: number; createdAt: string; likeCount: number; commentCount: number;
-    priceZij: number; locked: boolean;
+    priceZij: number; priceCurrency?: "UZS" | "USD"; locked: boolean;
     series?: { prev: SeriesPart | null; next: SeriesPart | null };
     isLiked: boolean; isSubscribed: boolean; isMine: boolean; author: VAuthor | null;
 }
@@ -147,7 +148,7 @@ export function NxVideoPlayer() {
                             <button onClick={buy} disabled={buying}
                                 className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-60"
                                 style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                                {buying ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Coins className="w-4 h-4" /> Sotib olish — {data.priceZij} Ƶ</>}
+                                {buying ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Coins className="w-4 h-4" /> Sotib olish — {formatMoney(data.priceZij, data.priceCurrency ?? "UZS")}</>}
                             </button>
                             {buyErr && <p className="text-xs text-red-400 font-bold">{buyErr}</p>}
                         </div>

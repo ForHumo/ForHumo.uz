@@ -3,22 +3,25 @@
 import { useState, useEffect } from "react";
 import { Link } from "@/i18n/routing";
 import { Star, X, Loader2, Check, Wallet, Lock, Sparkles } from "lucide-react";
+import { formatMoney, type Currency } from "@/lib/money";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NxSubscribeSheet — ijodkorga pullik oylik obuna (Zij). 30 kunlik kirish.
+// NxSubscribeSheet — ijodkorga pullik oylik obuna (real pul). 30 kunlik kirish.
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxSubscribeSheet({
-    open, onClose, creatorUsername, creatorName, priceZij, alreadyActive, onSuccess,
+    open, onClose, creatorUsername, creatorName, priceZij, currency, alreadyActive, onSuccess,
 }: {
     open: boolean;
     onClose: () => void;
     creatorUsername: string;
     creatorName?: string | null;
     priceZij: number;
+    currency: Currency;
     alreadyActive?: boolean;
     onSuccess?: (expiresAt: string) => void;
 }) {
     const [balance, setBalance] = useState<number | null>(null);
+    const [myCurrency, setMyCurrency] = useState<Currency>("UZS");
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [done, setDone] = useState(false);
@@ -26,13 +29,17 @@ export function NxSubscribeSheet({
     useEffect(() => {
         if (open) {
             setError(null); setDone(false);
-            fetch("/api/pay/wallet").then(r => r.json()).then(d => setBalance(Number(d.balance ?? 0))).catch(() => setBalance(null));
+            fetch("/api/pay/wallet").then(r => r.json()).then(d => {
+                setBalance(Number(d.balance ?? 0));
+                setMyCurrency(d.currency === "USD" ? "USD" : "UZS");
+            }).catch(() => setBalance(null));
         }
     }, [open]);
 
     if (!open) return null;
 
-    const insufficient = balance !== null && priceZij > balance;
+    // Tomoshabin valyutasi narx valyutasi bilan bir xil bo'lsa — yetishmovchilikni oldindan tekshiramiz
+    const insufficient = balance !== null && myCurrency === currency && priceZij > balance;
     const displayName = creatorName || `@${creatorUsername}`;
 
     async function subscribe() {
@@ -86,7 +93,7 @@ export function NxSubscribeSheet({
                         <div className="px-5 py-4">
                             {/* Narx */}
                             <div className="flex items-baseline justify-center gap-1.5 py-2">
-                                <span className="text-3xl font-black" style={{ color: "#8B5CF6" }}>{priceZij} Ƶ</span>
+                                <span className="text-3xl font-black" style={{ color: "#8B5CF6" }}>{formatMoney(priceZij, currency)}</span>
                                 <span className="text-sm font-bold" style={{ color: "rgba(120,140,185,0.8)" }}>/ oy</span>
                             </div>
 
@@ -105,7 +112,7 @@ export function NxSubscribeSheet({
 
                             {balance !== null && (
                                 <div className="mt-4 flex items-center gap-1.5 text-[11px]" style={{ color: "rgba(120,140,185,0.85)" }}>
-                                    <Wallet className="w-3.5 h-3.5" /> Hamyon: <span className="font-bold text-white">{balance} Ƶ</span>
+                                    <Wallet className="w-3.5 h-3.5" /> Hamyon: <span className="font-bold text-white">{formatMoney(balance, myCurrency)}</span>
                                 </div>
                             )}
                             {error && <p className="mt-2 text-xs font-bold" style={{ color: "#EF4444" }}>{error}</p>}
@@ -121,7 +128,7 @@ export function NxSubscribeSheet({
                                     className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-white disabled:opacity-50 active:scale-[0.99] transition"
                                     style={{ background: "linear-gradient(135deg,#8B5CF6,#2B3EE8)", boxShadow: "0 6px 24px rgba(139,92,246,0.35)" }}>
                                     {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                                    {priceZij} Ƶ — {alreadyActive ? "Uzaytirish" : "Obuna bo'lish"}
+                                    {formatMoney(priceZij, currency)} — {alreadyActive ? "Uzaytirish" : "Obuna bo'lish"}
                                 </button>
                             )}
                         </div>

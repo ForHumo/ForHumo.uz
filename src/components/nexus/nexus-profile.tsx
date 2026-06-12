@@ -10,11 +10,12 @@ import { NexusProfileContent } from "./nexus-profile-content";
 import { NxTipSheet } from "./nx-tip-sheet";
 import { NxSubscribeSheet } from "./nx-subscribe-sheet";
 import { NxCreatorSubSettings } from "./nx-creator-sub-settings";
+import { formatMoney } from "@/lib/money";
 
 interface ProfileData {
     name: string | null; username: string | null; image: string | null;
     coverImage: string | null; bio: string | null; humoId: string | null; verified: boolean;
-    subPriceZij: number;
+    subPriceZij: number; subCurrency: "UZS" | "USD";
 }
 interface Stats { posts: number; followers: number; following: number; videos: number; tracks: number; lives: number }
 interface ProfileResp { profile: ProfileData; stats: Stats; isFollowing: boolean; isMe: boolean; iBlocked: boolean; blockedMe: boolean; iMuted: boolean; subscribed: boolean; subExpiresAt: string | null }
@@ -248,7 +249,7 @@ export function NexusProfile({ username }: { username: string }) {
                                     <button onClick={() => setSubOpen(true)}
                                         className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black text-white active:scale-[0.99] transition"
                                         style={{ background: "linear-gradient(135deg,#8B5CF6,#2B3EE8)", boxShadow: "0 4px 18px rgba(139,92,246,0.35)" }}>
-                                        <Star className="w-4 h-4" /> Obuna bo&apos;lish · {data.profile.subPriceZij} Ƶ/oy
+                                        <Star className="w-4 h-4" /> Obuna · {formatMoney(data.profile.subPriceZij, data.profile.subCurrency)}/oy
                                     </button>
                                 )
                             )}
@@ -260,7 +261,7 @@ export function NexusProfile({ username }: { username: string }) {
                                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black active:scale-[0.99] transition"
                                         style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.30)", color: "rgba(196,181,253,0.95)" }}>
                                         <Settings2 className="w-4 h-4" style={{ color: "#8B5CF6" }} />
-                                        {data.profile.subPriceZij > 0 ? `${data.profile.subPriceZij} Ƶ/oy` : "Obunani yoqish"}
+                                        {data.profile.subPriceZij > 0 ? `${formatMoney(data.profile.subPriceZij, data.profile.subCurrency)}/oy` : "Obunani yoqish"}
                                     </button>
                                     <Link href="/nexus/analytics"
                                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black active:scale-[0.99] transition"
@@ -312,7 +313,7 @@ export function NexusProfile({ username }: { username: string }) {
                 {data && !data.isMe && data.profile.subPriceZij > 0 && (
                     <NxSubscribeSheet open={subOpen} onClose={() => setSubOpen(false)}
                         creatorUsername={username} creatorName={displayName}
-                        priceZij={data.profile.subPriceZij} alreadyActive={subscribed}
+                        priceZij={data.profile.subPriceZij} currency={data.profile.subCurrency} alreadyActive={subscribed}
                         onSuccess={(exp) => { setSubscribed(true); setSubExpiresAt(exp); }} />
                 )}
                 {data && data.isMe && subSettingsOpen && (

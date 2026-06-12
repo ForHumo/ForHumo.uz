@@ -6,6 +6,7 @@ import {
     X, Film, Loader2, Send, Trash2, ImageIcon, Plus, Hash, ShieldAlert,
     Coins, Layers, Check, ChevronDown, RectangleHorizontal, RectangleVertical, Sparkles,
 } from "lucide-react";
+import { currencySymbol, type Currency } from "@/lib/money";
 
 const CATEGORIES = [
     { id: "", label: "Kategoriyasiz" },
@@ -82,6 +83,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
     const [posting, setPosting] = useState(false);
     const [err, setErr] = useState<string | null>(null);
     const [aiBusy, setAiBusy] = useState<null | "caption" | "tags">(null);
+    const [myCurrency, setMyCurrency] = useState<Currency>("UZS");
 
     const coverRef = useRef<HTMLInputElement>(null);
     const descImgRef = useRef<HTMLInputElement>(null);
@@ -93,6 +95,12 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
         fetch("/api/nexus/videos?scope=mine&limit=50&sort=new")
             .then(r => r.json()).then(d => setMyVids(d.videos ?? [])).catch(() => { });
     }, [videoUrl, myVids.length]);
+
+    // Ijodkor valyutasi (narx shu valyutada)
+    useEffect(() => {
+        if (!open) return;
+        fetch("/api/pay/wallet").then(r => r.json()).then(d => setMyCurrency(d.currency === "USD" ? "USD" : "UZS")).catch(() => { });
+    }, [open]);
 
     if (!open) return null;
 
@@ -365,7 +373,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                                             <input type="number" min={0} value={priceZij || ""} onChange={e => setPriceZij(Number(e.target.value))} placeholder="Summa"
                                                 className="w-full h-10 px-3 pr-10 rounded-xl text-sm text-white outline-none"
                                                 style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", caretColor: "#00CEC8" }} />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-black" style={{ color: "#00CEC8" }}>Ƶ</span>
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black" style={{ color: "#00CEC8" }}>{currencySymbol(myCurrency)}</span>
                                         </div>
                                         <p className="text-[10px] mt-1" style={{ color: "rgba(120,140,185,0.7)" }}>Sotib olingach pul ALKH Pay hisobingizga tushadi.</p>
                                     </div>

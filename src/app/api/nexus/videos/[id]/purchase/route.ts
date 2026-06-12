@@ -3,9 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { nexusNotify } from "@/lib/nexus-notify";
+import { roundMoney, convert, currencyForCountry, type Currency } from "@/lib/money";
 
-// POST /api/nexus/videos/[id]/purchase — pullik videoni Zij'ga sotib olish.
-// Atomik: xaridor PURCHASE (balans kamayadi) + avtor SALE (to'liq summa) + NexusVideoPurchase.
+const cur = (c: string): Currency => c === "USD" ? "USD" : "UZS";
+
+// POST /api/nexus/videos/[id]/purchase — pullik videoni sotib olish (real pul).
+// Narx avtor valyutasida; xaridor o'z valyutasida (FX konvert) to'laydi; avtor narxni to'liq oladi.
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,33 +28,39 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     });
     if (existing) return NextResponse.json({ ok: true, already: true });
 
-    const price = video.priceZij;
+    const author = await prisma.userProfile.findUnique({ where: { id: video.profileId }, select: { country: true } });
+    const price = video.priceZij;                 // avtor valyutasidagi narx
     const short = video.title.slice(0, 40);
 
     try {
         const result = await prisma.$transaction(async tx => {
             const wallet = await tx.zijWallet.findUnique({ where: { profileId: me.id } });
-            const bal = Number(wallet?.balance ?? 0);
-            if (!wallet || bal < price) return "no_funds" as const;
+            const bCur = cur(wallet?.currency ?? "UZS");
 
-            // Race himoyasi — tranzaksiya ichida qayta tekshirish
+            // Avtor hamyoni/valyutasi (narx shu valyutada)
+            let aw = await tx.zijWallet.findUnique({ where: { profileId: video.profileId } });
+            if (!aw) aw = await tx.zijWallet.create({ data: { profileId: video.profileId, currency: currencyForCountry(author?.country) } });
+            const aCur = cur(aw.currency);
+
+            const buyerPays = convert(price, aCur, bCur);   // xaridor o'z valyutasida to'laydi
+            const bal = Number(wallet?.balance ?? 0);
+            if (!wallet || bal < buyerPays) return "no_funds" as const;
+
             const dup = await tx.nexusVideoPurchase.findUnique({
                 where: { videoId_buyerId: { videoId: id, buyerId: me.id } },
             });
             if (dup) return "ok" as const;
 
-            const newBuyerBal = Math.round((bal - price) * 100) / 100;
+            const newBuyerBal = roundMoney(bal - buyerPays, bCur);
             await tx.zijWallet.update({ where: { id: wallet.id }, data: { balance: newBuyerBal } });
             await tx.zijTransaction.create({
-                data: { walletId: wallet.id, type: "PURCHASE", amount: price, balanceAfter: newBuyerBal, description: `Nexus video xaridi: ${short}`, ref: id },
+                data: { walletId: wallet.id, type: "PURCHASE", amount: buyerPays, currency: bCur, balanceAfter: newBuyerBal, description: `Nexus video xaridi: ${short}`, ref: id },
             });
 
-            let aw = await tx.zijWallet.findUnique({ where: { profileId: video.profileId } });
-            if (!aw) aw = await tx.zijWallet.create({ data: { profileId: video.profileId } });
-            const newAuthorBal = Math.round((Number(aw.balance) + price) * 100) / 100;
+            const newAuthorBal = roundMoney(Number(aw.balance) + price, aCur);
             await tx.zijWallet.update({ where: { id: aw.id }, data: { balance: newAuthorBal } });
             await tx.zijTransaction.create({
-                data: { walletId: aw.id, type: "SALE", amount: price, balanceAfter: newAuthorBal, description: `Nexus video sotuvi: ${short}`, ref: id },
+                data: { walletId: aw.id, type: "SALE", amount: price, currency: aCur, balanceAfter: newAuthorBal, description: `Nexus video sotuvi: ${short}`, ref: id },
             });
 
             await tx.nexusVideoPurchase.create({ data: { videoId: id, buyerId: me.id, priceZij: price } });

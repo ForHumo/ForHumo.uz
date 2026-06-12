@@ -20,30 +20,29 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { recipientUsername, recipientId, amountZij, targetType, targetId, message } = body;
 
-    let recId: string | null = recipientId ?? null;
-    if (!recId && recipientUsername) {
-        const r = await prisma.userProfile.findUnique({ where: { username: recipientUsername }, select: { id: true } });
-        recId = r?.id ?? null;
-    }
-    if (!recId) return NextResponse.json({ error: "Ijodkor topilmadi" }, { status: 404 });
+    let rec: { id: string; country: string | null } | null = null;
+    if (recipientId) rec = await prisma.userProfile.findUnique({ where: { id: recipientId }, select: { id: true, country: true } });
+    else if (recipientUsername) rec = await prisma.userProfile.findUnique({ where: { username: recipientUsername }, select: { id: true, country: true } });
+    if (!rec) return NextResponse.json({ error: "Ijodkor topilmadi" }, { status: 404 });
+    const recId = rec.id;
     if (recId === me.id) return NextResponse.json({ error: "O'zingizga tip yubora olmaysiz" }, { status: 400 });
     if (await isBlockedBetween(me.id, recId)) return NextResponse.json({ error: "Bu ijodkorni qo'llab-quvvatlay olmaysiz" }, { status: 403 });
     if (await nexusRateLimited(me.id, "tip")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const tType: TipTarget = VALID_TARGETS.includes(targetType) ? targetType : "PROFILE";
 
-    const { result, tipId } = await sendTip({
+    const { result, tipId, received } = await sendTip({
         donorId: me.id, recipientId: recId, amountZij,
         targetType: tType, targetId: typeof targetId === "string" ? targetId : null, message,
+        recipientCountry: rec.country,
     });
 
     if (result === "no_funds") return NextResponse.json({ error: "Mablag' yetarli emas — ALKH Pay hamyoningizni to'ldiring" }, { status: 402 });
     if (result === "self") return NextResponse.json({ error: "O'zingizga tip yubora olmaysiz" }, { status: 400 });
     if (result !== "ok") return NextResponse.json({ error: "Noto'g'ri miqdor" }, { status: 400 });
 
-    const amount = Math.round(Number(amountZij));
     after(() => nexusNotify({
-        recipientId: recId, actorId: me.id, type: "TIP", amountZij: amount,
+        recipientId: recId, actorId: me.id, type: "TIP", amountZij: received ?? null,
         postId: tType === "POST" ? targetId : null,
         videoId: tType === "VIDEO" ? targetId : null,
         liveId: tType === "LIVE" ? targetId : null,

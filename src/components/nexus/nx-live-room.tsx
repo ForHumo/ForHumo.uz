@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
     X, Radio, Eye, Send, Loader2, BadgeCheck, StopCircle, Clock, CalendarClock, Gift,
 } from "lucide-react";
+import { formatMoney, type Currency } from "@/lib/money";
 
 interface LAuthor { name: string | null; username: string | null; image: string | null; verified: boolean }
 interface RoomStream {
@@ -15,7 +16,7 @@ interface RoomStream {
 }
 interface ChatMsg { id: string; text: string; tipZij?: number; createdAt: string; author: LAuthor | null }
 
-const SC_PRESETS = [10, 50, 100, 500];
+function scPresets(c: Currency) { return c === "USD" ? [1, 5, 10, 50] : [5000, 10000, 50000, 100000]; }
 
 function avatarOf(a: LAuthor | null) { return a?.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(a?.username || a?.name || "u")}`; }
 function fmtViewers(n: number) {
@@ -38,6 +39,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [scOpen, setScOpen] = useState(false);       // Super Chat summa tanlovi ochiqmi
     const [scAmount, setScAmount] = useState(0);        // 0 = oddiy xabar
     const [chatError, setChatError] = useState<string | null>(null);
+    const [currency, setCurrency] = useState<Currency>("UZS");
     const lastTsRef = useRef<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -53,6 +55,11 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
         const iv = setInterval(loadDetail, 15_000);
         return () => clearInterval(iv);
     }, [loadDetail]);
+
+    // Tomoshabin valyutasi (Super Chat uchun)
+    useEffect(() => {
+        fetch("/api/pay/wallet").then(r => r.json()).then(d => setCurrency(d.currency === "USD" ? "USD" : "UZS")).catch(() => { });
+    }, []);
 
     // Heartbeat — faqat LIVE paytida, har 10s
     useEffect(() => {
@@ -217,7 +224,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                         <Gift className="w-3 h-3" />{m.author?.name || m.author?.username || "Foydalanuvchi"}
                                         {m.author?.verified && <BadgeCheck className="w-3 h-3 text-white" />}
                                     </span>
-                                    <span className="text-[11px] font-black text-white">{m.tipZij} Ƶ</span>
+                                    <span className="text-[11px] font-black text-white">{formatMoney(m.tipZij ?? 0, currency)}</span>
                                 </div>
                                 {m.text && <p className="px-2.5 py-1.5 text-xs leading-relaxed" style={{ background: "rgba(245,158,11,0.10)", color: "rgba(245,225,190,0.95)" }}>{m.text}</p>}
                             </div>
@@ -244,13 +251,13 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         {scOpen && !stream.isMine && (
                             <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                                 <span className="text-[10px] font-black inline-flex items-center gap-1 mr-1" style={{ color: "#F59E0B" }}><Gift className="w-3 h-3" />Super Chat:</span>
-                                {SC_PRESETS.map(p => (
+                                {scPresets(currency).map(p => (
                                     <button key={p} onClick={() => setScAmount(scAmount === p ? 0 : p)}
-                                        className="px-2.5 py-1 rounded-lg text-[11px] font-black transition active:scale-95"
+                                        className="px-2 py-1 rounded-lg text-[10px] font-black transition active:scale-95"
                                         style={scAmount === p
                                             ? { background: "linear-gradient(135deg,#F59E0B,#EF4444)", color: "#fff" }
                                             : { background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.3)", color: "rgba(245,200,120,0.95)" }}>
-                                        {p} Ƶ
+                                        {formatMoney(p, currency)}
                                     </button>
                                 ))}
                             </div>
@@ -267,12 +274,12 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 </button>
                             )}
                             <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
-                                placeholder={scAmount > 0 ? `${scAmount} Ƶ bilan xabar...` : "Xabar yozing..."} className="flex-1 h-9 rounded-xl px-3 text-sm text-white outline-none"
+                                placeholder={scAmount > 0 ? `${formatMoney(scAmount, currency)} bilan xabar...` : "Xabar yozing..."} className="flex-1 h-9 rounded-xl px-3 text-sm text-white outline-none"
                                 style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.16)", caretColor: "#F97316" }} />
                             <button onClick={send} disabled={busy || (!input.trim() && scAmount === 0)}
                                 className="px-3 h-9 flex items-center justify-center gap-1 rounded-xl text-white text-xs font-black disabled:opacity-40"
                                 style={{ background: scAmount > 0 ? "linear-gradient(135deg,#F59E0B,#EF4444)" : "linear-gradient(135deg,#EF4444,#F97316)" }}>
-                                {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : scAmount > 0 ? <>{scAmount} Ƶ</> : <Send className="w-3.5 h-3.5" />}
+                                {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : scAmount > 0 ? <>{formatMoney(scAmount, currency)}</> : <Send className="w-3.5 h-3.5" />}
                             </button>
                         </div>
                     </div>

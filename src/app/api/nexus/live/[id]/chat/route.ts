@@ -69,7 +69,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         if (await isBlockedBetween(me.id, stream.profileId)) return NextResponse.json({ error: "Bu efirga tip yubora olmaysiz" }, { status: 403 });
         if (await nexusRateLimited(me.id, "tip")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
-        const { result } = await sendTip({
+        const { result, received } = await sendTip({
             donorId: me.id, recipientId: stream.profileId, amountZij: tip,
             targetType: "LIVE", targetId: id, message: cleanText,
         });
@@ -79,7 +79,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         const sc = await prisma.nexusLiveMessage.create({
             data: { streamId: id, profileId: me.id, text: cleanText, tipZij: tip },
         });
-        after(() => nexusNotify({ recipientId: stream.profileId, actorId: me.id, type: "TIP", liveId: id, amountZij: tip }));
+        after(() => nexusNotify({ recipientId: stream.profileId, actorId: me.id, type: "TIP", liveId: id, amountZij: received ?? null }));
         // Super Chat matni ham moderatsiya
         if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "LIVE_MESSAGE", targetId: sc.id, text: cleanText, kind: "jonli efir Super Chat" }));
 

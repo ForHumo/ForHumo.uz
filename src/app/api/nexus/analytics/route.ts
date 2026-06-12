@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { currencyForCountry } from "@/lib/money";
 
 // GET /api/nexus/analytics — ijodkorning auditoriya / daromad / kontent statistikasi (faqat o'zi)
 export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, subPriceZij: true } });
+    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, subPriceZij: true, country: true } });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
     const id = me.id;
     const now = new Date();
@@ -56,6 +57,7 @@ export async function GET() {
     const dMap = Object.fromEntries(donors.map(d => [d.id, d]));
 
     return NextResponse.json({
+        currency: currencyForCountry(me.country),
         subPriceEnabled: me.subPriceZij > 0,
         audience: { followers, subscribers: activeSubs, subMonthly },
         earnings: {

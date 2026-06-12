@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile, isAdultBirthday } from "@/lib/nexus";
+import { currencyForCountry } from "@/lib/money";
 
 // GET /api/nexus/videos/[id] — bitta video + tavsiya
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -28,7 +29,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     }
 
     const author = await prisma.userProfile.findUnique({
-        where: { id: video.profileId }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+        where: { id: video.profileId }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, country: true },
     });
 
     let isLiked = false, isSubscribed = false, isPurchased = false;
@@ -72,7 +73,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             videoUrl: locked ? "" : video.videoUrl, thumbUrl: video.thumbUrl, durationSec: video.durationSec,
             kind: video.kind, orientation: video.orientation, category: video.category,
             tags: video.tags, descImages: video.descImages, isMature: video.isMature,
-            priceZij: video.priceZij, prevVideoId: video.prevVideoId, locked,
+            priceZij: video.priceZij, priceCurrency: currencyForCountry(author?.country), prevVideoId: video.prevVideoId, locked,
             series: { prev: prevPart, next: nextPart },
             views: video.views, createdAt: video.createdAt,
             likeCount: video._count.likes, commentCount: video._count.comments,

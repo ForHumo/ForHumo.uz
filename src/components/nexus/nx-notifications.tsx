@@ -7,6 +7,7 @@ import {
     X, Bell, Heart, MessageCircle, UserPlus, Reply,
     CheckCheck, Loader2, Flame, BadgeCheck, Music2, Coins, Radio, Gift,
 } from "lucide-react";
+import { formatMoney, type Currency } from "@/lib/money";
 
 type NType = "LIKE" | "COMMENT" | "FOLLOW" | "REPLY" | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP";
 interface NActor { name: string | null; username: string | null; image: string | null; verified: boolean }
@@ -70,6 +71,7 @@ export function NxNotifications() {
     const { notifOpen, setNotifOpen } = useNxPlayer();
     const [filter, setFilter] = useState<"all" | NType>("all");
     const [notifs, setNotifs] = useState<Notif[]>([]);
+    const [currency, setCurrency] = useState<Currency>("UZS");
     const [loading, setLoading] = useState(true);
 
     const load = useCallback(async () => {
@@ -77,6 +79,7 @@ export function NxNotifications() {
         try {
             const d = await fetch("/api/nexus/notifications").then(r => r.json());
             setNotifs(d.notifications ?? []);
+            setCurrency(d.currency === "USD" ? "USD" : "UZS");
         } finally { setLoading(false); }
     }, []);
 
@@ -173,7 +176,7 @@ export function NxNotifications() {
                                             {n.actor?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
                                         </span>{" "}
                                         <span style={{ color: "rgba(180,200,240,0.85)" }}>{TYPE_TEXT[n.type]}</span>
-                                        {n.type === "TIP" && n.amountZij ? <span className="font-black ml-1" style={{ color: "#F59E0B" }}>{n.amountZij} Ƶ</span> : null}
+                                        {n.type === "TIP" && n.amountZij ? <span className="font-black ml-1" style={{ color: "#F59E0B" }}>{formatMoney(n.amountZij, currency)}</span> : null}
                                     </p>
                                     {n.postText && <p className="text-[11px] mt-0.5 truncate" style={{ color: "rgba(120,140,185,0.7)" }}>&ldquo;{n.postText}&rdquo;</p>}
                                     <p className="text-[10px] mt-0.5" style={{ color: "rgba(80,100,150,0.75)" }}>{timeAgo(n.createdAt)}</p>

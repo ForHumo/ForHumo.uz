@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { formatMoney } from "@/lib/money";
 import {
     TrendingUp, Flame, Clock,
     Radio, Users, Hash, MessageCircle, Bot,
@@ -151,6 +152,7 @@ export function ProfileView() {
     const [nx,          setNx]          = useState<{ posts: number; followers: number; following: number; likes?: number } | null>(null);
     const [verified,    setVerified]    = useState(false);
     const [balance,     setBalance]     = useState<number | null>(null);
+    const [balanceCurrency, setBalanceCurrency] = useState<"UZS" | "USD">("UZS");
     const [followList,  setFollowList]  = useState<"followers" | "following" | null>(null);
 
     /* Real profil ma'lumotlarini yuklash */
@@ -177,7 +179,7 @@ export function ProfileView() {
         // Real Zij balansi (ALKH Pay)
         fetch("/api/pay/wallet")
             .then(r => r.ok ? r.json() : null)
-            .then(d => { if (d && d.balance != null) setBalance(Number(d.balance)); })
+            .then(d => { if (d && d.balance != null) { setBalance(Number(d.balance)); setBalanceCurrency(d.currency === "USD" ? "USD" : "UZS"); } })
             .catch(() => { });
     }, [session?.user?.email]);
 
@@ -352,7 +354,7 @@ export function ProfileView() {
                 {[
                     { icon: Heart,      label: "Olingan layklar", value: nx?.likes != null ? String(nx.likes) : "—", gradient: "from-red-500 to-pink-600", action: undefined },
                     { icon: UserCheck,  label: "Obunachi",   value: nx ? String(nx.followers) : "—",  gradient: "from-[#2B3EE8] to-[#00CEC8]",  action: profile?.username ? () => setFollowList("followers") : undefined },
-                    { icon: CreditCard, label: "Hamyon",     value: balance != null ? `${balance.toLocaleString()} Ƶ` : "—", gradient: "from-emerald-500 to-teal-600", action: () => setWalletOpen(true) },
+                    { icon: CreditCard, label: "Hamyon",     value: balance != null ? formatMoney(balance, balanceCurrency) : "—", gradient: "from-emerald-500 to-teal-600", action: () => setWalletOpen(true) },
                     { icon: Shield,     label: "Xavfsizlik", value: profile?.emailVerified ? "Yaxshi" : "Boshlang'ich", gradient: "from-violet-500 to-indigo-600", action: undefined },
                 ].map(({ icon: Icon, label, value, gradient, action }, i) => (
                     <button key={i} onClick={action}

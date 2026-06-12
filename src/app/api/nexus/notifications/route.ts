@@ -3,12 +3,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
+import { currencyForCountry } from "@/lib/money";
 
 // GET /api/nexus/notifications — bildirishnomalar ro'yxati + o'qilmagan soni
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ notifications: [], unreadCount: 0 });
-    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, country: true } });
     if (!me) return NextResponse.json({ notifications: [], unreadCount: 0 });
 
     const { searchParams } = new URL(req.url);
@@ -55,5 +56,5 @@ export async function GET(req: Request) {
         };
     });
 
-    return NextResponse.json({ notifications, unreadCount });
+    return NextResponse.json({ notifications, unreadCount, currency: currencyForCountry(me.country) });
 }

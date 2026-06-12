@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { upload } from "@vercel/blob/client";
 import { Link } from "@/i18n/routing";
+import { formatMoney } from "@/lib/money";
 import {
     Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
     BadgeCheck, Image as ImgIcon, Loader2, Trash2, Send, X, Flag,
@@ -25,8 +26,6 @@ interface Post {
     author: Author | null; likes: number; comments: number;
     liked: boolean; saved: boolean; isMine: boolean;
 }
-function fz(v: string | number) { return Number(v).toLocaleString(); }
-
 const isVid = (u: string) => /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(u);
 function timeAgo(d: string) {
     const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -226,7 +225,7 @@ export function NxSocialFeed({ authorUsername, tag, postId }: { authorUsername?:
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-xs font-bold text-white truncate">{attached.name}</p>
-                            <p className="text-[11px] font-black" style={{ color: "#00CEC8" }}>{fz(attached.price)} Ƶ</p>
+                            <p className="text-[11px] font-black" style={{ color: "#00CEC8" }}>{formatMoney(Number(attached.price), "UZS")}</p>
                         </div>
                         <button onClick={() => setAttached(null)} className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center flex-shrink-0">
                             <X className="w-3 h-3 text-white" />
@@ -471,8 +470,8 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
                     <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-white truncate">{p.product.name}</p>
                         <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-black" style={{ color: "#00CEC8" }}>{fz(p.product.price)} Ƶ</span>
-                            {p.product.oldPrice && <span className="text-[10px] line-through" style={{ color: "rgba(80,100,150,0.7)" }}>{fz(p.product.oldPrice)} Ƶ</span>}
+                            <span className="text-sm font-black" style={{ color: "#00CEC8" }}>{formatMoney(Number(p.product.price), "UZS")}</span>
+                            {p.product.oldPrice && <span className="text-[10px] line-through" style={{ color: "rgba(80,100,150,0.7)" }}>{formatMoney(Number(p.product.oldPrice), "UZS")}</span>}
                         </div>
                     </div>
                     <span className="px-3 py-1.5 rounded-xl text-[11px] font-black text-white flex items-center gap-1 flex-shrink-0"
@@ -636,7 +635,7 @@ function ProductPicker({ onPick, onClose }: { onPick: (p: PickedProduct) => void
                             <div className="w-11 h-11 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">{p.image && <img src={p.image} alt="" className="w-full h-full object-cover" />}</div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-xs font-bold text-white truncate">{p.name}</p>
-                                <p className="text-[11px] font-black" style={{ color: "#00CEC8" }}>{fz(p.price)} Ƶ</p>
+                                <p className="text-[11px] font-black" style={{ color: "#00CEC8" }}>{formatMoney(Number(p.price), "UZS")}</p>
                             </div>
                         </button>
                     ))}

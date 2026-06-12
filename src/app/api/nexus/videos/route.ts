@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile, isAdultBirthday } from "@/lib/nexus";
 import { moderateOnCreate } from "@/lib/moderation";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { currencyForCountry } from "@/lib/money";
 
 // POST /api/nexus/videos — yangi video
 export async function POST(req: Request) {
@@ -131,7 +132,7 @@ export async function GET(req: Request) {
 
     const authorIds = [...new Set(videos.map(v => v.profileId))];
     const profs = await prisma.userProfile.findMany({
-        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, country: true },
     });
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 
@@ -155,7 +156,7 @@ export async function GET(req: Request) {
         return {
             id: v.id, title: v.title, thumbUrl: v.thumbUrl, videoUrl: locked ? "" : v.videoUrl,
             durationSec: v.durationSec, kind: v.kind, orientation: v.orientation,
-            priceZij: v.priceZij, isMature: v.isMature, isSaved: savedIds.has(v.id), locked,
+            priceZij: v.priceZij, priceCurrency: currencyForCountry(p?.country), isMature: v.isMature, isSaved: savedIds.has(v.id), locked,
             views: v.views, createdAt: v.createdAt,
             likeCount: v._count.likes, commentCount: v._count.comments,
             author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,

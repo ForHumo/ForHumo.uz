@@ -3,8 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
+import { currencyForCountry } from "@/lib/money";
 
-const SELECT = { id: true, name: true, username: true, image: true, coverImage: true, bio: true, humoId: true, verified: true, subPriceZij: true } as const;
+const SELECT = { id: true, name: true, username: true, image: true, coverImage: true, bio: true, humoId: true, verified: true, subPriceZij: true, country: true } as const;
 
 // GET /api/nexus/profile?username=X  (username yo'q bo'lsa — sessiya egasi)
 export async function GET(req: Request) {
@@ -59,6 +60,7 @@ export async function GET(req: Request) {
             coverImage: target.coverImage, bio: target.bio, humoId: target.humoId,
             verified: isVerifiedProfile(target),
             subPriceZij: target.subPriceZij,
+            subCurrency: currencyForCountry(target.country),
         },
         stats: { posts, followers, following, likes, videos, tracks, lives },
         isFollowing,
