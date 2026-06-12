@@ -881,6 +881,7 @@ model NexusLiveStream {
   endedAt     DateTime?
   peakViewers Int              @default(0)
   likes       Int              @default(0)
+  hidden      Boolean          @default(false)      // moderatsiya — yashirilgan efir
   createdAt   DateTime         @default(now())
   messages    NexusLiveMessage[]
   @@index([status, createdAt])
@@ -905,6 +906,7 @@ model NexusLiveMessage {
   stream    NexusLiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
   profileId String
   text      String
+  hidden    Boolean         @default(false)        // moderatsiya
   createdAt DateTime        @default(now())
   @@index([streamId, createdAt])
 }

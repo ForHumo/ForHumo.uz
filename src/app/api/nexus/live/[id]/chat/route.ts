@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { moderateOnCreate } from "@/lib/moderation";
+import { after } from "next/server";
 
 // GET /api/nexus/live/[id]/chat?since=<ISO> — chat xabarlari (polling)
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -12,7 +14,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const since = searchParams.get("since");
 
     const msgs = await prisma.nexusLiveMessage.findMany({
-        where: { streamId: id, ...(since ? { createdAt: { gt: new Date(since) } } : {}) },
+        where: { streamId: id, hidden: false, ...(since ? { createdAt: { gt: new Date(since) } } : {}) },
         orderBy: { createdAt: "asc" },
         take: 100,
     });
@@ -56,6 +58,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const msg = await prisma.nexusLiveMessage.create({
         data: { streamId: id, profileId: me.id, text: String(text).trim().slice(0, 500) },
     });
+
+    // Chat xabarini moderatsiya (real-time — javobni kutib turmaymiz; nojo'ya bo'lsa keyingi pollingda yo'qoladi)
+    after(() => moderateOnCreate({
+        module: "NEXUS", targetType: "LIVE_MESSAGE", targetId: msg.id, text: msg.text, kind: "jonli efir chat xabari",
+    }));
 
     return NextResponse.json({
         message: {

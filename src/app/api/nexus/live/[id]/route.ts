@@ -19,6 +19,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         meId = me?.id ?? null;
     }
 
+    // Moderatsiya yashirgan efir — egasidan boshqaga ko'rinmaydi
+    if (stream.hidden && stream.profileId !== meId) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
+
     const author = await prisma.userProfile.findUnique({
         where: { id: stream.profileId }, select: { id: true, name: true, username: true, image: true, humoId: true },
     });

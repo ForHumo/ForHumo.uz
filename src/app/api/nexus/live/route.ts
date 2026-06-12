@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { nexusNotifyFollowers } from "@/lib/nexus-notify";
+import { moderateOnCreate } from "@/lib/moderation";
 import { after } from "next/server";
 
 // Onlayn ko'ruvchi — oxirgi 30 soniyada heartbeat yuborganlar
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
 
     const streams = await prisma.nexusLiveStream.findMany({
         where: {
-            status, privacy: "PUBLIC",
+            status, privacy: "PUBLIC", hidden: false,
             ...(category ? { category } : {}),
         },
         orderBy: status === "UPCOMING" ? { scheduledAt: "asc" } : { createdAt: "desc" },
@@ -91,6 +92,12 @@ export async function POST(req: Request) {
             startedAt: isUpcoming ? null : new Date(),
         },
     });
+
+    // Efir nomi/kategoriyasini moderatsiya (javobni bloklamaydi)
+    after(() => moderateOnCreate({
+        module: "NEXUS", targetType: "LIVE", targetId: stream.id,
+        text: [stream.title, stream.category].filter(Boolean).join(" — "), kind: "jonli efir sarlavhasi",
+    }));
 
     // Darhol jonli + ochiq efir bo'lsa — kuzatuvchilarga xabar
     if (!isUpcoming && stream.privacy === "PUBLIC") {
