@@ -321,20 +321,18 @@ export function NexusShell() {
 // DM ko'prigi — /nexus?dm=username → xabarlar panelini shu suhbatga ochadi
 // ─────────────────────────────────────────────────────────────────────────────
 function MessagesWithBridge() {
-    const { setMessagesOpen } = useNxPlayer();
-    const [dmUser, setDmUser] = useState<string | null>(null);
+    const { openDM, dmTarget } = useNxPlayer();
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const dm = params.get("dm");
         if (dm) {
-            setDmUser(dm);
-            setMessagesOpen(true);
+            openDM(dm);
             params.delete("dm");
             const qs = params.toString();
             window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : ""));
         }
-    }, [setMessagesOpen]);
-    return <NxMessages openWithUsername={dmUser} />;
+    }, [openDM]);
+    return <NxMessages openWithUsername={dmTarget} />;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

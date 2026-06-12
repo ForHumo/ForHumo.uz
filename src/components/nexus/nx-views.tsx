@@ -15,6 +15,7 @@ import { useNxPlayer } from "./nx-player-ctx";
 import { NxStories } from "./nx-stories";
 import { NxHomeRows } from "./nx-home-rows";
 import { NxSocialFeed } from "./nx-social-feed";
+import { NxChatList } from "./nx-chat-list";
 import { NexusFollowList } from "./nexus-follow-list";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -73,7 +74,6 @@ const SOCIAL_TABS = [
 
 export function SocialView() {
     const [sub, setSub] = useState("posts");
-    const { setMessagesOpen } = useNxPlayer();
 
     return (
         <ViewShell>
@@ -100,19 +100,7 @@ export function SocialView() {
 
             {sub === "posts" && <NxSocialFeed />}
 
-            {sub === "chat" && (
-                <div className="mx-4">
-                    <button
-                        onClick={() => setMessagesOpen(true)}
-                        className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-sm font-bold text-white transition-all duration-150 active:scale-95 mb-3"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.40)" }}
-                    >
-                        <MessageCircle className="w-5 h-5" />
-                        Xabarlarni ochish
-                    </button>
-                    <p className="text-center text-xs px-4" style={{ color: "rgba(120,140,185,0.7)" }}>Suhbatlaringiz xabarlar oynasida ko&apos;rinadi</p>
-                </div>
-            )}
+            {sub === "chat" && <NxChatList />}
 
             {/* Kanallar / Guruhlar / Botlar — backend hali qurilmagan, halol holat */}
             {(sub === "channel" || sub === "group" || sub === "bot") && (

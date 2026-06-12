@@ -103,6 +103,8 @@ interface PlayerCtx {
     // Xabarlar / DM
     messagesOpen:    boolean;
     setMessagesOpen: (v: boolean) => void;
+    dmTarget:        string | null;                 // ochilishi kerak bo'lgan suhbat (username)
+    openDM:          (username: string) => void;    // suhbatni ochish (inline chat list, profil "Xabar")
 
     // Izohlar
     commentsOpen:    boolean;
@@ -392,6 +394,8 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Xabarlar / DM ── */
     const [messagesOpen, setMessagesOpen] = useState(false);
+    const [dmTarget, setDmTarget] = useState<string | null>(null);
+    const openDM = useCallback((username: string) => { setDmTarget(username); setMessagesOpen(true); }, []);
 
     /* ── Izohlar ── */
     const [commentsOpen, setCommentsOpen] = useState(false);
@@ -782,7 +786,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             savedIds, toggleSaved,
             watchHistory, addToHistory, clearHistory,
             notifOpen, setNotifOpen,
-            messagesOpen, setMessagesOpen,
+            messagesOpen, setMessagesOpen, dmTarget, openDM,
             commentsOpen, commentsFor, openComments, closeComments,
             liveChatOpen, setLiveChatOpen,
             exploreOpen, setExploreOpen,
