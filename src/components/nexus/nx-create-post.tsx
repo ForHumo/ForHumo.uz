@@ -5,7 +5,7 @@ import { upload } from "@vercel/blob/client";
 import {
     X, Plus, Image as ImgIcon, Film, Hash, MapPin,
     Users, Globe, Lock, ChevronDown, Send, Loader2, CheckCircle2,
-    AlignLeft, BarChart2, Trash2,
+    AlignLeft, BarChart2, Trash2, Star,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 
@@ -16,7 +16,7 @@ import { useNxPlayer } from "./nx-player-ctx";
 // ─────────────────────────────────────────────────────────────────────────────
 
 type PostType = "text" | "photo" | "video" | "poll";
-type Privacy = "PUBLIC" | "FOLLOWERS" | "PRIVATE";
+type Privacy = "PUBLIC" | "FOLLOWERS" | "SUBSCRIBERS" | "PRIVATE";
 
 const POST_TYPES: { value: PostType; label: string; icon: React.ElementType; color: string }[] = [
     { value: "text", label: "Matn", icon: AlignLeft, color: "#2B3EE8" },
@@ -27,7 +27,8 @@ const POST_TYPES: { value: PostType; label: string; icon: React.ElementType; col
 
 const PRIVACY_OPTS: { value: Privacy; label: string; icon: React.ElementType }[] = [
     { value: "PUBLIC", label: "Hammaga", icon: Globe },
-    { value: "FOLLOWERS", label: "Obunachilar", icon: Users },
+    { value: "FOLLOWERS", label: "Kuzatuvchilar", icon: Users },
+    { value: "SUBSCRIBERS", label: "Pullik obunachilar", icon: Star },
     { value: "PRIVATE", label: "Faqat men", icon: Lock },
 ];
 
@@ -56,6 +57,7 @@ export function NxCreatePost() {
     const [publishing, setPublishing] = useState(false);
     const [published, setPublished] = useState(false);
     const [err, setErr] = useState<string | null>(null);
+    const [canSub, setCanSub] = useState(false);    // pullik obuna yoqilgan ijodkormanmi
     const fileRef = useRef<HTMLInputElement>(null);
 
     // Trending teglar — real (kashfiyot API)
@@ -71,8 +73,15 @@ export function NxCreatePost() {
             .catch(() => { });
     }, [createPostOpen, trendTags.length]);
 
+    // Pullik obuna variantini faqat obunasi yoqilgan ijodkorga ko'rsatish
+    useEffect(() => {
+        if (!createPostOpen) return;
+        fetch("/api/nexus/creator").then(r => r.json()).then(d => setCanSub((d.subPriceZij ?? 0) > 0)).catch(() => { });
+    }, [createPostOpen]);
+
     if (!createPostOpen) return null;
 
+    const privacyOptions = PRIVACY_OPTS.filter(p => p.value !== "SUBSCRIBERS" || canSub);
     const privacyOpt = PRIVACY_OPTS.find(p => p.value === privacy)!;
     const PrivacyIcon = privacyOpt.icon;
 
@@ -177,7 +186,7 @@ export function NxCreatePost() {
                             {showPrivacy && (
                                 <div className="absolute right-0 top-full mt-1 z-10 rounded-xl overflow-hidden w-36"
                                     style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.25)", boxShadow: "0 8px 24px rgba(0,0,0,0.60)" }}>
-                                    {PRIVACY_OPTS.map(({ value, label, icon: Icon }) => (
+                                    {privacyOptions.map(({ value, label, icon: Icon }) => (
                                         <button key={value}
                                             onClick={() => { setPrivacy(value); setShowPrivacy(false); }}
                                             className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-xs font-bold transition-all duration-100"

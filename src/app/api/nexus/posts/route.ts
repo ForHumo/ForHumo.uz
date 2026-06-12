@@ -8,6 +8,7 @@ import { after } from "next/server";
 import { moderateOnCreate } from "@/lib/moderation";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { getHiddenAuthorIds } from "@/lib/nexus-block";
+import { getActiveSubscribedCreatorIds } from "@/lib/nexus-sub";
 
 async function myProfileId(): Promise<string | null> {
     const session = await getServerSession(authOptions);
@@ -62,11 +63,13 @@ export async function GET(req: Request) {
         where.profileId = { in: [...followingIds, myId] };
     }
 
-    // Maxfiylik: PUBLIC hammaga; FOLLOWERS — muallifni kuzatsam; PRIVATE/o'zimniki — faqat o'zim
+    // Maxfiylik: PUBLIC hammaga; FOLLOWERS — kuzatsam; SUBSCRIBERS — faol obunachi bo'lsam; PRIVATE/o'zimniki — faqat o'zim
     const privacyOr: Prisma.NexusPostWhereInput[] = [{ privacy: "PUBLIC" }];
     if (myId) {
         privacyOr.push({ profileId: myId });
         if (followingIds.length) privacyOr.push({ privacy: "FOLLOWERS", profileId: { in: followingIds } });
+        const subbedCreatorIds = await getActiveSubscribedCreatorIds(myId);
+        if (subbedCreatorIds.length) privacyOr.push({ privacy: "SUBSCRIBERS", profileId: { in: subbedCreatorIds } });
     }
     where.AND = [{ OR: privacyOr }];
 
@@ -161,7 +164,12 @@ export async function POST(req: Request) {
     if (!clean && !mediaArr.length) return NextResponse.json({ error: "Post bo'sh bo'lmasin" }, { status: 400 });
 
     const hours = [24, 72, 168].includes(Number(pollDurationHours)) ? Number(pollDurationHours) : 24;
-    const priv = privacy === "FOLLOWERS" ? "FOLLOWERS" : privacy === "PRIVATE" ? "PRIVATE" : "PUBLIC";
+    // SUBSCRIBERS — faqat pullik obunasi yoqilgan ijodkorlar tanlay oladi
+    const priv =
+        privacy === "FOLLOWERS" ? "FOLLOWERS"
+        : privacy === "PRIVATE" ? "PRIVATE"
+        : privacy === "SUBSCRIBERS" && profile.subPriceZij > 0 ? "SUBSCRIBERS"
+        : "PUBLIC";
 
     const attachId = typeof marketProductId === "string" && marketProductId ? marketProductId : null;
     const post = await prisma.nexusPost.create({

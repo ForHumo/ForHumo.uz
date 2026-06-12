@@ -1,0 +1,102 @@
+import { NextResponse, after } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { nexusNotify } from "@/lib/nexus-notify";
+import { isBlockedBetween } from "@/lib/nexus-block";
+import { SUB_DAYS } from "@/lib/nexus-sub";
+
+// GET /api/nexus/subscribe?creator=<username> — obuna holati
+export async function GET(req: Request) {
+    const { searchParams } = new URL(req.url);
+    const creatorUsername = searchParams.get("creator");
+    if (!creatorUsername) return NextResponse.json({ error: "creator kerak" }, { status: 400 });
+
+    const creator = await prisma.userProfile.findUnique({
+        where: { username: creatorUsername }, select: { id: true, subPriceZij: true },
+    });
+    if (!creator) return NextResponse.json({ error: "Ijodkor topilmadi" }, { status: 404 });
+
+    const session = await getServerSession(authOptions);
+    let active = false, expiresAt: Date | null = null;
+    if (session?.user?.email) {
+        const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+        if (me) {
+            const sub = await prisma.nexusSubscription.findUnique({
+                where: { subscriberId_creatorId: { subscriberId: me.id, creatorId: creator.id } },
+                select: { expiresAt: true },
+            });
+            if (sub && sub.expiresAt.getTime() > Date.now()) { active = true; expiresAt = sub.expiresAt; }
+        }
+    }
+    return NextResponse.json({ subPriceZij: creator.subPriceZij, active, expiresAt });
+}
+
+// POST /api/nexus/subscribe — { creatorUsername } obuna bo'lish / 30 kun uzaytirish (Zij to'lov)
+export async function POST(req: Request) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+    if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+
+    const { creatorUsername, creatorId } = await req.json();
+    let cId: string | null = creatorId ?? null;
+    let price = 0;
+    if (cId) {
+        const c = await prisma.userProfile.findUnique({ where: { id: cId }, select: { id: true, subPriceZij: true } });
+        cId = c?.id ?? null; price = c?.subPriceZij ?? 0;
+    } else if (creatorUsername) {
+        const c = await prisma.userProfile.findUnique({ where: { username: creatorUsername }, select: { id: true, subPriceZij: true } });
+        cId = c?.id ?? null; price = c?.subPriceZij ?? 0;
+    }
+    if (!cId) return NextResponse.json({ error: "Ijodkor topilmadi" }, { status: 404 });
+    if (cId === me.id) return NextResponse.json({ error: "O'zingizga obuna bo'la olmaysiz" }, { status: 400 });
+    if (price <= 0) return NextResponse.json({ error: "Bu ijodkorda pullik obuna yo'q" }, { status: 400 });
+    if (await isBlockedBetween(me.id, cId)) return NextResponse.json({ error: "Bu ijodkorga obuna bo'la olmaysiz" }, { status: 403 });
+
+    const creatorId2 = cId;
+
+    try {
+        const result = await prisma.$transaction(async tx => {
+            const wallet = await tx.zijWallet.findUnique({ where: { profileId: me.id } });
+            const bal = Number(wallet?.balance ?? 0);
+            if (!wallet || bal < price) return "no_funds" as const;
+
+            // Obunachi — TRANSFER_OUT
+            const newBuyerBal = Math.round((bal - price) * 100) / 100;
+            await tx.zijWallet.update({ where: { id: wallet.id }, data: { balance: newBuyerBal } });
+            await tx.zijTransaction.create({
+                data: { walletId: wallet.id, type: "TRANSFER_OUT", amount: price, balanceAfter: newBuyerBal, description: "Nexus pullik obuna", ref: creatorId2 },
+            });
+
+            // Ijodkor — TRANSFER_IN
+            let aw = await tx.zijWallet.findUnique({ where: { profileId: creatorId2 } });
+            if (!aw) aw = await tx.zijWallet.create({ data: { profileId: creatorId2 } });
+            const newAuthorBal = Math.round((Number(aw.balance) + price) * 100) / 100;
+            await tx.zijWallet.update({ where: { id: aw.id }, data: { balance: newAuthorBal } });
+            await tx.zijTransaction.create({
+                data: { walletId: aw.id, type: "TRANSFER_IN", amount: price, balanceAfter: newAuthorBal, description: "Nexus obuna daromadi", ref: me.id },
+            });
+
+            // Obuna yozuvi — faol bo'lsa uzaytiramiz, aks holda now+30
+            const existing = await tx.nexusSubscription.findUnique({
+                where: { subscriberId_creatorId: { subscriberId: me.id, creatorId: creatorId2 } },
+            });
+            const base = existing && existing.expiresAt.getTime() > Date.now() ? existing.expiresAt.getTime() : Date.now();
+            const expiresAt = new Date(base + SUB_DAYS * 24 * 60 * 60 * 1000);
+            await tx.nexusSubscription.upsert({
+                where: { subscriberId_creatorId: { subscriberId: me.id, creatorId: creatorId2 } },
+                create: { subscriberId: me.id, creatorId: creatorId2, priceZij: price, expiresAt },
+                update: { priceZij: price, expiresAt },
+            });
+            return { ok: true as const, expiresAt };
+        });
+
+        if (result === "no_funds") return NextResponse.json({ error: "Mablag' yetarli emas — ALKH Pay hamyoningizni to'ldiring" }, { status: 402 });
+
+        after(() => nexusNotify({ recipientId: creatorId2, actorId: me.id, type: "TIP", amountZij: price }));
+        return NextResponse.json({ ok: true, active: true, expiresAt: result.expiresAt });
+    } catch {
+        return NextResponse.json({ error: "Obuna amalga oshmadi, qayta urinib ko'ring" }, { status: 500 });
+    }
+}

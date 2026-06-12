@@ -2,19 +2,22 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Link, useRouter } from "@/i18n/routing";
-import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle, MoreHorizontal, Ban, VolumeX, Volume2, ShieldAlert, Gift } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle, MoreHorizontal, Ban, VolumeX, Volume2, ShieldAlert, Gift, Star, Settings2 } from "lucide-react";
 import { NxPlayerProvider } from "./nx-player-ctx";
 import { NxShare } from "./nx-share";
 import { NexusFollowList } from "./nexus-follow-list";
 import { NexusProfileContent } from "./nexus-profile-content";
 import { NxTipSheet } from "./nx-tip-sheet";
+import { NxSubscribeSheet } from "./nx-subscribe-sheet";
+import { NxCreatorSubSettings } from "./nx-creator-sub-settings";
 
 interface ProfileData {
     name: string | null; username: string | null; image: string | null;
     coverImage: string | null; bio: string | null; humoId: string | null; verified: boolean;
+    subPriceZij: number;
 }
 interface Stats { posts: number; followers: number; following: number; videos: number; tracks: number; lives: number }
-interface ProfileResp { profile: ProfileData; stats: Stats; isFollowing: boolean; isMe: boolean; iBlocked: boolean; blockedMe: boolean; iMuted: boolean }
+interface ProfileResp { profile: ProfileData; stats: Stats; isFollowing: boolean; isMe: boolean; iBlocked: boolean; blockedMe: boolean; iMuted: boolean; subscribed: boolean; subExpiresAt: string | null }
 
 function fzNum(n: number) {
     if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
@@ -36,6 +39,10 @@ export function NexusProfile({ username }: { username: string }) {
     const [blockedMe, setBlockedMe] = useState(false);
     const [iMuted, setIMuted] = useState(false);
     const [tipOpen, setTipOpen] = useState(false);
+    const [subOpen, setSubOpen] = useState(false);
+    const [subscribed, setSubscribed] = useState(false);
+    const [subExpiresAt, setSubExpiresAt] = useState<string | null>(null);
+    const [subSettingsOpen, setSubSettingsOpen] = useState(false);
 
     const load = useCallback(async () => {
         setLoading(true); setNotFound(false);
@@ -45,6 +52,7 @@ export function NexusProfile({ username }: { username: string }) {
             const d: ProfileResp = await res.json();
             setData(d); setFollowing(d.isFollowing); setFollowerCount(d.stats.followers);
             setIBlocked(d.iBlocked); setBlockedMe(d.blockedMe); setIMuted(d.iMuted);
+            setSubscribed(d.subscribed); setSubExpiresAt(d.subExpiresAt);
         } catch { setNotFound(true); } finally { setLoading(false); }
     }, [username]);
     useEffect(() => { load(); }, [load]);
@@ -226,6 +234,34 @@ export function NexusProfile({ username }: { username: string }) {
                                     <p className="text-[10px] font-bold" style={{ color: "rgba(120,140,185,0.75)" }}>Kuzatilmoqda</p>
                                 </button>
                             </div>
+
+                            {/* Pullik obuna CTA — boshqa ijodkor uchun */}
+                            {!data.isMe && !iBlocked && !blockedMe && data.profile.subPriceZij > 0 && (
+                                subscribed ? (
+                                    <button onClick={() => setSubOpen(true)}
+                                        className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black active:scale-[0.99] transition"
+                                        style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.35)", color: "rgba(196,181,253,0.95)" }}>
+                                        <Star className="w-4 h-4" style={{ color: "#8B5CF6" }} />
+                                        Obunachisiz{subExpiresAt ? ` · ${Math.max(0, Math.ceil((new Date(subExpiresAt).getTime() - Date.now()) / 86400000))} kun qoldi` : ""}
+                                    </button>
+                                ) : (
+                                    <button onClick={() => setSubOpen(true)}
+                                        className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black text-white active:scale-[0.99] transition"
+                                        style={{ background: "linear-gradient(135deg,#8B5CF6,#2B3EE8)", boxShadow: "0 4px 18px rgba(139,92,246,0.35)" }}>
+                                        <Star className="w-4 h-4" /> Obuna bo&apos;lish · {data.profile.subPriceZij} Ƶ/oy
+                                    </button>
+                                )
+                            )}
+
+                            {/* O'z profilim — ijodkor obuna sozlamasi */}
+                            {data.isMe && (
+                                <button onClick={() => setSubSettingsOpen(true)}
+                                    className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black active:scale-[0.99] transition"
+                                    style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.30)", color: "rgba(196,181,253,0.95)" }}>
+                                    <Settings2 className="w-4 h-4" style={{ color: "#8B5CF6" }} />
+                                    {data.profile.subPriceZij > 0 ? `Obuna narxi: ${data.profile.subPriceZij} Ƶ/oy` : "Pullik obunani yoqish"}
+                                </button>
+                            )}
                         </div>
 
                         {iBlocked || blockedMe ? (
@@ -258,6 +294,17 @@ export function NexusProfile({ username }: { username: string }) {
                     <NxTipSheet open={tipOpen} onClose={() => setTipOpen(false)}
                         recipientUsername={username} recipientName={displayName}
                         targetType="PROFILE" />
+                )}
+                {data && !data.isMe && data.profile.subPriceZij > 0 && (
+                    <NxSubscribeSheet open={subOpen} onClose={() => setSubOpen(false)}
+                        creatorUsername={username} creatorName={displayName}
+                        priceZij={data.profile.subPriceZij} alreadyActive={subscribed}
+                        onSuccess={(exp) => { setSubscribed(true); setSubExpiresAt(exp); }} />
+                )}
+                {data && data.isMe && subSettingsOpen && (
+                    <NxCreatorSubSettings initialPrice={data.profile.subPriceZij}
+                        onClose={() => setSubSettingsOpen(false)}
+                        onSaved={(price) => { setData(d => d ? { ...d, profile: { ...d.profile, subPriceZij: price } } : d); }} />
                 )}
             </div>
 

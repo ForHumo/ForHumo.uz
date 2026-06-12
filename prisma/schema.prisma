@@ -71,6 +71,9 @@ model UserProfile {
   level         Int      @default(0)
   emailVerified Boolean  @default(false)
 
+  // Ijodkor pullik obunasi — 0 = o'chiq, >0 = oylik narx (Ƶ)
+  subPriceZij   Int      @default(0)
+
   // Onboarding
   onboardingDone Boolean @default(false)
 
@@ -634,6 +637,7 @@ model NexusPost {
 enum NexusPostPrivacy {
   PUBLIC
   FOLLOWERS
+  SUBSCRIBERS   // faqat pullik obunachilar
   PRIVATE
 }
 
@@ -933,6 +937,21 @@ enum NexusTipTarget {
   POST
   VIDEO
   LIVE
+}
+
+// Pullik obuna — obunachi ijodkorga oylik Zij to'laydi, expiresAt gacha SUBSCRIBERS kontent ochiq.
+// Avto-uzaytirish yo'q (karta yo'q): obuna = 30 kunlik oldindan to'lov, qo'lda yangilanadi.
+model NexusSubscription {
+  id           String   @id @default(cuid())
+  subscriberId String                              // obunachi (UserProfile.id)
+  creatorId    String                              // ijodkor
+  priceZij     Int                                 // to'langan oylik narx (obuna paytida qotiriladi)
+  startedAt    DateTime @default(now())
+  expiresAt    DateTime                            // shu vaqtgacha faol
+  createdAt    DateTime @default(now())
+  @@unique([subscriberId, creatorId])
+  @@index([subscriberId, expiresAt])
+  @@index([creatorId, expiresAt])
 }
 
 // Jonli ko'ruvchi — heartbeat (lastSeenAt > now-30s = onlayn)

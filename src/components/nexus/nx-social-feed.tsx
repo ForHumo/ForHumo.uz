@@ -7,7 +7,7 @@ import { Link } from "@/i18n/routing";
 import {
     Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
     BadgeCheck, Image as ImgIcon, Loader2, Trash2, Send, X, Flag,
-    ShoppingBag, Search, MapPin, Lock, Users, BarChart2, CheckCircle2,
+    ShoppingBag, Search, MapPin, Lock, Users, BarChart2, CheckCircle2, Star,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 
@@ -20,7 +20,7 @@ interface PickedProduct { id: string; slug: string; name: string; image: string 
 interface Post {
     id: string; text: string | null; media: string[]; hashtags: string[];
     marketProductId: string | null; product?: AttachedProduct | null; shareCount: number; createdAt: string;
-    privacy?: "PUBLIC" | "FOLLOWERS" | "PRIVATE"; location?: string | null;
+    privacy?: "PUBLIC" | "FOLLOWERS" | "SUBSCRIBERS" | "PRIVATE"; location?: string | null;
     pollOptions?: string[]; pollEndsAt?: string | null; pollVotes?: number[]; myVote?: number | null;
     author: Author | null; likes: number; comments: number;
     liked: boolean; saved: boolean; isMine: boolean;
@@ -355,6 +355,7 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
                         <span>·</span>
                         <span>{timeAgo(p.createdAt)}</span>
                         {p.privacy === "FOLLOWERS" && <Users className="w-3 h-3" />}
+                        {p.privacy === "SUBSCRIBERS" && <Star className="w-3 h-3" style={{ color: "#8B5CF6" }} />}
                         {p.privacy === "PRIVATE" && <Lock className="w-3 h-3" />}
                         {p.location && (
                             <span className="flex items-center gap-0.5 truncate"><MapPin className="w-3 h-3 flex-shrink-0" />{p.location}</span>

@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 
-const SELECT = { id: true, name: true, username: true, image: true, coverImage: true, bio: true, humoId: true } as const;
+const SELECT = { id: true, name: true, username: true, image: true, coverImage: true, bio: true, humoId: true, subPriceZij: true } as const;
 
 // GET /api/nexus/profile?username=X  (username yo'q bo'lsa — sessiya egasi)
 export async function GET(req: Request) {
@@ -37,17 +37,20 @@ export async function GET(req: Request) {
     ]);
 
     let isFollowing = false, iBlocked = false, blockedMe = false, iMuted = false;
+    let subscribed = false, subExpiresAt: Date | null = null;
     if (meId && meId !== target.id) {
-        const [f, bOut, bIn, m] = await prisma.$transaction([
+        const [f, bOut, bIn, m, sub] = await prisma.$transaction([
             prisma.nexusFollow.findUnique({ where: { followerId_followingId: { followerId: meId, followingId: target.id } } }),
             prisma.nexusBlock.findUnique({ where: { blockerId_blockedId: { blockerId: meId, blockedId: target.id } } }),
             prisma.nexusBlock.findUnique({ where: { blockerId_blockedId: { blockerId: target.id, blockedId: meId } } }),
             prisma.nexusMute.findUnique({ where: { muterId_mutedId: { muterId: meId, mutedId: target.id } } }),
+            prisma.nexusSubscription.findUnique({ where: { subscriberId_creatorId: { subscriberId: meId, creatorId: target.id } } }),
         ]);
         isFollowing = !!f;
         iBlocked = !!bOut;
         blockedMe = !!bIn;
         iMuted = !!m;
+        if (sub && sub.expiresAt.getTime() > Date.now()) { subscribed = true; subExpiresAt = sub.expiresAt; }
     }
 
     return NextResponse.json({
@@ -55,10 +58,12 @@ export async function GET(req: Request) {
             name: target.name, username: target.username, image: target.image,
             coverImage: target.coverImage, bio: target.bio, humoId: target.humoId,
             verified: isVerifiedProfile(target),
+            subPriceZij: target.subPriceZij,
         },
         stats: { posts, followers, following, likes, videos, tracks, lives },
         isFollowing,
         isMe: meId === target.id,
         iBlocked, blockedMe, iMuted,
+        subscribed, subExpiresAt,
     });
 }
