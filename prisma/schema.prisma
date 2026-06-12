@@ -1072,25 +1072,27 @@ model NexusTrackLike {
   @@index([profileId, createdAt])
 }
 
-// ── ALKH Pay — Zij valyuta hamyoni ───────────────────────────────────────────
+// ── ALKH Pay — real pul hamyoni (UZS / USD) ──────────────────────────────────
 //
-// Zij (Ƶ) — ALKH Pay ichki valyutasi.
-// Al-Xorazmiy kitoblari ("Zij") nomidan olingan.
-// Kurs: 1 Ƶ = 1 USD — bu kurs O'ZGARMAS, tizim tomonidan qat'iy belgilangan.
-// Kelajakda ham bu nisbat saqlanadi.
+// Endi real valyuta: O'zbekiston foydalanuvchilari so'm (UZS), xorijliklar dollar (USD).
+// ("Zij" tushunchasi olib tashlandi — model nomlari ichki, foydalanuvchiga ko'rinmaydi.)
+// Hozir TEST rejimda: deposit darhol tushadi, withdraw payout-so'rov yaratadi.
+// MChJ + to'lov shlyuzi (Click/Payme/karta) kalitlari kelganda real ishlaydi (lib/payments).
 
 model ZijWallet {
   id          String   @id @default(cuid())
   profileId   String   @unique
   profile     UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
-  balance     Decimal  @default(0) @db.Decimal(18, 2)  // Zij miqdori
+  balance     Decimal  @default(0) @db.Decimal(18, 2)  // hamyon valyutasidagi miqdor
+  currency    String   @default("UZS")                 // UZS yoki USD (foydalanuvchi davlatidan)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   transactions ZijTransaction[]
   safes        ZijSafe[]
+  payouts      PayoutRequest[]
 }
 
 model ZijTransaction {
@@ -1099,26 +1101,51 @@ model ZijTransaction {
   wallet      ZijWallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   type        ZijTransactionType
-  amount      Decimal            @db.Decimal(18, 2)   // musbat son
+  amount      Decimal            @db.Decimal(18, 2)   // musbat son (shu tranzaksiya valyutasida)
+  currency    String             @default("UZS")      // tranzaksiya valyutasi
   balanceAfter Decimal           @db.Decimal(18, 2)   // tranzaksiyadan keyin balans
 
-  description String?            // "Test to'ldirish", "eSport turnir kirish badali" va h.k.
-  ref         String?            // tashqi ref (kelajakda: turnir ID, order ID)
+  description String?
+  ref         String?            // tashqi ref (order ID, payout ID, profil ID)
 
   createdAt   DateTime @default(now())
 }
 
 enum ZijTransactionType {
-  DEPOSIT    // pul kirish (test rejim)
-  WITHDRAW   // pul chiqish (hozircha o'chirilgan)
-  PURCHASE   // xarid (turnir, Nexus Pro va h.k.)
-  REFUND     // buyurtma bekor qilinganda qaytarish
-  SALE       // Market sotuvchisiga tushgan daromad (komissiya ayirilgan)
-  REWARD     // mukofot (turnir yutug'i, cashback)
-  TRANSFER_OUT  // do'stga yuborish
-  TRANSFER_IN   // do'stdan qabul qilish
+  DEPOSIT    // pul kirish (to'lov shlyuzi orqali)
+  WITHDRAW   // pul chiqish (payout)
+  PURCHASE   // xarid
+  REFUND     // qaytarish
+  SALE       // sotuvchi daromadi (komissiya ayirilgan)
+  REWARD     // mukofot / cashback
+  TRANSFER_OUT  // yuborish (tip/obuna/do'stga)
+  TRANSFER_IN   // qabul qilish
   SAFE_IN       // seyfga o'tkazish
   SAFE_OUT      // seyfdan chiqarish
+}
+
+// Pul yechish so'rovi (payout). Test rejimda darhol "tugatilgan"; real rejimda
+// to'lov shlyuzi orqali kartaga/hisobga o'tkaziladi.
+model PayoutRequest {
+  id          String   @id @default(cuid())
+  walletId    String
+  wallet      ZijWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  amount      Decimal  @db.Decimal(18, 2)
+  currency    String
+  method      String                              // "card" | "bank" | ...
+  destination String                              // karta raqami (maskalangan) / hisob
+  status      PayoutStatus @default(PENDING)
+  providerRef String?                             // shlyuz tranzaksiya id
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([walletId, createdAt])
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
 
 // Virtual seyf — maqsadli jamg'arma
