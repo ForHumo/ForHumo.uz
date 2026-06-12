@@ -17,14 +17,23 @@ export async function GET(req: Request) {
     const statusParam = (searchParams.get("status") || "live").toUpperCase();
     const status = ["LIVE", "UPCOMING", "ENDED"].includes(statusParam) ? statusParam as "LIVE" | "UPCOMING" | "ENDED" : "LIVE";
     const category = searchParams.get("category") || "";
+    const author = searchParams.get("author") || "";
     const limit = Math.min(Number(searchParams.get("limit") ?? 20), 40);
 
+    // Muallif berilsa — uning ochiq efirlari (har qanday status, eng yangidan)
+    let authorId: string | null = null;
+    if (author) {
+        const a = await prisma.userProfile.findUnique({ where: { username: author }, select: { id: true } });
+        authorId = a?.id ?? "__none__";
+    }
+
     const streams = await prisma.nexusLiveStream.findMany({
-        where: {
-            status, privacy: "PUBLIC", hidden: false,
-            ...(category ? { category } : {}),
-        },
-        orderBy: status === "UPCOMING" ? { scheduledAt: "asc" } : { createdAt: "desc" },
+        where: authorId
+            ? { profileId: authorId, privacy: "PUBLIC", hidden: false }
+            : { status, privacy: "PUBLIC", hidden: false, ...(category ? { category } : {}) },
+        orderBy: authorId
+            ? { createdAt: "desc" }
+            : status === "UPCOMING" ? { scheduledAt: "asc" } : { createdAt: "desc" },
         take: limit,
     });
 

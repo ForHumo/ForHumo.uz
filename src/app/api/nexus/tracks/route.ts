@@ -50,6 +50,7 @@ export async function GET(req: Request) {
     const sort = searchParams.get("sort") === "top" ? "top" : "new";
     const q = (searchParams.get("q") || "").trim();
     const scope = searchParams.get("scope") || "all";
+    const author = searchParams.get("author") || "";
     const limit = Math.min(Number(searchParams.get("limit") ?? 24), 60);
 
     const session = await getServerSession(authOptions);
@@ -59,13 +60,18 @@ export async function GET(req: Request) {
         meId = me?.id ?? null;
     }
 
-    const where: Prisma.NexusTrackWhereInput = { hidden: false, kind };
+    // Muallif berilsa — uning barcha audio turlari (kind cheklanmaydi); aks holda bitta kind tab.
+    const where: Prisma.NexusTrackWhereInput = { hidden: false };
+    if (!author) where.kind = kind;
     if (q) where.OR = [
         { title: { contains: q, mode: "insensitive" } },
         { artist: { contains: q, mode: "insensitive" } },
     ];
-    if (scope === "mine" && meId) where.profileId = meId;
-    if (scope === "liked" && meId) where.likes = { some: { profileId: meId } };
+    if (author) {
+        const a = await prisma.userProfile.findUnique({ where: { username: author }, select: { id: true } });
+        where.profileId = a?.id ?? "__none__";
+    } else if (scope === "mine" && meId) where.profileId = meId;
+    else if (scope === "liked" && meId) where.likes = { some: { profileId: meId } };
 
     const tracks = await prisma.nexusTrack.findMany({
         where,

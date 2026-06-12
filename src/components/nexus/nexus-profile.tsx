@@ -4,15 +4,15 @@ import { useState, useEffect, useCallback } from "react";
 import { Link, useRouter } from "@/i18n/routing";
 import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle, MoreHorizontal, Ban, VolumeX, Volume2, ShieldAlert } from "lucide-react";
 import { NxPlayerProvider } from "./nx-player-ctx";
-import { NxSocialFeed } from "./nx-social-feed";
 import { NxShare } from "./nx-share";
 import { NexusFollowList } from "./nexus-follow-list";
+import { NexusProfileContent } from "./nexus-profile-content";
 
 interface ProfileData {
     name: string | null; username: string | null; image: string | null;
     coverImage: string | null; bio: string | null; humoId: string | null; verified: boolean;
 }
-interface Stats { posts: number; followers: number; following: number }
+interface Stats { posts: number; followers: number; following: number; videos: number; tracks: number; lives: number }
 interface ProfileResp { profile: ProfileData; stats: Stats; isFollowing: boolean; isMe: boolean; iBlocked: boolean; blockedMe: boolean; iMuted: boolean }
 
 function fzNum(n: number) {
@@ -235,17 +235,10 @@ export function NexusProfile({ username }: { username: string }) {
                                 </p>
                             </div>
                         ) : (
-                            <>
-                                {/* Ajratgich */}
-                                <div className="mt-5 mx-4 pb-1" style={{ borderBottom: "1px solid rgba(43,62,232,0.15)" }}>
-                                    <span className="text-xs font-black" style={{ color: "#00CEC8" }}>Postlar</span>
-                                </div>
-
-                                {/* Postlar (NxSocialFeed reuse) */}
-                                <div className="pb-28">
-                                    <NxSocialFeed authorUsername={username} />
-                                </div>
-                            </>
+                            <NexusProfileContent
+                                username={username}
+                                counts={{ posts: data.stats.posts, videos: data.stats.videos, tracks: data.stats.tracks, lives: data.stats.lives }}
+                            />
                         )}
                     </>
                 )}
