@@ -944,6 +944,17 @@ enum NexusTipTarget {
   LIVE
 }
 
+// Web Push obunasi — brauzer push bildirishnomalari uchun (VAPID).
+model NexusPushSub {
+  id        String   @id @default(cuid())
+  profileId String                              // egasi (UserProfile.id)
+  endpoint  String   @unique                    // push service endpoint
+  p256dh    String                              // kalit
+  auth      String                              // kalit
+  createdAt DateTime @default(now())
+  @@index([profileId])
+}
+
 // Humo ID SSO — "Humo ID bilan kirish". Foydalanuvchi rozilik bergach qisqa muddatli
 // kod yaratiladi; hamkor uni server-aro (HMAC) profilga almashtiradi (OAuth code-flow uslubi).
 model HumoSsoCode {

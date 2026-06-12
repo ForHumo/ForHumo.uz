@@ -5,9 +5,10 @@ import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Bell, Heart, MessageCircle, UserPlus, Reply,
-    CheckCheck, Loader2, Flame, BadgeCheck, Music2, Coins, Radio, Gift, AtSign,
+    CheckCheck, Loader2, Flame, BadgeCheck, Music2, Coins, Radio, Gift, AtSign, BellRing, BellOff,
 } from "lucide-react";
 import { formatMoney, type Currency } from "@/lib/money";
+import { getPushState, subscribePush, unsubscribePush, type PushState } from "@/lib/push-client";
 
 type NType = "LIKE" | "COMMENT" | "FOLLOW" | "REPLY" | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION";
 interface NActor { name: string | null; username: string | null; image: string | null; verified: boolean }
@@ -74,6 +75,8 @@ export function NxNotifications() {
     const [notifs, setNotifs] = useState<Notif[]>([]);
     const [currency, setCurrency] = useState<Currency>("UZS");
     const [loading, setLoading] = useState(true);
+    const [pushState, setPushState] = useState<PushState>("unsupported");
+    const [pushBusy, setPushBusy] = useState(false);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -84,7 +87,15 @@ export function NxNotifications() {
         } finally { setLoading(false); }
     }, []);
 
-    useEffect(() => { if (notifOpen) load(); }, [notifOpen, load]);
+    useEffect(() => { if (notifOpen) { load(); getPushState().then(setPushState); } }, [notifOpen, load]);
+
+    async function togglePush() {
+        if (pushBusy) return;
+        setPushBusy(true);
+        try {
+            setPushState(pushState === "subscribed" ? await unsubscribePush() : await subscribePush());
+        } finally { setPushBusy(false); }
+    }
 
     if (!notifOpen) return null;
 
@@ -124,6 +135,15 @@ export function NxNotifications() {
                         <h3 className="text-base font-black text-white">Bildirishnomalar</h3>
                         {unreadCount > 0 && <p className="text-[10px]" style={{ color: "rgba(0,206,200,0.80)" }}>{unreadCount} ta yangi</p>}
                     </div>
+                    {pushState !== "unsupported" && pushState !== "denied" && (
+                        <button onClick={togglePush} disabled={pushBusy} title={pushState === "subscribed" ? "Push yoqilgan" : "Push'ni yoqish"}
+                            className="flex items-center justify-center w-8 h-8 rounded-lg"
+                            style={pushState === "subscribed"
+                                ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8" }
+                                : { background: "rgba(43,62,232,0.12)", color: "rgba(140,160,210,0.85)" }}>
+                            {pushBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : pushState === "subscribed" ? <BellRing className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
+                        </button>
+                    )}
                     {unreadCount > 0 && (
                         <button onClick={markAllRead} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold"
                             style={{ background: "rgba(43,62,232,0.12)", color: "rgba(140,160,210,0.85)" }}>
