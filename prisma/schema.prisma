@@ -614,16 +614,39 @@ model NexusPost {
   media           String[] @default([])           // rasm/video URL'lar
   hashtags        String[] @default([])
   marketProductId String?                         // ixtiyoriy — postga biriktirilgan Market mahsuloti ("Sotib olish")
+  privacy         NexusPostPrivacy @default(PUBLIC)  // PUBLIC / FOLLOWERS (obunachilar) / PRIVATE (faqat men)
+  location        String?                         // ixtiyoriy joylashuv matni
+  pollOptions     String[] @default([])           // bo'sh = so'rovnoma yo'q (2-4 variant)
+  pollEndsAt      DateTime?                       // so'rovnoma tugash vaqti
   shareCount      Int      @default(0)
   hidden          Boolean  @default(false) // moderatsiya
   createdAt       DateTime @default(now())
 
-  likes    NexusLike[]
-  comments NexusComment[]
-  saves    NexusSave[]
+  likes     NexusLike[]
+  comments  NexusComment[]
+  saves     NexusSave[]
+  pollVotes NexusPollVote[]
 
   @@index([profileId])
   @@index([createdAt])
+}
+
+enum NexusPostPrivacy {
+  PUBLIC
+  FOLLOWERS
+  PRIVATE
+}
+
+// So'rovnoma ovozi — bir post uchun bir ovoz (o'zgartirish mumkin, muddati tugaguncha)
+model NexusPollVote {
+  id        String    @id @default(cuid())
+  postId    String
+  post      NexusPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  profileId String
+  optionIdx Int
+  createdAt DateTime  @default(now())
+  @@unique([postId, profileId])
+  @@index([postId])
 }
 
 model NexusLike {

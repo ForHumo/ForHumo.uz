@@ -7,7 +7,7 @@ import { Link } from "@/i18n/routing";
 import {
     Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
     BadgeCheck, Image as ImgIcon, Loader2, Trash2, Send, X, Flag,
-    ShoppingBag, Search,
+    ShoppingBag, Search, MapPin, Lock, Users, BarChart2, CheckCircle2,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 
@@ -20,6 +20,8 @@ interface PickedProduct { id: string; slug: string; name: string; image: string 
 interface Post {
     id: string; text: string | null; media: string[]; hashtags: string[];
     marketProductId: string | null; product?: AttachedProduct | null; shareCount: number; createdAt: string;
+    privacy?: "PUBLIC" | "FOLLOWERS" | "PRIVATE"; location?: string | null;
+    pollOptions?: string[]; pollEndsAt?: string | null; pollVotes?: number[]; myVote?: number | null;
     author: Author | null; likes: number; comments: number;
     liked: boolean; saved: boolean; isMine: boolean;
 }
@@ -109,6 +111,33 @@ export function NxSocialFeed({ authorUsername, tag }: { authorUsername?: string;
         setPosts(prev => prev.filter(p => p.id !== id));
         await fetch(`/api/nexus/posts/${id}`, { method: "DELETE" }).catch(() => {});
     }
+
+    // So'rovnomada ovoz berish — optimistik
+    async function votePoll(p: Post, idx: number) {
+        if (p.myVote === idx) return;
+        patch(p.id, x => {
+            const votes = [...(x.pollVotes ?? x.pollOptions?.map(() => 0) ?? [])];
+            if (x.myVote != null && votes[x.myVote] != null) votes[x.myVote] = Math.max(0, votes[x.myVote] - 1);
+            votes[idx] = (votes[idx] ?? 0) + 1;
+            return { ...x, myVote: idx, pollVotes: votes };
+        });
+        try {
+            const r = await fetch(`/api/nexus/posts/${p.id}/vote`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ option: idx }),
+            });
+            if (r.ok) { const d = await r.json(); patch(p.id, x => ({ ...x, pollVotes: d.votes, myVote: d.myVote })); }
+        } catch { /* keyingi load tiklaydi */ }
+    }
+
+    // "+" composer'dan yangi post kelganda lentaga qo'shish
+    useEffect(() => {
+        const h = (e: Event) => {
+            const post = (e as CustomEvent).detail as Post | undefined;
+            if (post && !profileMode) setPosts(prev => [post, ...prev]);
+        };
+        window.addEventListener("nexus:post-created", h);
+        return () => window.removeEventListener("nexus:post-created", h);
+    }, [profileMode]);
 
     async function pickFiles(files: FileList | null) {
         if (!files?.length) return;
@@ -241,6 +270,7 @@ export function NxSocialFeed({ authorUsername, tag }: { authorUsername?: string;
                             onDelete={() => deletePost(p.id)}
                             onShare={() => openShareSheet((p.text ?? "").slice(0, 60))}
                             onBump={() => patch(p.id, x => ({ ...x, comments: x.comments + 1 }))}
+                            onVote={idx => votePoll(p, idx)}
                         />
                     ))}
                     {hasMore && (
@@ -258,8 +288,9 @@ export function NxSocialFeed({ authorUsername, tag }: { authorUsername?: string;
 // ─────────────────────────────────────────────────────────────────────────────
 // PostCard
 // ─────────────────────────────────────────────────────────────────────────────
-function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump }: {
+function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }: {
     post: Post; onLike: () => void; onSave: () => void; onDelete: () => void; onShare: () => void; onBump: () => void;
+    onVote: (idx: number) => void;
 }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [following, setFollowing] = useState(false);
@@ -316,6 +347,11 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump }: {
                         {p.author?.username && <span>@{p.author.username}</span>}
                         <span>·</span>
                         <span>{timeAgo(p.createdAt)}</span>
+                        {p.privacy === "FOLLOWERS" && <Users className="w-3 h-3" />}
+                        {p.privacy === "PRIVATE" && <Lock className="w-3 h-3" />}
+                        {p.location && (
+                            <span className="flex items-center gap-0.5 truncate"><MapPin className="w-3 h-3 flex-shrink-0" />{p.location}</span>
+                        )}
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -363,6 +399,45 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump }: {
                     )}
                 </div>
             )}
+
+            {/* So'rovnoma */}
+            {(p.pollOptions?.length ?? 0) >= 2 && (() => {
+                const opts = p.pollOptions!;
+                const votes = p.pollVotes ?? opts.map(() => 0);
+                const total = votes.reduce((a, b) => a + b, 0);
+                const expired = !!p.pollEndsAt && new Date(p.pollEndsAt).getTime() < Date.now();
+                const showResults = p.myVote != null || expired;
+                const leftMs = p.pollEndsAt ? new Date(p.pollEndsAt).getTime() - Date.now() : 0;
+                const leftLabel = expired ? "Tugagan" : leftMs > 86_400_000 ? `${Math.ceil(leftMs / 86_400_000)} kun qoldi` : `${Math.max(1, Math.ceil(leftMs / 3_600_000))} soat qoldi`;
+                return (
+                    <div className="mx-4 mb-3 flex flex-col gap-1.5">
+                        {opts.map((opt, i) => {
+                            const pct = total > 0 ? Math.round((votes[i] / total) * 100) : 0;
+                            const isMyVote = p.myVote === i;
+                            return (
+                                <button key={i} onClick={() => !expired && onVote(i)} disabled={expired}
+                                    className="relative w-full px-3 py-2.5 rounded-xl text-left overflow-hidden transition active:scale-[0.99]"
+                                    style={{ background: "rgba(43,62,232,0.06)", border: `1px solid ${isMyVote ? "rgba(0,206,200,0.5)" : "rgba(43,62,232,0.20)"}` }}>
+                                    {showResults && (
+                                        <div className="absolute inset-y-0 left-0 transition-all duration-500"
+                                            style={{ width: `${pct}%`, background: isMyVote ? "rgba(0,206,200,0.18)" : "rgba(43,62,232,0.16)" }} />
+                                    )}
+                                    <div className="relative flex items-center justify-between gap-2">
+                                        <span className="text-xs font-bold text-white flex items-center gap-1.5 min-w-0">
+                                            <span className="truncate">{opt}</span>
+                                            {isMyVote && <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                        </span>
+                                        {showResults && <span className="text-[11px] font-black flex-shrink-0" style={{ color: isMyVote ? "#00CEC8" : "rgba(140,160,210,0.85)" }}>{pct}%</span>}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                        <p className="px-1 text-[10px] flex items-center gap-1" style={{ color: "rgba(80,100,150,0.75)" }}>
+                            <BarChart2 className="w-3 h-3" />{total} ovoz · {leftLabel}
+                        </p>
+                    </div>
+                );
+            })()}
 
             {/* Media */}
             {p.media.length > 0 && (
