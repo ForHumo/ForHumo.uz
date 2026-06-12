@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Link, useRouter } from "@/i18n/routing";
-import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle, MoreHorizontal, Ban, VolumeX, Volume2, ShieldAlert, Gift, Star, Settings2 } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle, MoreHorizontal, Ban, VolumeX, Volume2, ShieldAlert, Gift, Star, Settings2, TrendingUp } from "lucide-react";
 import { NxPlayerProvider } from "./nx-player-ctx";
 import { NxShare } from "./nx-share";
 import { NexusFollowList } from "./nexus-follow-list";
@@ -253,14 +253,21 @@ export function NexusProfile({ username }: { username: string }) {
                                 )
                             )}
 
-                            {/* O'z profilim — ijodkor obuna sozlamasi */}
+                            {/* O'z profilim — ijodkor obuna sozlamasi + analitika */}
                             {data.isMe && (
-                                <button onClick={() => setSubSettingsOpen(true)}
-                                    className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black active:scale-[0.99] transition"
-                                    style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.30)", color: "rgba(196,181,253,0.95)" }}>
-                                    <Settings2 className="w-4 h-4" style={{ color: "#8B5CF6" }} />
-                                    {data.profile.subPriceZij > 0 ? `Obuna narxi: ${data.profile.subPriceZij} Ƶ/oy` : "Pullik obunani yoqish"}
-                                </button>
+                                <div className="mt-4 flex gap-2">
+                                    <button onClick={() => setSubSettingsOpen(true)}
+                                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black active:scale-[0.99] transition"
+                                        style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.30)", color: "rgba(196,181,253,0.95)" }}>
+                                        <Settings2 className="w-4 h-4" style={{ color: "#8B5CF6" }} />
+                                        {data.profile.subPriceZij > 0 ? `${data.profile.subPriceZij} Ƶ/oy` : "Obunani yoqish"}
+                                    </button>
+                                    <Link href="/nexus/analytics"
+                                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black active:scale-[0.99] transition"
+                                        style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.30)", color: "rgba(150,230,225,0.95)" }}>
+                                        <TrendingUp className="w-4 h-4" style={{ color: "#00CEC8" }} /> Analitika
+                                    </Link>
+                                </div>
                             )}
                         </div>
 
