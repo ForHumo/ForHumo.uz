@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 // GET /api/nexus/live/[id]/chat?since=<ISO> — chat xabarlari (polling)
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -50,6 +51,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const { text } = await req.json();
     if (!text?.trim()) return NextResponse.json({ error: "Matn kerak" }, { status: 400 });
+    if (await nexusRateLimited(me.id, "liveChat")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const msg = await prisma.nexusLiveMessage.create({
         data: { streamId: id, profileId: me.id, text: String(text).trim().slice(0, 500) },

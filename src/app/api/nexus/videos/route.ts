@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile, isAdultBirthday } from "@/lib/nexus";
 import { moderateOnCreate } from "@/lib/moderation";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 // POST /api/nexus/videos — yangi video
 export async function POST(req: Request) {
@@ -13,6 +14,7 @@ export async function POST(req: Request) {
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+    if (await nexusRateLimited(profile.id, "video")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const body = await req.json();
     const {

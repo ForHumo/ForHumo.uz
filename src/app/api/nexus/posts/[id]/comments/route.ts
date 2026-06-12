@@ -6,6 +6,7 @@ import { isVerifiedProfile } from "@/lib/nexus";
 import { after } from "next/server";
 import { moderateOnCreate } from "@/lib/moderation";
 import { nexusNotify } from "@/lib/nexus-notify";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 // GET /api/nexus/posts/[id]/comments — izohlar (flat; klient daraxt quradi)
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -45,6 +46,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+    if (await nexusRateLimited(profile.id, "comment")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { id } = await params;
     const { text, parentId } = await req.json();

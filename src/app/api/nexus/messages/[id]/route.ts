@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { otherId } from "@/lib/nexus-dm";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 async function meAndConv(email: string, id: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true } });
@@ -53,6 +54,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const { text } = await req.json();
     if (!text?.trim()) return NextResponse.json({ error: "Xabar bo'sh bo'lmasin" }, { status: 400 });
+    if (await nexusRateLimited(me.id, "dm")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
     const clean = String(text).trim().slice(0, 2000);
 
     const msg = await prisma.nexusMessage.create({ data: { conversationId: id, senderId: me.id, text: clean } });

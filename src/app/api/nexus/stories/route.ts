@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -12,6 +13,7 @@ export async function POST(req: Request) {
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+    if (await nexusRateLimited(profile.id, "story")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { mediaUrl, mediaType, caption } = await req.json();
     if (!mediaUrl || typeof mediaUrl !== "string") return NextResponse.json({ error: "Media kerak" }, { status: 400 });

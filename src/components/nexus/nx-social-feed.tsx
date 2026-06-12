@@ -43,8 +43,8 @@ function avatarOf(a: Author | null) {
 // ─────────────────────────────────────────────────────────────────────────────
 // NxSocialFeed
 // ─────────────────────────────────────────────────────────────────────────────
-export function NxSocialFeed({ authorUsername, tag }: { authorUsername?: string; tag?: string } = {}) {
-    const profileMode = !!authorUsername || !!tag;
+export function NxSocialFeed({ authorUsername, tag, postId }: { authorUsername?: string; tag?: string; postId?: string } = {}) {
+    const profileMode = !!authorUsername || !!tag || !!postId;
     const { openShareSheet } = useNxPlayer();
     const { data: session } = useSession();
     const PAGE = 15;
@@ -66,6 +66,13 @@ export function NxSocialFeed({ authorUsername, tag }: { authorUsername?: string;
 
     const loadFirst = useCallback(async () => {
         setLoading(true);
+        if (postId) {
+            // Bitta post (permalink)
+            const d = await fetch(`/api/nexus/posts/${postId}`).then(r => r.json()).catch(() => ({}));
+            setPosts(d.post ? [d.post] : []); setOffset(0); setHasMore(false);
+            setLoading(false);
+            return;
+        }
         const url = authorUsername
             ? `/api/nexus/posts?author=${encodeURIComponent(authorUsername)}&limit=${PAGE}&offset=0`
             : tag
@@ -75,7 +82,7 @@ export function NxSocialFeed({ authorUsername, tag }: { authorUsername?: string;
         const list: Post[] = data.posts ?? [];
         setPosts(list); setOffset(list.length); setHasMore(data.hasMore ?? false);
         setLoading(false);
-    }, [tab, authorUsername, tag]);
+    }, [tab, authorUsername, tag, postId]);
 
     useEffect(() => { loadFirst(); }, [loadFirst]);
 
@@ -268,7 +275,7 @@ export function NxSocialFeed({ authorUsername, tag }: { authorUsername?: string;
                         <PostCard key={p.id} post={p}
                             onLike={() => toggleLike(p)} onSave={() => toggleSave(p)}
                             onDelete={() => deletePost(p.id)}
-                            onShare={() => openShareSheet((p.text ?? "").slice(0, 60))}
+                            onShare={() => openShareSheet((p.text ?? "Humo Nexus posti").slice(0, 60), `${typeof window !== "undefined" ? window.location.origin : "https://forhumo.uz"}/nexus/p/${p.id}`)}
                             onBump={() => patch(p.id, x => ({ ...x, comments: x.comments + 1 }))}
                             onVote={idx => votePoll(p, idx)}
                         />

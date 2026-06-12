@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 import { isVerifiedProfile, extractHashtags } from "@/lib/nexus";
 import { after } from "next/server";
 import { moderateOnCreate } from "@/lib/moderation";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 async function myProfileId(): Promise<string | null> {
     const session = await getServerSession(authOptions);
@@ -140,6 +141,7 @@ export async function POST(req: Request) {
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+    if (await nexusRateLimited(profile.id, "post")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { text, media, marketProductId, privacy, location, pollOptions, pollDurationHours } = await req.json();
     const mediaArr: string[] = Array.isArray(media) ? media.filter((x: unknown) => typeof x === "string") : [];

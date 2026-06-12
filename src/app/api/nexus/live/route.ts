@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 // Onlayn ko'ruvchi — oxirgi 30 soniyada heartbeat yuborganlar
 const VIEWER_WINDOW_MS = 30_000;
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
 
     const { title, category, privacy, scheduledAt } = await req.json();
     if (!title?.trim()) return NextResponse.json({ error: "Sarlavha kerak" }, { status: 400 });
+    if (await nexusRateLimited(me.id, "live")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     // Bitta odamda bitta faol efir
     await prisma.nexusLiveStream.updateMany({

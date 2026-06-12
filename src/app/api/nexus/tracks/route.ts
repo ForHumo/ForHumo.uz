@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { moderateOnCreate } from "@/lib/moderation";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 // POST /api/nexus/tracks — yangi trek (musiqa/podkast/audiokitob)
 export async function POST(req: Request) {
@@ -13,6 +14,7 @@ export async function POST(req: Request) {
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+    if (await nexusRateLimited(profile.id, "track")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { title, artist, audioUrl, coverUrl, durationSec, kind, genre } = await req.json();
     if (!audioUrl || typeof audioUrl !== "string") return NextResponse.json({ error: "Audio kerak" }, { status: 400 });

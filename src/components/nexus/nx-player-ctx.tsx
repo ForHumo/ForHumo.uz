@@ -311,7 +311,8 @@ interface PlayerCtx {
     // Ulashish (Share Sheet)
     shareSheetOpen:  boolean;
     shareSheetTitle: string;
-    openShareSheet:  (title: string) => void;
+    shareSheetUrl:   string;
+    openShareSheet:  (title: string, url?: string) => void;
     closeShareSheet: () => void;
 }
 
@@ -555,7 +556,12 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     /* ── Share Sheet ── */
     const [shareSheetOpen,  setShareSheetOpen]  = useState(false);
     const [shareSheetTitle, setShareSheetTitle] = useState("");
-    const openShareSheet  = useCallback((title: string) => { setShareSheetTitle(title); setShareSheetOpen(true); }, []);
+    const [shareSheetUrl,   setShareSheetUrl]   = useState("");
+    const openShareSheet  = useCallback((title: string, url?: string) => {
+        setShareSheetTitle(title);
+        setShareSheetUrl(url || (typeof window !== "undefined" ? window.location.href : ""));
+        setShareSheetOpen(true);
+    }, []);
     const closeShareSheet = useCallback(() => setShareSheetOpen(false), []);
 
     /* ── Kanal ── */
@@ -827,7 +833,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             storyCreateOpen, setStoryCreateOpen,
             meetingOpen, setMeetingOpen,
             savedDefaultTab, openSavedHistory,
-            shareSheetOpen, shareSheetTitle, openShareSheet, closeShareSheet,
+            shareSheetOpen, shareSheetTitle, shareSheetUrl, openShareSheet, closeShareSheet,
         }}>
             {children}
         </Ctx.Provider>
