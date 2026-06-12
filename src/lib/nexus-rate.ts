@@ -9,7 +9,7 @@ const MIN = 60_000;
 type RateKind =
     | "post" | "comment" | "videoComment"
     | "video" | "track" | "story"
-    | "dm" | "live" | "liveChat";
+    | "dm" | "live" | "liveChat" | "tip";
 
 // kind -> [maks. son, oyna ms]
 const RULES: Record<RateKind, [number, number]> = {
@@ -22,6 +22,7 @@ const RULES: Record<RateKind, [number, number]> = {
     dm: [60, 10 * MIN],
     live: [6, 60 * MIN],
     liveChat: [40, 5 * MIN],
+    tip: [30, 10 * MIN],
 };
 
 export async function nexusRateLimited(profileId: string, kind: RateKind): Promise<boolean> {
@@ -56,6 +57,9 @@ export async function nexusRateLimited(profileId: string, kind: RateKind): Promi
                 break;
             case "liveChat":
                 count = await prisma.nexusLiveMessage.count({ where: { profileId, createdAt: { gt: since } } });
+                break;
+            case "tip":
+                count = await prisma.nexusTip.count({ where: { donorId: profileId, createdAt: { gt: since } } });
                 break;
         }
     } catch {

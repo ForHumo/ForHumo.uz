@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export type NexusNotifType =
     | "LIKE" | "COMMENT" | "FOLLOW" | "REPLY"
-    | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE";
+    | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP";
 
 export async function nexusNotify(opts: {
     recipientId: string;
@@ -14,6 +14,7 @@ export async function nexusNotify(opts: {
     videoId?: string | null;
     trackId?: string | null;
     liveId?: string | null;
+    amountZij?: number | null;
 }): Promise<void> {
     if (!opts.recipientId || opts.recipientId === opts.actorId) return; // o'ziga emas
     try {
@@ -27,6 +28,7 @@ export async function nexusNotify(opts: {
                 videoId: opts.videoId ?? null,
                 trackId: opts.trackId ?? null,
                 liveId: opts.liveId ?? null,
+                amountZij: opts.amountZij ?? null,
             },
         });
     } catch {

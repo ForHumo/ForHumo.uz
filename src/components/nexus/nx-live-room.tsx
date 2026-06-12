@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-    X, Radio, Eye, Send, Loader2, BadgeCheck, StopCircle, Clock, CalendarClock,
+    X, Radio, Eye, Send, Loader2, BadgeCheck, StopCircle, Clock, CalendarClock, Gift,
 } from "lucide-react";
 
 interface LAuthor { name: string | null; username: string | null; image: string | null; verified: boolean }
@@ -13,7 +13,9 @@ interface RoomStream {
     viewers: number; peakViewers: number; likes: number; isMine: boolean;
     author: LAuthor | null;
 }
-interface ChatMsg { id: string; text: string; createdAt: string; author: LAuthor | null }
+interface ChatMsg { id: string; text: string; tipZij?: number; createdAt: string; author: LAuthor | null }
+
+const SC_PRESETS = [10, 50, 100, 500];
 
 function avatarOf(a: LAuthor | null) { return a?.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(a?.username || a?.name || "u")}`; }
 function fmtViewers(n: number) {
@@ -33,6 +35,9 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
     const [ending, setEnding] = useState(false);
+    const [scOpen, setScOpen] = useState(false);       // Super Chat summa tanlovi ochiqmi
+    const [scAmount, setScAmount] = useState(0);        // 0 = oddiy xabar
+    const [chatError, setChatError] = useState<string | null>(null);
     const lastTsRef = useRef<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -86,18 +91,25 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
     async function send() {
-        if (!input.trim() || busy) return;
-        setBusy(true);
-        const text = input.trim(); setInput("");
+        const isSC = scAmount > 0;
+        if ((!input.trim() && !isSC) || busy) return;
+        setBusy(true); setChatError(null);
+        const text = input.trim();
         try {
             const r = await fetch(`/api/nexus/live/${streamId}/chat`, {
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text, ...(isSC ? { tipZij: scAmount } : {}) }),
             });
+            const d = await r.json();
             if (r.ok) {
-                const d = await r.json();
+                setInput(""); setScAmount(0); setScOpen(false);
                 setMsgs(prev => [...prev, d.message].slice(-200));
                 lastTsRef.current = d.message.createdAt;
+            } else {
+                setChatError(d.error || "Yuborilmadi");
             }
+        } catch {
+            setChatError("Tarmoq xatosi");
         } finally { setBusy(false); }
     }
 
@@ -198,31 +210,71 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     ) : msgs.length === 0 ? (
                         <p className="text-xs text-center py-6" style={{ color: "rgba(120,140,185,0.6)" }}>Birinchi xabarni yozing</p>
                     ) : msgs.map(m => (
-                        <div key={m.id} className="flex gap-2 py-1.5">
-                            <img src={avatarOf(m.author)} alt="" className="w-6 h-6 rounded-lg object-cover bg-white flex-shrink-0" />
-                            <p className="text-xs leading-relaxed min-w-0">
-                                <span className="font-black mr-1.5 inline-flex items-center gap-0.5" style={{ color: "rgba(240,160,140,0.95)" }}>
-                                    {m.author?.name || m.author?.username || "Foydalanuvchi"}
-                                    {m.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
-                                </span>
-                                <span style={{ color: "rgba(210,220,245,0.9)" }}>{m.text}</span>
-                            </p>
-                        </div>
+                        (m.tipZij ?? 0) > 0 ? (
+                            <div key={m.id} className="my-1.5 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(245,158,11,0.45)", boxShadow: "0 2px 12px rgba(245,158,11,0.2)" }}>
+                                <div className="flex items-center justify-between px-2.5 py-1.5" style={{ background: "linear-gradient(135deg,#F59E0B,#EF4444)" }}>
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-black text-white">
+                                        <Gift className="w-3 h-3" />{m.author?.name || m.author?.username || "Foydalanuvchi"}
+                                        {m.author?.verified && <BadgeCheck className="w-3 h-3 text-white" />}
+                                    </span>
+                                    <span className="text-[11px] font-black text-white">{m.tipZij} Ƶ</span>
+                                </div>
+                                {m.text && <p className="px-2.5 py-1.5 text-xs leading-relaxed" style={{ background: "rgba(245,158,11,0.10)", color: "rgba(245,225,190,0.95)" }}>{m.text}</p>}
+                            </div>
+                        ) : (
+                            <div key={m.id} className="flex gap-2 py-1.5">
+                                <img src={avatarOf(m.author)} alt="" className="w-6 h-6 rounded-lg object-cover bg-white flex-shrink-0" />
+                                <p className="text-xs leading-relaxed min-w-0">
+                                    <span className="font-black mr-1.5 inline-flex items-center gap-0.5" style={{ color: "rgba(240,160,140,0.95)" }}>
+                                        {m.author?.name || m.author?.username || "Foydalanuvchi"}
+                                        {m.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
+                                    </span>
+                                    <span style={{ color: "rgba(210,220,245,0.9)" }}>{m.text}</span>
+                                </p>
+                            </div>
+                        )
                     ))}
                     <div ref={bottomRef} />
                 </div>
 
                 {/* Yozish */}
                 {stream && stream.status !== "ENDED" && stream.status !== "UPCOMING" && (
-                    <div className="flex gap-2 px-4 py-3 flex-shrink-0" style={{ borderTop: "1px solid rgba(239,68,68,0.10)" }}>
-                        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
-                            placeholder="Xabar yozing..." className="flex-1 h-9 rounded-xl px-3 text-sm text-white outline-none"
-                            style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.16)", caretColor: "#F97316" }} />
-                        <button onClick={send} disabled={busy || !input.trim()}
-                            className="w-9 h-9 flex items-center justify-center rounded-xl text-white disabled:opacity-40"
-                            style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
-                            {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                        </button>
+                    <div className="px-4 py-3 flex-shrink-0" style={{ borderTop: "1px solid rgba(239,68,68,0.10)" }}>
+                        {/* Super Chat summa tanlovi */}
+                        {scOpen && !stream.isMine && (
+                            <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                                <span className="text-[10px] font-black inline-flex items-center gap-1 mr-1" style={{ color: "#F59E0B" }}><Gift className="w-3 h-3" />Super Chat:</span>
+                                {SC_PRESETS.map(p => (
+                                    <button key={p} onClick={() => setScAmount(scAmount === p ? 0 : p)}
+                                        className="px-2.5 py-1 rounded-lg text-[11px] font-black transition active:scale-95"
+                                        style={scAmount === p
+                                            ? { background: "linear-gradient(135deg,#F59E0B,#EF4444)", color: "#fff" }
+                                            : { background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.3)", color: "rgba(245,200,120,0.95)" }}>
+                                        {p} Ƶ
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        {chatError && <p className="text-[11px] font-bold mb-2" style={{ color: "#EF4444" }}>{chatError}</p>}
+                        <div className="flex gap-2">
+                            {!stream.isMine && (
+                                <button onClick={() => { setScOpen(o => !o); if (scOpen) setScAmount(0); }} title="Super Chat"
+                                    className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition"
+                                    style={scOpen
+                                        ? { background: "linear-gradient(135deg,#F59E0B,#EF4444)" }
+                                        : { background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)" }}>
+                                    <Gift className="w-4 h-4" style={{ color: scOpen ? "#fff" : "#F59E0B" }} />
+                                </button>
+                            )}
+                            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
+                                placeholder={scAmount > 0 ? `${scAmount} Ƶ bilan xabar...` : "Xabar yozing..."} className="flex-1 h-9 rounded-xl px-3 text-sm text-white outline-none"
+                                style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.16)", caretColor: "#F97316" }} />
+                            <button onClick={send} disabled={busy || (!input.trim() && scAmount === 0)}
+                                className="px-3 h-9 flex items-center justify-center gap-1 rounded-xl text-white text-xs font-black disabled:opacity-40"
+                                style={{ background: scAmount > 0 ? "linear-gradient(135deg,#F59E0B,#EF4444)" : "linear-gradient(135deg,#EF4444,#F97316)" }}>
+                                {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : scAmount > 0 ? <>{scAmount} Ƶ</> : <Send className="w-3.5 h-3.5" />}
+                            </button>
+                        </div>
                     </div>
                 )}
                 {stream?.status === "ENDED" && (

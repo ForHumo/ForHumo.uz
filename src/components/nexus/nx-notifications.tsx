@@ -5,23 +5,24 @@ import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Bell, Heart, MessageCircle, UserPlus, Reply,
-    CheckCheck, Loader2, Flame, BadgeCheck, Music2, Coins, Radio,
+    CheckCheck, Loader2, Flame, BadgeCheck, Music2, Coins, Radio, Gift,
 } from "lucide-react";
 
-type NType = "LIKE" | "COMMENT" | "FOLLOW" | "REPLY" | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE";
+type NType = "LIKE" | "COMMENT" | "FOLLOW" | "REPLY" | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP";
 interface NActor { name: string | null; username: string | null; image: string | null; verified: boolean }
 interface Notif {
     id: string; type: NType; read: boolean; createdAt: string; actor: NActor | null; postText: string | null;
     postId?: string | null; videoId?: string | null; trackId?: string | null; liveId?: string | null;
+    amountZij?: number | null;
 }
 
 const TYPE_ICONS: Record<NType, React.ElementType> = {
     LIKE: Heart, COMMENT: MessageCircle, FOLLOW: UserPlus, REPLY: Reply,
-    VIDEO_LIKE: Heart, VIDEO_COMMENT: MessageCircle, TRACK_LIKE: Music2, PURCHASE: Coins, LIVE: Radio,
+    VIDEO_LIKE: Heart, VIDEO_COMMENT: MessageCircle, TRACK_LIKE: Music2, PURCHASE: Coins, LIVE: Radio, TIP: Gift,
 };
 const TYPE_COLORS: Record<NType, string> = {
     LIKE: "#EF4444", COMMENT: "#2B3EE8", FOLLOW: "#10B981", REPLY: "#8B5CF6",
-    VIDEO_LIKE: "#EF4444", VIDEO_COMMENT: "#8B5CF6", TRACK_LIKE: "#10B981", PURCHASE: "#00CEC8", LIVE: "#EF4444",
+    VIDEO_LIKE: "#EF4444", VIDEO_COMMENT: "#8B5CF6", TRACK_LIKE: "#10B981", PURCHASE: "#00CEC8", LIVE: "#EF4444", TIP: "#F59E0B",
 };
 const TYPE_TEXT: Record<NType, string> = {
     LIKE: "postingizni yoqtirdi",
@@ -33,6 +34,7 @@ const TYPE_TEXT: Record<NType, string> = {
     TRACK_LIKE: "trekingizni yoqtirdi",
     PURCHASE: "videongizni sotib oldi",
     LIVE: "jonli efir boshladi",
+    TIP: "sizni qo'llab-quvvatladi",
 };
 
 // Bildirishnoma qaysi kontentga olib boradi
@@ -171,6 +173,7 @@ export function NxNotifications() {
                                             {n.actor?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
                                         </span>{" "}
                                         <span style={{ color: "rgba(180,200,240,0.85)" }}>{TYPE_TEXT[n.type]}</span>
+                                        {n.type === "TIP" && n.amountZij ? <span className="font-black ml-1" style={{ color: "#F59E0B" }}>{n.amountZij} Ƶ</span> : null}
                                     </p>
                                     {n.postText && <p className="text-[11px] mt-0.5 truncate" style={{ color: "rgba(120,140,185,0.7)" }}>&ldquo;{n.postText}&rdquo;</p>}
                                     <p className="text-[10px] mt-0.5" style={{ color: "rgba(80,100,150,0.75)" }}>{timeAgo(n.createdAt)}</p>

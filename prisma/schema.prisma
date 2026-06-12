@@ -722,6 +722,7 @@ model NexusNotification {
   videoId     String?                             // video like/izoh/xarid uchun
   trackId     String?                             // trek like uchun
   liveId      String?                             // jonli efir uchun
+  amountZij   Int?                                // tip/xarid miqdori (Ƶ)
   read        Boolean        @default(false)
   createdAt   DateTime       @default(now())
   @@index([recipientId, read])
@@ -738,6 +739,7 @@ enum NexusNotifType {
   TRACK_LIKE
   PURCHASE
   LIVE
+  TIP
 }
 
 // Story — 24 soatlik vaqtinchalik kontent
@@ -906,9 +908,31 @@ model NexusLiveMessage {
   stream    NexusLiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
   profileId String
   text      String
+  tipZij    Int             @default(0)            // > 0 bo'lsa — Super Chat (pulli, ajratilgan)
   hidden    Boolean         @default(false)        // moderatsiya
   createdAt DateTime        @default(now())
   @@index([streamId, createdAt])
+}
+
+// Tip / donat — ijodkorni qo'llab-quvvatlash. Zij donor→ijodkor o'tadi (komissiyasiz).
+model NexusTip {
+  id          String      @id @default(cuid())
+  donorId     String                              // kim yubordi (UserProfile.id)
+  recipientId String                              // ijodkor
+  amountZij   Int                                 // miqdor (Ƶ)
+  targetType  NexusTipTarget @default(PROFILE)    // nimaga: profil/post/video/jonli
+  targetId    String?                             // tegishli kontent id (PROFILE uchun null)
+  message     String?                             // ixtiyoriy izoh (Super Chat matni)
+  createdAt   DateTime    @default(now())
+  @@index([recipientId, createdAt])
+  @@index([donorId, createdAt])
+}
+
+enum NexusTipTarget {
+  PROFILE
+  POST
+  VIDEO
+  LIVE
 }
 
 // Jonli ko'ruvchi — heartbeat (lastSeenAt > now-30s = onlayn)

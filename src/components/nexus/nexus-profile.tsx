@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Link, useRouter } from "@/i18n/routing";
-import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle, MoreHorizontal, Ban, VolumeX, Volume2, ShieldAlert } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle, MoreHorizontal, Ban, VolumeX, Volume2, ShieldAlert, Gift } from "lucide-react";
 import { NxPlayerProvider } from "./nx-player-ctx";
 import { NxShare } from "./nx-share";
 import { NexusFollowList } from "./nexus-follow-list";
 import { NexusProfileContent } from "./nexus-profile-content";
+import { NxTipSheet } from "./nx-tip-sheet";
 
 interface ProfileData {
     name: string | null; username: string | null; image: string | null;
@@ -34,6 +35,7 @@ export function NexusProfile({ username }: { username: string }) {
     const [iBlocked, setIBlocked] = useState(false);
     const [blockedMe, setBlockedMe] = useState(false);
     const [iMuted, setIMuted] = useState(false);
+    const [tipOpen, setTipOpen] = useState(false);
 
     const load = useCallback(async () => {
         setLoading(true); setNotFound(false);
@@ -155,11 +157,18 @@ export function NexusProfile({ username }: { username: string }) {
                                             </button>
                                         )}
                                         {!iBlocked && !blockedMe && (
-                                            <Link href={`/nexus?dm=${username}`} title="Xabar"
-                                                className="flex items-center justify-center w-11 h-11 rounded-xl active:scale-95 transition"
-                                                style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
-                                                <MessageCircle className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} />
-                                            </Link>
+                                            <>
+                                                <button onClick={() => setTipOpen(true)} title="Qo'llab-quvvatlash"
+                                                    className="flex items-center justify-center w-11 h-11 rounded-xl active:scale-95 transition"
+                                                    style={{ background: "rgba(245,158,11,0.14)", border: "1px solid rgba(245,158,11,0.35)" }}>
+                                                    <Gift className="w-4 h-4" style={{ color: "#F59E0B" }} />
+                                                </button>
+                                                <Link href={`/nexus?dm=${username}`} title="Xabar"
+                                                    className="flex items-center justify-center w-11 h-11 rounded-xl active:scale-95 transition"
+                                                    style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                                    <MessageCircle className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} />
+                                                </Link>
+                                            </>
                                         )}
                                         {/* Ko'proq menyu — mute / block */}
                                         <div className="relative">
@@ -244,6 +253,12 @@ export function NexusProfile({ username }: { username: string }) {
                 )}
 
                 {listType && data && <NexusFollowList username={username} type={listType} onClose={() => setListType(null)} />}
+
+                {data && !data.isMe && (
+                    <NxTipSheet open={tipOpen} onClose={() => setTipOpen(false)}
+                        recipientUsername={username} recipientName={displayName}
+                        targetType="PROFILE" />
+                )}
             </div>
 
             {/* Ulashish modali (feed share tugmasi uchun) */}

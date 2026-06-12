@@ -51,6 +51,7 @@ export async function GET(req: Request) {
             actor: a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a) } : null,
             postText: targetText,
             postId: n.postId, videoId: n.videoId, trackId: n.trackId, liveId: n.liveId,
+            amountZij: n.amountZij,
         };
     });
 
