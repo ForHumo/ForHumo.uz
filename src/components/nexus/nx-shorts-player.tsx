@@ -291,7 +291,7 @@ export function NxShortsPlayer() {
                         onClick={() => { setLiked(p => ({ ...p, [shortIndex]: !p[shortIndex] })); likeShort(short); }}
                     />
                     <ActionBtn icon={MessageCircle} label={commentsOpen ? String(comments.length) : "Sharh"} active={commentsOpen} onClick={() => commentsOpen ? setCommentsOpen(false) : openCommentsPanel()} />
-                    <ActionBtn icon={Share2} label="Ulash" onClick={() => openShareSheet(short.author)} />
+                    <ActionBtn icon={Share2} label="Ulash" onClick={() => openShareSheet(short.author, short.id ? `${typeof window !== "undefined" ? window.location.origin : "https://forhumo.uz"}/nexus/v/${short.id}` : undefined)} />
                     <ActionBtn
                         icon={Bookmark} label="Saqlash"
                         active={isSaved} activeColor="#00CEC8" fill={isSaved}

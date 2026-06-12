@@ -204,7 +204,7 @@ export function NxVideoPlayer() {
                             style={{ background: showComments ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(160,176,224,0.85)" }}>
                             <MessageSquare className="w-3.5 h-3.5" /> {fmtViews(data?.commentCount ?? 0)}
                         </button>
-                        <button onClick={() => openShareSheet(title)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold"
+                        <button onClick={() => openShareSheet(title, data?.id ? `${typeof window !== "undefined" ? window.location.origin : "https://forhumo.uz"}/nexus/v/${data.id}` : undefined)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold"
                             style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(160,176,224,0.85)" }}>
                             <Share2 className="w-3.5 h-3.5" /> Ulash
                         </button>

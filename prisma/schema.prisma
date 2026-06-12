@@ -696,6 +696,9 @@ model NexusNotification {
   type        NexusNotifType
   postId      String?
   commentId   String?
+  videoId     String?                             // video like/izoh/xarid uchun
+  trackId     String?                             // trek like uchun
+  liveId      String?                             // jonli efir uchun
   read        Boolean        @default(false)
   createdAt   DateTime       @default(now())
   @@index([recipientId, read])
@@ -707,6 +710,11 @@ enum NexusNotifType {
   COMMENT
   FOLLOW
   REPLY
+  VIDEO_LIKE
+  VIDEO_COMMENT
+  TRACK_LIKE
+  PURCHASE
+  LIVE
 }
 
 // Story — 24 soatlik vaqtinchalik kontent

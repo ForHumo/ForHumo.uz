@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { nexusNotify } from "@/lib/nexus-notify";
 
 // GET /api/nexus/videos/[id]/comments — izohlar
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -47,6 +48,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const comment = await prisma.nexusVideoComment.create({
         data: { videoId: id, profileId: profile.id, text: String(text).trim().slice(0, 1000) },
+    });
+    after(async () => {
+        const v = await prisma.nexusVideo.findUnique({ where: { id }, select: { profileId: true } });
+        if (v) await nexusNotify({ recipientId: v.profileId, actorId: profile.id, type: "VIDEO_COMMENT", videoId: id });
     });
     return NextResponse.json({
         comment: {

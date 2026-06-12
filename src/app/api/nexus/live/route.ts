@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { nexusNotifyFollowers } from "@/lib/nexus-notify";
+import { after } from "next/server";
 
 // Onlayn ko'ruvchi — oxirgi 30 soniyada heartbeat yuborganlar
 const VIEWER_WINDOW_MS = 30_000;
@@ -89,6 +91,11 @@ export async function POST(req: Request) {
             startedAt: isUpcoming ? null : new Date(),
         },
     });
+
+    // Darhol jonli + ochiq efir bo'lsa — kuzatuvchilarga xabar
+    if (!isUpcoming && stream.privacy === "PUBLIC") {
+        after(() => nexusNotifyFollowers({ actorId: me.id, type: "LIVE", liveId: stream.id }));
+    }
 
     return NextResponse.json({ stream });
 }

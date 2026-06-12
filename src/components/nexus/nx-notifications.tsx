@@ -5,21 +5,45 @@ import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Bell, Heart, MessageCircle, UserPlus, Reply,
-    CheckCheck, Loader2, Flame, BadgeCheck,
+    CheckCheck, Loader2, Flame, BadgeCheck, Music2, Coins, Radio,
 } from "lucide-react";
 
-type NType = "LIKE" | "COMMENT" | "FOLLOW" | "REPLY";
+type NType = "LIKE" | "COMMENT" | "FOLLOW" | "REPLY" | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE";
 interface NActor { name: string | null; username: string | null; image: string | null; verified: boolean }
-interface Notif { id: string; type: NType; read: boolean; createdAt: string; actor: NActor | null; postText: string | null }
+interface Notif {
+    id: string; type: NType; read: boolean; createdAt: string; actor: NActor | null; postText: string | null;
+    postId?: string | null; videoId?: string | null; trackId?: string | null; liveId?: string | null;
+}
 
-const TYPE_ICONS: Record<NType, React.ElementType> = { LIKE: Heart, COMMENT: MessageCircle, FOLLOW: UserPlus, REPLY: Reply };
-const TYPE_COLORS: Record<NType, string> = { LIKE: "#EF4444", COMMENT: "#2B3EE8", FOLLOW: "#10B981", REPLY: "#8B5CF6" };
+const TYPE_ICONS: Record<NType, React.ElementType> = {
+    LIKE: Heart, COMMENT: MessageCircle, FOLLOW: UserPlus, REPLY: Reply,
+    VIDEO_LIKE: Heart, VIDEO_COMMENT: MessageCircle, TRACK_LIKE: Music2, PURCHASE: Coins, LIVE: Radio,
+};
+const TYPE_COLORS: Record<NType, string> = {
+    LIKE: "#EF4444", COMMENT: "#2B3EE8", FOLLOW: "#10B981", REPLY: "#8B5CF6",
+    VIDEO_LIKE: "#EF4444", VIDEO_COMMENT: "#8B5CF6", TRACK_LIKE: "#10B981", PURCHASE: "#00CEC8", LIVE: "#EF4444",
+};
 const TYPE_TEXT: Record<NType, string> = {
     LIKE: "postingizni yoqtirdi",
     COMMENT: "postingizga izoh qoldirdi",
     FOLLOW: "sizni kuzatdi",
     REPLY: "izohingizga javob berdi",
+    VIDEO_LIKE: "videongizni yoqtirdi",
+    VIDEO_COMMENT: "videongizga izoh qoldirdi",
+    TRACK_LIKE: "trekingizni yoqtirdi",
+    PURCHASE: "videongizni sotib oldi",
+    LIVE: "jonli efir boshladi",
 };
+
+// Bildirishnoma qaysi kontentga olib boradi
+function notifHref(n: Notif): string | null {
+    if (n.videoId) return `/nexus/v/${n.videoId}`;
+    if (n.trackId) return `/nexus/t/${n.trackId}`;
+    if (n.liveId) return `/nexus/live/${n.liveId}`;
+    if (n.postId) return `/nexus/p/${n.postId}`;
+    if (n.actor?.username) return `/nexus/u/${n.actor.username}`;
+    return null;
+}
 
 function timeAgo(d: string) {
     const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -62,8 +86,10 @@ export function NxNotifications() {
     const filtered = filter === "all"
         ? notifs
         : filter === "COMMENT"
-            ? notifs.filter(n => n.type === "COMMENT" || n.type === "REPLY")
-            : notifs.filter(n => n.type === filter);
+            ? notifs.filter(n => ["COMMENT", "REPLY", "VIDEO_COMMENT"].includes(n.type))
+            : filter === "LIKE"
+                ? notifs.filter(n => ["LIKE", "VIDEO_LIKE", "TRACK_LIKE"].includes(n.type))
+                : notifs.filter(n => n.type === filter);
 
     async function markAllRead() {
         setNotifs(p => p.map(n => ({ ...n, read: true })));
@@ -154,8 +180,9 @@ export function NxNotifications() {
                         );
                         const cls = "w-full flex items-start gap-3 px-4 py-3.5 text-left transition-all duration-150";
                         const st = { background: n.read ? "transparent" : "rgba(43,62,232,0.06)", borderBottom: "1px solid rgba(43,62,232,0.07)" };
-                        return n.actor?.username ? (
-                            <Link key={n.id} href={`/nexus/u/${n.actor.username}`} onClick={() => { markOne(n.id); close(); }} className={cls} style={st}>{inner}</Link>
+                        const href = notifHref(n);
+                        return href ? (
+                            <Link key={n.id} href={href} onClick={() => { markOne(n.id); close(); }} className={cls} style={st}>{inner}</Link>
                         ) : (
                             <button key={n.id} onClick={() => markOne(n.id)} className={cls} style={st}>{inner}</button>
                         );

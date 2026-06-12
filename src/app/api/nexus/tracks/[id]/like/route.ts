@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { nexusNotify } from "@/lib/nexus-notify";
 
 // POST /api/nexus/tracks/[id]/like — sevimli toggle
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -19,6 +20,10 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     } else {
         try { await prisma.nexusTrackLike.create({ data: { trackId: id, profileId: me.id } }); }
         catch { return NextResponse.json({ error: "Topilmadi" }, { status: 404 }); }
+        after(async () => {
+            const t = await prisma.nexusTrack.findUnique({ where: { id }, select: { profileId: true } });
+            if (t) await nexusNotify({ recipientId: t.profileId, actorId: me.id, type: "TRACK_LIKE", trackId: id });
+        });
     }
     const count = await prisma.nexusTrackLike.count({ where: { trackId: id } });
     return NextResponse.json({ liked: !existing, count });

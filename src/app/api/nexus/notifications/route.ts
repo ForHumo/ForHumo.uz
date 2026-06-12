@@ -22,19 +22,35 @@ export async function GET(req: Request) {
 
     const actorIds = [...new Set(rows.map(r => r.actorId))];
     const postIds = [...new Set(rows.map(r => r.postId).filter((x): x is string => !!x))];
-    const [actors, posts] = await Promise.all([
+    const videoIds = [...new Set(rows.map(r => r.videoId).filter((x): x is string => !!x))];
+    const trackIds = [...new Set(rows.map(r => r.trackId).filter((x): x is string => !!x))];
+    const liveIds = [...new Set(rows.map(r => r.liveId).filter((x): x is string => !!x))];
+
+    const [actors, posts, videos, tracks, lives] = await Promise.all([
         prisma.userProfile.findMany({ where: { id: { in: actorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true } }),
         postIds.length ? prisma.nexusPost.findMany({ where: { id: { in: postIds } }, select: { id: true, text: true } }) : Promise.resolve([] as { id: string; text: string | null }[]),
+        videoIds.length ? prisma.nexusVideo.findMany({ where: { id: { in: videoIds } }, select: { id: true, title: true } }) : Promise.resolve([] as { id: string; title: string }[]),
+        trackIds.length ? prisma.nexusTrack.findMany({ where: { id: { in: trackIds } }, select: { id: true, title: true } }) : Promise.resolve([] as { id: string; title: string }[]),
+        liveIds.length ? prisma.nexusLiveStream.findMany({ where: { id: { in: liveIds } }, select: { id: true, title: true } }) : Promise.resolve([] as { id: string; title: string }[]),
     ]);
     const aMap = Object.fromEntries(actors.map(a => [a.id, a]));
     const postMap = Object.fromEntries(posts.map(p => [p.id, p.text]));
+    const videoMap = Object.fromEntries(videos.map(v => [v.id, v.title]));
+    const trackMap = Object.fromEntries(tracks.map(t => [t.id, t.title]));
+    const liveMap = Object.fromEntries(lives.map(l => [l.id, l.title]));
 
     const notifications = rows.map(n => {
         const a = aMap[n.actorId];
+        const targetText =
+            n.postId ? (postMap[n.postId] ?? null) :
+            n.videoId ? (videoMap[n.videoId] ?? null) :
+            n.trackId ? (trackMap[n.trackId] ?? null) :
+            n.liveId ? (liveMap[n.liveId] ?? null) : null;
         return {
             id: n.id, type: n.type, read: n.read, createdAt: n.createdAt,
             actor: a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a) } : null,
-            postText: n.postId ? (postMap[n.postId] ?? null) : null,
+            postText: targetText,
+            postId: n.postId, videoId: n.videoId, trackId: n.trackId, liveId: n.liveId,
         };
     });
 

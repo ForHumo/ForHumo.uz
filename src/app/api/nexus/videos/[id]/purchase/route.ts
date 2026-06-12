@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { nexusNotify } from "@/lib/nexus-notify";
 
 // POST /api/nexus/videos/[id]/purchase — pullik videoni Zij'ga sotib olish.
 // Atomik: xaridor PURCHASE (balans kamayadi) + avtor SALE (to'liq summa) + NexusVideoPurchase.
@@ -60,6 +61,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         if (result === "no_funds") {
             return NextResponse.json({ error: "Mablag' yetarli emas — ALKH Pay hamyoningizni to'ldiring" }, { status: 402 });
         }
+        // Avtorga "videongiz sotib olindi" bildirishnomasi
+        after(() => nexusNotify({ recipientId: video.profileId, actorId: me.id, type: "PURCHASE", videoId: id }));
         return NextResponse.json({ ok: true });
     } catch {
         return NextResponse.json({ error: "Xarid amalga oshmadi, qayta urinib ko'ring" }, { status: 500 });
