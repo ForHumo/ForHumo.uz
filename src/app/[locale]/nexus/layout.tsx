@@ -4,9 +4,10 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Link } from "@/i18n/routing";
 import { Fingerprint, LogIn, ArrowRight } from "lucide-react";
+import { NexusUsernameGate } from "@/components/nexus/nexus-username-gate";
 
 // Nexus — global header/footer ustini yopadi, o'z to'liq ekran qobig'i bor.
-// DARVOZA: Humo Nexus faqat Humo ID olgan foydalanuvchilar uchun ishlaydi.
+// DARVOZA: Humo Nexus faqat Humo ID + @username olgan foydalanuvchilar uchun.
 export default async function NexusLayout({ children, params }: {
     children: React.ReactNode;
     params: Promise<{ locale: string }>;
@@ -15,13 +16,21 @@ export default async function NexusLayout({ children, params }: {
     setRequestLocale(locale);
 
     const session = await getServerSession(authOptions);
-    let signedIn = false, hasHumoId = false;
+    let signedIn = false, hasHumoId = false, username: string | null = null, firstName: string | null = null;
     if (session?.user?.email) {
         signedIn = true;
         const p = await prisma.userProfile.findUnique({
-            where: { email: session.user.email }, select: { humoId: true },
+            where: { email: session.user.email }, select: { humoId: true, username: true, firstName: true },
         });
         hasHumoId = !!p?.humoId;
+        username = p?.username ?? null;
+        firstName = p?.firstName ?? null;
+    }
+
+    // Humo ID bor, lekin username yo'q — Nexus uchun majburiy
+    if (hasHumoId && !username) {
+        const suggested = (firstName ?? session?.user?.name ?? "").toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);
+        return <NexusUsernameGate suggested={suggested.length >= 3 ? suggested : ""} />;
     }
 
     if (!hasHumoId) {
