@@ -2,87 +2,58 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getOrCreateWallet, walletCurrency } from "@/lib/wallet";
+import { minAmount, roundMoney, convert, formatMoney } from "@/lib/money";
 
-// POST /api/pay/transfer — username bo'yicha Zij yuborish
+// POST /api/pay/transfer — username bo'yicha pul yuborish.
+// Yuboruvchi o'z valyutasida tanlaydi; qabul qiluvchi o'z valyutasida (kerak bo'lsa konvert) oladi.
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email)
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { toUsername, amount, note } = await req.json();
-    const zij = Number(amount);
+    if (!toUsername?.trim()) return NextResponse.json({ error: "Username kiritilmagan" }, { status: 400 });
 
-    if (!toUsername?.trim())
-        return NextResponse.json({ error: "Username kiritilmagan" }, { status: 400 });
-    if (!zij || isNaN(zij) || zij < 1)
-        return NextResponse.json({ error: "Kamida 1 Ƶ yuborish kerak" }, { status: 400 });
+    const sender = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, username: true, country: true } });
+    if (!sender) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
-    // Yuboruvchi
-    const senderProfile = await prisma.userProfile.findUnique({
-        where: { email: session.user.email },
-    });
-    if (!senderProfile)
-        return NextResponse.json({ error: "Profile topilmadi" }, { status: 404 });
-
-    // O'ziga yuborishni bloklash
     const cleanUsername = toUsername.replace(/^@/, "").trim();
-    if (senderProfile.username?.toLowerCase() === cleanUsername.toLowerCase())
+    if (sender.username?.toLowerCase() === cleanUsername.toLowerCase())
         return NextResponse.json({ error: "O'zingizga yuborib bo'lmaydi" }, { status: 400 });
 
-    // Qabul qiluvchi
-    const receiverProfile = await prisma.userProfile.findUnique({
-        where: { username: cleanUsername },
-    });
-    if (!receiverProfile)
-        return NextResponse.json({ error: `@${cleanUsername} topilmadi` }, { status: 404 });
+    const receiver = await prisma.userProfile.findUnique({ where: { username: cleanUsername }, select: { id: true, name: true, username: true, country: true } });
+    if (!receiver) return NextResponse.json({ error: `@${cleanUsername} topilmadi` }, { status: 404 });
 
-    // Yuboruvchi hamyoni
-    let senderWallet = await prisma.zijWallet.findUnique({ where: { profileId: senderProfile.id } });
-    if (!senderWallet) senderWallet = await prisma.zijWallet.create({ data: { profileId: senderProfile.id } });
+    const senderWallet = await getOrCreateWallet(sender.id, sender.country);
+    const receiverWallet = await getOrCreateWallet(receiver.id, receiver.country);
+    const sCur = walletCurrency(senderWallet);
+    const rCur = walletCurrency(receiverWallet);
 
-    if (Number(senderWallet.balance) < zij)
+    const sendAmount = roundMoney(Number(amount), sCur);
+    if (!sendAmount || isNaN(sendAmount) || sendAmount < minAmount(sCur))
+        return NextResponse.json({ error: `Kamida ${formatMoney(minAmount(sCur), sCur)} yuborish kerak` }, { status: 400 });
+    if (Number(senderWallet.balance) < sendAmount)
         return NextResponse.json({ error: "Balans yetarli emas" }, { status: 400 });
 
-    // Qabul qiluvchi hamyoni (lazy init)
-    let receiverWallet = await prisma.zijWallet.findUnique({ where: { profileId: receiverProfile.id } });
-    if (!receiverWallet) receiverWallet = await prisma.zijWallet.create({ data: { profileId: receiverProfile.id } });
-
-    const senderNewBalance   = Number(senderWallet.balance)   - zij;
-    const receiverNewBalance = Number(receiverWallet.balance) + zij;
-    const desc = note?.trim() || null;
+    const recvAmount = convert(sendAmount, sCur, rCur);
+    const senderNew = roundMoney(Number(senderWallet.balance) - sendAmount, sCur);
+    const receiverNew = roundMoney(Number(receiverWallet.balance) + recvAmount, rCur);
+    const desc = typeof note === "string" && note.trim() ? note.trim().slice(0, 120) : null;
 
     await prisma.$transaction([
-        // Yuboruvchi balansi kamayadi
-        prisma.zijWallet.update({ where: { id: senderWallet.id }, data: { balance: senderNewBalance } }),
-        // Qabul qiluvchi balansi oshadi
-        prisma.zijWallet.update({ where: { id: receiverWallet.id }, data: { balance: receiverNewBalance } }),
-        // Yuboruvchi tranzaksiyasi
+        prisma.zijWallet.update({ where: { id: senderWallet.id }, data: { balance: senderNew } }),
+        prisma.zijWallet.update({ where: { id: receiverWallet.id }, data: { balance: receiverNew } }),
         prisma.zijTransaction.create({
-            data: {
-                walletId: senderWallet.id,
-                type: "TRANSFER_OUT",
-                amount: zij,
-                balanceAfter: senderNewBalance,
-                description: desc ?? `@${cleanUsername} ga yuborildi`,
-                ref: receiverProfile.id,
-            },
+            data: { walletId: senderWallet.id, type: "TRANSFER_OUT", amount: sendAmount, currency: sCur, balanceAfter: senderNew, description: desc ?? `@${cleanUsername} ga yuborildi`, ref: receiver.id },
         }),
-        // Qabul qiluvchi tranzaksiyasi
         prisma.zijTransaction.create({
-            data: {
-                walletId: receiverWallet.id,
-                type: "TRANSFER_IN",
-                amount: zij,
-                balanceAfter: receiverNewBalance,
-                description: desc ?? `@${senderProfile.username ?? senderProfile.email} dan`,
-                ref: senderProfile.id,
-            },
+            data: { walletId: receiverWallet.id, type: "TRANSFER_IN", amount: recvAmount, currency: rCur, balanceAfter: receiverNew, description: desc ?? `@${sender.username ?? "Foydalanuvchi"} dan`, ref: sender.id },
         }),
     ]);
 
     return NextResponse.json({
-        balance: senderNewBalance,
-        to: { username: cleanUsername, name: receiverProfile.name },
-        amount: zij,
+        balance: senderNew, currency: sCur,
+        to: { username: cleanUsername, name: receiver.name },
+        amount: sendAmount, received: recvAmount, receiverCurrency: rCur,
     });
 }

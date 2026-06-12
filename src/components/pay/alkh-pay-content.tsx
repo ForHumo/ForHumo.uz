@@ -6,17 +6,24 @@ import {
     useMotionValue, animate,
 } from "framer-motion";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import {
     ArrowDownLeft, ArrowUpRight, Gift, Zap,
-    TrendingUp, Plus, AlertCircle, CheckCircle2, Loader2,
-    Clock, ShoppingBag, X, Send, StickyNote, Store,
+    Plus, AlertCircle, CheckCircle2, Loader2,
+    ShoppingBag, X, Send, StickyNote, Store,
     Shield, Lock, Unlock,
     Wallet, BarChart3,
     Landmark, Plane, Smartphone, Gamepad2, Home,
     GraduationCap, Gem, Car, Sun, Dumbbell, Cat,
 } from "lucide-react";
 import { AlkhPayNavbar } from "@/components/pay/alkh-pay-navbar";
+import { formatMoney, currencySymbol, minAmount, type Currency } from "@/lib/money";
+
+function asCur(x: string | undefined | null): Currency { return x === "USD" ? "USD" : "UZS"; }
+function money(v: string | number, c: Currency) { return formatMoney(Number(v) || 0, c); }
+// Valyutaga mos tezkor summalar
+function quickAmounts(c: Currency): number[] {
+    return c === "USD" ? [1, 5, 10, 50, 100, 500] : [10000, 50000, 100000, 500000, 1000000, 5000000];
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -27,7 +34,7 @@ type TxType = "DEPOSIT" | "WITHDRAW" | "PURCHASE" | "REWARD" | "REFUND" | "SALE"
 type TxFilter = "all" | "in" | "out";
 
 interface Transaction {
-    id: string; type: TxType; amount: string;
+    id: string; type: TxType; amount: string; currency?: string;
     balanceAfter: string; description: string | null; createdAt: string;
 }
 
@@ -38,6 +45,7 @@ interface ZijSafe {
 
 interface WalletData {
     balance: string;
+    currency: string;
     transactions: Transaction[];
     safes: ZijSafe[];
 }
@@ -61,7 +69,6 @@ const TX_META: Record<TxType, { icon: React.ElementType; color: string; sign: "+
 const IN_TYPES:  TxType[] = ["DEPOSIT", "REWARD", "REFUND", "SALE", "TRANSFER_IN", "SAFE_OUT"];
 const OUT_TYPES: TxType[] = ["WITHDRAW", "PURCHASE", "TRANSFER_OUT", "SAFE_IN"];
 
-const QUICK_AMOUNTS = [10, 50, 100, 500, 1000, 5000];
 // Seyf ikonkalari — emoji yo'q, faqat Lucide ikonkalar
 type SafeIconKey = "landmark" | "plane" | "smartphone" | "gamepad" | "home"
     | "graduation" | "gem" | "car" | "sun" | "dumbbell" | "piggybank" | "shield";
@@ -88,10 +95,6 @@ function getSafeIcon(key: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-function fz(v: string | number) {
-    const n = Number(v);
-    return n % 1 === 0 ? n.toLocaleString() : n.toFixed(2);
-}
 function timeAgo(d: string) {
     const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
     if (m < 1) return "Hozir";
@@ -209,17 +212,18 @@ function GlassModal({ children, onClose }: { children: React.ReactNode; onClose:
 // ─────────────────────────────────────────────────────────────────────────────
 // DepositModal
 // ─────────────────────────────────────────────────────────────────────────────
-function DepositModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (b: string) => void }) {
+function DepositModal({ currency, onClose, onSuccess }: { currency: Currency; onClose: () => void; onSuccess: (b: string) => void }) {
     const t = useTranslations("Pay");
     const [amount, setAmount] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [done, setDone] = useState(false);
+    const sym = currencySymbol(currency);
 
     async function submit(e: React.FormEvent) {
         e.preventDefault(); setError("");
         const val = Number(amount);
-        if (!val || val < 1) { setError("Kamida 1 Ƶ"); return; }
+        if (!val || val < minAmount(currency)) { setError(`Kamida ${money(minAmount(currency), currency)}`); return; }
         setLoading(true);
         try {
             const res = await fetch("/api/pay/deposit", {
@@ -228,6 +232,7 @@ function DepositModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
             });
             const data = await res.json();
             if (!res.ok) { setError(data.error || t("deposit_error")); }
+            else if (data.redirectUrl) { window.location.href = data.redirectUrl; }
             else { setDone(true); onSuccess(String(data.balance)); setTimeout(onClose, 2000); }
         } catch { setError(t("deposit_error")); } finally { setLoading(false); }
     }
@@ -246,7 +251,7 @@ function DepositModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
                         </div>
                     </div>
                     <p className="text-gray-900 dark:text-white font-bold text-xl">{t("deposit_success")}</p>
-                    <p className="text-gray-500 dark:text-white/40 text-sm">+{amount} Ƶ qo&apos;shildi</p>
+                    <p className="text-gray-500 dark:text-white/40 text-sm">+{money(amount, currency)} qo&apos;shildi</p>
                 </motion.div>
             ) : (
                 <>
@@ -260,30 +265,30 @@ function DepositModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
                         </button>
                     </div>
                     <div className="grid grid-cols-3 gap-2 mb-4">
-                        {QUICK_AMOUNTS.map((q, i) => (
+                        {quickAmounts(currency).map((q, i) => (
                             <motion.button key={q} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.05 }} onClick={() => setAmount(String(q))}
-                                className={`py-2 rounded-2xl text-sm font-bold border transition-all
+                                className={`py-2 rounded-2xl text-xs font-bold border transition-all
                                     ${amount === String(q)
                                         ? "bg-blue-500/20 border-blue-400/60 text-blue-600 dark:text-blue-300 scale-105"
                                         : "bg-gray-100/60 dark:bg-white/5 border-gray-200/80 dark:border-white/8 text-gray-600 dark:text-white/50 hover:bg-blue-50 dark:hover:bg-white/10"
                                     }`}
                             >
-                                {q}<span className="text-[10px] ml-0.5 opacity-60">Ƶ</span>
+                                {money(q, currency)}
                             </motion.button>
                         ))}
                     </div>
                     <form onSubmit={submit}>
                         <div className="relative mb-2">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 dark:text-blue-400 font-black text-xl select-none">Ƶ</span>
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 dark:text-blue-400 font-black text-base select-none">{sym}</span>
                             <input type="number" min={1} value={amount} onChange={(e) => setAmount(e.target.value)}
                                 placeholder="Miqdor kiriting..."
                                 className="w-full bg-gray-50/80 dark:bg-white/5 border border-gray-200 dark:border-white/10
-                                    focus:border-blue-400 dark:focus:border-blue-500/50 rounded-2xl pl-11 pr-4 py-3.5
+                                    focus:border-blue-400 dark:focus:border-blue-500/50 rounded-2xl pl-16 pr-4 py-3.5
                                     text-gray-900 dark:text-white text-xl font-bold placeholder:text-gray-300 dark:placeholder:text-white/15 outline-none transition" />
                         </div>
                         <p className="text-xs text-gray-400 dark:text-white/25 mb-4 text-center">
-                            {amount ? `≈ $${amount} USD` : "1 Ƶ = 1 USD (o'zgarmas)"}
+                            {amount ? money(amount, currency) : `Minimal ${money(minAmount(currency), currency)}`}
                         </p>
                         {error && <motion.p initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                             className="text-red-500 text-sm mb-3 flex items-center gap-1.5"><AlertCircle size={13} />{error}</motion.p>}
@@ -303,8 +308,8 @@ function DepositModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
 // ─────────────────────────────────────────────────────────────────────────────
 // TransferModal
 // ─────────────────────────────────────────────────────────────────────────────
-function TransferModal({ balance, onClose, onSuccess }: {
-    balance: string; onClose: () => void; onSuccess: (b: string) => void;
+function TransferModal({ balance, currency, onClose, onSuccess }: {
+    balance: string; currency: Currency; onClose: () => void; onSuccess: (b: string) => void;
 }) {
     const [username, setUsername] = useState("");
     const [amount, setAmount]   = useState("");
@@ -312,12 +317,13 @@ function TransferModal({ balance, onClose, onSuccess }: {
     const [loading, setLoading] = useState(false);
     const [error, setError]     = useState("");
     const [done, setDone]       = useState<{ to: string; amount: number } | null>(null);
+    const sym = currencySymbol(currency);
 
     async function submit(e: React.FormEvent) {
         e.preventDefault(); setError("");
         const val = Number(amount);
         if (!username.trim()) { setError("Username kiriting"); return; }
-        if (!val || val < 1)  { setError("Kamida 1 Ƶ"); return; }
+        if (!val || val < minAmount(currency))  { setError(`Kamida ${money(minAmount(currency), currency)}`); return; }
         if (val > Number(balance)) { setError("Balans yetarli emas"); return; }
         setLoading(true);
         try {
@@ -345,13 +351,13 @@ function TransferModal({ balance, onClose, onSuccess }: {
                         </div>
                     </div>
                     <p className="text-gray-900 dark:text-white font-bold text-xl">Yuborildi!</p>
-                    <p className="text-gray-500 dark:text-white/40 text-sm">{done.amount} Ƶ → @{done.to}</p>
+                    <p className="text-gray-500 dark:text-white/40 text-sm">{money(done.amount, currency)} → @{done.to}</p>
                 </motion.div>
             ) : (
                 <>
                     <div className="flex items-center justify-between mb-5">
                         <div>
-                            <h3 className="text-gray-900 dark:text-white font-bold text-xl">Zij yuborish</h3>
+                            <h3 className="text-gray-900 dark:text-white font-bold text-xl">Pul yuborish</h3>
                             <p className="text-gray-500 dark:text-white/40 text-xs mt-0.5">Username orqali do&apos;stingizga</p>
                         </div>
                         <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100/80 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center transition">
@@ -370,11 +376,11 @@ function TransferModal({ balance, onClose, onSuccess }: {
                         </div>
                         {/* Miqdor */}
                         <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 dark:text-blue-400 font-black text-lg select-none">Ƶ</span>
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 dark:text-blue-400 font-black text-sm select-none">{sym}</span>
                             <input type="number" min={1} value={amount} onChange={(e) => setAmount(e.target.value)}
                                 placeholder="Miqdor"
                                 className="w-full bg-gray-50/80 dark:bg-white/5 border border-gray-200 dark:border-white/10
-                                    focus:border-blue-400 dark:focus:border-blue-500/50 rounded-2xl pl-10 pr-4 py-3
+                                    focus:border-blue-400 dark:focus:border-blue-500/50 rounded-2xl pl-16 pr-4 py-3
                                     text-gray-900 dark:text-white text-lg font-bold placeholder:text-gray-300 dark:placeholder:text-white/20 outline-none transition" />
                         </div>
                         {/* Izoh */}
@@ -387,7 +393,7 @@ function TransferModal({ balance, onClose, onSuccess }: {
                                     text-gray-900 dark:text-white font-medium placeholder:text-gray-300 dark:placeholder:text-white/20 outline-none transition" />
                         </div>
                         <p className="text-xs text-gray-400 dark:text-white/25 text-center">
-                            Balans: <span className="text-blue-500 dark:text-blue-400 font-bold">{fz(balance)} Ƶ</span>
+                            Balans: <span className="text-blue-500 dark:text-blue-400 font-bold">{money(balance, currency)}</span>
                         </p>
                         {error && <motion.p initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                             className="text-red-500 text-sm flex items-center gap-1.5"><AlertCircle size={13} />{error}</motion.p>}
@@ -407,9 +413,9 @@ function TransferModal({ balance, onClose, onSuccess }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // SafeCard — bitta seyf
 // ─────────────────────────────────────────────────────────────────────────────
-function SafeCard({ safe, walletBalance, onAction }: {
+function SafeCard({ safe, currency, onAction }: {
     safe: ZijSafe;
-    walletBalance: number;
+    currency: Currency;
     onAction: (id: string, action: "deposit" | "withdraw", amount: number) => void;
 }) {
     const [open, setOpen]     = useState(false);
@@ -453,7 +459,7 @@ function SafeCard({ safe, walletBalance, onAction }: {
                     <div>
                         <p className="text-gray-900 dark:text-white font-bold text-sm">{safe.name}</p>
                         <p className="text-gray-400 dark:text-white/30 text-xs">
-                            {fz(safe.balance)} / {fz(safe.targetAmount)} Ƶ
+                            {money(safe.balance, currency)} / {money(safe.targetAmount, currency)}
                         </p>
                     </div>
                 </div>
@@ -472,7 +478,7 @@ function SafeCard({ safe, walletBalance, onAction }: {
             </div>
             <div className="flex justify-between text-xs text-gray-400 dark:text-white/25 mb-3">
                 <span>{pct.toFixed(0)}%</span>
-                {!safe.isCompleted && <span>Qoldi: {fz(remaining)} Ƶ</span>}
+                {!safe.isCompleted && <span>Qoldi: {money(remaining, currency)}</span>}
             </div>
 
             {/* Amallar */}
@@ -497,11 +503,11 @@ function SafeCard({ safe, walletBalance, onAction }: {
                         transition={{ duration: 0.25 }} className="overflow-hidden">
                         <div className="pt-3 flex gap-2">
                             <div className="relative flex-1">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 font-bold text-sm">Ƶ</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 font-bold text-xs">{currencySymbol(currency)}</span>
                                 <input type="number" min={1} value={amount} onChange={(e) => setAmount(e.target.value)}
                                     placeholder="Miqdor"
                                     className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10
-                                        rounded-xl pl-8 pr-3 py-2.5 text-gray-900 dark:text-white text-sm font-bold
+                                        rounded-xl pl-12 pr-3 py-2.5 text-gray-900 dark:text-white text-sm font-bold
                                         placeholder:text-gray-300 dark:placeholder:text-white/20 outline-none" />
                             </div>
                             <button onClick={handleAction} disabled={loading || !amount}
@@ -520,7 +526,8 @@ function SafeCard({ safe, walletBalance, onAction }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // CreateSafeModal
 // ─────────────────────────────────────────────────────────────────────────────
-function CreateSafeModal({ onClose, onCreate }: {
+function CreateSafeModal({ currency, onClose, onCreate }: {
+    currency: Currency;
     onClose: () => void;
     onCreate: (safe: ZijSafe) => void;
 }) {
@@ -593,11 +600,11 @@ function CreateSafeModal({ onClose, onCreate }: {
                         text-gray-900 dark:text-white font-semibold placeholder:text-gray-300 dark:placeholder:text-white/20 outline-none transition" />
                 {/* Maqsad */}
                 <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 dark:text-blue-400 font-black text-lg">Ƶ</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 dark:text-blue-400 font-black text-sm">{currencySymbol(currency)}</span>
                     <input type="number" min={1} value={target} onChange={(e) => setTarget(e.target.value)}
                         placeholder="Maqsad summa"
                         className="w-full bg-gray-50/80 dark:bg-white/5 border border-gray-200 dark:border-white/10
-                            focus:border-blue-400 dark:focus:border-blue-500/50 rounded-2xl pl-10 pr-4 py-3
+                            focus:border-blue-400 dark:focus:border-blue-500/50 rounded-2xl pl-16 pr-4 py-3
                             text-gray-900 dark:text-white text-lg font-bold placeholder:text-gray-300 dark:placeholder:text-white/20 outline-none transition" />
                 </div>
                 {error && <p className="text-red-500 text-sm flex items-center gap-1.5"><AlertCircle size={13} />{error}</p>}
@@ -615,7 +622,7 @@ function CreateSafeModal({ onClose, onCreate }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // StatsCard — oylik statistika
 // ─────────────────────────────────────────────────────────────────────────────
-function StatsCard({ transactions }: { transactions: Transaction[] }) {
+function StatsCard({ transactions, currency }: { transactions: Transaction[]; currency: Currency }) {
     const now = new Date();
     const thisMonth = transactions.filter(tx => {
         const d = new Date(tx.createdAt);
@@ -639,11 +646,11 @@ function StatsCard({ transactions }: { transactions: Transaction[] }) {
             <div className="grid grid-cols-2 gap-3">
                 <div className="bg-emerald-50/80 dark:bg-emerald-500/8 rounded-xl p-3">
                     <p className="text-emerald-600 dark:text-emerald-400/60 text-xs mb-1">Kirim</p>
-                    <p className="text-emerald-600 dark:text-emerald-400 font-black text-xl">+{fz(totalIn)} <span className="text-sm font-bold">Ƶ</span></p>
+                    <p className="text-emerald-600 dark:text-emerald-400 font-black text-lg">+{money(totalIn, currency)}</p>
                 </div>
                 <div className="bg-red-50/80 dark:bg-red-500/8 rounded-xl p-3">
                     <p className="text-red-500 dark:text-red-400/60 text-xs mb-1">Chiqim</p>
-                    <p className="text-red-500 dark:text-red-400 font-black text-xl">-{fz(totalOut)} <span className="text-sm font-bold">Ƶ</span></p>
+                    <p className="text-red-500 dark:text-red-400 font-black text-lg">-{money(totalOut, currency)}</p>
                 </div>
             </div>
         </motion.div>
@@ -651,10 +658,83 @@ function StatsCard({ transactions }: { transactions: Transaction[] }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// WithdrawModal — kartaga/hisobga pul yechish
+// ─────────────────────────────────────────────────────────────────────────────
+function WithdrawModal({ balance, currency, onClose, onSuccess }: {
+    balance: string; currency: Currency; onClose: () => void; onSuccess: (b: string) => void;
+}) {
+    const [amount, setAmount] = useState("");
+    const [card, setCard] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [done, setDone] = useState(false);
+    const sym = currencySymbol(currency);
+
+    async function submit(e: React.FormEvent) {
+        e.preventDefault(); setError("");
+        const val = Number(amount);
+        if (!val || val < minAmount(currency)) { setError(`Kamida ${money(minAmount(currency), currency)}`); return; }
+        if (val > Number(balance)) { setError("Balans yetarli emas"); return; }
+        if (card.replace(/\D/g, "").length < 12) { setError("Karta raqamini to'liq kiriting"); return; }
+        setLoading(true);
+        try {
+            const res = await fetch("/api/pay/withdraw", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: val, method: "card", destination: card }),
+            });
+            const data = await res.json();
+            if (!res.ok) { setError(data.error || "Xatolik"); }
+            else { setDone(true); onSuccess(String(data.balance)); setTimeout(onClose, 2000); }
+        } catch { setError("Xatolik yuz berdi"); } finally { setLoading(false); }
+    }
+
+    return (
+        <GlassModal onClose={onClose}>
+            {done ? (
+                <div className="flex flex-col items-center gap-3 py-8">
+                    <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center"><CheckCircle2 className="text-emerald-400" size={32} /></div>
+                    <p className="text-gray-900 dark:text-white font-bold text-xl">So&apos;rov qabul qilindi</p>
+                    <p className="text-gray-500 dark:text-white/40 text-sm">{money(amount, currency)} kartaga yo&apos;naltirildi</p>
+                </div>
+            ) : (
+                <>
+                    <div className="flex items-center justify-between mb-5">
+                        <div>
+                            <h3 className="text-gray-900 dark:text-white font-bold text-xl">Pul yechish</h3>
+                            <p className="text-gray-500 dark:text-white/40 text-xs mt-0.5">Kartangizga o&apos;tkazish</p>
+                        </div>
+                        <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100/80 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center transition">
+                            <X size={14} className="text-gray-500 dark:text-white/50" />
+                        </button>
+                    </div>
+                    <form onSubmit={submit} className="space-y-3">
+                        <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 dark:text-blue-400 font-black text-sm select-none">{sym}</span>
+                            <input type="number" min={1} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Miqdor"
+                                className="w-full bg-gray-50/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 focus:border-blue-400 dark:focus:border-blue-500/50 rounded-2xl pl-16 pr-4 py-3 text-gray-900 dark:text-white text-lg font-bold placeholder:text-gray-300 dark:placeholder:text-white/20 outline-none transition" />
+                        </div>
+                        <input value={card} onChange={(e) => setCard(e.target.value)} inputMode="numeric" maxLength={19} placeholder={currency === "UZS" ? "Karta raqami (8600 ....)" : "Karta raqami"}
+                            className="w-full bg-gray-50/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 focus:border-blue-400 dark:focus:border-blue-500/50 rounded-2xl px-4 py-3 text-gray-900 dark:text-white font-semibold placeholder:text-gray-300 dark:placeholder:text-white/20 outline-none transition" />
+                        <p className="text-xs text-gray-400 dark:text-white/25 text-center">
+                            Balans: <span className="text-blue-500 dark:text-blue-400 font-bold">{money(balance, currency)}</span>
+                        </p>
+                        {error && <p className="text-red-500 text-sm flex items-center gap-1.5"><AlertCircle size={13} />{error}</p>}
+                        <motion.button type="submit" disabled={loading || !amount || !card} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition-all disabled:opacity-40 flex items-center justify-center gap-2">
+                            {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowUpRight size={16} />} Yechish
+                        </motion.button>
+                    </form>
+                </>
+            )}
+        </GlassModal>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // BalanceCard — 3D tilt + animatsiyali counter
 // ─────────────────────────────────────────────────────────────────────────────
-function BalanceCard({ balance, loading, onDeposit, onTransfer, t }:
-    { balance: string; loading: boolean; onDeposit: () => void; onTransfer: () => void; t: (k: string) => string }) {
+function BalanceCard({ balance, currency, loading, onDeposit, onTransfer, onWithdraw, t }:
+    { balance: string; currency: Currency; loading: boolean; onDeposit: () => void; onTransfer: () => void; onWithdraw: () => void; t: (k: string) => string }) {
     const cardRef = useRef<HTMLDivElement>(null);
     const rX = useSpring(0, { stiffness: 100, damping: 20 });
     const rY = useSpring(0, { stiffness: 100, damping: 20 });
@@ -683,7 +763,7 @@ function BalanceCard({ balance, loading, onDeposit, onTransfer, t }:
                 ],
             }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} />
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-400/50 to-transparent" />
-            <div className="absolute right-4 top-2 text-[120px] font-black leading-none text-blue-500/8 dark:text-blue-400/6 select-none pointer-events-none">Ƶ</div>
+            <div className="absolute right-5 top-6 text-5xl font-black leading-none text-blue-500/10 dark:text-blue-400/8 select-none pointer-events-none">{currency}</div>
 
             <div className="relative z-10">
                 <p className="text-gray-500 dark:text-white/40 text-sm font-medium mb-2">{t("balance_label")}</p>
@@ -692,12 +772,12 @@ function BalanceCard({ balance, loading, onDeposit, onTransfer, t }:
                 ) : (
                     <>
                         <div className="flex items-end gap-2 mb-1">
+                            {currency === "USD" && <span className="text-3xl font-bold mb-1.5 text-blue-400 dark:text-blue-300/60">$</span>}
                             <span className="text-5xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
                                 <AnimatedCounter value={Math.round(Number(balance))} />
                             </span>
-                            <span className="text-2xl font-bold mb-1.5 text-blue-400 dark:text-blue-300/60">Ƶ</span>
+                            {currency === "UZS" && <span className="text-2xl font-bold mb-1.5 text-blue-400 dark:text-blue-300/60">so&apos;m</span>}
                         </div>
-                        <p className="text-gray-400 dark:text-white/25 text-xs">≈ ${fz(balance)} USD <span className="ml-2 text-gray-300 dark:text-white/15">· 1 Ƶ = 1 $ (o&apos;zgarmas)</span></p>
                     </>
                 )}
                 <div className="flex gap-3 mt-5">
@@ -713,11 +793,13 @@ function BalanceCard({ balance, loading, onDeposit, onTransfer, t }:
                             font-bold text-sm transition-all">
                         <Send size={16} />Yuborish
                     </motion.button>
-                    <button disabled className="flex items-center gap-2 px-4 py-2.5 rounded-2xl
-                        bg-gray-100/80 dark:bg-white/5 border border-gray-200 dark:border-white/8
-                        text-gray-400 dark:text-white/20 font-semibold text-sm cursor-not-allowed">
-                        <Clock size={15} /><span className="text-[9px] bg-blue-100 dark:bg-blue-500/15 text-blue-500 dark:text-blue-400/70 rounded-full px-2 py-0.5">Tez orada</span>
-                    </button>
+                    <motion.button onClick={onWithdraw} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl
+                            bg-gray-100/80 dark:bg-white/8 border border-gray-200 dark:border-white/10
+                            hover:bg-blue-50 dark:hover:bg-white/12 text-gray-700 dark:text-white/70
+                            font-bold text-sm transition-all">
+                        <ArrowUpRight size={16} />Yechish
+                    </motion.button>
                 </div>
             </div>
         </motion.div>
@@ -733,6 +815,7 @@ export function AlkhPayContent() {
     const [loading, setLoading]       = useState(true);
     const [depositOpen, setDepositOpen]   = useState(false);
     const [transferOpen, setTransferOpen] = useState(false);
+    const [withdrawOpen, setWithdrawOpen] = useState(false);
     const [createSafeOpen, setCreateSafeOpen] = useState(false);
     const [txFilter, setTxFilter]     = useState<TxFilter>("all");
     const [activeTab, setActiveTab]   = useState<"wallet" | "safe">("wallet");
@@ -748,6 +831,8 @@ export function AlkhPayContent() {
     function handleBalanceUpdate(newBalance: string) {
         setWallet((prev) => { reload(); return prev ? { ...prev, balance: newBalance } : prev; });
     }
+
+    const currency = asCur(wallet?.currency);
 
     // Filterlangan tranzaksiyalar
     const filteredTx = (wallet?.transactions ?? []).filter(tx => {
@@ -791,9 +876,11 @@ export function AlkhPayContent() {
                     {/* Balans kartasi */}
                     <BalanceCard
                         balance={wallet?.balance ?? "0"}
+                        currency={currency}
                         loading={loading}
                         onDeposit={() => setDepositOpen(true)}
                         onTransfer={() => setTransferOpen(true)}
+                        onWithdraw={() => setWithdrawOpen(true)}
                         t={t}
                     />
 
@@ -814,7 +901,7 @@ export function AlkhPayContent() {
                     {activeTab === "wallet" && (
                         <>
                             {/* Statistika */}
-                            {!loading && wallet && <StatsCard transactions={wallet.transactions} />}
+                            {!loading && wallet && <StatsCard transactions={wallet.transactions} currency={currency} />}
 
                             {/* Filter */}
                             <div className="flex gap-2 mb-4">
@@ -861,9 +948,9 @@ export function AlkhPayContent() {
                                             </div>
                                             <div className="text-right shrink-0">
                                                 <p className={`font-bold text-sm ${meta.sign === "+" ? "text-emerald-500 dark:text-emerald-400" : "text-red-500 dark:text-red-400"}`}>
-                                                    {meta.sign}{fz(tx.amount)} Ƶ
+                                                    {meta.sign}{money(tx.amount, asCur(tx.currency))}
                                                 </p>
-                                                <p className="text-gray-300 dark:text-white/20 text-xs mt-0.5">{fz(tx.balanceAfter)} Ƶ</p>
+                                                <p className="text-gray-300 dark:text-white/20 text-xs mt-0.5">{money(tx.balanceAfter, asCur(tx.currency))}</p>
                                             </div>
                                         </motion.div>
                                     );
@@ -878,7 +965,7 @@ export function AlkhPayContent() {
                                 <div>
                                     <p className="text-gray-500 dark:text-white/40 text-sm font-semibold">Tez orada</p>
                                     <p className="text-gray-400 dark:text-white/20 text-xs mt-0.5">
-                                        eSport turnirlariga Zij bilan ro&apos;yxatdan o&apos;tish, Nexus Premium...
+                                        Kartaga avtomatik pul yechish, eSport turnir to&apos;lovlari...
                                     </p>
                                 </div>
                             </motion.div>
@@ -914,7 +1001,7 @@ export function AlkhPayContent() {
                                 <div className="space-y-3">
                                     {wallet.safes.map(safe => (
                                         <SafeCard key={safe.id} safe={safe}
-                                            walletBalance={Number(wallet.balance)}
+                                            currency={currency}
                                             onAction={handleSafeAction} />
                                     ))}
                                 </div>
@@ -926,13 +1013,16 @@ export function AlkhPayContent() {
 
             {/* Modallar */}
             <AnimatePresence>
-                {depositOpen && <DepositModal onClose={() => setDepositOpen(false)} onSuccess={handleBalanceUpdate} />}
+                {depositOpen && <DepositModal currency={currency} onClose={() => setDepositOpen(false)} onSuccess={handleBalanceUpdate} />}
             </AnimatePresence>
             <AnimatePresence>
-                {transferOpen && <TransferModal balance={wallet?.balance ?? "0"} onClose={() => setTransferOpen(false)} onSuccess={handleBalanceUpdate} />}
+                {transferOpen && <TransferModal balance={wallet?.balance ?? "0"} currency={currency} onClose={() => setTransferOpen(false)} onSuccess={handleBalanceUpdate} />}
             </AnimatePresence>
             <AnimatePresence>
-                {createSafeOpen && <CreateSafeModal onClose={() => setCreateSafeOpen(false)} onCreate={(safe) => {
+                {withdrawOpen && <WithdrawModal balance={wallet?.balance ?? "0"} currency={currency} onClose={() => setWithdrawOpen(false)} onSuccess={handleBalanceUpdate} />}
+            </AnimatePresence>
+            <AnimatePresence>
+                {createSafeOpen && <CreateSafeModal currency={currency} onClose={() => setCreateSafeOpen(false)} onCreate={(safe) => {
                     setWallet(prev => prev ? { ...prev, safes: [safe, ...prev.safes] } : prev);
                 }} />}
             </AnimatePresence>
