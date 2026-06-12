@@ -69,11 +69,14 @@ Bu qismni tushunish uchun bir nechta faylni birga o'qish kerak. Eng muhim naqshl
 - Server: `getServerSession(authOptions)`. Client: `useSession()` yoki `src/store/auth-store.ts` (Zustand).
 - Humo ID formati: `UZ` + 7 raqam (masalan `UZ4829341`) — `api/user/generate-humo-id`.
 
-### 4. Zij valyuta tizimi (ALKH Pay)
-- **Zij (Ƶ)** — ichki valyuta. **Kurs qat'iy: `1 Zij = 1 USD`** (o'zgarmas).
-- Saqlanishi: `Decimal(18,2)` (Int emas).
-- `ZijWallet` ↔ `UserProfile` bilan 1:1. `ZijTransaction` — **single-entry ledger** (`balanceAfter` maydoni bilan, double-entry emas). `ZijSafe` — maqsadli jamg'arma.
-- Pay biznes-logikasi `src/app/api/pay/*` route'larida (deposit/transfer/safe/wallet). **Deposit hozircha test rejimda, withdraw o'chirilgan** (`ZijTransactionType` izohlariga qarang).
+### 4. Valyuta tizimi (ALKH Pay) — REAL PUL (UZS/USD)
+- **"Zij" OLIB TASHLANDI** (huquqiy: xususiy valyuta O'zbekistonda muammo). Endi **real pul**: O'zbekiston foydalanuvchilari **so'm (UZS)**, xorijliklar **dollar (USD)**. Foydalanuvchi valyutasi `UserProfile.country` dan (`currencyForCountry` — UZ/bo'sh→UZS, aks holda USD).
+- **`src/lib/money.ts` — yagona manba:** `formatMoney(amount, currency)` (so'm/$), `convert(amount, from, to)` (FX, env `USD_UZS_RATE`, default 12900), `currencyForCountry`, `minAmount`/`maxAmount`, `roundMoney` (UZS butun, USD 2 kasr). UI'da **hech qachon `Ƶ` yozma** — doim `formatMoney`.
+- Model nomlari ichki qoldi: `ZijWallet`/`ZijTransaction`/`ZijSafe` (foydalanuvchiga ko'rinmaydi). Har biriga `currency` maydoni qo'shildi. `Decimal(18,2)`. `ZijTransaction` — single-entry ledger.
+- **Valyutalararo:** tip/obuna/video-xarid'da yuboruvchi o'z valyutasida, qabul qiluvchi o'z valyutasida (FX konvert). Narxlar (priceZij/subPriceZij) **egasining valyutasida**. `src/lib/wallet.ts getOrCreateWallet` valyutani davlatdan o'rnatadi.
+- **To'lov shlyuzi `src/lib/payments/`:** `PaymentProvider` interfeysi + `testProvider` (real pul yo'q). `getDepositProvider`/`getPayoutProvider` hozir test qaytaradi. Real shlyuz (Click/Payme→UZS, Stripe→USD) kalitlari env'da bo'lganda ulanadi (`isLiveMode()`); UI/route o'zgarmaydi. **Withdraw real:** `api/pay/withdraw` payout so'rovi (`PayoutRequest`), balans escrow, FAILED'da qaytarish.
+- Pay biznes-logikasi `src/app/api/pay/*` (deposit/withdraw/transfer/safe/wallet). **Hozir TEST rejim** (deposit darhol tushadi). MChJ + merchant hisob + kalitlar foydalanuvchidan kelganda real ishlaydi.
+- ⚠️ **Market hali Zij'da** (narxlari migratsiya qilinmagan; Nexus shoppable postlarda vaqtincha UZS sifatida ko'rsatiladi). Market valyuta migratsiyasi keyingi ish.
 
 ### 5. Repository vs API-direct (mos kelmaslik)
 - **Esport** DB logikasi `src/lib/repositories/` da (players / teams / tournaments).
@@ -195,7 +198,7 @@ VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
   `DATABASE_URL="<.env.local dagi URL>" npx prisma db push` ishlat. Unique constraint o'zgarsa `--accept-data-loss` kerak bo'ladi (test rejimda xavfsiz).
 - **PowerShell:** ish papkasi loyiha emas (uy papkasi) — buyruq oldidan `Set-Location "C:\Users\abduv\OneDrive\Рабочий стол\ForHumo.uz";` qo'sh. (`tsc`, `prisma`, `vercel` shu tarzda ishga tushiriladi.) Bash tool'da esa `cd "..." && ...` ishlaydi.
 - **Test rejim (vaqtincha):** Pay (Zij pul), Market (mahsulotlar), Nexus (kontent) — **mock** ma'lumot. Qolgan hamma narsa (auth, DB, API, deploy) **real**. Mock'ni faqat keyin real qilamiz; boshqa hech narsa o'zgarmaydi.
-- **Zij simvoli:** `Ƶ` (Al-Xorazmiy → ALKH). Kurs `1 Ƶ = 1 USD` o'zgarmas.
+- **Valyuta:** real pul — UZS (so'm) / USD ($). `Ƶ`/"Zij" ISHLATILMAYDI (huquqiy sabab). Doim `src/lib/money.ts formatMoney()`. Balanslar 2026-06-13 da 0ga tushirildi (`scripts/reset-wallets.mjs`).
 - **Mock rasm:** mahsulot/kontent rasmi kerak bo'lsa `https://picsum.photos/seed/<slug>/600/600`.
 - **Token tejash:** keraksiz fayllarni qayta o'qima; faqat kerakli qismni o'qi. Katta `.json`/`.claude.json` ni to'liq o'qimasdan `python3`/`grep` bilan tahlil qil.
 - **Glob/grep timeout:** loyiha OneDrive'da + `node_modules` katta — `**/CLAUDE.md` kabi keng Glob timeout bo'ladi. Aniq yo'l ber (`prisma/`, `src/...`) yoki Grep'da `path` ko'rsat.
