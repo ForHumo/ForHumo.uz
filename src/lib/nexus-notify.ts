@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export type NexusNotifType =
     | "LIKE" | "COMMENT" | "FOLLOW" | "REPLY"
-    | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP";
+    | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION";
 
 export async function nexusNotify(opts: {
     recipientId: string;

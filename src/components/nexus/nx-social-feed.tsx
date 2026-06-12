@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { upload } from "@vercel/blob/client";
 import { Link } from "@/i18n/routing";
 import { formatMoney } from "@/lib/money";
+import { NxText } from "./nx-rich-text";
 import {
     Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
     BadgeCheck, Image as ImgIcon, Loader2, Trash2, Send, X, Flag,
@@ -398,7 +399,7 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
             {/* Matn */}
             {p.text && (
                 <div className="px-4 pb-3">
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(200,215,245,0.90)" }}>{p.text}</p>
+                    <NxText text={p.text} className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(200,215,245,0.90)" }} />
                     {p.hashtags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                             {p.hashtags.map(h => <Link key={h} href={`/nexus/tag/${h}`} className="text-xs font-bold hover:underline" style={{ color: "#2B3EE8" }}>#{h}</Link>)}
@@ -557,7 +558,7 @@ function CommentsSection({ postId, onAdded }: { postId: string; onAdded: () => v
                                         </button>
                                     )}
                                 </div>
-                                <p className="text-xs mt-0.5" style={{ color: "rgba(200,215,245,0.85)" }}>{c.text}</p>
+                                <NxText text={c.text} className="text-xs mt-0.5" style={{ color: "rgba(200,215,245,0.85)" }} />
                             </div>
                         </div>
                     ))}

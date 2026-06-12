@@ -6,6 +6,7 @@ import { isVerifiedProfile } from "@/lib/nexus";
 import { after } from "next/server";
 import { moderateOnCreate } from "@/lib/moderation";
 import { nexusNotify } from "@/lib/nexus-notify";
+import { notifyMentions } from "@/lib/nexus-mention";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 // GET /api/nexus/posts/[id]/comments — izohlar (flat; klient daraxt quradi)
@@ -74,6 +75,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             await nexusNotify({ recipientId: post.profileId, actorId: profile.id, type: "COMMENT", postId: id });
         }
     });
+    // @mention bildirishnomalari
+    after(() => notifyMentions({ text: comment.text, actorId: profile.id, postId: id, commentId: comment.id }));
 
     return NextResponse.json({
         comment: {

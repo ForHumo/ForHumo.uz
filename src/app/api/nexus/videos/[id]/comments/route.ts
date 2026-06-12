@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { nexusNotify } from "@/lib/nexus-notify";
+import { notifyMentions } from "@/lib/nexus-mention";
 
 // GET /api/nexus/videos/[id]/comments — izohlar
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -53,6 +54,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         const v = await prisma.nexusVideo.findUnique({ where: { id }, select: { profileId: true } });
         if (v) await nexusNotify({ recipientId: v.profileId, actorId: profile.id, type: "VIDEO_COMMENT", videoId: id });
     });
+    after(() => notifyMentions({ text: comment.text, actorId: profile.id, videoId: id }));
     return NextResponse.json({
         comment: {
             id: comment.id, text: comment.text, createdAt: comment.createdAt, isMine: true,

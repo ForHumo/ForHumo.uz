@@ -9,6 +9,7 @@ import { moderateOnCreate } from "@/lib/moderation";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { getActiveSubscribedCreatorIds } from "@/lib/nexus-sub";
+import { notifyMentions } from "@/lib/nexus-mention";
 
 async function myProfileId(): Promise<string | null> {
     const session = await getServerSession(authOptions);
@@ -191,6 +192,8 @@ export async function POST(req: Request) {
         module: "NEXUS", targetType: "POST", targetId: post.id,
         text: post.text, imageUrl: mediaArr[0] || null, kind: "post",
     }));
+    // @mention bildirishnomalari
+    after(() => notifyMentions({ text: post.text, actorId: profile.id, postId: post.id }));
 
     const prodMap = await loadAttachedProducts([attachId]);
 

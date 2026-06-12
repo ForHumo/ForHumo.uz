@@ -748,6 +748,7 @@ enum NexusNotifType {
   PURCHASE
   LIVE
   TIP
+  MENTION
 }
 
 // Story — 24 soatlik vaqtinchalik kontent
