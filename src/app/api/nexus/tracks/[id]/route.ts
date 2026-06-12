@@ -22,7 +22,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             isLiked = !!lk;
         }
     }
-    const p = await prisma.userProfile.findUnique({ where: { id: t.profileId }, select: { name: true, username: true, image: true, humoId: true } });
+    const p = await prisma.userProfile.findUnique({ where: { id: t.profileId }, select: { name: true, username: true, image: true, humoId: true, verified: true } });
 
     return NextResponse.json({
         track: {

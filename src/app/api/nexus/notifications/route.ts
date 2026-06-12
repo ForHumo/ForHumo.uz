@@ -27,7 +27,7 @@ export async function GET(req: Request) {
     const liveIds = [...new Set(rows.map(r => r.liveId).filter((x): x is string => !!x))];
 
     const [actors, posts, videos, tracks, lives] = await Promise.all([
-        prisma.userProfile.findMany({ where: { id: { in: actorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true } }),
+        prisma.userProfile.findMany({ where: { id: { in: actorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } }),
         postIds.length ? prisma.nexusPost.findMany({ where: { id: { in: postIds } }, select: { id: true, text: true } }) : Promise.resolve([] as { id: string; text: string | null }[]),
         videoIds.length ? prisma.nexusVideo.findMany({ where: { id: { in: videoIds } }, select: { id: true, title: true } }) : Promise.resolve([] as { id: string; title: string }[]),
         trackIds.length ? prisma.nexusTrack.findMany({ where: { id: { in: trackIds } }, select: { id: true, title: true } }) : Promise.resolve([] as { id: string; title: string }[]),

@@ -39,7 +39,7 @@ export async function GET() {
     // Mualliflar
     const authorIds = [...new Set([...vidMap.values()].map(v => v.profileId))];
     const profs = await prisma.userProfile.findMany({
-        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true },
+        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
     });
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
     const savedSet = new Set(wlRows.map(w => w.videoId));

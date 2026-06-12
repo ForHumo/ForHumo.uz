@@ -27,7 +27,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     }
 
     const author = await prisma.userProfile.findUnique({
-        where: { id: post.profileId }, select: { id: true, name: true, username: true, image: true, humoId: true },
+        where: { id: post.profileId }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
     });
 
     let liked = false, saved = false;

@@ -19,7 +19,7 @@ export async function GET() {
     });
     const otherIds = [...new Set(convs.map(c => otherId(c, me.id)))];
     const profs = await prisma.userProfile.findMany({
-        where: { id: { in: otherIds } }, select: { id: true, name: true, username: true, image: true, humoId: true },
+        where: { id: { in: otherIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
     });
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
         update: {},
     });
 
-    const p = await prisma.userProfile.findUnique({ where: { id: targetId }, select: { name: true, username: true, image: true, humoId: true } });
+    const p = await prisma.userProfile.findUnique({ where: { id: targetId }, select: { name: true, username: true, image: true, humoId: true, verified: true } });
     return NextResponse.json({
         conversationId: conv.id,
         other: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,

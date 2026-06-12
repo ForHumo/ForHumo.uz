@@ -35,7 +35,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     });
 
     const oid = otherId(conv, me.id);
-    const p = await prisma.userProfile.findUnique({ where: { id: oid }, select: { name: true, username: true, image: true, humoId: true } });
+    const p = await prisma.userProfile.findUnique({ where: { id: oid }, select: { name: true, username: true, image: true, humoId: true, verified: true } });
 
     return NextResponse.json({
         messages: messages.map(m => ({ id: m.id, text: m.text, mine: m.senderId === me.id, createdAt: m.createdAt })),

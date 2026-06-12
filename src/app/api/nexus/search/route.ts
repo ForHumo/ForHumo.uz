@@ -36,7 +36,7 @@ export async function GET(req: Request) {
                 { username: { contains: q, mode: "insensitive" } },
             ],
         },
-        select: { id: true, name: true, username: true, image: true, humoId: true },
+        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
         take: 8,
     });
     let myFollowing = new Set<string>();
@@ -59,7 +59,7 @@ export async function GET(req: Request) {
     });
     const authorIds = [...new Set(postRows.map(p => p.profileId))];
     const authors = await prisma.userProfile.findMany({
-        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true },
+        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
     });
     const aMap = Object.fromEntries(authors.map(a => [a.id, a]));
     const posts = postRows.map(p => {
@@ -107,7 +107,7 @@ export async function GET(req: Request) {
     // Media mualliflari
     const mediaAuthorIds = [...new Set([...vidRows, ...trackRows, ...liveRows].map(r => r.profileId))];
     const mediaAuthors = mediaAuthorIds.length
-        ? await prisma.userProfile.findMany({ where: { id: { in: mediaAuthorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true } })
+        ? await prisma.userProfile.findMany({ where: { id: { in: mediaAuthorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } })
         : [];
     const mMap = Object.fromEntries(mediaAuthors.map(a => [a.id, a]));
     const authorOf = (pid: string) => {

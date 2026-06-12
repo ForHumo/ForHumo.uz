@@ -25,7 +25,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const profileIds = [...new Set(comments.map(c => c.profileId))];
     const profiles = await prisma.userProfile.findMany({
         where: { id: { in: profileIds } },
-        select: { id: true, name: true, username: true, image: true, humoId: true },
+        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
     });
     const pMap = Object.fromEntries(profiles.map(p => [p.id, p]));
 

@@ -28,7 +28,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     }
 
     const author = await prisma.userProfile.findUnique({
-        where: { id: video.profileId }, select: { id: true, name: true, username: true, image: true, humoId: true },
+        where: { id: video.profileId }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
     });
 
     let isLiked = false, isSubscribed = false, isPurchased = false;

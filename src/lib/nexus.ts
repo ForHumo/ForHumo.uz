@@ -2,9 +2,9 @@
 
 import { isFounderProfile } from "@/lib/founders";
 
-// Tasdiqlangan (ko'k belgi) — hozircha asoschilar (founder ro'yxati lib/founders.ts da)
-export function isVerifiedProfile(p: { username: string | null; humoId: string | null }) {
-    return isFounderProfile(p);
+// Tasdiqlangan (ko'k belgi) — asoschilar (lib/founders.ts) YOKI ariza orqali tasdiqlangan (DB verified flag)
+export function isVerifiedProfile(p: { username: string | null; humoId: string | null; verified?: boolean }) {
+    return isFounderProfile(p) || p.verified === true;
 }
 
 // 18 yoshga to'lganmi? Tug'ilgan sana yo'q bo'lsa — tasdiqlanmagan, false (18+ kontent yashiriladi)

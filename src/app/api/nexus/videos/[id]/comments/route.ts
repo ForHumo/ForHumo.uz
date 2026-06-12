@@ -21,7 +21,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         where: { videoId: id }, orderBy: { createdAt: "desc" }, take: 100,
     });
     const ids = [...new Set(comments.map(c => c.profileId))];
-    const profs = await prisma.userProfile.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, username: true, image: true, humoId: true } });
+    const profs = await prisma.userProfile.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } });
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 
     const enriched = comments.map(c => {
@@ -38,7 +38,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, name: true, username: true, image: true, humoId: true } });
+    const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
     if (await nexusRateLimited(profile.id, "videoComment")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 

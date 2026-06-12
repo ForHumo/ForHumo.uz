@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 
     const profiles = await prisma.userProfile.findMany({
         where: { id: { in: userIds } },
-        select: { id: true, name: true, username: true, image: true, humoId: true },
+        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
     });
     const pMap = Object.fromEntries(profiles.map(p => [p.id, p]));
 

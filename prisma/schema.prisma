@@ -74,6 +74,10 @@ model UserProfile {
   // Ijodkor pullik obunasi — 0 = o'chiq, >0 = oylik narx (Ƶ)
   subPriceZij   Int      @default(0)
 
+  // Tasdiqlangan (ko'k belgi) — founderlardan tashqari, ariza orqali
+  verified      Boolean  @default(false)
+  verifiedAt    DateTime?
+
   // Onboarding
   onboardingDone Boolean @default(false)
 
@@ -937,6 +941,27 @@ enum NexusTipTarget {
   POST
   VIDEO
   LIVE
+}
+
+// Verifikatsiya arizasi — ijodkor ko'k belgi so'raydi; founder ko'rib chiqadi.
+model NexusVerifyRequest {
+  id          String   @id @default(cuid())
+  profileId   String   @unique                  // ariza beruvchi (UserProfile.id)
+  fullName    String                             // haqiqiy ism
+  category    String                             // kim: bloger/musiqachi/brend/jurnalist...
+  reason      String                             // nega tasdiqlanishi kerak
+  links       String[] @default([])              // ijtimoiy tarmoq/manba havolalari
+  status      NexusVerifyStatus @default(PENDING)
+  reviewedBy  String?                            // founder profileId
+  reviewedAt  DateTime?
+  createdAt   DateTime @default(now())
+  @@index([status, createdAt])
+}
+
+enum NexusVerifyStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 // Pullik obuna — obunachi ijodkorga oylik Zij to'laydi, expiresAt gacha SUBSCRIBERS kontent ochiq.

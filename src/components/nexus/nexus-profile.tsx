@@ -269,6 +269,13 @@ export function NexusProfile({ username }: { username: string }) {
                                     </Link>
                                 </div>
                             )}
+                            {data.isMe && !data.profile.verified && (
+                                <Link href="/nexus/verify"
+                                    className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-bold active:scale-[0.99] transition"
+                                    style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(150,170,210,0.9)" }}>
+                                    <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} /> Ko&apos;k belgi uchun ariza
+                                </Link>
+                            )}
                         </div>
 
                         {iBlocked || blockedMe ? (
