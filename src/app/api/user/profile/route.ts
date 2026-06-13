@@ -3,6 +3,9 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { encryptLocation, decryptLocation } from "@/lib/crypto";
+import { isFounderProfile } from "@/lib/founders";
+
+const EDIT_WINDOW_MS = 14 * 24 * 60 * 60 * 1000; // 14 kun
 
 // GET /api/user/profile
 export async function GET() {
@@ -34,7 +37,7 @@ export async function GET() {
     }
 
     const { location: _loc, locationIv: _iv, ...rest } = profile;
-    return NextResponse.json({ ...rest, location: decryptedLocation });
+    return NextResponse.json({ ...rest, location: decryptedLocation, isFounder: isFounderProfile(profile) });
 }
 
 // PATCH /api/user/profile
@@ -61,9 +64,23 @@ export async function PATCH(req: Request) {
         onboardingDone?: boolean;
     };
 
-    // Rate limit o'chirilgan — test rejimi
+    // Joriy profil — founder holati + 14-kunlik cheklov uchun
+    const current = await prisma.userProfile.findUnique({
+        where: { email: session.user.email },
+        select: { username: true, humoId: true, profileEditedAt: true },
+    });
+    if (!current) return NextResponse.json({ error: "profile_not_found" }, { status: 404 });
+    const isFounder = isFounderProfile(current);
+
+    // Profilni 14 kunda 1 marta tahrirlash mumkin (founderlar bundan mustasno)
     const RATE_LIMITED_FIELDS = ["firstName", "lastName", "fatherName", "username", "bio", "birthday", "phone", "location"] as const;
     const isProfileEdit = RATE_LIMITED_FIELDS.some((f) => f in body) && body.onboardingDone !== true;
+    if (isProfileEdit && !isFounder && current.profileEditedAt) {
+        const nextEdit = current.profileEditedAt.getTime() + EDIT_WINDOW_MS;
+        if (Date.now() < nextEdit) {
+            return NextResponse.json({ error: "edit_cooldown", nextEditDate: new Date(nextEdit).toISOString() }, { status: 429 });
+        }
+    }
 
     // Validate username if provided
     const RESERVED_USERNAMES = new Set([
@@ -75,7 +92,7 @@ export async function PATCH(req: Request) {
         if (!/^[a-zA-Z0-9_]{3,20}$/.test(body.username)) {
             return NextResponse.json({ error: "username_invalid" }, { status: 400 });
         }
-        if (RESERVED_USERNAMES.has(body.username.toLowerCase())) {
+        if (!isFounder && RESERVED_USERNAMES.has(body.username.toLowerCase())) {
             return NextResponse.json({ error: "username_reserved" }, { status: 400 });
         }
         const existing = await prisma.userProfile.findUnique({
@@ -117,7 +134,7 @@ export async function PATCH(req: Request) {
     if (body.image      !== undefined) data.image      = body.image ?? null;
     if (body.phone      !== undefined) data.phone      = body.phone?.trim() || null;
     if (body.onboardingDone !== undefined) data.onboardingDone = body.onboardingDone;
-    if (isProfileEdit) data.profileEditedAt = new Date();
+    if (isProfileEdit && !isFounder) data.profileEditedAt = new Date();
     if (body.location !== undefined) {
         if (body.location.trim()) {
             const { encrypted, iv } = encryptLocation(body.location.trim());

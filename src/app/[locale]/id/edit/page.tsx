@@ -105,6 +105,7 @@ export default function EditProfilePage() {
     const [saved, setSaved]             = useState(false);
     const [error, setError]             = useState<string | null>(null);
     const [cooldownUntil, setCooldownUntil] = useState<Date | null>(null);
+    const [isFounder, setIsFounder]     = useState(false);
 
     // Avatar
     const [avatarLoading, setAvatarLoading] = useState(false);
@@ -141,7 +142,8 @@ export default function EditProfilePage() {
                 setCoverUrl(data.coverImage ?? null);
                 setUsernameInput(data.username ?? "");
                 setCurrentUsername(data.username ?? "");
-                if (data.profileEditedAt) {
+                setIsFounder(data.isFounder ?? false);
+                if (data.profileEditedAt && !data.isFounder) {
                     const next = new Date(new Date(data.profileEditedAt).getTime() + 14 * 24 * 60 * 60 * 1000);
                     if (next > new Date()) setCooldownUntil(next);
                 }
@@ -292,8 +294,7 @@ export default function EditProfilePage() {
                 }
                 return;
             }
-            const next = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-            setCooldownUntil(next);
+            if (!isFounder) setCooldownUntil(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000));
             setCurrentUsername(usernameInput);
             setSaved(true);
             setTimeout(() => { setSaved(false); router.push("/id"); }, 1200);
