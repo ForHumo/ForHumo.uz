@@ -28,8 +28,10 @@ export async function POST(req: Request) {
     });
     if (existing) await prisma.nexusFollow.delete({ where: { id: existing.id } });
     else {
-        await prisma.nexusFollow.create({ data: { followerId: me.id, followingId: targetId } });
-        after(() => nexusNotify({ recipientId: targetId, actorId: me.id, type: "FOLLOW" }));
+        // Idempotent — bir vaqtda ikki marta bosilsa unique buzilmasin (faqat birinchi marta bildirishnoma)
+        let created = false;
+        try { await prisma.nexusFollow.create({ data: { followerId: me.id, followingId: targetId } }); created = true; } catch { /* allaqachon kuzatadi */ }
+        if (created) after(() => nexusNotify({ recipientId: targetId, actorId: me.id, type: "FOLLOW" }));
     }
 
     const followerCount = await prisma.nexusFollow.count({ where: { followingId: targetId } });

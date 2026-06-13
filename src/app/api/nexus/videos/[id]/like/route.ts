@@ -15,9 +15,10 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     const existing = await prisma.nexusVideoLike.findUnique({ where: { videoId_profileId: { videoId: id, profileId: me.id } } });
     if (existing) await prisma.nexusVideoLike.delete({ where: { id: existing.id } });
     else {
-        await prisma.nexusVideoLike.create({ data: { videoId: id, profileId: me.id } });
-        // Muallifga bildirishnoma (faqat like'da)
-        after(async () => {
+        // Idempotent — bir vaqtda ikki bosishda unique buzilmasin (faqat birinchi marta bildirishnoma)
+        let created = false;
+        try { await prisma.nexusVideoLike.create({ data: { videoId: id, profileId: me.id } }); created = true; } catch { /* allaqachon like */ }
+        if (created) after(async () => {
             const v = await prisma.nexusVideo.findUnique({ where: { id }, select: { profileId: true } });
             if (v) await nexusNotify({ recipientId: v.profileId, actorId: me.id, type: "VIDEO_LIKE", videoId: id });
         });

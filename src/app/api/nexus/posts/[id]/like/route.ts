@@ -23,8 +23,10 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         if (post.profileId !== profile.id && await isBlockedBetween(profile.id, post.profileId)) {
             return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
         }
-        await prisma.nexusLike.create({ data: { postId: id, profileId: profile.id } });
-        after(() => nexusNotify({ recipientId: post.profileId, actorId: profile.id, type: "LIKE", postId: id }));
+        // Bir vaqtda ikki marta bosilsa unique buzilmasin (idempotent — faqat birinchi marta bildirishnoma)
+        let created = false;
+        try { await prisma.nexusLike.create({ data: { postId: id, profileId: profile.id } }); created = true; } catch { /* allaqachon like */ }
+        if (created) after(() => nexusNotify({ recipientId: post.profileId, actorId: profile.id, type: "LIKE", postId: id }));
     }
 
     const count = await prisma.nexusLike.count({ where: { postId: id } });

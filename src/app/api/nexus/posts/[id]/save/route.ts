@@ -13,7 +13,10 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     const { id } = await params;
     const existing = await prisma.nexusSave.findUnique({ where: { postId_profileId: { postId: id, profileId: profile.id } } });
     if (existing) await prisma.nexusSave.delete({ where: { id: existing.id } });
-    else await prisma.nexusSave.create({ data: { postId: id, profileId: profile.id } });
+    else {
+        // Idempotent — bir vaqtda ikki bosishda unique buzilmasin
+        try { await prisma.nexusSave.create({ data: { postId: id, profileId: profile.id } }); } catch { /* allaqachon saqlangan */ }
+    }
 
     return NextResponse.json({ saved: !existing });
 }

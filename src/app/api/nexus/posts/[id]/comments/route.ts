@@ -63,8 +63,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         return NextResponse.json({ error: "Bu postga izoh yoza olmaysiz" }, { status: 403 });
     }
 
+    // parentId — javob faqat SHU postdagi izohga bog'lanishi mumkin (cross-post daraxtni buzmaslik uchun)
+    let validParentId: string | null = null;
+    if (typeof parentId === "string" && parentId) {
+        const parent = await prisma.nexusComment.findFirst({ where: { id: parentId, postId: id }, select: { id: true } });
+        if (!parent) return NextResponse.json({ error: "Javob berilayotgan izoh topilmadi" }, { status: 400 });
+        validParentId = parent.id;
+    }
+
     const comment = await prisma.nexusComment.create({
-        data: { postId: id, profileId: profile.id, parentId: parentId ?? null, text: String(text).trim().slice(0, 1000) },
+        data: { postId: id, profileId: profile.id, parentId: validParentId, text: String(text).trim().slice(0, 1000) },
     });
 
     // Pre-publish moderatsiya

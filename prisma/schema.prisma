@@ -81,6 +81,9 @@ model UserProfile {
   // Onboarding
   onboardingDone Boolean @default(false)
 
+  // Akkaunt o'chirildi (tombstone) — hamyon/ledger saqlanadi, PII tozalanadi, kontent o'chadi
+  deletedAt     DateTime?
+
   // Rate-limit: user-initiated profile edits allowed once per 14 days
   profileEditedAt DateTime?
 
