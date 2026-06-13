@@ -2,63 +2,25 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Humo eSport — boshlang'ich o'yinlar (disiplinalar). MLBB launch uchun faol;
+// PUBG Mobile kelajak uchun (schema tayyor, UI keyin).
 async function main() {
-    console.log('Seeding Database...');
-
-    // 1. Create Users
-    const user1 = await prisma.user.upsert({
-        where: { nickname: 'ShadowSlayer' },
-        update: {},
-        create: {
-            nickname: 'ShadowSlayer',
-        },
-    });
-
-    const user2 = await prisma.user.upsert({
-        where: { nickname: 'NoobMaster' },
-        update: {},
-        create: {
-            nickname: 'NoobMaster',
-        },
-    });
-
-    // 2. Create Team
-    const team = await prisma.team.upsert({
-        where: { tag: 'NGNE' },
-        update: {},
-        create: {
-            name: 'Neon Genesis',
-            tag: 'NGNE',
-            ownerId: user1.id
-        }
-    });
-
-    // 3. Add Members
-    await prisma.teamMember.create({
-        data: {
-            userId: user1.id,
-            teamId: team.id,
-            role: 'OWNER'
-        }
-    }).catch(() => console.log('Member 1 already exists'));
-
-    await prisma.teamMember.create({
-        data: {
-            userId: user2.id,
-            teamId: team.id,
-            role: 'MEMBER'
-        }
-    }).catch(() => console.log('Member 2 already exists'));
-
-    console.log('Seeding Completed!');
+    console.log('Seeding Humo eSport games...');
+    const games = [
+        { slug: 'mlbb', name: 'Mobile Legends: Bang Bang', teamSize: 5 },
+        { slug: 'pubgm', name: 'PUBG Mobile', teamSize: 4 },
+    ];
+    for (const g of games) {
+        await prisma.esGame.upsert({
+            where: { slug: g.slug },
+            update: { name: g.name, teamSize: g.teamSize },
+            create: g,
+        });
+        console.log('  ok:', g.name);
+    }
+    console.log('Done.');
 }
 
 main()
-    .then(async () => {
-        await prisma.$disconnect()
-    })
-    .catch(async (e) => {
-        console.error(e)
-        await prisma.$disconnect()
-        process.exit(1)
-    });
+    .then(async () => { await prisma.$disconnect(); })
+    .catch(async (e) => { console.error(e); await prisma.$disconnect(); process.exit(1); });

@@ -131,185 +131,161 @@ model EmailVerificationCode {
   createdAt   DateTime    @default(now())
 }
 
-model User {
-  id        String   @id @default(cuid())
-  nickname  String   @unique
-  createdAt DateTime @default(now())
+// Humo eSport (0dan, Humo ID ustida) -- docs/humo-esport-design.md
 
-  teams     TeamMember[]
-  ownedTeams Team[]
-  sentRequests JoinRequest[]
-  role      UserRole @default(USER)
-}
-
-model PlayerProfile {
+model EsGame {            // disiplina (JADVAL — yangi o'yin koddа o'zgarishsiz qo'shiladi)
   id          String   @id @default(cuid())
-  nickname    String   @unique
-  firstName   String
-  lastName    String
-  telegram    String
-  avatar      String?
-  
-  level       Int      @default(1)
-  gamesPlayed Int      @default(0)
-  isActive    Boolean  @default(false)
-  joinedAt    DateTime @default(now())
-  
-  mlbbInfo    Json?
-  pubgInfo    Json?
+  slug        String   @unique          // "mlbb", "pubgm"
+  name        String                    // "Mobile Legends: Bang Bang"
+  teamSize    Int                       // MLBB=5, PUBGM=4
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  rosters     EsRoster[]
+  athletes    EsAthlete[]
+  divisions   EsDivision[]
+  tournaments EsTournament[]
 }
 
-model Team {
+model EsTeam {            // tashkilot — o'yinга bog'liq EMAS
   id        String   @id @default(cuid())
-  name      String
-  tag       String   @unique
+  name      String   @unique
+  tag       String   @unique            // qisqa teg (masalan "RMC")
   logo      String?
+  ownerId   String                      // UserProfile.id (Humo ID egasi)
+  bio       String?
   createdAt DateTime @default(now())
-  
-  ownerId   String
-  owner     User     @relation(fields: [ownerId], references: [id])
-
-  members       TeamMember[]
-  requests      JoinRequest[]
-  invites       TeamInvite[]
-  tournaments   TournamentTeam[]
+  rosters   EsRoster[]
+  @@index([ownerId])
 }
 
-model TeamInvite {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  teamId    String
-  createdBy String
-  expiresAt DateTime?
-  maxUses   Int      @default(1)
-  usedCount Int      @default(0)
-  createdAt DateTime @default(now())
-
-  team Team @relation(fields: [teamId], references: [id])
+model EsRoster {          // har (jamoa × o'yin) bitta tarkib
+  id      String @id @default(cuid())
+  teamId  String
+  gameId  String
+  team    EsTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  game    EsGame @relation(fields: [gameId], references: [id])
+  members EsRosterMember[]
+  @@unique([teamId, gameId])
+  @@index([gameId])
 }
 
-model TeamMember {
+model EsAthlete {         // Humo ID + bitta o'yin (qattiq qulf)
+  id            String  @id @default(cuid())
+  humoProfileId String  @unique         // bir Humo ID = bitta athlete
+  gameId        String                  // IMMUTABLE — hech qachon o'zgarmaydi
+  ign           String                  // in-game nom
+  gameUserId    String                  // in-game ID (MLBB raqami)
+  gameServer    String?                 // server/zona
+  role          String?                 // pozitsiya
+  createdAt     DateTime @default(now())
+  game          EsGame  @relation(fields: [gameId], references: [id])
+  memberships   EsRosterMember[]
+  transfers     EsTransfer[]
+  @@index([gameId])
+}
+
+model EsRosterMember {    // sportchini tarkibга bog'laydi (transfer shu yerda)
   id        String   @id @default(cuid())
-  role      TeamRole
+  rosterId  String
+  athleteId String
+  role      String   @default("STARTER")  // CAPTAIN/STARTER/SUB
   joinedAt  DateTime @default(now())
-
-  userId    String
-  teamId    String
-
-  user      User @relation(fields: [userId], references: [id])
-  team      Team @relation(fields: [teamId], references: [id])
-
-  @@unique([userId, teamId])
+  roster    EsRoster  @relation(fields: [rosterId], references: [id], onDelete: Cascade)
+  athlete   EsAthlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  @@unique([athleteId])                  // sportchi bir vaqtда bitta tarkibда (o'z o'yinида)
+  @@index([rosterId])
 }
 
-enum TeamRole {
-  OWNER
-  CAPTAIN
-  MEMBER
+model EsDivision {        // futboldek tier (1/2/3)
+  id     String @id @default(cuid())
+  gameId String
+  name   String                          // "Pro Division"
+  tier   Int                             // 1 = eng yuqori
+  game   EsGame @relation(fields: [gameId], references: [id])
+  @@unique([gameId, tier])
 }
 
-model JoinRequest {
-  id        String            @id @default(cuid())
-  userId    String
-  teamId    String
-  status    JoinRequestStatus @default(PENDING)
-  createdAt DateTime          @default(now())
-
-  user User @relation(fields: [userId], references: [id])
-  team Team @relation(fields: [teamId], references: [id])
-
-  @@unique([userId, teamId])
+model EsSeason {          // mavsum
+  id       String   @id @default(cuid())
+  gameId   String
+  name     String                        // "2026 Season 1"
+  startsAt DateTime @default(now())
+  endsAt   DateTime?
+  active   Boolean  @default(true)
 }
 
-enum JoinRequestStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
+model EsTournament {      // turnir
+  id           String   @id @default(cuid())
+  gameId       String
+  divisionId   String?
+  seasonId     String?
+  name         String
+  format       String   @default("SINGLE_ELIM")  // SINGLE_ELIM/DOUBLE_ELIM/GROUPS
+  prizePool    Decimal? @db.Decimal(18, 2)
+  currency     String   @default("UZS")
+  status       String   @default("UPCOMING")      // UPCOMING/REGISTRATION/LIVE/ENDED
+  maxTeams     Int      @default(16)
+  startsAt     DateTime?
+  createdAt    DateTime @default(now())
+  game         EsGame   @relation(fields: [gameId], references: [id])
+  participants EsTournamentTeam[]
+  matches      EsMatch[]
+  @@index([gameId, status])
 }
 
-enum UserRole {
-  USER
-  ADMIN
-}
-
-model Tournament {
-  id          String           @id @default(cuid())
-  name        String
-  slug        String           @unique
-  season      String
-  game        String
-  prizePool   Int
-  maxTeams    Int
-  status      TournamentStatus @default(UPCOMING)
-  startDate   DateTime
-  endDate     DateTime?
-  // Zij kirish badali (0 = bepul). 1 Zij = 1 USD, o'zgarmas.
-  entryFee    Decimal          @default(0) @db.Decimal(18, 2)
-  createdAt   DateTime         @default(now())
-
-  teams       TournamentTeam[]
-  matches     TournamentMatch[]
-  standings   TournamentStanding[]
-}
-
-model TournamentTeam {
-  id            String     @id @default(cuid())
-  tournamentId  String
-  teamId        String
-  registeredAt  DateTime   @default(now())
-  
-  snapshotName  String
-  snapshotLogo  String?
-
-  tournament    Tournament @relation(fields: [tournamentId], references: [id])
-  team          Team       @relation(fields: [teamId], references: [id])
-
-  matchesAsA    TournamentMatch[] @relation("TeamA")
-  matchesAsB    TournamentMatch[] @relation("TeamB")
-  matchesWon    TournamentMatch[] @relation("Winner")
-  standings     TournamentStanding[]
-
+model EsTournamentTeam {  // ro'yxatdan o'tgan jamoa (o'z o'yin-tarkibi bilan)
+  id           String   @id @default(cuid())
+  tournamentId String
+  teamId       String
+  rosterId     String                    // qaysi tarkib bilan kirgan
+  seed         Int?
+  registeredAt DateTime @default(now())
+  tournament   EsTournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   @@unique([tournamentId, teamId])
+  @@index([tournamentId])
 }
 
-model TournamentMatch {
-  id          String   @id @default(cuid())
-  matchNumber Int
-  stage       String
-  date        DateTime
-  time        String
-
+model EsMatch {           // bracket o'yini
+  id           String    @id @default(cuid())
   tournamentId String
-  tournament   Tournament @relation(fields: [tournamentId], references: [id])
-
-  teamAId     String
-  teamA       TournamentTeam @relation("TeamA", fields: [teamAId], references: [id])
-
-  teamBId     String
-  teamB       TournamentTeam @relation("TeamB", fields: [teamBId], references: [id])
-
-  scoreA      Int?
-  scoreB      Int?
-
-  winnerId    String?
-  winner      TournamentTeam? @relation("Winner", fields: [winnerId], references: [id])
-
-  status      String
-  youtubeUrl  String?
-  adminNote   String?
+  round        Int
+  slot         Int                        // round ichидаги o'rin (bracket pozitsiya)
+  teamAId      String?
+  teamBId      String?
+  scoreA       Int?
+  scoreB       Int?
+  winnerId     String?
+  status       String    @default("PENDING")  // PENDING/LIVE/DONE
+  streamUrl    String?                         // Nexus/Twitch havola
+  scheduledAt  DateTime?
+  tournament   EsTournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  @@index([tournamentId, round])
 }
 
-model TournamentStanding {
-  id          String   @id @default(cuid())
-  position    Int
-  prize       Int
-  proofUrl    String?
-  
-  tournamentId String
-  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+model EsStanding {        // divizion/mavsum jadvali
+  id         String @id @default(cuid())
+  seasonId   String
+  divisionId String
+  teamId     String
+  points     Int    @default(0)
+  wins       Int    @default(0)
+  losses     Int    @default(0)
+  @@unique([seasonId, divisionId, teamId])
+  @@index([seasonId, divisionId])
+}
 
-  teamId      String
-  team        TournamentTeam @relation(fields: [teamId], references: [id])
+model EsTransfer {        // sportchi jamoadan jamoага (ALKH Pay haq)
+  id         String   @id @default(cuid())
+  athleteId  String
+  fromTeamId String?
+  toTeamId   String
+  fee        Decimal? @db.Decimal(18, 2)      // 0/null = bepul
+  currency   String   @default("UZS")
+  status     String   @default("PENDING")     // PENDING/DONE/CANCELLED
+  createdAt  DateTime @default(now())
+  athlete    EsAthlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  @@index([athleteId, createdAt])
+  @@index([toTeamId])
 }
 
 // ── Humo Market ──────────────────────────────────────────────────────────────
