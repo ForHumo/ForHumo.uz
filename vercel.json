@@ -3,6 +3,6 @@
     "outputDirectory": ".next",
     "framework": "nextjs",
     "crons": [
-        { "path": "/api/cron/stories-cleanup", "schedule": "0 * * * *" }
+        { "path": "/api/cron/stories-cleanup", "schedule": "0 3 * * *" }
     ]
 }
