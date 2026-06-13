@@ -1,0 +1,83 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getMyProfile, MLBB_ROLES } from "@/lib/esport";
+
+// GET /api/esport/athlete — mening sportchi profilim (bo'lsa) + faol o'yinlar + Humo ID ismim
+export async function GET() {
+    const me = await getMyProfile();
+    if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
+
+    const [athlete, games] = await Promise.all([
+        prisma.esAthlete.findUnique({
+            where: { humoProfileId: me.id },
+            include: { game: { select: { slug: true, name: true } } },
+        }),
+        prisma.esGame.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, slug: true, name: true, teamSize: true } }),
+    ]);
+
+    return NextResponse.json({
+        hasHumoId: !!me.humoId,
+        profileName: { firstName: me.firstName ?? "", lastName: me.lastName ?? "", hasName: !!(me.firstName && me.lastName) },
+        athlete: athlete
+            ? { id: athlete.id, game: athlete.game, ign: athlete.ign, gameUserId: athlete.gameUserId, gameServer: athlete.gameServer, role: athlete.role }
+            : null,
+        games,
+        roles: MLBB_ROLES,
+    });
+}
+
+// POST /api/esport/athlete — sportchi profili yaratish (QATTIQ QULF: bir Humo ID = bitta o'yin, o'zgarmas)
+export async function POST(req: Request) {
+    const me = await getMyProfile();
+    if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
+    if (!me.humoId) return NextResponse.json({ error: "Avval Humo ID oling", needHumoId: true }, { status: 403 });
+
+    // Allaqachon sportchimi? (qattiq qulf — bitta athlete profil)
+    const existing = await prisma.esAthlete.findUnique({ where: { humoProfileId: me.id }, select: { id: true } });
+    if (existing) return NextResponse.json({ error: "Siz allaqachon sportchisiz" }, { status: 400 });
+
+    const body = await req.json();
+    const gameId = String(body.gameId || "");
+    const ign = String(body.ign || "").trim();
+    const gameUserId = String(body.gameUserId || "").trim();
+    const gameServer = typeof body.gameServer === "string" && body.gameServer.trim() ? body.gameServer.trim().slice(0, 30) : null;
+    const role = typeof body.role === "string" && (MLBB_ROLES as readonly string[]).includes(body.role) ? body.role : null;
+    let firstName = String(body.firstName || "").trim().slice(0, 60);
+    let lastName = String(body.lastName || "").trim().slice(0, 60);
+
+    // Ism/familiya — Humo ID'da bo'lsa o'shandan, bo'lmasa majburiy kiritiladi
+    if (me.firstName) firstName = me.firstName;
+    if (me.lastName) lastName = me.lastName;
+    if (!firstName || !lastName) return NextResponse.json({ error: "Ism va familiya majburiy" }, { status: 400 });
+    if (!ign) return NextResponse.json({ error: "MLBB nickname majburiy" }, { status: 400 });
+    if (!gameUserId) return NextResponse.json({ error: "In-game ID majburiy" }, { status: 400 });
+
+    // O'yin faolmi?
+    const game = await prisma.esGame.findFirst({ where: { id: gameId, active: true }, select: { id: true } });
+    if (!game) return NextResponse.json({ error: "Noto'g'ri yoki nofaol o'yin" }, { status: 400 });
+
+    // Humo ID'da ism/familiya bo'lmasa — to'ldiramiz (14-kun cheklovi profileEditedAt'ga tegmaymiz)
+    if (!me.firstName || !me.lastName) {
+        await prisma.userProfile.update({
+            where: { id: me.id },
+            data: { ...(me.firstName ? {} : { firstName }), ...(me.lastName ? {} : { lastName }) },
+        });
+    }
+
+    const athlete = await prisma.esAthlete.create({
+        data: {
+            humoProfileId: me.id,
+            gameId: game.id,
+            ign: ign.slice(0, 40),
+            gameUserId: gameUserId.slice(0, 40),
+            gameServer,
+            role,
+        },
+        include: { game: { select: { slug: true, name: true } } },
+    });
+
+    return NextResponse.json({
+        ok: true,
+        athlete: { id: athlete.id, game: athlete.game, ign: athlete.ign, gameUserId: athlete.gameUserId, gameServer: athlete.gameServer, role: athlete.role },
+    });
+}
