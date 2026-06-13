@@ -10,7 +10,7 @@ type RateKind =
     | "post" | "comment" | "videoComment"
     | "video" | "track" | "story"
     | "dm" | "live" | "liveChat" | "tip" | "channel" | "channelMsg"
-    | "payTransfer" | "payWithdraw" | "report" | "convStart";
+    | "payTransfer" | "payWithdraw" | "report" | "convStart" | "ai";
 
 // kind -> [maks. son, oyna ms]
 const RULES: Record<RateKind, [number, number]> = {
@@ -30,6 +30,7 @@ const RULES: Record<RateKind, [number, number]> = {
     payWithdraw: [5, 60 * MIN],
     report: [20, 10 * MIN],
     convStart: [30, 10 * MIN],
+    ai: [40, 10 * MIN],
 };
 
 export async function nexusRateLimited(profileId: string, kind: RateKind): Promise<boolean> {
@@ -85,6 +86,9 @@ export async function nexusRateLimited(profileId: string, kind: RateKind): Promi
                 break;
             case "convStart":
                 count = await prisma.nexusConversation.count({ where: { OR: [{ user1Id: profileId }, { user2Id: profileId }], createdAt: { gt: since } } });
+                break;
+            case "ai":
+                count = await prisma.aiUsage.count({ where: { profileId, createdAt: { gt: since } } });
                 break;
         }
     } catch {

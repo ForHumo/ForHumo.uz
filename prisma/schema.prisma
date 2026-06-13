@@ -532,6 +532,15 @@ model NexusReport {
   @@index([reporterId, createdAt])
 }
 
+// AI chaqiruvlari jurnali — faqat rate-limit uchun (pullik Gemini suiiste'molini to'sadi).
+model AiUsage {
+  id        String   @id @default(cuid())
+  profileId String
+  kind      String?  // "chat" | "search" | "listing" | "assist"
+  createdAt DateTime @default(now())
+  @@index([profileId, createdAt])
+}
+
 enum ModerationStatus {
   PENDING      // admin ko'rishi kutilmoqda
   KEPT         // ko'rib chiqildi — saqlandi

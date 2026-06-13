@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { aiAvailable, aiText, aiJSON } from "@/lib/ai";
+import { aiGate } from "@/lib/ai-gate";
 
 // POST /api/nexus/ai-assist — ijodkorga AI yordami (Gemini)
 // body: { action: "caption"|"title"|"tags"|"translate", ... }
 export async function POST(req: Request) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
-    if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
     if (!aiAvailable()) return NextResponse.json({ error: "AI hozircha mavjud emas" }, { status: 503 });
+    const gate = await aiGate("assist");
+    if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
 
     const body = await req.json();
     const action = String(body.action || "");

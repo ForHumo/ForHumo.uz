@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { aiAvailable, aiJSON } from "@/lib/ai";
+import { aiGate } from "@/lib/ai-gate";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 
 interface Filters {
@@ -16,6 +17,8 @@ interface Filters {
 export async function POST(req: Request) {
     if (!aiAvailable())
         return NextResponse.json({ error: "AI hali sozlanmagan", code: "AI_NO_KEY" }, { status: 503 });
+    const gate = await aiGate("search");
+    if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
 
     const { query } = await req.json();
     if (!query?.trim()) return NextResponse.json({ error: "Qidiruv bo'sh" }, { status: 400 });

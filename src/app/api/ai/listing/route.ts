@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { aiAvailable, aiVisionJSON } from "@/lib/ai";
+import { aiGate } from "@/lib/ai-gate";
 
 // POST /api/ai/listing — mahsulot uchun AI tavsif (rasm + nom dan)
 export async function POST(req: Request) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     if (!aiAvailable())
         return NextResponse.json({ error: "AI hali sozlanmagan (GEMINI_API_KEY kerak)", code: "AI_NO_KEY" }, { status: 503 });
+    const gate = await aiGate("listing");
+    if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
 
     const { name, category, imageUrl, brief } = await req.json();
     if (!name?.trim() && !imageUrl)

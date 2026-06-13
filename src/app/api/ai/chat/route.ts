@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { aiAvailable, aiChatJSON, type ChatMsg } from "@/lib/ai";
+import { aiGate } from "@/lib/ai-gate";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 
 interface ChatReply {
@@ -13,6 +14,8 @@ interface ChatReply {
 export async function POST(req: Request) {
     if (!aiAvailable())
         return NextResponse.json({ error: "AI hali sozlanmagan", code: "AI_NO_KEY" }, { status: 503 });
+    const gate = await aiGate("chat");
+    if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
 
     const { messages } = await req.json() as { messages: { role: "user" | "assistant"; content: string }[] };
     if (!Array.isArray(messages) || !messages.length)

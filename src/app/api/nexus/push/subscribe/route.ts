@@ -25,7 +25,10 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+    if (!me) return NextResponse.json({ ok: true });
     const { endpoint } = await req.json().catch(() => ({}));
-    if (endpoint) await prisma.nexusPushSub.deleteMany({ where: { endpoint } });
+    // Faqat o'z obunasini o'chira oladi (boshqaning endpoint'ini emas)
+    if (endpoint) await prisma.nexusPushSub.deleteMany({ where: { endpoint, profileId: me.id } });
     return NextResponse.json({ ok: true });
 }
