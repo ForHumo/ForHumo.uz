@@ -9,6 +9,7 @@ import { moderateOnCreate } from "@/lib/moderation";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { currencyForCountry } from "@/lib/money";
 import { getHiddenAuthorIds } from "@/lib/nexus-block";
+import { isValidMediaUrl, filterMediaUrls } from "@/lib/media-url";
 
 // POST /api/nexus/videos — yangi video
 export async function POST(req: Request) {
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
         title, description, videoUrl, thumbUrl, durationSec, category,
         orientation, width, height, tags, descImages, isMature, priceZij, prevVideoId,
     } = body;
-    if (!videoUrl || typeof videoUrl !== "string") return NextResponse.json({ error: "Video kerak" }, { status: 400 });
+    if (!isValidMediaUrl(videoUrl)) return NextResponse.json({ error: "Video kerak" }, { status: 400 });
     if (!title?.trim()) return NextResponse.json({ error: "Sarlavha kerak" }, { status: 400 });
 
     // Orientation: G.Video (gorizontal) / V.Video (vertikal). kind shundan kelib chiqadi.
@@ -35,10 +36,8 @@ export async function POST(req: Request) {
         ? [...new Set(tags.map((t: unknown) => String(t).replace(/^#+/, "").trim()).filter(Boolean).map((t: string) => t.slice(0, 50)))].slice(0, 50)
         : [];
 
-    // Tavsifdagi dalil rasmlari (URL massiv)
-    const cleanDescImages = Array.isArray(descImages)
-        ? descImages.filter((u: unknown) => typeof u === "string" && u).map((u: string) => u).slice(0, 30)
-        : [];
+    // Tavsifdagi dalil rasmlari (URL massiv) — faqat yaroqli https URL
+    const cleanDescImages = filterMediaUrls(descImages, 30);
 
     // Narx (Ƶ) — 0 = bepul
     const price = Number.isFinite(priceZij) ? Math.max(0, Math.min(10_000_000, Math.round(Number(priceZij)))) : 0;
@@ -57,7 +56,7 @@ export async function POST(req: Request) {
             // Tavsif cheksiz (xavfsizlik uchun 100k belgi shifti)
             description: typeof description === "string" && description.trim() ? description.trim().slice(0, 100_000) : null,
             videoUrl,
-            thumbUrl: typeof thumbUrl === "string" && thumbUrl ? thumbUrl : null,
+            thumbUrl: isValidMediaUrl(thumbUrl) ? thumbUrl : null,
             durationSec: Number.isFinite(durationSec) ? Math.max(0, Math.round(Number(durationSec))) : 0,
             kind: orient === "VERTICAL" ? "SHORT" : "LONG",
             orientation: orient,

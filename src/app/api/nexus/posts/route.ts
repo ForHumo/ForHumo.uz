@@ -10,6 +10,7 @@ import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { getActiveSubscribedCreatorIds } from "@/lib/nexus-sub";
 import { notifyMentions } from "@/lib/nexus-mention";
+import { filterMediaUrls } from "@/lib/media-url";
 
 async function myProfileId(): Promise<string | null> {
     const session = await getServerSession(authOptions);
@@ -154,7 +155,7 @@ export async function POST(req: Request) {
     if (await nexusRateLimited(profile.id, "post")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { text, media, marketProductId, privacy, location, pollOptions, pollDurationHours } = await req.json();
-    const mediaArr: string[] = Array.isArray(media) ? media.filter((x: unknown) => typeof x === "string").slice(0, 10) : [];
+    const mediaArr: string[] = filterMediaUrls(media, 10);
     const clean = typeof text === "string" ? text.trim().slice(0, 5000) : "";
 
     // So'rovnoma: 2-4 bo'sh bo'lmagan variant

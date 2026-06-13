@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { moderateOnCreate } from "@/lib/moderation";
+import { filterMediaUrls } from "@/lib/media-url";
 
 async function meAndMember(email: string, channelId: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } });
@@ -65,7 +66,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const { text, media } = await req.json();
     const cleanText = typeof text === "string" ? text.trim().slice(0, 4000) : "";
-    const cleanMedia: string[] = Array.isArray(media) ? media.filter((x: unknown) => typeof x === "string").slice(0, 9) : [];
+    const cleanMedia: string[] = filterMediaUrls(media, 9);
     if (!cleanText && !cleanMedia.length) return NextResponse.json({ error: "Bo'sh bo'lmasin" }, { status: 400 });
     if (await nexusRateLimited(me.id, "channelMsg")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 

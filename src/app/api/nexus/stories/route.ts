@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { getHiddenAuthorIds } from "@/lib/nexus-block";
+import { isValidMediaUrl } from "@/lib/media-url";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -16,7 +18,7 @@ export async function POST(req: Request) {
     if (await nexusRateLimited(profile.id, "story")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { mediaUrl, mediaType, caption } = await req.json();
-    if (!mediaUrl || typeof mediaUrl !== "string") return NextResponse.json({ error: "Media kerak" }, { status: 400 });
+    if (!isValidMediaUrl(mediaUrl)) return NextResponse.json({ error: "Media kerak" }, { status: 400 });
     const type = mediaType === "VIDEO" ? "VIDEO" : "IMAGE";
 
     const story = await prisma.nexusStory.create({
@@ -39,7 +41,9 @@ export async function GET() {
     if (!me) return NextResponse.json({ groups: [] });
 
     const following = await prisma.nexusFollow.findMany({ where: { followerId: me.id }, select: { followingId: true } });
-    const authorIds = [me.id, ...following.map(f => f.followingId)];
+    // Mute/blok qilingan mualliflar — stories qatoridan ham chiqarib tashlanadi (o'zimni emas)
+    const hidden = new Set((await getHiddenAuthorIds(me.id)).filter(x => x !== me.id));
+    const authorIds = [me.id, ...following.map(f => f.followingId).filter(id => !hidden.has(id))];
 
     const stories = await prisma.nexusStory.findMany({
         where: { profileId: { in: authorIds }, expiresAt: { gt: new Date() } },

@@ -8,6 +8,7 @@ import { isVerifiedProfile } from "@/lib/nexus";
 import { moderateOnCreate } from "@/lib/moderation";
 import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { isValidMediaUrl } from "@/lib/media-url";
 
 // POST /api/nexus/tracks — yangi trek (musiqa/podkast/audiokitob)
 export async function POST(req: Request) {
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
     if (await nexusRateLimited(profile.id, "track")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { title, artist, audioUrl, coverUrl, durationSec, kind, genre } = await req.json();
-    if (!audioUrl || typeof audioUrl !== "string") return NextResponse.json({ error: "Audio kerak" }, { status: 400 });
+    if (!isValidMediaUrl(audioUrl)) return NextResponse.json({ error: "Audio kerak" }, { status: 400 });
     if (!title?.trim()) return NextResponse.json({ error: "Sarlavha kerak" }, { status: 400 });
 
     const track = await prisma.nexusTrack.create({
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
             title: String(title).trim().slice(0, 200),
             artist: typeof artist === "string" && artist.trim() ? artist.trim().slice(0, 120) : null,
             audioUrl,
-            coverUrl: typeof coverUrl === "string" && coverUrl ? coverUrl : null,
+            coverUrl: isValidMediaUrl(coverUrl) ? coverUrl : null,
             durationSec: Number.isFinite(durationSec) ? Math.max(0, Math.round(Number(durationSec))) : 0,
             kind: kind === "PODCAST" ? "PODCAST" : kind === "AUDIOBOOK" ? "AUDIOBOOK" : "MUSIC",
             genre: typeof genre === "string" && genre ? genre : null,
