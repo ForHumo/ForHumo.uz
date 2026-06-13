@@ -7,7 +7,7 @@ import { after } from "next/server";
 import { moderateOnCreate } from "@/lib/moderation";
 import { nexusNotify } from "@/lib/nexus-notify";
 import { notifyMentions } from "@/lib/nexus-mention";
-import { getHiddenAuthorIds } from "@/lib/nexus-block";
+import { getHiddenAuthorIds, isBlockedBetween } from "@/lib/nexus-block";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 // GET /api/nexus/posts/[id]/comments — izohlar (flat; klient daraxt quradi)
@@ -58,9 +58,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const post = await prisma.nexusPost.findUnique({ where: { id }, select: { id: true, profileId: true } });
     if (!post) return NextResponse.json({ error: "Post topilmadi" }, { status: 404 });
+    // Blok — bloklangan foydalanuvchi post egasiga izoh yoza olmaydi
+    if (post.profileId !== profile.id && await isBlockedBetween(profile.id, post.profileId)) {
+        return NextResponse.json({ error: "Bu postga izoh yoza olmaysiz" }, { status: 403 });
+    }
 
     const comment = await prisma.nexusComment.create({
-        data: { postId: id, profileId: profile.id, parentId: parentId ?? null, text: text.trim() },
+        data: { postId: id, profileId: profile.id, parentId: parentId ?? null, text: String(text).trim().slice(0, 1000) },
     });
 
     // Pre-publish moderatsiya

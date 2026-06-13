@@ -74,13 +74,31 @@ export async function applyModeration(opts: {
     kind?: string;            // AI prompt uchun tavsif (masalan "mahsulot", "sharh")
     reporterReason?: string;  // bo'lsa — foydalanuvchi shikoyati
 }): Promise<ApplyModResult> {
+    const isReport = opts.reporterReason !== undefined;
+
+    // Xarajat himoyasi: agar target allaqachon flag'langan (AI bir marta tahlil qilgan) bo'lsa,
+    // takroriy shikoyatda AI'ni QAYTA chaqirmaymiz — bir xil kontentning hukmi o'zgarmaydi.
+    // Faqat reportCount oshadi. Bu cheksiz pullik AI chaqiruvini (DoS) yopadi.
+    if (isReport) {
+        const existing = await prisma.moderationFlag.findUnique({
+            where: { module_targetType_targetId: { module: opts.module, targetType: opts.targetType, targetId: opts.targetId } },
+            select: { id: true, status: true },
+        });
+        if (existing) {
+            await prisma.moderationFlag.update({
+                where: { id: existing.id },
+                data: { reportCount: { increment: 1 }, lastReason: opts.reporterReason ?? null },
+            });
+            return { flagged: true, autoHidden: existing.status === "AUTO_HIDDEN", result: null };
+        }
+    }
+
     const result = await moderateContent({
         kind: opts.kind || opts.targetType.toLowerCase(),
         text: opts.text,
         imageUrl: opts.imageUrl,
     });
 
-    const isReport = opts.reporterReason !== undefined;
     const verdictBad = !!result && result.verdict !== "OK";
     const autoHide = !!result && result.verdict === "BLOCK" && result.severity >= AUTO_HIDE_SEVERITY;
 

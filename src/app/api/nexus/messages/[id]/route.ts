@@ -24,9 +24,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (!conv) return NextResponse.json({ error: "Suhbat topilmadi" }, { status: 404 });
     if (conv.user1Id !== me.id && conv.user2Id !== me.id) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
 
-    const messages = await prisma.nexusMessage.findMany({
-        where: { conversationId: id }, orderBy: { createdAt: "asc" }, take: 100,
+    // Eng yangi 100 xabar (desc) — keyin klient uchun xronologik tartibga (asc) qaytaramiz.
+    // Avval asc edi → 100+ xabarli suhbatda eng yangilari ko'rinmay qolardi.
+    const recent = await prisma.nexusMessage.findMany({
+        where: { conversationId: id }, orderBy: { createdAt: "desc" }, take: 100,
     });
+    const messages = recent.reverse();
 
     // o'qildi
     await prisma.nexusConversation.update({

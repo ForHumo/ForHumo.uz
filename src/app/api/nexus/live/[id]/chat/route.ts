@@ -7,7 +7,7 @@ import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { moderateOnCreate } from "@/lib/moderation";
 import { sendTip } from "@/lib/nexus-tip";
 import { nexusNotify } from "@/lib/nexus-notify";
-import { isBlockedBetween } from "@/lib/nexus-block";
+import { isBlockedBetween, getHiddenAuthorIds } from "@/lib/nexus-block";
 import { after } from "next/server";
 
 // GET /api/nexus/live/[id]/chat?since=<ISO> — chat xabarlari (polling)
@@ -16,8 +16,21 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const { searchParams } = new URL(req.url);
     const since = searchParams.get("since");
 
+    // Kirgan tomoshabin uchun bloklangan/mute mualliflar xabarlarini yashiramiz
+    let myId: string | null = null;
+    const session = await getServerSession(authOptions);
+    if (session?.user?.email) {
+        const p = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+        myId = p?.id ?? null;
+    }
+    const hiddenIds = (await getHiddenAuthorIds(myId)).filter(x => x !== myId);
+
     const msgs = await prisma.nexusLiveMessage.findMany({
-        where: { streamId: id, hidden: false, ...(since ? { createdAt: { gt: new Date(since) } } : {}) },
+        where: {
+            streamId: id, hidden: false,
+            ...(since ? { createdAt: { gt: new Date(since) } } : {}),
+            ...(hiddenIds.length ? { profileId: { notIn: hiddenIds } } : {}),
+        },
         orderBy: { createdAt: "asc" },
         take: 100,
     });

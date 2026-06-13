@@ -6,7 +6,7 @@ import { isVerifiedProfile } from "@/lib/nexus";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { nexusNotify } from "@/lib/nexus-notify";
 import { notifyMentions } from "@/lib/nexus-mention";
-import { getHiddenAuthorIds } from "@/lib/nexus-block";
+import { getHiddenAuthorIds, isBlockedBetween } from "@/lib/nexus-block";
 import { moderateOnCreate } from "@/lib/moderation";
 
 // GET /api/nexus/videos/[id]/comments — izohlar
@@ -51,13 +51,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { text } = await req.json();
     if (!text?.trim()) return NextResponse.json({ error: "Izoh bo'sh bo'lmasin" }, { status: 400 });
 
+    // Blok — bloklangan foydalanuvchi video egasiga izoh yoza olmaydi
+    const vid = await prisma.nexusVideo.findUnique({ where: { id }, select: { profileId: true } });
+    if (!vid) return NextResponse.json({ error: "Video topilmadi" }, { status: 404 });
+    if (vid.profileId !== profile.id && await isBlockedBetween(profile.id, vid.profileId)) {
+        return NextResponse.json({ error: "Bu videoga izoh yoza olmaysiz" }, { status: 403 });
+    }
+
     const comment = await prisma.nexusVideoComment.create({
         data: { videoId: id, profileId: profile.id, text: String(text).trim().slice(0, 1000) },
     });
-    after(async () => {
-        const v = await prisma.nexusVideo.findUnique({ where: { id }, select: { profileId: true } });
-        if (v) await nexusNotify({ recipientId: v.profileId, actorId: profile.id, type: "VIDEO_COMMENT", videoId: id });
-    });
+    after(() => nexusNotify({ recipientId: vid.profileId, actorId: profile.id, type: "VIDEO_COMMENT", videoId: id }));
     after(() => moderateOnCreate({ module: "NEXUS", targetType: "VIDEO_COMMENT", targetId: comment.id, text: comment.text, kind: "video izohi" }));
     after(() => notifyMentions({ text: comment.text, actorId: profile.id, videoId: id }));
     return NextResponse.json({

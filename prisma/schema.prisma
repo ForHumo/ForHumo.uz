@@ -517,6 +517,21 @@ model ModerationFlag {
   @@index([status])
 }
 
+// Har bir foydalanuvchi-shikoyati (dedup + rate-limit uchun). Bir foydalanuvchi
+// bir target'ni faqat 1 marta shikoyat qila oladi (@@unique). Takroriy/spam
+// shikoyat AI'ni qayta chaqirmaydi — xarajat himoyasi ModerationFlag tomonida.
+model NexusReport {
+  id         String   @id @default(cuid())
+  reporterId String
+  module     String   // "MARKET" | "NEXUS"
+  targetType String
+  targetId   String
+  reason     String?
+  createdAt  DateTime @default(now())
+  @@unique([reporterId, module, targetType, targetId])
+  @@index([reporterId, createdAt])
+}
+
 enum ModerationStatus {
   PENDING      // admin ko'rishi kutilmoqda
   KEPT         // ko'rib chiqildi — saqlandi

@@ -25,10 +25,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const { searchParams } = new URL(req.url);
     const since = searchParams.get("since");
-    const msgs = await prisma.nexusChannelMessage.findMany({
+    // Inkremental polling (since bor) → asc. Birinchi yuklash (since yo'q) → eng yangi 100 (desc),
+    // so'ng xronologik tartibga qaytaramiz. Aks holda 100+ xabarli kanalda yangilar ko'rinmay qolardi.
+    const rows = await prisma.nexusChannelMessage.findMany({
         where: { channelId: id, hidden: false, ...(since ? { createdAt: { gt: new Date(since) } } : {}) },
-        orderBy: { createdAt: "asc" }, take: 100,
+        orderBy: { createdAt: since ? "asc" : "desc" }, take: 100,
     });
+    const msgs = since ? rows : rows.reverse();
     const ids = [...new Set(msgs.map(m => m.senderId))];
     const profs = ids.length ? await prisma.userProfile.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } }) : [];
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));

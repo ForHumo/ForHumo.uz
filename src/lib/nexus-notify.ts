@@ -1,6 +1,7 @@
 // Nexus bildirishnoma yaratish — o'ziga yubormaydi, hech qachon xato tashlamaydi.
 import { prisma } from "@/lib/prisma";
 import { sendPushToProfile } from "@/lib/push";
+import { getBlockedIds } from "@/lib/nexus-block";
 
 export type NexusNotifType =
     | "LIKE" | "COMMENT" | "FOLLOW" | "REPLY"
@@ -71,8 +72,12 @@ export async function nexusNotifyFollowers(opts: {
             take: opts.limit ?? 1000,
         });
         if (!follows.length) return;
+        // Bloklangan foydalanuvchilarga jonli efir bildirishnomasi yubormaymiz
+        const blocked = await getBlockedIds(opts.actorId);
+        const recipients = follows.filter(f => !blocked.has(f.followerId));
+        if (!recipients.length) return;
         await prisma.nexusNotification.createMany({
-            data: follows.map(f => ({
+            data: recipients.map(f => ({
                 recipientId: f.followerId,
                 actorId: opts.actorId,
                 type: opts.type,

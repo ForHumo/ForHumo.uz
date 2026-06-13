@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { applyModeration, type ModTargetType } from "@/lib/moderation";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 const TARGETS = ["POST", "COMMENT"] as const;
 type Target = typeof TARGETS[number];
@@ -27,6 +28,19 @@ export async function POST(req: Request) {
     if (!TARGETS.includes(targetType) || !targetId)
         return NextResponse.json({ error: "Noto'g'ri so'rov" }, { status: 400 });
 
+    // Tezlik cheklovi — pullik AI tahlilini suiiste'mol qilishni to'sadi
+    if (await nexusRateLimited(profile.id, "report")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
+
+    // Dedup — bir foydalanuvchi bir target'ni faqat 1 marta shikoyat qiladi
+    const cleanReason = reason ? String(reason).slice(0, 300) : "";
+    try {
+        await prisma.nexusReport.create({
+            data: { reporterId: profile.id, module: "NEXUS", targetType: String(targetType), targetId: String(targetId), reason: cleanReason || null },
+        });
+    } catch {
+        return NextResponse.json({ ok: true, already: true }); // allaqachon shikoyat qilingan
+    }
+
     const target = await loadNexusTarget(targetType as Target, targetId);
     if (!target) return NextResponse.json({ error: "Kontent topilmadi" }, { status: 404 });
 
@@ -37,7 +51,7 @@ export async function POST(req: Request) {
         text: target.text,
         imageUrl: target.imageUrl,
         kind: targetType === "POST" ? "post" : "izoh",
-        reporterReason: reason ? String(reason).slice(0, 300) : "",
+        reporterReason: cleanReason,
     });
 
     return NextResponse.json({ ok: true });

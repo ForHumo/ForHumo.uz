@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { normalizePair, otherId, hasUnread } from "@/lib/nexus-dm";
 import { isBlockedBetween } from "@/lib/nexus-block";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 // GET /api/nexus/messages — mening suhbatlarim
 export async function GET() {
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
     if (!targetId) return NextResponse.json({ error: "Foydalanuvchi topilmadi" }, { status: 404 });
     if (targetId === me.id) return NextResponse.json({ error: "O'zingizga yoza olmaysiz" }, { status: 400 });
     if (await isBlockedBetween(me.id, targetId)) return NextResponse.json({ error: "Bu foydalanuvchiga yoza olmaysiz" }, { status: 403 });
+    if (await nexusRateLimited(me.id, "convStart")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const [u1, u2] = normalizePair(me.id, targetId);
     const conv = await prisma.nexusConversation.upsert({
