@@ -544,6 +544,17 @@ model AiUsage {
   @@index([profileId, createdAt])
 }
 
+// Tavsiya algoritmi 2-bosqich: saqlanadigan qiziqish vektori (kunlik cron'da qayta hisoblanadi).
+// Signallar: like/save (post muallif+teg), video ko'rish (muallif+kategoriya+teg), follow (muallif).
+// Json = { kalit: og'irlik } (top-N saqlanadi). Feed reytingi shu profil bilan tartiblaydi.
+model NexusInterest {
+  profileId  String   @id          // bitta foydalanuvchi = bitta vektor
+  authors    Json     @default("{}")  // { authorId: weight }
+  tags       Json     @default("{}")  // { tag: weight }
+  categories Json     @default("{}")  // { category: weight }
+  computedAt DateTime @default(now())
+}
+
 enum ModerationStatus {
   PENDING      // admin ko'rishi kutilmoqda
   KEPT         // ko'rib chiqildi — saqlandi

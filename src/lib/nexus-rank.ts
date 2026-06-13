@@ -13,33 +13,47 @@ export interface InterestProfile {
 
 const EMPTY: InterestProfile = { followingSet: new Set(), authorWeights: new Map(), tagWeights: new Map() };
 
-// Foydalanuvchining yengil qiziqish profilini quradi (follow + so'nggi like'lardan).
+// Qiziqish profilini quradi. 2-bosqich: avval saqlangan vektorni (NexusInterest, kunlik
+// cron) o'qiydi — tez + kuchli signal. Yo'q bo'lsa (yangi user / cron hali ishlamagan)
+// jonli hisoblaydi (1-bosqich fallback). Follow'lar har doim yangilanadi (cron orasida o'zgaradi).
 export async function buildInterestProfile(myId: string | null): Promise<InterestProfile> {
     if (!myId) return EMPTY;
     try {
-        const [follows, likes] = await Promise.all([
+        const [stored, follows] = await Promise.all([
+            prisma.nexusInterest.findUnique({ where: { profileId: myId } }),
             prisma.nexusFollow.findMany({ where: { followerId: myId }, select: { followingId: true } }),
-            prisma.nexusLike.findMany({
-                where: { profileId: myId }, orderBy: { createdAt: "desc" }, take: 150,
-                select: { post: { select: { profileId: true, hashtags: true } } },
-            }),
         ]);
         const followingSet = new Set(follows.map(f => f.followingId));
-        const authorWeights = new Map<string, number>();
-        const tagWeights = new Map<string, number>();
-        // Follow = kuchli signal
-        for (const f of follows) authorWeights.set(f.followingId, (authorWeights.get(f.followingId) ?? 0) + 2);
-        // Like qilingan postlar — muallif + teg signali
-        for (const l of likes) {
-            const p = l.post;
-            if (!p) continue;
-            authorWeights.set(p.profileId, (authorWeights.get(p.profileId) ?? 0) + 1);
-            for (const t of p.hashtags) tagWeights.set(t, (tagWeights.get(t) ?? 0) + 1);
-        }
+
+        if (!stored) return liveInterestProfile(myId, follows);
+
+        const authorWeights = new Map<string, number>(Object.entries((stored.authors ?? {}) as unknown as Record<string, number>));
+        const tagWeights = new Map<string, number>(Object.entries((stored.tags ?? {}) as unknown as Record<string, number>));
+        // Follow'lar har doim joriy (cron orasida qo'shilgan/olib tashlanganlar)
+        for (const f of follows) authorWeights.set(f.followingId, Math.max(authorWeights.get(f.followingId) ?? 0, 2));
         return { followingSet, authorWeights, tagWeights };
     } catch {
         return EMPTY; // algoritm xatosi feed'ni buzmaydi (fail-safe → xronologik)
     }
+}
+
+// 1-bosqich uslubidagi jonli hisoblash (saqlangan vektor yo'q bo'lganda fallback).
+async function liveInterestProfile(myId: string, follows: { followingId: string }[]): Promise<InterestProfile> {
+    const likes = await prisma.nexusLike.findMany({
+        where: { profileId: myId }, orderBy: { createdAt: "desc" }, take: 150,
+        select: { post: { select: { profileId: true, hashtags: true } } },
+    });
+    const followingSet = new Set(follows.map(f => f.followingId));
+    const authorWeights = new Map<string, number>();
+    const tagWeights = new Map<string, number>();
+    for (const f of follows) authorWeights.set(f.followingId, (authorWeights.get(f.followingId) ?? 0) + 2);
+    for (const l of likes) {
+        const p = l.post;
+        if (!p) continue;
+        authorWeights.set(p.profileId, (authorWeights.get(p.profileId) ?? 0) + 1);
+        for (const t of p.hashtags) tagWeights.set(t, (tagWeights.get(t) ?? 0) + 1);
+    }
+    return { followingSet, authorWeights, tagWeights };
 }
 
 export interface RankablePost {
