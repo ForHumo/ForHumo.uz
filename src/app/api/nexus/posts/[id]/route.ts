@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile, extractHashtags } from "@/lib/nexus";
 import { moderateOnCreate } from "@/lib/moderation";
 import { notifyMentions } from "@/lib/nexus-mention";
+import { isActiveSubscriber } from "@/lib/nexus-sub";
+import { isBlockedBetween } from "@/lib/nexus-block";
 
 // GET /api/nexus/posts/[id] — bitta post (permalink sahifa uchun, maxfiylik bilan)
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -21,11 +23,21 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     });
     if (!post || post.hidden) return NextResponse.json({ error: "Post topilmadi" }, { status: 404 });
 
-    // Maxfiylik: FOLLOWERS — muallifni kuzatsam yoki o'zimniki; PRIVATE — faqat muallif
+    // Bloklangan muallif posti ko'rinmaydi
+    if (myId && post.profileId !== myId && await isBlockedBetween(myId, post.profileId)) {
+        return NextResponse.json({ error: "Post topilmadi" }, { status: 404 });
+    }
+
+    // Maxfiylik: PRIVATE — faqat muallif; SUBSCRIBERS — faol pullik obunachi; FOLLOWERS — kuzatuvchi
     if (post.privacy !== "PUBLIC" && post.profileId !== myId) {
         if (post.privacy === "PRIVATE") return NextResponse.json({ error: "Maxfiy post" }, { status: 403 });
-        const follows = myId ? await prisma.nexusFollow.findUnique({ where: { followerId_followingId: { followerId: myId, followingId: post.profileId } } }) : null;
-        if (!follows) return NextResponse.json({ error: "Faqat obunachilar uchun" }, { status: 403 });
+        if (post.privacy === "SUBSCRIBERS") {
+            const sub = myId ? await isActiveSubscriber(myId, post.profileId) : false;
+            if (!sub) return NextResponse.json({ error: "Faqat pullik obunachilar uchun" }, { status: 403 });
+        } else {
+            const follows = myId ? await prisma.nexusFollow.findUnique({ where: { followerId_followingId: { followerId: myId, followingId: post.profileId } } }) : null;
+            if (!follows) return NextResponse.json({ error: "Faqat kuzatuvchilar uchun" }, { status: 403 });
+        }
     }
 
     const author = await prisma.userProfile.findUnique({

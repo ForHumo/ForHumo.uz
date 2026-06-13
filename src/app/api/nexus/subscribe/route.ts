@@ -68,21 +68,23 @@ export async function POST(req: Request) {
             const aCur = cur(aw.currency);
 
             const wallet = await tx.zijWallet.findUnique({ where: { profileId: me.id } });
-            const bCur = cur(wallet?.currency ?? "UZS");
+            if (!wallet) return "no_funds" as const;
+            const bCur = cur(wallet.currency);
             const buyerPays = convert(price, aCur, bCur);   // obunachi o'z valyutasida to'laydi
-            const bal = Number(wallet?.balance ?? 0);
-            if (!wallet || bal < buyerPays) return "no_funds" as const;
 
-            // Obunachi — TRANSFER_OUT
-            const newBuyerBal = roundMoney(bal - buyerPays, bCur);
-            await tx.zijWallet.update({ where: { id: wallet.id }, data: { balance: newBuyerBal } });
+            // Obunachi — atomik shartli debit (race-safe)
+            const debit = await tx.zijWallet.updateMany({ where: { id: wallet.id, balance: { gte: buyerPays } }, data: { balance: { decrement: buyerPays } } });
+            if (debit.count === 0) return "no_funds" as const;
+            const afterBuyer = await tx.zijWallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
+            const newBuyerBal = roundMoney(Number(afterBuyer?.balance ?? 0), bCur);
             await tx.zijTransaction.create({
                 data: { walletId: wallet.id, type: "TRANSFER_OUT", amount: buyerPays, currency: bCur, balanceAfter: newBuyerBal, description: "Nexus pullik obuna", ref: creatorId2 },
             });
 
             // Ijodkor — TRANSFER_IN (narxni to'liq o'z valyutasida oladi)
-            const newAuthorBal = roundMoney(Number(aw.balance) + price, aCur);
-            await tx.zijWallet.update({ where: { id: aw.id }, data: { balance: newAuthorBal } });
+            await tx.zijWallet.update({ where: { id: aw.id }, data: { balance: { increment: price } } });
+            const afterAuthor = await tx.zijWallet.findUnique({ where: { id: aw.id }, select: { balance: true } });
+            const newAuthorBal = roundMoney(Number(afterAuthor?.balance ?? 0), aCur);
             await tx.zijTransaction.create({
                 data: { walletId: aw.id, type: "TRANSFER_IN", amount: price, currency: aCur, balanceAfter: newAuthorBal, description: "Nexus obuna daromadi", ref: me.id },
             });

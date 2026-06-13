@@ -49,18 +49,22 @@ export async function POST(req: Request) {
 
     const destination = method === "card" ? maskCard(destinationRaw) : destinationRaw.slice(0, 40);
 
-    // Atomik: balansni kamaytirib, payout + WITHDRAW tranzaksiya yaratamiz
-    const newBalance = roundMoney(Number(wallet.balance) - amount, currency);
-    const payout = await prisma.$transaction(async tx => {
-        await tx.zijWallet.update({ where: { id: wallet.id }, data: { balance: newBalance } });
+    // Atomik shartli debit (race-safe) + payout + WITHDRAW tranzaksiya
+    const txResult = await prisma.$transaction(async tx => {
+        const debit = await tx.zijWallet.updateMany({ where: { id: wallet.id, balance: { gte: amount } }, data: { balance: { decrement: amount } } });
+        if (debit.count === 0) return null;
+        const after = await tx.zijWallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
+        const newBal = roundMoney(Number(after?.balance ?? 0), currency);
         const p = await tx.payoutRequest.create({
             data: { walletId: wallet.id, amount, currency, method, destination, status: "PENDING" },
         });
         await tx.zijTransaction.create({
-            data: { walletId: wallet.id, type: "WITHDRAW", amount, currency, balanceAfter: newBalance, description: `Pul yechish (${destination})`, ref: p.id },
+            data: { walletId: wallet.id, type: "WITHDRAW", amount, currency, balanceAfter: newBal, description: `Pul yechish (${destination})`, ref: p.id },
         });
-        return p;
+        return { payout: p, newBalance: newBal };
     });
+    if (!txResult) return NextResponse.json({ error: "Balans yetarli emas" }, { status: 400 });
+    const { payout, newBalance } = txResult;
 
     // Shlyuzga yuborish
     const provider = getPayoutProvider(currency);
@@ -68,10 +72,10 @@ export async function POST(req: Request) {
     const status = res.status === "completed" ? "COMPLETED" : res.status === "processing" ? "PROCESSING" : "FAILED";
 
     if (status === "FAILED") {
-        // Muvaffaqiyatsiz — balansni qaytaramiz
+        // Muvaffaqiyatsiz — balansni qaytaramiz (increment)
         const restored = roundMoney(newBalance + amount, currency);
         await prisma.$transaction([
-            prisma.zijWallet.update({ where: { id: wallet.id }, data: { balance: restored } }),
+            prisma.zijWallet.update({ where: { id: wallet.id }, data: { balance: { increment: amount } } }),
             prisma.payoutRequest.update({ where: { id: payout.id }, data: { status: "FAILED", providerRef: res.providerRef ?? null } }),
             prisma.zijTransaction.create({ data: { walletId: wallet.id, type: "REFUND", amount, currency, balanceAfter: restored, description: "Pul yechish bekor qilindi", ref: payout.id } }),
         ]);

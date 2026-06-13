@@ -29,13 +29,14 @@ export async function sendTip(opts: {
     try {
         return await prisma.$transaction(async tx => {
             const wallet = await tx.zijWallet.findUnique({ where: { profileId: opts.donorId } });
-            const dCur = cur(wallet?.currency ?? "UZS");
-            const bal = Number(wallet?.balance ?? 0);
-            if (!wallet || bal < amount) return { result: "no_funds" as const };
+            if (!wallet) return { result: "no_funds" as const };
+            const dCur = cur(wallet.currency);
 
-            // Donor — TRANSFER_OUT (donor valyutasida)
-            const newDonorBal = roundMoney(bal - amount, dCur);
-            await tx.zijWallet.update({ where: { id: wallet.id }, data: { balance: newDonorBal } });
+            // Donor — atomik shartli debit (race-safe: balans yetarli bo'lsagina kamayadi)
+            const debit = await tx.zijWallet.updateMany({ where: { id: wallet.id, balance: { gte: amount } }, data: { balance: { decrement: amount } } });
+            if (debit.count === 0) return { result: "no_funds" as const };
+            const afterDonor = await tx.zijWallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
+            const newDonorBal = roundMoney(Number(afterDonor?.balance ?? 0), dCur);
             await tx.zijTransaction.create({
                 data: { walletId: wallet.id, type: "TRANSFER_OUT", amount, currency: dCur, balanceAfter: newDonorBal, description: "Nexus qo'llab-quvvatlash (tip)", ref: opts.targetId ?? opts.recipientId },
             });
@@ -45,8 +46,9 @@ export async function sendTip(opts: {
             if (!aw) aw = await tx.zijWallet.create({ data: { profileId: opts.recipientId, currency: currencyForCountry(opts.recipientCountry) } });
             const rCur = cur(aw.currency);
             const received = convert(amount, dCur, rCur);
-            const newRecBal = roundMoney(Number(aw.balance) + received, rCur);
-            await tx.zijWallet.update({ where: { id: aw.id }, data: { balance: newRecBal } });
+            await tx.zijWallet.update({ where: { id: aw.id }, data: { balance: { increment: received } } });
+            const afterRec = await tx.zijWallet.findUnique({ where: { id: aw.id }, select: { balance: true } });
+            const newRecBal = roundMoney(Number(afterRec?.balance ?? 0), rCur);
             await tx.zijTransaction.create({
                 data: { walletId: aw.id, type: "TRANSFER_IN", amount: received, currency: rCur, balanceAfter: newRecBal, description: "Nexus tip (qo'llab-quvvatlash daromadi)", ref: opts.targetId ?? opts.donorId },
             });

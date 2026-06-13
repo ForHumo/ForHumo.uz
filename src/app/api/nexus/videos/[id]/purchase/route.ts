@@ -43,22 +43,25 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
             const aCur = cur(aw.currency);
 
             const buyerPays = convert(price, aCur, bCur);   // xaridor o'z valyutasida to'laydi
-            const bal = Number(wallet?.balance ?? 0);
-            if (!wallet || bal < buyerPays) return "no_funds" as const;
+            if (!wallet) return "no_funds" as const;
 
             const dup = await tx.nexusVideoPurchase.findUnique({
                 where: { videoId_buyerId: { videoId: id, buyerId: me.id } },
             });
             if (dup) return "ok" as const;
 
-            const newBuyerBal = roundMoney(bal - buyerPays, bCur);
-            await tx.zijWallet.update({ where: { id: wallet.id }, data: { balance: newBuyerBal } });
+            // Atomik shartli debit (race-safe)
+            const debit = await tx.zijWallet.updateMany({ where: { id: wallet.id, balance: { gte: buyerPays } }, data: { balance: { decrement: buyerPays } } });
+            if (debit.count === 0) return "no_funds" as const;
+            const afterBuyer = await tx.zijWallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
+            const newBuyerBal = roundMoney(Number(afterBuyer?.balance ?? 0), bCur);
             await tx.zijTransaction.create({
                 data: { walletId: wallet.id, type: "PURCHASE", amount: buyerPays, currency: bCur, balanceAfter: newBuyerBal, description: `Nexus video xaridi: ${short}`, ref: id },
             });
 
-            const newAuthorBal = roundMoney(Number(aw.balance) + price, aCur);
-            await tx.zijWallet.update({ where: { id: aw.id }, data: { balance: newAuthorBal } });
+            await tx.zijWallet.update({ where: { id: aw.id }, data: { balance: { increment: price } } });
+            const afterAuthor = await tx.zijWallet.findUnique({ where: { id: aw.id }, select: { balance: true } });
+            const newAuthorBal = roundMoney(Number(afterAuthor?.balance ?? 0), aCur);
             await tx.zijTransaction.create({
                 data: { walletId: aw.id, type: "SALE", amount: price, currency: aCur, balanceAfter: newAuthorBal, description: `Nexus video sotuvi: ${short}`, ref: id },
             });
