@@ -552,6 +552,7 @@ model NexusInterest {
   authors    Json     @default("{}")  // { authorId: weight }
   tags       Json     @default("{}")  // { tag: weight }
   categories Json     @default("{}")  // { category: weight }
+  recAuthors Json     @default("{}")  // 3-bosqich CF: { authorId: score } — kuzatmagan, lekin tavsiya
   computedAt DateTime @default(now())
 }
 

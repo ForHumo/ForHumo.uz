@@ -3,6 +3,7 @@
 // shu saqlangan profilni o'qiydi (har so'rovda qayta hisoblamaydi → tez + kuchli signal).
 
 import { prisma } from "@/lib/prisma";
+import { computeRecommendedAuthors } from "@/lib/nexus-cf";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -51,7 +52,11 @@ export async function computeUserInterest(profileId: string): Promise<void> {
         for (const t of vid.tags) add(tags, t, 0.3);
     }
 
-    const data = { authors: topN(authors, 60), tags: topN(tags, 60), categories: topN(categories, 20) };
+    // 3-bosqich CF: tavsiya mualliflar (kuzatmagan, lekin o'xshashlar kuzatadigan)
+    const followingIds = follows.map(f => f.followingId);
+    const recAuthors = await computeRecommendedAuthors(profileId, followingIds).catch(() => ({}));
+
+    const data = { authors: topN(authors, 60), tags: topN(tags, 60), categories: topN(categories, 20), recAuthors };
     await prisma.nexusInterest.upsert({
         where: { profileId },
         create: { profileId, ...data },

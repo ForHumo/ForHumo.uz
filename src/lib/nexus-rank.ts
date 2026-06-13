@@ -29,6 +29,15 @@ export async function buildInterestProfile(myId: string | null): Promise<Interes
 
         const authorWeights = new Map<string, number>(Object.entries((stored.authors ?? {}) as unknown as Record<string, number>));
         const tagWeights = new Map<string, number>(Object.entries((stored.tags ?? {}) as unknown as Record<string, number>));
+
+        // 3-bosqich CF — kashfiyot in'ektsiyasi: tavsiya mualliflar (kuzatmaganlar)
+        // kamroq og'irlik bilan qo'shiladi → feed'da bubble'dan tashqari yangi mualliflar paydo bo'ladi.
+        const rec = (stored.recAuthors ?? {}) as unknown as Record<string, number>;
+        for (const [id, w] of Object.entries(rec)) {
+            if (followingSet.has(id)) continue;
+            authorWeights.set(id, Math.max(authorWeights.get(id) ?? 0, Math.min(w * 0.4, 2.5)));
+        }
+
         // Follow'lar har doim joriy (cron orasida qo'shilgan/olib tashlanganlar)
         for (const f of follows) authorWeights.set(f.followingId, Math.max(authorWeights.get(f.followingId) ?? 0, 2));
         return { followingSet, authorWeights, tagWeights };

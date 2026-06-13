@@ -34,10 +34,24 @@ export async function GET() {
     const hidden = new Set(await getHiddenAuthorIds(meId));
     const seen = new Set<string>();
     const candidateIds: string[] = [];
+
+    // 3-bosqich CF — avval "senga o'xshaganlar kuzatadigan" tavsiya mualliflar (score bo'yicha)
+    if (meId) {
+        const interest = await prisma.nexusInterest.findUnique({ where: { profileId: meId }, select: { recAuthors: true } });
+        const rec = (interest?.recAuthors ?? {}) as unknown as Record<string, number>;
+        const recIds = Object.entries(rec).sort((a, b) => b[1] - a[1]).map(([id]) => id);
+        for (const id of recIds) {
+            if (id === meId || myFollowing.has(id) || seen.has(id) || hidden.has(id)) continue;
+            seen.add(id); candidateIds.push(id);
+            if (candidateIds.length >= 8) break;
+        }
+    }
+
+    // Qolganini so'nggi post mualliflari bilan to'ldiramiz (CF yetmasa / yangi user)
     for (const p of recentPosts) {
+        if (candidateIds.length >= 8) break;
         if (p.profileId === meId || myFollowing.has(p.profileId) || seen.has(p.profileId) || hidden.has(p.profileId)) continue;
         seen.add(p.profileId); candidateIds.push(p.profileId);
-        if (candidateIds.length >= 8) break;
     }
     const profs = await prisma.userProfile.findMany({
         where: { id: { in: candidateIds }, username: { not: null }, accountType: "GOOGLE" },
