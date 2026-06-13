@@ -4,6 +4,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { computeRecommendedAuthors } from "@/lib/nexus-cf";
+import { embedUserFromEngagement } from "@/lib/nexus-embed";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -62,6 +63,9 @@ export async function computeUserInterest(profileId: string): Promise<void> {
         create: { profileId, ...data },
         update: { ...data, computedAt: new Date() },
     });
+
+    // 4-bosqich: foydalanuvchi "ta'm vektori" (like/save embeddinglari markazi)
+    await embedUserFromEngagement(profileId);
 }
 
 // So'nggi faol foydalanuvchilarning qiziqishini qayta hisoblaydi (cron, cheklangan partiya).

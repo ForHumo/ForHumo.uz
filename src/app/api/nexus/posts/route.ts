@@ -12,6 +12,7 @@ import { getActiveSubscribedCreatorIds } from "@/lib/nexus-sub";
 import { notifyMentions } from "@/lib/nexus-mention";
 import { filterMediaUrls } from "@/lib/media-url";
 import { buildInterestProfile, scorePost } from "@/lib/nexus-rank";
+import { embedPost, semanticPostScores } from "@/lib/nexus-embed";
 
 async function myProfileId(): Promise<string | null> {
     const session = await getServerSession(authOptions);
@@ -88,13 +89,22 @@ export async function GET(req: Request) {
     let total: number;
     if (tab === "foryou" && myId) {
         const POOL = 250;
-        const [pool, profile] = await Promise.all([
+        const [recentPool, profile, semScores] = await Promise.all([
             prisma.nexusPost.findMany({ where, orderBy: { createdAt: "desc" }, take: POOL, include: POST_INCLUDE }),
             buildInterestProfile(myId),
+            semanticPostScores(myId, 120),   // 4-bosqich: semantik o'xshashlik
         ]);
+        // Semantik nomzodlar — recency pool'da yo'qlarini ham qo'shamiz (eski, lekin mavzuga mos).
+        // Maxfiylik/blok filtri SHU YERDA ham `where` orqali — pgvural natijasi to'g'ridan-to'g'ri ko'rsatilmaydi.
+        const haveIds = new Set(recentPool.map(p => p.id));
+        const extraIds = [...semScores.keys()].filter(id => !haveIds.has(id));
+        const extra = extraIds.length
+            ? await prisma.nexusPost.findMany({ where: { AND: [where, { id: { in: extraIds } }] }, include: POST_INCLUDE })
+            : [];
+        const pool = [...recentPool, ...extra];
         const now = Date.now();
         const scored = pool
-            .map(p => ({ p, s: scorePost(p, profile, now) }))
+            .map(p => ({ p, s: scorePost(p, profile, now) + 1.2 * (semScores.get(p.id) ?? 0) }))
             .sort((a, b) => b.s - a.s);
         total = scored.length;
         posts = scored.slice(offset, offset + limit).map(x => x.p);
@@ -217,6 +227,8 @@ export async function POST(req: Request) {
     }));
     // @mention bildirishnomalari
     after(() => notifyMentions({ text: post.text, actorId: profile.id, postId: post.id }));
+    // Semantik embedding (4-bosqich tavsiya) — javobni kechiktirmaydi
+    after(() => embedPost(post.id, post.text ?? "", post.hashtags));
 
     const prodMap = await loadAttachedProducts([attachId]);
 

@@ -3,8 +3,33 @@
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+const EMBED_MODEL = process.env.GEMINI_EMBED_MODEL || "gemini-embedding-001";
+
+export const EMBED_DIM = 768;   // outputDimensionality (NexusPostEmbedding vector(768) bilan mos)
 
 export function aiAvailable() { return !!GEMINI_KEY; }
+
+// Matnni embedding vektoriga (768 o'lcham) aylantiradi. Kalit yo'q / xato → null (fail-safe).
+export async function aiEmbed(text: string): Promise<number[] | null> {
+    if (!GEMINI_KEY) return null;
+    const clean = (text || "").trim().slice(0, 8000);
+    if (!clean) return null;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${EMBED_MODEL}:embedContent?key=${GEMINI_KEY}`;
+    const body = { model: `models/${EMBED_MODEL}`, content: { parts: [{ text: clean }] }, outputDimensionality: EMBED_DIM };
+    try {
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+            if (res.ok) {
+                const data = await res.json();
+                const values: number[] | undefined = data?.embedding?.values;
+                return Array.isArray(values) && values.length ? values : null;
+            }
+            if (res.status === 503 || res.status === 429) { await new Promise(r => setTimeout(r, 700 * (attempt + 1))); continue; }
+            return null;
+        }
+    } catch { /* tarmoq xatosi */ }
+    return null;
+}
 
 type Part = { text: string } | { inline_data: { mime_type: string; data: string } };
 

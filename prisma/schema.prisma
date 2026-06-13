@@ -544,6 +544,20 @@ model AiUsage {
   @@index([profileId, createdAt])
 }
 
+// Tavsiya algoritmi 4-bosqich: semantik embeddinglar (pgvector + Gemini).
+// Prisma vector turini bilmaydi → Unsupported; insert/qidiruv raw SQL orqali (lib/nexus-embed.ts).
+model NexusPostEmbedding {
+  postId    String                      @id
+  embedding Unsupported("vector(768)")?
+  createdAt DateTime                    @default(now())
+}
+
+model NexusUserEmbedding {
+  profileId  String                      @id
+  embedding  Unsupported("vector(768)")?
+  computedAt DateTime                    @default(now())
+}
+
 // Tavsiya algoritmi 2-bosqich: saqlanadigan qiziqish vektori (kunlik cron'da qayta hisoblanadi).
 // Signallar: like/save (post muallif+teg), video ko'rish (muallif+kategoriya+teg), follow (muallif).
 // Json = { kalit: og'irlik } (top-N saqlanadi). Feed reytingi shu profil bilan tartiblaydi.
