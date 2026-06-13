@@ -61,8 +61,11 @@ export async function POST(req: Request) {
     if (typeof handle === "string" && handle.trim()) {
         const h = handle.trim().toLowerCase().replace(/^@/, "");
         if (!/^[a-z0-9_]{3,20}$/.test(h)) return NextResponse.json({ error: "Noto'g'ri handle (3-20: a-z, 0-9, _)" }, { status: 400 });
-        const exists = await prisma.nexusChannel.findUnique({ where: { handle: h }, select: { id: true } });
-        if (exists) return NextResponse.json({ error: "Bu handle band" }, { status: 409 });
+        const [exists, userClash] = await Promise.all([
+            prisma.nexusChannel.findUnique({ where: { handle: h }, select: { id: true } }),
+            prisma.userProfile.findUnique({ where: { username: h }, select: { id: true } }),
+        ]);
+        if (exists || userClash) return NextResponse.json({ error: "Bu handle band" }, { status: 409 });
         cleanHandle = h;
     }
 

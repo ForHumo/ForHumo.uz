@@ -750,6 +750,7 @@ enum NexusNotifType {
   LIVE
   TIP
   MENTION
+  SUB_EXPIRING
 }
 
 // Story — 24 soatlik vaqtinchalik kontent
@@ -1057,8 +1058,10 @@ model NexusSubscription {
   priceZij     Int                                 // to'langan oylik narx (obuna paytida qotiriladi)
   startedAt    DateTime @default(now())
   expiresAt    DateTime                            // shu vaqtgacha faol
+  expiryNotifiedAt DateTime?                       // tugashga yaqin bildirishnoma yuborilgan vaqt
   createdAt    DateTime @default(now())
   @@unique([subscriberId, creatorId])
+  @@index([expiresAt])
   @@index([subscriberId, expiresAt])
   @@index([creatorId, expiresAt])
 }

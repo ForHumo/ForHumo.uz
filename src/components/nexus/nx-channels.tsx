@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2,
+    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff,
 } from "lucide-react";
 
 type ChType = "CHANNEL" | "GROUP";
@@ -159,6 +159,7 @@ function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }) {
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
     const [joinBusy, setJoinBusy] = useState(false);
+    const [membersOpen, setMembersOpen] = useState(false);
     const lastTs = useRef<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -232,8 +233,11 @@ function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }) {
                     <p className="text-sm font-black text-white truncate">{ch.name}</p>
                     <p className="text-[11px]" style={{ color: "rgba(120,140,185,0.8)" }}>{ch.type === "CHANNEL" ? "Kanal" : "Guruh"} · {ch.memberCount} a&apos;zo</p>
                 </div>
+                {ch.isOwner && <button onClick={() => setMembersOpen(true)} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "rgba(43,62,232,0.12)" }}><Users className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} /></button>}
                 {ch.isMember && <button onClick={leaveOrDelete} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.1)" }}>{ch.isOwner ? <Trash2 className="w-4 h-4" style={{ color: "#ff8a96" }} /> : <X className="w-4 h-4" style={{ color: "#ff8a96" }} />}</button>}
             </div>
+
+            {membersOpen && <ChannelMembers id={id} onClose={() => setMembersOpen(false)} />}
 
             {!ch.isMember ? (
                 <div className="flex flex-col items-center justify-center flex-1 px-6 text-center">
@@ -274,5 +278,56 @@ function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }) {
                 </>
             )}
         </div>
+    );
+}
+
+interface MemberItem { profileId: string; role: string; name: string | null; username: string | null; image: string | null; verified: boolean }
+
+function ChannelMembers({ id, onClose }: { id: string; onClose: () => void }) {
+    const [members, setMembers] = useState<MemberItem[] | null>(null);
+    const [busy, setBusy] = useState<string | null>(null);
+
+    const load = useCallback(() => {
+        fetch(`/api/nexus/channels/${id}/members`).then(r => r.json()).then(d => setMembers(d.members ?? [])).catch(() => setMembers([]));
+    }, [id]);
+    useEffect(() => { load(); }, [load]);
+
+    async function setRole(profileId: string, role: "ADMIN" | "MEMBER") {
+        setBusy(profileId);
+        setMembers(prev => prev?.map(m => m.profileId === profileId ? { ...m, role } : m) ?? prev);
+        await fetch(`/api/nexus/channels/${id}/members`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profileId, role }) }).catch(() => { });
+        setBusy(null);
+    }
+
+    return (
+        <>
+            <div className="fixed inset-0 z-[80]" style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)" }} onClick={onClose} />
+            <div className="fixed inset-x-0 bottom-0 z-[80] rounded-t-3xl overflow-hidden md:inset-x-auto md:left-1/2 md:bottom-auto md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[420px] md:rounded-3xl max-h-[80vh] flex flex-col"
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)" }} onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    <h3 className="text-base font-black text-white">A&apos;zolar</h3>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }}><X className="w-4 h-4 text-white" /></button>
+                </div>
+                <div className="overflow-y-auto px-3 py-3 flex flex-col gap-1">
+                    {members === null ? <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                        : members.map(m => (
+                            <div key={m.profileId} className="flex items-center gap-3 p-2.5 rounded-2xl" style={{ background: "rgba(11,18,40,0.55)" }}>
+                                <img src={m.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(m.username || "u")}`} alt="" className="w-9 h-9 rounded-xl object-cover bg-white flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-white truncate inline-flex items-center gap-1">{m.name || m.username || "Foydalanuvchi"}{m.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}</p>
+                                    <p className="text-[11px]" style={{ color: m.role === "OWNER" ? "#F59E0B" : m.role === "ADMIN" ? "#00CEC8" : "rgba(120,140,185,0.75)" }}>{m.role === "OWNER" ? "Egasi" : m.role === "ADMIN" ? "Admin" : "A'zo"}</p>
+                                </div>
+                                {m.role !== "OWNER" && (
+                                    <button onClick={() => setRole(m.profileId, m.role === "ADMIN" ? "MEMBER" : "ADMIN")} disabled={busy === m.profileId}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold"
+                                        style={m.role === "ADMIN" ? { background: "rgba(239,68,68,0.1)", color: "#ff8a96" } : { background: "rgba(0,206,200,0.12)", color: "#00CEC8" }}>
+                                        {m.role === "ADMIN" ? <><ShieldOff className="w-3 h-3" />Olib tashlash</> : <><Shield className="w-3 h-3" />Admin</>}
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                </div>
+            </div>
+        </>
     );
 }

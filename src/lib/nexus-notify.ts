@@ -4,13 +4,13 @@ import { sendPushToProfile } from "@/lib/push";
 
 export type NexusNotifType =
     | "LIKE" | "COMMENT" | "FOLLOW" | "REPLY"
-    | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION";
+    | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION" | "SUB_EXPIRING";
 
 const PUSH_TEXT: Record<NexusNotifType, string> = {
     LIKE: "postingizni yoqtirdi", COMMENT: "postingizga izoh qoldirdi", FOLLOW: "sizni kuzatdi",
     REPLY: "izohingizga javob berdi", VIDEO_LIKE: "videongizni yoqtirdi", VIDEO_COMMENT: "videongizga izoh qoldirdi",
     TRACK_LIKE: "trekingizni yoqtirdi", PURCHASE: "videongizni sotib oldi", LIVE: "jonli efir boshladi",
-    TIP: "sizni qo'llab-quvvatladi", MENTION: "sizni eslatib o'tdi",
+    TIP: "sizni qo'llab-quvvatladi", MENTION: "sizni eslatib o'tdi", SUB_EXPIRING: "obunangiz tugayapti",
 };
 function pushUrl(o: { postId?: string | null; videoId?: string | null; trackId?: string | null; liveId?: string | null }): string {
     if (o.videoId) return `/nexus/v/${o.videoId}`;

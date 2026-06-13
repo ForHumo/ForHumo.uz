@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { nexusNotify } from "@/lib/nexus-notify";
 
 // GET /api/cron/stories-cleanup — muddati o'tgan storylarni o'chirish (Vercel Cron).
 // Himoya: CRON_SECRET bo'lsa Authorization tekshiriladi; Vercel cron x-vercel-cron yuboradi.
@@ -13,5 +14,20 @@ export async function GET(req: Request) {
     }
 
     const res = await prisma.nexusStory.deleteMany({ where: { expiresAt: { lt: new Date() } } });
-    return NextResponse.json({ ok: true, deleted: res.count });
+
+    // 24 soat ichida tugaydigan obunalar — obunachiga eslatma (bir marta)
+    const now = new Date();
+    const soon = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const expiring = await prisma.nexusSubscription.findMany({
+        where: { expiresAt: { gt: now, lt: soon }, expiryNotifiedAt: null },
+        take: 500,
+    });
+    let notified = 0;
+    for (const s of expiring) {
+        await nexusNotify({ recipientId: s.subscriberId, actorId: s.creatorId, type: "SUB_EXPIRING" });
+        await prisma.nexusSubscription.update({ where: { id: s.id }, data: { expiryNotifiedAt: now } }).catch(() => { });
+        notified++;
+    }
+
+    return NextResponse.json({ ok: true, deleted: res.count, expiryNotified: notified });
 }

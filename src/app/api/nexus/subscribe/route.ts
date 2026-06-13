@@ -98,7 +98,7 @@ export async function POST(req: Request) {
             await tx.nexusSubscription.upsert({
                 where: { subscriberId_creatorId: { subscriberId: me.id, creatorId: creatorId2 } },
                 create: { subscriberId: me.id, creatorId: creatorId2, priceZij: price, expiresAt },
-                update: { priceZij: price, expiresAt },
+                update: { priceZij: price, expiresAt, expiryNotifiedAt: null },
             });
             return { ok: true as const, expiresAt };
         });
