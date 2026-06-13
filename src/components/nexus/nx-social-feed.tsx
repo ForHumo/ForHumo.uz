@@ -9,7 +9,7 @@ import { NxText } from "./nx-rich-text";
 import {
     Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
     BadgeCheck, Image as ImgIcon, Loader2, Trash2, Send, X, Flag,
-    ShoppingBag, Search, MapPin, Lock, Users, BarChart2, CheckCircle2, Star,
+    ShoppingBag, Search, MapPin, Lock, Users, BarChart2, CheckCircle2, Star, Pencil,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 
@@ -24,6 +24,7 @@ interface Post {
     marketProductId: string | null; product?: AttachedProduct | null; shareCount: number; createdAt: string;
     privacy?: "PUBLIC" | "FOLLOWERS" | "SUBSCRIBERS" | "PRIVATE"; location?: string | null;
     pollOptions?: string[]; pollEndsAt?: string | null; pollVotes?: number[]; myVote?: number | null;
+    editedAt?: string | null;
     author: Author | null; likes: number; comments: number;
     liked: boolean; saved: boolean; isMine: boolean;
 }
@@ -303,6 +304,24 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
     const [following, setFollowing] = useState(false);
     const [showComments, setShowComments] = useState(false);
     const [reported, setReported] = useState(false);
+    const [editing, setEditing] = useState(false);
+    const [editText, setEditText] = useState(p.text ?? "");
+    const [editBusy, setEditBusy] = useState(false);
+    const [localText, setLocalText] = useState<string | null>(null);
+    const [edited, setEdited] = useState(!!p.editedAt);
+    const shownText = localText ?? p.text;
+
+    async function saveEdit() {
+        if (editBusy) return;
+        setEditBusy(true);
+        try {
+            const res = await fetch(`/api/nexus/posts/${p.id}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: editText }),
+            });
+            if (res.ok) { const d = await res.json(); setLocalText(d.text ?? ""); setEdited(true); setEditing(false); }
+        } finally { setEditBusy(false); }
+    }
 
     async function toggleFollow() {
         if (!p.author?.username) return;
@@ -379,11 +398,16 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
                         </button>
                         {menuOpen && (
                             p.isMine ? (
-                                <button onClick={() => { setMenuOpen(false); onDelete(); }}
-                                    className="absolute right-0 top-8 z-10 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap"
-                                    style={{ background: "rgba(8,14,32,0.98)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444" }}>
-                                    <Trash2 className="w-3.5 h-3.5" /> O&apos;chirish
-                                </button>
+                                <div className="absolute right-0 top-8 z-10 rounded-xl overflow-hidden whitespace-nowrap" style={{ background: "rgba(8,14,32,0.98)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                    <button onClick={() => { setMenuOpen(false); setEditText(shownText ?? ""); setEditing(true); }}
+                                        className="flex items-center gap-2 px-3 py-2 text-xs font-bold w-full" style={{ color: "rgba(180,195,235,0.95)" }}>
+                                        <Pencil className="w-3.5 h-3.5" /> Tahrirlash
+                                    </button>
+                                    <button onClick={() => { setMenuOpen(false); onDelete(); }}
+                                        className="flex items-center gap-2 px-3 py-2 text-xs font-bold w-full" style={{ color: "#EF4444", borderTop: "1px solid rgba(43,62,232,0.15)" }}>
+                                        <Trash2 className="w-3.5 h-3.5" /> O&apos;chirish
+                                    </button>
+                                </div>
                             ) : (
                                 <button onClick={() => { setMenuOpen(false); reportPost(); }} disabled={reported}
                                     className="absolute right-0 top-8 z-10 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap"
@@ -397,9 +421,22 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
             </div>
 
             {/* Matn */}
-            {p.text && (
+            {editing ? (
                 <div className="px-4 pb-3">
-                    <NxText text={p.text} className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(200,215,245,0.90)" }} />
+                    <textarea value={editText} onChange={e => setEditText(e.target.value)} rows={3} autoFocus
+                        className="w-full px-3 py-2.5 rounded-xl text-sm text-white outline-none resize-none"
+                        style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.25)", caretColor: "#00CEC8" }} />
+                    <div className="flex gap-2 mt-2 justify-end">
+                        <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: "rgba(43,62,232,0.08)", color: "rgba(160,180,230,0.85)" }}>Bekor</button>
+                        <button onClick={saveEdit} disabled={editBusy} className="px-4 py-1.5 rounded-lg text-xs font-black text-white flex items-center gap-1.5" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            {editBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}Saqlash
+                        </button>
+                    </div>
+                </div>
+            ) : shownText && (
+                <div className="px-4 pb-3">
+                    <NxText text={shownText} className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(200,215,245,0.90)" }} />
+                    {edited && <span className="text-[10px] ml-1" style={{ color: "rgba(80,100,150,0.7)" }}>(tahrirlangan)</span>}
                     {p.hashtags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                             {p.hashtags.map(h => <Link key={h} href={`/nexus/tag/${h}`} className="text-xs font-bold hover:underline" style={{ color: "#2B3EE8" }}>#{h}</Link>)}

@@ -128,7 +128,7 @@ export async function GET(req: Request) {
         const a = pMap[p.profileId];
         return {
             id: p.id, text: p.text, media: p.media, hashtags: p.hashtags,
-            marketProductId: p.marketProductId, shareCount: p.shareCount, createdAt: p.createdAt,
+            marketProductId: p.marketProductId, shareCount: p.shareCount, createdAt: p.createdAt, editedAt: p.editedAt,
             privacy: p.privacy, location: p.location,
             pollOptions: p.pollOptions, pollEndsAt: p.pollEndsAt,
             pollVotes: p.pollOptions.length ? p.pollOptions.map((_, i) => voteCounts[p.id]?.[i] ?? 0) : [],

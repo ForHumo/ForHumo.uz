@@ -1,8 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isVerifiedProfile } from "@/lib/nexus";
+import { isVerifiedProfile, extractHashtags } from "@/lib/nexus";
+import { moderateOnCreate } from "@/lib/moderation";
+import { notifyMentions } from "@/lib/nexus-mention";
 
 // GET /api/nexus/posts/[id] — bitta post (permalink sahifa uchun, maxfiylik bilan)
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -64,7 +66,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({
         post: {
             id: post.id, text: post.text, media: post.media, hashtags: post.hashtags,
-            marketProductId: post.marketProductId, shareCount: post.shareCount, createdAt: post.createdAt,
+            marketProductId: post.marketProductId, shareCount: post.shareCount, createdAt: post.createdAt, editedAt: post.editedAt,
             privacy: post.privacy, location: post.location,
             pollOptions: post.pollOptions, pollEndsAt: post.pollEndsAt, pollVotes, myVote,
             product,
@@ -90,4 +92,31 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     // likes/comments/saves onDelete:Cascade orqali o'chadi
     await prisma.nexusPost.delete({ where: { id } });
     return NextResponse.json({ ok: true });
+}
+
+// PATCH /api/nexus/posts/[id] — post matnini tahrirlash (faqat muallif)
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+    if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+
+    const { id } = await params;
+    const post = await prisma.nexusPost.findUnique({ where: { id }, select: { profileId: true, media: true } });
+    if (!post) return NextResponse.json({ error: "Post topilmadi" }, { status: 404 });
+    if (post.profileId !== profile.id) return NextResponse.json({ error: "Bu sizning postingiz emas" }, { status: 403 });
+
+    const { text } = await req.json();
+    const clean = typeof text === "string" ? text.trim() : "";
+    if (!clean && !(post.media?.length)) return NextResponse.json({ error: "Post bo'sh bo'lmasin" }, { status: 400 });
+
+    const updated = await prisma.nexusPost.update({
+        where: { id },
+        data: { text: clean || null, hashtags: extractHashtags(clean), editedAt: new Date() },
+    });
+
+    after(() => moderateOnCreate({ module: "NEXUS", targetType: "POST", targetId: id, text: updated.text, kind: "post" }));
+    after(() => notifyMentions({ text: updated.text, actorId: profile.id, postId: id }));
+
+    return NextResponse.json({ ok: true, text: updated.text, hashtags: updated.hashtags, editedAt: updated.editedAt });
 }

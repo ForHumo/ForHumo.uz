@@ -627,6 +627,7 @@ model NexusPost {
   pollEndsAt      DateTime?                       // so'rovnoma tugash vaqti
   shareCount      Int      @default(0)
   hidden          Boolean  @default(false) // moderatsiya
+  editedAt        DateTime?                // tahrirlangan bo'lsa
   createdAt       DateTime @default(now())
 
   likes     NexusLike[]
