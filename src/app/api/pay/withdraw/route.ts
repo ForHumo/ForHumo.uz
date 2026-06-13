@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getOrCreateWallet, walletCurrency } from "@/lib/wallet";
 import { minAmount, roundMoney, formatMoney } from "@/lib/money";
 import { getPayoutProvider } from "@/lib/payments";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 // Karta raqamini maskalash — faqat oxirgi 4 raqam saqlanadi
 function maskCard(s: string): string {
@@ -46,6 +47,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: `Kamida ${formatMoney(minAmount(currency), currency)} yechish mumkin` }, { status: 400 });
     if (!destinationRaw) return NextResponse.json({ error: "Karta yoki hisob raqami kerak" }, { status: 400 });
     if (Number(wallet.balance) < amount) return NextResponse.json({ error: "Balans yetarli emas" }, { status: 400 });
+    if (await nexusRateLimited(profile.id, "payWithdraw")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const destination = method === "card" ? maskCard(destinationRaw) : destinationRaw.slice(0, 40);
 

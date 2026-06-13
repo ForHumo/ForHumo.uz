@@ -6,14 +6,16 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { moderateOnCreate } from "@/lib/moderation";
+import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 // POST /api/nexus/tracks — yangi trek (musiqa/podkast/audiokitob)
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+    const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, humoId: true, username: true } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+    if (!profile.humoId || !profile.username) return NextResponse.json({ error: "Humo ID kerak" }, { status: 403 });
     if (await nexusRateLimited(profile.id, "track")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { title, artist, audioUrl, coverUrl, durationSec, kind, genre } = await req.json();
@@ -72,6 +74,10 @@ export async function GET(req: Request) {
         where.profileId = a?.id ?? "__none__";
     } else if (scope === "mine" && meId) where.profileId = meId;
     else if (scope === "liked" && meId) where.likes = { some: { profileId: meId } };
+
+    // Bloklangan/mute mualliflarni chiqarib tashlash
+    const hiddenIds = (await getHiddenAuthorIds(meId)).filter(x => x !== meId);
+    if (hiddenIds.length) where.AND = [{ profileId: { notIn: hiddenIds } }];
 
     const tracks = await prisma.nexusTrack.findMany({
         where,

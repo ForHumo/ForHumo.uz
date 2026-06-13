@@ -9,7 +9,8 @@ const MIN = 60_000;
 type RateKind =
     | "post" | "comment" | "videoComment"
     | "video" | "track" | "story"
-    | "dm" | "live" | "liveChat" | "tip" | "channel" | "channelMsg";
+    | "dm" | "live" | "liveChat" | "tip" | "channel" | "channelMsg"
+    | "payTransfer" | "payWithdraw";
 
 // kind -> [maks. son, oyna ms]
 const RULES: Record<RateKind, [number, number]> = {
@@ -25,6 +26,8 @@ const RULES: Record<RateKind, [number, number]> = {
     tip: [30, 10 * MIN],
     channel: [10, 60 * MIN],
     channelMsg: [60, 5 * MIN],
+    payTransfer: [20, 10 * MIN],
+    payWithdraw: [5, 60 * MIN],
 };
 
 export async function nexusRateLimited(profileId: string, kind: RateKind): Promise<boolean> {
@@ -68,6 +71,12 @@ export async function nexusRateLimited(profileId: string, kind: RateKind): Promi
                 break;
             case "channelMsg":
                 count = await prisma.nexusChannelMessage.count({ where: { senderId: profileId, createdAt: { gt: since } } });
+                break;
+            case "payTransfer":
+                count = await prisma.zijTransaction.count({ where: { wallet: { profileId }, type: "TRANSFER_OUT", createdAt: { gt: since } } });
+                break;
+            case "payWithdraw":
+                count = await prisma.payoutRequest.count({ where: { wallet: { profileId }, createdAt: { gt: since } } });
                 break;
         }
     } catch {

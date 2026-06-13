@@ -875,6 +875,7 @@ model NexusVideoComment {
   video     NexusVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
   profileId String
   text      String
+  hidden    Boolean    @default(false)   // moderatsiya
   createdAt DateTime   @default(now())
   @@index([videoId, createdAt])
 }

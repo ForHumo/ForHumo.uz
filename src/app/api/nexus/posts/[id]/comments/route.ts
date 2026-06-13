@@ -7,6 +7,7 @@ import { after } from "next/server";
 import { moderateOnCreate } from "@/lib/moderation";
 import { nexusNotify } from "@/lib/nexus-notify";
 import { notifyMentions } from "@/lib/nexus-mention";
+import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 // GET /api/nexus/posts/[id]/comments — izohlar (flat; klient daraxt quradi)
@@ -20,8 +21,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         myId = p?.id ?? null;
     }
 
+    const hiddenIds = (await getHiddenAuthorIds(myId)).filter(x => x !== myId);
     const comments = await prisma.nexusComment.findMany({
-        where: { postId: id, hidden: false }, orderBy: { createdAt: "asc" }, take: 200,
+        where: { postId: id, hidden: false, ...(hiddenIds.length ? { profileId: { notIn: hiddenIds } } : {}) },
+        orderBy: { createdAt: "asc" }, take: 200,
     });
     const profileIds = [...new Set(comments.map(c => c.profileId))];
     const profiles = await prisma.userProfile.findMany({

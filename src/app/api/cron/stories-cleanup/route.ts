@@ -7,7 +7,8 @@ export async function GET(req: Request) {
     const secret = process.env.CRON_SECRET;
     const auth = req.headers.get("authorization");
     const isVercelCron = req.headers.get("x-vercel-cron") != null;
-    if (secret && !isVercelCron && auth !== `Bearer ${secret}`) {
+    // Vercel cron (x-vercel-cron) yoki to'g'ri CRON_SECRET talab qilinadi — ommaviy chaqiruvni to'sadi
+    if (!isVercelCron && (!secret || auth !== `Bearer ${secret}`)) {
         return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 

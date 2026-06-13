@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateWallet, walletCurrency } from "@/lib/wallet";
 import { minAmount, roundMoney, convert, formatMoney } from "@/lib/money";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 // POST /api/pay/transfer — username bo'yicha pul yuborish.
 // Yuboruvchi o'z valyutasida tanlaydi; qabul qiluvchi o'z valyutasida (kerak bo'lsa konvert) oladi.
@@ -34,6 +35,8 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: `Kamida ${formatMoney(minAmount(sCur), sCur)} yuborish kerak` }, { status: 400 });
     if (Number(senderWallet.balance) < sendAmount)
         return NextResponse.json({ error: "Balans yetarli emas" }, { status: 400 });
+
+    if (await nexusRateLimited(sender.id, "payTransfer")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const recvAmount = convert(sendAmount, sCur, rCur);
     const desc = typeof note === "string" && note.trim() ? note.trim().slice(0, 120) : null;

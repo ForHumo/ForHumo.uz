@@ -6,6 +6,7 @@ import { isVerifiedProfile } from "@/lib/nexus";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { nexusNotifyFollowers } from "@/lib/nexus-notify";
 import { moderateOnCreate } from "@/lib/moderation";
+import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { after } from "next/server";
 
 // Onlayn ko'ruvchi — oxirgi 30 soniyada heartbeat yuborganlar
@@ -27,10 +28,17 @@ export async function GET(req: Request) {
         authorId = a?.id ?? "__none__";
     }
 
+    // Bloklangan/mute mualliflar (o'zim emas)
+    let meId: string | null = null;
+    const sess = await getServerSession(authOptions);
+    if (sess?.user?.email) { const m = await prisma.userProfile.findUnique({ where: { email: sess.user.email }, select: { id: true } }); meId = m?.id ?? null; }
+    const hiddenIds = (await getHiddenAuthorIds(meId)).filter(x => x !== meId);
+    const notHidden = hiddenIds.length ? { profileId: { notIn: hiddenIds } } : {};
+
     const streams = await prisma.nexusLiveStream.findMany({
         where: authorId
             ? { profileId: authorId, privacy: "PUBLIC", hidden: false }
-            : { status, privacy: "PUBLIC", hidden: false, ...(category ? { category } : {}) },
+            : { status, privacy: "PUBLIC", hidden: false, ...(category ? { category } : {}), ...notHidden },
         orderBy: authorId
             ? { createdAt: "desc" }
             : status === "UPCOMING" ? { scheduledAt: "asc" } : { createdAt: "desc" },

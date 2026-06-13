@@ -47,8 +47,9 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, humoId: true, username: true } });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+    if (!me.humoId || !me.username) return NextResponse.json({ error: "Humo ID kerak" }, { status: 403 });
     if (await nexusRateLimited(me.id, "channel")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { type, name, handle, description, isPrivate, avatarUrl } = await req.json();

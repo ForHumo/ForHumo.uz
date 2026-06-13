@@ -6,6 +6,8 @@ import { isVerifiedProfile } from "@/lib/nexus";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { nexusNotify } from "@/lib/nexus-notify";
 import { notifyMentions } from "@/lib/nexus-mention";
+import { getHiddenAuthorIds } from "@/lib/nexus-block";
+import { moderateOnCreate } from "@/lib/moderation";
 
 // GET /api/nexus/videos/[id]/comments — izohlar
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -18,8 +20,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         myId = p?.id ?? null;
     }
 
+    const hiddenIds = (await getHiddenAuthorIds(myId)).filter(x => x !== myId);
     const comments = await prisma.nexusVideoComment.findMany({
-        where: { videoId: id }, orderBy: { createdAt: "desc" }, take: 100,
+        where: { videoId: id, hidden: false, ...(hiddenIds.length ? { profileId: { notIn: hiddenIds } } : {}) },
+        orderBy: { createdAt: "desc" }, take: 100,
     });
     const ids = [...new Set(comments.map(c => c.profileId))];
     const profs = await prisma.userProfile.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } });
@@ -54,6 +58,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         const v = await prisma.nexusVideo.findUnique({ where: { id }, select: { profileId: true } });
         if (v) await nexusNotify({ recipientId: v.profileId, actorId: profile.id, type: "VIDEO_COMMENT", videoId: id });
     });
+    after(() => moderateOnCreate({ module: "NEXUS", targetType: "VIDEO_COMMENT", targetId: comment.id, text: comment.text, kind: "video izohi" }));
     after(() => notifyMentions({ text: comment.text, actorId: profile.id, videoId: id }));
     return NextResponse.json({
         comment: {

@@ -8,13 +8,15 @@ import { isVerifiedProfile, isAdultBirthday } from "@/lib/nexus";
 import { moderateOnCreate } from "@/lib/moderation";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { currencyForCountry } from "@/lib/money";
+import { getHiddenAuthorIds } from "@/lib/nexus-block";
 
 // POST /api/nexus/videos — yangi video
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+    const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, humoId: true, username: true } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+    if (!profile.humoId || !profile.username) return NextResponse.json({ error: "Humo ID kerak" }, { status: 403 });
     if (await nexusRateLimited(profile.id, "video")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const body = await req.json();
@@ -122,6 +124,10 @@ export async function GET(req: Request) {
     }
     // 18+ — faqat tasdiqlangan kattalar ko'radi (o'z videolari bundan mustasno)
     if (!adult && !(scope === "mine" && meId)) where.isMature = false;
+
+    // Bloklangan/mute mualliflarni chiqarib tashlash
+    const hiddenIds = (await getHiddenAuthorIds(meId)).filter(x => x !== meId);
+    if (hiddenIds.length) where.AND = [{ profileId: { notIn: hiddenIds } }];
 
     const videos = await prisma.nexusVideo.findMany({
         where,
