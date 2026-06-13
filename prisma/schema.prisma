@@ -945,6 +945,61 @@ enum NexusTipTarget {
   LIVE
 }
 
+// ── Kanallar va Guruhlar ─────────────────────────────────────────────────────
+// CHANNEL — bir tomonlama e'lon (faqat admin yozadi, a'zolar o'qiydi).
+// GROUP   — ko'p a'zoli suhbat (a'zolar yozadi).
+model NexusChannel {
+  id          String   @id @default(cuid())
+  ownerId     String                              // yaratuvchi (UserProfile.id)
+  type        NexusChannelType @default(CHANNEL)
+  name        String
+  handle      String?  @unique                    // @handle (ixtiyoriy, ommaviy uchun)
+  description String?
+  avatarUrl   String?
+  isPrivate   Boolean  @default(false)            // private = faqat taklif/havola bilan
+  memberCount Int      @default(1)
+  hidden      Boolean  @default(false)            // moderatsiya
+  createdAt   DateTime @default(now())
+  members     NexusChannelMember[]
+  messages    NexusChannelMessage[]
+  @@index([type, isPrivate, createdAt])
+}
+
+enum NexusChannelType {
+  CHANNEL
+  GROUP
+}
+
+model NexusChannelMember {
+  id        String   @id @default(cuid())
+  channelId String
+  channel   NexusChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  profileId String
+  role      NexusChannelRole @default(MEMBER)
+  lastReadAt DateTime?
+  joinedAt  DateTime @default(now())
+  @@unique([channelId, profileId])
+  @@index([profileId])
+}
+
+enum NexusChannelRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model NexusChannelMessage {
+  id        String   @id @default(cuid())
+  channelId String
+  channel   NexusChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  senderId  String
+  text      String?
+  media     String[] @default([])
+  hidden    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  @@index([channelId, createdAt])
+}
+
 // Web Push obunasi — brauzer push bildirishnomalari uchun (VAPID).
 model NexusPushSub {
   id        String   @id @default(cuid())

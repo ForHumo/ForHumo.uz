@@ -8,7 +8,8 @@ export type ModModule = "MARKET" | "NEXUS";
 export type ModTargetType =
     | "PRODUCT" | "REVIEW" | "REPLY" | "QUESTION" | "ANSWER" // Market
     | "POST" | "COMMENT" | "VIDEO" | "TRACK"                 // Nexus
-    | "LIVE" | "LIVE_MESSAGE";                               // Nexus jonli efir
+    | "LIVE" | "LIVE_MESSAGE"                                // Nexus jonli efir
+    | "CHANNEL_MESSAGE";                                     // Nexus kanal/guruh
 
 // targetType → tegishli modelda yashirish/ko'rsatish.
 // updateMany ishlatamiz: kontent o'chirilgan bo'lsa ham xato bermaydi.
@@ -46,6 +47,9 @@ export async function hideTarget(targetType: ModTargetType, targetId: string, hi
             break;
         case "LIVE_MESSAGE":
             await prisma.nexusLiveMessage.updateMany({ where: { id: targetId }, data: { hidden } });
+            break;
+        case "CHANNEL_MESSAGE":
+            await prisma.nexusChannelMessage.updateMany({ where: { id: targetId }, data: { hidden } });
             break;
     }
 }

@@ -17,6 +17,7 @@ import { NxStories } from "./nx-stories";
 import { NxHomeRows } from "./nx-home-rows";
 import { NxSocialFeed } from "./nx-social-feed";
 import { NxChatList } from "./nx-chat-list";
+import { NxChannels } from "./nx-channels";
 import { NexusFollowList } from "./nexus-follow-list";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -103,21 +104,20 @@ export function SocialView() {
 
             {sub === "chat" && <NxChatList />}
 
-            {/* Kanallar / Guruhlar / Botlar — backend hali qurilmagan, halol holat */}
-            {(sub === "channel" || sub === "group" || sub === "bot") && (
+            {sub === "channel" && <NxChannels type="CHANNEL" />}
+            {sub === "group" && <NxChannels type="GROUP" />}
+
+            {/* Botlar — backend hali qurilmagan, halol holat */}
+            {sub === "bot" && (
                 <div className="mx-4 flex flex-col items-center justify-center py-14 px-6 text-center rounded-2xl"
                     style={{ background: "rgba(11,18,40,0.50)", border: "1px dashed rgba(43,62,232,0.25)" }}>
                     <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
                         style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}>
-                        {sub === "channel" ? <Hash className="w-6 h-6" style={{ color: "rgba(43,62,232,0.55)" }} />
-                            : sub === "group" ? <Users className="w-6 h-6" style={{ color: "rgba(43,62,232,0.55)" }} />
-                                : <Bot className="w-6 h-6" style={{ color: "rgba(43,62,232,0.55)" }} />}
+                        <Bot className="w-6 h-6" style={{ color: "rgba(43,62,232,0.55)" }} />
                     </div>
-                    <p className="text-sm font-black text-white mb-1">
-                        {sub === "channel" ? "Kanallar" : sub === "group" ? "Guruhlar" : "Botlar"} — tez kunda
-                    </p>
+                    <p className="text-sm font-black text-white mb-1">Botlar — tez kunda</p>
                     <p className="text-xs max-w-xs leading-relaxed" style={{ color: "rgba(120,140,190,0.75)" }}>
-                        Bu bo&apos;lim keyingi bosqichda quriladi. Hozircha Postlar va Chatlar to&apos;liq ishlaydi.
+                        Bu bo&apos;lim keyingi bosqichda quriladi.
                     </p>
                 </div>
             )}
