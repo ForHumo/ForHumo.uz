@@ -203,3 +203,4 @@ VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
 - **Token tejash:** keraksiz fayllarni qayta o'qima; faqat kerakli qismni o'qi. Katta `.json`/`.claude.json` ni to'liq o'qimasdan `python3`/`grep` bilan tahlil qil.
 - **Glob/grep timeout:** loyiha OneDrive'da + `node_modules` katta — `**/CLAUDE.md` kabi keng Glob timeout bo'ladi. Aniq yo'l ber (`prisma/`, `src/...`) yoki Grep'da `path` ko'rsat.
 - **Docs-only o'zgarish:** faqat CLAUDE.md/markdown o'zgarsa commit+push yetadi, `vercel deploy` shart emas (build chiqimiga ta'sir qilmaydi).
+- **⚠️ Vercel Hobby reja — cron faqat KUNLIK:** `vercel.json` `crons` da soatlik (`0 * * * *`) yoki tez-tez jadval butun deploy'ni JIM buzadi (GitHub-integratsiya deploy yaratmaydi, xato ko'rinmaydi). Faqat kunlik (`0 3 * * *`) ishlaydi. Deploy yo'qolsa: `npx vercel deploy --prod --yes` bilan aniq xatoni ko'r, yoki `list_deployments` MCP bilan oxirgi deploy holatini tekshir. Auto-deploy uzilsa CLI bilan qo'lda deploy qilinadi.
