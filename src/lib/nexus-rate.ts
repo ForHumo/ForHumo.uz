@@ -33,6 +33,10 @@ const RULES: Record<RateKind, [number, number]> = {
     ai: [40, 10 * MIN],
 };
 
+// DB xatosida YOPIQ qoladigan k'indlar — bu yerda "ochiq" qolish real pul (Gemini)
+// yoki suiiste'mol xarajatini keltiradi. Qolganlari ishlash uchun ochiq qoladi (fail-open).
+const FAIL_CLOSED: ReadonlySet<RateKind> = new Set(["ai", "report", "payTransfer", "payWithdraw"]);
+
 export async function nexusRateLimited(profileId: string, kind: RateKind): Promise<boolean> {
     const [max, windowMs] = RULES[kind];
     const since = new Date(Date.now() - windowMs);
@@ -92,7 +96,8 @@ export async function nexusRateLimited(profileId: string, kind: RateKind): Promi
                 break;
         }
     } catch {
-        return false; // xato bo'lsa bloklamaymiz (fail-open)
+        // Xavfli/qimmat k'indlar DB xatosida YOPIQ (fail-closed); qolganlari ochiq (fail-open)
+        return FAIL_CLOSED.has(kind);
     }
     return count >= max;
 }

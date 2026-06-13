@@ -15,6 +15,14 @@ export async function GET(req: Request) {
 
     const res = await prisma.nexusStory.deleteMany({ where: { expiresAt: { lt: new Date() } } });
 
+    // Rate-limit jurnal jadvallarini tozalash — faqat oxirgi oyna kerak, eskisi keraksiz.
+    // 30 kun rate-limit oynasidan (maks. 60 daqiqa) ancha katta — xavfsiz.
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const [aiPruned, reportPruned] = await Promise.all([
+        prisma.aiUsage.deleteMany({ where: { createdAt: { lt: monthAgo } } }),
+        prisma.nexusReport.deleteMany({ where: { createdAt: { lt: monthAgo } } }),
+    ]);
+
     // 24 soat ichida tugaydigan obunalar — obunachiga eslatma (bir marta)
     const now = new Date();
     const soon = new Date(now.getTime() + 24 * 60 * 60 * 1000);
@@ -29,5 +37,5 @@ export async function GET(req: Request) {
         notified++;
     }
 
-    return NextResponse.json({ ok: true, deleted: res.count, expiryNotified: notified });
+    return NextResponse.json({ ok: true, deleted: res.count, expiryNotified: notified, aiPruned: aiPruned.count, reportPruned: reportPruned.count });
 }
