@@ -1,0 +1,62 @@
+// Nexus tavsiya algoritmi — 1-bosqich: "Senga mos" feed reytingi.
+// Sof Postgres/JS (qo'shimcha ML infra yo'q). Kam ma'lumotda ham ishlaydi,
+// engagement to'plangani sari aniqroq bo'ladi. Keyingi bosqichlar (qiziqish vektori,
+// collaborative filtering, pgvector+Gemini embeddings) shu poydevorga qo'shiladi.
+
+import { prisma } from "@/lib/prisma";
+
+export interface InterestProfile {
+    followingSet: Set<string>;       // kuzatadigan mualliflar
+    authorWeights: Map<string, number>;  // muallifga yaqinlik (follow + like'lardan)
+    tagWeights: Map<string, number>;     // teg qiziqishi (like qilingan postlar teglaridan)
+}
+
+const EMPTY: InterestProfile = { followingSet: new Set(), authorWeights: new Map(), tagWeights: new Map() };
+
+// Foydalanuvchining yengil qiziqish profilini quradi (follow + so'nggi like'lardan).
+export async function buildInterestProfile(myId: string | null): Promise<InterestProfile> {
+    if (!myId) return EMPTY;
+    try {
+        const [follows, likes] = await Promise.all([
+            prisma.nexusFollow.findMany({ where: { followerId: myId }, select: { followingId: true } }),
+            prisma.nexusLike.findMany({
+                where: { profileId: myId }, orderBy: { createdAt: "desc" }, take: 150,
+                select: { post: { select: { profileId: true, hashtags: true } } },
+            }),
+        ]);
+        const followingSet = new Set(follows.map(f => f.followingId));
+        const authorWeights = new Map<string, number>();
+        const tagWeights = new Map<string, number>();
+        // Follow = kuchli signal
+        for (const f of follows) authorWeights.set(f.followingId, (authorWeights.get(f.followingId) ?? 0) + 2);
+        // Like qilingan postlar — muallif + teg signali
+        for (const l of likes) {
+            const p = l.post;
+            if (!p) continue;
+            authorWeights.set(p.profileId, (authorWeights.get(p.profileId) ?? 0) + 1);
+            for (const t of p.hashtags) tagWeights.set(t, (tagWeights.get(t) ?? 0) + 1);
+        }
+        return { followingSet, authorWeights, tagWeights };
+    } catch {
+        return EMPTY; // algoritm xatosi feed'ni buzmaydi (fail-safe → xronologik)
+    }
+}
+
+export interface RankablePost {
+    profileId: string;
+    hashtags: string[];
+    createdAt: Date;
+    _count: { likes: number; comments: number };
+}
+
+// Post skori (yuqori = mosroq). Og'irliklar tajriba bilan sozlanadi.
+export function scorePost(post: RankablePost, profile: InterestProfile, now: number): number {
+    const ageHours = Math.max(0, (now - post.createdAt.getTime()) / 3_600_000);
+    const recency = Math.exp(-ageHours / 48);                       // yarim-umr ~33 soat
+    const engagement = Math.log1p(post._count.likes + 2 * post._count.comments);
+    const authorAffinity = Math.min(profile.authorWeights.get(post.profileId) ?? 0, 5);
+    let tagAffinity = 0;
+    for (const t of post.hashtags) tagAffinity += profile.tagWeights.get(t) ?? 0;
+    tagAffinity = Math.min(tagAffinity, 6);
+    return 1.0 * recency + 0.6 * engagement + 0.8 * authorAffinity + 0.5 * tagAffinity;
+}

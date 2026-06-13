@@ -11,6 +11,7 @@ import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { getActiveSubscribedCreatorIds } from "@/lib/nexus-sub";
 import { notifyMentions } from "@/lib/nexus-mention";
 import { filterMediaUrls } from "@/lib/media-url";
+import { buildInterestProfile, scorePost } from "@/lib/nexus-rank";
 
 async function myProfileId(): Promise<string | null> {
     const session = await getServerSession(authOptions);
@@ -79,13 +80,33 @@ export async function GET(req: Request) {
     const hiddenIds = (await getHiddenAuthorIds(myId)).filter(id => id !== myId);
     if (hiddenIds.length) (where.AND as Prisma.NexusPostWhereInput[]).push({ profileId: { notIn: hiddenIds } });
 
-    const [posts, total] = await prisma.$transaction([
-        prisma.nexusPost.findMany({
-            where, orderBy: { createdAt: "desc" }, take: limit, skip: offset,
-            include: { _count: { select: { likes: true, comments: true } } },
-        }),
-        prisma.nexusPost.count({ where }),
-    ]);
+    // "Senga mos" (foryou) — nomzodlar to'plamini olib, shaxsiy reyting bilan tartiblaymiz.
+    // Boshqa tablar (explore/following/tag/author/saved) — xronologik (DB pagination).
+    type PostRow = Prisma.NexusPostGetPayload<{ include: { _count: { select: { likes: true; comments: true } } } }>;
+    const POST_INCLUDE = { _count: { select: { likes: true, comments: true } } } as const;
+    let posts: PostRow[];
+    let total: number;
+    if (tab === "foryou" && myId) {
+        const POOL = 250;
+        const [pool, profile] = await Promise.all([
+            prisma.nexusPost.findMany({ where, orderBy: { createdAt: "desc" }, take: POOL, include: POST_INCLUDE }),
+            buildInterestProfile(myId),
+        ]);
+        const now = Date.now();
+        const scored = pool
+            .map(p => ({ p, s: scorePost(p, profile, now) }))
+            .sort((a, b) => b.s - a.s);
+        total = scored.length;
+        posts = scored.slice(offset, offset + limit).map(x => x.p);
+    } else {
+        [posts, total] = await prisma.$transaction([
+            prisma.nexusPost.findMany({
+                where, orderBy: { createdAt: "desc" }, take: limit, skip: offset,
+                include: POST_INCLUDE,
+            }),
+            prisma.nexusPost.count({ where }),
+        ]);
+    }
 
     const profileIds = [...new Set(posts.map(p => p.profileId))];
     const profiles = await prisma.userProfile.findMany({

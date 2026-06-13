@@ -692,6 +692,7 @@ model NexusLike {
   profileId String
   createdAt DateTime @default(now())
   @@unique([postId, profileId])
+  @@index([profileId, createdAt])   // qiziqish profili (rec-algoritm) uchun
 }
 
 model NexusSave {

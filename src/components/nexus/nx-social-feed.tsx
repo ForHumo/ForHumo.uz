@@ -51,7 +51,7 @@ export function NxSocialFeed({ authorUsername, tag, postId }: { authorUsername?:
     const PAGE = 15;
 
     const [posts, setPosts] = useState<Post[]>([]);
-    const [tab, setTab] = useState<"following" | "explore">("explore");
+    const [tab, setTab] = useState<"foryou" | "following" | "explore">("foryou");
     const [loading, setLoading] = useState(true);
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(false);
@@ -180,12 +180,12 @@ export function NxSocialFeed({ authorUsername, tag, postId }: { authorUsername?:
             {!profileMode && (
             <div className="flex gap-0 mx-4 mt-4 mb-3 rounded-2xl overflow-hidden"
                 style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.18)" }}>
-                {(["following", "explore"] as const).map(t => (
+                {(["foryou", "following", "explore"] as const).map(t => (
                     <button key={t} onClick={() => setTab(t)}
                         className="flex-1 py-2.5 text-xs font-black transition-all duration-200"
                         style={tab === t ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" } : { color: "rgba(140,160,210,0.75)" }}
                     >
-                        {t === "following" ? "Obunalar" : "Kashfiyot"}
+                        {t === "foryou" ? "Senga mos" : t === "following" ? "Obunalar" : "Kashfiyot"}
                     </button>
                 ))}
             </div>
