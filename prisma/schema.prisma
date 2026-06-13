@@ -154,8 +154,35 @@ model EsTeam {            // tashkilot — o'yinга bog'liq EMAS
   ownerId   String                      // UserProfile.id (Humo ID egasi)
   bio       String?
   createdAt DateTime @default(now())
-  rosters   EsRoster[]
+  rosters      EsRoster[]
+  invites      EsTeamInvite[]
+  joinRequests EsJoinRequest[]
   @@index([ownerId])
+}
+
+model EsTeamInvite {       // taklif-kod (ega yaratadi, sportchi kod bilan qo'shiladi)
+  id        String    @id @default(cuid())
+  teamId    String
+  code      String    @unique
+  createdBy String                        // ega profileId
+  maxUses   Int       @default(1)
+  usedCount Int       @default(0)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  team      EsTeam    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  @@index([teamId])
+}
+
+model EsJoinRequest {      // ariza (sportchi beradi, ega tasdiqlaydi)
+  id        String    @id @default(cuid())
+  teamId    String
+  athleteId String
+  status    String    @default("PENDING")  // PENDING/ACCEPTED/REJECTED
+  createdAt DateTime  @default(now())
+  team      EsTeam    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  athlete   EsAthlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  @@unique([teamId, athleteId])
+  @@index([teamId, status])
 }
 
 model EsRoster {          // har (jamoa × o'yin) bitta tarkib
@@ -181,6 +208,7 @@ model EsAthlete {         // Humo ID + bitta o'yin (qattiq qulf)
   game          EsGame  @relation(fields: [gameId], references: [id])
   memberships   EsRosterMember[]
   transfers     EsTransfer[]
+  joinRequests  EsJoinRequest[]
   @@index([gameId])
 }
 
