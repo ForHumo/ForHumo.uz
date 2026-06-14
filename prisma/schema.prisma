@@ -298,8 +298,25 @@ model EsStanding {        // divizion/mavsum jadvali
   points     Int    @default(0)
   wins       Int    @default(0)
   losses     Int    @default(0)
+  played     Int    @default(0)
   @@unique([seasonId, divisionId, teamId])
   @@index([seasonId, divisionId])
+}
+
+model EsLeagueMatch {     // liga o'yini (divizion ichida) — natija standings'ni yangilaydi
+  id          String    @id @default(cuid())
+  seasonId    String
+  divisionId  String
+  teamAId     String
+  teamBId     String
+  scoreA      Int?
+  scoreB      Int?
+  winnerId    String?                          // hisoblangan natija
+  status      String    @default("SCHEDULED")  // SCHEDULED/DONE
+  streamUrl   String?
+  scheduledAt DateTime?
+  createdAt   DateTime  @default(now())
+  @@index([seasonId, divisionId, status])
 }
 
 model EsTransfer {        // sportchi jamoadan jamoага (ALKH Pay haq)

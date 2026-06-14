@@ -19,6 +19,30 @@ async function main() {
         });
         console.log('  ok:', g.name, g.active ? '(faol)' : '(nofaol)');
     }
+
+    // MLBB uchun boshlang'ich divizionlar (tier 1 = eng yuqori) + mavsum
+    const mlbb = await prisma.esGame.findUnique({ where: { slug: 'mlbb' }, select: { id: true } });
+    if (mlbb) {
+        const divisions = [
+            { name: 'Pro Division', tier: 1 },
+            { name: 'Division 1', tier: 2 },
+            { name: 'Division 2', tier: 3 },
+        ];
+        for (const d of divisions) {
+            await prisma.esDivision.upsert({
+                where: { gameId_tier: { gameId: mlbb.id, tier: d.tier } },
+                update: { name: d.name },
+                create: { gameId: mlbb.id, name: d.name, tier: d.tier },
+            });
+        }
+        console.log('  ok: MLBB divizionlar (Pro/Div1/Div2)');
+
+        const hasSeason = await prisma.esSeason.findFirst({ where: { gameId: mlbb.id }, select: { id: true } });
+        if (!hasSeason) {
+            await prisma.esSeason.create({ data: { gameId: mlbb.id, name: '2026 Pre-Season', active: true } });
+            console.log('  ok: MLBB mavsum (2026 Pre-Season)');
+        }
+    }
     console.log('Done.');
 }
 

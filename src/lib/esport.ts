@@ -2,6 +2,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isFounderProfile } from "@/lib/founders";
 
 // MLBB pozitsiyalari (sportchi roli — ixtiyoriy)
 export const MLBB_ROLES = ["Gold Laner", "Mid Laner", "Roamer", "EXP Laner", "Jungler"] as const;
@@ -20,4 +21,11 @@ export async function getMyProfile() {
 export function fullName(p: { firstName?: string | null; lastName?: string | null; name?: string | null }): string {
     const fn = [p.firstName, p.lastName].filter(Boolean).join(" ").trim();
     return fn || p.name?.trim() || "";
+}
+
+// eSport admin = founder (CEO). null = ruxsat yo'q.
+export async function getEsportAdmin() {
+    const me = await getMyProfile();
+    if (!me || !isFounderProfile({ username: me.username, humoId: me.humoId })) return null;
+    return me;
 }
