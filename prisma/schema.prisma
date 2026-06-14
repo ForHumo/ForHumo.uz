@@ -254,8 +254,12 @@ model EsTournament {      // turnir
   prizePool    Decimal? @db.Decimal(18, 2)
   currency     String   @default("UZS")
   status       String   @default("UPCOMING")      // UPCOMING/REGISTRATION/LIVE/ENDED
-  maxTeams     Int      @default(16)
+  maxTeams     Int      @default(16)               // 0 = cheksiz (Ochiq divizion turniri)
+  thirdPlace   Boolean  @default(true)             // 3-o'rin o'yini (TOP 3 uchun)
+  registrationEndsAt DateTime?
   startsAt     DateTime?
+  endsAt       DateTime?
+  bracketReady Boolean  @default(false)            // setka tuzilganmi
   createdAt    DateTime @default(now())
   game         EsGame   @relation(fields: [gameId], references: [id])
   participants EsTournamentTeam[]
@@ -278,16 +282,24 @@ model EsTournamentTeam {  // ro'yxatdan o'tgan jamoa (o'z o'yin-tarkibi bilan)
 model EsMatch {           // bracket o'yini
   id           String    @id @default(cuid())
   tournamentId String
+  bracket      String    @default("MAIN")  // MAIN/THIRD (3-o'rin)
   round        Int
   slot         Int                        // round ichидаги o'rin (bracket pozitsiya)
   teamAId      String?
   teamBId      String?
+  seedA        Int?                            // seeding raqami (ko'rsatish uchun)
+  seedB        Int?
   scoreA       Int?
   scoreB       Int?
   winnerId     String?
   status       String    @default("PENDING")  // PENDING/LIVE/DONE
   streamUrl    String?                         // Nexus/Twitch havola
   scheduledAt  DateTime?
+  // bracket ulanishi: g'olib qayerga, mag'lub qayerga (yarim final -> 3-o'rin)
+  nextMatchId      String?
+  nextSlot         String?                     // "A" | "B"
+  loserNextMatchId String?
+  loserNextSlot    String?
   tournament   EsTournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   @@index([tournamentId, round])
 }
