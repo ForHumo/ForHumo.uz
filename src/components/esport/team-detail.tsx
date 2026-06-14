@@ -76,11 +76,11 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
         router.push("/esport/teams");
     }
 
-    if (loading) return <main className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
-    if (!team) return <main className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-3" style={{ background: BG }}><p className="text-sm text-white/60">{err || "Jamoa topilmadi"}</p><Link href="/esport/teams" className="text-sm font-bold text-[#00CEC8]">Orqaga</Link></main>;
+    if (loading) return <main className="flex items-center justify-center py-24" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
+    if (!team) return <main className="flex flex-col items-center justify-center py-24 gap-3" style={{ background: BG }}><p className="text-sm text-white/60">{err || "Jamoa topilmadi"}</p><Link href="/esport/teams" className="text-sm font-bold text-[#00CEC8]">Orqaga</Link></main>;
 
     return (
-        <main className="fixed inset-0 z-[100] overflow-y-auto" style={{ background: BG }}>
+        <main className="min-h-full" style={{ background: BG }}>
             <div className="mx-auto w-full max-w-lg px-5 py-8">
                 {/* Header */}
                 <div className="mb-5 flex items-center gap-3">

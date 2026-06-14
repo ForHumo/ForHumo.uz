@@ -19,7 +19,7 @@ interface Match { id: string; divisionId: string; teamAId: string; teamBId: stri
 interface StandRow { teamId: string; team: { name: string; tag: string } | null; points: number; wins: number; losses: number; played: number; rank: number }
 interface StandDiv { id: string; name: string; tier: number; teams: StandRow[] }
 
-type Tab = "season" | "division" | "enroll" | "match" | "table" | "turnir";
+type Tab = "season" | "division" | "enroll" | "match" | "table" | "turnir" | "adminlar";
 
 export default function EsportAdmin() {
     const [loading, setLoading] = useState(true);
@@ -34,10 +34,12 @@ export default function EsportAdmin() {
     const [matches, setMatches] = useState<Match[]>([]);
     const [standings, setStandings] = useState<StandDiv[]>([]);
     const [busy, setBusy] = useState(false);
+    const [isOwner, setIsOwner] = useState(false);
 
     const teamName = useCallback((id: string) => teams.find(t => t.id === id)?.tag || "—", [teams]);
 
     const loadCore = useCallback(async () => {
+        fetch("/api/esport/admin/check").then(r => r.json()).then(d => setIsOwner(!!d.isOwner)).catch(() => { });
         const st = await fetch("/api/esport/standings").then(r => r.json()).catch(() => null);
         if (st?.gameId) setGameId(st.gameId);
         const [sx, dx] = await Promise.all([
@@ -74,9 +76,9 @@ export default function EsportAdmin() {
         return res;
     }
 
-    if (loading) return <main className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
+    if (loading) return <main className="flex items-center justify-center py-24" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
     if (denied) return (
-        <main className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-3" style={{ background: BG }}>
+        <main className="flex flex-col items-center justify-center py-24 gap-3" style={{ background: BG }}>
             <ShieldAlert className="h-10 w-10 text-white/30" />
             <p className="text-sm font-bold text-white/60">Bu sahifa faqat adminlar uchun</p>
             <Link href="/esport" className="text-sm font-bold text-[#00CEC8]">Orqaga</Link>
@@ -93,10 +95,11 @@ export default function EsportAdmin() {
         { id: "match", label: "O'yin", icon: Swords },
         { id: "table", label: "Jadval", icon: BarChart3 },
         { id: "turnir", label: "Turnir", icon: Trophy },
+        ...(isOwner ? [{ id: "adminlar" as Tab, label: "Adminlar", icon: ShieldAlert }] : []),
     ];
 
     return (
-        <main className="fixed inset-0 z-[100] overflow-y-auto" style={{ background: BG }}>
+        <main className="min-h-full" style={{ background: BG }}>
             <div className="mx-auto w-full max-w-lg px-5 py-8">
                 <div className="mb-4 flex items-center gap-3">
                     <Link href="/esport" className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}><ArrowLeft className="h-4 w-4 text-white/80" /></Link>
@@ -131,6 +134,7 @@ export default function EsportAdmin() {
                 {tab === "match" && <MatchTab matches={matches} teams={teams} divisions={myDivs} seasonId={seasonId} teamName={teamName} api={api} reload={() => loadSeasonData(seasonId)} busy={busy} />}
                 {tab === "table" && <TableTab standings={standings} divisions={myDivs} seasonId={seasonId} api={api} reload={() => loadSeasonData(seasonId)} busy={busy} />}
                 {tab === "turnir" && <TournamentTab gameId={gameId} seasons={seasons} divisions={myDivs} seasonId={seasonId} api={api} busy={busy} />}
+                {tab === "adminlar" && <AdminsTab api={api} busy={busy} />}
             </div>
         </main>
     );
@@ -337,6 +341,48 @@ function TournamentTab({ gameId, seasons, divisions, seasonId, api, busy }: { ga
                         <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-white">{t.name}</p><p className="text-[11px] text-white/40">{t.status} · {t.teams}{t.maxTeams > 0 ? `/${t.maxTeams}` : ""} jamoa</p></div>
                         <ChevronRight className="h-4 w-4 text-white/25" />
                     </Link>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+interface AdminRow { humoId: string; name: string | null; username: string | null; image: string | null }
+
+function AdminsTab({ api, busy }: { api: ApiFn; busy: boolean }) {
+    const [list, setList] = useState<AdminRow[]>([]);
+    const [humoId, setHumoId] = useState("");
+    const [msg, setMsg] = useState("");
+
+    const load = useCallback(async () => {
+        const d = await fetch("/api/esport/admin/admins").then(r => r.json()).catch(() => ({}));
+        setList(d.admins || []);
+    }, []);
+    useEffect(() => { load(); }, [load]);
+
+    return (
+        <div className="space-y-3">
+            <div className="rounded-2xl p-4" style={card}>
+                <p className="mb-1 text-xs font-black uppercase text-white/40">Admin qo'shish</p>
+                <p className="mb-2 text-[11px] text-white/40">Admin Humo ID raqamini kiriting (UZxxxxxxx). Adminlar turnir/liga boshqaradi (lekin admin qo'sha olmaydi).</p>
+                <div className="flex gap-2">
+                    <Inp value={humoId} onChange={v => setHumoId(v.toUpperCase())} placeholder="UZ1234567" />
+                    <Btn busy={busy} onClick={async () => {
+                        setMsg("");
+                        const r = await api("/api/esport/admin/admins", "POST", { humoId });
+                        if (r.error) setMsg(String(r.error)); else { setHumoId(""); setMsg(`Qo'shildi: ${r.name || humoId}`); load(); }
+                    }}><Plus className="h-4 w-4" /></Btn>
+                </div>
+                {msg && <p className="mt-2 text-xs font-semibold text-[#00CEC8]">{msg}</p>}
+            </div>
+            <div className="space-y-2">
+                {list.length === 0 && <p className="rounded-2xl p-6 text-center text-xs text-white/40" style={card}>Hali admin yo'q (egadan tashqari)</p>}
+                {list.map(a => (
+                    <div key={a.humoId} className="flex items-center gap-3 rounded-2xl p-3" style={card}>
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg text-[10px] font-black text-white" style={{ background: ACCENT }}>{a.image ? <img src={a.image} alt="" className="h-full w-full rounded-lg object-cover" /> : (a.name || a.humoId).slice(0, 2).toUpperCase()}</span>
+                        <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-white">{a.name || a.humoId}</p><p className="text-[11px] text-white/40">{a.username ? `@${a.username} · ` : ""}{a.humoId}</p></div>
+                        <button onClick={async () => { await api("/api/esport/admin/admins", "DELETE", { humoId: a.humoId }); load(); }}><Trash2 className="h-4 w-4 text-red-300/60" /></button>
+                    </div>
                 ))}
             </div>
         </div>

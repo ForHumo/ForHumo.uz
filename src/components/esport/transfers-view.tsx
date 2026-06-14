@@ -66,10 +66,10 @@ export default function TransfersView() {
         setTarget(null); setQ(""); setFee(""); setFound([]); load();
     }
 
-    if (loading) return <main className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
+    if (loading) return <main className="flex items-center justify-center py-24" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
 
     return (
-        <main className="fixed inset-0 z-[100] overflow-y-auto" style={{ background: BG }}>
+        <main className="min-h-full" style={{ background: BG }}>
             <div className="mx-auto w-full max-w-lg px-5 py-8">
                 <div className="mb-6 flex items-center gap-3">
                     <Link href="/esport" className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}><ArrowLeft className="h-4 w-4 text-white/80" /></Link>

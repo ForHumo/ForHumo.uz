@@ -246,6 +246,17 @@
   animation: nx-glow-pulse 2.2s ease-in-out infinite;
 }
 
+/* ── Humo eSport: premium qorong'i-arena sirtlar (tasdiqlangan ranglar) ─────── */
+.es-bg   { background: radial-gradient(ellipse 90% 60% at 50% -5%, #0a1430 0%, #05070f 60%); }
+.es-card { background: rgba(14,22,42,0.72); border: 1px solid rgba(60,120,200,0.22); }
+.es-soft { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.07); }
+.es-fg   { color: #ffffff; }
+.es-mut  { color: rgba(255,255,255,0.45); }
+.es-faint { color: rgba(255,255,255,0.30); }
+.es-accent-text { color: #00d4ff; }
+.es-accent-bg { background: linear-gradient(135deg,#0a6cff,#00d4ff); }
+.es-glow { box-shadow: 0 0 28px rgba(0,150,255,.35); }
+
 /* ── Nexus app-shell utilities ────────────────────────────────────────────── */
 
 /* Navy-tinted glass — primary surface */

@@ -57,10 +57,10 @@ export default function TeamsView() {
         router.push(`/esport/teams/${res.teamId}`);
     }
 
-    if (loading) return <main className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
+    if (loading) return <main className="flex items-center justify-center py-24" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
 
     return (
-        <main className="fixed inset-0 z-[100] overflow-y-auto" style={{ background: BG }}>
+        <main className="min-h-full" style={{ background: BG }}>
             <div className="mx-auto w-full max-w-lg px-5 py-8">
                 {/* Header */}
                 <div className="mb-6 flex items-center gap-3">

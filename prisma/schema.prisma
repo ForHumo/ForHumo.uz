@@ -133,6 +133,13 @@ model EmailVerificationCode {
 
 // Humo eSport (0dan, Humo ID ustida) -- docs/humo-esport-design.md
 
+model EsAdmin {           // eSport admini (ega Humo ID raqami bilan qo'shadi)
+  id        String   @id @default(cuid())
+  humoId    String   @unique
+  createdBy String                          // qo'shgan ega humoId
+  createdAt DateTime @default(now())
+}
+
 model EsGame {            // disiplina (JADVAL — yangi o'yin koddа o'zgarishsiz qo'shiladi)
   id          String   @id @default(cuid())
   slug        String   @unique          // "mlbb", "pubgm"
