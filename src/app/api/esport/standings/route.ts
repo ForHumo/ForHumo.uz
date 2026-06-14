@@ -27,10 +27,12 @@ export async function GET(req: Request) {
         prisma.esStanding.findMany({ where: { seasonId } }),
     ]);
     const teamIds = [...new Set(standings.map(s => s.teamId))];
-    const teams = teamIds.length
-        ? await prisma.esTeam.findMany({ where: { id: { in: teamIds } }, select: { id: true, name: true, tag: true, logo: true } })
-        : [];
+    const [teams, rosters] = await Promise.all([
+        teamIds.length ? prisma.esTeam.findMany({ where: { id: { in: teamIds } }, select: { id: true, name: true, tag: true, logo: true } }) : [],
+        teamIds.length ? prisma.esRoster.findMany({ where: { gameId, teamId: { in: teamIds } }, select: { teamId: true, rating: true } }) : [],
+    ]);
     const tMap = Object.fromEntries(teams.map(t => [t.id, t]));
+    const rMap = Object.fromEntries(rosters.map(r => [r.teamId, r.rating]));
 
     const byDiv = divisions.map(d => {
         const rows = standings
@@ -39,6 +41,7 @@ export async function GET(req: Request) {
             .map((s, i) => ({
                 rank: i + 1, teamId: s.teamId, team: tMap[s.teamId] ?? null,
                 points: s.points, wins: s.wins, losses: s.losses, played: s.played,
+                rating: rMap[s.teamId] ?? null,
             }));
         return { id: d.id, name: d.name, tier: d.tier, teams: rows };
     });

@@ -23,19 +23,21 @@ async function main() {
     // MLBB uchun boshlang'ich divizionlar (tier 1 = eng yuqori) + mavsum
     const mlbb = await prisma.esGame.findUnique({ where: { slug: 'mlbb' }, select: { id: true } });
     if (mlbb) {
+        // tier 1 = eng yuqori; eng katta tier (Ochiq) = cheksiz, ro'yxat shu yerda, TOP 3 ko'tariladi
         const divisions = [
-            { name: 'Pro Division', tier: 1 },
-            { name: 'Division 1', tier: 2 },
-            { name: 'Division 2', tier: 3 },
+            { name: 'Pro Division', tier: 1, capacity: 8 },
+            { name: 'Division 1', tier: 2, capacity: 8 },
+            { name: 'Division 2', tier: 3, capacity: 8 },
+            { name: 'Ochiq divizion', tier: 4, capacity: null as number | null },
         ];
         for (const d of divisions) {
             await prisma.esDivision.upsert({
                 where: { gameId_tier: { gameId: mlbb.id, tier: d.tier } },
-                update: { name: d.name },
-                create: { gameId: mlbb.id, name: d.name, tier: d.tier },
+                update: { name: d.name, capacity: d.capacity },
+                create: { gameId: mlbb.id, name: d.name, tier: d.tier, capacity: d.capacity },
             });
         }
-        console.log('  ok: MLBB divizionlar (Pro/Div1/Div2)');
+        console.log('  ok: MLBB divizionlar (Pro/Div1/Div2/Ochiq)');
 
         const hasSeason = await prisma.esSeason.findFirst({ where: { gameId: mlbb.id }, select: { id: true } });
         if (!hasSeason) {

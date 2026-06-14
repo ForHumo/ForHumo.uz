@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { ArrowLeft, Loader2, Trophy, ArrowUp, ArrowDown, Minus, BarChart3 } from "lucide-react";
 
-interface Row { rank: number; teamId: string; team: { id: string; name: string; tag: string; logo: string | null } | null; points: number; wins: number; losses: number; played: number }
+interface Row { rank: number; teamId: string; team: { id: string; name: string; tag: string; logo: string | null } | null; points: number; wins: number; losses: number; played: number; rating: number | null }
 interface Division { id: string; name: string; tier: number; teams: Row[] }
 
 const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
@@ -83,7 +83,10 @@ export default function StandingsView() {
                                                         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-black text-white" style={{ background: ACCENT }}>
                                                             {r.team?.logo ? <img src={r.team.logo} alt="" className="h-full w-full rounded-lg object-cover" /> : (r.team?.tag.slice(0, 3) || "?")}
                                                         </div>
-                                                        <span className="truncate text-sm font-bold text-white">{r.team?.name || "—"}</span>
+                                                        <span className="min-w-0">
+                                                            <span className="block truncate text-sm font-bold text-white">{r.team?.name || "—"}</span>
+                                                            {r.rating != null && <span className="block text-[10px] font-semibold text-white/35">Elo {r.rating}</span>}
+                                                        </span>
                                                     </div>
                                                     <span className="w-7 text-center text-xs font-semibold text-white/55">{r.played}</span>
                                                     <span className="w-7 text-center text-xs font-semibold text-emerald-400/80">{r.wins}</span>

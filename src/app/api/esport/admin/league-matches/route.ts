@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getEsportAdmin } from "@/lib/esport";
+import { applyElo } from "@/lib/esport-elo";
 
 const WIN_POINTS = 3;
 
@@ -55,10 +57,23 @@ export async function PATCH(req: Request) {
     const loserId = a > b ? match.teamBId : match.teamAId;
     const key = (teamId: string) => ({ seasonId_divisionId_teamId: { seasonId: match.seasonId, divisionId: match.divisionId, teamId } });
 
-    await prisma.$transaction([
+    // Elo: shu o'yin valyutasidagi (mavsum o'yini) jamoa rosterlari
+    const season = await prisma.esSeason.findUnique({ where: { id: match.seasonId }, select: { gameId: true } });
+    const [rosterW, rosterL] = season ? await Promise.all([
+        prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: winnerId, gameId: season.gameId } }, select: { id: true, rating: true } }),
+        prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: loserId, gameId: season.gameId } }, select: { id: true, rating: true } }),
+    ]) : [null, null];
+
+    const ops: Prisma.PrismaPromise<unknown>[] = [
         prisma.esLeagueMatch.update({ where: { id }, data: { scoreA: a, scoreB: b, winnerId, status: "DONE" } }),
         prisma.esStanding.update({ where: key(winnerId), data: { points: { increment: WIN_POINTS }, wins: { increment: 1 }, played: { increment: 1 } } }),
         prisma.esStanding.update({ where: key(loserId), data: { losses: { increment: 1 }, played: { increment: 1 } } }),
-    ]);
+    ];
+    if (rosterW && rosterL) {
+        const { newA, newB } = applyElo(rosterW.rating, rosterL.rating, true);
+        ops.push(prisma.esRoster.update({ where: { id: rosterW.id }, data: { rating: newA } }));
+        ops.push(prisma.esRoster.update({ where: { id: rosterL.id }, data: { rating: newB } }));
+    }
+    await prisma.$transaction(ops);
     return NextResponse.json({ ok: true, winnerId });
 }

@@ -9,10 +9,16 @@ export async function POST(req: Request) {
     const { seasonId, teamId, toDivisionId, reset } = await req.json();
     if (!seasonId || !teamId || !toDivisionId) return NextResponse.json({ error: "seasonId, teamId, toDivisionId kerak" }, { status: 400 });
 
-    const standing = await prisma.esStanding.findFirst({ where: { seasonId, teamId }, select: { id: true } });
+    const standing = await prisma.esStanding.findFirst({ where: { seasonId, teamId }, select: { id: true, divisionId: true } });
     if (!standing) return NextResponse.json({ error: "Jamoa bu mavsumda emas" }, { status: 404 });
-    const div = await prisma.esDivision.findUnique({ where: { id: toDivisionId }, select: { id: true } });
+    const div = await prisma.esDivision.findUnique({ where: { id: toDivisionId }, select: { id: true, capacity: true } });
     if (!div) return NextResponse.json({ error: "Divizion topilmadi" }, { status: 404 });
+
+    // Cheklangan divizion to'lgan bo'lsa — ko'chirib bo'lmaydi (Ochiq divizion capacity=null)
+    if (div.capacity != null && standing.divisionId !== toDivisionId) {
+        const count = await prisma.esStanding.count({ where: { seasonId, divisionId: toDivisionId } });
+        if (count >= div.capacity) return NextResponse.json({ error: "Divizion to'lgan" }, { status: 400 });
+    }
 
     await prisma.esStanding.update({
         where: { id: standing.id },

@@ -189,6 +189,7 @@ model EsRoster {          // har (jamoa × o'yin) bitta tarkib
   id      String @id @default(cuid())
   teamId  String
   gameId  String
+  rating  Int    @default(-1000)         // Elo kuch reytingi (mavsumlar aro saqlanadi; -1000 = boshlang'ich)
   team    EsTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
   game    EsGame @relation(fields: [gameId], references: [id])
   members EsRosterMember[]
@@ -224,12 +225,13 @@ model EsRosterMember {    // sportchini tarkibга bog'laydi (transfer shu yerda
   @@index([rosterId])
 }
 
-model EsDivision {        // futboldek tier (1/2/3)
-  id     String @id @default(cuid())
-  gameId String
-  name   String                          // "Pro Division"
-  tier   Int                             // 1 = eng yuqori
-  game   EsGame @relation(fields: [gameId], references: [id])
+model EsDivision {        // futboldek tier (1 = eng yuqori; eng katta tier = Ochiq divizion)
+  id       String @id @default(cuid())
+  gameId   String
+  name     String                        // "Pro Division"
+  tier     Int                           // 1 = eng yuqori
+  capacity Int?                          // jamoalar chegarasi; null = CHEKSIZ (Ochiq divizion)
+  game     EsGame @relation(fields: [gameId], references: [id])
   @@unique([gameId, tier])
 }
 
