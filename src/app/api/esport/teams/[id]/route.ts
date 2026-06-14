@@ -47,7 +47,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             id: team.id, name: team.name, tag: team.tag, logo: team.logo, bio: team.bio,
             isOwner, amIMember, myAthleteId: myAthlete?.id ?? null, pendingRequests,
             rosters: team.rosters.map(r => ({
-                id: r.id, game: r.game,
+                id: r.id, game: r.game, rating: r.rating,
                 members: r.members.map(m => {
                     const p = pMap[m.athlete.humoProfileId];
                     return {

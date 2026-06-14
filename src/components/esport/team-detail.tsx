@@ -4,11 +4,11 @@ import { useEffect, useState, useCallback } from "react";
 import { Link, useRouter } from "@/i18n/routing";
 import {
     ArrowLeft, Loader2, Shield, Crown, Copy, Check, UserPlus, Inbox,
-    LogOut, Trash2, ChevronRight, BadgeCheck, X, AlertTriangle,
+    LogOut, Trash2, ChevronRight, BadgeCheck, X, AlertTriangle, Settings2,
 } from "lucide-react";
 
 interface Member { athleteId: string; role: string; ign: string; gameUserId: string; gameServer: string | null; position: string | null; name: string; username: string | null; image: string | null; humoId: string | null; verified: boolean }
-interface Roster { id: string; game: { slug: string; name: string; teamSize: number }; members: Member[] }
+interface Roster { id: string; game: { slug: string; name: string; teamSize: number }; rating: number; members: Member[] }
 interface Team { id: string; name: string; tag: string; logo: string | null; bio: string | null; isOwner: boolean; amIMember: boolean; myAthleteId: string | null; pendingRequests: number; rosters: Roster[] }
 interface JoinReq { id: string; athleteId: string; ign: string; position: string | null; game: string; name: string; username: string | null; image: string | null }
 
@@ -141,23 +141,27 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                     <div key={r.id} className="mb-4 rounded-3xl p-4" style={card}>
                         <div className="mb-3 flex items-center justify-between px-1">
                             <p className="text-sm font-black text-white">{r.game.name}</p>
-                            <span className="text-[11px] font-bold text-white/40">{r.members.length}/{r.game.teamSize}+</span>
+                            <span className="flex items-center gap-2 text-[11px] font-bold text-white/40">
+                                <span className="text-[#00CEC8]">Elo {r.rating}</span>
+                                <span>{r.members.length}/{r.game.teamSize}+</span>
+                            </span>
                         </div>
                         <div className="space-y-1.5">
                             {r.members.map(m => (
                                 <div key={m.athleteId}>
-                                    <button onClick={() => team.isOwner && m.role !== "CAPTAIN" ? setSel(sel === m.athleteId ? null : m.athleteId) : undefined}
-                                        className="flex w-full items-center gap-3 rounded-2xl p-2.5 text-left" style={soft}>
-                                        <Avatar image={m.image} fallback={m.ign} />
-                                        <div className="min-w-0 flex-1">
-                                            <p className="flex items-center gap-1 truncate text-sm font-bold text-white">{m.ign}{m.verified && <BadgeCheck className="h-3.5 w-3.5 text-[#00CEC8]" />}</p>
-                                            <p className="truncate text-[11px] text-white/40">{m.name}{m.position ? ` · ${m.position}` : ""}</p>
-                                        </div>
+                                    <div className="flex items-center gap-3 rounded-2xl p-2.5" style={soft}>
+                                        <Link href={`/esport/a/${m.athleteId}`} className="flex min-w-0 flex-1 items-center gap-3">
+                                            <Avatar image={m.image} fallback={m.ign} />
+                                            <div className="min-w-0 flex-1">
+                                                <p className="flex items-center gap-1 truncate text-sm font-bold text-white">{m.ign}{m.verified && <BadgeCheck className="h-3.5 w-3.5 text-[#00CEC8]" />}</p>
+                                                <p className="truncate text-[11px] text-white/40">{m.name}{m.position ? ` · ${m.position}` : ""}</p>
+                                            </div>
+                                        </Link>
                                         <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold" style={m.role === "CAPTAIN" ? { background: "rgba(0,206,200,0.14)", color: "#00CEC8" } : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)" }}>
                                             {m.role === "CAPTAIN" && <Crown className="h-3 w-3" />}{roleLabel[m.role]}
                                         </span>
-                                        {team.isOwner && m.role !== "CAPTAIN" && <ChevronRight className="h-4 w-4 text-white/25" />}
-                                    </button>
+                                        {team.isOwner && m.role !== "CAPTAIN" && <button onClick={() => setSel(sel === m.athleteId ? null : m.athleteId)} className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: "rgba(255,255,255,0.05)" }}><Settings2 className="h-3.5 w-3.5 text-white/50" /></button>}
+                                    </div>
                                     {sel === m.athleteId && team.isOwner && (
                                         <div className="mt-1.5 flex flex-wrap gap-1.5 rounded-2xl p-2" style={soft}>
                                             {ROLES.filter(x => x !== "CAPTAIN").map(rl => (
