@@ -1,6 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
-import { Gamepad2, User, Users, BarChart3, ShieldHalf, ChevronRight, Home } from "lucide-react";
+import { Gamepad2, User, Users, BarChart3, ShieldHalf, ChevronRight, Home, Trophy } from "lucide-react";
 
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
 const card = { background: "rgba(10,16,34,0.72)", border: "1px solid rgba(43,62,232,0.20)" };
@@ -8,6 +8,7 @@ const card = { background: "rgba(10,16,34,0.72)", border: "1px solid rgba(43,62,
 const items = [
     { href: "/esport/athlete", icon: User, title: "Sportchi", desc: "Sportchi profili yarating" },
     { href: "/esport/teams", icon: Users, title: "Jamoalar", desc: "Jamoa tuzing yoki qo'shiling" },
+    { href: "/esport/tournaments", icon: Trophy, title: "Turnirlar", desc: "Kubok, bracket va yutuq" },
     { href: "/esport/standings", icon: BarChart3, title: "Divizionlar", desc: "Jadval va reyting" },
     { href: "/esport/admin", icon: ShieldHalf, title: "Admin", desc: "Liga boshqaruvi (faqat admin)" },
 ] as const;

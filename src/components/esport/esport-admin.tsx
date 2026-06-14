@@ -19,7 +19,7 @@ interface Match { id: string; divisionId: string; teamAId: string; teamBId: stri
 interface StandRow { teamId: string; team: { name: string; tag: string } | null; points: number; wins: number; losses: number; played: number; rank: number }
 interface StandDiv { id: string; name: string; tier: number; teams: StandRow[] }
 
-type Tab = "season" | "division" | "enroll" | "match" | "table";
+type Tab = "season" | "division" | "enroll" | "match" | "table" | "turnir";
 
 export default function EsportAdmin() {
     const [loading, setLoading] = useState(true);
@@ -92,6 +92,7 @@ export default function EsportAdmin() {
         { id: "enroll", label: "Jamoa", icon: Users },
         { id: "match", label: "O'yin", icon: Swords },
         { id: "table", label: "Jadval", icon: BarChart3 },
+        { id: "turnir", label: "Turnir", icon: Trophy },
     ];
 
     return (
@@ -115,7 +116,7 @@ export default function EsportAdmin() {
                 </div>
 
                 {/* Tabs */}
-                <div className="mb-5 grid grid-cols-5 gap-1.5">
+                <div className="mb-5 grid grid-cols-3 gap-1.5">
                     {TABS.map(t => (
                         <button key={t.id} onClick={() => setTab(t.id)} className="flex flex-col items-center gap-1 rounded-xl py-2" style={tab === t.id ? { background: "rgba(43,62,232,0.22)", border: "1px solid rgba(0,206,200,0.4)" } : soft}>
                             <t.icon className="h-4 w-4" style={{ color: tab === t.id ? "#00CEC8" : "rgba(255,255,255,0.5)" }} />
@@ -129,6 +130,7 @@ export default function EsportAdmin() {
                 {tab === "enroll" && <EnrollTab teams={teams} divisions={myDivs} seasonId={seasonId} api={api} reload={() => loadSeasonData(seasonId)} busy={busy} />}
                 {tab === "match" && <MatchTab matches={matches} teams={teams} divisions={myDivs} seasonId={seasonId} teamName={teamName} api={api} reload={() => loadSeasonData(seasonId)} busy={busy} />}
                 {tab === "table" && <TableTab standings={standings} divisions={myDivs} seasonId={seasonId} api={api} reload={() => loadSeasonData(seasonId)} busy={busy} />}
+                {tab === "turnir" && <TournamentTab gameId={gameId} seasons={seasons} divisions={myDivs} seasonId={seasonId} api={api} busy={busy} />}
             </div>
         </main>
     );
@@ -287,6 +289,56 @@ function TableTab({ standings, divisions, seasonId, api, reload, busy }: { stand
                     ))}
                 </div>
             ))}
+        </div>
+    );
+}
+
+interface TournamentLite { id: string; name: string; status: string; prizePool: number | null; currency: string; teams: number; maxTeams: number }
+
+function TournamentTab({ gameId, seasons, divisions, seasonId, api, busy }: { gameId: string; seasons: Season[]; divisions: Division[]; seasonId: string; api: ApiFn; busy: boolean }) {
+    const [list, setList] = useState<TournamentLite[]>([]);
+    const [name, setName] = useState("");
+    const [prize, setPrize] = useState("");
+    const [maxTeams, setMaxTeams] = useState("");
+    const [divId, setDivId] = useState("");
+
+    const load = useCallback(async () => {
+        const d = await fetch(`/api/esport/admin/tournaments?gameId=${gameId}`).then(r => r.json()).catch(() => ({}));
+        setList(d.tournaments || []);
+    }, [gameId]);
+    useEffect(() => { if (gameId) load(); }, [gameId, load]);
+
+    return (
+        <div className="space-y-3">
+            <div className="rounded-2xl p-4" style={card}>
+                <p className="mb-2 text-xs font-black uppercase text-white/40">Yangi turnir</p>
+                <div className="space-y-2">
+                    <Inp value={name} onChange={setName} placeholder="Turnir nomi (masalan Summer Tournament)" />
+                    <div className="flex gap-2">
+                        <Inp value={prize} onChange={setPrize} placeholder="Yutuq fondi (so'm)" />
+                        <Inp value={maxTeams} onChange={setMaxTeams} placeholder="Maks jamoa (0=cheksiz)" cls="w-40" />
+                    </div>
+                    <Pills label="Divizion (ixtiyoriy)" items={[{ id: "", label: "Yo'q" }, ...divisions.map(d => ({ id: d.id, label: d.name }))]} value={divId} onChange={setDivId} />
+                    <Btn busy={busy} onClick={async () => {
+                        if (!name.trim()) return;
+                        const r = await api("/api/esport/admin/tournaments", "POST", {
+                            gameId, name, prizePool: prize ? Number(prize) : null,
+                            maxTeams: maxTeams ? Number(maxTeams) : 16,
+                            seasonId: divId ? seasonId : null, divisionId: divId || null,
+                        });
+                        if (!r.error) { setName(""); setPrize(""); setMaxTeams(""); setDivId(""); load(); }
+                    }}><Plus className="h-4 w-4" /> Turnir yaratish</Btn>
+                </div>
+            </div>
+            <div className="space-y-2">
+                {list.map(t => (
+                    <Link key={t.id} href={`/esport/tournaments/${t.id}`} className="flex items-center gap-2 rounded-2xl p-3" style={card}>
+                        <Trophy className="h-4 w-4 text-[#FFB020]" />
+                        <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-white">{t.name}</p><p className="text-[11px] text-white/40">{t.status} · {t.teams}{t.maxTeams > 0 ? `/${t.maxTeams}` : ""} jamoa</p></div>
+                        <ChevronRight className="h-4 w-4 text-white/25" />
+                    </Link>
+                ))}
+            </div>
         </div>
     );
 }

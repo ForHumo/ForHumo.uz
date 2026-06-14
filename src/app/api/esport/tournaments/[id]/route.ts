@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile } from "@/lib/esport";
+import { isFounderProfile } from "@/lib/founders";
 import { formatMoney, type Currency } from "@/lib/money";
 
 // GET /api/esport/tournaments/[id] — ommaviy tafsilot: turnir + ishtirokchilar + setka
@@ -30,8 +31,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         myTeams = owned.map(o => ({ ...o, registered: regSet.has(o.id) }));
     }
 
+    const isAdmin = !!me && isFounderProfile({ username: me.username, humoId: me.humoId });
     const cur = (t.currency === "USD" ? "USD" : "UZS") as Currency;
     return NextResponse.json({
+        isAdmin,
         tournament: {
             id: t.id, name: t.name, game: t.game, status: t.status,
             prizePool: t.prizePool ? Number(t.prizePool) : null,
