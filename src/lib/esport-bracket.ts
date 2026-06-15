@@ -33,7 +33,7 @@ export async function generateBracket(tournamentId: string): Promise<{ ok: boole
     const rosters = await prisma.esRoster.findMany({ where: { id: { in: parts.map(p => p.rosterId) } }, select: { id: true, rating: true } });
     const ratingMap = Object.fromEntries(rosters.map(r => [r.id, r.rating]));
     const seeded = parts
-        .map(p => ({ teamId: p.teamId, rating: ratingMap[p.rosterId] ?? -1000, at: p.registeredAt.getTime() }))
+        .map(p => ({ teamId: p.teamId, rating: ratingMap[p.rosterId] ?? 1000, at: p.registeredAt.getTime() }))
         .sort((a, b) => b.rating - a.rating || a.at - b.at);
 
     const N = seeded.length;
@@ -110,14 +110,14 @@ export async function recordTournamentResult(matchId: string, a: number, b: numb
     const t = await prisma.esTournament.findUnique({ where: { id: m.tournamentId }, select: { gameId: true } });
     if (t) {
         const [rw, rl] = await Promise.all([
-            prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: winnerId, gameId: t.gameId } }, select: { id: true, rating: true } }),
-            prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: loserId, gameId: t.gameId } }, select: { id: true, rating: true } }),
+            prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: winnerId, gameId: t.gameId } }, select: { id: true, rating: true, peakRating: true, lowRating: true } }),
+            prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: loserId, gameId: t.gameId } }, select: { id: true, rating: true, peakRating: true, lowRating: true } }),
         ]);
         if (rw && rl) {
             const { newA, newB } = applyElo(rw.rating, rl.rating, true);
             await prisma.$transaction([
-                prisma.esRoster.update({ where: { id: rw.id }, data: { rating: newA } }),
-                prisma.esRoster.update({ where: { id: rl.id }, data: { rating: newB } }),
+                prisma.esRoster.update({ where: { id: rw.id }, data: { rating: newA, peakRating: Math.max(rw.peakRating, newA), lowRating: Math.min(rw.lowRating, newA) } }),
+                prisma.esRoster.update({ where: { id: rl.id }, data: { rating: newB, peakRating: Math.max(rl.peakRating, newB), lowRating: Math.min(rl.lowRating, newB) } }),
             ]);
         }
     }

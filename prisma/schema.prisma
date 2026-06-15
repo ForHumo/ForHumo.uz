@@ -193,10 +193,12 @@ model EsJoinRequest {      // ariza (sportchi beradi, ega tasdiqlaydi)
 }
 
 model EsRoster {          // har (jamoa × o'yin) bitta tarkib
-  id      String @id @default(cuid())
-  teamId  String
-  gameId  String
-  rating  Int    @default(-1000)         // Elo kuch reytingi (mavsumlar aro saqlanadi; -1000 = boshlang'ich)
+  id          String @id @default(cuid())
+  teamId      String
+  gameId      String
+  rating      Int    @default(1000)       // Elo kuch reytingi (mavsumlar aro saqlanadi; 1000 = boshlang'ich)
+  peakRating  Int    @default(1000)       // eng yuqori Elo (tarix)
+  lowRating   Int    @default(1000)       // eng past Elo (tarix)
   team    EsTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
   game    EsGame @relation(fields: [gameId], references: [id])
   members EsRosterMember[]
@@ -208,15 +210,18 @@ model EsAthlete {         // Humo ID + bitta o'yin (qattiq qulf)
   id            String  @id @default(cuid())
   humoProfileId String  @unique         // bir Humo ID = bitta athlete
   gameId        String                  // IMMUTABLE — hech qachon o'zgarmaydi
-  ign           String                  // in-game nom
-  gameUserId    String                  // in-game ID (MLBB raqami)
+  ign           String  @unique         // in-game nom — TAKRORLANMAYDI
+  gameUserId    String                  // in-game ID (MLBB raqami) — o'yin ichida takrorlanmaydi
   gameServer    String?                 // server/zona
   role          String?                 // pozitsiya
+  image         String?                 // avatar (null = Humo ID rasmi)
+  marketValue   Decimal? @db.Decimal(18, 2)  // transfer bozori narxi
   createdAt     DateTime @default(now())
   game          EsGame  @relation(fields: [gameId], references: [id])
   memberships   EsRosterMember[]
   transfers     EsTransfer[]
   joinRequests  EsJoinRequest[]
+  @@unique([gameId, gameUserId])        // o'yin ID raqami takrorlanmaydi
   @@index([gameId])
 }
 

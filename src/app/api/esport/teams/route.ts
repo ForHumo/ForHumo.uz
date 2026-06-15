@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getMyProfile } from "@/lib/esport";
+import { getMyProfile, userHasTeam } from "@/lib/esport";
 import { addAthleteToTeam } from "@/lib/esport-roster";
 
 // GET /api/esport/teams — mening jamoalarim (egasi + a'zo bo'lganlarim)
@@ -37,6 +37,9 @@ export async function POST(req: Request) {
     const me = await getMyProfile();
     if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
     if (!me.humoId) return NextResponse.json({ error: "Avval Humo ID oling", needHumoId: true }, { status: 403 });
+
+    // Bitta odam = bitta jamoa (ega yoki a'zo) — ikkinchi jamoa ochib bo'lmaydi
+    if (await userHasTeam(me.id)) return NextResponse.json({ error: "Siz allaqachon bir jamodasiz — ikkinchi jamoa ocha olmaysiz" }, { status: 409 });
 
     const body = await req.json();
     const name = String(body.name || "").trim().slice(0, 40);

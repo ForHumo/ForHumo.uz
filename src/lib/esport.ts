@@ -49,3 +49,13 @@ export async function getEsportOwner() {
     const me = await getMyProfile();
     return me && isEsportOwner(me) ? me : null;
 }
+
+// Foydalanuvchi allaqachon biror jamodami (ega YOKI a'zo)? — bitta odam = bitta jamoa.
+export async function userHasTeam(profileId: string): Promise<boolean> {
+    const owned = await prisma.esTeam.count({ where: { ownerId: profileId } });
+    if (owned > 0) return true;
+    const athlete = await prisma.esAthlete.findUnique({ where: { humoProfileId: profileId }, select: { id: true } });
+    if (!athlete) return false;
+    const member = await prisma.esRosterMember.count({ where: { athleteId: athlete.id } });
+    return member > 0;
+}

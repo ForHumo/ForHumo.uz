@@ -60,8 +60,8 @@ export async function PATCH(req: Request) {
     // Elo: shu o'yin valyutasidagi (mavsum o'yini) jamoa rosterlari
     const season = await prisma.esSeason.findUnique({ where: { id: match.seasonId }, select: { gameId: true } });
     const [rosterW, rosterL] = season ? await Promise.all([
-        prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: winnerId, gameId: season.gameId } }, select: { id: true, rating: true } }),
-        prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: loserId, gameId: season.gameId } }, select: { id: true, rating: true } }),
+        prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: winnerId, gameId: season.gameId } }, select: { id: true, rating: true, peakRating: true, lowRating: true } }),
+        prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: loserId, gameId: season.gameId } }, select: { id: true, rating: true, peakRating: true, lowRating: true } }),
     ]) : [null, null];
 
     const ops: Prisma.PrismaPromise<unknown>[] = [
@@ -71,8 +71,8 @@ export async function PATCH(req: Request) {
     ];
     if (rosterW && rosterL) {
         const { newA, newB } = applyElo(rosterW.rating, rosterL.rating, true);
-        ops.push(prisma.esRoster.update({ where: { id: rosterW.id }, data: { rating: newA } }));
-        ops.push(prisma.esRoster.update({ where: { id: rosterL.id }, data: { rating: newB } }));
+        ops.push(prisma.esRoster.update({ where: { id: rosterW.id }, data: { rating: newA, peakRating: Math.max(rosterW.peakRating, newA), lowRating: Math.min(rosterW.lowRating, newA) } }));
+        ops.push(prisma.esRoster.update({ where: { id: rosterL.id }, data: { rating: newB, peakRating: Math.max(rosterL.peakRating, newB), lowRating: Math.min(rosterL.lowRating, newB) } }));
     }
     await prisma.$transaction(ops);
     return NextResponse.json({ ok: true, winnerId });

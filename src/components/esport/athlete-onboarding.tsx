@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useRouter } from "@/i18n/routing";
 import {
     Gamepad2, Trophy, Lock, ChevronDown, Check, ShieldCheck,
-    ArrowLeft, Loader2, AlertTriangle, IdCard,
+    ArrowLeft, Loader2, AlertTriangle, IdCard, Pencil, Camera, X,
 } from "lucide-react";
 
 interface Game { id: string; slug: string; name: string; teamSize: number }
-interface Athlete { id: string; game: { slug: string; name: string }; ign: string; gameUserId: string; gameServer: string | null; role: string | null }
+interface Athlete { id: string; game: { slug: string; name: string }; ign: string; gameUserId: string; gameServer: string | null; role: string | null; image?: string | null }
 
 const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
@@ -108,26 +108,7 @@ export default function AthleteOnboarding() {
                         <Link href="/id" className="mt-4 inline-flex rounded-2xl px-5 py-2.5 text-sm font-bold text-white" style={{ background: ACCENT }}>Humo ID olish</Link>
                     </div>
                 ) : athlete ? (
-                    /* Allaqachon sportchi */
-                    <div className="rounded-3xl p-6" style={cardStyle}>
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: ACCENT }}>
-                                <ShieldCheck className="h-6 w-6 text-white" />
-                            </div>
-                            <div>
-                                <p className="text-base font-black text-white">Siz sportchisiz</p>
-                                <p className="text-xs font-semibold text-white/50">{athlete.game.name}</p>
-                            </div>
-                        </div>
-                        <div className="mt-5 space-y-2.5">
-                            <Row label="Nickname" value={athlete.ign} />
-                            <Row label="In-game ID" value={athlete.gameServer ? `${athlete.gameUserId} (${athlete.gameServer})` : athlete.gameUserId} />
-                            {athlete.role && <Row label="Pozitsiya" value={athlete.role} />}
-                        </div>
-                        <button onClick={() => router.push("/esport")} className="mt-6 w-full rounded-2xl py-3 text-sm font-bold text-white" style={{ background: ACCENT }}>
-                            Davom etish
-                        </button>
-                    </div>
+                    <AthleteCard athlete={athlete} roles={roles} onUpdated={setAthlete} onContinue={() => router.push("/esport")} />
                 ) : (
                     /* Onboarding forma */
                     <div className="space-y-5">
@@ -233,6 +214,122 @@ export default function AthleteOnboarding() {
                 )}
             </div>
         </main>
+    );
+}
+
+function AthleteCard({ athlete, roles, onUpdated, onContinue }: {
+    athlete: Athlete; roles: string[]; onUpdated: (a: Athlete) => void; onContinue: () => void;
+}) {
+    const [editing, setEditing] = useState(false);
+    const [ign, setIgn] = useState(athlete.ign);
+    const [gameUserId, setGameUserId] = useState(athlete.gameUserId);
+    const [gameServer, setGameServer] = useState(athlete.gameServer || "");
+    const [role, setRole] = useState(athlete.role || "");
+    const [image, setImage] = useState(athlete.image || "");
+    const [roleOpen, setRoleOpen] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [err, setErr] = useState("");
+    const fileRef = useRef<HTMLInputElement>(null);
+    const roleRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const h = (e: MouseEvent) => { if (roleRef.current && !roleRef.current.contains(e.target as Node)) setRoleOpen(false); };
+        document.addEventListener("mousedown", h);
+        return () => document.removeEventListener("mousedown", h);
+    }, []);
+
+    async function uploadAvatar(file: File) {
+        setUploading(true); setErr("");
+        const fd = new FormData(); fd.append("file", file); fd.append("kind", "brand");
+        const r = await fetch("/api/market/upload", { method: "POST", body: fd }).then(x => x.json()).catch(() => ({ error: "Yuklash xatosi" }));
+        setUploading(false);
+        if (r.url) setImage(r.url); else setErr(r.error || "Rasm yuklanmadi");
+    }
+
+    async function save() {
+        setErr("");
+        if (!ign.trim()) return setErr("Nickname majburiy");
+        if (!gameUserId.trim()) return setErr("In-game ID majburiy");
+        setSaving(true);
+        const r = await fetch("/api/esport/athlete", {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ign, gameUserId, gameServer, role, image: image || null }),
+        }).then(x => x.json()).catch(() => ({ error: "Tarmoq xatosi" }));
+        setSaving(false);
+        if (r.error) return setErr(r.error);
+        onUpdated(r.athlete); setEditing(false);
+    }
+
+    return (
+        <div className="rounded-3xl p-6" style={cardStyle}>
+            {/* Avatar + sarlavha */}
+            <div className="flex items-center gap-4">
+                <div className="relative">
+                    {image
+                        ? <img src={image} alt="" className="h-16 w-16 rounded-2xl object-cover" />
+                        : <div className="flex h-16 w-16 items-center justify-center rounded-2xl" style={{ background: ACCENT }}><ShieldCheck className="h-7 w-7 text-white" /></div>}
+                    {editing && (
+                        <button onClick={() => fileRef.current?.click()} className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full text-white" style={{ background: ACCENT, border: "2px solid #0B1226" }}>
+                            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                        </button>
+                    )}
+                    <input ref={fileRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); }} />
+                </div>
+                <div className="min-w-0 flex-1">
+                    <p className="text-base font-black text-white">{athlete.ign}</p>
+                    <p className="text-xs font-semibold text-white/50">{athlete.game.name}</p>
+                </div>
+                {!editing && (
+                    <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-white/85" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                        <Pencil className="h-3.5 w-3.5" /> Tahrirlash
+                    </button>
+                )}
+            </div>
+
+            {err && <div className="mt-4 flex items-center gap-2 rounded-2xl px-4 py-2.5" style={{ background: "rgba(255,60,60,0.10)", border: "1px solid rgba(255,60,60,0.3)" }}><AlertTriangle className="h-4 w-4 text-red-400" /><span className="text-xs font-semibold text-red-300">{err}</span></div>}
+
+            {!editing ? (
+                <>
+                    <div className="mt-5 space-y-2.5">
+                        <Row label="Nickname" value={athlete.ign} />
+                        <Row label="In-game ID" value={athlete.gameServer ? `${athlete.gameUserId} (${athlete.gameServer})` : athlete.gameUserId} />
+                        {athlete.role && <Row label="Pozitsiya" value={athlete.role} />}
+                    </div>
+                    <div className="mt-6 flex gap-2">
+                        <Link href={`/esport/a/${athlete.id}`} className="flex-1 rounded-2xl py-3 text-center text-sm font-bold text-white/85" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>Ommaviy karta</Link>
+                        <button onClick={onContinue} className="flex-1 rounded-2xl py-3 text-sm font-bold text-white" style={{ background: ACCENT }}>Davom etish</button>
+                    </div>
+                </>
+            ) : (
+                <div className="mt-5 space-y-2.5">
+                    <p className="text-[11px] font-bold uppercase text-white/35">Rasm Humo ID'dan olinadi — yuqoridagi kamera orqali o'zgartiring</p>
+                    <Input value={ign} onChange={setIgn} placeholder="Nickname" />
+                    <div className="grid grid-cols-2 gap-2">
+                        <Input value={gameUserId} onChange={setGameUserId} placeholder="In-game ID" inputMode="numeric" />
+                        <Input value={gameServer} onChange={setGameServer} placeholder="Server/Zona" inputMode="numeric" />
+                    </div>
+                    <div ref={roleRef} className="relative">
+                        <button onClick={() => setRoleOpen(o => !o)} className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                            <span className={`text-sm font-semibold ${role ? "text-white" : "text-white/35"}`}>{role || "Pozitsiya (ixtiyoriy)"}</span>
+                            <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${roleOpen ? "rotate-180" : ""}`} />
+                        </button>
+                        {roleOpen && (
+                            <div className="absolute z-10 mt-2 w-full overflow-hidden rounded-2xl py-1" style={{ background: "#0D1430", border: "1px solid rgba(43,62,232,0.35)" }}>
+                                <button onClick={() => { setRole(""); setRoleOpen(false); }} className="flex w-full px-4 py-2.5 text-left text-sm font-semibold text-white/60 hover:bg-white/5">Yo'q</button>
+                                {roles.map(r => (
+                                    <button key={r} onClick={() => { setRole(r); setRoleOpen(false); }} className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold text-white/85 hover:bg-white/5">{r} {role === r && <Check className="h-4 w-4 text-[#00CEC8]" />}</button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                        <button onClick={() => { setEditing(false); setIgn(athlete.ign); setGameUserId(athlete.gameUserId); setGameServer(athlete.gameServer || ""); setRole(athlete.role || ""); setImage(athlete.image || ""); setErr(""); }} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-bold text-white/70" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}><X className="h-4 w-4" /> Bekor</button>
+                        <button onClick={save} disabled={saving || uploading} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-black text-white disabled:opacity-60" style={{ background: ACCENT }}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Saqlash</button>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }
 

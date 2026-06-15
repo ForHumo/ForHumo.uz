@@ -1,8 +1,8 @@
-// Elo kuch reytingi — har o'yindan keyin yangilanadi. Boshlang'ich -1000 (EsRoster.rating).
-// Sun'iy pol yo'q: -1000 bazaviy chiziq, undan yuqori = o'rtachadan kuchli. Turnir seeding shu bo'yicha.
+// Elo kuch reytingi — har o'yindan keyin yangilanadi. Boshlang'ich 1000 (EsRoster.rating).
+// 1000 bazaviy chiziq, undan yuqori = o'rtachadan kuchli. Turnir seeding shu bo'yicha.
 
 const K = 32;            // o'zgarish kuchi
-export const ELO_BASE = -1000;
+export const ELO_BASE = 1000;
 
 // Kutilgan natija (A ning g'alaba ehtimoli)
 function expected(ratingA: number, ratingB: number): number {

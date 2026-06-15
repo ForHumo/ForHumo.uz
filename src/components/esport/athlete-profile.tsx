@@ -2,20 +2,34 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
-import { ArrowLeft, Loader2, BadgeCheck, Shield, Gamepad2, TrendingUp, Hash, ChevronRight } from "lucide-react";
+import {
+    ArrowLeft, Loader2, BadgeCheck, Shield, Gamepad2, TrendingUp, Hash, ChevronRight,
+    Coins, Calendar, Trophy, ArrowUp, ArrowDown, Clock,
+} from "lucide-react";
 
 interface Athlete {
     id: string; ign: string; gameUserId: string; gameServer: string | null; position: string | null;
     game: { name: string } | null; createdAt: string; name: string; username: string | null;
-    image: string | null; humoId: string | null; verified: boolean;
-    team: { id: string; name: string; tag: string; logo: string | null; role: string; rating: number } | null;
+    image: string | null; humoId: string | null; verified: boolean; marketValue: number | null;
+    team: { id: string; name: string; tag: string; logo: string | null; role: string; joinedAt: string; rating: number; peakRating: number; lowRating: number } | null;
+    results: { wins: number; losses: number; played: number } | null;
 }
 
-const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
-const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
-const card = { background: "rgba(10,16,34,0.72)", border: "1px solid rgba(43,62,232,0.20)" };
-const soft = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" };
 const roleLabel: Record<string, string> = { CAPTAIN: "Kapitan", STARTER: "Asosiy", SUB: "Zaxira" };
+
+// Sana'dan beri o'tgan vaqt (yil/oy/kun)
+function since(iso: string): string {
+    const ms = Date.now() - new Date(iso).getTime();
+    const days = Math.floor(ms / 864e5);
+    if (days < 1) return "bugun";
+    if (days < 30) return `${days} kun`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months} oy`;
+    const years = Math.floor(months / 12);
+    const remM = months % 12;
+    return remM ? `${years} yil ${remM} oy` : `${years} yil`;
+}
+function money(n: number | null) { return n == null ? "Belgilanmagan" : `${n.toLocaleString()} so'm`; }
 
 export default function AthleteProfile({ athleteId }: { athleteId: string }) {
     const [a, setA] = useState<Athlete | null>(null);
@@ -25,57 +39,79 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
         fetch(`/api/esport/athletes/${athleteId}`).then(r => r.json()).then(d => { setA(d.athlete || null); setLoading(false); }).catch(() => setLoading(false));
     }, [athleteId]);
 
-    if (loading) return <main className="flex items-center justify-center py-24" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
-    if (!a) return <main className="flex flex-col items-center justify-center py-24 gap-3" style={{ background: BG }}><p className="text-sm text-white/60">Sportchi topilmadi</p><Link href="/esport" className="text-sm font-bold text-[#00CEC8]">Orqaga</Link></main>;
+    if (loading) return <div className="flex items-center justify-center py-24"><Loader2 className="h-7 w-7 animate-spin es-faint" /></div>;
+    if (!a) return <div className="flex flex-col items-center justify-center gap-3 py-24"><p className="text-sm es-mut">Sportchi topilmadi</p><Link href="/esport/transfers" className="text-sm font-bold es-accent-text">Transfer bozori</Link></div>;
 
     return (
-        <main className="min-h-full" style={{ background: BG }}>
-            <div className="mx-auto w-full max-w-2xl px-5 py-8">
-                <div className="mb-5 flex items-center gap-3">
-                    <Link href="/esport/teams" className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}><ArrowLeft className="h-4 w-4 text-white/80" /></Link>
-                    <span className="text-sm font-bold text-white/50">Sportchi</span>
-                </div>
+        <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+            <div className="mb-5 flex items-center gap-3">
+                <Link href="/esport/transfers" className="flex h-9 w-9 items-center justify-center rounded-xl es-soft"><ArrowLeft className="h-4 w-4 es-fg" /></Link>
+                <span className="text-sm font-bold es-mut">Sportchi kartasi</span>
+            </div>
 
-                {/* Profil */}
-                <div className="mb-5 rounded-3xl p-6 text-center" style={card}>
-                    {a.image
-                        ? <img src={a.image} alt="" className="mx-auto h-20 w-20 rounded-3xl object-cover" />
-                        : <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl text-2xl font-black text-white" style={{ background: ACCENT }}>{a.ign.slice(0, 2).toUpperCase()}</div>}
-                    <p className="mt-3 flex items-center justify-center gap-1.5 text-xl font-black text-white">{a.ign}{a.verified && <BadgeCheck className="h-5 w-5 text-[#00CEC8]" />}</p>
-                    {a.name && <p className="text-sm font-semibold text-white/45">{a.name}</p>}
-                    <div className="mt-3 flex items-center justify-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold text-[#00CEC8]" style={{ background: "rgba(0,206,200,0.12)" }}><Gamepad2 className="h-3 w-3" /> {a.game?.name}</span>
-                        {a.position && <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold text-white/60" style={soft}>{a.position}</span>}
+            {/* Bosh karta */}
+            <div className="relative mb-4 overflow-hidden rounded-3xl es-card">
+                <div className="h-24 es-accent-bg3" />
+                <div className="px-6 pb-6">
+                    <div className="-mt-12 flex items-end gap-4">
+                        {a.image
+                            ? <img src={a.image} alt="" className="h-24 w-24 rounded-3xl object-cover ring-4 ring-[var(--es-card)]" />
+                            : <div className="flex h-24 w-24 items-center justify-center rounded-3xl text-2xl font-black text-white ring-4 ring-[var(--es-card)] es-accent-bg">{a.ign.slice(0, 2).toUpperCase()}</div>}
+                        <div className="mb-1 min-w-0 flex-1">
+                            <p className="flex items-center gap-1.5 text-xl font-black es-fg">{a.ign}{a.verified && <BadgeCheck className="h-5 w-5 es-accent-text" />}</p>
+                            {a.name && <p className="truncate text-sm font-semibold es-mut">{a.name}</p>}
+                        </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold es-accent-text es-soft"><Gamepad2 className="h-3 w-3" /> {a.game?.name}</span>
+                        {a.position && <span className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold es-mut es-soft">{a.position}</span>}
+                        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold text-amber-400 es-soft"><Coins className="h-3 w-3" /> {money(a.marketValue)}</span>
                     </div>
                 </div>
-
-                {/* Jamoa */}
-                {a.team ? (
-                    <Link href={`/esport/teams/${a.team.id}`} className="mb-3 flex items-center gap-3 rounded-3xl p-4" style={card}>
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-black text-white" style={{ background: ACCENT }}>{a.team.logo ? <img src={a.team.logo} alt="" className="h-full w-full rounded-2xl object-cover" /> : a.team.tag.slice(0, 3)}</div>
-                        <div className="flex-1"><p className="text-sm font-bold text-white">{a.team.name}</p><p className="text-[11px] text-white/45">[{a.team.tag}] · {roleLabel[a.team.role] || a.team.role}</p></div>
-                        <ChevronRight className="h-4 w-4 text-white/25" />
-                    </Link>
-                ) : (
-                    <div className="mb-3 flex items-center gap-2 rounded-3xl p-4" style={card}><Shield className="h-4 w-4 text-white/35" /><span className="text-sm font-semibold text-white/50">Erkin sportchi (jamoasiz)</span></div>
-                )}
-
-                {/* Statistika */}
-                <div className="grid grid-cols-2 gap-3">
-                    {a.team && <Stat icon={TrendingUp} label="Jamoa Elo" value={String(a.team.rating)} />}
-                    <Stat icon={Hash} label="In-game ID" value={a.gameServer ? `${a.gameUserId} (${a.gameServer})` : a.gameUserId} />
-                </div>
             </div>
-        </main>
+
+            {/* Jamoa */}
+            {a.team ? (
+                <Link href={`/esport/teams/${a.team.id}`} className="mb-4 flex items-center gap-3 rounded-3xl p-4 es-card">
+                    <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl text-sm font-black text-white es-accent-bg">{a.team.logo ? <img src={a.team.logo} alt="" className="h-full w-full object-cover" /> : a.team.tag.slice(0, 3)}</div>
+                    <div className="flex-1"><p className="text-sm font-bold es-fg">{a.team.name}</p><p className="text-[11px] es-mut">[{a.team.tag}] · {roleLabel[a.team.role] || a.team.role} · jamoada {since(a.team.joinedAt)}dan beri</p></div>
+                    <ChevronRight className="h-4 w-4 es-faint" />
+                </Link>
+            ) : (
+                <div className="mb-4 flex items-center gap-2 rounded-3xl p-4 es-card"><Shield className="h-4 w-4 es-faint" /><span className="text-sm font-semibold es-mut">Erkin sportchi (jamoasiz)</span></div>
+            )}
+
+            {/* Elo statistikasi */}
+            {a.team && (
+                <div className="mb-4 grid grid-cols-3 gap-3">
+                    <Stat icon={TrendingUp} label="Joriy Elo" value={String(a.team.rating)} accent />
+                    <Stat icon={ArrowUp} label="Maksimal Elo" value={String(a.team.peakRating)} />
+                    <Stat icon={ArrowDown} label="Minimal Elo" value={String(a.team.lowRating)} />
+                </div>
+            )}
+
+            {/* Natijalar + tajriba */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {a.results && <Stat icon={Trophy} label="G'alaba" value={String(a.results.wins)} />}
+                {a.results && <Stat icon={Trophy} label="Mag'lubiyat" value={String(a.results.losses)} />}
+                <Stat icon={Calendar} label="O'yinlar" value={String(a.results?.played ?? 0)} />
+                <Stat icon={Clock} label="eSportda" value={since(a.createdAt)} />
+            </div>
+
+            {/* O'yin ma'lumotlari */}
+            <div className="mt-3 rounded-2xl p-4 es-card">
+                <div className="flex items-center gap-2 text-sm es-fg"><Hash className="h-4 w-4 es-accent-text" /><span className="font-bold">In-game ID:</span> <span className="es-mut">{a.gameServer ? `${a.gameUserId} (${a.gameServer})` : a.gameUserId}</span></div>
+            </div>
+        </div>
     );
 }
 
-function Stat({ icon: Icon, label, value }: { icon: typeof Hash; label: string; value: string }) {
+function Stat({ icon: Icon, label, value, accent }: { icon: typeof Hash; label: string; value: string; accent?: boolean }) {
     return (
-        <div className="rounded-2xl p-4" style={card}>
-            <Icon className="h-4 w-4 text-[#00CEC8]" />
-            <p className="mt-2 text-lg font-black text-white">{value}</p>
-            <p className="text-[11px] font-semibold text-white/40">{label}</p>
+        <div className="rounded-2xl p-4 es-card">
+            <Icon className="h-4 w-4 es-accent-text" />
+            <p className={`mt-2 text-lg font-black ${accent ? "es-accent-text" : "es-fg"}`}>{value}</p>
+            <p className="text-[11px] font-semibold es-mut">{label}</p>
         </div>
     );
 }
