@@ -100,7 +100,7 @@ export default function EsportAdmin() {
 
     return (
         <main className="min-h-full" style={{ background: BG }}>
-            <div className="mx-auto w-full max-w-lg px-5 py-8">
+            <div className="mx-auto w-full max-w-4xl px-5 py-8">
                 <div className="mb-4 flex items-center gap-3">
                     <Link href="/esport" className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}><ArrowLeft className="h-4 w-4 text-white/80" /></Link>
                     <div className="flex items-center gap-2">

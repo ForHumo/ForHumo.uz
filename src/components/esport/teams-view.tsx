@@ -61,7 +61,7 @@ export default function TeamsView() {
 
     return (
         <main className="min-h-full" style={{ background: BG }}>
-            <div className="mx-auto w-full max-w-lg px-5 py-8">
+            <div className="mx-auto w-full max-w-3xl px-5 py-8">
                 {/* Header */}
                 <div className="mb-6 flex items-center gap-3">
                     <Link href="/esport" className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}>
@@ -126,7 +126,7 @@ export default function TeamsView() {
                         <p className="mt-1 text-xs text-white/40">Jamoa yarating yoki taklif-kod bilan qo'shiling.</p>
                     </div>
                 ) : (
-                    <div className="space-y-2.5">
+                    <div className="grid gap-2.5 sm:grid-cols-2">
                         {owned.map(t => <TeamRow key={t.id} t={t} />)}
                         {memberTeam && <TeamRow t={memberTeam} />}
                     </div>
