@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { motion } from "framer-motion";
-import { Loader2, Trophy, TrendingUp, Swords, Crown, Star, Gamepad2 } from "lucide-react";
+import { Loader2, Trophy, TrendingUp, Swords, Crown, Star, Gamepad2, Newspaper, Coins, CalendarClock, Plus, X, Send, Trash2, ImagePlus } from "lucide-react";
 import EsportBroadcast, { type Broadcast } from "./esport-broadcast";
 
 interface TeamLite { id: string; name: string; tag: string; logo: string | null }
@@ -12,6 +12,10 @@ interface T { id: string; name: string; game: string; status: string; teams: num
 interface TopTeam { team: TeamLite; rating: number; game: string }
 interface TopPlayer { id: string; ign: string; position: string | null; roleLabel: string; team: TeamLite | null; rating: number; game: string }
 interface Result { a: TeamLite | null; b: TeamLite | null; scoreA: number | null; scoreB: number | null; winnerId: string | null }
+interface NewsItem { id: string; kind: string; title: string; body: string | null; image: string | null; pinned?: boolean; createdAt: string }
+interface ExpPlayer { id: string; ign: string; position: string | null; image: string | null; value: number; team: { name: string; tag: string } | null }
+interface ExpTeam { team: TeamLite; value: number }
+interface Upcoming { a: TeamLite | null; b: TeamLite | null; at: string | null }
 
 const STATUS: Record<string, { label: string; cls: string }> = {
     UPCOMING: { label: "Tez orada", cls: "es-mut" },
@@ -29,13 +33,26 @@ export default function EsportHome() {
     const [topTeams, setTopTeams] = useState<TopTeam[]>([]);
     const [topPlayers, setTopPlayers] = useState<TopPlayer[]>([]);
     const [results, setResults] = useState<Result[]>([]);
+    const [news, setNews] = useState<NewsItem[]>([]);
+    const [expPlayers, setExpPlayers] = useState<ExpPlayer[]>([]);
+    const [expTeams, setExpTeams] = useState<ExpTeam[]>([]);
+    const [upcoming, setUpcoming] = useState<Upcoming[]>([]);
     const [isAdmin, setIsAdmin] = useState(false);
+    // News admin
+    const [newsOpen, setNewsOpen] = useState(false);
+    const [nTitle, setNTitle] = useState("");
+    const [nBody, setNBody] = useState("");
+    const [nImage, setNImage] = useState("");
+    const [nBusy, setNBusy] = useState(false);
+    const newsFileRef = useRef<HTMLInputElement>(null);
 
     const load = useCallback(() => {
         fetch("/api/esport/home").then(r => r.json()).then(d => {
             setCasts(d.broadcasts || []);
             setTournaments(d.tournaments || []); setTopTeams(d.topTeams || []);
-            setTopPlayers(d.topPlayers || []); setResults(d.results || []); setLoading(false);
+            setTopPlayers(d.topPlayers || []); setResults(d.results || []);
+            setNews(d.news || []); setExpPlayers(d.expensivePlayers || []); setExpTeams(d.expensiveTeams || []);
+            setUpcoming(d.upcoming || []); setLoading(false);
         }).catch(() => setLoading(false));
     }, []);
 
@@ -43,6 +60,23 @@ export default function EsportHome() {
         load();
         fetch("/api/esport/admin/check").then(r => r.json()).then(d => setIsAdmin(!!d.isAdmin)).catch(() => { });
     }, [load]);
+
+    async function uploadNewsImg(file: File) {
+        setNBusy(true);
+        const fd = new FormData(); fd.append("file", file); fd.append("kind", "brand");
+        const r = await fetch("/api/market/upload", { method: "POST", body: fd }).then(x => x.json()).catch(() => ({}));
+        setNBusy(false); if (r.url) setNImage(r.url);
+    }
+    async function addNews() {
+        if (!nTitle.trim()) return;
+        setNBusy(true);
+        await fetch("/api/esport/news", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: nTitle, body: nBody, image: nImage || null }) }).catch(() => { });
+        setNBusy(false); setNTitle(""); setNBody(""); setNImage(""); setNewsOpen(false); load();
+    }
+    async function delNews(id: string) {
+        await fetch(`/api/esport/news/${id}`, { method: "DELETE" }).catch(() => { });
+        load();
+    }
 
     return (
         <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
@@ -73,6 +107,44 @@ export default function EsportHome() {
                         </h2>
                         <EsportBroadcast broadcasts={casts} isAdmin={isAdmin} onChanged={load} />
                     </motion.div>
+
+                    {/* Yangiliklar */}
+                    <motion.section {...fade} transition={{ duration: 0.35, delay: 0.07 }} className="mt-6">
+                        <div className="mb-2.5 flex items-center justify-between px-1">
+                            <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Newspaper className="h-4 w-4 es-accent-text" /> Yangiliklar</h2>
+                            {isAdmin && !newsOpen && <button onClick={() => setNewsOpen(true)} className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-white es-accent-bg"><Plus className="h-3.5 w-3.5" /> Qo'shish</button>}
+                        </div>
+                        {isAdmin && newsOpen && (
+                            <div className="mb-3 space-y-2 rounded-2xl p-4 es-card">
+                                <div className="flex items-center justify-between"><p className="text-sm font-black es-fg">Yangilik qo'shish</p><button onClick={() => setNewsOpen(false)}><X className="h-4 w-4 es-mut" /></button></div>
+                                <div className="flex items-center gap-3">
+                                    <button onClick={() => newsFileRef.current?.click()} className="flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl es-soft">{nImage ? <img src={nImage} alt="" className="h-full w-full object-cover" /> : <ImagePlus className="h-5 w-5 es-mut" />}</button>
+                                    <input ref={newsFileRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; if (f) uploadNewsImg(f); }} />
+                                    <input value={nTitle} onChange={e => setNTitle(e.target.value)} placeholder="Sarlavha" className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none placeholder:opacity-50" />
+                                </div>
+                                <textarea value={nBody} onChange={e => setNBody(e.target.value)} placeholder="Matn (ixtiyoriy)" rows={2} className="w-full rounded-xl px-3 py-2 text-sm es-fg es-soft outline-none placeholder:opacity-50" />
+                                <button onClick={addNews} disabled={nBusy} className="flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-black text-white es-accent-bg disabled:opacity-50">{nBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} E'lon qilish</button>
+                            </div>
+                        )}
+                        {news.length === 0 ? <div className="rounded-2xl p-5 es-card"><Empty text="Hozircha yangilik yo'q" /></div> : (
+                            <div className="flex gap-3 overflow-x-auto pb-1 nx-hide-scrollbar">
+                                {news.map(n => (
+                                    <div key={n.id} className="relative w-64 shrink-0 overflow-hidden rounded-2xl es-card">
+                                        {n.image && <img src={n.image} alt="" className="h-28 w-full object-cover" />}
+                                        <div className="p-3">
+                                            <div className="mb-1 flex items-center gap-1.5">
+                                                <span className={`rounded px-1.5 py-0.5 text-[9px] font-black uppercase ${n.kind === "auto" ? "es-mut es-soft" : "text-white es-accent-bg"}`}>{n.kind === "auto" ? "Avto" : "Yangilik"}</span>
+                                                {n.pinned && <Star className="h-3 w-3 text-amber-400" />}
+                                            </div>
+                                            <p className="text-sm font-black es-fg">{n.title}</p>
+                                            {n.body && <p className="mt-1 line-clamp-2 text-[11px] es-mut">{n.body}</p>}
+                                        </div>
+                                        {isAdmin && n.kind === "admin" && <button onClick={() => delNews(n.id)} className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/40 text-white"><Trash2 className="h-3 w-3" /></button>}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </motion.section>
 
                     {/* 3 karta: Turnirlar · Top jamoalar · Top o'yinchilar */}
                     <div className="mt-6 grid gap-4 lg:grid-cols-3">
@@ -136,8 +208,58 @@ export default function EsportHome() {
                         </motion.section>
                     </div>
 
+                    {/* Eng qimmat o'yinchilar · Eng qimmat jamoalar */}
+                    <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                        <motion.section {...fade} transition={{ duration: 0.35, delay: 0.22 }} className="rounded-3xl p-5 es-card">
+                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Coins className="h-4 w-4 text-amber-400" /> Eng qimmat o'yinchilar</h2>
+                            {expPlayers.length === 0 ? <Empty text="Hali narx belgilanmagan" /> : (
+                                <div className="space-y-1.5">
+                                    {expPlayers.map((p, i) => (
+                                        <Link key={p.id} href={`/esport/a/${p.id}`} className="flex items-center gap-3 rounded-2xl p-2.5 es-soft transition-transform hover:scale-[1.02]">
+                                            <Rank i={i} />
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg text-[10px] font-black text-white es-accent-bg">{p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : p.ign.slice(0, 2).toUpperCase()}</div>
+                                            <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold es-fg">{p.ign}</p><p className="truncate text-[11px] es-mut">{p.team ? `[${p.team.tag}]` : "Erkin"}</p></div>
+                                            <span className="shrink-0 text-xs font-black text-amber-400">{som(p.value)}</span>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </motion.section>
+                        <motion.section {...fade} transition={{ duration: 0.35, delay: 0.24 }} className="rounded-3xl p-5 es-card">
+                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Coins className="h-4 w-4 text-amber-400" /> Eng qimmat jamoalar</h2>
+                            {expTeams.length === 0 ? <Empty text="Hali narx belgilanmagan" /> : (
+                                <div className="space-y-1.5">
+                                    {expTeams.map((t, i) => (
+                                        <Link key={t.team.id} href={`/esport/teams/${t.team.id}`} className="flex items-center gap-3 rounded-2xl p-2.5 es-soft transition-transform hover:scale-[1.02]">
+                                            <Rank i={i} />
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg text-[10px] font-black text-white es-accent-bg">{t.team.logo ? <img src={t.team.logo} alt="" className="h-full w-full object-cover" /> : t.team.tag.slice(0, 3)}</div>
+                                            <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold es-fg">{t.team.name}</p><p className="truncate text-[11px] es-mut">[{t.team.tag}]</p></div>
+                                            <span className="shrink-0 text-xs font-black text-amber-400">{som(t.value)}</span>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </motion.section>
+                    </div>
+
+                    {/* Bo'lajak o'yinlar */}
+                    {upcoming.length > 0 && (
+                        <motion.section {...fade} transition={{ duration: 0.35, delay: 0.26 }} className="mt-4 rounded-3xl p-5 es-card">
+                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><CalendarClock className="h-4 w-4 es-accent-text" /> Bo'lajak o'yinlar</h2>
+                            <div className="grid gap-2 sm:grid-cols-2">
+                                {upcoming.map((m, i) => (
+                                    <div key={i} className="flex items-center justify-between gap-2 rounded-2xl p-3 es-soft">
+                                        <span className="flex-1 truncate text-right text-sm font-bold es-fg">{m.a?.tag || "—"}</span>
+                                        <span className="shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-bold es-mut" style={{ background: "var(--es-soft)" }}>{fmtDate(m.at)}</span>
+                                        <span className="flex-1 truncate text-sm font-bold es-fg">{m.b?.tag || "—"}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.section>
+                    )}
+
                     {/* So'nggi natijalar */}
-                    <motion.section {...fade} transition={{ duration: 0.35, delay: 0.25 }} className="mt-4 rounded-3xl p-5 es-card">
+                    <motion.section {...fade} transition={{ duration: 0.35, delay: 0.28 }} className="mt-4 rounded-3xl p-5 es-card">
                         <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Gamepad2 className="h-4 w-4 es-accent-text" /> So'nggi natijalar</h2>
                         {results.length === 0 ? <Empty text="Hali o'yin o'tkazilmagan" /> : (
                             <div className="grid gap-2 sm:grid-cols-2">
@@ -162,3 +284,11 @@ function Rank({ i }: { i: number }) {
     return <span className="w-5 text-center text-sm font-black es-faint">{i + 1}</span>;
 }
 function Empty({ text }: { text: string }) { return <p className="py-6 text-center text-xs es-faint">{text}</p>; }
+function som(n: number) { return `${n.toLocaleString()} so'm`; }
+const MON = ["Yan", "Fev", "Mar", "Apr", "May", "Iyn", "Iyl", "Avg", "Sen", "Okt", "Noy", "Dek"];
+function fmtDate(iso: string | null) {
+    if (!iso) return "—";
+    const t = new Date(new Date(iso).getTime() + 5 * 3600e3); // Toshkent +5
+    const pad = (x: number) => String(x).padStart(2, "0");
+    return `${t.getUTCDate()} ${MON[t.getUTCMonth()]} ${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}`;
+}

@@ -364,6 +364,17 @@ model EsTransfer {        // futbol-transfer: o'yinchiga oylik taklif → qabul 
   @@index([toTeamId])
 }
 
+model EsNews {            // Asosiy sahifadagi yangiliklar (admin yozadi)
+  id        String   @id @default(cuid())
+  title     String
+  body      String?
+  image     String?
+  pinned    Boolean  @default(false)
+  createdBy String
+  createdAt DateTime @default(now())
+  @@index([createdAt])
+}
+
 model EsRetro {           // arxiv turnir (tarixiy natijalar — Turnirlar bo'limida)
   id        String   @id @default(cuid())
   name      String                          // "Autumn Tournament"
