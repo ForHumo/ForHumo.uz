@@ -2,9 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
-import { ArrowLeft, Loader2, Trophy, Users, ChevronRight, Coins } from "lucide-react";
+import { ArrowLeft, Loader2, Trophy, Users, ChevronRight, Coins, Calendar, ClipboardList, ShieldCheck } from "lucide-react";
 
-interface T { id: string; name: string; game: { name: string } | null; status: string; prizePool: number | null; currency: string; maxTeams: number; teams: number; startsAt: string | null }
+interface T {
+    id: string; name: string; game: { name: string } | null; status: string;
+    division: { name: string; tier: number } | null; isOpen: boolean;
+    prizePool: number | null; currency: string; maxTeams: number; teams: number;
+    registrationStartsAt: string | null; registrationEndsAt: string | null; startsAt: string | null; endsAt: string | null;
+}
+
+const MON = ["Yan", "Fev", "Mar", "Apr", "May", "Iyn", "Iyl", "Avg", "Sen", "Okt", "Noy", "Dek"];
+function fmt(iso: string | null): string {
+    if (!iso) return "";
+    const d = new Date(iso);
+    // Toshkent (+5)
+    const t = new Date(d.getTime() + 5 * 3600e3);
+    return `${t.getUTCDate()} ${MON[t.getUTCMonth()]}`;
+}
 
 const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
@@ -55,10 +69,27 @@ export default function TournamentsList() {
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
                                             <p className="truncate text-base font-black text-white">{t.name}</p>
-                                            <p className="text-xs font-semibold text-white/45">{t.game?.name}</p>
+                                            <p className="text-xs font-semibold text-white/45">{t.game?.name}{t.division ? ` · ${t.division.name}` : ""}</p>
                                         </div>
                                         <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold" style={{ color: s.color, background: s.bg }}>{s.label}</span>
                                     </div>
+                                    {(t.startsAt || t.endsAt) && (
+                                        <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-white/55">
+                                            <Calendar className="h-3.5 w-3.5 text-[#00CEC8]" /> {fmt(t.startsAt)} – {fmt(t.endsAt)}
+                                        </div>
+                                    )}
+                                    {/* Ro'yxat (Ochiq divizion) yoki avtomatik qatnashuv */}
+                                    {t.isOpen ? (
+                                        t.registrationStartsAt && (
+                                            <div className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: t.status === "REGISTRATION" ? "#00CEC8" : "rgba(255,255,255,0.45)" }}>
+                                                <ClipboardList className="h-3.5 w-3.5" /> Ro'yxat: {fmt(t.registrationStartsAt)} – {fmt(t.registrationEndsAt)}
+                                            </div>
+                                        )
+                                    ) : t.division ? (
+                                        <div className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-white/45">
+                                            <ShieldCheck className="h-3.5 w-3.5 text-[#FFB020]" /> Avtomatik qatnashuv (ro'yxatsiz)
+                                        </div>
+                                    ) : null}
                                     <div className="mt-3 flex items-center gap-4 text-xs font-semibold text-white/55">
                                         {t.prizePool ? <span className="flex items-center gap-1.5"><Coins className="h-3.5 w-3.5 text-[#FFB020]" /> {money(t.prizePool, t.currency)}</span> : null}
                                         <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> {t.teams}{t.maxTeams > 0 ? `/${t.maxTeams}` : ""}</span>

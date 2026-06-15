@@ -123,3 +123,34 @@ export async function recordTournamentResult(matchId: string, a: number, b: numb
     }
     return { ok: true, winnerId };
 }
+
+// Vaqti kelgan turnirlar setkasini avtomatik tuzadi (10:00 +5 cron chaqiradi).
+// Pro/Division 1/2 — divizion jamoalari avtomatik kiritiladi; Ochiq divizion — ro'yxatdagilar.
+export async function processDueBrackets(): Promise<{ processed: number; results: { id: string; ok: boolean; error?: string }[] }> {
+    const now = new Date();
+    const due = await prisma.esTournament.findMany({
+        where: { bracketReady: false, bracketAt: { lte: now } },
+        select: { id: true, divisionId: true, seasonId: true, gameId: true },
+    });
+    const results: { id: string; ok: boolean; error?: string }[] = [];
+    for (const t of due) {
+        if (t.divisionId && t.seasonId) {
+            const div = await prisma.esDivision.findUnique({ where: { id: t.divisionId }, select: { capacity: true } });
+            if (div && div.capacity != null) {
+                // Avtomatik qatnashuvchi divizion — shu mavsum/divizion jamoalarini kiritamiz
+                const standings = await prisma.esStanding.findMany({ where: { seasonId: t.seasonId, divisionId: t.divisionId }, select: { teamId: true } });
+                for (const s of standings) {
+                    const roster = await prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: s.teamId, gameId: t.gameId } }, select: { id: true } });
+                    if (!roster) continue;
+                    await prisma.esTournamentTeam.upsert({
+                        where: { tournamentId_teamId: { tournamentId: t.id, teamId: s.teamId } },
+                        create: { tournamentId: t.id, teamId: s.teamId, rosterId: roster.id }, update: {},
+                    });
+                }
+            }
+        }
+        const r = await generateBracket(t.id);
+        results.push({ id: t.id, ...r });
+    }
+    return { processed: results.length, results };
+}

@@ -4,6 +4,7 @@
     "framework": "nextjs",
     "crons": [
         { "path": "/api/cron/stories-cleanup", "schedule": "0 3 * * *" },
-        { "path": "/api/cron/interest-rebuild", "schedule": "0 4 * * *" }
+        { "path": "/api/cron/interest-rebuild", "schedule": "0 4 * * *" },
+        { "path": "/api/cron/esport-brackets", "schedule": "0 5 * * *" }
     ]
 }

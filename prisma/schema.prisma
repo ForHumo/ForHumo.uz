@@ -268,7 +268,9 @@ model EsTournament {      // turnir
   status       String   @default("UPCOMING")      // UPCOMING/REGISTRATION/LIVE/ENDED
   maxTeams     Int      @default(16)               // 0 = cheksiz (Ochiq divizion turniri)
   thirdPlace   Boolean  @default(true)             // 3-o'rin o'yini (TOP 3 uchun)
-  registrationEndsAt DateTime?
+  registrationStartsAt DateTime?                   // Ochiq divizion: ro'yxat ochiladi
+  registrationEndsAt DateTime?                     // Ochiq divizion: ro'yxat yopiladi
+  bracketAt    DateTime?                           // setka avtomatik tuziladigan vaqt (10:00 +5)
   startsAt     DateTime?
   endsAt       DateTime?
   bracketReady Boolean  @default(false)            // setka tuzilganmi

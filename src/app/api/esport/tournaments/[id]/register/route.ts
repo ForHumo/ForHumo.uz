@@ -13,11 +13,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const t = await prisma.esTournament.findUnique({
         where: { id },
-        select: { id: true, gameId: true, divisionId: true, seasonId: true, status: true, maxTeams: true, registrationEndsAt: true },
+        select: { id: true, gameId: true, divisionId: true, seasonId: true, status: true, maxTeams: true, registrationStartsAt: true, registrationEndsAt: true },
     });
     if (!t) return NextResponse.json({ error: "Turnir topilmadi" }, { status: 404 });
-    if (t.status !== "REGISTRATION") return NextResponse.json({ error: "Ro'yxat ochiq emas" }, { status: 400 });
-    if (t.registrationEndsAt && t.registrationEndsAt.getTime() < Date.now()) return NextResponse.json({ error: "Ro'yxat muddati tugagan" }, { status: 400 });
+
+    // Faqat Ochiq divizion ro'yxat oladi — Pro/Division 1/2 avtomatik qatnashadi
+    if (t.divisionId) {
+        const div = await prisma.esDivision.findUnique({ where: { id: t.divisionId }, select: { capacity: true } });
+        if (div && div.capacity != null) return NextResponse.json({ error: "Bu divizion turnirda avtomatik qatnashadi — ro'yxat shart emas" }, { status: 400 });
+    }
+
+    // Ro'yxat oynasi (sana bo'yicha avtomatik). Sana yo'q bo'lsa — status bo'yicha.
+    const now = Date.now();
+    if (t.registrationStartsAt || t.registrationEndsAt) {
+        if (t.registrationStartsAt && now < t.registrationStartsAt.getTime()) return NextResponse.json({ error: "Ro'yxat hali ochilmagan" }, { status: 400 });
+        if (t.registrationEndsAt && now >= t.registrationEndsAt.getTime()) return NextResponse.json({ error: "Ro'yxat muddati tugagan" }, { status: 400 });
+    } else if (t.status !== "REGISTRATION") {
+        return NextResponse.json({ error: "Ro'yxat ochiq emas" }, { status: 400 });
+    }
 
     const team = await prisma.esTeam.findUnique({ where: { id: teamId }, select: { id: true, ownerId: true } });
     if (!team) return NextResponse.json({ error: "Jamoa topilmadi" }, { status: 404 });
