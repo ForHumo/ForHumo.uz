@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import {
     ArrowLeft, Loader2, BadgeCheck, Shield, Gamepad2, TrendingUp, Hash, ChevronRight,
-    Coins, Calendar, Trophy, ArrowUp, ArrowDown, Clock,
+    Coins, Calendar, Trophy, ArrowUp, ArrowDown, Clock, Pencil, Check, X,
 } from "lucide-react";
 
 interface Athlete {
@@ -34,10 +34,25 @@ function money(n: number | null) { return n == null ? "Belgilanmagan" : `${n.toL
 export default function AthleteProfile({ athleteId }: { athleteId: string }) {
     const [a, setA] = useState<Athlete | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [editPrice, setEditPrice] = useState(false);
+    const [priceVal, setPriceVal] = useState("");
+    const [savingPrice, setSavingPrice] = useState(false);
 
     useEffect(() => {
         fetch(`/api/esport/athletes/${athleteId}`).then(r => r.json()).then(d => { setA(d.athlete || null); setLoading(false); }).catch(() => setLoading(false));
+        fetch("/api/esport/admin/check").then(r => r.json()).then(d => setIsAdmin(!!d.isAdmin)).catch(() => { });
     }, [athleteId]);
+
+    async function savePrice() {
+        setSavingPrice(true);
+        const r = await fetch(`/api/esport/athletes/${athleteId}`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ marketValue: priceVal.trim() === "" ? null : Number(priceVal) }),
+        }).then(x => x.json()).catch(() => ({ error: "Xato" }));
+        setSavingPrice(false);
+        if (!r.error) { setA(prev => prev ? { ...prev, marketValue: r.marketValue } : prev); setEditPrice(false); }
+    }
 
     if (loading) return <div className="flex items-center justify-center py-24"><Loader2 className="h-7 w-7 animate-spin es-faint" /></div>;
     if (!a) return <div className="flex flex-col items-center justify-center gap-3 py-24"><p className="text-sm es-mut">Sportchi topilmadi</p><Link href="/esport/transfers" className="text-sm font-bold es-accent-text">Transfer bozori</Link></div>;
@@ -66,7 +81,20 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
                         <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold es-accent-text es-soft"><Gamepad2 className="h-3 w-3" /> {a.game?.name}</span>
                         {a.position && <span className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold es-mut es-soft">{a.position}</span>}
                         <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold text-amber-400 es-soft"><Coins className="h-3 w-3" /> {money(a.marketValue)}</span>
+                        {isAdmin && !editPrice && (
+                            <button onClick={() => { setPriceVal(a.marketValue != null ? String(a.marketValue) : ""); setEditPrice(true); }} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold es-accent-text es-soft"><Pencil className="h-3 w-3" /> Narx</button>
+                        )}
                     </div>
+                    {isAdmin && editPrice && (
+                        <div className="mt-3 flex items-center gap-2">
+                            <div className="flex flex-1 items-center gap-2 rounded-xl px-3 py-2 es-soft">
+                                <Coins className="h-4 w-4 text-amber-400" />
+                                <input value={priceVal} onChange={e => setPriceVal(e.target.value.replace(/[^\d]/g, ""))} inputMode="numeric" placeholder="Transfer narxi (so'm) — bo'sh = belgilanmagan" className="w-full bg-transparent text-sm font-semibold es-fg outline-none placeholder:opacity-50" />
+                            </div>
+                            <button onClick={savePrice} disabled={savingPrice} className="flex h-9 w-9 items-center justify-center rounded-xl text-white es-accent-bg disabled:opacity-50">{savingPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}</button>
+                            <button onClick={() => setEditPrice(false)} className="flex h-9 w-9 items-center justify-center rounded-xl es-soft"><X className="h-4 w-4 es-mut" /></button>
+                        </div>
+                    )}
                 </div>
             </div>
 

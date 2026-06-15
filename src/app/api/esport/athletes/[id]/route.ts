@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { fullName } from "@/lib/esport";
+import { fullName, getEsportAdmin } from "@/lib/esport";
 import { isVerifiedProfile } from "@/lib/nexus";
+
+// PATCH /api/esport/athletes/[id] — transfer narxini belgilash (faqat admin/ega)
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const admin = await getEsportAdmin();
+    if (!admin) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+    const { id } = await params;
+    const body = await req.json().catch(() => ({}));
+    const raw = body.marketValue;
+    const marketValue = raw === null || raw === "" || raw === undefined ? null : Math.max(0, Math.round(Number(raw)));
+    if (marketValue !== null && !Number.isFinite(marketValue)) return NextResponse.json({ error: "Noto'g'ri narx" }, { status: 400 });
+    const updated = await prisma.esAthlete.update({ where: { id }, data: { marketValue }, select: { id: true, marketValue: true } });
+    return NextResponse.json({ ok: true, marketValue: updated.marketValue ? Number(updated.marketValue) : null });
+}
 
 // GET /api/esport/athletes/[id] — ommaviy sportchi profili
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {

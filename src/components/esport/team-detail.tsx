@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Link, useRouter } from "@/i18n/routing";
 import {
     ArrowLeft, Loader2, Shield, Crown, Copy, Check, UserPlus, Inbox,
-    LogOut, Trash2, ChevronRight, BadgeCheck, X, AlertTriangle, Settings2,
+    LogOut, Trash2, ChevronRight, BadgeCheck, X, AlertTriangle, Settings2, Pencil, ImagePlus,
 } from "lucide-react";
 
 interface Member { athleteId: string; role: string; ign: string; gameUserId: string; gameServer: string | null; position: string | null; name: string; username: string | null; image: string | null; humoId: string | null; verified: boolean }
@@ -30,6 +30,36 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
     const [sel, setSel] = useState<string | null>(null); // tanlangan a'zo (rol/kick)
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState("");
+    // Tahrirlash
+    const [editOpen, setEditOpen] = useState(false);
+    const [eName, setEName] = useState("");
+    const [eTag, setETag] = useState("");
+    const [eBio, setEBio] = useState("");
+    const [eLogo, setELogo] = useState("");
+    const [uploading, setUploading] = useState(false);
+    const fileRef = useRef<HTMLInputElement>(null);
+
+    function openEdit() {
+        if (!team) return;
+        setEName(team.name); setETag(team.tag); setEBio(team.bio || ""); setELogo(team.logo || ""); setErr(""); setEditOpen(true);
+    }
+    async function uploadLogo(file: File) {
+        setUploading(true); setErr("");
+        const fd = new FormData(); fd.append("file", file); fd.append("kind", "brand");
+        const r = await fetch("/api/market/upload", { method: "POST", body: fd }).then(x => x.json()).catch(() => ({ error: "Yuklash xatosi" }));
+        setUploading(false);
+        if (r.url) setELogo(r.url); else setErr(r.error || "Rasm yuklanmadi");
+    }
+    async function saveEdit() {
+        setBusy(true); setErr("");
+        const r = await fetch(`/api/esport/teams/${teamId}`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: eName, tag: eTag, bio: eBio, logo: eLogo || null }),
+        }).then(x => x.json()).catch(() => ({ error: "Tarmoq xatosi" }));
+        setBusy(false);
+        if (r.error) return setErr(r.error);
+        setEditOpen(false); await load();
+    }
 
     const load = useCallback(async () => {
         const d = await fetch(`/api/esport/teams/${teamId}`).then(r => r.json()).catch(() => ({}));
@@ -99,8 +129,29 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                             <p className="text-sm font-bold text-white/45">[{team.tag}]</p>
                             {team.isOwner && <span className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold text-[#00CEC8]" style={{ background: "rgba(0,206,200,0.12)" }}><Crown className="h-3 w-3" /> Egasi</span>}
                         </div>
+                        {team.isOwner && !editOpen && <button onClick={openEdit} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={soft}><Pencil className="h-4 w-4 text-white/70" /></button>}
                     </div>
-                    {team.bio && <p className="mt-3 text-xs text-white/55">{team.bio}</p>}
+                    {team.bio && !editOpen && <p className="mt-3 text-xs text-white/55">{team.bio}</p>}
+
+                    {/* Tahrirlash formasi (faqat ega) */}
+                    {editOpen && team.isOwner && (
+                        <div className="mt-4 space-y-2.5 border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => fileRef.current?.click()} className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl" style={soft}>
+                                    {eLogo ? <img src={eLogo} alt="" className="h-full w-full object-cover" /> : uploading ? <Loader2 className="h-4 w-4 animate-spin text-white/50" /> : <ImagePlus className="h-5 w-5 text-white/40" />}
+                                </button>
+                                <input ref={fileRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; if (f) uploadLogo(f); }} />
+                                <span className="text-xs text-white/40">Logo (qurilmadan)</span>
+                            </div>
+                            <input value={eName} onChange={e => setEName(e.target.value)} placeholder="Jamoa nomi" className="w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white outline-none placeholder:text-white/30" style={soft} />
+                            <input value={eTag} onChange={e => setETag(e.target.value.toUpperCase())} maxLength={5} placeholder="Teg" className="w-full rounded-2xl px-4 py-3 text-sm font-semibold uppercase text-white outline-none placeholder:text-white/30" style={soft} />
+                            <input value={eBio} onChange={e => setEBio(e.target.value)} placeholder="Qisqa tavsif" className="w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white outline-none placeholder:text-white/30" style={soft} />
+                            <div className="flex gap-2">
+                                <button onClick={() => setEditOpen(false)} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-sm font-bold text-white/70" style={soft}><X className="h-4 w-4" /> Bekor</button>
+                                <button onClick={saveEdit} disabled={busy || uploading} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-sm font-black text-white disabled:opacity-60" style={{ background: ACCENT }}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Saqlash</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Owner actions */}
