@@ -19,6 +19,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if ("nexusLiveId" in b) data.nexusLiveId = b.nexusLiveId?.toString().trim() || null;
     if ("posterUrl" in b) data.posterUrl = b.posterUrl?.toString().trim() || null;
     if ("scheduledAt" in b) data.scheduledAt = b.scheduledAt ? new Date(b.scheduledAt) : null;
+    if ("endsAt" in b) data.endsAt = b.endsAt ? new Date(b.endsAt) : null;
 
     const updated = await prisma.esBroadcast.update({ where: { id }, data });
     return NextResponse.json({ broadcast: updated });

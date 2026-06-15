@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
             tournamentId: b.tournamentId?.toString() || null,
             matchId: b.matchId?.toString() || null,
             scheduledAt: b.scheduledAt ? new Date(b.scheduledAt) : null,
+            endsAt: b.endsAt ? new Date(b.endsAt) : null,
             createdBy: admin.humoId || admin.id,
         },
     });

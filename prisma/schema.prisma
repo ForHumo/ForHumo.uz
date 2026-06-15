@@ -360,10 +360,11 @@ model EsBroadcast {       // turnir translyatsiyasi (Asosiy 16:9 oyna — Nexus 
   status       String    @default("SCHEDULED")  // LIVE/SCHEDULED/ENDED
   streamUrl    String?                           // embed havola (YouTube/Twitch/Nexus)
   nexusLiveId  String?                           // Nexus jonli efir bog'lanishi
-  posterUrl    String?                           // muqova rasmi
+  posterUrl    String?                           // muqova rasmi (oblojka)
   tournamentId String?
   matchId      String?
-  scheduledAt  DateTime?                         // rejalashtirilgan vaqt
+  scheduledAt  DateTime?                         // boshlanish vaqti (rejalashtirilgan)
+  endsAt       DateTime?                         // tugash vaqti (avto-status uchun)
   endedAt      DateTime?
   viewers      Int       @default(0)
   createdBy    String                            // admin Humo ID

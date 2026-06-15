@@ -2,7 +2,10 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isFounderProfile } from "@/lib/founders";
+
+// eSport EGASI — FAQAT bitta hisob (CEO). Boshqa founderlar ham ega EMAS.
+export const ESPORT_OWNER_HUMO_ID = "UZ6889574";
+export const ESPORT_OWNER_USERNAME = "abduvoris";
 
 // MLBB pozitsiyalari (sportchi roli — ixtiyoriy)
 export const MLBB_ROLES = ["Gold Laner", "Mid Laner", "Roamer", "EXP Laner", "Jungler"] as const;
@@ -23,9 +26,10 @@ export function fullName(p: { firstName?: string | null; lastName?: string | nul
     return fn || p.name?.trim() || "";
 }
 
-// eSport EGASI = founder (CEO + UZ6889574). Egalar adminlarni boshqaradi.
+// eSport EGASI = FAQAT UZ6889574 (CEO). Ega adminlarni boshqaradi.
 export function isEsportOwner(p: { username?: string | null; humoId?: string | null } | null): boolean {
-    return isFounderProfile(p ?? undefined);
+    if (!p) return false;
+    return p.humoId === ESPORT_OWNER_HUMO_ID || p.username === ESPORT_OWNER_USERNAME;
 }
 
 // eSport ADMIN = ega YOKI EsAdmin jadvalidagi Humo ID. null = ruxsat yo'q.

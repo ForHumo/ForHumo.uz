@@ -5,17 +5,16 @@ import { useLocale } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Play, Radio, Clock, ChevronLeft, ChevronRight, CalendarPlus,
-    Loader2, Send, X, Tv, Users,
+    Loader2, Send, X, Tv, Users, ImagePlus,
 } from "lucide-react";
 
 export interface Broadcast {
     id: string; title: string; status: string; streamUrl: string | null;
-    nexusLiveId: string | null; posterUrl: string | null; scheduledAt: string | null; viewers: number;
+    nexusLiveId: string | null; posterUrl: string | null; scheduledAt: string | null; endsAt: string | null; viewers: number;
 }
-interface Props {
-    live: Broadcast[]; scheduled: Broadcast[]; ended: Broadcast[];
-    isAdmin: boolean; onChanged: () => void;
-}
+interface Props { broadcasts: Broadcast[]; isAdmin: boolean; onChanged: () => void; }
+
+const ROTATE_MS = 5000;
 
 // YouTube/Twitch/Nexus → iframe src (sayt ichida o'ynaydi, Nexusga o'tib ketmaydi)
 function useEmbedSrc() {
@@ -37,7 +36,7 @@ function useEmbedSrc() {
 function Countdown({ iso }: { iso: string | null }) {
     const [now, setNow] = useState(Date.now());
     useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
-    if (!iso) return null;
+    if (!iso) return <span className="es-accent-text">Tez orada</span>;
     const diff = new Date(iso).getTime() - now;
     if (diff <= 0) return <span className="es-accent-text">Boshlanmoqda…</span>;
     const d = Math.floor(diff / 864e5), h = Math.floor(diff / 36e5) % 24, m = Math.floor(diff / 6e4) % 60, s = Math.floor(diff / 1e3) % 60;
@@ -45,25 +44,40 @@ function Countdown({ iso }: { iso: string | null }) {
     return <span className="tabular-nums">{d > 0 ? `${d}k ` : ""}{pad(h)}:{pad(m)}:{pad(s)}</span>;
 }
 
-export default function EsportBroadcast({ live, scheduled, ended, isAdmin, onChanged }: Props) {
+export default function EsportBroadcast({ broadcasts, isAdmin, onChanged }: Props) {
     const embedSrc = useEmbedSrc();
-    // Deck: jonli → rejalashtirilgan → o'tgan; admin uchun oxirida "rejalashtirish" slaydi
+    // Deck: translyatsiyalar + (admin uchun) oxirida "rejalashtirish" slaydi
     const slides = useMemo(() => {
-        const arr: ({ kind: "cast"; data: Broadcast } | { kind: "schedule" })[] = [
-            ...live.map(d => ({ kind: "cast" as const, data: d })),
-            ...scheduled.map(d => ({ kind: "cast" as const, data: d })),
-            ...ended.map(d => ({ kind: "cast" as const, data: d })),
-        ];
+        const arr: ({ kind: "cast"; data: Broadcast } | { kind: "schedule" })[] =
+            broadcasts.map(d => ({ kind: "cast" as const, data: d }));
         if (isAdmin) arr.push({ kind: "schedule" });
         return arr;
-    }, [live, scheduled, ended, isAdmin]);
+    }, [broadcasts, isAdmin]);
 
     const [idx, setIdx] = useState(0);
     const [dir, setDir] = useState(0);
     const [playingId, setPlayingId] = useState<string | null>(null);
+    const [formOpen, setFormOpen] = useState(false);
+    const [progress, setProgress] = useState(0);
+
+    const paused = playingId !== null || formOpen;
     useEffect(() => { if (idx > slides.length - 1) setIdx(Math.max(0, slides.length - 1)); }, [slides.length, idx]);
 
     const go = (d: number) => { setDir(d); setPlayingId(null); setIdx(i => (i + d + slides.length) % slides.length); };
+    const jump = (i: number) => { setDir(i > idx ? 1 : -1); setPlayingId(null); setIdx(i); };
+
+    // Avto-aylanish + progress (har slaydda 5s, chiziq to'lib boradi)
+    useEffect(() => {
+        setProgress(0);
+        if (paused || slides.length <= 1) return;
+        const start = Date.now();
+        const t = setInterval(() => {
+            const pct = Math.min(100, ((Date.now() - start) / ROTATE_MS) * 100);
+            setProgress(pct);
+            if (pct >= 100) { clearInterval(t); setDir(1); setIdx(i => (i + 1) % slides.length); }
+        }, 50);
+        return () => clearInterval(t);
+    }, [idx, paused, slides.length]);
 
     if (slides.length === 0) {
         return (
@@ -83,9 +97,20 @@ export default function EsportBroadcast({ live, scheduled, ended, isAdmin, onCha
     return (
         <div className="relative">
             <div className="relative aspect-video w-full overflow-hidden rounded-3xl es-card es-glow">
+                {/* segment progress (stories uslubi) — tepada */}
+                {slides.length > 1 && (
+                    <div className="absolute inset-x-3 top-3 z-30 flex gap-1">
+                        {slides.map((_, i) => (
+                            <div key={i} className="h-1 flex-1 overflow-hidden rounded-full bg-white/25">
+                                <div className="h-full rounded-full bg-white transition-[width] duration-100 ease-linear"
+                                    style={{ width: i < idx ? "100%" : i === idx ? `${progress}%` : "0%" }} />
+                            </div>
+                        ))}
+                    </div>
+                )}
+
                 <AnimatePresence mode="wait" custom={dir}>
-                    <motion.div key={idx}
-                        custom={dir}
+                    <motion.div key={idx} custom={dir}
                         initial={{ opacity: 0, x: dir >= 0 ? 40 : -40 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: dir >= 0 ? -40 : 40 }}
@@ -96,7 +121,7 @@ export default function EsportBroadcast({ live, scheduled, ended, isAdmin, onCha
                         className="absolute inset-0"
                     >
                         {cur.kind === "schedule"
-                            ? <ScheduleSlide onChanged={onChanged} />
+                            ? <ScheduleSlide onChanged={onChanged} onOpenChange={setFormOpen} />
                             : <CastSlide b={cur.data} playing={playingId === cur.data.id} onPlay={() => setPlayingId(cur.data.id)} embedSrc={embedSrc} />}
                     </motion.div>
                 </AnimatePresence>
@@ -114,12 +139,13 @@ export default function EsportBroadcast({ live, scheduled, ended, isAdmin, onCha
                 )}
             </div>
 
-            {/* nuqta indikatorlari */}
+            {/* pastki nuqta indikatorlari */}
             {slides.length > 1 && (
                 <div className="mt-3 flex items-center justify-center gap-1.5">
                     {slides.map((s, i) => (
-                        <button key={i} onClick={() => { setDir(i > idx ? 1 : -1); setPlayingId(null); setIdx(i); }}
-                            className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 es-accent-bg" : "w-1.5 bg-current es-faint"}`}
+                        <button key={i} onClick={() => jump(i)}
+                            className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 es-accent-bg" : "w-1.5 es-faint"}`}
+                            style={i === idx ? undefined : { background: "currentColor" }}
                             aria-label={s.kind === "schedule" ? "Rejalashtirish" : `Slayd ${i + 1}`} />
                     ))}
                 </div>
@@ -139,20 +165,19 @@ function CastSlide({ b, playing, onPlay, embedSrc }: { b: Broadcast; playing: bo
 
     return (
         <div className="relative h-full w-full">
-            {/* poster / fon */}
             {b.posterUrl
                 ? <img src={b.posterUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
                 : <div className="absolute inset-0 es-accent-bg3 opacity-20" />}
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/30" />
 
-            {/* status chip */}
-            <div className="absolute left-4 top-4 z-10 flex items-center gap-2">
+            {/* status chip — avtomatik */}
+            <div className="absolute left-4 top-7 z-10 flex items-center gap-2">
                 {isLive ? (
                     <span className="flex items-center gap-1.5 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-white shadow-lg">
                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> Jonli
                     </span>
                 ) : isEnded ? (
-                    <span className="rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-bold text-white/90 backdrop-blur-sm">Takroriy</span>
+                    <span className="rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-bold text-white/90 backdrop-blur-sm">Tugadi · Takroriy</span>
                 ) : (
                     <span className="flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-bold text-white/90 backdrop-blur-sm"><Clock className="h-3 w-3" /> Rejada</span>
                 )}
@@ -163,9 +188,9 @@ function CastSlide({ b, playing, onPlay, embedSrc }: { b: Broadcast; playing: bo
 
             {/* markaz: play yoki countdown */}
             <div className="absolute inset-0 z-10 flex items-center justify-center">
-                {src ? (
-                    <button onClick={onPlay} className="group flex h-16 w-16 items-center justify-center rounded-full bg-white/15 backdrop-blur-md ring-1 ring-white/30 transition-transform hover:scale-110 active:scale-95 sm:h-20 sm:w-20">
-                        <span className="absolute h-16 w-16 animate-ping rounded-full bg-white/20 sm:h-20 sm:w-20" />
+                {src && (isLive || isEnded) ? (
+                    <button onClick={onPlay} className="group relative flex h-16 w-16 items-center justify-center rounded-full bg-white/15 backdrop-blur-md ring-1 ring-white/30 transition-transform hover:scale-110 active:scale-95 sm:h-20 sm:w-20">
+                        {isLive && <span className="absolute h-16 w-16 animate-ping rounded-full bg-white/20 sm:h-20 sm:w-20" />}
                         <Play className="ml-1 h-7 w-7 fill-white text-white sm:h-9 sm:w-9" />
                     </button>
                 ) : !isEnded ? (
@@ -187,30 +212,41 @@ function CastSlide({ b, playing, onPlay, embedSrc }: { b: Broadcast; playing: bo
     );
 }
 
-function ScheduleSlide({ onChanged }: { onChanged: () => void }) {
-    const [open, setOpen] = useState(false);
+function ScheduleSlide({ onChanged, onOpenChange }: { onChanged: () => void; onOpenChange: (open: boolean) => void }) {
+    const [open, setOpenState] = useState(false);
+    const setOpen = (v: boolean) => { setOpenState(v); onOpenChange(v); };
     const [title, setTitle] = useState("");
     const [streamUrl, setStreamUrl] = useState("");
     const [scheduledAt, setScheduledAt] = useState("");
-    const [goLive, setGoLive] = useState(false);
+    const [endsAt, setEndsAt] = useState("");
+    const [posterUrl, setPosterUrl] = useState("");
+    const [uploading, setUploading] = useState(false);
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState("");
-    const ref = useRef<HTMLDivElement>(null);
+    const fileRef = useRef<HTMLInputElement>(null);
+
+    async function uploadPoster(file: File) {
+        setUploading(true); setErr("");
+        const fd = new FormData(); fd.append("file", file); fd.append("kind", "brand");
+        const r = await fetch("/api/market/upload", { method: "POST", body: fd }).then(x => x.json()).catch(() => ({ error: "Yuklash xatosi" }));
+        setUploading(false);
+        if (r.url) setPosterUrl(r.url); else setErr(r.error || "Rasm yuklanmadi");
+    }
 
     async function submit() {
         if (!title.trim()) return setErr("Sarlavha kiriting");
         setBusy(true); setErr("");
         const r = await fetch("/api/esport/broadcasts", {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title, streamUrl, scheduledAt: scheduledAt || null, status: goLive ? "LIVE" : "SCHEDULED" }),
+            body: JSON.stringify({ title, streamUrl, posterUrl, scheduledAt: scheduledAt || null, endsAt: endsAt || null }),
         }).then(x => x.json()).catch(() => ({ error: "Xato" }));
         setBusy(false);
         if (r.error) return setErr(r.error);
-        setTitle(""); setStreamUrl(""); setScheduledAt(""); setGoLive(false); setOpen(false); onChanged();
+        setTitle(""); setStreamUrl(""); setScheduledAt(""); setEndsAt(""); setPosterUrl(""); setOpen(false); onChanged();
     }
 
     return (
-        <div ref={ref} className="relative h-full w-full overflow-y-auto nx-hide-scrollbar">
+        <div className="relative h-full w-full overflow-y-auto nx-hide-scrollbar">
             <div className="absolute inset-0 es-accent-bg3 opacity-15" />
             {!open ? (
                 <div className="relative flex h-full flex-col items-center justify-center gap-3 p-5 text-center">
@@ -218,28 +254,40 @@ function ScheduleSlide({ onChanged }: { onChanged: () => void }) {
                         <CalendarPlus className="h-7 w-7 text-white" />
                     </div>
                     <p className="text-base font-black es-fg">Keyingi translyatsiyani rejalashtirish</p>
-                    <p className="max-w-xs text-xs es-mut">Jonli yoki navbatdagi o'yin efirini shu yerdan qo'shing — kuzatuvchilar Asosiy oynada ko'radi.</p>
+                    <p className="max-w-xs text-xs es-mut">Boshlanish/tugash vaqtini bersangiz, holat avtomatik: Rejada → Jonli → Tugadi.</p>
                     <button onClick={() => setOpen(true)} className="mt-1 rounded-xl px-5 py-2.5 text-sm font-black text-white es-accent-bg transition-transform hover:scale-[1.03] active:scale-95">
                         Rejalashtirish
                     </button>
                 </div>
             ) : (
-                <div className="relative flex h-full flex-col gap-2.5 p-4 sm:p-5">
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm font-black es-fg">Yangi translyatsiya</p>
-                        <button onClick={() => setOpen(false)}><X className="h-4 w-4 es-mut" /></button>
+                <div className="relative grid h-full grid-cols-1 gap-2.5 p-4 sm:grid-cols-[auto_1fr] sm:p-5">
+                    {/* oblojka yuklash */}
+                    <div className="flex items-center gap-3 sm:flex-col sm:items-start">
+                        <button type="button" onClick={() => fileRef.current?.click()}
+                            className="relative flex aspect-video w-32 shrink-0 items-center justify-center overflow-hidden rounded-xl es-soft sm:w-40">
+                            {posterUrl ? <img src={posterUrl} alt="" className="h-full w-full object-cover" />
+                                : uploading ? <Loader2 className="h-5 w-5 animate-spin es-mut" />
+                                    : <span className="flex flex-col items-center gap-1 es-mut"><ImagePlus className="h-5 w-5" /><span className="text-[10px] font-bold">Oblojka</span></span>}
+                        </button>
+                        <input ref={fileRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; if (f) uploadPoster(f); }} />
                     </div>
-                    {err && <p className="rounded-lg px-3 py-1.5 text-xs font-semibold text-rose-300" style={{ background: "rgba(255,60,60,0.12)" }}>{err}</p>}
-                    <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Sarlavha (masalan: Final — TeamA vs TeamB)" className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold es-fg es-soft outline-none" />
-                    <input value={streamUrl} onChange={e => setStreamUrl(e.target.value)} placeholder="Havola (YouTube / Twitch / Nexus)" className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold es-fg es-soft outline-none" />
-                    <input value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} type="datetime-local" className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold es-fg es-soft outline-none" />
-                    <label className="flex items-center gap-2 text-xs font-bold es-mut">
-                        <input type="checkbox" checked={goLive} onChange={e => setGoLive(e.target.checked)} className="h-4 w-4 accent-rose-500" />
-                        Hozir jonli (LIVE) deb belgilash
-                    </label>
-                    <button onClick={submit} disabled={busy} className="mt-auto flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-black text-white es-accent-bg disabled:opacity-50">
-                        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Saqlash
-                    </button>
+
+                    <div className="flex min-w-0 flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm font-black es-fg">Yangi translyatsiya</p>
+                            <button onClick={() => setOpen(false)}><X className="h-4 w-4 es-mut" /></button>
+                        </div>
+                        {err && <p className="rounded-lg px-3 py-1.5 text-xs font-semibold text-rose-300" style={{ background: "rgba(255,60,60,0.12)" }}>{err}</p>}
+                        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Sarlavha (Final — TeamA vs TeamB)" className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none" />
+                        <input value={streamUrl} onChange={e => setStreamUrl(e.target.value)} placeholder="Havola (YouTube / Twitch / Nexus)" className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none" />
+                        <div className="grid grid-cols-2 gap-2">
+                            <label className="text-[10px] font-bold es-mut">Boshlanish<input value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} type="datetime-local" className="mt-0.5 w-full rounded-xl px-2 py-2 text-xs font-semibold es-fg es-soft outline-none" /></label>
+                            <label className="text-[10px] font-bold es-mut">Tugash<input value={endsAt} onChange={e => setEndsAt(e.target.value)} type="datetime-local" className="mt-0.5 w-full rounded-xl px-2 py-2 text-xs font-semibold es-fg es-soft outline-none" /></label>
+                        </div>
+                        <button onClick={submit} disabled={busy || uploading} className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-black text-white es-accent-bg disabled:opacity-50">
+                            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Saqlash
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

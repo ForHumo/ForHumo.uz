@@ -7,9 +7,11 @@ export async function generateMetadata() {
 // Humo eSport — global header/footer ustini yopadi, o'z navbari (tema + til + bo'limlar) bor.
 export default function EsportLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden es-bg nx-scrollbar">
+        <div className="fixed inset-0 z-[100] flex flex-col es-bg">
             <EsportNavbar />
-            {children}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden nx-scrollbar">
+                {children}
+            </div>
         </div>
     );
 }

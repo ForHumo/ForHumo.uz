@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { motion } from "framer-motion";
-import { Loader2, Trophy, TrendingUp, Swords, Coins, Users, ChevronRight, Crown, Star, Gamepad2 } from "lucide-react";
+import { Loader2, Trophy, TrendingUp, Swords, Crown, Star, Gamepad2 } from "lucide-react";
 import EsportBroadcast, { type Broadcast } from "./esport-broadcast";
 
 interface TeamLite { id: string; name: string; tag: string; logo: string | null }
@@ -12,7 +12,6 @@ interface T { id: string; name: string; game: string; status: string; teams: num
 interface TopTeam { team: TeamLite; rating: number; game: string }
 interface TopPlayer { id: string; ign: string; position: string | null; roleLabel: string; team: TeamLite | null; rating: number; game: string }
 interface Result { a: TeamLite | null; b: TeamLite | null; scoreA: number | null; scoreB: number | null; winnerId: string | null }
-interface Casts { live: Broadcast[]; scheduled: Broadcast[]; ended: Broadcast[] }
 
 const STATUS: Record<string, { label: string; cls: string }> = {
     UPCOMING: { label: "Tez orada", cls: "es-mut" },
@@ -25,7 +24,7 @@ const fade = { initial: { opacity: 0, y: 14 }, animate: { opacity: 1, y: 0 } };
 
 export default function EsportHome() {
     const [loading, setLoading] = useState(true);
-    const [casts, setCasts] = useState<Casts>({ live: [], scheduled: [], ended: [] });
+    const [casts, setCasts] = useState<Broadcast[]>([]);
     const [tournaments, setTournaments] = useState<T[]>([]);
     const [topTeams, setTopTeams] = useState<TopTeam[]>([]);
     const [topPlayers, setTopPlayers] = useState<TopPlayer[]>([]);
@@ -34,7 +33,7 @@ export default function EsportHome() {
 
     const load = useCallback(() => {
         fetch("/api/esport/home").then(r => r.json()).then(d => {
-            setCasts(d.broadcasts || { live: [], scheduled: [], ended: [] });
+            setCasts(d.broadcasts || []);
             setTournaments(d.tournaments || []); setTopTeams(d.topTeams || []);
             setTopPlayers(d.topPlayers || []); setResults(d.results || []); setLoading(false);
         }).catch(() => setLoading(false));
@@ -72,7 +71,7 @@ export default function EsportHome() {
                         <h2 className="mb-2.5 flex items-center gap-2 px-1 text-sm font-black uppercase tracking-wide es-fg">
                             <Swords className="h-4 w-4 es-accent-text" /> Turnir efiri
                         </h2>
-                        <EsportBroadcast live={casts.live} scheduled={casts.scheduled} ended={casts.ended} isAdmin={isAdmin} onChanged={load} />
+                        <EsportBroadcast broadcasts={casts} isAdmin={isAdmin} onChanged={load} />
                     </motion.div>
 
                     {/* 3 karta: Turnirlar · Top jamoalar · Top o'yinchilar */}
@@ -154,14 +153,6 @@ export default function EsportHome() {
                     </motion.section>
                 </>
             )}
-
-            {/* Tezkor havolalar */}
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Quick href="/esport/athlete" icon={Users} label="Sportchi" />
-                <Quick href="/esport/teams" icon={Users} label="Jamoalar" />
-                <Quick href="/esport/standings" icon={TrendingUp} label="Divizionlar" />
-                <Quick href="/esport/transfers" icon={Coins} label="Transfer" />
-            </div>
         </div>
     );
 }
@@ -171,11 +162,3 @@ function Rank({ i }: { i: number }) {
     return <span className="w-5 text-center text-sm font-black es-faint">{i + 1}</span>;
 }
 function Empty({ text }: { text: string }) { return <p className="py-6 text-center text-xs es-faint">{text}</p>; }
-function Quick({ href, icon: Icon, label }: { href: string; icon: typeof Users; label: string }) {
-    return (
-        <Link href={href} className="flex items-center justify-between rounded-2xl p-4 es-card transition-transform hover:scale-[1.03]">
-            <span className="flex items-center gap-2 text-sm font-bold es-fg"><Icon className="h-4 w-4 es-accent-text" /> {label}</span>
-            <ChevronRight className="h-4 w-4 es-faint" />
-        </Link>
-    );
-}
