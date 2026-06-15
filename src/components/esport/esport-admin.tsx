@@ -6,6 +6,7 @@ import {
     ArrowLeft, Loader2, ShieldAlert, Plus, Trash2, Check, X, CalendarDays,
     Layers, Users, Swords, BarChart3, Trophy, ChevronRight, ArrowUp,
 } from "lucide-react";
+import { useEsT } from "@/lib/esport-i18n";
 
 const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
@@ -22,6 +23,7 @@ interface StandDiv { id: string; name: string; tier: number; teams: StandRow[] }
 type Tab = "season" | "division" | "enroll" | "match" | "table" | "turnir" | "adminlar";
 
 export default function EsportAdmin() {
+    const tr = useEsT();
     const [loading, setLoading] = useState(true);
     const [denied, setDenied] = useState(false);
     const [tab, setTab] = useState<Tab>("season");
@@ -80,22 +82,22 @@ export default function EsportAdmin() {
     if (denied) return (
         <main className="flex flex-col items-center justify-center py-24 gap-3" >
             <ShieldAlert className="h-10 w-10 text-white/30" />
-            <p className="text-sm font-bold text-white/60">Bu sahifa faqat adminlar uchun</p>
-            <Link href="/esport" className="text-sm font-bold text-[#00CEC8]">Orqaga</Link>
+            <p className="text-sm font-bold text-white/60">{tr("adm.onlyAdmins")}</p>
+            <Link href="/esport" className="text-sm font-bold text-[#00CEC8]">{tr("td.back")}</Link>
         </main>
     );
 
     const myDivs = divisions.filter(d => d.gameId === gameId).sort((a, b) => a.tier - b.tier);
     const reload = () => { loadCore(); if (seasonId) loadSeasonData(seasonId); };
 
-    const TABS: { id: Tab; label: string; icon: typeof Layers }[] = [
-        { id: "season", label: "Mavsum", icon: CalendarDays },
-        { id: "division", label: "Divizion", icon: Layers },
-        { id: "enroll", label: "Jamoa", icon: Users },
-        { id: "match", label: "O'yin", icon: Swords },
-        { id: "table", label: "Jadval", icon: BarChart3 },
-        { id: "turnir", label: "Turnir", icon: Trophy },
-        ...(isOwner ? [{ id: "adminlar" as Tab, label: "Adminlar", icon: ShieldAlert }] : []),
+    const TABS: { id: Tab; tkey: string; icon: typeof Layers }[] = [
+        { id: "season", tkey: "adm.tabSeason", icon: CalendarDays },
+        { id: "division", tkey: "adm.tabDivision", icon: Layers },
+        { id: "enroll", tkey: "adm.tabTeam", icon: Users },
+        { id: "match", tkey: "adm.tabMatch", icon: Swords },
+        { id: "table", tkey: "adm.tabTable", icon: BarChart3 },
+        { id: "turnir", tkey: "adm.tabTournament", icon: Trophy },
+        ...(isOwner ? [{ id: "adminlar" as Tab, tkey: "adm.tabAdmins", icon: ShieldAlert }] : []),
     ];
 
     return (
@@ -123,7 +125,7 @@ export default function EsportAdmin() {
                     {TABS.map(t => (
                         <button key={t.id} onClick={() => setTab(t.id)} className="flex flex-col items-center gap-1 rounded-xl py-2" style={tab === t.id ? { background: "rgba(43,62,232,0.22)", border: "1px solid rgba(0,206,200,0.4)" } : soft}>
                             <t.icon className="h-4 w-4" style={{ color: tab === t.id ? "#00CEC8" : "rgba(255,255,255,0.5)" }} />
-                            <span className="text-[10px] font-bold text-white/70">{t.label}</span>
+                            <span className="text-[10px] font-bold text-white/70">{tr(t.tkey)}</span>
                         </button>
                     ))}
                 </div>
@@ -149,13 +151,14 @@ const Btn = (p: { onClick: () => void; busy?: boolean; children: ReactNode }) =>
 );
 
 function SeasonTab({ seasons, gameId, api, reload, busy }: { seasons: Season[]; gameId: string; api: ApiFn; reload: () => void; busy: boolean }) {
+    const tr = useEsT();
     const [name, setName] = useState("");
     return (
         <div className="space-y-3">
             <div className="rounded-2xl p-4" style={card}>
-                <p className="mb-2 text-xs font-black uppercase text-white/40">Yangi mavsum</p>
+                <p className="mb-2 text-xs font-black uppercase text-white/40">{tr("adm.newSeason")}</p>
                 <div className="flex gap-2">
-                    <Inp value={name} onChange={setName} placeholder="Masalan 2026 Season 1" />
+                    <Inp value={name} onChange={setName} placeholder={tr("adm.seasonPh")} />
                     <Btn busy={busy} onClick={async () => { if (!name.trim()) return; await api("/api/esport/admin/seasons", "POST", { gameId, name }); setName(""); reload(); }}><Plus className="h-4 w-4" /></Btn>
                 </div>
             </div>
@@ -164,8 +167,8 @@ function SeasonTab({ seasons, gameId, api, reload, busy }: { seasons: Season[]; 
                     <div key={s.id} className="flex items-center gap-2 rounded-2xl p-3" style={card}>
                         <CalendarDays className="h-4 w-4 text-white/40" />
                         <span className="flex-1 text-sm font-bold text-white">{s.name}</span>
-                        {s.active ? <span className="text-[11px] font-bold text-[#00CEC8]">Faol</span> : <button onClick={async () => { await api("/api/esport/admin/seasons", "PATCH", { id: s.id, active: true }); reload(); }} className="text-[11px] font-bold text-white/50">Faollashtirish</button>}
-                        {s.active && <button onClick={async () => { await api("/api/esport/admin/seasons", "PATCH", { id: s.id, end: true }); reload(); }} className="rounded-lg px-2 py-1 text-[11px] font-bold text-red-300" style={{ background: "rgba(255,60,60,0.1)" }}>Tugatish</button>}
+                        {s.active ? <span className="text-[11px] font-bold text-[#00CEC8]">{tr("adm.active")}</span> : <button onClick={async () => { await api("/api/esport/admin/seasons", "PATCH", { id: s.id, active: true }); reload(); }} className="text-[11px] font-bold text-white/50">{tr("adm.activate")}</button>}
+                        {s.active && <button onClick={async () => { await api("/api/esport/admin/seasons", "PATCH", { id: s.id, end: true }); reload(); }} className="rounded-lg px-2 py-1 text-[11px] font-bold text-red-300" style={{ background: "rgba(255,60,60,0.1)" }}>{tr("adm.end")}</button>}
                     </div>
                 ))}
             </div>
@@ -174,15 +177,16 @@ function SeasonTab({ seasons, gameId, api, reload, busy }: { seasons: Season[]; 
 }
 
 function DivisionTab({ divisions, gameId, api, reload, busy }: { divisions: Division[]; gameId: string; api: ApiFn; reload: () => void; busy: boolean }) {
+    const tr = useEsT();
     const [name, setName] = useState("");
     const [tier, setTier] = useState("");
     return (
         <div className="space-y-3">
             <div className="rounded-2xl p-4" style={card}>
-                <p className="mb-2 text-xs font-black uppercase text-white/40">Yangi divizion (tier 1 = eng yuqori)</p>
+                <p className="mb-2 text-xs font-black uppercase text-white/40">{tr("adm.newDiv")}</p>
                 <div className="flex gap-2">
-                    <Inp value={name} onChange={setName} placeholder="Nom" />
-                    <Inp value={tier} onChange={setTier} placeholder="Tier" cls="w-20" />
+                    <Inp value={name} onChange={setName} placeholder={tr("adm.namePh")} />
+                    <Inp value={tier} onChange={setTier} placeholder={tr("adm.tierPh")} cls="w-20" />
                     <Btn busy={busy} onClick={async () => { if (!name.trim() || !tier) return; const r = await api("/api/esport/admin/divisions", "POST", { gameId, name, tier: Number(tier) }); if (!r.error) { setName(""); setTier(""); reload(); } }}><Plus className="h-4 w-4" /></Btn>
                 </div>
             </div>
@@ -200,17 +204,18 @@ function DivisionTab({ divisions, gameId, api, reload, busy }: { divisions: Divi
 }
 
 function EnrollTab({ teams, divisions, seasonId, api, reload, busy }: { teams: Team[]; divisions: Division[]; seasonId: string; api: ApiFn; reload: () => void; busy: boolean }) {
+    const tr = useEsT();
     const divName = (id: string | null) => divisions.find(d => d.id === id)?.name;
     return (
         <div className="space-y-2">
-            {teams.length === 0 && <p className="rounded-2xl p-6 text-center text-xs text-white/40" style={card}>Hali jamoa yo'q</p>}
+            {teams.length === 0 && <p className="rounded-2xl p-6 text-center text-xs text-white/40" style={card}>{tr("adm.noTeams")}</p>}
             {teams.map(t => (
                 <div key={t.id} className="flex items-center gap-2 rounded-2xl p-3" style={card}>
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg text-[10px] font-black text-white" style={{ background: ACCENT }}>{t.tag.slice(0, 3)}</span>
                     <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-white">{t.name}</p>{t.enrolledDivisionId && <p className="text-[11px] text-[#00CEC8]">{divName(t.enrolledDivisionId)}</p>}</div>
                     {t.enrolledDivisionId
                         ? <Check className="h-4 w-4 text-[#00CEC8]" />
-                        : <button onClick={async () => { if (!seasonId) return; await api("/api/esport/admin/enroll", "POST", { teamId: t.id, seasonId }); reload(); }} disabled={busy} className="rounded-lg px-3 py-1.5 text-xs font-bold text-white" style={{ background: ACCENT }}>Kiritish</button>}
+                        : <button onClick={async () => { if (!seasonId) return; await api("/api/esport/admin/enroll", "POST", { teamId: t.id, seasonId }); reload(); }} disabled={busy} className="rounded-lg px-3 py-1.5 text-xs font-bold text-white" style={{ background: ACCENT }}>{tr("adm.enroll")}</button>}
                 </div>
             ))}
         </div>
@@ -218,6 +223,7 @@ function EnrollTab({ teams, divisions, seasonId, api, reload, busy }: { teams: T
 }
 
 function MatchTab({ matches, teams, divisions, seasonId, teamName, api, reload, busy }: { matches: Match[]; teams: Team[]; divisions: Division[]; seasonId: string; teamName: (id: string) => string; api: ApiFn; reload: () => void; busy: boolean }) {
+    const tr = useEsT();
     const [divId, setDivId] = useState("");
     const [a, setA] = useState("");
     const [b, setB] = useState("");
@@ -225,13 +231,13 @@ function MatchTab({ matches, teams, divisions, seasonId, teamName, api, reload, 
     return (
         <div className="space-y-3">
             <div className="rounded-2xl p-4" style={card}>
-                <p className="mb-2 text-xs font-black uppercase text-white/40">Yangi o'yin</p>
+                <p className="mb-2 text-xs font-black uppercase text-white/40">{tr("adm.newMatch")}</p>
                 <div className="space-y-2">
-                    <Pills label="Divizion" items={divisions.map(d => ({ id: d.id, label: d.name }))} value={divId} onChange={v => { setDivId(v); setA(""); setB(""); }} />
+                    <Pills label={tr("adm.tabDivision")} items={divisions.map(d => ({ id: d.id, label: d.name }))} value={divId} onChange={v => { setDivId(v); setA(""); setB(""); }} />
                     {divId && <>
-                        <Pills label="A jamoa" items={inDiv.map(t => ({ id: t.id, label: t.tag }))} value={a} onChange={setA} />
-                        <Pills label="B jamoa" items={inDiv.filter(t => t.id !== a).map(t => ({ id: t.id, label: t.tag }))} value={b} onChange={setB} />
-                        <Btn busy={busy} onClick={async () => { if (!a || !b) return; const r = await api("/api/esport/admin/league-matches", "POST", { seasonId, divisionId: divId, teamAId: a, teamBId: b }); if (!r.error) { setA(""); setB(""); reload(); } }}><Plus className="h-4 w-4" /> O'yin qo'shish</Btn>
+                        <Pills label={`A ${tr("common.team")}`} items={inDiv.map(t => ({ id: t.id, label: t.tag }))} value={a} onChange={setA} />
+                        <Pills label={`B ${tr("common.team")}`} items={inDiv.filter(t => t.id !== a).map(t => ({ id: t.id, label: t.tag }))} value={b} onChange={setB} />
+                        <Btn busy={busy} onClick={async () => { if (!a || !b) return; const r = await api("/api/esport/admin/league-matches", "POST", { seasonId, divisionId: divId, teamAId: a, teamBId: b }); if (!r.error) { setA(""); setB(""); reload(); } }}><Plus className="h-4 w-4" /> {tr("adm.newMatch")}</Btn>
                     </>}
                 </div>
             </div>
@@ -243,6 +249,7 @@ function MatchTab({ matches, teams, divisions, seasonId, teamName, api, reload, 
 }
 
 function MatchRow({ m, teamName, api, reload }: { m: Match; teamName: (id: string) => string; api: ApiFn; reload: () => void }) {
+    const tr = useEsT();
     const [sa, setSa] = useState("");
     const [sb, setSb] = useState("");
     const done = m.status === "DONE";
@@ -258,7 +265,7 @@ function MatchRow({ m, teamName, api, reload }: { m: Match; teamName: (id: strin
                     <input value={sa} onChange={e => setSa(e.target.value)} placeholder="0" className="w-12 rounded-lg px-2 py-1.5 text-center text-sm font-bold text-white outline-none" style={soft} />
                     <span className="text-white/30">:</span>
                     <input value={sb} onChange={e => setSb(e.target.value)} placeholder="0" className="w-12 rounded-lg px-2 py-1.5 text-center text-sm font-bold text-white outline-none" style={soft} />
-                    <button onClick={async () => { const r = await api("/api/esport/admin/league-matches", "PATCH", { id: m.id, scoreA: Number(sa), scoreB: Number(sb) }); if (!r.error) reload(); }} className="ml-auto rounded-lg px-3 py-1.5 text-xs font-bold text-white" style={{ background: ACCENT }}>Saqlash</button>
+                    <button onClick={async () => { const r = await api("/api/esport/admin/league-matches", "PATCH", { id: m.id, scoreA: Number(sa), scoreB: Number(sb) }); if (!r.error) reload(); }} className="ml-auto rounded-lg px-3 py-1.5 text-xs font-bold text-white" style={{ background: ACCENT }}>{tr("adm.save")}</button>
                 </div>
             )}
         </div>
@@ -266,6 +273,7 @@ function MatchRow({ m, teamName, api, reload }: { m: Match; teamName: (id: strin
 }
 
 function TableTab({ standings, divisions, seasonId, api, reload, busy }: { standings: StandDiv[]; divisions: Division[]; seasonId: string; api: ApiFn; reload: () => void; busy: boolean }) {
+    const tr = useEsT();
     const [moveTeam, setMoveTeam] = useState<string | null>(null);
     const [confirmPromo, setConfirmPromo] = useState(false);
     return (
@@ -274,14 +282,14 @@ function TableTab({ standings, divisions, seasonId, api, reload, busy }: { stand
             <div className="rounded-2xl p-3" style={card}>
                 {!confirmPromo ? (
                     <button onClick={() => setConfirmPromo(true)} disabled={busy || !seasonId} className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white" style={{ background: ACCENT }}>
-                        <ArrowUp className="h-4 w-4" /> Mavsum yakuni — avto ko'tarilish/tushish (TOP 3)
+                        <ArrowUp className="h-4 w-4" /> {tr("adm.promoBtn")}
                     </button>
                 ) : (
                     <div className="space-y-2">
-                        <p className="text-xs font-semibold text-white/70">Har divizionда TOP 3 yuqoriga, pastki 3 pastga ko'chadi va statistika nollanadi. Davom etasizmi?</p>
+                        <p className="text-xs font-semibold text-white/70">{tr("adm.promoConfirm")}</p>
                         <div className="flex gap-2">
-                            <button onClick={() => setConfirmPromo(false)} className="flex-1 rounded-xl py-2 text-xs font-bold text-white/70" style={soft}>Bekor</button>
-                            <button disabled={busy} onClick={async () => { await api("/api/esport/admin/promote", "POST", { seasonId }); setConfirmPromo(false); reload(); }} className="flex-1 rounded-xl py-2 text-xs font-black text-white" style={{ background: ACCENT }}>Tasdiqlash</button>
+                            <button onClick={() => setConfirmPromo(false)} className="flex-1 rounded-xl py-2 text-xs font-bold text-white/70" style={soft}>{tr("adm.cancel")}</button>
+                            <button disabled={busy} onClick={async () => { await api("/api/esport/admin/promote", "POST", { seasonId }); setConfirmPromo(false); reload(); }} className="flex-1 rounded-xl py-2 text-xs font-black text-white" style={{ background: ACCENT }}>{tr("adm.confirm")}</button>
                         </div>
                     </div>
                 )}
@@ -317,6 +325,7 @@ function TableTab({ standings, divisions, seasonId, api, reload, busy }: { stand
 interface TournamentLite { id: string; name: string; status: string; prizePool: number | null; currency: string; teams: number; maxTeams: number }
 
 function TournamentTab({ gameId, seasons, divisions, seasonId, api, busy }: { gameId: string; seasons: Season[]; divisions: Division[]; seasonId: string; api: ApiFn; busy: boolean }) {
+    const tr = useEsT();
     const [list, setList] = useState<TournamentLite[]>([]);
     const [name, setName] = useState("");
     const [prize, setPrize] = useState("");
@@ -332,14 +341,14 @@ function TournamentTab({ gameId, seasons, divisions, seasonId, api, busy }: { ga
     return (
         <div className="space-y-3">
             <div className="rounded-2xl p-4" style={card}>
-                <p className="mb-2 text-xs font-black uppercase text-white/40">Yangi turnir</p>
+                <p className="mb-2 text-xs font-black uppercase text-white/40">{tr("adm.newTournament")}</p>
                 <div className="space-y-2">
-                    <Inp value={name} onChange={setName} placeholder="Turnir nomi (masalan Summer Tournament)" />
+                    <Inp value={name} onChange={setName} placeholder={tr("adm.tNamePh")} />
                     <div className="flex gap-2">
-                        <Inp value={prize} onChange={setPrize} placeholder="Yutuq fondi (so'm)" />
-                        <Inp value={maxTeams} onChange={setMaxTeams} placeholder="Maks jamoa (0=cheksiz)" cls="w-40" />
+                        <Inp value={prize} onChange={setPrize} placeholder={tr("adm.prizePh")} />
+                        <Inp value={maxTeams} onChange={setMaxTeams} placeholder={tr("adm.maxTeamsPh")} cls="w-40" />
                     </div>
-                    <Pills label="Divizion (ixtiyoriy)" items={[{ id: "", label: "Yo'q" }, ...divisions.map(d => ({ id: d.id, label: d.name }))]} value={divId} onChange={setDivId} />
+                    <Pills label={tr("adm.divOpt")} items={[{ id: "", label: tr("adm.none") }, ...divisions.map(d => ({ id: d.id, label: d.name }))]} value={divId} onChange={setDivId} />
                     <Btn busy={busy} onClick={async () => {
                         if (!name.trim()) return;
                         const r = await api("/api/esport/admin/tournaments", "POST", {
@@ -348,7 +357,7 @@ function TournamentTab({ gameId, seasons, divisions, seasonId, api, busy }: { ga
                             seasonId: divId ? seasonId : null, divisionId: divId || null,
                         });
                         if (!r.error) { setName(""); setPrize(""); setMaxTeams(""); setDivId(""); load(); }
-                    }}><Plus className="h-4 w-4" /> Turnir yaratish</Btn>
+                    }}><Plus className="h-4 w-4" /> {tr("adm.newTournament")}</Btn>
                 </div>
             </div>
             <div className="space-y-2">
@@ -359,6 +368,7 @@ function TournamentTab({ gameId, seasons, divisions, seasonId, api, busy }: { ga
 }
 
 function TourAdminRow({ t, api, reload, busy }: { t: TournamentLite; api: ApiFn; reload: () => void; busy: boolean }) {
+    const tr = useEsT();
     const [prize, setPrize] = useState(t.prizePool != null ? String(t.prizePool) : "");
     const [open, setOpen] = useState(false);
     return (
@@ -369,12 +379,12 @@ function TourAdminRow({ t, api, reload, busy }: { t: TournamentLite; api: ApiFn;
                     <p className="truncate text-sm font-bold text-white">{t.name}</p>
                     <p className="text-[11px] text-white/40">{t.status} · {t.teams}{t.maxTeams > 0 ? `/${t.maxTeams}` : ""} jamoa · {t.prizePool ? `${t.prizePool.toLocaleString()} so'm` : "fondsiz"}</p>
                 </div>
-                <button onClick={() => setOpen(o => !o)} className="rounded-lg px-2.5 py-1 text-[11px] font-bold text-white" style={{ background: "rgba(43,62,232,0.3)" }}>Fond</button>
+                <button onClick={() => setOpen(o => !o)} className="rounded-lg px-2.5 py-1 text-[11px] font-bold text-white" style={{ background: "rgba(43,62,232,0.3)" }}>{tr("adm.fund")}</button>
                 <Link href={`/esport/tournaments/${t.id}`} className="flex h-7 w-7 items-center justify-center rounded-lg" style={soft}><ChevronRight className="h-4 w-4 text-white/40" /></Link>
             </div>
             {open && (
                 <div className="mt-2 flex items-center gap-2">
-                    <Inp value={prize} onChange={setPrize} placeholder="Yutuq fondi (so'm)" />
+                    <Inp value={prize} onChange={setPrize} placeholder={tr("adm.prizePh")} />
                     <Btn busy={busy} onClick={async () => { await api(`/api/esport/admin/tournaments/${t.id}`, "PATCH", { prizePool: prize ? Number(prize) : 0 }); setOpen(false); reload(); }}><Check className="h-4 w-4" /></Btn>
                 </div>
             )}
@@ -385,6 +395,7 @@ function TourAdminRow({ t, api, reload, busy }: { t: TournamentLite; api: ApiFn;
 interface AdminRow { humoId: string; name: string | null; username: string | null; image: string | null }
 
 function AdminsTab({ api, busy }: { api: ApiFn; busy: boolean }) {
+    const tr = useEsT();
     const [list, setList] = useState<AdminRow[]>([]);
     const [humoId, setHumoId] = useState("");
     const [msg, setMsg] = useState("");
@@ -398,20 +409,20 @@ function AdminsTab({ api, busy }: { api: ApiFn; busy: boolean }) {
     return (
         <div className="space-y-3">
             <div className="rounded-2xl p-4" style={card}>
-                <p className="mb-1 text-xs font-black uppercase text-white/40">Admin qo'shish</p>
-                <p className="mb-2 text-[11px] text-white/40">Admin Humo ID raqamini kiriting (UZxxxxxxx). Adminlar turnir/liga boshqaradi (lekin admin qo'sha olmaydi).</p>
+                <p className="mb-1 text-xs font-black uppercase text-white/40">{tr("adm.addAdmin")}</p>
+                <p className="mb-2 text-[11px] text-white/40">{tr("adm.addAdminHint")}</p>
                 <div className="flex gap-2">
                     <Inp value={humoId} onChange={v => setHumoId(v.toUpperCase())} placeholder="UZ1234567" />
                     <Btn busy={busy} onClick={async () => {
                         setMsg("");
                         const r = await api("/api/esport/admin/admins", "POST", { humoId });
-                        if (r.error) setMsg(String(r.error)); else { setHumoId(""); setMsg(`Qo'shildi: ${r.name || humoId}`); load(); }
+                        if (r.error) setMsg(String(r.error)); else { setHumoId(""); setMsg(`${tr("adm.added")}: ${r.name || humoId}`); load(); }
                     }}><Plus className="h-4 w-4" /></Btn>
                 </div>
                 {msg && <p className="mt-2 text-xs font-semibold text-[#00CEC8]">{msg}</p>}
             </div>
             <div className="space-y-2">
-                {list.length === 0 && <p className="rounded-2xl p-6 text-center text-xs text-white/40" style={card}>Hali admin yo'q (egadan tashqari)</p>}
+                {list.length === 0 && <p className="rounded-2xl p-6 text-center text-xs text-white/40" style={card}>{tr("adm.noAdmins")}</p>}
                 {list.map(a => (
                     <div key={a.humoId} className="flex items-center gap-3 rounded-2xl p-3" style={card}>
                         <span className="flex h-8 w-8 items-center justify-center rounded-lg text-[10px] font-black text-white" style={{ background: ACCENT }}>{a.image ? <img src={a.image} alt="" className="h-full w-full rounded-lg object-cover" /> : (a.name || a.humoId).slice(0, 2).toUpperCase()}</span>
