@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "@/i18n/routing";
 import {
     ArrowLeft, Loader2, ShieldAlert, Plus, Trash2, Check, X, CalendarDays,
-    Layers, Users, Swords, BarChart3, Trophy, ChevronRight,
+    Layers, Users, Swords, BarChart3, Trophy, ChevronRight, ArrowUp,
 } from "lucide-react";
 
 const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
@@ -267,8 +267,25 @@ function MatchRow({ m, teamName, api, reload }: { m: Match; teamName: (id: strin
 
 function TableTab({ standings, divisions, seasonId, api, reload, busy }: { standings: StandDiv[]; divisions: Division[]; seasonId: string; api: ApiFn; reload: () => void; busy: boolean }) {
     const [moveTeam, setMoveTeam] = useState<string | null>(null);
+    const [confirmPromo, setConfirmPromo] = useState(false);
     return (
         <div className="space-y-4">
+            {/* Mavsum yakuni: avto ko'tarilish/tushish */}
+            <div className="rounded-2xl p-3" style={card}>
+                {!confirmPromo ? (
+                    <button onClick={() => setConfirmPromo(true)} disabled={busy || !seasonId} className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white" style={{ background: ACCENT }}>
+                        <ArrowUp className="h-4 w-4" /> Mavsum yakuni — avto ko'tarilish/tushish (TOP 3)
+                    </button>
+                ) : (
+                    <div className="space-y-2">
+                        <p className="text-xs font-semibold text-white/70">Har divizionда TOP 3 yuqoriga, pastki 3 pastga ko'chadi va statistika nollanadi. Davom etasizmi?</p>
+                        <div className="flex gap-2">
+                            <button onClick={() => setConfirmPromo(false)} className="flex-1 rounded-xl py-2 text-xs font-bold text-white/70" style={soft}>Bekor</button>
+                            <button disabled={busy} onClick={async () => { await api("/api/esport/admin/promote", "POST", { seasonId }); setConfirmPromo(false); reload(); }} className="flex-1 rounded-xl py-2 text-xs font-black text-white" style={{ background: ACCENT }}>Tasdiqlash</button>
+                        </div>
+                    </div>
+                )}
+            </div>
             {standings.map(d => (
                 <div key={d.id} className="rounded-2xl p-3" style={card}>
                     <p className="mb-2 px-1 text-sm font-black text-white">{d.name}</p>
