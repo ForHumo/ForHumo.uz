@@ -11,9 +11,10 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     if (!await getEsportAdmin()) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
     const { id } = await params;
 
-    const t = await prisma.esTournament.findUnique({ where: { id }, select: { id: true, name: true, status: true, prizePool: true, currency: true } });
+    const t = await prisma.esTournament.findUnique({ where: { id }, select: { id: true, name: true, status: true, prizePool: true, currency: true, endsAt: true } });
     if (!t) return NextResponse.json({ error: "Turnir topilmadi" }, { status: 404 });
-    if (t.status !== "ENDED") return NextResponse.json({ error: "Turnir tugamagan" }, { status: 400 });
+    const dateEnded = t.endsAt ? t.endsAt.getTime() < Date.now() : false;
+    if (t.status !== "ENDED" && !dateEnded) return NextResponse.json({ error: "Turnir tugamagan" }, { status: 400 });
     const pool = Number(t.prizePool ?? 0);
     if (pool <= 0) return NextResponse.json({ error: "Yutuq fondi yo'q" }, { status: 400 });
 

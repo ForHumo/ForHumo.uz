@@ -30,33 +30,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ ok: true, athleteId, role });
 }
 
-// DELETE /api/esport/teams/[id]/members — chiqarish (ega) yoki chiqish (sportchi o'zi) { athleteId }
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
-    const me = await getMyProfile();
-    if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
-
-    const { athleteId } = await req.json().catch(() => ({}));
-    const targetAthleteId = String(athleteId || "");
-    if (!targetAthleteId) return NextResponse.json({ error: "athleteId kerak" }, { status: 400 });
-
-    const team = await prisma.esTeam.findUnique({ where: { id }, select: { ownerId: true } });
-    if (!team) return NextResponse.json({ error: "Jamoa topilmadi" }, { status: 404 });
-
-    // Ruxsat: ega istalgan a'zoni chiqaradi; sportchi faqat o'zini chiqaradi
-    const myAthlete = await prisma.esAthlete.findUnique({ where: { humoProfileId: me.id }, select: { id: true } });
-    const isOwner = team.ownerId === me.id;
-    const isSelf = myAthlete?.id === targetAthleteId;
-    if (!isOwner && !isSelf) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
-
-    // Ega o'zi (kapitan) chiqa olmaydi — avval jamoani o'chirsin yoki egalikni o'tkazsin
-    const targetMember = await memberInTeam(targetAthleteId, id);
-    if (!targetMember) return NextResponse.json({ error: "A'zo topilmadi" }, { status: 404 });
-    const targetProfile = await prisma.esAthlete.findUnique({ where: { id: targetAthleteId }, select: { humoProfileId: true } });
-    if (targetProfile?.humoProfileId === team.ownerId) {
-        return NextResponse.json({ error: "Ega tarkibdan chiqa olmaydi (jamoani o'chiring)" }, { status: 400 });
-    }
-
-    await prisma.esRosterMember.delete({ where: { id: targetMember.id } });
-    return NextResponse.json({ ok: true });
-}
+// Eslatma: a'zoni chiqarish/chiqish endi FAQAT ikki tomonlama rozilik orqali
+// (`/api/esport/teams/[id]/requests` + `/api/esport/requests/[id]`). Darhol chiqaruvchi
+// DELETE endpoint OLIB TASHLANDI — kelishuv tizimini chetlab o'tmaslik uchun.

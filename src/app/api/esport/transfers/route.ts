@@ -25,11 +25,17 @@ export async function POST(req: Request) {
     if (!toTeam) return NextResponse.json({ error: "Jamoa topilmadi" }, { status: 404 });
     if (toTeam.ownerId !== me.id) return NextResponse.json({ error: "Faqat jamoa egasi taklif qiladi" }, { status: 403 });
 
-    const athlete = await prisma.esAthlete.findUnique({ where: { id: athleteId }, select: { id: true } });
+    const athlete = await prisma.esAthlete.findUnique({ where: { id: athleteId }, select: { id: true, humoProfileId: true } });
     if (!athlete) return NextResponse.json({ error: "Sportchi topilmadi" }, { status: 404 });
 
     const fromTeamId = await currentTeamId(athleteId);
     if (fromTeamId === toTeamId) return NextResponse.json({ error: "Sportchi allaqachon jamoangizda" }, { status: 400 });
+
+    // Jamoa egasini transfer qilib bo'lmaydi (avval egalikni o'tkazsin yoki jamoani o'chirsin)
+    if (fromTeamId) {
+        const fromTeam = await prisma.esTeam.findUnique({ where: { id: fromTeamId }, select: { ownerId: true } });
+        if (fromTeam?.ownerId === athlete.humoProfileId) return NextResponse.json({ error: "Jamoa egasini transfer qilib bo'lmaydi" }, { status: 400 });
+    }
 
     const dup = await prisma.esTransfer.findFirst({ where: { athleteId, toTeamId, status: { in: OPEN } }, select: { id: true } });
     if (dup) return NextResponse.json({ error: "Bu sportchiga ochiq taklif bor" }, { status: 409 });

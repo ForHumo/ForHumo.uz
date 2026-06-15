@@ -129,7 +129,8 @@ export async function recordTournamentResult(matchId: string, a: number, b: numb
 export async function processDueBrackets(): Promise<{ processed: number; results: { id: string; ok: boolean; error?: string }[] }> {
     const now = new Date();
     const due = await prisma.esTournament.findMany({
-        where: { bracketReady: false, bracketAt: { lte: now } },
+        // vaqti kelgan, lekin hali tugamagan turnirlar (o'tgan/tarixiy turnirlarга setka tuzilmaydi)
+        where: { bracketReady: false, bracketAt: { lte: now }, OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
         select: { id: true, divisionId: true, seasonId: true, gameId: true },
     });
     const results: { id: string; ok: boolean; error?: string }[] = [];

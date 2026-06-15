@@ -18,6 +18,12 @@ export async function executeTransfer(transferId: string): Promise<TransferResul
             const toTeam = await tx.esTeam.findUnique({ where: { id: tr.toTeamId }, select: { id: true, ownerId: true } });
             if (!athlete || !toTeam) return "invalid" as const;
 
+            // Eskirgan taklif himoyasi: sotuvchi jamoa belgilangan bo'lsa, o'yinchi hali ham o'shanda bo'lishi shart
+            if (tr.fromTeamId) {
+                const cur = await tx.esRosterMember.findUnique({ where: { athleteId: tr.athleteId }, select: { roster: { select: { teamId: true } } } });
+                if (cur?.roster.teamId !== tr.fromTeamId) return "invalid" as const;
+            }
+
             const buyerId = toTeam.ownerId;
             const fromTeam = tr.fromTeamId ? await tx.esTeam.findUnique({ where: { id: tr.fromTeamId }, select: { ownerId: true } }) : null;
             const recipientId = fromTeam?.ownerId ?? athlete.humoProfileId;
