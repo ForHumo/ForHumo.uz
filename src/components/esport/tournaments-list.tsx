@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
-import { ArrowLeft, Loader2, Trophy, Users, ChevronRight, Coins, Calendar, ClipboardList, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Loader2, Trophy, Users, ChevronRight, Coins, Calendar, ClipboardList, ShieldCheck, Crown, Youtube, ChevronDown, History, Medal } from "lucide-react";
+
+interface RetroMatch { order: number; date: string; time: string | null; stage: string; teamA: string; teamB: string; scoreA: number | null; scoreB: number | null; winner: string | null; note: string | null; reason: string | null; youtube: string | null }
+interface Retro { id: string; name: string; season: string; game: string; organizer: string; startDate: string; endDate: string; prizePool: number | null; currency: string; champion: string | null; runnerUp: string | null; third: string | null; matches: RetroMatch[] }
 
 interface T {
     id: string; name: string; game: { name: string } | null; status: string;
@@ -36,9 +39,11 @@ function money(n: number, c: string) { return c === "USD" ? `$${n.toLocaleString
 export default function TournamentsList() {
     const [loading, setLoading] = useState(true);
     const [list, setList] = useState<T[]>([]);
+    const [retros, setRetros] = useState<Retro[]>([]);
 
     useEffect(() => {
         fetch("/api/esport/tournaments").then(r => r.json()).then(d => { setList(d.tournaments || []); setLoading(false); }).catch(() => setLoading(false));
+        fetch("/api/esport/retro").then(r => r.json()).then(d => setRetros(d.retros || [])).catch(() => { });
     }, []);
 
     if (loading) return <main className="flex items-center justify-center py-24" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
@@ -100,7 +105,69 @@ export default function TournamentsList() {
                         })}
                     </div>
                 )}
+
+                {/* Arxiv — o'tgan turnirlar (retro) */}
+                {retros.length > 0 && (
+                    <div className="mt-8">
+                        <div className="mb-3 flex items-center gap-2">
+                            <History className="h-4 w-4 text-[#00CEC8]" />
+                            <h2 className="text-sm font-black uppercase tracking-wide text-white/70">Arxiv — o'tgan turnirlar</h2>
+                        </div>
+                        <div className="space-y-3">
+                            {retros.map(r => <RetroCard key={r.id} r={r} />)}
+                        </div>
+                    </div>
+                )}
             </div>
         </main>
+    );
+}
+
+function RetroCard({ r }: { r: Retro }) {
+    const [open, setOpen] = useState(false);
+    const stages = [...new Set(r.matches.map(m => m.stage))];
+    return (
+        <div className="rounded-3xl p-5" style={card}>
+            <button onClick={() => setOpen(o => !o)} className="flex w-full items-start justify-between gap-3 text-left">
+                <div className="min-w-0">
+                    <p className="flex items-center gap-2 text-base font-black text-white">{r.name} <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>{r.season}</span></p>
+                    <p className="text-xs font-semibold text-white/45">{r.game} · {r.organizer}</p>
+                    {r.champion && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-bold">
+                            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: "rgba(255,176,32,0.14)", color: "#FFB020" }}><Crown className="h-3 w-3" /> {r.champion}</span>
+                            {r.runnerUp && <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-white/60" style={{ background: "rgba(255,255,255,0.05)" }}><Medal className="h-3 w-3" /> {r.runnerUp}</span>}
+                            {r.third && <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-white/45" style={{ background: "rgba(255,255,255,0.04)" }}>3-o'rin: {r.third}</span>}
+                        </div>
+                    )}
+                </div>
+                <ChevronDown className={`mt-1 h-5 w-5 shrink-0 text-white/40 transition-transform ${open ? "rotate-180" : ""}`} />
+            </button>
+
+            {open && (
+                <div className="mt-4 space-y-4 border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                    {stages.map(stage => (
+                        <div key={stage}>
+                            <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-[#00CEC8]">{stage}</p>
+                            <div className="space-y-2">
+                                {r.matches.filter(m => m.stage === stage).map(m => (
+                                    <div key={m.order} className="rounded-2xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`flex-1 truncate text-right text-sm font-bold ${m.winner === m.teamA ? "text-white" : "text-white/45"}`}>{m.teamA}</span>
+                                            <span className="shrink-0 rounded-lg px-2 py-0.5 text-xs font-black text-white" style={{ background: "rgba(43,62,232,0.3)" }}>{m.scoreA == null ? "VS" : `${m.scoreA}:${m.scoreB}`}</span>
+                                            <span className={`flex-1 truncate text-sm font-bold ${m.winner === m.teamB ? "text-white" : "text-white/45"}`}>{m.teamB}</span>
+                                        </div>
+                                        <div className="mt-1.5 flex items-center justify-between gap-2">
+                                            <span className="text-[10px] text-white/35">{m.date}{m.time ? ` · ${m.time}` : ""}{m.note ? ` · ${m.note}` : ""}</span>
+                                            {m.youtube && <a href={m.youtube} target="_blank" rel="noopener noreferrer" className="flex shrink-0 items-center gap-1 text-[11px] font-bold text-[#FF3C5F]"><Youtube className="h-3.5 w-3.5" /> Tomosha</a>}
+                                        </div>
+                                        {m.reason && <p className="mt-1 text-[10px] italic text-white/35">{m.reason}</p>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
     );
 }

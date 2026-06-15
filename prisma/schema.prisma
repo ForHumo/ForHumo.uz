@@ -361,6 +361,42 @@ model EsTransfer {        // sportchi jamoadan jamoага (ALKH Pay haq)
   @@index([toTeamId])
 }
 
+model EsRetro {           // arxiv turnir (tarixiy natijalar — Turnirlar bo'limida)
+  id        String   @id @default(cuid())
+  name      String                          // "Autumn Tournament"
+  season    String                          // "2025-2026"
+  game      String                          // "Mobile Legends: Bang Bang"
+  organizer String   @default("For Humo & Humo eSport")
+  startDate DateTime
+  endDate   DateTime
+  prizePool Int?
+  currency  String   @default("UZS")
+  champion  String?
+  runnerUp  String?
+  third     String?
+  createdAt DateTime @default(now())
+  matches   EsRetroMatch[]
+}
+
+model EsRetroMatch {
+  id      String  @id @default(cuid())
+  retroId String
+  order   Int
+  date    String                            // ko'rsatish uchun "10/11/2025"
+  time    String?
+  stage   String                            // GROUP STAGE / SEMIFINALS / THIRD PLACE / GRAND FINAL
+  teamA   String
+  teamB   String
+  scoreA  Int?
+  scoreB  Int?
+  winner  String?
+  note    String?                           // o'yin holati
+  reason  String?                           // sabab
+  youtube String?
+  retro   EsRetro @relation(fields: [retroId], references: [id], onDelete: Cascade)
+  @@index([retroId, order])
+}
+
 model EsRequest {         // a'zolik kelishuvi: chiqish/chiqarish/jamoa o'chirish (ikki tomonlama rozilik)
   id          String   @id @default(cuid())
   type        String                          // LEAVE (sportchi chiqmoqchi) / KICK (jamoa chiqarmoqchi) / TEAM_DELETE
