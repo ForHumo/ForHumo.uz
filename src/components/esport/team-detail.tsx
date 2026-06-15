@@ -6,6 +6,7 @@ import {
     ArrowLeft, Loader2, Shield, Crown, Copy, Check, UserPlus, Inbox,
     LogOut, Trash2, ChevronRight, BadgeCheck, X, AlertTriangle, Settings2, Pencil, ImagePlus,
 } from "lucide-react";
+import { useEsT } from "@/lib/esport-i18n";
 
 interface Member { athleteId: string; role: string; ign: string; gameUserId: string; gameServer: string | null; position: string | null; name: string; username: string | null; image: string | null; humoId: string | null; verified: boolean }
 interface Roster { id: string; game: { slug: string; name: string; teamSize: number }; rating: number; members: Member[] }
@@ -21,6 +22,7 @@ const ROLES = ["CAPTAIN", "STARTER", "SUB"];
 const roleLabel: Record<string, string> = { CAPTAIN: "Kapitan", STARTER: "Asosiy", SUB: "Zaxira" };
 
 export default function TeamDetail({ teamId }: { teamId: string }) {
+    const t = useEsT();
     const router = useRouter();
     const [team, setTeam] = useState<Team | null>(null);
     const [loading, setLoading] = useState(true);
@@ -101,7 +103,7 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
         setBusy(true);
         const res = await fetch(`/api/esport/teams/${teamId}/join-request`, { method: "POST" }).then(r => r.json()).catch(() => ({ error: "Xato" }));
         setBusy(false);
-        if (res.error) setErr(res.error); else setErr("Ariza yuborildi");
+        if (res.error) setErr(res.error); else setErr(t("td.applied"));
     }
     // Chiqish — jamoa egasi roziligini so'raydi
     async function leave() {
@@ -125,7 +127,7 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
     }
 
     if (loading) return <main className="flex items-center justify-center py-24" ><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
-    if (!team) return <main className="flex flex-col items-center justify-center py-24 gap-3" ><p className="text-sm text-white/60">{err || "Jamoa topilmadi"}</p><Link href="/esport/teams" className="text-sm font-bold text-[#00CEC8]">Orqaga</Link></main>;
+    if (!team) return <main className="flex flex-col items-center justify-center py-24 gap-3" ><p className="text-sm text-white/60">{err || t("td.notFound")}</p><Link href="/esport/teams" className="text-sm font-bold text-[#00CEC8]">{t("td.back")}</Link></main>;
 
     return (
         <main className="min-h-full" >
@@ -133,7 +135,7 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                 {/* Header */}
                 <div className="mb-5 flex items-center gap-3">
                     <Link href="/esport/teams" className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}><ArrowLeft className="h-4 w-4 text-white/80" /></Link>
-                    <span className="text-sm font-bold text-white/50">Jamoa</span>
+                    <span className="text-sm font-bold text-white/50">{t("td.crumb")}</span>
                 </div>
 
                 {/* Team card */}
@@ -145,7 +147,7 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                         <div className="min-w-0 flex-1">
                             <p className="truncate text-xl font-black text-white">{team.name}</p>
                             <p className="text-sm font-bold text-white/45">[{team.tag}]</p>
-                            {team.isOwner && <span className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold text-[#00CEC8]" style={{ background: "rgba(0,206,200,0.12)" }}><Crown className="h-3 w-3" /> Egasi</span>}
+                            {team.isOwner && <span className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold text-[#00CEC8]" style={{ background: "rgba(0,206,200,0.12)" }}><Crown className="h-3 w-3" /> {t("td.owner")}</span>}
                         </div>
                         {team.isOwner && !editOpen && <button onClick={openEdit} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={soft}><Pencil className="h-4 w-4 text-white/70" /></button>}
                     </div>
@@ -159,14 +161,14 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                                     {eLogo ? <img src={eLogo} alt="" className="h-full w-full object-cover" /> : uploading ? <Loader2 className="h-4 w-4 animate-spin text-white/50" /> : <ImagePlus className="h-5 w-5 text-white/40" />}
                                 </button>
                                 <input ref={fileRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; if (f) uploadLogo(f); }} />
-                                <span className="text-xs text-white/40">Logo (qurilmadan)</span>
+                                <span className="text-xs text-white/40">{t("td.editLogo")}</span>
                             </div>
-                            <input value={eName} onChange={e => setEName(e.target.value)} placeholder="Jamoa nomi" className="w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white outline-none placeholder:text-white/30" style={soft} />
+                            <input value={eName} onChange={e => setEName(e.target.value)} placeholder={t("td.editName")} className="w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white outline-none placeholder:text-white/30" style={soft} />
                             <input value={eTag} onChange={e => setETag(e.target.value.toUpperCase())} maxLength={5} placeholder="Teg" className="w-full rounded-2xl px-4 py-3 text-sm font-semibold uppercase text-white outline-none placeholder:text-white/30" style={soft} />
-                            <input value={eBio} onChange={e => setEBio(e.target.value)} placeholder="Qisqa tavsif" className="w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white outline-none placeholder:text-white/30" style={soft} />
+                            <input value={eBio} onChange={e => setEBio(e.target.value)} placeholder={t("td.editBio")} className="w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white outline-none placeholder:text-white/30" style={soft} />
                             <div className="flex gap-2">
-                                <button onClick={() => setEditOpen(false)} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-sm font-bold text-white/70" style={soft}><X className="h-4 w-4" /> Bekor</button>
-                                <button onClick={saveEdit} disabled={busy || uploading} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-sm font-black text-white disabled:opacity-60" style={{ background: ACCENT }}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Saqlash</button>
+                                <button onClick={() => setEditOpen(false)} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-sm font-bold text-white/70" style={soft}><X className="h-4 w-4" /> {t("td.cancel")}</button>
+                                <button onClick={saveEdit} disabled={busy || uploading} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-sm font-black text-white disabled:opacity-60" style={{ background: ACCENT }}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {t("td.save")}</button>
                             </div>
                         </div>
                     )}
@@ -178,20 +180,20 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                         {requests.map(rq => {
                             const mine = team.myAthleteId;
                             if (rq.type === "LEAVE") {
-                                if (team.isOwner) return <ReqRow key={rq.id} text={`${rq.ign} jamoadan chiqishni so'rayapti`} onApprove={() => respondReq(rq.id, "approve")} onReject={() => respondReq(rq.id, "reject")} />;
+                                if (team.isOwner) return <ReqRow key={rq.id} text={`${rq.ign} ${t("td.leaveReqSuffix")}`} onApprove={() => respondReq(rq.id, "approve")} onReject={() => respondReq(rq.id, "reject")} />;
                                 if (rq.athleteId === mine) return <ReqRow key={rq.id} text="Chiqish so'rovingiz egaga yuborildi" onCancel={() => cancelReq(rq.id)} />;
                                 return null;
                             }
                             if (rq.type === "KICK") {
-                                if (rq.athleteId === mine) return <ReqRow key={rq.id} text="Jamoa sizni chiqarmoqchi — rozimisiz?" onApprove={() => respondReq(rq.id, "approve")} onReject={() => respondReq(rq.id, "reject")} />;
-                                if (team.isOwner) return <ReqRow key={rq.id} text={`${rq.ign} ni chiqarish so'rovi yuborildi`} onCancel={() => cancelReq(rq.id)} />;
+                                if (rq.athleteId === mine) return <ReqRow key={rq.id} text={t("td.kickAsk")} onApprove={() => respondReq(rq.id, "approve")} onReject={() => respondReq(rq.id, "reject")} />;
+                                if (team.isOwner) return <ReqRow key={rq.id} text={`${rq.ign} ${t("td.kickSentSuffix")}`} onCancel={() => cancelReq(rq.id)} />;
                                 return null;
                             }
                             if (rq.type === "TEAM_DELETE") {
                                 const approved = mine ? rq.approvals.includes(mine) : false;
-                                if (team.isOwner) return <ReqRow key={rq.id} text={`Jamoani o'chirish: ${rq.approvals.length} a'zo rozi bo'ldi`} onCancel={() => cancelReq(rq.id)} />;
-                                if (mine && !approved) return <ReqRow key={rq.id} text="Jamoani o'chirishga rozimisiz?" onApprove={() => respondReq(rq.id, "approve")} onReject={() => respondReq(rq.id, "reject")} />;
-                                if (approved) return <ReqRow key={rq.id} text="Jamoani o'chirishga rozilik berdingiz" />;
+                                if (team.isOwner) return <ReqRow key={rq.id} text={`${t("td.delVotes")} ${rq.approvals.length}`} onCancel={() => cancelReq(rq.id)} />;
+                                if (mine && !approved) return <ReqRow key={rq.id} text={t("td.delAsk")} onApprove={() => respondReq(rq.id, "approve")} onReject={() => respondReq(rq.id, "reject")} />;
+                                if (approved) return <ReqRow key={rq.id} text={t("td.delAgreed")} />;
                                 return null;
                             }
                             return null;
@@ -203,21 +205,21 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                 {team.isOwner && (
                     <div className="mb-5 space-y-3">
                         <div className="grid grid-cols-2 gap-3">
-                            <button onClick={genCode} disabled={busy} className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white" style={{ background: ACCENT }}><UserPlus className="h-4 w-4" /> Taklif-kod</button>
+                            <button onClick={genCode} disabled={busy} className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white" style={{ background: ACCENT }}><UserPlus className="h-4 w-4" /> {t("td.inviteCode")}</button>
                             <button onClick={() => { setReqOpen(o => !o); if (!reqOpen) loadReqs(); }} className="relative flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white/85" style={card}>
-                                <Inbox className="h-4 w-4" /> Arizalar
+                                <Inbox className="h-4 w-4" /> {t("td.requests")}
                                 {team.pendingRequests > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-black text-white" style={{ background: "#FF3C5F" }}>{team.pendingRequests}</span>}
                             </button>
                         </div>
                         {code && (
                             <div className="flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.3)" }}>
                                 <span className="text-lg font-black tracking-widest text-white">{code}</span>
-                                <button onClick={() => { navigator.clipboard?.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="flex items-center gap-1.5 text-xs font-bold text-[#00CEC8]">{copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}{copied ? "Nusxalandi" : "Nusxa"}</button>
+                                <button onClick={() => { navigator.clipboard?.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="flex items-center gap-1.5 text-xs font-bold text-[#00CEC8]">{copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}{copied ? t("td.copied") : t("td.copy")}</button>
                             </div>
                         )}
                         {reqOpen && (
                             <div className="rounded-2xl p-2" style={card}>
-                                {reqs.length === 0 ? <p className="py-4 text-center text-xs text-white/40">Yangi ariza yo'q</p> : reqs.map(r => (
+                                {reqs.length === 0 ? <p className="py-4 text-center text-xs text-white/40">{t("td.noReq")}</p> : reqs.map(r => (
                                     <div key={r.id} className="flex items-center gap-2 rounded-xl p-2">
                                         <Avatar image={r.image} fallback={r.ign} />
                                         <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-white">{r.ign}</p><p className="truncate text-[11px] text-white/40">{r.name} · {r.position || r.game}</p></div>
@@ -232,7 +234,7 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
 
                 {/* Rosters */}
                 {team.rosters.length === 0 ? (
-                    <div className="rounded-3xl p-8 text-center" style={card}><Shield className="mx-auto h-10 w-10 text-white/25" /><p className="mt-3 text-sm font-bold text-white/65">Tarkib bo'sh</p><p className="mt-1 text-xs text-white/40">{team.isOwner ? "Taklif-kod bilan sportchilarni qo'shing." : "Hali a'zo yo'q."}</p></div>
+                    <div className="rounded-3xl p-8 text-center" style={card}><Shield className="mx-auto h-10 w-10 text-white/25" /><p className="mt-3 text-sm font-bold text-white/65">{t("td.rosterEmpty")}</p><p className="mt-1 text-xs text-white/40">{team.isOwner ? t("td.ownerHint") : t("td.noMembers")}</p></div>
                 ) : team.rosters.map(r => (
                     <div key={r.id} className="mb-4 rounded-3xl p-4" style={card}>
                         <div className="mb-3 flex items-center justify-between px-1">
@@ -254,14 +256,14 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                                             </div>
                                         </Link>
                                         <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold" style={m.role === "CAPTAIN" ? { background: "rgba(0,206,200,0.14)", color: "#00CEC8" } : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)" }}>
-                                            {m.role === "CAPTAIN" && <Crown className="h-3 w-3" />}{roleLabel[m.role]}
+                                            {m.role === "CAPTAIN" && <Crown className="h-3 w-3" />}{t("rl." + m.role)}
                                         </span>
                                         {team.isOwner && m.role !== "CAPTAIN" && <button onClick={() => setSel(sel === m.athleteId ? null : m.athleteId)} className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: "rgba(255,255,255,0.05)" }}><Settings2 className="h-3.5 w-3.5 text-white/50" /></button>}
                                     </div>
                                     {sel === m.athleteId && team.isOwner && (
                                         <div className="mt-1.5 flex flex-wrap gap-1.5 rounded-2xl p-2" style={soft}>
                                             {ROLES.filter(x => x !== "CAPTAIN").map(rl => (
-                                                <button key={rl} onClick={() => setRole(m.athleteId, rl)} className="rounded-lg px-3 py-1.5 text-xs font-bold" style={m.role === rl ? { background: ACCENT, color: "#fff" } : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)" }}>{roleLabel[rl]}</button>
+                                                <button key={rl} onClick={() => setRole(m.athleteId, rl)} className="rounded-lg px-3 py-1.5 text-xs font-bold" style={m.role === rl ? { background: ACCENT, color: "#fff" } : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)" }}>{t("rl." + rl)}</button>
                                             ))}
                                             <button onClick={() => kick(m.athleteId)} className="ml-auto flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold text-red-300" style={{ background: "rgba(255,60,60,0.10)" }}><Trash2 className="h-3.5 w-3.5" /> Chiqarish</button>
                                         </div>
@@ -275,16 +277,16 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                 {/* Sportchi amallari */}
                 {!team.isOwner && team.myAthleteId && (
                     team.amIMember ? (
-                        <button onClick={leave} className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-red-300" style={{ background: "rgba(255,60,60,0.10)", border: "1px solid rgba(255,60,60,0.25)" }}><LogOut className="h-4 w-4" /> Jamoadan chiqish (so'rov)</button>
+                        <button onClick={leave} className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-red-300" style={{ background: "rgba(255,60,60,0.10)", border: "1px solid rgba(255,60,60,0.25)" }}><LogOut className="h-4 w-4" /> {t("td.leave")}</button>
                     ) : (
-                        <button onClick={joinRequest} disabled={busy} className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white" style={{ background: ACCENT }}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />} Ariza berish</button>
+                        <button onClick={joinRequest} disabled={busy} className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white" style={{ background: ACCENT }}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />} {t("td.apply")}</button>
                     )
                 )}
                 {err && <div className="mt-3 flex items-center gap-2 rounded-2xl px-4 py-2.5" style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.3)" }}><AlertTriangle className="h-4 w-4 text-white/50" /><span className="text-xs font-semibold text-white/70">{err}</span></div>}
 
                 {/* Egasi: o'chirish */}
                 {team.isOwner && (
-                    <button onClick={del} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-xs font-bold text-red-300/70" style={{ background: "rgba(255,60,60,0.06)" }}><Trash2 className="h-3.5 w-3.5" /> Jamoani o'chirish</button>
+                    <button onClick={del} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-xs font-bold text-red-300/70" style={{ background: "rgba(255,60,60,0.06)" }}><Trash2 className="h-3.5 w-3.5" /> {t("td.delete")}</button>
                 )}
             </div>
         </main>
@@ -292,12 +294,13 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
 }
 
 function ReqRow({ text, onApprove, onReject, onCancel }: { text: string; onApprove?: () => void; onReject?: () => void; onCancel?: () => void }) {
+    const t = useEsT();
     return (
         <div className="flex items-center gap-2 rounded-2xl p-3" style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.28)" }}>
             <span className="min-w-0 flex-1 text-xs font-semibold text-white/80">{text}</span>
-            {onApprove && <button onClick={onApprove} className="flex h-8 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white" style={{ background: ACCENT }}><Check className="h-3.5 w-3.5" /> Roziman</button>}
-            {onReject && <button onClick={onReject} className="flex h-8 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white/70" style={soft}><X className="h-3.5 w-3.5" /> Rad</button>}
-            {onCancel && <button onClick={onCancel} className="flex h-8 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white/60" style={soft}>Bekor</button>}
+            {onApprove && <button onClick={onApprove} className="flex h-8 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white" style={{ background: ACCENT }}><Check className="h-3.5 w-3.5" /> {t("td.approve")}</button>}
+            {onReject && <button onClick={onReject} className="flex h-8 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white/70" style={soft}><X className="h-3.5 w-3.5" /> {t("td.reject")}</button>}
+            {onCancel && <button onClick={onCancel} className="flex h-8 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white/60" style={soft}>{t("td.cancel")}</button>}
         </div>
     );
 }
