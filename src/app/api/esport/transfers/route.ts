@@ -3,18 +3,21 @@ import { prisma } from "@/lib/prisma";
 import { getMyProfile, fullName } from "@/lib/esport";
 import { formatMoney, type Currency } from "@/lib/money";
 
-// Sportchining hozirgi jamoasi (roster a'zoligidan)
+const OPEN = ["PLAYER_PENDING", "AWAIT_FEE", "CLUB_PENDING"];
+
 async function currentTeamId(athleteId: string): Promise<string | null> {
     const m = await prisma.esRosterMember.findUnique({ where: { athleteId }, select: { roster: { select: { teamId: true } } } });
     return m?.roster.teamId ?? null;
 }
 
-// POST /api/esport/transfers — taklif yaratish { athleteId, toTeamId, fee }
+// POST /api/esport/transfers — o'yinchiga oylik taklif yuborish (xaridor jamoa egasi)
+// { athleteId, toTeamId, salary, conditions, contractMonths }
 export async function POST(req: Request) {
     const me = await getMyProfile();
     if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
 
-    const { athleteId, toTeamId, fee } = await req.json();
+    const b = await req.json();
+    const { athleteId, toTeamId } = b;
     if (!athleteId || !toTeamId) return NextResponse.json({ error: "athleteId va toTeamId kerak" }, { status: 400 });
 
     const toTeam = await prisma.esTeam.findUnique({ where: { id: toTeamId }, select: { id: true, ownerId: true } });
@@ -25,23 +28,25 @@ export async function POST(req: Request) {
     if (!athlete) return NextResponse.json({ error: "Sportchi topilmadi" }, { status: 404 });
 
     const fromTeamId = await currentTeamId(athleteId);
-    if (fromTeamId === toTeamId) return NextResponse.json({ error: "Sportchi allaqachon jamoangizда" }, { status: 400 });
+    if (fromTeamId === toTeamId) return NextResponse.json({ error: "Sportchi allaqachon jamoangizda" }, { status: 400 });
 
-    // Bir xil ochiq taklif bo'lmasin
-    const dup = await prisma.esTransfer.findFirst({ where: { athleteId, toTeamId, status: "PENDING" }, select: { id: true } });
+    const dup = await prisma.esTransfer.findFirst({ where: { athleteId, toTeamId, status: { in: OPEN } }, select: { id: true } });
     if (dup) return NextResponse.json({ error: "Bu sportchiga ochiq taklif bor" }, { status: 409 });
 
-    const cleanFee = Math.max(0, Math.round(Number(fee) || 0));
+    const salary = b.salary != null && b.salary !== "" ? Math.max(0, Math.round(Number(b.salary))) : null;
+    const contractMonths = b.contractMonths ? Math.max(1, Math.round(Number(b.contractMonths))) : null;
+    const conditions = typeof b.conditions === "string" && b.conditions.trim() ? b.conditions.trim().slice(0, 300) : null;
+
     const t = await prisma.esTransfer.create({
-        data: { athleteId, fromTeamId, toTeamId, fee: cleanFee, currency: "UZS", status: "PENDING" },
+        data: { athleteId, fromTeamId, toTeamId, salary, conditions, contractMonths, currency: "UZS", status: "PLAYER_PENDING" },
     });
     return NextResponse.json({ ok: true, transfer: t });
 }
 
-// GET /api/esport/transfers — mening transferlarim (xaridor / sotuvchi / sportchi)
+// GET /api/esport/transfers — mening takliflarim (o'yinchi / xaridor / sotuvchi jamoa)
 export async function GET() {
     const me = await getMyProfile();
-    if (!me) return NextResponse.json({ incoming: [], outgoing: [] });
+    if (!me) return NextResponse.json({ asPlayer: [], asBuyer: [], asClub: [] });
 
     const myAthlete = await prisma.esAthlete.findUnique({ where: { humoProfileId: me.id }, select: { id: true } });
     const myTeams = await prisma.esTeam.findMany({ where: { ownerId: me.id }, select: { id: true } });
@@ -49,21 +54,20 @@ export async function GET() {
 
     const rows = await prisma.esTransfer.findMany({
         where: {
-            status: "PENDING",
+            status: { in: OPEN },
             OR: [
                 ...(myAthlete ? [{ athleteId: myAthlete.id }] : []),
                 { toTeamId: { in: myTeamIds } },
                 ...(myTeamIds.length ? [{ fromTeamId: { in: myTeamIds } }] : []),
             ],
         },
-        orderBy: { createdAt: "desc" }, take: 50,
+        orderBy: { createdAt: "desc" }, take: 60,
     });
 
-    // Boyitish
     const athleteIds = [...new Set(rows.map(r => r.athleteId))];
     const teamIds = [...new Set(rows.flatMap(r => [r.toTeamId, r.fromTeamId].filter(Boolean) as string[]))];
     const [athletes, teams] = await Promise.all([
-        athleteIds.length ? prisma.esAthlete.findMany({ where: { id: { in: athleteIds } }, select: { id: true, ign: true, humoProfileId: true } }) : [],
+        athleteIds.length ? prisma.esAthlete.findMany({ where: { id: { in: athleteIds } }, select: { id: true, ign: true, humoProfileId: true, marketValue: true } }) : [],
         teamIds.length ? prisma.esTeam.findMany({ where: { id: { in: teamIds } }, select: { id: true, name: true, tag: true } }) : [],
     ]);
     const profs = athletes.length ? await prisma.userProfile.findMany({ where: { id: { in: athletes.map(a => a.humoProfileId) } }, select: { id: true, firstName: true, lastName: true, name: true } }) : [];
@@ -74,17 +78,21 @@ export async function GET() {
     const shape = (r: typeof rows[number]) => {
         const a = aMap[r.athleteId];
         const p = a ? pMap[a.humoProfileId] : null;
+        const mv = a?.marketValue ? Number(a.marketValue) : null;
         return {
-            id: r.id, fee: Number(r.fee ?? 0), feeLabel: formatMoney(Number(r.fee ?? 0), r.currency as Currency),
+            id: r.id, status: r.status,
             athleteId: r.athleteId, ign: a?.ign ?? "", athleteName: p ? fullName(p) : "",
             toTeam: tMap[r.toTeamId] ?? null, fromTeam: r.fromTeamId ? tMap[r.fromTeamId] ?? null : null,
-            iAmAthlete: !!myAthlete && r.athleteId === myAthlete.id,
-            iAmBuyer: myTeamIds.includes(r.toTeamId),
+            salary: r.salary ? Number(r.salary) : null, salaryLabel: r.salary ? formatMoney(Number(r.salary), r.currency as Currency) : null,
+            conditions: r.conditions, contractMonths: r.contractMonths,
+            fee: r.fee ? Number(r.fee) : null, feeLabel: r.fee ? formatMoney(Number(r.fee), r.currency as Currency) : null,
+            marketValue: mv, marketLabel: mv != null ? formatMoney(mv, "UZS") : null,
         };
     };
 
-    // Sportchi tasdig'i kutilayotganlar (incoming) + men yuborgan/sotuvchi (outgoing)
-    const incoming = rows.filter(r => myAthlete && r.athleteId === myAthlete.id).map(shape);
-    const outgoing = rows.filter(r => !(myAthlete && r.athleteId === myAthlete.id)).map(shape);
-    return NextResponse.json({ incoming, outgoing });
+    return NextResponse.json({
+        asPlayer: rows.filter(r => myAthlete && r.athleteId === myAthlete.id && r.status === "PLAYER_PENDING").map(shape),
+        asBuyer: rows.filter(r => myTeamIds.includes(r.toTeamId)).map(shape),
+        asClub: rows.filter(r => r.fromTeamId && myTeamIds.includes(r.fromTeamId) && r.status === "CLUB_PENDING").map(shape),
+    });
 }

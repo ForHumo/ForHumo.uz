@@ -3,38 +3,78 @@ import { prisma } from "@/lib/prisma";
 import { getMyProfile } from "@/lib/esport";
 import { executeTransfer, TRANSFER_MSG } from "@/lib/esport-transfer";
 
-// POST /api/esport/transfers/[id] — { action: approve|reject|cancel }
-// approve/reject — sportchi; cancel — xaridor (toTeam egasi).
+// POST /api/esport/transfers/[id] — ko'p bosqichli javob
+// { action: approve|reject, fee? }
+//  PLAYER_PENDING → o'yinchi: approve (erkin bo'lsa darhol DONE; jamoadagi bo'lsa AWAIT_FEE) / reject
+//  AWAIT_FEE      → xaridor: action=setfee + fee (≥ marketValue) → CLUB_PENDING
+//  CLUB_PENDING   → sotuvchi jamoa: approve (ALKH Pay + ko'chirish → DONE) / reject
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const me = await getMyProfile();
     if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
 
-    const tr = await prisma.esTransfer.findUnique({ where: { id }, select: { id: true, status: true, athleteId: true, toTeamId: true } });
-    if (!tr || tr.status !== "PENDING") return NextResponse.json({ error: "Taklif topilmadi yoki yopilgan" }, { status: 404 });
+    const tr = await prisma.esTransfer.findUnique({ where: { id }, select: { id: true, status: true, athleteId: true, toTeamId: true, fromTeamId: true } });
+    if (!tr || !["PLAYER_PENDING", "AWAIT_FEE", "CLUB_PENDING"].includes(tr.status)) return NextResponse.json({ error: "Taklif topilmadi yoki yopilgan" }, { status: 404 });
 
-    const athlete = await prisma.esAthlete.findUnique({ where: { id: tr.athleteId }, select: { humoProfileId: true } });
+    const athlete = await prisma.esAthlete.findUnique({ where: { id: tr.athleteId }, select: { humoProfileId: true, marketValue: true } });
     const toTeam = await prisma.esTeam.findUnique({ where: { id: tr.toTeamId }, select: { ownerId: true } });
+    const fromTeam = tr.fromTeamId ? await prisma.esTeam.findUnique({ where: { id: tr.fromTeamId }, select: { ownerId: true } }) : null;
     const isAthlete = athlete?.humoProfileId === me.id;
     const isBuyer = toTeam?.ownerId === me.id;
+    const isClub = fromTeam?.ownerId === me.id;
 
-    const { action } = await req.json();
+    const body = await req.json();
+    const action = body.action;
 
-    if (action === "approve") {
-        if (!isAthlete) return NextResponse.json({ error: "Faqat sportchi tasdiqlaydi" }, { status: 403 });
-        const r = await executeTransfer(id);
-        if (r !== "ok") return NextResponse.json({ error: TRANSFER_MSG[r] }, { status: 400 });
-        return NextResponse.json({ ok: true });
+    // 1) O'yinchi taklifni ko'rib chiqadi
+    if (tr.status === "PLAYER_PENDING") {
+        if (!isAthlete) return NextResponse.json({ error: "Faqat o'yinchi javob beradi" }, { status: 403 });
+        if (action === "reject") { await prisma.esTransfer.update({ where: { id }, data: { status: "REJECTED" } }); return NextResponse.json({ ok: true }); }
+        if (action === "approve") {
+            if (!tr.fromTeamId) { // erkin sportchi — darhol o'tadi (haqsiz)
+                const r = await executeTransfer(id);
+                if (r !== "ok") return NextResponse.json({ error: TRANSFER_MSG[r] }, { status: 400 });
+                return NextResponse.json({ ok: true, done: true });
+            }
+            await prisma.esTransfer.update({ where: { id }, data: { status: "AWAIT_FEE" } });
+            return NextResponse.json({ ok: true, message: "Qabul qilindi — endi xaridor jamoaga haq taklif qiladi" });
+        }
+        return NextResponse.json({ error: "Noto'g'ri amal" }, { status: 400 });
     }
-    if (action === "reject") {
-        if (!isAthlete) return NextResponse.json({ error: "Faqat sportchi rad etadi" }, { status: 403 });
-        await prisma.esTransfer.update({ where: { id }, data: { status: "REJECTED" } });
-        return NextResponse.json({ ok: true });
+
+    // 2) Xaridor jamoaga haq taklif qiladi (marketValuedan kam emas)
+    if (tr.status === "AWAIT_FEE") {
+        if (!isBuyer) return NextResponse.json({ error: "Faqat xaridor jamoa haq belgilaydi" }, { status: 403 });
+        if (action === "cancel") { await prisma.esTransfer.update({ where: { id }, data: { status: "CANCELLED" } }); return NextResponse.json({ ok: true }); }
+        const fee = Math.max(0, Math.round(Number(body.fee) || 0));
+        const floor = athlete?.marketValue ? Number(athlete.marketValue) : 0;
+        if (fee < floor) return NextResponse.json({ error: `Haq transfermarket narxidan kam bo'lmasin (${floor.toLocaleString()} so'm)` }, { status: 400 });
+        await prisma.esTransfer.update({ where: { id }, data: { fee, status: "CLUB_PENDING" } });
+        return NextResponse.json({ ok: true, message: "Haq taklifi sotuvchi jamoaga yuborildi" });
     }
-    if (action === "cancel") {
-        if (!isBuyer) return NextResponse.json({ error: "Faqat xaridor bekor qiladi" }, { status: 403 });
-        await prisma.esTransfer.update({ where: { id }, data: { status: "CANCELLED" } });
-        return NextResponse.json({ ok: true });
+
+    // 3) Sotuvchi jamoa haqni qabul qiladi → ALKH Pay + ko'chirish
+    if (tr.status === "CLUB_PENDING") {
+        if (!isClub) return NextResponse.json({ error: "Faqat sotuvchi jamoa egasi javob beradi" }, { status: 403 });
+        if (action === "reject") { await prisma.esTransfer.update({ where: { id }, data: { status: "REJECTED" } }); return NextResponse.json({ ok: true }); }
+        if (action === "approve") {
+            const r = await executeTransfer(id);
+            if (r !== "ok") return NextResponse.json({ error: TRANSFER_MSG[r] }, { status: 400 });
+            return NextResponse.json({ ok: true, done: true });
+        }
     }
     return NextResponse.json({ error: "Noto'g'ri amal" }, { status: 400 });
+}
+
+// DELETE — xaridor bekor qiladi (o'yinchi javobini kutayotgan bosqichda)
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    const me = await getMyProfile();
+    if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
+    const tr = await prisma.esTransfer.findUnique({ where: { id }, select: { status: true, toTeamId: true } });
+    if (!tr || !["PLAYER_PENDING", "AWAIT_FEE"].includes(tr.status)) return NextResponse.json({ error: "Bekor qilib bo'lmaydi" }, { status: 400 });
+    const toTeam = await prisma.esTeam.findUnique({ where: { id: tr.toTeamId }, select: { ownerId: true } });
+    if (toTeam?.ownerId !== me.id) return NextResponse.json({ error: "Faqat xaridor" }, { status: 403 });
+    await prisma.esTransfer.update({ where: { id }, data: { status: "CANCELLED" } });
+    return NextResponse.json({ ok: true });
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import {
     ArrowLeft, Loader2, BadgeCheck, Shield, Gamepad2, TrendingUp, Hash, ChevronRight,
-    Coins, Calendar, Trophy, ArrowUp, ArrowDown, Clock, Pencil, Check, X,
+    Coins, Calendar, Trophy, ArrowUp, ArrowDown, Clock, Pencil, Check, X, Send, UserPlus,
 } from "lucide-react";
 
 interface Athlete {
@@ -38,11 +38,33 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
     const [editPrice, setEditPrice] = useState(false);
     const [priceVal, setPriceVal] = useState("");
     const [savingPrice, setSavingPrice] = useState(false);
+    // Taklif yuborish (jamoa egasi)
+    const [myTeams, setMyTeams] = useState<{ id: string; name: string; tag: string }[]>([]);
+    const [offerOpen, setOfferOpen] = useState(false);
+    const [oTeam, setOTeam] = useState("");
+    const [oSalary, setOSalary] = useState("");
+    const [oCond, setOCond] = useState("");
+    const [oMonths, setOMonths] = useState("");
+    const [sending, setSending] = useState(false);
+    const [offerMsg, setOfferMsg] = useState("");
 
     useEffect(() => {
         fetch(`/api/esport/athletes/${athleteId}`).then(r => r.json()).then(d => { setA(d.athlete || null); setLoading(false); }).catch(() => setLoading(false));
         fetch("/api/esport/admin/check").then(r => r.json()).then(d => setIsAdmin(!!d.isAdmin)).catch(() => { });
+        fetch("/api/esport/teams").then(r => r.json()).then(d => { const o = d.owned || []; setMyTeams(o); if (o[0]) setOTeam(o[0].id); }).catch(() => { });
     }, [athleteId]);
+
+    async function sendOffer() {
+        if (!oTeam) return setOfferMsg("Jamoa tanlang");
+        setSending(true); setOfferMsg("");
+        const r = await fetch("/api/esport/transfers", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ athleteId, toTeamId: oTeam, salary: oSalary || null, conditions: oCond || null, contractMonths: oMonths || null }),
+        }).then(x => x.json()).catch(() => ({ error: "Xato" }));
+        setSending(false);
+        if (r.error) return setOfferMsg(r.error);
+        setOfferMsg("Taklif o'yinchiga yuborildi"); setOfferOpen(false); setOSalary(""); setOCond(""); setOMonths("");
+    }
 
     async function savePrice() {
         setSavingPrice(true);
@@ -107,6 +129,33 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
                 </Link>
             ) : (
                 <div className="mb-4 flex items-center gap-2 rounded-3xl p-4 es-card"><Shield className="h-4 w-4 es-faint" /><span className="text-sm font-semibold es-mut">Erkin sportchi (jamoasiz)</span></div>
+            )}
+
+            {/* Taklif yuborish (jamoa egasi) */}
+            {myTeams.length > 0 && (
+                <div className="mb-4 rounded-3xl p-4 es-card">
+                    {offerMsg && <p className="mb-2 text-xs font-semibold es-accent-text">{offerMsg}</p>}
+                    {!offerOpen ? (
+                        <button onClick={() => { setOfferOpen(true); setOfferMsg(""); }} className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-black text-white es-accent-bg"><UserPlus className="h-4 w-4" /> Transfer taklifi yuborish</button>
+                    ) : (
+                        <div className="space-y-2.5">
+                            <div className="flex items-center justify-between"><p className="text-sm font-black es-fg">O'yinchiga taklif</p><button onClick={() => setOfferOpen(false)}><X className="h-4 w-4 es-mut" /></button></div>
+                            <div className="flex flex-wrap gap-1.5">
+                                {myTeams.map(t => <button key={t.id} onClick={() => setOTeam(t.id)} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${oTeam === t.id ? "text-white es-accent-bg" : "es-mut es-soft"}`}>{t.tag}</button>)}
+                            </div>
+                            <div className="flex items-center gap-2 rounded-xl px-3 py-2 es-soft">
+                                <Coins className="h-4 w-4 text-amber-400" />
+                                <input value={oSalary} onChange={e => setOSalary(e.target.value.replace(/[^\d]/g, ""))} inputMode="numeric" placeholder="Oylik maosh (so'm)" className="w-full bg-transparent text-sm font-semibold es-fg outline-none placeholder:opacity-50" />
+                            </div>
+                            <div className="flex items-center gap-2 rounded-xl px-3 py-2 es-soft">
+                                <Calendar className="h-4 w-4 es-accent-text" />
+                                <input value={oMonths} onChange={e => setOMonths(e.target.value.replace(/[^\d]/g, ""))} inputMode="numeric" placeholder="Shartnoma muddati (oy)" className="w-full bg-transparent text-sm font-semibold es-fg outline-none placeholder:opacity-50" />
+                            </div>
+                            <input value={oCond} onChange={e => setOCond(e.target.value)} placeholder="Qo'shimcha shartlar (ixtiyoriy)" className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none placeholder:opacity-50" />
+                            <button onClick={sendOffer} disabled={sending} className="flex w-full items-center justify-center gap-2 rounded-2xl py-2.5 text-sm font-black text-white es-accent-bg disabled:opacity-50">{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Taklif yuborish</button>
+                        </div>
+                    )}
+                </div>
             )}
 
             {/* Elo statistikasi */}

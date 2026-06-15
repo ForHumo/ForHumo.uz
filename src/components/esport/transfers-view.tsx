@@ -1,25 +1,80 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "@/i18n/routing";
-import { ArrowLeft, Loader2, ArrowLeftRight, Search, Coins, Gamepad2, TrendingUp, ChevronRight } from "lucide-react";
+import { ArrowLeft, Loader2, ArrowLeftRight, Search, Coins, Gamepad2, TrendingUp, ChevronRight, Send, Check, X, Clock } from "lucide-react";
 
 interface Card {
     id: string; ign: string; position: string | null; game: string | null;
     image: string | null; marketValue: number | null;
     team: { name: string; tag: string; logo: string | null } | null; rating: number | null;
 }
+interface Offer {
+    id: string; status: string; athleteId: string; ign: string; athleteName: string;
+    toTeam: { name: string; tag: string } | null; fromTeam: { name: string; tag: string } | null;
+    salary: number | null; salaryLabel: string | null; conditions: string | null; contractMonths: number | null;
+    fee: number | null; feeLabel: string | null; marketValue: number | null; marketLabel: string | null;
+}
+interface Offers { asPlayer: Offer[]; asBuyer: Offer[]; asClub: Offer[] }
 
 function money(n: number | null) { return n == null ? "Belgilanmagan" : `${n.toLocaleString()} so'm`; }
+
+function OfferCard({ text, busy, onApprove, onReject, onCancel, approveLabel, icon }: { text: string; busy: boolean; onApprove?: () => void; onReject?: () => void; onCancel?: () => void; approveLabel?: string; icon?: "clock" }) {
+    return (
+        <div className="flex items-center gap-2 rounded-2xl p-3 es-card">
+            {icon === "clock" && <Clock className="h-4 w-4 shrink-0 es-faint" />}
+            <span className="min-w-0 flex-1 text-xs font-semibold es-fg">{text}</span>
+            {onApprove && <button onClick={onApprove} disabled={busy} className="flex h-8 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white es-accent-bg disabled:opacity-50"><Check className="h-3.5 w-3.5" /> {approveLabel || "Qabul"}</button>}
+            {onReject && <button onClick={onReject} disabled={busy} className="flex h-8 items-center gap-1 rounded-lg px-3 text-xs font-bold es-mut es-soft disabled:opacity-50"><X className="h-3.5 w-3.5" /> Rad</button>}
+            {onCancel && <button onClick={onCancel} disabled={busy} className="flex h-8 items-center rounded-lg px-3 text-xs font-bold es-mut es-soft disabled:opacity-50">Bekor</button>}
+        </div>
+    );
+}
+
+function FeeCard({ o, busy, onSend, onCancel }: { o: Offer; busy: boolean; onSend: (fee: number) => void; onCancel: () => void }) {
+    const [fee, setFee] = useState(o.marketValue != null ? String(o.marketValue) : "");
+    return (
+        <div className="rounded-2xl p-3 es-card">
+            <p className="text-xs font-semibold es-fg">{o.ign} qabul qildi — {o.fromTeam?.tag} jamoasiga haq taklif qiling</p>
+            <p className="mt-0.5 text-[11px] es-mut">Eng kam: {o.marketLabel || "0 so'm"} (transfermarket narxi)</p>
+            <div className="mt-2 flex items-center gap-2">
+                <div className="flex flex-1 items-center gap-2 rounded-xl px-3 py-2 es-soft">
+                    <Coins className="h-4 w-4 text-amber-400" />
+                    <input value={fee} onChange={e => setFee(e.target.value.replace(/[^\d]/g, ""))} inputMode="numeric" placeholder="Transfer haqi (so'm)" className="w-full bg-transparent text-sm font-semibold es-fg outline-none placeholder:opacity-50" />
+                </div>
+                <button onClick={() => onSend(Number(fee || 0))} disabled={busy} className="flex h-9 items-center gap-1 rounded-xl px-3 text-xs font-bold text-white es-accent-bg disabled:opacity-50"><Send className="h-3.5 w-3.5" /> Yuborish</button>
+                <button onClick={onCancel} disabled={busy} className="flex h-9 items-center rounded-xl px-3 text-xs font-bold es-mut es-soft">Bekor</button>
+            </div>
+        </div>
+    );
+}
 
 export default function TransfersView() {
     const [loading, setLoading] = useState(true);
     const [list, setList] = useState<Card[]>([]);
     const [q, setQ] = useState("");
+    const [offers, setOffers] = useState<Offers>({ asPlayer: [], asBuyer: [], asClub: [] });
+    const [busy, setBusy] = useState(false);
 
+    const loadOffers = useCallback(() => {
+        fetch("/api/esport/transfers").then(r => r.json()).then(d => setOffers({ asPlayer: d.asPlayer || [], asBuyer: d.asBuyer || [], asClub: d.asClub || [] })).catch(() => { });
+    }, []);
     useEffect(() => {
         fetch("/api/esport/athletes").then(r => r.json()).then(d => { setList(d.athletes || []); setLoading(false); }).catch(() => setLoading(false));
-    }, []);
+        loadOffers();
+    }, [loadOffers]);
+
+    async function act(id: string, action: string, fee?: number) {
+        setBusy(true);
+        await fetch(`/api/esport/transfers/${id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, fee }) }).catch(() => { });
+        setBusy(false); loadOffers();
+    }
+    async function cancelOffer(id: string) {
+        setBusy(true);
+        await fetch(`/api/esport/transfers/${id}`, { method: "DELETE" }).catch(() => { });
+        setBusy(false); loadOffers();
+    }
+    const hasOffers = offers.asPlayer.length + offers.asBuyer.length + offers.asClub.length > 0;
 
     const filtered = useMemo(() => {
         const s = q.trim().toLowerCase();
@@ -39,6 +94,27 @@ export default function TransfersView() {
                     </div>
                 </div>
             </div>
+
+            {/* Mening takliflarim */}
+            {hasOffers && (
+                <div className="mb-5 space-y-2">
+                    <p className="px-1 text-xs font-black uppercase tracking-wide es-accent-text">Transfer takliflari</p>
+                    {offers.asPlayer.map(o => (
+                        <OfferCard key={o.id} text={`${o.toTeam?.name} sizga taklif: oylik ${o.salaryLabel || "—"}${o.contractMonths ? ` · ${o.contractMonths} oy` : ""}${o.conditions ? ` · ${o.conditions}` : ""}`}
+                            busy={busy} onApprove={() => act(o.id, "approve")} onReject={() => act(o.id, "reject")} approveLabel="Qabul" />
+                    ))}
+                    {offers.asBuyer.map(o => {
+                        if (o.status === "PLAYER_PENDING") return <OfferCard key={o.id} icon="clock" text={`${o.ign} — o'yinchi javobini kutmoqda`} busy={busy} onCancel={() => cancelOffer(o.id)} />;
+                        if (o.status === "AWAIT_FEE") return <FeeCard key={o.id} o={o} busy={busy} onSend={(fee) => act(o.id, "setfee", fee)} onCancel={() => cancelOffer(o.id)} />;
+                        if (o.status === "CLUB_PENDING") return <OfferCard key={o.id} icon="clock" text={`${o.ign} uchun ${o.fromTeam?.tag}ga ${o.feeLabel} taklif yuborildi — jamoa javobini kutmoqda`} busy={busy} />;
+                        return null;
+                    })}
+                    {offers.asClub.map(o => (
+                        <OfferCard key={o.id} text={`${o.toTeam?.name} ${o.ign}ni sotib olmoqchi — haq ${o.feeLabel} (bozor: ${o.marketLabel || "—"})`}
+                            busy={busy} onApprove={() => act(o.id, "approve")} onReject={() => act(o.id, "reject")} approveLabel="Sotish" />
+                    ))}
+                </div>
+            )}
 
             {/* Qidiruv */}
             <div className="mb-5 flex items-center gap-2 rounded-2xl px-4 py-2.5 es-soft">

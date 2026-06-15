@@ -12,7 +12,7 @@ export async function executeTransfer(transferId: string): Promise<TransferResul
     try {
         return await prisma.$transaction(async tx => {
             const tr = await tx.esTransfer.findUnique({ where: { id: transferId } });
-            if (!tr || tr.status !== "PENDING") return "not_found" as const;
+            if (!tr || ["DONE", "CANCELLED", "REJECTED"].includes(tr.status)) return "not_found" as const;
 
             const athlete = await tx.esAthlete.findUnique({ where: { id: tr.athleteId }, select: { id: true, gameId: true, humoProfileId: true, game: { select: { teamSize: true } } } });
             const toTeam = await tx.esTeam.findUnique({ where: { id: tr.toTeamId }, select: { id: true, ownerId: true } });

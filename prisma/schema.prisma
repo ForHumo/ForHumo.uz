@@ -347,15 +347,18 @@ model EsLeagueMatch {     // liga o'yini (divizion ichida) — natija standings'
   @@index([seasonId, divisionId, status])
 }
 
-model EsTransfer {        // sportchi jamoadan jamoага (ALKH Pay haq)
-  id         String   @id @default(cuid())
-  athleteId  String
-  fromTeamId String?
-  toTeamId   String
-  fee        Decimal? @db.Decimal(18, 2)      // 0/null = bepul
-  currency   String   @default("UZS")
-  status     String   @default("PENDING")     // PENDING/DONE/CANCELLED
-  createdAt  DateTime @default(now())
+model EsTransfer {        // futbol-transfer: o'yinchiga oylik taklif → qabul → jamoaga haq → ALKH Pay
+  id            String   @id @default(cuid())
+  athleteId     String
+  fromTeamId    String?                          // sotuvchi jamoa (null = erkin sportchi)
+  toTeamId      String                           // xaridor jamoa
+  salary        Decimal? @db.Decimal(18, 2)      // oylik maosh (o'yinchi bilan kelishuv)
+  conditions    String?                          // qo'shimcha shartlar
+  contractMonths Int?                            // shartnoma muddati (oy)
+  fee           Decimal? @db.Decimal(18, 2)      // transfer haqi (jamoaga; marketValuedan kam emas)
+  currency      String   @default("UZS")
+  status        String   @default("PLAYER_PENDING") // PLAYER_PENDING/AWAIT_FEE/CLUB_PENDING/DONE/REJECTED/CANCELLED
+  createdAt     DateTime @default(now())
   athlete    EsAthlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
   @@index([athleteId, createdAt])
   @@index([toTeamId])
