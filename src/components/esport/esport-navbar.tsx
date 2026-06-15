@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Home, User, Users, Trophy, BarChart3, ArrowLeftRight, ShieldCheck, type LucideIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import EsportNotifications from "@/components/esport/esport-notifications";
 
 const LINKS: { label: string; href: string; icon: LucideIcon }[] = [
     { label: "Asosiy", href: "/esport", icon: Home },
@@ -59,6 +60,7 @@ export default function EsportNavbar() {
                     <div className="flex shrink-0 items-center gap-2">
                         <LanguageSwitcher />
                         <ThemeToggle />
+                        {session?.user && <EsportNotifications />}
                         {session?.user && (
                             <Link href="/id" title="Humo ID" className="group relative">
                                 <div className="h-8 w-8 overflow-hidden rounded-full ring-2 es-bd transition-all group-hover:ring-[var(--es-c2)]">

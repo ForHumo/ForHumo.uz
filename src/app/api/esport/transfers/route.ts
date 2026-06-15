@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile, fullName } from "@/lib/esport";
 import { formatMoney, type Currency } from "@/lib/money";
+import { esNotify, athleteProfileId } from "@/lib/esport-notify";
 
 const OPEN = ["PLAYER_PENDING", "AWAIT_FEE", "CLUB_PENDING"];
 
@@ -40,6 +41,8 @@ export async function POST(req: Request) {
     const t = await prisma.esTransfer.create({
         data: { athleteId, fromTeamId, toTeamId, salary, conditions, contractMonths, currency: "UZS", status: "PLAYER_PENDING" },
     });
+    const toTeamName = (await prisma.esTeam.findUnique({ where: { id: toTeamId }, select: { name: true } }))?.name ?? "Bir jamoa";
+    await esNotify(await athleteProfileId(athleteId), { type: "TRANSFER_OFFER", title: "Yangi transfer taklifi", body: `${toTeamName} sizga taklif yubordi${salary ? ` — oylik ${salary.toLocaleString()} so'm` : ""}`, href: "/esport/transfers" });
     return NextResponse.json({ ok: true, transfer: t });
 }
 

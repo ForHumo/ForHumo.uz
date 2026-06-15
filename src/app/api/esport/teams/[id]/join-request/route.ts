@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile, fullName } from "@/lib/esport";
+import { esNotify } from "@/lib/esport-notify";
 
 // GET /api/esport/teams/[id]/join-request — kutilayotgan arizalar (faqat ega)
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -52,5 +53,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         create: { teamId: id, athleteId: athlete.id, status: "PENDING" },
         update: { status: "PENDING", createdAt: new Date() },
     });
+    const myIgn = (await prisma.esAthlete.findUnique({ where: { id: athlete.id }, select: { ign: true } }))?.ign ?? "Sportchi";
+    await esNotify(team.ownerId, { type: "JOIN_REQUEST", title: "Yangi ariza", body: `${myIgn} jamoangizga qo'shilmoqchi`, href: `/esport/teams/${id}` });
     return NextResponse.json({ ok: true });
 }

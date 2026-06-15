@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile } from "@/lib/esport";
+import { esNotify, esNotifyMany } from "@/lib/esport-notify";
 
 // Jamoa a'zolari (athleteId + humoProfileId) — owner aniqlash uchun
 async function teamMembers(teamId: string) {
@@ -56,6 +57,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         if (isOwner) return NextResponse.json({ error: "Ega chiqa olmaydi — jamoani o'chiring yoki egalikni o'tkazing" }, { status: 400 });
         if (await ensureNoDup("LEAVE", myAthlete.id)) return NextResponse.json({ error: "So'rov allaqachon yuborilgan" }, { status: 409 });
         await prisma.esRequest.create({ data: { type: "LEAVE", teamId: id, athleteId: myAthlete.id, initiatedBy: me.id } });
+        await esNotify(team.ownerId, { type: "LEAVE_REQ", title: "Chiqish so'rovi", body: "A'zo jamoadan chiqmoqchi — tasdiqlang", href: `/esport/teams/${id}` });
         return NextResponse.json({ ok: true, message: "Chiqish so'rovi jamoa egasiga yuborildi" });
     }
 
@@ -66,6 +68,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         if (target.humoProfileId === team.ownerId) return NextResponse.json({ error: "O'zingizni chiqara olmaysiz" }, { status: 400 });
         if (await ensureNoDup("KICK", athleteId)) return NextResponse.json({ error: "So'rov allaqachon yuborilgan" }, { status: 409 });
         await prisma.esRequest.create({ data: { type: "KICK", teamId: id, athleteId, initiatedBy: me.id } });
+        await esNotify(target.humoProfileId, { type: "KICK_REQ", title: "Jamoadan chiqarish so'rovi", body: "Jamoa sizni chiqarmoqchi — rozimisiz?", href: `/esport/teams/${id}` });
         return NextResponse.json({ ok: true, message: "Chiqarish so'rovi sportchiga yuborildi" });
     }
 
@@ -78,6 +81,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         }
         if (await ensureNoDup("TEAM_DELETE")) return NextResponse.json({ error: "O'chirish so'rovi allaqachon faol" }, { status: 409 });
         await prisma.esRequest.create({ data: { type: "TEAM_DELETE", teamId: id, initiatedBy: me.id } });
+        await esNotifyMany(others.map(o => o.humoProfileId), { type: "TEAM_DELETE_REQ", title: "Jamoa o'chirilishiga rozilik", body: "Jamoa egasi jamoani o'chirmoqchi — ovoz bering", href: `/esport/teams/${id}` });
         return NextResponse.json({ ok: true, message: `O'chirish uchun ${others.length} a'zoning 100% roziligi kerak` });
     }
 

@@ -59,5 +59,17 @@ export async function POST(req: Request) {
     const athlete = await prisma.esAthlete.findUnique({ where: { humoProfileId: me.id }, select: { id: true } });
     if (athlete) await addAthleteToTeam(athlete.id, team.id); // already_in_team bo'lsa jim o'tadi
 
+    // B model: yangi jamoa har faol mavsumning ENG QUYI (Ochiq) divizioniga avtomatik kiritiladi
+    // (shu bilan turnir/divizion quvuri ochiladi — Ochiq ro'yxat + avto-setka ishlaydi)
+    try {
+        const activeSeasons = await prisma.esSeason.findMany({ where: { active: true }, select: { id: true, gameId: true } });
+        for (const s of activeSeasons) {
+            const lowest = await prisma.esDivision.findFirst({ where: { gameId: s.gameId }, orderBy: { tier: "desc" }, select: { id: true } });
+            if (!lowest) continue;
+            const exists = await prisma.esStanding.findFirst({ where: { seasonId: s.id, teamId: team.id }, select: { id: true } });
+            if (!exists) await prisma.esStanding.create({ data: { seasonId: s.id, divisionId: lowest.id, teamId: team.id } });
+        }
+    } catch { /* kiritish xatosi jamoa yaratishni buzmasin */ }
+
     return NextResponse.json({ ok: true, team: { id: team.id, name: team.name, tag: team.tag } });
 }

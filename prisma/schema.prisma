@@ -364,6 +364,19 @@ model EsTransfer {        // futbol-transfer: o'yinchiga oylik taklif → qabul 
   @@index([toTeamId])
 }
 
+model EsNotification {   // eSport bildirishnomalari (transfer/ariza/kelishuv)
+  id        String   @id @default(cuid())
+  profileId String                          // qabul qiluvchi UserProfile.id
+  type      String                          // TRANSFER_OFFER / TRANSFER_FEE / TRANSFER_DONE / JOIN_REQUEST / JOIN_RESULT / LEAVE_REQ / KICK_REQ / TEAM_DELETE_REQ / REQ_RESULT
+  title     String
+  body      String?
+  href      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  @@index([profileId, read])
+  @@index([profileId, createdAt])
+}
+
 model EsNews {            // Asosiy sahifadagi yangiliklar (admin yozadi)
   id        String   @id @default(cuid())
   title     String

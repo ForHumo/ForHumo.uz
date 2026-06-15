@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile } from "@/lib/esport";
 import { executeTransfer, TRANSFER_MSG } from "@/lib/esport-transfer";
+import { esNotify } from "@/lib/esport-notify";
 
 // POST /api/esport/transfers/[id] — ko'p bosqichli javob
 // { action: approve|reject, fee? }
@@ -29,14 +30,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // 1) O'yinchi taklifni ko'rib chiqadi
     if (tr.status === "PLAYER_PENDING") {
         if (!isAthlete) return NextResponse.json({ error: "Faqat o'yinchi javob beradi" }, { status: 403 });
-        if (action === "reject") { await prisma.esTransfer.update({ where: { id }, data: { status: "REJECTED" } }); return NextResponse.json({ ok: true }); }
+        if (action === "reject") {
+            await prisma.esTransfer.update({ where: { id }, data: { status: "REJECTED" } });
+            await esNotify(toTeam?.ownerId, { type: "TRANSFER_DONE", title: "Taklif rad etildi", body: "O'yinchi transfer taklifini rad etdi", href: "/esport/transfers" });
+            return NextResponse.json({ ok: true });
+        }
         if (action === "approve") {
             if (!tr.fromTeamId) { // erkin sportchi — darhol o'tadi (haqsiz)
                 const r = await executeTransfer(id);
                 if (r !== "ok") return NextResponse.json({ error: TRANSFER_MSG[r] }, { status: 400 });
+                await esNotify(toTeam?.ownerId, { type: "TRANSFER_DONE", title: "O'yinchi qo'shildi", body: "Erkin sportchi jamoangizga qo'shildi", href: "/esport/teams" });
                 return NextResponse.json({ ok: true, done: true });
             }
             await prisma.esTransfer.update({ where: { id }, data: { status: "AWAIT_FEE" } });
+            await esNotify(toTeam?.ownerId, { type: "TRANSFER_FEE", title: "O'yinchi qabul qildi", body: "Endi sotuvchi jamoaga haq taklif qiling", href: "/esport/transfers" });
             return NextResponse.json({ ok: true, message: "Qabul qilindi — endi xaridor jamoaga haq taklif qiladi" });
         }
         return NextResponse.json({ error: "Noto'g'ri amal" }, { status: 400 });
@@ -50,16 +57,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         const floor = athlete?.marketValue ? Number(athlete.marketValue) : 0;
         if (fee < floor) return NextResponse.json({ error: `Haq transfermarket narxidan kam bo'lmasin (${floor.toLocaleString()} so'm)` }, { status: 400 });
         await prisma.esTransfer.update({ where: { id }, data: { fee, status: "CLUB_PENDING" } });
+        await esNotify(fromTeam?.ownerId, { type: "TRANSFER_FEE", title: "Transfer haqi taklifi", body: `O'yinchingiz uchun ${fee.toLocaleString()} so'm taklif qilindi`, href: "/esport/transfers" });
         return NextResponse.json({ ok: true, message: "Haq taklifi sotuvchi jamoaga yuborildi" });
     }
 
     // 3) Sotuvchi jamoa haqni qabul qiladi → ALKH Pay + ko'chirish
     if (tr.status === "CLUB_PENDING") {
         if (!isClub) return NextResponse.json({ error: "Faqat sotuvchi jamoa egasi javob beradi" }, { status: 403 });
-        if (action === "reject") { await prisma.esTransfer.update({ where: { id }, data: { status: "REJECTED" } }); return NextResponse.json({ ok: true }); }
+        if (action === "reject") {
+            await prisma.esTransfer.update({ where: { id }, data: { status: "REJECTED" } });
+            await esNotify(toTeam?.ownerId, { type: "TRANSFER_DONE", title: "Haq rad etildi", body: "Sotuvchi jamoa haq taklifini rad etdi", href: "/esport/transfers" });
+            return NextResponse.json({ ok: true });
+        }
         if (action === "approve") {
             const r = await executeTransfer(id);
             if (r !== "ok") return NextResponse.json({ error: TRANSFER_MSG[r] }, { status: 400 });
+            await esNotify(toTeam?.ownerId, { type: "TRANSFER_DONE", title: "Transfer yakunlandi", body: "O'yinchi jamoangizga o'tdi", href: "/esport/teams" });
+            await esNotify(athlete?.humoProfileId, { type: "TRANSFER_DONE", title: "Transfer yakunlandi", body: "Siz yangi jamoaga o'tdingiz", href: "/esport/teams" });
             return NextResponse.json({ ok: true, done: true });
         }
     }

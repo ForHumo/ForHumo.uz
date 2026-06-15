@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile } from "@/lib/esport";
+import { esNotify } from "@/lib/esport-notify";
 
 // POST /api/esport/requests/[id] — javob { action: approve|reject }
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -22,9 +23,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         if (action === "approve") {
             if (r.athleteId) await prisma.esRosterMember.deleteMany({ where: { athleteId: r.athleteId } });
             await prisma.esRequest.update({ where: { id }, data: { status: "APPROVED" } });
+            await esNotify(r.initiatedBy, { type: "REQ_RESULT", title: "Chiqish tasdiqlandi", body: "Jamoa egasi chiqishingizni tasdiqladi", href: "/esport/teams" });
             return NextResponse.json({ ok: true, message: "Sportchi jamoadan chiqarildi" });
         }
         await prisma.esRequest.update({ where: { id }, data: { status: "REJECTED" } });
+        await esNotify(r.initiatedBy, { type: "REQ_RESULT", title: "Chiqish rad etildi", body: "Jamoa egasi chiqish so'rovini rad etdi", href: "/esport/teams" });
         return NextResponse.json({ ok: true, message: "Rad etildi" });
     }
 
@@ -33,9 +36,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         if (action === "approve") {
             await prisma.esRosterMember.deleteMany({ where: { athleteId: r.athleteId } });
             await prisma.esRequest.update({ where: { id }, data: { status: "APPROVED" } });
+            await esNotify(r.initiatedBy, { type: "REQ_RESULT", title: "Chiqarish tasdiqlandi", body: "Sportchi jamoadan chiqdi", href: `/esport/teams/${r.teamId}` });
             return NextResponse.json({ ok: true, message: "Jamoadan chiqdingiz" });
         }
         await prisma.esRequest.update({ where: { id }, data: { status: "REJECTED" } });
+        await esNotify(r.initiatedBy, { type: "REQ_RESULT", title: "Chiqarish rad etildi", body: "Sportchi chiqarishni rad etdi", href: `/esport/teams/${r.teamId}` });
         return NextResponse.json({ ok: true, message: "Rad etildi" });
     }
 
@@ -49,6 +54,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
         if (action === "reject") {
             await prisma.esRequest.update({ where: { id }, data: { status: "REJECTED" } });
+            await esNotify(r.initiatedBy, { type: "REQ_RESULT", title: "O'chirish rad etildi", body: "A'zo jamoani o'chirishga rozi bo'lmadi", href: `/esport/teams/${r.teamId}` });
             return NextResponse.json({ ok: true, message: "O'chirish bekor qilindi" });
         }
         // approve — ovozni qayd etamiz
