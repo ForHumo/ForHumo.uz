@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { ArrowLeft, Loader2, Trophy, Users, ChevronRight, Coins, Calendar, ClipboardList, ShieldCheck, Crown, Youtube, ChevronDown, History, Medal } from "lucide-react";
+import { useEsT } from "@/lib/esport-i18n";
 
 interface RetroMatch { order: number; date: string; time: string | null; stage: string; teamA: string; teamB: string; scoreA: number | null; scoreB: number | null; winner: string | null; note: string | null; reason: string | null; youtube: string | null }
 interface Retro { id: string; name: string; season: string; game: string; organizer: string; startDate: string; endDate: string; prizePool: number | null; currency: string; champion: string | null; runnerUp: string | null; third: string | null; matches: RetroMatch[] }
@@ -27,16 +28,17 @@ const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
 const card = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
 
-const STATUS: Record<string, { label: string; color: string; bg: string }> = {
-    UPCOMING: { label: "Tez orada", color: "rgba(255,255,255,0.6)", bg: "rgba(255,255,255,0.06)" },
-    REGISTRATION: { label: "Ro'yxat ochiq", color: "#00CEC8", bg: "rgba(0,206,200,0.12)" },
-    LIVE: { label: "Jonli", color: "#FF3C5F", bg: "rgba(255,60,95,0.14)" },
-    ENDED: { label: "Tugagan", color: "rgba(255,255,255,0.4)", bg: "rgba(255,255,255,0.04)" },
+const STATUS: Record<string, { tkey: string; color: string; bg: string }> = {
+    UPCOMING: { tkey: "st.upcoming", color: "rgba(255,255,255,0.6)", bg: "rgba(255,255,255,0.06)" },
+    REGISTRATION: { tkey: "st.registration", color: "#00CEC8", bg: "rgba(0,206,200,0.12)" },
+    LIVE: { tkey: "st.live", color: "#FF3C5F", bg: "rgba(255,60,95,0.14)" },
+    ENDED: { tkey: "st.ended", color: "rgba(255,255,255,0.4)", bg: "rgba(255,255,255,0.04)" },
 };
 
 function money(n: number, c: string) { return c === "USD" ? `$${n.toLocaleString()}` : `${n.toLocaleString()} so'm`; }
 
 export default function TournamentsList() {
+    const tr = useEsT();
     const [loading, setLoading] = useState(true);
     const [list, setList] = useState<T[]>([]);
     const [retros, setRetros] = useState<Retro[]>([]);
@@ -55,15 +57,15 @@ export default function TournamentsList() {
                     <Link href="/esport" className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}><ArrowLeft className="h-4 w-4 text-white/80" /></Link>
                     <div className="flex items-center gap-2">
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: ACCENT }}><Trophy className="h-5 w-5 text-white" /></div>
-                        <h1 className="text-lg font-black text-white">Turnirlar</h1>
+                        <h1 className="text-lg font-black text-white">{tr("nav.tournaments")}</h1>
                     </div>
                 </div>
 
                 {list.length === 0 ? (
                     <div className="rounded-3xl p-8 text-center" style={card}>
                         <Trophy className="mx-auto h-10 w-10 text-white/25" />
-                        <p className="mt-3 text-sm font-bold text-white/65">Hali turnir yo'q</p>
-                        <p className="mt-1 text-xs text-white/40">Tez orada birinchi turnir e'lon qilinadi.</p>
+                        <p className="mt-3 text-sm font-bold text-white/65">{tr("tour.none")}</p>
+                        <p className="mt-1 text-xs text-white/40">{tr("tour.soon")}</p>
                     </div>
                 ) : (
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -76,7 +78,7 @@ export default function TournamentsList() {
                                             <p className="truncate text-base font-black text-white">{t.name}</p>
                                             <p className="text-xs font-semibold text-white/45">{t.game?.name}{t.division ? ` · ${t.division.name}` : ""}</p>
                                         </div>
-                                        <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold" style={{ color: s.color, background: s.bg }}>{s.label}</span>
+                                        <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold" style={{ color: s.color, background: s.bg }}>{tr(s.tkey)}</span>
                                     </div>
                                     {(t.startsAt || t.endsAt) && (
                                         <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-white/55">
@@ -87,12 +89,12 @@ export default function TournamentsList() {
                                     {t.isOpen ? (
                                         t.registrationStartsAt && (
                                             <div className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: t.status === "REGISTRATION" ? "#00CEC8" : "rgba(255,255,255,0.45)" }}>
-                                                <ClipboardList className="h-3.5 w-3.5" /> Ro'yxat: {fmt(t.registrationStartsAt)} – {fmt(t.registrationEndsAt)}
+                                                <ClipboardList className="h-3.5 w-3.5" /> {tr("tour.reg")}: {fmt(t.registrationStartsAt)} – {fmt(t.registrationEndsAt)}
                                             </div>
                                         )
                                     ) : t.division ? (
                                         <div className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-white/45">
-                                            <ShieldCheck className="h-3.5 w-3.5 text-[#FFB020]" /> Avtomatik qatnashuv (ro'yxatsiz)
+                                            <ShieldCheck className="h-3.5 w-3.5 text-[#FFB020]" /> {tr("tour.auto")}
                                         </div>
                                     ) : null}
                                     <div className="mt-3 flex items-center gap-4 text-xs font-semibold text-white/55">
@@ -111,7 +113,7 @@ export default function TournamentsList() {
                     <div className="mt-8">
                         <div className="mb-3 flex items-center gap-2">
                             <History className="h-4 w-4 text-[#00CEC8]" />
-                            <h2 className="text-sm font-black uppercase tracking-wide text-white/70">Arxiv — o'tgan turnirlar</h2>
+                            <h2 className="text-sm font-black uppercase tracking-wide text-white/70">{tr("tour.archive")}</h2>
                         </div>
                         <div className="space-y-3">
                             {retros.map(r => <RetroCard key={r.id} r={r} />)}
@@ -124,6 +126,7 @@ export default function TournamentsList() {
 }
 
 function RetroCard({ r }: { r: Retro }) {
+    const tr = useEsT();
     const [open, setOpen] = useState(false);
     const stages = [...new Set(r.matches.map(m => m.stage))];
     return (
@@ -158,7 +161,7 @@ function RetroCard({ r }: { r: Retro }) {
                                         </div>
                                         <div className="mt-1.5 flex items-center justify-between gap-2">
                                             <span className="text-[10px] text-white/35">{m.date}{m.time ? ` · ${m.time}` : ""}{m.note ? ` · ${m.note}` : ""}</span>
-                                            {m.youtube && <a href={m.youtube} target="_blank" rel="noopener noreferrer" className="flex shrink-0 items-center gap-1 text-[11px] font-bold text-[#FF3C5F]"><Youtube className="h-3.5 w-3.5" /> Tomosha</a>}
+                                            {m.youtube && <a href={m.youtube} target="_blank" rel="noopener noreferrer" className="flex shrink-0 items-center gap-1 text-[11px] font-bold text-[#FF3C5F]"><Youtube className="h-3.5 w-3.5" /> {tr("tour.watch")}</a>}
                                         </div>
                                         {m.reason && <p className="mt-1 text-[10px] italic text-white/35">{m.reason}</p>}
                                     </div>

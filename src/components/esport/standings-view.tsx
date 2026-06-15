@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { ArrowLeft, Loader2, Trophy, ArrowUp, ArrowDown, Minus, BarChart3 } from "lucide-react";
+import { useEsT } from "@/lib/esport-i18n";
 
 interface Row { rank: number; teamId: string; team: { id: string; name: string; tag: string; logo: string | null } | null; points: number; wins: number; losses: number; played: number; rating: number | null }
 interface Division { id: string; name: string; tier: number; teams: Row[] }
@@ -12,6 +13,7 @@ const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
 const card = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
 
 export default function StandingsView() {
+    const t = useEsT();
     const [loading, setLoading] = useState(true);
     const [season, setSeason] = useState<{ name: string; active: boolean } | null>(null);
     const [divisions, setDivisions] = useState<Division[]>([]);
@@ -35,8 +37,8 @@ export default function StandingsView() {
                     <div className="flex items-center gap-2">
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: ACCENT }}><BarChart3 className="h-5 w-5 text-white" /></div>
                         <div>
-                            <h1 className="text-lg font-black leading-tight text-white">Divizionlar</h1>
-                            {season && <p className="text-[11px] font-semibold text-white/45">{season.name}{season.active ? " · faol" : ""}</p>}
+                            <h1 className="text-lg font-black leading-tight text-white">{t("nav.divisions")}</h1>
+                            {season && <p className="text-[11px] font-semibold text-white/45">{season.name}{season.active ? ` · ${t("stand.active")}` : ""}</p>}
                         </div>
                     </div>
                 </div>
@@ -44,8 +46,8 @@ export default function StandingsView() {
                 {divisions.length === 0 ? (
                     <div className="rounded-3xl p-8 text-center" style={card}>
                         <Trophy className="mx-auto h-10 w-10 text-white/25" />
-                        <p className="mt-3 text-sm font-bold text-white/65">Hali jadval yo'q</p>
-                        <p className="mt-1 text-xs text-white/40">Mavsum boshlanganda divizionlar bu yerda ko'rinadi.</p>
+                        <p className="mt-3 text-sm font-bold text-white/65">{t("stand.none")}</p>
+                        <p className="mt-1 text-xs text-white/40">{t("stand.noneHint")}</p>
                     </div>
                 ) : (
                     <div className="space-y-5">
@@ -55,21 +57,21 @@ export default function StandingsView() {
                                 <div className="flex items-center gap-2 px-5 py-3.5" style={{ background: di === 0 ? "rgba(0,206,200,0.10)" : "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                                     <Trophy className="h-4 w-4" style={{ color: di === 0 ? "#00CEC8" : "rgba(255,255,255,0.4)" }} />
                                     <p className="text-sm font-black text-white">{d.name}</p>
-                                    <span className="ml-auto text-[11px] font-bold text-white/35">{d.teams.length} jamoa</span>
+                                    <span className="ml-auto text-[11px] font-bold text-white/35">{d.teams.length} {t("common.team")}</span>
                                 </div>
 
                                 {d.teams.length === 0 ? (
-                                    <p className="px-5 py-6 text-center text-xs text-white/35">Bu divizionda jamoa yo'q</p>
+                                    <p className="px-5 py-6 text-center text-xs text-white/35">{t("stand.divEmpty")}</p>
                                 ) : (
                                     <div>
                                         {/* Column headers */}
                                         <div className="flex items-center gap-3 px-5 py-2 text-[10px] font-black uppercase tracking-wide text-white/30">
                                             <span className="w-5 text-center">#</span>
-                                            <span className="flex-1">Jamoa</span>
-                                            <span className="w-7 text-center">O</span>
-                                            <span className="w-7 text-center">G</span>
-                                            <span className="w-7 text-center">M</span>
-                                            <span className="w-9 text-center">Ochko</span>
+                                            <span className="flex-1">{t("stand.colTeam")}</span>
+                                            <span className="w-7 text-center">{t("stand.colP")}</span>
+                                            <span className="w-7 text-center">{t("stand.colW")}</span>
+                                            <span className="w-7 text-center">{t("stand.colL")}</span>
+                                            <span className="w-9 text-center">{t("stand.colPts")}</span>
                                         </div>
                                         {d.teams.map(r => {
                                             const promo = di > 0 && r.rank <= 2;              // yuqori divizionlardagi top-2 ko'tariladi
@@ -100,9 +102,9 @@ export default function StandingsView() {
                             </div>
                         ))}
                         <div className="flex items-center justify-center gap-4 pt-1 text-[11px] text-white/35">
-                            <span className="flex items-center gap-1"><ArrowUp className="h-3 w-3 text-emerald-400" /> ko'tariladi</span>
-                            <span className="flex items-center gap-1"><ArrowDown className="h-3 w-3 text-red-400" /> tushadi</span>
-                            <span className="flex items-center gap-1"><Minus className="h-3 w-3" /> qoladi</span>
+                            <span className="flex items-center gap-1"><ArrowUp className="h-3 w-3 text-emerald-400" /> {t("stand.promo")}</span>
+                            <span className="flex items-center gap-1"><ArrowDown className="h-3 w-3 text-red-400" /> {t("stand.releg")}</span>
+                            <span className="flex items-center gap-1"><Minus className="h-3 w-3" /> {t("stand.stay")}</span>
                         </div>
                     </div>
                 )}
