@@ -15,8 +15,8 @@ interface ReqItem { id: string; type: string; athleteId: string | null; ign: str
 
 const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
-const card = { background: "rgba(10,16,34,0.72)", border: "1px solid rgba(43,62,232,0.20)" };
-const soft = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" };
+const card = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
+const soft = { background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" };
 const ROLES = ["CAPTAIN", "STARTER", "SUB"];
 const roleLabel: Record<string, string> = { CAPTAIN: "Kapitan", STARTER: "Asosiy", SUB: "Zaxira" };
 
@@ -124,11 +124,11 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
         await loadRequests();
     }
 
-    if (loading) return <main className="flex items-center justify-center py-24" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
-    if (!team) return <main className="flex flex-col items-center justify-center py-24 gap-3" style={{ background: BG }}><p className="text-sm text-white/60">{err || "Jamoa topilmadi"}</p><Link href="/esport/teams" className="text-sm font-bold text-[#00CEC8]">Orqaga</Link></main>;
+    if (loading) return <main className="flex items-center justify-center py-24" ><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
+    if (!team) return <main className="flex flex-col items-center justify-center py-24 gap-3" ><p className="text-sm text-white/60">{err || "Jamoa topilmadi"}</p><Link href="/esport/teams" className="text-sm font-bold text-[#00CEC8]">Orqaga</Link></main>;
 
     return (
-        <main className="min-h-full" style={{ background: BG }}>
+        <main className="min-h-full" >
             <div className="mx-auto w-full max-w-3xl px-5 py-8">
                 {/* Header */}
                 <div className="mb-5 flex items-center gap-3">

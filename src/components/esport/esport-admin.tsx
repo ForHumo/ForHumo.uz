@@ -9,8 +9,8 @@ import {
 
 const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
-const card = { background: "rgba(10,16,34,0.72)", border: "1px solid rgba(43,62,232,0.20)" };
-const soft = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" };
+const card = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
+const soft = { background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" };
 
 interface Season { id: string; name: string; active: boolean; gameId: string }
 interface Division { id: string; name: string; tier: number; gameId: string }
@@ -76,9 +76,9 @@ export default function EsportAdmin() {
         return res;
     }
 
-    if (loading) return <main className="flex items-center justify-center py-24" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
+    if (loading) return <main className="flex items-center justify-center py-24" ><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
     if (denied) return (
-        <main className="flex flex-col items-center justify-center py-24 gap-3" style={{ background: BG }}>
+        <main className="flex flex-col items-center justify-center py-24 gap-3" >
             <ShieldAlert className="h-10 w-10 text-white/30" />
             <p className="text-sm font-bold text-white/60">Bu sahifa faqat adminlar uchun</p>
             <Link href="/esport" className="text-sm font-bold text-[#00CEC8]">Orqaga</Link>
@@ -99,7 +99,7 @@ export default function EsportAdmin() {
     ];
 
     return (
-        <main className="min-h-full" style={{ background: BG }}>
+        <main className="min-h-full" >
             <div className="mx-auto w-full max-w-4xl px-5 py-8">
                 <div className="mb-4 flex items-center gap-3">
                     <Link href="/esport" className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}><ArrowLeft className="h-4 w-4 text-white/80" /></Link>

@@ -305,6 +305,26 @@
 .es-glow   { box-shadow: 0 0 28px var(--es-glow); }
 .es-nav    { background: var(--es-nav); border-color: var(--es-nav-bd); }
 
+/* Kunduzgi rejim: eski qorong'i eSport sahifalaridagi oq matnni avtomatik moslash
+   (inline fonlar var(--es-*) ga o'tkazilgan; bu blok className-matnni tuzatadi) */
+html:not(.dark) .es-bg .text-white { color: var(--es-fg) !important; }
+html:not(.dark) .es-bg .text-white\/90,
+html:not(.dark) .es-bg .text-white\/85,
+html:not(.dark) .es-bg .text-white\/80 { color: var(--es-fg) !important; }
+html:not(.dark) .es-bg .text-white\/70,
+html:not(.dark) .es-bg .text-white\/65,
+html:not(.dark) .es-bg .text-white\/60,
+html:not(.dark) .es-bg .text-white\/55,
+html:not(.dark) .es-bg .text-white\/50,
+html:not(.dark) .es-bg .text-white\/45 { color: var(--es-mut) !important; }
+html:not(.dark) .es-bg .text-white\/40,
+html:not(.dark) .es-bg .text-white\/35,
+html:not(.dark) .es-bg .text-white\/30,
+html:not(.dark) .es-bg .text-white\/25,
+html:not(.dark) .es-bg .text-white\/20 { color: var(--es-faint) !important; }
+html:not(.dark) .es-bg input::placeholder,
+html:not(.dark) .es-bg textarea::placeholder { color: var(--es-faint) !important; }
+
 /* ── Nexus app-shell utilities ────────────────────────────────────────────── */
 
 /* Navy-tinted glass — primary surface */

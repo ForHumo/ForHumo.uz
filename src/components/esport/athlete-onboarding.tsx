@@ -12,7 +12,7 @@ interface Athlete { id: string; game: { slug: string; name: string }; ign: strin
 
 const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
-const cardStyle = { background: "rgba(10,16,34,0.72)", border: "1px solid rgba(43,62,232,0.20)" };
+const cardStyle = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
 
 export default function AthleteOnboarding() {
     const router = useRouter();
@@ -77,14 +77,14 @@ export default function AthleteOnboarding() {
 
     if (loading) {
         return (
-            <main className="flex items-center justify-center py-24" style={{ background: BG }}>
+            <main className="flex items-center justify-center py-24" >
                 <Loader2 className="h-7 w-7 animate-spin text-white/40" />
             </main>
         );
     }
 
     return (
-        <main className="min-h-full" style={{ background: BG }}>
+        <main className="min-h-full" >
             <div className="mx-auto w-full max-w-2xl px-5 py-8">
                 {/* Header */}
                 <div className="mb-6 flex items-center gap-3">
@@ -124,7 +124,7 @@ export default function AthleteOnboarding() {
                                 {games.map(g => (
                                     <button key={g.id} onClick={() => setGameId(g.id)}
                                         className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left transition-all"
-                                        style={gameId === g.id ? { background: "rgba(43,62,232,0.22)", border: "1px solid rgba(0,206,200,0.55)" } : { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                                        style={gameId === g.id ? { background: "rgba(43,62,232,0.22)", border: "1px solid rgba(0,206,200,0.55)" } : { background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" }}>
                                         <span className="flex items-center gap-3">
                                             <Trophy className="h-4 w-4" style={{ color: gameId === g.id ? "#00CEC8" : "rgba(255,255,255,0.4)" }} />
                                             <span className="text-sm font-bold text-white">{g.name}</span>
@@ -144,7 +144,7 @@ export default function AthleteOnboarding() {
                         <div className="rounded-3xl p-5" style={cardStyle}>
                             <p className="mb-3 text-xs font-black uppercase tracking-wide text-white/40">Shaxsiy</p>
                             {profileName.hasName ? (
-                                <div className="flex items-center gap-2 rounded-2xl px-4 py-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                                <div className="flex items-center gap-2 rounded-2xl px-4 py-3" style={{ background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" }}>
                                     <IdCard className="h-4 w-4 text-white/40" />
                                     <span className="text-sm font-bold text-white">{profileName.firstName} {profileName.lastName}</span>
                                     <span className="ml-auto text-[11px] text-white/35">Humo ID'dan</span>
@@ -171,12 +171,12 @@ export default function AthleteOnboarding() {
                                 <div ref={roleRef} className="relative">
                                     <button onClick={() => setRoleOpen(o => !o)}
                                         className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left"
-                                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                                        style={{ background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" }}>
                                         <span className={`text-sm font-semibold ${role ? "text-white" : "text-white/35"}`}>{role || "Pozitsiya (ixtiyoriy)"}</span>
                                         <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${roleOpen ? "rotate-180" : ""}`} />
                                     </button>
                                     {roleOpen && (
-                                        <div className="absolute z-10 mt-2 w-full overflow-hidden rounded-2xl py-1" style={{ background: "#0D1430", border: "1px solid rgba(43,62,232,0.35)" }}>
+                                        <div className="absolute z-10 mt-2 w-full overflow-hidden rounded-2xl py-1" style={{ background: "var(--es-card)", border: "1px solid rgba(43,62,232,0.35)" }}>
                                             {roles.map(r => (
                                                 <button key={r} onClick={() => { setRole(r); setRoleOpen(false); }}
                                                     className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold text-white/85 hover:bg-white/5">
@@ -332,12 +332,12 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
                         <Input value={gameServer} onChange={setGameServer} placeholder="Server/Zona" inputMode="numeric" />
                     </div>
                     <div ref={roleRef} className="relative">
-                        <button onClick={() => setRoleOpen(o => !o)} className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                        <button onClick={() => setRoleOpen(o => !o)} className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left" style={{ background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" }}>
                             <span className={`text-sm font-semibold ${role ? "text-white" : "text-white/35"}`}>{role || "Pozitsiya (ixtiyoriy)"}</span>
                             <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${roleOpen ? "rotate-180" : ""}`} />
                         </button>
                         {roleOpen && (
-                            <div className="absolute z-10 mt-2 w-full overflow-hidden rounded-2xl py-1" style={{ background: "#0D1430", border: "1px solid rgba(43,62,232,0.35)" }}>
+                            <div className="absolute z-10 mt-2 w-full overflow-hidden rounded-2xl py-1" style={{ background: "var(--es-card)", border: "1px solid rgba(43,62,232,0.35)" }}>
                                 <button onClick={() => { setRole(""); setRoleOpen(false); }} className="flex w-full px-4 py-2.5 text-left text-sm font-semibold text-white/60 hover:bg-white/5">Yo'q</button>
                                 {roles.map(r => (
                                     <button key={r} onClick={() => { setRole(r); setRoleOpen(false); }} className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold text-white/85 hover:bg-white/5">{r} {role === r && <Check className="h-4 w-4 text-[#00CEC8]" />}</button>
@@ -357,7 +357,7 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
 
 function Row({ label, value }: { label: string; value: string }) {
     return (
-        <div className="flex items-center justify-between rounded-2xl px-4 py-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex items-center justify-between rounded-2xl px-4 py-2.5" style={{ background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" }}>
             <span className="text-xs font-semibold text-white/40">{label}</span>
             <span className="text-sm font-bold text-white">{value}</span>
         </div>
@@ -368,6 +368,6 @@ function Input({ value, onChange, placeholder, inputMode }: { value: string; onC
     return (
         <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} inputMode={inputMode}
             className="w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white outline-none placeholder:text-white/30"
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }} />
+            style={{ background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" }} />
     );
 }

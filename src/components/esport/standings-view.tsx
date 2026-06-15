@@ -9,7 +9,7 @@ interface Division { id: string; name: string; tier: number; teams: Row[] }
 
 const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
-const card = { background: "rgba(10,16,34,0.72)", border: "1px solid rgba(43,62,232,0.20)" };
+const card = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
 
 export default function StandingsView() {
     const [loading, setLoading] = useState(true);
@@ -24,10 +24,10 @@ export default function StandingsView() {
         }).catch(() => setLoading(false));
     }, []);
 
-    if (loading) return <main className="flex items-center justify-center py-24" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
+    if (loading) return <main className="flex items-center justify-center py-24" ><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
 
     return (
-        <main className="min-h-full" style={{ background: BG }}>
+        <main className="min-h-full" >
             <div className="mx-auto w-full max-w-2xl px-5 py-8">
                 {/* Header */}
                 <div className="mb-5 flex items-center gap-3">

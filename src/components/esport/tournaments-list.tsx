@@ -25,7 +25,7 @@ function fmt(iso: string | null): string {
 
 const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
-const card = { background: "rgba(10,16,34,0.72)", border: "1px solid rgba(43,62,232,0.20)" };
+const card = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
 
 const STATUS: Record<string, { label: string; color: string; bg: string }> = {
     UPCOMING: { label: "Tez orada", color: "rgba(255,255,255,0.6)", bg: "rgba(255,255,255,0.06)" },
@@ -46,10 +46,10 @@ export default function TournamentsList() {
         fetch("/api/esport/retro").then(r => r.json()).then(d => setRetros(d.retros || [])).catch(() => { });
     }, []);
 
-    if (loading) return <main className="flex items-center justify-center py-24" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
+    if (loading) return <main className="flex items-center justify-center py-24" ><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
 
     return (
-        <main className="min-h-full" style={{ background: BG }}>
+        <main className="min-h-full" >
             <div className="mx-auto w-full max-w-4xl px-5 py-8">
                 <div className="mb-6 flex items-center gap-3">
                     <Link href="/esport" className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}><ArrowLeft className="h-4 w-4 text-white/80" /></Link>
@@ -150,7 +150,7 @@ function RetroCard({ r }: { r: Retro }) {
                             <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-[#00CEC8]">{stage}</p>
                             <div className="space-y-2">
                                 {r.matches.filter(m => m.stage === stage).map(m => (
-                                    <div key={m.order} className="rounded-2xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                                    <div key={m.order} className="rounded-2xl p-3" style={{ background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" }}>
                                         <div className="flex items-center gap-2">
                                             <span className={`flex-1 truncate text-right text-sm font-bold ${m.winner === m.teamA ? "text-white" : "text-white/45"}`}>{m.teamA}</span>
                                             <span className="shrink-0 rounded-lg px-2 py-0.5 text-xs font-black text-white" style={{ background: "rgba(43,62,232,0.3)" }}>{m.scoreA == null ? "VS" : `${m.scoreA}:${m.scoreB}`}</span>

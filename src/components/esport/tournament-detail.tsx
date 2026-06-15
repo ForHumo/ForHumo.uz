@@ -14,7 +14,7 @@ interface MyTeam { id: string; name: string; tag: string; registered: boolean }
 
 const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
-const card = { background: "rgba(10,16,34,0.72)", border: "1px solid rgba(43,62,232,0.20)" };
+const card = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
 const soft = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" };
 
 function roundName(round: number, total: number): string {
@@ -53,8 +53,8 @@ export default function TournamentDetail({ tournamentId }: { tournamentId: strin
         return r;
     }
 
-    if (loading) return <main className="flex items-center justify-center py-24" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
-    if (!t) return <main className="flex flex-col items-center justify-center py-24 gap-3" style={{ background: BG }}><p className="text-sm text-white/60">{err || "Topilmadi"}</p><Link href="/esport/tournaments" className="text-sm font-bold text-[#00CEC8]">Orqaga</Link></main>;
+    if (loading) return <main className="flex items-center justify-center py-24" ><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
+    if (!t) return <main className="flex flex-col items-center justify-center py-24 gap-3" ><p className="text-sm text-white/60">{err || "Topilmadi"}</p><Link href="/esport/tournaments" className="text-sm font-bold text-[#00CEC8]">Orqaga</Link></main>;
 
     const mainRounds = [...new Set(matches.filter(m => m.bracket === "MAIN").map(m => m.round))].sort((a, b) => a - b);
     const totalRounds = mainRounds.length ? Math.max(...mainRounds) : 0;
@@ -65,7 +65,7 @@ export default function TournamentDetail({ tournamentId }: { tournamentId: strin
     const eligible = myTeams.filter(x => !x.registered);
 
     return (
-        <main className="min-h-full" style={{ background: BG }}>
+        <main className="min-h-full" >
             <div className="mx-auto w-full max-w-3xl px-4 py-8">
                 <div className="mb-4 flex items-center gap-3">
                     <Link href="/esport/tournaments" className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}><ArrowLeft className="h-4 w-4 text-white/80" /></Link>
