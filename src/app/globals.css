@@ -246,16 +246,64 @@
   animation: nx-glow-pulse 2.2s ease-in-out infinite;
 }
 
-/* ── Humo eSport: premium qorong'i-arena sirtlar (tasdiqlangan ranglar) ─────── */
-.es-bg   { background: radial-gradient(ellipse 90% 60% at 50% -5%, #0a1430 0%, #05070f 60%); }
-.es-card { background: rgba(14,22,42,0.72); border: 1px solid rgba(60,120,200,0.22); }
-.es-soft { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.07); }
-.es-fg   { color: #ffffff; }
-.es-mut  { color: rgba(255,255,255,0.45); }
-.es-faint { color: rgba(255,255,255,0.30); }
-.es-accent-text { color: #00d4ff; }
-.es-accent-bg { background: linear-gradient(135deg,#0a6cff,#00d4ff); }
-.es-glow { box-shadow: 0 0 28px rgba(0,150,255,.35); }
+/* ── Humo eSport palitra (logo: ko'k feniks qanoti + chrome H) ────────────────
+   Tri-color: c1 elektr-ko'k · c2 siyan · c3 binafsha-indigo.
+   Kunduzgi (default) + Tungi (.dark) — har biri logoga mos 3 rangdan.            */
+.es-bg {
+  /* — KUNDUZGI (default) — */
+  --es-c1: #0A5CFF;   /* elektr-ko'k */
+  --es-c2: #00B8D4;   /* siyan */
+  --es-c3: #6A4CFF;   /* binafsha-indigo */
+  --es-card: rgba(255,255,255,0.82);
+  --es-card-bd: rgba(10,92,255,0.16);
+  --es-soft: rgba(10,40,90,0.045);
+  --es-soft-bd: rgba(10,40,90,0.09);
+  --es-fg: #0A1430;
+  --es-mut: rgba(16,32,64,0.58);
+  --es-faint: rgba(16,32,64,0.36);
+  --es-nav: rgba(244,248,255,0.62);
+  --es-nav-bd: rgba(10,92,255,0.14);
+  --es-glow: rgba(10,92,255,0.22);
+  color: var(--es-fg);
+  background:
+    radial-gradient(ellipse 70% 48% at 12% -8%, rgba(10,92,255,0.12), transparent 58%),
+    radial-gradient(ellipse 64% 46% at 90% -4%, rgba(106,76,255,0.12), transparent 54%),
+    radial-gradient(ellipse 60% 40% at 50% 8%, rgba(0,184,212,0.08), transparent 60%),
+    linear-gradient(180deg, #EEF3FF 0%, #E6ECFA 100%);
+}
+.dark .es-bg {
+  /* — TUNGI — */
+  --es-c1: #2B8BFF;   /* elektr-ko'k (yorqinroq) */
+  --es-c2: #00E0FF;   /* siyan-neon */
+  --es-c3: #8B6DFF;   /* binafsha-neon */
+  --es-card: rgba(14,22,42,0.72);
+  --es-card-bd: rgba(70,130,220,0.22);
+  --es-soft: rgba(255,255,255,0.04);
+  --es-soft-bd: rgba(255,255,255,0.08);
+  --es-fg: #FFFFFF;
+  --es-mut: rgba(255,255,255,0.48);
+  --es-faint: rgba(255,255,255,0.30);
+  --es-nav: rgba(7,12,28,0.55);
+  --es-nav-bd: rgba(70,130,220,0.18);
+  --es-glow: rgba(0,150,255,0.35);
+  color: var(--es-fg);
+  background:
+    radial-gradient(ellipse 64% 46% at 12% -8%, rgba(43,139,255,0.20), transparent 55%),
+    radial-gradient(ellipse 58% 44% at 90% -4%, rgba(139,109,255,0.18), transparent 52%),
+    radial-gradient(ellipse 80% 56% at 50% -5%, #0A1430 0%, #05070F 62%);
+}
+.es-card   { background: var(--es-card); border: 1px solid var(--es-card-bd); }
+.es-soft   { background: var(--es-soft); border: 1px solid var(--es-soft-bd); }
+.es-bd     { border-color: var(--es-card-bd); }
+.es-fg     { color: var(--es-fg); }
+.es-mut    { color: var(--es-mut); }
+.es-faint  { color: var(--es-faint); }
+.es-accent-text { color: var(--es-c1); }
+.es-accent-bg   { background: linear-gradient(135deg, var(--es-c1), var(--es-c2)); }
+.es-accent-bg3  { background: linear-gradient(120deg, var(--es-c1) 0%, var(--es-c2) 52%, var(--es-c3) 100%); }
+.es-accent-text3 { background: linear-gradient(120deg, var(--es-c1), var(--es-c2) 55%, var(--es-c3)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.es-glow   { box-shadow: 0 0 28px var(--es-glow); }
+.es-nav    { background: var(--es-nav); border-color: var(--es-nav-bd); }
 
 /* ── Nexus app-shell utilities ────────────────────────────────────────────── */
 

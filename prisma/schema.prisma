@@ -354,6 +354,23 @@ model EsTransfer {        // sportchi jamoadan jamoага (ALKH Pay haq)
   @@index([toTeamId])
 }
 
+model EsBroadcast {       // turnir translyatsiyasi (Asosiy 16:9 oyna — Nexus integratsiya)
+  id           String    @id @default(cuid())
+  title        String
+  status       String    @default("SCHEDULED")  // LIVE/SCHEDULED/ENDED
+  streamUrl    String?                           // embed havola (YouTube/Twitch/Nexus)
+  nexusLiveId  String?                           // Nexus jonli efir bog'lanishi
+  posterUrl    String?                           // muqova rasmi
+  tournamentId String?
+  matchId      String?
+  scheduledAt  DateTime?                         // rejalashtirilgan vaqt
+  endedAt      DateTime?
+  viewers      Int       @default(0)
+  createdBy    String                            // admin Humo ID
+  createdAt    DateTime  @default(now())
+  @@index([status, scheduledAt])
+}
+
 // ── Humo Market ──────────────────────────────────────────────────────────────
 
 model MarketBrand {
