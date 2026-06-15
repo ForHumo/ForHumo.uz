@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useRouter } from "@/i18n/routing";
 import {
     Gamepad2, Trophy, Lock, ChevronDown, Check, ShieldCheck,
-    ArrowLeft, Loader2, AlertTriangle, IdCard, Pencil, Camera, X,
+    ArrowLeft, Loader2, AlertTriangle, IdCard, Pencil, Camera, X, Trash2,
 } from "lucide-react";
 
 interface Game { id: string; slug: string; name: string; teamSize: number }
@@ -108,7 +108,7 @@ export default function AthleteOnboarding() {
                         <Link href="/id" className="mt-4 inline-flex rounded-2xl px-5 py-2.5 text-sm font-bold text-white" style={{ background: ACCENT }}>Humo ID olish</Link>
                     </div>
                 ) : athlete ? (
-                    <AthleteCard athlete={athlete} roles={roles} onUpdated={setAthlete} onContinue={() => router.push("/esport")} />
+                    <AthleteCard athlete={athlete} roles={roles} onUpdated={setAthlete} onDeleted={() => setAthlete(null)} onContinue={() => router.push("/esport")} />
                 ) : (
                     /* Onboarding forma */
                     <div className="space-y-5">
@@ -217,10 +217,20 @@ export default function AthleteOnboarding() {
     );
 }
 
-function AthleteCard({ athlete, roles, onUpdated, onContinue }: {
-    athlete: Athlete; roles: string[]; onUpdated: (a: Athlete) => void; onContinue: () => void;
+function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
+    athlete: Athlete; roles: string[]; onUpdated: (a: Athlete) => void; onDeleted: () => void; onContinue: () => void;
 }) {
     const [editing, setEditing] = useState(false);
+    const [confirmDel, setConfirmDel] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    async function deleteProfile() {
+        setDeleting(true); setErr("");
+        const r = await fetch("/api/esport/athlete", { method: "DELETE" }).then(x => x.json()).catch(() => ({ error: "Tarmoq xatosi" }));
+        setDeleting(false);
+        if (r.error) { setConfirmDel(false); return setErr(r.error); }
+        onDeleted();
+    }
     const [ign, setIgn] = useState(athlete.ign);
     const [gameUserId, setGameUserId] = useState(athlete.gameUserId);
     const [gameServer, setGameServer] = useState(athlete.gameServer || "");
@@ -300,6 +310,18 @@ function AthleteCard({ athlete, roles, onUpdated, onContinue }: {
                         <Link href={`/esport/a/${athlete.id}`} className="flex-1 rounded-2xl py-3 text-center text-sm font-bold text-white/85" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>Ommaviy karta</Link>
                         <button onClick={onContinue} className="flex-1 rounded-2xl py-3 text-sm font-bold text-white" style={{ background: ACCENT }}>Davom etish</button>
                     </div>
+                    {/* Kibersport profilini o'chirish (Humo ID emas) */}
+                    {!confirmDel ? (
+                        <button onClick={() => setConfirmDel(true)} className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-bold text-red-300/70" style={{ background: "rgba(255,60,60,0.06)" }}><Trash2 className="h-3.5 w-3.5" /> Kibersport profilini o'chirish</button>
+                    ) : (
+                        <div className="mt-3 rounded-2xl p-3" style={{ background: "rgba(255,60,60,0.08)", border: "1px solid rgba(255,60,60,0.25)" }}>
+                            <p className="text-xs font-semibold text-red-200">Faqat eSport profili o'chiriladi — Humo ID hisobingiz qoladi. Davom etasizmi?</p>
+                            <div className="mt-2 flex gap-2">
+                                <button onClick={() => setConfirmDel(false)} className="flex-1 rounded-xl py-2 text-xs font-bold text-white/70" style={{ background: "rgba(255,255,255,0.06)" }}>Bekor</button>
+                                <button onClick={deleteProfile} disabled={deleting} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-black text-white disabled:opacity-60" style={{ background: "#E11D48" }}>{deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />} O'chirish</button>
+                            </div>
+                        </div>
+                    )}
                 </>
             ) : (
                 <div className="mt-5 space-y-2.5">

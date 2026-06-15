@@ -361,6 +361,28 @@ model EsTransfer {        // sportchi jamoadan jamoага (ALKH Pay haq)
   @@index([toTeamId])
 }
 
+model EsRequest {         // a'zolik kelishuvi: chiqish/chiqarish/jamoa o'chirish (ikki tomonlama rozilik)
+  id          String   @id @default(cuid())
+  type        String                          // LEAVE (sportchi chiqmoqchi) / KICK (jamoa chiqarmoqchi) / TEAM_DELETE
+  teamId      String
+  athleteId   String?                         // LEAVE/KICK — tegishli sportchi
+  initiatedBy String                          // profileId
+  status      String   @default("PENDING")    // PENDING/APPROVED/REJECTED/CANCELLED
+  createdAt   DateTime @default(now())
+  approvals   EsRequestApproval[]
+  @@index([teamId, status])
+  @@index([athleteId, status])
+}
+
+model EsRequestApproval {  // TEAM_DELETE uchun a'zo ovozlari (100% rozilik kerak)
+  id        String   @id @default(cuid())
+  requestId String
+  athleteId String
+  createdAt DateTime @default(now())
+  request   EsRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  @@unique([requestId, athleteId])
+}
+
 model EsBroadcast {       // turnir translyatsiyasi (Asosiy 16:9 oyna — Nexus integratsiya)
   id           String    @id @default(cuid())
   title        String

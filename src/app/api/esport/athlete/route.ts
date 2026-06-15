@@ -105,6 +105,24 @@ export async function POST(req: Request) {
     });
 }
 
+// DELETE /api/esport/athlete — FAQAT eSport profilini o'chiradi (Humo ID emas)
+export async function DELETE() {
+    const me = await getMyProfile();
+    if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
+    const athlete = await prisma.esAthlete.findUnique({ where: { humoProfileId: me.id }, select: { id: true } });
+    if (!athlete) return NextResponse.json({ error: "Sportchi profili yo'q" }, { status: 404 });
+
+    // Jamoada bo'lsa — avval chiqishi kerak
+    const member = await prisma.esRosterMember.findUnique({ where: { athleteId: athlete.id }, select: { id: true } });
+    if (member) return NextResponse.json({ error: "Avval jamoadan chiqing" }, { status: 400 });
+    // Jamoa egasi bo'lsa — avval jamoani hal qilsin
+    const owns = await prisma.esTeam.count({ where: { ownerId: me.id } });
+    if (owns > 0) return NextResponse.json({ error: "Avval jamoangizni o'chiring yoki egalikni o'tkazing" }, { status: 400 });
+
+    await prisma.esAthlete.delete({ where: { id: athlete.id } }); // cascade: a'zolik/transfer/arizalar
+    return NextResponse.json({ ok: true });
+}
+
 // PATCH /api/esport/athlete — sportchi ma'lumotini tahrirlash (o'yin O'ZGARMAYDI)
 export async function PATCH(req: Request) {
     const me = await getMyProfile();

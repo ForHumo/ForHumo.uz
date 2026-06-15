@@ -11,6 +11,7 @@ interface Member { athleteId: string; role: string; ign: string; gameUserId: str
 interface Roster { id: string; game: { slug: string; name: string; teamSize: number }; rating: number; members: Member[] }
 interface Team { id: string; name: string; tag: string; logo: string | null; bio: string | null; isOwner: boolean; amIMember: boolean; myAthleteId: string | null; pendingRequests: number; rosters: Roster[] }
 interface JoinReq { id: string; athleteId: string; ign: string; position: string | null; game: string; name: string; username: string | null; image: string | null }
+interface ReqItem { id: string; type: string; athleteId: string | null; ign: string | null; approvals: string[]; createdAt: string }
 
 const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
@@ -61,12 +62,17 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
         setEditOpen(false); await load();
     }
 
+    const [requests, setRequests] = useState<ReqItem[]>([]);
     const load = useCallback(async () => {
         const d = await fetch(`/api/esport/teams/${teamId}`).then(r => r.json()).catch(() => ({}));
         if (d.error) { setErr(d.error); setLoading(false); return; }
         setTeam(d.team); setLoading(false);
     }, [teamId]);
-    useEffect(() => { load(); }, [load]);
+    const loadRequests = useCallback(async () => {
+        const d = await fetch(`/api/esport/teams/${teamId}/requests`).then(r => r.json()).catch(() => ({}));
+        setRequests(d.requests || []);
+    }, [teamId]);
+    useEffect(() => { load(); loadRequests(); }, [load, loadRequests]);
 
     async function genCode() {
         setBusy(true);
@@ -86,9 +92,10 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
         await fetch(`/api/esport/teams/${teamId}/members`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ athleteId, role }) });
         setSel(null); await load();
     }
+    // Chiqarish — endi sportchi roziligini so'raydi (darhol chiqarmaydi)
     async function kick(athleteId: string) {
-        await fetch(`/api/esport/teams/${teamId}/members`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ athleteId }) });
-        setSel(null); await load();
+        const r = await fetch(`/api/esport/teams/${teamId}/requests`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "KICK", athleteId }) }).then(x => x.json()).catch(() => ({ error: "Xato" }));
+        setSel(null); setErr(r.message || r.error || ""); await loadRequests();
     }
     async function joinRequest() {
         setBusy(true);
@@ -96,14 +103,25 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
         setBusy(false);
         if (res.error) setErr(res.error); else setErr("Ariza yuborildi");
     }
+    // Chiqish — jamoa egasi roziligini so'raydi
     async function leave() {
-        if (!team?.myAthleteId) return;
-        await fetch(`/api/esport/teams/${teamId}/members`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ athleteId: team.myAthleteId }) });
-        router.push("/esport/teams");
+        const r = await fetch(`/api/esport/teams/${teamId}/requests`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "LEAVE" }) }).then(x => x.json()).catch(() => ({ error: "Xato" }));
+        setErr(r.message || r.error || ""); await loadRequests();
     }
+    // O'chirish — yolg'iz bo'lsa darhol, a'zolar bo'lsa 100% rozilik so'raydi
     async function del() {
-        await fetch(`/api/esport/teams/${teamId}`, { method: "DELETE" });
-        router.push("/esport/teams");
+        const r = await fetch(`/api/esport/teams/${teamId}/requests`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "TEAM_DELETE" }) }).then(x => x.json()).catch(() => ({ error: "Xato" }));
+        if (r.deleted) { router.push("/esport/teams"); return; }
+        setErr(r.message || r.error || ""); await loadRequests();
+    }
+    async function respondReq(reqId: string, action: "approve" | "reject") {
+        const r = await fetch(`/api/esport/requests/${reqId}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) }).then(x => x.json()).catch(() => ({ error: "Xato" }));
+        if (r.deleted) { router.push("/esport/teams"); return; }
+        setErr(r.message || r.error || ""); await loadRequests(); await load();
+    }
+    async function cancelReq(reqId: string) {
+        await fetch(`/api/esport/requests/${reqId}`, { method: "DELETE" });
+        await loadRequests();
     }
 
     if (loading) return <main className="flex items-center justify-center py-24" style={{ background: BG }}><Loader2 className="h-7 w-7 animate-spin text-white/40" /></main>;
@@ -153,6 +171,33 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                         </div>
                     )}
                 </div>
+
+                {/* A'zolik so'rovlari (chiqish/chiqarish/o'chirish kelishuvi) */}
+                {requests.length > 0 && (
+                    <div className="mb-5 space-y-2">
+                        {requests.map(rq => {
+                            const mine = team.myAthleteId;
+                            if (rq.type === "LEAVE") {
+                                if (team.isOwner) return <ReqRow key={rq.id} text={`${rq.ign} jamoadan chiqishni so'rayapti`} onApprove={() => respondReq(rq.id, "approve")} onReject={() => respondReq(rq.id, "reject")} />;
+                                if (rq.athleteId === mine) return <ReqRow key={rq.id} text="Chiqish so'rovingiz egaga yuborildi" onCancel={() => cancelReq(rq.id)} />;
+                                return null;
+                            }
+                            if (rq.type === "KICK") {
+                                if (rq.athleteId === mine) return <ReqRow key={rq.id} text="Jamoa sizni chiqarmoqchi — rozimisiz?" onApprove={() => respondReq(rq.id, "approve")} onReject={() => respondReq(rq.id, "reject")} />;
+                                if (team.isOwner) return <ReqRow key={rq.id} text={`${rq.ign} ni chiqarish so'rovi yuborildi`} onCancel={() => cancelReq(rq.id)} />;
+                                return null;
+                            }
+                            if (rq.type === "TEAM_DELETE") {
+                                const approved = mine ? rq.approvals.includes(mine) : false;
+                                if (team.isOwner) return <ReqRow key={rq.id} text={`Jamoani o'chirish: ${rq.approvals.length} a'zo rozi bo'ldi`} onCancel={() => cancelReq(rq.id)} />;
+                                if (mine && !approved) return <ReqRow key={rq.id} text="Jamoani o'chirishga rozimisiz?" onApprove={() => respondReq(rq.id, "approve")} onReject={() => respondReq(rq.id, "reject")} />;
+                                if (approved) return <ReqRow key={rq.id} text="Jamoani o'chirishga rozilik berdingiz" />;
+                                return null;
+                            }
+                            return null;
+                        })}
+                    </div>
+                )}
 
                 {/* Owner actions */}
                 {team.isOwner && (
@@ -230,7 +275,7 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                 {/* Sportchi amallari */}
                 {!team.isOwner && team.myAthleteId && (
                     team.amIMember ? (
-                        <button onClick={leave} className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-red-300" style={{ background: "rgba(255,60,60,0.10)", border: "1px solid rgba(255,60,60,0.25)" }}><LogOut className="h-4 w-4" /> Jamoadan chiqish</button>
+                        <button onClick={leave} className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-red-300" style={{ background: "rgba(255,60,60,0.10)", border: "1px solid rgba(255,60,60,0.25)" }}><LogOut className="h-4 w-4" /> Jamoadan chiqish (so'rov)</button>
                     ) : (
                         <button onClick={joinRequest} disabled={busy} className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white" style={{ background: ACCENT }}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />} Ariza berish</button>
                     )
@@ -243,6 +288,17 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                 )}
             </div>
         </main>
+    );
+}
+
+function ReqRow({ text, onApprove, onReject, onCancel }: { text: string; onApprove?: () => void; onReject?: () => void; onCancel?: () => void }) {
+    return (
+        <div className="flex items-center gap-2 rounded-2xl p-3" style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.28)" }}>
+            <span className="min-w-0 flex-1 text-xs font-semibold text-white/80">{text}</span>
+            {onApprove && <button onClick={onApprove} className="flex h-8 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white" style={{ background: ACCENT }}><Check className="h-3.5 w-3.5" /> Roziman</button>}
+            {onReject && <button onClick={onReject} className="flex h-8 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white/70" style={soft}><X className="h-3.5 w-3.5" /> Rad</button>}
+            {onCancel && <button onClick={onCancel} className="flex h-8 items-center gap-1 rounded-lg px-3 text-xs font-bold text-white/60" style={soft}>Bekor</button>}
+        </div>
     );
 }
 
