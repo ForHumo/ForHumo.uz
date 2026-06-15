@@ -64,6 +64,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         });
         const approvals = await prisma.esRequestApproval.count({ where: { requestId: id } });
         if (approvals >= others.length) {
+            await prisma.esTransfer.updateMany({ where: { OR: [{ toTeamId: r.teamId }, { fromTeamId: r.teamId }], status: { in: ["PLAYER_PENDING", "AWAIT_FEE", "CLUB_PENDING"] } }, data: { status: "CANCELLED" } });
             await prisma.esTeam.delete({ where: { id: r.teamId } }); // cascade: rosterlar/a'zolar/so'rovlar
             return NextResponse.json({ ok: true, deleted: true, message: "Barcha rozi — jamoa o'chirildi" });
         }

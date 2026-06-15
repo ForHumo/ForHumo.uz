@@ -34,6 +34,11 @@ export async function POST(req: Request) {
     const dup = await prisma.esTransfer.findFirst({ where: { athleteId, toTeamId, status: { in: OPEN } }, select: { id: true } });
     if (dup) return NextResponse.json({ error: "Bu sportchiga ochiq taklif bor" }, { status: 409 });
 
+    // Spam himoyasi: bitta jamoa 10 daqiqada 20 tadan ko'p taklif yubora olmaydi
+    const since = new Date(Date.now() - 10 * 60 * 1000);
+    const recentCount = await prisma.esTransfer.count({ where: { toTeamId, createdAt: { gt: since } } });
+    if (recentCount >= 20) return NextResponse.json({ error: "Juda ko'p taklif yuborildi — biroz kuting" }, { status: 429 });
+
     const salary = b.salary != null && b.salary !== "" ? Math.max(0, Math.round(Number(b.salary))) : null;
     const contractMonths = b.contractMonths ? Math.max(1, Math.round(Number(b.contractMonths))) : null;
     const conditions = typeof b.conditions === "string" && b.conditions.trim() ? b.conditions.trim().slice(0, 300) : null;

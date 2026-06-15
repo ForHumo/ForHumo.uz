@@ -164,6 +164,7 @@ model EsTeam {            // tashkilot — o'yinга bog'liq EMAS
   rosters      EsRoster[]
   invites      EsTeamInvite[]
   joinRequests EsJoinRequest[]
+  requests     EsRequest[]
   @@index([ownerId])
 }
 
@@ -432,6 +433,7 @@ model EsRequest {         // a'zolik kelishuvi: chiqish/chiqarish/jamoa o'chiris
   initiatedBy String                          // profileId
   status      String   @default("PENDING")    // PENDING/APPROVED/REJECTED/CANCELLED
   createdAt   DateTime @default(now())
+  team        EsTeam   @relation(fields: [teamId], references: [id], onDelete: Cascade)
   approvals   EsRequestApproval[]
   @@index([teamId, status])
   @@index([athleteId, status])

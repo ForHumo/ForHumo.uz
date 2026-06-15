@@ -99,7 +99,9 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     const { id } = await params;
     const me = await getMyProfile();
     if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
-    const res = await prisma.esTeam.deleteMany({ where: { id, ownerId: me.id } });
-    if (!res.count) return NextResponse.json({ error: "Faqat egasi" }, { status: 403 });
+    const owns = await prisma.esTeam.findFirst({ where: { id, ownerId: me.id }, select: { id: true } });
+    if (!owns) return NextResponse.json({ error: "Faqat egasi" }, { status: 403 });
+    await prisma.esTransfer.updateMany({ where: { OR: [{ toTeamId: id }, { fromTeamId: id }], status: { in: ["PLAYER_PENDING", "AWAIT_FEE", "CLUB_PENDING"] } }, data: { status: "CANCELLED" } });
+    await prisma.esTeam.delete({ where: { id } }); // EsRequest/roster cascade bilan o'chadi
     return NextResponse.json({ ok: true });
 }

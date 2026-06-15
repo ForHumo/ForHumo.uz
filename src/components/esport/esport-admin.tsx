@@ -352,14 +352,32 @@ function TournamentTab({ gameId, seasons, divisions, seasonId, api, busy }: { ga
                 </div>
             </div>
             <div className="space-y-2">
-                {list.map(t => (
-                    <Link key={t.id} href={`/esport/tournaments/${t.id}`} className="flex items-center gap-2 rounded-2xl p-3" style={card}>
-                        <Trophy className="h-4 w-4 text-[#FFB020]" />
-                        <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-white">{t.name}</p><p className="text-[11px] text-white/40">{t.status} · {t.teams}{t.maxTeams > 0 ? `/${t.maxTeams}` : ""} jamoa</p></div>
-                        <ChevronRight className="h-4 w-4 text-white/25" />
-                    </Link>
-                ))}
+                {list.map(t => <TourAdminRow key={t.id} t={t} api={api} reload={load} busy={busy} />)}
             </div>
+        </div>
+    );
+}
+
+function TourAdminRow({ t, api, reload, busy }: { t: TournamentLite; api: ApiFn; reload: () => void; busy: boolean }) {
+    const [prize, setPrize] = useState(t.prizePool != null ? String(t.prizePool) : "");
+    const [open, setOpen] = useState(false);
+    return (
+        <div className="rounded-2xl p-3" style={card}>
+            <div className="flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-[#FFB020]" />
+                <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-white">{t.name}</p>
+                    <p className="text-[11px] text-white/40">{t.status} · {t.teams}{t.maxTeams > 0 ? `/${t.maxTeams}` : ""} jamoa · {t.prizePool ? `${t.prizePool.toLocaleString()} so'm` : "fondsiz"}</p>
+                </div>
+                <button onClick={() => setOpen(o => !o)} className="rounded-lg px-2.5 py-1 text-[11px] font-bold text-white" style={{ background: "rgba(43,62,232,0.3)" }}>Fond</button>
+                <Link href={`/esport/tournaments/${t.id}`} className="flex h-7 w-7 items-center justify-center rounded-lg" style={soft}><ChevronRight className="h-4 w-4 text-white/40" /></Link>
+            </div>
+            {open && (
+                <div className="mt-2 flex items-center gap-2">
+                    <Inp value={prize} onChange={setPrize} placeholder="Yutuq fondi (so'm)" />
+                    <Btn busy={busy} onClick={async () => { await api(`/api/esport/admin/tournaments/${t.id}`, "PATCH", { prizePool: prize ? Number(prize) : 0 }); setOpen(false); reload(); }}><Check className="h-4 w-4" /></Btn>
+                </div>
+            )}
         </div>
     );
 }

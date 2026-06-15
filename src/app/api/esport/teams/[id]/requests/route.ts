@@ -76,7 +76,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         if (!isOwner) return NextResponse.json({ error: "Faqat jamoa egasi" }, { status: 403 });
         const others = members.filter(m => m.humoProfileId !== team.ownerId);
         if (others.length === 0) {
-            await prisma.esTeam.delete({ where: { id } });
+            await prisma.esTransfer.updateMany({ where: { OR: [{ toTeamId: id }, { fromTeamId: id }], status: { in: ["PLAYER_PENDING", "AWAIT_FEE", "CLUB_PENDING"] } }, data: { status: "CANCELLED" } });
+            await prisma.esTeam.delete({ where: { id } }); // EsRequest cascade bilan o'chadi
             return NextResponse.json({ ok: true, deleted: true, message: "Jamoa o'chirildi" });
         }
         if (await ensureNoDup("TEAM_DELETE")) return NextResponse.json({ error: "O'chirish so'rovi allaqachon faol" }, { status: 409 });
