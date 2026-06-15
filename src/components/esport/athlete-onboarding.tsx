@@ -6,6 +6,7 @@ import {
     Gamepad2, Trophy, Lock, ChevronDown, Check, ShieldCheck,
     ArrowLeft, Loader2, AlertTriangle, IdCard, Pencil, Camera, X, Trash2,
 } from "lucide-react";
+import { useEsT } from "@/lib/esport-i18n";
 
 interface Game { id: string; slug: string; name: string; teamSize: number }
 interface Athlete { id: string; game: { slug: string; name: string }; ign: string; gameUserId: string; gameServer: string | null; role: string | null; image?: string | null }
@@ -15,6 +16,7 @@ const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
 const cardStyle = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
 
 export default function AthleteOnboarding() {
+    const t = useEsT();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [hasHumoId, setHasHumoId] = useState(true);
@@ -60,11 +62,11 @@ export default function AthleteOnboarding() {
 
     async function submit() {
         setErr("");
-        if (!gameId) return setErr("O'yinni tanlang");
-        if (!profileName.hasName && (!firstName.trim() || !lastName.trim())) return setErr("Ism va familiya majburiy");
-        if (!ign.trim()) return setErr("MLBB nickname majburiy");
-        if (!gameUserId.trim()) return setErr("In-game ID majburiy");
-        if (!agree) return setErr("O'yin tanlovi o'zgarmasligini tasdiqlang");
+        if (!gameId) return setErr(t("ob.errGame"));
+        if (!profileName.hasName && (!firstName.trim() || !lastName.trim())) return setErr(t("ob.errName"));
+        if (!ign.trim()) return setErr(t("ob.errNick"));
+        if (!gameUserId.trim()) return setErr(t("ob.errId"));
+        if (!agree) return setErr(t("ob.errConsent"));
         setSubmitting(true);
         const res = await fetch("/api/esport/athlete", {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -103,9 +105,9 @@ export default function AthleteOnboarding() {
                 {!hasHumoId ? (
                     <div className="rounded-3xl p-6 text-center" style={cardStyle}>
                         <IdCard className="mx-auto h-10 w-10 text-white/40" />
-                        <p className="mt-3 text-sm font-bold text-white">Sportchi bo'lish uchun Humo ID kerak</p>
-                        <p className="mt-1 text-xs text-white/50">Har bir sportchi — to'liq Humo ID egasi.</p>
-                        <Link href="/id" className="mt-4 inline-flex rounded-2xl px-5 py-2.5 text-sm font-bold text-white" style={{ background: ACCENT }}>Humo ID olish</Link>
+                        <p className="mt-3 text-sm font-bold text-white">{t("ob.needId")}</p>
+                        <p className="mt-1 text-xs text-white/50">{t("ob.needIdSub")}</p>
+                        <Link href="/id" className="mt-4 inline-flex rounded-2xl px-5 py-2.5 text-sm font-bold text-white" style={{ background: ACCENT }}>{t("ob.getId")}</Link>
                     </div>
                 ) : athlete ? (
                     <AthleteCard athlete={athlete} roles={roles} onUpdated={setAthlete} onDeleted={() => setAthlete(null)} onContinue={() => router.push("/esport")} />
@@ -113,13 +115,13 @@ export default function AthleteOnboarding() {
                     /* Onboarding forma */
                     <div className="space-y-5">
                         <div className="rounded-3xl p-5" style={cardStyle}>
-                            <p className="text-base font-black text-white">Sportchi bo'lish</p>
-                            <p className="mt-1 text-xs text-white/50">Turnir va divizionlarda raqobatlashish uchun profil yarating.</p>
+                            <p className="text-base font-black text-white">{t("ob.becomeBtn")}</p>
+                            <p className="mt-1 text-xs text-white/50">{t("ob.becomeSub")}</p>
                         </div>
 
                         {/* O'yin tanlash */}
                         <div className="rounded-3xl p-5" style={cardStyle}>
-                            <p className="mb-3 text-xs font-black uppercase tracking-wide text-white/40">O'yin</p>
+                            <p className="mb-3 text-xs font-black uppercase tracking-wide text-white/40">{t("ob.game")}</p>
                             <div className="space-y-2">
                                 {games.map(g => (
                                     <button key={g.id} onClick={() => setGameId(g.id)}
@@ -136,35 +138,35 @@ export default function AthleteOnboarding() {
                             </div>
                             <div className="mt-3 flex items-start gap-2 rounded-2xl px-3 py-2.5" style={{ background: "rgba(255,176,32,0.08)", border: "1px solid rgba(255,176,32,0.25)" }}>
                                 <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FFB020]" />
-                                <p className="text-[11px] font-semibold leading-snug text-[#FFB020]">O'yin BIR MARTA tanlanadi va keyin o'zgartirib bo'lmaydi. Sportchi bitta o'yinga ixtisoslashadi.</p>
+                                <p className="text-[11px] font-semibold leading-snug text-[#FFB020]">{t("ob.lock")}</p>
                             </div>
                         </div>
 
                         {/* Ism / familiya */}
                         <div className="rounded-3xl p-5" style={cardStyle}>
-                            <p className="mb-3 text-xs font-black uppercase tracking-wide text-white/40">Shaxsiy</p>
+                            <p className="mb-3 text-xs font-black uppercase tracking-wide text-white/40">{t("ob.personal")}</p>
                             {profileName.hasName ? (
                                 <div className="flex items-center gap-2 rounded-2xl px-4 py-3" style={{ background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" }}>
                                     <IdCard className="h-4 w-4 text-white/40" />
                                     <span className="text-sm font-bold text-white">{profileName.firstName} {profileName.lastName}</span>
-                                    <span className="ml-auto text-[11px] text-white/35">Humo ID'dan</span>
+                                    <span className="ml-auto text-[11px] text-white/35">{t("ob.fromId")}</span>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 gap-2">
-                                    <Input value={firstName} onChange={setFirstName} placeholder="Ism" />
-                                    <Input value={lastName} onChange={setLastName} placeholder="Familiya" />
+                                    <Input value={firstName} onChange={setFirstName} placeholder={t("ob.firstName")} />
+                                    <Input value={lastName} onChange={setLastName} placeholder={t("ob.lastName")} />
                                 </div>
                             )}
                         </div>
 
                         {/* O'yin ma'lumotlari */}
                         <div className="rounded-3xl p-5" style={cardStyle}>
-                            <p className="mb-3 text-xs font-black uppercase tracking-wide text-white/40">MLBB ma'lumotlari</p>
+                            <p className="mb-3 text-xs font-black uppercase tracking-wide text-white/40">{t("ob.mlbbInfo")}</p>
                             <div className="space-y-2.5">
-                                <Input value={ign} onChange={setIgn} placeholder="MLBB nickname (majburiy)" />
+                                <Input value={ign} onChange={setIgn} placeholder={t("ob.nickReq")} />
                                 <div className="grid grid-cols-2 gap-2">
                                     <Input value={gameUserId} onChange={setGameUserId} placeholder="In-game ID" inputMode="numeric" />
-                                    <Input value={gameServer} onChange={setGameServer} placeholder="Server/Zona" inputMode="numeric" />
+                                    <Input value={gameServer} onChange={setGameServer} placeholder={t("ob.server")} inputMode="numeric" />
                                 </div>
 
                                 {/* Pozitsiya — styled dropdown (native select EMAS) */}
@@ -172,7 +174,7 @@ export default function AthleteOnboarding() {
                                     <button onClick={() => setRoleOpen(o => !o)}
                                         className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left"
                                         style={{ background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" }}>
-                                        <span className={`text-sm font-semibold ${role ? "text-white" : "text-white/35"}`}>{role || "Pozitsiya (ixtiyoriy)"}</span>
+                                        <span className={`text-sm font-semibold ${role ? "text-white" : "text-white/35"}`}>{role || t("ob.positionOpt")}</span>
                                         <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${roleOpen ? "rotate-180" : ""}`} />
                                     </button>
                                     {roleOpen && (
@@ -195,7 +197,7 @@ export default function AthleteOnboarding() {
                                 style={agree ? { background: ACCENT } : { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.2)" }}>
                                 {agree && <Check className="h-3.5 w-3.5 text-white" />}
                             </button>
-                            <span className="text-xs font-semibold leading-snug text-white/70">O'yin tanlovim doimiy ekanini va keyin o'zgartirib bo'lmasligini tushunaman.</span>
+                            <span className="text-xs font-semibold leading-snug text-white/70">{t("ob.consent")}</span>
                         </label>
 
                         {err && (
@@ -208,7 +210,7 @@ export default function AthleteOnboarding() {
                         <button onClick={submit} disabled={submitting}
                             className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-black text-white disabled:opacity-60" style={{ background: ACCENT }}>
                             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-                            Sportchi bo'lish
+                            {t("ob.becomeBtn")}
                         </button>
                     </div>
                 )}
@@ -220,6 +222,7 @@ export default function AthleteOnboarding() {
 function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
     athlete: Athlete; roles: string[]; onUpdated: (a: Athlete) => void; onDeleted: () => void; onContinue: () => void;
 }) {
+    const t = useEsT();
     const [editing, setEditing] = useState(false);
     const [confirmDel, setConfirmDel] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -259,8 +262,8 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
 
     async function save() {
         setErr("");
-        if (!ign.trim()) return setErr("Nickname majburiy");
-        if (!gameUserId.trim()) return setErr("In-game ID majburiy");
+        if (!ign.trim()) return setErr(t("ob.errNick"));
+        if (!gameUserId.trim()) return setErr(t("ob.errId"));
         setSaving(true);
         const r = await fetch("/api/esport/athlete", {
             method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -292,7 +295,7 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
                 </div>
                 {!editing && (
                     <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-white/85" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                        <Pencil className="h-3.5 w-3.5" /> Tahrirlash
+                        <Pencil className="h-3.5 w-3.5" /> {t("ob.edit")}
                     </button>
                 )}
             </div>
@@ -302,43 +305,43 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
             {!editing ? (
                 <>
                     <div className="mt-5 space-y-2.5">
-                        <Row label="Nickname" value={athlete.ign} />
-                        <Row label="In-game ID" value={athlete.gameServer ? `${athlete.gameUserId} (${athlete.gameServer})` : athlete.gameUserId} />
-                        {athlete.role && <Row label="Pozitsiya" value={athlete.role} />}
+                        <Row label={t("ob.nick")} value={athlete.ign} />
+                        <Row label={t("ap.ingameId")} value={athlete.gameServer ? `${athlete.gameUserId} (${athlete.gameServer})` : athlete.gameUserId} />
+                        {athlete.role && <Row label={t("ob.position")} value={athlete.role} />}
                     </div>
                     <div className="mt-6 flex gap-2">
-                        <Link href={`/esport/a/${athlete.id}`} className="flex-1 rounded-2xl py-3 text-center text-sm font-bold text-white/85" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>Ommaviy karta</Link>
-                        <button onClick={onContinue} className="flex-1 rounded-2xl py-3 text-sm font-bold text-white" style={{ background: ACCENT }}>Davom etish</button>
+                        <Link href={`/esport/a/${athlete.id}`} className="flex-1 rounded-2xl py-3 text-center text-sm font-bold text-white/85" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>{t("ob.publicCard")}</Link>
+                        <button onClick={onContinue} className="flex-1 rounded-2xl py-3 text-sm font-bold text-white" style={{ background: ACCENT }}>{t("ob.continue")}</button>
                     </div>
                     {/* Kibersport profilini o'chirish (Humo ID emas) */}
                     {!confirmDel ? (
-                        <button onClick={() => setConfirmDel(true)} className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-bold text-red-300/70" style={{ background: "rgba(255,60,60,0.06)" }}><Trash2 className="h-3.5 w-3.5" /> Kibersport profilini o'chirish</button>
+                        <button onClick={() => setConfirmDel(true)} className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-bold text-red-300/70" style={{ background: "rgba(255,60,60,0.06)" }}><Trash2 className="h-3.5 w-3.5" /> {t("ob.delProfile")}</button>
                     ) : (
                         <div className="mt-3 rounded-2xl p-3" style={{ background: "rgba(255,60,60,0.08)", border: "1px solid rgba(255,60,60,0.25)" }}>
-                            <p className="text-xs font-semibold text-red-200">Faqat eSport profili o'chiriladi — Humo ID hisobingiz qoladi. Davom etasizmi?</p>
+                            <p className="text-xs font-semibold text-red-200">{t("ob.delConfirm")}</p>
                             <div className="mt-2 flex gap-2">
-                                <button onClick={() => setConfirmDel(false)} className="flex-1 rounded-xl py-2 text-xs font-bold text-white/70" style={{ background: "rgba(255,255,255,0.06)" }}>Bekor</button>
-                                <button onClick={deleteProfile} disabled={deleting} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-black text-white disabled:opacity-60" style={{ background: "#E11D48" }}>{deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />} O'chirish</button>
+                                <button onClick={() => setConfirmDel(false)} className="flex-1 rounded-xl py-2 text-xs font-bold text-white/70" style={{ background: "rgba(255,255,255,0.06)" }}>{t("ob.cancel")}</button>
+                                <button onClick={deleteProfile} disabled={deleting} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-black text-white disabled:opacity-60" style={{ background: "#E11D48" }}>{deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />} {t("ob.delBtn")}</button>
                             </div>
                         </div>
                     )}
                 </>
             ) : (
                 <div className="mt-5 space-y-2.5">
-                    <p className="text-[11px] font-bold uppercase text-white/35">Rasm Humo ID'dan olinadi — yuqoridagi kamera orqali o'zgartiring</p>
-                    <Input value={ign} onChange={setIgn} placeholder="Nickname" />
+                    <p className="text-[11px] font-bold uppercase text-white/35">{t("ob.imgNote")}</p>
+                    <Input value={ign} onChange={setIgn} placeholder={t("ob.nick")} />
                     <div className="grid grid-cols-2 gap-2">
-                        <Input value={gameUserId} onChange={setGameUserId} placeholder="In-game ID" inputMode="numeric" />
-                        <Input value={gameServer} onChange={setGameServer} placeholder="Server/Zona" inputMode="numeric" />
+                        <Input value={gameUserId} onChange={setGameUserId} placeholder={t("ap.ingameId")} inputMode="numeric" />
+                        <Input value={gameServer} onChange={setGameServer} placeholder={t("ob.server")} inputMode="numeric" />
                     </div>
                     <div ref={roleRef} className="relative">
                         <button onClick={() => setRoleOpen(o => !o)} className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left" style={{ background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" }}>
-                            <span className={`text-sm font-semibold ${role ? "text-white" : "text-white/35"}`}>{role || "Pozitsiya (ixtiyoriy)"}</span>
+                            <span className={`text-sm font-semibold ${role ? "text-white" : "text-white/35"}`}>{role || t("ob.positionOpt")}</span>
                             <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${roleOpen ? "rotate-180" : ""}`} />
                         </button>
                         {roleOpen && (
                             <div className="absolute z-10 mt-2 w-full overflow-hidden rounded-2xl py-1" style={{ background: "var(--es-card)", border: "1px solid rgba(43,62,232,0.35)" }}>
-                                <button onClick={() => { setRole(""); setRoleOpen(false); }} className="flex w-full px-4 py-2.5 text-left text-sm font-semibold text-white/60 hover:bg-white/5">Yo'q</button>
+                                <button onClick={() => { setRole(""); setRoleOpen(false); }} className="flex w-full px-4 py-2.5 text-left text-sm font-semibold text-white/60 hover:bg-white/5">{t("ob.none")}</button>
                                 {roles.map(r => (
                                     <button key={r} onClick={() => { setRole(r); setRoleOpen(false); }} className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-semibold text-white/85 hover:bg-white/5">{r} {role === r && <Check className="h-4 w-4 text-[#00CEC8]" />}</button>
                                 ))}
@@ -346,8 +349,8 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
                         )}
                     </div>
                     <div className="flex gap-2 pt-1">
-                        <button onClick={() => { setEditing(false); setIgn(athlete.ign); setGameUserId(athlete.gameUserId); setGameServer(athlete.gameServer || ""); setRole(athlete.role || ""); setImage(athlete.image || ""); setErr(""); }} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-bold text-white/70" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}><X className="h-4 w-4" /> Bekor</button>
-                        <button onClick={save} disabled={saving || uploading} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-black text-white disabled:opacity-60" style={{ background: ACCENT }}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Saqlash</button>
+                        <button onClick={() => { setEditing(false); setIgn(athlete.ign); setGameUserId(athlete.gameUserId); setGameServer(athlete.gameServer || ""); setRole(athlete.role || ""); setImage(athlete.image || ""); setErr(""); }} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-bold text-white/70" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}><X className="h-4 w-4" /> {t("ob.cancel")}</button>
+                        <button onClick={save} disabled={saving || uploading} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-black text-white disabled:opacity-60" style={{ background: ACCENT }}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {t("ob.save")}</button>
                     </div>
                 </div>
             )}

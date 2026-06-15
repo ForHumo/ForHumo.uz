@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "next-intl";
+import { useEsT } from "@/lib/esport-i18n";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Play, Radio, Clock, ChevronLeft, ChevronRight, CalendarPlus,
@@ -34,17 +35,19 @@ function useEmbedSrc() {
 }
 
 function Countdown({ iso }: { iso: string | null }) {
+    const tt = useEsT();
     const [now, setNow] = useState(Date.now());
-    useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
-    if (!iso) return <span className="es-accent-text">Tez orada</span>;
+    useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
+    if (!iso) return <span className="es-accent-text">{tt("st.upcoming")}</span>;
     const diff = new Date(iso).getTime() - now;
-    if (diff <= 0) return <span className="es-accent-text">Boshlanmoqda…</span>;
+    if (diff <= 0) return <span className="es-accent-text">{tt("bc.starting")}</span>;
     const d = Math.floor(diff / 864e5), h = Math.floor(diff / 36e5) % 24, m = Math.floor(diff / 6e4) % 60, s = Math.floor(diff / 1e3) % 60;
     const pad = (n: number) => String(n).padStart(2, "0");
     return <span className="tabular-nums">{d > 0 ? `${d}k ` : ""}{pad(h)}:{pad(m)}:{pad(s)}</span>;
 }
 
 export default function EsportBroadcast({ broadcasts, isAdmin, onChanged }: Props) {
+    const t = useEsT();
     const embedSrc = useEmbedSrc();
     // Deck: translyatsiyalar + (admin uchun) oxirida "rejalashtirish" slaydi
     const slides = useMemo(() => {
@@ -85,8 +88,8 @@ export default function EsportBroadcast({ broadcasts, isAdmin, onChanged }: Prop
                 <div className="absolute inset-0 es-accent-bg3 opacity-10" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                     <Tv className="h-9 w-9 es-faint" />
-                    <p className="text-sm font-bold es-mut">Tez orada jonli translyatsiyalar</p>
-                    <p className="text-xs es-faint">Turnir o'yinlari shu yerda jonli efirda</p>
+                    <p className="text-sm font-bold es-mut">{t("bc.soon")}</p>
+                    <p className="text-xs es-faint">{t("bc.soonSub")}</p>
                 </div>
             </div>
         );
@@ -155,6 +158,7 @@ export default function EsportBroadcast({ broadcasts, isAdmin, onChanged }: Prop
 }
 
 function CastSlide({ b, playing, onPlay, embedSrc }: { b: Broadcast; playing: boolean; onPlay: () => void; embedSrc: (b: Broadcast) => string | null }) {
+    const t = useEsT();
     const src = embedSrc(b);
     const isLive = b.status === "LIVE";
     const isEnded = b.status === "ENDED";
@@ -174,12 +178,12 @@ function CastSlide({ b, playing, onPlay, embedSrc }: { b: Broadcast; playing: bo
             <div className="absolute left-4 top-7 z-10 flex items-center gap-2">
                 {isLive ? (
                     <span className="flex items-center gap-1.5 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-white shadow-lg">
-                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> Jonli
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> {t("bc.live")}
                     </span>
                 ) : isEnded ? (
-                    <span className="rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-bold text-white/90 backdrop-blur-sm">Tugadi · Takroriy</span>
+                    <span className="rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-bold text-white/90 backdrop-blur-sm">{t("bc.replay")}</span>
                 ) : (
-                    <span className="flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-bold text-white/90 backdrop-blur-sm"><Clock className="h-3 w-3" /> Rejada</span>
+                    <span className="flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-bold text-white/90 backdrop-blur-sm"><Clock className="h-3 w-3" /> {t("bc.scheduled")}</span>
                 )}
                 {isLive && b.viewers > 0 && (
                     <span className="flex items-center gap-1 rounded-full bg-black/45 px-2 py-1 text-[11px] font-bold text-white/90 backdrop-blur-sm"><Users className="h-3 w-3" /> {b.viewers}</span>
@@ -197,10 +201,10 @@ function CastSlide({ b, playing, onPlay, embedSrc }: { b: Broadcast; playing: bo
                     <div className="text-center">
                         <Radio className="mx-auto mb-2 h-8 w-8 text-white/70" />
                         <p className="text-2xl font-black text-white sm:text-3xl"><Countdown iso={b.scheduledAt} /></p>
-                        <p className="mt-1 text-xs font-semibold text-white/55">translyatsiyagacha</p>
+                        <p className="mt-1 text-xs font-semibold text-white/55">{t("bc.untilStart")}</p>
                     </div>
                 ) : (
-                    <p className="text-sm font-semibold text-white/55">Yozuv tez orada</p>
+                    <p className="text-sm font-semibold text-white/55">{t("bc.recSoon")}</p>
                 )}
             </div>
 
@@ -213,6 +217,7 @@ function CastSlide({ b, playing, onPlay, embedSrc }: { b: Broadcast; playing: bo
 }
 
 function ScheduleSlide({ onChanged, onOpenChange }: { onChanged: () => void; onOpenChange: (open: boolean) => void }) {
+    const t = useEsT();
     const [open, setOpenState] = useState(false);
     const setOpen = (v: boolean) => { setOpenState(v); onOpenChange(v); };
     const [title, setTitle] = useState("");
@@ -234,7 +239,7 @@ function ScheduleSlide({ onChanged, onOpenChange }: { onChanged: () => void; onO
     }
 
     async function submit() {
-        if (!title.trim()) return setErr("Sarlavha kiriting");
+        if (!title.trim()) return setErr(t("bc.titleReq"));
         setBusy(true); setErr("");
         const r = await fetch("/api/esport/broadcasts", {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -253,10 +258,10 @@ function ScheduleSlide({ onChanged, onOpenChange }: { onChanged: () => void; onO
                     <div className="flex h-14 w-14 items-center justify-center rounded-2xl es-accent-bg shadow-lg">
                         <CalendarPlus className="h-7 w-7 text-white" />
                     </div>
-                    <p className="text-base font-black es-fg">Keyingi translyatsiyani rejalashtirish</p>
-                    <p className="max-w-xs text-xs es-mut">Boshlanish/tugash vaqtini bersangiz, holat avtomatik: Rejada → Jonli → Tugadi.</p>
+                    <p className="text-base font-black es-fg">{t("bc.schedule")}</p>
+                    <p className="max-w-xs text-xs es-mut">{t("bc.scheduleSub")}</p>
                     <button onClick={() => setOpen(true)} className="mt-1 rounded-xl px-5 py-2.5 text-sm font-black text-white es-accent-bg transition-transform hover:scale-[1.03] active:scale-95">
-                        Rejalashtirish
+                        {t("bc.scheduleBtn")}
                     </button>
                 </div>
             ) : (
@@ -267,25 +272,25 @@ function ScheduleSlide({ onChanged, onOpenChange }: { onChanged: () => void; onO
                             className="relative flex aspect-video w-32 shrink-0 items-center justify-center overflow-hidden rounded-xl es-soft sm:w-40">
                             {posterUrl ? <img src={posterUrl} alt="" className="h-full w-full object-cover" />
                                 : uploading ? <Loader2 className="h-5 w-5 animate-spin es-mut" />
-                                    : <span className="flex flex-col items-center gap-1 es-mut"><ImagePlus className="h-5 w-5" /><span className="text-[10px] font-bold">Oblojka</span></span>}
+                                    : <span className="flex flex-col items-center gap-1 es-mut"><ImagePlus className="h-5 w-5" /><span className="text-[10px] font-bold">{t("bc.cover")}</span></span>}
                         </button>
                         <input ref={fileRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; if (f) uploadPoster(f); }} />
                     </div>
 
                     <div className="flex min-w-0 flex-col gap-2">
                         <div className="flex items-center justify-between">
-                            <p className="text-sm font-black es-fg">Yangi translyatsiya</p>
+                            <p className="text-sm font-black es-fg">{t("bc.new")}</p>
                             <button onClick={() => setOpen(false)}><X className="h-4 w-4 es-mut" /></button>
                         </div>
                         {err && <p className="rounded-lg px-3 py-1.5 text-xs font-semibold text-rose-300" style={{ background: "rgba(255,60,60,0.12)" }}>{err}</p>}
-                        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Sarlavha (Final — TeamA vs TeamB)" className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none" />
-                        <input value={streamUrl} onChange={e => setStreamUrl(e.target.value)} placeholder="Havola (YouTube / Twitch / Nexus)" className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none" />
+                        <input value={title} onChange={e => setTitle(e.target.value)} placeholder={t("bc.titlePh")} className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none" />
+                        <input value={streamUrl} onChange={e => setStreamUrl(e.target.value)} placeholder={t("bc.linkPh")} className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none" />
                         <div className="grid grid-cols-2 gap-2">
-                            <label className="text-[10px] font-bold es-mut">Boshlanish<input value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} type="datetime-local" className="mt-0.5 w-full rounded-xl px-2 py-2 text-xs font-semibold es-fg es-soft outline-none" /></label>
-                            <label className="text-[10px] font-bold es-mut">Tugash<input value={endsAt} onChange={e => setEndsAt(e.target.value)} type="datetime-local" className="mt-0.5 w-full rounded-xl px-2 py-2 text-xs font-semibold es-fg es-soft outline-none" /></label>
+                            <label className="text-[10px] font-bold es-mut">{t("bc.start")}<input value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} type="datetime-local" className="mt-0.5 w-full rounded-xl px-2 py-2 text-xs font-semibold es-fg es-soft outline-none" /></label>
+                            <label className="text-[10px] font-bold es-mut">{t("bc.end")}<input value={endsAt} onChange={e => setEndsAt(e.target.value)} type="datetime-local" className="mt-0.5 w-full rounded-xl px-2 py-2 text-xs font-semibold es-fg es-soft outline-none" /></label>
                         </div>
                         <button onClick={submit} disabled={busy || uploading} className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-black text-white es-accent-bg disabled:opacity-50">
-                            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Saqlash
+                            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} {t("bc.save")}
                         </button>
                     </div>
                 </div>
