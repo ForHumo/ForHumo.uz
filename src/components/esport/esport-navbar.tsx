@@ -10,17 +10,19 @@ import { Home, User, Users, Trophy, BarChart3, ArrowLeftRight, ShieldCheck, type
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import EsportNotifications from "@/components/esport/esport-notifications";
+import { useEsT } from "@/lib/esport-i18n";
 
-const LINKS: { label: string; href: string; icon: LucideIcon }[] = [
-    { label: "Asosiy", href: "/esport", icon: Home },
-    { label: "Sportchi", href: "/esport/athlete", icon: User },
-    { label: "Jamoalar", href: "/esport/teams", icon: Users },
-    { label: "Turnirlar", href: "/esport/tournaments", icon: Trophy },
-    { label: "Divizionlar", href: "/esport/standings", icon: BarChart3 },
-    { label: "Transfer", href: "/esport/transfers", icon: ArrowLeftRight },
+const LINKS: { tkey: string; href: string; icon: LucideIcon }[] = [
+    { tkey: "nav.home", href: "/esport", icon: Home },
+    { tkey: "nav.athlete", href: "/esport/athlete", icon: User },
+    { tkey: "nav.teams", href: "/esport/teams", icon: Users },
+    { tkey: "nav.tournaments", href: "/esport/tournaments", icon: Trophy },
+    { tkey: "nav.divisions", href: "/esport/standings", icon: BarChart3 },
+    { tkey: "nav.transfer", href: "/esport/transfers", icon: ArrowLeftRight },
 ];
 
 export default function EsportNavbar() {
+    const t = useEsT();
     const [isAdmin, setIsAdmin] = useState(false);
     const { data: session } = useSession();
     const pathname = usePathname();
@@ -30,7 +32,7 @@ export default function EsportNavbar() {
         fetch("/api/esport/admin/check").then(r => r.json()).then(d => setIsAdmin(!!d.isAdmin)).catch(() => { });
     }, []);
 
-    const links = isAdmin ? [...LINKS, { label: "Admin", href: "/esport/admin", icon: ShieldCheck }] : LINKS;
+    const links = isAdmin ? [...LINKS, { tkey: "nav.admin", href: "/esport/admin", icon: ShieldCheck }] : LINKS;
     const isActive = (href: string) => href === "/esport" ? current === "/esport" : current.startsWith(href);
 
     return (
@@ -85,7 +87,7 @@ export default function EsportNavbar() {
                             const active = isActive(l.href);
                             const Icon = l.icon;
                             return (
-                                <Link key={l.href} href={l.href} title={l.label}
+                                <Link key={l.href} href={l.href} title={t(l.tkey)}
                                     className={`relative flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold transition-colors ${active ? "text-white" : "es-mut hover:opacity-70"}`}>
                                     {active && <motion.span layoutId="es-nav-active" className="absolute inset-0 -z-10 rounded-full es-accent-bg" transition={{ type: "spring", stiffness: 460, damping: 34 }} />}
                                     <Icon className="h-4 w-4 shrink-0" />
@@ -93,7 +95,7 @@ export default function EsportNavbar() {
                                         {active && (
                                             <motion.span initial={{ width: 0, opacity: 0 }} animate={{ width: "auto", opacity: 1 }} exit={{ width: 0, opacity: 0 }}
                                                 transition={{ duration: 0.2 }} className="overflow-hidden whitespace-nowrap">
-                                                {l.label}
+                                                {t(l.tkey)}
                                             </motion.span>
                                         )}
                                     </AnimatePresence>

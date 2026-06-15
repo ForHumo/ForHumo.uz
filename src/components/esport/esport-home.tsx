@@ -6,6 +6,7 @@ import { Link } from "@/i18n/routing";
 import { motion } from "framer-motion";
 import { Loader2, Trophy, TrendingUp, Swords, Crown, Star, Gamepad2, Newspaper, Coins, CalendarClock, Plus, X, Send, Trash2, ImagePlus } from "lucide-react";
 import EsportBroadcast, { type Broadcast } from "./esport-broadcast";
+import { useEsT } from "@/lib/esport-i18n";
 
 interface TeamLite { id: string; name: string; tag: string; logo: string | null }
 interface T { id: string; name: string; game: string; status: string; teams: number; prizePool: number | null; currency: string }
@@ -17,16 +18,17 @@ interface ExpPlayer { id: string; ign: string; position: string | null; image: s
 interface ExpTeam { team: TeamLite; value: number }
 interface Upcoming { a: TeamLite | null; b: TeamLite | null; at: string | null }
 
-const STATUS: Record<string, { label: string; cls: string }> = {
-    UPCOMING: { label: "Tez orada", cls: "es-mut" },
-    REGISTRATION: { label: "Ro'yxat ochiq", cls: "es-accent-text" },
-    LIVE: { label: "Jonli", cls: "text-rose-500" },
+const STATUS: Record<string, { tkey: string; cls: string }> = {
+    UPCOMING: { tkey: "st.upcoming", cls: "es-mut" },
+    REGISTRATION: { tkey: "st.registration", cls: "es-accent-text" },
+    LIVE: { tkey: "st.live", cls: "text-rose-500" },
 };
 function money(n: number, c: string) { return c === "USD" ? `$${n.toLocaleString()}` : `${n.toLocaleString()} so'm`; }
 
 const fade = { initial: { opacity: 0, y: 14 }, animate: { opacity: 1, y: 0 } };
 
 export default function EsportHome() {
+    const tr = useEsT();
     const [loading, setLoading] = useState(true);
     const [casts, setCasts] = useState<Broadcast[]>([]);
     const [tournaments, setTournaments] = useState<T[]>([]);
@@ -91,7 +93,7 @@ export default function EsportHome() {
                     </div>
                     <div className="min-w-0">
                         <h1 className="es-accent-text3 text-2xl font-black tracking-tight sm:text-4xl">Humo eSport</h1>
-                        <p className="mt-1 text-sm font-semibold es-mut sm:text-base">Kibersport arenasi — turnirlar, divizionlar, transferlar va jonli efir</p>
+                        <p className="mt-1 text-sm font-semibold es-mut sm:text-base">{tr("home.subtitle")}</p>
                     </div>
                 </div>
             </motion.div>
@@ -103,7 +105,7 @@ export default function EsportHome() {
                     {/* Translyatsiya oynasi 16:9 */}
                     <motion.div {...fade} transition={{ duration: 0.4, delay: 0.05 }} className="mb-3">
                         <h2 className="mb-2.5 flex items-center gap-2 px-1 text-sm font-black uppercase tracking-wide es-fg">
-                            <Swords className="h-4 w-4 es-accent-text" /> Turnir efiri
+                            <Swords className="h-4 w-4 es-accent-text" /> {tr("home.broadcast")}
                         </h2>
                         <EsportBroadcast broadcasts={casts} isAdmin={isAdmin} onChanged={load} />
                     </motion.div>
@@ -111,29 +113,29 @@ export default function EsportHome() {
                     {/* Yangiliklar */}
                     <motion.section {...fade} transition={{ duration: 0.35, delay: 0.07 }} className="mt-6">
                         <div className="mb-2.5 flex items-center justify-between px-1">
-                            <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Newspaper className="h-4 w-4 es-accent-text" /> Yangiliklar</h2>
-                            {isAdmin && !newsOpen && <button onClick={() => setNewsOpen(true)} className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-white es-accent-bg"><Plus className="h-3.5 w-3.5" /> Qo'shish</button>}
+                            <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Newspaper className="h-4 w-4 es-accent-text" /> {tr("home.news")}</h2>
+                            {isAdmin && !newsOpen && <button onClick={() => setNewsOpen(true)} className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-white es-accent-bg"><Plus className="h-3.5 w-3.5" /> {tr("common.add")}</button>}
                         </div>
                         {isAdmin && newsOpen && (
                             <div className="mb-3 space-y-2 rounded-2xl p-4 es-card">
-                                <div className="flex items-center justify-between"><p className="text-sm font-black es-fg">Yangilik qo'shish</p><button onClick={() => setNewsOpen(false)}><X className="h-4 w-4 es-mut" /></button></div>
+                                <div className="flex items-center justify-between"><p className="text-sm font-black es-fg">{tr("home.newsAdd")}</p><button onClick={() => setNewsOpen(false)}><X className="h-4 w-4 es-mut" /></button></div>
                                 <div className="flex items-center gap-3">
                                     <button onClick={() => newsFileRef.current?.click()} className="flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl es-soft">{nImage ? <img src={nImage} alt="" className="h-full w-full object-cover" /> : <ImagePlus className="h-5 w-5 es-mut" />}</button>
                                     <input ref={newsFileRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; if (f) uploadNewsImg(f); }} />
-                                    <input value={nTitle} onChange={e => setNTitle(e.target.value)} placeholder="Sarlavha" className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none placeholder:opacity-50" />
+                                    <input value={nTitle} onChange={e => setNTitle(e.target.value)} placeholder={tr("common.title")} className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none placeholder:opacity-50" />
                                 </div>
-                                <textarea value={nBody} onChange={e => setNBody(e.target.value)} placeholder="Matn (ixtiyoriy)" rows={2} className="w-full rounded-xl px-3 py-2 text-sm es-fg es-soft outline-none placeholder:opacity-50" />
-                                <button onClick={addNews} disabled={nBusy} className="flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-black text-white es-accent-bg disabled:opacity-50">{nBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} E'lon qilish</button>
+                                <textarea value={nBody} onChange={e => setNBody(e.target.value)} placeholder={tr("common.text")} rows={2} className="w-full rounded-xl px-3 py-2 text-sm es-fg es-soft outline-none placeholder:opacity-50" />
+                                <button onClick={addNews} disabled={nBusy} className="flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-black text-white es-accent-bg disabled:opacity-50">{nBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} {tr("common.publish")}</button>
                             </div>
                         )}
-                        {news.length === 0 ? <div className="rounded-2xl p-5 es-card"><Empty text="Hozircha yangilik yo'q" /></div> : (
+                        {news.length === 0 ? <div className="rounded-2xl p-5 es-card"><Empty text={tr("home.noNews")} /></div> : (
                             <div className="flex gap-3 overflow-x-auto pb-1 nx-hide-scrollbar">
                                 {news.map(n => (
                                     <div key={n.id} className="relative w-64 shrink-0 overflow-hidden rounded-2xl es-card">
                                         {n.image && <img src={n.image} alt="" className="h-28 w-full object-cover" />}
                                         <div className="p-3">
                                             <div className="mb-1 flex items-center gap-1.5">
-                                                <span className={`rounded px-1.5 py-0.5 text-[9px] font-black uppercase ${n.kind === "auto" ? "es-mut es-soft" : "text-white es-accent-bg"}`}>{n.kind === "auto" ? "Avto" : "Yangilik"}</span>
+                                                <span className={`rounded px-1.5 py-0.5 text-[9px] font-black uppercase ${n.kind === "auto" ? "es-mut es-soft" : "text-white es-accent-bg"}`}>{n.kind === "auto" ? tr("home.autoBadge") : tr("home.newsBadge")}</span>
                                                 {n.pinned && <Star className="h-3 w-3 text-amber-400" />}
                                             </div>
                                             <p className="text-sm font-black es-fg">{n.title}</p>
@@ -150,17 +152,17 @@ export default function EsportHome() {
                     <div className="mt-6 grid gap-4 lg:grid-cols-3">
                         {/* Turnirlar */}
                         <motion.section {...fade} transition={{ duration: 0.35, delay: 0.1 }} className="rounded-3xl p-5 es-card">
-                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Trophy className="h-4 w-4 es-accent-text" /> Turnirlar</h2>
-                            {tournaments.length === 0 ? <Empty text="Hozircha turnir yo'q" /> : (
+                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Trophy className="h-4 w-4 es-accent-text" /> {tr("home.tournaments")}</h2>
+                            {tournaments.length === 0 ? <Empty text={tr("home.noTournaments")} /> : (
                                 <div className="space-y-2">
                                     {tournaments.map(t => (
                                         <Link key={t.id} href={`/esport/tournaments/${t.id}`} className="flex items-center gap-3 rounded-2xl p-3 es-soft transition-transform hover:scale-[1.02]">
                                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl es-accent-bg"><Trophy className="h-4 w-4 text-white" /></div>
                                             <div className="min-w-0 flex-1">
                                                 <p className="truncate text-sm font-bold es-fg">{t.name}</p>
-                                                <p className="truncate text-[11px] es-mut">{t.game} · {t.teams} jamoa{t.prizePool ? ` · ${money(t.prizePool, t.currency)}` : ""}</p>
+                                                <p className="truncate text-[11px] es-mut">{t.game} · {t.teams} {tr("common.team")}{t.prizePool ? ` · ${money(t.prizePool, t.currency)}` : ""}</p>
                                             </div>
-                                            <span className={`shrink-0 text-[11px] font-bold ${STATUS[t.status]?.cls || "es-mut"}`}>{STATUS[t.status]?.label}</span>
+                                            <span className={`shrink-0 text-[11px] font-bold ${STATUS[t.status]?.cls || "es-mut"}`}>{STATUS[t.status] ? tr(STATUS[t.status].tkey) : ""}</span>
                                         </Link>
                                     ))}
                                 </div>
@@ -169,8 +171,8 @@ export default function EsportHome() {
 
                         {/* Top 5 jamoa */}
                         <motion.section {...fade} transition={{ duration: 0.35, delay: 0.15 }} className="rounded-3xl p-5 es-card">
-                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><TrendingUp className="h-4 w-4 es-accent-text" /> Eng kuchli jamoalar</h2>
-                            {topTeams.length === 0 ? <Empty text="Hali reyting yo'q" /> : (
+                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><TrendingUp className="h-4 w-4 es-accent-text" /> {tr("home.topTeams")}</h2>
+                            {topTeams.length === 0 ? <Empty text={tr("home.noRating")} /> : (
                                 <div className="space-y-1.5">
                                     {topTeams.map((r, i) => (
                                         <Link key={r.team.id} href={`/esport/teams/${r.team.id}`} className="flex items-center gap-3 rounded-2xl p-2.5 es-soft transition-transform hover:scale-[1.02]">
@@ -189,8 +191,8 @@ export default function EsportHome() {
 
                         {/* Top 5 o'yinchi */}
                         <motion.section {...fade} transition={{ duration: 0.35, delay: 0.2 }} className="rounded-3xl p-5 es-card">
-                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Star className="h-4 w-4 es-accent-text" /> Eng kuchli o'yinchilar</h2>
-                            {topPlayers.length === 0 ? <Empty text="Hali o'yinchi yo'q" /> : (
+                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Star className="h-4 w-4 es-accent-text" /> {tr("home.topPlayers")}</h2>
+                            {topPlayers.length === 0 ? <Empty text={tr("home.noPlayers")} /> : (
                                 <div className="space-y-1.5">
                                     {topPlayers.map((p, i) => (
                                         <Link key={p.id} href={`/esport/a/${p.id}`} className="flex items-center gap-3 rounded-2xl p-2.5 es-soft transition-transform hover:scale-[1.02]">
@@ -198,7 +200,7 @@ export default function EsportHome() {
                                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-black text-white es-accent-bg">{p.ign.slice(0, 2).toUpperCase()}</div>
                                             <div className="min-w-0 flex-1">
                                                 <p className="truncate text-sm font-bold es-fg">{p.ign}</p>
-                                                <p className="truncate text-[11px] es-mut">{p.team ? `[${p.team.tag}]` : "Erkin"}{p.position ? ` · ${p.position}` : ""}</p>
+                                                <p className="truncate text-[11px] es-mut">{p.team ? `[${p.team.tag}]` : tr("common.free")}{p.position ? ` · ${p.position}` : ""}</p>
                                             </div>
                                             <span className="shrink-0 text-sm font-black es-accent-text">{p.rating}</span>
                                         </Link>
@@ -211,14 +213,14 @@ export default function EsportHome() {
                     {/* Eng qimmat o'yinchilar · Eng qimmat jamoalar */}
                     <div className="mt-4 grid gap-4 lg:grid-cols-2">
                         <motion.section {...fade} transition={{ duration: 0.35, delay: 0.22 }} className="rounded-3xl p-5 es-card">
-                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Coins className="h-4 w-4 text-amber-400" /> Eng qimmat o'yinchilar</h2>
-                            {expPlayers.length === 0 ? <Empty text="Hali narx belgilanmagan" /> : (
+                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Coins className="h-4 w-4 text-amber-400" /> {tr("home.expPlayers")}</h2>
+                            {expPlayers.length === 0 ? <Empty text={tr("home.noValue")} /> : (
                                 <div className="space-y-1.5">
                                     {expPlayers.map((p, i) => (
                                         <Link key={p.id} href={`/esport/a/${p.id}`} className="flex items-center gap-3 rounded-2xl p-2.5 es-soft transition-transform hover:scale-[1.02]">
                                             <Rank i={i} />
                                             <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg text-[10px] font-black text-white es-accent-bg">{p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : p.ign.slice(0, 2).toUpperCase()}</div>
-                                            <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold es-fg">{p.ign}</p><p className="truncate text-[11px] es-mut">{p.team ? `[${p.team.tag}]` : "Erkin"}</p></div>
+                                            <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold es-fg">{p.ign}</p><p className="truncate text-[11px] es-mut">{p.team ? `[${p.team.tag}]` : tr("common.free")}</p></div>
                                             <span className="shrink-0 text-xs font-black text-amber-400">{som(p.value)}</span>
                                         </Link>
                                     ))}
@@ -226,8 +228,8 @@ export default function EsportHome() {
                             )}
                         </motion.section>
                         <motion.section {...fade} transition={{ duration: 0.35, delay: 0.24 }} className="rounded-3xl p-5 es-card">
-                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Coins className="h-4 w-4 text-amber-400" /> Eng qimmat jamoalar</h2>
-                            {expTeams.length === 0 ? <Empty text="Hali narx belgilanmagan" /> : (
+                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Coins className="h-4 w-4 text-amber-400" /> {tr("home.expTeams")}</h2>
+                            {expTeams.length === 0 ? <Empty text={tr("home.noValue")} /> : (
                                 <div className="space-y-1.5">
                                     {expTeams.map((t, i) => (
                                         <Link key={t.team.id} href={`/esport/teams/${t.team.id}`} className="flex items-center gap-3 rounded-2xl p-2.5 es-soft transition-transform hover:scale-[1.02]">
@@ -245,7 +247,7 @@ export default function EsportHome() {
                     {/* Bo'lajak o'yinlar */}
                     {upcoming.length > 0 && (
                         <motion.section {...fade} transition={{ duration: 0.35, delay: 0.26 }} className="mt-4 rounded-3xl p-5 es-card">
-                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><CalendarClock className="h-4 w-4 es-accent-text" /> Bo'lajak o'yinlar</h2>
+                            <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><CalendarClock className="h-4 w-4 es-accent-text" /> {tr("home.upcoming")}</h2>
                             <div className="grid gap-2 sm:grid-cols-2">
                                 {upcoming.map((m, i) => (
                                     <div key={i} className="flex items-center justify-between gap-2 rounded-2xl p-3 es-soft">
@@ -260,8 +262,8 @@ export default function EsportHome() {
 
                     {/* So'nggi natijalar */}
                     <motion.section {...fade} transition={{ duration: 0.35, delay: 0.28 }} className="mt-4 rounded-3xl p-5 es-card">
-                        <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Gamepad2 className="h-4 w-4 es-accent-text" /> So'nggi natijalar</h2>
-                        {results.length === 0 ? <Empty text="Hali o'yin o'tkazilmagan" /> : (
+                        <h2 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide es-fg"><Gamepad2 className="h-4 w-4 es-accent-text" /> {tr("home.results")}</h2>
+                        {results.length === 0 ? <Empty text={tr("home.noMatches")} /> : (
                             <div className="grid gap-2 sm:grid-cols-2">
                                 {results.map((m, i) => (
                                     <div key={i} className="flex items-center justify-between gap-2 rounded-2xl p-3 es-soft">

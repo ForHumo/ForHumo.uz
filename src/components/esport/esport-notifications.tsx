@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { Bell, Check, ArrowLeftRight, UserPlus, LogOut, Trophy, Info } from "lucide-react";
+import { useEsT } from "@/lib/esport-i18n";
 
 interface Item { id: string; type: string; title: string; body: string | null; href: string | null; read: boolean; createdAt: string }
 
@@ -21,6 +22,7 @@ function ago(iso: string) {
 }
 
 export default function EsportNotifications() {
+    const t = useEsT();
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState<Item[]>([]);
     const [unread, setUnread] = useState(0);
@@ -48,7 +50,7 @@ export default function EsportNotifications() {
 
     return (
         <div ref={ref} className="relative">
-            <button onClick={() => { setOpen(o => !o); if (!open) load(); }} className="relative flex h-8 w-8 items-center justify-center rounded-full es-soft" title="Bildirishnomalar">
+            <button onClick={() => { setOpen(o => !o); if (!open) load(); }} className="relative flex h-8 w-8 items-center justify-center rounded-full es-soft" title={t("nav.notifications")}>
                 <Bell className="h-4 w-4 es-fg" />
                 {unread > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-black text-white">{unread > 9 ? "9+" : unread}</span>}
             </button>
@@ -56,12 +58,12 @@ export default function EsportNotifications() {
             {open && (
                 <div className="absolute right-0 top-10 z-50 w-80 overflow-hidden rounded-2xl border es-bd shadow-2xl" style={{ background: "var(--es-card)", backdropFilter: "blur(20px)" }}>
                     <div className="flex items-center justify-between border-b es-bd px-4 py-2.5">
-                        <p className="text-sm font-black es-fg">Bildirishnomalar</p>
-                        {unread > 0 && <button onClick={markAll} className="flex items-center gap-1 text-[11px] font-bold es-accent-text"><Check className="h-3.5 w-3.5" /> Hammasi o'qildi</button>}
+                        <p className="text-sm font-black es-fg">{t("nav.notifications")}</p>
+                        {unread > 0 && <button onClick={markAll} className="flex items-center gap-1 text-[11px] font-bold es-accent-text"><Check className="h-3.5 w-3.5" /> {t("nav.markAll")}</button>}
                     </div>
                     <div className="max-h-96 overflow-y-auto nx-hide-scrollbar">
                         {items.length === 0 ? (
-                            <p className="py-10 text-center text-xs es-faint">Bildirishnoma yo'q</p>
+                            <p className="py-10 text-center text-xs es-faint">{t("nav.noNotif")}</p>
                         ) : items.map(n => {
                             const Icon = ICON[n.type] || Bell;
                             const inner = (
