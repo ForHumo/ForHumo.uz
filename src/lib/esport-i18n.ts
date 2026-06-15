@@ -92,6 +92,39 @@ const DICT: Record<string, [string, string, string]> = {
     "stand.promo": ["ko'tariladi", "повышение", "promotion"],
     "stand.releg": ["tushadi", "понижение", "relegation"],
     "stand.stay": ["qoladi", "остаётся", "stays"],
+
+    // ── Transfer ──
+    "tr.title": ["Transfer bozori", "Трансферный рынок", "Transfer market"],
+    "tr.sub": ["Barcha kibersportchilar — kartani bosib to'liq ma'lumot", "Все киберспортсмены — нажмите для подробностей", "All athletes — tap a card for details"],
+    "tr.search": ["Nickname yoki jamoa bo'yicha qidirish", "Поиск по нику или команде", "Search by nickname or team"],
+    "tr.notFound": ["Hech narsa topilmadi", "Ничего не найдено", "Nothing found"],
+    "tr.empty": ["Hali kibersportchi yo'q", "Киберспортсменов пока нет", "No athletes yet"],
+    "tr.offers": ["Transfer takliflari", "Трансферные предложения", "Transfer offers"],
+    "tr.accept": ["Qabul", "Принять", "Accept"],
+    "tr.reject": ["Rad", "Отклонить", "Reject"],
+    "tr.cancel": ["Bekor", "Отмена", "Cancel"],
+    "tr.send": ["Yuborish", "Отправить", "Send"],
+    "tr.sell": ["Sotish", "Продать", "Sell"],
+
+    // ── O'yinchi kartasi (athlete-profile) ──
+    "ap.card": ["Sportchi kartasi", "Карта игрока", "Player card"],
+    "ap.notFound": ["Sportchi topilmadi", "Игрок не найден", "Player not found"],
+    "ap.curElo": ["Joriy Elo", "Текущий Elo", "Current Elo"],
+    "ap.maxElo": ["Maksimal Elo", "Максимальный Elo", "Peak Elo"],
+    "ap.minElo": ["Minimal Elo", "Минимальный Elo", "Lowest Elo"],
+    "ap.wins": ["G'alaba", "Победы", "Wins"],
+    "ap.losses": ["Mag'lubiyat", "Поражения", "Losses"],
+    "ap.games": ["O'yinlar", "Матчи", "Matches"],
+    "ap.inEsport": ["eSportda", "в киберспорте", "in esports"],
+    "ap.offerBtn": ["Transfer taklifi yuborish", "Отправить предложение", "Send transfer offer"],
+    "ap.offerTitle": ["O'yinchiga taklif", "Предложение игроку", "Offer to player"],
+    "ap.salaryPh": ["Oylik maosh (so'm)", "Зарплата в месяц (сум)", "Monthly salary (UZS)"],
+    "ap.monthsPh": ["Shartnoma muddati (oy)", "Срок контракта (мес.)", "Contract length (months)"],
+    "ap.condPh": ["Qo'shimcha shartlar (ixtiyoriy)", "Доп. условия (необязательно)", "Extra conditions (optional)"],
+    "ap.sent": ["Taklif o'yinchiga yuborildi", "Предложение отправлено игроку", "Offer sent to player"],
+    "ap.pickTeam": ["Jamoa tanlang", "Выберите команду", "Select a team"],
+    "ap.freeAthlete": ["Erkin sportchi (jamoasiz)", "Свободный игрок (без команды)", "Free agent (no team)"],
+    "ap.ingameId": ["In-game ID", "Игровой ID", "In-game ID"],
 };
 
 export type EsT = (key: string, fallback?: string) => string;

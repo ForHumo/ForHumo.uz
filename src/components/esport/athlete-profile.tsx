@@ -6,6 +6,7 @@ import {
     ArrowLeft, Loader2, BadgeCheck, Shield, Gamepad2, TrendingUp, Hash, ChevronRight,
     Coins, Calendar, Trophy, ArrowUp, ArrowDown, Clock, Pencil, Check, X, Send, UserPlus,
 } from "lucide-react";
+import { useEsT } from "@/lib/esport-i18n";
 
 interface Athlete {
     id: string; ign: string; gameUserId: string; gameServer: string | null; position: string | null;
@@ -32,6 +33,7 @@ function since(iso: string): string {
 function money(n: number | null) { return n == null ? "Belgilanmagan" : `${n.toLocaleString()} so'm`; }
 
 export default function AthleteProfile({ athleteId }: { athleteId: string }) {
+    const t = useEsT();
     const [a, setA] = useState<Athlete | null>(null);
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -55,7 +57,7 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
     }, [athleteId]);
 
     async function sendOffer() {
-        if (!oTeam) return setOfferMsg("Jamoa tanlang");
+        if (!oTeam) return setOfferMsg(t("ap.pickTeam"));
         setSending(true); setOfferMsg("");
         const r = await fetch("/api/esport/transfers", {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -63,7 +65,7 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
         }).then(x => x.json()).catch(() => ({ error: "Xato" }));
         setSending(false);
         if (r.error) return setOfferMsg(r.error);
-        setOfferMsg("Taklif o'yinchiga yuborildi"); setOfferOpen(false); setOSalary(""); setOCond(""); setOMonths("");
+        setOfferMsg(t("ap.sent")); setOfferOpen(false); setOSalary(""); setOCond(""); setOMonths("");
     }
 
     async function savePrice() {
@@ -77,13 +79,13 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
     }
 
     if (loading) return <div className="flex items-center justify-center py-24"><Loader2 className="h-7 w-7 animate-spin es-faint" /></div>;
-    if (!a) return <div className="flex flex-col items-center justify-center gap-3 py-24"><p className="text-sm es-mut">Sportchi topilmadi</p><Link href="/esport/transfers" className="text-sm font-bold es-accent-text">Transfer bozori</Link></div>;
+    if (!a) return <div className="flex flex-col items-center justify-center gap-3 py-24"><p className="text-sm es-mut">{t("ap.notFound")}</p><Link href="/esport/transfers" className="text-sm font-bold es-accent-text">{t("tr.title")}</Link></div>;
 
     return (
         <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
             <div className="mb-5 flex items-center gap-3">
                 <Link href="/esport/transfers" className="flex h-9 w-9 items-center justify-center rounded-xl es-soft"><ArrowLeft className="h-4 w-4 es-fg" /></Link>
-                <span className="text-sm font-bold es-mut">Sportchi kartasi</span>
+                <span className="text-sm font-bold es-mut">{t("ap.card")}</span>
             </div>
 
             {/* Bosh karta */}
@@ -102,7 +104,7 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                         <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold es-accent-text es-soft"><Gamepad2 className="h-3 w-3" /> {a.game?.name}</span>
                         {a.position && <span className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold es-mut es-soft">{a.position}</span>}
-                        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold text-amber-400 es-soft"><Coins className="h-3 w-3" /> {money(a.marketValue)}</span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold text-amber-400 es-soft"><Coins className="h-3 w-3" /> {a.marketValue == null ? t("common.notset") : money(a.marketValue)}</span>
                         {isAdmin && !editPrice && (
                             <button onClick={() => { setPriceVal(a.marketValue != null ? String(a.marketValue) : ""); setEditPrice(true); }} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold es-accent-text es-soft"><Pencil className="h-3 w-3" /> Narx</button>
                         )}
@@ -128,7 +130,7 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
                     <ChevronRight className="h-4 w-4 es-faint" />
                 </Link>
             ) : (
-                <div className="mb-4 flex items-center gap-2 rounded-3xl p-4 es-card"><Shield className="h-4 w-4 es-faint" /><span className="text-sm font-semibold es-mut">Erkin sportchi (jamoasiz)</span></div>
+                <div className="mb-4 flex items-center gap-2 rounded-3xl p-4 es-card"><Shield className="h-4 w-4 es-faint" /><span className="text-sm font-semibold es-mut">{t("ap.freeAthlete")}</span></div>
             )}
 
             {/* Taklif yuborish (jamoa egasi) */}
@@ -136,22 +138,22 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
                 <div className="mb-4 rounded-3xl p-4 es-card">
                     {offerMsg && <p className="mb-2 text-xs font-semibold es-accent-text">{offerMsg}</p>}
                     {!offerOpen ? (
-                        <button onClick={() => { setOfferOpen(true); setOfferMsg(""); }} className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-black text-white es-accent-bg"><UserPlus className="h-4 w-4" /> Transfer taklifi yuborish</button>
+                        <button onClick={() => { setOfferOpen(true); setOfferMsg(""); }} className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-black text-white es-accent-bg"><UserPlus className="h-4 w-4" /> {t("ap.offerBtn")}</button>
                     ) : (
                         <div className="space-y-2.5">
-                            <div className="flex items-center justify-between"><p className="text-sm font-black es-fg">O'yinchiga taklif</p><button onClick={() => setOfferOpen(false)}><X className="h-4 w-4 es-mut" /></button></div>
+                            <div className="flex items-center justify-between"><p className="text-sm font-black es-fg">{t("ap.offerTitle")}</p><button onClick={() => setOfferOpen(false)}><X className="h-4 w-4 es-mut" /></button></div>
                             <div className="flex flex-wrap gap-1.5">
                                 {myTeams.map(t => <button key={t.id} onClick={() => setOTeam(t.id)} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${oTeam === t.id ? "text-white es-accent-bg" : "es-mut es-soft"}`}>{t.tag}</button>)}
                             </div>
                             <div className="flex items-center gap-2 rounded-xl px-3 py-2 es-soft">
                                 <Coins className="h-4 w-4 text-amber-400" />
-                                <input value={oSalary} onChange={e => setOSalary(e.target.value.replace(/[^\d]/g, ""))} inputMode="numeric" placeholder="Oylik maosh (so'm)" className="w-full bg-transparent text-sm font-semibold es-fg outline-none placeholder:opacity-50" />
+                                <input value={oSalary} onChange={e => setOSalary(e.target.value.replace(/[^\d]/g, ""))} inputMode="numeric" placeholder={t("ap.salaryPh")} className="w-full bg-transparent text-sm font-semibold es-fg outline-none placeholder:opacity-50" />
                             </div>
                             <div className="flex items-center gap-2 rounded-xl px-3 py-2 es-soft">
                                 <Calendar className="h-4 w-4 es-accent-text" />
-                                <input value={oMonths} onChange={e => setOMonths(e.target.value.replace(/[^\d]/g, ""))} inputMode="numeric" placeholder="Shartnoma muddati (oy)" className="w-full bg-transparent text-sm font-semibold es-fg outline-none placeholder:opacity-50" />
+                                <input value={oMonths} onChange={e => setOMonths(e.target.value.replace(/[^\d]/g, ""))} inputMode="numeric" placeholder={t("ap.monthsPh")} className="w-full bg-transparent text-sm font-semibold es-fg outline-none placeholder:opacity-50" />
                             </div>
-                            <input value={oCond} onChange={e => setOCond(e.target.value)} placeholder="Qo'shimcha shartlar (ixtiyoriy)" className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none placeholder:opacity-50" />
+                            <input value={oCond} onChange={e => setOCond(e.target.value)} placeholder={t("ap.condPh")} className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none placeholder:opacity-50" />
                             <button onClick={sendOffer} disabled={sending} className="flex w-full items-center justify-center gap-2 rounded-2xl py-2.5 text-sm font-black text-white es-accent-bg disabled:opacity-50">{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Taklif yuborish</button>
                         </div>
                     )}
@@ -161,18 +163,18 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
             {/* Elo statistikasi */}
             {a.team && (
                 <div className="mb-4 grid grid-cols-3 gap-3">
-                    <Stat icon={TrendingUp} label="Joriy Elo" value={String(a.team.rating)} accent />
-                    <Stat icon={ArrowUp} label="Maksimal Elo" value={String(a.team.peakRating)} />
-                    <Stat icon={ArrowDown} label="Minimal Elo" value={String(a.team.lowRating)} />
+                    <Stat icon={TrendingUp} label={t("ap.curElo")} value={String(a.team.rating)} accent />
+                    <Stat icon={ArrowUp} label={t("ap.maxElo")} value={String(a.team.peakRating)} />
+                    <Stat icon={ArrowDown} label={t("ap.minElo")} value={String(a.team.lowRating)} />
                 </div>
             )}
 
             {/* Natijalar + tajriba */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {a.results && <Stat icon={Trophy} label="G'alaba" value={String(a.results.wins)} />}
-                {a.results && <Stat icon={Trophy} label="Mag'lubiyat" value={String(a.results.losses)} />}
-                <Stat icon={Calendar} label="O'yinlar" value={String(a.results?.played ?? 0)} />
-                <Stat icon={Clock} label="eSportda" value={since(a.createdAt)} />
+                {a.results && <Stat icon={Trophy} label={t("ap.wins")} value={String(a.results.wins)} />}
+                {a.results && <Stat icon={Trophy} label={t("ap.losses")} value={String(a.results.losses)} />}
+                <Stat icon={Calendar} label={t("ap.games")} value={String(a.results?.played ?? 0)} />
+                <Stat icon={Clock} label={t("ap.inEsport")} value={since(a.createdAt)} />
             </div>
 
             {/* O'yin ma'lumotlari */}
