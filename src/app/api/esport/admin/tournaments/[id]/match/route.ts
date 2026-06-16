@@ -7,9 +7,11 @@ import { recordTournamentResult } from "@/lib/esport-bracket";
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     if (!await getEsportAdmin()) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
     const { id } = await params;
-    const { matchId, scoreA, scoreB } = await req.json();
+    const body = await req.json();
+    const { matchId, scoreA, scoreB } = body;
     const a = Math.max(0, Math.round(Number(scoreA)));
     const b = Math.max(0, Math.round(Number(scoreB)));
+    const proofUrl = typeof body.proofUrl === "string" && body.proofUrl ? body.proofUrl : null;
     if (!matchId) return NextResponse.json({ error: "matchId kerak" }, { status: 400 });
 
     const m = await prisma.esMatch.findUnique({ where: { id: matchId }, select: { tournamentId: true } });
@@ -17,6 +19,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const r = await recordTournamentResult(matchId, a, b);
     if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
+    if (proofUrl) await prisma.esMatch.update({ where: { id: matchId }, data: { proofUrl } });
 
     // Final tugadimi? (eng yuqori MAIN round) → turnir ENDED
     const finalM = await prisma.esMatch.findFirst({ where: { tournamentId: id, bracket: "MAIN" }, orderBy: { round: "desc" }, select: { status: true } });

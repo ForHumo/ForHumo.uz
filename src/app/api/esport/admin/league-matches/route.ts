@@ -43,9 +43,11 @@ export async function POST(req: Request) {
 // PATCH /api/esport/admin/league-matches — natija kiritish { id, scoreA, scoreB } → standings yangilanadi
 export async function PATCH(req: Request) {
     if (!await getEsportAdmin()) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
-    const { id, scoreA, scoreB } = await req.json();
+    const body = await req.json();
+    const { id, scoreA, scoreB } = body;
     const a = Math.max(0, Math.round(Number(scoreA)));
     const b = Math.max(0, Math.round(Number(scoreB)));
+    const proofUrl = typeof body.proofUrl === "string" && body.proofUrl ? body.proofUrl : null;
     if (!id || !Number.isFinite(a) || !Number.isFinite(b)) return NextResponse.json({ error: "id va hisob kerak" }, { status: 400 });
     if (a === b) return NextResponse.json({ error: "Durang bo'lmaydi — g'olib aniq bo'lsin" }, { status: 400 });
 
@@ -71,7 +73,7 @@ export async function PATCH(req: Request) {
     ]) : [null, null];
 
     const ops: Prisma.PrismaPromise<unknown>[] = [
-        prisma.esLeagueMatch.update({ where: { id }, data: { scoreA: a, scoreB: b, winnerId, status: "DONE" } }),
+        prisma.esLeagueMatch.update({ where: { id }, data: { scoreA: a, scoreB: b, winnerId, status: "DONE", proofUrl } }),
     ];
     if (stW) ops.push(prisma.esStanding.update({ where: { id: stW.id }, data: { points: { increment: WIN_POINTS }, wins: { increment: 1 }, played: { increment: 1 } } }));
     if (stL) ops.push(prisma.esStanding.update({ where: { id: stL.id }, data: { losses: { increment: 1 }, played: { increment: 1 } } }));
