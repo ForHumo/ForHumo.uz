@@ -10,7 +10,7 @@ import { useEsT } from "@/lib/esport-i18n";
 
 interface Member { athleteId: string; role: string; ign: string; gameUserId: string; gameServer: string | null; position: string | null; name: string; username: string | null; image: string | null; humoId: string | null; verified: boolean }
 interface Roster { id: string; game: { slug: string; name: string; teamSize: number }; rating: number; members: Member[] }
-interface Team { id: string; name: string; tag: string; logo: string | null; bio: string | null; isOwner: boolean; amIMember: boolean; myAthleteId: string | null; pendingRequests: number; rosters: Roster[] }
+interface Team { id: string; name: string; tag: string; logo: string | null; bio: string | null; isOwner: boolean; amIMember: boolean; myAthleteId: string | null; pendingRequests: number; locked: boolean; rosters: Roster[] }
 interface JoinReq { id: string; athleteId: string; ign: string; position: string | null; game: string; name: string; username: string | null; image: string | null }
 interface ReqItem { id: string; type: string; athleteId: string | null; ign: string | null; approvals: string[]; createdAt: string }
 
@@ -172,6 +172,14 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                     )}
                 </div>
 
+                {/* Roster lock banner — active turnirda tarkib qulflangan */}
+                {team.locked && (
+                    <div className="mb-5 flex items-center gap-2 rounded-2xl px-4 py-3" style={{ background: "rgba(255,176,32,0.10)", border: "1px solid rgba(255,176,32,0.3)" }}>
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-[#FFB020]" />
+                        <span className="text-xs font-semibold text-[#FFB020]">{t("td.locked")}</span>
+                    </div>
+                )}
+
                 {/* A'zolik so'rovlari (chiqish/chiqarish/o'chirish kelishuvi) */}
                 {requests.length > 0 && (
                     <div className="mb-5 space-y-2">
@@ -203,7 +211,7 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                 {team.isOwner && (
                     <div className="mb-5 space-y-3">
                         <div className="grid grid-cols-2 gap-3">
-                            <button onClick={genCode} disabled={busy} className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white" style={{ background: ACCENT }}><UserPlus className="h-4 w-4" /> {t("td.inviteCode")}</button>
+                            <button onClick={genCode} disabled={busy || team.locked} className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white disabled:opacity-40" style={{ background: ACCENT }}><UserPlus className="h-4 w-4" /> {t("td.inviteCode")}</button>
                             <button onClick={() => { setReqOpen(o => !o); if (!reqOpen) loadReqs(); }} className="relative flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white/85" style={card}>
                                 <Inbox className="h-4 w-4" /> {t("td.requests")}
                                 {team.pendingRequests > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-black text-white" style={{ background: "#FF3C5F" }}>{team.pendingRequests}</span>}
@@ -263,7 +271,7 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                                             {ROLES.filter(x => x !== "CAPTAIN").map(rl => (
                                                 <button key={rl} onClick={() => setRole(m.athleteId, rl)} className="rounded-lg px-3 py-1.5 text-xs font-bold" style={m.role === rl ? { background: ACCENT, color: "#fff" } : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)" }}>{t("rl." + rl)}</button>
                                             ))}
-                                            <button onClick={() => kick(m.athleteId)} className="ml-auto flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold text-red-300" style={{ background: "rgba(255,60,60,0.10)" }}><Trash2 className="h-3.5 w-3.5" /> Chiqarish</button>
+                                            <button onClick={() => kick(m.athleteId)} disabled={team.locked} className="ml-auto flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold text-red-300 disabled:opacity-40" style={{ background: "rgba(255,60,60,0.10)" }}><Trash2 className="h-3.5 w-3.5" /> Chiqarish</button>
                                         </div>
                                     )}
                                 </div>
@@ -275,16 +283,16 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                 {/* Sportchi amallari */}
                 {!team.isOwner && team.myAthleteId && (
                     team.amIMember ? (
-                        <button onClick={leave} className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-red-300" style={{ background: "rgba(255,60,60,0.10)", border: "1px solid rgba(255,60,60,0.25)" }}><LogOut className="h-4 w-4" /> {t("td.leave")}</button>
+                        <button onClick={leave} disabled={team.locked} className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-red-300 disabled:opacity-40" style={{ background: "rgba(255,60,60,0.10)", border: "1px solid rgba(255,60,60,0.25)" }}><LogOut className="h-4 w-4" /> {t("td.leave")}</button>
                     ) : (
-                        <button onClick={joinRequest} disabled={busy} className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white" style={{ background: ACCENT }}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />} {t("td.apply")}</button>
+                        <button onClick={joinRequest} disabled={busy || team.locked} className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-white disabled:opacity-40" style={{ background: ACCENT }}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />} {t("td.apply")}</button>
                     )
                 )}
                 {err && <div className="mt-3 flex items-center gap-2 rounded-2xl px-4 py-2.5" style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.3)" }}><AlertTriangle className="h-4 w-4 text-white/50" /><span className="text-xs font-semibold text-white/70">{err}</span></div>}
 
                 {/* Egasi: o'chirish */}
                 {team.isOwner && (
-                    <button onClick={del} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-xs font-bold text-red-300/70" style={{ background: "rgba(255,60,60,0.06)" }}><Trash2 className="h-3.5 w-3.5" /> {t("td.delete")}</button>
+                    <button onClick={del} disabled={team.locked} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-xs font-bold text-red-300/70 disabled:opacity-40" style={{ background: "rgba(255,60,60,0.06)" }}><Trash2 className="h-3.5 w-3.5" /> {t("td.delete")}</button>
                 )}
             </div>
         </main>

@@ -43,10 +43,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         ? await prisma.esJoinRequest.count({ where: { teamId: id, status: "PENDING" } })
         : 0;
 
+    const locked = await isTeamLockedAny(id); // active turnirda — tarkib qulflangan
+
     return NextResponse.json({
         team: {
             id: team.id, name: team.name, tag: team.tag, logo: team.logo, bio: team.bio,
-            isOwner, amIMember, myAthleteId: myAthlete?.id ?? null, pendingRequests,
+            isOwner, amIMember, myAthleteId: myAthlete?.id ?? null, pendingRequests, locked,
             rosters: team.rosters.map(r => ({
                 id: r.id, game: r.game, rating: r.rating,
                 members: r.members.map(m => {
