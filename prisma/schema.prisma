@@ -265,6 +265,7 @@ model EsTournament {      // turnir
   name         String
   format       String   @default("SINGLE_ELIM")  // SINGLE_ELIM/DOUBLE_ELIM/GROUPS
   prizePool    Decimal? @db.Decimal(18, 2)
+  prizeFunded  Decimal  @default(0) @db.Decimal(18, 2)  // egadan escrow'ga to'ldirilgan mukofot
   currency     String   @default("UZS")
   status       String   @default("UPCOMING")      // UPCOMING/REGISTRATION/LIVE/ENDED
   maxTeams     Int      @default(16)               // 0 = cheksiz (Ochiq divizion turniri)
