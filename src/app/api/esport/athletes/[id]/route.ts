@@ -12,8 +12,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const raw = body.marketValue;
     const marketValue = raw === null || raw === "" || raw === undefined ? null : Math.max(0, Math.round(Number(raw)));
     if (marketValue !== null && !Number.isFinite(marketValue)) return NextResponse.json({ error: "Noto'g'ri narx" }, { status: 400 });
-    const updated = await prisma.esAthlete.update({ where: { id }, data: { marketValue }, select: { id: true, marketValue: true } });
-    return NextResponse.json({ ok: true, marketValue: updated.marketValue ? Number(updated.marketValue) : null });
+    try {
+        const updated = await prisma.esAthlete.update({ where: { id }, data: { marketValue }, select: { id: true, marketValue: true } });
+        return NextResponse.json({ ok: true, marketValue: updated.marketValue ? Number(updated.marketValue) : null });
+    } catch {
+        return NextResponse.json({ error: "Sportchi topilmadi" }, { status: 404 });
+    }
 }
 
 // GET /api/esport/athletes/[id] — ommaviy sportchi profili

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getEsportOwner, fullName } from "@/lib/esport";
-import { isFounderProfile } from "@/lib/founders";
+import { getEsportOwner, isEsportOwner, fullName } from "@/lib/esport";
 
 // GET /api/esport/admin/admins — adminlar ro'yxati (faqat ega)
 export async function GET() {
@@ -29,7 +28,7 @@ export async function POST(req: Request) {
 
     const user = await prisma.userProfile.findUnique({ where: { humoId: id }, select: { id: true, firstName: true, lastName: true, name: true } });
     if (!user) return NextResponse.json({ error: "Bu Humo ID topilmadi" }, { status: 404 });
-    if (isFounderProfile({ humoId: id })) return NextResponse.json({ error: "Bu allaqachon ega" }, { status: 400 });
+    if (isEsportOwner({ humoId: id })) return NextResponse.json({ error: "Bu allaqachon ega" }, { status: 400 });
 
     try {
         await prisma.esAdmin.create({ data: { humoId: id, createdBy: owner.humoId ?? "" } });
