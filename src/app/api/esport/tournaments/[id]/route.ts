@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getMyProfile } from "@/lib/esport";
-import { isFounderProfile } from "@/lib/founders";
+import { getMyProfile, getEsportAdmin, isEsportOwner } from "@/lib/esport";
 import { formatMoney, type Currency } from "@/lib/money";
 
 // GET /api/esport/tournaments/[id] — ommaviy tafsilot: turnir + ishtirokchilar + setka
@@ -31,14 +30,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         myTeams = owned.map(o => ({ ...o, registered: regSet.has(o.id) }));
     }
 
-    const isAdmin = !!me && isFounderProfile({ username: me.username, humoId: me.humoId });
+    const isAdmin = !!(await getEsportAdmin());
+    const isOwner = !!me && isEsportOwner(me);
     const cur = (t.currency === "USD" ? "USD" : "UZS") as Currency;
     return NextResponse.json({
-        isAdmin,
+        isAdmin, isOwner,
         tournament: {
             id: t.id, name: t.name, game: t.game, status: t.status,
             prizePool: t.prizePool ? Number(t.prizePool) : null,
             prizeLabel: t.prizePool ? formatMoney(Number(t.prizePool), cur) : null,
+            prizeFunded: Number(t.prizeFunded), prizeFundedLabel: formatMoney(Number(t.prizeFunded), cur),
             currency: cur, maxTeams: t.maxTeams, bracketReady: t.bracketReady, thirdPlace: t.thirdPlace,
             registrationEndsAt: t.registrationEndsAt, startsAt: t.startsAt, endsAt: t.endsAt,
         },

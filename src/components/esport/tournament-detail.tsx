@@ -10,7 +10,7 @@ import {
 
 interface TeamLite { id: string; name: string; tag: string; logo: string | null }
 interface Match { id: string; bracket: string; round: number; slot: number; seedA: number | null; seedB: number | null; scoreA: number | null; scoreB: number | null; status: string; streamUrl: string | null; proofUrl: string | null; winnerId: string | null; teamA: TeamLite | null; teamB: TeamLite | null }
-interface Tournament { id: string; name: string; game: { name: string } | null; status: string; prizePool: number | null; prizeLabel: string | null; currency: string; maxTeams: number; bracketReady: boolean; thirdPlace: boolean; registrationEndsAt: string | null }
+interface Tournament { id: string; name: string; game: { name: string } | null; status: string; prizePool: number | null; prizeLabel: string | null; prizeFunded: number; prizeFundedLabel: string | null; currency: string; maxTeams: number; bracketReady: boolean; thirdPlace: boolean; registrationEndsAt: string | null }
 interface MyTeam { id: string; name: string; tag: string; registered: boolean }
 
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
@@ -32,6 +32,8 @@ export default function TournamentDetail({ tournamentId }: { tournamentId: strin
     const [participants, setParticipants] = useState<TeamLite[]>([]);
     const [myTeams, setMyTeams] = useState<MyTeam[]>([]);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isOwner, setIsOwner] = useState(false);
+    const [fundAmt, setFundAmt] = useState("");
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState("");
@@ -63,7 +65,7 @@ export default function TournamentDetail({ tournamentId }: { tournamentId: strin
     const load = useCallback(async () => {
         const d = await fetch(`/api/esport/tournaments/${tournamentId}`).then(r => r.json()).catch(() => ({}));
         if (d.error) { setErr(d.error); setLoading(false); return; }
-        setT(d.tournament); setMatches(d.matches || []); setParticipants(d.participants || []); setMyTeams(d.myTeams || []); setIsAdmin(!!d.isAdmin);
+        setT(d.tournament); setMatches(d.matches || []); setParticipants(d.participants || []); setMyTeams(d.myTeams || []); setIsAdmin(!!d.isAdmin); setIsOwner(!!d.isOwner);
         setLoading(false);
     }, [tournamentId]);
     useEffect(() => { load(); }, [load]);
@@ -151,6 +153,15 @@ export default function TournamentDetail({ tournamentId }: { tournamentId: strin
                         {t.status === "UPCOMING" && <AdminBtn onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}`, "PATCH", { status: "REGISTRATION" })} busy={busy} icon={Users}>{"Ro'yxat ochish"}</AdminBtn>}
                         {!t.bracketReady && participants.length >= 2 && <AdminBtn onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}/generate`, "POST")} busy={busy} icon={Wand2}>Setka tuzish (Elo)</AdminBtn>}
                         {t.status === "ENDED" && t.prizePool ? <AdminBtn onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}/payout`, "POST")} busy={busy} icon={Banknote}>Yutuqни to'lash</AdminBtn> : null}
+                        {isOwner && t.prizePool ? (
+                            <div className="flex w-full flex-col gap-2 rounded-2xl p-3" style={soft}>
+                                <p className="text-[11px] font-bold text-white/60">{tr("pe.fund")}: <span className="text-[#00CEC8]">{t.prizeFundedLabel}</span> / {t.prizeLabel}</p>
+                                <div className="flex gap-2">
+                                    <input value={fundAmt} onChange={e => setFundAmt(e.target.value)} placeholder="0" inputMode="numeric" className="flex-1 rounded-xl px-3 py-2 text-sm font-bold text-white outline-none" style={{ background: "rgba(255,255,255,0.05)" }} />
+                                    <button onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}/fund`, "POST", { amount: Number(fundAmt) }).then(() => setFundAmt(""))} disabled={busy || !fundAmt} className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold text-white disabled:opacity-50" style={{ background: ACCENT }}><Banknote className="h-4 w-4" /> {tr("pe.fundBtn")}</button>
+                                </div>
+                            </div>
+                        ) : null}
                     </div>
                 )}
 
