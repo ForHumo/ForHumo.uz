@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { playbackIframeUrl } from "@/lib/esport-stream";
 
 const ROLE_LABEL: Record<string, string> = { CAPTAIN: "Kapitan", STARTER: "Asosiy", SUB: "Zaxira" };
 
@@ -90,7 +91,7 @@ export async function GET() {
     };
     const crank = (st: string) => (st === "LIVE" ? 0 : st === "SCHEDULED" ? 1 : 2);
     const broadcasts = rawCasts
-        .map(b => ({ id: b.id, title: b.title, status: castStatus(b), streamUrl: b.streamUrl, nexusLiveId: b.nexusLiveId, posterUrl: b.posterUrl, scheduledAt: b.scheduledAt, endsAt: b.endsAt, viewers: b.viewers }))
+        .map(b => ({ id: b.id, title: b.title, status: castStatus(b), streamUrl: b.streamUrl, nexusLiveId: b.nexusLiveId, posterUrl: b.posterUrl, scheduledAt: b.scheduledAt, endsAt: b.endsAt, viewers: b.viewers, source: b.source, playbackUrl: b.source === "CLOUDFLARE" ? playbackIframeUrl(b.playbackId) : null }))
         .filter(b => b.status !== "ENDED" || !b.endsAt || now - new Date(b.endsAt).getTime() < WEEK)
         .sort((a, b) => { const r = crank(a.status) - crank(b.status); if (r !== 0) return r; const at = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0; const bt = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0; return a.status === "SCHEDULED" ? at - bt : bt - at; })
         .slice(0, 12);
