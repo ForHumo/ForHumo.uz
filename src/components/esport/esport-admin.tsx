@@ -156,6 +156,11 @@ const Btn = (p: { onClick: () => void; busy?: boolean; children: ReactNode }) =>
 function SeasonTab({ seasons, gameId, api, reload, busy }: { seasons: Season[]; gameId: string; api: ApiFn; reload: () => void; busy: boolean }) {
     const tr = useEsT();
     const [name, setName] = useState("");
+    const [rName, setRName] = useState("");
+    const [rStart, setRStart] = useState("");
+    const [rEnd, setREnd] = useState("");
+    const [rMsg, setRMsg] = useState("");
+    const active = seasons.find(s => s.active);
     return (
         <div className="space-y-3">
             <div className="rounded-2xl p-4" style={card}>
@@ -165,6 +170,26 @@ function SeasonTab({ seasons, gameId, api, reload, busy }: { seasons: Season[]; 
                     <Btn busy={busy} onClick={async () => { if (!name.trim()) return; await api("/api/esport/admin/seasons", "POST", { gameId, name }); setName(""); reload(); }}><Plus className="h-4 w-4" /></Btn>
                 </div>
             </div>
+
+            {active && (
+                <div className="rounded-2xl p-4" style={card}>
+                    <p className="mb-1 text-xs font-black uppercase text-white/40">{tr("sa.rollover")}</p>
+                    <p className="mb-2 text-[11px] text-white/40">{tr("sa.rolloverHint")}</p>
+                    <div className="space-y-2">
+                        <Inp value={rName} onChange={setRName} placeholder={tr("sa.nextName")} />
+                        <div className="flex gap-2">
+                            <label className="flex-1 text-[10px] font-bold text-white/40">{tr("sa.start")}<input value={rStart} onChange={e => setRStart(e.target.value)} type="date" className="mt-0.5 w-full rounded-xl px-2 py-2 text-xs font-semibold text-white outline-none" style={{ background: "rgba(255,255,255,0.05)" }} /></label>
+                            <label className="flex-1 text-[10px] font-bold text-white/40">{tr("sa.end")}<input value={rEnd} onChange={e => setREnd(e.target.value)} type="date" className="mt-0.5 w-full rounded-xl px-2 py-2 text-xs font-semibold text-white outline-none" style={{ background: "rgba(255,255,255,0.05)" }} /></label>
+                        </div>
+                        <Btn busy={busy} onClick={async () => {
+                            if (!rName.trim()) return; setRMsg("");
+                            const r = await api("/api/esport/admin/seasons/rollover", "POST", { seasonId: active.id, nextName: rName, nextStartsAt: rStart || null, nextEndsAt: rEnd || null });
+                            if (r.error) setRMsg(String(r.error)); else { setRMsg(`${tr("sa.done")}: ${r.carried}`); setRName(""); setRStart(""); setREnd(""); reload(); }
+                        }}><ArrowUp className="h-4 w-4" /> {tr("sa.rolloverBtn")}</Btn>
+                        {rMsg && <p className="text-xs font-semibold text-[#00CEC8]">{rMsg}</p>}
+                    </div>
+                </div>
+            )}
             <div className="space-y-2">
                 {seasons.map(s => (
                     <div key={s.id} className="flex items-center gap-2 rounded-2xl p-3" style={card}>
