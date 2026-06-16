@@ -11,7 +11,7 @@ import { useEsT } from "@/lib/esport-i18n";
 interface Athlete {
     id: string; ign: string; gameUserId: string; gameServer: string | null; position: string | null;
     game: { name: string } | null; createdAt: string; name: string; username: string | null;
-    image: string | null; humoId: string | null; verified: boolean; marketValue: number | null;
+    image: string | null; coverImage: string | null; humoId: string | null; verified: boolean; marketValue: number | null;
     team: { id: string; name: string; tag: string; logo: string | null; role: string; joinedAt: string; rating: number; peakRating: number; lowRating: number } | null;
     results: { wins: number; losses: number; played: number } | null;
 }
@@ -109,7 +109,7 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
 
             {/* Bosh karta */}
             <div className="relative mb-4 overflow-hidden rounded-3xl es-card">
-                <div className="h-24 es-accent-bg3" />
+                <div className="h-24 overflow-hidden es-accent-bg3">{a.coverImage && <img src={a.coverImage} alt="" className="h-full w-full object-cover" />}</div>
                 <div className="px-6 pb-6">
                     <div className="-mt-12 flex items-end gap-4">
                         {a.image

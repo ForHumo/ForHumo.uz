@@ -30,7 +30,7 @@ export async function GET() {
         hasHumoId: !!me.humoId,
         profileName: { firstName: me.firstName ?? "", lastName: me.lastName ?? "", hasName: !!(me.firstName && me.lastName) },
         athlete: athlete
-            ? { id: athlete.id, game: athlete.game, ign: athlete.ign, gameUserId: athlete.gameUserId, gameServer: athlete.gameServer, role: athlete.role, image: athlete.image ?? me.image ?? null }
+            ? { id: athlete.id, game: athlete.game, ign: athlete.ign, gameUserId: athlete.gameUserId, gameServer: athlete.gameServer, role: athlete.role, image: athlete.image ?? me.image ?? null, coverImage: athlete.coverImage ?? null }
             : null,
         games,
         roles: MLBB_ROLES,
@@ -149,6 +149,7 @@ export async function PATCH(req: Request) {
     if ("gameServer" in body) data.gameServer = typeof body.gameServer === "string" && body.gameServer.trim() ? body.gameServer.trim().slice(0, 30) : null;
     if ("role" in body) data.role = typeof body.role === "string" && (MLBB_ROLES as readonly string[]).includes(body.role) ? body.role : null;
     if ("image" in body) data.image = typeof body.image === "string" && body.image ? body.image : null;
+    if ("coverImage" in body) data.coverImage = typeof body.coverImage === "string" && body.coverImage ? body.coverImage : null;
 
     let updated;
     try {
@@ -159,6 +160,6 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({
         ok: true,
-        athlete: { id: updated.id, game: updated.game, ign: updated.ign, gameUserId: updated.gameUserId, gameServer: updated.gameServer, role: updated.role, image: updated.image ?? me.image ?? null },
+        athlete: { id: updated.id, game: updated.game, ign: updated.ign, gameUserId: updated.gameUserId, gameServer: updated.gameServer, role: updated.role, image: updated.image ?? me.image ?? null, coverImage: updated.coverImage ?? null },
     });
 }

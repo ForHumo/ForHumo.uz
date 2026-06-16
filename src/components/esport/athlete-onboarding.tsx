@@ -9,7 +9,7 @@ import {
 import { useEsT } from "@/lib/esport-i18n";
 
 interface Game { id: string; slug: string; name: string; teamSize: number }
-interface Athlete { id: string; game: { slug: string; name: string }; ign: string; gameUserId: string; gameServer: string | null; role: string | null; image?: string | null }
+interface Athlete { id: string; game: { slug: string; name: string }; ign: string; gameUserId: string; gameServer: string | null; role: string | null; image?: string | null; coverImage?: string | null }
 
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
 const cardStyle = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
@@ -238,11 +238,14 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
     const [gameServer, setGameServer] = useState(athlete.gameServer || "");
     const [role, setRole] = useState(athlete.role || "");
     const [image, setImage] = useState(athlete.image || "");
+    const [cover, setCover] = useState(athlete.coverImage || "");
     const [roleOpen, setRoleOpen] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [coverUploading, setCoverUploading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState("");
     const fileRef = useRef<HTMLInputElement>(null);
+    const coverRef = useRef<HTMLInputElement>(null);
     const roleRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -258,6 +261,13 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
         setUploading(false);
         if (r.url) setImage(r.url); else setErr(r.error || "Rasm yuklanmadi");
     }
+    async function uploadCover(file: File) {
+        setCoverUploading(true); setErr("");
+        const fd = new FormData(); fd.append("file", file); fd.append("kind", "brand");
+        const r = await fetch("/api/market/upload", { method: "POST", body: fd }).then(x => x.json()).catch(() => ({ error: "Yuklash xatosi" }));
+        setCoverUploading(false);
+        if (r.url) setCover(r.url); else setErr(r.error || "Rasm yuklanmadi");
+    }
 
     async function save() {
         setErr("");
@@ -266,7 +276,7 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
         setSaving(true);
         const r = await fetch("/api/esport/athlete", {
             method: "PATCH", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ign, gameUserId, gameServer, role, image: image || null }),
+            body: JSON.stringify({ ign, gameUserId, gameServer, role, image: image || null, coverImage: cover || null }),
         }).then(x => x.json()).catch(() => ({ error: "Tarmoq xatosi" }));
         setSaving(false);
         if (r.error) return setErr(r.error);
@@ -300,6 +310,15 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
             </div>
 
             {err && <div className="mt-4 flex items-center gap-2 rounded-2xl px-4 py-2.5" style={{ background: "rgba(255,60,60,0.10)", border: "1px solid rgba(255,60,60,0.3)" }}><AlertTriangle className="h-4 w-4 text-red-400" /><span className="text-xs font-semibold text-red-300">{err}</span></div>}
+
+            {editing && (
+                <>
+                    <button onClick={() => coverRef.current?.click()} className="relative mt-4 flex h-24 w-full items-center justify-center overflow-hidden rounded-2xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                        {cover ? <img src={cover} alt="" className="h-full w-full object-cover" /> : <span className="flex items-center gap-2 text-xs font-bold text-white/40">{coverUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />} {t("td.editCover")}</span>}
+                    </button>
+                    <input ref={coverRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; if (f) uploadCover(f); }} />
+                </>
+            )}
 
             {!editing ? (
                 <>
@@ -348,7 +367,7 @@ function AthleteCard({ athlete, roles, onUpdated, onDeleted, onContinue }: {
                         )}
                     </div>
                     <div className="flex gap-2 pt-1">
-                        <button onClick={() => { setEditing(false); setIgn(athlete.ign); setGameUserId(athlete.gameUserId); setGameServer(athlete.gameServer || ""); setRole(athlete.role || ""); setImage(athlete.image || ""); setErr(""); }} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-bold text-white/70" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}><X className="h-4 w-4" /> {t("ob.cancel")}</button>
+                        <button onClick={() => { setEditing(false); setIgn(athlete.ign); setGameUserId(athlete.gameUserId); setGameServer(athlete.gameServer || ""); setRole(athlete.role || ""); setImage(athlete.image || ""); setCover(athlete.coverImage || ""); setErr(""); }} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-bold text-white/70" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}><X className="h-4 w-4" /> {t("ob.cancel")}</button>
                         <button onClick={save} disabled={saving || uploading} className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-black text-white disabled:opacity-60" style={{ background: ACCENT }}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {t("ob.save")}</button>
                     </div>
                 </div>

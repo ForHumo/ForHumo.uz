@@ -27,7 +27,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const { id } = await params;
     const a = await prisma.esAthlete.findUnique({
         where: { id },
-        select: { id: true, ign: true, gameUserId: true, gameServer: true, role: true, createdAt: true, humoProfileId: true, gameId: true, image: true, marketValue: true, game: { select: { name: true, slug: true } } },
+        select: { id: true, ign: true, gameUserId: true, gameServer: true, role: true, createdAt: true, humoProfileId: true, gameId: true, image: true, coverImage: true, marketValue: true, game: { select: { name: true, slug: true } } },
     });
     if (!a) return NextResponse.json({ error: "Sportchi topilmadi" }, { status: 404 });
 
@@ -64,7 +64,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         contract, canExtend,
         athlete: {
             id: a.id, ign: a.ign, gameUserId: a.gameUserId, gameServer: a.gameServer, position: a.role,
-            game: a.game, createdAt: a.createdAt,
+            game: a.game, createdAt: a.createdAt, coverImage: a.coverImage ?? null,
             marketValue: a.marketValue ? Number(a.marketValue) : null,
             name: profile ? fullName(profile) : "", username: profile?.username ?? null,
             image: a.image ?? profile?.image ?? null, humoId: profile?.humoId ?? null,

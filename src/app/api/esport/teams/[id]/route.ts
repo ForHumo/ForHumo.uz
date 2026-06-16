@@ -47,7 +47,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     return NextResponse.json({
         team: {
-            id: team.id, name: team.name, tag: team.tag, logo: team.logo, bio: team.bio,
+            id: team.id, name: team.name, tag: team.tag, logo: team.logo, coverImage: team.coverImage, bio: team.bio,
             isOwner, amIMember, myAthleteId: myAthlete?.id ?? null, pendingRequests, locked,
             rosters: team.rosters.map(r => ({
                 id: r.id, game: r.game, rating: r.rating,
@@ -74,7 +74,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!team || team.ownerId !== me.id) return NextResponse.json({ error: "Faqat egasi" }, { status: 403 });
 
     const body = await req.json();
-    const data: { name?: string; tag?: string; logo?: string | null; bio?: string | null } = {};
+    const data: { name?: string; tag?: string; logo?: string | null; bio?: string | null; coverImage?: string | null } = {};
+    if (typeof body.coverImage === "string") data.coverImage = isValidMediaUrl(body.coverImage) ? body.coverImage : null;
     if (typeof body.name === "string" && body.name.trim().length >= 2) data.name = body.name.trim().slice(0, 40);
     if (typeof body.tag === "string") {
         const tag = body.tag.trim().toUpperCase().slice(0, 5);

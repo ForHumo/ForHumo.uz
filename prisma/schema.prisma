@@ -158,6 +158,7 @@ model EsTeam {            // tashkilot — o'yinга bog'liq EMAS
   name      String   @unique
   tag       String   @unique            // qisqa teg (masalan "RMC")
   logo      String?
+  coverImage String?                    // jamoa banneri (muqova)
   ownerId   String                      // UserProfile.id (Humo ID egasi)
   bio       String?
   createdAt DateTime @default(now())
@@ -216,6 +217,7 @@ model EsAthlete {         // Humo ID + bitta o'yin (qattiq qulf)
   gameServer    String?                 // server/zona
   role          String?                 // pozitsiya
   image         String?                 // avatar (null = Humo ID rasmi)
+  coverImage    String?                 // profil banneri (muqova)
   marketValue   Decimal? @db.Decimal(18, 2)  // transfer bozori narxi
   createdAt     DateTime @default(now())
   game          EsGame  @relation(fields: [gameId], references: [id])

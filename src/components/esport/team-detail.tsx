@@ -10,7 +10,7 @@ import { useEsT } from "@/lib/esport-i18n";
 
 interface Member { athleteId: string; role: string; ign: string; gameUserId: string; gameServer: string | null; position: string | null; name: string; username: string | null; image: string | null; humoId: string | null; verified: boolean }
 interface Roster { id: string; game: { slug: string; name: string; teamSize: number }; rating: number; members: Member[] }
-interface Team { id: string; name: string; tag: string; logo: string | null; bio: string | null; isOwner: boolean; amIMember: boolean; myAthleteId: string | null; pendingRequests: number; locked: boolean; rosters: Roster[] }
+interface Team { id: string; name: string; tag: string; logo: string | null; coverImage: string | null; bio: string | null; isOwner: boolean; amIMember: boolean; myAthleteId: string | null; pendingRequests: number; locked: boolean; rosters: Roster[] }
 interface JoinReq { id: string; athleteId: string; ign: string; position: string | null; game: string; name: string; username: string | null; image: string | null }
 interface ReqItem { id: string; type: string; athleteId: string | null; ign: string | null; approvals: string[]; createdAt: string }
 
@@ -37,25 +37,28 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
     const [eTag, setETag] = useState("");
     const [eBio, setEBio] = useState("");
     const [eLogo, setELogo] = useState("");
+    const [eCover, setECover] = useState("");
     const [uploading, setUploading] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
+    const coverRef = useRef<HTMLInputElement>(null);
 
     function openEdit() {
         if (!team) return;
-        setEName(team.name); setETag(team.tag); setEBio(team.bio || ""); setELogo(team.logo || ""); setErr(""); setEditOpen(true);
+        setEName(team.name); setETag(team.tag); setEBio(team.bio || ""); setELogo(team.logo || ""); setECover(team.coverImage || ""); setErr(""); setEditOpen(true);
     }
-    async function uploadLogo(file: File) {
+    async function uploadImg(file: File, set: (u: string) => void) {
         setUploading(true); setErr("");
         const fd = new FormData(); fd.append("file", file); fd.append("kind", "brand");
         const r = await fetch("/api/market/upload", { method: "POST", body: fd }).then(x => x.json()).catch(() => ({ error: "Yuklash xatosi" }));
         setUploading(false);
-        if (r.url) setELogo(r.url); else setErr(r.error || "Rasm yuklanmadi");
+        if (r.url) set(r.url); else setErr(r.error || "Rasm yuklanmadi");
     }
+    const uploadLogo = (file: File) => uploadImg(file, setELogo);
     async function saveEdit() {
         setBusy(true); setErr("");
         const r = await fetch(`/api/esport/teams/${teamId}`, {
             method: "PATCH", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: eName, tag: eTag, bio: eBio, logo: eLogo || null }),
+            body: JSON.stringify({ name: eName, tag: eTag, bio: eBio, logo: eLogo || null, coverImage: eCover || null }),
         }).then(x => x.json()).catch(() => ({ error: "Tarmoq xatosi" }));
         setBusy(false);
         if (r.error) return setErr(r.error);
@@ -137,7 +140,8 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                 </div>
 
                 {/* Team card */}
-                <div className="mb-5 rounded-3xl p-5" style={card}>
+                <div className="mb-5 overflow-hidden rounded-3xl p-5" style={card}>
+                    {team.coverImage && <div className="-mx-5 -mt-5 mb-4 h-28"><img src={team.coverImage} alt="" className="h-full w-full object-cover" /></div>}
                     <div className="flex items-center gap-4">
                         <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl text-lg font-black text-white" style={team.logo ? undefined : { background: ACCENT }}>
                             {team.logo ? <img src={team.logo} alt="" className="h-full w-full rounded-2xl object-contain" /> : team.tag.slice(0, 3)}
@@ -160,6 +164,13 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                                 </button>
                                 <input ref={fileRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; if (f) uploadLogo(f); }} />
                                 <span className="text-xs text-white/40">{t("td.editLogo")}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => coverRef.current?.click()} className="flex h-14 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl" style={soft}>
+                                    {eCover ? <img src={eCover} alt="" className="h-full w-full object-cover" /> : <ImagePlus className="h-5 w-5 text-white/40" />}
+                                </button>
+                                <input ref={coverRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; if (f) uploadImg(f, setECover); }} />
+                                <span className="text-xs text-white/40">{t("td.editCover")}</span>
                             </div>
                             <input value={eName} onChange={e => setEName(e.target.value)} placeholder={t("td.editName")} className="w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white outline-none placeholder:text-white/30" style={soft} />
                             <input value={eTag} onChange={e => setETag(e.target.value.toUpperCase())} maxLength={5} placeholder="Teg" className="w-full rounded-2xl px-4 py-3 text-sm font-semibold uppercase text-white outline-none placeholder:text-white/30" style={soft} />
