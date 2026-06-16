@@ -130,6 +130,9 @@ NEXTAUTH_URL
 GOOGLE_CLIENT_ID          # GoogleProvider (auth.ts)
 GOOGLE_CLIENT_SECRET
 BLOB_READ_WRITE_TOKEN     # Vercel Blob (avatar / cover upload)
+CLOUDFLARE_ACCOUNT_ID     # Cloudflare Stream (eSport jonli efir) — account id
+CLOUDFLARE_STREAM_TOKEN   # Stream:Edit ruxsatli API token (live input yaratish/status/o'chirish)
+CLOUDFLARE_STREAM_CODE    # customer-{CODE}.cloudflarestream.com (iframe playback)
 GEMINI_API_KEY            # Gemini (AI funksiyalar: listing/qidiruv/chat) — Google AI Studio, paid prepay
 GEMINI_MODEL              # ixtiyoriy — default "gemini-2.5-flash-lite" (lib/ai.ts)
 LOCATION_ENCRYPTION_KEY   # ixtiyoriy — AES-256-GCM kaliti (crypto.ts); bo'lmasa NEXTAUTH_SECRET dan derive
@@ -153,6 +156,7 @@ VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
 - **Locale Link gotcha:** `import { Link } from "@/i18n/routing"` locale'ni **avtomatik** qo'shadi. `href="/market"` yoz, `/${locale}/market` **EMAS** (ikki marta chiqadi: `/uz/uz/...`). `useRouter` ham `@/i18n/routing` dan import qilinadi.
 - **Modul shell pattern:** Har modul `src/app/[locale]/<modul>/layout.tsx` da `fixed inset-0 z-[100]` + o'z navbari bilan o'raladi (global header/footer'ni yopadi). Mavjud: eSport, ID, AI, Pay, Market, Nexus. ⚠️ Overlay foni **qattiq (opaque)** bo'lishi shart — yarim-shaffof bo'lsa global footer kunduzi sizib chiqadi (Market'da `from-white via-green-50 to-emerald-50`). Market'ning o'z footer'i `market-footer.tsx`.
 - **Prisma client:** doimo `src/lib/prisma.ts` singleton orqali import qil (yangi `PrismaClient()` yaratma).
+- **eSport jonli efir:** `src/lib/esport-stream.ts` — Cloudflare Stream Live (RTMP→LL-HLS, `recording.mode="off"` = yozuvsiz). Kalit (`CLOUDFLARE_*`) yo'q bo'lsa **stub** (test). `streamKey`/`ingestUrl` faqat `/api/esport/broadcasts/[id]/ingest` (admin/ega) orqali; public/list GET'da HECH QACHON qaytmaydi. eSport efiri yozuvsiz; abadiy yozuv kerak bo'lsa Nexus Live (`nexusLiveId`). `EsBroadcast.source` = EXTERNAL (YouTube/Twitch embed) | CLOUDFLARE.
 - **Profil tahriri:** `UserProfile.profileEditedAt` — foydalanuvchi profilini **14 kunda 1 marta** tahrir qila oladi (rate-limit).
 - **Manzil:** `location`/`locationIv` shifrlangan — `src/lib/crypto.ts` siz to'g'ridan o'qib/yozib bo'lmaydi.
 - **Tailwind v4 dark mode (KRITIK):** v4 da config fayli yo'q — `dark:` default'da OS media query'ga bog'lanadi, `.dark` class'ga **emas**. `src/app/globals.css` da `@custom-variant dark (&:where(.dark, .dark *));` bo'lishi SHART. Yo'qolsa dark-mode toggle butun ilovada ishlamaydi.
