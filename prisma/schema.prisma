@@ -166,7 +166,20 @@ model EsTeam {            // tashkilot — o'yinга bog'liq EMAS
   invites      EsTeamInvite[]
   joinRequests EsJoinRequest[]
   requests     EsRequest[]
+  staff        EsTeamStaff[]
   @@index([ownerId])
+}
+
+model EsTeamStaff {        // jamoa lavozimlari (o'yinchi bo'lishi shart emas — istalgan Humo ID)
+  id        String   @id @default(cuid())
+  teamId    String
+  profileId String                      // UserProfile.id
+  role      String                      // VICE_OWNER | COACH | CAPTAIN | STAFF
+  title     String?                     // STAFF uchun erkin lavozim (Direktor/Buxgalter/Admin)
+  createdAt DateTime @default(now())
+  team      EsTeam   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  @@unique([teamId, profileId])         // bir odam jamoada bitta lavozim yozuvi
+  @@index([teamId])
 }
 
 model EsTeamInvite {       // taklif-kod (ega yaratadi, sportchi kod bilan qo'shiladi)

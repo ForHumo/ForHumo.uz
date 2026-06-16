@@ -54,7 +54,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 members: r.members.map(m => {
                     const p = pMap[m.athlete.humoProfileId];
                     return {
-                        athleteId: m.athlete.id, role: m.role, ign: m.athlete.ign,
+                        athleteId: m.athlete.id, humoProfileId: m.athlete.humoProfileId, role: m.role, ign: m.athlete.ign,
                         gameUserId: m.athlete.gameUserId, gameServer: m.athlete.gameServer, position: m.athlete.role,
                         name: p ? fullName(p) : "", username: p?.username ?? null, image: p?.image ?? null,
                         humoId: p?.humoId ?? null, verified: p?.verified ?? false,
