@@ -55,10 +55,16 @@ export async function PATCH(req: Request) {
 
     const winnerId = a > b ? match.teamAId : match.teamBId;
     const loserId = a > b ? match.teamBId : match.teamAId;
-    const key = (teamId: string) => ({ seasonId_divisionId_teamId: { seasonId: match.seasonId, divisionId: match.divisionId, teamId } });
+
+    // Standing'ni mavsum+jamoa bo'yicha topamiz (divizion key emas) — jamoa o'yin
+    // yaratilgandan keyin boshqa divizionga ko'chsa ham natija to'g'ri yoziladi (500 bo'lmaydi).
+    const [stW, stL, season] = await Promise.all([
+        prisma.esStanding.findFirst({ where: { seasonId: match.seasonId, teamId: winnerId }, select: { id: true } }),
+        prisma.esStanding.findFirst({ where: { seasonId: match.seasonId, teamId: loserId }, select: { id: true } }),
+        prisma.esSeason.findUnique({ where: { id: match.seasonId }, select: { gameId: true } }),
+    ]);
 
     // Elo: shu o'yin valyutasidagi (mavsum o'yini) jamoa rosterlari
-    const season = await prisma.esSeason.findUnique({ where: { id: match.seasonId }, select: { gameId: true } });
     const [rosterW, rosterL] = season ? await Promise.all([
         prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: winnerId, gameId: season.gameId } }, select: { id: true, rating: true, peakRating: true, lowRating: true } }),
         prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: loserId, gameId: season.gameId } }, select: { id: true, rating: true, peakRating: true, lowRating: true } }),
@@ -66,9 +72,9 @@ export async function PATCH(req: Request) {
 
     const ops: Prisma.PrismaPromise<unknown>[] = [
         prisma.esLeagueMatch.update({ where: { id }, data: { scoreA: a, scoreB: b, winnerId, status: "DONE" } }),
-        prisma.esStanding.update({ where: key(winnerId), data: { points: { increment: WIN_POINTS }, wins: { increment: 1 }, played: { increment: 1 } } }),
-        prisma.esStanding.update({ where: key(loserId), data: { losses: { increment: 1 }, played: { increment: 1 } } }),
     ];
+    if (stW) ops.push(prisma.esStanding.update({ where: { id: stW.id }, data: { points: { increment: WIN_POINTS }, wins: { increment: 1 }, played: { increment: 1 } } }));
+    if (stL) ops.push(prisma.esStanding.update({ where: { id: stL.id }, data: { losses: { increment: 1 }, played: { increment: 1 } } }));
     if (rosterW && rosterL) {
         const { newA, newB } = applyElo(rosterW.rating, rosterL.rating, true);
         ops.push(prisma.esRoster.update({ where: { id: rosterW.id }, data: { rating: newA, peakRating: Math.max(rosterW.peakRating, newA), lowRating: Math.min(rosterW.lowRating, newA) } }));

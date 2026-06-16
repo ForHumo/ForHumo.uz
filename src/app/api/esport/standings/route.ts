@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 
     const byDiv = divisions.map(d => {
         const rows = standings
-            .filter(s => s.divisionId === d.id)
+            .filter(s => s.divisionId === d.id && tMap[s.teamId]) // o'chirilgan jamoa "arvoh" qatorlari yashiriladi
             .sort((a, b) => b.points - a.points || b.wins - a.wins || a.losses - b.losses)
             .map((s, i) => ({
                 rank: i + 1, teamId: s.teamId, team: tMap[s.teamId] ?? null,

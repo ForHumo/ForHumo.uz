@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getMyProfile, fullName } from "@/lib/esport";
+import { getMyProfile, fullName, purgeTeam } from "@/lib/esport";
 import { isValidMediaUrl } from "@/lib/media-url";
 
 // GET /api/esport/teams/[id] — jamoa tafsiloti (tarkiblar + a'zolar)
@@ -109,7 +109,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     const hasOthers = rosters.some(r => r.members.some(m => m.athlete.humoProfileId !== me.id));
     if (hasOthers) return NextResponse.json({ error: "Jamoada a'zolar bor — o'chirish uchun 100% rozilik kerak (so'rov yuboring)", needVote: true }, { status: 409 });
 
-    await prisma.esTransfer.updateMany({ where: { OR: [{ toTeamId: id }, { fromTeamId: id }], status: { in: ["PLAYER_PENDING", "AWAIT_FEE", "CLUB_PENDING"] } }, data: { status: "CANCELLED" } });
-    await prisma.esTeam.delete({ where: { id } }); // EsRequest/roster cascade bilan o'chadi
+    await purgeTeam(id); // transfer bekor + standings + jamoa (cascade)
     return NextResponse.json({ ok: true });
 }

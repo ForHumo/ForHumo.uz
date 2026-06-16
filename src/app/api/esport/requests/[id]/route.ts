@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getMyProfile } from "@/lib/esport";
+import { getMyProfile, purgeTeam } from "@/lib/esport";
 import { esNotify } from "@/lib/esport-notify";
 
 // POST /api/esport/requests/[id] — javob { action: approve|reject }
@@ -64,8 +64,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         });
         const approvals = await prisma.esRequestApproval.count({ where: { requestId: id } });
         if (approvals >= others.length) {
-            await prisma.esTransfer.updateMany({ where: { OR: [{ toTeamId: r.teamId }, { fromTeamId: r.teamId }], status: { in: ["PLAYER_PENDING", "AWAIT_FEE", "CLUB_PENDING"] } }, data: { status: "CANCELLED" } });
-            await prisma.esTeam.delete({ where: { id: r.teamId } }); // cascade: rosterlar/a'zolar/so'rovlar
+            await purgeTeam(r.teamId); // transfer bekor + standings + jamoa (cascade)
             return NextResponse.json({ ok: true, deleted: true, message: "Barcha rozi — jamoa o'chirildi" });
         }
         return NextResponse.json({ ok: true, message: `Ovoz qabul qilindi (${approvals}/${others.length})` });

@@ -50,6 +50,18 @@ export async function getEsportOwner() {
     return me && isEsportOwner(me) ? me : null;
 }
 
+// Jamoani to'liq o'chirish (yagona manba): ochiq transferlarni bekor qiladi,
+// standings'ni o'chiradi (EsStanding'да team FK yo'q — orphan "arvoh" qator qolmasin),
+// keyin jamoani o'chiradi (roster/a'zo/so'rov/invite/ariza cascade bilan ketadi).
+export async function purgeTeam(teamId: string) {
+    await prisma.esTransfer.updateMany({
+        where: { OR: [{ toTeamId: teamId }, { fromTeamId: teamId }], status: { in: ["PLAYER_PENDING", "AWAIT_FEE", "CLUB_PENDING"] } },
+        data: { status: "CANCELLED" },
+    });
+    await prisma.esStanding.deleteMany({ where: { teamId } });
+    await prisma.esTeam.delete({ where: { id: teamId } });
+}
+
 // Foydalanuvchi allaqachon biror jamodami (ega YOKI a'zo)? — bitta odam = bitta jamoa.
 export async function userHasTeam(profileId: string): Promise<boolean> {
     const owned = await prisma.esTeam.count({ where: { ownerId: profileId } });
