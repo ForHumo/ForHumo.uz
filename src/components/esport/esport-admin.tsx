@@ -230,6 +230,10 @@ function MatchTab({ matches, teams, divisions, seasonId, teamName, api, reload, 
     const [divId, setDivId] = useState("");
     const [a, setA] = useState("");
     const [b, setB] = useState("");
+    const [dbl, setDbl] = useState(false);
+    const [fxStart, setFxStart] = useState("");
+    const [fxInt, setFxInt] = useState("7");
+    const [fxMsg, setFxMsg] = useState("");
     const inDiv = teams.filter(t => t.enrolledDivisionId === divId);
     return (
         <div className="space-y-3">
@@ -244,6 +248,27 @@ function MatchTab({ matches, teams, divisions, seasonId, teamName, api, reload, 
                     </>}
                 </div>
             </div>
+
+            {/* Fixture (to'liq jadval) auto-generatsiya */}
+            <div className="rounded-2xl p-4" style={card}>
+                <p className="mb-2 text-xs font-black uppercase text-white/40">{tr("fx.title")}</p>
+                {!divId ? <p className="text-[11px] text-white/40">{tr("fx.pickDiv")}</p> : (
+                    <div className="space-y-2">
+                        <label className="flex items-center gap-2 text-xs font-bold text-white/70"><input type="checkbox" checked={dbl} onChange={e => setDbl(e.target.checked)} /> {tr("fx.double")}</label>
+                        <div className="flex gap-2">
+                            <label className="flex-1 text-[10px] font-bold text-white/40">{tr("fx.start")}<input value={fxStart} onChange={e => setFxStart(e.target.value)} type="date" className="mt-0.5 w-full rounded-xl px-2 py-2 text-xs font-semibold text-white outline-none" style={{ background: "rgba(255,255,255,0.05)" }} /></label>
+                            <label className="w-20 text-[10px] font-bold text-white/40">{tr("fx.interval")}<input value={fxInt} onChange={e => setFxInt(e.target.value)} inputMode="numeric" className="mt-0.5 w-full rounded-xl px-2 py-2 text-center text-xs font-semibold text-white outline-none" style={{ background: "rgba(255,255,255,0.05)" }} /></label>
+                        </div>
+                        <Btn busy={busy} onClick={async () => {
+                            setFxMsg("");
+                            const r = await api("/api/esport/admin/league-matches/generate", "POST", { seasonId, divisionId: divId, double: dbl, startsAt: fxStart || null, intervalDays: Number(fxInt) || 7 });
+                            if (r.error) setFxMsg(String(r.error)); else { setFxMsg(`${tr("fx.done")}: ${r.created}`); reload(); }
+                        }}><CalendarDays className="h-4 w-4" /> {tr("fx.gen")}</Btn>
+                        {fxMsg && <p className="text-xs font-semibold text-[#00CEC8]">{fxMsg}</p>}
+                    </div>
+                )}
+            </div>
+
             <div className="space-y-2">
                 {matches.map(m => <MatchRow key={m.id} m={m} teamName={teamName} api={api} reload={reload} />)}
             </div>
