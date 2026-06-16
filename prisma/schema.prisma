@@ -309,6 +309,7 @@ model EsMatch {           // bracket o'yini
   winnerId     String?
   status       String    @default("PENDING")  // PENDING/LIVE/DONE
   streamUrl    String?                         // Nexus/Twitch havola
+  proofUrl     String?                         // natija isboti (yakuniy hisob skrinshoti)
   scheduledAt  DateTime?
   // bracket ulanishi: g'olib qayerga, mag'lub qayerga (yarim final -> 3-o'rin)
   nextMatchId      String?
@@ -343,6 +344,7 @@ model EsLeagueMatch {     // liga o'yini (divizion ichida) — natija standings'
   winnerId    String?                          // hisoblangan natija
   status      String    @default("SCHEDULED")  // SCHEDULED/DONE
   streamUrl   String?
+  proofUrl    String?                          // natija isboti (yakuniy hisob skrinshoti)
   scheduledAt DateTime?
   createdAt   DateTime  @default(now())
   @@index([seasonId, divisionId, status])
@@ -446,6 +448,22 @@ model EsRequestApproval {  // TEAM_DELETE uchun a'zo ovozlari (100% rozilik kera
   createdAt DateTime @default(now())
   request   EsRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   @@unique([requestId, athleteId])
+}
+
+model EsDispute {         // natija e'tirozi (jamoa egasi bildiradi, admin hakam)
+  id            String   @id @default(cuid())
+  matchType     String                          // TOURNAMENT | LEAGUE
+  matchId       String                          // EsMatch.id yoki EsLeagueMatch.id (polimorf, FK yo'q)
+  teamId        String                          // e'tiroz bildirgan jamoa
+  filedBy       String                          // UserProfile id (ega)
+  reason        String
+  screenshotUrl String?                         // dalil skrinshoti
+  status        String   @default("OPEN")       // OPEN | RESOLVED | REJECTED
+  adminNote     String?                         // hakam izohi
+  createdAt     DateTime @default(now())
+  resolvedAt    DateTime?
+  @@index([status, createdAt])
+  @@index([matchType, matchId])
 }
 
 model EsBroadcast {       // turnir translyatsiyasi (Asosiy 16:9 oyna — Nexus integratsiya)
