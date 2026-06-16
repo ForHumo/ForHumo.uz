@@ -11,6 +11,15 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals.js", "next/typescript"),
+  {
+    rules: {
+      // Loyiha ataylab <img> ishlatadi (blob/remote URL, next/image emas) — CLAUDE.md'da hujjatlangan.
+      "@next/next/no-img-element": "off",
+      // O'zbek tilida ' (tutuq belgisi) harf sifatida ishlatiladi (o', g', ...) —
+      // bu qoida butun UI matniga qarshi kurashadi; matn JSX'da xavfsiz render bo'ladi.
+      "react/no-unescaped-entities": "off",
+    },
+  },
 ];
 
 export default eslintConfig;

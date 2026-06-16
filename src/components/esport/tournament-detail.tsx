@@ -12,7 +12,6 @@ interface Match { id: string; bracket: string; round: number; slot: number; seed
 interface Tournament { id: string; name: string; game: { name: string } | null; status: string; prizePool: number | null; prizeLabel: string | null; currency: string; maxTeams: number; bracketReady: boolean; thirdPlace: boolean; registrationEndsAt: string | null }
 interface MyTeam { id: string; name: string; tag: string; registered: boolean }
 
-const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
 const card = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
 const soft = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" };
@@ -100,14 +99,14 @@ export default function TournamentDetail({ tournamentId }: { tournamentId: strin
                 {/* Registration */}
                 {t.status === "REGISTRATION" && eligible.length > 0 && (
                     <div className="mb-5 rounded-3xl p-5" style={card}>
-                        <p className="mb-3 text-sm font-black text-white">Ro'yxatdan o'tish</p>
+                        <p className="mb-3 text-sm font-black text-white">{"Ro'yxatdan o'tish"}</p>
                         <div className="space-y-2">
                             {eligible.map(tm => (
                                 <button key={tm.id} onClick={() => call(`/api/esport/tournaments/${tournamentId}/register`, "POST", { teamId: tm.id })} disabled={busy}
                                     className="flex w-full items-center gap-3 rounded-2xl p-3 text-left" style={soft}>
                                     <span className="flex h-8 w-8 items-center justify-center rounded-lg text-[10px] font-black text-white" style={{ background: ACCENT }}>{tm.tag.slice(0, 3)}</span>
                                     <span className="flex-1 text-sm font-bold text-white">{tm.name}</span>
-                                    <span className="rounded-lg px-3 py-1.5 text-xs font-bold text-white" style={{ background: ACCENT }}>Qo'shilish</span>
+                                    <span className="rounded-lg px-3 py-1.5 text-xs font-bold text-white" style={{ background: ACCENT }}>{"Qo'shilish"}</span>
                                 </button>
                             ))}
                         </div>
@@ -115,7 +114,7 @@ export default function TournamentDetail({ tournamentId }: { tournamentId: strin
                 )}
                 {t.status === "REGISTRATION" && myTeams.some(x => x.registered) && (
                     <div className="mb-5 flex items-center gap-2 rounded-2xl px-4 py-3" style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.3)" }}>
-                        <Check className="h-4 w-4 text-[#00CEC8]" /><span className="text-xs font-semibold text-[#00CEC8]">Jamoangiz ro'yxatdan o'tgan</span>
+                        <Check className="h-4 w-4 text-[#00CEC8]" /><span className="text-xs font-semibold text-[#00CEC8]">{"Jamoangiz ro'yxatdan o'tgan"}</span>
                     </div>
                 )}
 
@@ -123,7 +122,7 @@ export default function TournamentDetail({ tournamentId }: { tournamentId: strin
                 {isAdmin && (
                     <div className="mb-5 flex flex-wrap gap-2 rounded-3xl p-4" style={card}>
                         <span className="w-full text-[11px] font-black uppercase tracking-wide text-white/40">Admin</span>
-                        {t.status === "UPCOMING" && <AdminBtn onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}`, "PATCH", { status: "REGISTRATION" })} busy={busy} icon={Users}>Ro'yxat ochish</AdminBtn>}
+                        {t.status === "UPCOMING" && <AdminBtn onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}`, "PATCH", { status: "REGISTRATION" })} busy={busy} icon={Users}>{"Ro'yxat ochish"}</AdminBtn>}
                         {!t.bracketReady && participants.length >= 2 && <AdminBtn onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}/generate`, "POST")} busy={busy} icon={Wand2}>Setka tuzish (Elo)</AdminBtn>}
                         {t.status === "ENDED" && t.prizePool ? <AdminBtn onClick={() => call(`/api/esport/admin/tournaments/${tournamentId}/payout`, "POST")} busy={busy} icon={Banknote}>Yutuqни to'lash</AdminBtn> : null}
                     </div>

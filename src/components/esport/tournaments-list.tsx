@@ -24,7 +24,6 @@ function fmt(iso: string | null): string {
     return `${t.getUTCDate()} ${MON[t.getUTCMonth()]}`;
 }
 
-const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
 const card = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
 
@@ -139,7 +138,7 @@ function RetroCard({ r }: { r: Retro }) {
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-bold">
                             <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: "rgba(255,176,32,0.14)", color: "#FFB020" }}><Crown className="h-3 w-3" /> {r.champion}</span>
                             {r.runnerUp && <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-white/60" style={{ background: "rgba(255,255,255,0.05)" }}><Medal className="h-3 w-3" /> {r.runnerUp}</span>}
-                            {r.third && <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-white/45" style={{ background: "rgba(255,255,255,0.04)" }}>3-o'rin: {r.third}</span>}
+                            {r.third && <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-white/45" style={{ background: "rgba(255,255,255,0.04)" }}>{"3-o'rin:"} {r.third}</span>}
                         </div>
                     )}
                 </div>

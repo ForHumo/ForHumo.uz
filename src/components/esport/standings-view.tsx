@@ -8,7 +8,6 @@ import { useEsT } from "@/lib/esport-i18n";
 interface Row { rank: number; teamId: string; team: { id: string; name: string; tag: string; logo: string | null } | null; points: number; wins: number; losses: number; played: number; rating: number | null }
 interface Division { id: string; name: string; tier: number; teams: Row[] }
 
-const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
 const card = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
 

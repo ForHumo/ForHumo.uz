@@ -11,7 +11,6 @@ import { useEsT } from "@/lib/esport-i18n";
 interface Game { id: string; slug: string; name: string; teamSize: number }
 interface Athlete { id: string; game: { slug: string; name: string }; ign: string; gameUserId: string; gameServer: string | null; role: string | null; image?: string | null }
 
-const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
 const cardStyle = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
 

@@ -24,16 +24,27 @@ export async function POST(req: Request) {
     const sortBest = (arr: typeof standings) => [...arr].sort((a, b) => b.points - a.points || b.wins - a.wins || a.losses - b.losses);
 
     const moves: { id: string; toDivisionId: string }[] = [];
+    const movedIds = new Set<string>(); // bir jamoa bir mavsumda faqat bir marta ko'chadi
     for (let i = 0; i < divisions.length - 1; i++) {
         const upper = divisions[i], lower = divisions[i + 1];
         const up = sortBest(byDiv[lower.id] || []);     // pastki divizion (yaxshi → yomon)
         const dn = sortBest(byDiv[upper.id] || []);     // yuqori divizion (yaxshi → yomon)
         const k = Math.min(N, up.length, dn.length);
         if (k === 0) continue;
-        // pastki TOP k → yuqoriga
-        for (let j = 0; j < k; j++) moves.push({ id: up[j].id, toDivisionId: upper.id });
-        // yuqori pastki k → pastga
-        for (let j = 0; j < k; j++) moves.push({ id: dn[dn.length - 1 - j].id, toDivisionId: lower.id });
+        // pastki TOP k → yuqoriga (allaqachon ko'chgan bo'lsa o'tkazib yuboramiz)
+        for (let j = 0; j < k; j++) {
+            const id = up[j].id;
+            if (movedIds.has(id)) continue;
+            moves.push({ id, toDivisionId: upper.id }); movedIds.add(id);
+        }
+        // yuqori pastki k → pastga. MUHIM: shu divizion tepasidagi jamoa allaqachon
+        // yuqoriga ko'tarilgan bo'lsa (kichik divizion: top-k va bottom-k kesishadi),
+        // uni pastga TUSHIRMAYMIZ — aks holda qarama-qarshi ikki marta ko'chish bo'lardi.
+        for (let j = 0; j < k; j++) {
+            const id = dn[dn.length - 1 - j].id;
+            if (movedIds.has(id)) continue;
+            moves.push({ id, toDivisionId: lower.id }); movedIds.add(id);
+        }
     }
 
     if (moves.length === 0) return NextResponse.json({ ok: true, moved: 0, message: "Ko'chirish uchun yetarli jamoa yo'q" });

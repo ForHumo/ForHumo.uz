@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Link, useRouter } from "@/i18n/routing";
 import {
     ArrowLeft, Loader2, Shield, Crown, Copy, Check, UserPlus, Inbox,
-    LogOut, Trash2, ChevronRight, BadgeCheck, X, AlertTriangle, Settings2, Pencil, ImagePlus,
+    LogOut, Trash2, BadgeCheck, X, AlertTriangle, Settings2, Pencil, ImagePlus,
 } from "lucide-react";
 import { useEsT } from "@/lib/esport-i18n";
 
@@ -14,12 +14,10 @@ interface Team { id: string; name: string; tag: string; logo: string | null; bio
 interface JoinReq { id: string; athleteId: string; ign: string; position: string | null; game: string; name: string; username: string | null; image: string | null }
 interface ReqItem { id: string; type: string; athleteId: string | null; ign: string | null; approvals: string[]; createdAt: string }
 
-const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
 const card = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
 const soft = { background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" };
 const ROLES = ["CAPTAIN", "STARTER", "SUB"];
-const roleLabel: Record<string, string> = { CAPTAIN: "Kapitan", STARTER: "Asosiy", SUB: "Zaxira" };
 
 export default function TeamDetail({ teamId }: { teamId: string }) {
     const t = useEsT();

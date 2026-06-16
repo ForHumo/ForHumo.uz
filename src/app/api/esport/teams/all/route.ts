@@ -7,7 +7,7 @@ export async function GET() {
     const me = await getMyProfile();
 
     // Meniki: ega bo'lgan + a'zo bo'lgan jamoa
-    let myTeamIds = new Set<string>();
+    const myTeamIds = new Set<string>();
     if (me) {
         const owned = await prisma.esTeam.findMany({ where: { ownerId: me.id }, select: { id: true } });
         owned.forEach(t => myTeamIds.add(t.id));

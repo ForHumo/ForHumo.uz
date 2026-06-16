@@ -3,12 +3,11 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "@/i18n/routing";
 import {
-    ArrowLeft, Loader2, ShieldAlert, Plus, Trash2, Check, X, CalendarDays,
+    ArrowLeft, Loader2, ShieldAlert, Plus, Trash2, Check, CalendarDays,
     Layers, Users, Swords, BarChart3, Trophy, ChevronRight, ArrowUp,
 } from "lucide-react";
 import { useEsT } from "@/lib/esport-i18n";
 
-const BG = "linear-gradient(160deg,#060A18 0%,#0B1226 55%,#0A0F22 100%)";
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
 const card = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
 const soft = { background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" };
@@ -297,7 +296,7 @@ function TableTab({ standings, divisions, seasonId, api, reload, busy }: { stand
             {standings.map(d => (
                 <div key={d.id} className="rounded-2xl p-3" style={card}>
                     <p className="mb-2 px-1 text-sm font-black text-white">{d.name}</p>
-                    {d.teams.length === 0 ? <p className="py-3 text-center text-xs text-white/30">Bo'sh</p> : d.teams.map(r => (
+                    {d.teams.length === 0 ? <p className="py-3 text-center text-xs text-white/30">{"Bo'sh"}</p> : d.teams.map(r => (
                         <div key={r.teamId}>
                             <button onClick={() => setMoveTeam(moveTeam === r.teamId ? null : r.teamId)} className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left">
                                 <span className="w-4 text-center text-xs font-bold text-white/40">{r.rank}</span>
@@ -308,7 +307,7 @@ function TableTab({ standings, divisions, seasonId, api, reload, busy }: { stand
                             </button>
                             {moveTeam === r.teamId && (
                                 <div className="mb-1 flex flex-wrap gap-1.5 rounded-xl p-2" style={soft}>
-                                    <span className="w-full text-[10px] font-bold text-white/40">Ko'chirish:</span>
+                                    <span className="w-full text-[10px] font-bold text-white/40">{"Ko'chirish:"}</span>
                                     {divisions.filter(dd => dd.id !== d.id).map(dd => (
                                         <button key={dd.id} disabled={busy} onClick={async () => { await api("/api/esport/admin/move", "POST", { seasonId, teamId: r.teamId, toDivisionId: dd.id }); setMoveTeam(null); reload(); }} className="rounded-lg px-2.5 py-1 text-[11px] font-bold text-white" style={{ background: "rgba(43,62,232,0.3)" }}>{dd.name}</button>
                                     ))}
@@ -324,7 +323,7 @@ function TableTab({ standings, divisions, seasonId, api, reload, busy }: { stand
 
 interface TournamentLite { id: string; name: string; status: string; prizePool: number | null; currency: string; teams: number; maxTeams: number }
 
-function TournamentTab({ gameId, seasons, divisions, seasonId, api, busy }: { gameId: string; seasons: Season[]; divisions: Division[]; seasonId: string; api: ApiFn; busy: boolean }) {
+function TournamentTab({ gameId, divisions, seasonId, api, busy }: { gameId: string; seasons: Season[]; divisions: Division[]; seasonId: string; api: ApiFn; busy: boolean }) {
     const tr = useEsT();
     const [list, setList] = useState<TournamentLite[]>([]);
     const [name, setName] = useState("");
