@@ -139,8 +139,8 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                 {/* Team card */}
                 <div className="mb-5 rounded-3xl p-5" style={card}>
                     <div className="flex items-center gap-4">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl text-lg font-black text-white" style={{ background: ACCENT }}>
-                            {team.logo ? <img src={team.logo} alt="" className="h-full w-full rounded-2xl object-cover" /> : team.tag.slice(0, 3)}
+                        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl text-lg font-black text-white" style={team.logo ? undefined : { background: ACCENT }}>
+                            {team.logo ? <img src={team.logo} alt="" className="h-full w-full rounded-2xl object-contain" /> : team.tag.slice(0, 3)}
                         </div>
                         <div className="min-w-0 flex-1">
                             <p className="truncate text-xl font-black text-white">{team.name}</p>

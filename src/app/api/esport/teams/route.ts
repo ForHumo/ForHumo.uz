@@ -49,6 +49,7 @@ export async function POST(req: Request) {
 
     if (name.length < 2) return NextResponse.json({ error: "Jamoa nomi kamida 2 belgi" }, { status: 400 });
     if (!/^[A-Z0-9]{2,5}$/.test(tag)) return NextResponse.json({ error: "Teg 2-5 ta lotin harf/raqam (masalan RMC)" }, { status: 400 });
+    if (!logo) return NextResponse.json({ error: "Jamoa logosi majburiy" }, { status: 400 });
 
     const dup = await prisma.esTeam.findFirst({ where: { OR: [{ name }, { tag }] }, select: { name: true, tag: true } });
     if (dup) return NextResponse.json({ error: dup.tag === tag ? "Bu teg band" : "Bu nom band" }, { status: 409 });

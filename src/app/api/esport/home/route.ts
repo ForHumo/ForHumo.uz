@@ -18,7 +18,7 @@ export async function GET() {
         prisma.esRoster.findMany({ orderBy: { rating: "desc" }, take: 5, select: { rating: true, teamId: true, game: { select: { name: true } } } }),
         prisma.esRosterMember.findMany({
             orderBy: { roster: { rating: "desc" } }, take: 5,
-            select: { role: true, athlete: { select: { id: true, ign: true, role: true } }, roster: { select: { rating: true, team: { select: { id: true, name: true, tag: true, logo: true } }, game: { select: { name: true } } } } },
+            select: { role: true, athlete: { select: { id: true, ign: true, role: true, image: true, humoProfileId: true } }, roster: { select: { rating: true, team: { select: { id: true, name: true, tag: true, logo: true } }, game: { select: { name: true } } } } },
         }),
         prisma.esLeagueMatch.findMany({ where: { status: "DONE" }, orderBy: { createdAt: "desc" }, take: 5 }),
         prisma.esMatch.findMany({ where: { status: "DONE", winnerId: { not: null } }, orderBy: { id: "desc" }, take: 5, select: { teamAId: true, teamBId: true, scoreA: true, scoreB: true, winnerId: true } }),
@@ -57,6 +57,11 @@ export async function GET() {
     ])];
     const teams = teamIds.length ? await prisma.esTeam.findMany({ where: { id: { in: teamIds } }, select: { id: true, name: true, tag: true, logo: true } }) : [];
     const tMap = Object.fromEntries(teams.map(t => [t.id, t]));
+
+    // Top o'yinchilar avatari (athlete rasmi yoki Humo ID rasmi)
+    const memberHumoIds = [...new Set(topMembers.map(m => m.athlete.humoProfileId))];
+    const memberProfs = memberHumoIds.length ? await prisma.userProfile.findMany({ where: { id: { in: memberHumoIds } }, select: { id: true, image: true } }) : [];
+    const mpMap = Object.fromEntries(memberProfs.map(p => [p.id, p.image]));
 
     const results = [
         ...leagueResults.map(m => ({ a: tMap[m.teamAId] ?? null, b: tMap[m.teamBId] ?? null, scoreA: m.scoreA, scoreB: m.scoreB, winnerId: m.winnerId })),
@@ -101,7 +106,7 @@ export async function GET() {
         news,
         tournaments: tournaments.map(t => ({ id: t.id, name: t.name, game: t.game?.name, status: t.status, teams: t._count.participants, prizePool: t.prizePool ? Number(t.prizePool) : null, currency: t.currency })),
         topTeams: topRosters.map(r => ({ team: tMap[r.teamId] ?? null, rating: r.rating, game: r.game?.name })).filter(x => x.team),
-        topPlayers: topMembers.map(m => ({ id: m.athlete.id, ign: m.athlete.ign, position: m.athlete.role, roleLabel: ROLE_LABEL[m.role] || m.role, team: m.roster.team, rating: m.roster.rating, game: m.roster.game?.name })),
+        topPlayers: topMembers.map(m => ({ id: m.athlete.id, ign: m.athlete.ign, position: m.athlete.role, roleLabel: ROLE_LABEL[m.role] || m.role, image: m.athlete.image ?? mpMap[m.athlete.humoProfileId] ?? null, team: m.roster.team, rating: m.roster.rating, game: m.roster.game?.name })),
         expensivePlayers: expPlayers.map(a => ({ id: a.id, ign: a.ign, position: a.role, image: a.image, value: a.marketValue ? Number(a.marketValue) : 0, team: a.memberships[0]?.roster.team ?? null })),
         expensiveTeams,
         upcoming,

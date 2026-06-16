@@ -11,7 +11,7 @@ import { useEsT } from "@/lib/esport-i18n";
 interface TeamLite { id: string; name: string; tag: string; logo: string | null }
 interface T { id: string; name: string; game: string; status: string; teams: number; prizePool: number | null; currency: string }
 interface TopTeam { team: TeamLite; rating: number; game: string }
-interface TopPlayer { id: string; ign: string; position: string | null; roleLabel: string; team: TeamLite | null; rating: number; game: string }
+interface TopPlayer { id: string; ign: string; position: string | null; roleLabel: string; image: string | null; team: TeamLite | null; rating: number; game: string }
 interface Result { a: TeamLite | null; b: TeamLite | null; scoreA: number | null; scoreB: number | null; winnerId: string | null }
 interface NewsItem { id: string; kind: string; title: string; body: string | null; image: string | null; pinned?: boolean; createdAt: string }
 interface ExpPlayer { id: string; ign: string; position: string | null; image: string | null; value: number; team: { name: string; tag: string } | null }
@@ -177,7 +177,7 @@ export default function EsportHome() {
                                     {topTeams.map((r, i) => (
                                         <Link key={r.team.id} href={`/esport/teams/${r.team.id}`} className="flex items-center gap-3 rounded-2xl p-2.5 es-soft transition-transform hover:scale-[1.02]">
                                             <Rank i={i} />
-                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg text-[10px] font-black text-white es-accent-bg">{r.team.logo ? <img src={r.team.logo} alt="" className="h-full w-full object-cover" /> : r.team.tag.slice(0, 3)}</div>
+                                            <div className={`flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg text-[10px] font-black text-white ${r.team.logo ? "" : "es-accent-bg"}`}>{r.team.logo ? <img src={r.team.logo} alt="" className="h-full w-full object-contain" /> : r.team.tag.slice(0, 3)}</div>
                                             <div className="min-w-0 flex-1">
                                                 <p className="truncate text-sm font-bold es-fg">{r.team.name}</p>
                                                 <p className="truncate text-[11px] es-mut">{r.game}</p>
@@ -197,7 +197,7 @@ export default function EsportHome() {
                                     {topPlayers.map((p, i) => (
                                         <Link key={p.id} href={`/esport/a/${p.id}`} className="flex items-center gap-3 rounded-2xl p-2.5 es-soft transition-transform hover:scale-[1.02]">
                                             <Rank i={i} />
-                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-black text-white es-accent-bg">{p.ign.slice(0, 2).toUpperCase()}</div>
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg text-[10px] font-black text-white es-accent-bg">{p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : p.ign.slice(0, 2).toUpperCase()}</div>
                                             <div className="min-w-0 flex-1">
                                                 <p className="truncate text-sm font-bold es-fg">{p.ign}</p>
                                                 <p className="truncate text-[11px] es-mut">{p.team ? `[${p.team.tag}]` : tr("common.free")}{p.position ? ` · ${p.position}` : ""}</p>
@@ -234,7 +234,7 @@ export default function EsportHome() {
                                     {expTeams.map((t, i) => (
                                         <Link key={t.team.id} href={`/esport/teams/${t.team.id}`} className="flex items-center gap-3 rounded-2xl p-2.5 es-soft transition-transform hover:scale-[1.02]">
                                             <Rank i={i} />
-                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg text-[10px] font-black text-white es-accent-bg">{t.team.logo ? <img src={t.team.logo} alt="" className="h-full w-full object-cover" /> : t.team.tag.slice(0, 3)}</div>
+                                            <div className={`flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg text-[10px] font-black text-white ${t.team.logo ? "" : "es-accent-bg"}`}>{t.team.logo ? <img src={t.team.logo} alt="" className="h-full w-full object-contain" /> : t.team.tag.slice(0, 3)}</div>
                                             <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold es-fg">{t.team.name}</p><p className="truncate text-[11px] es-mut">[{t.team.tag}]</p></div>
                                             <span className="shrink-0 text-xs font-black text-amber-400">{som(t.value)}</span>
                                         </Link>

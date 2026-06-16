@@ -101,8 +101,8 @@ export default function TeamsView() {
                             {t.isMine && <span className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-black text-white es-accent-bg"><Star className="h-3 w-3" /> {tr("team.mine")}</span>}
                             <div className="relative h-24 es-accent-bg3">
                                 <div className="absolute inset-0 opacity-25" style={{ background: "radial-gradient(circle at 75% 15%, rgba(255,255,255,.4), transparent 60%)" }} />
-                                <div className="absolute -bottom-7 left-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl text-lg font-black text-white ring-4 ring-[var(--es-card)] es-accent-bg">
-                                    {t.logo ? <img src={t.logo} alt="" className="h-full w-full object-cover" /> : t.tag.slice(0, 3)}
+                                <div className={`absolute -bottom-7 left-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl text-lg font-black text-white ring-4 ring-[var(--es-card)] ${t.logo ? "bg-[var(--es-card)]" : "es-accent-bg"}`}>
+                                    {t.logo ? <img src={t.logo} alt="" className="h-full w-full object-contain" /> : t.tag.slice(0, 3)}
                                 </div>
                                 {!t.isMine && <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-black/30 px-2 py-1 text-[11px] font-black text-white backdrop-blur-sm">#{i + 1}</span>}
                             </div>

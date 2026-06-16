@@ -144,7 +144,7 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
             {/* Jamoa */}
             {a.team ? (
                 <Link href={`/esport/teams/${a.team.id}`} className="mb-4 flex items-center gap-3 rounded-3xl p-4 es-card">
-                    <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl text-sm font-black text-white es-accent-bg">{a.team.logo ? <img src={a.team.logo} alt="" className="h-full w-full object-cover" /> : a.team.tag.slice(0, 3)}</div>
+                    <div className={`flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl text-sm font-black text-white ${a.team.logo ? "" : "es-accent-bg"}`}>{a.team.logo ? <img src={a.team.logo} alt="" className="h-full w-full object-contain" /> : a.team.tag.slice(0, 3)}</div>
                     <div className="flex-1"><p className="text-sm font-bold es-fg">{a.team.name}</p><p className="text-[11px] es-mut">[{a.team.tag}] · {roleLabel[a.team.role] || a.team.role} · jamoada {since(a.team.joinedAt)}dan beri</p></div>
                     <ChevronRight className="h-4 w-4 es-faint" />
                 </Link>
