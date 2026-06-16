@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile, fullName, purgeTeam } from "@/lib/esport";
 import { isValidMediaUrl } from "@/lib/media-url";
+import { isTeamLockedAny } from "@/lib/esport-lock";
 
 // GET /api/esport/teams/[id] — jamoa tafsiloti (tarkiblar + a'zolar)
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -103,6 +104,9 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
     const owns = await prisma.esTeam.findFirst({ where: { id, ownerId: me.id }, select: { id: true } });
     if (!owns) return NextResponse.json({ error: "Faqat egasi" }, { status: 403 });
+
+    // Roster lock: active turnirda o'chirib bo'lmaydi
+    if (await isTeamLockedAny(id)) return NextResponse.json({ error: "Jamoa turnirda — o'chirish turnir tugagach mumkin" }, { status: 409 });
 
     // Egadan boshqa a'zolar bormi? — bo'lsa darhol o'chirib bo'lmaydi (kelishuv kerak)
     const rosters = await prisma.esRoster.findMany({ where: { teamId: id }, select: { members: { select: { athlete: { select: { humoProfileId: true } } } } } });

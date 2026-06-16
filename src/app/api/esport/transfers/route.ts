@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getMyProfile, fullName } from "@/lib/esport";
 import { formatMoney, type Currency } from "@/lib/money";
 import { esNotify, athleteProfileId } from "@/lib/esport-notify";
+import { isTeamLockedForGame } from "@/lib/esport-lock";
 
 const OPEN = ["PLAYER_PENDING", "AWAIT_FEE", "CLUB_PENDING"];
 
@@ -25,11 +26,15 @@ export async function POST(req: Request) {
     if (!toTeam) return NextResponse.json({ error: "Jamoa topilmadi" }, { status: 404 });
     if (toTeam.ownerId !== me.id) return NextResponse.json({ error: "Faqat jamoa egasi taklif qiladi" }, { status: 403 });
 
-    const athlete = await prisma.esAthlete.findUnique({ where: { id: athleteId }, select: { id: true, humoProfileId: true } });
+    const athlete = await prisma.esAthlete.findUnique({ where: { id: athleteId }, select: { id: true, humoProfileId: true, gameId: true } });
     if (!athlete) return NextResponse.json({ error: "Sportchi topilmadi" }, { status: 404 });
 
     const fromTeamId = await currentTeamId(athleteId);
     if (fromTeamId === toTeamId) return NextResponse.json({ error: "Sportchi allaqachon jamoangizda" }, { status: 400 });
+
+    // Roster lock: xaridor yoki sotuvchi jamoa active turnirda bo'lsa transfer taqiqlanadi
+    if (await isTeamLockedForGame(toTeamId, athlete.gameId)) return NextResponse.json({ error: "Jamoangiz turnirda — transfer turnir tugagach mumkin" }, { status: 409 });
+    if (fromTeamId && await isTeamLockedForGame(fromTeamId, athlete.gameId)) return NextResponse.json({ error: "Sportchi jamoasi turnirda — transfer turnir tugagach mumkin" }, { status: 409 });
 
     // Jamoa egasini transfer qilib bo'lmaydi (avval egalikni o'tkazsin yoki jamoani o'chirsin)
     if (fromTeamId) {

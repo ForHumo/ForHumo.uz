@@ -1,7 +1,8 @@
 // Sportchini jamoa tarkibiga qo'shish — invite-qabul va join-request-qabul shundan foydalanadi.
 import { prisma } from "@/lib/prisma";
+import { isTeamLockedForGame } from "@/lib/esport-lock";
 
-export type AddResult = "ok" | "already_in_team" | "no_athlete" | "roster_full" | "error";
+export type AddResult = "ok" | "already_in_team" | "no_athlete" | "roster_full" | "locked" | "error";
 
 const ROSTER_EXTRA = 5; // teamSize + 5 (asosiy + zaxiralar)
 
@@ -10,6 +11,7 @@ export const ADD_MSG: Record<AddResult, string> = {
     already_in_team: "Sportchi allaqachon boshqa jamoada — avval chiqishi kerak",
     no_athlete: "Sportchi profili topilmadi",
     roster_full: "Tarkib to'lgan",
+    locked: "Jamoa turnirda — tarkib qulflangan (turnir tugagach mumkin)",
     error: "Xatolik yuz berdi",
 };
 
@@ -31,6 +33,9 @@ export async function addAthleteToTeam(athleteId: string, teamId: string): Promi
         // athlete'dan oldin yaratilganda). O'z jamoasiga kapitan sifatida qo'shilish mumkin.
         const ownsOther = await prisma.esTeam.count({ where: { ownerId: athlete.humoProfileId, id: { not: teamId } } });
         if (ownsOther > 0) return "already_in_team";
+
+        // Roster lock: jamoa shu o'yinda active turnirda bo'lsa qo'shilib bo'lmaydi
+        if (await isTeamLockedForGame(teamId, athlete.gameId)) return "locked";
 
         let roster = await prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId, gameId: athlete.gameId } } });
         if (!roster) roster = await prisma.esRoster.create({ data: { teamId, gameId: athlete.gameId } });

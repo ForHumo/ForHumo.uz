@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile, purgeTeam } from "@/lib/esport";
 import { esNotify, esNotifyMany } from "@/lib/esport-notify";
+import { isTeamLockedForGame, isTeamLockedAny } from "@/lib/esport-lock";
 
 // Jamoa a'zolari (athleteId + humoProfileId) — owner aniqlash uchun
 async function teamMembers(teamId: string) {
@@ -44,7 +45,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { type, athleteId } = await req.json();
     const isOwner = team.ownerId === me.id;
     const members = await teamMembers(id);
-    const myAthlete = await prisma.esAthlete.findUnique({ where: { humoProfileId: me.id }, select: { id: true } });
+    const myAthlete = await prisma.esAthlete.findUnique({ where: { humoProfileId: me.id }, select: { id: true, gameId: true } });
 
     // takror so'rov bo'lmasin
     async function ensureNoDup(t: string, aId?: string | null) {
@@ -55,6 +56,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (type === "LEAVE") {
         if (!myAthlete || !members.some(m => m.athleteId === myAthlete.id)) return NextResponse.json({ error: "Siz bu jamoa a'zosi emassiz" }, { status: 400 });
         if (isOwner) return NextResponse.json({ error: "Ega chiqa olmaydi — jamoani o'chiring yoki egalikni o'tkazing" }, { status: 400 });
+        if (await isTeamLockedForGame(id, myAthlete.gameId)) return NextResponse.json({ error: "Jamoa turnirda — chiqish turnir tugagach mumkin" }, { status: 409 });
         if (await ensureNoDup("LEAVE", myAthlete.id)) return NextResponse.json({ error: "So'rov allaqachon yuborilgan" }, { status: 409 });
         await prisma.esRequest.create({ data: { type: "LEAVE", teamId: id, athleteId: myAthlete.id, initiatedBy: me.id } });
         await esNotify(team.ownerId, { type: "LEAVE_REQ", title: "Chiqish so'rovi", body: "A'zo jamoadan chiqmoqchi — tasdiqlang", href: `/esport/teams/${id}` });
@@ -66,6 +68,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         const target = members.find(m => m.athleteId === athleteId);
         if (!target) return NextResponse.json({ error: "Sportchi topilmadi" }, { status: 404 });
         if (target.humoProfileId === team.ownerId) return NextResponse.json({ error: "O'zingizni chiqara olmaysiz" }, { status: 400 });
+        const ta = await prisma.esAthlete.findUnique({ where: { id: athleteId }, select: { gameId: true } });
+        if (ta && await isTeamLockedForGame(id, ta.gameId)) return NextResponse.json({ error: "Jamoa turnirda — chiqarish turnir tugagach mumkin" }, { status: 409 });
         if (await ensureNoDup("KICK", athleteId)) return NextResponse.json({ error: "So'rov allaqachon yuborilgan" }, { status: 409 });
         await prisma.esRequest.create({ data: { type: "KICK", teamId: id, athleteId, initiatedBy: me.id } });
         await esNotify(target.humoProfileId, { type: "KICK_REQ", title: "Jamoadan chiqarish so'rovi", body: "Jamoa sizni chiqarmoqchi — rozimisiz?", href: `/esport/teams/${id}` });
@@ -74,6 +78,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     if (type === "TEAM_DELETE") {
         if (!isOwner) return NextResponse.json({ error: "Faqat jamoa egasi" }, { status: 403 });
+        if (await isTeamLockedAny(id)) return NextResponse.json({ error: "Jamoa turnirda — o'chirish turnir tugagach mumkin" }, { status: 409 });
         const others = members.filter(m => m.humoProfileId !== team.ownerId);
         if (others.length === 0) {
             await purgeTeam(id); // transfer bekor + standings + jamoa (cascade)

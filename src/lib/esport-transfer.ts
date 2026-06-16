@@ -2,14 +2,21 @@
 // Haq: sotuvchi jamoa egasi oladi; erkin sportchi bo'lsa — sportchining o'zi (signing bonus).
 import { prisma } from "@/lib/prisma";
 import { roundMoney, convert, currencyForCountry, type Currency } from "@/lib/money";
+import { isTeamLockedForGame } from "@/lib/esport-lock";
 
 const cur = (c: string): Currency => (c === "USD" ? "USD" : "UZS");
 const ROSTER_EXTRA = 5;
 
-export type TransferResult = "ok" | "not_found" | "no_funds" | "roster_full" | "invalid";
+export type TransferResult = "ok" | "not_found" | "no_funds" | "roster_full" | "locked" | "invalid";
 
 export async function executeTransfer(transferId: string): Promise<TransferResult> {
     try {
+        // Roster lock: taklifдан keyin turnir boshlangan bo'lsa — ijro etilmaydi
+        const pre = await prisma.esTransfer.findUnique({ where: { id: transferId }, select: { toTeamId: true, fromTeamId: true, athlete: { select: { gameId: true } } } });
+        if (pre) {
+            if (await isTeamLockedForGame(pre.toTeamId, pre.athlete.gameId)) return "locked";
+            if (pre.fromTeamId && await isTeamLockedForGame(pre.fromTeamId, pre.athlete.gameId)) return "locked";
+        }
         return await prisma.$transaction(async tx => {
             const tr = await tx.esTransfer.findUnique({ where: { id: transferId } });
             if (!tr || ["DONE", "CANCELLED", "REJECTED"].includes(tr.status)) return "not_found" as const;
@@ -83,5 +90,6 @@ export const TRANSFER_MSG: Record<TransferResult, string> = {
     not_found: "Taklif topilmadi yoki yopilgan",
     no_funds: "Mablag' yetarli emas — ALKH Pay hamyonni to'ldiring",
     roster_full: "Yangi tarkib to'lgan",
+    locked: "Jamoa turnirda — transfer turnir tugagach mumkin",
     invalid: "Transfer amalga oshmadi",
 };
