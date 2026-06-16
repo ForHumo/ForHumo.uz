@@ -453,6 +453,11 @@ model EsBroadcast {       // turnir translyatsiyasi (Asosiy 16:9 oyna — Nexus 
   title        String
   status       String    @default("SCHEDULED")  // LIVE/SCHEDULED/ENDED
   streamUrl    String?                           // embed havola (YouTube/Twitch/Nexus)
+  source       String    @default("EXTERNAL")     // EXTERNAL (YouTube/Twitch) | CLOUDFLARE; Nexus = nexusLiveId
+  liveInputId  String?                           // Cloudflare live input uid
+  playbackId   String?                           // Cloudflare playback uid
+  streamKey    String?                           // MAXFIY — faqat admin/ega (OBS)
+  ingestUrl    String?                           // RTMP ingest URL
   nexusLiveId  String?                           // Nexus jonli efir bog'lanishi
   posterUrl    String?                           // muqova rasmi (oblojka)
   tournamentId String?
