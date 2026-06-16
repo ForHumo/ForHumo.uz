@@ -46,7 +46,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         matches: t.matches.map(m => ({
             id: m.id, bracket: m.bracket, round: m.round, slot: m.slot,
             seedA: m.seedA, seedB: m.seedB, scoreA: m.scoreA, scoreB: m.scoreB,
-            status: m.status, streamUrl: m.streamUrl, winnerId: m.winnerId,
+            status: m.status, streamUrl: m.streamUrl, proofUrl: m.proofUrl, winnerId: m.winnerId,
             teamA: m.teamAId ? tMap[m.teamAId] ?? null : null,
             teamB: m.teamBId ? tMap[m.teamBId] ?? null : null,
         })),
