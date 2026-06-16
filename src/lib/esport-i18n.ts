@@ -206,6 +206,7 @@ const DICT: Record<string, [string, string, string]> = {
     "td.leave": ["Jamoadan chiqish (so'rov)", "Покинуть команду (запрос)", "Leave team (request)"],
     "td.delete": ["Jamoani o'chirish", "Удалить команду", "Delete team"],
     "td.locked": ["Turnir davom etmoqda — tarkib qulflangan (transfer/chiqish/o'chirish turnir tugagach mumkin)", "Турнир идёт — состав заблокирован (трансфер/выход/удаление после турнира)", "Tournament in progress — roster locked (transfer/leave/delete after it ends)"],
+    "tour.rules": ["Nizom", "Регламент", "Rules"],
     "dp.tab": ["Nizolar", "Споры", "Disputes"],
     "dp.dispute": ["E'tiroz", "Оспорить", "Dispute"],
     "dp.title": ["Natijaga e'tiroz", "Оспорить результат", "Dispute result"],

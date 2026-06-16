@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
-import { ArrowLeft, Loader2, Trophy, Users, ChevronRight, Coins, Calendar, ClipboardList, ShieldCheck, Crown, Youtube, ChevronDown, History, Medal } from "lucide-react";
+import { ArrowLeft, Loader2, Trophy, Users, ChevronRight, Coins, Calendar, ClipboardList, ShieldCheck, Crown, Youtube, ChevronDown, History, Medal, ScrollText } from "lucide-react";
 import { useEsT } from "@/lib/esport-i18n";
 
 interface RetroMatch { order: number; date: string; time: string | null; stage: string; teamA: string; teamB: string; scoreA: number | null; scoreB: number | null; winner: string | null; note: string | null; reason: string | null; youtube: string | null }
@@ -58,6 +58,7 @@ export default function TournamentsList() {
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: ACCENT }}><Trophy className="h-5 w-5 text-white" /></div>
                         <h1 className="text-lg font-black text-white">{tr("nav.tournaments")}</h1>
                     </div>
+                    <Link href="/esport/rules" className="ml-auto flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-white/80" style={card}><ScrollText className="h-4 w-4 text-[#00CEC8]" /> {tr("tour.rules")}</Link>
                 </div>
 
                 {list.length === 0 ? (
