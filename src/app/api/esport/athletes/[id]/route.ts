@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { fullName, getEsportAdmin } from "@/lib/esport";
+import { fullName, getEsportAdmin, getMyProfile } from "@/lib/esport";
 import { isVerifiedProfile } from "@/lib/nexus";
+import { effectiveStatus } from "@/lib/esport-contract";
+import { formatMoney, type Currency } from "@/lib/money";
 
 // PATCH /api/esport/athletes/[id] — transfer narxini belgilash (faqat admin/ega)
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -47,7 +49,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         results = standings.reduce((acc, s) => ({ wins: acc.wins + s.wins, losses: acc.losses + s.losses, played: acc.played + s.played }), { wins: 0, losses: 0, played: 0 });
     }
 
+    // Shartnoma (faol/oxirgi) + uzaytirish huquqi (jamoa egasi)
+    const c = await prisma.esContract.findFirst({ where: { athleteId: id }, orderBy: [{ status: "asc" }, { createdAt: "desc" }] });
+    let contract = null as null | { id: string; salary: number | null; salaryLabel: string | null; startsAt: Date; endsAt: Date | null; status: string };
+    let canExtend = false;
+    if (c) {
+        const cur = (c.currency === "USD" ? "USD" : "UZS") as Currency;
+        contract = { id: c.id, salary: c.salary ? Number(c.salary) : null, salaryLabel: c.salary ? formatMoney(Number(c.salary), cur) : null, startsAt: c.startsAt, endsAt: c.endsAt, status: effectiveStatus(c) };
+        const me = await getMyProfile();
+        if (me) { const team = await prisma.esTeam.findUnique({ where: { id: c.teamId }, select: { ownerId: true } }); canExtend = !!team && team.ownerId === me.id; }
+    }
+
     return NextResponse.json({
+        contract, canExtend,
         athlete: {
             id: a.id, ign: a.ign, gameUserId: a.gameUserId, gameServer: a.gameServer, position: a.role,
             game: a.game, createdAt: a.createdAt,

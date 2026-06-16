@@ -59,6 +59,7 @@ export async function purgeTeam(teamId: string) {
         data: { status: "CANCELLED" },
     });
     await prisma.esStanding.deleteMany({ where: { teamId } });
+    await prisma.esContract.updateMany({ where: { teamId, status: "ACTIVE" }, data: { status: "TERMINATED" } });
     await prisma.esTeam.delete({ where: { id: teamId } });
 }
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import {
     ArrowLeft, Loader2, BadgeCheck, Shield, Gamepad2, TrendingUp, Hash, ChevronRight,
-    Coins, Calendar, Trophy, ArrowUp, ArrowDown, Clock, Pencil, Check, X, Send, UserPlus,
+    Coins, Calendar, Trophy, ArrowUp, ArrowDown, Clock, Pencil, Check, X, Send, UserPlus, FileText,
 } from "lucide-react";
 import { useEsT } from "@/lib/esport-i18n";
 
@@ -15,6 +15,8 @@ interface Athlete {
     team: { id: string; name: string; tag: string; logo: string | null; role: string; joinedAt: string; rating: number; peakRating: number; lowRating: number } | null;
     results: { wins: number; losses: number; played: number } | null;
 }
+
+interface Contract { id: string; salary: number | null; salaryLabel: string | null; startsAt: string; endsAt: string | null; status: string }
 
 const roleLabel: Record<string, string> = { CAPTAIN: "Kapitan", STARTER: "Asosiy", SUB: "Zaxira" };
 
@@ -35,6 +37,10 @@ function money(n: number | null) { return n == null ? "Belgilanmagan" : `${n.toL
 export default function AthleteProfile({ athleteId }: { athleteId: string }) {
     const t = useEsT();
     const [a, setA] = useState<Athlete | null>(null);
+    const [contract, setContract] = useState<Contract | null>(null);
+    const [canExtend, setCanExtend] = useState(false);
+    const [extMonths, setExtMonths] = useState("");
+    const [extBusy, setExtBusy] = useState(false);
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
     const [editPrice, setEditPrice] = useState(false);
@@ -51,7 +57,7 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
     const [offerMsg, setOfferMsg] = useState("");
 
     useEffect(() => {
-        fetch(`/api/esport/athletes/${athleteId}`).then(r => r.json()).then(d => { setA(d.athlete || null); setLoading(false); }).catch(() => setLoading(false));
+        fetch(`/api/esport/athletes/${athleteId}`).then(r => r.json()).then(d => { setA(d.athlete || null); setContract(d.contract || null); setCanExtend(!!d.canExtend); setLoading(false); }).catch(() => setLoading(false));
         fetch("/api/esport/admin/check").then(r => r.json()).then(d => setIsAdmin(!!d.isAdmin)).catch(() => { });
         fetch("/api/esport/teams").then(r => r.json()).then(d => { const o = d.owned || []; setMyTeams(o); if (o[0]) setOTeam(o[0].id); }).catch(() => { });
     }, [athleteId]);
@@ -66,6 +72,19 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
         setSending(false);
         if (r.error) return setOfferMsg(r.error);
         setOfferMsg(t("ap.sent")); setOfferOpen(false); setOSalary(""); setOCond(""); setOMonths("");
+    }
+
+    async function extend() {
+        if (!contract || !extMonths) return;
+        setExtBusy(true);
+        const r = await fetch(`/api/esport/contracts/${contract.id}/extend`, {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ months: Number(extMonths) }),
+        }).then(x => x.json()).catch(() => ({ error: "Xato" }));
+        setExtBusy(false);
+        if (!r.error) {
+            setExtMonths("");
+            fetch(`/api/esport/athletes/${athleteId}`).then(x => x.json()).then(d => { setContract(d.contract || null); setCanExtend(!!d.canExtend); }).catch(() => { });
+        }
     }
 
     async function savePrice() {
@@ -131,6 +150,30 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
                 </Link>
             ) : (
                 <div className="mb-4 flex items-center gap-2 rounded-3xl p-4 es-card"><Shield className="h-4 w-4 es-faint" /><span className="text-sm font-semibold es-mut">{t("ap.freeAthlete")}</span></div>
+            )}
+
+            {/* Shartnoma */}
+            {contract && (
+                <div className="mb-4 rounded-3xl p-4 es-card">
+                    <div className="flex items-center justify-between">
+                        <p className="flex items-center gap-2 text-sm font-black es-fg"><FileText className="h-4 w-4 es-accent-text" /> {t("ct.title")}</p>
+                        <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold" style={
+                            contract.status === "ACTIVE" ? { background: "rgba(0,206,200,0.14)", color: "#00CEC8" }
+                                : contract.status === "EXPIRED" ? { background: "rgba(255,176,32,0.14)", color: "#FFB020" }
+                                    : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }
+                        }>{contract.status === "ACTIVE" ? t("ct.active") : contract.status === "EXPIRED" ? t("ct.expired") : t("ct.terminated")}</span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs es-mut">
+                        {contract.salaryLabel && <span>{t("ct.salary")}: <b className="es-fg">{contract.salaryLabel}</b></span>}
+                        <span>{t("ct.until")}: <b className="es-fg">{contract.endsAt ? new Date(contract.endsAt).toLocaleDateString() : t("ct.openEnded")}</b></span>
+                    </div>
+                    {canExtend && (
+                        <div className="mt-3 flex gap-2">
+                            <input value={extMonths} onChange={e => setExtMonths(e.target.value.replace(/[^\d]/g, ""))} inputMode="numeric" placeholder={t("ct.months")} className="w-24 rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none placeholder:opacity-50" />
+                            <button onClick={extend} disabled={extBusy || !extMonths} className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold text-white es-accent-bg disabled:opacity-50">{extBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />} {t("ct.extend")}</button>
+                        </div>
+                    )}
+                </div>
             )}
 
             {/* Taklif yuborish (jamoa egasi) */}

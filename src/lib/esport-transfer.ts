@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { roundMoney, convert, currencyForCountry, type Currency } from "@/lib/money";
 import { isTeamLockedForGame } from "@/lib/esport-lock";
+import { addMonths } from "@/lib/esport-contract";
 
 const cur = (c: string): Currency => (c === "USD" ? "USD" : "UZS");
 const ROSTER_EXTRA = 5;
@@ -76,6 +77,17 @@ export async function executeTransfer(transferId: string): Promise<TransferResul
             // butun tranzaksiyani (jumladan haqni) bekor qilamiz, return EMAS (return commit qiladi).
             if (count >= athlete.game.teamSize + ROSTER_EXTRA) throw new Error("roster_full_after_pay");
             await tx.esRosterMember.create({ data: { rosterId: roster.id, athleteId: athlete.id, role: count === 0 ? "CAPTAIN" : "STARTER" } });
+
+            // Shartnoma: eski faol shartnomalarni bekor + (shartlar bo'lsa) yangi shartnoma
+            await tx.esContract.updateMany({ where: { athleteId: athlete.id, status: "ACTIVE" }, data: { status: "TERMINATED" } });
+            if (tr.salary != null || tr.contractMonths != null) {
+                await tx.esContract.create({
+                    data: {
+                        athleteId: athlete.id, teamId: toTeam.id, salary: tr.salary ?? null, currency: tr.currency,
+                        endsAt: tr.contractMonths ? addMonths(new Date(), tr.contractMonths) : null, status: "ACTIVE",
+                    },
+                });
+            }
 
             await tx.esTransfer.update({ where: { id: tr.id }, data: { status: "DONE" } });
             return "ok" as const;

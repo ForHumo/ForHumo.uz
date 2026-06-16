@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile, purgeTeam } from "@/lib/esport";
 import { esNotify } from "@/lib/esport-notify";
+import { terminateContracts } from "@/lib/esport-contract";
 
 // POST /api/esport/requests/[id] — javob { action: approve|reject }
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -21,7 +22,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (r.type === "LEAVE") {
         if (!isOwner) return NextResponse.json({ error: "Faqat jamoa egasi tasdiqlaydi" }, { status: 403 });
         if (action === "approve") {
-            if (r.athleteId) await prisma.esRosterMember.deleteMany({ where: { athleteId: r.athleteId } });
+            if (r.athleteId) { await prisma.esRosterMember.deleteMany({ where: { athleteId: r.athleteId } }); await terminateContracts(r.athleteId); }
             await prisma.esRequest.update({ where: { id }, data: { status: "APPROVED" } });
             await esNotify(r.initiatedBy, { type: "REQ_RESULT", title: "Chiqish tasdiqlandi", body: "Jamoa egasi chiqishingizni tasdiqladi", href: "/esport/teams" });
             return NextResponse.json({ ok: true, message: "Sportchi jamoadan chiqarildi" });
@@ -35,6 +36,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         if (!myAthlete || myAthlete.id !== r.athleteId) return NextResponse.json({ error: "Faqat tegishli sportchi javob beradi" }, { status: 403 });
         if (action === "approve") {
             await prisma.esRosterMember.deleteMany({ where: { athleteId: r.athleteId } });
+            if (r.athleteId) await terminateContracts(r.athleteId);
             await prisma.esRequest.update({ where: { id }, data: { status: "APPROVED" } });
             await esNotify(r.initiatedBy, { type: "REQ_RESULT", title: "Chiqarish tasdiqlandi", body: "Sportchi jamoadan chiqdi", href: `/esport/teams/${r.teamId}` });
             return NextResponse.json({ ok: true, message: "Jamoadan chiqdingiz" });

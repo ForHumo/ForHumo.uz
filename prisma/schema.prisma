@@ -222,6 +222,7 @@ model EsAthlete {         // Humo ID + bitta o'yin (qattiq qulf)
   memberships   EsRosterMember[]
   transfers     EsTransfer[]
   joinRequests  EsJoinRequest[]
+  contracts     EsContract[]
   @@unique([gameId, gameUserId])        // o'yin ID raqami takrorlanmaydi
   @@index([gameId])
 }
@@ -449,6 +450,21 @@ model EsRequestApproval {  // TEAM_DELETE uchun a'zo ovozlari (100% rozilik kera
   createdAt DateTime @default(now())
   request   EsRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   @@unique([requestId, athleteId])
+}
+
+model EsContract {        // o'yinchi shartnomasi (transfer/futbol modelidan) — muddat, oylik, status
+  id         String    @id @default(cuid())
+  athleteId  String
+  teamId     String
+  salary     Decimal?  @db.Decimal(18, 2)
+  currency   String    @default("UZS")
+  startsAt   DateTime  @default(now())
+  endsAt     DateTime?                          // null = muddatsiz; o'tsa lazy-EXPIRED
+  status     String    @default("ACTIVE")       // ACTIVE | EXPIRED | TERMINATED
+  createdAt  DateTime  @default(now())
+  athlete    EsAthlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  @@index([athleteId, status])
+  @@index([teamId, status])
 }
 
 model EsDispute {         // natija e'tirozi (jamoa egasi bildiradi, admin hakam)
