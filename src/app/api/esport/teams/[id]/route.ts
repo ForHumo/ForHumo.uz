@@ -94,13 +94,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ ok: true });
 }
 
-// DELETE /api/esport/teams/[id] — o'chirish (faqat ega)
+// DELETE /api/esport/teams/[id] — o'chirish (faqat ega, FAQAT yolg'iz bo'lsa)
+// Boshqa a'zolar bo'lsa — kelishuv shart: `teams/[id]/requests` (TEAM_DELETE, 100% ovoz).
+// Bu endpoint o'sha qoidani chetlab o'tmasligi uchun a'zoli jamoani o'chirmaydi.
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const me = await getMyProfile();
     if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
     const owns = await prisma.esTeam.findFirst({ where: { id, ownerId: me.id }, select: { id: true } });
     if (!owns) return NextResponse.json({ error: "Faqat egasi" }, { status: 403 });
+
+    // Egadan boshqa a'zolar bormi? — bo'lsa darhol o'chirib bo'lmaydi (kelishuv kerak)
+    const rosters = await prisma.esRoster.findMany({ where: { teamId: id }, select: { members: { select: { athlete: { select: { humoProfileId: true } } } } } });
+    const hasOthers = rosters.some(r => r.members.some(m => m.athlete.humoProfileId !== me.id));
+    if (hasOthers) return NextResponse.json({ error: "Jamoada a'zolar bor — o'chirish uchun 100% rozilik kerak (so'rov yuboring)", needVote: true }, { status: 409 });
+
     await prisma.esTransfer.updateMany({ where: { OR: [{ toTeamId: id }, { fromTeamId: id }], status: { in: ["PLAYER_PENDING", "AWAIT_FEE", "CLUB_PENDING"] } }, data: { status: "CANCELLED" } });
     await prisma.esTeam.delete({ where: { id } }); // EsRequest/roster cascade bilan o'chadi
     return NextResponse.json({ ok: true });

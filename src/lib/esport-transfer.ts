@@ -24,6 +24,14 @@ export async function executeTransfer(transferId: string): Promise<TransferResul
                 if (cur?.roster.teamId !== tr.fromTeamId) return "invalid" as const;
             }
 
+            // Kapasitet tekshiruvini TO'LOVDAN OLDIN qilamiz — aks holda haq to'langach
+            // "roster_full" qaytsa, $transaction COMMIT bo'lib pul yo'qoladi (return rollback qilmaydi).
+            const destRoster = await tx.esRoster.findUnique({ where: { teamId_gameId: { teamId: toTeam.id, gameId: athlete.gameId } }, select: { id: true } });
+            if (destRoster) {
+                const destCount = await tx.esRosterMember.count({ where: { rosterId: destRoster.id } });
+                if (destCount >= athlete.game.teamSize + ROSTER_EXTRA) return "roster_full" as const; // hali yozuv yo'q — xavfsiz
+            }
+
             const buyerId = toTeam.ownerId;
             const fromTeam = tr.fromTeamId ? await tx.esTeam.findUnique({ where: { id: tr.fromTeamId }, select: { ownerId: true } }) : null;
             const recipientId = fromTeam?.ownerId ?? athlete.humoProfileId;
@@ -57,7 +65,9 @@ export async function executeTransfer(transferId: string): Promise<TransferResul
             let roster = await tx.esRoster.findUnique({ where: { teamId_gameId: { teamId: toTeam.id, gameId: athlete.gameId } } });
             if (!roster) roster = await tx.esRoster.create({ data: { teamId: toTeam.id, gameId: athlete.gameId } });
             const count = await tx.esRosterMember.count({ where: { rosterId: roster.id } });
-            if (count >= athlete.game.teamSize + ROSTER_EXTRA) return "roster_full" as const;
+            // Bu yerga yetganda to'lov allaqachon bo'lgan — to'lalik (race) bo'lsa THROW qilib
+            // butun tranzaksiyani (jumladan haqni) bekor qilamiz, return EMAS (return commit qiladi).
+            if (count >= athlete.game.teamSize + ROSTER_EXTRA) throw new Error("roster_full_after_pay");
             await tx.esRosterMember.create({ data: { rosterId: roster.id, athleteId: athlete.id, role: count === 0 ? "CAPTAIN" : "STARTER" } });
 
             await tx.esTransfer.update({ where: { id: tr.id }, data: { status: "DONE" } });
