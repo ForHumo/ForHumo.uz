@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getMyProfile, fullName } from "@/lib/esport";
+import { getMyProfile, fullName, userHasTeam } from "@/lib/esport";
 import { esNotify } from "@/lib/esport-notify";
 
 // GET /api/esport/teams/[id]/join-request — kutilayotgan arizalar (faqat ega)
@@ -44,9 +44,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     const team = await prisma.esTeam.findUnique({ where: { id }, select: { id: true, ownerId: true } });
     if (!team) return NextResponse.json({ error: "Jamoa topilmadi" }, { status: 404 });
 
-    // Allaqachon biror tarkibdami?
-    const membership = await prisma.esRosterMember.findUnique({ where: { athleteId: athlete.id }, select: { id: true } });
-    if (membership) return NextResponse.json({ error: "Siz allaqachon jamoadasiz — avval chiqing" }, { status: 400 });
+    // Bitta odam = bitta jamoa (ega YOKI a'zo) — ariza bera olmaydi
+    if (await userHasTeam(me.id)) return NextResponse.json({ error: "Siz allaqachon bir jamodasiz — avval chiqing" }, { status: 400 });
 
     await prisma.esJoinRequest.upsert({
         where: { teamId_athleteId: { teamId: id, athleteId: athlete.id } },

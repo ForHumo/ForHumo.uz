@@ -19,12 +19,18 @@ export async function addAthleteToTeam(athleteId: string, teamId: string): Promi
     try {
         const athlete = await prisma.esAthlete.findUnique({
             where: { id: athleteId },
-            select: { id: true, gameId: true, game: { select: { teamSize: true } } },
+            select: { id: true, gameId: true, humoProfileId: true, game: { select: { teamSize: true } } },
         });
         if (!athlete) return "no_athlete";
 
         const existing = await prisma.esRosterMember.findUnique({ where: { athleteId }, select: { id: true } });
         if (existing) return "already_in_team";
+
+        // Bitta odam = bitta jamoa: O'Z jamoasidan boshqa jamoa egasi bo'lsa qo'shilmaydi
+        // (egalik bor, lekin roster a'zoligi yo'q holatini ham yopadi — masalan jamoa
+        // athlete'dan oldin yaratilganda). O'z jamoasiga kapitan sifatida qo'shilish mumkin.
+        const ownsOther = await prisma.esTeam.count({ where: { ownerId: athlete.humoProfileId, id: { not: teamId } } });
+        if (ownsOther > 0) return "already_in_team";
 
         let roster = await prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId, gameId: athlete.gameId } } });
         if (!roster) roster = await prisma.esRoster.create({ data: { teamId, gameId: athlete.gameId } });
