@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { ArrowLeft, Loader2, Trophy, Users, ChevronRight, Coins, Calendar, ClipboardList, ShieldCheck, Crown, Youtube, ChevronDown, History, Medal, ScrollText } from "lucide-react";
 import { useEsT } from "@/lib/esport-i18n";
+import { seasonPoster } from "@/lib/esport-season";
 
 interface RetroMatch { order: number; date: string; time: string | null; stage: string; teamA: string; teamB: string; scoreA: number | null; scoreB: number | null; winner: string | null; note: string | null; reason: string | null; youtube: string | null }
 interface Retro { id: string; name: string; season: string; game: string; organizer: string; startDate: string; endDate: string; prizePool: number | null; currency: string; champion: string | null; runnerUp: string | null; third: string | null; matches: RetroMatch[] }
@@ -71,8 +72,11 @@ export default function TournamentsList() {
                     <div className="grid gap-3 sm:grid-cols-2">
                         {list.map(t => {
                             const s = STATUS[t.status] || STATUS.UPCOMING;
+                            const poster = seasonPoster(t.name, t.startsAt);
                             return (
-                                <Link key={t.id} href={`/esport/tournaments/${t.id}`} className="block rounded-3xl p-5" style={card}>
+                                <Link key={t.id} href={`/esport/tournaments/${t.id}`} className="flex gap-3 rounded-3xl p-5" style={card}>
+                                    {poster && <img src={poster} alt="" className="h-20 w-14 shrink-0 rounded-xl object-cover" />}
+                                    <div className="min-w-0 flex-1">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
                                             <p className="truncate text-base font-black text-white">{t.name}</p>
@@ -101,6 +105,7 @@ export default function TournamentsList() {
                                         {t.prizePool ? <span className="flex items-center gap-1.5"><Coins className="h-3.5 w-3.5 text-[#FFB020]" /> {money(t.prizePool, t.currency)}</span> : null}
                                         <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> {t.teams}{t.maxTeams > 0 ? `/${t.maxTeams}` : ""}</span>
                                         <ChevronRight className="ml-auto h-4 w-4 text-white/25" />
+                                    </div>
                                     </div>
                                 </Link>
                             );

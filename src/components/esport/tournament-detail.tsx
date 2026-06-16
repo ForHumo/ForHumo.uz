@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "@/i18n/routing";
 import { useEsT } from "@/lib/esport-i18n";
+import { seasonPoster } from "@/lib/esport-season";
 import {
     ArrowLeft, Loader2, Trophy, Crown, Coins, Users, ShieldCheck,
     Swords, Wand2, Banknote, Check, AlertTriangle, Tv, Flag, ImagePlus, X, Send,
@@ -102,7 +103,7 @@ export default function TournamentDetail({ tournamentId }: { tournamentId: strin
                 {/* Header */}
                 <div className="mb-5 rounded-3xl p-5" style={card}>
                     <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: ACCENT }}><Trophy className="h-6 w-6 text-white" /></div>
+                        {seasonPoster(t.name) ? <img src={seasonPoster(t.name)!} alt="" className="h-16 w-11 shrink-0 rounded-xl object-cover" /> : <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: ACCENT }}><Trophy className="h-6 w-6 text-white" /></div>}
                         <div className="min-w-0 flex-1">
                             <p className="truncate text-xl font-black text-white">{t.name}</p>
                             <p className="text-xs font-semibold text-white/45">{t.game?.name}</p>

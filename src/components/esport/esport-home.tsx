@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Loader2, Trophy, TrendingUp, Swords, Crown, Star, Gamepad2, Newspaper, Coins, CalendarClock, Plus, X, Send, Trash2, ImagePlus } from "lucide-react";
 import EsportBroadcast, { type Broadcast } from "./esport-broadcast";
 import { useEsT } from "@/lib/esport-i18n";
+import { seasonPoster } from "@/lib/esport-season";
 
 interface TeamLite { id: string; name: string; tag: string; logo: string | null }
 interface T { id: string; name: string; game: string; status: string; teams: number; prizePool: number | null; currency: string }
@@ -157,7 +158,7 @@ export default function EsportHome() {
                                 <div className="space-y-2">
                                     {tournaments.map(t => (
                                         <Link key={t.id} href={`/esport/tournaments/${t.id}`} className="flex items-center gap-3 rounded-2xl p-3 es-soft transition-transform hover:scale-[1.02]">
-                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl es-accent-bg"><Trophy className="h-4 w-4 text-white" /></div>
+                                            {seasonPoster(t.name) ? <img src={seasonPoster(t.name)!} alt="" className="h-12 w-9 shrink-0 rounded-lg object-cover" /> : <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl es-accent-bg"><Trophy className="h-4 w-4 text-white" /></div>}
                                             <div className="min-w-0 flex-1">
                                                 <p className="truncate text-sm font-bold es-fg">{t.name}</p>
                                                 <p className="truncate text-[11px] es-mut">{t.game} · {t.teams} {tr("common.team")}{t.prizePool ? ` · ${money(t.prizePool, t.currency)}` : ""}</p>
