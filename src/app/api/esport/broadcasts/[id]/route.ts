@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getEsportAdmin } from "@/lib/esport";
+import { getStreamProvider } from "@/lib/esport-stream";
 
 // PATCH /api/esport/broadcasts/[id] — holat/maydonlarni yangilash (admin)
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -30,6 +31,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const admin = await getEsportAdmin();
     if (!admin) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
     const { id } = await params;
+    const b = await prisma.esBroadcast.findUnique({ where: { id }, select: { liveInputId: true } });
+    if (b?.liveInputId) {
+        try { await getStreamProvider().deleteLiveInput(b.liveInputId); } catch { /* fail-safe: DB baribir o'chadi */ }
+    }
     await prisma.esBroadcast.delete({ where: { id } });
     return NextResponse.json({ ok: true });
 }
