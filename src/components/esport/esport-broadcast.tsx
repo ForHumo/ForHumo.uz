@@ -12,6 +12,7 @@ import {
 export interface Broadcast {
     id: string; title: string; status: string; streamUrl: string | null;
     nexusLiveId: string | null; posterUrl: string | null; scheduledAt: string | null; endsAt: string | null; viewers: number;
+    source?: string | null; playbackUrl?: string | null;
 }
 interface Props { broadcasts: Broadcast[]; isAdmin: boolean; onChanged: () => void; }
 
@@ -21,13 +22,14 @@ const ROTATE_MS = 5000;
 function useEmbedSrc() {
     const locale = useLocale();
     return (b: Broadcast): string | null => {
+        if (b.source === "CLOUDFLARE") return b.playbackUrl || null;
         if (b.streamUrl) {
             const u = b.streamUrl.trim();
             const yt = u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|live\/|shorts\/))([\w-]{11})/);
             if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&rel=0&modestbranding=1`;
             const tw = u.match(/twitch\.tv\/([A-Za-z0-9_]+)$/);
             if (tw) return `https://player.twitch.tv/?channel=${tw[1]}&parent=forhumo.uz&parent=www.forhumo.uz&autoplay=true`;
-            return u;
+            return null; // tanilmagan URL — embed qilinmaydi (xavfsizlik)
         }
         if (b.nexusLiveId) return `/${locale}/nexus/live/${b.nexusLiveId}?embed=1`;
         return null;
@@ -221,6 +223,7 @@ function ScheduleSlide({ onChanged, onOpenChange }: { onChanged: () => void; onO
     const [open, setOpenState] = useState(false);
     const setOpen = (v: boolean) => { setOpenState(v); onOpenChange(v); };
     const [title, setTitle] = useState("");
+    const [source, setSource] = useState<"EXTERNAL" | "CLOUDFLARE">("EXTERNAL");
     const [streamUrl, setStreamUrl] = useState("");
     const [scheduledAt, setScheduledAt] = useState("");
     const [endsAt, setEndsAt] = useState("");
@@ -228,6 +231,7 @@ function ScheduleSlide({ onChanged, onOpenChange }: { onChanged: () => void; onO
     const [uploading, setUploading] = useState(false);
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState("");
+    const [created, setCreated] = useState<{ id: string; rtmpUrl: string; streamKey: string } | null>(null);
     const fileRef = useRef<HTMLInputElement>(null);
 
     async function uploadPoster(file: File) {
@@ -243,10 +247,15 @@ function ScheduleSlide({ onChanged, onOpenChange }: { onChanged: () => void; onO
         setBusy(true); setErr("");
         const r = await fetch("/api/esport/broadcasts", {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title, streamUrl, posterUrl, scheduledAt: scheduledAt || null, endsAt: endsAt || null }),
+            body: JSON.stringify({ title, source, streamUrl: source === "EXTERNAL" ? streamUrl : null, posterUrl, scheduledAt: scheduledAt || null, endsAt: endsAt || null }),
         }).then(x => x.json()).catch(() => ({ error: "Xato" }));
         setBusy(false);
         if (r.error) return setErr(r.error);
+        // Cloudflare bo'lsa OBS ingest (RTMP+kalit) ko'rsatamiz; aks holda yopamiz
+        if (source === "CLOUDFLARE" && r.broadcast?.id) {
+            const ing = await fetch(`/api/esport/broadcasts/${r.broadcast.id}/ingest`).then(x => x.json()).catch(() => null);
+            if (ing?.streamKey) { setCreated({ id: r.broadcast.id, rtmpUrl: ing.rtmpUrl, streamKey: ing.streamKey }); onChanged(); return; }
+        }
         setTitle(""); setStreamUrl(""); setScheduledAt(""); setEndsAt(""); setPosterUrl(""); setOpen(false); onChanged();
     }
 
@@ -284,7 +293,11 @@ function ScheduleSlide({ onChanged, onOpenChange }: { onChanged: () => void; onO
                         </div>
                         {err && <p className="rounded-lg px-3 py-1.5 text-xs font-semibold text-rose-300" style={{ background: "rgba(255,60,60,0.12)" }}>{err}</p>}
                         <input value={title} onChange={e => setTitle(e.target.value)} placeholder={t("bc.titlePh")} className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none" />
-                        <input value={streamUrl} onChange={e => setStreamUrl(e.target.value)} placeholder={t("bc.linkPh")} className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none" />
+                        <div className="flex gap-1.5">
+                            <button type="button" onClick={() => setSource("EXTERNAL")} className={`flex-1 rounded-xl px-2 py-1.5 text-[11px] font-bold ${source === "EXTERNAL" ? "text-white es-accent-bg" : "es-soft es-mut"}`}>{t("bc.sourceExternal")}</button>
+                            <button type="button" onClick={() => setSource("CLOUDFLARE")} className={`flex-1 rounded-xl px-2 py-1.5 text-[11px] font-bold ${source === "CLOUDFLARE" ? "text-white es-accent-bg" : "es-soft es-mut"}`}>{t("bc.sourceCloudflare")}</button>
+                        </div>
+                        {source === "EXTERNAL" && <input value={streamUrl} onChange={e => setStreamUrl(e.target.value)} placeholder={t("bc.linkPh")} className="w-full rounded-xl px-3 py-2 text-sm font-semibold es-fg es-soft outline-none" />}
                         <div className="grid grid-cols-2 gap-2">
                             <label className="text-[10px] font-bold es-mut">{t("bc.start")}<input value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} type="datetime-local" className="mt-0.5 w-full rounded-xl px-2 py-2 text-xs font-semibold es-fg es-soft outline-none" /></label>
                             <label className="text-[10px] font-bold es-mut">{t("bc.end")}<input value={endsAt} onChange={e => setEndsAt(e.target.value)} type="datetime-local" className="mt-0.5 w-full rounded-xl px-2 py-2 text-xs font-semibold es-fg es-soft outline-none" /></label>
@@ -292,9 +305,34 @@ function ScheduleSlide({ onChanged, onOpenChange }: { onChanged: () => void; onO
                         <button onClick={submit} disabled={busy || uploading} className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-black text-white es-accent-bg disabled:opacity-50">
                             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} {t("bc.save")}
                         </button>
+                        {created && (
+                            <div className="mt-1 flex flex-col gap-1.5 rounded-xl p-3 es-soft">
+                                <p className="text-xs font-black es-fg">{t("bc.obsTitle")}</p>
+                                <p className="text-[10px] es-mut">{t("bc.obsHint")}</p>
+                                <CopyRow label={t("bc.rtmpUrl")} value={created.rtmpUrl} />
+                                <CopyRow label={t("bc.streamKey")} value={created.streamKey} />
+                                <button onClick={() => { setCreated(null); setTitle(""); setSource("EXTERNAL"); setOpen(false); }} className="mt-1 rounded-lg py-1.5 text-xs font-bold text-white es-accent-bg">OK</button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+// OBS sozlash uchun nusxa-olinadigan qator (RTMP URL / stream kalit)
+function CopyRow({ label, value }: { label: string; value: string }) {
+    const t = useEsT();
+    const [done, setDone] = useState(false);
+    return (
+        <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+                <p className="text-[9px] font-bold uppercase es-faint">{label}</p>
+                <p className="truncate font-mono text-[11px] es-fg">{value}</p>
+            </div>
+            <button onClick={() => { navigator.clipboard?.writeText(value); setDone(true); setTimeout(() => setDone(false), 1500); }}
+                className="shrink-0 rounded-lg px-2 py-1 text-[10px] font-bold text-white es-accent-bg">{done ? t("bc.copied") : t("bc.copy")}</button>
         </div>
     );
 }
