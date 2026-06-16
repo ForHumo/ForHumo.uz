@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "@/i18n/routing";
 import {
-    ArrowLeft, Loader2, ShieldAlert, Plus, Trash2, Check, CalendarDays,
+    ArrowLeft, Loader2, ShieldAlert, Plus, Trash2, Check, CalendarDays, X, Flag, ImagePlus,
     Layers, Users, Swords, BarChart3, Trophy, ChevronRight, ArrowUp,
 } from "lucide-react";
 import { useEsT } from "@/lib/esport-i18n";
@@ -19,7 +19,9 @@ interface Match { id: string; divisionId: string; teamAId: string; teamBId: stri
 interface StandRow { teamId: string; team: { name: string; tag: string } | null; points: number; wins: number; losses: number; played: number; rank: number }
 interface StandDiv { id: string; name: string; tier: number; teams: StandRow[] }
 
-type Tab = "season" | "division" | "enroll" | "match" | "table" | "turnir" | "adminlar";
+type Tab = "season" | "division" | "enroll" | "match" | "table" | "turnir" | "nizo" | "adminlar";
+
+interface DisputeRow { id: string; matchType: string; matchId: string; team: { id: string; name: string; tag: string } | null; reason: string; screenshotUrl: string | null; status: string; adminNote: string | null; createdAt: string }
 
 export default function EsportAdmin() {
     const tr = useEsT();
@@ -96,6 +98,7 @@ export default function EsportAdmin() {
         { id: "match", tkey: "adm.tabMatch", icon: Swords },
         { id: "table", tkey: "adm.tabTable", icon: BarChart3 },
         { id: "turnir", tkey: "adm.tabTournament", icon: Trophy },
+        { id: "nizo", tkey: "dp.tab", icon: Flag },
         ...(isOwner ? [{ id: "adminlar" as Tab, tkey: "adm.tabAdmins", icon: ShieldAlert }] : []),
     ];
 
@@ -135,6 +138,7 @@ export default function EsportAdmin() {
                 {tab === "match" && <MatchTab matches={matches} teams={teams} divisions={myDivs} seasonId={seasonId} teamName={teamName} api={api} reload={() => loadSeasonData(seasonId)} busy={busy} />}
                 {tab === "table" && <TableTab standings={standings} divisions={myDivs} seasonId={seasonId} api={api} reload={() => loadSeasonData(seasonId)} busy={busy} />}
                 {tab === "turnir" && <TournamentTab gameId={gameId} seasons={seasons} divisions={myDivs} seasonId={seasonId} api={api} busy={busy} />}
+                {tab === "nizo" && <DisputeTab />}
                 {tab === "adminlar" && <AdminsTab api={api} busy={busy} />}
             </div>
         </main>
@@ -392,6 +396,53 @@ function TourAdminRow({ t, api, reload, busy }: { t: TournamentLite; api: ApiFn;
 }
 
 interface AdminRow { humoId: string; name: string | null; username: string | null; image: string | null }
+
+function DisputeTab() {
+    const tr = useEsT();
+    const [list, setList] = useState<DisputeRow[]>([]);
+    const [note, setNote] = useState<Record<string, string>>({});
+    const [working, setWorking] = useState(false);
+
+    const load = useCallback(async () => {
+        const d = await fetch("/api/esport/disputes").then(r => r.json()).catch(() => ({}));
+        setList(d.disputes || []);
+    }, []);
+    useEffect(() => { load(); }, [load]);
+
+    async function decide(id: string, action: "resolve" | "reject") {
+        setWorking(true);
+        await fetch(`/api/esport/disputes/${id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, note: note[id] || null }) }).catch(() => { });
+        setWorking(false); load();
+    }
+    const stLabel = (s: string) => s === "OPEN" ? tr("dp.open") : s === "RESOLVED" ? tr("dp.resolved") : tr("dp.rejected");
+    const stStyle = (s: string) => s === "OPEN" ? { background: "rgba(255,176,32,0.14)", color: "#FFB020" } : s === "RESOLVED" ? { background: "rgba(0,206,200,0.14)", color: "#00CEC8" } : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" };
+
+    return (
+        <div className="space-y-2">
+            {list.length === 0 && <p className="rounded-2xl p-6 text-center text-xs text-white/40" style={card}>{tr("dp.none")}</p>}
+            {list.map(d => (
+                <div key={d.id} className="rounded-2xl p-3" style={card}>
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="truncate text-sm font-bold text-white">{d.team?.tag ?? "—"} · {d.matchType === "TOURNAMENT" ? "Turnir" : "Liga"}</span>
+                        <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold" style={stStyle(d.status)}>{stLabel(d.status)}</span>
+                    </div>
+                    <p className="text-xs text-white/70">{d.reason}</p>
+                    {d.screenshotUrl && <a href={d.screenshotUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[#00CEC8]"><ImagePlus className="h-3 w-3" /> {tr("dp.proof")}</a>}
+                    {d.adminNote && <p className="mt-1 text-[11px] text-white/40">{d.adminNote}</p>}
+                    {d.status === "OPEN" && (
+                        <div className="mt-2 flex flex-col gap-1.5">
+                            <input value={note[d.id] || ""} onChange={e => setNote(n => ({ ...n, [d.id]: e.target.value }))} placeholder={tr("dp.note")} className="w-full rounded-xl px-3 py-2 text-xs font-semibold text-white outline-none placeholder:text-white/30" style={soft} />
+                            <div className="flex gap-2">
+                                <button onClick={() => decide(d.id, "resolve")} disabled={working} className="flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold text-white disabled:opacity-50" style={{ background: ACCENT }}><Check className="h-3.5 w-3.5" /> {tr("dp.resolve")}</button>
+                                <button onClick={() => decide(d.id, "reject")} disabled={working} className="flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold text-white/70 disabled:opacity-50" style={soft}><X className="h-3.5 w-3.5" /> {tr("dp.reject")}</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
 
 function AdminsTab({ api, busy }: { api: ApiFn; busy: boolean }) {
     const tr = useEsT();
