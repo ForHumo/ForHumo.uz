@@ -138,6 +138,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     const politeRef = useRef(role === "callee");
     const makingOfferRef = useRef(false);
     const ignoreOfferRef = useRef(false);
+    const pendingRenegotiateRef = useRef(false);
 
     useEffect(() => { setCanScreen(supportsScreenShare()); }, []);
 
@@ -331,6 +332,27 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         }).catch(() => { });
     }, [callId]);
 
+    // Renegotiate — stable bo'lsa darrov, aks holda pending flag qo'yib kutamiz
+    const triggerRenegotiate = useCallback(async () => {
+        const pc = pcRef.current;
+        if (!pc) return;
+        if (pc.signalingState !== "stable" || makingOfferRef.current) {
+            pendingRenegotiateRef.current = true;
+            return;
+        }
+        try {
+            makingOfferRef.current = true;
+            await pc.setLocalDescription();
+            if (pc.localDescription) {
+                await sendSignal("offer", { sdp: pc.localDescription.sdp, type: pc.localDescription.type });
+            }
+        } catch (e) {
+            console.warn("renegotiate:", e);
+        } finally {
+            makingOfferRef.current = false;
+        }
+    }, [sendSignal]);
+
     // ── PeerConnection + audio track + video transceiver (sendrecv, track'siz) ─
     // Transceiver oldindan yaratilishi renegotiate zaruratini yo'q qiladi:
     // ikkala tomon ham m-line'ga ega, replaceTrack(track) darrov peer'da ontrack chaqiradi.
@@ -411,8 +433,16 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                 endCall();
             }
         };
+        // Signaling state stable bo'lganda, kutayotgan renegotiate bor bo'lsa ishga tushiramiz
+        pc.onsignalingstatechange = () => {
+            if (pc.signalingState === "stable" && pendingRenegotiateRef.current) {
+                pendingRenegotiateRef.current = false;
+                // Micro-task: hozirgi call stack tugagach
+                setTimeout(() => { void triggerRenegotiate(); }, 0);
+            }
+        };
         return pc;
-    }, [sendSignal, endCall]);
+    }, [sendSignal, endCall, triggerRenegotiate]);
 
     // ── Video track almashtirish + majburiy renegotiate ──────────────────────
     // iOS Safari va ba'zi brauzerlar transceiver track'siz yaratilganda SDP'da 'recvonly'
@@ -445,21 +475,10 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         if (localRef.current) localRef.current.srcObject = stream;
         setVideoSource(source);
 
-        // Majburiy renegotiate — Perfect Negotiation orqali (onnegotiationneeded iOS'da ishonchsiz)
-        if (pc.signalingState === "stable") {
-            try {
-                makingOfferRef.current = true;
-                await pc.setLocalDescription();
-                if (pc.localDescription) {
-                    await sendSignal("offer", { sdp: pc.localDescription.sdp, type: pc.localDescription.type });
-                }
-            } catch (e) {
-                console.warn("manual renegotiate:", e);
-            } finally {
-                makingOfferRef.current = false;
-            }
-        }
-    }, [sendSignal]);
+        // Majburiy renegotiate (iOS/Chrome onnegotiationneeded ba'zan ishlamaydi).
+        // Stable emas bo'lsa pending flag qo'yiladi va state stable bo'lganda avtomatik ishga tushadi.
+        await triggerRenegotiate();
+    }, [triggerRenegotiate]);
 
     const enableCamera = useCallback(async (facingOverride?: Facing) => {
         if (videoBusy) return;
