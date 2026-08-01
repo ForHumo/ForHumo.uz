@@ -9,8 +9,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { Mic, MicOff, Video as CamIcon, VideoOff, PhoneOff, Loader2, Volume2, VolumeX, BadgeCheck, Minimize2, Maximize2, ScreenShare, ScreenShareOff, SwitchCamera } from "lucide-react";
+import { Mic, MicOff, Video as CamIcon, VideoOff, PhoneOff, Loader2, Volume2, VolumeX, BadgeCheck, Minimize2, Maximize2, ScreenShare, ScreenShareOff, SwitchCamera, SlidersHorizontal, X } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
+import { VoiceFxPipeline, VOICE_FX_LIST, type VoiceEffect } from "@/lib/nexus-voice-fx";
 
 interface Peer { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean }
 
@@ -65,8 +66,11 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     const [duration, setDuration] = useState(0);
     const [err, setErr] = useState<string>("");
     const [canScreen, setCanScreen] = useState(true);
+    const [voiceFx, setVoiceFx] = useState<VoiceEffect>("none");
+    const [fxSheetOpen, setFxSheetOpen] = useState(false);
 
     const pcRef = useRef<RTCPeerConnection | null>(null);
+    const voicePipelineRef = useRef<VoiceFxPipeline | null>(null);
     const localRef = useRef<HTMLVideoElement>(null);
     const remoteRef = useRef<HTMLVideoElement>(null);
     const remoteAudioRef = useRef<HTMLAudioElement>(null);
@@ -94,6 +98,8 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
             pcRef.current?.close();
         } catch { }
         pcRef.current = null;
+        try { voicePipelineRef.current?.dispose(); } catch { }
+        voicePipelineRef.current = null;
         try { localStreamRef.current?.getTracks().forEach(t => t.stop()); } catch { }
         localStreamRef.current = null;
         setPhase("ended");
@@ -133,9 +139,11 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         const pc = new RTCPeerConnection({ iceServers });
         pcRef.current = pc;
 
-        // Audio transceiver (sendrecv, track bilan)
-        const [audioTrack] = stream.getAudioTracks();
-        audioSenderRef.current = pc.addTrack(audioTrack, stream);
+        // Audio transceiver — voice FX pipeline orqali o'tadi (effektsiz bo'lsa asl track)
+        voicePipelineRef.current = new VoiceFxPipeline();
+        const fxStream = await voicePipelineRef.current.setInput(stream);
+        const [audioTrack] = fxStream.getAudioTracks();
+        audioSenderRef.current = pc.addTrack(audioTrack, fxStream);
         // Video transceiver (sendrecv, track'siz — replaceTrack orqali qo'shiladi)
         const vTx = pc.addTransceiver("video", { direction: "sendrecv" });
         videoSenderRef.current = vTx.sender;
@@ -389,10 +397,24 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     const toggleMute = () => {
         setMuted(m => {
             const next = !m;
+            // Original mikrofon track'ni o'chiramiz — pipeline'ga input'ni to'xtatadi (effekt bo'lsa ham jim)
             localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = !next; });
             return next;
         });
     };
+
+    // Ovoz effektini almashtirish — pipeline yangi stream qaytaradi, audio sender'ga replaceTrack
+    const applyVoiceFx = useCallback(async (effect: VoiceEffect) => {
+        setVoiceFx(effect);
+        const pipeline = voicePipelineRef.current;
+        const sender = audioSenderRef.current;
+        if (!pipeline || !sender) return;
+        const outStream = await pipeline.setEffect(effect);
+        const [track] = outStream?.getAudioTracks() ?? [];
+        if (track) {
+            try { await sender.replaceTrack(track); } catch (e) { console.warn("audio replaceTrack:", e); }
+        }
+    }, []);
     const toggleSpeaker = () => {
         setSpeaker(s => {
             const next = !s;
@@ -515,12 +537,39 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                     )}
                     <CtrlButton onClick={toggleSpeaker} active={speaker}
                         icon={speaker ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />} />
+                    <CtrlButton onClick={() => setFxSheetOpen(v => !v)} active={voiceFx !== "none"}
+                        icon={<SlidersHorizontal className="h-6 w-6" />} />
                     <button onClick={() => endCall()}
                         className="ml-2 flex h-14 w-14 items-center justify-center rounded-full bg-rose-600 shadow-lg transition-transform hover:scale-105 active:scale-95">
                         <PhoneOff className="h-6 w-6" />
                     </button>
                 </div>
             </div>
+
+            {/* Ovoz effektlari bottom sheet */}
+            {fxSheetOpen && (
+                <div className="absolute inset-x-0 bottom-0 z-20 rounded-t-3xl bg-black/90 p-5 pb-8 shadow-2xl ring-1 ring-white/10 backdrop-blur-xl">
+                    <div className="mb-3 flex items-center justify-between">
+                        <p className="text-sm font-black text-white">Ovoz effekti</p>
+                        <button onClick={() => setFxSheetOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+                            <X className="h-4 w-4 text-white" />
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                        {VOICE_FX_LIST.map(fx => {
+                            const active = voiceFx === fx.id;
+                            return (
+                                <button key={fx.id} onClick={() => applyVoiceFx(fx.id)}
+                                    style={active ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.45)" } : undefined}
+                                    className={`flex flex-col items-center gap-0.5 rounded-2xl p-3 text-center transition-transform hover:scale-105 active:scale-95 ${active ? "text-white" : "bg-white/10 text-white/90 ring-1 ring-white/15"}`}>
+                                    <span className="text-sm font-black">{fx.label}</span>
+                                    <span className="text-[10px] opacity-70">{fx.hint}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
