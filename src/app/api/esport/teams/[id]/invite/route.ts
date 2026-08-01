@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { canManageTeam } from "@/lib/esport-block";
 import { getMyProfile } from "@/lib/esport";
 import { genInviteCode } from "@/lib/esport-roster";
 
@@ -9,7 +10,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const me = await getMyProfile();
     if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
     const team = await prisma.esTeam.findUnique({ where: { id }, select: { ownerId: true } });
-    if (!team || team.ownerId !== me.id) return NextResponse.json({ error: "Faqat egasi" }, { status: 403 });
+    if (!team || !await canManageTeam(me.id, id)) return NextResponse.json({ error: "Faqat egasi yoki vitse-rahbar" }, { status: 403 });
 
     const body = await req.json().catch(() => ({}));
     const maxUses = Math.min(Math.max(Number(body.maxUses) || 1, 1), 50);

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { canManageTeam } from "@/lib/esport-block";
 import { getMyProfile, fullName } from "@/lib/esport";
 import { formatMoney, type Currency } from "@/lib/money";
 import { esNotify, athleteProfileId } from "@/lib/esport-notify";
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
 
     const toTeam = await prisma.esTeam.findUnique({ where: { id: toTeamId }, select: { id: true, ownerId: true } });
     if (!toTeam) return NextResponse.json({ error: "Jamoa topilmadi" }, { status: 404 });
-    if (toTeam.ownerId !== me.id) return NextResponse.json({ error: "Faqat jamoa egasi taklif qiladi" }, { status: 403 });
+    if (!await canManageTeam(me.id, toTeamId)) return NextResponse.json({ error: "Faqat jamoa egasi yoki vitse-rahbar taklif qiladi" }, { status: 403 });
 
     const athlete = await prisma.esAthlete.findUnique({ where: { id: athleteId }, select: { id: true, humoProfileId: true, gameId: true } });
     if (!athlete) return NextResponse.json({ error: "Sportchi topilmadi" }, { status: 404 });

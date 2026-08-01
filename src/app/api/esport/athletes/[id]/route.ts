@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { fullName, getEsportAdmin, getMyProfile } from "@/lib/esport";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { effectiveStatus } from "@/lib/esport-contract";
+import { isBlocked } from "@/lib/esport-block";
 import { formatMoney, type Currency } from "@/lib/money";
 
 // PATCH /api/esport/athletes/[id] — transfer narxini belgilash (faqat admin/ega)
@@ -27,7 +28,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const { id } = await params;
     const a = await prisma.esAthlete.findUnique({
         where: { id },
-        select: { id: true, ign: true, gameUserId: true, gameServer: true, role: true, createdAt: true, humoProfileId: true, gameId: true, image: true, coverImage: true, marketValue: true, game: { select: { name: true, slug: true } } },
+        select: { id: true, ign: true, gameUserId: true, gameServer: true, role: true, createdAt: true, humoProfileId: true, gameId: true, image: true, coverImage: true, marketValue: true, blockedUntil: true, game: { select: { name: true, slug: true } } },
     });
     if (!a) return NextResponse.json({ error: "Sportchi topilmadi" }, { status: 404 });
 
@@ -65,6 +66,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         athlete: {
             id: a.id, ign: a.ign, gameUserId: a.gameUserId, gameServer: a.gameServer, position: a.role,
             game: a.game, createdAt: a.createdAt, coverImage: a.coverImage ?? null,
+            blocked: isBlocked(a), blockedUntil: a.blockedUntil,
             marketValue: a.marketValue ? Number(a.marketValue) : null,
             name: profile ? fullName(profile) : "", username: profile?.username ?? null,
             image: a.image ?? profile?.image ?? null, humoId: profile?.humoId ?? null,

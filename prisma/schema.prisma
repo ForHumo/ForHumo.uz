@@ -232,6 +232,8 @@ model EsAthlete {         // Humo ID + bitta o'yin (qattiq qulf)
   image         String?                 // avatar (null = Humo ID rasmi)
   coverImage    String?                 // profil banneri (muqova)
   marketValue   Decimal? @db.Decimal(18, 2)  // transfer bozori narxi
+  blockedUntil  DateTime?               // bloklangan bo'lsa shu sanagacha (null=blok yo'q; uzoq sana=abadiy)
+  blockReason   String?                 // bloklash sababi (admin)
   createdAt     DateTime @default(now())
   game          EsGame  @relation(fields: [gameId], references: [id])
   memberships   EsRosterMember[]

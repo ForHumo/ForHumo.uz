@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import {
     ArrowLeft, Loader2, BadgeCheck, Shield, Gamepad2, TrendingUp, Hash, ChevronRight,
-    Coins, Calendar, Trophy, ArrowUp, ArrowDown, Clock, Pencil, Check, X, Send, UserPlus, FileText,
+    Coins, Calendar, Trophy, ArrowUp, ArrowDown, Clock, Pencil, Check, X, Send, UserPlus, FileText, Ban,
 } from "lucide-react";
 import { useEsT } from "@/lib/esport-i18n";
 
@@ -12,6 +12,7 @@ interface Athlete {
     id: string; ign: string; gameUserId: string; gameServer: string | null; position: string | null;
     game: { name: string } | null; createdAt: string; name: string; username: string | null;
     image: string | null; coverImage: string | null; humoId: string | null; verified: boolean; marketValue: number | null;
+    blocked: boolean; blockedUntil: string | null;
     team: { id: string; name: string; tag: string; logo: string | null; role: string; joinedAt: string; rating: number; peakRating: number; lowRating: number } | null;
     results: { wins: number; losses: number; played: number } | null;
 }
@@ -46,6 +47,24 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
     const [editPrice, setEditPrice] = useState(false);
     const [priceVal, setPriceVal] = useState("");
     const [savingPrice, setSavingPrice] = useState(false);
+    // Bloklash (admin)
+    const [blockOpen, setBlockOpen] = useState(false);
+    const [blockUntil, setBlockUntil] = useState("");
+    const [blockReason, setBlockReason] = useState("");
+    const [blockBusy, setBlockBusy] = useState(false);
+    const reloadAthlete = () => fetch(`/api/esport/athletes/${athleteId}`).then(r => r.json()).then(d => { setA(d.athlete || null); setContract(d.contract || null); setCanExtend(!!d.canExtend); }).catch(() => { });
+    async function block(permanent: boolean) {
+        if (!permanent && !blockUntil) return;
+        setBlockBusy(true);
+        const until = permanent ? "permanent" : new Date(blockUntil).toISOString();
+        await fetch(`/api/esport/admin/athletes/${athleteId}/block`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ until, reason: blockReason || null }) }).catch(() => { });
+        setBlockBusy(false); setBlockOpen(false); setBlockReason(""); setBlockUntil(""); reloadAthlete();
+    }
+    async function unblock() {
+        setBlockBusy(true);
+        await fetch(`/api/esport/admin/athletes/${athleteId}/block`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ until: null }) }).catch(() => { });
+        setBlockBusy(false); reloadAthlete();
+    }
     // Taklif yuborish (jamoa egasi)
     const [myTeams, setMyTeams] = useState<{ id: string; name: string; tag: string }[]>([]);
     const [offerOpen, setOfferOpen] = useState(false);
@@ -124,6 +143,7 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
                         <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold es-accent-text es-soft"><Gamepad2 className="h-3 w-3" /> {a.game?.name}</span>
                         {a.position && <span className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold es-mut es-soft">{a.position}</span>}
                         <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold text-amber-400 es-soft"><Coins className="h-3 w-3" /> {a.marketValue == null ? t("common.notset") : money(a.marketValue)}</span>
+                        {a.blocked && <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold text-red-300" style={{ background: "rgba(255,60,60,0.15)" }}><Ban className="h-3 w-3" /> {t("bl.blocked")}</span>}
                         {isAdmin && !editPrice && (
                             <button onClick={() => { setPriceVal(a.marketValue != null ? String(a.marketValue) : ""); setEditPrice(true); }} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold es-accent-text es-soft"><Pencil className="h-3 w-3" /> Narx</button>
                         )}
@@ -140,6 +160,33 @@ export default function AthleteProfile({ athleteId }: { athleteId: string }) {
                     )}
                 </div>
             </div>
+
+            {/* Bloklash (admin) */}
+            {isAdmin && (
+                <div className="mb-4 rounded-3xl p-4 es-card">
+                    <p className="mb-2 flex items-center gap-2 text-sm font-black es-fg"><Ban className="h-4 w-4 text-red-300" /> {t("bl.title")}</p>
+                    {a.blocked ? (
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs es-mut">{t("bl.until")}: <b className="es-fg">{a.blockedUntil && new Date(a.blockedUntil).getFullYear() >= 2090 ? t("bl.permanent") : (a.blockedUntil ? new Date(a.blockedUntil).toLocaleDateString() : "")}</b></p>
+                            <button onClick={unblock} disabled={blockBusy} className="rounded-xl px-4 py-2 text-sm font-bold text-white es-accent-bg disabled:opacity-50">{t("bl.unblock")}</button>
+                        </div>
+                    ) : !blockOpen ? (
+                        <button onClick={() => setBlockOpen(true)} className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold text-red-300" style={{ background: "rgba(255,60,60,0.10)" }}><Ban className="h-4 w-4" /> {t("bl.block")}</button>
+                    ) : (
+                        <div className="space-y-2">
+                            <input value={blockReason} onChange={e => setBlockReason(e.target.value)} placeholder={t("bl.reasonPh")} className="w-full rounded-xl px-3 py-2 text-sm es-fg es-soft outline-none placeholder:opacity-50" />
+                            <div className="flex items-center gap-2">
+                                <input value={blockUntil} onChange={e => setBlockUntil(e.target.value)} type="date" className="flex-1 rounded-xl px-3 py-2 text-sm es-fg es-soft outline-none" />
+                                <button onClick={() => block(false)} disabled={blockBusy || !blockUntil} className="rounded-xl px-3 py-2 text-sm font-bold text-white es-accent-bg disabled:opacity-50">{t("bl.blockUntil")}</button>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={() => block(true)} disabled={blockBusy} className="flex-1 rounded-xl py-2 text-sm font-bold text-white disabled:opacity-50" style={{ background: "rgba(220,50,50,0.75)" }}>{t("bl.permanent")}</button>
+                                <button onClick={() => setBlockOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-xl es-soft"><X className="h-4 w-4 es-mut" /></button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Jamoa */}
             {a.team ? (

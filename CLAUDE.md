@@ -202,7 +202,7 @@ VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
 - **TS tekshiruvi:** deploy oldidan `npx tsc --noEmit` bilan xatolarni tekshir.
 - **DB o'zgarishi:** `prisma migrate dev` **interaktiv** (bu muhitda ishlamaydi). O'rniga:
   `DATABASE_URL="<.env.local dagi URL>" npx prisma db push` ishlat. Unique constraint o'zgarsa `--accept-data-loss` kerak bo'ladi (test rejimda xavfsiz).
-- **PowerShell:** ish papkasi loyiha emas (uy papkasi) — buyruq oldidan `Set-Location "C:\Users\abduv\OneDrive\Рабочий стол\ForHumo.uz";` qo'sh. (`tsc`, `prisma`, `vercel` shu tarzda ishga tushiriladi.) Bash tool'da esa `cd "..." && ...` ishlaydi.
+- **Loyiha yo'li (YANGILANDI):** loyiha OneDrive'dan **`C:\Users\abduv\Desktop\ForHumo.uz`** ga ko'chirildi (OneDrive muammolari sababli). Bash tool'da `cd "/c/Users/abduv/Desktop/ForHumo.uz" && ...` (kirill yo'q — ishonchli). PowerShell'da `Set-Location "C:\Users\abduv\Desktop\ForHumo.uz";`.
 - **Test rejim (vaqtincha):** Pay (Zij pul), Market (mahsulotlar), Nexus (kontent) — **mock** ma'lumot. Qolgan hamma narsa (auth, DB, API, deploy) **real**. Mock'ni faqat keyin real qilamiz; boshqa hech narsa o'zgarmaydi.
 - **Valyuta:** real pul — UZS (so'm) / USD ($). `Ƶ`/"Zij" ISHLATILMAYDI (huquqiy sabab). Doim `src/lib/money.ts formatMoney()`. Balanslar 2026-06-13 da 0ga tushirildi (`scripts/reset-wallets.mjs`).
 - **Mock rasm:** mahsulot/kontent rasmi kerak bo'lsa `https://picsum.photos/seed/<slug>/600/600`.

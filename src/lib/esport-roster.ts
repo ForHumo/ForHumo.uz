@@ -1,8 +1,9 @@
 // Sportchini jamoa tarkibiga qo'shish — invite-qabul va join-request-qabul shundan foydalanadi.
 import { prisma } from "@/lib/prisma";
 import { isTeamLockedForGame } from "@/lib/esport-lock";
+import { isBlocked } from "@/lib/esport-block";
 
-export type AddResult = "ok" | "already_in_team" | "no_athlete" | "roster_full" | "locked" | "error";
+export type AddResult = "ok" | "already_in_team" | "no_athlete" | "roster_full" | "locked" | "blocked" | "error";
 
 const ROSTER_EXTRA = 5; // teamSize + 5 (asosiy + zaxiralar)
 
@@ -12,6 +13,7 @@ export const ADD_MSG: Record<AddResult, string> = {
     no_athlete: "Sportchi profili topilmadi",
     roster_full: "Tarkib to'lgan",
     locked: "Jamoa turnirda — tarkib qulflangan (turnir tugagach mumkin)",
+    blocked: "Sportchi bloklangan — jamoaga qo'shib bo'lmaydi",
     error: "Xatolik yuz berdi",
 };
 
@@ -21,9 +23,10 @@ export async function addAthleteToTeam(athleteId: string, teamId: string): Promi
     try {
         const athlete = await prisma.esAthlete.findUnique({
             where: { id: athleteId },
-            select: { id: true, gameId: true, humoProfileId: true, game: { select: { teamSize: true } } },
+            select: { id: true, gameId: true, humoProfileId: true, blockedUntil: true, game: { select: { teamSize: true } } },
         });
         if (!athlete) return "no_athlete";
+        if (isBlocked(athlete)) return "blocked";
 
         const existing = await prisma.esRosterMember.findUnique({ where: { athleteId }, select: { id: true } });
         if (existing) return "already_in_team";

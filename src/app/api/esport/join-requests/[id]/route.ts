@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { canManageTeam } from "@/lib/esport-block";
 import { getMyProfile } from "@/lib/esport";
 import { addAthleteToTeam, ADD_MSG } from "@/lib/esport-roster";
 import { esNotify, athleteProfileId } from "@/lib/esport-notify";
@@ -15,7 +16,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         include: { team: { select: { id: true, ownerId: true } } },
     });
     if (!jr) return NextResponse.json({ error: "Ariza topilmadi" }, { status: 404 });
-    if (jr.team.ownerId !== me.id) return NextResponse.json({ error: "Faqat egasi" }, { status: 403 });
+    if (!await canManageTeam(me.id, jr.team.id)) return NextResponse.json({ error: "Faqat egasi yoki vitse-rahbar" }, { status: 403 });
 
     const { action } = await req.json();
     if (action === "reject") {

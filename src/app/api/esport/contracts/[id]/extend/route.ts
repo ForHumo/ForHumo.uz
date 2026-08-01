@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { canManageTeam } from "@/lib/esport-block";
 import { getMyProfile } from "@/lib/esport";
 import { addMonths } from "@/lib/esport-contract";
 
@@ -12,7 +13,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const c = await prisma.esContract.findUnique({ where: { id }, select: { id: true, teamId: true, endsAt: true } });
     if (!c) return NextResponse.json({ error: "Shartnoma topilmadi" }, { status: 404 });
     const team = await prisma.esTeam.findUnique({ where: { id: c.teamId }, select: { ownerId: true } });
-    if (!team || team.ownerId !== me.id) return NextResponse.json({ error: "Faqat jamoa egasi" }, { status: 403 });
+    if (!team || !await canManageTeam(me.id, c.teamId)) return NextResponse.json({ error: "Faqat jamoa egasi yoki vitse-rahbar" }, { status: 403 });
 
     const b = await req.json().catch(() => ({}));
     const months = Math.max(1, Math.min(60, Math.round(Number(b.months) || 0)));

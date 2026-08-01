@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { canManageTeam } from "@/lib/esport-block";
 import { getMyProfile } from "@/lib/esport";
 
 // POST /api/esport/tournaments/[id]/register — jamoani ro'yxatdan o'tkazish { teamId }
@@ -34,7 +35,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const team = await prisma.esTeam.findUnique({ where: { id: teamId }, select: { id: true, ownerId: true } });
     if (!team) return NextResponse.json({ error: "Jamoa topilmadi" }, { status: 404 });
-    if (team.ownerId !== me.id) return NextResponse.json({ error: "Faqat jamoa egasi ro'yxatdan o'tkazadi" }, { status: 403 });
+    if (!await canManageTeam(me.id, teamId)) return NextResponse.json({ error: "Faqat jamoa egasi yoki vitse-rahbar ro'yxatdan o'tkazadi" }, { status: 403 });
 
     // O'yin tarkibi + teamSize tekshiruvi
     const game = await prisma.esGame.findUnique({ where: { id: t.gameId }, select: { teamSize: true } });

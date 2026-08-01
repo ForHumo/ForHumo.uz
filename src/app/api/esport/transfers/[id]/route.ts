@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getMyProfile } from "@/lib/esport";
 import { executeTransfer, TRANSFER_MSG } from "@/lib/esport-transfer";
 import { esNotify } from "@/lib/esport-notify";
+import { isProfileBlocked, canManageTeam } from "@/lib/esport-block";
 
 // POST /api/esport/transfers/[id] — ko'p bosqichli javob
 // { action: approve|reject, fee? }
@@ -21,15 +22,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const toTeam = await prisma.esTeam.findUnique({ where: { id: tr.toTeamId }, select: { ownerId: true } });
     const fromTeam = tr.fromTeamId ? await prisma.esTeam.findUnique({ where: { id: tr.fromTeamId }, select: { ownerId: true } }) : null;
     const isAthlete = athlete?.humoProfileId === me.id;
-    const isBuyer = toTeam?.ownerId === me.id;
-    const isClub = fromTeam?.ownerId === me.id;
+    const isBuyer = !!toTeam && await canManageTeam(me.id, tr.toTeamId);
+    const isClub = !!fromTeam && !!tr.fromTeamId && await canManageTeam(me.id, tr.fromTeamId);
 
     const body = await req.json();
     const action = body.action;
+    const athleteBlocked = athlete ? await isProfileBlocked(athlete.humoProfileId) : false;
 
     // 1) O'yinchi taklifni ko'rib chiqadi
     if (tr.status === "PLAYER_PENDING") {
         if (!isAthlete) return NextResponse.json({ error: "Faqat o'yinchi javob beradi" }, { status: 403 });
+        if (action === "approve" && athleteBlocked) return NextResponse.json({ error: "Siz bloklangansiz — transferni qabul qila olmaysiz" }, { status: 403 });
         if (action === "reject") {
             await prisma.esTransfer.update({ where: { id }, data: { status: "REJECTED" } });
             await esNotify(toTeam?.ownerId, { type: "TRANSFER_DONE", title: "Taklif rad etildi", body: "O'yinchi transfer taklifini rad etdi", href: "/esport/transfers" });
@@ -70,6 +73,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             return NextResponse.json({ ok: true });
         }
         if (action === "approve") {
+            if (athleteBlocked) return NextResponse.json({ error: "O'yinchi bloklangan — transfer amalga oshmaydi" }, { status: 403 });
             const r = await executeTransfer(id);
             if (r !== "ok") return NextResponse.json({ error: TRANSFER_MSG[r] }, { status: 400 });
             await esNotify(toTeam?.ownerId, { type: "TRANSFER_DONE", title: "Transfer yakunlandi", body: "O'yinchi jamoangizga o'tdi", href: "/esport/teams" });
@@ -87,8 +91,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
     const tr = await prisma.esTransfer.findUnique({ where: { id }, select: { status: true, toTeamId: true } });
     if (!tr || !["PLAYER_PENDING", "AWAIT_FEE"].includes(tr.status)) return NextResponse.json({ error: "Bekor qilib bo'lmaydi" }, { status: 400 });
-    const toTeam = await prisma.esTeam.findUnique({ where: { id: tr.toTeamId }, select: { ownerId: true } });
-    if (toTeam?.ownerId !== me.id) return NextResponse.json({ error: "Faqat xaridor" }, { status: 403 });
+    if (!await canManageTeam(me.id, tr.toTeamId)) return NextResponse.json({ error: "Faqat xaridor jamoa" }, { status: 403 });
     await prisma.esTransfer.update({ where: { id }, data: { status: "CANCELLED" } });
     return NextResponse.json({ ok: true });
 }

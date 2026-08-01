@@ -10,7 +10,7 @@ import { useEsT } from "@/lib/esport-i18n";
 
 interface Member { athleteId: string; humoProfileId: string; role: string; ign: string; gameUserId: string; gameServer: string | null; position: string | null; name: string; username: string | null; image: string | null; humoId: string | null; verified: boolean }
 interface Roster { id: string; game: { slug: string; name: string; teamSize: number }; rating: number; members: Member[] }
-interface Team { id: string; name: string; tag: string; logo: string | null; coverImage: string | null; bio: string | null; isOwner: boolean; amIMember: boolean; myAthleteId: string | null; pendingRequests: number; locked: boolean; rosters: Roster[] }
+interface Team { id: string; name: string; tag: string; logo: string | null; coverImage: string | null; bio: string | null; isOwner: boolean; isRealOwner: boolean; amIMember: boolean; myAthleteId: string | null; pendingRequests: number; locked: boolean; rosters: Roster[] }
 interface JoinReq { id: string; athleteId: string; ign: string; position: string | null; game: string; name: string; username: string | null; image: string | null }
 interface ReqItem { id: string; type: string; athleteId: string | null; ign: string | null; approvals: string[]; createdAt: string }
 interface StaffItem { id: string; profileId: string; role: string; title: string | null; name: string; username: string | null; image: string | null; humoId: string | null }
@@ -85,6 +85,14 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
         setStaff(d.staff || []);
     }, [teamId]);
     useEffect(() => { load(); loadRequests(); loadStaff(); }, [load, loadRequests, loadStaff]);
+    const [isAdmin, setIsAdmin] = useState(false);
+    useEffect(() => { fetch("/api/esport/admin/check").then(r => r.json()).then(d => setIsAdmin(!!d.isAdmin)).catch(() => { }); }, []);
+    async function forceDelete() {
+        if (!confirm(t("bl.teamRemoveConfirm"))) return;
+        const r = await fetch(`/api/esport/admin/teams/${teamId}`, { method: "DELETE" }).then(x => x.json()).catch(() => ({ error: "Xato" }));
+        if (r.ok) { router.push("/esport/teams"); return; }
+        setErr(r.error || "");
+    }
 
     async function addStaff() {
         if (!stIdent.trim()) return; setStMsg("");
@@ -289,7 +297,7 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                                         <p className="text-[11px] text-[#00CEC8]">{s.role === "STAFF" ? (s.title || t("stf.role.STAFF")) : t(`stf.role.${s.role}`)}</p>
                                     </div>
                                     {team.isOwner && (<>
-                                        <button onClick={() => { if (confirm(t("stf.transferConfirm"))) transferOwner(s.profileId); }} title={t("stf.transferOwner")} className="flex h-7 w-7 items-center justify-center rounded-lg" style={soft}><Crown className="h-3.5 w-3.5 text-[#FFB020]" /></button>
+                                        {team.isRealOwner && <button onClick={() => { if (confirm(t("stf.transferConfirm"))) transferOwner(s.profileId); }} title={t("stf.transferOwner")} className="flex h-7 w-7 items-center justify-center rounded-lg" style={soft}><Crown className="h-3.5 w-3.5 text-[#FFB020]" /></button>}
                                         <button onClick={() => removeStaff(s.profileId)} className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: "rgba(255,60,60,0.10)" }}><X className="h-3.5 w-3.5 text-red-300" /></button>
                                     </>)}
                                 </div>
@@ -343,7 +351,7 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                                             {ROLES.filter(x => x !== "CAPTAIN").map(rl => (
                                                 <button key={rl} onClick={() => setRole(m.athleteId, rl)} className="rounded-lg px-3 py-1.5 text-xs font-bold" style={m.role === rl ? { background: ACCENT, color: "#fff" } : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)" }}>{t("rl." + rl)}</button>
                                             ))}
-                                            <button onClick={() => { if (confirm(t("stf.transferConfirm"))) transferOwner(m.humoProfileId); }} className="ml-auto flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold text-[#FFB020]" style={{ background: "rgba(255,176,32,0.10)" }}><Crown className="h-3.5 w-3.5" /> {t("stf.makeOwner")}</button>
+                                            {team.isRealOwner && <button onClick={() => { if (confirm(t("stf.transferConfirm"))) transferOwner(m.humoProfileId); }} className="ml-auto flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold text-[#FFB020]" style={{ background: "rgba(255,176,32,0.10)" }}><Crown className="h-3.5 w-3.5" /> {t("stf.makeOwner")}</button>}
                                             <button onClick={() => kick(m.athleteId)} disabled={team.locked} className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold text-red-300 disabled:opacity-40" style={{ background: "rgba(255,60,60,0.10)" }}><Trash2 className="h-3.5 w-3.5" /> Chiqarish</button>
                                         </div>
                                     )}
@@ -364,8 +372,13 @@ export default function TeamDetail({ teamId }: { teamId: string }) {
                 {err && <div className="mt-3 flex items-center gap-2 rounded-2xl px-4 py-2.5" style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.3)" }}><AlertTriangle className="h-4 w-4 text-white/50" /><span className="text-xs font-semibold text-white/70">{err}</span></div>}
 
                 {/* Egasi: o'chirish */}
-                {team.isOwner && (
+                {team.isRealOwner && (
                     <button onClick={del} disabled={team.locked} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-xs font-bold text-red-300/70 disabled:opacity-40" style={{ background: "rgba(255,60,60,0.06)" }}><Trash2 className="h-3.5 w-3.5" /> {t("td.delete")}</button>
+                )}
+
+                {/* Admin: axloqsiz nom/logo uchun majburiy o'chirish */}
+                {isAdmin && !team.isRealOwner && (
+                    <button onClick={forceDelete} className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-xs font-bold text-red-300" style={{ background: "rgba(255,60,60,0.12)", border: "1px solid rgba(255,60,60,0.3)" }}><AlertTriangle className="h-3.5 w-3.5" /> {t("bl.teamRemove")}</button>
                 )}
             </div>
         </main>

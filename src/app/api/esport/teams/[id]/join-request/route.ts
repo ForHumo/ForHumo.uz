@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { canManageTeam } from "@/lib/esport-block";
 import { getMyProfile, fullName, userHasTeam } from "@/lib/esport";
 import { esNotify } from "@/lib/esport-notify";
 
@@ -9,7 +10,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const me = await getMyProfile();
     if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
     const team = await prisma.esTeam.findUnique({ where: { id }, select: { ownerId: true } });
-    if (!team || team.ownerId !== me.id) return NextResponse.json({ error: "Faqat egasi" }, { status: 403 });
+    if (!team || !await canManageTeam(me.id, id)) return NextResponse.json({ error: "Faqat egasi yoki vitse-rahbar" }, { status: 403 });
 
     const reqs = await prisma.esJoinRequest.findMany({
         where: { teamId: id, status: "PENDING" }, orderBy: { createdAt: "asc" },

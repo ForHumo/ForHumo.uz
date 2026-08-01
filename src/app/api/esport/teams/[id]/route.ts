@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getMyProfile, fullName, purgeTeam } from "@/lib/esport";
 import { isValidMediaUrl } from "@/lib/media-url";
 import { isTeamLockedAny } from "@/lib/esport-lock";
+import { canManageTeam } from "@/lib/esport-block";
 
 // GET /api/esport/teams/[id] — jamoa tafsiloti (tarkiblar + a'zolar)
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -32,7 +33,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         : [];
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 
-    const isOwner = !!me && team.ownerId === me.id;
+    const isRealOwner = !!me && team.ownerId === me.id;
+    const isOwner = !!me && await canManageTeam(me.id, id); // ega yoki (ega bloklangan bo'lsa) vitse-rahbar
     const myAthlete = me ? await prisma.esAthlete.findUnique({ where: { humoProfileId: me.id }, select: { id: true } }) : null;
     const myMembership = myAthlete
         ? await prisma.esRosterMember.findUnique({ where: { athleteId: myAthlete.id }, select: { roster: { select: { teamId: true } } } })
@@ -48,7 +50,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({
         team: {
             id: team.id, name: team.name, tag: team.tag, logo: team.logo, coverImage: team.coverImage, bio: team.bio,
-            isOwner, amIMember, myAthleteId: myAthlete?.id ?? null, pendingRequests, locked,
+            isOwner, isRealOwner, amIMember, myAthleteId: myAthlete?.id ?? null, pendingRequests, locked,
             rosters: team.rosters.map(r => ({
                 id: r.id, game: r.game, rating: r.rating,
                 members: r.members.map(m => {
@@ -70,8 +72,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const { id } = await params;
     const me = await getMyProfile();
     if (!me) return NextResponse.json({ error: "Avval tizimga kiring" }, { status: 401 });
-    const team = await prisma.esTeam.findUnique({ where: { id }, select: { ownerId: true } });
-    if (!team || team.ownerId !== me.id) return NextResponse.json({ error: "Faqat egasi" }, { status: 403 });
+    if (!await canManageTeam(me.id, id)) return NextResponse.json({ error: "Faqat egasi yoki vitse-rahbar" }, { status: 403 });
 
     const body = await req.json();
     const data: { name?: string; tag?: string; logo?: string | null; bio?: string | null; coverImage?: string | null } = {};

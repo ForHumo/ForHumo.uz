@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { canManageTeam } from "@/lib/esport-block";
 import { getMyProfile, purgeTeam } from "@/lib/esport";
 import { esNotify, esNotifyMany } from "@/lib/esport-notify";
 import { isTeamLockedForGame, isTeamLockedAny } from "@/lib/esport-lock";
@@ -43,7 +44,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!team) return NextResponse.json({ error: "Jamoa topilmadi" }, { status: 404 });
 
     const { type, athleteId } = await req.json();
-    const isOwner = team.ownerId === me.id;
+    const isOwner = await canManageTeam(me.id, id);
     const members = await teamMembers(id);
     const myAthlete = await prisma.esAthlete.findUnique({ where: { humoProfileId: me.id }, select: { id: true, gameId: true } });
 
