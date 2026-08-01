@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { Mic, MicOff, Video as CamIcon, VideoOff, PhoneOff, Loader2, Volume2, VolumeX, BadgeCheck, Minimize2, Maximize2, ScreenShare, ScreenShareOff, SwitchCamera, SlidersHorizontal, X } from "lucide-react";
+import { Mic, MicOff, Video as CamIcon, VideoOff, PhoneOff, Loader2, Volume2, VolumeX, BadgeCheck, Minimize2, Maximize2, ScreenShare, ScreenShareOff, SwitchCamera, SlidersHorizontal, X, ImagePlus } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import { VoiceFxPipeline, VOICE_FX_LIST, type VoiceEffect } from "@/lib/nexus-voice-fx";
 import { BackgroundFxPipeline, type BgEffect } from "@/lib/nexus-bg-fx";
@@ -45,6 +45,16 @@ const cameraConstraints = (facing: Facing): MediaStreamConstraints => ({
 const supportsScreenShare = () => typeof navigator !== "undefined"
     && typeof navigator.mediaDevices?.getDisplayMedia === "function";
 
+// Preset fon rasmlari (Picsum — CORS-enabled, barqaror seed)
+const BG_PRESETS: { id: string; url: string; label: string }[] = [
+    { id: "office", url: "https://picsum.photos/seed/nx-office/960/540", label: "Ofis" },
+    { id: "sky",    url: "https://picsum.photos/seed/nx-sky/960/540", label: "Osmon" },
+    { id: "forest", url: "https://picsum.photos/seed/nx-forest/960/540", label: "O'rmon" },
+    { id: "ocean",  url: "https://picsum.photos/seed/nx-ocean/960/540", label: "Dengiz" },
+    { id: "city",   url: "https://picsum.photos/seed/nx-city/960/540", label: "Shahar" },
+    { id: "abstract", url: "https://picsum.photos/seed/nx-abstract/960/540", label: "Abstract" },
+];
+
 interface Props {
     callId: string;
     role: Role;
@@ -77,6 +87,10 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     const bgPipelineRef = useRef<BackgroundFxPipeline | null>(null);
     const cameraRawTrackRef = useRef<MediaStreamTrack | null>(null);
     const bgFxRef = useRef<BgEffect>("none");
+    const bgImageUrlRef = useRef<string | null>(null);
+    const [bgImageUrl, setBgImageUrl] = useState<string | null>(null);
+    const [bgUploading, setBgUploading] = useState(false);
+    const bgFileRef = useRef<HTMLInputElement>(null);
     const levelAudioCtxRef = useRef<AudioContext | null>(null);
     const [localLevel, setLocalLevel] = useState(0);
     const [remoteLevel, setRemoteLevel] = useState(0);
@@ -287,7 +301,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
             let outTrack = rawTrack;
             if (bgFxRef.current !== "none") {
                 if (!bgPipelineRef.current) bgPipelineRef.current = new BackgroundFxPipeline();
-                const outStream = await bgPipelineRef.current.apply(rawTrack, bgFxRef.current);
+                const outStream = await bgPipelineRef.current.apply(rawTrack, bgFxRef.current, bgImageUrlRef.current ?? undefined);
                 outTrack = outStream.getVideoTracks()[0] ?? rawTrack;
             }
             await applyVideoTrack(outTrack, "camera");
@@ -476,9 +490,13 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     };
 
     // Fon effektini almashtirish (faqat kamera yoqilgan bo'lsa amal qiladi)
-    const applyBgFx = useCallback(async (effect: BgEffect) => {
+    const applyBgFx = useCallback(async (effect: BgEffect, imageUrl?: string) => {
         setBgFx(effect);
         bgFxRef.current = effect;
+        if (effect === "image" && imageUrl) {
+            setBgImageUrl(imageUrl);
+            bgImageUrlRef.current = imageUrl;
+        }
         const raw = cameraRawTrackRef.current;
         const sender = videoSenderRef.current;
         if (!raw || !sender || videoSource !== "camera") return;
@@ -492,7 +510,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                 return;
             }
             if (!bgPipelineRef.current) bgPipelineRef.current = new BackgroundFxPipeline();
-            const outStream = await bgPipelineRef.current.apply(raw, effect);
+            const outStream = await bgPipelineRef.current.apply(raw, effect, effect === "image" ? (imageUrl ?? bgImageUrlRef.current ?? undefined) : undefined);
             const [outTrack] = outStream.getVideoTracks();
             if (outTrack) {
                 await sender.replaceTrack(outTrack);
@@ -510,6 +528,21 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
             setBgBusy(false);
         }
     }, [videoSource]);
+
+    // O'z rasmni yuklab, fon sifatida qo'llash
+    const uploadBgImage = useCallback(async (file: File) => {
+        setBgUploading(true);
+        try {
+            const fd = new FormData();
+            fd.append("file", file);
+            fd.append("kind", "brand");
+            const r = await fetch("/api/market/upload", { method: "POST", body: fd }).then(x => x.json()).catch(() => ({}));
+            if (r?.url) await applyBgFx("image", r.url);
+        } finally {
+            setBgUploading(false);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Ovoz effektini almashtirish — pipeline yangi stream qaytaradi, audio sender'ga replaceTrack
     const applyVoiceFx = useCallback(async (effect: VoiceEffect) => {
@@ -714,6 +747,32 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                                 </button>
                             );
                         })}
+                    </div>
+                    {/* Fon rasm galereyasi */}
+                    <p className="mt-3 mb-2 text-[10px] font-bold uppercase text-white/50">Fon rasm</p>
+                    <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                        {BG_PRESETS.map(p => {
+                            const active = bgFx === "image" && bgImageUrl === p.url;
+                            const disabled = videoSource !== "camera" || bgBusy;
+                            return (
+                                <button key={p.id} onClick={() => applyBgFx("image", p.url)} disabled={disabled} title={p.label}
+                                    className={`relative aspect-square overflow-hidden rounded-xl transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 ${active ? "ring-2 ring-[#00CEC8]" : "ring-1 ring-white/15"}`}>
+                                    <img src={p.url} alt={p.label} className="h-full w-full object-cover" />
+                                    {active && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                            <div className="h-2 w-2 rounded-full bg-[#00CEC8]" />
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
+                        <button onClick={() => bgFileRef.current?.click()} disabled={videoSource !== "camera" || bgUploading}
+                            title="O'z rasmingiz"
+                            className="flex aspect-square items-center justify-center rounded-xl bg-white/10 text-white/70 ring-1 ring-white/15 transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100">
+                            {bgUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                        </button>
+                        <input ref={bgFileRef} type="file" accept="image/*" hidden
+                            onChange={e => { const f = e.target.files?.[0]; if (f) uploadBgImage(f); e.target.value = ""; }} />
                     </div>
                     <p className="mt-3 text-[10px] text-white/40">Fon effekti birinchi marta yoqilganda MediaPipe modeli (~4MB) yuklanadi.</p>
                 </div>
