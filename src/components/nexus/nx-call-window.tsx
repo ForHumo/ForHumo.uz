@@ -128,6 +128,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     const localStreamRef = useRef<MediaStream | null>(null);
     const audioSenderRef = useRef<RTCRtpSender | null>(null);
     const videoSenderRef = useRef<RTCRtpSender | null>(null);
+    const remoteStreamRef = useRef<MediaStream | null>(null);
     const sinceRef = useRef<string>(new Date(Date.now() - 60_000).toISOString());
     const startTsRef = useRef<number | null>(null);
     const endedRef = useRef(false);
@@ -157,6 +158,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         cameraRawTrackRef.current = null;
         try { levelAudioCtxRef.current?.close(); } catch { }
         levelAudioCtxRef.current = null;
+        remoteStreamRef.current = null;
         try { if (recorderRef.current?.state === "recording") recorderRef.current.stop(); } catch { }
         recorderRef.current = null;
         try { recAudioCtxRef.current?.close(); } catch { }
@@ -374,22 +376,25 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         };
 
         pc.ontrack = (ev) => {
-            const [remote] = ev.streams;
-            if (remoteAudioRef.current) remoteAudioRef.current.srcObject = remote;
-            if (remoteRef.current) remoteRef.current.srcObject = remote;
+            // Barcha receiver'lardan birlashtirilgan remote stream quramiz (msid'ga tayanmaymiz)
+            const combined = remoteStreamRef.current ?? new MediaStream();
+            for (const r of pc.getReceivers()) {
+                if (r.track && !combined.getTracks().includes(r.track)) {
+                    combined.addTrack(r.track);
+                }
+            }
+            remoteStreamRef.current = combined;
+            if (remoteAudioRef.current) remoteAudioRef.current.srcObject = combined;
+            if (remoteRef.current) remoteRef.current.srcObject = combined;
             // Remote ovoz kuchi indikatori (audio track paydo bo'lganda)
-            if (ev.track.kind === "audio") setupLevelMeter("remote", remote);
+            if (ev.track.kind === "audio") setupLevelMeter("remote", combined);
             const updateFlag = () => {
-                const has = remote.getVideoTracks().some(t => t.readyState === "live" && !t.muted);
+                const stream = remoteStreamRef.current;
+                const has = !!stream && stream.getVideoTracks().some(t => t.readyState === "live" && !t.muted);
                 setRemoteVideo(has);
             };
             updateFlag();
-            remote.onaddtrack = updateFlag;
-            remote.onremovetrack = updateFlag;
-            for (const t of remote.getVideoTracks()) {
-                t.onmute = updateFlag; t.onunmute = updateFlag; t.onended = updateFlag;
-            }
-            // Yangi track e'lonida ham (ev.track) mute holatini kuzat
+            // Track holati o'zgarganda (mute/unmute/ended) yangilaymiz
             ev.track.onmute = updateFlag;
             ev.track.onunmute = updateFlag;
             ev.track.onended = updateFlag;
@@ -698,6 +703,13 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         if (localRef.current) localRef.current.srcObject = localStreamRef.current;
     }, [videoSource]);
 
+    // Remote video element remount bo'lsa (showRemoteVideo o'zgarsa), srcObject qayta biriktir
+    useEffect(() => {
+        if (remoteRef.current && remoteStreamRef.current) {
+            remoteRef.current.srcObject = remoteStreamRef.current;
+        }
+    }, [remoteVideo]);
+
     const toggleMute = () => {
         setMuted(m => {
             const next = !m;
@@ -826,9 +838,10 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
 
     return (
         <div className="fixed inset-0 z-[300] flex flex-col bg-black text-white">
-            {showRemoteVideo ? (
-                <video ref={remoteRef} autoPlay playsInline className="absolute inset-0 h-full w-full object-cover" />
-            ) : (
+            {/* Remote video element — DOIMO mount qilingan (ref stabil qoladi), CSS bilan yashirinadi */}
+            <video ref={remoteRef} autoPlay playsInline
+                className={showRemoteVideo ? "absolute inset-0 h-full w-full object-cover" : "hidden"} />
+            {!showRemoteVideo && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-indigo-950 via-violet-900 to-black">
                     <div className="relative">
                         {/* Jonli ovoz halqasi (remoteLevel bo'yicha kengayadi) */}
@@ -845,7 +858,6 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                     </div>
                 </div>
             )}
-            {!showRemoteVideo && <video ref={remoteRef} autoPlay playsInline className="hidden" />}
             <audio ref={remoteAudioRef} autoPlay />
 
             {/* Tepa overlay + minimize */}
