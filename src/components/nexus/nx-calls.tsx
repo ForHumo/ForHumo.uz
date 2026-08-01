@@ -5,10 +5,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { X, Phone, Video, Clock, PhoneMissed, PhoneIncoming, PhoneOutgoing, BadgeCheck, Loader2 } from "lucide-react";
+import { X, Phone, Video, Clock, PhoneMissed, PhoneIncoming, PhoneOutgoing, BadgeCheck, Loader2, Mic } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 
 interface CallPeer { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean }
+interface CallRecording { id: string; audioUrl: string; durationSec: number; sizeKb: number }
 interface CallItem {
     id: string;
     kind: "audio" | "video";
@@ -18,6 +19,7 @@ interface CallItem {
     peer: CallPeer | null;
     duration: number;
     createdAt: string;
+    recordings?: CallRecording[];
 }
 
 export function NxCalls() {
@@ -80,38 +82,55 @@ export function NxCalls() {
                                 const Icon = c.missed ? PhoneMissed : c.dir === "in" ? PhoneIncoming : PhoneOutgoing;
                                 const iconColor = c.missed ? "#EF4444" : c.dir === "in" ? "rgba(0,206,200,0.85)" : "rgba(43,62,232,0.85)";
                                 return (
-                                    <div key={c.id} className="flex items-center gap-3 rounded-2xl p-3 transition-colors hover:bg-white/[0.03]">
-                                        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-2xl bg-white/10">
-                                            {c.peer?.image
-                                                ? <Image src={c.peer.image} alt="" width={44} height={44} className="h-full w-full object-cover" />
-                                                : <div className="flex h-full w-full items-center justify-center text-xs font-black text-white">{peerLabel.slice(0, 2).toUpperCase()}</div>}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-1.5">
-                                                <p className="truncate text-sm font-bold text-white">{peerLabel}</p>
-                                                {c.peer?.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0" style={{ color: "#00CEC8" }} />}
+                                    <div key={c.id} className="flex flex-col rounded-2xl transition-colors hover:bg-white/[0.03]">
+                                        <div className="flex items-center gap-3 p-3">
+                                            <div className="h-11 w-11 shrink-0 overflow-hidden rounded-2xl bg-white/10">
+                                                {c.peer?.image
+                                                    ? <Image src={c.peer.image} alt="" width={44} height={44} className="h-full w-full object-cover" />
+                                                    : <div className="flex h-full w-full items-center justify-center text-xs font-black text-white">{peerLabel.slice(0, 2).toUpperCase()}</div>}
                                             </div>
-                                            <div className="mt-0.5 flex items-center gap-1.5">
-                                                <Icon className="h-3 w-3 shrink-0" style={{ color: iconColor }} />
-                                                <span className="truncate text-[10px]" style={{ color: c.missed ? "rgba(239,68,68,0.85)" : "rgba(80,100,150,0.85)" }}>
-                                                    {c.missed ? "O'tkazib yuborilgan" : c.dir === "in" ? "Kiruvchi" : "Chiquvchi"} · {c.kind === "video" ? "Video" : "Ovoz"} · {timeAgo(c.createdAt)}{c.duration > 0 ? ` · ${formatDur(c.duration)}` : ""}
-                                                </span>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-1.5">
+                                                    <p className="truncate text-sm font-bold text-white">{peerLabel}</p>
+                                                    {c.peer?.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0" style={{ color: "#00CEC8" }} />}
+                                                    {c.recordings && c.recordings.length > 0 && (
+                                                        <Mic className="h-3 w-3 shrink-0" style={{ color: "#00CEC8" }} />
+                                                    )}
+                                                </div>
+                                                <div className="mt-0.5 flex items-center gap-1.5">
+                                                    <Icon className="h-3 w-3 shrink-0" style={{ color: iconColor }} />
+                                                    <span className="truncate text-[10px]" style={{ color: c.missed ? "rgba(239,68,68,0.85)" : "rgba(80,100,150,0.85)" }}>
+                                                        {c.missed ? "O'tkazib yuborilgan" : c.dir === "in" ? "Kiruvchi" : "Chiquvchi"} · {c.kind === "video" ? "Video" : "Ovoz"} · {timeAgo(c.createdAt)}{c.duration > 0 ? ` · ${formatDur(c.duration)}` : ""}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex shrink-0 gap-2">
+                                                <button onClick={() => dial(c.peer?.id, "AUDIO")}
+                                                    disabled={!c.peer?.id}
+                                                    className="flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-90 disabled:opacity-30"
+                                                    style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                                                    <Phone className="h-4 w-4" style={{ color: "#00CEC8" }} />
+                                                </button>
+                                                <button onClick={() => dial(c.peer?.id, "VIDEO")}
+                                                    disabled={!c.peer?.id}
+                                                    className="flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-90 disabled:opacity-30"
+                                                    style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                                                    <Video className="h-4 w-4" style={{ color: "#2B3EE8" }} />
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="flex shrink-0 gap-2">
-                                            <button onClick={() => dial(c.peer?.id, "AUDIO")}
-                                                disabled={!c.peer?.id}
-                                                className="flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-90 disabled:opacity-30"
-                                                style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                                                <Phone className="h-4 w-4" style={{ color: "#00CEC8" }} />
-                                            </button>
-                                            <button onClick={() => dial(c.peer?.id, "VIDEO")}
-                                                disabled={!c.peer?.id}
-                                                className="flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-90 disabled:opacity-30"
-                                                style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                                                <Video className="h-4 w-4" style={{ color: "#2B3EE8" }} />
-                                            </button>
-                                        </div>
+                                        {/* Yozuvlar (bo'lsa) */}
+                                        {c.recordings && c.recordings.length > 0 && (
+                                            <div className="flex flex-col gap-1.5 border-t px-3 py-2.5" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                                {c.recordings.map(r => (
+                                                    <div key={r.id} className="flex items-center gap-2">
+                                                        <Mic className="h-3.5 w-3.5 shrink-0" style={{ color: "#00CEC8" }} />
+                                                        <audio src={r.audioUrl} controls className="h-8 flex-1" style={{ minWidth: 0 }} />
+                                                        <span className="shrink-0 text-[10px]" style={{ color: "rgba(80,100,150,0.85)" }}>{formatDur(r.durationSec)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}

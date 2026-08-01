@@ -1095,9 +1095,23 @@ model NexusCall {
   endedAt     DateTime?
   duration    Int              @default(0)             // sekundlarda (acceptedAt→endedAt)
   signals     NexusCallSignal[]
+  recordings  NexusCallRecording[]
   @@index([callerId, createdAt])
   @@index([calleeId, createdAt])
   @@index([calleeId, status])                          // incoming poller uchun
+}
+
+model NexusCallRecording {
+  id          String    @id @default(cuid())
+  callId      String
+  call        NexusCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+  startedById String                                   // UserProfile.id — yozuvni boshlagan
+  audioUrl    String                                   // Vercel Blob URL
+  durationSec Int                                       // sekundlar
+  sizeKb      Int                                       // kilobayt
+  createdAt   DateTime  @default(now())
+  @@index([callId, createdAt])
+  @@index([startedById, createdAt])
 }
 
 model NexusCallSignal {

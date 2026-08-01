@@ -82,6 +82,7 @@ export async function GET() {
     const calls = await prisma.nexusCall.findMany({
         where: { OR: [{ callerId: me.id }, { calleeId: me.id }] },
         orderBy: { createdAt: "desc" }, take: 50,
+        include: { recordings: { orderBy: { createdAt: "asc" }, select: { id: true, audioUrl: true, durationSec: true, sizeKb: true, startedById: true } } },
     });
     const peerIds = [...new Set(calls.map(c => (c.callerId === me.id ? c.calleeId : c.callerId)))];
     const profs = peerIds.length
@@ -97,6 +98,7 @@ export async function GET() {
             return {
                 id: c.id, kind: c.kind.toLowerCase(), status: c.status, dir, missed,
                 peer, duration: c.duration, createdAt: c.createdAt,
+                recordings: c.recordings,
             };
         }),
     });

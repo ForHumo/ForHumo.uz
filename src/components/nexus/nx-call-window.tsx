@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { Mic, MicOff, Video as CamIcon, VideoOff, PhoneOff, Loader2, Volume2, VolumeX, BadgeCheck, Minimize2, Maximize2, ScreenShare, ScreenShareOff, SwitchCamera, SlidersHorizontal, X, ImagePlus, Smile } from "lucide-react";
+import { Mic, MicOff, Video as CamIcon, VideoOff, PhoneOff, Loader2, Volume2, VolumeX, BadgeCheck, Minimize2, Maximize2, ScreenShare, ScreenShareOff, SwitchCamera, SlidersHorizontal, X, ImagePlus, Smile, Circle, Square } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import { VoiceFxPipeline, VOICE_FX_LIST, type VoiceEffect } from "@/lib/nexus-voice-fx";
 import { BackgroundFxPipeline, type BgEffect } from "@/lib/nexus-bg-fx";
@@ -98,6 +98,14 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     const [reactions, setReactions] = useState<FloatingReaction[]>([]);
     const [reactionSheetOpen, setReactionSheetOpen] = useState(false);
     const reactionKeyRef = useRef(0);
+    const [recording, setRecording] = useState(false);
+    const [recordUploading, setRecordUploading] = useState(false);
+    const [peerRecording, setPeerRecording] = useState(false);
+    const [recToast, setRecToast] = useState<string>("");
+    const recorderRef = useRef<MediaRecorder | null>(null);
+    const recChunksRef = useRef<BlobPart[]>([]);
+    const recStartTsRef = useRef<number>(0);
+    const recAudioCtxRef = useRef<AudioContext | null>(null);
     const [bgFx, setBgFx] = useState<BgEffect>("none");
     const [bgBusy, setBgBusy] = useState(false);
     const [fxSheetOpen, setFxSheetOpen] = useState(false);
@@ -149,6 +157,10 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         cameraRawTrackRef.current = null;
         try { levelAudioCtxRef.current?.close(); } catch { }
         levelAudioCtxRef.current = null;
+        try { if (recorderRef.current?.state === "recording") recorderRef.current.stop(); } catch { }
+        recorderRef.current = null;
+        try { recAudioCtxRef.current?.close(); } catch { }
+        recAudioCtxRef.current = null;
         try { localStreamRef.current?.getTracks().forEach(t => t.stop()); } catch { }
         localStreamRef.current = null;
         setPhase("ended");
@@ -161,6 +173,94 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         }
         setTimeout(onClose, 1200);
     }, [callId, onClose, setCallMinimized]);
+
+    // Chaqiruvni yozib olish (mahalliy mic + remote audio mixed → MediaRecorder)
+    const startRecording = useCallback(async () => {
+        if (recording || phase !== "in-call") return;
+        const localStream = localStreamRef.current;
+        const remoteObj = remoteAudioRef.current?.srcObject as MediaStream | null;
+        if (!localStream || !remoteObj) { setRecToast("Ovoz oqim topilmadi"); return; }
+        const AC = typeof window !== "undefined"
+            ? (window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
+            : null;
+        if (!AC) { setRecToast("Brauzer yozib olishni qo'llab-quvvatlamaydi"); return; }
+        try {
+            const ctx = new AC();
+            recAudioCtxRef.current = ctx;
+            const dest = ctx.createMediaStreamDestination();
+            // Mahalliy mic
+            if (localStream.getAudioTracks().length) {
+                const src1 = ctx.createMediaStreamSource(localStream);
+                src1.connect(dest);
+            }
+            // Peer audio
+            if (remoteObj.getAudioTracks().length) {
+                const src2 = ctx.createMediaStreamSource(remoteObj);
+                src2.connect(dest);
+            }
+            // MediaRecorder mimeType tanlash
+            const mimeCandidates = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
+            const mime = mimeCandidates.find(m => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(m)) || "";
+            const rec = mime ? new MediaRecorder(dest.stream, { mimeType: mime }) : new MediaRecorder(dest.stream);
+            recorderRef.current = rec;
+            recChunksRef.current = [];
+            rec.ondataavailable = (ev) => { if (ev.data.size > 0) recChunksRef.current.push(ev.data); };
+            rec.start(1000); // har 1s'da chunk
+            recStartTsRef.current = Date.now();
+            setRecording(true);
+            // Peer'ga xabar
+            fetch(`/api/nexus/calls/${callId}/recording/notify`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "start" }),
+            }).catch(() => { });
+        } catch (e) {
+            setRecToast(e instanceof Error ? e.message : "Yozib olishni boshlash xatosi");
+        }
+    }, [recording, phase, callId]);
+
+    const stopRecording = useCallback(async () => {
+        const rec = recorderRef.current;
+        if (!rec || rec.state === "inactive") return;
+        setRecording(false);
+        setRecordUploading(true);
+        try {
+            const durationSec = Math.max(1, Math.round((Date.now() - recStartTsRef.current) / 1000));
+            const stopped = new Promise<void>(res => { rec.onstop = () => res(); });
+            rec.stop();
+            await stopped;
+            const blob = new Blob(recChunksRef.current, { type: rec.mimeType || "audio/webm" });
+            recChunksRef.current = [];
+            try { recAudioCtxRef.current?.close(); } catch { }
+            recAudioCtxRef.current = null;
+            // Peer'ga xabar
+            fetch(`/api/nexus/calls/${callId}/recording/notify`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "stop" }),
+            }).catch(() => { });
+            // Upload
+            const fd = new FormData();
+            const ext = (rec.mimeType || "").includes("mp4") ? "mp4" : (rec.mimeType || "").includes("ogg") ? "ogg" : "webm";
+            fd.append("file", new File([blob], `call-${callId}.${ext}`, { type: blob.type }));
+            fd.append("durationSec", String(durationSec));
+            const r = await fetch(`/api/nexus/calls/${callId}/recording`, { method: "POST", body: fd })
+                .then(x => x.json()).catch(() => null);
+            if (r?.recording) {
+                setRecToast(`Yozildi (${Math.floor(durationSec / 60)}:${String(durationSec % 60).padStart(2, "0")}) — chaqiruv tarixida`);
+            } else {
+                setRecToast("Yuklab bo'lmadi");
+            }
+        } catch (e) {
+            setRecToast(e instanceof Error ? e.message : "Yozuvni yakunlash xatosi");
+        } finally {
+            setRecordUploading(false);
+            setTimeout(() => setRecToast(""), 5000);
+        }
+    }, [callId]);
+
+    const toggleRecording = useCallback(() => {
+        if (recording) stopRecording();
+        else startRecording();
+    }, [recording, startRecording, stopRecording]);
 
     // Emoji reaksiya — mahalliy ko'rsatish + Pusher orqali peer'ga yuborish
     const spawnReaction = useCallback((char: string) => {
@@ -525,6 +625,12 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
             const char = REACTION_CHAR[data.emoji];
             if (char) spawnReaction(char);
         };
+        const onRecStart = (data: { callId: string }) => {
+            if (data.callId === callId) setPeerRecording(true);
+        };
+        const onRecStop = (data: { callId: string }) => {
+            if (data.callId === callId) setPeerRecording(false);
+        };
         channel.bind("signal:offer", onSignal);
         channel.bind("signal:answer", onSignal);
         channel.bind("signal:ice", onSignal);
@@ -532,6 +638,8 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         channel.bind("call:rejected", onRejectedOrEnded);
         channel.bind("call:ended", onRejectedOrEnded);
         channel.bind("reaction:emoji", onReaction);
+        channel.bind("recording:start", onRecStart);
+        channel.bind("recording:stop", onRecStop);
         return () => {
             channel.unbind("signal:offer", onSignal);
             channel.unbind("signal:answer", onSignal);
@@ -540,6 +648,8 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
             channel.unbind("call:rejected", onRejectedOrEnded);
             channel.unbind("call:ended", onRejectedOrEnded);
             channel.unbind("reaction:emoji", onReaction);
+            channel.unbind("recording:start", onRecStart);
+            channel.unbind("recording:stop", onRecStop);
         };
     }, [myProfileId, callId, role, initialKind, processSignal, initPeer, sendSignal, enableCamera, endCall, spawnReaction]);
 
@@ -764,6 +874,15 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                     </div>
                 </div>
                 {err && <p className="mt-3 rounded-xl bg-rose-500/20 px-3 py-2 text-xs font-semibold text-rose-100">{err}</p>}
+                {(recording || peerRecording) && (
+                    <div className="mt-3 flex items-center gap-2 rounded-full bg-rose-600/85 px-3 py-1.5 text-xs font-black text-white shadow-lg">
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
+                        {recording ? "Yozib olyapman" : `${peerLabel} yozib olyapti`}
+                    </div>
+                )}
+                {recToast && (
+                    <p className="mt-3 rounded-xl bg-emerald-500/25 px-3 py-2 text-xs font-semibold text-emerald-100">{recToast}</p>
+                )}
             </div>
 
             {/* Mahalliy preview + kamera flip */}
@@ -807,6 +926,9 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                         icon={speaker ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />} />
                     <CtrlButton onClick={() => setReactionSheetOpen(v => !v)} active={reactionSheetOpen}
                         icon={<Smile className="h-6 w-6" />} />
+                    <CtrlButton onClick={toggleRecording} active={recording}
+                        disabled={phase !== "in-call" || recordUploading}
+                        icon={recordUploading ? <Loader2 className="h-6 w-6 animate-spin" /> : recording ? <Square className="h-6 w-6 fill-current" /> : <Circle className="h-6 w-6" />} />
                     <CtrlButton onClick={() => setFxSheetOpen(v => !v)} active={voiceFx !== "none"}
                         icon={<SlidersHorizontal className="h-6 w-6" />} />
                     <button onClick={() => endCall()}
