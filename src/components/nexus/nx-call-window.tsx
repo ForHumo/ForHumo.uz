@@ -15,9 +15,18 @@ type Kind = "AUDIO" | "VIDEO";
 type Role = "caller" | "callee";
 type Phase = "connecting" | "ringing" | "in-call" | "ended";
 
-const ICE_SERVERS: RTCConfiguration = {
-    iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }],
-};
+const FALLBACK_ICE: RTCIceServer[] = [
+    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
+];
+
+async function fetchIceServers(): Promise<RTCIceServer[]> {
+    try {
+        const r = await fetch("/api/nexus/calls/ice-servers").then(x => x.json()) as { iceServers?: RTCIceServer[] };
+        return r?.iceServers?.length ? r.iceServers : FALLBACK_ICE;
+    } catch {
+        return FALLBACK_ICE;
+    }
+}
 
 const SIGNAL_POLL_MS = 1200;
 const STATE_POLL_MS = 3000;
@@ -95,7 +104,8 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         }
         localStreamRef.current = stream;
 
-        const pc = new RTCPeerConnection(ICE_SERVERS);
+        const iceServers = await fetchIceServers();
+        const pc = new RTCPeerConnection({ iceServers });
         pcRef.current = pc;
         for (const track of stream.getAudioTracks()) pc.addTrack(track, stream);
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { nexusNotify } from "@/lib/nexus-notify";
 
 const RING_TTL_MS = 35_000; // 35s dan uzoq turgan RINGING → MISSED
 
@@ -14,11 +15,21 @@ export async function GET() {
     if (!me) return NextResponse.json({ call: null });
 
     const cutoff = new Date(Date.now() - RING_TTL_MS);
-    // Eskirgan RINGING'larni MISSED ga aylantirish (men callee bo'lganlar)
-    await prisma.nexusCall.updateMany({
+    // Eskirgan RINGING'larni MISSED ga aylantirish (men callee bo'lganlar) + bildirishnoma
+    const stale = await prisma.nexusCall.findMany({
         where: { calleeId: me.id, status: "RINGING", createdAt: { lt: cutoff } },
-        data: { status: "MISSED", endedAt: new Date() },
-    }).catch(() => { });
+        select: { id: true, callerId: true },
+    }).catch(() => [] as { id: string; callerId: string }[]);
+    if (stale.length) {
+        await prisma.nexusCall.updateMany({
+            where: { id: { in: stale.map(c => c.id) } },
+            data: { status: "MISSED", endedAt: new Date() },
+        }).catch(() => { });
+        // Har bir MISSED uchun calleega notif (o'tkazib yuborilgan)
+        for (const c of stale) {
+            void nexusNotify({ recipientId: me.id, actorId: c.callerId, type: "CALL_MISSED", callId: c.id });
+        }
+    }
 
     const c = await prisma.nexusCall.findFirst({
         where: { calleeId: me.id, status: "RINGING", createdAt: { gte: cutoff } },

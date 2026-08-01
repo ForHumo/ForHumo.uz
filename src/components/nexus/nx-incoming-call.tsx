@@ -8,6 +8,7 @@ import Image from "next/image";
 import { Phone, Video, PhoneOff, BadgeCheck } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import NxCallWindow from "./nx-call-window";
+import { playRingtone, stopRingtone } from "@/lib/nexus-ringtone";
 
 const POLL_MS = 2500;
 
@@ -32,6 +33,15 @@ export function NxIncomingCall() {
         const iv = setInterval(tick, POLL_MS);
         return () => { stopped = true; clearInterval(iv); };
     }, [incoming, setIncoming, activeCall]);
+
+    // Ringtone: RINGING kelganda o'ynaydi, qabul/rad/tugash bilan to'xtaydi
+    useEffect(() => {
+        if (incoming && !activeCall) {
+            playRingtone();
+            return () => stopRingtone();
+        }
+        stopRingtone();
+    }, [incoming, activeCall]);
 
     return (
         <>

@@ -51,7 +51,7 @@ export async function GET(req: Request) {
             id: n.id, type: n.type, read: n.read, createdAt: n.createdAt,
             actor: a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a) } : null,
             postText: targetText,
-            postId: n.postId, videoId: n.videoId, trackId: n.trackId, liveId: n.liveId,
+            postId: n.postId, videoId: n.videoId, trackId: n.trackId, liveId: n.liveId, callId: n.callId,
             amountZij: n.amountZij,
         };
     });

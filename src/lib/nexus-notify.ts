@@ -5,19 +5,22 @@ import { getBlockedIds } from "@/lib/nexus-block";
 
 export type NexusNotifType =
     | "LIKE" | "COMMENT" | "FOLLOW" | "REPLY"
-    | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION" | "SUB_EXPIRING";
+    | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION" | "SUB_EXPIRING"
+    | "CALL_MISSED";
 
 const PUSH_TEXT: Record<NexusNotifType, string> = {
     LIKE: "postingizni yoqtirdi", COMMENT: "postingizga izoh qoldirdi", FOLLOW: "sizni kuzatdi",
     REPLY: "izohingizga javob berdi", VIDEO_LIKE: "videongizni yoqtirdi", VIDEO_COMMENT: "videongizga izoh qoldirdi",
     TRACK_LIKE: "trekingizni yoqtirdi", PURCHASE: "videongizni sotib oldi", LIVE: "jonli efir boshladi",
     TIP: "sizni qo'llab-quvvatladi", MENTION: "sizni eslatib o'tdi", SUB_EXPIRING: "obunangiz tugayapti",
+    CALL_MISSED: "sizni chaqirdi (javob berilmadi)",
 };
-function pushUrl(o: { postId?: string | null; videoId?: string | null; trackId?: string | null; liveId?: string | null }): string {
+function pushUrl(o: { postId?: string | null; videoId?: string | null; trackId?: string | null; liveId?: string | null; callId?: string | null }): string {
     if (o.videoId) return `/nexus/v/${o.videoId}`;
     if (o.trackId) return `/nexus/t/${o.trackId}`;
     if (o.liveId) return `/nexus/live/${o.liveId}`;
     if (o.postId) return `/nexus/p/${o.postId}`;
+    if (o.callId) return "/nexus?calls=1";
     return "/nexus";
 }
 
@@ -30,6 +33,7 @@ export async function nexusNotify(opts: {
     videoId?: string | null;
     trackId?: string | null;
     liveId?: string | null;
+    callId?: string | null;
     amountZij?: number | null;
 }): Promise<void> {
     if (!opts.recipientId || opts.recipientId === opts.actorId) return; // o'ziga emas
@@ -44,6 +48,7 @@ export async function nexusNotify(opts: {
                 videoId: opts.videoId ?? null,
                 trackId: opts.trackId ?? null,
                 liveId: opts.liveId ?? null,
+                callId: opts.callId ?? null,
                 amountZij: opts.amountZij ?? null,
             },
         });

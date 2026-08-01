@@ -1002,6 +1002,7 @@ model NexusNotification {
   videoId     String?                             // video like/izoh/xarid uchun
   trackId     String?                             // trek like uchun
   liveId      String?                             // jonli efir uchun
+  callId      String?                             // qo'ng'iroq (MISSED/ENDED) uchun
   amountZij   Int?                                // tip/xarid miqdori (Ƶ)
   read        Boolean        @default(false)
   createdAt   DateTime       @default(now())
@@ -1022,6 +1023,7 @@ enum NexusNotifType {
   TIP
   MENTION
   SUB_EXPIRING
+  CALL_MISSED
 }
 
 // Story — 24 soatlik vaqtinchalik kontent
