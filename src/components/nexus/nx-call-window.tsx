@@ -77,6 +77,9 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     const bgPipelineRef = useRef<BackgroundFxPipeline | null>(null);
     const cameraRawTrackRef = useRef<MediaStreamTrack | null>(null);
     const bgFxRef = useRef<BgEffect>("none");
+    const levelAudioCtxRef = useRef<AudioContext | null>(null);
+    const [localLevel, setLocalLevel] = useState(0);
+    const [remoteLevel, setRemoteLevel] = useState(0);
     const localRef = useRef<HTMLVideoElement>(null);
     const remoteRef = useRef<HTMLVideoElement>(null);
     const remoteAudioRef = useRef<HTMLAudioElement>(null);
@@ -110,6 +113,8 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         bgPipelineRef.current = null;
         try { cameraRawTrackRef.current?.stop(); } catch { }
         cameraRawTrackRef.current = null;
+        try { levelAudioCtxRef.current?.close(); } catch { }
+        levelAudioCtxRef.current = null;
         try { localStreamRef.current?.getTracks().forEach(t => t.stop()); } catch { }
         localStreamRef.current = null;
         setPhase("ended");
@@ -122,6 +127,43 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         }
         setTimeout(onClose, 1200);
     }, [callId, onClose, setCallMinimized]);
+
+    // Ovoz kuchi o'lchagichi — AnalyserNode RMS bo'yicha, RAF 15fps
+    const setupLevelMeter = useCallback((who: "local" | "remote", stream: MediaStream) => {
+        if (!stream.getAudioTracks().length) return;
+        const AC = typeof window !== "undefined"
+            ? (window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
+            : null;
+        if (!AC) return;
+        try {
+            if (!levelAudioCtxRef.current) levelAudioCtxRef.current = new AC();
+            const ctx = levelAudioCtxRef.current;
+            const src = ctx.createMediaStreamSource(stream);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 512;
+            analyser.smoothingTimeConstant = 0.75;
+            src.connect(analyser);
+            const buf = new Uint8Array(analyser.frequencyBinCount);
+            let last = 0;
+            const loop = () => {
+                if (endedRef.current) return;
+                const now = performance.now();
+                if (now - last > 66) { // ~15fps
+                    last = now;
+                    analyser.getByteFrequencyData(buf);
+                    let sum = 0;
+                    for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+                    const rms = Math.sqrt(sum / buf.length);
+                    const pct = Math.min(100, Math.round((rms / 128) * 100));
+                    if (who === "local") setLocalLevel(pct); else setRemoteLevel(pct);
+                }
+                requestAnimationFrame(loop);
+            };
+            loop();
+        } catch (e) {
+            console.warn("level meter:", e);
+        }
+    }, []);
 
     const sendSignal = useCallback(async (sigKind: "offer" | "answer" | "ice", payload: unknown) => {
         await fetch(`/api/nexus/calls/${callId}/signal`, {
@@ -154,6 +196,8 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         const fxStream = await voicePipelineRef.current.setInput(stream);
         const [audioTrack] = fxStream.getAudioTracks();
         audioSenderRef.current = pc.addTrack(audioTrack, fxStream);
+        // Ovoz kuchi indikatori — mahalliy mikrofon (FX'gacha)
+        setupLevelMeter("local", stream);
         // Video transceiver (sendrecv, track'siz — replaceTrack orqali qo'shiladi)
         const vTx = pc.addTransceiver("video", { direction: "sendrecv" });
         videoSenderRef.current = vTx.sender;
@@ -176,6 +220,8 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
             const [remote] = ev.streams;
             if (remoteAudioRef.current) remoteAudioRef.current.srcObject = remote;
             if (remoteRef.current) remoteRef.current.srcObject = remote;
+            // Remote ovoz kuchi indikatori (audio track paydo bo'lganda)
+            if (ev.track.kind === "audio") setupLevelMeter("remote", remote);
             const updateFlag = () => {
                 const has = remote.getVideoTracks().some(t => t.readyState === "live" && !t.muted);
                 setRemoteVideo(has);
@@ -508,7 +554,8 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                 <button onClick={() => setCallMinimized(false)}
                     className="fixed bottom-4 right-4 z-[300] flex max-w-[220px] items-center gap-3 rounded-2xl bg-black/85 p-2.5 pr-4 text-white shadow-2xl ring-1 ring-white/15 backdrop-blur-md transition-transform hover:scale-[1.03] active:scale-95 sm:bottom-6 sm:right-6"
                     aria-label="Chaqiruvni kengaytirish">
-                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/15">
+                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/15"
+                        style={remoteLevel > 8 ? { boxShadow: `0 0 ${10 + remoteLevel * 0.25}px rgba(0,206,200,${0.4 + remoteLevel / 300})` } : undefined}>
                         {peer.image
                             ? <Image src={peer.image} alt="" width={40} height={40} className="h-full w-full object-cover" />
                             : <div className="flex h-full w-full items-center justify-center text-xs font-black">{peerLabel.slice(0, 2).toUpperCase()}</div>}
@@ -532,10 +579,18 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                 <video ref={remoteRef} autoPlay playsInline className="absolute inset-0 h-full w-full object-cover" />
             ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-indigo-950 via-violet-900 to-black">
-                    <div className="flex h-40 w-40 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-2 ring-white/30">
-                        {peer.image
-                            ? <Image src={peer.image} alt="" width={160} height={160} className="h-full w-full object-cover" />
-                            : <span className="text-4xl font-black">{peerLabel.slice(0, 2).toUpperCase()}</span>}
+                    <div className="relative">
+                        {/* Jonli ovoz halqasi (remoteLevel bo'yicha kengayadi) */}
+                        <div className="pointer-events-none absolute inset-0 rounded-full transition-all duration-100"
+                            style={{
+                                transform: `scale(${1 + remoteLevel / 200})`,
+                                boxShadow: `0 0 ${40 + remoteLevel * 0.6}px ${remoteLevel * 0.3}px rgba(0,206,200,${0.15 + remoteLevel / 300})`,
+                            }} />
+                        <div className="relative flex h-40 w-40 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-2 ring-white/30">
+                            {peer.image
+                                ? <Image src={peer.image} alt="" width={160} height={160} className="h-full w-full object-cover" />
+                                : <span className="text-4xl font-black">{peerLabel.slice(0, 2).toUpperCase()}</span>}
+                        </div>
                     </div>
                 </div>
             )}
@@ -550,7 +605,8 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                         aria-label="Kichraytirish">
                         <Minimize2 className="h-4 w-4" />
                     </button>
-                    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/15">
+                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/15"
+                        style={remoteLevel > 8 ? { boxShadow: `0 0 ${12 + remoteLevel * 0.25}px rgba(0,206,200,${0.4 + remoteLevel / 300})` } : undefined}>
                         {peer.image
                             ? <Image src={peer.image} alt="" width={44} height={44} className="h-full w-full object-cover" />
                             : <div className="flex h-full w-full items-center justify-center text-sm font-black">{peerLabel.slice(0, 2).toUpperCase()}</div>}
@@ -587,8 +643,17 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
             {/* Boshqaruv paneli */}
             <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-6 pb-10">
                 <div className="mx-auto flex max-w-md flex-wrap items-center justify-center gap-3">
-                    <CtrlButton onClick={toggleMute} active={!muted}
-                        icon={muted ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />} />
+                    <div className="relative">
+                        {!muted && localLevel > 8 && (
+                            <span className="pointer-events-none absolute inset-0 rounded-full transition-all duration-100"
+                                style={{
+                                    transform: `scale(${1 + localLevel / 220})`,
+                                    boxShadow: `0 0 ${8 + localLevel * 0.4}px rgba(0,206,200,${0.35 + localLevel / 300})`,
+                                }} />
+                        )}
+                        <CtrlButton onClick={toggleMute} active={!muted}
+                            icon={muted ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />} />
+                    </div>
                     <CtrlButton onClick={toggleCamera} active={videoSource === "camera"}
                         disabled={videoBusy || phase !== "in-call"}
                         icon={videoBusy && videoSource !== "screen" ? <Loader2 className="h-6 w-6 animate-spin" /> : videoSource === "camera" ? <CamIcon className="h-6 w-6" /> : <VideoOff className="h-6 w-6" />} />
