@@ -78,6 +78,12 @@ model UserProfile {
   verified      Boolean  @default(false)
   verifiedAt    DateTime?
 
+  // Steam OpenID linking (CS2 sportchilar uchun majburiy; login emas — faqat identity link)
+  steamId64     String?   @unique   // Valve SteamID64 (17-rem raqam)
+  steamPersona  String?             // Steam displayed nickname (Web API'dan olinadi)
+  steamAvatar   String?             // Steam avatar URL (Web API'dan olinadi)
+  steamLinkedAt DateTime?
+
   // Onboarding
   onboardingDone Boolean @default(false)
 

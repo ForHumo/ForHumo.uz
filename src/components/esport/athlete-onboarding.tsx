@@ -4,12 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useRouter } from "@/i18n/routing";
 import {
     Gamepad2, Trophy, Lock, ChevronDown, Check, ShieldCheck,
-    ArrowLeft, Loader2, AlertTriangle, IdCard, Pencil, Camera, X, Trash2,
+    ArrowLeft, Loader2, AlertTriangle, IdCard, Pencil, Camera, X, Trash2, Link2, Link2Off,
 } from "lucide-react";
 import { useEsT } from "@/lib/esport-i18n";
 
-interface Game { id: string; slug: string; name: string; teamSize: number }
+interface Game { id: string; slug: string; name: string; teamSize: number; requiresSteam?: boolean }
 interface Athlete { id: string; game: { slug: string; name: string }; ign: string; gameUserId: string; gameServer: string | null; role: string | null; image?: string | null; coverImage?: string | null }
+interface SteamState { linked: boolean; steamId64: string | null; persona: string | null; avatar: string | null }
 
 const ACCENT = "linear-gradient(135deg,#2B3EE8,#00CEC8)";
 const cardStyle = { background: "var(--es-card)", border: "1px solid var(--es-card-bd)" };
@@ -23,6 +24,8 @@ export default function AthleteOnboarding() {
     const [games, setGames] = useState<Game[]>([]);
     const [roles, setRoles] = useState<string[]>([]);
     const [profileName, setProfileName] = useState({ firstName: "", lastName: "", hasName: false });
+    const [steam, setSteam] = useState<SteamState>({ linked: false, steamId64: null, persona: null, avatar: null });
+    const [steamMsg, setSteamMsg] = useState<string>("");
 
     // form
     const [gameId, setGameId] = useState("");
@@ -48,9 +51,19 @@ export default function AthleteOnboarding() {
             setProfileName(d.profileName || { firstName: "", lastName: "", hasName: false });
             setFirstName(d.profileName?.firstName || "");
             setLastName(d.profileName?.lastName || "");
+            if (d.steam) setSteam(d.steam);
             if ((d.games || []).length === 1) setGameId(d.games[0].id);
             setLoading(false);
         }).catch(() => setLoading(false));
+
+        // Steam callback natijasi (?steam=ok|failed|taken|session_lost|no_profile)
+        const url = new URL(window.location.href);
+        const s = url.searchParams.get("steam");
+        if (s) {
+            setSteamMsg(s);
+            url.searchParams.delete("steam");
+            window.history.replaceState({}, "", url.toString());
+        }
     }, []);
 
     useEffect(() => {
@@ -59,17 +72,22 @@ export default function AthleteOnboarding() {
         return () => document.removeEventListener("mousedown", h);
     }, []);
 
+    const selectedGame = games.find(g => g.id === gameId);
+    const needsSteam = !!selectedGame?.requiresSteam;
+
     async function submit() {
         setErr("");
         if (!gameId) return setErr(t("ob.errGame"));
         if (!profileName.hasName && (!firstName.trim() || !lastName.trim())) return setErr(t("ob.errName"));
         if (!ign.trim()) return setErr(t("ob.errNick"));
-        if (!gameUserId.trim()) return setErr(t("ob.errId"));
+        // CS2 uchun gameUserId server tomonda SteamID64'ga o'rnatiladi — mahalliy tekshiruvni tashlab yuboramiz
+        if (!needsSteam && !gameUserId.trim()) return setErr(t("ob.errId"));
+        if (needsSteam && !steam.linked) return setErr(t("st.required"));
         if (!agree) return setErr(t("ob.errConsent"));
         setSubmitting(true);
         const res = await fetch("/api/esport/athlete", {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ gameId, firstName, lastName, ign, gameUserId, gameServer, role }),
+            body: JSON.stringify({ gameId, firstName, lastName, ign, gameUserId: needsSteam ? "" : gameUserId, gameServer, role }),
         }).then(r => r.json()).catch(() => ({ error: "Tarmoq xatosi" }));
         setSubmitting(false);
         if (res.error) return setErr(res.error);
@@ -158,17 +176,62 @@ export default function AthleteOnboarding() {
                             )}
                         </div>
 
+                        {/* Steam bog'lash kartasi (CS2 uchun majburiy) */}
+                        {needsSteam && (
+                            <div className="rounded-3xl p-5" style={cardStyle}>
+                                <div className="mb-3 flex items-center justify-between">
+                                    <p className="text-xs font-black uppercase tracking-wide text-white/40">{t("st.title")}</p>
+                                    {steam.linked
+                                        ? <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black uppercase text-emerald-300" style={{ background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.35)" }}><Check className="h-3 w-3" /> {t("st.linked")}</span>
+                                        : <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black uppercase text-amber-300" style={{ background: "rgba(255,176,32,0.08)", border: "1px solid rgba(255,176,32,0.30)" }}><AlertTriangle className="h-3 w-3" /> {t("st.notLinked")}</span>}
+                                </div>
+                                {steam.linked ? (
+                                    <div className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" }}>
+                                        {steam.avatar
+                                            ? <img src={steam.avatar} alt="" className="h-10 w-10 rounded-xl object-cover" />
+                                            : <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.22)" }}><ShieldCheck className="h-5 w-5 text-white/70" /></div>}
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-bold text-white">{steam.persona || "Steam"}</p>
+                                            <p className="truncate text-[11px] font-semibold text-white/40">SteamID64: {steam.steamId64}</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="text-xs font-semibold leading-snug text-white/60">{t("st.whyCs2")}</p>
+                                        <a href="/api/user/steam-link/start?from=/esport/onboarding"
+                                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-black text-white"
+                                            style={{ background: ACCENT }}>
+                                            <Link2 className="h-4 w-4" /> {t("st.linkBtn")}
+                                        </a>
+                                    </>
+                                )}
+                                {steamMsg && steamMsg !== "ok" && (
+                                    <div className="mt-3 flex items-center gap-2 rounded-2xl px-3 py-2" style={{ background: "rgba(255,60,60,0.10)", border: "1px solid rgba(255,60,60,0.3)" }}>
+                                        <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
+                                        <span className="text-[11px] font-semibold text-red-300">{t(`st.err.${steamMsg}`)}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* O'yin ma'lumotlari */}
                         <div className="rounded-3xl p-5" style={cardStyle}>
                             <p className="mb-3 text-xs font-black uppercase tracking-wide text-white/40">{t("ob.mlbbInfo")}</p>
                             <div className="space-y-2.5">
                                 <Input value={ign} onChange={setIgn} placeholder={t("ob.nickReq")} />
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Input value={gameUserId} onChange={setGameUserId} placeholder="In-game ID" inputMode="numeric" />
-                                    <Input value={gameServer} onChange={setGameServer} placeholder={t("ob.server")} inputMode="numeric" />
-                                </div>
+                                {needsSteam ? (
+                                    <div className="rounded-2xl px-4 py-3 text-[11px] font-semibold text-white/50" style={{ background: "var(--es-soft)", border: "1px solid var(--es-soft-bd)" }}>
+                                        {t("st.idAutoFromSteam")}
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Input value={gameUserId} onChange={setGameUserId} placeholder="In-game ID" inputMode="numeric" />
+                                        <Input value={gameServer} onChange={setGameServer} placeholder={t("ob.server")} inputMode="numeric" />
+                                    </div>
+                                )}
 
-                                {/* Pozitsiya — styled dropdown (native select EMAS) */}
+                                {/* Pozitsiya — faqat MLBB uchun (roles ro'yxati MLBB'ga xos) */}
+                                {selectedGame?.slug === "mlbb" && (
                                 <div ref={roleRef} className="relative">
                                     <button onClick={() => setRoleOpen(o => !o)}
                                         className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left"
@@ -187,6 +250,7 @@ export default function AthleteOnboarding() {
                                         </div>
                                     )}
                                 </div>
+                                )}
                             </div>
                         </div>
 
