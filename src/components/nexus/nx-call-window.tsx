@@ -1,8 +1,9 @@
 "use client";
 
-// Nexus 1:1 WebRTC ovoz/video chaqiruv oynasi (haqiqiy peer-to-peer).
+// Nexus 1:1 WebRTC ovoz/video chaqiruv oynasi (Telegram uslubi).
+// Boshlanishi: doim ovozli. Kamera chaqiruv davomida qo'shiladi/olib tashlanadi (dinamik renegotiate).
 // Signaling: /api/nexus/calls/[id]/signal (polling).
-// STUN: Google (bepul). TURN yo'q — 15% NAT'da fail-over qilishi mumkin (kelajakda qo'shiladi).
+// STUN: Google (bepul). TURN yo'q — 15% NAT'da fail-over qilishi mumkin.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -20,21 +21,23 @@ const ICE_SERVERS: RTCConfiguration = {
 
 const SIGNAL_POLL_MS = 1200;
 const STATE_POLL_MS = 3000;
+const VIDEO_CONSTRAINTS: MediaTrackConstraints = { width: { ideal: 640 }, height: { ideal: 480 } };
 
 interface Props {
     callId: string;
     role: Role;
-    kind: Kind;
+    kind: Kind;               // Boshlang'ich rejim (AUDIO odatiy). VIDEO bo'lsa kamera darrov yoqiladi.
     peer: Peer;
-    /** Callee bo'lsa: qabul qilingandan keyingi status oqimi ("accept"→WebRTC boshlanishi tashqarida chaqiriladi). */
     autoAccepted?: boolean;
     onClose: () => void;
 }
 
-export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, onClose }: Props) {
+export default function NxCallWindow({ callId, role, kind: initialKind, peer, autoAccepted, onClose }: Props) {
     const [phase, setPhase] = useState<Phase>(role === "caller" ? "connecting" : autoAccepted ? "connecting" : "ringing");
     const [muted, setMuted] = useState(false);
-    const [camOff, setCamOff] = useState(kind === "AUDIO");
+    const [localVideo, setLocalVideo] = useState(false);       // Menda kamera yoqilganmi
+    const [remoteVideo, setRemoteVideo] = useState(false);     // Peer'da kamera yoqilganmi
+    const [camBusy, setCamBusy] = useState(false);
     const [speaker, setSpeaker] = useState(true);
     const [duration, setDuration] = useState(0);
     const [err, setErr] = useState<string>("");
@@ -44,12 +47,13 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
     const remoteRef = useRef<HTMLVideoElement>(null);
     const remoteAudioRef = useRef<HTMLAudioElement>(null);
     const localStreamRef = useRef<MediaStream | null>(null);
+    const videoSenderRef = useRef<RTCRtpSender | null>(null);
     const sinceRef = useRef<string>(new Date(Date.now() - 60_000).toISOString());
     const startTsRef = useRef<number | null>(null);
     const endedRef = useRef(false);
     const acceptedRef = useRef(role === "callee" && autoAccepted === true);
 
-    // ── Chaqiruvni tugatish (bir marta) ──────────────────────────────────────
+    // ── Chaqiruvni tugatish ──────────────────────────────────────────────────
     const endCall = useCallback(async (notify = true) => {
         if (endedRef.current) return;
         endedRef.current = true;
@@ -70,7 +74,6 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
         setTimeout(onClose, 1200);
     }, [callId, onClose]);
 
-    // ── Signal yuborish ──────────────────────────────────────────────────────
     const sendSignal = useCallback(async (sigKind: "offer" | "answer" | "ice", payload: unknown) => {
         await fetch(`/api/nexus/calls/${callId}/signal`, {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -78,32 +81,41 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
         }).catch(() => { });
     }, [callId]);
 
-    // ── PeerConnection + local media tayyorlash ──────────────────────────────
+    // ── PeerConnection + local media (doim ovoz) ─────────────────────────────
     const initPeer = useCallback(async () => {
         if (pcRef.current) return pcRef.current;
         let stream: MediaStream;
         try {
-            stream = await navigator.mediaDevices.getUserMedia({
-                audio: true,
-                video: kind === "VIDEO" ? { width: { ideal: 640 }, height: { ideal: 480 } } : false,
-            });
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         } catch (e) {
-            const msg = e instanceof Error ? e.message : "Media ruxsat rad etildi";
+            const msg = e instanceof Error ? e.message : "Mikrofon ruxsat rad etildi";
             setErr(msg);
             await endCall();
             return null;
         }
         localStreamRef.current = stream;
-        if (localRef.current) { localRef.current.srcObject = stream; }
 
         const pc = new RTCPeerConnection(ICE_SERVERS);
         pcRef.current = pc;
-        for (const track of stream.getTracks()) pc.addTrack(track, stream);
+        for (const track of stream.getAudioTracks()) pc.addTrack(track, stream);
 
         pc.ontrack = (ev) => {
             const [remote] = ev.streams;
-            if (kind === "VIDEO" && remoteRef.current) remoteRef.current.srcObject = remote;
             if (remoteAudioRef.current) remoteAudioRef.current.srcObject = remote;
+            if (remoteRef.current) remoteRef.current.srcObject = remote;
+            // Peer kamerasini kuzatib boramiz
+            const updateRemoteFlag = () => {
+                const hasLiveVideo = remote.getVideoTracks().some(t => t.readyState === "live" && !t.muted);
+                setRemoteVideo(hasLiveVideo);
+            };
+            updateRemoteFlag();
+            remote.onaddtrack = updateRemoteFlag;
+            remote.onremovetrack = updateRemoteFlag;
+            for (const t of remote.getVideoTracks()) {
+                t.onmute = updateRemoteFlag;
+                t.onunmute = updateRemoteFlag;
+                t.onended = updateRemoteFlag;
+            }
         };
         pc.onicecandidate = (ev) => {
             if (ev.candidate) sendSignal("ice", ev.candidate.toJSON());
@@ -118,15 +130,73 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
             }
         };
         return pc;
-    }, [kind, sendSignal, endCall]);
+    }, [sendSignal, endCall]);
 
-    // ── Caller: chaqiruv qabul qilinishini kutib, offer yuborish ────────────
-    // Callee: autoAccepted bo'lgandan so'ng answer ochish (offer polling'dan keladi)
+    // ── Kamera yoqish (dinamik — chaqiruv davomida) ──────────────────────────
+    const enableCamera = useCallback(async () => {
+        if (camBusy || localVideo) return;
+        const pc = pcRef.current;
+        if (!pc || !localStreamRef.current) return;
+        setCamBusy(true);
+        try {
+            const vStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: VIDEO_CONSTRAINTS });
+            const [track] = vStream.getVideoTracks();
+            if (!track) throw new Error("Video oqim topilmadi");
+            localStreamRef.current.addTrack(track);
+            if (videoSenderRef.current) {
+                await videoSenderRef.current.replaceTrack(track);
+            } else {
+                videoSenderRef.current = pc.addTrack(track, localStreamRef.current);
+            }
+            if (localRef.current) localRef.current.srcObject = localStreamRef.current;
+            setLocalVideo(true);
+            // Renegotiate — yangi offer yuboramiz
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            await sendSignal("offer", { sdp: offer.sdp, type: offer.type });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : "Kamera yoqilmadi";
+            setErr(msg);
+        } finally {
+            setCamBusy(false);
+        }
+    }, [camBusy, localVideo, sendSignal]);
+
+    // ── Kamera o'chirish (track'ni to'xtatib, sender'ni bo'shatamiz) ─────────
+    const disableCamera = useCallback(async () => {
+        if (camBusy || !localVideo) return;
+        setCamBusy(true);
+        try {
+            const stream = localStreamRef.current;
+            if (stream) {
+                for (const t of stream.getVideoTracks()) {
+                    try { t.stop(); } catch { }
+                    stream.removeTrack(t);
+                }
+            }
+            if (videoSenderRef.current) {
+                await videoSenderRef.current.replaceTrack(null).catch(() => { });
+            }
+            if (localRef.current) localRef.current.srcObject = stream;
+            setLocalVideo(false);
+            // Renegotiate — peer'ga video ketmayotganini bildiramiz
+            const pc = pcRef.current;
+            if (pc) {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                await sendSignal("offer", { sdp: offer.sdp, type: offer.type });
+            }
+        } finally {
+            setCamBusy(false);
+        }
+    }, [camBusy, localVideo, sendSignal]);
+
+    // ── Caller: accept'ni kutib, offer yuborish ──────────────────────────────
+    // Callee: autoAccepted bo'lgach initPeer, offer signal'idan keladi
     useEffect(() => {
         let stopped = false;
         (async () => {
             if (role === "caller") {
-                // Callee accept qilishini kutamiz
                 const poll = async () => {
                     if (stopped || endedRef.current) return;
                     const r = await fetch(`/api/nexus/calls/${callId}`).then(x => x.json()).catch(() => null);
@@ -139,24 +209,29 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
                     if (r.call.status === "ACCEPTED" && !pcRef.current) {
                         const pc = await initPeer();
                         if (!pc) return;
-                        const offer = await pc.createOffer();
-                        await pc.setLocalDescription(offer);
-                        await sendSignal("offer", { sdp: offer.sdp, type: offer.type });
+                        // VIDEO chaqiruv bo'lsa darrov kamerani yoqamiz (renegotiate ichida offer yuboriladi)
+                        if (initialKind === "VIDEO") {
+                            await enableCamera();
+                        } else {
+                            const offer = await pc.createOffer();
+                            await pc.setLocalDescription(offer);
+                            await sendSignal("offer", { sdp: offer.sdp, type: offer.type });
+                        }
                     }
                 };
                 await poll();
                 const iv = setInterval(poll, STATE_POLL_MS);
                 return () => clearInterval(iv);
             } else if (acceptedRef.current) {
-                // Callee: peer'ni tayyorlab, offer'ni signal polling'dan kutamiz
                 await initPeer();
+                // VIDEO callee ham darrov kamera qo'ymaydi — o'zi tanlaydi (Telegram uslubi)
             }
         })();
         return () => { stopped = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // ── Signal polling (offer/answer/ice) ────────────────────────────────────
+    // ── Signal polling ───────────────────────────────────────────────────────
     useEffect(() => {
         let stopped = false;
         const tick = async () => {
@@ -175,7 +250,9 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
                         await pc.setLocalDescription(answer);
                         await sendSignal("answer", { sdp: answer.sdp, type: answer.type });
                     } else if (s.kind === "answer") {
-                        if (pcRef.current) await pcRef.current.setRemoteDescription(new RTCSessionDescription(s.payload as RTCSessionDescriptionInit));
+                        if (pcRef.current && pcRef.current.signalingState !== "stable") {
+                            await pcRef.current.setRemoteDescription(new RTCSessionDescription(s.payload as RTCSessionDescriptionInit));
+                        }
                     } else if (s.kind === "ice") {
                         if (pcRef.current) await pcRef.current.addIceCandidate(new RTCIceCandidate(s.payload as RTCIceCandidateInit)).catch(() => { });
                     }
@@ -189,7 +266,7 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
         return () => { stopped = true; clearInterval(iv); };
     }, [callId, initPeer, sendSignal]);
 
-    // ── Chaqiruv holati polling (peer end qilsa bilamiz) ────────────────────
+    // ── Chaqiruv holati polling (peer end qilsa bilamiz) ─────────────────────
     useEffect(() => {
         let stopped = false;
         const tick = async () => {
@@ -211,6 +288,11 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
         return () => clearInterval(iv);
     }, []);
 
+    // ── Mahalliy video preview'ni yangilash ──────────────────────────────────
+    useEffect(() => {
+        if (localRef.current) localRef.current.srcObject = localStreamRef.current;
+    }, [localVideo]);
+
     // ── Toggle handlers ──────────────────────────────────────────────────────
     const toggleMute = () => {
         setMuted(m => {
@@ -219,13 +301,9 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
             return next;
         });
     };
-    const toggleCam = () => {
-        if (kind !== "VIDEO") return;
-        setCamOff(v => {
-            const next = !v;
-            localStreamRef.current?.getVideoTracks().forEach(t => { t.enabled = !next; });
-            return next;
-        });
+    const toggleCamera = () => {
+        if (localVideo) disableCamera();
+        else enableCamera();
     };
     const toggleSpeaker = () => {
         setSpeaker(s => {
@@ -236,7 +314,6 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
         });
     };
 
-    // ── Beforeunload — chaqiruvni tugat ──────────────────────────────────────
     useEffect(() => {
         const off = () => { endCall(); };
         window.addEventListener("beforeunload", off);
@@ -251,10 +328,12 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
         return "Yakunlandi";
     }, [phase, role, duration]);
 
+    const showRemoteVideo = remoteVideo && phase === "in-call";
+
     return (
         <div className="fixed inset-0 z-[300] flex flex-col bg-black text-white">
-            {/* Remote video (VIDEO rejim) yoki avatar (AUDIO rejim) */}
-            {kind === "VIDEO" ? (
+            {/* Remote video (peer kamerani yoqsa) yoki avatar */}
+            {showRemoteVideo ? (
                 <video ref={remoteRef} autoPlay playsInline className="absolute inset-0 h-full w-full object-cover" />
             ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-indigo-950 via-violet-900 to-black">
@@ -265,10 +344,11 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
                     </div>
                 </div>
             )}
-
+            {/* Remote video element bg'da qoladi (ontrack srcObject uchun) */}
+            {!showRemoteVideo && <video ref={remoteRef} autoPlay playsInline className="hidden" />}
             <audio ref={remoteAudioRef} autoPlay />
 
-            {/* Overlay tepa */}
+            {/* Tepa overlay */}
             <div className="absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/70 to-transparent p-5">
                 <div className="flex items-center gap-3">
                     <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/15">
@@ -290,26 +370,25 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
                 {err && <p className="mt-3 rounded-xl bg-rose-500/20 px-3 py-2 text-xs font-semibold text-rose-100">{err}</p>}
             </div>
 
-            {/* Local preview (VIDEO rejim, kichik oyna) */}
-            {kind === "VIDEO" && (
+            {/* Mahalliy preview (faqat kamera yoqilgan bo'lsa) */}
+            {localVideo && (
                 <div className="absolute right-4 top-24 z-10 h-40 w-28 overflow-hidden rounded-2xl bg-black/50 ring-1 ring-white/20 shadow-2xl sm:right-6 sm:top-28 sm:h-52 sm:w-40">
-                    {camOff ? (
-                        <div className="flex h-full w-full items-center justify-center text-white/60"><VideoOff className="h-6 w-6" /></div>
-                    ) : (
-                        <video ref={localRef} autoPlay playsInline muted className="h-full w-full scale-x-[-1] object-cover" />
-                    )}
+                    <video ref={localRef} autoPlay playsInline muted className="h-full w-full scale-x-[-1] object-cover" />
                 </div>
             )}
 
             {/* Boshqaruv paneli */}
             <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-6 pb-10">
                 <div className="mx-auto flex max-w-md items-center justify-center gap-3">
-                    <CtrlButton onClick={toggleMute} active={!muted} icon={muted ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />} />
-                    {kind === "VIDEO" && (
-                        <CtrlButton onClick={toggleCam} active={!camOff} icon={camOff ? <VideoOff className="h-6 w-6" /> : <CamIcon className="h-6 w-6" />} />
-                    )}
-                    <CtrlButton onClick={toggleSpeaker} active={speaker} icon={speaker ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />} />
-                    <button onClick={() => endCall()} className="ml-2 flex h-14 w-14 items-center justify-center rounded-full bg-rose-600 shadow-lg transition-transform hover:scale-105 active:scale-95">
+                    <CtrlButton onClick={toggleMute} active={!muted}
+                        icon={muted ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />} />
+                    <CtrlButton onClick={toggleCamera} active={localVideo}
+                        disabled={camBusy || phase !== "in-call"}
+                        icon={camBusy ? <Loader2 className="h-6 w-6 animate-spin" /> : localVideo ? <CamIcon className="h-6 w-6" /> : <VideoOff className="h-6 w-6" />} />
+                    <CtrlButton onClick={toggleSpeaker} active={speaker}
+                        icon={speaker ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />} />
+                    <button onClick={() => endCall()}
+                        className="ml-2 flex h-14 w-14 items-center justify-center rounded-full bg-rose-600 shadow-lg transition-transform hover:scale-105 active:scale-95">
                         <PhoneOff className="h-6 w-6" />
                     </button>
                 </div>
@@ -318,10 +397,10 @@ export default function NxCallWindow({ callId, role, kind, peer, autoAccepted, o
     );
 }
 
-function CtrlButton({ onClick, active, icon }: { onClick: () => void; active: boolean; icon: React.ReactNode }) {
+function CtrlButton({ onClick, active, icon, disabled }: { onClick: () => void; active: boolean; icon: React.ReactNode; disabled?: boolean }) {
     return (
-        <button onClick={onClick}
-            className={`flex h-12 w-12 items-center justify-center rounded-full backdrop-blur-sm transition-transform hover:scale-105 active:scale-95 ${active ? "bg-white/15 ring-1 ring-white/25" : "bg-white/45 text-black"}`}>
+        <button onClick={onClick} disabled={disabled}
+            className={`flex h-12 w-12 items-center justify-center rounded-full backdrop-blur-sm transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 ${active ? "bg-white/15 ring-1 ring-white/25" : "bg-white/45 text-black"}`}>
             {icon}
         </button>
     );
