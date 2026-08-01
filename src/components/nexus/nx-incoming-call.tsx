@@ -4,33 +4,58 @@
 // Nexus shell'da bir marta mount qilinadi; sessiya bo'yicha 2.5s'da /incoming ni tekshiradi.
 
 import { useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Phone, Video, PhoneOff, BadgeCheck } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import NxCallWindow from "./nx-call-window";
 import { playRingtone, stopRingtone } from "@/lib/nexus-ringtone";
+import { getPusherClient } from "@/lib/pusher-client";
 
-const POLL_MS = 2500;
+// Pusher ulangan bo'lsa polling siyrak (30s heartbeat), aks holda 2.5s.
+const POLL_MS_FAST = 2500;
+const POLL_MS_SLOW = 30_000;
 
 export function NxIncomingCall() {
+    const { data: session } = useSession();
+    // @ts-ignore
+    const myProfileId: string | null = session?.user?.profileId ?? null;
     const { incoming, setIncoming, acceptIncoming, rejectIncoming, activeCall, closeActiveCall } = useNxPlayer();
 
+    // Pusher real-time — kelayotgan chaqiruvni darrov qabul qilish
+    useEffect(() => {
+        if (!myProfileId) return;
+        const pusher = getPusherClient();
+        if (!pusher) return;
+        const channel = pusher.subscribe(`private-user-${myProfileId}`);
+        const onIncoming = (data: { id: string; kind: "AUDIO" | "VIDEO"; caller: { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean } }) => {
+            if (!activeCall) setIncoming({ id: data.id, kind: data.kind, caller: data.caller });
+        };
+        const onEnded = () => { setIncoming(null); };
+        channel.bind("call:incoming", onIncoming);
+        channel.bind("call:ended", onEnded);
+        return () => {
+            channel.unbind("call:incoming", onIncoming);
+            channel.unbind("call:ended", onEnded);
+        };
+    }, [myProfileId, activeCall, setIncoming]);
+
+    // Polling — Pusher yo'q/uzilgan bo'lganida fallback (yoki heartbeat)
     useEffect(() => {
         let stopped = false;
+        const pollMs = getPusherClient() ? POLL_MS_SLOW : POLL_MS_FAST;
         const tick = async () => {
             if (stopped) return;
-            // Faol chaqiruv bor bo'lsa yangi kelayotganni tekshirmaymiz
             if (activeCall) return;
             const r = await fetch("/api/nexus/calls/incoming").then(x => x.json()).catch(() => null) as { call?: { id: string; kind: "AUDIO" | "VIDEO"; caller: { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean } } | null } | null;
             if (r?.call) {
                 setIncoming({ id: r.call.id, kind: r.call.kind, caller: r.call.caller });
             } else if (incoming) {
-                // Serverda RINGING qolmadi — modalni yop
                 setIncoming(null);
             }
         };
         tick();
-        const iv = setInterval(tick, POLL_MS);
+        const iv = setInterval(tick, pollMs);
         return () => { stopped = true; clearInterval(iv); };
     }, [incoming, setIncoming, activeCall]);
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getPusher, userChannel } from "@/lib/pusher-server";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -30,6 +31,17 @@ export async function POST(req: Request, { params }: Ctx) {
     await prisma.nexusCallSignal.create({
         data: { callId: id, fromId: me.id, kind, payload: JSON.stringify(payload) },
     });
+
+    // Pusher orqali peer'ga darhol yetkazish (sozlangan bo'lsa; polling fallback baribir ishlaydi)
+    const pusher = getPusher();
+    if (pusher) {
+        const peerId = c.callerId === me.id ? c.calleeId : c.callerId;
+        const eventName = kind === "offer" ? "signal:offer" : kind === "answer" ? "signal:answer" : "signal:ice";
+        pusher.trigger(userChannel(peerId), eventName, {
+            callId: id, kind, payload, fromId: me.id,
+        }).catch(() => { });
+    }
+
     return NextResponse.json({ ok: true });
 }
 

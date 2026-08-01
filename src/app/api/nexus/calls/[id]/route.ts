@@ -2,8 +2,14 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getPusher, userChannel } from "@/lib/pusher-server";
 
 type Ctx = { params: Promise<{ id: string }> };
+
+function pushCallEvent(peerId: string, event: "call:accepted" | "call:rejected" | "call:ended", callId: string) {
+    const p = getPusher();
+    if (p) p.trigger(userChannel(peerId), event, { callId }).catch(() => { });
+}
 
 // GET /api/nexus/calls/[id] — chaqiruv holati + peer
 export async function GET(_req: Request, { params }: Ctx) {
@@ -53,12 +59,14 @@ export async function PATCH(req: Request, { params }: Ctx) {
         if (c.calleeId !== me.id) return NextResponse.json({ error: "Faqat qabul qiluvchi" }, { status: 403 });
         if (c.status !== "RINGING") return NextResponse.json({ error: "Chaqiruv aktual emas" }, { status: 409 });
         await prisma.nexusCall.update({ where: { id }, data: { status: "ACCEPTED", acceptedAt: new Date() } });
+        pushCallEvent(c.callerId, "call:accepted", id);
         return NextResponse.json({ ok: true });
     }
     if (action === "reject") {
         if (c.calleeId !== me.id) return NextResponse.json({ error: "Faqat qabul qiluvchi" }, { status: 403 });
         if (c.status !== "RINGING") return NextResponse.json({ error: "Chaqiruv aktual emas" }, { status: 409 });
         await prisma.nexusCall.update({ where: { id }, data: { status: "REJECTED", endedAt: new Date() } });
+        pushCallEvent(c.callerId, "call:rejected", id);
         return NextResponse.json({ ok: true });
     }
     // end — har ikkalasi
@@ -68,5 +76,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
     const endedAt = new Date();
     const duration = c.acceptedAt ? Math.max(0, Math.round((endedAt.getTime() - c.acceptedAt.getTime()) / 1000)) : 0;
     await prisma.nexusCall.update({ where: { id }, data: { status: "ENDED", endedAt, duration } });
+    const peerId = c.callerId === me.id ? c.calleeId : c.callerId;
+    pushCallEvent(peerId, "call:ended", id);
     return NextResponse.json({ ok: true });
 }

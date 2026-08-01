@@ -13,6 +13,8 @@ import { Mic, MicOff, Video as CamIcon, VideoOff, PhoneOff, Loader2, Volume2, Vo
 import { useNxPlayer } from "./nx-player-ctx";
 import { VoiceFxPipeline, VOICE_FX_LIST, type VoiceEffect } from "@/lib/nexus-voice-fx";
 import { BackgroundFxPipeline, type BgEffect } from "@/lib/nexus-bg-fx";
+import { useSession } from "next-auth/react";
+import { getPusherClient } from "@/lib/pusher-client";
 
 interface Peer { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean }
 
@@ -404,9 +406,100 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // ── Signal polling (Perfect Negotiation) ─────────────────────────────────
+    // Signal ishlash — Perfect Negotiation (polling ham, Pusher ham foydalanadi)
+    const processedIdsRef = useRef<Set<string>>(new Set());
+    const processSignal = useCallback(async (s: { id?: string; kind: string; payload: unknown }) => {
+        if (s.id) {
+            if (processedIdsRef.current.has(s.id)) return;
+            processedIdsRef.current.add(s.id);
+        }
+        const pc = pcRef.current || await initPeer();
+        if (!pc) return;
+        try {
+            if (s.kind === "offer") {
+                const readyForOffer = !makingOfferRef.current && (pc.signalingState === "stable" || pc.signalingState === "have-remote-offer");
+                const offerCollision = !readyForOffer;
+                ignoreOfferRef.current = !politeRef.current && offerCollision;
+                if (ignoreOfferRef.current) return;
+                if (offerCollision) {
+                    await Promise.all([
+                        pc.setLocalDescription({ type: "rollback" } as RTCSessionDescriptionInit).catch(() => { }),
+                        pc.setRemoteDescription(new RTCSessionDescription(s.payload as RTCSessionDescriptionInit)),
+                    ]);
+                } else {
+                    await pc.setRemoteDescription(new RTCSessionDescription(s.payload as RTCSessionDescriptionInit));
+                }
+                await pc.setLocalDescription();
+                if (pc.localDescription) {
+                    await sendSignal("answer", { sdp: pc.localDescription.sdp, type: pc.localDescription.type });
+                }
+            } else if (s.kind === "answer") {
+                if (pc.signalingState === "have-local-offer") {
+                    await pc.setRemoteDescription(new RTCSessionDescription(s.payload as RTCSessionDescriptionInit));
+                }
+            } else if (s.kind === "ice") {
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(s.payload as RTCIceCandidateInit));
+                } catch (err) {
+                    if (!ignoreOfferRef.current) console.warn("addIceCandidate:", err);
+                }
+            }
+        } catch (e) {
+            console.warn("Signal xatosi:", e);
+        }
+    }, [initPeer, sendSignal]);
+
+    // ── Pusher real-time signal + call-state event'lar ───────────────────────
+    const { data: session } = useSession();
+    // @ts-ignore
+    const myProfileId: string | null = session?.user?.profileId ?? null;
+    useEffect(() => {
+        if (!myProfileId) return;
+        const pusher = getPusherClient();
+        if (!pusher) return;
+        const channel = pusher.subscribe(`private-user-${myProfileId}`);
+        const onSignal = (data: { callId: string; kind: string; payload: unknown; fromId: string }) => {
+            if (data.callId !== callId) return;
+            void processSignal({ kind: data.kind, payload: data.payload });
+        };
+        const onAccepted = async (data: { callId: string }) => {
+            if (data.callId !== callId || role !== "caller" || pcRef.current) return;
+            const pc = await initPeer();
+            if (!pc) return;
+            makingOfferRef.current = true;
+            try {
+                await pc.setLocalDescription();
+                if (pc.localDescription) {
+                    await sendSignal("offer", { sdp: pc.localDescription.sdp, type: pc.localDescription.type });
+                }
+            } finally { makingOfferRef.current = false; }
+            if (initialKind === "VIDEO") await enableCamera();
+        };
+        const onRejectedOrEnded = (data: { callId: string }) => {
+            if (data.callId !== callId) return;
+            endCall(false);
+        };
+        channel.bind("signal:offer", onSignal);
+        channel.bind("signal:answer", onSignal);
+        channel.bind("signal:ice", onSignal);
+        channel.bind("call:accepted", onAccepted);
+        channel.bind("call:rejected", onRejectedOrEnded);
+        channel.bind("call:ended", onRejectedOrEnded);
+        return () => {
+            channel.unbind("signal:offer", onSignal);
+            channel.unbind("signal:answer", onSignal);
+            channel.unbind("signal:ice", onSignal);
+            channel.unbind("call:accepted", onAccepted);
+            channel.unbind("call:rejected", onRejectedOrEnded);
+            channel.unbind("call:ended", onRejectedOrEnded);
+        };
+    }, [myProfileId, callId, role, initialKind, processSignal, initPeer, sendSignal, enableCamera, endCall]);
+
+    // ── Signal polling fallback (Pusher yo'q/uzilgan bo'lsa) ─────────────────
     useEffect(() => {
         let stopped = false;
+        // Pusher ulangan bo'lsa polling faqat safety net — 5s'da bir marta yetadi
+        const pollMs = getPusherClient() ? 5000 : SIGNAL_POLL_MS;
         const tick = async () => {
             if (stopped || endedRef.current) return;
             const url = `/api/nexus/calls/${callId}/signal?since=${encodeURIComponent(sinceRef.current)}`;
@@ -414,46 +507,13 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
             if (!r?.signals?.length) return;
             for (const s of r.signals) {
                 sinceRef.current = new Date(new Date(s.createdAt).getTime()).toISOString();
-                const pc = pcRef.current || await initPeer();
-                if (!pc) return;
-                try {
-                    if (s.kind === "offer") {
-                        const readyForOffer = !makingOfferRef.current && (pc.signalingState === "stable" || pc.signalingState === "have-remote-offer");
-                        const offerCollision = !readyForOffer;
-                        ignoreOfferRef.current = !politeRef.current && offerCollision;
-                        if (ignoreOfferRef.current) continue;
-                        if (offerCollision) {
-                            await Promise.all([
-                                pc.setLocalDescription({ type: "rollback" } as RTCSessionDescriptionInit).catch(() => { }),
-                                pc.setRemoteDescription(new RTCSessionDescription(s.payload as RTCSessionDescriptionInit)),
-                            ]);
-                        } else {
-                            await pc.setRemoteDescription(new RTCSessionDescription(s.payload as RTCSessionDescriptionInit));
-                        }
-                        await pc.setLocalDescription();
-                        if (pc.localDescription) {
-                            await sendSignal("answer", { sdp: pc.localDescription.sdp, type: pc.localDescription.type });
-                        }
-                    } else if (s.kind === "answer") {
-                        if (pc.signalingState === "have-local-offer") {
-                            await pc.setRemoteDescription(new RTCSessionDescription(s.payload as RTCSessionDescriptionInit));
-                        }
-                    } else if (s.kind === "ice") {
-                        try {
-                            await pc.addIceCandidate(new RTCIceCandidate(s.payload as RTCIceCandidateInit));
-                        } catch (err) {
-                            if (!ignoreOfferRef.current) console.warn("addIceCandidate:", err);
-                        }
-                    }
-                } catch (e) {
-                    console.warn("Signal xatosi:", e);
-                }
+                await processSignal(s);
             }
         };
-        const iv = setInterval(tick, SIGNAL_POLL_MS);
+        const iv = setInterval(tick, pollMs);
         tick();
         return () => { stopped = true; clearInterval(iv); };
-    }, [callId, initPeer, sendSignal]);
+    }, [callId, processSignal]);
 
     // ── Chaqiruv holati polling ──────────────────────────────────────────────
     useEffect(() => {

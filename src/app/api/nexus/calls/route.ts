@@ -6,6 +6,7 @@ import { isBlockedBetween } from "@/lib/nexus-block";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { sendPushToProfile } from "@/lib/push";
 import { after } from "next/server";
+import { getPusher, userChannel } from "@/lib/pusher-server";
 
 // POST /api/nexus/calls  { peerId, kind: "AUDIO"|"VIDEO" }  → chaqiruv boshlash (RINGING)
 export async function POST(req: Request) {
@@ -41,6 +42,18 @@ export async function POST(req: Request) {
         data: { callerId: me.id, calleeId: peer.id, kind, status: "RINGING" },
         select: { id: true, kind: true, status: true, callerId: true, calleeId: true, createdAt: true },
     });
+
+    // Real-time Pusher event calleega (darhol overlay chiqadi, polling kutilmaydi)
+    const pusher = getPusher();
+    if (pusher) {
+        const meProf = await prisma.userProfile.findUnique({
+            where: { id: me.id },
+            select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+        });
+        pusher.trigger(userChannel(peer.id), "call:incoming", {
+            id: call.id, kind: call.kind, caller: meProf,
+        }).catch(() => { });
+    }
 
     // Web push — callee tab yopiq bo'lsa ham bilsin (fire-and-forget)
     after(async () => {

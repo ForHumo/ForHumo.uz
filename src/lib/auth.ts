@@ -82,8 +82,9 @@ export const authOptions: NextAuthOptions = {
                     try {
                         const profile = await prisma.userProfile.findUnique({
                             where: { email: token.email as string },
-                            select: { onboardingDone: true, humoId: true, username: true, coverImage: true },
+                            select: { id: true, onboardingDone: true, humoId: true, username: true, coverImage: true },
                         });
+                        token.profileId     = profile?.id             ?? null;
                         token.onboardingDone = profile?.onboardingDone ?? false;
                         token.humoId        = profile?.humoId        ?? null;
                         token.username      = profile?.username       ?? null;
@@ -100,6 +101,8 @@ export const authOptions: NextAuthOptions = {
             if (session.user) {
                 // @ts-ignore
                 session.user.id             = token.sub;
+                // @ts-ignore
+                session.user.profileId      = token.profileId as string | null;
                 // @ts-ignore
                 session.user.onboardingDone = token.onboardingDone as boolean;
                 // @ts-ignore
