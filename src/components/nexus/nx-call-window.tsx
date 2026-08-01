@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { Mic, MicOff, Video as CamIcon, VideoOff, PhoneOff, Loader2, Volume2, VolumeX, BadgeCheck, Minimize2, Maximize2, ScreenShare, ScreenShareOff, SwitchCamera, SlidersHorizontal, X, ImagePlus } from "lucide-react";
+import { Mic, MicOff, Video as CamIcon, VideoOff, PhoneOff, Loader2, Volume2, VolumeX, BadgeCheck, Minimize2, Maximize2, ScreenShare, ScreenShareOff, SwitchCamera, SlidersHorizontal, X, ImagePlus, Smile } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import { VoiceFxPipeline, VOICE_FX_LIST, type VoiceEffect } from "@/lib/nexus-voice-fx";
 import { BackgroundFxPipeline, type BgEffect } from "@/lib/nexus-bg-fx";
@@ -47,6 +47,21 @@ const cameraConstraints = (facing: Facing): MediaStreamConstraints => ({
 const supportsScreenShare = () => typeof navigator !== "undefined"
     && typeof navigator.mediaDevices?.getDisplayMedia === "function";
 
+// Emoji reaksiya — 8 ta xavfsiz variant (cho'chqasiz, spirtsiz)
+const REACTIONS: { id: string; char: string }[] = [
+    { id: "heart",  char: "❤️" },
+    { id: "thumbs", char: "👍" },
+    { id: "laugh",  char: "😂" },
+    { id: "wow",    char: "😮" },
+    { id: "clap",   char: "👏" },
+    { id: "party",  char: "🎉" },
+    { id: "fire",   char: "🔥" },
+    { id: "cry",    char: "😢" },
+];
+const REACTION_CHAR: Record<string, string> = Object.fromEntries(REACTIONS.map(r => [r.id, r.char]));
+
+interface FloatingReaction { key: number; char: string; x: number; }
+
 // Preset fon rasmlari (Picsum — CORS-enabled, barqaror seed)
 const BG_PRESETS: { id: string; url: string; label: string }[] = [
     { id: "office", url: "https://picsum.photos/seed/nx-office/960/540", label: "Ofis" },
@@ -80,6 +95,9 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     const [err, setErr] = useState<string>("");
     const [canScreen, setCanScreen] = useState(true);
     const [voiceFx, setVoiceFx] = useState<VoiceEffect>("none");
+    const [reactions, setReactions] = useState<FloatingReaction[]>([]);
+    const [reactionSheetOpen, setReactionSheetOpen] = useState(false);
+    const reactionKeyRef = useRef(0);
     const [bgFx, setBgFx] = useState<BgEffect>("none");
     const [bgBusy, setBgBusy] = useState(false);
     const [fxSheetOpen, setFxSheetOpen] = useState(false);
@@ -143,6 +161,29 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         }
         setTimeout(onClose, 1200);
     }, [callId, onClose, setCallMinimized]);
+
+    // Emoji reaksiya — mahalliy ko'rsatish + Pusher orqali peer'ga yuborish
+    const spawnReaction = useCallback((char: string) => {
+        const key = ++reactionKeyRef.current;
+        const x = 15 + Math.random() * 70; // 15%..85% horizontally
+        setReactions(prev => [...prev, { key, char, x }]);
+        setTimeout(() => {
+            setReactions(prev => prev.filter(r => r.key !== key));
+        }, 2800);
+    }, []);
+
+    const sendReaction = useCallback(async (id: string) => {
+        const char = REACTION_CHAR[id];
+        if (!char) return;
+        spawnReaction(char);              // O'zim darrov ko'raman
+        setReactionSheetOpen(false);
+        try {
+            await fetch(`/api/nexus/calls/${callId}/reaction`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ emoji: id }),
+            });
+        } catch { }
+    }, [callId, spawnReaction]);
 
     // Ovoz kuchi o'lchagichi — AnalyserNode RMS bo'yicha, RAF 15fps
     const setupLevelMeter = useCallback((who: "local" | "remote", stream: MediaStream) => {
@@ -479,12 +520,18 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
             if (data.callId !== callId) return;
             endCall(false);
         };
+        const onReaction = (data: { callId: string; emoji: string }) => {
+            if (data.callId !== callId) return;
+            const char = REACTION_CHAR[data.emoji];
+            if (char) spawnReaction(char);
+        };
         channel.bind("signal:offer", onSignal);
         channel.bind("signal:answer", onSignal);
         channel.bind("signal:ice", onSignal);
         channel.bind("call:accepted", onAccepted);
         channel.bind("call:rejected", onRejectedOrEnded);
         channel.bind("call:ended", onRejectedOrEnded);
+        channel.bind("reaction:emoji", onReaction);
         return () => {
             channel.unbind("signal:offer", onSignal);
             channel.unbind("signal:answer", onSignal);
@@ -492,8 +539,9 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
             channel.unbind("call:accepted", onAccepted);
             channel.unbind("call:rejected", onRejectedOrEnded);
             channel.unbind("call:ended", onRejectedOrEnded);
+            channel.unbind("reaction:emoji", onReaction);
         };
-    }, [myProfileId, callId, role, initialKind, processSignal, initPeer, sendSignal, enableCamera, endCall]);
+    }, [myProfileId, callId, role, initialKind, processSignal, initPeer, sendSignal, enableCamera, endCall, spawnReaction]);
 
     // ── Signal polling fallback (Pusher yo'q/uzilgan bo'lsa) ─────────────────
     useEffect(() => {
@@ -757,6 +805,8 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                     )}
                     <CtrlButton onClick={toggleSpeaker} active={speaker}
                         icon={speaker ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />} />
+                    <CtrlButton onClick={() => setReactionSheetOpen(v => !v)} active={reactionSheetOpen}
+                        icon={<Smile className="h-6 w-6" />} />
                     <CtrlButton onClick={() => setFxSheetOpen(v => !v)} active={voiceFx !== "none"}
                         icon={<SlidersHorizontal className="h-6 w-6" />} />
                     <button onClick={() => endCall()}
@@ -765,6 +815,33 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                     </button>
                 </div>
             </div>
+
+            {/* Emoji reaksiya — floating layer (pastdan tepaga uchadi) */}
+            {reactions.length > 0 && (
+                <div className="pointer-events-none absolute inset-0 z-[15]">
+                    {reactions.map(r => (
+                        <div key={r.key}
+                            className="nx-reaction absolute text-5xl sm:text-6xl"
+                            style={{ left: `${r.x}%`, bottom: "180px" }}>
+                            {r.char}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Emoji tanlash paneli (kichik yopishqoq) */}
+            {reactionSheetOpen && (
+                <div className="absolute inset-x-0 bottom-32 z-[18] flex justify-center px-4">
+                    <div className="flex items-center gap-1.5 rounded-full bg-black/85 p-2 shadow-2xl ring-1 ring-white/15 backdrop-blur-xl">
+                        {REACTIONS.map(r => (
+                            <button key={r.id} onClick={() => sendReaction(r.id)}
+                                className="flex h-10 w-10 items-center justify-center rounded-full text-2xl transition-transform hover:scale-125 active:scale-95">
+                                {r.char}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Effektlar bottom sheet */}
             {fxSheetOpen && (

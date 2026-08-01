@@ -368,3 +368,15 @@ html:not(.dark) .es-bg textarea::placeholder { color: var(--es-faint) !important
 .nx-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(43,62,232,0.45); }
 .nx-hide-scrollbar                        { scrollbar-width: none; -ms-overflow-style: none; }
 .nx-hide-scrollbar::-webkit-scrollbar     { display: none; }
+/* Nexus chaqiruv emoji reaksiyasi — pastdan tepaga uchish + so'nish */
+@keyframes nx-reaction-float {
+  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  15%  { transform: translateY(-20px) scale(1.2); opacity: 1; }
+  85%  { transform: translateY(-260px) scale(1); opacity: 1; }
+  100% { transform: translateY(-320px) scale(0.9); opacity: 0; }
+}
+.nx-reaction {
+  animation: nx-reaction-float 2.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
