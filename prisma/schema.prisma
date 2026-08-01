@@ -1081,6 +1081,48 @@ model NexusMessage {
   @@index([conversationId, createdAt])
 }
 
+// ── Nexus Calls (1:1 WebRTC ovoz/video) ──────────────────────────────────────
+model NexusCall {
+  id          String           @id @default(cuid())
+  callerId    String                                    // UserProfile.id — chaqiruvchi
+  calleeId    String                                    // UserProfile.id — qabul qiluvchi
+  kind        NexusCallKind    @default(AUDIO)
+  status      NexusCallStatus  @default(RINGING)
+  createdAt   DateTime         @default(now())
+  acceptedAt  DateTime?
+  endedAt     DateTime?
+  duration    Int              @default(0)             // sekundlarda (acceptedAt→endedAt)
+  signals     NexusCallSignal[]
+  @@index([callerId, createdAt])
+  @@index([calleeId, createdAt])
+  @@index([calleeId, status])                          // incoming poller uchun
+}
+
+model NexusCallSignal {
+  id        String    @id @default(cuid())
+  callId    String
+  call      NexusCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+  fromId    String                                     // UserProfile.id — yuboruvchi peer
+  kind      String                                     // "offer" | "answer" | "ice"
+  payload   String    @db.Text                         // JSON: SDP yoki ICE candidate
+  createdAt DateTime  @default(now())
+  @@index([callId, createdAt])
+}
+
+enum NexusCallKind {
+  AUDIO
+  VIDEO
+}
+
+enum NexusCallStatus {
+  RINGING
+  ACCEPTED
+  REJECTED
+  MISSED
+  ENDED
+  FAILED
+}
+
 // ── Nexus Video — to'liq video (LONG) va Shorts (SHORT) ──────────────────────
 model NexusVideo {
   id          String         @id @default(cuid())

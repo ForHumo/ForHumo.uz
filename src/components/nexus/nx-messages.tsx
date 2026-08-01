@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare } from "lucide-react";
+import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare, Phone, Video } from "lucide-react";
 
-interface Other { name: string | null; username: string | null; image: string | null; verified: boolean }
+interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean }
 interface Conv { conversationId: string; other: Other | null; lastMessageText: string | null; lastMessageAt: string; lastMine: boolean; unread: boolean }
 interface Msg { id: string; text: string; mine: boolean; createdAt: string }
 interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isMe: boolean }
@@ -22,7 +22,7 @@ function timeShort(d: string) {
 }
 
 export function NxMessages({ openWithUsername }: { openWithUsername?: string | null } = {}) {
-    const { messagesOpen, setMessagesOpen } = useNxPlayer();
+    const { messagesOpen, setMessagesOpen, startCall } = useNxPlayer();
     const [conversations, setConversations] = useState<Conv[]>([]);
     const [selected, setSelected] = useState<{ conversationId: string; other: Other | null } | null>(null);
     const [messages, setMessages] = useState<Msg[]>([]);
@@ -135,6 +135,22 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                     {selected.other?.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
                                 </div>
                             </Link>
+                            {selected.other?.id && (
+                                <>
+                                    <button onClick={() => selected.other?.id && startCall(selected.other.id, "AUDIO")}
+                                        title="Ovozli chaqiruv"
+                                        className="w-8 h-8 flex items-center justify-center rounded-xl transition-transform hover:scale-110 active:scale-95"
+                                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                                        <Phone className="w-4 h-4 text-white" />
+                                    </button>
+                                    <button onClick={() => selected.other?.id && startCall(selected.other.id, "VIDEO")}
+                                        title="Video chaqiruv"
+                                        className="w-8 h-8 flex items-center justify-center rounded-xl transition-transform hover:scale-110 active:scale-95"
+                                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                                        <Video className="w-4 h-4 text-white" />
+                                    </button>
+                                </>
+                            )}
                             <button onClick={close} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }}>
                                 <X className="w-4 h-4 text-white" />
                             </button>

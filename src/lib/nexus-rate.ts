@@ -10,7 +10,7 @@ type RateKind =
     | "post" | "comment" | "videoComment"
     | "video" | "track" | "story"
     | "dm" | "live" | "liveChat" | "tip" | "channel" | "channelMsg"
-    | "payTransfer" | "payWithdraw" | "report" | "convStart" | "ai";
+    | "payTransfer" | "payWithdraw" | "report" | "convStart" | "ai" | "call";
 
 // kind -> [maks. son, oyna ms]
 const RULES: Record<RateKind, [number, number]> = {
@@ -31,6 +31,7 @@ const RULES: Record<RateKind, [number, number]> = {
     report: [20, 10 * MIN],
     convStart: [30, 10 * MIN],
     ai: [40, 10 * MIN],
+    call: [40, 10 * MIN],
 };
 
 // DB xatosida YOPIQ qoladigan k'indlar — bu yerda "ochiq" qolish real pul (Gemini)
@@ -93,6 +94,9 @@ export async function nexusRateLimited(profileId: string, kind: RateKind): Promi
                 break;
             case "ai":
                 count = await prisma.aiUsage.count({ where: { profileId, createdAt: { gt: since } } });
+                break;
+            case "call":
+                count = await prisma.nexusCall.count({ where: { callerId: profileId, createdAt: { gt: since } } });
                 break;
         }
     } catch {

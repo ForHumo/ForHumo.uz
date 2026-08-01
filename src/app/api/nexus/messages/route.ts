@@ -32,7 +32,7 @@ export async function GET() {
         if (unread) totalUnread++;
         return {
             conversationId: c.id,
-            other: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,
+            other: p ? { id: p.id, name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,
             lastMessageText: c.lastMessageText,
             lastMessageAt: c.lastMessageAt,
             lastMine: c.lastSenderId === me.id,

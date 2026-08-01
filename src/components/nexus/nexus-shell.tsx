@@ -16,6 +16,7 @@ import { NxChannel } from "./nx-channel";
 import { FeedView, VideoView, LiveView, MediaView, SocialView, ProfileView } from "./nx-views";
 import { NxNotifications }  from "./nx-notifications";
 import { NxMessages }        from "./nx-messages";
+import { NxIncomingCall }    from "./nx-incoming-call";
 import { NxComments }        from "./nx-comments";
 import { NxLiveChat }        from "./nx-live-chat";
 import { NxPlaylist }        from "./nx-playlist";
@@ -189,6 +190,9 @@ export function NexusShell() {
 
                 {/* ── Qo'ng'iroqlar ─────────────────────────────────────── */}
                 <NxCalls />
+
+                {/* ── Kelayotgan chaqiruv + faol WebRTC oynasi ──────────── */}
+                <NxIncomingCall />
 
                 {/* ── Obunalar ──────────────────────────────────────────── */}
                 <NxSubscriptions />

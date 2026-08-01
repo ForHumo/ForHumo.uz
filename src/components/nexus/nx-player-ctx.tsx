@@ -30,6 +30,11 @@ export interface NxShort {
     videoSrc?: string;
 }
 
+// ─── Chaqiruv ────────────────────────────────────────────────────────────────
+export interface CallPeer { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean }
+export interface ActiveCallState { callId: string; role: "caller" | "callee"; kind: "AUDIO" | "VIDEO"; peer: CallPeer; autoAccepted?: boolean }
+export interface IncomingCall { id: string; kind: "AUDIO" | "VIDEO"; caller: CallPeer }
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Context interfeysi
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,6 +110,15 @@ interface PlayerCtx {
     setMessagesOpen: (v: boolean) => void;
     dmTarget:        string | null;                 // ochilishi kerak bo'lgan suhbat (username)
     openDM:          (username: string) => void;    // suhbatni ochish (inline chat list, profil "Xabar")
+
+    // Chaqiruv (WebRTC 1:1)
+    activeCall:      ActiveCallState | null;
+    startCall:       (peerId: string, kind: "AUDIO" | "VIDEO") => Promise<void>;
+    acceptIncoming:  (callId: string) => Promise<void>;
+    rejectIncoming:  (callId: string) => Promise<void>;
+    closeActiveCall: () => void;
+    incoming:        IncomingCall | null;
+    setIncoming:     (v: IncomingCall | null) => void;
 
     // Izohlar
     commentsOpen:    boolean;
@@ -396,6 +410,47 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     const [messagesOpen, setMessagesOpen] = useState(false);
     const [dmTarget, setDmTarget] = useState<string | null>(null);
     const openDM = useCallback((username: string) => { setDmTarget(username); setMessagesOpen(true); }, []);
+
+    /* ── Chaqiruv (WebRTC 1:1) ── */
+    const [activeCall, setActiveCall] = useState<ActiveCallState | null>(null);
+    const [incoming, setIncoming] = useState<IncomingCall | null>(null);
+
+    const startCall = useCallback(async (peerId: string, kind: "AUDIO" | "VIDEO") => {
+        const r = await fetch("/api/nexus/calls", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ peerId, kind }),
+        }).then(x => x.json()).catch(() => null);
+        if (!r?.call) {
+            if (r?.error) alert(r.error);
+            return;
+        }
+        // Peer ma'lumotini olish (avatar/nom uchun)
+        const det = await fetch(`/api/nexus/calls/${r.call.id}`).then(x => x.json()).catch(() => null);
+        if (!det?.call) return;
+        setActiveCall({ callId: r.call.id, role: "caller", kind, peer: det.call.peer });
+    }, []);
+
+    const acceptIncoming = useCallback(async (callId: string) => {
+        const r = await fetch(`/api/nexus/calls/${callId}`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "accept" }),
+        }).then(x => x.json()).catch(() => null);
+        if (!r?.ok) { setIncoming(null); return; }
+        const det = await fetch(`/api/nexus/calls/${callId}`).then(x => x.json()).catch(() => null);
+        if (!det?.call) { setIncoming(null); return; }
+        setActiveCall({ callId, role: "callee", kind: det.call.kind, peer: det.call.peer, autoAccepted: true });
+        setIncoming(null);
+    }, []);
+
+    const rejectIncoming = useCallback(async (callId: string) => {
+        await fetch(`/api/nexus/calls/${callId}`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "reject" }),
+        }).catch(() => { });
+        setIncoming(null);
+    }, []);
+
+    const closeActiveCall = useCallback(() => setActiveCall(null), []);
 
     /* ── Izohlar ── */
     const [commentsOpen, setCommentsOpen] = useState(false);
@@ -787,6 +842,8 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             watchHistory, addToHistory, clearHistory,
             notifOpen, setNotifOpen,
             messagesOpen, setMessagesOpen, dmTarget, openDM,
+            activeCall, startCall, acceptIncoming, rejectIncoming, closeActiveCall,
+            incoming, setIncoming,
             commentsOpen, commentsFor, openComments, closeComments,
             liveChatOpen, setLiveChatOpen,
             exploreOpen, setExploreOpen,
