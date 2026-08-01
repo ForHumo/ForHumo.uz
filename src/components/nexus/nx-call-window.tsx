@@ -12,6 +12,7 @@ import Image from "next/image";
 import { Mic, MicOff, Video as CamIcon, VideoOff, PhoneOff, Loader2, Volume2, VolumeX, BadgeCheck, Minimize2, Maximize2, ScreenShare, ScreenShareOff, SwitchCamera, SlidersHorizontal, X } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import { VoiceFxPipeline, VOICE_FX_LIST, type VoiceEffect } from "@/lib/nexus-voice-fx";
+import { BackgroundFxPipeline, type BgEffect } from "@/lib/nexus-bg-fx";
 
 interface Peer { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean }
 
@@ -67,10 +68,15 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     const [err, setErr] = useState<string>("");
     const [canScreen, setCanScreen] = useState(true);
     const [voiceFx, setVoiceFx] = useState<VoiceEffect>("none");
+    const [bgFx, setBgFx] = useState<BgEffect>("none");
+    const [bgBusy, setBgBusy] = useState(false);
     const [fxSheetOpen, setFxSheetOpen] = useState(false);
 
     const pcRef = useRef<RTCPeerConnection | null>(null);
     const voicePipelineRef = useRef<VoiceFxPipeline | null>(null);
+    const bgPipelineRef = useRef<BackgroundFxPipeline | null>(null);
+    const cameraRawTrackRef = useRef<MediaStreamTrack | null>(null);
+    const bgFxRef = useRef<BgEffect>("none");
     const localRef = useRef<HTMLVideoElement>(null);
     const remoteRef = useRef<HTMLVideoElement>(null);
     const remoteAudioRef = useRef<HTMLAudioElement>(null);
@@ -100,6 +106,10 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         pcRef.current = null;
         try { voicePipelineRef.current?.dispose(); } catch { }
         voicePipelineRef.current = null;
+        try { bgPipelineRef.current?.dispose(); } catch { }
+        bgPipelineRef.current = null;
+        try { cameraRawTrackRef.current?.stop(); } catch { }
+        cameraRawTrackRef.current = null;
         try { localStreamRef.current?.getTracks().forEach(t => t.stop()); } catch { }
         localStreamRef.current = null;
         setPhase("ended");
@@ -222,9 +232,19 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         try {
             const f = facingOverride ?? facing;
             const v = await navigator.mediaDevices.getUserMedia(cameraConstraints(f));
-            const [t] = v.getVideoTracks();
-            if (!t) throw new Error("Kamera oqim topilmadi");
-            await applyVideoTrack(t, "camera");
+            const [rawTrack] = v.getVideoTracks();
+            if (!rawTrack) throw new Error("Kamera oqim topilmadi");
+            // Eski raw track'ni to'xtatamiz
+            try { cameraRawTrackRef.current?.stop(); } catch { }
+            cameraRawTrackRef.current = rawTrack;
+            // BG effekt qo'llash (yoki asl track)
+            let outTrack = rawTrack;
+            if (bgFxRef.current !== "none") {
+                if (!bgPipelineRef.current) bgPipelineRef.current = new BackgroundFxPipeline();
+                const outStream = await bgPipelineRef.current.apply(rawTrack, bgFxRef.current);
+                outTrack = outStream.getVideoTracks()[0] ?? rawTrack;
+            }
+            await applyVideoTrack(outTrack, "camera");
             if (facingOverride) setFacing(facingOverride);
         } catch (e) {
             setErr(e instanceof Error ? e.message : "Kamera yoqilmadi");
@@ -236,7 +256,13 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     const disableVideo = useCallback(async () => {
         if (videoBusy || videoSource === "none") return;
         setVideoBusy(true);
-        try { await applyVideoTrack(null, "none"); }
+        try {
+            await applyVideoTrack(null, "none");
+            try { bgPipelineRef.current?.dispose(); } catch { }
+            bgPipelineRef.current = null;
+            try { cameraRawTrackRef.current?.stop(); } catch { }
+            cameraRawTrackRef.current = null;
+        }
         finally { setVideoBusy(false); }
     }, [videoBusy, videoSource, applyVideoTrack]);
 
@@ -403,6 +429,42 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         });
     };
 
+    // Fon effektini almashtirish (faqat kamera yoqilgan bo'lsa amal qiladi)
+    const applyBgFx = useCallback(async (effect: BgEffect) => {
+        setBgFx(effect);
+        bgFxRef.current = effect;
+        const raw = cameraRawTrackRef.current;
+        const sender = videoSenderRef.current;
+        if (!raw || !sender || videoSource !== "camera") return;
+        setBgBusy(true);
+        try {
+            if (effect === "none") {
+                try { bgPipelineRef.current?.dispose(); } catch { }
+                bgPipelineRef.current = null;
+                await sender.replaceTrack(raw);
+                if (localRef.current) localRef.current.srcObject = localStreamRef.current;
+                return;
+            }
+            if (!bgPipelineRef.current) bgPipelineRef.current = new BackgroundFxPipeline();
+            const outStream = await bgPipelineRef.current.apply(raw, effect);
+            const [outTrack] = outStream.getVideoTracks();
+            if (outTrack) {
+                await sender.replaceTrack(outTrack);
+                // Mahalliy preview'ni yangi (qayta ishlangan) oqim bilan yangilash
+                const localStream = localStreamRef.current;
+                if (localStream) {
+                    for (const t of localStream.getVideoTracks()) { try { localStream.removeTrack(t); } catch { } }
+                    localStream.addTrack(outTrack);
+                    if (localRef.current) localRef.current.srcObject = localStream;
+                }
+            }
+        } catch (e) {
+            setErr(e instanceof Error ? e.message : "Fon effekti xatosi");
+        } finally {
+            setBgBusy(false);
+        }
+    }, [videoSource]);
+
     // Ovoz effektini almashtirish — pipeline yangi stream qaytaradi, audio sender'ga replaceTrack
     const applyVoiceFx = useCallback(async (effect: VoiceEffect) => {
         setVoiceFx(effect);
@@ -546,16 +608,17 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                 </div>
             </div>
 
-            {/* Ovoz effektlari bottom sheet */}
+            {/* Effektlar bottom sheet */}
             {fxSheetOpen && (
                 <div className="absolute inset-x-0 bottom-0 z-20 rounded-t-3xl bg-black/90 p-5 pb-8 shadow-2xl ring-1 ring-white/10 backdrop-blur-xl">
                     <div className="mb-3 flex items-center justify-between">
-                        <p className="text-sm font-black text-white">Ovoz effekti</p>
+                        <p className="text-sm font-black text-white">Effektlar</p>
                         <button onClick={() => setFxSheetOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
                             <X className="h-4 w-4 text-white" />
                         </button>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                    <p className="mb-2 text-[10px] font-bold uppercase text-white/50">Ovoz</p>
+                    <div className="mb-4 grid grid-cols-3 gap-2 sm:grid-cols-5">
                         {VOICE_FX_LIST.map(fx => {
                             const active = voiceFx === fx.id;
                             return (
@@ -568,6 +631,26 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                             );
                         })}
                     </div>
+                    <p className="mb-2 text-[10px] font-bold uppercase text-white/50">
+                        Fon {videoSource !== "camera" && <span className="ml-1 normal-case text-white/40">(kamerani yoqing)</span>}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {(["none", "blur"] as const).map(id => {
+                            const active = bgFx === id;
+                            const disabled = videoSource !== "camera" || bgBusy;
+                            const label = id === "none" ? "Yo'q" : "Xiralashtirish";
+                            const hint = id === "none" ? "Asl fon" : "MediaPipe segmentatsiya";
+                            return (
+                                <button key={id} onClick={() => applyBgFx(id)} disabled={disabled}
+                                    style={active ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.45)" } : undefined}
+                                    className={`flex flex-col items-center gap-0.5 rounded-2xl p-3 text-center transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 ${active ? "text-white" : "bg-white/10 text-white/90 ring-1 ring-white/15"}`}>
+                                    <span className="text-sm font-black">{label}</span>
+                                    <span className="text-[10px] opacity-70">{bgBusy && active ? "Yuklanmoqda…" : hint}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <p className="mt-3 text-[10px] text-white/40">Fon effekti birinchi marta yoqilganda MediaPipe modeli (~4MB) yuklanadi.</p>
                 </div>
             )}
         </div>
