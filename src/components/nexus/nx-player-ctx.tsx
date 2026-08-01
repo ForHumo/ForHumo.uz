@@ -119,6 +119,8 @@ interface PlayerCtx {
     closeActiveCall: () => void;
     incoming:        IncomingCall | null;
     setIncoming:     (v: IncomingCall | null) => void;
+    callMinimized:   boolean;
+    setCallMinimized:(v: boolean) => void;
 
     // Izohlar
     commentsOpen:    boolean;
@@ -414,6 +416,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     /* ── Chaqiruv (WebRTC 1:1) ── */
     const [activeCall, setActiveCall] = useState<ActiveCallState | null>(null);
     const [incoming, setIncoming] = useState<IncomingCall | null>(null);
+    const [callMinimized, setCallMinimized] = useState(false);
 
     const startCall = useCallback(async (peerId: string, kind: "AUDIO" | "VIDEO") => {
         const r = await fetch("/api/nexus/calls", {
@@ -450,7 +453,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
         setIncoming(null);
     }, []);
 
-    const closeActiveCall = useCallback(() => setActiveCall(null), []);
+    const closeActiveCall = useCallback(() => { setActiveCall(null); setCallMinimized(false); }, []);
 
     /* ── Izohlar ── */
     const [commentsOpen, setCommentsOpen] = useState(false);
@@ -843,7 +846,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             notifOpen, setNotifOpen,
             messagesOpen, setMessagesOpen, dmTarget, openDM,
             activeCall, startCall, acceptIncoming, rejectIncoming, closeActiveCall,
-            incoming, setIncoming,
+            incoming, setIncoming, callMinimized, setCallMinimized,
             commentsOpen, commentsFor, openComments, closeComments,
             liveChatOpen, setLiveChatOpen,
             exploreOpen, setExploreOpen,
