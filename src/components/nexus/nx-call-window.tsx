@@ -1,14 +1,15 @@
 "use client";
 
 // Nexus 1:1 WebRTC ovoz/video chaqiruv oynasi (Telegram uslubi).
-// - Ovozli boshlanadi, kamera dinamik yoqiladi (renegotiate)
-// - Ekran ulashish (getDisplayMedia) — video sender'ni almashtiradi
-// - Perfect Negotiation pattern (caller=impolite, callee=polite) — glare xavfsiz
-// - Minimize: kichik pinned oyna, WebRTC uzilmaydi
+// - Video transceiver oldindan yaratiladi (sendrecv) → track qo'shishda renegotiate KERAK EMAS
+// - Ovozli boshlanadi, kamera/ekran dinamik almashadi (replaceTrack)
+// - Kamera aylantirish (front/back) — facingMode toggle
+// - Ekran ulashish (getDisplayMedia) — mobil brauzerlarda YO'Q, tugma yashirinadi
+// - Perfect Negotiation (glare) + Minimize (kichik pinned oyna)
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { Mic, MicOff, Video as CamIcon, VideoOff, PhoneOff, Loader2, Volume2, VolumeX, BadgeCheck, Minimize2, Maximize2, ScreenShare, ScreenShareOff } from "lucide-react";
+import { Mic, MicOff, Video as CamIcon, VideoOff, PhoneOff, Loader2, Volume2, VolumeX, BadgeCheck, Minimize2, Maximize2, ScreenShare, ScreenShareOff, SwitchCamera } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 
 interface Peer { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean }
@@ -17,6 +18,7 @@ type Kind = "AUDIO" | "VIDEO";
 type Role = "caller" | "callee";
 type Phase = "connecting" | "ringing" | "in-call" | "ended";
 type VideoSource = "none" | "camera" | "screen";
+type Facing = "user" | "environment";
 
 const FALLBACK_ICE: RTCIceServer[] = [
     { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
@@ -33,7 +35,13 @@ async function fetchIceServers(): Promise<RTCIceServer[]> {
 
 const SIGNAL_POLL_MS = 1200;
 const STATE_POLL_MS = 3000;
-const VIDEO_CONSTRAINTS: MediaTrackConstraints = { width: { ideal: 640 }, height: { ideal: 480 } };
+const cameraConstraints = (facing: Facing): MediaStreamConstraints => ({
+    audio: false,
+    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: facing },
+});
+
+const supportsScreenShare = () => typeof navigator !== "undefined"
+    && typeof navigator.mediaDevices?.getDisplayMedia === "function";
 
 interface Props {
     callId: string;
@@ -49,29 +57,33 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     const [phase, setPhase] = useState<Phase>(role === "caller" ? "connecting" : autoAccepted ? "connecting" : "ringing");
     const [muted, setMuted] = useState(false);
     const [videoSource, setVideoSource] = useState<VideoSource>("none");
+    const [facing, setFacing] = useState<Facing>("user");
     const [remoteVideo, setRemoteVideo] = useState(false);
     const [videoBusy, setVideoBusy] = useState(false);
     const [screenBusy, setScreenBusy] = useState(false);
     const [speaker, setSpeaker] = useState(true);
     const [duration, setDuration] = useState(0);
     const [err, setErr] = useState<string>("");
+    const [canScreen, setCanScreen] = useState(true);
 
     const pcRef = useRef<RTCPeerConnection | null>(null);
     const localRef = useRef<HTMLVideoElement>(null);
     const remoteRef = useRef<HTMLVideoElement>(null);
     const remoteAudioRef = useRef<HTMLAudioElement>(null);
     const localStreamRef = useRef<MediaStream | null>(null);
+    const audioSenderRef = useRef<RTCRtpSender | null>(null);
     const videoSenderRef = useRef<RTCRtpSender | null>(null);
-    const videoSourceRef = useRef<VideoSource>("none");
     const sinceRef = useRef<string>(new Date(Date.now() - 60_000).toISOString());
     const startTsRef = useRef<number | null>(null);
     const endedRef = useRef(false);
     const acceptedRef = useRef(role === "callee" && autoAccepted === true);
 
-    // Perfect Negotiation flags
-    const politeRef = useRef(role === "callee");            // callee = polite
+    // Perfect Negotiation
+    const politeRef = useRef(role === "callee");
     const makingOfferRef = useRef(false);
     const ignoreOfferRef = useRef(false);
+
+    useEffect(() => { setCanScreen(supportsScreenShare()); }, []);
 
     // ── Chaqiruvni tugatish ──────────────────────────────────────────────────
     const endCall = useCallback(async (notify = true) => {
@@ -102,15 +114,16 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         }).catch(() => { });
     }, [callId]);
 
-    // ── PeerConnection + local audio ────────────────────────────────────────
+    // ── PeerConnection + audio track + video transceiver (sendrecv, track'siz) ─
+    // Transceiver oldindan yaratilishi renegotiate zaruratini yo'q qiladi:
+    // ikkala tomon ham m-line'ga ega, replaceTrack(track) darrov peer'da ontrack chaqiradi.
     const initPeer = useCallback(async () => {
         if (pcRef.current) return pcRef.current;
         let stream: MediaStream;
         try {
             stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         } catch (e) {
-            const msg = e instanceof Error ? e.message : "Mikrofon ruxsat rad etildi";
-            setErr(msg);
+            setErr(e instanceof Error ? e.message : "Mikrofon ruxsat rad etildi");
             await endCall();
             return null;
         }
@@ -119,9 +132,14 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         const iceServers = await fetchIceServers();
         const pc = new RTCPeerConnection({ iceServers });
         pcRef.current = pc;
-        for (const track of stream.getAudioTracks()) pc.addTrack(track, stream);
 
-        // Perfect Negotiation: onnegotiationneeded → offer yuborish
+        // Audio transceiver (sendrecv, track bilan)
+        const [audioTrack] = stream.getAudioTracks();
+        audioSenderRef.current = pc.addTrack(audioTrack, stream);
+        // Video transceiver (sendrecv, track'siz — replaceTrack orqali qo'shiladi)
+        const vTx = pc.addTransceiver("video", { direction: "sendrecv" });
+        videoSenderRef.current = vTx.sender;
+
         pc.onnegotiationneeded = async () => {
             try {
                 makingOfferRef.current = true;
@@ -130,7 +148,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                     await sendSignal("offer", { sdp: pc.localDescription.sdp, type: pc.localDescription.type });
                 }
             } catch (e) {
-                console.warn("onnegotiationneeded:", e);
+                console.warn("negotiationneeded:", e);
             } finally {
                 makingOfferRef.current = false;
             }
@@ -150,6 +168,10 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
             for (const t of remote.getVideoTracks()) {
                 t.onmute = updateFlag; t.onunmute = updateFlag; t.onended = updateFlag;
             }
+            // Yangi track e'lonida ham (ev.track) mute holatini kuzat
+            ev.track.onmute = updateFlag;
+            ev.track.onunmute = updateFlag;
+            ev.track.onended = updateFlag;
         };
         pc.onicecandidate = (ev) => {
             if (ev.candidate) sendSignal("ice", ev.candidate.toJSON());
@@ -166,43 +188,42 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         return pc;
     }, [sendSignal, endCall]);
 
-    // ── Video track qo'shish/almashtirish (camera yoki screen) ───────────────
+    // ── Video track almashtirish (renegotiate SHART EMAS — transceiver bor) ──
     const applyVideoTrack = useCallback(async (track: MediaStreamTrack | null, source: VideoSource) => {
-        const pc = pcRef.current;
+        const sender = videoSenderRef.current;
         const stream = localStreamRef.current;
-        if (!pc || !stream) return;
+        if (!sender || !stream) return;
         // Eski video track'ni to'xtatish
         for (const t of stream.getVideoTracks()) {
             try { t.stop(); } catch { }
             stream.removeTrack(t);
         }
         if (track) stream.addTrack(track);
-
-        if (videoSenderRef.current) {
-            await videoSenderRef.current.replaceTrack(track);
-        } else if (track) {
-            videoSenderRef.current = pc.addTrack(track, stream);
+        try {
+            await sender.replaceTrack(track);
+        } catch (e) {
+            console.warn("replaceTrack:", e);
         }
         if (localRef.current) localRef.current.srcObject = stream;
-        videoSourceRef.current = source;
         setVideoSource(source);
-        // onnegotiationneeded avtomatik yangi offer yuboradi
     }, []);
 
-    const enableCamera = useCallback(async () => {
-        if (videoBusy || videoSource === "camera") return;
+    const enableCamera = useCallback(async (facingOverride?: Facing) => {
+        if (videoBusy) return;
         setVideoBusy(true);
         try {
-            const v = await navigator.mediaDevices.getUserMedia({ audio: false, video: VIDEO_CONSTRAINTS });
+            const f = facingOverride ?? facing;
+            const v = await navigator.mediaDevices.getUserMedia(cameraConstraints(f));
             const [t] = v.getVideoTracks();
             if (!t) throw new Error("Kamera oqim topilmadi");
             await applyVideoTrack(t, "camera");
+            if (facingOverride) setFacing(facingOverride);
         } catch (e) {
             setErr(e instanceof Error ? e.message : "Kamera yoqilmadi");
         } finally {
             setVideoBusy(false);
         }
-    }, [videoBusy, videoSource, applyVideoTrack]);
+    }, [videoBusy, facing, applyVideoTrack]);
 
     const disableVideo = useCallback(async () => {
         if (videoBusy || videoSource === "none") return;
@@ -216,25 +237,30 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         else enableCamera();
     }, [videoSource, disableVideo, enableCamera]);
 
-    // Ekran ulashish
+    // Kamerani front↔back aylantirish (mobil qurilma uchun)
+    const flipCamera = useCallback(async () => {
+        if (videoBusy || videoSource !== "camera") return;
+        const next: Facing = facing === "user" ? "environment" : "user";
+        await enableCamera(next);
+    }, [videoBusy, videoSource, facing, enableCamera]);
+
+    // Ekran ulashish (faqat kompyuter brauzerlari)
     const enableScreen = useCallback(async () => {
-        if (screenBusy) return;
+        if (screenBusy || !canScreen) return;
         setScreenBusy(true);
         try {
             const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
             const [t] = s.getVideoTracks();
             if (!t) throw new Error("Ekran oqim topilmadi");
-            // Foydalanuvchi brauzerdan "To'xtatish" bossa avto-o'chirish
             t.onended = () => { disableVideo(); };
             await applyVideoTrack(t, "screen");
         } catch (e) {
-            // Foydalanuvchi rad etsa xato ko'rsatmaymiz (NotAllowedError)
             const msg = e instanceof Error ? e.message : "";
-            if (msg && !msg.toLowerCase().includes("permission")) setErr(msg);
+            if (msg && !msg.toLowerCase().includes("permission") && !msg.toLowerCase().includes("denied")) setErr(msg);
         } finally {
             setScreenBusy(false);
         }
-    }, [screenBusy, applyVideoTrack, disableVideo]);
+    }, [screenBusy, canScreen, applyVideoTrack, disableVideo]);
 
     const toggleScreen = useCallback(() => {
         if (videoSource === "screen") disableVideo();
@@ -256,23 +282,20 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                         return;
                     }
                     if (r.call.status === "ACCEPTED" && !pcRef.current) {
-                        await initPeer();
-                        // VIDEO chaqiruv bo'lsa kamerani darrov yoqamiz (onnegotiationneeded offer yuboradi)
-                        if (initialKind === "VIDEO") {
-                            await enableCamera();
-                        } else {
-                            // Audio-only — negotiationneeded avtomatik ishga tushmasligi mumkin, qo'lda offer
-                            const pc = pcRef.current!;
-                            makingOfferRef.current = true;
-                            try {
-                                await pc.setLocalDescription();
-                                if (pc.localDescription) {
-                                    await sendSignal("offer", { sdp: pc.localDescription.sdp, type: pc.localDescription.type });
-                                }
-                            } finally {
-                                makingOfferRef.current = false;
+                        const pc = await initPeer();
+                        if (!pc) return;
+                        // Birinchi offer — audio + video transceiver'lar bilan
+                        makingOfferRef.current = true;
+                        try {
+                            await pc.setLocalDescription();
+                            if (pc.localDescription) {
+                                await sendSignal("offer", { sdp: pc.localDescription.sdp, type: pc.localDescription.type });
                             }
+                        } finally {
+                            makingOfferRef.current = false;
                         }
+                        // Video chaqiruv bo'lsa kamerani darrov yoqamiz (replaceTrack — renegotiate yo'q)
+                        if (initialKind === "VIDEO") await enableCamera();
                     }
                 };
                 await poll();
@@ -280,13 +303,14 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                 return () => clearInterval(iv);
             } else if (acceptedRef.current) {
                 await initPeer();
+                if (initialKind === "VIDEO") await enableCamera();
             }
         })();
         return () => { stopped = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // ── Signal polling — Perfect Negotiation ─────────────────────────────────
+    // ── Signal polling (Perfect Negotiation) ─────────────────────────────────
     useEffect(() => {
         let stopped = false;
         const tick = async () => {
@@ -305,7 +329,6 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                         ignoreOfferRef.current = !politeRef.current && offerCollision;
                         if (ignoreOfferRef.current) continue;
                         if (offerCollision) {
-                            // polite — o'z local'ni rollback, so'ng remote'ni qabul qilamiz
                             await Promise.all([
                                 pc.setLocalDescription({ type: "rollback" } as RTCSessionDescriptionInit).catch(() => { }),
                                 pc.setRemoteDescription(new RTCSessionDescription(s.payload as RTCSessionDescriptionInit)),
@@ -462,10 +485,18 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                 {err && <p className="mt-3 rounded-xl bg-rose-500/20 px-3 py-2 text-xs font-semibold text-rose-100">{err}</p>}
             </div>
 
+            {/* Mahalliy preview + kamera flip */}
             {videoSource !== "none" && (
                 <div className="absolute right-4 top-24 z-10 h-40 w-28 overflow-hidden rounded-2xl bg-black/50 ring-1 ring-white/20 shadow-2xl sm:right-6 sm:top-28 sm:h-52 sm:w-40">
                     <video ref={localRef} autoPlay playsInline muted
-                        className={`h-full w-full object-cover ${videoSource === "camera" ? "scale-x-[-1]" : ""}`} />
+                        className={`h-full w-full object-cover ${videoSource === "camera" && facing === "user" ? "scale-x-[-1]" : ""}`} />
+                    {videoSource === "camera" && (
+                        <button onClick={flipCamera} disabled={videoBusy}
+                            className="absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition-transform hover:scale-110 active:scale-95 disabled:opacity-50"
+                            aria-label="Kamerani aylantirish">
+                            <SwitchCamera className="h-4 w-4" />
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -477,9 +508,11 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                     <CtrlButton onClick={toggleCamera} active={videoSource === "camera"}
                         disabled={videoBusy || phase !== "in-call"}
                         icon={videoBusy && videoSource !== "screen" ? <Loader2 className="h-6 w-6 animate-spin" /> : videoSource === "camera" ? <CamIcon className="h-6 w-6" /> : <VideoOff className="h-6 w-6" />} />
-                    <CtrlButton onClick={toggleScreen} active={videoSource === "screen"}
-                        disabled={screenBusy || phase !== "in-call"}
-                        icon={screenBusy ? <Loader2 className="h-6 w-6 animate-spin" /> : videoSource === "screen" ? <ScreenShareOff className="h-6 w-6" /> : <ScreenShare className="h-6 w-6" />} />
+                    {canScreen && (
+                        <CtrlButton onClick={toggleScreen} active={videoSource === "screen"}
+                            disabled={screenBusy || phase !== "in-call"}
+                            icon={screenBusy ? <Loader2 className="h-6 w-6 animate-spin" /> : videoSource === "screen" ? <ScreenShareOff className="h-6 w-6" /> : <ScreenShare className="h-6 w-6" />} />
+                    )}
                     <CtrlButton onClick={toggleSpeaker} active={speaker}
                         icon={speaker ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />} />
                     <button onClick={() => endCall()}
@@ -492,10 +525,12 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     );
 }
 
+// Active — Nexus accent gradient (#2B3EE8 → #00CEC8). Inactive — kulrang shishasimon.
 function CtrlButton({ onClick, active, icon, disabled }: { onClick: () => void; active: boolean; icon: React.ReactNode; disabled?: boolean }) {
     return (
         <button onClick={onClick} disabled={disabled}
-            className={`flex h-12 w-12 items-center justify-center rounded-full backdrop-blur-sm transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 ${active ? "bg-white/15 ring-1 ring-white/25" : "bg-white/45 text-black"}`}>
+            style={active ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.45)" } : undefined}
+            className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 ${active ? "" : "bg-white/15 ring-1 ring-white/25 backdrop-blur-sm"}`}>
             {icon}
         </button>
     );
