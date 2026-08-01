@@ -145,7 +145,6 @@ VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
 - [ ] **KYC level 2** — `UserProfile.level == 2` (biometrik) `schema.prisma` da "future" deb belgilangan, implementatsiya yo'q.
 - [ ] **Nexus N4+** — core feed real; stories/live/music/spaces/... hali mock (DB/API yo'q).
 - [ ] **Market go-live** — to'lov gateway (Click/Payme), KYC, yetkazish/logistika; naqd/karta buyurtmada komissiya ushlanmaydi.
-- [ ] **`.env.example` qo'shish** — yangi ishchilar uchun namuna fayl yo'q.
 
 ## Muhim qoidalar
 
