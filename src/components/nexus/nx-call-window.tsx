@@ -379,9 +379,8 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         audioSenderRef.current = pc.addTrack(audioTrack, fxStream);
         // Ovoz kuchi indikatori — mahalliy mikrofon (FX'gacha)
         setupLevelMeter("local", stream);
-        // Video transceiver (sendrecv, track'siz — replaceTrack orqali qo'shiladi)
-        const vTx = pc.addTransceiver("video", { direction: "sendrecv" });
-        videoSenderRef.current = vTx.sender;
+        // Video: dinamik qo'shiladi (applyVideoTrack pc.addTrack chaqiradi) — bu ishonchli
+        // onnegotiationneeded triggerni ta'minlaydi (transceiver pre-yaratish iOS + Chrome'da muammo edi).
 
         pc.onnegotiationneeded = async () => {
             try {
@@ -444,39 +443,34 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         return pc;
     }, [sendSignal, endCall, triggerRenegotiate]);
 
-    // ── Video track almashtirish + majburiy renegotiate ──────────────────────
-    // iOS Safari va ba'zi brauzerlar transceiver track'siz yaratilganda SDP'da 'recvonly'
-    // deb belgilaydi — keyin replaceTrack ishlaydi lekin peer'ga hech nima ketmaydi.
-    // Shuning uchun direction'ni majburiy 'sendrecv' + qo'lda offer yuboramiz.
+    // ── Video track qo'shish/almashtirish ────────────────────────────────────
+    // Sender yo'q bo'lsa addTrack (onnegotiationneeded avtomatik fire),
+    // bor bo'lsa replaceTrack (seamless).
     const applyVideoTrack = useCallback(async (track: MediaStreamTrack | null, source: VideoSource) => {
         const pc = pcRef.current;
-        const sender = videoSenderRef.current;
         const stream = localStreamRef.current;
-        if (!pc || !sender || !stream) return;
+        if (!pc || !stream) return;
         // Eski video track'ni to'xtatish
         for (const t of stream.getVideoTracks()) {
             try { t.stop(); } catch { }
             stream.removeTrack(t);
         }
         if (track) stream.addTrack(track);
-        // Transceiver direction'ni majburiy sendrecv (yoki track yo'q bo'lsa recvonly) qilamiz
-        const tx = pc.getTransceivers().find(t => t.sender === sender);
-        if (tx) {
-            const wantDir: RTCRtpTransceiverDirection = track ? "sendrecv" : "recvonly";
-            if (tx.direction !== wantDir) {
-                try { tx.direction = wantDir; } catch { }
-            }
-        }
         try {
-            await sender.replaceTrack(track);
+            if (videoSenderRef.current) {
+                // Sender allaqachon bor — track'ni almashtirish (yoki null qilish)
+                await videoSenderRef.current.replaceTrack(track);
+            } else if (track) {
+                // Birinchi marta video — addTrack (bu onnegotiationneeded'ni ishga tushiradi)
+                videoSenderRef.current = pc.addTrack(track, stream);
+            }
         } catch (e) {
-            console.warn("replaceTrack:", e);
+            console.warn("video track qo'shish:", e);
         }
         if (localRef.current) localRef.current.srcObject = stream;
         setVideoSource(source);
 
-        // Majburiy renegotiate (iOS/Chrome onnegotiationneeded ba'zan ishlamaydi).
-        // Stable emas bo'lsa pending flag qo'yiladi va state stable bo'lganda avtomatik ishga tushadi.
+        // Safety net — onnegotiationneeded fire bo'lmasa qo'lda trigger
         await triggerRenegotiate();
     }, [triggerRenegotiate]);
 
