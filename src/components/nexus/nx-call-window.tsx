@@ -414,17 +414,29 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         return pc;
     }, [sendSignal, endCall]);
 
-    // ── Video track almashtirish (renegotiate SHART EMAS — transceiver bor) ──
+    // ── Video track almashtirish + majburiy renegotiate ──────────────────────
+    // iOS Safari va ba'zi brauzerlar transceiver track'siz yaratilganda SDP'da 'recvonly'
+    // deb belgilaydi — keyin replaceTrack ishlaydi lekin peer'ga hech nima ketmaydi.
+    // Shuning uchun direction'ni majburiy 'sendrecv' + qo'lda offer yuboramiz.
     const applyVideoTrack = useCallback(async (track: MediaStreamTrack | null, source: VideoSource) => {
+        const pc = pcRef.current;
         const sender = videoSenderRef.current;
         const stream = localStreamRef.current;
-        if (!sender || !stream) return;
+        if (!pc || !sender || !stream) return;
         // Eski video track'ni to'xtatish
         for (const t of stream.getVideoTracks()) {
             try { t.stop(); } catch { }
             stream.removeTrack(t);
         }
         if (track) stream.addTrack(track);
+        // Transceiver direction'ni majburiy sendrecv (yoki track yo'q bo'lsa recvonly) qilamiz
+        const tx = pc.getTransceivers().find(t => t.sender === sender);
+        if (tx) {
+            const wantDir: RTCRtpTransceiverDirection = track ? "sendrecv" : "recvonly";
+            if (tx.direction !== wantDir) {
+                try { tx.direction = wantDir; } catch { }
+            }
+        }
         try {
             await sender.replaceTrack(track);
         } catch (e) {
@@ -432,7 +444,22 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         }
         if (localRef.current) localRef.current.srcObject = stream;
         setVideoSource(source);
-    }, []);
+
+        // Majburiy renegotiate — Perfect Negotiation orqali (onnegotiationneeded iOS'da ishonchsiz)
+        if (pc.signalingState === "stable") {
+            try {
+                makingOfferRef.current = true;
+                await pc.setLocalDescription();
+                if (pc.localDescription) {
+                    await sendSignal("offer", { sdp: pc.localDescription.sdp, type: pc.localDescription.type });
+                }
+            } catch (e) {
+                console.warn("manual renegotiate:", e);
+            } finally {
+                makingOfferRef.current = false;
+            }
+        }
+    }, [sendSignal]);
 
     const enableCamera = useCallback(async (facingOverride?: Facing) => {
         if (videoBusy) return;
