@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
     const catList = MARKET_CATEGORIES.map(c => `${c.slug} (${c.name})`).join(", ");
     const prompt = `Foydalanuvchi onlayn-do'konda qidirmoqda: "${query.trim()}"
-Buni qidiruv filtrlariga aylantir. Narxlar Ƶ (Zij) da, 1 Ƶ = 1 USD.
+Buni qidiruv filtrlariga aylantir. Narxlar so'mda (UZS). Foydalanuvchi "5000" desa 5000 so'm.
 Kategoriya FAQAT shu ro'yxatdan (yoki null): ${catList}
 
 Faqat JSON qaytar:

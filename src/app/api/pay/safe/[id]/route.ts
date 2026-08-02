@@ -14,10 +14,10 @@ export async function POST(
 
     const { id } = await params;
     const { action, amount } = await req.json(); // action: "deposit" | "withdraw"
-    const zij = Number(amount);
+    const amt = Number(amount);
 
-    if (!zij || zij < 1)
-        return NextResponse.json({ error: "Kamida 1 Ƶ" }, { status: 400 });
+    if (!amt || amt < 1)
+        return NextResponse.json({ error: "Kamida 1 so'm" }, { status: 400 });
 
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
     if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
@@ -30,11 +30,11 @@ export async function POST(
 
     if (action === "deposit") {
         // Hamyon → Seyf
-        if (Number(wallet.balance) < zij)
+        if (Number(wallet.balance) < amt)
             return NextResponse.json({ error: "Balans yetarli emas" }, { status: 400 });
 
-        const newWalletBal = Number(wallet.balance) - zij;
-        const newSafeBal   = Number(safe.balance) + zij;
+        const newWalletBal = Number(wallet.balance) - amt;
+        const newSafeBal   = Number(safe.balance) + amt;
         const isCompleted  = newSafeBal >= Number(safe.targetAmount);
 
         await prisma.$transaction([
@@ -44,7 +44,7 @@ export async function POST(
                 data: {
                     walletId: wallet.id,
                     type: "SAFE_IN",
-                    amount: zij,
+                    amount: amt,
                     currency: wallet.currency,
                     balanceAfter: newWalletBal,
                     description: `"${safe.name}" seyfi`,
@@ -58,11 +58,11 @@ export async function POST(
 
     if (action === "withdraw") {
         // Seyf → Hamyon (faqat to'lgan seyf yoki ixtiyoriy)
-        if (Number(safe.balance) < zij)
+        if (Number(safe.balance) < amt)
             return NextResponse.json({ error: "Seyf balansi yetarli emas" }, { status: 400 });
 
-        const newWalletBal = Number(wallet.balance) + zij;
-        const newSafeBal   = Number(safe.balance) - zij;
+        const newWalletBal = Number(wallet.balance) + amt;
+        const newSafeBal   = Number(safe.balance) - amt;
 
         await prisma.$transaction([
             prisma.zijWallet.update({ where: { id: wallet.id }, data: { balance: newWalletBal } }),
@@ -71,7 +71,7 @@ export async function POST(
                 data: {
                     walletId: wallet.id,
                     type: "SAFE_OUT",
-                    amount: zij,
+                    amount: amt,
                     currency: wallet.currency,
                     balanceAfter: newWalletBal,
                     description: `"${safe.name}" seyfidan`,

@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     // Tavsifdagi dalil rasmlari (URL massiv) — faqat yaroqli https URL
     const cleanDescImages = filterMediaUrls(descImages, 30);
 
-    // Narx (Ƶ) — 0 = bepul
+    // Narx (foydalanuvchi valyutasida) — 0 = bepul
     const price = Number.isFinite(priceZij) ? Math.max(0, Math.min(10_000_000, Math.round(Number(priceZij)))) : 0;
 
     // Series — avvalgi qism faqat o'zimning mavjud videom bo'lishi mumkin

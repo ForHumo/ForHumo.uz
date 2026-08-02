@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     const target = Number(targetAmount);
 
     if (!name?.trim()) return NextResponse.json({ error: "Seyf nomi kerak" }, { status: 400 });
-    if (!target || target < 1) return NextResponse.json({ error: "Maqsad summa kamida 1 Ƶ" }, { status: 400 });
+    if (!target || target < 1) return NextResponse.json({ error: "Maqsad summa kamida 1 so'm" }, { status: 400 });
 
     const wallet = await getWallet(session.user.email);
     if (!wallet) return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
