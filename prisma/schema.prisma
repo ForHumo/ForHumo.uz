@@ -94,6 +94,9 @@ model UserProfile {
   // Rate-limit: user-initiated profile edits allowed once per 14 days
   profileEditedAt DateTime?
 
+  // Ikkinchi valyutani (USD) narxlar yonida referens sifatida ko'rsatish
+  showUsdRef    Boolean  @default(false)
+
   lastLoginAt   DateTime?
   loginEvents   LoginEvent[]
   supportTickets SupportTicket[]
@@ -821,6 +824,7 @@ model MarketOrder {
   total         Decimal             @db.Decimal(18, 2)   // chegirmadan keyingi yakuniy summa
   discount      Decimal             @default(0) @db.Decimal(18, 2)
   currency      Currency            @default(UZS)         // buyurtma valyutasi (mahsulot valyutalariga mos)
+  exchangeRate  Decimal?            @db.Decimal(18, 6)    // Buyurtma vaqtidagi USD/UZS kursi (Shariat: gharar oldini oladi)
   promoCode     String?
   settledAt     DateTime?           // sotuvchilarga to'lov amalga oshirilgan vaqt (ikki marta to'lamaslik uchun)
   status        MarketOrderStatus   @default(PENDING)

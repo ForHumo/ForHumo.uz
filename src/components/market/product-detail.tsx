@@ -29,6 +29,8 @@ interface Product {
 const isVid = (u: string) => /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(u);
 
 import { formatMoney } from "@/lib/money";
+import { useFxRate, toUsdRef } from "@/lib/fx-client";
+import { useShowUsdRef } from "@/lib/user-pref";
 function fz(v: string | number) { return Number(v).toLocaleString(); }
 function disc(p: string, o: string | null) {
     if (!o) return null;
@@ -100,6 +102,9 @@ export function ProductDetail({ slug }: { slug: string }) {
     const curStock = activeVariant ? activeVariant.stock : product.stock;
     const inStock = hasVariants ? (activeVariant ? activeVariant.stock > 0 : variants.some(v => v.stock > 0)) : product.stock > 0;
     const d = disc(curPrice, curOld);
+    const fx = useFxRate();
+    const showUsd = useShowUsdRef();
+    const usdRef = showUsd && (product.currency ?? "UZS") === "UZS" && fx ? toUsdRef(Number(curPrice), fx.rate) : "";
 
     return (
         <div className="container mx-auto px-4 max-w-6xl py-8">
@@ -209,6 +214,11 @@ export function ProductDetail({ slug }: { slug: string }) {
                             <span className="text-lg text-gray-400 line-through">{formatMoney(Number(curOld), product.currency ?? "UZS")}</span>
                         )}
                     </div>
+                    {usdRef && fx && (
+                        <p className="mb-6 text-xs text-gray-400 dark:text-white/30 -mt-4">
+                            ≈ {usdRef} <span className="opacity-60">(kurs: {new Date(fx.updatedAt).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })})</span>
+                        </p>
+                    )}
 
                     {/* Tavsif */}
                     {product.description && (

@@ -7,6 +7,8 @@ import Image from "next/image";
 import { Star, ShoppingCart, Flame, CheckCircle2, Loader2, Heart } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 import { formatMoney, type Currency } from "@/lib/money";
+import { useFxRate, toUsdRef } from "@/lib/fx-client";
+import { useShowUsdRef } from "@/lib/user-pref";
 
 interface Product {
     id: string; name: string; slug: string; price: string; oldPrice: string | null;
@@ -26,6 +28,10 @@ export function ProductCard({
     const router = useRouter();
     const d = disc(product.price, product.oldPrice);
     const out = (product.stock ?? 1) <= 0;
+    const fx = useFxRate();
+    const showUsd = useShowUsdRef();
+    const cur: Currency = product.currency ?? "UZS";
+    const usdRef = showUsd && cur === "UZS" && fx ? toUsdRef(Number(product.price), fx.rate) : "";
     const [adding, setAdding]   = useState(false);
     const [added, setAdded]     = useState(false);
     const [liked, setLiked]     = useState(initialLiked);
@@ -165,6 +171,9 @@ export function ProductCard({
                         </div>
                         {product.oldPrice && !compact && (
                             <span className="text-[10px] text-gray-400 line-through">{formatMoney(Number(product.oldPrice), product.currency ?? "UZS")}</span>
+                        )}
+                        {usdRef && (
+                            <span className="block text-[10px] font-semibold text-gray-400 dark:text-white/30 mt-0.5">≈ {usdRef}</span>
                         )}
                     </div>
                     <motion.button onClick={addToCart} disabled={adding || out}

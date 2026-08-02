@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validatePromo } from "@/lib/market-promo";
+import { getUsdUzsRate } from "@/lib/fx";
 
 type PaymentMethod = "WALLET" | "CASH_ON_DELIVERY" | "CARD_ON_DELIVERY";
 
@@ -104,11 +105,14 @@ export async function POST(req: Request) {
 
             if (promoId) await tx.marketPromoCode.update({ where: { id: promoId }, data: { usedCount: { increment: 1 } } });
 
+            // Kurs muzlatilgan (Shariat + Iste'molchi Qonuni — gharar oldini oladi)
+            const fx = await getUsdUzsRate();
             const order = await tx.marketOrder.create({
                 data: {
                     profileId: profile.id, total, discount, promoCode: appliedCode,
                     status: paymentMethod === "WALLET" ? "PAID" : "PENDING",
                     paymentMethod,
+                    exchangeRate: fx.rate,
                     address: address.trim(),
                     note: note?.trim() ?? null,
                     items: { create: orderItemsData },

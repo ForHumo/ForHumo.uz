@@ -13,6 +13,7 @@ export async function GET() {
         select: {
             id: true, name: true, firstName: true, fatherName: true,
             username: true, humoId: true, image: true, coverImage: true, phone: true,
+            showUsdRef: true,
         },
     });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });

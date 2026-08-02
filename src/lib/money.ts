@@ -25,12 +25,21 @@ export function currencyForCountry(country: string | null | undefined): Currency
     return "USD";
 }
 
-// Valyutalararo o'tkazish.
+// Valyutalararo o'tkazish (sync — env kurs bilan, tez, ammo eski bo'lishi mumkin).
 export function convert(amount: number, from: Currency, to: Currency, rate = usdUzsRate()): number {
     if (from === to) return roundMoney(amount, to);
     if (from === "USD" && to === "UZS") return roundMoney(amount * rate, "UZS");
     if (from === "UZS" && to === "USD") return roundMoney(amount / rate, "USD");
     return roundMoney(amount, to);
+}
+
+/** Async konvertatsiya — server-side CBU kursidan foydalanadi (30 daq cache).
+ *  Faqat server komponentlar/route'larda ishlating. Client uchun /api/fx/rate. */
+export async function convertLive(amount: number, from: Currency, to: Currency): Promise<number> {
+    if (from === to) return roundMoney(amount, to);
+    const { getUsdUzsRate } = await import("./fx");
+    const { rate } = await getUsdUzsRate();
+    return convert(amount, from, to, rate);
 }
 
 // Minimal miqdorlar (deposit/transfer/tip).

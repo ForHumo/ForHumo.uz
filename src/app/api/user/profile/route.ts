@@ -23,7 +23,7 @@ export async function GET() {
             image: true, coverImage: true, bio: true, birthday: true, city: true,
             location: true, locationIv: true,
             phone: true, level: true, emailVerified: true, onboardingDone: true,
-            profileEditedAt: true,
+            profileEditedAt: true, showUsdRef: true,
             createdAt: true,
         },
     });
@@ -62,6 +62,7 @@ export async function PATCH(req: Request) {
         image?: string | null;  // avatar URL (null = delete custom avatar)
         phone?: string | null;
         onboardingDone?: boolean;
+        showUsdRef?: boolean;
     };
 
     // Joriy profil — founder holati + 14-kunlik cheklov uchun
@@ -132,6 +133,7 @@ export async function PATCH(req: Request) {
     if (body.city       !== undefined) data.city       = body.city.trim() || null;
     if (body.coverImage !== undefined) data.coverImage = body.coverImage || null;
     if (body.image      !== undefined) data.image      = body.image ?? null;
+    if (body.showUsdRef !== undefined) data.showUsdRef = !!body.showUsdRef;
     if (body.phone      !== undefined) data.phone      = body.phone?.trim() || null;
     if (body.onboardingDone !== undefined) data.onboardingDone = body.onboardingDone;
     if (isProfileEdit && !isFounder) data.profileEditedAt = new Date();

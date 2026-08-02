@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 import { formatMoney, currencyForCountry, type Currency } from "@/lib/money";
+import { invalidateUserPref } from "@/lib/user-pref";
+import { DollarSign } from "lucide-react";
 
 interface BrandRow {
     id: string; slug: string; name: string; logo: string | null; verified: boolean;
@@ -21,6 +23,7 @@ interface ProfileData {
     profile: {
         id: string; name: string | null; firstName: string | null; fatherName: string | null;
         username: string | null; humoId: string | null; image: string | null; coverImage: string | null; phone: string | null;
+        showUsdRef?: boolean;
     };
     brands: BrandRow[];
     stats: { brandCount: number; reviewsGiven: number; likesReceived: number; likesGiven: number; ordersCount: number; spent: number; earned: number };
@@ -144,7 +147,7 @@ export function MarketProfile() {
                 </div>
 
                 {/* Tezkor havolalar */}
-                <div className="flex gap-3 mb-8">
+                <div className="flex gap-3 mb-4">
                     <Link href="/market/orders" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl
                         bg-gray-100/80 dark:bg-white/[0.05] hover:bg-gray-200 dark:hover:bg-white/[0.08]
                         text-gray-700 dark:text-white/60 font-semibold text-sm transition-all">
@@ -156,6 +159,9 @@ export function MarketProfile() {
                         <Heart size={15} /> Sevimlilar
                     </Link>
                 </div>
+
+                {/* USD referens toggle */}
+                <UsdRefToggle initial={!!profile.showUsdRef} />
 
                 {/* Brendlarim */}
                 <div className="flex items-center justify-between mb-4">
@@ -209,6 +215,40 @@ export function MarketProfile() {
                     </div>
                 )}
             </div>
+        </div>
+    );
+}
+
+// USD referens toggle — narxlar yonida "≈ $X" ko'rsatish/yashirish
+function UsdRefToggle({ initial }: { initial: boolean }) {
+    const [on, setOn] = useState(initial);
+    const [busy, setBusy] = useState(false);
+    const toggle = async () => {
+        setBusy(true);
+        const next = !on;
+        setOn(next);
+        try {
+            const r = await fetch("/api/user/profile", {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ showUsdRef: next }),
+            });
+            if (!r.ok) setOn(on); // rollback
+            invalidateUserPref();
+        } finally { setBusy(false); }
+    };
+    return (
+        <div className="flex items-center gap-3 mb-8 py-3 px-4 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06]">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                <DollarSign size={16} className="text-blue-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">USDda referens ko&apos;rsatish</p>
+                <p className="text-[11px] text-gray-500 dark:text-white/40">Narxlar yonida &quot;≈ $X&quot; qo&apos;shimcha ko&apos;rinadi</p>
+            </div>
+            <button onClick={toggle} disabled={busy}
+                className={`relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-50 ${on ? "bg-emerald-500" : "bg-gray-300 dark:bg-white/20"}`}>
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${on ? "translate-x-[22px]" : "translate-x-0.5"}`} />
+            </button>
         </div>
     );
 }
