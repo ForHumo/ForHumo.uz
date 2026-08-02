@@ -44,7 +44,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const p = await prisma.userProfile.findUnique({ where: { id: oid }, select: { name: true, username: true, image: true, humoId: true, verified: true } });
 
     return NextResponse.json({
-        messages: messages.map(m => ({ id: m.id, text: m.text, mine: m.senderId === me.id, createdAt: m.createdAt })),
+        messages: messages.map(m => ({
+            id: m.id, text: m.text, mine: m.senderId === me.id, createdAt: m.createdAt,
+            mediaUrl: m.mediaUrl, mediaType: m.mediaType, mediaMime: m.mediaMime,
+            mediaName: m.mediaName, mediaSize: m.mediaSize, durationMs: m.durationMs,
+        })),
         other: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,
         peerReadAt,
     });
@@ -62,21 +66,60 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     if (await isBlockedBetween(me.id, otherId(conv, me.id))) return NextResponse.json({ error: "Bu suhbatga yoza olmaysiz" }, { status: 403 });
 
-    const { text } = await req.json();
-    if (!text?.trim()) return NextResponse.json({ error: "Xabar bo'sh bo'lmasin" }, { status: 400 });
+    const body = (await req.json()) as {
+        text?: string;
+        mediaUrl?: string; mediaType?: string; mediaMime?: string;
+        mediaName?: string; mediaSize?: number; durationMs?: number;
+    };
+    const text = String(body.text ?? "").trim();
+    const hasMedia = !!body.mediaUrl && !!body.mediaType;
+    if (!text && !hasMedia) return NextResponse.json({ error: "Xabar bo'sh bo'lmasin" }, { status: 400 });
     if (await nexusRateLimited(me.id, "dm")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
-    const clean = String(text).trim().slice(0, 2000);
+    const clean = text.slice(0, 2000);
 
-    const msg = await prisma.nexusMessage.create({ data: { conversationId: id, senderId: me.id, text: clean } });
+    // Media turini tekshirish (faqat ruxsat etilgan qiymatlar)
+    const VALID_TYPES = ["image", "video", "audio", "file"];
+    if (hasMedia && !VALID_TYPES.includes(body.mediaType!)) {
+        return NextResponse.json({ error: "Noto'g'ri media turi" }, { status: 400 });
+    }
+
+    const msg = await prisma.nexusMessage.create({
+        data: {
+            conversationId: id,
+            senderId: me.id,
+            text: clean,
+            mediaUrl: hasMedia ? body.mediaUrl : null,
+            mediaType: hasMedia ? body.mediaType : null,
+            mediaMime: hasMedia ? (body.mediaMime ?? null) : null,
+            mediaName: hasMedia ? (body.mediaName ?? null)?.slice(0, 200) : null,
+            mediaSize: hasMedia && typeof body.mediaSize === "number" ? Math.max(0, Math.floor(body.mediaSize)) : null,
+            durationMs: hasMedia && typeof body.durationMs === "number" ? Math.max(0, Math.floor(body.durationMs)) : null,
+        },
+    });
+
+    // Suhbat ro'yxatida ko'rinadigan preview matni
+    const previewLabels: Record<string, string> = {
+        image: "Rasm", video: "Video", audio: "Ovozli xabar", file: "Fayl",
+    };
+    const preview = clean
+        || (hasMedia ? (previewLabels[body.mediaType!] || "Media") : "")
+        || "...";
+
     await prisma.nexusConversation.update({
         where: { id },
         data: {
             lastMessageAt: new Date(),
-            lastMessageText: clean.slice(0, 120),
+            lastMessageText: preview.slice(0, 120),
             lastSenderId: me.id,
             ...(conv.user1Id === me.id ? { user1ReadAt: new Date() } : { user2ReadAt: new Date() }),
         },
     });
 
-    return NextResponse.json({ message: { id: msg.id, text: msg.text, mine: true, createdAt: msg.createdAt } });
+    return NextResponse.json({
+        message: {
+            id: msg.id, text: msg.text, mine: true, createdAt: msg.createdAt,
+            mediaUrl: msg.mediaUrl, mediaType: msg.mediaType, mediaMime: msg.mediaMime,
+            mediaName: msg.mediaName, mediaSize: msg.mediaSize, durationMs: msg.durationMs,
+        },
+    });
 }

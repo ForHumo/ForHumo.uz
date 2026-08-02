@@ -1098,7 +1098,14 @@ model NexusMessage {
   conversationId String
   conversation   NexusConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderId       String
-  text           String
+  text           String                                    // media bo'lsa caption yoki bo'sh
+  // Ixtiyoriy media qo'shimchasi (rasm/video/audio/fayl)
+  mediaUrl       String?
+  mediaType      String?                                   // "image" | "video" | "audio" | "file"
+  mediaMime      String?                                   // "image/jpeg", "video/mp4", "audio/webm", ...
+  mediaName      String?                                   // fayl ko'rsatiladigan nomi
+  mediaSize      Int?                                      // baytlar (fayl/audio/video hajmi)
+  durationMs     Int?                                      // audio/video davomiyligi (ms)
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
 }

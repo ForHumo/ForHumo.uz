@@ -4,13 +4,38 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck } from "lucide-react";
+import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2 } from "lucide-react";
 import { usePresence } from "@/lib/presence";
+import { upload } from "@vercel/blob/client";
 
 interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean }
 interface Conv { conversationId: string; other: Other | null; lastMessageText: string | null; lastMessageAt: string; lastMine: boolean; unread: boolean }
-interface Msg { id: string; text: string; mine: boolean; createdAt: string }
+interface Msg {
+    id: string; text: string; mine: boolean; createdAt: string;
+    mediaUrl?: string | null; mediaType?: string | null; mediaMime?: string | null;
+    mediaName?: string | null; mediaSize?: number | null; durationMs?: number | null;
+}
 interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isMe: boolean }
+
+// Media turini MIME'dan aniqlash
+function detectMediaType(mime: string): "image" | "video" | "audio" | "file" {
+    if (mime.startsWith("image/")) return "image";
+    if (mime.startsWith("video/")) return "video";
+    if (mime.startsWith("audio/")) return "audio";
+    return "file";
+}
+function fmtSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+function fmtDuration(ms: number): string {
+    const s = Math.floor(ms / 1000);
+    const mm = Math.floor(s / 60);
+    const ss = s % 60;
+    return `${mm}:${String(ss).padStart(2, "0")}`;
+}
 
 function avatarOf(o: Other | SUser | null) {
     return o?.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(o?.username || o?.name || "user")}`;
@@ -142,6 +167,132 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             });
             if (res.ok) { const d = await res.json(); setMessages(m => m.map(x => x.id === temp.id ? d.message : x)); loadConvs(); }
         } finally { setSending(false); }
+    }
+
+    // Fayl attach — rasm/video/audio/fayl
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploading, setUploading] = useState(false);
+    const [uploadPct, setUploadPct] = useState(0);
+
+    // Ovozli xabar (MediaRecorder)
+    const recorderRef = useRef<MediaRecorder | null>(null);
+    const recStreamRef = useRef<MediaStream | null>(null);
+    const recChunksRef = useRef<Blob[]>([]);
+    const recStartRef = useRef<number>(0);
+    const [recording, setRecording] = useState(false);
+    const [recSeconds, setRecSeconds] = useState(0);
+    const recTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const recCancelRef = useRef<boolean>(false);
+
+    async function startVoice() {
+        if (recording || uploading) return;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            recStreamRef.current = stream;
+            recChunksRef.current = [];
+            recCancelRef.current = false;
+            // Brauzerlarda eng keng qo'llab-quvvatlanuvchi: audio/webm (opus)
+            const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus"
+                : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm"
+                : MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4"
+                : "";
+            const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+            rec.ondataavailable = (e) => { if (e.data && e.data.size > 0) recChunksRef.current.push(e.data); };
+            rec.onstop = () => {
+                stream.getTracks().forEach(t => t.stop());
+                recStreamRef.current = null;
+                if (recCancelRef.current) return;
+                const finalMime = rec.mimeType || "audio/webm";
+                const blob = new Blob(recChunksRef.current, { type: finalMime });
+                const ext = finalMime.includes("mp4") ? "m4a" : "webm";
+                const file = new File([blob], `voice-${Date.now()}.${ext}`, { type: finalMime });
+                sendMedia(file);
+            };
+            recorderRef.current = rec;
+            recStartRef.current = Date.now();
+            rec.start(100);
+            setRecording(true);
+            setRecSeconds(0);
+            recTimerRef.current = setInterval(() => {
+                setRecSeconds(Math.floor((Date.now() - recStartRef.current) / 1000));
+            }, 200);
+        } catch (e) {
+            alert(e instanceof Error ? e.message : "Mikrofonga ruxsat berilmadi");
+        }
+    }
+    function stopVoice(cancel: boolean = false) {
+        if (!recording) return;
+        recCancelRef.current = cancel;
+        if (recTimerRef.current) { clearInterval(recTimerRef.current); recTimerRef.current = null; }
+        setRecording(false);
+        try { recorderRef.current?.stop(); } catch { }
+        recorderRef.current = null;
+    }
+    // Component unmount bo'lsa mikrofonni ozod qilish
+    useEffect(() => {
+        return () => {
+            if (recTimerRef.current) clearInterval(recTimerRef.current);
+            try { recorderRef.current?.stop(); } catch { }
+            recStreamRef.current?.getTracks().forEach(t => t.stop());
+        };
+    }, []);
+
+    async function sendMedia(file: File) {
+        if (!selected || uploading) return;
+        setUploading(true); setUploadPct(0);
+        const kind = detectMediaType(file.type || "");
+        // Optimistic temp message (URL bo'lmagunicha loading)
+        const temp: Msg = {
+            id: "tmp-" + Date.now(), text: "", mine: true, createdAt: new Date().toISOString(),
+            mediaType: kind, mediaMime: file.type || null, mediaName: file.name, mediaSize: file.size,
+        };
+        setMessages(m => [...m, temp]);
+        try {
+            // Vercel Blob'ga to'g'ridan-to'g'ri client upload (4.5MB serverless limitini chetlab o'tadi)
+            const safeName = file.name.replace(/[^\w.-]/g, "_");
+            const blob = await upload(`nx-dm/${selected.conversationId}/${Date.now()}-${safeName}`, file, {
+                access: "public",
+                handleUploadUrl: "/api/market/upload/client-token",
+                onUploadProgress: (p) => setUploadPct(Math.round((p.percentage ?? 0))),
+            });
+            // Audio/video davomiyligini olish
+            let durationMs: number | undefined;
+            if (kind === "audio" || kind === "video") {
+                try {
+                    durationMs = await new Promise<number>((resolve) => {
+                        const el = kind === "audio" ? new Audio() : document.createElement("video");
+                        el.preload = "metadata";
+                        el.onloadedmetadata = () => resolve(Math.round((el.duration || 0) * 1000));
+                        el.onerror = () => resolve(0);
+                        el.src = blob.url;
+                        setTimeout(() => resolve(0), 5000);
+                    });
+                } catch { /* ignore */ }
+            }
+            const res = await fetch(`/api/nexus/messages/${selected.conversationId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text: "",
+                    mediaUrl: blob.url, mediaType: kind, mediaMime: file.type,
+                    mediaName: file.name, mediaSize: file.size, durationMs,
+                }),
+            });
+            if (res.ok) {
+                const d = await res.json();
+                setMessages(m => m.map(x => x.id === temp.id ? d.message : x));
+                loadConvs();
+            } else {
+                setMessages(m => m.filter(x => x.id !== temp.id));
+                const e = await res.json().catch(() => ({}));
+                alert(e.error || "Jo'natib bo'lmadi");
+            }
+        } catch (e) {
+            setMessages(m => m.filter(x => x.id !== temp.id));
+            alert(e instanceof Error ? e.message : "Yuklashda xato");
+        } finally {
+            setUploading(false); setUploadPct(0);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
     }
 
     async function openWith(u: SUser) {
@@ -325,17 +476,70 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                     <p className="text-center text-xs py-8" style={{ color: "rgba(120,140,185,0.6)" }}>Suhbat boshlang</p>
                 )}
                 {messages.map(m => {
-                    // Read receipt: mening xabarim + peer keyin ochgan bo'lsa → 2 ko'k ptichka
                     const isRead = m.mine && !m.id.startsWith("tmp-") && peerReadAt && new Date(m.createdAt) <= new Date(peerReadAt);
+                    const isTemp = m.id.startsWith("tmp-");
+                    const hasMedia = !!m.mediaType && (m.mediaUrl || isTemp);
                     return (
                         <div key={m.id} className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
                             <div className="flex flex-col gap-0.5 max-w-[75%] lg:max-w-[60%]">
-                                <div className="px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words"
-                                    style={m.mine
-                                        ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)", color: "#fff", borderBottomRightRadius: "4px" }
-                                        : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.92)", borderBottomLeftRadius: "4px" }}>
-                                    {m.text}
-                                </div>
+                                {/* Media qism (agar mavjud bo'lsa) */}
+                                {hasMedia && (
+                                    <div className="rounded-2xl overflow-hidden mb-0.5" style={m.mine
+                                        ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)" }
+                                        : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                                        {m.mediaType === "image" && m.mediaUrl && (
+                                            <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer" className="block">
+                                                <img src={m.mediaUrl} alt="" className="max-w-full max-h-80 object-contain" />
+                                            </a>
+                                        )}
+                                        {m.mediaType === "video" && m.mediaUrl && (
+                                            <video src={m.mediaUrl} controls playsInline className="max-w-full max-h-80" />
+                                        )}
+                                        {m.mediaType === "audio" && m.mediaUrl && (
+                                            <div className="px-3 py-2.5 flex items-center gap-2.5 min-w-[240px]">
+                                                <Music className="w-4 h-4 flex-shrink-0" style={{ color: m.mine ? "rgba(255,255,255,0.9)" : "#00CEC8" }} />
+                                                <audio src={m.mediaUrl} controls className="flex-1 h-8" style={{ maxWidth: 200 }} />
+                                                {typeof m.durationMs === "number" && m.durationMs > 0 && (
+                                                    <span className="text-[10px] tabular-nums" style={{ color: m.mine ? "rgba(255,255,255,0.75)" : "rgba(140,160,210,0.75)" }}>{fmtDuration(m.durationMs)}</span>
+                                                )}
+                                            </div>
+                                        )}
+                                        {m.mediaType === "file" && (
+                                            <a href={m.mediaUrl || "#"} target="_blank" rel="noopener noreferrer"
+                                                className="flex items-center gap-3 px-3.5 py-3 min-w-[220px]" style={{ textDecoration: "none" }}>
+                                                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                                                    style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgba(43,62,232,0.25)" }}>
+                                                    <FileIcon className="w-5 h-5" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-xs font-bold truncate" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>{m.mediaName || "Fayl"}</p>
+                                                    <p className="text-[10px]" style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "rgba(140,160,210,0.75)" }}>
+                                                        {typeof m.mediaSize === "number" ? fmtSize(m.mediaSize) : ""}
+                                                    </p>
+                                                </div>
+                                                {m.mediaUrl && <Download className="w-4 h-4 flex-shrink-0" style={{ color: m.mine ? "rgba(255,255,255,0.75)" : "rgba(140,160,210,0.75)" }} />}
+                                            </a>
+                                        )}
+                                        {/* Yuklanish holati (temp) */}
+                                        {isTemp && !m.mediaUrl && (
+                                            <div className="px-3.5 py-3 flex items-center gap-2" style={{ minWidth: 220 }}>
+                                                <Loader2 className="w-4 h-4 animate-spin" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
+                                                <span className="text-[11px]" style={{ color: m.mine ? "rgba(255,255,255,0.85)" : "rgba(220,230,255,0.85)" }}>
+                                                    Yuklanmoqda... {uploadPct > 0 ? `${uploadPct}%` : ""}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                {/* Matn qism (agar bo'lsa) */}
+                                {m.text && (
+                                    <div className="px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words"
+                                        style={m.mine
+                                            ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)", color: "#fff", borderBottomRightRadius: "4px" }
+                                            : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.92)", borderBottomLeftRadius: "4px" }}>
+                                        {m.text}
+                                    </div>
+                                )}
                                 <div className={`flex items-center gap-1 px-1 ${m.mine ? "justify-end" : "justify-start"}`}>
                                     <span className="text-[10px]" style={{ color: "rgba(80,100,150,0.7)" }}>{timeShort(m.createdAt)}</span>
                                     {m.mine && (
@@ -352,22 +556,68 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             </div>
 
             <div className="flex-shrink-0 px-4 py-3 flex items-center gap-2" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
-                <input value={input} onChange={e => {
-                        setInput(e.target.value);
-                        const now = Date.now();
-                        if (selected?.other?.id && myProfileId && now - lastTypingSentRef.current > 2000) {
-                            sendTyping(selected.other.id, myProfileId, myName);
-                            lastTypingSentRef.current = now;
-                        }
-                    }} onKeyDown={e => e.key === "Enter" && send()}
-                    placeholder="Xabar yozing..." maxLength={2000}
-                    className="flex-1 h-10 rounded-xl px-3.5 text-sm text-white outline-none"
-                    style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "#00CEC8" }} />
-                <button onClick={send} disabled={!input.trim() || sending}
-                    className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40"
-                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                    {sending ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Send className="w-4 h-4 text-white" />}
-                </button>
+                <input ref={fileInputRef} type="file"
+                    accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) sendMedia(f); }}
+                    className="hidden" />
+                {recording ? (
+                    /* ── Ovoz yozish rejimi: bekor + timer + jo'natish ── */
+                    <>
+                        <button onClick={() => stopVoice(true)} title="Bekor qilish"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 hover:scale-105 active:scale-95 transition-transform"
+                            style={{ background: "rgba(239,68,68,0.15)" }}>
+                            <Trash2 className="w-4 h-4" style={{ color: "#EF4444" }} />
+                        </button>
+                        <div className="flex-1 h-10 rounded-xl px-3.5 flex items-center gap-3"
+                            style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.30)" }}>
+                            <span className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse" style={{ background: "#EF4444" }} />
+                            <span className="text-xs font-bold text-white flex-1">Ovoz yozilmoqda</span>
+                            <span className="text-xs tabular-nums font-bold" style={{ color: "#EF4444" }}>{fmtDuration(recSeconds * 1000)}</span>
+                        </div>
+                        <button onClick={() => stopVoice(false)} title="Jo'natish"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0"
+                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            <Send className="w-4 h-4 text-white" />
+                        </button>
+                    </>
+                ) : (
+                    /* ── Oddiy rejim: attach + input + mic/send ── */
+                    <>
+                        <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
+                            title="Fayl biriktirish"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40 hover:scale-105 active:scale-95 transition-transform"
+                            style={{ background: "rgba(43,62,232,0.10)" }}>
+                            {uploading ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Paperclip className="w-4 h-4 text-white" />}
+                        </button>
+                        <input value={input} onChange={e => {
+                                setInput(e.target.value);
+                                const now = Date.now();
+                                if (selected?.other?.id && myProfileId && now - lastTypingSentRef.current > 2000) {
+                                    sendTyping(selected.other.id, myProfileId, myName);
+                                    lastTypingSentRef.current = now;
+                                }
+                            }} onKeyDown={e => e.key === "Enter" && send()}
+                            placeholder={uploading ? `Yuklanmoqda ${uploadPct}%...` : "Xabar yozing..."}
+                            maxLength={2000} disabled={uploading}
+                            className="flex-1 h-10 rounded-xl px-3.5 text-sm text-white outline-none disabled:opacity-60"
+                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "#00CEC8" }} />
+                        {/* Matn bo'sh bo'lsa mic, aks holda jo'natish */}
+                        {input.trim() ? (
+                            <button onClick={send} disabled={sending}
+                                className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40"
+                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                {sending ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Send className="w-4 h-4 text-white" />}
+                            </button>
+                        ) : (
+                            <button onClick={startVoice} disabled={uploading}
+                                title="Ovozli xabar yozish"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40 hover:scale-105 active:scale-95 transition-transform"
+                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                <Mic className="w-4 h-4 text-white" />
+                            </button>
+                        )}
+                    </>
+                )}
             </div>
         </>
     ) : (

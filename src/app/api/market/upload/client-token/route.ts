@@ -19,6 +19,13 @@ export async function POST(req: Request): Promise<NextResponse> {
                         "video/mp4", "video/webm", "video/quicktime",
                         "video/x-m4v", "video/ogg", "video/x-msvideo", "video/x-matroska",
                         "image/jpeg", "image/png", "image/webp", "image/gif",
+                        "audio/webm", "audio/mp4", "audio/mpeg", "audio/ogg", "audio/wav",
+                        // Fayllar (DM'da fayl yuborish uchun)
+                        "application/pdf",
+                        "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "application/zip", "application/x-zip-compressed",
+                        "text/plain",
                     ],
                     // Cheksiz hajm — multipart bilan katta videolar (30 soatlik ham) yuklanadi.
                     // (maximumSizeInBytes ko'rsatilmaganda Blok SDK cheklov qo'ymaydi.)
