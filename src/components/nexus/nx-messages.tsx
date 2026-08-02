@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare, Phone, Video, Users, MessageSquare } from "lucide-react";
+import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck } from "lucide-react";
 import { usePresence } from "@/lib/presence";
 
 interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean }
@@ -81,8 +81,12 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     const loadConvs = useCallback(() => {
         fetch("/api/nexus/messages").then(r => r.json()).then(d => setConversations(d.conversations ?? [])).catch(() => { });
     }, []);
+    const [peerReadAt, setPeerReadAt] = useState<string | null>(null);
     const loadThread = useCallback((cid: string) => {
-        fetch(`/api/nexus/messages/${cid}`).then(r => r.json()).then(d => setMessages(d.messages ?? [])).catch(() => { });
+        fetch(`/api/nexus/messages/${cid}`).then(r => r.json()).then(d => {
+            setMessages(d.messages ?? []);
+            setPeerReadAt(d.peerReadAt ?? null);
+        }).catch(() => { });
     }, []);
 
     // Ochilganda
@@ -320,19 +324,30 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 {messages.length === 0 && (
                     <p className="text-center text-xs py-8" style={{ color: "rgba(120,140,185,0.6)" }}>Suhbat boshlang</p>
                 )}
-                {messages.map(m => (
-                    <div key={m.id} className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
-                        <div className="flex flex-col gap-0.5 max-w-[75%] lg:max-w-[60%]">
-                            <div className="px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words"
-                                style={m.mine
-                                    ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)", color: "#fff", borderBottomRightRadius: "4px" }
-                                    : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.92)", borderBottomLeftRadius: "4px" }}>
-                                {m.text}
+                {messages.map(m => {
+                    // Read receipt: mening xabarim + peer keyin ochgan bo'lsa → 2 ko'k ptichka
+                    const isRead = m.mine && !m.id.startsWith("tmp-") && peerReadAt && new Date(m.createdAt) <= new Date(peerReadAt);
+                    return (
+                        <div key={m.id} className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
+                            <div className="flex flex-col gap-0.5 max-w-[75%] lg:max-w-[60%]">
+                                <div className="px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words"
+                                    style={m.mine
+                                        ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)", color: "#fff", borderBottomRightRadius: "4px" }
+                                        : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.92)", borderBottomLeftRadius: "4px" }}>
+                                    {m.text}
+                                </div>
+                                <div className={`flex items-center gap-1 px-1 ${m.mine ? "justify-end" : "justify-start"}`}>
+                                    <span className="text-[10px]" style={{ color: "rgba(80,100,150,0.7)" }}>{timeShort(m.createdAt)}</span>
+                                    {m.mine && (
+                                        isRead
+                                            ? <CheckCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} strokeWidth={2.5} />
+                                            : <Check className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.65)" }} strokeWidth={2.5} />
+                                    )}
+                                </div>
                             </div>
-                            <span className={`text-[10px] px-1 ${m.mine ? "text-right" : "text-left"}`} style={{ color: "rgba(80,100,150,0.7)" }}>{timeShort(m.createdAt)}</span>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
                 <div ref={endRef} />
             </div>
 

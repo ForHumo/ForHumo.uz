@@ -31,7 +31,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     });
     const messages = recent.reverse();
 
-    // o'qildi
+    // Peer'ning oxirgi o'qigan vaqti (mening xabarlarim uchun 2 ptichka hisoblash)
+    const peerReadAt = conv.user1Id === me.id ? conv.user2ReadAt : conv.user1ReadAt;
+
+    // o'qildi (menikini — yangilash)
     await prisma.nexusConversation.update({
         where: { id },
         data: conv.user1Id === me.id ? { user1ReadAt: new Date() } : { user2ReadAt: new Date() },
@@ -43,6 +46,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({
         messages: messages.map(m => ({ id: m.id, text: m.text, mine: m.senderId === me.id, createdAt: m.createdAt })),
         other: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,
+        peerReadAt,
     });
 }
 
