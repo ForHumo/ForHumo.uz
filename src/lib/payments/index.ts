@@ -13,30 +13,34 @@ import { paymeProvider } from "./payme";
 import { clickProvider } from "./click";
 import { stripeProvider } from "./stripe";
 
-// Real shlyuz kalitlari mavjudmi? (env orqali tanlanadi)
+// Ustuvorlik: env'da BARCHA kerakli kalitlar bo'lsa — real ishlatiladi.
+// Qisman sozlash → xavfli (foydalanuvchi to'lasa ham webhook ishlamaydi)
+// shu sabab MERCHANT_ID + MERCHANT_KEY ikkalasini talab qilamiz.
+const paymeReady  = () => !!(process.env.PAYME_MERCHANT_ID && process.env.PAYME_MERCHANT_KEY);
+const clickReady  = () => !!(process.env.CLICK_MERCHANT_ID && process.env.CLICK_SERVICE_ID && process.env.CLICK_SECRET);
+const stripeReady = () => !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET);
+
+// Real shlyuz kalitlari to'liq mavjudmi? (webhook bilan birga)
 export function isLiveMode(): boolean {
-    return !!(process.env.CLICK_MERCHANT_ID || process.env.PAYME_MERCHANT_ID || process.env.STRIPE_SECRET_KEY);
+    return paymeReady() || clickReady() || stripeReady();
 }
 
-// Ustuvorlik: env'da qaysi kalitlar bor bo'lsa — o'sha ishlatiladi.
-// UZS: PAYME_MERCHANT_ID > CLICK_MERCHANT_ID > test
-// USD: STRIPE_SECRET_KEY > test
 export function getDepositProvider(currency: Currency): PaymentProvider {
     if (currency === "UZS") {
-        if (process.env.PAYME_MERCHANT_ID) return paymeProvider;
-        if (process.env.CLICK_MERCHANT_ID) return clickProvider;
+        if (paymeReady()) return paymeProvider;
+        if (clickReady()) return clickProvider;
     }
-    if (currency === "USD" && process.env.STRIPE_SECRET_KEY) return stripeProvider;
+    if (currency === "USD" && stripeReady()) return stripeProvider;
     return testProvider;
 }
 
 export function getPayoutProvider(currency: Currency): PaymentProvider {
     // Payout hozircha barcha real shlyuzlarda "processing" — MChJ hisobi orqali qo'lda
     if (currency === "UZS") {
-        if (process.env.PAYME_MERCHANT_ID) return paymeProvider;
-        if (process.env.CLICK_MERCHANT_ID) return clickProvider;
+        if (paymeReady()) return paymeProvider;
+        if (clickReady()) return clickProvider;
     }
-    if (currency === "USD" && process.env.STRIPE_SECRET_KEY) return stripeProvider;
+    if (currency === "USD" && stripeReady()) return stripeProvider;
     return testProvider;
 }
 

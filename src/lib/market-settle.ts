@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { notify } from "@/lib/market-notify";
+import { grantAchievement } from "@/lib/achievements";
 
 // Platforma komissiyasi (sotuvchidan ushlab qolinadi)
 export const MARKET_COMMISSION = 0.05; // 5%
@@ -57,7 +58,7 @@ export async function settleOrder(orderId: string) {
     ops.push(prisma.marketOrder.update({ where: { id: orderId }, data: { settledAt: new Date() } }));
     await prisma.$transaction(ops);
 
-    // Sotuvchilarga bildirishnoma (bloklamaydi)
+    // Sotuvchilarga bildirishnoma + yutuqlar (tier'lar)
     for (const p of payouts) {
         await notify(p.ownerId, {
             type: "ORDER_UPDATE",
@@ -65,5 +66,16 @@ export async function settleOrder(orderId: string) {
             body: `${short} yetkazildi — hamyoningizga tushdi`,
             link: `/market/dashboard`,
         });
+        // Tier-based sotuv yutuqlari — brend egasining jami settled buyurtmalari soni
+        const ownerBrands = await prisma.marketBrand.findMany({ where: { ownerId: p.ownerId }, select: { id: true } });
+        const brandIds = ownerBrands.map(b => b.id);
+        if (brandIds.length) {
+            const salesCount = await prisma.marketOrderItem.count({
+                where: { product: { brandId: { in: brandIds } }, order: { settledAt: { not: null } } },
+            });
+            await grantAchievement(p.ownerId, "market.first_sale");
+            if (salesCount >= 10) await grantAchievement(p.ownerId, "market.10_sales");
+            if (salesCount >= 100) await grantAchievement(p.ownerId, "market.100_sales");
+        }
     }
 }

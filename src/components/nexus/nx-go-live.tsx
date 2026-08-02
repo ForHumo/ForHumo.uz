@@ -68,6 +68,11 @@ export function NxGoLive() {
     const bottomRef = useRef<HTMLDivElement>(null);
     const roomRef = useRef<Room | null>(null);
     const publishedTracksRef = useRef<{ video?: LocalVideoTrack; audio?: LocalAudioTrack }>({});
+    // Modal yopilganda cleanup uchun eng oxirgi qiymatlarni ushlash
+    const streamIdRef = useRef<string | null>(null);
+    const stageRef = useRef<Stage>("setup");
+    useEffect(() => { streamIdRef.current = streamId; }, [streamId]);
+    useEffect(() => { stageRef.current = stage; }, [stage]);
 
     // ── Kamera/mikrofon — modal ochilganda yoqiladi, yopilganda o'chadi ──
     useEffect(() => {
@@ -102,10 +107,18 @@ export function NxGoLive() {
         publishedTracksRef.current.video?.mediaStreamTrack && (publishedTracksRef.current.video.mediaStreamTrack.enabled = camOn);
     }, [camOn]);
 
-    // ── Reset (yopilganda) ──
+    // ── Reset (yopilganda) — jonli efir aktiv bo'lsa DB'da ham tugatiladi ──
     useEffect(() => {
         if (!goLiveOpen) {
+            const wasLive = stageRef.current === "live";
+            const activeId = streamIdRef.current;
             disconnectLiveKit();
+            // Efir aktiv edi va foydalanuvchi tugatmasdan yopdi — avto-tugatish
+            if (wasLive && activeId) {
+                fetch(`/api/nexus/live/${activeId}`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "end" }),
+                }).catch(() => { });
+            }
             setStage("setup"); setTitle(""); setCategory(""); setPrivacy("PUBLIC");
             setMicOn(true); setCamOn(true); setStarting(false); setErr(null);
             setStreamId(null); setViewers(0); setPeak(0); setDuration(0);

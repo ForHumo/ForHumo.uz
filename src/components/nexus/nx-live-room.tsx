@@ -121,8 +121,14 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     }
                 };
                 const onTrackUnsubscribed = (track: RemoteTrack) => {
-                    track.detach().forEach(el => el.remove());
-                    if (track.kind === Track.Kind.Video) setHasRemoteVideo(false);
+                    // React boshqaradigan element'ni DOM'dan olib tashlamaymiz —
+                    // faqat track detach; element ref keyingi subscribe uchun mavjud qoladi.
+                    if (track.kind === Track.Kind.Video && videoElRef.current) {
+                        track.detach(videoElRef.current);
+                        setHasRemoteVideo(false);
+                    } else if (track.kind === Track.Kind.Audio && audioElRef.current) {
+                        track.detach(audioElRef.current);
+                    }
                 };
 
                 room.on(RoomEvent.TrackSubscribed, onTrackSubscribed);

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { after } from "next/server";
 import { nexusNotify } from "@/lib/nexus-notify";
 import { isBlockedBetween } from "@/lib/nexus-block";
+import { grantAchievement } from "@/lib/achievements";
 
 // POST /api/nexus/follow — follow toggle ({ username } yoki { profileId })
 export async function POST(req: Request) {
@@ -35,5 +36,15 @@ export async function POST(req: Request) {
     }
 
     const followerCount = await prisma.nexusFollow.count({ where: { followingId: targetId } });
+
+    // Tier-based yutuqlar (obunachi kuzatuvchi soniga qarab)
+    if (!existing) {
+        after(async () => {
+            if (followerCount >= 10) await grantAchievement(targetId, "nexus.10_followers");
+            if (followerCount >= 100) await grantAchievement(targetId, "nexus.100_followers");
+            if (followerCount >= 1000) await grantAchievement(targetId, "nexus.1k_followers");
+        });
+    }
+
     return NextResponse.json({ following: !existing, followerCount });
 }

@@ -24,6 +24,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (stream.hidden && stream.profileId !== me.id) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
 
     const isPublisher = stream.profileId === me.id;
+
+    // Maxfiylik: PRIVATE efir faqat ega uchun. FRIENDS efirni faqat egasi va uni kuzatuvchilar ko'radi.
+    if (!isPublisher) {
+        if (stream.privacy === "PRIVATE") {
+            return NextResponse.json({ error: "Bu efir maxfiy" }, { status: 403 });
+        }
+        if (stream.privacy === "FRIENDS") {
+            const following = await prisma.nexusFollow.findFirst({
+                where: { followerId: me.id, followingId: stream.profileId }, select: { id: true },
+            });
+            if (!following) return NextResponse.json({ error: "Faqat obunachilarga" }, { status: 403 });
+        }
+    }
     const roomName = `live_${id}`;
 
     const token = await createLiveKitToken({
