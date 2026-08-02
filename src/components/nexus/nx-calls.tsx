@@ -10,6 +10,7 @@ import { useNxPlayer } from "./nx-player-ctx";
 
 interface CallPeer { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean }
 interface CallRecording { id: string; audioUrl: string; durationSec: number; sizeKb: number }
+interface GroupCallItem { id: string; roomName: string; title: string | null; status: "ACTIVE" | "ENDED"; createdAt: string; endedAt: string | null; participantCount: number; isHost: boolean }
 interface CallItem {
     id: string;
     kind: "audio" | "video";
@@ -23,14 +24,19 @@ interface CallItem {
 }
 
 export function NxCalls() {
-    const { callsOpen, setCallsOpen, startCall, setGroupCallOpen } = useNxPlayer();
+    const { callsOpen, setCallsOpen, startCall, setGroupCallOpen, openGroupCall } = useNxPlayer();
     const [calls, setCalls] = useState<CallItem[]>([]);
+    const [groupCalls, setGroupCalls] = useState<GroupCallItem[]>([]);
     const [loading, setLoading] = useState(false);
 
     const load = useCallback(async () => {
         setLoading(true);
-        const r = await fetch("/api/nexus/calls").then(x => x.json()).catch(() => null) as { calls?: CallItem[] } | null;
-        setCalls(r?.calls || []);
+        const [r1, r2] = await Promise.all([
+            fetch("/api/nexus/calls").then(x => x.json()).catch(() => null) as Promise<{ calls?: CallItem[] } | null>,
+            fetch("/api/nexus/group-calls").then(x => x.json()).catch(() => null) as Promise<{ calls?: GroupCallItem[] } | null>,
+        ]);
+        setCalls(r1?.calls || []);
+        setGroupCalls(r2?.calls || []);
         setLoading(false);
     }, []);
 
@@ -72,16 +78,67 @@ export function NxCalls() {
                         style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
                         <Users className="h-4 w-4" /> Guruh chaqiruv (LiveKit)
                     </button>
+
+                    {/* Faol guruh chaqiruvlar (agar bo'lsa — birinchi ko'rsatiladi) */}
+                    {groupCalls.filter(g => g.status === "ACTIVE").length > 0 && (
+                        <div className="mb-3">
+                            <p className="mb-1.5 px-1 text-[10px] font-black uppercase" style={{ color: "rgba(0,206,200,0.85)" }}>Faol guruh</p>
+                            {groupCalls.filter(g => g.status === "ACTIVE").map(g => (
+                                <div key={g.id} className="mb-1 flex items-center gap-3 rounded-2xl p-3"
+                                    style={{ border: "1px solid rgba(0,206,200,0.35)", background: "rgba(0,206,200,0.05)" }}>
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                        <Users className="h-5 w-5 text-white" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-bold text-white">{g.title || "Guruh chaqiruv"}</p>
+                                        <p className="mt-0.5 text-[10px]" style={{ color: "#00CEC8" }}>
+                                            Faol · {g.participantCount} ishtirokchi{g.isHost ? " · Host" : ""}
+                                        </p>
+                                    </div>
+                                    <button onClick={() => { setCallsOpen(false); openGroupCall(g.id); }}
+                                        className="rounded-xl px-3 py-1.5 text-xs font-black text-white shadow-lg"
+                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                        Kirish
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Guruh chaqiruv tarixi (tugagan) */}
+                    {groupCalls.filter(g => g.status === "ENDED").length > 0 && (
+                        <div className="mb-3">
+                            <p className="mb-1.5 px-1 text-[10px] font-black uppercase" style={{ color: "rgba(140,160,210,0.7)" }}>Tugagan guruhlar</p>
+                            {groupCalls.filter(g => g.status === "ENDED").slice(0, 5).map(g => (
+                                <div key={g.id} className="mb-1 flex items-center gap-3 rounded-2xl p-3">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ background: "rgba(43,62,232,0.15)" }}>
+                                        <Users className="h-5 w-5" style={{ color: "rgba(140,160,210,0.8)" }} />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-bold text-white">{g.title || "Guruh chaqiruv"}</p>
+                                        <p className="mt-0.5 text-[10px]" style={{ color: "rgba(80,100,150,0.85)" }}>
+                                            {g.participantCount} ishtirokchi{g.isHost ? " · Host" : ""} · {timeAgo(g.createdAt)}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
                     {loading && calls.length === 0 ? (
                         <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin" style={{ color: "rgba(140,160,210,0.6)" }} /></div>
                     ) : calls.length === 0 ? (
-                        <div className="py-16 text-center">
-                            <Clock className="mx-auto mb-3 h-8 w-8" style={{ color: "rgba(80,100,150,0.5)" }} />
-                            <p className="text-sm" style={{ color: "rgba(120,140,185,0.7)" }}>Hozircha qo'ng'iroqlar yo'q</p>
-                            <p className="mt-1 text-[11px]" style={{ color: "rgba(80,100,150,0.5)" }}>DM ichida telefon yoki video tugmasini bosing</p>
-                        </div>
+                        groupCalls.length === 0 ? (
+                            <div className="py-10 text-center">
+                                <Clock className="mx-auto mb-3 h-8 w-8" style={{ color: "rgba(80,100,150,0.5)" }} />
+                                <p className="text-sm" style={{ color: "rgba(120,140,185,0.7)" }}>Hozircha qo'ng'iroqlar yo'q</p>
+                                <p className="mt-1 text-[11px]" style={{ color: "rgba(80,100,150,0.5)" }}>DM ichida telefon yoki video tugmasini bosing</p>
+                            </div>
+                        ) : null
                     ) : (
                         <div className="flex flex-col gap-1">
+                            <p className="mb-1 px-1 text-[10px] font-black uppercase" style={{ color: "rgba(140,160,210,0.7)" }}>1:1 chaqiruvlar</p>
                             {calls.map(c => {
                                 const peerLabel = c.peer?.name || c.peer?.username || c.peer?.humoId || "Peer";
                                 const Icon = c.missed ? PhoneMissed : c.dir === "in" ? PhoneIncoming : PhoneOutgoing;

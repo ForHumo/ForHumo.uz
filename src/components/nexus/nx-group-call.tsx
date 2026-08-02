@@ -7,7 +7,9 @@ import "@livekit/components-styles";
 
 import { useCallback, useEffect, useState } from "react";
 import { LiveKitRoom, VideoConference, RoomAudioRenderer } from "@livekit/components-react";
-import { Loader2, X, Check, PhoneOff, Users, Plus, Link as LinkIcon, UserPlus, Search, BadgeCheck } from "lucide-react";
+import { Loader2, X, Check, PhoneOff, Users, Plus, Link as LinkIcon, UserPlus, Search, BadgeCheck, MessageSquare } from "lucide-react";
+import { NxGroupChat } from "./nx-group-chat";
+import { NxGroupParticipants } from "./nx-group-participants";
 import { useNxPlayer } from "./nx-player-ctx";
 
 interface GroupCallListItem {
@@ -34,6 +36,18 @@ export function NxGroupCall() {
     const [inviteResults, setInviteResults] = useState<SUser[]>([]);
     const [inviteBusy, setInviteBusy] = useState(false);
     const [inviteSent, setInviteSent] = useState<Set<string>>(new Set());
+    const [chatOpen, setChatOpen] = useState(false);
+    const [participantsOpen, setParticipantsOpen] = useState(false);
+    const [callInfo, setCallInfo] = useState<{ hostId: string; isHost: boolean } | null>(null);
+
+    // Xona ma'lumotini yuklash (host bo'lish uchun)
+    useEffect(() => {
+        if (!activeCallId) { setCallInfo(null); return; }
+        fetch(`/api/nexus/group-calls/${activeCallId}`)
+            .then(r => r.json())
+            .then(r => { if (r?.call) setCallInfo({ hostId: r.call.hostId, isHost: r.call.isHost }); })
+            .catch(() => { });
+    }, [activeCallId]);
 
     const load = useCallback(async () => {
         setLoading(true); setErr("");
@@ -162,6 +176,16 @@ export function NxGroupCall() {
                         <p className="truncate text-sm font-black">Guruh chaqiruv</p>
                         <p className="mt-0.5 truncate text-[10px] text-white/60">{tokenInfo.roomName}</p>
                     </div>
+                    <button onClick={() => setChatOpen(v => !v)}
+                        title="Chat"
+                        className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
+                        <MessageSquare className="h-4 w-4 text-white" />
+                    </button>
+                    <button onClick={() => setParticipantsOpen(v => !v)}
+                        title="Ishtirokchilar"
+                        className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
+                        <Users className="h-4 w-4 text-white" />
+                    </button>
                     <button onClick={() => { setInviteOpen(true); setInviteQuery(""); setInviteResults([]); }}
                         className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white/90 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
                         <UserPlus className="h-3.5 w-3.5" /> Taklif
@@ -187,6 +211,15 @@ export function NxGroupCall() {
                         style={{ height: "100%" }}>
                         <VideoConference />
                         <RoomAudioRenderer />
+                        <NxGroupChat open={chatOpen} onClose={() => setChatOpen(false)} />
+                        {activeCallId && (
+                            <NxGroupParticipants
+                                open={participantsOpen}
+                                onClose={() => setParticipantsOpen(false)}
+                                callId={activeCallId}
+                                isHost={callInfo?.isHost ?? false}
+                            />
+                        )}
                     </LiveKitRoom>
                 </div>
 
