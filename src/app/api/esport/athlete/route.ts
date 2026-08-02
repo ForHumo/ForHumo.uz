@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile, MLBB_ROLES } from "@/lib/esport";
+import { grantAchievement } from "@/lib/achievements";
 
 // O'yin slug'i bo'yicha Steam bog'lanish talab qilinadimi?
 // CS2 uchun Valve identiteti (SteamID64) majburiy — soxta akkountlar oldini olish uchun.
@@ -136,6 +138,8 @@ export async function POST(req: Request) {
     } catch {
         return NextResponse.json({ error: "Nickname yoki o'yin ID band" }, { status: 409 });
     }
+
+    after(() => { grantAchievement(me.id, "esport.athlete"); });
 
     return NextResponse.json({
         ok: true,

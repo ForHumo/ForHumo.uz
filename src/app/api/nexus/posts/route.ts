@@ -13,6 +13,7 @@ import { notifyMentions } from "@/lib/nexus-mention";
 import { filterMediaUrls } from "@/lib/media-url";
 import { buildInterestProfile, scorePost } from "@/lib/nexus-rank";
 import { embedPost, semanticPostScores } from "@/lib/nexus-embed";
+import { grantAchievement } from "@/lib/achievements";
 
 async function myProfileId(): Promise<string | null> {
     const session = await getServerSession(authOptions);
@@ -229,6 +230,8 @@ export async function POST(req: Request) {
     after(() => notifyMentions({ text: post.text, actorId: profile.id, postId: post.id }));
     // Semantik embedding (4-bosqich tavsiya) — javobni kechiktirmaydi
     after(() => embedPost(post.id, post.text ?? "", post.hashtags));
+    // Yutuq (birinchi post)
+    after(() => { grantAchievement(profile.id, "nexus.first_post"); });
 
     const prodMap = await loadAttachedProducts([attachId]);
 

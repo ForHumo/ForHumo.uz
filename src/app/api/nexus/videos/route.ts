@@ -10,6 +10,7 @@ import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { currencyForCountry } from "@/lib/money";
 import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { isValidMediaUrl, filterMediaUrls } from "@/lib/media-url";
+import { grantAchievement } from "@/lib/achievements";
 
 // POST /api/nexus/videos — yangi video
 export async function POST(req: Request) {
@@ -76,6 +77,7 @@ export async function POST(req: Request) {
         module: "NEXUS", targetType: "VIDEO", targetId: video.id,
         text: `${video.title}\n${video.description || ""}`, imageUrl: video.thumbUrl, kind: "video",
     }));
+    after(() => { grantAchievement(profile.id, "nexus.first_video"); });
 
     return NextResponse.json({ video });
 }

@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateWallet, walletCurrency } from "@/lib/wallet";
 import { minAmount, maxAmount, roundMoney, formatMoney } from "@/lib/money";
 import { getDepositProvider } from "@/lib/payments";
+import { grantAchievement } from "@/lib/achievements";
 
 // POST /api/pay/deposit — hamyonni to'ldirish.
 // Test rejimda darhol tushadi; real shlyuzda redirectUrl qaytarib, webhook'da tasdiqlanadi.
@@ -43,6 +45,8 @@ export async function POST(req: Request) {
             },
         }),
     ]);
+
+    after(() => { grantAchievement(profile.id, "pay.first_deposit"); });
 
     return NextResponse.json({ balance: updated.balance, currency, transaction: tx });
 }

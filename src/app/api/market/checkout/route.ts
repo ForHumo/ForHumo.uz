@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { validatePromo } from "@/lib/market-promo";
 import { getUsdUzsRate } from "@/lib/fx";
 import { sendSms } from "@/lib/sms";
+import { grantAchievement } from "@/lib/achievements";
 
 type PaymentMethod = "WALLET" | "CASH_ON_DELIVERY" | "CARD_ON_DELIVERY";
 
@@ -124,6 +125,9 @@ export async function POST(req: Request) {
             await tx.marketCartItem.deleteMany({ where: { profileId: profile.id } });
             return { order, newBalance };
         });
+
+        // ── Yutuq (birinchi xarid) — background ─────────────────────────
+        after(() => { grantAchievement(profile.id, "market.first_order"); });
 
         // ── SMS bildirishnoma (fail-open, background) ───────────────────
         after(async () => {

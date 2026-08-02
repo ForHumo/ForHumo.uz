@@ -8,6 +8,7 @@ import { nexusNotifyFollowers } from "@/lib/nexus-notify";
 import { moderateOnCreate } from "@/lib/moderation";
 import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { after } from "next/server";
+import { grantAchievement } from "@/lib/achievements";
 
 // Onlayn ko'ruvchi — oxirgi 30 soniyada heartbeat yuborganlar
 const VIEWER_WINDOW_MS = 30_000;
@@ -120,6 +121,7 @@ export async function POST(req: Request) {
     if (!isUpcoming && stream.privacy === "PUBLIC") {
         after(() => nexusNotifyFollowers({ actorId: me.id, type: "LIVE", liveId: stream.id }));
     }
+    after(() => { grantAchievement(me.id, "nexus.first_live"); });
 
     return NextResponse.json({ stream });
 }

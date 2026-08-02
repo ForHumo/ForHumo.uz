@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { grantAchievement } from "@/lib/achievements";
 
 // Avto-tasdiqlangan + bepul brend egalari (asoschilar)
 const FOUNDER_HUMO_IDS = ["UZ6889574", "UZ3549920"];
@@ -89,6 +91,7 @@ export async function POST(req: Request) {
                 },
             }),
         ]);
+        after(() => { grantAchievement(profile.id, "market.first_brand"); });
         return NextResponse.json({ brand, charged: price });
     }
 
@@ -103,5 +106,6 @@ export async function POST(req: Request) {
             verified: isFounder,
         },
     });
+    after(() => { grantAchievement(profile.id, "market.first_brand"); });
     return NextResponse.json({ brand, charged: 0 });
 }

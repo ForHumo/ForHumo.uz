@@ -1638,3 +1638,23 @@ model WalletSafe {
 
   @@map("ZijSafe")
 }
+
+// ─────────────────────────────────────────────────────────────
+// Yutuqlar (Achievement) — cross-modul (eSport + Nexus + Market + Pay)
+// UserProfile.id + code bo'yicha unique — bir yutuq bir marta beriladi.
+// ─────────────────────────────────────────────────────────────
+model UserAchievement {
+  id         String   @id @default(cuid())
+  profileId  String
+  code       String            // "esport.first_win", "nexus.100_followers", "market.first_sale" ...
+  title      String            // ko'rsatiladigan sarlavha (til foydalanuvchi tilida bo'lishi mumkin)
+  icon       String   @default("Trophy")  // Lucide icon nomi (masalan "Trophy", "Star")
+  category   String            // "esport" | "nexus" | "market" | "pay" | "id"
+  tier       String   @default("bronze")  // "bronze" | "silver" | "gold" | "platinum"
+  meta       Json?             // qo'shimcha ma'lumot (masalan: { count: 100, tournamentId: "..." })
+  earnedAt   DateTime @default(now())
+
+  @@unique([profileId, code])
+  @@index([profileId, category])
+  @@index([category, earnedAt])
+}
