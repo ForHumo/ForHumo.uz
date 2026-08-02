@@ -19,6 +19,7 @@ import { NxSocialFeed } from "./nx-social-feed";
 import { NxChatList } from "./nx-chat-list";
 import { NxChannels } from "./nx-channels";
 import { NexusFollowList } from "./nexus-follow-list";
+import { NxOnboarding } from "./nx-onboarding";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Umumiy yordamchi komponentlar
@@ -40,6 +41,8 @@ export function FeedView() {
     return (
         <ViewShell>
             <NxStories />
+            {/* Yangi foydalanuvchi uchun 5 qadam checklist (bajarilsa avtomatik yashadi) */}
+            <NxOnboarding />
             {/* Real kontent qatorlari: jonli / yangi video / yangi musiqa */}
             <NxHomeRows />
             {/* Real postlar lentasi (composer bilan) */}
