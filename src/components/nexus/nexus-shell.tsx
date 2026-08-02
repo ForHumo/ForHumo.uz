@@ -28,6 +28,7 @@ import { NxCreatePost } from "./nx-create-post";
 import { NxStoryCreate } from "./nx-story-create";
 import { NxShare } from "./nx-share";
 import { NxReport } from "./nx-report";
+import { usePresence } from "@/lib/presence";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tab-ga mos view
@@ -63,6 +64,8 @@ export function NexusShell() {
 
     return (
         <NxPlayerProvider>
+            {/* Global presence subscription — nexus'ga kirgan bo'lsa "onlayn" bo'ladi */}
+            <PresenceKeepalive />
             <div
                 className="w-full h-full flex flex-col overflow-hidden text-white select-none"
                 style={{ background: "#050818" }}
@@ -122,6 +125,14 @@ export function NexusShell() {
             </div>
         </NxPlayerProvider>
     );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Presence keepalive — foydalanuvchi Nexus'da bo'lsa avtomatik onlayn
+// ─────────────────────────────────────────────────────────────────────────────
+function PresenceKeepalive() {
+    usePresence();
+    return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

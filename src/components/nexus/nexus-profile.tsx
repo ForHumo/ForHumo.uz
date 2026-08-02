@@ -11,8 +11,10 @@ import { NxTipSheet } from "./nx-tip-sheet";
 import { NxSubscribeSheet } from "./nx-subscribe-sheet";
 import { NxCreatorSubSettings } from "./nx-creator-sub-settings";
 import { formatMoney } from "@/lib/money";
+import { usePresence } from "@/lib/presence";
 
 interface ProfileData {
+    id: string;
     name: string | null; username: string | null; image: string | null;
     coverImage: string | null; bio: string | null; humoId: string | null; verified: boolean;
     subPrice: number; subCurrency: "UZS" | "USD";
@@ -24,6 +26,17 @@ function fzNum(n: number) {
     if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
     if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
     return String(n);
+}
+
+function ProfilePresenceKeepalive() { usePresence(); return null; }
+
+function ProfileOnlineBadge({ profileId }: { profileId: string }) {
+    const { isOnline } = usePresence();
+    if (!isOnline(profileId)) return null;
+    return (
+        <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 z-10"
+            style={{ background: "#10B981", borderColor: "#050818" }} title="Onlayn" />
+    );
 }
 
 export function NexusProfile({ username }: { username: string }) {
@@ -100,6 +113,8 @@ export function NexusProfile({ username }: { username: string }) {
 
     return (
         <NxPlayerProvider>
+            {/* Presence keepalive — bu profil ochilishi bilan foydalanuvchi ham onlayn deb hisoblanadi */}
+            <ProfilePresenceKeepalive />
             <div className="h-full overflow-y-auto text-white" style={{ background: "#050818" }}>
                 {/* Top bar */}
                 <header className="sticky top-0 z-20 flex items-center gap-3 px-3 h-14 backdrop-blur-xl"
@@ -139,8 +154,11 @@ export function NexusProfile({ username }: { username: string }) {
                         {/* Profil ma'lumoti */}
                         <div className="px-4 -mt-12 relative">
                             <div className="flex items-end justify-between">
-                                <div className="w-24 h-24 rounded-3xl p-[3px]" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 8px 32px rgba(43,62,232,0.4)" }}>
-                                    <img src={avatar} alt={displayName} className="w-full h-full rounded-[20px] object-cover bg-[#050818]" referrerPolicy="no-referrer" />
+                                <div className="relative">
+                                    <div className="w-24 h-24 rounded-3xl p-[3px]" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 8px 32px rgba(43,62,232,0.4)" }}>
+                                        <img src={avatar} alt={displayName} className="w-full h-full rounded-[20px] object-cover bg-[#050818]" referrerPolicy="no-referrer" />
+                                    </div>
+                                    <ProfileOnlineBadge profileId={data.profile.id} />
                                 </div>
                                 {/* Tugma */}
                                 {data.isMe ? (

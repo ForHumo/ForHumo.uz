@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare, Phone, Video, Users } from "lucide-react";
+import { usePresence } from "@/lib/presence";
 
 interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean }
 interface Conv { conversationId: string; other: Other | null; lastMessageText: string | null; lastMessageAt: string; lastMine: boolean; unread: boolean }
@@ -23,6 +25,14 @@ function timeShort(d: string) {
 
 export function NxMessages({ openWithUsername }: { openWithUsername?: string | null } = {}) {
     const { messagesOpen, setMessagesOpen, startCall, openGroupCall } = useNxPlayer();
+    const { data: session } = useSession();
+    const { isOnline, sendTyping, onTyping } = usePresence();
+    // @ts-ignore — session.user.profileId (auth.ts JWT ichida)
+    const myProfileId: string | null = (session?.user as { profileId?: string })?.profileId ?? null;
+    const myName = session?.user?.name ?? null;
+    const [peerTyping, setPeerTyping] = useState(false);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const lastTypingSentRef = useRef<number>(0);
 
     // DM'dan darrov guruh chaqiruv boshlash: create → invite → open
     const startGroupCall = useCallback(async (peerId: string, peerName: string | null) => {
@@ -48,6 +58,21 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     const [query, setQuery] = useState("");
     const [sending, setSending] = useState(false);
     const [newOpen, setNewOpen] = useState(false);
+
+    // "yozmoqda..." event'larini eshitish — faqat hozirgi selected peer'dan
+    useEffect(() => {
+        const off = onTyping((e) => {
+            if (!selected?.other?.id || !myProfileId) return;
+            if (e.fromId !== selected.other.id) return;
+            if (e.toId !== myProfileId) return;
+            setPeerTyping(true);
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = setTimeout(() => setPeerTyping(false), 3000);
+        });
+        return () => { off(); };
+    }, [onTyping, selected?.other?.id, myProfileId]);
+
+    useEffect(() => { setPeerTyping(false); }, [selected?.other?.id]);
     const [newQuery, setNewQuery] = useState("");
     const [newResults, setNewResults] = useState<SUser[]>([]);
     const endRef = useRef<HTMLDivElement>(null);
@@ -145,12 +170,23 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                 <ArrowLeft className="w-4 h-4 text-white" />
                             </button>
                             <Link href={selected.other?.username ? `/nexus/u/${selected.other.username}` : "/nexus"} onClick={close} className="flex items-center gap-2.5 flex-1 min-w-0">
-                                <div className="w-8 h-8 rounded-xl overflow-hidden flex-shrink-0">
+                                <div className="relative w-8 h-8 rounded-xl overflow-hidden flex-shrink-0">
                                     <img src={avatarOf(selected.other)} alt="" className="w-full h-full object-cover bg-white" />
+                                    {selected.other?.id && isOnline(selected.other.id) && (
+                                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2"
+                                            style={{ background: "#10B981", borderColor: "#050818" }} title="Onlayn" />
+                                    )}
                                 </div>
-                                <div className="min-w-0 flex items-center gap-1">
-                                    <span className="text-sm font-bold text-white truncate">{selected.other?.name || selected.other?.username || "Foydalanuvchi"}</span>
-                                    {selected.other?.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-sm font-bold text-white truncate">{selected.other?.name || selected.other?.username || "Foydalanuvchi"}</span>
+                                        {selected.other?.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                    </div>
+                                    {peerTyping ? (
+                                        <p className="text-[10px] font-bold" style={{ color: "#00CEC8" }}>yozmoqda...</p>
+                                    ) : selected.other?.id && isOnline(selected.other.id) ? (
+                                        <p className="text-[10px]" style={{ color: "rgba(16,185,129,0.85)" }}>onlayn</p>
+                                    ) : null}
                                 </div>
                             </Link>
                             {selected.other?.id && (
@@ -201,7 +237,15 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                         </div>
 
                         <div className="flex-shrink-0 px-4 py-3 flex items-center gap-2" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
-                            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
+                            <input value={input} onChange={e => {
+                                    setInput(e.target.value);
+                                    // Peer'ga "yozmoqda" signal (2 soniyada bir marta)
+                                    const now = Date.now();
+                                    if (selected?.other?.id && myProfileId && now - lastTypingSentRef.current > 2000) {
+                                        sendTyping(selected.other.id, myProfileId, myName);
+                                        lastTypingSentRef.current = now;
+                                    }
+                                }} onKeyDown={e => e.key === "Enter" && send()}
                                 placeholder="Xabar yozing..." maxLength={2000}
                                 className="flex-1 h-10 rounded-xl px-3.5 text-sm text-white outline-none"
                                 style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "#00CEC8" }} />
@@ -283,8 +327,14 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                     className="w-full flex items-center gap-3 px-4 py-3.5 text-left" style={{ borderBottom: "1px solid rgba(43,62,232,0.07)" }}
                                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(43,62,232,0.08)"}
                                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}>
-                                    <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0" style={{ border: "2px solid rgba(43,62,232,0.22)" }}>
-                                        <img src={avatarOf(c.other)} alt="" className="w-full h-full object-cover bg-white" />
+                                    <div className="relative w-11 h-11 flex-shrink-0">
+                                        <div className="w-11 h-11 rounded-2xl overflow-hidden" style={{ border: "2px solid rgba(43,62,232,0.22)" }}>
+                                            <img src={avatarOf(c.other)} alt="" className="w-full h-full object-cover bg-white" />
+                                        </div>
+                                        {c.other?.id && isOnline(c.other.id) && (
+                                            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
+                                                style={{ background: "#10B981", borderColor: "#050818" }} title="Onlayn" />
+                                        )}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between mb-0.5 gap-2">

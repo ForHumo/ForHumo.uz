@@ -13,7 +13,10 @@ export async function POST(req: Request) {
 
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Kirish talab" }, { status: 401 });
-    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+    const me = await prisma.userProfile.findUnique({
+        where: { email: session.user.email },
+        select: { id: true, name: true, username: true, image: true },
+    });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
     const body = await req.formData();
@@ -21,11 +24,27 @@ export async function POST(req: Request) {
     const channelName = String(body.get("channel_name") || "");
     if (!socketId || !channelName) return NextResponse.json({ error: "Yaroqsiz so'rov" }, { status: 400 });
 
-    // Faqat o'z kanaliga ruxsat
-    if (channelName !== `private-user-${me.id}`) {
-        return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+    // Private-user kanali — faqat egasining kanaliga ruxsat
+    if (channelName.startsWith("private-user-")) {
+        if (channelName !== `private-user-${me.id}`) {
+            return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+        }
+        const auth = pusher.authorizeChannel(socketId, channelName);
+        return NextResponse.json(auth);
     }
 
-    const auth = pusher.authorizeChannel(socketId, channelName);
-    return NextResponse.json(auth);
+    // Presence kanallari — foydalanuvchi identity qo'shiladi (kim onlayn)
+    if (channelName.startsWith("presence-")) {
+        const auth = pusher.authorizeChannel(socketId, channelName, {
+            user_id: me.id,
+            user_info: {
+                name: me.name,
+                username: me.username,
+                image: me.image,
+            },
+        });
+        return NextResponse.json(auth);
+    }
+
+    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
 }
