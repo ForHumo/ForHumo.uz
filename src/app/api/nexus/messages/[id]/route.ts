@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -6,6 +7,8 @@ import { isVerifiedProfile } from "@/lib/nexus";
 import { otherId } from "@/lib/nexus-dm";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { isBlockedBetween } from "@/lib/nexus-block";
+import { checkBanned, moderateDmMessage } from "@/lib/moderation-dm";
+import { BAN_LABELS } from "@/lib/moderation-ladder";
 
 async function meAndConv(email: string, id: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true } });
@@ -71,6 +74,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     if (await isBlockedBetween(me.id, otherId(conv, me.id))) return NextResponse.json({ error: "Bu suhbatga yoza olmaysiz" }, { status: 403 });
 
+    // AI moderation bloki tekshiruvi — foydalanuvchi aktiv ban ostidami?
+    const banCheck = await checkBanned(me.id);
+    if (banCheck.banned) {
+        const { ban } = banCheck;
+        const remaining = ban.expiresAt
+            ? `${BAN_LABELS[ban.level]} (${ban.expiresAt.toLocaleString("uz-UZ")} gacha)`
+            : "Abadiy";
+        return NextResponse.json({
+            error: `Sizga xabar jo'natish taqiqlangan. Muddat: ${remaining}. Sabab: ${ban.reason}. Adolatsiz deb hisoblasangiz, ariza berishingiz mumkin.`,
+            code: "USER_BANNED",
+            banId: ban.id,
+            expiresAt: ban.expiresAt,
+        }, { status: 403 });
+    }
+
     const body = (await req.json()) as {
         text?: string;
         mediaUrl?: string; mediaType?: string; mediaMime?: string;
@@ -125,6 +143,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             lastSenderId: me.id,
             ...(conv.user1Id === me.id ? { user1ReadAt: new Date() } : { user2ReadAt: new Date() }),
         },
+    });
+
+    // AI moderatsiya asinxron ishga tushiriladi — javobni kechiktirmaydi
+    after(async () => {
+        await moderateDmMessage({
+            messageId: msg.id,
+            senderId: me.id,
+            recipientId: otherId(conv, me.id),
+            text: msg.text,
+            mediaUrl: msg.mediaUrl,
+            mediaType: msg.mediaType,
+        });
     });
 
     return NextResponse.json({

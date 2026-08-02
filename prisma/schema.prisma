@@ -82,6 +82,9 @@ model UserProfile {
   // creator/gamer/entertainer/organization/government. NULL = generic (founder yoki eski).
   verifiedCategory  String?
 
+  // AI moderation blokirovkalari (progressiv)
+  bans              UserBan[]
+
   // Steam OpenID linking (CS2 sportchilar uchun majburiy; login emas — faqat identity link)
   steamId64     String?   @unique   // Valve SteamID64 (17-rem raqam)
   steamPersona  String?             // Steam displayed nickname (Web API'dan olinadi)
@@ -1693,6 +1696,34 @@ enum KycStatus {
   PENDING     // yuborilgan, admin tekshirmoqda
   APPROVED    // tasdiqlangan → UserProfile.level = 2
   REJECTED    // rad etilgan (sabab bilan)
+}
+
+// UserBan — AI moderation tomonidan berilgan vaqtincha yoki abadiy bloklash.
+// Progressiv jazo: har yangi bloklash oldingisidan uzunroq (1h → 3h → ... → forever).
+// Foydalanuvchi ariza berishi mumkin (appealText); founder ko'rib chiqadi.
+model UserBan {
+  id           String       @id @default(cuid())
+  profileId    String
+  profile      UserProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  level        Int                                  // 0..13 (BAN_LADDER indeksi); 13 = forever
+  reason       String                               // "hate_speech", "threat", "csam", "spam", "explicit", "other"
+  category     String       @default("soft")        // "hard" = darhol forever (CSAM/terrorizm), "soft" = ladder bo'yicha
+  contextSnippet String?                            // qisqa parcha (moderator ko'rishi uchun; ariza bo'lganda)
+  aiVerdict    String?                              // "BLOCK" | "REVIEW"
+  aiSeverity   Float?                               // 0-1
+  aiRelationScore Int?                              // 0-100 (yaqin do'st balli)
+  issuedAt     DateTime     @default(now())
+  expiresAt    DateTime?                            // NULL = abadiy
+  appealAt     DateTime?
+  appealText   String?                              // foydalanuvchi ariza matni
+  reviewedById String?                              // founder ko'rgan bo'lsa
+  reviewedAt   DateTime?
+  lifted       Boolean      @default(false)         // ariza tasdiqlangan bo'lsa qaytariladi
+  liftReason   String?
+
+  @@index([profileId, expiresAt])
+  @@index([expiresAt])
+  @@index([appealAt, reviewedAt])
 }
 
 model UserKyc {
