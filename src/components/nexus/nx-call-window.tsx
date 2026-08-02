@@ -13,6 +13,7 @@ import { Mic, MicOff, Video as CamIcon, VideoOff, PhoneOff, Loader2, Volume2, Vo
 import { useNxPlayer } from "./nx-player-ctx";
 import { VoiceFxPipeline, VOICE_FX_LIST, type VoiceEffect } from "@/lib/nexus-voice-fx";
 import { BackgroundFxPipeline, type BgEffect } from "@/lib/nexus-bg-fx";
+import { playDialTone, stopDialTone } from "@/lib/nexus-ringtone";
 import { useSession } from "next-auth/react";
 import { getPusherClient } from "@/lib/pusher-client";
 
@@ -109,6 +110,15 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     const [bgFx, setBgFx] = useState<BgEffect>("none");
     const [bgBusy, setBgBusy] = useState(false);
     const [fxSheetOpen, setFxSheetOpen] = useState(false);
+
+    // Dial tone — faqat CALLER tomonda, phase=connecting bo'lgan vaqtda
+    useEffect(() => {
+        if (role === "caller" && phase === "connecting") {
+            playDialTone();
+            return () => stopDialTone();
+        }
+        stopDialTone();
+    }, [role, phase]);
 
     const pcRef = useRef<RTCPeerConnection | null>(null);
     const voicePipelineRef = useRef<VoiceFxPipeline | null>(null);

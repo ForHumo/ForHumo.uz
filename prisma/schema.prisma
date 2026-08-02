@@ -101,6 +101,9 @@ model UserProfile {
   // Ro'yxatda YO'Q tur = default yoqilgan. Faqat OFF'lar saqlanadi.
   notifPrefs    Json?
 
+  // Nexus chaqiruv ringtone (signature/whisper/pulse/melody/classic) — default signature
+  ringtone      String   @default("signature")
+
   lastLoginAt   DateTime?
   loginEvents   LoginEvent[]
   supportTickets SupportTicket[]

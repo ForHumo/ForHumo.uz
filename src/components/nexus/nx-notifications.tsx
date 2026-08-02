@@ -11,6 +11,7 @@ import {
 import { NOTIF_TYPES, NOTIF_LABELS, type NotifTypeKey } from "@/lib/notif-types";
 import { formatMoney, type Currency } from "@/lib/money";
 import { getPushState, subscribePush, unsubscribePush, type PushState } from "@/lib/push-client";
+import { RINGTONE_LABELS, RINGTONE_DESCRIPTIONS, previewRingtone, type RingtoneVariant } from "@/lib/nexus-ringtone";
 
 type NType = "LIKE" | "COMMENT" | "FOLLOW" | "REPLY" | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION" | "SUB_EXPIRING" | "CALL_MISSED";
 interface NActor { name: string | null; username: string | null; image: string | null; verified: boolean }
@@ -83,12 +84,25 @@ export function NxNotifications() {
     const [pushBusy, setPushBusy] = useState(false);
     const [prefsOpen, setPrefsOpen] = useState(false);
     const [prefs, setPrefs] = useState<Record<string, boolean>>({});
+    const [ringtone, setRingtone] = useState<RingtoneVariant>("signature");
 
     async function loadPrefs() {
         try {
             const d = await fetch("/api/user/notif-prefs").then(r => r.json());
             setPrefs(d.prefs ?? {});
         } catch { /* ignore */ }
+        try {
+            const r = await fetch("/api/user/ringtone").then(x => x.json());
+            if (r?.ringtone) setRingtone(r.ringtone as RingtoneVariant);
+        } catch { /* ignore */ }
+    }
+    async function changeRingtone(v: RingtoneVariant) {
+        setRingtone(v);
+        previewRingtone(v);   // darrov demo eshittirish
+        await fetch("/api/user/ringtone", {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ variant: v }),
+        }).catch(() => { });
     }
     async function togglePref(type: NotifTypeKey) {
         const currentlyEnabled = prefs[type] !== false; // default yoqilgan
@@ -191,7 +205,7 @@ export function NxNotifications() {
 
                 {/* Prefs panel (Settings2 tugmasi bilan ochiladi) */}
                 {prefsOpen && (
-                    <div className="px-5 py-3 flex-shrink-0 space-y-1.5" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)", background: "rgba(43,62,232,0.04)" }}>
+                    <div className="px-5 py-3 flex-shrink-0 space-y-1.5 overflow-y-auto max-h-[60vh]" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)", background: "rgba(43,62,232,0.04)", scrollbarWidth: "none" }}>
                         <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: "rgba(140,160,210,0.75)" }}>Push bildirishnomalar</p>
                         {NOTIF_TYPES.map(t => {
                             const enabled = prefs[t] !== false;
@@ -204,6 +218,27 @@ export function NxNotifications() {
                                         style={{ background: enabled ? "#00CEC8" : "rgba(80,100,150,0.4)" }}>
                                         <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
                                             style={{ left: enabled ? "18px" : "2px" }} />
+                                    </div>
+                                </button>
+                            );
+                        })}
+
+                        {/* Ringtone selektori */}
+                        <p className="text-[10px] font-black uppercase tracking-wider mt-4 mb-2" style={{ color: "rgba(140,160,210,0.75)" }}>Chaqiruv ohangi</p>
+                        <p className="text-[10px] mb-2" style={{ color: "rgba(120,140,185,0.65)" }}>Tanlash uchun bosing — darrov namuna eshittiradi</p>
+                        {(Object.keys(RINGTONE_LABELS) as RingtoneVariant[]).map(v => {
+                            const active = ringtone === v;
+                            return (
+                                <button key={v} onClick={() => changeRingtone(v)}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all active:scale-[0.98]"
+                                    style={{ background: active ? "rgba(0,206,200,0.12)" : "rgba(43,62,232,0.05)", border: active ? "1px solid rgba(0,206,200,0.30)" : "1px solid transparent" }}>
+                                    <div className="w-5 h-5 flex-shrink-0 rounded-full flex items-center justify-center"
+                                        style={{ background: active ? "#00CEC8" : "rgba(80,100,150,0.20)" }}>
+                                        {active && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[11px] font-bold text-white leading-tight">{RINGTONE_LABELS[v]}</p>
+                                        <p className="text-[10px] mt-0.5" style={{ color: "rgba(120,140,185,0.75)" }}>{RINGTONE_DESCRIPTIONS[v]}</p>
                                     </div>
                                 </button>
                             );

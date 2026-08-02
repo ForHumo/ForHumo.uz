@@ -3,13 +3,13 @@
 // Global kelayotgan chaqiruv poller + qabul/rad overlay.
 // Nexus shell'da bir marta mount qilinadi; sessiya bo'yicha 2.5s'da /incoming ni tekshiradi.
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Phone, Video, PhoneOff, BadgeCheck } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import NxCallWindow from "./nx-call-window";
-import { playRingtone, stopRingtone } from "@/lib/nexus-ringtone";
+import { playRingtone, stopRingtone, type RingtoneVariant } from "@/lib/nexus-ringtone";
 import { getPusherClient } from "@/lib/pusher-client";
 
 // Pusher ulangan bo'lsa polling siyrak (30s heartbeat), aks holda 2.5s.
@@ -59,14 +59,23 @@ export function NxIncomingCall() {
         return () => { stopped = true; clearInterval(iv); };
     }, [incoming, setIncoming, activeCall]);
 
+    // Foydalanuvchi tanlagan ringtone (default signature). Sessiya boshida yuklaydi.
+    const [ringVariant, setRingVariant] = useState<RingtoneVariant>("signature");
+    useEffect(() => {
+        if (!myProfileId) return;
+        fetch("/api/user/ringtone").then(r => r.ok ? r.json() : null).then((d: { ringtone?: RingtoneVariant } | null) => {
+            if (d?.ringtone) setRingVariant(d.ringtone);
+        }).catch(() => { });
+    }, [myProfileId]);
+
     // Ringtone: RINGING kelganda o'ynaydi, qabul/rad/tugash bilan to'xtaydi
     useEffect(() => {
         if (incoming && !activeCall) {
-            playRingtone();
+            playRingtone(ringVariant);
             return () => stopRingtone();
         }
         stopRingtone();
-    }, [incoming, activeCall]);
+    }, [incoming, activeCall, ringVariant]);
 
     return (
         <>
