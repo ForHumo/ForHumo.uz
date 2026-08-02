@@ -114,7 +114,7 @@ Bu qismni tushunish uchun bir nechta faylni birga o'qish kerak. Eng muhim naqshl
 | **Esport** | `/esport`, `/teams`, `/players`, `/tournaments`, `/esport/admin`, `/history` | `api/teams/*`, `api/tournaments/*` + repositories | ✅ Tayyor | Role-based admin, jamoa invite/join, turnir registratsiya |
 | **Market** | `/market`, `/catalog`, `/cart`, `/orders`, `/wishlist`, `/product/[slug]`(+`/edit`), `/product/add`, `/brand/manage`, `/brand/[slug]`, `/profile`, `/profile/activity`, `/notifications`, `/dashboard`, `/u/[username]` | `api/market/*` to'liq | ✅ Tayyor (test) | Sharh tahrir/o'chirish, pagination, **variantlar** (rang/o'lcham, narx+stock), **Q&A**, **buyurtma kuzatuvi** (stepper+sotuvchi boshqaruvi), bekor→Zij qaytarish, oversell guard (atomik), **promokod** (founder), **sotuvchi dashboard**, **payout** (escrow 5%), shikoyat/flag, ommaviy profil. **Real launch'ga qoldi:** to'lov gateway, KYC, yetkazish |
 | **Pay (ALKH)** | `/pay` | `api/pay/*` (deposit/transfer/safe/wallet) | 🟡 Funksional | Deposit **test rejim**, withdraw o'chirilgan. ⚠️ `alkh-pay-content.tsx` `TX_META` har bir `ZijTransactionType`ni qamrashi shart (fallback bor) |
-| **Nexus** | `/nexus` (SPA), `/nexus/u/[username]`, `/nexus/tag/[tag]` | `api/nexus/*` (…stories/messages/videos/report) | 🟡 Core real | Feed + profil + qidiruv/kashf + bildirishnoma + stories + DM + **Video** (uzun + Shorts: real MP4 yuklash/player/ko'rish/like/izoh/obuna) real. Qolgan ~44 komponent (live/media) mock |
+| **Nexus** | `/nexus` (SPA), `/nexus/u/[username]`, `/nexus/tag/[tag]` | `api/nexus/*` (…calls/live/videos/tracks/channels) | ✅ Real | Feed + profil + qidiruv/kashf + bildirishnoma + stories + DM + **Video** (real MP4 yuklash/player/like/izoh/obuna) + **1:1 Chaqiruv** (WebRTC + Pusher + TURN + effektlar) + **Guruh chaqiruv** (LiveKit) + **Jonli efir** (LiveKit ingest) + Kanallar/Guruhlar (channels API). Mock modallar (40+) 2026-08-02 tozalandi |
 | **AI** | `/ai` (iframe), `api/ai/*` (Gemini) | `lib/ai.ts`, `lib/ai-moderate.ts` (kontent moderatsiya), `lib/moderation.ts` | 🟢 Real | Market AI: listing/NL qidiruv/chat. **AI moderatsiya:** pre-publish + reaktiv (shikoyat) + avto-yashirish. ⚠️ `lib/ai-moderator.ts` boshqa narsa (esport o'yin evristikasi) |
 | **Admin** | `/admin/moderation` | `api/admin/moderation/*` | 🟢 Real | Founder-gated moderatsiya navbati (`lib/admin-guard.ts` + `lib/founders.ts`). AI verdict + shikoyatlar; Saqlash/Yashirish |
 | **Statik** | `/faq`, `/support`, `/privacy-policy`, `/coming-soon` | `api/support/contact` | ✅ Tayyor | — |
@@ -139,12 +139,17 @@ LOCATION_ENCRYPTION_KEY   # ixtiyoriy — AES-256-GCM kaliti (crypto.ts); bo'lma
 VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
 ```
 
-## Current TODO (koddan kuzatilgan, dalilga asoslangan)
+## Current TODO (2026-08-02 audit'dan keyin)
 
-- [ ] **Pay'ni real rejimga o'tkazish** — `ZijTransactionType.DEPOSIT` test rejimda, `WITHDRAW` o'chirilgan. Haqiqiy to'lov integratsiyasi kerak.
-- [ ] **KYC level 2** — `UserProfile.level == 2` (biometrik) `schema.prisma` da "future" deb belgilangan, implementatsiya yo'q.
-- [ ] **Nexus N4+** — core feed real; stories/live/music/spaces/... hali mock (DB/API yo'q).
-- [ ] **Market go-live** — to'lov gateway (Click/Payme), KYC, yetkazish/logistika; naqd/karta buyurtmada komissiya ushlanmaydi.
+- [x] **Nexus mock tozalash** — 40+ dead komponent o'chirildi (F1+F2, commit 6f89da0)
+- [x] **Nexus Live video transport** — LiveKit ingest ulanadi (F3, commit 04ff712)
+- [x] **To'lov adapter skeleton** — Payme/Click/Stripe fayllar + webhook route'lar (F4, commit 7ede82c). MChJ kelgach faqat env qo'shiladi.
+- [x] **SMS bildirishnoma + yetkazib berish** — Eskiz.uz + delivery quote (F5, commit c3f05a1)
+- [x] **Achievement tizimi** — cross-modul yutuqlar (F6, commit ed26872)
+- [x] **KYC L2 skeleton** — 10M UZS / 1000 USD chegara + admin approve (F7, commit 677f20c)
+- [ ] **MChJ ochilishi** — ~1 oy kutmoqda. Ochilgach: PAYME_MERCHANT_ID/KEY + CLICK_MERCHANT_ID/SECRET + ESKIZ_EMAIL/PASSWORD env'ga qo'yish → real ishlaydi.
+- [ ] **Cloudflare Stream kalitlari** — eSport jonli efir uchun (hozir stub).
+- [ ] **Yandex Delivery API** — hozircha lokal tarifa (Toshkent 20k UZS, viloyat 40k).
 
 ## Muhim qoidalar
 
