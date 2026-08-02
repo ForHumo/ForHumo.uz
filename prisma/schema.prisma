@@ -1658,3 +1658,28 @@ model UserAchievement {
   @@index([profileId, category])
   @@index([category, earnedAt])
 }
+
+// ─────────────────────────────────────────────────────────────
+// KYC (Know Your Customer) — Level 2
+// Katta summalar (>10M UZS / >1000 USD) chiqarish uchun majburiy.
+// Hozircha qo'lda tekshiruv (passport rasm); kelajakda avto-face API.
+// ─────────────────────────────────────────────────────────────
+enum KycStatus {
+  PENDING     // yuborilgan, admin tekshirmoqda
+  APPROVED    // tasdiqlangan → UserProfile.level = 2
+  REJECTED    // rad etilgan (sabab bilan)
+}
+
+model UserKyc {
+  id           String    @id @default(cuid())
+  profileId    String    @unique   // bitta foydalanuvchida bitta faol ariza
+  passportUrl  String              // Vercel Blob URL — passport 1-bet skan
+  selfieUrl    String?             // ixtiyoriy — passport bilan selfi (autentiklik)
+  status       KycStatus @default(PENDING)
+  rejectReason String?             // REJECTED bo'lsa sabab
+  reviewedById String?             // admin UserProfile.id (kim ko'rdi)
+  reviewedAt   DateTime?
+  submittedAt  DateTime  @default(now())
+
+  @@index([status, submittedAt])
+}
