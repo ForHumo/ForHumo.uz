@@ -70,7 +70,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
     const [descImages, setDescImages] = useState<string[]>([]);
     const [isMature, setIsMature] = useState(false);
     const [isPaid, setIsPaid] = useState(false);
-    const [price, setPriceZij] = useState<number>(0);
+    const [price, setPrice] = useState<number>(0);
 
     const [myVids, setMyVids] = useState<MyVid[]>([]);
     const [prevVideoId, setPrevVideoId] = useState<string>("");
@@ -108,7 +108,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
         setVideoUrl(null); setAutoThumb(null); setCoverUrl(null); setDurationSec(0); setDims({ w: 0, h: 0 });
         setOrientation(defaultKind === "SHORT" ? "VERTICAL" : "HORIZONTAL");
         setTitle(""); setDesc(""); setCategory(""); setTags([]); setTagInput(""); setDescImages([]);
-        setIsMature(false); setIsPaid(false); setPriceZij(0);
+        setIsMature(false); setIsPaid(false); setPrice(0);
         setMyVids([]); setPrevVideoId(""); setSeriesOpen(false);
         setUploading(false); setUploadPct(0); setCoverBusy(false); setDescBusy(false); setPosting(false); setErr(null);
     }
@@ -370,7 +370,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                                 {isPaid && (
                                     <div className="mt-2">
                                         <div className="relative">
-                                            <input type="number" min={0} value={price || ""} onChange={e => setPriceZij(Number(e.target.value))} placeholder="Summa"
+                                            <input type="number" min={0} value={price || ""} onChange={e => setPrice(Number(e.target.value))} placeholder="Summa"
                                                 className="w-full h-10 px-3 pr-10 rounded-xl text-sm text-white outline-none"
                                                 style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", caretColor: "#00CEC8" }} />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black" style={{ color: "#00CEC8" }}>{currencySymbol(myCurrency)}</span>
