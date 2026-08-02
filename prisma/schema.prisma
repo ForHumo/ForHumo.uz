@@ -97,6 +97,10 @@ model UserProfile {
   // Ikkinchi valyutani (USD) narxlar yonida referens sifatida ko'rsatish
   showUsdRef    Boolean  @default(false)
 
+  // Bildirishnoma sozlamalari — JSON: { LIKE: false, COMMENT: true, ... }
+  // Ro'yxatda YO'Q tur = default yoqilgan. Faqat OFF'lar saqlanadi.
+  notifPrefs    Json?
+
   lastLoginAt   DateTime?
   loginEvents   LoginEvent[]
   supportTickets SupportTicket[]

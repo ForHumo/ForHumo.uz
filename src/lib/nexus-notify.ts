@@ -52,6 +52,13 @@ export async function nexusNotify(opts: {
                 amount: opts.amount ?? null,
             },
         });
+        // Push preferences — bu tur o'chirilgan bo'lsa web push yubormaymiz (in-app baribir bor)
+        const recipient = await prisma.userProfile.findUnique({
+            where: { id: opts.recipientId }, select: { notifPrefs: true },
+        });
+        const prefs = (recipient?.notifPrefs ?? {}) as Record<string, boolean>;
+        if (prefs[opts.type] === false) return;
+
         // Web push (fire-and-forget; kalit yo'q bo'lsa jim o'tadi)
         const actor = await prisma.userProfile.findUnique({ where: { id: opts.actorId }, select: { name: true, username: true } });
         const who = actor?.name || (actor?.username ? `@${actor.username}` : "Kimdir");

@@ -28,6 +28,7 @@ import { NxCreatePost } from "./nx-create-post";
 import { NxStoryCreate } from "./nx-story-create";
 import { NxShare } from "./nx-share";
 import { NxReport } from "./nx-report";
+import { NxPushPrompt } from "./nx-push-prompt";
 import { usePresence } from "@/lib/presence";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -122,6 +123,9 @@ export function NexusShell() {
                 {/* Yordamchi */}
                 <NxShare />
                 <NxReport />
+
+                {/* Push notification prompt (30s ichida bir marta) */}
+                <NxPushPrompt />
             </div>
         </NxPlayerProvider>
     );
