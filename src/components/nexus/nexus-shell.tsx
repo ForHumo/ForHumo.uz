@@ -17,6 +17,7 @@ import { FeedView, VideoView, LiveView, MediaView, SocialView, ProfileView } fro
 import { NxNotifications }  from "./nx-notifications";
 import { NxMessages }        from "./nx-messages";
 import { NxIncomingCall }    from "./nx-incoming-call";
+import { NxGroupCall }       from "./nx-group-call";
 import { NxComments }        from "./nx-comments";
 import { NxLiveChat }        from "./nx-live-chat";
 import { NxPlaylist }        from "./nx-playlist";
@@ -193,6 +194,9 @@ export function NexusShell() {
 
                 {/* ── Kelayotgan chaqiruv + faol WebRTC oynasi ──────────── */}
                 <NxIncomingCall />
+
+                {/* ── Guruh chaqiruv (LiveKit) ──────────────────────────── */}
+                <NxGroupCall />
 
                 {/* ── Obunalar ──────────────────────────────────────────── */}
                 <NxSubscriptions />

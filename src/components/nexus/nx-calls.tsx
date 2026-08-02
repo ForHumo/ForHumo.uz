@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { X, Phone, Video, Clock, PhoneMissed, PhoneIncoming, PhoneOutgoing, BadgeCheck, Loader2, Mic } from "lucide-react";
+import { X, Phone, Video, Clock, PhoneMissed, PhoneIncoming, PhoneOutgoing, BadgeCheck, Loader2, Mic, Users } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 
 interface CallPeer { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean }
@@ -23,7 +23,7 @@ interface CallItem {
 }
 
 export function NxCalls() {
-    const { callsOpen, setCallsOpen, startCall } = useNxPlayer();
+    const { callsOpen, setCallsOpen, startCall, setGroupCallOpen } = useNxPlayer();
     const [calls, setCalls] = useState<CallItem[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -67,6 +67,11 @@ export function NxCalls() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-4 pb-6" style={{ scrollbarWidth: "none" }}>
+                    <button onClick={() => { setCallsOpen(false); setGroupCallOpen(true); }}
+                        className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-black text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-95"
+                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        <Users className="h-4 w-4" /> Guruh chaqiruv (LiveKit)
+                    </button>
                     {loading && calls.length === 0 ? (
                         <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin" style={{ color: "rgba(140,160,210,0.6)" }} /></div>
                     ) : calls.length === 0 ? (

@@ -121,6 +121,8 @@ interface PlayerCtx {
     setIncoming:     (v: IncomingCall | null) => void;
     callMinimized:   boolean;
     setCallMinimized:(v: boolean) => void;
+    groupCallOpen:   boolean;
+    setGroupCallOpen:(v: boolean) => void;
 
     // Izohlar
     commentsOpen:    boolean;
@@ -417,6 +419,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     const [activeCall, setActiveCall] = useState<ActiveCallState | null>(null);
     const [incoming, setIncoming] = useState<IncomingCall | null>(null);
     const [callMinimized, setCallMinimized] = useState(false);
+    const [groupCallOpen, setGroupCallOpen] = useState(false);
 
     const startCall = useCallback(async (peerId: string, kind: "AUDIO" | "VIDEO") => {
         const r = await fetch("/api/nexus/calls", {
@@ -847,6 +850,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             messagesOpen, setMessagesOpen, dmTarget, openDM,
             activeCall, startCall, acceptIncoming, rejectIncoming, closeActiveCall,
             incoming, setIncoming, callMinimized, setCallMinimized,
+            groupCallOpen, setGroupCallOpen,
             commentsOpen, commentsFor, openComments, closeComments,
             liveChatOpen, setLiveChatOpen,
             exploreOpen, setExploreOpen,

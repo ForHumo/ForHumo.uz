@@ -1114,6 +1114,42 @@ model NexusCallRecording {
   @@index([startedById, createdAt])
 }
 
+// ── Guruh chaqiruvi (LiveKit SFU) ────────────────────────────────────────────
+model NexusGroupCall {
+  id           String                       @id @default(cuid())
+  roomName     String                       @unique  // LiveKit room name (chaqiruv id + prefix)
+  title        String?                                // ixtiyoriy nom
+  hostId       String                                 // UserProfile.id — yaratuvchi
+  status       NexusGroupCallStatus         @default(ACTIVE)
+  createdAt    DateTime                     @default(now())
+  endedAt      DateTime?
+  participants NexusGroupCallParticipant[]
+  @@index([hostId, createdAt])
+  @@index([status, createdAt])
+}
+
+model NexusGroupCallParticipant {
+  id          String         @id @default(cuid())
+  groupCallId String
+  groupCall   NexusGroupCall @relation(fields: [groupCallId], references: [id], onDelete: Cascade)
+  profileId   String                                     // UserProfile.id
+  role        NexusGroupCallRole @default(GUEST)
+  joinedAt    DateTime       @default(now())
+  leftAt      DateTime?
+  @@unique([groupCallId, profileId])
+  @@index([profileId, joinedAt])
+}
+
+enum NexusGroupCallStatus {
+  ACTIVE
+  ENDED
+}
+
+enum NexusGroupCallRole {
+  HOST
+  GUEST
+}
+
 model NexusCallSignal {
   id        String    @id @default(cuid())
   callId    String
