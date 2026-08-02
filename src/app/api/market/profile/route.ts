@@ -53,19 +53,19 @@ export async function GET() {
         select: { total: true, paymentMethod: true },
     });
     const ordersCount = orders.length;
-    const zijSpent = orders
+    const spent = orders
         .filter(o => o.paymentMethod === "WALLET")
         .reduce((s, o) => s + Number(o.total), 0);
 
     // ── Ishlab olingan Zij (o'z brendlari mahsulotlari sotuvidan) ──
     const myBrandIds = brands.map(b => b.id);
-    let zijEarned = 0;
+    let earned = 0;
     if (myBrandIds.length) {
         const soldItems = await prisma.marketOrderItem.findMany({
             where: { product: { brandId: { in: myBrandIds } } },
             select: { price: true, quantity: true },
         });
-        zijEarned = soldItems.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
+        earned = soldItems.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
     }
 
     return NextResponse.json({
@@ -77,8 +77,8 @@ export async function GET() {
             likesReceived,
             likesGiven,
             ordersCount,
-            zijSpent: Number(zijSpent.toFixed(2)),
-            zijEarned: Number(zijEarned.toFixed(2)),
+            spent: Number(spent.toFixed(2)),
+            earned: Number(earned.toFixed(2)),
         },
     });
 }

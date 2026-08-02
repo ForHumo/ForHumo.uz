@@ -1,7 +1,7 @@
 // Akkaunt o'chirilganda foydalanuvchining BARCHA Nexus ma'lumotlarini o'chiradi.
 // Sabab: aksariyat Nexus modellari profileId'ni oddiy String sifatida saqlaydi
 // (UserProfile'ga FK yo'q), shuning uchun cascade ishlamaydi — qo'lda tozalaymiz.
-// Hamyon/ledger (ZijWallet/ZijTransaction) BU YERDA tegilmaydi — anonim saqlanadi.
+// Hamyon/ledger (Wallet/WalletTransaction) BU YERDA tegilmaydi — anonim saqlanadi.
 
 import { prisma } from "@/lib/prisma";
 

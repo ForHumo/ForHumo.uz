@@ -99,7 +99,7 @@ model UserProfile {
   supportTickets SupportTicket[]
   emailCodes    EmailVerificationCode[]
   identities    Identity[]
-  zijWallet     ZijWallet?
+  wallet        Wallet?
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -1542,7 +1542,7 @@ model NexusTrackLike {
 // Hozir TEST rejimda: deposit darhol tushadi, withdraw payout-so'rov yaratadi.
 // MChJ + to'lov shlyuzi (Click/Payme/karta) kalitlari kelganda real ishlaydi (lib/payments).
 
-model ZijWallet {
+model Wallet {
   id          String   @id @default(cuid())
   profileId   String   @unique
   profile     UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -1553,17 +1553,19 @@ model ZijWallet {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  transactions ZijTransaction[]
-  safes        ZijSafe[]
+  transactions WalletTransaction[]
+  safes        WalletSafe[]
   payouts      PayoutRequest[]
+
+  @@map("ZijWallet")
 }
 
-model ZijTransaction {
+model WalletTransaction {
   id          String             @id @default(cuid())
   walletId    String
-  wallet      ZijWallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  wallet      Wallet             @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
-  type        ZijTransactionType
+  type        TransactionType
   amount      Decimal            @db.Decimal(18, 2)   // musbat son (shu tranzaksiya valyutasida)
   currency    String             @default("UZS")      // tranzaksiya valyutasi
   balanceAfter Decimal           @db.Decimal(18, 2)   // tranzaksiyadan keyin balans
@@ -1572,9 +1574,11 @@ model ZijTransaction {
   ref         String?            // tashqi ref (order ID, payout ID, profil ID)
 
   createdAt   DateTime @default(now())
+
+  @@map("ZijTransaction")
 }
 
-enum ZijTransactionType {
+enum TransactionType {
   DEPOSIT    // pul kirish (to'lov shlyuzi orqali)
   WITHDRAW   // pul chiqish (payout)
   PURCHASE   // xarid
@@ -1585,6 +1589,8 @@ enum ZijTransactionType {
   TRANSFER_IN   // qabul qilish
   SAFE_IN       // seyfga o'tkazish
   SAFE_OUT      // seyfdan chiqarish
+
+  @@map("ZijTransactionType")
 }
 
 // Pul yechish so'rovi (payout). Test rejimda darhol "tugatilgan"; real rejimda
@@ -1592,7 +1598,7 @@ enum ZijTransactionType {
 model PayoutRequest {
   id          String   @id @default(cuid())
   walletId    String
-  wallet      ZijWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
   amount      Decimal  @db.Decimal(18, 2)
   currency    String
   method      String                              // "card" | "bank" | ...
@@ -1612,10 +1618,10 @@ enum PayoutStatus {
 }
 
 // Virtual seyf — maqsadli jamg'arma
-model ZijSafe {
+model WalletSafe {
   id          String   @id @default(cuid())
   walletId    String
-  wallet      ZijWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   name        String              // "Parij sayohati", "Yangi telefon" va h.k.
   emoji       String   @default("🏦")
@@ -1625,4 +1631,6 @@ model ZijSafe {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@map("ZijSafe")
 }

@@ -81,7 +81,7 @@ export async function nexusRateLimited(profileId: string, kind: RateKind): Promi
                 count = await prisma.nexusChannelMessage.count({ where: { senderId: profileId, createdAt: { gt: since } } });
                 break;
             case "payTransfer":
-                count = await prisma.zijTransaction.count({ where: { wallet: { profileId }, type: "TRANSFER_OUT", createdAt: { gt: since } } });
+                count = await prisma.walletTransaction.count({ where: { wallet: { profileId }, type: "TRANSFER_OUT", createdAt: { gt: since } } });
                 break;
             case "payWithdraw":
                 count = await prisma.payoutRequest.count({ where: { wallet: { profileId }, createdAt: { gt: since } } });

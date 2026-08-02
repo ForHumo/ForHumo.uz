@@ -35,8 +35,8 @@ export async function POST(req: Request) {
     // Test (yoki darhol tasdiqlangan) — balansga qo'shamiz
     const newBalance = roundMoney(Number(wallet.balance) + amount, currency);
     const [updated, tx] = await prisma.$transaction([
-        prisma.zijWallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
-        prisma.zijTransaction.create({
+        prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
+        prisma.walletTransaction.create({
             data: {
                 walletId: wallet.id, type: "DEPOSIT", amount, currency, balanceAfter: newBalance,
                 description: provider.live ? "To'ldirish" : "Test to'ldirish", ref: res.providerRef ?? null,

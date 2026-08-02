@@ -63,29 +63,29 @@ export async function POST(req: Request) {
     try {
         const result = await prisma.$transaction(async tx => {
             // Ijodkor hamyoni/valyutasi (narx shu valyutada)
-            let aw = await tx.zijWallet.findUnique({ where: { profileId: creatorId2 } });
-            if (!aw) aw = await tx.zijWallet.create({ data: { profileId: creatorId2, currency: currencyForCountry(creatorCountry) } });
+            let aw = await tx.wallet.findUnique({ where: { profileId: creatorId2 } });
+            if (!aw) aw = await tx.wallet.create({ data: { profileId: creatorId2, currency: currencyForCountry(creatorCountry) } });
             const aCur = cur(aw.currency);
 
-            const wallet = await tx.zijWallet.findUnique({ where: { profileId: me.id } });
+            const wallet = await tx.wallet.findUnique({ where: { profileId: me.id } });
             if (!wallet) return "no_funds" as const;
             const bCur = cur(wallet.currency);
             const buyerPays = convert(price, aCur, bCur);   // obunachi o'z valyutasida to'laydi
 
             // Obunachi — atomik shartli debit (race-safe)
-            const debit = await tx.zijWallet.updateMany({ where: { id: wallet.id, balance: { gte: buyerPays } }, data: { balance: { decrement: buyerPays } } });
+            const debit = await tx.wallet.updateMany({ where: { id: wallet.id, balance: { gte: buyerPays } }, data: { balance: { decrement: buyerPays } } });
             if (debit.count === 0) return "no_funds" as const;
-            const afterBuyer = await tx.zijWallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
+            const afterBuyer = await tx.wallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
             const newBuyerBal = roundMoney(Number(afterBuyer?.balance ?? 0), bCur);
-            await tx.zijTransaction.create({
+            await tx.walletTransaction.create({
                 data: { walletId: wallet.id, type: "TRANSFER_OUT", amount: buyerPays, currency: bCur, balanceAfter: newBuyerBal, description: "Nexus pullik obuna", ref: creatorId2 },
             });
 
             // Ijodkor — TRANSFER_IN (narxni to'liq o'z valyutasida oladi)
-            await tx.zijWallet.update({ where: { id: aw.id }, data: { balance: { increment: price } } });
-            const afterAuthor = await tx.zijWallet.findUnique({ where: { id: aw.id }, select: { balance: true } });
+            await tx.wallet.update({ where: { id: aw.id }, data: { balance: { increment: price } } });
+            const afterAuthor = await tx.wallet.findUnique({ where: { id: aw.id }, select: { balance: true } });
             const newAuthorBal = roundMoney(Number(afterAuthor?.balance ?? 0), aCur);
-            await tx.zijTransaction.create({
+            await tx.walletTransaction.create({
                 data: { walletId: aw.id, type: "TRANSFER_IN", amount: price, currency: aCur, balanceAfter: newAuthorBal, description: "Nexus obuna daromadi", ref: me.id },
             });
 

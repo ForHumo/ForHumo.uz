@@ -48,24 +48,24 @@ export async function executeTransfer(transferId: string): Promise<TransferResul
 
             // ── Haq to'lovi (o'ziga o'tkazma bo'lsa o'tkazib yuboramiz) ──
             if (fee > 0 && buyerId !== recipientId) {
-                const bw = await tx.zijWallet.findUnique({ where: { profileId: buyerId } });
+                const bw = await tx.wallet.findUnique({ where: { profileId: buyerId } });
                 if (!bw) return "no_funds" as const;
                 const bCur = cur(bw.currency);
                 const buyerPays = convert(fee, feeCur, bCur);
-                const debit = await tx.zijWallet.updateMany({ where: { id: bw.id, balance: { gte: buyerPays } }, data: { balance: { decrement: buyerPays } } });
+                const debit = await tx.wallet.updateMany({ where: { id: bw.id, balance: { gte: buyerPays } }, data: { balance: { decrement: buyerPays } } });
                 if (debit.count === 0) return "no_funds" as const;
-                const afterB = await tx.zijWallet.findUnique({ where: { id: bw.id }, select: { balance: true } });
-                await tx.zijTransaction.create({ data: { walletId: bw.id, type: "TRANSFER_OUT", amount: buyerPays, currency: bCur, balanceAfter: roundMoney(Number(afterB?.balance ?? 0), bCur), description: "eSport transfer to'lovi", ref: `transfer:${tr.id}` } });
+                const afterB = await tx.wallet.findUnique({ where: { id: bw.id }, select: { balance: true } });
+                await tx.walletTransaction.create({ data: { walletId: bw.id, type: "TRANSFER_OUT", amount: buyerPays, currency: bCur, balanceAfter: roundMoney(Number(afterB?.balance ?? 0), bCur), description: "eSport transfer to'lovi", ref: `transfer:${tr.id}` } });
 
                 // Qabul qiluvchi
                 const recProfile = await tx.userProfile.findUnique({ where: { id: recipientId }, select: { country: true } });
-                let rw = await tx.zijWallet.findUnique({ where: { profileId: recipientId } });
-                if (!rw) rw = await tx.zijWallet.create({ data: { profileId: recipientId, currency: currencyForCountry(recProfile?.country) } });
+                let rw = await tx.wallet.findUnique({ where: { profileId: recipientId } });
+                if (!rw) rw = await tx.wallet.create({ data: { profileId: recipientId, currency: currencyForCountry(recProfile?.country) } });
                 const rCur = cur(rw.currency);
                 const received = convert(fee, feeCur, rCur);
-                await tx.zijWallet.update({ where: { id: rw.id }, data: { balance: { increment: received } } });
-                const afterR = await tx.zijWallet.findUnique({ where: { id: rw.id }, select: { balance: true } });
-                await tx.zijTransaction.create({ data: { walletId: rw.id, type: "TRANSFER_IN", amount: received, currency: rCur, balanceAfter: roundMoney(Number(afterR?.balance ?? 0), rCur), description: "eSport transfer daromadi", ref: `transfer:${tr.id}` } });
+                await tx.wallet.update({ where: { id: rw.id }, data: { balance: { increment: received } } });
+                const afterR = await tx.wallet.findUnique({ where: { id: rw.id }, select: { balance: true } });
+                await tx.walletTransaction.create({ data: { walletId: rw.id, type: "TRANSFER_IN", amount: received, currency: rCur, balanceAfter: roundMoney(Number(afterR?.balance ?? 0), rCur), description: "eSport transfer daromadi", ref: `transfer:${tr.id}` } });
             }
 
             // ── Tarkibni ko'chirish ──

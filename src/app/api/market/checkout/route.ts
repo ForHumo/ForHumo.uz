@@ -60,8 +60,8 @@ export async function POST(req: Request) {
     // Zij to'lovida balansni oldindan tekshirish (do'stona xabar uchun)
     let walletId: string | null = null;
     if (paymentMethod === "WALLET") {
-        let wallet = await prisma.zijWallet.findUnique({ where: { profileId: profile.id } });
-        if (!wallet) wallet = await prisma.zijWallet.create({ data: { profileId: profile.id } });
+        let wallet = await prisma.wallet.findUnique({ where: { profileId: profile.id } });
+        if (!wallet) wallet = await prisma.wallet.create({ data: { profileId: profile.id } });
         if (Number(wallet.balance) < total) {
             return NextResponse.json({
                 error: `Balans yetarli emas. Kerak: ${total.toLocaleString()} so'm, Mavjud: ${Number(wallet.balance).toLocaleString()} so'm`,
@@ -93,11 +93,11 @@ export async function POST(req: Request) {
 
             let newBalance: number | null = null;
             if (paymentMethod === "WALLET" && walletId) {
-                const w = await tx.zijWallet.findUnique({ where: { id: walletId } });
+                const w = await tx.wallet.findUnique({ where: { id: walletId } });
                 if (!w || Number(w.balance) < total) throw new Error("INSUFFICIENT_ZIJ");
                 newBalance = Number(w.balance) - total;
-                await tx.zijWallet.update({ where: { id: walletId }, data: { balance: newBalance } });
-                await tx.zijTransaction.create({
+                await tx.wallet.update({ where: { id: walletId }, data: { balance: newBalance } });
+                await tx.walletTransaction.create({
                     data: { walletId, type: "PURCHASE", amount: total, balanceAfter: newBalance, description: `Humo Market — ${cartItems.length} ta mahsulot` },
                 });
             }

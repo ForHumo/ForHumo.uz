@@ -24,10 +24,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         const wallet = await getOrCreateWalletTx(tx, me.id, profile?.country);
         const wCur = (wallet.currency === "USD" ? "USD" : "UZS") as Currency;
         const pay = roundMoney(convert(amount, tCur, wCur), wCur);
-        const debit = await tx.zijWallet.updateMany({ where: { id: wallet.id, balance: { gte: pay } }, data: { balance: { decrement: pay } } });
+        const debit = await tx.wallet.updateMany({ where: { id: wallet.id, balance: { gte: pay } }, data: { balance: { decrement: pay } } });
         if (debit.count === 0) return { ok: false as const };
-        const after = await tx.zijWallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
-        await tx.zijTransaction.create({ data: { walletId: wallet.id, type: "TRANSFER_OUT", amount: pay, currency: wCur, balanceAfter: roundMoney(Number(after?.balance ?? 0), wCur), description: "Turnir mukofot fondi (escrow)", ref: `tourfund:${id}` } });
+        const after = await tx.wallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
+        await tx.walletTransaction.create({ data: { walletId: wallet.id, type: "TRANSFER_OUT", amount: pay, currency: wCur, balanceAfter: roundMoney(Number(after?.balance ?? 0), wCur), description: "Turnir mukofot fondi (escrow)", ref: `tourfund:${id}` } });
         const upd = await tx.esTournament.update({ where: { id }, data: { prizeFunded: { increment: amount } }, select: { prizeFunded: true } });
         return { ok: true as const, funded: Number(upd.prizeFunded) };
     });

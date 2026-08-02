@@ -51,11 +51,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             else ops.push(prisma.marketProduct.update({ where: { id: it.productId }, data: { stock: { increment: it.quantity } } }));
         }
         if (order.paymentMethod === "WALLET" && Number(order.total) > 0) {
-            let wallet = await prisma.zijWallet.findUnique({ where: { profileId: order.profileId } });
-            if (!wallet) wallet = await prisma.zijWallet.create({ data: { profileId: order.profileId } });
+            let wallet = await prisma.wallet.findUnique({ where: { profileId: order.profileId } });
+            if (!wallet) wallet = await prisma.wallet.create({ data: { profileId: order.profileId } });
             const newBalance = Number(wallet.balance) + Number(order.total);
-            ops.push(prisma.zijWallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }));
-            ops.push(prisma.zijTransaction.create({
+            ops.push(prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }));
+            ops.push(prisma.walletTransaction.create({
                 data: {
                     walletId: wallet.id, type: "REFUND", amount: Number(order.total), balanceAfter: newBalance,
                     description: `Buyurtma bekor qilindi — qaytarildi`, ref: order.id,

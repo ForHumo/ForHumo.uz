@@ -38,7 +38,7 @@ interface Transaction {
     balanceAfter: string; description: string | null; createdAt: string;
 }
 
-interface ZijSafe {
+interface WalletSafe {
     id: string; name: string; emoji: string;
     targetAmount: string; balance: string; isCompleted: boolean; createdAt: string;
 }
@@ -47,7 +47,7 @@ interface WalletData {
     balance: string;
     currency: string;
     transactions: Transaction[];
-    safes: ZijSafe[];
+    safes: WalletSafe[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -414,7 +414,7 @@ function TransferModal({ balance, currency, onClose, onSuccess }: {
 // SafeCard — bitta seyf
 // ─────────────────────────────────────────────────────────────────────────────
 function SafeCard({ safe, currency, onAction }: {
-    safe: ZijSafe;
+    safe: WalletSafe;
     currency: Currency;
     onAction: (id: string, action: "deposit" | "withdraw", amount: number) => void;
 }) {
@@ -529,7 +529,7 @@ function SafeCard({ safe, currency, onAction }: {
 function CreateSafeModal({ currency, onClose, onCreate }: {
     currency: Currency;
     onClose: () => void;
-    onCreate: (safe: ZijSafe) => void;
+    onCreate: (safe: WalletSafe) => void;
 }) {
     const [name, setName]       = useState("");
     const [iconKey, setIconKey] = useState<SafeIconKey>("landmark");

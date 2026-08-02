@@ -61,8 +61,8 @@ export async function POST(req: Request) {
 
     // Pullik brend — Zij yechish (atomik)
     if (price > 0) {
-        let wallet = await prisma.zijWallet.findUnique({ where: { profileId: profile.id } });
-        if (!wallet) wallet = await prisma.zijWallet.create({ data: { profileId: profile.id } });
+        let wallet = await prisma.wallet.findUnique({ where: { profileId: profile.id } });
+        if (!wallet) wallet = await prisma.wallet.create({ data: { profileId: profile.id } });
         if (Number(wallet.balance) < price)
             return NextResponse.json({
                 error: `Brend ochish narxi ${price.toLocaleString()} so'm. Balansingiz yetarli emas (${Number(wallet.balance).toLocaleString()} so'm).`,
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
 
         const newBalance = Number(wallet.balance) - price;
         const [, brand] = await prisma.$transaction([
-            prisma.zijWallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
+            prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
             prisma.marketBrand.create({
                 data: {
                     slug, name: name.trim(),
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
                     verified: isFounder,
                 },
             }),
-            prisma.zijTransaction.create({
+            prisma.walletTransaction.create({
                 data: {
                     walletId: wallet.id, type: "PURCHASE", amount: price, balanceAfter: newBalance,
                     description: `Brend ochish: ${name.trim()}`,

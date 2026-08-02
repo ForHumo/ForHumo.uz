@@ -1,7 +1,7 @@
 // ALKH Pay — real pul (valyuta) yagona manbai.
 // O'zbekiston foydalanuvchilari: so'm (UZS). Xorijiy: dollar (USD).
 // "Zij" tushunchasi olib tashlandi — endi real valyuta. (Ichki DB model nomlari
-// (ZijWallet/ZijTransaction) eski qoldi, lekin ular foydalanuvchiga ko'rinmaydi.)
+// (Wallet/WalletTransaction) eski qoldi, lekin ular foydalanuvchiga ko'rinmaydi.)
 
 export type Currency = "UZS" | "USD";
 export const CURRENCIES: Currency[] = ["UZS", "USD"];

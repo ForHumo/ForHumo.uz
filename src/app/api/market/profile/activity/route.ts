@@ -33,8 +33,8 @@ export async function GET() {
     });
 
     // ── Sarflangan (PURCHASE/SAFE_IN tranzaksiyalar) ──
-    const wallet = await prisma.zijWallet.findUnique({ where: { profileId: me } });
-    const spent = wallet ? await prisma.zijTransaction.findMany({
+    const wallet = await prisma.wallet.findUnique({ where: { profileId: me } });
+    const spent = wallet ? await prisma.walletTransaction.findMany({
         where: { walletId: wallet.id, type: { in: ["PURCHASE", "TRANSFER_OUT", "SAFE_IN"] } },
         orderBy: { createdAt: "desc" }, take: 100,
     }) : [];

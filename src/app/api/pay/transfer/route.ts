@@ -43,15 +43,15 @@ export async function POST(req: Request) {
 
     const result = await prisma.$transaction(async tx => {
         // Atomik shartli debit (race-safe)
-        const debit = await tx.zijWallet.updateMany({ where: { id: senderWallet.id, balance: { gte: sendAmount } }, data: { balance: { decrement: sendAmount } } });
+        const debit = await tx.wallet.updateMany({ where: { id: senderWallet.id, balance: { gte: sendAmount } }, data: { balance: { decrement: sendAmount } } });
         if (debit.count === 0) return null;
-        const afterS = await tx.zijWallet.findUnique({ where: { id: senderWallet.id }, select: { balance: true } });
+        const afterS = await tx.wallet.findUnique({ where: { id: senderWallet.id }, select: { balance: true } });
         const senderNew = roundMoney(Number(afterS?.balance ?? 0), sCur);
-        await tx.zijWallet.update({ where: { id: receiverWallet.id }, data: { balance: { increment: recvAmount } } });
-        const afterR = await tx.zijWallet.findUnique({ where: { id: receiverWallet.id }, select: { balance: true } });
+        await tx.wallet.update({ where: { id: receiverWallet.id }, data: { balance: { increment: recvAmount } } });
+        const afterR = await tx.wallet.findUnique({ where: { id: receiverWallet.id }, select: { balance: true } });
         const receiverNew = roundMoney(Number(afterR?.balance ?? 0), rCur);
-        await tx.zijTransaction.create({ data: { walletId: senderWallet.id, type: "TRANSFER_OUT", amount: sendAmount, currency: sCur, balanceAfter: senderNew, description: desc ?? `@${cleanUsername} ga yuborildi`, ref: receiver.id } });
-        await tx.zijTransaction.create({ data: { walletId: receiverWallet.id, type: "TRANSFER_IN", amount: recvAmount, currency: rCur, balanceAfter: receiverNew, description: desc ?? `@${sender.username ?? "Foydalanuvchi"} dan`, ref: sender.id } });
+        await tx.walletTransaction.create({ data: { walletId: senderWallet.id, type: "TRANSFER_OUT", amount: sendAmount, currency: sCur, balanceAfter: senderNew, description: desc ?? `@${cleanUsername} ga yuborildi`, ref: receiver.id } });
+        await tx.walletTransaction.create({ data: { walletId: receiverWallet.id, type: "TRANSFER_IN", amount: recvAmount, currency: rCur, balanceAfter: receiverNew, description: desc ?? `@${sender.username ?? "Foydalanuvchi"} dan`, ref: sender.id } });
         return senderNew;
     });
     if (result === null) return NextResponse.json({ error: "Balans yetarli emas" }, { status: 400 });

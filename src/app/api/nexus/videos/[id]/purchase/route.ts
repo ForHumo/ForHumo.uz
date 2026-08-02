@@ -34,12 +34,12 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
     try {
         const result = await prisma.$transaction(async tx => {
-            const wallet = await tx.zijWallet.findUnique({ where: { profileId: me.id } });
+            const wallet = await tx.wallet.findUnique({ where: { profileId: me.id } });
             const bCur = cur(wallet?.currency ?? "UZS");
 
             // Avtor hamyoni/valyutasi (narx shu valyutada)
-            let aw = await tx.zijWallet.findUnique({ where: { profileId: video.profileId } });
-            if (!aw) aw = await tx.zijWallet.create({ data: { profileId: video.profileId, currency: currencyForCountry(author?.country) } });
+            let aw = await tx.wallet.findUnique({ where: { profileId: video.profileId } });
+            if (!aw) aw = await tx.wallet.create({ data: { profileId: video.profileId, currency: currencyForCountry(author?.country) } });
             const aCur = cur(aw.currency);
 
             const buyerPays = convert(price, aCur, bCur);   // xaridor o'z valyutasida to'laydi
@@ -51,18 +51,18 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
             if (dup) return "ok" as const;
 
             // Atomik shartli debit (race-safe)
-            const debit = await tx.zijWallet.updateMany({ where: { id: wallet.id, balance: { gte: buyerPays } }, data: { balance: { decrement: buyerPays } } });
+            const debit = await tx.wallet.updateMany({ where: { id: wallet.id, balance: { gte: buyerPays } }, data: { balance: { decrement: buyerPays } } });
             if (debit.count === 0) return "no_funds" as const;
-            const afterBuyer = await tx.zijWallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
+            const afterBuyer = await tx.wallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
             const newBuyerBal = roundMoney(Number(afterBuyer?.balance ?? 0), bCur);
-            await tx.zijTransaction.create({
+            await tx.walletTransaction.create({
                 data: { walletId: wallet.id, type: "PURCHASE", amount: buyerPays, currency: bCur, balanceAfter: newBuyerBal, description: `Nexus video xaridi: ${short}`, ref: id },
             });
 
-            await tx.zijWallet.update({ where: { id: aw.id }, data: { balance: { increment: price } } });
-            const afterAuthor = await tx.zijWallet.findUnique({ where: { id: aw.id }, select: { balance: true } });
+            await tx.wallet.update({ where: { id: aw.id }, data: { balance: { increment: price } } });
+            const afterAuthor = await tx.wallet.findUnique({ where: { id: aw.id }, select: { balance: true } });
             const newAuthorBal = roundMoney(Number(afterAuthor?.balance ?? 0), aCur);
-            await tx.zijTransaction.create({
+            await tx.walletTransaction.create({
                 data: { walletId: aw.id, type: "SALE", amount: price, currency: aCur, balanceAfter: newAuthorBal, description: `Nexus video sotuvi: ${short}`, ref: id },
             });
 

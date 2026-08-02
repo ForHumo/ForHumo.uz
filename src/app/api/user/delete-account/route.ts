@@ -20,13 +20,13 @@ export async function DELETE(req: Request) {
 
     const profile = await prisma.userProfile.findUnique({
         where: { email: session.user.email },
-        select: { id: true, deletedAt: true, zijWallet: { select: { balance: true } } },
+        select: { id: true, deletedAt: true, wallet: { select: { balance: true } } },
     });
     if (!profile) return NextResponse.json({ error: "not_found" }, { status: 404 });
     if (profile.deletedAt) return NextResponse.json({ ok: true, already: true });
 
     // Balans qolgan bo'lsa avval yechib olish kerak (pul yo'qolmasin)
-    if (Number(profile.zijWallet?.balance ?? 0) > 0) {
+    if (Number(profile.wallet?.balance ?? 0) > 0) {
         return NextResponse.json({ error: "withdraw_first" }, { status: 400 });
     }
 

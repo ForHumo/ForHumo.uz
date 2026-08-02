@@ -20,7 +20,7 @@ export async function GET() {
     }
 
     // Lazy init: hamyon yo'q bo'lsa yaratamiz (valyuta davlatdan)
-    let wallet = await prisma.zijWallet.findUnique({
+    let wallet = await prisma.wallet.findUnique({
         where: { profileId: profile.id },
         include: {
             transactions: { orderBy: { createdAt: "desc" }, take: 50 },
@@ -29,7 +29,7 @@ export async function GET() {
     });
 
     if (!wallet) {
-        wallet = await prisma.zijWallet.create({
+        wallet = await prisma.wallet.create({
             data: { profileId: profile.id, currency: currencyForCountry(profile.country) },
             include: { transactions: true, safes: true },
         });

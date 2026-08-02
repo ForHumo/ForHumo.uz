@@ -42,11 +42,11 @@ export async function settleOrder(orderId: string) {
     for (const [ownerId, gross] of perSeller) {
         const net = Math.round(gross * (1 - MARKET_COMMISSION) * 100) / 100;
         if (net <= 0) continue;
-        let wallet = await prisma.zijWallet.findUnique({ where: { profileId: ownerId } });
-        if (!wallet) wallet = await prisma.zijWallet.create({ data: { profileId: ownerId } });
+        let wallet = await prisma.wallet.findUnique({ where: { profileId: ownerId } });
+        if (!wallet) wallet = await prisma.wallet.create({ data: { profileId: ownerId } });
         const newBalance = Number(wallet.balance) + net;
-        ops.push(prisma.zijWallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }));
-        ops.push(prisma.zijTransaction.create({
+        ops.push(prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }));
+        ops.push(prisma.walletTransaction.create({
             data: {
                 walletId: wallet.id, type: "SALE", amount: net, balanceAfter: newBalance,
                 description: `Market sotuv ${short}`, ref: order.id,

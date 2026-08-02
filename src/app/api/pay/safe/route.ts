@@ -6,8 +6,8 @@ import { prisma } from "@/lib/prisma";
 async function getWallet(email: string) {
     const profile = await prisma.userProfile.findUnique({ where: { email } });
     if (!profile) return null;
-    let wallet = await prisma.zijWallet.findUnique({ where: { profileId: profile.id } });
-    if (!wallet) wallet = await prisma.zijWallet.create({ data: { profileId: profile.id } });
+    let wallet = await prisma.wallet.findUnique({ where: { profileId: profile.id } });
+    if (!wallet) wallet = await prisma.wallet.create({ data: { profileId: profile.id } });
     return wallet;
 }
 
@@ -20,7 +20,7 @@ export async function GET() {
     const wallet = await getWallet(session.user.email);
     if (!wallet) return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
 
-    const safes = await prisma.zijSafe.findMany({
+    const safes = await prisma.walletSafe.findMany({
         where: { walletId: wallet.id },
         orderBy: { createdAt: "desc" },
     });
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     const wallet = await getWallet(session.user.email);
     if (!wallet) return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
 
-    const safe = await prisma.zijSafe.create({
+    const safe = await prisma.walletSafe.create({
         data: {
             walletId: wallet.id,
             name: name.trim(),

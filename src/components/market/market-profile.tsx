@@ -23,7 +23,7 @@ interface ProfileData {
         username: string | null; humoId: string | null; image: string | null; coverImage: string | null; phone: string | null;
     };
     brands: BrandRow[];
-    stats: { brandCount: number; reviewsGiven: number; likesReceived: number; likesGiven: number; ordersCount: number; zijSpent: number; zijEarned: number };
+    stats: { brandCount: number; reviewsGiven: number; likesReceived: number; likesGiven: number; ordersCount: number; spent: number; earned: number };
     currency?: Currency;
 }
 
@@ -131,7 +131,7 @@ export function MarketProfile() {
                             <TrendingDown size={14} className="text-red-500" />
                             <span className="text-xs text-gray-500 dark:text-white/40">Sarflangan</span>
                         </div>
-                        <p className="text-xl font-black text-red-500 dark:text-red-400">{formatMoney(stats.zijSpent, data?.currency ?? "UZS")}</p>
+                        <p className="text-xl font-black text-red-500 dark:text-red-400">{formatMoney(stats.spent, data?.currency ?? "UZS")}</p>
                     </Link>
                     <Link href="/market/profile/activity?tab=earned"
                         className="bg-green-50/70 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-800/40 rounded-2xl p-4 transition-all">
@@ -139,7 +139,7 @@ export function MarketProfile() {
                             <TrendingUp size={14} className="text-green-500" />
                             <span className="text-xs text-gray-500 dark:text-white/40">Ishlab olingan</span>
                         </div>
-                        <p className="text-xl font-black text-green-600 dark:text-green-400">{formatMoney(stats.zijEarned, data?.currency ?? "UZS")}</p>
+                        <p className="text-xl font-black text-green-600 dark:text-green-400">{formatMoney(stats.earned, data?.currency ?? "UZS")}</p>
                     </Link>
                 </div>
 

@@ -19,7 +19,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     if (pool <= 0) return NextResponse.json({ error: "Yutuq fondi yo'q" }, { status: 400 });
 
     // Ikki marta to'lashni to'sish
-    const already = await prisma.zijTransaction.count({ where: { ref: `tour:${id}` } });
+    const already = await prisma.walletTransaction.count({ where: { ref: `tour:${id}` } });
     if (already) return NextResponse.json({ error: "Yutuq allaqachon to'langan" }, { status: 400 });
 
     // Joylar: chempion + finalist (final) + 3-o'rin g'olibi
@@ -60,8 +60,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         const newBal = roundMoney(Number(wallet.balance) + amount, wCur);
 
         await prisma.$transaction([
-            prisma.zijWallet.update({ where: { id: wallet.id }, data: { balance: { increment: amount } } }),
-            prisma.zijTransaction.create({
+            prisma.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: amount } } }),
+            prisma.walletTransaction.create({
                 data: { walletId: wallet.id, type: "TRANSFER_IN", amount, currency: wCur, balanceAfter: newBal, description: `Turnir yutug'i: ${t.name} (${i + 1}-o'rin)`, ref: `tour:${id}` },
             }),
         ]);
@@ -80,8 +80,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
             if (back > 0) {
                 const newBal = roundMoney(Number(w.balance) + back, wCur);
                 await prisma.$transaction([
-                    prisma.zijWallet.update({ where: { id: w.id }, data: { balance: { increment: back } } }),
-                    prisma.zijTransaction.create({ data: { walletId: w.id, type: "TRANSFER_IN", amount: back, currency: wCur, balanceAfter: newBal, description: `Turnir fondi qoldig'i: ${t.name}`, ref: `tourfund-refund:${id}` } }),
+                    prisma.wallet.update({ where: { id: w.id }, data: { balance: { increment: back } } }),
+                    prisma.walletTransaction.create({ data: { walletId: w.id, type: "TRANSFER_IN", amount: back, currency: wCur, balanceAfter: newBal, description: `Turnir fondi qoldig'i: ${t.name}`, ref: `tourfund-refund:${id}` } }),
                 ]);
             }
         }

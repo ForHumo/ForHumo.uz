@@ -22,10 +22,10 @@ export async function POST(
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
     if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-    const wallet = await prisma.zijWallet.findUnique({ where: { profileId: profile.id } });
+    const wallet = await prisma.wallet.findUnique({ where: { profileId: profile.id } });
     if (!wallet) return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
 
-    const safe = await prisma.zijSafe.findFirst({ where: { id, walletId: wallet.id } });
+    const safe = await prisma.walletSafe.findFirst({ where: { id, walletId: wallet.id } });
     if (!safe) return NextResponse.json({ error: "Seyf topilmadi" }, { status: 404 });
 
     if (action === "deposit") {
@@ -38,9 +38,9 @@ export async function POST(
         const isCompleted  = newSafeBal >= Number(safe.targetAmount);
 
         await prisma.$transaction([
-            prisma.zijWallet.update({ where: { id: wallet.id }, data: { balance: newWalletBal } }),
-            prisma.zijSafe.update({ where: { id: safe.id }, data: { balance: newSafeBal, isCompleted } }),
-            prisma.zijTransaction.create({
+            prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newWalletBal } }),
+            prisma.walletSafe.update({ where: { id: safe.id }, data: { balance: newSafeBal, isCompleted } }),
+            prisma.walletTransaction.create({
                 data: {
                     walletId: wallet.id,
                     type: "SAFE_IN",
@@ -65,9 +65,9 @@ export async function POST(
         const newSafeBal   = Number(safe.balance) - amt;
 
         await prisma.$transaction([
-            prisma.zijWallet.update({ where: { id: wallet.id }, data: { balance: newWalletBal } }),
-            prisma.zijSafe.update({ where: { id: safe.id }, data: { balance: newSafeBal, isCompleted: false } }),
-            prisma.zijTransaction.create({
+            prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newWalletBal } }),
+            prisma.walletSafe.update({ where: { id: safe.id }, data: { balance: newSafeBal, isCompleted: false } }),
+            prisma.walletTransaction.create({
                 data: {
                     walletId: wallet.id,
                     type: "SAFE_OUT",
