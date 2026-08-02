@@ -55,15 +55,17 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
             if (debit.count === 0) return "no_funds" as const;
             const afterBuyer = await tx.wallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
             const newBuyerBal = roundMoney(Number(afterBuyer?.balance ?? 0), bCur);
+            // Har buyer-video kombinatsiyasi noyob (author'da har xaridor uchun alohida SALE)
+            const txRef = `vidbuy:${id}:${me.id}`;
             await tx.walletTransaction.create({
-                data: { walletId: wallet.id, type: "PURCHASE", amount: buyerPays, currency: bCur, balanceAfter: newBuyerBal, description: `Nexus video xaridi: ${short}`, ref: id },
+                data: { walletId: wallet.id, type: "PURCHASE", amount: buyerPays, currency: bCur, balanceAfter: newBuyerBal, description: `Nexus video xaridi: ${short}`, ref: txRef },
             });
 
             await tx.wallet.update({ where: { id: aw.id }, data: { balance: { increment: price } } });
             const afterAuthor = await tx.wallet.findUnique({ where: { id: aw.id }, select: { balance: true } });
             const newAuthorBal = roundMoney(Number(afterAuthor?.balance ?? 0), aCur);
             await tx.walletTransaction.create({
-                data: { walletId: aw.id, type: "SALE", amount: price, currency: aCur, balanceAfter: newAuthorBal, description: `Nexus video sotuvi: ${short}`, ref: id },
+                data: { walletId: aw.id, type: "SALE", amount: price, currency: aCur, balanceAfter: newAuthorBal, description: `Nexus video sotuvi: ${short}`, ref: txRef },
             });
 
             await tx.nexusVideoPurchase.create({ data: { videoId: id, buyerId: me.id, price: price } });

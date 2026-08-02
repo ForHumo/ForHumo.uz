@@ -50,8 +50,10 @@ export async function POST(req: Request) {
         await tx.wallet.update({ where: { id: receiverWallet.id }, data: { balance: { increment: recvAmount } } });
         const afterR = await tx.wallet.findUnique({ where: { id: receiverWallet.id }, select: { balance: true } });
         const receiverNew = roundMoney(Number(afterR?.balance ?? 0), rCur);
-        await tx.walletTransaction.create({ data: { walletId: senderWallet.id, type: "TRANSFER_OUT", amount: sendAmount, currency: sCur, balanceAfter: senderNew, description: desc ?? `@${cleanUsername} ga yuborildi`, ref: receiver.id } });
-        await tx.walletTransaction.create({ data: { walletId: receiverWallet.id, type: "TRANSFER_IN", amount: recvAmount, currency: rCur, balanceAfter: receiverNew, description: desc ?? `@${sender.username ?? "Foydalanuvchi"} dan`, ref: sender.id } });
+        // Har o'tkazma noyob — timestamp bilan (aks holda ikki marta yubora olmaydi)
+        const txRef = `xfer:${sender.id}:${receiver.id}:${Date.now()}`;
+        await tx.walletTransaction.create({ data: { walletId: senderWallet.id, type: "TRANSFER_OUT", amount: sendAmount, currency: sCur, balanceAfter: senderNew, description: desc ?? `@${cleanUsername} ga yuborildi`, ref: txRef } });
+        await tx.walletTransaction.create({ data: { walletId: receiverWallet.id, type: "TRANSFER_IN", amount: recvAmount, currency: rCur, balanceAfter: receiverNew, description: desc ?? `@${sender.username ?? "Foydalanuvchi"} dan`, ref: txRef } });
         return senderNew;
     });
     if (result === null) return NextResponse.json({ error: "Balans yetarli emas" }, { status: 400 });

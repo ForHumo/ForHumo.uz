@@ -77,8 +77,10 @@ export async function POST(req: Request) {
             if (debit.count === 0) return "no_funds" as const;
             const afterBuyer = await tx.wallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
             const newBuyerBal = roundMoney(Number(afterBuyer?.balance ?? 0), bCur);
+            // Har obuna oyi noyob — timestamp bilan (uzaytirish yoki qayta obuna uchun)
+            const subRef = `sub:${me.id}:${creatorId2}:${Date.now()}`;
             await tx.walletTransaction.create({
-                data: { walletId: wallet.id, type: "TRANSFER_OUT", amount: buyerPays, currency: bCur, balanceAfter: newBuyerBal, description: "Nexus pullik obuna", ref: creatorId2 },
+                data: { walletId: wallet.id, type: "TRANSFER_OUT", amount: buyerPays, currency: bCur, balanceAfter: newBuyerBal, description: "Nexus pullik obuna", ref: subRef },
             });
 
             // Ijodkor — TRANSFER_IN (narxni to'liq o'z valyutasida oladi)
@@ -86,7 +88,7 @@ export async function POST(req: Request) {
             const afterAuthor = await tx.wallet.findUnique({ where: { id: aw.id }, select: { balance: true } });
             const newAuthorBal = roundMoney(Number(afterAuthor?.balance ?? 0), aCur);
             await tx.walletTransaction.create({
-                data: { walletId: aw.id, type: "TRANSFER_IN", amount: price, currency: aCur, balanceAfter: newAuthorBal, description: "Nexus obuna daromadi", ref: me.id },
+                data: { walletId: aw.id, type: "TRANSFER_IN", amount: price, currency: aCur, balanceAfter: newAuthorBal, description: "Nexus obuna daromadi", ref: subRef },
             });
 
             // Obuna yozuvi — faol bo'lsa uzaytiramiz, aks holda now+30

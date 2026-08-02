@@ -88,7 +88,7 @@ export async function POST(req: Request) {
         await prisma.$transaction([
             prisma.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: amount } } }),
             prisma.payoutRequest.update({ where: { id: payout.id }, data: { status: "FAILED", providerRef: res.providerRef ?? null } }),
-            prisma.walletTransaction.create({ data: { walletId: wallet.id, type: "REFUND", amount, currency, balanceAfter: restored, description: "Pul yechish bekor qilindi", ref: payout.id } }),
+            prisma.walletTransaction.create({ data: { walletId: wallet.id, type: "REFUND", amount, currency, balanceAfter: restored, description: "Pul yechish bekor qilindi", ref: `refund:${payout.id}` } }),
         ]);
         return NextResponse.json({ error: res.error || "Pul yechish amalga oshmadi" }, { status: 502 });
     }

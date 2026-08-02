@@ -48,7 +48,7 @@ export async function POST(
                     currency: wallet.currency,
                     balanceAfter: newWalletBal,
                     description: `"${safe.name}" seyfi`,
-                    ref: safe.id,
+                    ref: `safe-in:${safe.id}:${Date.now()}`,
                 },
             }),
         ]);
@@ -75,7 +75,7 @@ export async function POST(
                     currency: wallet.currency,
                     balanceAfter: newWalletBal,
                     description: `"${safe.name}" seyfidan`,
-                    ref: safe.id,
+                    ref: `safe-out:${safe.id}:${Date.now()}`,
                 },
             }),
         ]);
