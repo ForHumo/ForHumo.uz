@@ -71,8 +71,9 @@ model UserProfile {
   level         Int      @default(0)
   emailVerified Boolean  @default(false)
 
-  // Ijodkor pullik obunasi — 0 = o'chiq, >0 = oylik narx (Ƶ)
-  subPriceZij   Int      @default(0)
+  // Ijodkor pullik obunasi — 0 = o'chiq, >0 = oylik narx (subCurrency valyutasida)
+  subPrice      Int      @default(0) @map("subPriceZij")
+  subCurrency   Currency @default(UZS)
 
   // Tasdiqlangan (ko'k belgi) — founderlardan tashqari, ariza orqali
   verified      Boolean  @default(false)
@@ -1011,7 +1012,7 @@ model NexusNotification {
   trackId     String?                             // trek like uchun
   liveId      String?                             // jonli efir uchun
   callId      String?                             // qo'ng'iroq (MISSED/ENDED) uchun
-  amountZij   Int?                                // tip/xarid miqdori (Ƶ)
+  amount      Int?           @map("amountZij")    // tip/xarid miqdori (foydalanuvchi valyutasida)
   read        Boolean        @default(false)
   createdAt   DateTime       @default(now())
   @@index([recipientId, read])
@@ -1214,7 +1215,8 @@ model NexusVideo {
   tags        String[]                              // foydalanuvchi #teglari (cheksiz)
   descImages  String[]                              // tavsifdagi dalil rasmlari
   isMature    Boolean        @default(false)        // 18+ — voyaga yetmaganlardan yashiriladi
-  priceZij    Int            @default(0)            // 0 = bepul, >0 = pullik (Ƶ)
+  price       Int            @default(0) @map("priceZij")  // 0 = bepul, >0 = pullik (priceCurrency valyutasida)
+  priceCurrency Currency     @default(UZS)
   prevVideoId String?                               // series — avvalgi qism (joylangan bo'lishi shart)
   prevVideo   NexusVideo?    @relation("VideoSeries", fields: [prevVideoId], references: [id], onDelete: SetNull)
   nextParts   NexusVideo[]   @relation("VideoSeries")
@@ -1307,7 +1309,7 @@ model NexusLiveMessage {
   stream    NexusLiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
   profileId String
   text      String
-  tipZij    Int             @default(0)            // > 0 bo'lsa — Super Chat (pulli, ajratilgan)
+  tipAmount Int             @default(0) @map("tipZij")  // > 0 bo'lsa — Super Chat (pulli, ajratilgan)
   hidden    Boolean         @default(false)        // moderatsiya
   createdAt DateTime        @default(now())
   @@index([streamId, createdAt])
@@ -1318,7 +1320,8 @@ model NexusTip {
   id          String      @id @default(cuid())
   donorId     String                              // kim yubordi (UserProfile.id)
   recipientId String                              // ijodkor
-  amountZij   Int                                 // miqdor (Ƶ)
+  amount      Int            @map("amountZij")    // miqdor (currency valyutasida)
+  currency    Currency       @default(UZS)
   targetType  NexusTipTarget @default(PROFILE)    // nimaga: profil/post/video/jonli
   targetId    String?                             // tegishli kontent id (PROFILE uchun null)
   message     String?                             // ixtiyoriy izoh (Super Chat matni)
@@ -1442,7 +1445,8 @@ model NexusSubscription {
   id           String   @id @default(cuid())
   subscriberId String                              // obunachi (UserProfile.id)
   creatorId    String                              // ijodkor
-  priceZij     Int                                 // to'langan oylik narx (obuna paytida qotiriladi)
+  price        Int            @map("priceZij")    // to'langan oylik narx (obuna paytida qotiriladi)
+  currency     Currency       @default(UZS)
   startedAt    DateTime @default(now())
   expiresAt    DateTime                            // shu vaqtgacha faol
   expiryNotifiedAt DateTime?                       // tugashga yaqin bildirishnoma yuborilgan vaqt
@@ -1469,7 +1473,7 @@ model NexusVideoPurchase {
   videoId   String
   video     NexusVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
   buyerId   String                                  // UserProfile id
-  priceZij  Int                                     // to'langan summa (Ƶ)
+  price     Int            @map("priceZij")        // to'langan summa
   createdAt DateTime   @default(now())
   @@unique([videoId, buyerId])
   @@index([buyerId, createdAt])

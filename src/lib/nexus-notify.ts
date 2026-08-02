@@ -34,7 +34,7 @@ export async function nexusNotify(opts: {
     trackId?: string | null;
     liveId?: string | null;
     callId?: string | null;
-    amountZij?: number | null;
+    amount?: number | null;
 }): Promise<void> {
     if (!opts.recipientId || opts.recipientId === opts.actorId) return; // o'ziga emas
     try {
@@ -49,7 +49,7 @@ export async function nexusNotify(opts: {
                 trackId: opts.trackId ?? null,
                 liveId: opts.liveId ?? null,
                 callId: opts.callId ?? null,
-                amountZij: opts.amountZij ?? null,
+                amount: opts.amount ?? null,
             },
         });
         // Web push (fire-and-forget; kalit yo'q bo'lsa jim o'tadi)

@@ -15,7 +15,7 @@ interface NActor { name: string | null; username: string | null; image: string |
 interface Notif {
     id: string; type: NType; read: boolean; createdAt: string; actor: NActor | null; postText: string | null;
     postId?: string | null; videoId?: string | null; trackId?: string | null; liveId?: string | null; callId?: string | null;
-    amountZij?: number | null;
+    amount?: number | null;
 }
 
 const TYPE_ICONS: Record<NType, React.ElementType> = {
@@ -199,7 +199,7 @@ export function NxNotifications() {
                                             {n.actor?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
                                         </span>{" "}
                                         <span style={{ color: "rgba(180,200,240,0.85)" }}>{TYPE_TEXT[n.type]}</span>
-                                        {n.type === "TIP" && n.amountZij ? <span className="font-black ml-1" style={{ color: "#F59E0B" }}>{formatMoney(n.amountZij, currency)}</span> : null}
+                                        {n.type === "TIP" && n.amount ? <span className="font-black ml-1" style={{ color: "#F59E0B" }}>{formatMoney(n.amount, currency)}</span> : null}
                                     </p>
                                     {n.postText && <p className="text-[11px] mt-0.5 truncate" style={{ color: "rgba(120,140,185,0.7)" }}>&ldquo;{n.postText}&rdquo;</p>}
                                     <p className="text-[10px] mt-0.5" style={{ color: "rgba(80,100,150,0.75)" }}>{timeAgo(n.createdAt)}</p>

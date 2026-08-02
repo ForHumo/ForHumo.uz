@@ -9,13 +9,13 @@ import { formatMoney, type Currency } from "@/lib/money";
 // NxSubscribeSheet — ijodkorga pullik oylik obuna (real pul). 30 kunlik kirish.
 // ─────────────────────────────────────────────────────────────────────────────
 export function NxSubscribeSheet({
-    open, onClose, creatorUsername, creatorName, priceZij, currency, alreadyActive, onSuccess,
+    open, onClose, creatorUsername, creatorName, price, currency, alreadyActive, onSuccess,
 }: {
     open: boolean;
     onClose: () => void;
     creatorUsername: string;
     creatorName?: string | null;
-    priceZij: number;
+    price: number;
     currency: Currency;
     alreadyActive?: boolean;
     onSuccess?: (expiresAt: string) => void;
@@ -39,7 +39,7 @@ export function NxSubscribeSheet({
     if (!open) return null;
 
     // Tomoshabin valyutasi narx valyutasi bilan bir xil bo'lsa — yetishmovchilikni oldindan tekshiramiz
-    const insufficient = balance !== null && myCurrency === currency && priceZij > balance;
+    const insufficient = balance !== null && myCurrency === currency && price > balance;
     const displayName = creatorName || `@${creatorUsername}`;
 
     async function subscribe() {
@@ -93,7 +93,7 @@ export function NxSubscribeSheet({
                         <div className="px-5 py-4">
                             {/* Narx */}
                             <div className="flex items-baseline justify-center gap-1.5 py-2">
-                                <span className="text-3xl font-black" style={{ color: "#8B5CF6" }}>{formatMoney(priceZij, currency)}</span>
+                                <span className="text-3xl font-black" style={{ color: "#8B5CF6" }}>{formatMoney(price, currency)}</span>
                                 <span className="text-sm font-bold" style={{ color: "rgba(120,140,185,0.8)" }}>/ oy</span>
                             </div>
 
@@ -128,7 +128,7 @@ export function NxSubscribeSheet({
                                     className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-white disabled:opacity-50 active:scale-[0.99] transition"
                                     style={{ background: "linear-gradient(135deg,#8B5CF6,#2B3EE8)", boxShadow: "0 6px 24px rgba(139,92,246,0.35)" }}>
                                     {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                                    {formatMoney(priceZij, currency)} — {alreadyActive ? "Uzaytirish" : "Obuna bo'lish"}
+                                    {formatMoney(price, currency)} — {alreadyActive ? "Uzaytirish" : "Obuna bo'lish"}
                                 </button>
                             )}
                         </div>

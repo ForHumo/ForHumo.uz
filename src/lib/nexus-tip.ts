@@ -15,13 +15,13 @@ function cur(c: string): Currency { return c === "USD" ? "USD" : "UZS"; }
 export async function sendTip(opts: {
     donorId: string;
     recipientId: string;
-    amountZij: number;              // donor valyutasidagi miqdor
+    amount: number;              // donor valyutasidagi miqdor
     targetType: TipTarget;
     targetId?: string | null;
     message?: string | null;
     recipientCountry?: string | null;  // ijodkor hamyoni yo'q bo'lsa valyuta uchun
 }): Promise<{ result: TipResult; tipId?: string; received?: number }> {
-    const amount = Math.round(Number(opts.amountZij));
+    const amount = Math.round(Number(opts.amount));
     if (!Number.isFinite(amount) || amount < TIP_MIN) return { result: "invalid" };
     if (!opts.recipientId) return { result: "invalid" };
     if (opts.donorId === opts.recipientId) return { result: "self" };
@@ -55,7 +55,7 @@ export async function sendTip(opts: {
 
             const tip = await tx.nexusTip.create({
                 data: {
-                    donorId: opts.donorId, recipientId: opts.recipientId, amountZij: received,  // ijodkor olgan miqdor (uning valyutasida)
+                    donorId: opts.donorId, recipientId: opts.recipientId, amount: received,  // ijodkor olgan miqdor (uning valyutasida)
                     targetType: opts.targetType, targetId: opts.targetId ?? null,
                     message: typeof opts.message === "string" && opts.message.trim() ? opts.message.trim().slice(0, 200) : null,
                 },

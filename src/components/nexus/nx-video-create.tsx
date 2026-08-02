@@ -70,7 +70,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
     const [descImages, setDescImages] = useState<string[]>([]);
     const [isMature, setIsMature] = useState(false);
     const [isPaid, setIsPaid] = useState(false);
-    const [priceZij, setPriceZij] = useState<number>(0);
+    const [price, setPriceZij] = useState<number>(0);
 
     const [myVids, setMyVids] = useState<MyVid[]>([]);
     const [prevVideoId, setPrevVideoId] = useState<string>("");
@@ -195,7 +195,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                     thumbUrl: coverUrl || autoThumb, durationSec,
                     width: dims.w, height: dims.h, orientation, category,
                     tags, descImages, isMature,
-                    priceZij: isPaid ? Math.max(0, Math.round(priceZij)) : 0,
+                    price: isPaid ? Math.max(0, Math.round(price)) : 0,
                     prevVideoId: prevVideoId || null,
                 }),
             });
@@ -370,7 +370,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                                 {isPaid && (
                                     <div className="mt-2">
                                         <div className="relative">
-                                            <input type="number" min={0} value={priceZij || ""} onChange={e => setPriceZij(Number(e.target.value))} placeholder="Summa"
+                                            <input type="number" min={0} value={price || ""} onChange={e => setPriceZij(Number(e.target.value))} placeholder="Summa"
                                                 className="w-full h-10 px-3 pr-10 rounded-xl text-sm text-white outline-none"
                                                 style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", caretColor: "#00CEC8" }} />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black" style={{ color: "#00CEC8" }}>{currencySymbol(myCurrency)}</span>

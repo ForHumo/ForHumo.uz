@@ -14,7 +14,7 @@ interface RoomStream {
     viewers: number; peakViewers: number; likes: number; isMine: boolean;
     author: LAuthor | null;
 }
-interface ChatMsg { id: string; text: string; tipZij?: number; createdAt: string; author: LAuthor | null }
+interface ChatMsg { id: string; text: string; tipAmount?: number; createdAt: string; author: LAuthor | null }
 
 function scPresets(c: Currency) { return c === "USD" ? [1, 5, 10, 50] : [5000, 10000, 50000, 100000]; }
 
@@ -105,7 +105,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
         try {
             const r = await fetch(`/api/nexus/live/${streamId}/chat`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text, ...(isSC ? { tipZij: scAmount } : {}) }),
+                body: JSON.stringify({ text, ...(isSC ? { tipAmount: scAmount } : {}) }),
             });
             const d = await r.json();
             if (r.ok) {
@@ -217,14 +217,14 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     ) : msgs.length === 0 ? (
                         <p className="text-xs text-center py-6" style={{ color: "rgba(120,140,185,0.6)" }}>Birinchi xabarni yozing</p>
                     ) : msgs.map(m => (
-                        (m.tipZij ?? 0) > 0 ? (
+                        (m.tipAmount ?? 0) > 0 ? (
                             <div key={m.id} className="my-1.5 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(245,158,11,0.45)", boxShadow: "0 2px 12px rgba(245,158,11,0.2)" }}>
                                 <div className="flex items-center justify-between px-2.5 py-1.5" style={{ background: "linear-gradient(135deg,#F59E0B,#EF4444)" }}>
                                     <span className="inline-flex items-center gap-1 text-[11px] font-black text-white">
                                         <Gift className="w-3 h-3" />{m.author?.name || m.author?.username || "Foydalanuvchi"}
                                         {m.author?.verified && <BadgeCheck className="w-3 h-3 text-white" />}
                                     </span>
-                                    <span className="text-[11px] font-black text-white">{formatMoney(m.tipZij ?? 0, currency)}</span>
+                                    <span className="text-[11px] font-black text-white">{formatMoney(m.tipAmount ?? 0, currency)}</span>
                                 </div>
                                 {m.text && <p className="px-2.5 py-1.5 text-xs leading-relaxed" style={{ background: "rgba(245,158,11,0.10)", color: "rgba(245,225,190,0.95)" }}>{m.text}</p>}
                             </div>

@@ -8,7 +8,7 @@ import { currencyForCountry } from "@/lib/money";
 export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, subPriceZij: true, country: true } });
+    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, subPrice: true, country: true } });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
     const id = me.id;
     const now = new Date();
@@ -25,10 +25,10 @@ export async function GET() {
         // Auditoriya
         prisma.nexusFollow.count({ where: { followingId: id } }),
         prisma.nexusSubscription.count({ where: { creatorId: id, expiresAt: { gt: now } } }),
-        prisma.nexusSubscription.aggregate({ where: { creatorId: id, expiresAt: { gt: now } }, _sum: { priceZij: true } }),
+        prisma.nexusSubscription.aggregate({ where: { creatorId: id, expiresAt: { gt: now } }, _sum: { price: true } }),
         // Daromad
-        prisma.nexusTip.aggregate({ where: { recipientId: id }, _sum: { amountZij: true } }),
-        prisma.nexusVideoPurchase.aggregate({ where: { video: { profileId: id } }, _sum: { priceZij: true } }),
+        prisma.nexusTip.aggregate({ where: { recipientId: id }, _sum: { amount: true } }),
+        prisma.nexusVideoPurchase.aggregate({ where: { video: { profileId: id } }, _sum: { price: true } }),
         // Kontent — video
         prisma.nexusVideo.count({ where: { profileId: id, hidden: false } }),
         prisma.nexusVideo.aggregate({ where: { profileId: id, hidden: false }, _sum: { views: true } }),
@@ -45,9 +45,9 @@ export async function GET() {
         prisma.nexusTip.findMany({ where: { recipientId: id }, orderBy: { createdAt: "desc" }, take: 8 }),
     ]);
 
-    const tipsTotal = tipsAgg._sum.amountZij ?? 0;
-    const salesTotal = salesAgg._sum.priceZij ?? 0;
-    const subMonthly = subSum._sum.priceZij ?? 0;
+    const tipsTotal = tipsAgg._sum.amount ?? 0;
+    const salesTotal = salesAgg._sum.price ?? 0;
+    const subMonthly = subSum._sum.price ?? 0;
 
     // So'nggi tip donorlari
     const donorIds = [...new Set(recentTips.map(t => t.donorId))];
@@ -58,7 +58,7 @@ export async function GET() {
 
     return NextResponse.json({
         currency: currencyForCountry(me.country),
-        subPriceEnabled: me.subPriceZij > 0,
+        subPriceEnabled: me.subPrice > 0,
         audience: { followers, subscribers: activeSubs, subMonthly },
         earnings: {
             tips: tipsTotal,
@@ -75,7 +75,7 @@ export async function GET() {
         recentTips: recentTips.map(t => {
             const d = dMap[t.donorId];
             return {
-                id: t.id, amountZij: t.amountZij, message: t.message, targetType: t.targetType, createdAt: t.createdAt,
+                id: t.id, amount: t.amount, message: t.message, targetType: t.targetType, createdAt: t.createdAt,
                 donor: d ? { name: d.name, username: d.username, image: d.image } : null,
             };
         }),

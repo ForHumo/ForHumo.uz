@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const {
         title, description, videoUrl, thumbUrl, durationSec, category,
-        orientation, width, height, tags, descImages, isMature, priceZij, prevVideoId,
+        orientation, width, height, tags, descImages, isMature, price, prevVideoId,
     } = body;
     if (!isValidMediaUrl(videoUrl)) return NextResponse.json({ error: "Video kerak" }, { status: 400 });
     if (!title?.trim()) return NextResponse.json({ error: "Sarlavha kerak" }, { status: 400 });
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     const cleanDescImages = filterMediaUrls(descImages, 30);
 
     // Narx (foydalanuvchi valyutasida) — 0 = bepul
-    const price = Number.isFinite(priceZij) ? Math.max(0, Math.min(10_000_000, Math.round(Number(priceZij)))) : 0;
+    const priceNum = Number.isFinite(price) ? Math.max(0, Math.min(10_000_000, Math.round(Number(price)))) : 0;
 
     // Series — avvalgi qism faqat o'zimning mavjud videom bo'lishi mumkin
     let prevId: string | null = null;
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
             tags: cleanTags,
             descImages: cleanDescImages,
             isMature: isMature === true,
-            priceZij: price,
+            price: priceNum,
             prevVideoId: prevId,
         },
     });
@@ -106,7 +106,7 @@ export async function GET(req: Request) {
     const where: Prisma.NexusVideoWhereInput = { hidden: false };
     if (kindParam === "SHORT" || kindParam === "LONG") where.kind = kindParam;
     if (orientParam === "HORIZONTAL" || orientParam === "VERTICAL") where.orientation = orientParam;
-    if (free) where.priceZij = 0;
+    if (free) where.price = 0;
     if (category) where.category = category;
     if (q) where.OR = [
         { title: { contains: q, mode: "insensitive" } },
@@ -157,11 +157,11 @@ export async function GET(req: Request) {
     const out = videos.map(v => {
         const p = pMap[v.profileId];
         // Pullik video — sotib olinmaguncha videoUrl chiqmaydi (paywall bypass'ini yopadi)
-        const locked = v.priceZij > 0 && v.profileId !== meId && !boughtIds.has(v.id);
+        const locked = v.price > 0 && v.profileId !== meId && !boughtIds.has(v.id);
         return {
             id: v.id, title: v.title, thumbUrl: v.thumbUrl, videoUrl: locked ? "" : v.videoUrl,
             durationSec: v.durationSec, kind: v.kind, orientation: v.orientation,
-            priceZij: v.priceZij, priceCurrency: currencyForCountry(p?.country), isMature: v.isMature, isSaved: savedIds.has(v.id), locked,
+            price: v.price, priceCurrency: currencyForCountry(p?.country), isMature: v.isMature, isSaved: savedIds.has(v.id), locked,
             views: v.views, createdAt: v.createdAt,
             likeCount: v._count.likes, commentCount: v._count.comments,
             author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,

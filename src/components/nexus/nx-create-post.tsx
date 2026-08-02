@@ -87,7 +87,7 @@ export function NxCreatePost() {
     // Pullik obuna variantini faqat obunasi yoqilgan ijodkorga ko'rsatish
     useEffect(() => {
         if (!createPostOpen) return;
-        fetch("/api/nexus/creator").then(r => r.json()).then(d => setCanSub((d.subPriceZij ?? 0) > 0)).catch(() => { });
+        fetch("/api/nexus/creator").then(r => r.json()).then(d => setCanSub((d.subPrice ?? 0) > 0)).catch(() => { });
     }, [createPostOpen]);
 
     if (!createPostOpen) return null;

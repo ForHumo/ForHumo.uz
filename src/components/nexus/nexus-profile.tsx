@@ -15,7 +15,7 @@ import { formatMoney } from "@/lib/money";
 interface ProfileData {
     name: string | null; username: string | null; image: string | null;
     coverImage: string | null; bio: string | null; humoId: string | null; verified: boolean;
-    subPriceZij: number; subCurrency: "UZS" | "USD";
+    subPrice: number; subCurrency: "UZS" | "USD";
 }
 interface Stats { posts: number; followers: number; following: number; videos: number; tracks: number; lives: number }
 interface ProfileResp { profile: ProfileData; stats: Stats; isFollowing: boolean; isMe: boolean; iBlocked: boolean; blockedMe: boolean; iMuted: boolean; subscribed: boolean; subExpiresAt: string | null }
@@ -237,7 +237,7 @@ export function NexusProfile({ username }: { username: string }) {
                             </div>
 
                             {/* Pullik obuna CTA — boshqa ijodkor uchun */}
-                            {!data.isMe && !iBlocked && !blockedMe && data.profile.subPriceZij > 0 && (
+                            {!data.isMe && !iBlocked && !blockedMe && data.profile.subPrice > 0 && (
                                 subscribed ? (
                                     <button onClick={() => setSubOpen(true)}
                                         className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black active:scale-[0.99] transition"
@@ -249,7 +249,7 @@ export function NexusProfile({ username }: { username: string }) {
                                     <button onClick={() => setSubOpen(true)}
                                         className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black text-white active:scale-[0.99] transition"
                                         style={{ background: "linear-gradient(135deg,#8B5CF6,#2B3EE8)", boxShadow: "0 4px 18px rgba(139,92,246,0.35)" }}>
-                                        <Star className="w-4 h-4" /> Obuna · {formatMoney(data.profile.subPriceZij, data.profile.subCurrency)}/oy
+                                        <Star className="w-4 h-4" /> Obuna · {formatMoney(data.profile.subPrice, data.profile.subCurrency)}/oy
                                     </button>
                                 )
                             )}
@@ -261,7 +261,7 @@ export function NexusProfile({ username }: { username: string }) {
                                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black active:scale-[0.99] transition"
                                         style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.30)", color: "rgba(196,181,253,0.95)" }}>
                                         <Settings2 className="w-4 h-4" style={{ color: "#8B5CF6" }} />
-                                        {data.profile.subPriceZij > 0 ? `${formatMoney(data.profile.subPriceZij, data.profile.subCurrency)}/oy` : "Obunani yoqish"}
+                                        {data.profile.subPrice > 0 ? `${formatMoney(data.profile.subPrice, data.profile.subCurrency)}/oy` : "Obunani yoqish"}
                                     </button>
                                     <Link href="/nexus/analytics"
                                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black active:scale-[0.99] transition"
@@ -310,16 +310,16 @@ export function NexusProfile({ username }: { username: string }) {
                         recipientUsername={username} recipientName={displayName}
                         targetType="PROFILE" />
                 )}
-                {data && !data.isMe && data.profile.subPriceZij > 0 && (
+                {data && !data.isMe && data.profile.subPrice > 0 && (
                     <NxSubscribeSheet open={subOpen} onClose={() => setSubOpen(false)}
                         creatorUsername={username} creatorName={displayName}
-                        priceZij={data.profile.subPriceZij} currency={data.profile.subCurrency} alreadyActive={subscribed}
+                        price={data.profile.subPrice} currency={data.profile.subCurrency} alreadyActive={subscribed}
                         onSuccess={(exp) => { setSubscribed(true); setSubExpiresAt(exp); }} />
                 )}
                 {data && data.isMe && subSettingsOpen && (
-                    <NxCreatorSubSettings initialPrice={data.profile.subPriceZij}
+                    <NxCreatorSubSettings initialPrice={data.profile.subPrice}
                         onClose={() => setSubSettingsOpen(false)}
-                        onSaved={(price) => { setData(d => d ? { ...d, profile: { ...d.profile, subPriceZij: price } } : d); }} />
+                        onSaved={(price) => { setData(d => d ? { ...d, profile: { ...d.profile, subPrice: price } } : d); }} />
                 )}
             </div>
 

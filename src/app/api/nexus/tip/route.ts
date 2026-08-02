@@ -10,7 +10,7 @@ import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 const VALID_TARGETS: TipTarget[] = ["PROFILE", "POST", "VIDEO", "LIVE"];
 
 // POST /api/nexus/tip — ijodkorni qo'llab-quvvatlash (Zij donat)
-// body: { recipientUsername|recipientId, amountZij, targetType?, targetId?, message? }
+// body: { recipientUsername|recipientId, amount, targetType?, targetId?, message? }
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
     const body = await req.json();
-    const { recipientUsername, recipientId, amountZij, targetType, targetId, message } = body;
+    const { recipientUsername, recipientId, amount, targetType, targetId, message } = body;
 
     let rec: { id: string; country: string | null } | null = null;
     if (recipientId) rec = await prisma.userProfile.findUnique({ where: { id: recipientId }, select: { id: true, country: true } });
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     const tType: TipTarget = VALID_TARGETS.includes(targetType) ? targetType : "PROFILE";
 
     const { result, tipId, received } = await sendTip({
-        donorId: me.id, recipientId: recId, amountZij,
+        donorId: me.id, recipientId: recId, amount,
         targetType: tType, targetId: typeof targetId === "string" ? targetId : null, message,
         recipientCountry: rec.country,
     });
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     if (result !== "ok") return NextResponse.json({ error: "Noto'g'ri miqdor" }, { status: 400 });
 
     after(() => nexusNotify({
-        recipientId: recId, actorId: me.id, type: "TIP", amountZij: received ?? null,
+        recipientId: recId, actorId: me.id, type: "TIP", amount: received ?? null,
         postId: tType === "POST" ? targetId : null,
         videoId: tType === "VIDEO" ? targetId : null,
         liveId: tType === "LIVE" ? targetId : null,

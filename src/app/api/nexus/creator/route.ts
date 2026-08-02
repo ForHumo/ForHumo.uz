@@ -8,25 +8,25 @@ import { currencyForCountry } from "@/lib/money";
 export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, subPriceZij: true, country: true } });
+    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, subPrice: true, country: true } });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
     const [subscribers, subIncome] = await prisma.$transaction([
         prisma.nexusSubscription.count({ where: { creatorId: me.id, expiresAt: { gt: new Date() } } }),
-        prisma.nexusSubscription.aggregate({ where: { creatorId: me.id, expiresAt: { gt: new Date() } }, _sum: { priceZij: true } }),
+        prisma.nexusSubscription.aggregate({ where: { creatorId: me.id, expiresAt: { gt: new Date() } }, _sum: { price: true } }),
     ]);
-    return NextResponse.json({ subPriceZij: me.subPriceZij, currency: currencyForCountry(me.country), activeSubscribers: subscribers, monthlyIncome: subIncome._sum.priceZij ?? 0 });
+    return NextResponse.json({ subPrice: me.subPrice, currency: currencyForCountry(me.country), activeSubscribers: subscribers, monthlyIncome: subIncome._sum.price ?? 0 });
 }
 
-// PATCH /api/nexus/creator — { subPriceZij } obuna narxini o'rnatish (0 = o'chirish)
+// PATCH /api/nexus/creator — { subPrice } obuna narxini o'rnatish (0 = o'chirish)
 export async function PATCH(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
-    const { subPriceZij } = await req.json();
-    const price = Math.max(0, Math.min(1_000_000, Math.round(Number(subPriceZij) || 0)));
-    await prisma.userProfile.update({ where: { id: me.id }, data: { subPriceZij: price } });
-    return NextResponse.json({ ok: true, subPriceZij: price });
+    const { subPrice } = await req.json();
+    const price = Math.max(0, Math.min(1_000_000, Math.round(Number(subPrice) || 0)));
+    await prisma.userProfile.update({ where: { id: me.id }, data: { subPrice: price } });
+    return NextResponse.json({ ok: true, subPrice: price });
 }

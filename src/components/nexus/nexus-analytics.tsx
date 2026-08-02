@@ -14,7 +14,7 @@ interface Analytics extends AnalyticsExtra {
     audience: { followers: number; subscribers: number; subMonthly: number };
     earnings: { tips: number; videoSales: number; subMonthly: number; total: number };
     content: { videos: number; videoViews: number; videoLikes: number; tracks: number; trackPlays: number; posts: number; postLikes: number; lives: number };
-    recentTips: { id: string; amountZij: number; message: string | null; targetType: string; createdAt: string; donor: { name: string | null; username: string | null; image: string | null } | null }[];
+    recentTips: { id: string; amount: number; message: string | null; targetType: string; createdAt: string; donor: { name: string | null; username: string | null; image: string | null } | null }[];
 }
 
 function fmtN(n: number) {
@@ -110,7 +110,7 @@ export function NexusAnalytics() {
                                             {t.message && <p className="text-[11px] truncate" style={{ color: "rgba(120,140,185,0.8)" }}>{t.message}</p>}
                                         </div>
                                         <div className="text-right flex-shrink-0">
-                                            <p className="text-sm font-black" style={{ color: "#F59E0B" }}>{formatMoney(t.amountZij, data.currency)}</p>
+                                            <p className="text-sm font-black" style={{ color: "#F59E0B" }}>{formatMoney(t.amount, data.currency)}</p>
                                             <p className="text-[10px]" style={{ color: "rgba(100,120,170,0.7)" }}>{timeAgo(t.createdAt)}</p>
                                         </div>
                                     </div>

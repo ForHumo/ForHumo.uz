@@ -24,7 +24,7 @@ function avatarOf(a: { username?: string | null; name?: string | null; image?: s
     return a?.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(a?.username || a?.name || "u")}`;
 }
 
-interface VidItem { id: string; title: string; thumbUrl: string | null; videoUrl: string; durationSec: number; orientation: string; views: number; likeCount: number; priceZij: number; priceCurrency?: Currency; locked: boolean; author: { name: string | null; username: string | null; image: string | null } | null }
+interface VidItem { id: string; title: string; thumbUrl: string | null; videoUrl: string; durationSec: number; orientation: string; views: number; likeCount: number; price: number; priceCurrency?: Currency; locked: boolean; author: { name: string | null; username: string | null; image: string | null } | null }
 interface TrackItem { id: string; title: string; artist: string | null; audioUrl: string; coverUrl: string | null; durationSec: number; kind: string; plays: number; uploader: { name: string | null; username: string | null } | null }
 interface LiveItem { id: string; title: string; status: string; viewers: number; peakViewers: number; createdAt: string; author: { name: string | null; username: string | null; image: string | null } | null }
 
@@ -122,7 +122,7 @@ export function NexusProfileContent({ username, counts }: { username: string; co
                                             {v.thumbUrl
                                                 ? <img src={v.thumbUrl} alt="" className="w-full h-full object-cover" />
                                                 : <div className="w-full h-full flex items-center justify-center"><Play className="w-7 h-7" style={{ color: "rgba(120,140,185,0.4)" }} /></div>}
-                                            {v.locked && <span className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black text-white" style={{ background: "rgba(43,62,232,0.9)" }}><Lock className="w-2.5 h-2.5" />{formatMoney(v.priceZij, v.priceCurrency ?? "UZS")}</span>}
+                                            {v.locked && <span className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black text-white" style={{ background: "rgba(43,62,232,0.9)" }}><Lock className="w-2.5 h-2.5" />{formatMoney(v.price, v.priceCurrency ?? "UZS")}</span>}
                                             {v.durationSec > 0 && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                         </div>
                                         <p className="text-xs font-bold text-white line-clamp-2 leading-snug group-hover:text-[#8B5CF6] transition-colors">{v.title}</p>

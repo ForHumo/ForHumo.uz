@@ -14,7 +14,7 @@ interface VAuthor { name: string | null; username: string | null; image: string 
 interface Vid {
     id: string; title: string; thumbUrl: string | null; videoUrl: string;
     durationSec: number; views: number; createdAt: string;
-    orientation: "HORIZONTAL" | "VERTICAL"; priceZij: number; priceCurrency?: "UZS" | "USD"; isMature: boolean; isSaved: boolean;
+    orientation: "HORIZONTAL" | "VERTICAL"; price: number; priceCurrency?: "UZS" | "USD"; isMature: boolean; isSaved: boolean;
     locked: boolean;
     likeCount: number; commentCount: number; author: VAuthor | null;
 }
@@ -240,11 +240,11 @@ export function VideoView() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Karta badge'lari: narx + 18+
 function Badges({ v }: { v: Vid }) {
-    if (v.priceZij <= 0 && !v.isMature) return null;
+    if (v.price <= 0 && !v.isMature) return null;
     return (
         <div className="absolute top-2 left-2 flex gap-1">
-            {v.priceZij > 0 && (
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>{formatMoney(v.priceZij, v.priceCurrency ?? "UZS")}</span>
+            {v.price > 0 && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>{formatMoney(v.price, v.priceCurrency ?? "UZS")}</span>
             )}
             {v.isMature && (
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "rgba(239,68,68,0.92)" }}>18+</span>

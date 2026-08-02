@@ -41,10 +41,10 @@ export function NxCreatorSubSettings({
         setBusy(true);
         try {
             const res = await fetch("/api/nexus/creator", {
-                method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subPriceZij: effective }),
+                method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subPrice: effective }),
             });
             const d = await res.json();
-            if (res.ok) { onSaved(d.subPriceZij); onClose(); }
+            if (res.ok) { onSaved(d.subPrice); onClose(); }
         } finally { setBusy(false); }
     }
 

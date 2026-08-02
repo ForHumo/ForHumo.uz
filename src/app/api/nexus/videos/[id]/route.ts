@@ -43,7 +43,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     }
 
     // Pullik video — sotib olinmaguncha videoUrl berilmaydi
-    const locked = video.priceZij > 0 && video.profileId !== meId && !isPurchased;
+    const locked = video.price > 0 && video.profileId !== meId && !isPurchased;
 
     // Seriya — oldingi/keyingi qism
     const partSelect = { id: true, title: true, thumbUrl: true, durationSec: true, views: true } as const;
@@ -73,7 +73,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             videoUrl: locked ? "" : video.videoUrl, thumbUrl: video.thumbUrl, durationSec: video.durationSec,
             kind: video.kind, orientation: video.orientation, category: video.category,
             tags: video.tags, descImages: video.descImages, isMature: video.isMature,
-            priceZij: video.priceZij, priceCurrency: currencyForCountry(author?.country), prevVideoId: video.prevVideoId, locked,
+            price: video.price, priceCurrency: currencyForCountry(author?.country), prevVideoId: video.prevVideoId, locked,
             series: { prev: prevPart, next: nextPart },
             views: video.views, createdAt: video.createdAt,
             likeCount: video._count.likes, commentCount: video._count.comments,

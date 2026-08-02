@@ -45,7 +45,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         messages: msgs.map(m => {
             const p = pMap[m.profileId];
             return {
-                id: m.id, text: m.text, tipZij: m.tipZij, createdAt: m.createdAt,
+                id: m.id, text: m.text, tipAmount: m.tipAmount, createdAt: m.createdAt,
                 author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,
             };
         }),
@@ -67,8 +67,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!stream) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
     if (stream.status === "ENDED") return NextResponse.json({ error: "Efir tugagan" }, { status: 400 });
 
-    const { text, tipZij } = await req.json();
-    const tip = Math.round(Number(tipZij) || 0);
+    const { text, tipAmount } = await req.json();
+    const tip = Math.round(Number(tipAmount) || 0);
     const isSuperChat = tip > 0;
     // Oddiy xabarda matn shart; Super Chat'da matn ixtiyoriy
     if (!isSuperChat && !text?.trim()) return NextResponse.json({ error: "Matn kerak" }, { status: 400 });
@@ -83,22 +83,22 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         if (await nexusRateLimited(me.id, "tip")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
         const { result, received } = await sendTip({
-            donorId: me.id, recipientId: stream.profileId, amountZij: tip,
+            donorId: me.id, recipientId: stream.profileId, amount: tip,
             targetType: "LIVE", targetId: id, message: cleanText,
         });
         if (result === "no_funds") return NextResponse.json({ error: "Mablag' yetarli emas — ALKH Pay hamyoningizni to'ldiring" }, { status: 402 });
         if (result !== "ok") return NextResponse.json({ error: "Super Chat amalga oshmadi" }, { status: 400 });
 
         const sc = await prisma.nexusLiveMessage.create({
-            data: { streamId: id, profileId: me.id, text: cleanText, tipZij: tip },
+            data: { streamId: id, profileId: me.id, text: cleanText, tipAmount: tip },
         });
-        after(() => nexusNotify({ recipientId: stream.profileId, actorId: me.id, type: "TIP", liveId: id, amountZij: received ?? null }));
+        after(() => nexusNotify({ recipientId: stream.profileId, actorId: me.id, type: "TIP", liveId: id, amount: received ?? null }));
         // Super Chat matni ham moderatsiya
         if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "LIVE_MESSAGE", targetId: sc.id, text: cleanText, kind: "jonli efir Super Chat" }));
 
         return NextResponse.json({
             message: {
-                id: sc.id, text: sc.text, tipZij: sc.tipZij, createdAt: sc.createdAt,
+                id: sc.id, text: sc.text, tipAmount: sc.tipAmount, createdAt: sc.createdAt,
                 author: { name: me.name, username: me.username, image: me.image, verified: isVerifiedProfile(me) },
             },
         });
@@ -116,7 +116,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     return NextResponse.json({
         message: {
-            id: msg.id, text: msg.text, tipZij: 0, createdAt: msg.createdAt,
+            id: msg.id, text: msg.text, tipAmount: 0, createdAt: msg.createdAt,
             author: { name: me.name, username: me.username, image: me.image, verified: isVerifiedProfile(me) },
         },
     });

@@ -46,7 +46,7 @@ export async function DELETE(req: Request) {
             firstName: null, lastName: null, fatherName: null,
             image: null, coverImage: null, bio: null, birthday: null,
             city: null, location: null, locationIv: null, phone: null,
-            verified: false, verifiedAt: null, subPriceZij: 0,
+            verified: false, verifiedAt: null, subPrice: 0,
             onboardingDone: false, emailVerified: false,
             deletedAt: new Date(),
         },

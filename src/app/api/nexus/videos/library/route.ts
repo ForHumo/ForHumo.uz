@@ -53,11 +53,11 @@ export async function GET() {
 
     function shape(v: VideoWithCount) {
         const p = pMap[v.profileId] as (typeof profs)[number] | undefined;
-        const locked = v.priceZij > 0 && v.profileId !== me!.id && !boughtSet.has(v.id);
+        const locked = v.price > 0 && v.profileId !== me!.id && !boughtSet.has(v.id);
         return {
             id: v.id, title: v.title, thumbUrl: v.thumbUrl, videoUrl: locked ? "" : v.videoUrl,
             durationSec: v.durationSec, kind: v.kind, orientation: v.orientation,
-            priceZij: v.priceZij, isMature: v.isMature, isSaved: savedSet.has(v.id), locked,
+            price: v.price, isMature: v.isMature, isSaved: savedSet.has(v.id), locked,
             views: v.views, createdAt: v.createdAt,
             likeCount: v._count.likes, commentCount: v._count.comments,
             author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,

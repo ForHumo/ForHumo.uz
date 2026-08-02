@@ -55,7 +55,7 @@ export function NxTipSheet({
         try {
             const res = await fetch("/api/nexus/tip", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ recipientUsername, amountZij: effective, targetType, targetId: targetId ?? null, message: message.trim() || null }),
+                body: JSON.stringify({ recipientUsername, amount: effective, targetType, targetId: targetId ?? null, message: message.trim() || null }),
             });
             const d = await res.json();
             if (!res.ok) { setError(d.error || "Xatolik"); return; }

@@ -12,7 +12,7 @@ interface SAuthor { name: string | null; username: string | null; image?: string
 interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isFollowing: boolean; isMe: boolean }
 interface SPost { id: string; text: string | null; createdAt: string; likes: number; comments: number; author: { name: string | null; username: string | null; image: string | null; verified: boolean } | null }
 interface STag { tag: string; count: number }
-interface SVideo { id: string; title: string; thumbUrl: string | null; duration: string; orientation: string; views: number; priceZij: number; author: SAuthor | null }
+interface SVideo { id: string; title: string; thumbUrl: string | null; duration: string; orientation: string; views: number; price: number; author: SAuthor | null }
 interface STrack { id: string; title: string; artist: string | null; coverUrl: string | null; audioUrl: string; duration: string; durationSec: number; kind: string; plays: number; author: SAuthor | null }
 interface SLive { id: string; title: string; status: string; author: SAuthor | null }
 
@@ -94,7 +94,7 @@ export function NxSearch() {
     }
     function playVideo(v: SVideo) {
         close();
-        if (v.orientation === "VERTICAL" && v.priceZij === 0) {
+        if (v.orientation === "VERTICAL" && v.price === 0) {
             openShorts([{ id: v.id, image: v.thumbUrl || "", author: v.author?.name || v.author?.username || "Foydalanuvchi", views: fmtN(v.views), likes: "0", duration: v.duration, videoSrc: "" }], 0);
             return;
         }
@@ -261,7 +261,7 @@ export function NxSearch() {
                                             <div className="relative w-20 h-12 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "rgba(11,18,40,0.7)" }}>
                                                 {v.thumbUrl ? <img src={v.thumbUrl} alt="" className="w-full h-full object-cover" />
                                                     : <div className="w-full h-full flex items-center justify-center"><Play className="w-4 h-4" style={{ color: "rgba(120,140,185,0.4)" }} /></div>}
-                                                {v.priceZij > 0 && <span className="absolute top-0.5 left-0.5 flex items-center gap-0.5 px-1 rounded text-[8px] font-black text-white" style={{ background: "rgba(43,62,232,0.9)" }}><Lock className="w-2 h-2" />{fmtN(v.priceZij)}</span>}
+                                                {v.price > 0 && <span className="absolute top-0.5 left-0.5 flex items-center gap-0.5 px-1 rounded text-[8px] font-black text-white" style={{ background: "rgba(43,62,232,0.9)" }}><Lock className="w-2 h-2" />{fmtN(v.price)}</span>}
                                                 <span className="absolute bottom-0.5 right-0.5 px-1 rounded text-[8px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{v.duration}</span>
                                             </div>
                                             <div className="min-w-0 flex-1">

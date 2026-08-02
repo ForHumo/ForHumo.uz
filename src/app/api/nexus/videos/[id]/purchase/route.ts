@@ -17,10 +17,10 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
     const { id } = await params;
     const video = await prisma.nexusVideo.findUnique({
-        where: { id }, select: { id: true, title: true, profileId: true, priceZij: true, hidden: true },
+        where: { id }, select: { id: true, title: true, profileId: true, price: true, hidden: true },
     });
     if (!video || video.hidden) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
-    if (video.priceZij <= 0) return NextResponse.json({ error: "Bu video bepul" }, { status: 400 });
+    if (video.price <= 0) return NextResponse.json({ error: "Bu video bepul" }, { status: 400 });
     if (video.profileId === me.id) return NextResponse.json({ error: "O'z videongiz" }, { status: 400 });
 
     const existing = await prisma.nexusVideoPurchase.findUnique({
@@ -29,7 +29,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     if (existing) return NextResponse.json({ ok: true, already: true });
 
     const author = await prisma.userProfile.findUnique({ where: { id: video.profileId }, select: { country: true } });
-    const price = video.priceZij;                 // avtor valyutasidagi narx
+    const price = video.price;                 // avtor valyutasidagi narx
     const short = video.title.slice(0, 40);
 
     try {
@@ -66,7 +66,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
                 data: { walletId: aw.id, type: "SALE", amount: price, currency: aCur, balanceAfter: newAuthorBal, description: `Nexus video sotuvi: ${short}`, ref: id },
             });
 
-            await tx.nexusVideoPurchase.create({ data: { videoId: id, buyerId: me.id, priceZij: price } });
+            await tx.nexusVideoPurchase.create({ data: { videoId: id, buyerId: me.id, price: price } });
             return "ok" as const;
         });
 

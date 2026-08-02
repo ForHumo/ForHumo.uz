@@ -90,7 +90,7 @@ export async function GET(req: Request) {
         prisma.nexusVideo.findMany({
             where: { hidden: false, isMature: false, ...notHidden, title: { contains: q, mode: "insensitive" } },
             orderBy: [{ views: "desc" }, { createdAt: "desc" }], take: 6,
-            select: { id: true, title: true, thumbUrl: true, durationSec: true, orientation: true, views: true, priceZij: true, profileId: true },
+            select: { id: true, title: true, thumbUrl: true, durationSec: true, orientation: true, views: true, price: true, profileId: true },
         }),
         prisma.nexusTrack.findMany({
             where: { hidden: false, ...notHidden, OR: [{ title: { contains: q, mode: "insensitive" } }, { artist: { contains: q, mode: "insensitive" } }] },
@@ -117,7 +117,7 @@ export async function GET(req: Request) {
 
     const videos = vidRows.map(v => ({
         id: v.id, title: v.title, thumbUrl: v.thumbUrl, duration: fmtDur(v.durationSec),
-        orientation: v.orientation, views: v.views, priceZij: v.priceZij, author: authorOf(v.profileId),
+        orientation: v.orientation, views: v.views, price: v.price, author: authorOf(v.profileId),
     }));
     const tracks = trackRows.map(t => ({
         id: t.id, title: t.title, artist: t.artist, coverUrl: t.coverUrl, audioUrl: t.audioUrl,

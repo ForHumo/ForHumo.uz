@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     if (!creatorUsername) return NextResponse.json({ error: "creator kerak" }, { status: 400 });
 
     const creator = await prisma.userProfile.findUnique({
-        where: { username: creatorUsername }, select: { id: true, subPriceZij: true },
+        where: { username: creatorUsername }, select: { id: true, subPrice: true },
     });
     if (!creator) return NextResponse.json({ error: "Ijodkor topilmadi" }, { status: 404 });
 
@@ -32,7 +32,7 @@ export async function GET(req: Request) {
             if (sub && sub.expiresAt.getTime() > Date.now()) { active = true; expiresAt = sub.expiresAt; }
         }
     }
-    return NextResponse.json({ subPriceZij: creator.subPriceZij, active, expiresAt });
+    return NextResponse.json({ subPrice: creator.subPrice, active, expiresAt });
 }
 
 // POST /api/nexus/subscribe — { creatorUsername } obuna bo'lish / 30 kun uzaytirish (Zij to'lov)
@@ -47,11 +47,11 @@ export async function POST(req: Request) {
     let price = 0;
     let creatorCountry: string | null = null;
     if (cId) {
-        const c = await prisma.userProfile.findUnique({ where: { id: cId }, select: { id: true, subPriceZij: true, country: true } });
-        cId = c?.id ?? null; price = c?.subPriceZij ?? 0; creatorCountry = c?.country ?? null;
+        const c = await prisma.userProfile.findUnique({ where: { id: cId }, select: { id: true, subPrice: true, country: true } });
+        cId = c?.id ?? null; price = c?.subPrice ?? 0; creatorCountry = c?.country ?? null;
     } else if (creatorUsername) {
-        const c = await prisma.userProfile.findUnique({ where: { username: creatorUsername }, select: { id: true, subPriceZij: true, country: true } });
-        cId = c?.id ?? null; price = c?.subPriceZij ?? 0; creatorCountry = c?.country ?? null;
+        const c = await prisma.userProfile.findUnique({ where: { username: creatorUsername }, select: { id: true, subPrice: true, country: true } });
+        cId = c?.id ?? null; price = c?.subPrice ?? 0; creatorCountry = c?.country ?? null;
     }
     if (!cId) return NextResponse.json({ error: "Ijodkor topilmadi" }, { status: 404 });
     if (cId === me.id) return NextResponse.json({ error: "O'zingizga obuna bo'la olmaysiz" }, { status: 400 });
@@ -97,15 +97,15 @@ export async function POST(req: Request) {
             const expiresAt = new Date(base + SUB_DAYS * 24 * 60 * 60 * 1000);
             await tx.nexusSubscription.upsert({
                 where: { subscriberId_creatorId: { subscriberId: me.id, creatorId: creatorId2 } },
-                create: { subscriberId: me.id, creatorId: creatorId2, priceZij: price, expiresAt },
-                update: { priceZij: price, expiresAt, expiryNotifiedAt: null },
+                create: { subscriberId: me.id, creatorId: creatorId2, price: price, expiresAt },
+                update: { price: price, expiresAt, expiryNotifiedAt: null },
             });
             return { ok: true as const, expiresAt };
         });
 
         if (result === "no_funds") return NextResponse.json({ error: "Mablag' yetarli emas — ALKH Pay hamyoningizni to'ldiring" }, { status: 402 });
 
-        after(() => nexusNotify({ recipientId: creatorId2, actorId: me.id, type: "TIP", amountZij: price }));
+        after(() => nexusNotify({ recipientId: creatorId2, actorId: me.id, type: "TIP", amount: price }));
         return NextResponse.json({ ok: true, active: true, expiresAt: result.expiresAt });
     } catch {
         return NextResponse.json({ error: "Obuna amalga oshmadi, qayta urinib ko'ring" }, { status: 500 });

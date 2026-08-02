@@ -202,7 +202,7 @@ export async function POST(req: Request) {
     const priv =
         privacy === "FOLLOWERS" ? "FOLLOWERS"
         : privacy === "PRIVATE" ? "PRIVATE"
-        : privacy === "SUBSCRIBERS" && profile.subPriceZij > 0 ? "SUBSCRIBERS"
+        : privacy === "SUBSCRIBERS" && profile.subPrice > 0 ? "SUBSCRIBERS"
         : "PUBLIC";
 
     const attachId = typeof marketProductId === "string" && marketProductId ? marketProductId : null;

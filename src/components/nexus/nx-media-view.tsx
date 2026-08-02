@@ -22,7 +22,7 @@ interface Track {
 }
 interface KinoVid {
     id: string; title: string; thumbUrl: string | null; durationSec: number; views: number;
-    orientation: "HORIZONTAL" | "VERTICAL"; locked: boolean; priceZij: number; priceCurrency?: "UZS" | "USD";
+    orientation: "HORIZONTAL" | "VERTICAL"; locked: boolean; price: number; priceCurrency?: "UZS" | "USD";
     author: { name: string | null; username: string | null; image: string | null; verified: boolean } | null;
 }
 
@@ -162,7 +162,7 @@ export function MediaView() {
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ background: "rgba(5,8,24,0.35)" }}>
                                         <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}><Play className="w-5 h-5 text-white fill-white ml-0.5" /></div>
                                     </div>
-                                    {v.priceZij > 0 && <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>{formatMoney(v.priceZij, v.priceCurrency ?? "UZS")}</span>}
+                                    {v.price > 0 && <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>{formatMoney(v.price, v.priceCurrency ?? "UZS")}</span>}
                                     {v.durationSec > 0 && <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                 </div>
                                 <h4 className="text-sm font-bold text-white leading-snug line-clamp-2 group-hover:text-[#00CEC8] transition-colors">{v.title}</h4>
