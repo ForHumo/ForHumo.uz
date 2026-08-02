@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera } from "lucide-react";
+import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle } from "lucide-react";
 import { usePresence } from "@/lib/presence";
 import { upload } from "@vercel/blob/client";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
@@ -15,6 +15,8 @@ interface Msg {
     id: string; text: string; mine: boolean; createdAt: string;
     mediaUrl?: string | null; mediaType?: string | null; mediaMime?: string | null;
     mediaName?: string | null; mediaSize?: number | null; durationMs?: number | null;
+    locLat?: number | null; locLng?: number | null;
+    locUpdatedAt?: string | null; locExpiresAt?: string | null;
 }
 interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isMe: boolean }
 
@@ -299,6 +301,76 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     // Video circle recorder state
     const [circleOpen, setCircleOpen] = useState(false);
 
+    // Location — statik + jonli
+    const [locSheetOpen, setLocSheetOpen] = useState(false);
+    const [locBusy, setLocBusy] = useState(false);
+    const liveLocWatchRef = useRef<Set<string>>(new Set());   // ish faoli bo'lgan msg ID'lari
+    const liveLocIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    async function getPosition(): Promise<GeolocationPosition> {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) return reject(new Error("Brauzer joylashuvni qo'llab-quvvatlamaydi"));
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true, timeout: 10000, maximumAge: 5000,
+            });
+        });
+    }
+    async function sendLocation(durationMinutes: number | null) {
+        if (!selected || locBusy) return;
+        setLocSheetOpen(false); setLocBusy(true);
+        try {
+            const pos = await getPosition();
+            const lat = pos.coords.latitude, lng = pos.coords.longitude;
+            const expiresAt = durationMinutes ? new Date(Date.now() + durationMinutes * 60_000).toISOString() : null;
+            const res = await fetch(`/api/nexus/messages/${selected.conversationId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: "", mediaType: "location", locLat: lat, locLng: lng, locExpiresAt: expiresAt }),
+            });
+            if (res.ok) {
+                const d = await res.json();
+                setMessages(m => [...m, d.message]);
+                loadConvs();
+            } else {
+                const e = await res.json().catch(() => ({}));
+                alert(e.error || "Jo'natib bo'lmadi");
+            }
+        } catch (e) {
+            alert(e instanceof Error ? e.message : "Joylashuvni olib bo'lmadi");
+        } finally { setLocBusy(false); }
+    }
+    async function stopLiveLocation(msgId: string) {
+        await fetch(`/api/nexus/messages/${msgId}/location`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ stop: true }),
+        }).catch(() => { });
+        liveLocWatchRef.current.delete(msgId);
+        if (selected) loadThread(selected.conversationId);
+    }
+
+    // Fon'da jonli joylashuv yangilagichi (o'zim jo'natgan aktiv jonli xabarlar uchun)
+    useEffect(() => {
+        // Har 15 sekundda o'z aktiv jonli joylashuv xabarlarini yangilash
+        const tick = async () => {
+            const active = messages.filter(m =>
+                m.mine && m.mediaType === "location" && m.locExpiresAt && new Date(m.locExpiresAt) > new Date()
+            );
+            if (active.length === 0) return;
+            let pos: GeolocationPosition | null = null;
+            try { pos = await getPosition(); } catch { return; }
+            for (const m of active) {
+                fetch(`/api/nexus/messages/${m.id}/location`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                }).catch(() => { });
+            }
+        };
+        if (liveLocIntervalRef.current) clearInterval(liveLocIntervalRef.current);
+        liveLocIntervalRef.current = setInterval(tick, 15000);
+        return () => {
+            if (liveLocIntervalRef.current) clearInterval(liveLocIntervalRef.current);
+        };
+    }, [messages]);
+
     async function openWith(u: SUser) {
         if (!u.username) return;
         const res = await fetch("/api/nexus/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: u.username }) });
@@ -522,6 +594,56 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                                 )}
                                             </div>
                                         )}
+                                        {m.mediaType === "location" && typeof m.locLat === "number" && typeof m.locLng === "number" && (
+                                            (() => {
+                                                const isLive = m.locExpiresAt && new Date(m.locExpiresAt) > new Date();
+                                                const lat = m.locLat, lng = m.locLng;
+                                                const delta = 0.005;
+                                                const bbox = `${lng - delta},${lat - delta * 0.6},${lng + delta},${lat + delta * 0.6}`;
+                                                const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+                                                const yandexUrl = `https://yandex.uz/maps/?ll=${lng},${lat}&z=16&pt=${lng},${lat}`;
+                                                const googleUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+                                                return (
+                                                    <div style={{ width: 280 }}>
+                                                        <iframe src={mapSrc} width="100%" height={160} style={{ border: 0, display: "block" }} loading="lazy" title="Xarita" />
+                                                        <div className="px-3 py-2.5 flex items-center gap-2.5">
+                                                            {isLive
+                                                                ? <span className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse" style={{ background: "#EF4444" }} />
+                                                                : <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: m.mine ? "rgba(255,255,255,0.9)" : "#00CEC8" }} />}
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-[11px] font-bold" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                                    {isLive ? "Jonli joylashuv" : "Joylashuv"}
+                                                                </p>
+                                                                <p className="text-[10px]" style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "rgba(140,160,210,0.75)" }}>
+                                                                    {isLive
+                                                                        ? `${new Date(m.locExpiresAt!).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })} gacha`
+                                                                        : `${lat.toFixed(5)}, ${lng.toFixed(5)}`}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex gap-1 px-3 pb-3">
+                                                            <a href={yandexUrl} target="_blank" rel="noopener noreferrer"
+                                                                className="flex-1 text-center text-[10px] font-bold px-2 py-1.5 rounded-lg"
+                                                                style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgba(43,62,232,0.20)", color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                                Yandex
+                                                            </a>
+                                                            <a href={googleUrl} target="_blank" rel="noopener noreferrer"
+                                                                className="flex-1 text-center text-[10px] font-bold px-2 py-1.5 rounded-lg"
+                                                                style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgba(43,62,232,0.20)", color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                                Google
+                                                            </a>
+                                                            {m.mine && isLive && (
+                                                                <button onClick={() => stopLiveLocation(m.id)}
+                                                                    className="flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg"
+                                                                    style={{ background: "rgba(239,68,68,0.20)", color: "#EF4444" }}>
+                                                                    <StopCircle className="w-3 h-3" />To'xtatish
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()
+                                        )}
                                         {m.mediaType === "file" && (
                                             <a href={m.mediaUrl || "#"} target="_blank" rel="noopener noreferrer"
                                                 className="flex items-center gap-3 px-3.5 py-3 min-w-[220px]" style={{ textDecoration: "none" }}>
@@ -607,6 +729,12 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                             style={{ background: "rgba(43,62,232,0.10)" }}>
                             {uploading ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Paperclip className="w-4 h-4 text-white" />}
                         </button>
+                        <button onClick={() => setLocSheetOpen(true)} disabled={locBusy}
+                            title="Joylashuv"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40 hover:scale-105 active:scale-95 transition-transform hidden sm:flex"
+                            style={{ background: "rgba(43,62,232,0.10)" }}>
+                            {locBusy ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <MapPin className="w-4 h-4 text-white" />}
+                        </button>
                         <input value={input} onChange={e => {
                                 setInput(e.target.value);
                                 const now = Date.now();
@@ -650,6 +778,51 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             <NxVideoCircleRecorder open={circleOpen}
                 onClose={() => setCircleOpen(false)}
                 onRecorded={(file, dur) => sendMedia(file, "video-circle", dur)} />
+
+            {/* Joylashuv sheet — statik yoki jonli muddat tanlash */}
+            {locSheetOpen && (
+                <>
+                    <div className="fixed inset-0 z-[70]" style={{ background: "rgba(5,8,24,0.60)" }} onClick={() => setLocSheetOpen(false)} />
+                    <div className="fixed z-[70] left-1/2 bottom-6 -translate-x-1/2 w-[92%] max-w-md rounded-2xl overflow-hidden"
+                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
+                        <div className="px-5 py-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                            <h3 className="text-sm font-black text-white">Joylashuv jo'natish</h3>
+                            <p className="text-[11px] mt-0.5" style={{ color: "rgba(140,160,210,0.75)" }}>Statik yoki jonli muddat bilan</p>
+                        </div>
+                        <div className="p-3 space-y-1.5">
+                            <button onClick={() => sendLocation(null)}
+                                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left active:scale-[0.98] transition"
+                                style={{ background: "rgba(43,62,232,0.10)" }}>
+                                <MapPin className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                <div className="flex-1">
+                                    <p className="text-xs font-bold text-white">Hozirgi joylashuv</p>
+                                    <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>Bir marta, keyin yangilanmaydi</p>
+                                </div>
+                            </button>
+                            {[
+                                { min: 15, label: "15 daqiqa" },
+                                { min: 60, label: "1 soat" },
+                                { min: 480, label: "8 soat" },
+                            ].map(x => (
+                                <button key={x.min} onClick={() => sendLocation(x.min)}
+                                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left active:scale-[0.98] transition"
+                                    style={{ background: "rgba(43,62,232,0.10)" }}>
+                                    <Navigation className="w-4 h-4" style={{ color: "#EF4444" }} />
+                                    <div className="flex-1">
+                                        <p className="text-xs font-bold text-white">Jonli — {x.label}</p>
+                                        <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>Har 15 sekundda avtomatik yangilanadi</p>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                        <button onClick={() => setLocSheetOpen(false)}
+                            className="w-full px-5 py-3 text-xs font-bold text-white"
+                            style={{ background: "rgba(43,62,232,0.05)", borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                            Bekor qilish
+                        </button>
+                    </div>
+                </>
+            )}
         </>
     ) : (
         /* Bo'sh holat — faqat lg+ ekranda ko'rinadi */

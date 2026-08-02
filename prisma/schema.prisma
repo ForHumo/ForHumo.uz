@@ -1099,13 +1099,18 @@ model NexusMessage {
   conversation   NexusConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderId       String
   text           String                                    // media bo'lsa caption yoki bo'sh
-  // Ixtiyoriy media qo'shimchasi (rasm/video/audio/fayl)
+  // Ixtiyoriy media qo'shimchasi (rasm/video/audio/fayl/video-circle/location)
   mediaUrl       String?
-  mediaType      String?                                   // "image" | "video" | "audio" | "file"
+  mediaType      String?                                   // "image" | "video" | "audio" | "file" | "video-circle" | "location"
   mediaMime      String?                                   // "image/jpeg", "video/mp4", "audio/webm", ...
   mediaName      String?                                   // fayl ko'rsatiladigan nomi
   mediaSize      Int?                                      // baytlar (fayl/audio/video hajmi)
   durationMs     Int?                                      // audio/video davomiyligi (ms)
+  // Joylashuv (mediaType="location" bo'lganda)
+  locLat         Float?
+  locLng         Float?
+  locUpdatedAt   DateTime?                                 // oxirgi yangilangan vaqti (jonli uchun)
+  locExpiresAt   DateTime?                                 // NULL = statik; sana bo'lsa jonli, shundan keyin to'xtaydi
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
 }

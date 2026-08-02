@@ -48,6 +48,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             id: m.id, text: m.text, mine: m.senderId === me.id, createdAt: m.createdAt,
             mediaUrl: m.mediaUrl, mediaType: m.mediaType, mediaMime: m.mediaMime,
             mediaName: m.mediaName, mediaSize: m.mediaSize, durationMs: m.durationMs,
+            locLat: m.locLat, locLng: m.locLng, locUpdatedAt: m.locUpdatedAt, locExpiresAt: m.locExpiresAt,
         })),
         other: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,
         peerReadAt,
@@ -70,16 +71,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         text?: string;
         mediaUrl?: string; mediaType?: string; mediaMime?: string;
         mediaName?: string; mediaSize?: number; durationMs?: number;
+        locLat?: number; locLng?: number; locExpiresAt?: string | null;
     };
     const text = String(body.text ?? "").trim();
-    const hasMedia = !!body.mediaUrl && !!body.mediaType;
+    const isLocation = body.mediaType === "location" && typeof body.locLat === "number" && typeof body.locLng === "number";
+    const hasMedia = (!!body.mediaUrl && !!body.mediaType) || isLocation;
     if (!text && !hasMedia) return NextResponse.json({ error: "Xabar bo'sh bo'lmasin" }, { status: 400 });
     if (await nexusRateLimited(me.id, "dm")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
     const clean = text.slice(0, 2000);
 
     // Media turini tekshirish (faqat ruxsat etilgan qiymatlar)
-    const VALID_TYPES = ["image", "video", "audio", "file", "video-circle"];
-    if (hasMedia && !VALID_TYPES.includes(body.mediaType!)) {
+    const VALID_TYPES = ["image", "video", "audio", "file", "video-circle", "location"];
+    if (body.mediaType && !VALID_TYPES.includes(body.mediaType)) {
         return NextResponse.json({ error: "Noto'g'ri media turi" }, { status: 400 });
     }
 
@@ -88,18 +91,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             conversationId: id,
             senderId: me.id,
             text: clean,
-            mediaUrl: hasMedia ? body.mediaUrl : null,
+            mediaUrl: hasMedia && !isLocation ? body.mediaUrl : null,
             mediaType: hasMedia ? body.mediaType : null,
-            mediaMime: hasMedia ? (body.mediaMime ?? null) : null,
-            mediaName: hasMedia ? (body.mediaName ?? null)?.slice(0, 200) : null,
-            mediaSize: hasMedia && typeof body.mediaSize === "number" ? Math.max(0, Math.floor(body.mediaSize)) : null,
+            mediaMime: hasMedia && !isLocation ? (body.mediaMime ?? null) : null,
+            mediaName: hasMedia && !isLocation ? (body.mediaName ?? null)?.slice(0, 200) : null,
+            mediaSize: hasMedia && !isLocation && typeof body.mediaSize === "number" ? Math.max(0, Math.floor(body.mediaSize)) : null,
             durationMs: hasMedia && typeof body.durationMs === "number" ? Math.max(0, Math.floor(body.durationMs)) : null,
+            locLat: isLocation ? body.locLat : null,
+            locLng: isLocation ? body.locLng : null,
+            locUpdatedAt: isLocation ? new Date() : null,
+            locExpiresAt: isLocation && body.locExpiresAt ? new Date(body.locExpiresAt) : null,
         },
     });
 
     // Suhbat ro'yxatida ko'rinadigan preview matni
     const previewLabels: Record<string, string> = {
         image: "Rasm", video: "Video", audio: "Ovozli xabar", file: "Fayl", "video-circle": "Dumaloq video",
+        location: body.locExpiresAt ? "Jonli joylashuv" : "Joylashuv",
     };
     const preview = clean
         || (hasMedia ? (previewLabels[body.mediaType!] || "Media") : "")
@@ -120,6 +128,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             id: msg.id, text: msg.text, mine: true, createdAt: msg.createdAt,
             mediaUrl: msg.mediaUrl, mediaType: msg.mediaType, mediaMime: msg.mediaMime,
             mediaName: msg.mediaName, mediaSize: msg.mediaSize, durationMs: msg.durationMs,
+            locLat: msg.locLat, locLng: msg.locLng, locUpdatedAt: msg.locUpdatedAt, locExpiresAt: msg.locExpiresAt,
         },
     });
 }
