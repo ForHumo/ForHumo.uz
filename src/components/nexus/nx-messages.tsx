@@ -4,9 +4,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2 } from "lucide-react";
+import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera } from "lucide-react";
 import { usePresence } from "@/lib/presence";
 import { upload } from "@vercel/blob/client";
+import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 
 interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean }
 interface Conv { conversationId: string; other: Other | null; lastMessageText: string | null; lastMessageAt: string; lastMine: boolean; unread: boolean }
@@ -237,10 +238,10 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
         };
     }, []);
 
-    async function sendMedia(file: File) {
+    async function sendMedia(file: File, overrideType?: "image" | "video" | "audio" | "file" | "video-circle", knownDurationMs?: number) {
         if (!selected || uploading) return;
         setUploading(true); setUploadPct(0);
-        const kind = detectMediaType(file.type || "");
+        const kind = overrideType ?? detectMediaType(file.type || "");
         // Optimistic temp message (URL bo'lmagunicha loading)
         const temp: Msg = {
             id: "tmp-" + Date.now(), text: "", mine: true, createdAt: new Date().toISOString(),
@@ -255,9 +256,9 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 handleUploadUrl: "/api/market/upload/client-token",
                 onUploadProgress: (p) => setUploadPct(Math.round((p.percentage ?? 0))),
             });
-            // Audio/video davomiyligini olish
-            let durationMs: number | undefined;
-            if (kind === "audio" || kind === "video") {
+            // Audio/video davomiyligini olish (agar oldindan berilmagan bo'lsa)
+            let durationMs: number | undefined = knownDurationMs;
+            if (!durationMs && (kind === "audio" || kind === "video" || kind === "video-circle")) {
                 try {
                     durationMs = await new Promise<number>((resolve) => {
                         const el = kind === "audio" ? new Audio() : document.createElement("video");
@@ -294,6 +295,9 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
     }
+
+    // Video circle recorder state
+    const [circleOpen, setCircleOpen] = useState(false);
 
     async function openWith(u: SUser) {
         if (!u.username) return;
@@ -495,6 +499,20 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                         {m.mediaType === "video" && m.mediaUrl && (
                                             <video src={m.mediaUrl} controls playsInline className="max-w-full max-h-80" />
                                         )}
+                                        {m.mediaType === "video-circle" && m.mediaUrl && (
+                                            <div className="p-2">
+                                                <div className="relative rounded-full overflow-hidden bg-black"
+                                                    style={{ width: 200, height: 200, border: "2px solid rgba(255,255,255,0.15)" }}>
+                                                    <video src={m.mediaUrl} controls playsInline className="w-full h-full object-cover" />
+                                                </div>
+                                                {typeof m.durationMs === "number" && m.durationMs > 0 && (
+                                                    <p className="text-[10px] mt-1 text-center tabular-nums"
+                                                        style={{ color: m.mine ? "rgba(255,255,255,0.75)" : "rgba(140,160,210,0.75)" }}>
+                                                        {fmtDuration(m.durationMs)}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                         {m.mediaType === "audio" && m.mediaUrl && (
                                             <div className="px-3 py-2.5 flex items-center gap-2.5 min-w-[240px]">
                                                 <Music className="w-4 h-4 flex-shrink-0" style={{ color: m.mine ? "rgba(255,255,255,0.9)" : "#00CEC8" }} />
@@ -601,7 +619,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                             maxLength={2000} disabled={uploading}
                             className="flex-1 h-10 rounded-xl px-3.5 text-sm text-white outline-none disabled:opacity-60"
                             style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "#00CEC8" }} />
-                        {/* Matn bo'sh bo'lsa mic, aks holda jo'natish */}
+                        {/* Matn bo'sh bo'lsa: dumaloq video + mic; aks holda jo'natish */}
                         {input.trim() ? (
                             <button onClick={send} disabled={sending}
                                 className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40"
@@ -609,16 +627,29 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                 {sending ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Send className="w-4 h-4 text-white" />}
                             </button>
                         ) : (
-                            <button onClick={startVoice} disabled={uploading}
-                                title="Ovozli xabar yozish"
-                                className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40 hover:scale-105 active:scale-95 transition-transform"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                                <Mic className="w-4 h-4 text-white" />
-                            </button>
+                            <>
+                                <button onClick={() => setCircleOpen(true)} disabled={uploading}
+                                    title="Dumaloq video xabar"
+                                    className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40 hover:scale-105 active:scale-95 transition-transform"
+                                    style={{ background: "rgba(43,62,232,0.10)" }}>
+                                    <Camera className="w-4 h-4 text-white" />
+                                </button>
+                                <button onClick={startVoice} disabled={uploading}
+                                    title="Ovozli xabar yozish"
+                                    className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40 hover:scale-105 active:scale-95 transition-transform"
+                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    <Mic className="w-4 h-4 text-white" />
+                                </button>
+                            </>
                         )}
                     </>
                 )}
             </div>
+
+            {/* Dumaloq video recorder modali */}
+            <NxVideoCircleRecorder open={circleOpen}
+                onClose={() => setCircleOpen(false)}
+                onRecorded={(file, dur) => sendMedia(file, "video-circle", dur)} />
         </>
     ) : (
         /* Bo'sh holat — faqat lg+ ekranda ko'rinadi */

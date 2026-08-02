@@ -78,7 +78,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const clean = text.slice(0, 2000);
 
     // Media turini tekshirish (faqat ruxsat etilgan qiymatlar)
-    const VALID_TYPES = ["image", "video", "audio", "file"];
+    const VALID_TYPES = ["image", "video", "audio", "file", "video-circle"];
     if (hasMedia && !VALID_TYPES.includes(body.mediaType!)) {
         return NextResponse.json({ error: "Noto'g'ri media turi" }, { status: 400 });
     }
@@ -99,7 +99,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     // Suhbat ro'yxatida ko'rinadigan preview matni
     const previewLabels: Record<string, string> = {
-        image: "Rasm", video: "Video", audio: "Ovozli xabar", file: "Fayl",
+        image: "Rasm", video: "Video", audio: "Ovozli xabar", file: "Fayl", "video-circle": "Dumaloq video",
     };
     const preview = clean
         || (hasMedia ? (previewLabels[body.mediaType!] || "Media") : "")
