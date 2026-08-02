@@ -54,7 +54,7 @@ export async function GET() {
     });
     const ordersCount = orders.length;
     const zijSpent = orders
-        .filter(o => o.paymentMethod === "ZIJ")
+        .filter(o => o.paymentMethod === "WALLET")
         .reduce((s, o) => s + Number(o.total), 0);
 
     // ── Ishlab olingan Zij (o'z brendlari mahsulotlari sotuvidan) ──

@@ -821,7 +821,7 @@ model MarketOrder {
   promoCode     String?
   settledAt     DateTime?           // sotuvchilarga to'lov amalga oshirilgan vaqt (ikki marta to'lamaslik uchun)
   status        MarketOrderStatus   @default(PENDING)
-  paymentMethod MarketPaymentMethod @default(ZIJ)
+  paymentMethod MarketPaymentMethod @default(WALLET)
   address       String              // manzil majburiy
   note          String?
   createdAt     DateTime            @default(now())
@@ -850,9 +850,9 @@ enum MarketPromoType {
 }
 
 enum MarketPaymentMethod {
-  ZIJ              // Zij bilan to'landi
-  CASH_ON_DELIVERY // Yetkazishda naqd
-  CARD_ON_DELIVERY // Yetkazishda karta
+  WALLET           @map("ZIJ")  // Hamyondan to'lash (DB'da eski 'ZIJ' qiymati saqlanadi)
+  CASH_ON_DELIVERY                // Yetkazishda naqd
+  CARD_ON_DELIVERY                // Yetkazishda karta
 }
 
 model MarketOrderItem {

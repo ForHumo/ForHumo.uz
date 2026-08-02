@@ -23,7 +23,7 @@ export async function settleOrder(orderId: string) {
     if (!order) return;
     if (order.settledAt) return;                       // allaqachon to'langan
     if (order.status !== "DELIVERED") return;          // faqat yetkazilgan
-    if (order.paymentMethod !== "ZIJ") {               // naqd/karta — Zij harakati yo'q, faqat belgilaymiz
+    if (order.paymentMethod !== "WALLET") {            // naqd/karta — hamyon harakati yo'q, faqat belgilaymiz
         await prisma.marketOrder.update({ where: { id: orderId }, data: { settledAt: new Date() } });
         return;
     }

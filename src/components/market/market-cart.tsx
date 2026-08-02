@@ -27,7 +27,7 @@ interface Order {
     items: { quantity: number; price: string; product: { name: string; images: string[]; brand: { name: string } } }[];
 }
 
-type PayMethod = "ZIJ" | "CASH_ON_DELIVERY" | "CARD_ON_DELIVERY";
+type PayMethod = "WALLET" | "CASH_ON_DELIVERY" | "CARD_ON_DELIVERY";
 type Tab = "cart" | "orders";
 
 function fz(v: number | string) { return Number(v).toLocaleString(); }
@@ -92,7 +92,7 @@ function OrderTimeline({ status }: { status: string }) {
 }
 
 const PAY_METHODS: { key: PayMethod; label: string; desc: string; icon: React.ElementType }[] = [
-    { key: "ZIJ",              label: "Zij bilan to'lash", desc: "Darhol Zij hamyondan yechiladi",          icon: Wallet   },
+    { key: "WALLET",           label: "Hamyondan to'lash",  desc: "Darhol hamyondan yechiladi",              icon: Wallet   },
     { key: "CASH_ON_DELIVERY", label: "Yetkazishda naqd",  desc: "Kuryer yetkazganda naqd pul to'lang",   icon: Banknote },
     { key: "CARD_ON_DELIVERY", label: "Yetkazishda karta", desc: "Kuryer yetkazganda karta orqali to'lang",icon: CreditCard},
 ];
@@ -105,7 +105,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
     const [checkout, setCheckout]   = useState(false);
     const [address, setAddress]     = useState("");
     const [note, setNote]           = useState("");
-    const [payMethod, setPayMethod] = useState<PayMethod>("ZIJ");
+    const [payMethod, setPayMethod] = useState<PayMethod>("WALLET");
     const [paying, setPaying]       = useState(false);
     const [done, setDone]           = useState(false);
     const [error, setError]         = useState("");
@@ -218,7 +218,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                 <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Buyurtma qabul qilindi!</h2>
                 <p className="text-gray-500 dark:text-white/40 mb-1">Manzil: {address}</p>
                 <p className="text-gray-400 dark:text-white/30 text-sm mb-6">
-                    {payMethod === "ZIJ" ? `${fz(finalTotal)} Ƶ to'landi` : "Yetkazishda to'lanadi"}
+                    {payMethod === "WALLET" ? `${fz(finalTotal)} Ƶ to'landi` : "Yetkazishda to'lanadi"}
                 </p>
                 <div className="flex gap-3 justify-center">
                     <Link href="/market"
@@ -414,7 +414,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
 
                                     {!checkout ? (
                                         <>
-                                            {balance !== null && balance < finalTotal && payMethod === "ZIJ" && (
+                                            {balance !== null && balance < finalTotal && payMethod === "WALLET" && (
                                                 <div className="flex items-start gap-2 bg-red-50 dark:bg-red-500/8
                                                     border border-red-200/80 dark:border-red-500/20 rounded-xl p-3 mb-3">
                                                     <AlertCircle size={13} className="text-red-500 mt-0.5 shrink-0" />
@@ -486,8 +486,8 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                                     shadow-lg shadow-green-500/25 transition-all disabled:opacity-40
                                                     flex items-center justify-center gap-2">
                                                 {paying ? <Loader2 size={16} className="animate-spin" /> :
-                                                    payMethod === "ZIJ" ? <Wallet size={16} /> : <Package size={16} />}
-                                                {payMethod === "ZIJ" ? `${fz(finalTotal)} Ƶ to'lash` : "Buyurtmani tasdiqlash"}
+                                                    payMethod === "WALLET" ? <Wallet size={16} /> : <Package size={16} />}
+                                                {payMethod === "WALLET" ? `${fz(finalTotal)} Ƶ to'lash` : "Buyurtmani tasdiqlash"}
                                             </motion.button>
                                             <button onClick={() => setCheckout(false)}
                                                 className="w-full py-2 text-sm text-gray-400 dark:text-white/30 hover:text-gray-600 transition-colors">
@@ -550,7 +550,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                 </div>
                                 <div className="flex items-center justify-between text-xs text-gray-400 dark:text-white/25">
                                     <div className="flex items-center gap-1"><MapPin size={11} />{order.address}</div>
-                                    <span>{order.paymentMethod === "ZIJ" ? "Zij" : order.paymentMethod === "CASH_ON_DELIVERY" ? "Naqd" : "Karta"}</span>
+                                    <span>{order.paymentMethod === "WALLET" ? "Hamyon" : order.paymentMethod === "CASH_ON_DELIVERY" ? "Naqd" : "Karta"}</span>
                                 </div>
 
                                 {/* Holat bosqichlari */}

@@ -4,13 +4,13 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validatePromo } from "@/lib/market-promo";
 
-type PaymentMethod = "ZIJ" | "CASH_ON_DELIVERY" | "CARD_ON_DELIVERY";
+type PaymentMethod = "WALLET" | "CASH_ON_DELIVERY" | "CARD_ON_DELIVERY";
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { address, note, paymentMethod = "ZIJ", promoCode }: {
+    const { address, note, paymentMethod = "WALLET", promoCode }: {
         address?: string; note?: string; paymentMethod?: PaymentMethod; promoCode?: string;
     } = await req.json();
 
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 
     // Zij to'lovida balansni oldindan tekshirish (do'stona xabar uchun)
     let walletId: string | null = null;
-    if (paymentMethod === "ZIJ") {
+    if (paymentMethod === "WALLET") {
         let wallet = await prisma.zijWallet.findUnique({ where: { profileId: profile.id } });
         if (!wallet) wallet = await prisma.zijWallet.create({ data: { profileId: profile.id } });
         if (Number(wallet.balance) < total) {
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
             }
 
             let newBalance: number | null = null;
-            if (paymentMethod === "ZIJ" && walletId) {
+            if (paymentMethod === "WALLET" && walletId) {
                 const w = await tx.zijWallet.findUnique({ where: { id: walletId } });
                 if (!w || Number(w.balance) < total) throw new Error("INSUFFICIENT_ZIJ");
                 newBalance = Number(w.balance) - total;
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
             const order = await tx.marketOrder.create({
                 data: {
                     profileId: profile.id, total, discount, promoCode: appliedCode,
-                    status: paymentMethod === "ZIJ" ? "PAID" : "PENDING",
+                    status: paymentMethod === "WALLET" ? "PAID" : "PENDING",
                     paymentMethod,
                     address: address.trim(),
                     note: note?.trim() ?? null,

@@ -50,7 +50,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             if (it.variantId) ops.push(prisma.marketProductVariant.update({ where: { id: it.variantId }, data: { stock: { increment: it.quantity } } }));
             else ops.push(prisma.marketProduct.update({ where: { id: it.productId }, data: { stock: { increment: it.quantity } } }));
         }
-        if (order.paymentMethod === "ZIJ" && Number(order.total) > 0) {
+        if (order.paymentMethod === "WALLET" && Number(order.total) > 0) {
             let wallet = await prisma.zijWallet.findUnique({ where: { profileId: order.profileId } });
             if (!wallet) wallet = await prisma.zijWallet.create({ data: { profileId: order.profileId } });
             const newBalance = Number(wallet.balance) + Number(order.total);
