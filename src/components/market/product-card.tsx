@@ -6,15 +6,15 @@ import { Link, useRouter } from "@/i18n/routing";
 import Image from "next/image";
 import { Star, ShoppingCart, Flame, CheckCircle2, Loader2, Heart } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
+import { formatMoney, type Currency } from "@/lib/money";
 
 interface Product {
     id: string; name: string; slug: string; price: string; oldPrice: string | null;
+    currency?: Currency;
     images: string[]; rating: number; reviewCount: number; sold: number; isFeatured: boolean;
     stock?: number;
     brand: { name: string; slug: string; verified: boolean };
 }
-
-function fz(v: string | number) { return Number(v).toLocaleString(); }
 function disc(p: string, o: string | null) {
     if (!o) return null;
     return Math.round((1 - Number(p) / Number(o)) * 100);
@@ -160,12 +160,11 @@ export function ProductCard({
                             <span className={`font-black text-transparent bg-clip-text
                                 bg-gradient-to-r from-green-600 to-emerald-500 dark:from-green-400 dark:to-emerald-300
                                 ${compact ? "text-sm" : "text-base"}`}>
-                                {fz(product.price)}
+                                {formatMoney(Number(product.price), product.currency ?? "UZS")}
                             </span>
-                            <span className={`font-bold text-green-500 dark:text-green-400 ${compact ? "text-xs" : "text-sm"}`}>Ƶ</span>
                         </div>
                         {product.oldPrice && !compact && (
-                            <span className="text-[10px] text-gray-400 line-through">{fz(product.oldPrice)} Ƶ</span>
+                            <span className="text-[10px] text-gray-400 line-through">{formatMoney(Number(product.oldPrice), product.currency ?? "UZS")}</span>
                         )}
                     </div>
                     <motion.button onClick={addToCart} disabled={adding || out}

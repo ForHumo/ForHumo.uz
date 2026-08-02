@@ -168,7 +168,7 @@ export function MarketCatalog() {
 
                         {/* Narx filtri */}
                         <div className="mt-6 pt-5 border-t border-gray-100 dark:border-white/[0.06]">
-                            <h3 className="font-bold text-gray-900 dark:text-white mb-3 text-sm">Narx (Ƶ)</h3>
+                            <h3 className="font-bold text-gray-900 dark:text-white mb-3 text-sm">Narx (so'm)</h3>
                             <div className="flex items-center gap-2">
                                 <input type="number" min={0} value={minPrice} onChange={e => setMinPrice(e.target.value)}
                                     placeholder="dan"

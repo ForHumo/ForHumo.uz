@@ -64,7 +64,7 @@ export async function POST(req: Request) {
         if (!wallet) wallet = await prisma.zijWallet.create({ data: { profileId: profile.id } });
         if (Number(wallet.balance) < total) {
             return NextResponse.json({
-                error: `Balans yetarli emas. Kerak: ${total} Ƶ, Mavjud: ${Number(wallet.balance).toFixed(2)} Ƶ`,
+                error: `Balans yetarli emas. Kerak: ${total.toLocaleString()} so'm, Mavjud: ${Number(wallet.balance).toLocaleString()} so'm`,
                 code: "INSUFFICIENT_ZIJ", required: total, available: Number(wallet.balance),
             }, { status: 400 });
         }

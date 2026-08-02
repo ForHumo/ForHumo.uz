@@ -19,6 +19,7 @@ interface Variant { id: string; name: string; price: string; oldPrice: string | 
 interface Product {
     id: string; name: string; slug: string; description: string | null;
     images: string[]; videos?: string[]; price: string; oldPrice: string | null;
+    currency?: import("@/lib/money").Currency;
     stock: number; sold: number; rating: number; reviewCount: number;
     category: string; subcategory: string | null; isFeatured: boolean;
     variantLabel?: string | null; variants?: Variant[];
@@ -27,6 +28,7 @@ interface Product {
 
 const isVid = (u: string) => /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(u);
 
+import { formatMoney } from "@/lib/money";
 function fz(v: string | number) { return Number(v).toLocaleString(); }
 function disc(p: string, o: string | null) {
     if (!o) return null;
@@ -201,11 +203,10 @@ export function ProductDetail({ slug }: { slug: string }) {
                         <span className="text-4xl font-black text-transparent bg-clip-text
                             bg-gradient-to-r from-green-600 to-emerald-500
                             dark:from-green-400 dark:to-emerald-300">
-                            {fz(curPrice)}
+                            {formatMoney(Number(curPrice), product.currency ?? "UZS")}
                         </span>
-                        <span className="text-xl font-bold text-green-500 dark:text-green-400">Ƶ</span>
                         {curOld && (
-                            <span className="text-lg text-gray-400 line-through">{fz(curOld)} Ƶ</span>
+                            <span className="text-lg text-gray-400 line-through">{formatMoney(Number(curOld), product.currency ?? "UZS")}</span>
                         )}
                     </div>
 

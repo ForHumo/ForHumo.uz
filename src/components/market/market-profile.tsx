@@ -11,6 +11,7 @@ import {
     ShieldCheck, Plus, MessageSquare,
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
+import { formatMoney, currencyForCountry, type Currency } from "@/lib/money";
 
 interface BrandRow {
     id: string; slug: string; name: string; logo: string | null; verified: boolean;
@@ -23,6 +24,7 @@ interface ProfileData {
     };
     brands: BrandRow[];
     stats: { brandCount: number; reviewsGiven: number; likesReceived: number; likesGiven: number; ordersCount: number; zijSpent: number; zijEarned: number };
+    currency?: Currency;
 }
 
 function fz(v: number | string) { return Number(v).toLocaleString(); }
@@ -121,7 +123,7 @@ export function MarketProfile() {
                     ))}
                 </div>
 
-                {/* Zij — ishlatilgan / ishlab olingan (bosiladigan) */}
+                {/* Sarflangan / Ishlab olingan (bosiladigan) */}
                 <div className="grid grid-cols-2 gap-3 mb-8">
                     <Link href="/market/profile/activity?tab=spent"
                         className="bg-red-50/70 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 hover:border-red-300 dark:hover:border-red-800/40 rounded-2xl p-4 transition-all">
@@ -129,7 +131,7 @@ export function MarketProfile() {
                             <TrendingDown size={14} className="text-red-500" />
                             <span className="text-xs text-gray-500 dark:text-white/40">Sarflangan</span>
                         </div>
-                        <p className="text-xl font-black text-red-500 dark:text-red-400">{fz(stats.zijSpent)} <span className="text-sm">Ƶ</span></p>
+                        <p className="text-xl font-black text-red-500 dark:text-red-400">{formatMoney(stats.zijSpent, data?.currency ?? "UZS")}</p>
                     </Link>
                     <Link href="/market/profile/activity?tab=earned"
                         className="bg-green-50/70 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-800/40 rounded-2xl p-4 transition-all">
@@ -137,7 +139,7 @@ export function MarketProfile() {
                             <TrendingUp size={14} className="text-green-500" />
                             <span className="text-xs text-gray-500 dark:text-white/40">Ishlab olingan</span>
                         </div>
-                        <p className="text-xl font-black text-green-600 dark:text-green-400">{fz(stats.zijEarned)} <span className="text-sm">Ƶ</span></p>
+                        <p className="text-xl font-black text-green-600 dark:text-green-400">{formatMoney(stats.zijEarned, data?.currency ?? "UZS")}</p>
                     </Link>
                 </div>
 

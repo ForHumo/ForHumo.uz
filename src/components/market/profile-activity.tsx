@@ -10,6 +10,7 @@ import {
     TrendingDown, TrendingUp, Reply as ReplyIcon, ShoppingBag,
 } from "lucide-react";
 import { isVideoUrl } from "./media-uploader";
+import { formatMoney } from "@/lib/money";
 
 type Tab = "reviews" | "ratings" | "likes" | "spent" | "earned";
 
@@ -129,7 +130,7 @@ export function ProfileActivity() {
                                     <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{t.description || TX_LABEL[t.type] || t.type}</p>
                                     <p className="text-xs text-gray-400 dark:text-white/30">{dt(t.createdAt)}</p>
                                 </div>
-                                <span className="font-bold text-red-500 dark:text-red-400 shrink-0">-{fz(t.amount)} Ƶ</span>
+                                <span className="font-bold text-red-500 dark:text-red-400 shrink-0">-{formatMoney(Number(t.amount), "UZS")}</span>
                             </div>
                         ))}
                     </>)}
@@ -146,7 +147,7 @@ export function ProfileActivity() {
                                     <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{e.productName}</p>
                                     <p className="text-xs text-gray-400 dark:text-white/30">{e.buyer} · {e.quantity} dona · {dt(e.createdAt)}</p>
                                 </div>
-                                <span className="font-bold text-green-600 dark:text-green-400 shrink-0">+{fz(e.total)} Ƶ</span>
+                                <span className="font-bold text-green-600 dark:text-green-400 shrink-0">+{formatMoney(Number(e.total), "UZS")}</span>
                             </div>
                         ))}
                     </>)}

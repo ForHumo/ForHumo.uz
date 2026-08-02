@@ -17,7 +17,7 @@ export async function validatePromo(rawCode: string, subtotal: number): Promise<
     if (promo.expiresAt && promo.expiresAt < new Date()) return { error: "Promokod muddati tugagan" };
     if (promo.usageLimit != null && promo.usedCount >= promo.usageLimit) return { error: "Promokod limiti tugagan" };
     if (subtotal < Number(promo.minOrder))
-        return { error: `Minimal buyurtma summasi: ${Number(promo.minOrder)} Ƶ` };
+        return { error: `Minimal buyurtma summasi: ${Number(promo.minOrder).toLocaleString()} so'm` };
 
     let discount = promo.type === "PERCENT"
         ? (subtotal * Number(promo.value)) / 100

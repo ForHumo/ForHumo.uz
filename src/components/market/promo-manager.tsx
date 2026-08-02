@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tag, Plus, Trash2, Loader2, X, AlertCircle, Percent, Coins } from "lucide-react";
+import { formatMoney } from "@/lib/money";
 
 interface Promo {
     id: string; code: string; type: "PERCENT" | "FIXED"; value: string;
@@ -89,8 +90,8 @@ export function PromoManager() {
                             <div className="flex-1 min-w-0">
                                 <p className="font-bold text-gray-900 dark:text-white font-mono">{c.code}</p>
                                 <p className="text-xs text-gray-400 dark:text-white/30">
-                                    {c.type === "PERCENT" ? `${Number(c.value)}% chegirma` : `${Number(c.value)} Ƶ chegirma`}
-                                    {Number(c.minOrder) > 0 && ` · min ${Number(c.minOrder)} Ƶ`}
+                                    {c.type === "PERCENT" ? `${Number(c.value)}% chegirma` : `${formatMoney(Number(c.value), "UZS")} chegirma`}
+                                    {Number(c.minOrder) > 0 && ` · min ${formatMoney(Number(c.minOrder), "UZS")}`}
                                     {` · ${c.usedCount}${c.usageLimit ? `/${c.usageLimit}` : ""} marta`}
                                 </p>
                             </div>
@@ -127,11 +128,11 @@ export function PromoManager() {
                                     </button>
                                     <button type="button" onClick={() => setType("FIXED")}
                                         className={`py-2.5 rounded-xl border text-sm font-semibold transition ${type === "FIXED" ? "border-green-400/60 bg-green-50 dark:bg-green-900/15 text-green-700 dark:text-green-400" : "border-gray-200 dark:border-white/[0.07] text-gray-500 dark:text-white/40"}`}>
-                                        Belgilangan (Ƶ)
+                                        Belgilangan (so'm)
                                     </button>
                                 </div>
                                 <input value={value} onChange={e => setValue(e.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal"
-                                    placeholder={type === "PERCENT" ? "Foiz (masalan 10)" : "Miqdor Ƶ (masalan 5)"} className={inputCls} />
+                                    placeholder={type === "PERCENT" ? "Foiz (masalan 10)" : "Miqdor so'm (masalan 5000)"} className={inputCls} />
                                 <div className="grid grid-cols-3 gap-2">
                                     <input value={minOrder} onChange={e => setMinOrder(e.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal" placeholder="Min buyurtma" className={inputCls} />
                                     {type === "PERCENT" && <input value={maxDiscount} onChange={e => setMaxDiscount(e.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal" placeholder="Maks chegirma" className={inputCls} />}

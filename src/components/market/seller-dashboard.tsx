@@ -8,6 +8,7 @@ import {
     LayoutDashboard, TrendingUp, ShoppingBag, Package, Inbox, Store,
     Box, Loader2, ChevronRight, Crown,
 } from "lucide-react";
+import { formatMoney } from "@/lib/money";
 
 interface TopProduct { name: string; slug: string; image: string | null; qty: number; revenue: number }
 interface Data {
@@ -33,7 +34,7 @@ export function SellerDashboard() {
     const maxDay = Math.max(1, ...days.map(d => d.revenue));
 
     const CARDS = [
-        { icon: TrendingUp, label: "Daromad", value: `${fz(stats.revenue)} Ƶ`, color: "#10B981" },
+        { icon: TrendingUp, label: "Daromad", value: formatMoney(stats.revenue, "UZS"), color: "#10B981" },
         { icon: ShoppingBag, label: "Sotilgan", value: fz(stats.sold), color: "#3B82F6" },
         { icon: Inbox, label: "Buyurtmalar", value: fz(stats.orders), color: "#8B5CF6" },
         { icon: Crown, label: "Faol buyurtma", value: fz(stats.pendingCount), color: "#F59E0B" },
@@ -114,7 +115,7 @@ export function SellerDashboard() {
                             </div>
                             <p className="flex-1 min-w-0 text-sm font-semibold text-gray-900 dark:text-white truncate">{p.name}</p>
                             <div className="text-right shrink-0">
-                                <p className="text-sm font-black text-green-600 dark:text-green-400">{fz(p.revenue)} Ƶ</p>
+                                <p className="text-sm font-black text-green-600 dark:text-green-400">{formatMoney(p.revenue, "UZS")}</p>
                                 <p className="text-xs text-gray-400 dark:text-white/30">{fz(p.qty)} dona</p>
                             </div>
                         </Link>

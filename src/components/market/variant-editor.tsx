@@ -33,7 +33,7 @@ export function VariantEditor({ label, onLabel, variants, onChange }: {
 
             {/* Sarlavha */}
             <div className="hidden sm:grid grid-cols-[1fr_5rem_5rem_4rem_2rem] gap-2 text-[11px] font-semibold text-gray-400 dark:text-white/30 px-1">
-                <span>Nom</span><span>Narx Ƶ</span><span>Eski narx</span><span>Stock</span><span></span>
+                <span>Nom</span><span>Narx (so'm)</span><span>Eski narx</span><span>Stock</span><span></span>
             </div>
 
             {variants.map((v, i) => (

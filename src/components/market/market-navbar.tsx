@@ -14,10 +14,11 @@ import {
 import { useState, useRef, useEffect } from "react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { VerifiedBadge } from "./verified-badge";
+import { formatMoney, type Currency } from "@/lib/money";
 
 interface Suggestions {
     brands: { slug: string; name: string; logo: string | null; verified: boolean }[];
-    products: { slug: string; name: string; price: string; images: string[] }[];
+    products: { slug: string; name: string; price: string; currency?: Currency; images: string[] }[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -321,7 +322,7 @@ export function MarketNavbar() {
                                                             {p.images?.[0] && <Image src={p.images[0]} alt="" width={28} height={28} className="w-full h-full object-cover" />}
                                                         </div>
                                                         <span className="text-sm text-gray-700 dark:text-white/70 truncate flex-1">{p.name}</span>
-                                                        <span className="text-xs font-bold text-green-600 dark:text-green-400 shrink-0">{Number(p.price).toLocaleString()} Ƶ</span>
+                                                        <span className="text-xs font-bold text-green-600 dark:text-green-400 shrink-0">{formatMoney(Number(p.price), p.currency ?? "UZS")}</span>
                                                     </Link>
                                                 ))}
                                             </div>

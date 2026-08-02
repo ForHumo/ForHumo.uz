@@ -75,7 +75,7 @@ export async function POST(req: Request) {
 
     if (!brandSlug) return NextResponse.json({ error: "Brend tanlang" }, { status: 400 });
     if (!name?.trim()) return NextResponse.json({ error: "Mahsulot nomi kerak" }, { status: 400 });
-    if (!hasVariants && (!price || Number(price) < 1)) return NextResponse.json({ error: "Narx kerak (kamida 1 Ƶ)" }, { status: 400 });
+    if (!hasVariants && (!price || Number(price) < 1)) return NextResponse.json({ error: "Narx kerak (kamida 1 so'm)" }, { status: 400 });
     if (!category) return NextResponse.json({ error: "Kategoriya tanlang" }, { status: 400 });
 
     // Variant narx/stock dan mahsulot narx (eng arzon) va stock (yig'indi)

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Link } from "@/i18n/routing";
 import { Sparkles, Loader2, ChevronRight, Search, Tag, Layers, ArrowUpDown, AlertCircle } from "lucide-react";
 import { ProductCard } from "./product-card";
+import { formatMoney } from "@/lib/money";
 
 interface Product {
     id: string; name: string; slug: string; price: string; oldPrice: string | null;
@@ -49,7 +50,7 @@ export function MarketAISearch() {
     const chips: { icon: React.ElementType; label: string }[] = [];
     if (interp?.keywords) chips.push({ icon: Search, label: interp.keywords });
     if (interp?.categoryName) chips.push({ icon: Layers, label: interp.categoryName });
-    if (interp?.minPrice || interp?.maxPrice) chips.push({ icon: Tag, label: `${interp.minPrice ? fz(interp.minPrice) : "0"} – ${interp.maxPrice ? fz(interp.maxPrice) : "∞"} Ƶ` });
+    if (interp?.minPrice || interp?.maxPrice) chips.push({ icon: Tag, label: `${interp.minPrice ? formatMoney(interp.minPrice, "UZS") : "0"} – ${interp.maxPrice ? formatMoney(interp.maxPrice, "UZS") : "∞"}` });
     if (interp?.sort && SORT_LABEL[interp.sort]) chips.push({ icon: ArrowUpDown, label: SORT_LABEL[interp.sort] });
 
     return (

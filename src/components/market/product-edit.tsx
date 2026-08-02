@@ -172,7 +172,7 @@ export function ProductEdit({ slug }: { slug: string }) {
                 ) : (
                     <div className="grid grid-cols-3 gap-3">
                         <div>
-                            <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">Narx (Ƶ) *</label>
+                            <label className="text-xs font-semibold text-gray-500 dark:text-white/40 mb-1.5 block">Narx (so'm) *</label>
                             <input type="number" min={1} value={price} onChange={e => setPrice(e.target.value)}
                                 className="w-full bg-gray-50 dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
                                     focus:border-green-400 dark:focus:border-green-500/50 rounded-2xl px-4 py-3 text-gray-900 dark:text-white font-bold outline-none transition" />

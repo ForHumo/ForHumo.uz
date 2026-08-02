@@ -61,7 +61,7 @@ export async function settleOrder(orderId: string) {
     for (const p of payouts) {
         await notify(p.ownerId, {
             type: "ORDER_UPDATE",
-            title: `Sotuvdan daromad: +${p.net} Ƶ`,
+            title: `Sotuvdan daromad: +${Number(p.net).toLocaleString()} so'm`,
             body: `${short} yetkazildi — hamyoningizga tushdi`,
             link: `/market/dashboard`,
         });

@@ -646,8 +646,9 @@ model MarketProduct {
   description String?
   images      String[]          // rasm URL massiv
   videos      String[] @default([])   // video URL massiv
-  price       Decimal  @db.Decimal(18, 2)   // Zij narxi
+  price       Decimal  @db.Decimal(18, 2)   // narx (currency bo'yicha)
   oldPrice    Decimal? @db.Decimal(18, 2)   // chegirma bo'lsa eski narx
+  currency    Currency @default(UZS)         // valyuta — mahsulot sotuvchisi qaysida narxlagan
   stock       Int      @default(0)
   sold        Int      @default(0)
   rating      Float    @default(0)
@@ -818,6 +819,7 @@ model MarketOrder {
   profileId     String
   total         Decimal             @db.Decimal(18, 2)   // chegirmadan keyingi yakuniy summa
   discount      Decimal             @default(0) @db.Decimal(18, 2)
+  currency      Currency            @default(UZS)         // buyurtma valyutasi (mahsulot valyutalariga mos)
   promoCode     String?
   settledAt     DateTime?           // sotuvchilarga to'lov amalga oshirilgan vaqt (ikki marta to'lamaslik uchun)
   status        MarketOrderStatus   @default(PENDING)
@@ -853,6 +855,12 @@ enum MarketPaymentMethod {
   WALLET           @map("ZIJ")  // Hamyondan to'lash (DB'da eski 'ZIJ' qiymati saqlanadi)
   CASH_ON_DELIVERY                // Yetkazishda naqd
   CARD_ON_DELIVERY                // Yetkazishda karta
+}
+
+// Valyuta (money.ts Currency tipiga mos: UZS | USD)
+enum Currency {
+  UZS
+  USD
 }
 
 model MarketOrderItem {

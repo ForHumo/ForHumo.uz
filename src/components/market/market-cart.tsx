@@ -12,9 +12,10 @@ import {
 } from "lucide-react";
 import { VerifiedBadge } from "./verified-badge";
 import { LocationPicker } from "@/components/ui/location-picker";
+import { formatMoney, type Currency } from "@/lib/money";
 
 interface CartProduct {
-    id: string; name: string; slug: string; price: string;
+    id: string; name: string; slug: string; price: string; currency?: Currency;
     images: string[]; stock: number;
     brand: { name: string; slug: string; verified: boolean };
 }
@@ -23,6 +24,7 @@ interface CartItem { id: string; productId: string; quantity: number; product: C
 
 interface Order {
     id: string; total: string; status: string; paymentMethod: string;
+    currency?: Currency;
     address: string; createdAt: string;
     items: { quantity: number; price: string; product: { name: string; images: string[]; brand: { name: string } } }[];
 }
@@ -131,6 +133,8 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
     const itemPrice = (i: CartItem) => Number(i.variant ? i.variant.price : i.product.price);
     const total = items.reduce((s, i) => s + itemPrice(i) * i.quantity, 0);
     const finalTotal = Math.max(0, total - promoDiscount);
+    // Cart valyutasi — birinchi mahsuloddan (barcha buyurtma bir valyutada bo'ladi)
+    const cartCurrency: Currency = items[0]?.product.currency ?? "UZS";
 
     async function applyPromo() {
         if (!promo.trim()) return;
@@ -218,7 +222,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                 <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Buyurtma qabul qilindi!</h2>
                 <p className="text-gray-500 dark:text-white/40 mb-1">Manzil: {address}</p>
                 <p className="text-gray-400 dark:text-white/30 text-sm mb-6">
-                    {payMethod === "WALLET" ? `${fz(finalTotal)} Ƶ to'landi` : "Yetkazishda to'lanadi"}
+                    {payMethod === "WALLET" ? `${formatMoney(finalTotal, cartCurrency)} to'landi` : "Yetkazishda to'lanadi"}
                 </p>
                 <div className="flex gap-3 justify-center">
                     <Link href="/market"
@@ -328,7 +332,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                                     </div>
                                                     <span className="font-black text-transparent bg-clip-text
                                                         bg-gradient-to-r from-green-600 to-emerald-500 dark:from-green-400 dark:to-emerald-300">
-                                                        {fz(itemPrice(item) * item.quantity)} Ƶ
+                                                        {formatMoney(itemPrice(item) * item.quantity, item.product.currency ?? cartCurrency)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -349,22 +353,22 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                     backdrop-blur-xl rounded-3xl p-6">
                                     <h3 className="font-bold text-gray-900 dark:text-white mb-4">Buyurtma xulosasi</h3>
 
-                                    {/* Zij balansi */}
+                                    {/* Hamyon balansi */}
                                     {balance !== null && (
                                         <div className="flex items-center justify-between mb-3 py-2.5 px-3
                                             bg-green-50/80 dark:bg-green-900/10 rounded-xl border border-green-100 dark:border-green-800/20">
                                             <div className="flex items-center gap-2">
                                                 <Wallet size={14} className="text-green-500" />
-                                                <span className="text-xs font-medium text-gray-600 dark:text-white/50">Zij balans</span>
+                                                <span className="text-xs font-medium text-gray-600 dark:text-white/50">Hamyon balansi</span>
                                             </div>
                                             <span className={`text-sm font-bold ${balance >= total ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
-                                                {fz(balance)} Ƶ
+                                                {formatMoney(balance, cartCurrency)}
                                             </span>
                                         </div>
                                     )}
 
                                     <div className="flex justify-between text-sm text-gray-500 dark:text-white/40 mb-2">
-                                        <span>Mahsulotlar ({items.length})</span><span>{fz(total)} Ƶ</span>
+                                        <span>Mahsulotlar ({items.length})</span><span>{formatMoney(total, cartCurrency)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm text-gray-500 dark:text-white/40 mb-3">
                                         <span>Yetkazib berish</span>
@@ -398,7 +402,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
 
                                     {promoDiscount > 0 && (
                                         <div className="flex justify-between text-sm font-semibold text-green-600 dark:text-green-400 mb-3">
-                                            <span>Chegirma</span><span>−{fz(promoDiscount)} Ƶ</span>
+                                            <span>Chegirma</span><span>−{formatMoney(promoDiscount, cartCurrency)}</span>
                                         </div>
                                     )}
 
@@ -406,10 +410,9 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                         <div className="flex justify-between font-black text-gray-900 dark:text-white">
                                             <span>Jami</span>
                                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-500 dark:from-green-400 dark:to-emerald-300">
-                                                {fz(finalTotal)} Ƶ
+                                                {formatMoney(finalTotal, cartCurrency)}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-gray-400 dark:text-white/25 mt-0.5">≈ ${fz(finalTotal)} USD</p>
                                     </div>
 
                                     {!checkout ? (
@@ -487,7 +490,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                                     flex items-center justify-center gap-2">
                                                 {paying ? <Loader2 size={16} className="animate-spin" /> :
                                                     payMethod === "WALLET" ? <Wallet size={16} /> : <Package size={16} />}
-                                                {payMethod === "WALLET" ? `${fz(finalTotal)} Ƶ to'lash` : "Buyurtmani tasdiqlash"}
+                                                {payMethod === "WALLET" ? `${formatMoney(finalTotal, cartCurrency)} to'lash` : "Buyurtmani tasdiqlash"}
                                             </motion.button>
                                             <button onClick={() => setCheckout(false)}
                                                 className="w-full py-2 text-sm text-gray-400 dark:text-white/30 hover:text-gray-600 transition-colors">
@@ -529,7 +532,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                         <span className={`text-xs font-bold ${st.color}`}>{st.label}</span>
                                         <p className="font-black text-sm text-transparent bg-clip-text
                                             bg-gradient-to-r from-green-600 to-emerald-500 dark:from-green-400 dark:to-emerald-300">
-                                            {fz(order.total)} Ƶ
+                                            {formatMoney(Number(order.total), order.currency ?? "UZS")}
                                         </p>
                                     </div>
                                 </div>

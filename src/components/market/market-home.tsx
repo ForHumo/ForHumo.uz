@@ -113,14 +113,14 @@ export function MarketHome() {
                             <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm
                                 border border-white/20 rounded-full px-4 py-1.5 mb-5">
                                 <Zap size={13} className="text-yellow-300" />
-                                <span className="text-white/90 text-xs font-semibold">Test rejimi — Zij bilan xarid qiling</span>
+                                <span className="text-white/90 text-xs font-semibold">Test rejimi — hamyondan xarid qiling</span>
                             </div>
                             <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tight">
                                 Humo Market
                             </h1>
                             <p className="text-white/70 text-lg mb-8 max-w-xl">
                                 O'z brendingizni yarating, mahsulotlaringizni joylab soting.
-                                To'lov — <span className="text-white font-bold">Ƶ Zij</span> bilan.
+                                To'lov — <span className="text-white font-bold">hamyondan</span> darrov.
                             </p>
                             <div className="flex gap-3">
                                 <Link href={`/market/catalog`}

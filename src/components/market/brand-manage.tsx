@@ -13,6 +13,7 @@ import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ImageUploader } from "./image-uploader";
 import { BrandEditModal } from "./brand-edit-modal";
 import { SellerOrders } from "./seller-orders";
+import { formatMoney } from "@/lib/money";
 import { PromoManager } from "./promo-manager";
 import { AdminModerationCard } from "./admin-moderation-card";
 
@@ -172,7 +173,7 @@ function CreateBrandForm({ onCreated, nextPrice }: { onCreated: (b: Brand) => vo
                                                     : "bg-amber-50 dark:bg-amber-900/15 text-amber-700 dark:text-amber-400"}`}>
                                                 {nextPrice === 0
                                                     ? "Bu brend BEPUL"
-                                                    : `Bu brendni ochish narxi: ${nextPrice} Ƶ (hamyondan yechiladi)`}
+                                                    : `Bu brendni ochish narxi: ${formatMoney(nextPrice, "UZS")} (hamyondan yechiladi)`}
                                             </div>
 
                                             {error && (
@@ -186,7 +187,7 @@ function CreateBrandForm({ onCreated, nextPrice }: { onCreated: (b: Brand) => vo
                                                     text-white font-bold text-sm shadow-lg shadow-green-500/25 disabled:opacity-40
                                                     flex items-center justify-center gap-2 transition-all">
                                                 {loading ? <Loader2 size={16} className="animate-spin" /> : <Store size={16} />}
-                                                {nextPrice === 0 ? "Brend yaratish (bepul)" : `${nextPrice} Ƶ to'lab yaratish`}
+                                                {nextPrice === 0 ? "Brend yaratish (bepul)" : `${formatMoney(nextPrice, "UZS")} to'lab yaratish`}
                                             </motion.button>
                                         </form>
                                     </>
@@ -250,7 +251,7 @@ export function BrandManage() {
                         {" "}Barcha brendlaringiz bepul va avtomatik tasdiqlangan.</>
                     ) : (
                         <><span className="font-bold text-green-700 dark:text-green-400">1-brend bepul.</span>
-                        {" "}Keyingilari: 2-chi 25 Ƶ · 3-chi 50 Ƶ · 4-chi 100 Ƶ · 5+ 200 Ƶ (hamyondan yechiladi).</>
+                        {" "}Keyingilari: 2-chi {formatMoney(25000, "UZS")} · 3-chi {formatMoney(50000, "UZS")} · 4-chi {formatMoney(100000, "UZS")} · 5+ {formatMoney(200000, "UZS")} (hamyondan yechiladi).</>
                     )}
                 </div>
             </div>

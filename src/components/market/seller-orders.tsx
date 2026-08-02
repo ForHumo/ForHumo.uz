@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Inbox, Loader2, MapPin, Package, Truck, CheckCircle2, XCircle } from "lucide-react";
+import { formatMoney } from "@/lib/money";
 
 interface SellerOrder {
     id: string; status: string; createdAt: string; address: string; paymentMethod: string;
@@ -74,7 +75,7 @@ export function SellerOrders() {
                             <div className="text-right">
                                 <span className={`text-xs font-bold ${st.color}`}>{st.label}</span>
                                 <p className="font-black text-sm text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-500 dark:from-green-400 dark:to-emerald-300">
-                                    {fz(o.sellerTotal)} Ƶ
+                                    {formatMoney(o.sellerTotal, "UZS")}
                                 </p>
                             </div>
                         </div>
