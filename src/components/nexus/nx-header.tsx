@@ -16,7 +16,7 @@ interface NxHeaderProps {
 
 export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHeaderProps) {
     const { data: session } = useSession();
-    const { setSearchOpen, setStudioOpen: _setStudioOpen, setNotifOpen, setMessagesOpen, setExploreOpen, setCreatePostOpen } = useNxPlayer();
+    const { setSearchOpen, setNotifOpen, setMessagesOpen, setExploreOpen, setCreatePostOpen } = useNxPlayer();
 
     return (
         <header

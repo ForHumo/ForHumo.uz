@@ -37,7 +37,7 @@ export interface IncomingCall { id: string; kind: "AUDIO" | "VIDEO"; caller: Cal
 export interface IncomingGroupInvite { callId: string; roomName: string; title: string | null; inviter: CallPeer }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Context interfeysi
+// Context interfeysi — faqat REAL komponentlar uchun state
 // ─────────────────────────────────────────────────────────────────────────────
 interface PlayerCtx {
     // Musiqa
@@ -80,19 +80,6 @@ interface PlayerCtx {
     searchOpen:    boolean;
     setSearchOpen: (v: boolean) => void;
 
-    // Studio
-    studioOpen:    boolean;
-    setStudioOpen: (v: boolean) => void;
-
-    // Pro obuna
-    proOpen:    boolean;
-    setProOpen: (v: boolean) => void;
-
-    // Kanal
-    channelAuthor: string | null;
-    openChannel:   (author: string) => void;
-    closeChannel:  () => void;
-
     // Saqlangan (localStorage)
     savedIds:    Set<string>;
     toggleSaved: (id: string) => void;
@@ -109,8 +96,8 @@ interface PlayerCtx {
     // Xabarlar / DM
     messagesOpen:    boolean;
     setMessagesOpen: (v: boolean) => void;
-    dmTarget:        string | null;                 // ochilishi kerak bo'lgan suhbat (username)
-    openDM:          (username: string) => void;    // suhbatni ochish (inline chat list, profil "Xabar")
+    dmTarget:        string | null;
+    openDM:          (username: string) => void;
 
     // Chaqiruv (WebRTC 1:1)
     activeCall:      ActiveCallState | null;
@@ -122,6 +109,8 @@ interface PlayerCtx {
     setIncoming:     (v: IncomingCall | null) => void;
     callMinimized:   boolean;
     setCallMinimized:(v: boolean) => void;
+
+    // Guruh chaqiruv (LiveKit)
     groupCallOpen:   boolean;
     setGroupCallOpen:(v: boolean) => void;
     joinGroupCallId: string | null;
@@ -130,27 +119,17 @@ interface PlayerCtx {
     incomingGroup:   IncomingGroupInvite | null;
     setIncomingGroup:(v: IncomingGroupInvite | null) => void;
 
-    // Izohlar
-    commentsOpen:    boolean;
-    commentsFor:     string | null;
-    openComments:    (target: string) => void;
-    closeComments:   () => void;
-
     // Jonli efir chat
     liveChatOpen:    boolean;
     setLiveChatOpen: (v: boolean) => void;
 
-    // Explore
+    // Explore / Kashfiyot
     exploreOpen:    boolean;
     setExploreOpen: (v: boolean) => void;
 
     // Playlist
     playlistsOpen:    boolean;
     setPlaylistsOpen: (v: boolean) => void;
-
-    // Analytics
-    analyticsOpen:    boolean;
-    setAnalyticsOpen: (v: boolean) => void;
 
     // Stories viewer
     storiesViewerOpen:  boolean;
@@ -162,175 +141,31 @@ interface PlayerCtx {
     savedOpen:    boolean;
     setSavedOpen: (v: boolean) => void;
 
-    // Guruhlar va kanallar
-    groupsOpen:    boolean;
-    setGroupsOpen: (v: boolean) => void;
-
-    // Qo'ng'iroqlar
+    // Qo'ng'iroqlar jurnali
     callsOpen:    boolean;
     setCallsOpen: (v: boolean) => void;
 
-    // Obunalar / Followers
+    // Obunalar
     subsOpen:    boolean;
     setSubsOpen: (v: boolean) => void;
-
-    // Audio Spaces
-    spacesOpen:    boolean;
-    setSpacesOpen: (v: boolean) => void;
-
-    // Bozor (Marketplace)
-    marketOpen:    boolean;
-    setMarketOpen: (v: boolean) => void;
-
-    // Hamyon (Wallet)
-    walletOpen:    boolean;
-    setWalletOpen: (v: boolean) => void;
-
-    // Tadbirlar (Events)
-    eventsOpen:    boolean;
-    setEventsOpen: (v: boolean) => void;
-
-    // Yuklangan (Downloads)
-    downloadsOpen:    boolean;
-    setDownloadsOpen: (v: boolean) => void;
-
-    // Ish o'rinlari (Jobs)
-    jobsOpen:    boolean;
-    setJobsOpen: (v: boolean) => void;
-
-    // Trendlar
-    trendingOpen:    boolean;
-    setTrendingOpen: (v: boolean) => void;
-
-    // AI yordamchi
-    aiOpen:    boolean;
-    setAiOpen: (v: boolean) => void;
 
     // Go Live
     goLiveOpen:    boolean;
     setGoLiveOpen: (v: boolean) => void;
 
-    // Virtual sovg'alar
-    giftsOpen:    boolean;
-    setGiftsOpen: (v: boolean) => void;
-
-    // Leaderboard
-    leaderboardOpen:    boolean;
-    setLeaderboardOpen: (v: boolean) => void;
-
     // Post yaratish
     createPostOpen:    boolean;
     setCreatePostOpen: (v: boolean) => void;
-
-    // Kim kuzatish kerak
-    suggestionsOpen:    boolean;
-    setSuggestionsOpen: (v: boolean) => void;
-
-    // Watch Party
-    watchPartyOpen:    boolean;
-    setWatchPartyOpen: (v: boolean) => void;
-
-    // Highlights
-    highlightsOpen:    boolean;
-    setHighlightsOpen: (v: boolean) => void;
-
-    // Lyrics
-    lyricsOpen:    boolean;
-    setLyricsOpen: (v: boolean) => void;
-
-    // QR Share
-    qrShareOpen:    boolean;
-    setQrShareOpen: (v: boolean) => void;
-
-    // Community posts
-    communityOpen:    boolean;
-    setCommunityOpen: (v: boolean) => void;
-
-    // Kliplar
-    clipsOpen:    boolean;
-    setClipsOpen: (v: boolean) => void;
-
-    // Super Chat
-    superChatOpen:    boolean;
-    setSuperChatOpen: (v: boolean) => void;
-
-    // Yutuqlar (Achievements)
-    achievementsOpen:    boolean;
-    setAchievementsOpen: (v: boolean) => void;
-
-    // Mini Ilovalar
-    miniAppsOpen:    boolean;
-    setMiniAppsOpen: (v: boolean) => void;
-
-    // Kontent jadvali (Schedule)
-    scheduleOpen:    boolean;
-    setScheduleOpen: (v: boolean) => void;
-
-    // Do'kon (Shop)
-    shopOpen:    boolean;
-    setShopOpen: (v: boolean) => void;
-
-    // Maqolalar (Reader)
-    readerOpen:    boolean;
-    setReaderOpen: (v: boolean) => void;
-
-    // Moliyalashtirish (Fundraiser)
-    fundraiserOpen:    boolean;
-    setFundraiserOpen: (v: boolean) => void;
-
-    // Forum (Reddit uslubi muhokama)
-    forumOpen:    boolean;
-    setForumOpen: (v: boolean) => void;
-
-    // Podkastlar
-    podcastsOpen:    boolean;
-    setPodcastsOpen: (v: boolean) => void;
-
-    // Hamkorlik (Collab)
-    collabOpen:    boolean;
-    setCollabOpen: (v: boolean) => void;
-
-    // Eslatmalar (Reminders)
-    remindersOpen:    boolean;
-    setRemindersOpen: (v: boolean) => void;
-
-    // So'rovnomalar (Polls)
-    pollsOpen:    boolean;
-    setPollsOpen: (v: boolean) => void;
-
-    // Statistika (Stats)
-    statsOpen:    boolean;
-    setStatsOpen: (v: boolean) => void;
-
-    // Qoralamalar (Drafts)
-    draftsOpen:    boolean;
-    setDraftsOpen: (v: boolean) => void;
-
-    // Nishonlar (Badges)
-    badgesOpen:    boolean;
-    setBadgesOpen: (v: boolean) => void;
-
-    // Shikoyat (Report)
-    reportOpen:    boolean;
-    setReportOpen: (v: boolean) => void;
-
-    // Tavsiya dasturi (Affiliate)
-    affiliateOpen:    boolean;
-    setAffiliateOpen: (v: boolean) => void;
-
-    // Albomlar
-    albumsOpen:    boolean;
-    setAlbumsOpen: (v: boolean) => void;
 
     // Story yaratish
     storyCreateOpen:    boolean;
     setStoryCreateOpen: (v: boolean) => void;
 
-    // Video Meetings (Zoom/Meet uslubi)
-    meetingOpen:    boolean;
-    setMeetingOpen: (v: boolean) => void;
+    // Shikoyat
+    reportOpen:    boolean;
+    setReportOpen: (v: boolean) => void;
 
-    // Saqlangan panel — tab tanlash
+    // Saqlangan default tab
     savedDefaultTab: "all" | "history";
     openSavedHistory: () => void;
 
@@ -408,10 +243,8 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     const [shortIndex, setShortIndex] = useState(0);
     const [shortsOpen, setShortsOpen] = useState(false);
 
-    /* ── Boshqalar ── */
+    /* ── Qidiruv ── */
     const [searchOpen, setSearchOpen] = useState(false);
-    const [studioOpen, setStudioOpen] = useState(false);
-    const [proOpen,    setProOpen]    = useState(false);
 
     /* ── Bildirishnomalar ── */
     const [notifOpen, setNotifOpen] = useState(false);
@@ -447,7 +280,6 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             if (r?.error) alert(r.error);
             return;
         }
-        // Peer ma'lumotini olish (avatar/nom uchun)
         const det = await fetch(`/api/nexus/calls/${r.call.id}`).then(x => x.json()).catch(() => null);
         if (!det?.call) return;
         setActiveCall({ callId: r.call.id, role: "caller", kind, peer: det.call.peer });
@@ -475,12 +307,6 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     const closeActiveCall = useCallback(() => { setActiveCall(null); setCallMinimized(false); }, []);
 
-    /* ── Izohlar ── */
-    const [commentsOpen, setCommentsOpen] = useState(false);
-    const [commentsFor,  setCommentsFor]  = useState<string | null>(null);
-    const openComments  = useCallback((target: string) => { setCommentsFor(target); setCommentsOpen(true); }, []);
-    const closeComments = useCallback(() => setCommentsOpen(false), []);
-
     /* ── Jonli efir chat ── */
     const [liveChatOpen, setLiveChatOpen] = useState(false);
 
@@ -489,9 +315,6 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
 
     /* ── Playlist ── */
     const [playlistsOpen, setPlaylistsOpen] = useState(false);
-
-    /* ── Analytics ── */
-    const [analyticsOpen, setAnalyticsOpen] = useState(false);
 
     /* ── Stories viewer ── */
     const [storiesViewerOpen,  setStoriesViewerOpen]  = useState(false);
@@ -502,131 +325,23 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     /* ── Saqlangan panel ── */
     const [savedOpen, setSavedOpen] = useState(false);
 
-    /* ── Guruhlar va kanallar ── */
-    const [groupsOpen, setGroupsOpen] = useState(false);
-
-    /* ── Qo'ng'iroqlar ── */
+    /* ── Qo'ng'iroqlar jurnali ── */
     const [callsOpen, setCallsOpen] = useState(false);
 
     /* ── Obunalar ── */
     const [subsOpen, setSubsOpen] = useState(false);
 
-    /* ── Spaces ── */
-    const [spacesOpen, setSpacesOpen] = useState(false);
-
-    /* ── Marketplace ── */
-    const [marketOpen, setMarketOpen] = useState(false);
-
-    /* ── Wallet ── */
-    const [walletOpen, setWalletOpen] = useState(false);
-
-    /* ── Events ── */
-    const [eventsOpen, setEventsOpen] = useState(false);
-
-    /* ── Downloads ── */
-    const [downloadsOpen, setDownloadsOpen] = useState(false);
-
-    /* ── Jobs ── */
-    const [jobsOpen, setJobsOpen] = useState(false);
-
-    /* ── Trending ── */
-    const [trendingOpen, setTrendingOpen] = useState(false);
-
-    /* ── AI ── */
-    const [aiOpen, setAiOpen] = useState(false);
-
     /* ── Go Live ── */
     const [goLiveOpen, setGoLiveOpen] = useState(false);
-
-    /* ── Gifts ── */
-    const [giftsOpen, setGiftsOpen] = useState(false);
-
-    /* ── Leaderboard ── */
-    const [leaderboardOpen, setLeaderboardOpen] = useState(false);
 
     /* ── Post yaratish ── */
     const [createPostOpen, setCreatePostOpen] = useState(false);
 
-    /* ── Tavsiyalar ── */
-    const [suggestionsOpen, setSuggestionsOpen] = useState(false);
-
-    /* ── Watch Party ── */
-    const [watchPartyOpen, setWatchPartyOpen] = useState(false);
-
-    /* ── Highlights ── */
-    const [highlightsOpen, setHighlightsOpen] = useState(false);
-
-    /* ── Lyrics ── */
-    const [lyricsOpen, setLyricsOpen] = useState(false);
-
-    /* ── QR Share ── */
-    const [qrShareOpen, setQrShareOpen] = useState(false);
-
-    /* ── Community ── */
-    const [communityOpen, setCommunityOpen] = useState(false);
-
-    /* ── Clips ── */
-    const [clipsOpen, setClipsOpen] = useState(false);
-
-    /* ── Super Chat ── */
-    const [superChatOpen, setSuperChatOpen] = useState(false);
-
-    /* ── Achievements ── */
-    const [achievementsOpen, setAchievementsOpen] = useState(false);
-
-    /* ── Mini Apps ── */
-    const [miniAppsOpen, setMiniAppsOpen] = useState(false);
-
-    /* ── Schedule ── */
-    const [scheduleOpen, setScheduleOpen] = useState(false);
-
-    /* ── Shop ── */
-    const [shopOpen, setShopOpen] = useState(false);
-
-    /* ── Reader ── */
-    const [readerOpen, setReaderOpen] = useState(false);
-
-    /* ── Fundraiser ── */
-    const [fundraiserOpen, setFundraiserOpen] = useState(false);
-
-    /* ── Forum ── */
-    const [forumOpen, setForumOpen] = useState(false);
-
-    /* ── Podcasts ── */
-    const [podcastsOpen, setPodcastsOpen] = useState(false);
-
-    /* ── Collab ── */
-    const [collabOpen, setCollabOpen] = useState(false);
-
-    /* ── Reminders ── */
-    const [remindersOpen, setRemindersOpen] = useState(false);
-
-    /* ── Polls ── */
-    const [pollsOpen, setPollsOpen] = useState(false);
-
-    /* ── Stats ── */
-    const [statsOpen, setStatsOpen] = useState(false);
-
-    /* ── Drafts ── */
-    const [draftsOpen, setDraftsOpen] = useState(false);
-
-    /* ── Badges ── */
-    const [badgesOpen, setBadgesOpen] = useState(false);
-
-    /* ── Report ── */
-    const [reportOpen, setReportOpen] = useState(false);
-
-    /* ── Affiliate ── */
-    const [affiliateOpen, setAffiliateOpen] = useState(false);
-
-    /* ── Albums ── */
-    const [albumsOpen, setAlbumsOpen] = useState(false);
-
     /* ── Story yaratish ── */
     const [storyCreateOpen, setStoryCreateOpen] = useState(false);
 
-    /* ── Meeting ── */
-    const [meetingOpen, setMeetingOpen] = useState(false);
+    /* ── Shikoyat ── */
+    const [reportOpen, setReportOpen] = useState(false);
 
     /* ── Saqlangan default tab ── */
     const [savedDefaultTab, setSavedDefaultTab] = useState<"all" | "history">("all");
@@ -645,9 +360,6 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
         setShareSheetOpen(true);
     }, []);
     const closeShareSheet = useCallback(() => setShareSheetOpen(false), []);
-
-    /* ── Kanal ── */
-    const [channelAuthor, setChannelAuthor] = useState<string | null>(null);
 
     /* ── Saqlangan ── */
     const [savedIds, setSavedIds] = useState<Set<string>>(() => loadSaved());
@@ -801,7 +513,6 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     const openVideo  = useCallback((v: NxVideo) => {
         setVideo(v);
         setVideoOpen(true);
-        // Tarixga qo'shish
         setWatchHistory(prev => {
             const filtered = prev.filter(h => h.title !== v.title);
             const updated  = [v, ...filtered].slice(0, 50);
@@ -816,13 +527,10 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     }, []);
     const closeShorts = useCallback(() => setShortsOpen(false), []);
 
-    const openChannel  = useCallback((author: string) => setChannelAuthor(author), []);
-    const closeChannel = useCallback(() => setChannelAuthor(null), []);
-
     const toggleSaved = useCallback((id: string) => {
         setSavedIds(prev => {
             const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
+            if (next.has(id)) next.delete(id); else next.add(id);
             saveSavedLS(next);
             return next;
         });
@@ -858,9 +566,6 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             openShorts, closeShorts,
             nextShort, prevShort,
             searchOpen, setSearchOpen,
-            studioOpen, setStudioOpen,
-            proOpen, setProOpen,
-            channelAuthor, openChannel, closeChannel,
             savedIds, toggleSaved,
             watchHistory, addToHistory, clearHistory,
             notifOpen, setNotifOpen,
@@ -870,55 +575,17 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             groupCallOpen, setGroupCallOpen,
             joinGroupCallId, openGroupCall, consumeJoinGroupCallId,
             incomingGroup, setIncomingGroup,
-            commentsOpen, commentsFor, openComments, closeComments,
             liveChatOpen, setLiveChatOpen,
             exploreOpen, setExploreOpen,
             playlistsOpen, setPlaylistsOpen,
-            analyticsOpen, setAnalyticsOpen,
             storiesViewerOpen, storiesViewerIndex, openStoriesViewer, closeStoriesViewer,
             savedOpen, setSavedOpen,
-            groupsOpen, setGroupsOpen,
             callsOpen, setCallsOpen,
             subsOpen, setSubsOpen,
-            spacesOpen, setSpacesOpen,
-            marketOpen, setMarketOpen,
-            walletOpen, setWalletOpen,
-            eventsOpen, setEventsOpen,
-            downloadsOpen, setDownloadsOpen,
-            jobsOpen, setJobsOpen,
-            trendingOpen, setTrendingOpen,
-            aiOpen, setAiOpen,
             goLiveOpen, setGoLiveOpen,
-            giftsOpen, setGiftsOpen,
-            leaderboardOpen, setLeaderboardOpen,
             createPostOpen, setCreatePostOpen,
-            suggestionsOpen, setSuggestionsOpen,
-            watchPartyOpen, setWatchPartyOpen,
-            highlightsOpen, setHighlightsOpen,
-            lyricsOpen, setLyricsOpen,
-            qrShareOpen, setQrShareOpen,
-            communityOpen, setCommunityOpen,
-            clipsOpen, setClipsOpen,
-            superChatOpen, setSuperChatOpen,
-            achievementsOpen, setAchievementsOpen,
-            miniAppsOpen, setMiniAppsOpen,
-            scheduleOpen, setScheduleOpen,
-            shopOpen, setShopOpen,
-            readerOpen, setReaderOpen,
-            fundraiserOpen, setFundraiserOpen,
-            forumOpen, setForumOpen,
-            podcastsOpen, setPodcastsOpen,
-            collabOpen, setCollabOpen,
-            remindersOpen, setRemindersOpen,
-            pollsOpen, setPollsOpen,
-            statsOpen, setStatsOpen,
-            draftsOpen, setDraftsOpen,
-            badgesOpen, setBadgesOpen,
-            reportOpen, setReportOpen,
-            affiliateOpen, setAffiliateOpen,
-            albumsOpen, setAlbumsOpen,
             storyCreateOpen, setStoryCreateOpen,
-            meetingOpen, setMeetingOpen,
+            reportOpen, setReportOpen,
             savedDefaultTab, openSavedHistory,
             shareSheetOpen, shareSheetTitle, shareSheetUrl, openShareSheet, closeShareSheet,
         }}>

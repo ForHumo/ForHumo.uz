@@ -193,4 +193,3 @@ export interface CurrentUser {
     };
 }
 // Alias for backward compatibility if needed, or just use CurrentUser
-export type MockUser = CurrentUser;

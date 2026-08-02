@@ -136,7 +136,7 @@ interface ProfileData {
 
 export function ProfileView() {
     const { data: session } = useSession();
-    const { watchHistory, clearHistory, openVideo, openSavedHistory, setSavedOpen, setSubsOpen, setExploreOpen, setGoLiveOpen, setWalletOpen } = useNxPlayer();
+    const { watchHistory, clearHistory, openVideo, openSavedHistory, setSavedOpen, setSubsOpen, setExploreOpen, setGoLiveOpen } = useNxPlayer();
 
     const sessionName  = session?.user?.name  ?? "Mehmon";
     const sessionEmail = session?.user?.email ?? "—";
@@ -351,27 +351,35 @@ export function ProfileView() {
 
             {/* ── Statistika (REAL) ─────────────────────────────────────── */}
             <div className="mx-4 mt-3 grid grid-cols-2 gap-3">
-                {[
-                    { icon: Heart,      label: "Olingan layklar", value: nx?.likes != null ? String(nx.likes) : "—", gradient: "from-red-500 to-pink-600", action: undefined },
+                {([
+                    { icon: Heart,      label: "Olingan layklar", value: nx?.likes != null ? String(nx.likes) : "—", gradient: "from-red-500 to-pink-600" },
                     { icon: UserCheck,  label: "Obunachi",   value: nx ? String(nx.followers) : "—",  gradient: "from-[#2B3EE8] to-[#00CEC8]",  action: profile?.username ? () => setFollowList("followers") : undefined },
-                    { icon: CreditCard, label: "Hamyon",     value: balance != null ? formatMoney(balance, balanceCurrency) : "—", gradient: "from-emerald-500 to-teal-600", action: () => setWalletOpen(true) },
-                    { icon: Shield,     label: "Xavfsizlik", value: profile?.emailVerified ? "Yaxshi" : "Boshlang'ich", gradient: "from-violet-500 to-indigo-600", action: undefined },
-                ].map(({ icon: Icon, label, value, gradient, action }, i) => (
-                    <button key={i} onClick={action}
-                        className="flex items-center gap-3 p-4 rounded-2xl transition-all duration-150 text-left"
-                        style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)", cursor: action ? "pointer" : "default" }}
-                        onMouseEnter={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)")}
-                        onMouseLeave={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)")}
-                    >
-                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${gradient}`}>
-                            <Icon className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                            <p className="text-[9px] font-bold uppercase tracking-widest mb-0.5" style={{ color: "rgba(80,100,150,0.80)" }}>{label}</p>
-                            <p className="text-lg font-black text-white">{value}</p>
-                        </div>
-                    </button>
-                ))}
+                    { icon: CreditCard, label: "Hamyon",     value: balance != null ? formatMoney(balance, balanceCurrency) : "—", gradient: "from-emerald-500 to-teal-600", href: "/pay" as const },
+                    { icon: Shield,     label: "Xavfsizlik", value: profile?.emailVerified ? "Yaxshi" : "Boshlang'ich", gradient: "from-violet-500 to-indigo-600" },
+                ] as Array<{ icon: typeof Heart; label: string; value: string; gradient: string; action?: (() => void) | undefined; href?: string }>).map(({ icon: Icon, label, value, gradient, action, href }, i) => {
+                    const inner = (
+                        <>
+                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${gradient}`}>
+                                <Icon className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-bold uppercase tracking-widest mb-0.5" style={{ color: "rgba(80,100,150,0.80)" }}>{label}</p>
+                                <p className="text-lg font-black text-white">{value}</p>
+                            </div>
+                        </>
+                    );
+                    const cls = "flex items-center gap-3 p-4 rounded-2xl transition-all duration-150 text-left";
+                    const st = { background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" };
+                    if (href) return <Link key={i} href={href} className={cls} style={st}>{inner}</Link>;
+                    return (
+                        <button key={i} onClick={action}
+                            className={cls}
+                            style={{ ...st, cursor: action ? "pointer" : "default" }}
+                            onMouseEnter={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)")}
+                            onMouseLeave={e => action && ((e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.18)")}
+                        >{inner}</button>
+                    );
+                })}
             </div>
 
             {/* ── Ko'rish tarixi ────────────────────────────────────────── */}
