@@ -7,7 +7,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { CheckCircle2, Circle, X, Sparkles, UserPlus, PenSquare, Camera, Bell, ChevronRight } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
-import { getPushState } from "@/lib/push-client";
+import { getPushState, subscribePush } from "@/lib/push-client";
 
 const LS_HIDDEN = "nx_onboarding_hidden";
 
@@ -67,6 +67,17 @@ export function NxOnboarding() {
         setHidden(true);
     };
 
+    const enablePush = async () => {
+        try {
+            const state = await subscribePush();
+            if (state === "subscribed") { load(); return; }
+            if (state === "denied") { alert("Brauzer sozlamalarida bildirishnomalarga ruxsat bering. Sozlamalar → Sayt sozlamalari → Bildirishnomalar → Ruxsat berish."); return; }
+            if (state === "unsupported") { alert("Sizning brauzeringiz push bildirishnomalarni qo'llab-quvvatlamaydi."); return; }
+        } catch (e) {
+            alert(e instanceof Error ? e.message : "Xato yuz berdi");
+        }
+    };
+
     if (hidden || !status) return null;
 
     const steps = [
@@ -74,7 +85,7 @@ export function NxOnboarding() {
         { key: "followsSomeone",  done: status.followsSomeone,  icon: UserPlus, label: "Kim bo'lsa kuzatib boring",   href: undefined,        action: () => setExploreOpen(true) },
         { key: "hasPost",         done: status.hasPost,         icon: PenSquare,label: "Birinchi postni yozing",       href: undefined,        action: () => setCreatePostOpen(true) },
         { key: "hasStory",        done: status.hasStory,        icon: Camera,   label: "Story qo'ying (24 soat)",     href: undefined,        action: () => setStoryCreateOpen(true) },
-        { key: "pushEnabled",     done: status.pushEnabled,     icon: Bell,     label: "Bildirishnomalarni yoqing",   href: undefined,        action: undefined },
+        { key: "pushEnabled",     done: status.pushEnabled,     icon: Bell,     label: "Bildirishnomalarni yoqing",   href: undefined,        action: enablePush },
     ];
 
     const doneCount = steps.filter(s => s.done).length;
