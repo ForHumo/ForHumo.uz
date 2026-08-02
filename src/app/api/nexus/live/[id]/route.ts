@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
+import { deleteLiveKitRoom } from "@/lib/livekit";
 
 const VIEWER_WINDOW_MS = 30_000;
 
@@ -65,6 +66,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const updated = await prisma.nexusLiveStream.update({
             where: { id }, data: { status: "ENDED", endedAt: new Date() },
         });
+        // LiveKit xonasini tozalash (fail-safe)
+        deleteLiveKitRoom(`live_${id}`).catch(() => { });
         return NextResponse.json({ stream: updated });
     }
     return NextResponse.json({ error: "Noto'g'ri amal" }, { status: 400 });
@@ -79,5 +82,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 
     const { id } = await params;
     await prisma.nexusLiveStream.deleteMany({ where: { id, profileId: me.id } });
+    deleteLiveKitRoom(`live_${id}`).catch(() => { });
     return NextResponse.json({ ok: true });
 }

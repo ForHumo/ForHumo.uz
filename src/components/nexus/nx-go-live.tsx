@@ -5,6 +5,7 @@ import {
     X, Radio, Mic, MicOff, Camera, CameraOff, Eye, Loader2,
     Send, Globe, Users, Lock, StopCircle, BadgeCheck, Clock, MessageSquare,
 } from "lucide-react";
+import { Room, LocalVideoTrack, LocalAudioTrack, Track } from "livekit-client";
 import { useNxPlayer } from "./nx-player-ctx";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,6 +66,8 @@ export function NxGoLive() {
     const videoElRef = useRef<HTMLVideoElement>(null);
     const lastTsRef = useRef<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
+    const roomRef = useRef<Room | null>(null);
+    const publishedTracksRef = useRef<{ video?: LocalVideoTrack; audio?: LocalAudioTrack }>({});
 
     // ── Kamera/mikrofon — modal ochilganda yoqiladi, yopilganda o'chadi ──
     useEffect(() => {
@@ -90,17 +93,25 @@ export function NxGoLive() {
         if (videoElRef.current && mediaRef.current) videoElRef.current.srcObject = mediaRef.current;
     }, [stage]);
 
-    useEffect(() => { mediaRef.current?.getAudioTracks().forEach(t => { t.enabled = micOn; }); }, [micOn]);
-    useEffect(() => { mediaRef.current?.getVideoTracks().forEach(t => { t.enabled = camOn; }); }, [camOn]);
+    useEffect(() => {
+        mediaRef.current?.getAudioTracks().forEach(t => { t.enabled = micOn; });
+        publishedTracksRef.current.audio?.mediaStreamTrack && (publishedTracksRef.current.audio.mediaStreamTrack.enabled = micOn);
+    }, [micOn]);
+    useEffect(() => {
+        mediaRef.current?.getVideoTracks().forEach(t => { t.enabled = camOn; });
+        publishedTracksRef.current.video?.mediaStreamTrack && (publishedTracksRef.current.video.mediaStreamTrack.enabled = camOn);
+    }, [camOn]);
 
     // ── Reset (yopilganda) ──
     useEffect(() => {
         if (!goLiveOpen) {
+            disconnectLiveKit();
             setStage("setup"); setTitle(""); setCategory(""); setPrivacy("PUBLIC");
             setMicOn(true); setCamOn(true); setStarting(false); setErr(null);
             setStreamId(null); setViewers(0); setPeak(0); setDuration(0);
             setMsgs([]); setChatIn(""); lastTsRef.current = null;
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [goLiveOpen]);
 
     // ── Jonli: real timer ──
@@ -164,20 +175,53 @@ export function NxGoLive() {
                 body: JSON.stringify({ title, category, privacy }),
             });
             const d = await r.json().catch(() => ({}));
-            if (r.ok && d.stream) { setStreamId(d.stream.id); setStage("live"); setDuration(0); }
-            else setErr(d.error || "Efir boshlanmadi");
+            if (!r.ok || !d.stream) { setErr(d.error || "Efir boshlanmadi"); return; }
+
+            // LiveKit token — video oqimini tomoshabinlarga uzatish uchun
+            const newId: string = d.stream.id;
+            const tk = await fetch(`/api/nexus/live/${newId}/token`).then(x => x.json()).catch(() => null);
+            if (tk?.token && tk?.url && mediaRef.current) {
+                try {
+                    const room = new Room({ adaptiveStream: true, dynacast: true });
+                    await room.connect(tk.url, tk.token);
+                    roomRef.current = room;
+                    const videoTrack = mediaRef.current.getVideoTracks()[0];
+                    const audioTrack = mediaRef.current.getAudioTracks()[0];
+                    if (videoTrack) {
+                        const lv = new LocalVideoTrack(videoTrack);
+                        await room.localParticipant.publishTrack(lv, { source: Track.Source.Camera });
+                        publishedTracksRef.current.video = lv;
+                    }
+                    if (audioTrack) {
+                        const la = new LocalAudioTrack(audioTrack);
+                        await room.localParticipant.publishTrack(la, { source: Track.Source.Microphone });
+                        publishedTracksRef.current.audio = la;
+                    }
+                } catch (e) {
+                    console.warn("[NxGoLive] LiveKit publish xato:", e);
+                    // Video transport ishlamasa ham efir DB'da qoladi (chat + heartbeat baribir real)
+                }
+            }
+
+            setStreamId(newId); setStage("live"); setDuration(0);
         } catch { setErr("Tarmoq xatosi"); }
         finally { setStarting(false); }
+    }
+
+    async function disconnectLiveKit() {
+        try { await roomRef.current?.disconnect(); } catch { /* ignore */ }
+        roomRef.current = null;
+        publishedTracksRef.current = {};
     }
 
     async function endLive() {
         if (!streamId || endingBusy) return;
         setEndingBusy(true);
         try {
+            await disconnectLiveKit();
             await fetch(`/api/nexus/live/${streamId}`, {
                 method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "end" }),
             });
-            // Yakuniy statistika
             const d = await fetch(`/api/nexus/live/${streamId}`).then(r => r.json()).catch(() => null);
             if (d?.stream) setPeak(d.stream.peakViewers);
             setStage("ended");

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
     X, Radio, Eye, Send, Loader2, BadgeCheck, StopCircle, Clock, CalendarClock, Gift,
 } from "lucide-react";
+import { Room, RoomEvent, Track, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
 
 interface LAuthor { name: string | null; username: string | null; image: string | null; verified: boolean }
@@ -42,6 +43,10 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [currency, setCurrency] = useState<Currency>("UZS");
     const lastTsRef = useRef<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
+    const videoElRef = useRef<HTMLVideoElement>(null);
+    const audioElRef = useRef<HTMLAudioElement>(null);
+    const roomRef = useRef<Room | null>(null);
+    const [hasRemoteVideo, setHasRemoteVideo] = useState(false);
 
     // Tafsilot — ochilishda + har 15s (status o'zgarishini ushlash uchun)
     const loadDetail = useCallback(() => {
@@ -97,6 +102,53 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
 
     useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
+    // ── LiveKit subscribe — video oqimini olish ──
+    useEffect(() => {
+        if (stream?.status !== "LIVE") return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const tk = await fetch(`/api/nexus/live/${streamId}/token`).then(r => r.json());
+                if (cancelled || !tk?.token || !tk?.url) return;
+                const room = new Room({ adaptiveStream: true, dynacast: true });
+
+                const onTrackSubscribed = (track: RemoteTrack, _pub: RemoteTrackPublication, _p: RemoteParticipant) => {
+                    if (track.kind === Track.Kind.Video && videoElRef.current) {
+                        track.attach(videoElRef.current);
+                        setHasRemoteVideo(true);
+                    } else if (track.kind === Track.Kind.Audio && audioElRef.current) {
+                        track.attach(audioElRef.current);
+                    }
+                };
+                const onTrackUnsubscribed = (track: RemoteTrack) => {
+                    track.detach().forEach(el => el.remove());
+                    if (track.kind === Track.Kind.Video) setHasRemoteVideo(false);
+                };
+
+                room.on(RoomEvent.TrackSubscribed, onTrackSubscribed);
+                room.on(RoomEvent.TrackUnsubscribed, onTrackUnsubscribed);
+                await room.connect(tk.url, tk.token);
+                if (cancelled) { room.disconnect(); return; }
+                roomRef.current = room;
+
+                // Xonaga kirganda mavjud publisher (streamer) tracks'larini olish
+                room.remoteParticipants.forEach(p => {
+                    p.trackPublications.forEach(pub => {
+                        if (pub.isSubscribed && pub.track) onTrackSubscribed(pub.track, pub, p);
+                    });
+                });
+            } catch (e) {
+                console.warn("[NxLiveRoom] LiveKit subscribe xato:", e);
+            }
+        })();
+        return () => {
+            cancelled = true;
+            try { roomRef.current?.disconnect(); } catch { /* ignore */ }
+            roomRef.current = null;
+            setHasRemoteVideo(false);
+        };
+    }, [stream?.status, streamId]);
+
     async function send() {
         const isSC = scAmount > 0;
         if ((!input.trim() && !isSC) || busy) return;
@@ -142,11 +194,17 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
 
             {/* ── Sahna (video maydoni) ── */}
             <div className="flex-1 bg-black flex items-center justify-center min-h-0 relative">
+                {/* LiveKit remote video (LIVE bo'lganda ko'rinadi) */}
+                <video ref={videoElRef} autoPlay playsInline
+                    className="absolute inset-0 w-full h-full object-contain"
+                    style={{ display: isLive && hasRemoteVideo ? "block" : "none" }} />
+                <audio ref={audioElRef} autoPlay />
+
                 {loading ? (
                     <Loader2 className="w-10 h-10 animate-spin text-white/60" />
                 ) : !stream ? (
                     <p className="text-sm text-white/60">Efir topilmadi</p>
-                ) : (
+                ) : hasRemoteVideo && isLive ? null : (
                     <div className="flex flex-col items-center gap-4 px-6 text-center">
                         <div className="relative">
                             <img src={avatarOf(stream.author)} alt="" className="w-24 h-24 rounded-full object-cover bg-white"
@@ -177,7 +235,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             </div>
                         ) : (
                             <p className="text-xs max-w-xs leading-relaxed" style={{ color: "rgba(150,170,210,0.7)" }}>
-                                Video oqimi keyingi bosqichda ulanadi — hozircha jonli chat va ko&apos;ruvchilar real ishlaydi
+                                Video oqimini kutmoqda...
                             </p>
                         )}
                         {stream.isMine && isLive && (
