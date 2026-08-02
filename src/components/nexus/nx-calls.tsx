@@ -10,7 +10,8 @@ import { useNxPlayer } from "./nx-player-ctx";
 
 interface CallPeer { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean }
 interface CallRecording { id: string; audioUrl: string; durationSec: number; sizeKb: number }
-interface GroupCallItem { id: string; roomName: string; title: string | null; status: "ACTIVE" | "ENDED"; createdAt: string; endedAt: string | null; participantCount: number; isHost: boolean }
+interface GroupCallRecording { id: string; audioUrl: string; durationSec: number; sizeKb: number }
+interface GroupCallItem { id: string; roomName: string; title: string | null; status: "ACTIVE" | "ENDED"; createdAt: string; endedAt: string | null; participantCount: number; isHost: boolean; recordings?: GroupCallRecording[] }
 interface CallItem {
     id: string;
     kind: "audio" | "video";
@@ -111,16 +112,34 @@ export function NxCalls() {
                         <div className="mb-3">
                             <p className="mb-1.5 px-1 text-[10px] font-black uppercase" style={{ color: "rgba(140,160,210,0.7)" }}>Tugagan guruhlar</p>
                             {groupCalls.filter(g => g.status === "ENDED").slice(0, 5).map(g => (
-                                <div key={g.id} className="mb-1 flex items-center gap-3 rounded-2xl p-3">
-                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ background: "rgba(43,62,232,0.15)" }}>
-                                        <Users className="h-5 w-5" style={{ color: "rgba(140,160,210,0.8)" }} />
+                                <div key={g.id} className="mb-1 flex flex-col rounded-2xl">
+                                    <div className="flex items-center gap-3 p-3">
+                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ background: "rgba(43,62,232,0.15)" }}>
+                                            <Users className="h-5 w-5" style={{ color: "rgba(140,160,210,0.8)" }} />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <p className="truncate text-sm font-bold text-white">{g.title || "Guruh chaqiruv"}</p>
+                                                {g.recordings && g.recordings.length > 0 && (
+                                                    <Mic className="h-3 w-3 shrink-0" style={{ color: "#00CEC8" }} />
+                                                )}
+                                            </div>
+                                            <p className="mt-0.5 text-[10px]" style={{ color: "rgba(80,100,150,0.85)" }}>
+                                                {g.participantCount} ishtirokchi{g.isHost ? " · Host" : ""} · {timeAgo(g.createdAt)}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-bold text-white">{g.title || "Guruh chaqiruv"}</p>
-                                        <p className="mt-0.5 text-[10px]" style={{ color: "rgba(80,100,150,0.85)" }}>
-                                            {g.participantCount} ishtirokchi{g.isHost ? " · Host" : ""} · {timeAgo(g.createdAt)}
-                                        </p>
-                                    </div>
+                                    {g.recordings && g.recordings.length > 0 && (
+                                        <div className="flex flex-col gap-1.5 border-t px-3 py-2.5" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                            {g.recordings.map(r => (
+                                                <div key={r.id} className="flex items-center gap-2">
+                                                    <Mic className="h-3.5 w-3.5 shrink-0" style={{ color: "#00CEC8" }} />
+                                                    <audio src={r.audioUrl} controls className="h-8 flex-1" style={{ minWidth: 0 }} />
+                                                    <span className="shrink-0 text-[10px]" style={{ color: "rgba(80,100,150,0.85)" }}>{formatDur(r.durationSec)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

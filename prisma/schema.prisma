@@ -1124,8 +1124,22 @@ model NexusGroupCall {
   createdAt    DateTime                     @default(now())
   endedAt      DateTime?
   participants NexusGroupCallParticipant[]
+  recordings   NexusGroupCallRecording[]
   @@index([hostId, createdAt])
   @@index([status, createdAt])
+}
+
+model NexusGroupCallRecording {
+  id            String         @id @default(cuid())
+  groupCallId   String
+  groupCall     NexusGroupCall @relation(fields: [groupCallId], references: [id], onDelete: Cascade)
+  startedById   String                                   // UserProfile.id
+  audioUrl      String                                   // Vercel Blob
+  durationSec   Int
+  sizeKb        Int
+  createdAt     DateTime       @default(now())
+  @@index([groupCallId, createdAt])
+  @@index([startedById, createdAt])
 }
 
 model NexusGroupCallParticipant {

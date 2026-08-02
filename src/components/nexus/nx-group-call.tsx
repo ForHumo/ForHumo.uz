@@ -10,6 +10,9 @@ import { LiveKitRoom, VideoConference, RoomAudioRenderer } from "@livekit/compon
 import { Loader2, X, Check, PhoneOff, Users, Plus, Link as LinkIcon, UserPlus, Search, BadgeCheck, MessageSquare } from "lucide-react";
 import { NxGroupChat } from "./nx-group-chat";
 import { NxGroupParticipants } from "./nx-group-participants";
+import { NxGroupRecord } from "./nx-group-record";
+import { getPusherClient } from "@/lib/pusher-client";
+import { useSession } from "next-auth/react";
 import { useNxPlayer } from "./nx-player-ctx";
 
 interface GroupCallListItem {
@@ -39,6 +42,30 @@ export function NxGroupCall() {
     const [chatOpen, setChatOpen] = useState(false);
     const [participantsOpen, setParticipantsOpen] = useState(false);
     const [callInfo, setCallInfo] = useState<{ hostId: string; isHost: boolean } | null>(null);
+    const [peerRecording, setPeerRecording] = useState<{ name: string } | null>(null);
+
+    // Peer yozib olish holatini kuzatish (Pusher)
+    const { data: session } = useSession();
+    // @ts-ignore
+    const myProfileId: string | null = session?.user?.profileId ?? null;
+    useEffect(() => {
+        if (!myProfileId || !activeCallId) return;
+        const pusher = getPusherClient();
+        if (!pusher) return;
+        const channel = pusher.subscribe(`private-user-${myProfileId}`);
+        const onStart = (d: { callId: string; fromName: string }) => {
+            if (d.callId === activeCallId) setPeerRecording({ name: d.fromName || "Kimdir" });
+        };
+        const onStop = (d: { callId: string }) => {
+            if (d.callId === activeCallId) setPeerRecording(null);
+        };
+        channel.bind("group-recording:start", onStart);
+        channel.bind("group-recording:stop", onStop);
+        return () => {
+            channel.unbind("group-recording:start", onStart);
+            channel.unbind("group-recording:stop", onStop);
+        };
+    }, [myProfileId, activeCallId]);
 
     // Xona ma'lumotini yuklash (host bo'lish uchun)
     useEffect(() => {
@@ -171,36 +198,7 @@ export function NxGroupCall() {
     if (view === "room" && tokenInfo) {
         return (
             <div className="fixed inset-0 z-[300] flex flex-col bg-black text-white">
-                <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-3 bg-black/60 p-4 backdrop-blur-md">
-                    <div className="flex-1 min-w-0">
-                        <p className="truncate text-sm font-black">Guruh chaqiruv</p>
-                        <p className="mt-0.5 truncate text-[10px] text-white/60">{tokenInfo.roomName}</p>
-                    </div>
-                    <button onClick={() => setChatOpen(v => !v)}
-                        title="Chat"
-                        className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
-                        <MessageSquare className="h-4 w-4 text-white" />
-                    </button>
-                    <button onClick={() => setParticipantsOpen(v => !v)}
-                        title="Ishtirokchilar"
-                        className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
-                        <Users className="h-4 w-4 text-white" />
-                    </button>
-                    <button onClick={() => { setInviteOpen(true); setInviteQuery(""); setInviteResults([]); }}
-                        className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white/90 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
-                        <UserPlus className="h-3.5 w-3.5" /> Taklif
-                    </button>
-                    <button onClick={copyInvite}
-                        className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white/90 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
-                        {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <LinkIcon className="h-3.5 w-3.5" />}
-                        {copied ? "Ko'chirildi" : "Havola"}
-                    </button>
-                    <button onClick={endCall}
-                        className="flex h-9 items-center gap-1.5 rounded-full bg-rose-600 px-3 text-xs font-black text-white shadow-lg transition-transform hover:scale-105 active:scale-95">
-                        <PhoneOff className="h-3.5 w-3.5" /> Chiqish
-                    </button>
-                </div>
-                <div className="flex-1 pt-16" data-lk-theme="default">
+                <div className="relative flex-1" data-lk-theme="default">
                     <LiveKitRoom
                         token={tokenInfo.token}
                         serverUrl={tokenInfo.url}
@@ -208,8 +206,52 @@ export function NxGroupCall() {
                         video
                         audio
                         onDisconnected={() => leaveRoom()}
-                        style={{ height: "100%" }}>
-                        <VideoConference />
+                        style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                        {/* Top bar — LiveKitRoom ichida (record tugmasi hook ishlatadi) */}
+                        <div className="absolute inset-x-0 top-0 z-[15] flex items-center gap-2 bg-black/60 p-3 backdrop-blur-md sm:gap-3 sm:p-4">
+                            <div className="flex-1 min-w-0">
+                                <p className="truncate text-sm font-black">Guruh chaqiruv</p>
+                                <p className="mt-0.5 truncate text-[10px] text-white/60">{tokenInfo.roomName}</p>
+                            </div>
+                            {activeCallId && <NxGroupRecord callId={activeCallId} />}
+                            <button onClick={() => setChatOpen(v => !v)}
+                                title="Chat"
+                                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
+                                <MessageSquare className="h-4 w-4 text-white" />
+                            </button>
+                            <button onClick={() => setParticipantsOpen(v => !v)}
+                                title="Ishtirokchilar"
+                                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
+                                <Users className="h-4 w-4 text-white" />
+                            </button>
+                            <button onClick={() => { setInviteOpen(true); setInviteQuery(""); setInviteResults([]); }}
+                                className="hidden sm:flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white/90 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
+                                <UserPlus className="h-3.5 w-3.5" /> Taklif
+                            </button>
+                            <button onClick={copyInvite}
+                                className="hidden sm:flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white/90 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
+                                {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <LinkIcon className="h-3.5 w-3.5" />}
+                                {copied ? "Ko'chirildi" : "Havola"}
+                            </button>
+                            <button onClick={endCall}
+                                className="flex h-9 items-center gap-1.5 rounded-full bg-rose-600 px-3 text-xs font-black text-white shadow-lg transition-transform hover:scale-105 active:scale-95">
+                                <PhoneOff className="h-3.5 w-3.5" /> Chiqish
+                            </button>
+                        </div>
+
+                        {/* Peer yozib olyapti banneri */}
+                        {peerRecording && (
+                            <div className="pointer-events-none absolute inset-x-0 top-16 z-[14] flex justify-center">
+                                <div className="flex items-center gap-2 rounded-full bg-rose-600/85 px-4 py-1.5 text-xs font-black text-white shadow-lg">
+                                    <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
+                                    {peerRecording.name} yozib olyapti
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="pt-16" style={{ height: "100%" }}>
+                            <VideoConference />
+                        </div>
                         <RoomAudioRenderer />
                         <NxGroupChat open={chatOpen} onClose={() => setChatOpen(false)} />
                         {activeCallId && (

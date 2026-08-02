@@ -39,7 +39,10 @@ export async function GET() {
     const calls = await prisma.nexusGroupCall.findMany({
         where: { OR: [{ hostId: me.id }, { participants: { some: { profileId: me.id } } }] },
         orderBy: { createdAt: "desc" }, take: 30,
-        include: { _count: { select: { participants: true } } },
+        include: {
+            _count: { select: { participants: true } },
+            recordings: { orderBy: { createdAt: "asc" }, select: { id: true, audioUrl: true, durationSec: true, sizeKb: true, startedById: true } },
+        },
     });
     return NextResponse.json({
         calls: calls.map(c => ({
@@ -47,6 +50,7 @@ export async function GET() {
             status: c.status, createdAt: c.createdAt, endedAt: c.endedAt,
             hostId: c.hostId, participantCount: c._count.participants,
             isHost: c.hostId === me.id,
+            recordings: c.recordings,
         })),
     });
 }
