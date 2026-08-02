@@ -18,6 +18,7 @@ import { NxNotifications }  from "./nx-notifications";
 import { NxMessages }        from "./nx-messages";
 import { NxIncomingCall }    from "./nx-incoming-call";
 import { NxGroupCall }       from "./nx-group-call";
+import { NxGroupIncoming }   from "./nx-group-incoming";
 import { NxComments }        from "./nx-comments";
 import { NxLiveChat }        from "./nx-live-chat";
 import { NxPlaylist }        from "./nx-playlist";
@@ -197,6 +198,7 @@ export function NexusShell() {
 
                 {/* ── Guruh chaqiruv (LiveKit) ──────────────────────────── */}
                 <NxGroupCall />
+                <NxGroupIncoming />
 
                 {/* ── Obunalar ──────────────────────────────────────────── */}
                 <NxSubscriptions />

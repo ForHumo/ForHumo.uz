@@ -34,6 +34,7 @@ export interface NxShort {
 export interface CallPeer { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean }
 export interface ActiveCallState { callId: string; role: "caller" | "callee"; kind: "AUDIO" | "VIDEO"; peer: CallPeer; autoAccepted?: boolean }
 export interface IncomingCall { id: string; kind: "AUDIO" | "VIDEO"; caller: CallPeer }
+export interface IncomingGroupInvite { callId: string; roomName: string; title: string | null; inviter: CallPeer }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Context interfeysi
@@ -123,6 +124,11 @@ interface PlayerCtx {
     setCallMinimized:(v: boolean) => void;
     groupCallOpen:   boolean;
     setGroupCallOpen:(v: boolean) => void;
+    joinGroupCallId: string | null;
+    openGroupCall:   (id: string) => void;
+    consumeJoinGroupCallId: () => string | null;
+    incomingGroup:   IncomingGroupInvite | null;
+    setIncomingGroup:(v: IncomingGroupInvite | null) => void;
 
     // Izohlar
     commentsOpen:    boolean;
@@ -420,6 +426,17 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     const [incoming, setIncoming] = useState<IncomingCall | null>(null);
     const [callMinimized, setCallMinimized] = useState(false);
     const [groupCallOpen, setGroupCallOpen] = useState(false);
+    const [joinGroupCallId, setJoinGroupCallId] = useState<string | null>(null);
+    const [incomingGroup, setIncomingGroup] = useState<IncomingGroupInvite | null>(null);
+    const openGroupCall = useCallback((id: string) => {
+        setJoinGroupCallId(id);
+        setGroupCallOpen(true);
+    }, []);
+    const consumeJoinGroupCallId = useCallback(() => {
+        const id = joinGroupCallId;
+        setJoinGroupCallId(null);
+        return id;
+    }, [joinGroupCallId]);
 
     const startCall = useCallback(async (peerId: string, kind: "AUDIO" | "VIDEO") => {
         const r = await fetch("/api/nexus/calls", {
@@ -851,6 +868,8 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             activeCall, startCall, acceptIncoming, rejectIncoming, closeActiveCall,
             incoming, setIncoming, callMinimized, setCallMinimized,
             groupCallOpen, setGroupCallOpen,
+            joinGroupCallId, openGroupCall, consumeJoinGroupCallId,
+            incomingGroup, setIncomingGroup,
             commentsOpen, commentsFor, openComments, closeComments,
             liveChatOpen, setLiveChatOpen,
             exploreOpen, setExploreOpen,

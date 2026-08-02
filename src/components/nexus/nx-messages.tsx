@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare, Phone, Video } from "lucide-react";
+import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare, Phone, Video, Users } from "lucide-react";
 
 interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean }
 interface Conv { conversationId: string; other: Other | null; lastMessageText: string | null; lastMessageAt: string; lastMine: boolean; unread: boolean }
@@ -22,7 +22,25 @@ function timeShort(d: string) {
 }
 
 export function NxMessages({ openWithUsername }: { openWithUsername?: string | null } = {}) {
-    const { messagesOpen, setMessagesOpen, startCall } = useNxPlayer();
+    const { messagesOpen, setMessagesOpen, startCall, openGroupCall } = useNxPlayer();
+
+    // DM'dan darrov guruh chaqiruv boshlash: create → invite → open
+    const startGroupCall = useCallback(async (peerId: string, peerName: string | null) => {
+        try {
+            const c = await fetch("/api/nexus/group-calls", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: peerName ? `${peerName} bilan` : null }),
+            }).then(x => x.json());
+            if (!c?.call?.id) { alert(c?.error || "Yaratib bo'lmadi"); return; }
+            await fetch(`/api/nexus/group-calls/${c.call.id}/invite`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ profileIds: [peerId] }),
+            }).catch(() => { });
+            openGroupCall(c.call.id);
+        } catch (e) {
+            alert(e instanceof Error ? e.message : "Xato");
+        }
+    }, [openGroupCall]);
     const [conversations, setConversations] = useState<Conv[]>([]);
     const [selected, setSelected] = useState<{ conversationId: string; other: Other | null } | null>(null);
     const [messages, setMessages] = useState<Msg[]>([]);
@@ -148,6 +166,12 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                         className="w-8 h-8 flex items-center justify-center rounded-xl transition-transform hover:scale-110 active:scale-95"
                                         style={{ background: "rgba(43,62,232,0.10)" }}>
                                         <Video className="w-4 h-4 text-white" />
+                                    </button>
+                                    <button onClick={() => selected.other?.id && startGroupCall(selected.other.id, selected.other?.name || null)}
+                                        title="Guruh chaqiruv"
+                                        className="w-8 h-8 flex items-center justify-center rounded-xl transition-transform hover:scale-110 active:scale-95"
+                                        style={{ background: "rgba(0,206,200,0.15)" }}>
+                                        <Users className="w-4 h-4 text-white" />
                                     </button>
                                 </>
                             )}

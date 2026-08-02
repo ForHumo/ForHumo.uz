@@ -7,7 +7,7 @@ import "@livekit/components-styles";
 
 import { useCallback, useEffect, useState } from "react";
 import { LiveKitRoom, VideoConference, RoomAudioRenderer } from "@livekit/components-react";
-import { Loader2, X, Copy, Check, PhoneOff, Users, Plus, Link as LinkIcon } from "lucide-react";
+import { Loader2, X, Check, PhoneOff, Users, Plus, Link as LinkIcon, UserPlus, Search, BadgeCheck } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 
 interface GroupCallListItem {
@@ -16,9 +16,10 @@ interface GroupCallListItem {
 }
 
 interface TokenInfo { token: string; url: string; roomName: string; identity: string }
+interface SUser { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean }
 
 export function NxGroupCall() {
-    const { groupCallOpen, setGroupCallOpen } = useNxPlayer();
+    const { groupCallOpen, setGroupCallOpen, consumeJoinGroupCallId } = useNxPlayer();
     const [view, setView] = useState<"list" | "create" | "room">("list");
     const [calls, setCalls] = useState<GroupCallListItem[]>([]);
     const [loading, setLoading] = useState(false);
@@ -28,6 +29,11 @@ export function NxGroupCall() {
     const [activeCallId, setActiveCallId] = useState<string | null>(null);
     const [err, setErr] = useState<string>("");
     const [copied, setCopied] = useState(false);
+    const [inviteOpen, setInviteOpen] = useState(false);
+    const [inviteQuery, setInviteQuery] = useState("");
+    const [inviteResults, setInviteResults] = useState<SUser[]>([]);
+    const [inviteBusy, setInviteBusy] = useState(false);
+    const [inviteSent, setInviteSent] = useState<Set<string>>(new Set());
 
     const load = useCallback(async () => {
         setLoading(true); setErr("");
@@ -38,6 +44,14 @@ export function NxGroupCall() {
     }, []);
 
     useEffect(() => { if (groupCallOpen && view === "list") load(); }, [groupCallOpen, view, load]);
+
+    // Ctx orqali join talab qilinsa (openGroupCall(id)) avtomatik kirish
+    useEffect(() => {
+        if (!groupCallOpen) return;
+        const id = consumeJoinGroupCallId();
+        if (id) joinCall(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [groupCallOpen]);
 
     // Deep link: /nexus?join=<id> — avtomatik guruh chaqiruvga kirish
     useEffect(() => {
@@ -110,6 +124,33 @@ export function NxGroupCall() {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    // Foydalanuvchi qidirish (invite panel uchun)
+    useEffect(() => {
+        if (!inviteOpen) return;
+        const q = inviteQuery.trim();
+        if (!q) { setInviteResults([]); return; }
+        const t = setTimeout(async () => {
+            const r = await fetch(`/api/nexus/search?q=${encodeURIComponent(q)}`)
+                .then(x => x.json()).catch(() => null) as { users?: SUser[] } | null;
+            setInviteResults(r?.users ?? []);
+        }, 250);
+        return () => clearTimeout(t);
+    }, [inviteQuery, inviteOpen]);
+
+    const invite = async (u: SUser) => {
+        if (!activeCallId || inviteSent.has(u.id)) return;
+        setInviteBusy(true);
+        try {
+            const r = await fetch(`/api/nexus/group-calls/${activeCallId}/invite`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ profileIds: [u.id] }),
+            }).then(x => x.json());
+            if (r?.invited) {
+                setInviteSent(prev => new Set(prev).add(u.id));
+            }
+        } finally { setInviteBusy(false); }
+    };
+
     if (!groupCallOpen) return null;
 
     // ── ROOM (LiveKit) ────────────────────────────────────────────────────────
@@ -121,6 +162,10 @@ export function NxGroupCall() {
                         <p className="truncate text-sm font-black">Guruh chaqiruv</p>
                         <p className="mt-0.5 truncate text-[10px] text-white/60">{tokenInfo.roomName}</p>
                     </div>
+                    <button onClick={() => { setInviteOpen(true); setInviteQuery(""); setInviteResults([]); }}
+                        className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white/90 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
+                        <UserPlus className="h-3.5 w-3.5" /> Taklif
+                    </button>
                     <button onClick={copyInvite}
                         className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white/90 backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
                         {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <LinkIcon className="h-3.5 w-3.5" />}
@@ -144,6 +189,68 @@ export function NxGroupCall() {
                         <RoomAudioRenderer />
                     </LiveKitRoom>
                 </div>
+
+                {/* Taklif panel — foydalanuvchi qidirib qo'shish */}
+                {inviteOpen && (
+                    <>
+                        <div className="fixed inset-0 z-[310] bg-black/60 backdrop-blur-sm"
+                            onClick={() => setInviteOpen(false)} />
+                        <div className="fixed inset-x-0 bottom-0 z-[311] max-h-[70vh] overflow-hidden rounded-t-3xl bg-[#080C20] shadow-2xl md:inset-x-auto md:left-1/2 md:top-1/2 md:w-[440px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl"
+                            style={{ border: "1px solid rgba(43,62,232,0.22)" }}
+                            onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                                <h3 className="flex items-center gap-2 text-base font-black text-white">
+                                    <UserPlus className="h-4 w-4" style={{ color: "#00CEC8" }} /> Taklif qilish
+                                </h3>
+                                <button onClick={() => setInviteOpen(false)}
+                                    className="flex h-8 w-8 items-center justify-center rounded-full"
+                                    style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                                    <X className="h-4 w-4 text-white" />
+                                </button>
+                            </div>
+                            <div className="px-4 pb-3">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none"
+                                        style={{ color: "rgba(43,62,232,0.5)" }} />
+                                    <input value={inviteQuery} onChange={e => setInviteQuery(e.target.value)}
+                                        placeholder="Ism yoki username..."
+                                        className="w-full rounded-xl pl-9 pr-4 py-2.5 text-sm font-semibold text-white outline-none"
+                                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
+                                </div>
+                            </div>
+                            <div className="flex-1 overflow-y-auto px-3 pb-5" style={{ maxHeight: "calc(70vh - 130px)", scrollbarWidth: "none" }}>
+                                {inviteResults.length === 0 && inviteQuery && (
+                                    <p className="py-6 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>Topilmadi</p>
+                                )}
+                                {inviteResults.map(u => {
+                                    const sent = inviteSent.has(u.id);
+                                    const label = u.name || (u.username ? `@${u.username}` : u.humoId || "Foydalanuvchi");
+                                    return (
+                                        <button key={u.id} onClick={() => invite(u)} disabled={sent || inviteBusy}
+                                            className="mb-1 flex w-full items-center gap-3 rounded-2xl p-2.5 text-left transition-colors hover:bg-white/[0.03] disabled:opacity-70">
+                                            <div className="h-9 w-9 shrink-0 overflow-hidden rounded-2xl bg-white/10">
+                                                {u.image
+                                                    ? <img src={u.image} alt="" className="h-full w-full object-cover" />
+                                                    : <div className="flex h-full w-full items-center justify-center text-xs font-black text-white">{label.slice(0, 2).toUpperCase()}</div>}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-1">
+                                                    <p className="truncate text-sm font-bold text-white">{label}</p>
+                                                    {u.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0" style={{ color: "#00CEC8" }} />}
+                                                </div>
+                                                {u.username && <p className="truncate text-[10px]" style={{ color: "rgba(80,100,150,0.85)" }}>@{u.username}</p>}
+                                            </div>
+                                            {sent
+                                                ? <Check className="h-4 w-4 shrink-0" style={{ color: "#00CEC8" }} />
+                                                : <span className="rounded-lg px-2.5 py-1 text-[10px] font-black text-white shadow"
+                                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>Taklif</span>}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         );
     }
