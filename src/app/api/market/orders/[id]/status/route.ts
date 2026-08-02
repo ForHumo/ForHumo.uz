@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { notify } from "@/lib/market-notify";
 import { settleOrder } from "@/lib/market-settle";
+import { sendSms } from "@/lib/sms";
 
 type Status = "PENDING" | "PAID" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
@@ -87,6 +89,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                 type: "ORDER_UPDATE", title: "Buyurtma bekor qilindi", body: short, link: `/market/brand/manage`,
             });
         }
+    }
+
+    // SMS bildirishnoma xaridorga (status o'zgarganda) — fail-open, background
+    if (isSeller && !isBuyer && ["SHIPPED", "DELIVERED", "CANCELLED"].includes(status)) {
+        after(async () => {
+            try {
+                const buyer = await prisma.userProfile.findUnique({
+                    where: { id: order.profileId }, select: { phone: true },
+                });
+                if (buyer?.phone) {
+                    await sendSms(buyer.phone, `ForHumo: Buyurtma ${short} — ${LABEL[status] ?? status}.`);
+                }
+            } catch { /* fail-open */ }
+        });
     }
 
     return NextResponse.json({ ok: true, status });

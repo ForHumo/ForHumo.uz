@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validatePromo } from "@/lib/market-promo";
 import { getUsdUzsRate } from "@/lib/fx";
+import { sendSms } from "@/lib/sms";
 
 type PaymentMethod = "WALLET" | "CASH_ON_DELIVERY" | "CARD_ON_DELIVERY";
 
@@ -122,6 +124,35 @@ export async function POST(req: Request) {
             await tx.marketCartItem.deleteMany({ where: { profileId: profile.id } });
             return { order, newBalance };
         });
+
+        // ── SMS bildirishnoma (fail-open, background) ───────────────────
+        after(async () => {
+            try {
+                const orderId = result.order.id;
+                const shortId = orderId.slice(-6).toUpperCase();
+                const buyer = await prisma.userProfile.findUnique({
+                    where: { id: profile.id }, select: { phone: true },
+                });
+                if (buyer?.phone) {
+                    await sendSms(buyer.phone, `ForHumo: Buyurtma #${shortId} qabul qilindi. Yetkazib berish taxminan 24-48 soat ichida.`);
+                }
+                // Sotuvchi(lar)ga xabar — brendlar bo'yicha yagona SMS (dublet oldini olamiz)
+                const brandIds = [...new Set(cartItems.map(it => it.product.brandId))];
+                const brands = await prisma.marketBrand.findMany({
+                    where: { id: { in: brandIds } }, select: { ownerId: true },
+                });
+                const ownerIds = [...new Set(brands.map(b => b.ownerId))];
+                const owners = await prisma.userProfile.findMany({
+                    where: { id: { in: ownerIds } }, select: { phone: true },
+                });
+                const sellerPhones = new Set<string>();
+                owners.forEach(o => { if (o.phone) sellerPhones.add(o.phone); });
+                for (const phone of sellerPhones) {
+                    await sendSms(phone, `ForHumo: Yangi buyurtma #${shortId}. Dashboard'da ko'ring: forhumo.uz/market/dashboard`);
+                }
+            } catch { /* SMS fail-open */ }
+        });
+
         return NextResponse.json(result);
     } catch (e) {
         const msg = (e as Error).message;
