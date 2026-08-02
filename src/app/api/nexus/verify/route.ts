@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isFounderProfile } from "@/lib/founders";
+import { VERIFIED_CATEGORIES } from "@/lib/verified-categories";
 
 // GET /api/nexus/verify — mening ariza holatim (founder bo'lsam: PENDING arizalar ro'yxati)
 export async function GET() {
@@ -59,6 +60,10 @@ export async function POST(req: Request) {
     if (!fullName?.trim() || !category?.trim() || !reason?.trim()) {
         return NextResponse.json({ error: "Ism, toifa va sabab kerak" }, { status: 400 });
     }
+    // Kategoriya faqat ruxsat etilgan qiymatlardan bo'lishi kerak
+    if (!(category in VERIFIED_CATEGORIES)) {
+        return NextResponse.json({ error: "Noto'g'ri kategoriya" }, { status: 400 });
+    }
     const cleanLinks = Array.isArray(links)
         ? links.filter((l: unknown) => typeof l === "string" && l.trim()).map((l: string) => l.trim().slice(0, 200)).slice(0, 5)
         : [];
@@ -95,7 +100,11 @@ export async function PATCH(req: Request) {
 
     if (action === "approve") {
         await prisma.$transaction([
-            prisma.userProfile.update({ where: { id: vr.profileId }, data: { verified: true, verifiedAt: new Date() } }),
+            // Ariza kategoriyasini foydalanuvchi profiliga o'tkazamiz — badge ikoni shu asosda ko'rsatiladi
+            prisma.userProfile.update({
+                where: { id: vr.profileId },
+                data: { verified: true, verifiedAt: new Date(), verifiedCategory: vr.category },
+            }),
             prisma.nexusVerifyRequest.update({ where: { id: vr.id }, data: { status: "APPROVED", reviewedBy: me.id, reviewedAt: new Date() } }),
         ]);
         return NextResponse.json({ ok: true, status: "APPROVED" });

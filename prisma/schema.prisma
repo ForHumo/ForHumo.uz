@@ -76,8 +76,11 @@ model UserProfile {
   subCurrency   Currency @default(UZS)
 
   // Tasdiqlangan (ko'k belgi) — founderlardan tashqari, ariza orqali
-  verified      Boolean  @default(false)
-  verifiedAt    DateTime?
+  verified          Boolean   @default(false)
+  verifiedAt        DateTime?
+  // Kategoriya bo'yicha tasdiq (YouTube uslubi): musician/filmmaker/author/sportsman/journalist/
+  // creator/gamer/entertainer/organization/government. NULL = generic (founder yoki eski).
+  verifiedCategory  String?
 
   // Steam OpenID linking (CS2 sportchilar uchun majburiy; login emas — faqat identity link)
   steamId64     String?   @unique   // Valve SteamID64 (17-rem raqam)
@@ -1705,3 +1708,4 @@ model UserKyc {
 
   @@index([status, submittedAt])
 }
+

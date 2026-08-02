@@ -7,6 +7,13 @@ export function isVerifiedProfile(p: { username: string | null; humoId: string |
     return isFounderProfile(p) || p.verified === true;
 }
 
+/** Foydalanuvchi verified kategoriyasini olish. Founder yoki eski verified — null (generic ko'k tick).
+ *  Kelajakda founder kategoriyasi ham belgilanishi mumkin. */
+export function getVerifiedCategory(p: { username: string | null; humoId: string | null; verified?: boolean; verifiedCategory?: string | null }): string | null {
+    if (!isVerifiedProfile(p)) return null;
+    return p.verifiedCategory || null;
+}
+
 // 18 yoshga to'lganmi? Tug'ilgan sana yo'q bo'lsa — tasdiqlanmagan, false (18+ kontent yashiriladi)
 export function isAdultBirthday(birthday: Date | null | undefined): boolean {
     if (!birthday) return false;

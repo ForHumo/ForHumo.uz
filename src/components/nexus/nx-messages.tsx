@@ -4,12 +4,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, BadgeCheck, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle } from "lucide-react";
+import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck } from "lucide-react";
+import { NxVerifiedBadge } from "./nx-verified-badge";
 import { usePresence } from "@/lib/presence";
 import { upload } from "@vercel/blob/client";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 
-interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean }
+interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
 interface Conv { conversationId: string; other: Other | null; lastMessageText: string | null; lastMessageAt: string; lastMine: boolean; unread: boolean }
 interface Msg {
     id: string; text: string; mine: boolean; createdAt: string;
@@ -416,7 +417,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                         <div className="min-w-0">
                             <div className="flex items-center gap-1">
                                 <span className="text-sm font-bold text-white truncate">{u.name || u.username}</span>
-                                {u.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                {u.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}{/* search API hali verifiedCategory qaytarmaydi — kelasi migration */}
                             </div>
                             {u.username && <span className="text-[11px]" style={{ color: "rgba(120,140,185,0.7)" }}>@{u.username}</span>}
                         </div>
@@ -476,7 +477,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                 <div className="flex items-center justify-between mb-0.5 gap-2">
                                     <span className="text-sm font-bold text-white truncate flex items-center gap-1">
                                         {c.other?.name || c.other?.username || "Foydalanuvchi"}
-                                        {c.other?.verified && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                        {c.other?.verified && <NxVerifiedBadge category={c.other?.verifiedCategory} size={12} />}
                                     </span>
                                     <span className="text-[10px] flex-shrink-0" style={{ color: "rgba(80,100,150,0.8)" }}>{timeShort(c.lastMessageAt)}</span>
                                 </div>
@@ -510,7 +511,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                     <div className="min-w-0">
                         <div className="flex items-center gap-1">
                             <span className="text-sm font-bold text-white truncate">{selected.other?.name || selected.other?.username || "Foydalanuvchi"}</span>
-                            {selected.other?.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                            {selected.other?.verified && <NxVerifiedBadge category={selected.other?.verifiedCategory} size={14} />}
                         </div>
                         {peerTyping ? (
                             <p className="text-[10px] font-bold" style={{ color: "#00CEC8" }}>yozmoqda...</p>

@@ -41,7 +41,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     });
 
     const oid = otherId(conv, me.id);
-    const p = await prisma.userProfile.findUnique({ where: { id: oid }, select: { name: true, username: true, image: true, humoId: true, verified: true } });
+    const p = await prisma.userProfile.findUnique({ where: { id: oid }, select: { name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true } });
 
     return NextResponse.json({
         messages: messages.map(m => ({
@@ -50,7 +50,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             mediaName: m.mediaName, mediaSize: m.mediaSize, durationMs: m.durationMs,
             locLat: m.locLat, locLng: m.locLng, locUpdatedAt: m.locUpdatedAt, locExpiresAt: m.locExpiresAt,
         })),
-        other: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,
+        other: p ? {
+            name: p.name, username: p.username, image: p.image,
+            verified: isVerifiedProfile(p),
+            verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null,
+        } : null,
         peerReadAt,
     });
 }

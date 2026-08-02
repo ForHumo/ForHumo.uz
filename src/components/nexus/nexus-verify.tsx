@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { Link, useRouter } from "@/i18n/routing";
 import { ArrowLeft, Loader2, BadgeCheck, ShieldCheck, Clock, Send, Check, X, Plus, Trash2 } from "lucide-react";
+import { VERIFIED_LIST, VERIFIED_CATEGORIES, type VerifiedCategory } from "@/lib/verified-categories";
+import { NxVerifiedBadge } from "./nx-verified-badge";
 
 interface QueueItem {
     id: string; profileId: string; fullName: string; category: string; reason: string; links: string[]; createdAt: string;
@@ -60,7 +62,8 @@ export function NexusVerify() {
         }).catch(() => { });
     }
 
-    const CATEGORIES = ["Bloger", "Musiqachi", "Jurnalist", "Brend / kompaniya", "Sportchi", "Davlat tashkiloti", "Boshqa"];
+    // Kategoriyalar YouTube uslubidagi kengaytirilgan ro'yxatdan (verified-categories.ts)
+    const CATEGORIES = VERIFIED_LIST;
 
     return (
         <div className="h-full overflow-y-auto text-white" style={{ background: "#050818" }}>
@@ -156,13 +159,27 @@ export function NexusVerify() {
                                 className="w-full px-3.5 py-3 rounded-xl text-sm text-white outline-none mb-3" style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
 
                             <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgba(150,170,210,0.85)" }}>Toifa</label>
-                            <div className="flex flex-wrap gap-1.5 mb-3">
-                                {CATEGORIES.map(c => (
-                                    <button key={c} onClick={() => setCategory(c)} className="px-3 py-1.5 rounded-lg text-[11px] font-bold transition active:scale-95"
-                                        style={category === c ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" } : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.2)", color: "rgba(160,180,230,0.85)" }}>
-                                        {c}
-                                    </button>
-                                ))}
+                            <p className="text-[10px] mb-2 px-1" style={{ color: "rgba(120,140,185,0.65)" }}>
+                                Ikoningiz ismingiz yonida ko'rinadi (masalan musiqachi uchun nota)
+                            </p>
+                            <div className="grid grid-cols-2 gap-1.5 mb-3">
+                                {CATEGORIES.map(c => {
+                                    const active = category === c.key;
+                                    const Icon = c.icon;
+                                    return (
+                                        <button key={c.key} onClick={() => setCategory(c.key)}
+                                            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition active:scale-95"
+                                            style={active
+                                                ? { background: "rgba(0,206,200,0.14)", border: `1px solid ${c.color}` }
+                                                : { background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.15)" }}>
+                                            <Icon className="w-4 h-4 flex-shrink-0" style={{ color: c.color }} strokeWidth={2.5} />
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-[11px] font-bold text-white truncate">{c.shortLabel}</p>
+                                                <p className="text-[9px] truncate" style={{ color: "rgba(140,160,210,0.70)" }}>{c.description}</p>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
 
                             <label className="text-[11px] font-bold block mb-1.5 px-1" style={{ color: "rgba(150,170,210,0.85)" }}>Nega tasdiqlanishingiz kerak?</label>
