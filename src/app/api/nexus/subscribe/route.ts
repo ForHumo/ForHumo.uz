@@ -1,4 +1,5 @@
 import { NextResponse, after } from "next/server";
+import crypto from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -77,8 +78,8 @@ export async function POST(req: Request) {
             if (debit.count === 0) return "no_funds" as const;
             const afterBuyer = await tx.wallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
             const newBuyerBal = roundMoney(Number(afterBuyer?.balance ?? 0), bCur);
-            // Har obuna oyi noyob — timestamp bilan (uzaytirish yoki qayta obuna uchun)
-            const subRef = `sub:${me.id}:${creatorId2}:${Date.now()}`;
+            // Har obuna to'lovi noyob — UUID bilan (uzaytirish yoki qayta obuna uchun)
+            const subRef = `sub:${me.id}:${creatorId2}:${crypto.randomUUID()}`;
             await tx.walletTransaction.create({
                 data: { walletId: wallet.id, type: "TRANSFER_OUT", amount: buyerPays, currency: bCur, balanceAfter: newBuyerBal, description: "Nexus pullik obuna", ref: subRef },
             });

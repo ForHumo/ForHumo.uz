@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -48,7 +49,7 @@ export async function POST(
                     currency: wallet.currency,
                     balanceAfter: newWalletBal,
                     description: `"${safe.name}" seyfi`,
-                    ref: `safe-in:${safe.id}:${Date.now()}`,
+                    ref: `safe-in:${safe.id}:${crypto.randomUUID()}`,
                 },
             }),
         ]);
@@ -75,7 +76,7 @@ export async function POST(
                     currency: wallet.currency,
                     balanceAfter: newWalletBal,
                     description: `"${safe.name}" seyfidan`,
-                    ref: `safe-out:${safe.id}:${Date.now()}`,
+                    ref: `safe-out:${safe.id}:${crypto.randomUUID()}`,
                 },
             }),
         ]);
