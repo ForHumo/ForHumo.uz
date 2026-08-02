@@ -1575,10 +1575,13 @@ model WalletTransaction {
   balanceAfter Decimal           @db.Decimal(18, 2)   // tranzaksiyadan keyin balans
 
   description String?
-  ref         String?            // tashqi ref (order ID, payout ID, profil ID)
+  ref         String?            // tashqi ref (order ID, payout ID, provider txn)
 
   createdAt   DateTime @default(now())
 
+  // Idempotentlik: bir hamyonda bir ref bo'yicha ikkinchi marta yozib bo'lmaydi.
+  // NULL ref'lar cheklovga tushmaydi (Postgres NULL != NULL).
+  @@unique([walletId, ref])
   @@map("ZijTransaction")
 }
 

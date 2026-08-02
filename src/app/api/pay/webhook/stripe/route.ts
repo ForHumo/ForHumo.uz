@@ -54,20 +54,23 @@ export async function POST(req: Request) {
     const wallet = await prisma.wallet.findUnique({ where: { profileId } });
     if (!wallet) return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
 
-    // Idempotent
-    const existing = await prisma.walletTransaction.findFirst({ where: { walletId: wallet.id, ref: sessionId } });
-    if (existing) return NextResponse.json({ received: true, duplicate: true });
-
-    const newBalance = Number(wallet.balance) + amountUsd;
-    await prisma.$transaction([
-        prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
-        prisma.walletTransaction.create({
-            data: {
-                walletId: wallet.id, type: "DEPOSIT", amount: amountUsd, currency: wallet.currency,
-                balanceAfter: newBalance, description: "Stripe to'ldirish", ref: sessionId,
-            },
-        }),
-    ]);
+    // Idempotent (unique constraint bilan race-safe)
+    try {
+        const newBalance = Number(wallet.balance) + amountUsd;
+        await prisma.$transaction([
+            prisma.walletTransaction.create({
+                data: {
+                    walletId: wallet.id, type: "DEPOSIT", amount: amountUsd, currency: wallet.currency,
+                    balanceAfter: newBalance, description: "Stripe to'ldirish", ref: sessionId,
+                },
+            }),
+            prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
+        ]);
+    } catch (e) {
+        const code = (e as { code?: string }).code;
+        if (code !== "P2002") throw e;
+        return NextResponse.json({ received: true, duplicate: true });
+    }
 
     return NextResponse.json({ received: true });
 }

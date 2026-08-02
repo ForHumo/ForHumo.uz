@@ -74,20 +74,24 @@ export async function POST(req: Request) {
                 if (!account?.profile_id || !amount) return rpcError(id, ERR.INVALID_AMOUNT);
                 const wallet = await prisma.wallet.findUnique({ where: { profileId: account.profile_id } });
                 if (!wallet) return rpcError(id, ERR.ACCOUNT_NOT_FOUND);
-                // Idempotentlik (oddiy) — providerRef bo'yicha duplikat tekshiruvi
-                const existing = await prisma.walletTransaction.findFirst({ where: { walletId: wallet.id, ref: paymeId } });
-                if (existing) return rpcOk(id, { transaction: paymeId, perform_time: Date.now(), state: 2 });
 
-                const newBalance = Number(wallet.balance) + amount;
-                await prisma.$transaction([
-                    prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
-                    prisma.walletTransaction.create({
-                        data: {
-                            walletId: wallet.id, type: "DEPOSIT", amount, currency: wallet.currency,
-                            balanceAfter: newBalance, description: "Payme to'ldirish", ref: paymeId,
-                        },
-                    }),
-                ]);
+                // Idempotent: (walletId, ref) unique — ikkinchi urinishda P2002 → allaqachon qilingan deymiz
+                try {
+                    const newBalance = Number(wallet.balance) + amount;
+                    await prisma.$transaction([
+                        prisma.walletTransaction.create({
+                            data: {
+                                walletId: wallet.id, type: "DEPOSIT", amount, currency: wallet.currency,
+                                balanceAfter: newBalance, description: "Payme to'ldirish", ref: paymeId,
+                            },
+                        }),
+                        prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
+                    ]);
+                } catch (e) {
+                    const code = (e as { code?: string }).code;
+                    if (code !== "P2002") throw e;
+                    // duplikat — javob baribir muvaffaqiyatli
+                }
                 return rpcOk(id, { transaction: paymeId, perform_time: Date.now(), state: 2 });
             }
             return rpcOk(id, { transaction: String(params.id ?? ""), state: 1 });

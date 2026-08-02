@@ -53,19 +53,22 @@ export async function POST(req: Request) {
     }
 
     if (action === 1) {
-        // Complete — balansga qo'shish (idempotent)
-        const existing = await prisma.walletTransaction.findFirst({ where: { walletId: wallet.id, ref: clickTransId } });
-        if (!existing) {
+        // Complete — balansga qo'shish (unique constraint bilan race-safe)
+        try {
             const newBalance = Number(wallet.balance) + amount;
             await prisma.$transaction([
-                prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
                 prisma.walletTransaction.create({
                     data: {
                         walletId: wallet.id, type: "DEPOSIT", amount, currency: wallet.currency,
                         balanceAfter: newBalance, description: "Click to'ldirish", ref: clickTransId,
                     },
                 }),
+                prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
             ]);
+        } catch (e) {
+            const code = (e as { code?: string }).code;
+            if (code !== "P2002") throw e;
+            // duplikat webhook — javob baribir OK
         }
         return NextResponse.json({
             click_trans_id: clickTransId, merchant_trans_id: merchantTransId,
