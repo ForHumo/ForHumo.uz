@@ -4,12 +4,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck } from "lucide-react";
+import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2 } from "lucide-react";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 import { usePresence } from "@/lib/presence";
 import { upload } from "@vercel/blob/client";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxBanModal, type BanInfo } from "./nx-ban-modal";
+import { NxPollCreate } from "./nx-poll-create";
 
 interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
 interface Conv { conversationId: string; other: Other | null; lastMessageText: string | null; lastMessageAt: string; lastMine: boolean; unread: boolean }
@@ -19,6 +20,8 @@ interface Msg {
     mediaName?: string | null; mediaSize?: number | null; durationMs?: number | null;
     locLat?: number | null; locLng?: number | null;
     locUpdatedAt?: string | null; locExpiresAt?: string | null;
+    pollQuestion?: string | null; pollOptions?: string[]; pollExpiresAt?: string | null; pollMulti?: boolean;
+    pollVoteCounts?: number[] | null; pollMyVotes?: number[] | null; pollTotal?: number | null;
 }
 interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isMe: boolean }
 
@@ -319,6 +322,50 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
 
     // Ban modal — foydalanuvchi bloklanganida
     const [ban, setBan] = useState<BanInfo | null>(null);
+
+    // Poll create modal
+    const [pollOpen, setPollOpen] = useState(false);
+
+    async function sendPoll(poll: { question: string; options: string[]; expiresAt: string | null; multi: boolean }) {
+        if (!selected) return;
+        const res = await fetch(`/api/nexus/messages/${selected.conversationId}`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                text: "", mediaType: "poll",
+                pollQuestion: poll.question, pollOptions: poll.options,
+                pollExpiresAt: poll.expiresAt, pollMulti: poll.multi,
+            }),
+        });
+        if (res.ok) {
+            const d = await res.json();
+            setMessages(m => [...m, d.message]);
+            loadConvs();
+            setPollOpen(false);
+        } else {
+            const wasBanned = await handleMaybeBan(res);
+            if (!wasBanned) {
+                const e = await res.json().catch(() => ({}));
+                throw new Error(e.error || "Jo'natib bo'lmadi");
+            }
+        }
+    }
+
+    async function votePoll(messageId: string, optionIndex: number) {
+        const res = await fetch(`/api/nexus/messages/${messageId}/poll-vote`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ optionIndex }),
+        });
+        if (res.ok) {
+            const d = await res.json();
+            setMessages(m => m.map(x => x.id === messageId
+                ? { ...x, pollVoteCounts: d.counts, pollMyVotes: d.myVotes, pollTotal: d.total }
+                : x
+            ));
+        } else {
+            const e = await res.json().catch(() => ({}));
+            alert(e.error || "Ovoz berib bo'lmadi");
+        }
+    }
 
     // API 403 + code:"USER_BANNED" bo'lsa ban ma'lumotini extract qiladi
     async function handleMaybeBan(res: Response): Promise<boolean> {
@@ -631,6 +678,69 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                                 )}
                                             </div>
                                         )}
+                                        {m.mediaType === "poll" && m.pollQuestion && Array.isArray(m.pollOptions) && (
+                                            (() => {
+                                                const counts = m.pollVoteCounts ?? m.pollOptions.map(() => 0);
+                                                const total = m.pollTotal ?? 0;
+                                                const myVotes = m.pollMyVotes ?? [];
+                                                const expired = m.pollExpiresAt && new Date(m.pollExpiresAt) < new Date();
+                                                const showResults = myVotes.length > 0 || expired;
+                                                return (
+                                                    <div className="p-3.5 space-y-2.5" style={{ minWidth: 260 }}>
+                                                        <div className="flex items-start gap-2 mb-1">
+                                                            <BarChart2 className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: m.mine ? "rgba(255,255,255,0.90)" : "#00CEC8" }} />
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-xs font-black" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                                    {m.pollQuestion}
+                                                                </p>
+                                                                <p className="text-[10px] mt-0.5" style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "rgba(140,160,210,0.75)" }}>
+                                                                    {m.pollMulti ? "Bir necha variant" : "Bitta variant"} · {total} ovoz
+                                                                    {expired && " · Yakunlangan"}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        {m.pollOptions.map((opt, i) => {
+                                                            const cnt = counts[i] ?? 0;
+                                                            const pct = total > 0 ? Math.round((cnt / total) * 100) : 0;
+                                                            const isMyVote = myVotes.includes(i);
+                                                            return (
+                                                                <button key={i}
+                                                                    onClick={() => !expired && votePoll(m.id, i)}
+                                                                    disabled={!!expired}
+                                                                    className="w-full text-left rounded-lg overflow-hidden relative transition active:scale-[0.98] disabled:opacity-70"
+                                                                    style={{ background: m.mine ? "rgba(255,255,255,0.10)" : "rgba(43,62,232,0.10)" }}>
+                                                                    {showResults && (
+                                                                        <div className="absolute inset-y-0 left-0 rounded-lg transition-all"
+                                                                            style={{
+                                                                                width: `${pct}%`,
+                                                                                background: isMyVote
+                                                                                    ? (m.mine ? "rgba(255,255,255,0.28)" : "rgba(0,206,200,0.30)")
+                                                                                    : (m.mine ? "rgba(255,255,255,0.14)" : "rgba(43,62,232,0.25)"),
+                                                                            }} />
+                                                                    )}
+                                                                    <div className="relative flex items-center gap-2 px-3 py-2">
+                                                                        {showResults && (
+                                                                            <span className="text-[10px] font-black tabular-nums w-9 flex-shrink-0"
+                                                                                style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>{pct}%</span>
+                                                                        )}
+                                                                        <span className="text-xs flex-1"
+                                                                            style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)", fontWeight: isMyVote ? 700 : 500 }}>
+                                                                            {opt}
+                                                                        </span>
+                                                                        {isMyVote && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: m.mine ? "#fff" : "#00CEC8" }} strokeWidth={3} />}
+                                                                    </div>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                        {!showResults && (
+                                                            <p className="text-[10px] italic mt-1" style={{ color: m.mine ? "rgba(255,255,255,0.65)" : "rgba(140,160,210,0.70)" }}>
+                                                                Natijalarni ko'rish uchun ovoz bering
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()
+                                        )}
                                         {m.mediaType === "location" && typeof m.locLat === "number" && typeof m.locLng === "number" && (
                                             (() => {
                                                 const isLive = m.locExpiresAt && new Date(m.locExpiresAt) > new Date();
@@ -772,6 +882,12 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                             style={{ background: "rgba(43,62,232,0.10)" }}>
                             {locBusy ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <MapPin className="w-4 h-4 text-white" />}
                         </button>
+                        <button onClick={() => setPollOpen(true)}
+                            title="So'rovnoma"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 hover:scale-105 active:scale-95 transition-transform hidden sm:flex"
+                            style={{ background: "rgba(43,62,232,0.10)" }}>
+                            <BarChart2 className="w-4 h-4 text-white" />
+                        </button>
                         <input value={input} onChange={e => {
                                 setInput(e.target.value);
                                 const now = Date.now();
@@ -818,6 +934,9 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
 
             {/* AI moderation ban modali */}
             <NxBanModal ban={ban} onClose={() => setBan(null)} />
+
+            {/* Poll create modal */}
+            <NxPollCreate open={pollOpen} onClose={() => setPollOpen(false)} onCreated={sendPoll} />
 
             {/* Joylashuv sheet — statik yoki jonli muddat tanlash */}
             {locSheetOpen && (

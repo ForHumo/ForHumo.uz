@@ -1105,9 +1105,9 @@ model NexusMessage {
   conversation   NexusConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderId       String
   text           String                                    // media bo'lsa caption yoki bo'sh
-  // Ixtiyoriy media qo'shimchasi (rasm/video/audio/fayl/video-circle/location)
+  // Ixtiyoriy media qo'shimchasi (rasm/video/audio/fayl/video-circle/location/poll)
   mediaUrl       String?
-  mediaType      String?                                   // "image" | "video" | "audio" | "file" | "video-circle" | "location"
+  mediaType      String?                                   // "image" | "video" | "audio" | "file" | "video-circle" | "location" | "poll"
   mediaMime      String?                                   // "image/jpeg", "video/mp4", "audio/webm", ...
   mediaName      String?                                   // fayl ko'rsatiladigan nomi
   mediaSize      Int?                                      // baytlar (fayl/audio/video hajmi)
@@ -1117,8 +1117,25 @@ model NexusMessage {
   locLng         Float?
   locUpdatedAt   DateTime?                                 // oxirgi yangilangan vaqti (jonli uchun)
   locExpiresAt   DateTime?                                 // NULL = statik; sana bo'lsa jonli, shundan keyin to'xtaydi
+  // So'rovnoma (mediaType="poll" bo'lganda)
+  pollQuestion   String?                                   // savol matni
+  pollOptions    String[]          @default([])            // 2-10 variant
+  pollExpiresAt  DateTime?                                 // NULL = cheklovsiz
+  pollMulti      Boolean           @default(false)         // bir necha variant tanlash mumkinmi
+  pollVotes      NexusDmPollVote[]
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
+}
+
+model NexusDmPollVote {
+  id           String        @id @default(cuid())
+  messageId    String
+  message      NexusMessage  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  profileId    String
+  optionIndex  Int                                         // 0-based; multi bo'lsa har variant uchun alohida yozuv
+  createdAt    DateTime      @default(now())
+  @@unique([messageId, profileId, optionIndex])
+  @@index([messageId])
 }
 
 // ── Nexus Calls (1:1 WebRTC ovoz/video) ──────────────────────────────────────
