@@ -71,6 +71,9 @@ export function NxStoryCreate() {
     const [myTracks, setMyTracks] = useState<UserTrack[]>([]);
     const fileRef = useRef<HTMLInputElement>(null);
     const stageRef = useRef<HTMLDivElement>(null);
+    // Drag handling — pointer events (mouse + touch). MUHIM: hook early return'dan OLDIN
+    // bo'lishi shart, aks holda React error #310 "Rendered fewer hooks" chiqadi.
+    const dragRef = useRef<{ overlayId: string; startX: number; startY: number; startOverlayX: number; startOverlayY: number } | null>(null);
 
     useEffect(() => {
         if (!storyCreateOpen) return;
@@ -116,9 +119,7 @@ export function NxStoryCreate() {
         if (selectedOverlayId === id) setSelectedOverlayId(null);
     }
 
-    // Drag handling — pointer events (mouse + touch)
-    const dragRef = useRef<{ overlayId: string; startX: number; startY: number; startOverlayX: number; startOverlayY: number } | null>(null);
-
+    // Drag handling — dragRef yuqorida e'lon qilingan (hook order uchun)
     function onOverlayPointerDown(e: React.PointerEvent, o: StoryOverlay) {
         e.stopPropagation();
         const stage = stageRef.current;

@@ -162,7 +162,8 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
         return () => clearTimeout(t);
     }, [newOpen, newQuery]);
 
-    if (!messagesOpen) return null;
+    // MUHIM: early return quyida (barcha hook'lardan keyin) qilinadi,
+    // aks holda React error #310 "Rendered fewer hooks" chiqadi.
 
     async function send() {
         if (!selected || !input.trim() || sending) return;
@@ -1002,6 +1003,9 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             </button>
         </div>
     );
+
+    // Barcha hook'lardan keyin early return — Rules of Hooks
+    if (!messagesOpen) return null;
 
     return (
         <>
