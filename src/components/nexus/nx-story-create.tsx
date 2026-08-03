@@ -1,20 +1,19 @@
 "use client";
 
-// Stories Creator v2 — Instagram-quality multi-slide editor.
-// Xususiyatlar: multi-slide (2-10), TEXT/IMAGE/VIDEO, filter, music, text overlay.
-// Kelasi iteratsiyalarda: drawing canvas, stickers, reorder.
+// Stories Creator v3 — draggable text overlays + emoji stickers.
+// Multi-slide (2-10), TEXT/IMAGE/VIDEO, filter, music, per-slide overlays.
 
 import { useState, useRef, useEffect } from "react";
 import { upload } from "@vercel/blob/client";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, ImagePlus, Loader2, Send, Trash2, Plus, Type, Music,
-    Sparkles, Palette, ChevronLeft, ChevronRight,
+    Sparkles, Palette, ChevronLeft, ChevronRight, Smile, RotateCw,
 } from "lucide-react";
+import { STICKER_EMOJIS, TEXT_COLORS, HIGHLIGHT_BG_COLORS, type StoryOverlay } from "@/lib/story-overlays";
 
 const isVid = (u: string) => /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(u);
 
-// Filter presetlari (nx-stories-viewer bilan mos)
 const FILTERS = [
     { key: "none", label: "Original" },
     { key: "grayscale", label: "Kul rang" },
@@ -32,14 +31,7 @@ const FILTER_CSS: Record<string, string> = {
     bw: "grayscale(1) contrast(1.15)",
 };
 
-// TEXT slide uchun fon ranglari (gradient bo'lmasa oddiy rang)
-const BG_COLORS = [
-    "#2B3EE8", "#00CEC8", "#EF4444", "#F59E0B", "#10B981",
-    "#8B5CF6", "#EC4899", "#000000", "#EAB308", "#3B82F6",
-];
-
-// Text overlay ranglari
-const TEXT_COLORS = ["#FFFFFF", "#000000", "#F59E0B", "#EF4444", "#00CEC8", "#8B5CF6", "#10B981"];
+const BG_COLORS = ["#2B3EE8", "#00CEC8", "#EF4444", "#F59E0B", "#10B981", "#8B5CF6", "#EC4899", "#000000", "#EAB308", "#3B82F6"];
 
 interface Slide {
     localId: string;
@@ -48,53 +40,43 @@ interface Slide {
     caption: string;
     filter: string;
     bgColor: string | null;
-    // Text overlay (bitta markazlashtirilgan; kengaytirish uchun keyingi versiyada array)
-    overlayText?: string;
-    overlayColor?: string;
-    overlaySize?: number;
-    overlayY?: number;   // 0-100%
+    overlays: StoryOverlay[];
 }
 
-interface UserTrack {
-    id: string; title: string; artist: string | null; audioUrl: string;
-}
+interface UserTrack { id: string; title: string; artist: string | null; audioUrl: string }
 
 function newTextSlide(): Slide {
-    return {
-        localId: `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        mediaUrl: "", mediaType: "TEXT", caption: "",
-        filter: "none", bgColor: BG_COLORS[0],
-    };
+    return { localId: `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, mediaUrl: "", mediaType: "TEXT", caption: "", filter: "none", bgColor: BG_COLORS[0], overlays: [] };
 }
 function newMediaSlide(url: string): Slide {
-    return {
-        localId: `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        mediaUrl: url, mediaType: isVid(url) ? "VIDEO" : "IMAGE",
-        caption: "", filter: "none", bgColor: null,
-    };
+    return { localId: `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, mediaUrl: url, mediaType: isVid(url) ? "VIDEO" : "IMAGE", caption: "", filter: "none", bgColor: null, overlays: [] };
+}
+function newOverlayId(): string {
+    return `o-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export function NxStoryCreate() {
     const { storyCreateOpen, setStoryCreateOpen } = useNxPlayer();
     const [slides, setSlides] = useState<Slide[]>([]);
     const [activeIdx, setActiveIdx] = useState(0);
-    const [tab, setTab] = useState<"none" | "filter" | "text" | "music" | "bg">("none");
+    const [tab, setTab] = useState<"none" | "filter" | "text" | "music" | "bg" | "sticker">("none");
     const [uploading, setUploading] = useState(false);
     const [posting, setPosting] = useState(false);
+    // Selected overlay for editing
+    const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
     // Story-level
     const [storyCaption, setStoryCaption] = useState("");
     const [musicTrackId, setMusicTrackId] = useState<string | null>(null);
     const [musicTitle, setMusicTitle] = useState<string | null>(null);
     const [myTracks, setMyTracks] = useState<UserTrack[]>([]);
     const fileRef = useRef<HTMLInputElement>(null);
+    const stageRef = useRef<HTMLDivElement>(null);
 
-    // Reset ochilganda
     useEffect(() => {
         if (!storyCreateOpen) return;
-        setSlides([]); setActiveIdx(0); setTab("none");
+        setSlides([]); setActiveIdx(0); setTab("none"); setSelectedOverlayId(null);
         setStoryCaption(""); setMusicTrackId(null); setMusicTitle(null);
         setUploading(false); setPosting(false);
-        // O'z tracklarim
         fetch("/api/nexus/tracks?scope=mine").then(r => r.ok ? r.json() : null).then(d => {
             if (d?.tracks) setMyTracks(d.tracks.slice(0, 30));
         }).catch(() => { });
@@ -103,9 +85,62 @@ export function NxStoryCreate() {
     if (!storyCreateOpen) return null;
 
     const active = slides[activeIdx] || null;
+    const activeOverlay = active?.overlays.find(o => o.id === selectedOverlayId) || null;
 
     function updateActive(patch: Partial<Slide>) {
         setSlides(prev => prev.map((s, i) => i === activeIdx ? { ...s, ...patch } : s));
+    }
+    function updateOverlay(id: string, patch: Partial<StoryOverlay>) {
+        setSlides(prev => prev.map((s, i) => i === activeIdx
+            ? { ...s, overlays: s.overlays.map(o => o.id === id ? ({ ...o, ...patch } as StoryOverlay) : o) }
+            : s));
+    }
+    function addTextOverlay() {
+        if (!active) return;
+        const id = newOverlayId();
+        const overlay: StoryOverlay = { id, kind: "text", text: "", x: 50, y: 50, color: "#FFFFFF", size: 32, rotation: 0, bg: null };
+        updateActive({ overlays: [...active.overlays, overlay] });
+        setSelectedOverlayId(id);
+        setTab("text");
+    }
+    function addStickerOverlay(emoji: string) {
+        if (!active) return;
+        const id = newOverlayId();
+        const overlay: StoryOverlay = { id, kind: "sticker", emoji, x: 50, y: 50, size: 80, rotation: 0 };
+        updateActive({ overlays: [...active.overlays, overlay] });
+        setSelectedOverlayId(id);
+    }
+    function deleteOverlay(id: string) {
+        if (!active) return;
+        updateActive({ overlays: active.overlays.filter(o => o.id !== id) });
+        if (selectedOverlayId === id) setSelectedOverlayId(null);
+    }
+
+    // Drag handling — pointer events (mouse + touch)
+    const dragRef = useRef<{ overlayId: string; startX: number; startY: number; startOverlayX: number; startOverlayY: number } | null>(null);
+
+    function onOverlayPointerDown(e: React.PointerEvent, o: StoryOverlay) {
+        e.stopPropagation();
+        const stage = stageRef.current;
+        if (!stage) return;
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        dragRef.current = { overlayId: o.id, startX: e.clientX, startY: e.clientY, startOverlayX: o.x, startOverlayY: o.y };
+        setSelectedOverlayId(o.id);
+    }
+    function onOverlayPointerMove(e: React.PointerEvent) {
+        const drag = dragRef.current;
+        const stage = stageRef.current;
+        if (!drag || !stage) return;
+        const rect = stage.getBoundingClientRect();
+        const dx = ((e.clientX - drag.startX) / rect.width) * 100;
+        const dy = ((e.clientY - drag.startY) / rect.height) * 100;
+        const newX = Math.max(0, Math.min(100, drag.startOverlayX + dx));
+        const newY = Math.max(0, Math.min(100, drag.startOverlayY + dy));
+        updateOverlay(drag.overlayId, { x: newX, y: newY });
+    }
+    function onOverlayPointerUp(e: React.PointerEvent) {
+        try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+        dragRef.current = null;
     }
 
     async function pick(files: FileList | null) {
@@ -121,6 +156,7 @@ export function NxStoryCreate() {
             const s = newMediaSlide(blob.url);
             setSlides(prev => [...prev, s]);
             setActiveIdx(slides.length);
+            setSelectedOverlayId(null);
             setTab("none");
         } catch { alert("Yuklab bo'lmadi"); }
         finally {
@@ -128,7 +164,6 @@ export function NxStoryCreate() {
             if (fileRef.current) fileRef.current.value = "";
         }
     }
-
     function addTextSlide() {
         if (slides.length >= 10) { alert("Maks 10 slide"); return; }
         const s = newTextSlide();
@@ -136,15 +171,14 @@ export function NxStoryCreate() {
         setActiveIdx(slides.length);
         setTab("bg");
     }
-
     function removeSlide(idx: number) {
         setSlides(prev => prev.filter((_, i) => i !== idx));
         setActiveIdx(a => Math.max(0, Math.min(a, slides.length - 2)));
+        setSelectedOverlayId(null);
     }
 
     async function publish() {
         if (slides.length === 0 || posting) return;
-        // TEXT slide caption bo'sh bo'lsa nima ko'rsatiladi? Cheklovsiz — foydalanuvchi ixtiyori
         setPosting(true);
         try {
             const payload = {
@@ -157,9 +191,7 @@ export function NxStoryCreate() {
                     caption: s.caption,
                     filter: s.filter,
                     bgColor: s.bgColor,
-                    overlays: s.overlayText
-                        ? { texts: [{ text: s.overlayText, color: s.overlayColor || "#fff", size: s.overlaySize || 32, y: s.overlayY ?? 50 }] }
-                        : null,
+                    overlays: s.overlays.length > 0 ? { items: s.overlays } : null,
                 })),
             };
             const res = await fetch("/api/nexus/stories", {
@@ -194,9 +226,8 @@ export function NxStoryCreate() {
                     </button>
                 </div>
 
-                {/* Body */}
                 {slides.length === 0 ? (
-                    /* Bo'sh holat — birinchi slide qo'shish */
+                    /* Bo'sh holat */
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6">
                         <button onClick={() => fileRef.current?.click()} disabled={uploading}
                             className="flex flex-col items-center justify-center gap-3 w-full flex-1 rounded-2xl border-2 border-dashed"
@@ -219,8 +250,11 @@ export function NxStoryCreate() {
                     </div>
                 ) : (
                     <>
-                        {/* Slide preview (asosiy zona) */}
-                        <div className="relative flex-1 overflow-hidden" style={{ background: active?.bgColor || "#000" }}>
+                        {/* Slide preview stage */}
+                        <div ref={stageRef} className="relative flex-1 overflow-hidden select-none"
+                            style={{ background: active?.bgColor || "#000", touchAction: "none" }}
+                            onPointerMove={onOverlayPointerMove}
+                            onClick={() => { setSelectedOverlayId(null); }}>
                             {active && (
                                 <>
                                     {active.mediaType === "TEXT" ? (
@@ -234,48 +268,83 @@ export function NxStoryCreate() {
                                     ) : active.mediaType === "VIDEO" ? (
                                         <video src={active.mediaUrl} autoPlay loop muted playsInline
                                             style={{ filter: FILTER_CSS[active.filter] ?? "none" }}
-                                            className="w-full h-full object-cover" />
+                                            className="w-full h-full object-cover pointer-events-none" />
                                     ) : (
                                         <img src={active.mediaUrl} alt=""
                                             style={{ filter: FILTER_CSS[active.filter] ?? "none" }}
-                                            className="w-full h-full object-cover" />
+                                            className="w-full h-full object-cover pointer-events-none" />
                                     )}
 
-                                    {/* Text overlay preview */}
-                                    {active.overlayText && active.mediaType !== "TEXT" && (
-                                        <div className="absolute left-0 right-0 flex items-center justify-center px-4 pointer-events-none"
-                                            style={{ top: `${active.overlayY ?? 50}%`, transform: "translateY(-50%)" }}>
-                                            <p className="font-black text-center" style={{
-                                                color: active.overlayColor || "#fff",
-                                                fontSize: `${active.overlaySize || 32}px`,
-                                                textShadow: "0 2px 12px rgba(0,0,0,0.55)",
-                                                maxWidth: "90%",
-                                            }}>{active.overlayText}</p>
-                                        </div>
+                                    {/* Overlays render */}
+                                    {active.overlays.map(o => {
+                                        const isSel = selectedOverlayId === o.id;
+                                        const commonStyle: React.CSSProperties = {
+                                            position: "absolute", left: `${o.x}%`, top: `${o.y}%`,
+                                            transform: `translate(-50%, -50%) rotate(${o.rotation}deg)`,
+                                            cursor: "grab", touchAction: "none",
+                                        };
+                                        if (o.kind === "sticker") {
+                                            return (
+                                                <div key={o.id} style={{ ...commonStyle, fontSize: `${o.size}px`, lineHeight: 1 }}
+                                                    onPointerDown={e => onOverlayPointerDown(e, o)}
+                                                    onPointerUp={onOverlayPointerUp}>
+                                                    <span style={{ display: "inline-block", padding: isSel ? "4px" : "0", border: isSel ? "2px dashed rgba(255,255,255,0.55)" : "none", borderRadius: 8 }}>
+                                                        {o.emoji}
+                                                    </span>
+                                                </div>
+                                            );
+                                        }
+                                        return (
+                                            <div key={o.id} style={commonStyle}
+                                                onPointerDown={e => onOverlayPointerDown(e, o)}
+                                                onPointerUp={onOverlayPointerUp}>
+                                                <span style={{
+                                                    display: "inline-block",
+                                                    padding: o.bg ? "4px 10px" : (isSel ? "4px" : "0"),
+                                                    background: o.bg || "transparent",
+                                                    borderRadius: o.bg ? 6 : 0,
+                                                    fontSize: `${o.size}px`,
+                                                    color: o.color,
+                                                    fontWeight: 900,
+                                                    textShadow: o.bg ? "none" : "0 2px 12px rgba(0,0,0,0.55)",
+                                                    border: isSel && !o.bg ? "2px dashed rgba(255,255,255,0.55)" : (isSel && o.bg ? "2px dashed rgba(255,255,255,0.85)" : "none"),
+                                                    whiteSpace: "nowrap",
+                                                }}>{o.text || "Matn..."}</span>
+                                            </div>
+                                        );
+                                    })}
+
+                                    {/* Selected overlay delete button */}
+                                    {activeOverlay && (
+                                        <button onClick={() => deleteOverlay(activeOverlay.id)}
+                                            className="absolute top-3 right-3 z-30 w-8 h-8 rounded-full flex items-center justify-center"
+                                            style={{ background: "rgba(239,68,68,0.85)" }}>
+                                            <Trash2 className="w-4 h-4 text-white" />
+                                        </button>
                                     )}
                                 </>
                             )}
 
                             {/* Slide navigatsiya arrows */}
                             {activeIdx > 0 && (
-                                <button onClick={() => setActiveIdx(activeIdx - 1)}
-                                    className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full"
+                                <button onClick={(e) => { e.stopPropagation(); setActiveIdx(activeIdx - 1); setSelectedOverlayId(null); }}
+                                    className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full z-20"
                                     style={{ background: "rgba(0,0,0,0.5)" }}>
                                     <ChevronLeft className="w-5 h-5 text-white" />
                                 </button>
                             )}
                             {activeIdx < slides.length - 1 && (
-                                <button onClick={() => setActiveIdx(activeIdx + 1)}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full"
+                                <button onClick={(e) => { e.stopPropagation(); setActiveIdx(activeIdx + 1); setSelectedOverlayId(null); }}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full z-20"
                                     style={{ background: "rgba(0,0,0,0.5)" }}>
                                     <ChevronRight className="w-5 h-5 text-white" />
                                 </button>
                             )}
                         </div>
 
-                        {/* Editor panel (tab ochilib turgan bo'lsa) */}
+                        {/* Editor panel */}
                         {tab !== "none" && (
-                            <div className="px-4 py-3 flex-shrink-0 max-h-64 overflow-y-auto" style={{ background: "rgba(11,18,40,0.85)", borderTop: "1px solid rgba(43,62,232,0.14)", scrollbarWidth: "none" }}>
+                            <div className="px-4 py-3 flex-shrink-0 max-h-72 overflow-y-auto" style={{ background: "rgba(11,18,40,0.85)", borderTop: "1px solid rgba(43,62,232,0.14)", scrollbarWidth: "none" }}>
                                 {tab === "filter" && active && active.mediaType !== "TEXT" && (
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: "rgba(140,160,210,0.75)" }}>Filter</p>
@@ -302,55 +371,104 @@ export function NxStoryCreate() {
                                                     style={{ background: c, border: active.bgColor === c ? "2px solid #fff" : "1px solid rgba(255,255,255,0.20)" }} />
                                             ))}
                                         </div>
+                                        <div className="mt-3">
+                                            <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Matn</p>
+                                            <textarea value={active.caption} onChange={e => updateActive({ caption: e.target.value.slice(0, 300) })}
+                                                rows={3} placeholder="Xohlagan matnni yozing..."
+                                                className="w-full px-3 py-2 rounded-lg text-sm text-white outline-none resize-none"
+                                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)" }} />
+                                        </div>
                                     </div>
                                 )}
                                 {tab === "text" && active && (
-                                    <div className="space-y-3">
-                                        {active.mediaType === "TEXT" ? (
+                                    activeOverlay && activeOverlay.kind === "text" ? (
+                                        <div className="space-y-3">
                                             <div>
                                                 <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Matn</p>
-                                                <textarea value={active.caption} onChange={e => updateActive({ caption: e.target.value.slice(0, 300) })}
-                                                    rows={3} placeholder="Xohlagan matnni yozing..."
-                                                    className="w-full px-3 py-2 rounded-lg text-sm text-white outline-none resize-none"
-                                                    style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)" }} />
+                                                <input value={activeOverlay.text} onChange={e => updateOverlay(activeOverlay.id, { text: e.target.value.slice(0, 300) })}
+                                                    placeholder="Matn..."
+                                                    className="w-full h-10 rounded-lg px-3 text-sm text-white outline-none"
+                                                    style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)" }} autoFocus />
                                             </div>
-                                        ) : (
-                                            <>
-                                                <div>
-                                                    <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Overlay matn</p>
-                                                    <input value={active.overlayText || ""} onChange={e => updateActive({ overlayText: e.target.value.slice(0, 200) })}
-                                                        placeholder="Rasm ustiga matn..."
-                                                        className="w-full h-10 rounded-lg px-3 text-sm text-white outline-none"
-                                                        style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)" }} />
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Rang</p>
+                                                <div className="flex gap-1.5 flex-wrap">
+                                                    {TEXT_COLORS.map(c => (
+                                                        <button key={c} onClick={() => updateOverlay(activeOverlay.id, { color: c })}
+                                                            className="w-7 h-7 rounded-lg"
+                                                            style={{ background: c, border: activeOverlay.color === c ? "2px solid #00CEC8" : "1px solid rgba(255,255,255,0.20)" }} />
+                                                    ))}
                                                 </div>
-                                                {active.overlayText && (
-                                                    <>
-                                                        <div>
-                                                            <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Rang</p>
-                                                            <div className="flex gap-1.5">
-                                                                {TEXT_COLORS.map(c => (
-                                                                    <button key={c} onClick={() => updateActive({ overlayColor: c })}
-                                                                        className="w-7 h-7 rounded-lg"
-                                                                        style={{ background: c, border: (active.overlayColor || "#fff") === c ? "2px solid #00CEC8" : "1px solid rgba(255,255,255,0.20)" }} />
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Hajm: {active.overlaySize || 32}px</p>
-                                                            <input type="range" min={16} max={72} value={active.overlaySize || 32}
-                                                                onChange={e => updateActive({ overlaySize: Number(e.target.value) })}
-                                                                className="w-full" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Joylashuv (Y): {active.overlayY ?? 50}%</p>
-                                                            <input type="range" min={10} max={90} value={active.overlayY ?? 50}
-                                                                onChange={e => updateActive({ overlayY: Number(e.target.value) })}
-                                                                className="w-full" />
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </>
-                                        )}
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Fon (highlight)</p>
+                                                <div className="flex gap-1.5 flex-wrap">
+                                                    {HIGHLIGHT_BG_COLORS.map(c => (
+                                                        <button key={c} onClick={() => updateOverlay(activeOverlay.id, { bg: c === "transparent" ? null : c })}
+                                                            className="w-7 h-7 rounded-lg flex items-center justify-center"
+                                                            style={{
+                                                                background: c === "transparent" ? "rgba(255,255,255,0.05)" : c,
+                                                                border: (activeOverlay.bg || "transparent") === c ? "2px solid #00CEC8" : "1px solid rgba(255,255,255,0.20)",
+                                                            }}>
+                                                            {c === "transparent" && <X className="w-3 h-3 text-white" />}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Hajm: {activeOverlay.size}px</p>
+                                                <input type="range" min={12} max={96} value={activeOverlay.size}
+                                                    onChange={e => updateOverlay(activeOverlay.id, { size: Number(e.target.value) })}
+                                                    className="w-full" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-widest mb-1.5 flex items-center gap-1" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                                    <RotateCw className="w-2.5 h-2.5" /> Aylantirish: {activeOverlay.rotation}°
+                                                </p>
+                                                <input type="range" min={-180} max={180} value={activeOverlay.rotation}
+                                                    onChange={e => updateOverlay(activeOverlay.id, { rotation: Number(e.target.value) })}
+                                                    className="w-full" />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button onClick={addTextOverlay}
+                                            className="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold text-white"
+                                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                            <Plus className="w-4 h-4" /> Matn qo&apos;shish
+                                        </button>
+                                    )
+                                )}
+                                {tab === "sticker" && (
+                                    <div>
+                                        {activeOverlay && activeOverlay.kind === "sticker" ? (
+                                            <div className="space-y-3 mb-4">
+                                                <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: "rgba(140,160,210,0.75)" }}>Tanlangan sticker sozlash</p>
+                                                <div>
+                                                    <p className="text-[10px] mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Hajm: {activeOverlay.size}px</p>
+                                                    <input type="range" min={32} max={200} value={activeOverlay.size}
+                                                        onChange={e => updateOverlay(activeOverlay.id, { size: Number(e.target.value) })}
+                                                        className="w-full" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] mb-1.5 flex items-center gap-1" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                                        <RotateCw className="w-2.5 h-2.5" /> Aylantirish: {activeOverlay.rotation}°
+                                                    </p>
+                                                    <input type="range" min={-180} max={180} value={activeOverlay.rotation}
+                                                        onChange={e => updateOverlay(activeOverlay.id, { rotation: Number(e.target.value) })}
+                                                        className="w-full" />
+                                                </div>
+                                            </div>
+                                        ) : null}
+                                        <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: "rgba(140,160,210,0.75)" }}>Sticker qo&apos;shish</p>
+                                        <div className="grid grid-cols-8 gap-1">
+                                            {STICKER_EMOJIS.map(em => (
+                                                <button key={em} onClick={() => addStickerOverlay(em)}
+                                                    className="aspect-square rounded-lg flex items-center justify-center text-lg hover:scale-110 active:scale-95 transition-transform"
+                                                    style={{ background: "rgba(43,62,232,0.06)" }}>
+                                                    {em}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                                 {tab === "music" && (
@@ -411,6 +529,11 @@ export function NxStoryCreate() {
                                 style={tab === "text" ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8" } : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,230,0.85)" }}>
                                 <Type className="w-3.5 h-3.5" /> Matn
                             </button>
+                            <button onClick={() => setTab(t => t === "sticker" ? "none" : "sticker")}
+                                className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold"
+                                style={tab === "sticker" ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8" } : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,230,0.85)" }}>
+                                <Smile className="w-3.5 h-3.5" /> Sticker
+                            </button>
                             <button onClick={() => setTab(t => t === "music" ? "none" : "music")}
                                 className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold"
                                 style={tab === "music" ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8" } : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,230,0.85)" }}>
@@ -419,15 +542,19 @@ export function NxStoryCreate() {
                             </button>
                         </div>
 
-                        {/* Slide thumbnail strip + add + delete */}
+                        {/* Slide thumbnails */}
                         <div className="flex items-center gap-1.5 px-3 pb-2 pt-1 flex-shrink-0 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
                             {slides.map((s, i) => (
-                                <button key={s.localId} onClick={() => setActiveIdx(i)}
+                                <button key={s.localId} onClick={() => { setActiveIdx(i); setSelectedOverlayId(null); }}
                                     className="relative flex-shrink-0 w-12 h-16 rounded-lg overflow-hidden"
                                     style={{ border: i === activeIdx ? "2px solid #00CEC8" : "1px solid rgba(255,255,255,0.15)", background: s.bgColor || "#111" }}>
                                     {s.mediaType === "IMAGE" && <img src={s.mediaUrl} alt="" className="w-full h-full object-cover" />}
                                     {s.mediaType === "VIDEO" && <video src={s.mediaUrl} muted className="w-full h-full object-cover" />}
                                     {s.mediaType === "TEXT" && <div className="w-full h-full flex items-center justify-center text-white text-[8px] font-bold px-1 text-center truncate">{s.caption || "Aa"}</div>}
+                                    {s.overlays.length > 0 && (
+                                        <span className="absolute top-0.5 right-0.5 w-3 h-3 rounded-full text-[7px] font-black text-black flex items-center justify-center"
+                                            style={{ background: "#00CEC8" }}>{s.overlays.length}</span>
+                                    )}
                                     {i === activeIdx && slides.length > 1 && (
                                         <span onClick={(e) => { e.stopPropagation(); removeSlide(i); }}
                                             className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center cursor-pointer"
@@ -453,7 +580,7 @@ export function NxStoryCreate() {
                             )}
                         </div>
 
-                        {/* Publish bar */}
+                        {/* Publish */}
                         <div className="flex items-center gap-2 px-3 pb-3 flex-shrink-0">
                             <input value={storyCaption} onChange={e => setStoryCaption(e.target.value.slice(0, 300))}
                                 placeholder="Story izohi (ixtiyoriy)..."

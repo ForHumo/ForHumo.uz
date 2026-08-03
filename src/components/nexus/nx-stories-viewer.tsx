@@ -8,6 +8,7 @@ import {
     VolumeX, Volume2, Eye, Trash2, Loader2, Send, Music as MusicIcon, Loader,
 } from "lucide-react";
 import { NxVerifiedBadge } from "./nx-verified-badge";
+import { normalizeOverlays, type StoryOverlay } from "@/lib/story-overlays";
 
 const isVid = (u: string) => /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(u);
 const IMG_DURATION = 5000;
@@ -268,8 +269,38 @@ export function NxStoriesViewer() {
                                 style={{ filter: FILTER_CSS[slide.filter] ?? "none" }} />
                         )}
 
-                        {/* Overlays (matn/sticker) — asosiy render kelajakda; hozircha bo'sh */}
-                        {/* Kelajakda: slide.overlays JSON'ni parse qilib absolute pozitsiyada matn/sticker chizamiz */}
+                        {/* Overlays (matn + sticker) */}
+                        {(() => {
+                            const overlays = normalizeOverlays(slide.overlays).items;
+                            if (overlays.length === 0) return null;
+                            return overlays.map((o: StoryOverlay) => {
+                                const commonStyle: React.CSSProperties = {
+                                    position: "absolute", left: `${o.x}%`, top: `${o.y}%`,
+                                    transform: `translate(-50%, -50%) rotate(${o.rotation}deg)`,
+                                    pointerEvents: "none",
+                                };
+                                if (o.kind === "sticker") {
+                                    return (
+                                        <div key={o.id} style={{ ...commonStyle, fontSize: `${o.size}px`, lineHeight: 1 }}>{o.emoji}</div>
+                                    );
+                                }
+                                return (
+                                    <div key={o.id} style={commonStyle}>
+                                        <span style={{
+                                            display: "inline-block",
+                                            padding: o.bg ? "4px 10px" : "0",
+                                            background: o.bg || "transparent",
+                                            borderRadius: o.bg ? 6 : 0,
+                                            fontSize: `${o.size}px`,
+                                            color: o.color,
+                                            fontWeight: 900,
+                                            textShadow: o.bg ? "none" : "0 2px 12px rgba(0,0,0,0.55)",
+                                            whiteSpace: "nowrap",
+                                        }}>{o.text}</span>
+                                    </div>
+                                );
+                            });
+                        })()}
 
                         <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 25%, transparent 60%, rgba(0,0,0,0.85) 100%)" }} />
 
