@@ -3,10 +3,11 @@
 import { useState, useMemo } from "react";
 import {
     Store, MapPin, ArrowRight, ChevronRight, Star, Package,
-    TrendingDown, Sparkles, Crown, Loader2, Globe,
+    TrendingDown, Sparkles, Crown, Loader2, Globe, Warehouse,
 } from "lucide-react";
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
+import { BnHeroSlider } from "./bn-hero-slider";
 import { BnLink } from "./bn-nav";
 import { shopLocationText } from "./bn-cards";
 import { MOCK_MARKETS, MOCK_PRODUCTS, MOCK_SHOPS, type MockProduct } from "@/lib/bn-mock";
@@ -37,6 +38,7 @@ export function BnHome() {
                     oldPrice: null,
                     shopSlug: s.slug,
                     shopName: s.name,
+                    shopVerified: s.tier === "VERIFIED" || s.tier === "PREMIUM",
                     marketName: s.marketName,
                     stock: 1 + ((k + r * 3) % 9),
                     rating: Math.round((3.8 + ((k * 3 + r * 5) % 12) / 10) * 10) / 10,
@@ -69,6 +71,9 @@ export function BnHome() {
 
     return (
         <div className="mx-auto max-w-[1280px] px-4 pt-5 pb-10">
+            {/* ── Reklama slayder (Bozor/Do'kondan TEPADA) ── */}
+            <BnHeroSlider />
+
             {/* ── Ikkita asosiy kirish nuqtasi ── */}
             <section className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10">
                 <EntryCard
@@ -81,7 +86,7 @@ export function BnHome() {
                 />
                 <EntryCard
                     href="/dokonlar"
-                    icon={<MapPin className="w-6 h-6" />}
+                    icon={<Warehouse className="w-6 h-6" />}
                     title="Do'konlar"
                     text="Bozordagi, ko'chadagi va onlayn do'konlar"
                     count={`${MOCK_SHOPS.length} ta do'kon`}

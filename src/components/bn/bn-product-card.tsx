@@ -1,7 +1,7 @@
 "use client";
 
 import { BnLink } from "./bn-nav";
-import { Store, MapPin, Star, Eye, Truck } from "lucide-react";
+import { Store, Star, Eye, Truck, BadgeCheck } from "lucide-react";
 import { BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel } from "@/lib/bn-theme";
 
 export interface ProductCardData {
@@ -13,6 +13,7 @@ export interface ProductCardData {
     images: string[];
     shopName: string;
     shopSlug: string;
+    shopVerified?: boolean;         // Tasdiqlangan do'kon belgisi
     marketName: string | null;
     city: string;
     rating: number;
@@ -84,6 +85,24 @@ export function BnProductCard({ p, compact = false }: { p: ProductCardData; comp
 
             {/* Matn */}
             <div className="flex flex-col flex-1 p-3">
+                {/* TEPADA: qaysi do'kon sotayapti (ikonkasiz — foydalanuvchi qarori) */}
+                <div className="flex items-center gap-1 mb-1.5 text-[11.5px] font-bold min-w-0">
+                    <span className="truncate" style={{ color: BN.text2 }}>{p.shopName}</span>
+                    {p.shopVerified && (
+                        <BadgeCheck
+                            className="w-3.5 h-3.5 flex-shrink-0"
+                            style={{ color: BN.info }}
+                            strokeWidth={2.6}
+                        />
+                    )}
+                    {p.ratingCount > 0 && (
+                        <span className="ml-auto flex items-center gap-0.5 flex-shrink-0" style={{ color: BN.gold }}>
+                            <Star className="w-3 h-3 fill-current" />
+                            {p.rating.toFixed(1)}
+                        </span>
+                    )}
+                </div>
+
                 {/* Narx — asosiy element */}
                 <div className="flex items-baseline gap-2 mb-1">
                     <span className="text-[16px] font-black tabular-nums leading-none">
@@ -120,26 +139,13 @@ export function BnProductCard({ p, compact = false }: { p: ProductCardData; comp
 
                 <div className="flex-1" />
 
-                {/* Do'kon + joy */}
-                <div className="flex items-center gap-1.5 text-[11px] min-w-0" style={{ color: BN.text3 }}>
-                    {p.marketName ? (
-                        <>
-                            <Store className="w-3 h-3 flex-shrink-0" />
-                            <span className="truncate">{p.marketName}</span>
-                        </>
-                    ) : (
-                        <>
-                            <MapPin className="w-3 h-3 flex-shrink-0" />
-                            <span className="truncate">{p.shopName}</span>
-                        </>
-                    )}
-                    {p.ratingCount > 0 && (
-                        <span className="ml-auto flex items-center gap-0.5 flex-shrink-0" style={{ color: BN.gold }}>
-                            <Star className="w-3 h-3 fill-current" />
-                            {p.rating.toFixed(1)}
-                        </span>
-                    )}
-                </div>
+                {/* PASTIDA: bozor (rejadagi zo'r naqsh — o'zgarmaydi) */}
+                {p.marketName && (
+                    <div className="flex items-center gap-1.5 text-[11px] min-w-0" style={{ color: BN.text3 }}>
+                        <Store className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{p.marketName}</span>
+                    </div>
+                )}
             </div>
         </BnLink>
     );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useSession, signIn } from "next-auth/react";
 import {
     Car, Smartphone, Shirt, Sofa, Hammer, ShoppingBasket, Baby, Dumbbell,
@@ -26,60 +26,170 @@ const CAT_ICONS: Record<string, React.ReactNode> = {
     Wrench:         <Wrench className="w-6 h-6" />,
 };
 
-// ── Katalog (kategoriyalar — bosh sahifadan ko'chirildi) ────────────────────
+// ── Katalog (Uzum uslubi — chap ustun kategoriyalar, o'ng ustun ochilgan) ───
+// Uzum'dan o'zlashtirilgan naqsh, lekin BN uslubida: hover'da o'ng panel
+// almashadi, mobil'da esa oddiy vertikal accordion.
 
 export function BnCatalogPage() {
+    const [active, setActive] = useState<string>(MOCK_CATEGORIES[0].slug);
+    const cat = MOCK_CATEGORIES.find(c => c.slug === active) ?? MOCK_CATEGORIES[0];
+
     return (
         <Wrap>
             <PageHead title="Katalog" subtitle="Barcha kategoriyalar" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {MOCK_CATEGORIES.map(c => (
-                    <div
-                        key={c.slug}
-                        className="rounded-2xl overflow-hidden"
-                        style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
-                    >
-                        <BnLink
-                            href={`/k/${c.slug}`}
-                            className="group flex items-center gap-3 p-4"
-                            style={{ borderBottom: c.children?.length ? `1px solid ${BN.border}` : undefined }}
-                        >
-                            <span
-                                className="w-12 h-12 rounded-xl grid place-items-center flex-shrink-0"
-                                style={{ background: BN.goldSoft, color: BN.gold }}
-                            >
-                                {CAT_ICONS[c.icon] ?? <Store className="w-6 h-6" />}
-                            </span>
-                            <span className="flex-1 min-w-0">
-                                <span className="block text-[15px] font-black truncate transition-colors group-hover:text-[color:var(--bn-gold)]">
-                                    {c.name}
-                                </span>
-                                <span className="block text-[11.5px] mt-0.5" style={{ color: BN.text3 }}>
-                                    {c.productCount.toLocaleString("uz-UZ")} ta mahsulot
-                                </span>
-                            </span>
-                            <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: BN.text3 }} />
-                        </BnLink>
 
-                        {c.children && c.children.length > 0 && (
-                            <div className="p-2">
-                                {c.children.map(ch => (
-                                    <BnLink
-                                        key={ch.slug}
-                                        href={`/k/${ch.slug}`}
-                                        className="flex items-center justify-between h-9 px-2.5 rounded-lg text-[13px] transition-colors"
-                                        style={{ color: BN.text2 }}
-                                    >
-                                        <span className="truncate">{ch.name}</span>
-                                        <span className="text-[11px] flex-shrink-0" style={{ color: BN.text3 }}>
-                                            {ch.productCount}
-                                        </span>
-                                    </BnLink>
-                                ))}
-                            </div>
-                        )}
+            {/* Desktop — 2 ustun */}
+            <div
+                className="hidden md:grid grid-cols-[280px_1fr] gap-4 rounded-3xl overflow-hidden"
+                style={{ background: BN.surface, border: `1px solid ${BN.border}`, minHeight: 520 }}
+            >
+                {/* Chap: kategoriyalar */}
+                <nav
+                    className="py-2"
+                    style={{ borderRight: `1px solid ${BN.border}` }}
+                    onMouseLeave={() => { /* qoldiramiz — foydalanuvchi qayta harakat qilsa yangi active */ }}
+                >
+                    {MOCK_CATEGORIES.map(c => {
+                        const isActive = c.slug === active;
+                        return (
+                            <button
+                                key={c.slug}
+                                onMouseEnter={() => setActive(c.slug)}
+                                onClick={() => setActive(c.slug)}
+                                className="flex items-center gap-3 w-full pl-3 pr-2 py-2.5 text-left transition-colors"
+                                style={{
+                                    background: isActive ? BN.goldSoft : "transparent",
+                                    color: isActive ? BN.gold : BN.text,
+                                    borderLeft: `3px solid ${isActive ? BN.gold : "transparent"}`,
+                                }}
+                            >
+                                <span
+                                    className="w-9 h-9 rounded-xl grid place-items-center flex-shrink-0"
+                                    style={{
+                                        background: isActive ? "rgba(245,179,1,0.16)" : BN.surfaceUp,
+                                        color: isActive ? BN.gold : BN.text2,
+                                    }}
+                                >
+                                    {CAT_ICONS[c.icon]
+                                        ? React.cloneElement(CAT_ICONS[c.icon] as React.ReactElement, { className: "w-5 h-5" } as never)
+                                        : <Store className="w-5 h-5" />}
+                                </span>
+                                <span className="flex-1 min-w-0 text-[13.5px] font-bold truncate">{c.name}</span>
+                                <ChevronRight
+                                    className="w-4 h-4 flex-shrink-0 transition-transform"
+                                    style={{
+                                        color: isActive ? BN.gold : BN.text3,
+                                        transform: isActive ? "translateX(2px)" : undefined,
+                                    }}
+                                />
+                            </button>
+                        );
+                    })}
+                </nav>
+
+                {/* O'ng: pastki kategoriyalar */}
+                <div className="p-6 min-w-0">
+                    <div className="flex items-baseline justify-between gap-3 mb-5">
+                        <BnLink
+                            href={`/k/${cat.slug}`}
+                            className="text-[22px] font-black tracking-tight leading-none transition-colors hover:text-[color:var(--bn-gold)]"
+                        >
+                            {cat.name}
+                        </BnLink>
+                        <BnLink
+                            href={`/k/${cat.slug}`}
+                            className="flex items-center gap-1 text-[13px] font-bold"
+                            style={{ color: BN.gold }}
+                        >
+                            Barcha {cat.productCount.toLocaleString("uz-UZ")} ta
+                            <ChevronRight className="w-4 h-4" />
+                        </BnLink>
                     </div>
-                ))}
+
+                    {cat.children && cat.children.length > 0 ? (
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1">
+                            {cat.children.map(ch => (
+                                <BnLink
+                                    key={ch.slug}
+                                    href={`/k/${ch.slug}`}
+                                    className="flex items-center justify-between h-10 px-2 rounded-lg text-[13.5px] transition-colors hover:text-[color:var(--bn-gold)]"
+                                    style={{ color: BN.text }}
+                                >
+                                    <span className="truncate">{ch.name}</span>
+                                    <span className="text-[11px] flex-shrink-0" style={{ color: BN.text3 }}>
+                                        {ch.productCount.toLocaleString("uz-UZ")}
+                                    </span>
+                                </BnLink>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-[13px]" style={{ color: BN.text3 }}>
+                            Bo&apos;linmalar keyin qo&apos;shiladi. Hozircha to&apos;g&apos;ridan-to&apos;g&apos;ri kategoriya ochiladi.
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            {/* Mobil — accordion */}
+            <div className="md:hidden space-y-2">
+                {MOCK_CATEGORIES.map(c => {
+                    const open = c.slug === active;
+                    return (
+                        <div
+                            key={c.slug}
+                            className="rounded-2xl overflow-hidden"
+                            style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+                        >
+                            <button
+                                onClick={() => setActive(open ? "" : c.slug)}
+                                className="flex items-center gap-3 w-full p-3.5 text-left"
+                            >
+                                <span
+                                    className="w-11 h-11 rounded-xl grid place-items-center flex-shrink-0"
+                                    style={{ background: BN.goldSoft, color: BN.gold }}
+                                >
+                                    {CAT_ICONS[c.icon] ?? <Store className="w-5 h-5" />}
+                                </span>
+                                <span className="flex-1 min-w-0">
+                                    <span className="block text-[14.5px] font-black truncate">{c.name}</span>
+                                    <span className="block text-[11.5px] mt-0.5" style={{ color: BN.text3 }}>
+                                        {c.productCount.toLocaleString("uz-UZ")} ta mahsulot
+                                    </span>
+                                </span>
+                                <ChevronRight
+                                    className="w-4 h-4 flex-shrink-0 transition-transform"
+                                    style={{ transform: open ? "rotate(90deg)" : undefined, color: BN.text3 }}
+                                />
+                            </button>
+
+                            {open && c.children && c.children.length > 0 && (
+                                <div className="px-2 pb-2" style={{ borderTop: `1px solid ${BN.border}` }}>
+                                    <BnLink
+                                        href={`/k/${c.slug}`}
+                                        className="flex items-center justify-between h-11 px-3 rounded-xl text-[13px] font-bold mt-2"
+                                        style={{ background: BN.goldSoft, color: BN.gold }}
+                                    >
+                                        <span>Barchasini ko&apos;rish</span>
+                                        <span className="text-[11px]">{c.productCount.toLocaleString("uz-UZ")}</span>
+                                    </BnLink>
+                                    {c.children.map(ch => (
+                                        <BnLink
+                                            key={ch.slug}
+                                            href={`/k/${ch.slug}`}
+                                            className="flex items-center justify-between h-11 px-3 rounded-xl text-[13.5px]"
+                                            style={{ color: BN.text }}
+                                        >
+                                            <span className="truncate">{ch.name}</span>
+                                            <span className="text-[11px] flex-shrink-0" style={{ color: BN.text3 }}>
+                                                {ch.productCount.toLocaleString("uz-UZ")}
+                                            </span>
+                                        </BnLink>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
         </Wrap>
     );

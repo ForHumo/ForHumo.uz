@@ -28,7 +28,7 @@ export interface MockProduct {
     price: number; oldPrice: number | null; marketAvgPrice: number | null;
     images: string[];
     categorySlug: string;
-    shopSlug: string; shopName: string;
+    shopSlug: string; shopName: string; shopVerified?: boolean;
     marketName: string | null; city: string;
     stock: number; isNegotiable: boolean;
     allowPickup: boolean; allowDelivery: boolean; allowInspect: boolean;

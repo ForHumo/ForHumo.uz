@@ -4,20 +4,20 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import {
-    Search, ShoppingCart, Menu, X, Store, MapPin, User, Bell,
-    LayoutGrid, Package, ChevronRight, LogIn, Navigation, Headphones, Heart,
+    Search, ShoppingCart, Menu, X, User, Bell, LayoutGrid,
+    Package, ChevronRight, LogIn, Navigation, Headphones, Heart, Store,
+    Sparkles, Mic, MapPin, PackageOpen, Warehouse,
 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink, useBnHref, useBnBase, BnThemeToggle, BnLangSwitch } from "./bn-nav";
 import { MOCK_CATEGORIES } from "@/lib/bn-mock";
 
+// Foydalanuvchi so'rovi: Katalog/Bozorlar/Do'konlar OLIB TASHLANDI (navbar/asosiy'da bor).
+// Faqat gorizontal 1 qatorda: Mening joylashuvim → Topshirish punkti → Buyurtmalarim → Humo Support
 const NAV = [
-    { href: "/katalog",       label: "Katalog",          icon: LayoutGrid },
-    { href: "/bozorlar",      label: "Bozorlar",         icon: Store },
-    { href: "/dokonlar",      label: "Do'konlar",        icon: MapPin },
-    { href: "/buyurtmalarim", label: "Buyurtmalarim",    icon: Package },
     { href: "/joylashuv",     label: "Mening joylashuvim", icon: Navigation },
-    { href: "/punktlar",      label: "Topshirish punkti", icon: Package },
+    { href: "/punktlar",      label: "Topshirish punkti",  icon: Warehouse },
+    { href: "/buyurtmalarim", label: "Buyurtmalarim",      icon: Package },
 ] as const;
 
 export function BnHeader() {
@@ -66,15 +66,18 @@ export function BnHeader() {
                 <div className="mx-auto max-w-[1280px] px-4">
                     {/* ── Desktop ── */}
                     <div className="hidden md:flex items-start gap-4 py-3">
-                        <BnLink href="/" className="flex items-center gap-2.5 flex-shrink-0 group h-11">
-                            <BnLogo />
-                            <span className="font-black text-[17px] tracking-tight leading-none">Bozor Narxida</span>
+                        <BnLink href="/" className="flex items-center gap-2.5 flex-shrink-0 group h-14">
+                            <BnLogo size={52} />
+                            <span className="font-black text-[19px] tracking-tight leading-none">Bozor Narxida</span>
                         </BnLink>
 
                         <div className="flex-1 min-w-0 flex flex-col gap-2.5">
-                            {/* Qidiruv */}
+                            {/* Qidiruv — chap ovoz, o'ng AI */}
                             <form onSubmit={submitSearch}>
-                                <div className="relative">
+                                <div
+                                    className="relative flex items-center h-11 rounded-2xl overflow-hidden transition-colors"
+                                    style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+                                >
                                     <Search
                                         className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] pointer-events-none"
                                         style={{ color: BN.text3 }}
@@ -83,26 +86,34 @@ export function BnHeader() {
                                         value={q}
                                         onChange={e => setQ(e.target.value)}
                                         placeholder="Mahsulot, do'kon yoki bozor qidiring..."
-                                        className="w-full h-11 rounded-2xl pl-11 pr-4 text-[14px] outline-none transition-colors"
-                                        style={{
-                                            background: BN.surface,
-                                            border: `1px solid ${BN.border}`,
-                                            color: BN.text,
-                                            caretColor: BN.gold,
-                                        }}
+                                        className="flex-1 h-full pl-11 pr-2 bg-transparent text-[14px] outline-none"
+                                        style={{ color: BN.text, caretColor: BN.gold }}
                                     />
+                                    <SearchExtraBtn
+                                        label="Ovozli qidiruv"
+                                        onClick={() => alert("Ovozli qidiruv tez orada")}
+                                    >
+                                        <Mic className="w-[17px] h-[17px]" />
+                                    </SearchExtraBtn>
+                                    <SearchExtraBtn
+                                        label="AI qidiruv"
+                                        onClick={() => router.push(to("/qidiruv?ai=1"))}
+                                        gold
+                                    >
+                                        <Sparkles className="w-[17px] h-[17px]" />
+                                    </SearchExtraBtn>
                                 </div>
                             </form>
 
-                            {/* Bo'limlar */}
-                            <nav className="flex items-center gap-0.5 flex-wrap">
+                            {/* Ikkinchi qator — GORIZONTAL 1 QATOR, o'ralmaydi */}
+                            <nav className="flex items-center gap-0.5 overflow-x-auto bn-noscroll">
                                 {NAV.map(n => {
                                     const Icon = n.icon;
                                     return (
                                         <BnLink
                                             key={n.href}
                                             href={n.href}
-                                            className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl text-[12.5px] font-bold transition-colors whitespace-nowrap"
+                                            className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl text-[12.5px] font-bold whitespace-nowrap flex-shrink-0"
                                             style={{ color: BN.text2 }}
                                         >
                                             <Icon className="w-[15px] h-[15px]" />
@@ -114,7 +125,7 @@ export function BnHeader() {
                                     href={supportUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl text-[12.5px] font-bold transition-colors whitespace-nowrap"
+                                    className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl text-[12.5px] font-bold whitespace-nowrap flex-shrink-0"
                                     style={{ color: BN.text2 }}
                                 >
                                     <Headphones className="w-[15px] h-[15px]" />
@@ -189,8 +200,8 @@ export function BnHeader() {
                             </button>
 
                             <BnLink href="/" className="flex items-center gap-2 flex-shrink-0">
-                                <BnLogo size={32} />
-                                <span className="font-black text-[15px] tracking-tight leading-none">Bozor Narxida</span>
+                                <BnLogo size={42} />
+                                <span className="font-black text-[16px] tracking-tight leading-none">Bozor Narxida</span>
                             </BnLink>
 
                             <div className="flex-1" />
@@ -205,7 +216,10 @@ export function BnHeader() {
                         </div>
 
                         <form onSubmit={submitSearch} className="pb-3">
-                            <div className="relative">
+                            <div
+                                className="relative flex items-center h-11 rounded-2xl overflow-hidden"
+                                style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+                            >
                                 <Search
                                     className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[17px] h-[17px] pointer-events-none"
                                     style={{ color: BN.text3 }}
@@ -214,14 +228,22 @@ export function BnHeader() {
                                     value={q}
                                     onChange={e => setQ(e.target.value)}
                                     placeholder="Nima qidiryapsiz?"
-                                    className="w-full h-11 rounded-2xl pl-10 pr-4 text-[14px] outline-none"
-                                    style={{
-                                        background: BN.surface,
-                                        border: `1px solid ${BN.border}`,
-                                        color: BN.text,
-                                        caretColor: BN.gold,
-                                    }}
+                                    className="flex-1 h-full pl-10 pr-2 bg-transparent text-[14px] outline-none"
+                                    style={{ color: BN.text, caretColor: BN.gold }}
                                 />
+                                <SearchExtraBtn
+                                    label="Ovozli qidiruv"
+                                    onClick={() => alert("Ovozli qidiruv tez orada")}
+                                >
+                                    <Mic className="w-4 h-4" />
+                                </SearchExtraBtn>
+                                <SearchExtraBtn
+                                    label="AI qidiruv"
+                                    onClick={() => router.push(to("/qidiruv?ai=1"))}
+                                    gold
+                                >
+                                    <Sparkles className="w-4 h-4" />
+                                </SearchExtraBtn>
                             </div>
                         </form>
                     </div>
@@ -360,27 +382,51 @@ export function BnHeader() {
     );
 }
 
-export function BnLogo({ size = 36 }: { size?: number }) {
+export function BnLogo({ size = 52 }: { size?: number }) {
+    // Manba PNG'da logo atrofida ~40% bo'sh joy bor. scale bilan qoplaymiz.
     return (
-        <span className="relative flex-shrink-0" style={{ width: size, height: size }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+        <span
+            className="relative flex-shrink-0 overflow-hidden grid place-items-center"
+            style={{ width: size, height: size }}
+        >
             <img
                 src="/bn/logo.png"
                 alt="Bozor Narxida"
                 width={size}
                 height={size}
-                className="w-full h-full object-contain dark:hidden"
+                style={{ transform: "scale(1.35)" }}
+                className="max-w-none object-contain dark:hidden"
             />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
                 src="/bn/logo-dark.png"
                 alt=""
                 width={size}
                 height={size}
                 aria-hidden="true"
-                className="w-full h-full object-contain hidden dark:block"
+                style={{ transform: "scale(1.35)" }}
+                className="max-w-none object-contain hidden dark:block"
             />
         </span>
+    );
+}
+
+function SearchExtraBtn({
+    label, onClick, gold, children,
+}: { label: string; onClick: () => void; gold?: boolean; children: React.ReactNode }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            aria-label={label}
+            title={label}
+            className="grid place-items-center w-9 h-9 rounded-xl mr-1 flex-shrink-0 transition-colors active:scale-95"
+            style={{
+                background: gold ? BN.goldSoft : "transparent",
+                color: gold ? BN.gold : BN.text2,
+            }}
+        >
+            {children}
+        </button>
     );
 }
 
