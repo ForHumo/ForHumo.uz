@@ -2,13 +2,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-
-// Reserved usernames that map to real routes or brand names
-const RESERVED = new Set([
-    "edit", "verify", "settings", "admin", "api", "help",
-    "support", "pay", "market", "nexus", "esport", "ai", "id",
-    "forhumo", "humo", "humoid",
-]);
+import { checkReservedUsername } from "@/lib/reserved-username";
+import { isFounderProfile } from "@/lib/founders";
 
 // Simple in-memory rate limit: max 40 checks/min per user
 const rl = new Map<string, number[]>();
@@ -40,8 +35,15 @@ export async function GET(req: Request) {
         return NextResponse.json({ available: false, reason: "invalid" });
     }
 
-    if (RESERVED.has(q.toLowerCase())) {
-        return NextResponse.json({ available: false, reason: "reserved" });
+    const me = await prisma.userProfile.findUnique({
+        where: { email: session.user.email },
+        select: { id: true, humoId: true, username: true },
+    });
+    const isFounder = me ? isFounderProfile(me) : false;
+
+    const check = await checkReservedUsername(q, { profileId: me?.id ?? null, isFounder });
+    if (check.reserved) {
+        return NextResponse.json({ available: false, reason: "reserved", message: check.reason });
     }
 
     const existing = await prisma.userProfile.findUnique({

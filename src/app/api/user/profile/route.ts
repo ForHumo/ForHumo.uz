@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { encryptLocation, decryptLocation } from "@/lib/crypto";
 import { isFounderProfile } from "@/lib/founders";
+import { checkReservedUsername } from "@/lib/reserved-username";
 
 const EDIT_WINDOW_MS = 14 * 24 * 60 * 60 * 1000; // 14 kun
 
@@ -68,7 +69,7 @@ export async function PATCH(req: Request) {
     // Joriy profil — founder holati + 14-kunlik cheklov uchun
     const current = await prisma.userProfile.findUnique({
         where: { email: session.user.email },
-        select: { username: true, humoId: true, profileEditedAt: true },
+        select: { id: true, username: true, humoId: true, profileEditedAt: true },
     });
     if (!current) return NextResponse.json({ error: "profile_not_found" }, { status: 404 });
     const isFounder = isFounderProfile(current);
@@ -83,18 +84,14 @@ export async function PATCH(req: Request) {
         }
     }
 
-    // Validate username if provided
-    const RESERVED_USERNAMES = new Set([
-        "edit", "verify", "settings", "admin", "api", "help",
-        "support", "pay", "market", "nexus", "esport", "ai", "id",
-        "forhumo", "humo", "humoid",
-    ]);
+    // Validate username if provided — zaxira usernamelar DB'da (ReservedUsername).
     if (body.username !== undefined && body.username !== "") {
         if (!/^[a-zA-Z0-9_]{3,20}$/.test(body.username)) {
             return NextResponse.json({ error: "username_invalid" }, { status: 400 });
         }
-        if (!isFounder && RESERVED_USERNAMES.has(body.username.toLowerCase())) {
-            return NextResponse.json({ error: "username_reserved" }, { status: 400 });
+        const reserved = await checkReservedUsername(body.username, { profileId: current.id, isFounder });
+        if (reserved.reserved) {
+            return NextResponse.json({ error: "username_reserved", message: reserved.reason }, { status: 400 });
         }
         const existing = await prisma.userProfile.findUnique({
             where: { username: body.username },

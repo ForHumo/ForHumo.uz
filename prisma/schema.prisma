@@ -2030,3 +2030,30 @@ enum BnOrderStatus {
   COMPLETED      // Yakunlandi (7 kun keyin auto — refund muddat tugadi)
   CANCELLED      // Bekor qilindi
 }
+
+// ── Zaxira usernamelar ───────────────────────────────────────────────────────
+// Foydalanuvchi olmaydigan @nomlar (tizim, brend, mashhur odam, davlat,
+// PERSONAL — yaqin odamlarga ajratilgan). VIP toifa keyin 10K+ faol
+// foydalanuvchi bo'lganda sotiladi (hozircha bepul band ko'rsatiladi).
+model ReservedUsername {
+  id           String   @id @default(cuid())
+  username     String   @unique                       // lowercase canonical
+  category     ReservedCategory
+  priceUzs     Int?                                    // VIP: kelajakda sotiladigan narx
+  note         String?                                 // "Onamga", "Cristiano Ronaldo", "Apple Inc."
+  assignedToId String?                                 // PERSONAL: aynan qaysi profil ololadi
+  reservedById String?                                 // Qo'shgan founder (audit)
+  createdAt    DateTime @default(now())
+  claimedAt    DateTime?                               // Kimgadir topshirilganda (arxiv)
+  @@index([category])
+}
+
+enum ReservedCategory {
+  SYSTEM      // admin, api, humo — hech kimga
+  VIP         // 777, ali, vip — kelajakda pullik
+  CELEBRITY   // cristiano, ronaldo — mashhur odam kelsa beriladi
+  BRAND       // apple, samsung — rasmiy vakilga beriladi
+  COUNTRY     // uzbekistan, russia — davlat rasmiy vakili
+  GOVERNMENT  // president, mvd — davlat organi
+  PERSONAL    // do'st/qarindosh — assignedToId bo'yicha
+}

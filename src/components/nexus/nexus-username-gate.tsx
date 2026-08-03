@@ -7,8 +7,8 @@ import { AtSign, Loader2, ArrowRight, Check } from "lucide-react";
 // ─────────────────────────────────────────────────────────────────────────────
 // NexusUsernameGate — Humo ID bor, lekin @username yo'q foydalanuvchi uchun.
 // Username Nexus uchun MAJBURIY: usersiz profil/kuzatish/eslatma ishlamaydi.
+// Zaxira usernamelar tekshiruvi butunlay server tomonida (ReservedUsername DB).
 // ─────────────────────────────────────────────────────────────────────────────
-const RESERVED = new Set(["edit", "verify", "settings", "admin", "api", "help", "support", "pay", "market", "nexus", "esport", "ai", "id", "forhumo", "humo", "humoid"]);
 
 export function NexusUsernameGate({ suggested }: { suggested?: string }) {
     const [value, setValue] = useState(suggested ?? "");
@@ -18,8 +18,7 @@ export function NexusUsernameGate({ suggested }: { suggested?: string }) {
 
     const clean = value.trim().toLowerCase();
     const formatOk = /^[a-z0-9_]{3,20}$/.test(clean);
-    const reserved = RESERVED.has(clean);
-    const valid = formatOk && !reserved;
+    const valid = formatOk;
 
     async function save() {
         if (!valid || saving) return;
@@ -37,7 +36,7 @@ export function NexusUsernameGate({ suggested }: { suggested?: string }) {
             const d = await res.json().catch(() => ({}));
             setErr(
                 d.error === "username_taken" ? "Bu username band — boshqasini tanlang" :
-                d.error === "username_reserved" ? "Bu username tizim uchun zaxiralangan" :
+                d.error === "username_reserved" ? (d.message || "Bu username zaxiralangan") :
                 d.error === "username_invalid" ? "Username 3-20 belgi: a-z, 0-9, _" :
                 "Xatolik yuz berdi, qayta urinib ko'ring"
             );
@@ -74,7 +73,7 @@ export function NexusUsernameGate({ suggested }: { suggested?: string }) {
                 </div>
 
                 <p className="text-[11px] text-left px-1 mb-4 min-h-[16px]" style={{ color: err ? "#f87171" : "rgba(120,140,190,0.7)" }}>
-                    {err ?? (clean && !formatOk ? "3-20 belgi: a-z, 0-9, _" : reserved ? "Bu username zaxiralangan" : "Masalan: @ali_dev")}
+                    {err ?? (clean && !formatOk ? "3-20 belgi: a-z, 0-9, _" : "Masalan: @ali_dev")}
                 </p>
 
                 <button onClick={save} disabled={!valid || saving || done}
