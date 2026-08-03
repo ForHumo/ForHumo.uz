@@ -1,5 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
-import { BnComingSoon } from "@/components/bn/bn-coming-soon";
+import { BnHome } from "@/components/bn/bn-home";
 
 export async function generateMetadata() {
     return {
@@ -11,5 +11,5 @@ export async function generateMetadata() {
 export default async function BnPage({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    return <BnComingSoon />;
+    return <BnHome />;
 }
