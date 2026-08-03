@@ -7,6 +7,7 @@ import { isVerifiedProfile, extractHashtags } from "@/lib/nexus";
 import { after } from "next/server";
 import { moderateOnCreate } from "@/lib/moderation";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { banGuard } from "@/lib/moderation-guard";
 import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { getActiveSubscribedCreatorIds } from "@/lib/nexus-sub";
 import { notifyMentions } from "@/lib/nexus-mention";
@@ -184,6 +185,7 @@ export async function POST(req: Request) {
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
     if (!profile.humoId || !profile.username) return NextResponse.json({ error: "Humo ID kerak" }, { status: 403 });
+    const banned = await banGuard(profile.id); if (banned) return banned;
     if (await nexusRateLimited(profile.id, "post")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { text, media, marketProductId, privacy, location, pollOptions, pollDurationHours } = await req.json();

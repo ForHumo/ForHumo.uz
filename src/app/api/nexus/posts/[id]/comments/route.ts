@@ -9,6 +9,7 @@ import { nexusNotify } from "@/lib/nexus-notify";
 import { notifyMentions } from "@/lib/nexus-mention";
 import { getHiddenAuthorIds, isBlockedBetween } from "@/lib/nexus-block";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { banGuard } from "@/lib/moderation-guard";
 
 // GET /api/nexus/posts/[id]/comments — izohlar (flat; klient daraxt quradi)
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -50,6 +51,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+    const banned = await banGuard(profile.id); if (banned) return banned;
     if (await nexusRateLimited(profile.id, "comment")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { id } = await params;

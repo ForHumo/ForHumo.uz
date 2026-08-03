@@ -8,6 +8,7 @@ import { isVerifiedProfile } from "@/lib/nexus";
 import { moderateOnCreate } from "@/lib/moderation";
 import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { banGuard } from "@/lib/moderation-guard";
 import { isValidMediaUrl } from "@/lib/media-url";
 
 // POST /api/nexus/tracks — yangi trek (musiqa/podkast/audiokitob)
@@ -17,6 +18,7 @@ export async function POST(req: Request) {
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, humoId: true, username: true } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
     if (!profile.humoId || !profile.username) return NextResponse.json({ error: "Humo ID kerak" }, { status: 403 });
+    const banned = await banGuard(profile.id); if (banned) return banned;
     if (await nexusRateLimited(profile.id, "track")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { title, artist, audioUrl, coverUrl, durationSec, kind, genre } = await req.json();

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { banGuard } from "@/lib/moderation-guard";
 import { moderateOnCreate } from "@/lib/moderation";
 import { sendTip } from "@/lib/nexus-tip";
 import { nexusNotify } from "@/lib/nexus-notify";
@@ -72,6 +73,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const isSuperChat = tip > 0;
     // Oddiy xabarda matn shart; Super Chat'da matn ixtiyoriy
     if (!isSuperChat && !text?.trim()) return NextResponse.json({ error: "Matn kerak" }, { status: 400 });
+    const banned = await banGuard(me.id); if (banned) return banned;
     if (await nexusRateLimited(me.id, "liveChat")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const cleanText = String(text || "").trim().slice(0, 500);

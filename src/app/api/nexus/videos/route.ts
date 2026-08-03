@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile, isAdultBirthday } from "@/lib/nexus";
 import { moderateOnCreate } from "@/lib/moderation";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { banGuard } from "@/lib/moderation-guard";
 import { currencyForCountry } from "@/lib/money";
 import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { isValidMediaUrl, filterMediaUrls } from "@/lib/media-url";
@@ -19,6 +20,7 @@ export async function POST(req: Request) {
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, humoId: true, username: true } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
     if (!profile.humoId || !profile.username) return NextResponse.json({ error: "Humo ID kerak" }, { status: 403 });
+    const banned = await banGuard(profile.id); if (banned) return banned;
     if (await nexusRateLimited(profile.id, "video")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const body = await req.json();
