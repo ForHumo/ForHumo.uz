@@ -375,9 +375,10 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             if (d?.code === "USER_BANNED" && d.banId) {
                 setBan({
                     banId: d.banId,
-                    reason: d.error?.match(/Sabab:\s*([^\.]+)/)?.[1]?.trim() || "other",
-                    level: 0,   // real ma'lumot GET /api/user/ban-appeal orqali olinishi mumkin
+                    reason: d.reason || "other",
+                    level: typeof d.level === "number" ? d.level : 0,
                     expiresAt: d.expiresAt ?? null,
+                    category: d.category === "hard" ? "hard" : "soft",
                 });
                 return true;
             }

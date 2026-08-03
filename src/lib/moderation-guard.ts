@@ -23,5 +23,8 @@ export async function banGuard(profileId: string): Promise<NextResponse | null> 
         code: "USER_BANNED",
         banId: ban.id,
         expiresAt: ban.expiresAt,
+        reason: ban.reason,
+        category: ban.category,
+        level: ban.level,
     }, { status: 403 });
 }

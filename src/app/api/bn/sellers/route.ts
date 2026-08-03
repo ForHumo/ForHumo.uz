@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { banGuard } from "@/lib/moderation-guard";
 
 // Slug ishlab chiqarish — do'kon nomidan URL-safe (o'zbekcha harflar → latin)
 function makeSlug(name: string): string {
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+    const banned = await banGuard(me.id); if (banned) return banned;
 
     // Allaqachon seller?
     const existing = await prisma.bnSeller.findUnique({ where: { profileId: me.id } });

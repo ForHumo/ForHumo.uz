@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { banGuard } from "@/lib/moderation-guard";
+import { after } from "next/server";
+import { moderateOnCreate } from "@/lib/moderation";
 
 function makeSlug(name: string): string {
     return name.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || `product-${Date.now()}`;
@@ -50,6 +53,7 @@ export async function POST(req: Request) {
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+    const banned = await banGuard(me.id); if (banned) return banned;
 
     const seller = await prisma.bnSeller.findUnique({ where: { profileId: me.id }, select: { id: true, status: true } });
     if (!seller) return NextResponse.json({ error: "Avval sotuvchi bo'lib ro'yxatdan o'ting" }, { status: 403 });
@@ -96,6 +100,17 @@ export async function POST(req: Request) {
             pickupOnly: !!body.pickupOnly,
         },
     });
+
+    // AI moderatsiya — mahsulot sarlavha + tavsif + birinchi rasm
+    after(() => moderateOnCreate({
+        module: "BN",
+        targetType: "BN_PRODUCT",
+        targetId: product.id,
+        text: `${product.title}\n${product.description || ""}`,
+        imageUrl: product.images[0] || null,
+        kind: "BN mahsulot",
+        authorId: me.id,
+    }));
 
     return NextResponse.json({ ok: true, product });
 }

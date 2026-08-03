@@ -109,6 +109,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             code: "USER_BANNED",
             banId: ban.id,
             expiresAt: ban.expiresAt,
+            reason: ban.reason,
+            category: ban.category,
+            level: ban.level,
         }, { status: 403 });
     }
 

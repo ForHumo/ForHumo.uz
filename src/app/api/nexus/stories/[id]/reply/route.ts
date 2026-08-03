@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { normalizePair } from "@/lib/nexus-dm";
 import { isBlockedBetween } from "@/lib/nexus-block";
 import { banGuard } from "@/lib/moderation-guard";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { moderateDmMessage } from "@/lib/moderation-dm";
+import { after } from "next/server";
 
 // POST /api/nexus/stories/[id]/reply — story'ga DM javob (Instagram uslubi)
 // body: { text: string, slideId?: string }
@@ -31,6 +34,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         return NextResponse.json({ error: "Bu foydalanuvchiga xabar yubora olmaysiz" }, { status: 403 });
     }
     const banned = await banGuard(me.id); if (banned) return banned;
+    // Reply DM xabari kabi hisoblanadi — dm rate-limit
+    if (await nexusRateLimited(me.id, "dm")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     // 1:1 suhbatni topamiz/yaratamiz, keyin xabar yozamiz (story'ga havola bilan)
     const [u1, u2] = normalizePair(me.id, story.profileId);
@@ -56,6 +61,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             ...(conv.user1Id === me.id ? { user1ReadAt: new Date() } : { user2ReadAt: new Date() }),
         },
     });
+
+    // Story reply DM xabari kabi hisoblanadi — AI moderatsiya (yaqin do'st konteksti bilan)
+    after(() => moderateDmMessage({
+        messageId: msg.id,
+        senderId: me.id,
+        recipientId: story.profileId,
+        text: msg.text,
+    }));
 
     return NextResponse.json({ ok: true, conversationId: conv.id, messageId: msg.id });
 }

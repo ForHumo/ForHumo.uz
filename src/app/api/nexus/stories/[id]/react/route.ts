@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { nexusNotify } from "@/lib/nexus-notify";
 import { after } from "next/server";
+import { banGuard } from "@/lib/moderation-guard";
+import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 const ALLOWED = new Set(["❤️", "😂", "😮", "🔥", "👏", "😢"]);
 
@@ -15,6 +17,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { id: storyId } = await params;
     const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+    const banned = await banGuard(me.id); if (banned) return banned;
+    // Spam himoyasi — reaksiyalar 10 daq'da 30 tagacha (dm bilan bir xil budjet)
+    if (await nexusRateLimited(me.id, "dm")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { emoji, slideId } = (await req.json()) as { emoji?: string; slideId?: string };
     if (!emoji || !ALLOWED.has(emoji)) return NextResponse.json({ error: "Emoji noto'g'ri" }, { status: 400 });

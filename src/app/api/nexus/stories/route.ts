@@ -7,6 +7,8 @@ import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { isValidMediaUrl } from "@/lib/media-url";
 import { banGuard } from "@/lib/moderation-guard";
+import { after } from "next/server";
+import { moderateOnCreate } from "@/lib/moderation";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -26,8 +28,9 @@ interface IncomingSlide {
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+    const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, humoId: true, username: true } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+    if (!profile.humoId || !profile.username) return NextResponse.json({ error: "Humo ID kerak" }, { status: 403 });
     const banned = await banGuard(profile.id); if (banned) return banned;
     if (await nexusRateLimited(profile.id, "story")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
@@ -97,6 +100,18 @@ export async function POST(req: Request) {
         },
         include: { slides: { orderBy: { order: "asc" } } },
     });
+
+    // AI moderatsiya — barcha slidelar captions + birinchi rasm
+    const modText = [body.caption, ...slides.map(s => s.caption)].filter(Boolean).join("\n");
+    const modImage = story.slides.find(s => s.mediaType === "IMAGE" && s.mediaUrl)?.mediaUrl || null;
+    if (modText || modImage) {
+        after(() => moderateOnCreate({
+            module: "NEXUS", targetType: "POST",   // story mavjud target type yo'q, POST bilan yaxshi mos keladi
+            targetId: story.id, text: modText, imageUrl: modImage,
+            kind: "story", authorId: profile.id,
+        }));
+    }
+
     return NextResponse.json({ story });
 }
 

@@ -5,12 +5,13 @@ import { prisma } from "@/lib/prisma";
 import { moderateContent, AUTO_HIDE_SEVERITY, type ModResult } from "@/lib/ai-moderate";
 import { issueBan } from "@/lib/moderation-ladder";
 
-export type ModModule = "MARKET" | "NEXUS";
+export type ModModule = "MARKET" | "NEXUS" | "BN";
 export type ModTargetType =
     | "PRODUCT" | "REVIEW" | "REPLY" | "QUESTION" | "ANSWER" // Market
     | "POST" | "COMMENT" | "VIDEO_COMMENT" | "VIDEO" | "TRACK" // Nexus
     | "LIVE" | "LIVE_MESSAGE"                                // Nexus jonli efir
-    | "CHANNEL_MESSAGE";                                     // Nexus kanal/guruh
+    | "CHANNEL_MESSAGE"                                      // Nexus kanal/guruh
+    | "BN_PRODUCT";                                          // Bozor Narxida mahsuloti
 
 // targetType → tegishli modelda yashirish/ko'rsatish.
 // updateMany ishlatamiz: kontent o'chirilgan bo'lsa ham xato bermaydi.
@@ -54,6 +55,9 @@ export async function hideTarget(targetType: ModTargetType, targetId: string, hi
             break;
         case "CHANNEL_MESSAGE":
             await prisma.nexusChannelMessage.updateMany({ where: { id: targetId }, data: { hidden } });
+            break;
+        case "BN_PRODUCT":
+            await prisma.bnProduct.updateMany({ where: { id: targetId }, data: { hidden } });
             break;
     }
 }
