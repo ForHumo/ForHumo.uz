@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 
     const profiles = await prisma.userProfile.findMany({
         where: { id: { in: userIds } },
-        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
     });
     const pMap = Object.fromEntries(profiles.map(p => [p.id, p]));
 
@@ -56,6 +56,7 @@ export async function GET(req: Request) {
             return {
                 name: p.name, username: p.username, image: p.image,
                 verified: isVerifiedProfile(p),
+                verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null,
                 isFollowing: myFollowing.has(id),
                 isMe: id === meId,
             };

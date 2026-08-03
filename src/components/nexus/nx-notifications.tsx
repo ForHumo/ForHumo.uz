@@ -12,6 +12,7 @@ import { NOTIF_TYPES, NOTIF_LABELS, type NotifTypeKey } from "@/lib/notif-types"
 import { formatMoney, type Currency } from "@/lib/money";
 import { getPushState, subscribePush, unsubscribePush, type PushState } from "@/lib/push-client";
 import { RINGTONE_LABELS, RINGTONE_DESCRIPTIONS, previewRingtone, type RingtoneVariant } from "@/lib/nexus-ringtone";
+import { NxVerifiedBadge } from "./nx-verified-badge";
 
 type NType = "LIKE" | "COMMENT" | "FOLLOW" | "REPLY" | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION" | "SUB_EXPIRING" | "CALL_MISSED";
 interface NActor { name: string | null; username: string | null; image: string | null; verified: boolean }
@@ -284,7 +285,7 @@ export function NxNotifications() {
                                     <p className="text-[13px] text-white leading-snug">
                                         <span className="font-bold inline-flex items-center gap-0.5">
                                             {n.actor?.name || n.actor?.username || "Kimdir"}
-                                            {n.actor?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
+                                            {n.actor?.verified && <NxVerifiedBadge category={(n.actor as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
                                         </span>{" "}
                                         <span style={{ color: "rgba(180,200,240,0.85)" }}>{TYPE_TEXT[n.type]}</span>
                                         {n.type === "TIP" && n.amount ? <span className="font-black ml-1" style={{ color: "#F59E0B" }}>{formatMoney(n.amount, currency)}</span> : null}

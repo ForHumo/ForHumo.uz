@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "@/i18n/routing";
 import { X, BadgeCheck, Loader2 } from "lucide-react";
+import { NxVerifiedBadge } from "./nx-verified-badge";
 
 interface FollowUser {
     name: string | null; username: string | null; image: string | null;
@@ -65,7 +66,7 @@ export function NexusFollowList({ username, type, onClose }: {
                                 <div className="min-w-0">
                                     <div className="flex items-center gap-1">
                                         <span className="text-sm font-bold text-white truncate">{u.name || u.username || "Foydalanuvchi"}</span>
-                                        {u.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                        {u.verified && <NxVerifiedBadge category={(u as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={14} />}
                                     </div>
                                     {u.username && <span className="text-[11px]" style={{ color: "rgba(120,140,185,0.7)" }}>@{u.username}</span>}
                                 </div>

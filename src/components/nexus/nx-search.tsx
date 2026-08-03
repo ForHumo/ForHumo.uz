@@ -7,10 +7,11 @@ import {
     Search, X, Hash, BadgeCheck, Loader2,
     UserPlus, UserCheck, MessageCircle, Heart, Play, Eye, Music2, Radio, Lock,
 } from "lucide-react";
+import { NxVerifiedBadge } from "./nx-verified-badge";
 
-interface SAuthor { name: string | null; username: string | null; image?: string | null; verified: boolean }
-interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isFollowing: boolean; isMe: boolean }
-interface SPost { id: string; text: string | null; createdAt: string; likes: number; comments: number; author: { name: string | null; username: string | null; image: string | null; verified: boolean } | null }
+interface SAuthor { name: string | null; username: string | null; image?: string | null; verified: boolean; verifiedCategory?: string | null }
+interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null; isFollowing: boolean; isMe: boolean }
+interface SPost { id: string; text: string | null; createdAt: string; likes: number; comments: number; author: { name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null } | null }
 interface STag { tag: string; count: number }
 interface SVideo { id: string; title: string; thumbUrl: string | null; duration: string; orientation: string; views: number; price: number; author: SAuthor | null }
 interface STrack { id: string; title: string; artist: string | null; coverUrl: string | null; audioUrl: string; duration: string; durationSec: number; kind: string; plays: number; author: SAuthor | null }
@@ -118,7 +119,7 @@ export function NxSearch() {
                     <div className="min-w-0">
                         <div className="flex items-center gap-1">
                             <span className="text-sm font-bold text-white truncate">{u.name || u.username || "Foydalanuvchi"}</span>
-                            {u.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                            {u.verified && <NxVerifiedBadge category={u.verifiedCategory} size={14} />}
                         </div>
                         {u.username && <span className="text-[11px]" style={{ color: "rgba(120,140,185,0.7)" }}>@{u.username}</span>}
                     </div>
@@ -242,7 +243,7 @@ export function NxSearch() {
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-1">
                                                     <span className="text-xs font-bold text-white truncate">{p.author?.name || p.author?.username || "Foydalanuvchi"}</span>
-                                                    {p.author?.verified && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                                    {p.author?.verified && <NxVerifiedBadge category={p.author?.verifiedCategory} size={12} />}
                                                 </div>
                                                 <p className="text-[13px] leading-snug mt-0.5 line-clamp-2" style={{ color: "rgba(200,215,245,0.85)" }}>{p.text}</p>
                                                 <div className="flex items-center gap-3 mt-1 text-[10px]" style={{ color: "rgba(120,140,185,0.6)" }}>

@@ -122,7 +122,7 @@ export async function GET(req: Request) {
     const profileIds = [...new Set(posts.map(p => p.profileId))];
     const profiles = await prisma.userProfile.findMany({
         where: { id: { in: profileIds } },
-        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
     });
     const pMap = Object.fromEntries(profiles.map(p => [p.id, p]));
 
@@ -167,7 +167,7 @@ export async function GET(req: Request) {
             pollVotes: p.pollOptions.length ? p.pollOptions.map((_, i) => voteCounts[p.id]?.[i] ?? 0) : [],
             myVote: p.id in myVotes ? myVotes[p.id] : null,
             product: p.marketProductId ? prodMap[p.marketProductId] ?? null : null,
-            author: a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a) } : null,
+            author: a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a), verifiedCategory: isVerifiedProfile(a) ? (a.verifiedCategory || null) : null } : null,
             likes: p._count.likes, comments: p._count.comments,
             liked: likedIds.includes(p.id), saved: savedIds.includes(p.id),
             isMine: p.profileId === myId,
@@ -243,7 +243,7 @@ export async function POST(req: Request) {
             pollOptions: post.pollOptions, pollEndsAt: post.pollEndsAt,
             pollVotes: post.pollOptions.map(() => 0), myVote: null,
             product: attachId ? prodMap[attachId] ?? null : null,
-            author: { name: profile.name, username: profile.username, image: profile.image, verified: isVerifiedProfile(profile) },
+            author: { name: profile.name, username: profile.username, image: profile.image, verified: isVerifiedProfile(profile), verifiedCategory: isVerifiedProfile(profile) ? (profile.verifiedCategory || null) : null },
             likes: 0, comments: 0, liked: false, saved: false, isMine: true,
         },
     });

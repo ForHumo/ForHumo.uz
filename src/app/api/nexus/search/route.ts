@@ -36,7 +36,7 @@ export async function GET(req: Request) {
                 { username: { contains: q, mode: "insensitive" } },
             ],
         },
-        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
         take: 8,
     });
     let myFollowing = new Set<string>();
@@ -48,7 +48,7 @@ export async function GET(req: Request) {
     }
     const users = userRows.map(u => ({
         name: u.name, username: u.username, image: u.image,
-        verified: isVerifiedProfile(u), isFollowing: myFollowing.has(u.id), isMe: u.id === meId,
+        verified: isVerifiedProfile(u), verifiedCategory: isVerifiedProfile(u) ? (u.verifiedCategory || null) : null, isFollowing: myFollowing.has(u.id), isMe: u.id === meId,
     }));
 
     // ── Postlar ──
@@ -59,7 +59,7 @@ export async function GET(req: Request) {
     });
     const authorIds = [...new Set(postRows.map(p => p.profileId))];
     const authors = await prisma.userProfile.findMany({
-        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
     });
     const aMap = Object.fromEntries(authors.map(a => [a.id, a]));
     const posts = postRows.map(p => {
@@ -67,7 +67,7 @@ export async function GET(req: Request) {
         return {
             id: p.id, text: p.text, createdAt: p.createdAt,
             likes: p._count.likes, comments: p._count.comments,
-            author: a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a) } : null,
+            author: a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a), verifiedCategory: isVerifiedProfile(a) ? (a.verifiedCategory || null) : null } : null,
         };
     });
 
@@ -107,12 +107,12 @@ export async function GET(req: Request) {
     // Media mualliflari
     const mediaAuthorIds = [...new Set([...vidRows, ...trackRows, ...liveRows].map(r => r.profileId))];
     const mediaAuthors = mediaAuthorIds.length
-        ? await prisma.userProfile.findMany({ where: { id: { in: mediaAuthorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } })
+        ? await prisma.userProfile.findMany({ where: { id: { in: mediaAuthorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true } })
         : [];
     const mMap = Object.fromEntries(mediaAuthors.map(a => [a.id, a]));
     const authorOf = (pid: string) => {
         const a = mMap[pid];
-        return a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a) } : null;
+        return a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a), verifiedCategory: isVerifiedProfile(a) ? (a.verifiedCategory || null) : null } : null;
     };
 
     const videos = vidRows.map(v => ({

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useRouter } from "@/i18n/routing";
 import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle, MoreHorizontal, Ban, VolumeX, Volume2, ShieldAlert, Gift, Star, Settings2, TrendingUp } from "lucide-react";
+import { NxVerifiedBadge } from "./nx-verified-badge";
 import { NxPlayerProvider } from "./nx-player-ctx";
 import { NxShare } from "./nx-share";
 import { NexusFollowList } from "./nexus-follow-list";
@@ -126,7 +127,7 @@ export function NexusProfile({ username }: { username: string }) {
                     <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                             <span className="text-sm font-black text-white truncate">{displayName}</span>
-                            {p?.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                            {p?.verified && <NxVerifiedBadge category={(p as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={14} />}
                         </div>
                         {!loading && data && <span className="text-[10px]" style={{ color: "rgba(120,140,185,0.7)" }}>{fzNum(data.stats.posts)} post</span>}
                     </div>
@@ -232,7 +233,7 @@ export function NexusProfile({ username }: { username: string }) {
                             <div className="mt-3">
                                 <div className="flex items-center gap-1.5">
                                     <h1 className="text-xl font-black text-white">{displayName}</h1>
-                                    {data.profile.verified && <BadgeCheck className="w-5 h-5" style={{ color: "#00CEC8" }} />}
+                                    {data.profile.verified && <NxVerifiedBadge category={(data.profile as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={20} />}
                                 </div>
                                 {data.profile.username && <p className="text-sm font-mono" style={{ color: "#00CEC8" }}>@{data.profile.username}</p>}
                                 {data.profile.bio && <p className="text-sm mt-2 leading-relaxed" style={{ color: "rgba(180,195,235,0.8)" }}>{data.profile.bio}</p>}

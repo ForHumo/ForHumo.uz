@@ -29,7 +29,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const profileIds = [...new Set(comments.map(c => c.profileId))];
     const profiles = await prisma.userProfile.findMany({
         where: { id: { in: profileIds } },
-        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
     });
     const pMap = Object.fromEntries(profiles.map(p => [p.id, p]));
 
@@ -37,7 +37,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         const a = pMap[c.profileId];
         return {
             id: c.id, parentId: c.parentId, text: c.text, createdAt: c.createdAt,
-            author: a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a) } : null,
+            author: a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a), verifiedCategory: isVerifiedProfile(a) ? (a.verifiedCategory || null) : null } : null,
             isMine: c.profileId === myId,
         };
     });
@@ -96,7 +96,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({
         comment: {
             id: comment.id, parentId: comment.parentId, text: comment.text, createdAt: comment.createdAt,
-            author: { name: profile.name, username: profile.username, image: profile.image, verified: isVerifiedProfile(profile) },
+            author: { name: profile.name, username: profile.username, image: profile.image, verified: isVerifiedProfile(profile), verifiedCategory: isVerifiedProfile(profile) ? (profile.verifiedCategory || null) : null },
             isMine: true,
         },
     });

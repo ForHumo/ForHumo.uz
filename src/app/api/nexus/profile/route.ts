@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { currencyForCountry } from "@/lib/money";
 
-const SELECT = { id: true, name: true, username: true, image: true, coverImage: true, bio: true, humoId: true, verified: true, subPrice: true, country: true } as const;
+const SELECT = { id: true, name: true, username: true, image: true, coverImage: true, bio: true, humoId: true, verified: true, verifiedCategory: true, subPrice: true, country: true } as const;
 
 // GET /api/nexus/profile?username=X  (username yo'q bo'lsa — sessiya egasi)
 export async function GET(req: Request) {
@@ -59,6 +59,7 @@ export async function GET(req: Request) {
             name: target.name, username: target.username, image: target.image,
             coverImage: target.coverImage, bio: target.bio, humoId: target.humoId,
             verified: isVerifiedProfile(target),
+            verifiedCategory: isVerifiedProfile(target) ? (target.verifiedCategory || null) : null,
             subPrice: target.subPrice,
             subCurrency: currencyForCountry(target.country),
         },

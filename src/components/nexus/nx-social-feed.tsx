@@ -12,11 +12,12 @@ import {
     ShoppingBag, Search, MapPin, Lock, Users, BarChart2, CheckCircle2, Star, Pencil,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
+import { NxVerifiedBadge } from "./nx-verified-badge";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tiplar (real API)
 // ─────────────────────────────────────────────────────────────────────────────
-interface Author { name: string | null; username: string | null; image: string | null; verified: boolean }
+interface Author { name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
 interface AttachedProduct { slug: string; name: string; image: string | null; price: string; oldPrice: string | null }
 interface PickedProduct { id: string; slug: string; name: string; image: string | null; price: string }
 interface Post {
@@ -367,7 +368,7 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
                         ) : (
                             <span className="text-sm font-bold text-white truncate">{p.author?.name ?? "Foydalanuvchi"}</span>
                         )}
-                        {p.author?.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                        {p.author?.verified && <NxVerifiedBadge category={p.author?.verifiedCategory} size={14} />}
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "rgba(80,100,150,0.75)" }}>
                         {p.author?.username && <span>@{p.author.username}</span>}
@@ -585,7 +586,7 @@ function CommentsSection({ postId, onAdded }: { postId: string; onAdded: () => v
                             <div className="flex-1 min-w-0 rounded-xl px-3 py-2" style={{ background: "rgba(43,62,232,0.06)" }}>
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-xs font-bold text-white">{c.author?.name ?? c.author?.username ?? "Foydalanuvchi"}</span>
-                                    {c.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
+                                    {c.author?.verified && <NxVerifiedBadge category={(c.author as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
                                     <span className="text-[9px]" style={{ color: "rgba(80,100,150,0.7)" }}>{timeAgo(c.createdAt)}</span>
                                     {!c.isMine && (
                                         <button onClick={() => reportComment(c.id)} disabled={reportedC.has(c.id)} title="Shikoyat"
