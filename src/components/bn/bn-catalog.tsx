@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Link } from "@/i18n/routing";
+import { BnLink } from "./bn-nav";
 import { SlidersHorizontal, X, Search, ChevronRight, Store, Package } from "lucide-react";
 import { BN, fmtPrice } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
@@ -90,13 +90,13 @@ export function BnCatalog({ categorySlug, query, initialSort = "new" }: Props) {
             {/* Sarlavha */}
             <div className="mb-5">
                 <nav className="flex items-center gap-1.5 text-[12px] mb-2.5 flex-wrap" style={{ color: BN.text3 }}>
-                    <Link href="/bn" className="hover:text-white transition-colors">Bosh sahifa</Link>
+                    <BnLink href="/" className="hover:opacity-70 transition-colors">Bosh sahifa</BnLink>
                     <ChevronRight className="w-3 h-3" />
                     {category && subCategory ? (
                         <>
-                            <Link href={`/bn/k/${category.slug}`} className="hover:text-white transition-colors">
+                            <BnLink href={`/k/${category.slug}`} className="hover:opacity-70 transition-colors">
                                 {category.name}
-                            </Link>
+                            </BnLink>
                             <ChevronRight className="w-3 h-3" />
                             <span style={{ color: BN.text2 }}>{subCategory.name}</span>
                         </>
@@ -114,15 +114,15 @@ export function BnCatalog({ categorySlug, query, initialSort = "new" }: Props) {
             {category?.children && !subCategory && (
                 <div className="flex flex-wrap gap-2 mb-5">
                     {category.children.map(ch => (
-                        <Link
+                        <BnLink
                             key={ch.slug}
-                            href={`/bn/k/${ch.slug}`}
-                            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-bold transition-colors hover:text-white"
+                            href={`/k/${ch.slug}`}
+                            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-bold transition-colors hover:opacity-70"
                             style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text2 }}
                         >
                             {ch.name}
                             <span className="text-[11px]" style={{ color: BN.text3 }}>{ch.productCount}</span>
-                        </Link>
+                        </BnLink>
                     ))}
                 </div>
             )}
@@ -143,7 +143,7 @@ export function BnCatalog({ categorySlug, query, initialSort = "new" }: Props) {
                     {activeFilters > 0 && (
                         <span
                             className="min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full text-[10px] font-black"
-                            style={{ background: BN.gold, color: "#0A0A0A" }}
+                            style={{ background: BN.gold, color: BN.onGold }}
                         >
                             {activeFilters}
                         </span>
@@ -182,18 +182,18 @@ export function BnCatalog({ categorySlug, query, initialSort = "new" }: Props) {
                             <button
                                 onClick={reset}
                                 className="h-11 px-5 rounded-xl text-[14px] font-black"
-                                style={{ background: BN.gold, color: "#0A0A0A" }}
+                                style={{ background: BN.gold, color: BN.onGold }}
                             >
                                 Filtrlarni tozalash
                             </button>
                         ) : (
-                            <Link
-                                href="/bn"
+                            <BnLink
+                                href="/"
                                 className="inline-flex h-11 px-5 items-center rounded-xl text-[14px] font-black"
-                                style={{ background: BN.gold, color: "#0A0A0A" }}
+                                style={{ background: BN.gold, color: BN.onGold }}
                             >
                                 Bosh sahifaga
-                            </Link>
+                            </BnLink>
                         )
                     }
                 />
@@ -208,7 +208,7 @@ export function BnCatalog({ categorySlug, query, initialSort = "new" }: Props) {
                 <div className="fixed inset-0 z-[120]">
                     <div
                         className="absolute inset-0"
-                        style={{ background: "rgba(0,0,0,0.7)" }}
+                        style={{ background: "rgba(0,0,0,0.55)" }}
                         onClick={() => setFilterOpen(false)}
                     />
                     <div
@@ -286,7 +286,7 @@ export function BnCatalog({ categorySlug, query, initialSort = "new" }: Props) {
                             <button
                                 onClick={() => setFilterOpen(false)}
                                 className="w-full h-12 rounded-2xl text-[15px] font-black"
-                                style={{ background: BN.gold, color: "#0A0A0A" }}
+                                style={{ background: BN.gold, color: BN.onGold }}
                             >
                                 {items.length} ta mahsulotni ko&apos;rish
                             </button>
@@ -323,7 +323,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
             >
                 <span
                     className="absolute top-1 w-4 h-4 rounded-full transition-all"
-                    style={{ left: checked ? 20 : 4, background: checked ? "#0A0A0A" : BN.text2 }}
+                    style={{ left: checked ? 20 : 4, background: checked ? BN.onGold : BN.text2 }}
                 />
             </span>
         </button>
@@ -358,9 +358,9 @@ export function BnMarketsList() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {MOCK_MARKETS.map(m => (
-                    <Link
+                    <BnLink
                         key={m.id}
-                        href={`/bn/m/${m.slug}`}
+                        href={`/m/${m.slug}`}
                         className="group rounded-2xl overflow-hidden transition-all active:scale-[0.99]"
                         style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                     >
@@ -374,7 +374,7 @@ export function BnMarketsList() {
                             />
                         </div>
                         <div className="p-4">
-                            <p className="text-[15px] font-black mb-1.5 transition-colors group-hover:text-[#F5B301]">
+                            <p className="text-[15px] font-black mb-1.5 transition-colors group-hover:text-[color:var(--bn-gold)]">
                                 {m.name}
                             </p>
                             <p className="text-[12.5px] mb-2" style={{ color: BN.text3 }}>{m.district}</p>
@@ -387,7 +387,7 @@ export function BnMarketsList() {
                                 </span>
                             </div>
                         </div>
-                    </Link>
+                    </BnLink>
                 ))}
             </div>
         </div>

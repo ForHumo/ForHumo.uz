@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@/i18n/routing";
+import { BnLink } from "./bn-nav";
 import { Store, MapPin, Star, Eye, Truck } from "lucide-react";
 import { BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel } from "@/lib/bn-theme";
 
@@ -30,8 +30,8 @@ export function BnProductCard({ p, compact = false }: { p: ProductCardData; comp
     const showDiff = rank === "cheap" && diff;
 
     return (
-        <Link
-            href={`/bn/p/${p.slug}`}
+        <BnLink
+            href={`/p/${p.slug}`}
             className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-150 active:scale-[0.985]"
             style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
         >
@@ -55,7 +55,7 @@ export function BnProductCard({ p, compact = false }: { p: ProductCardData; comp
                 {showDiff && (
                     <span
                         className="absolute top-2 left-2 px-2 py-1 rounded-lg text-[10.5px] font-black leading-none"
-                        style={{ background: BN.ok, color: "#052E16" }}
+                        style={{ background: BN.ok, color: BN.onGold }}
                     >
                         {diff}
                     </span>
@@ -65,7 +65,7 @@ export function BnProductCard({ p, compact = false }: { p: ProductCardData; comp
                 {p.stock > 0 && p.stock <= 3 && (
                     <span
                         className="absolute top-2 right-2 px-2 py-1 rounded-lg text-[10.5px] font-black leading-none"
-                        style={{ background: "rgba(10,10,10,0.85)", color: BN.warn }}
+                        style={{ background: BN.glass, color: BN.warn }}
                     >
                         {p.stock} ta qoldi
                     </span>
@@ -112,7 +112,7 @@ export function BnProductCard({ p, compact = false }: { p: ProductCardData; comp
 
                 {/* Nomi */}
                 <p
-                    className="text-[13px] leading-snug mb-2 line-clamp-2 transition-colors group-hover:text-[#F5B301]"
+                    className="text-[13px] leading-snug mb-2 line-clamp-2 transition-colors group-hover:text-[color:var(--bn-gold)]"
                     style={{ color: BN.text }}
                 >
                     {p.title}
@@ -141,7 +141,7 @@ export function BnProductCard({ p, compact = false }: { p: ProductCardData; comp
                     )}
                 </div>
             </div>
-        </Link>
+        </BnLink>
     );
 }
 
@@ -149,7 +149,7 @@ function Chip({ icon, text }: { icon: React.ReactNode; text: string }) {
     return (
         <span
             className="flex items-center gap-1 px-1.5 py-1 rounded-md text-[10px] font-bold leading-none backdrop-blur-sm"
-            style={{ background: "rgba(10,10,10,0.72)", color: BN.text2 }}
+            style={{ background: BN.glass, color: BN.text2 }}
         >
             {icon}
             {text}

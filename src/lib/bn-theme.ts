@@ -1,38 +1,46 @@
 // Bozor Narxida — dizayn tizimi (yagona manba).
 // Reja: docs/BN-PLAN.md §6
-// Qoida: rang qiymatlari faqat shu yerda. Komponentlarda hex yozilmaydi.
+//
+// MUHIM: ranglar CSS o'zgaruvchilariga bog'langan — Kunduzgi / Tungi / Tizim
+// rejimlari shu orqali ishlaydi. Qiymatlar `bn-styles.tsx` da e'lon qilinadi.
+// Komponentlarda hech qachon hex yozilmaydi — doim `BN.*` ishlatiladi.
 
 export const BN = {
     // Brend
-    gold:       "#F5B301",
-    goldLight:  "#FFCE3D",
-    goldDark:   "#C98F00",
-    goldSoft:   "rgba(245,179,1,0.10)",
-    goldEdge:   "rgba(245,179,1,0.22)",
+    gold:       "var(--bn-gold)",
+    goldLight:  "var(--bn-gold-light)",
+    goldDark:   "var(--bn-gold-dark)",
+    goldSoft:   "var(--bn-gold-soft)",
+    goldEdge:   "var(--bn-gold-edge)",
 
     // Fon qatlamlari
-    bg:         "#0A0A0A",
-    surface:    "#141414",
-    surfaceUp:  "#1C1C1C",
-    surfaceTop: "#242424",
+    bg:         "var(--bn-bg)",
+    surface:    "var(--bn-surface)",
+    surfaceUp:  "var(--bn-surface-up)",
+    surfaceTop: "var(--bn-surface-top)",
 
     // Chegara
-    border:     "rgba(255,255,255,0.08)",
-    borderGold: "rgba(245,179,1,0.20)",
+    border:     "var(--bn-border)",
+    borderGold: "var(--bn-border-gold)",
 
     // Matn
-    text:       "#FAFAFA",
-    text2:      "#A1A1AA",
-    text3:      "#71717A",
+    text:       "var(--bn-text)",
+    text2:      "var(--bn-text-2)",
+    text3:      "var(--bn-text-3)",
+    onGold:     "var(--bn-on-gold)",     // oltin fon ustidagi matn
 
     // Holat
-    ok:         "#22C55E",
-    okSoft:     "rgba(34,197,94,0.12)",
-    warn:       "#F59E0B",
-    warnSoft:   "rgba(245,158,11,0.12)",
-    err:        "#EF4444",
-    errSoft:    "rgba(239,68,68,0.12)",
-    info:       "#3B82F6",
+    ok:         "var(--bn-ok)",
+    okSoft:     "var(--bn-ok-soft)",
+    warn:       "var(--bn-warn)",
+    warnSoft:   "var(--bn-warn-soft)",
+    err:        "var(--bn-err)",
+    errSoft:    "var(--bn-err-soft)",
+    info:       "var(--bn-info)",
+
+    // Maxsus
+    glass:      "var(--bn-glass)",       // muallaq navbar foni
+    shadow:     "var(--bn-shadow)",
 } as const;
 
 // ── Narx ────────────────────────────────────────────────────────────────────
@@ -63,8 +71,8 @@ export function priceRankOf(price: number, marketAvg: number | null | undefined)
 }
 
 export const PRICE_RANK_META: Record<PriceRank, { label: string; color: string; soft: string }> = {
-    cheap:     { label: "Bozor narxidan arzon", color: BN.ok,   soft: BN.okSoft },
-    fair:      { label: "Bozor narxida",        color: BN.gold, soft: BN.goldSoft },
+    cheap:     { label: "Bozor narxidan arzon",  color: BN.ok,   soft: BN.okSoft },
+    fair:      { label: "Bozor narxida",         color: BN.gold, soft: BN.goldSoft },
     expensive: { label: "Bozor narxidan qimmat", color: BN.warn, soft: BN.warnSoft },
 };
 
@@ -102,12 +110,12 @@ export const LOCATION_META: Record<LocationType, { label: string; icon: string }
 export type OrderStatus = "PLACED" | "CONFIRMED" | "READY" | "COMPLETED" | "CANCELLED" | "DISPUTED";
 
 export const ORDER_STATUS_META: Record<OrderStatus, { label: string; color: string }> = {
-    PLACED:    { label: "Kutilmoqda",   color: BN.text3 },
-    CONFIRMED: { label: "Tasdiqlandi",  color: BN.info  },
-    READY:     { label: "Tayyor",       color: BN.gold  },
-    COMPLETED: { label: "Yakunlandi",   color: BN.ok    },
-    CANCELLED: { label: "Bekor",        color: BN.err   },
-    DISPUTED:  { label: "Nizo",         color: BN.warn  },
+    PLACED:    { label: "Kutilmoqda",  color: BN.text3 },
+    CONFIRMED: { label: "Tasdiqlandi", color: BN.info  },
+    READY:     { label: "Tayyor",      color: BN.gold  },
+    COMPLETED: { label: "Yakunlandi",  color: BN.ok    },
+    CANCELLED: { label: "Bekor",       color: BN.err   },
+    DISPUTED:  { label: "Nizo",        color: BN.warn  },
 };
 
 // ── Olish usuli ─────────────────────────────────────────────────────────────
@@ -115,8 +123,8 @@ export const ORDER_STATUS_META: Record<OrderStatus, { label: string; color: stri
 export type FulfillType = "PICKUP" | "DELIVERY" | "INSPECT";
 
 export const FULFILL_META: Record<FulfillType, { label: string; desc: string }> = {
-    PICKUP:   { label: "Do'kondan olaman",  desc: "O'zingiz borib olasiz" },
-    DELIVERY: { label: "Yetkazib berish",   desc: "Manzilingizga keltiramiz" },
+    PICKUP:   { label: "Do'kondan olaman",    desc: "O'zingiz borib olasiz" },
+    DELIVERY: { label: "Yetkazib berish",     desc: "Manzilingizga keltiramiz" },
     INSPECT:  { label: "Ko'rib sotib olaman", desc: "24 soat band qilamiz, borib ko'rasiz" },
 };
 
@@ -132,7 +140,7 @@ export interface AttrDef {
     options?: string[];
     required?: boolean;
     filterable?: boolean;
-    unit?: string;          // "GB", "kg", "sm"
+    unit?: string;
 }
 
 export function parseAttrSchema(raw: unknown): AttrDef[] {

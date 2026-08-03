@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@/i18n/routing";
+import { BnLink } from "./bn-nav";
 import { Store, MapPin, Star, Globe, Package, Clock, ChevronRight } from "lucide-react";
 import { BN, TIER_META, type ShopTier, type LocationType } from "@/lib/bn-theme";
 
@@ -25,8 +25,8 @@ export interface ShopCardData {
 export function BnShopCard({ s }: { s: ShopCardData }) {
     const tier = TIER_META[s.tier];
     return (
-        <Link
-            href={`/bn/d/${s.slug}`}
+        <BnLink
+            href={`/d/${s.slug}`}
             className="group flex items-center gap-3 p-3 rounded-2xl transition-all active:scale-[0.99]"
             style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
         >
@@ -44,7 +44,7 @@ export function BnShopCard({ s }: { s: ShopCardData }) {
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-[14px] font-black truncate transition-colors group-hover:text-[#F5B301]">
+                    <p className="text-[14px] font-black truncate transition-colors group-hover:text-[color:var(--bn-gold)]">
                         {s.name}
                     </p>
                     {s.tier !== "NEW" && (
@@ -78,7 +78,7 @@ export function BnShopCard({ s }: { s: ShopCardData }) {
             </div>
 
             <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: BN.text3 }} />
-        </Link>
+        </BnLink>
     );
 }
 
@@ -111,8 +111,8 @@ export interface MarketCardData {
 
 export function BnMarketCard({ m, wide = false }: { m: MarketCardData; wide?: boolean }) {
     return (
-        <Link
-            href={`/bn/m/${m.slug}`}
+        <BnLink
+            href={`/m/${m.slug}`}
             className="group relative overflow-hidden rounded-2xl transition-all active:scale-[0.99]"
             style={{ border: `1px solid ${BN.border}` }}
         >
@@ -132,10 +132,10 @@ export function BnMarketCard({ m, wide = false }: { m: MarketCardData; wide?: bo
             />
 
             <div className="absolute inset-x-0 bottom-0 p-3.5">
-                <p className="text-[15px] font-black leading-tight mb-1 transition-colors group-hover:text-[#F5B301]">
+                <p className="text-[15px] font-black leading-tight mb-1 transition-colors group-hover:text-[color:var(--bn-gold)]">
                     {m.name}
                 </p>
-                <div className="flex items-center gap-3 text-[11.5px]" style={{ color: "rgba(250,250,250,0.75)" }}>
+                <div className="flex items-center gap-3 text-[11.5px]" style={{ color: "rgba(255,255,255,0.8)" }}>
                     <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
                         {m.district}
@@ -146,13 +146,13 @@ export function BnMarketCard({ m, wide = false }: { m: MarketCardData; wide?: bo
                     </span>
                 </div>
                 {wide && (
-                    <p className="flex items-center gap-1 mt-1 text-[11.5px]" style={{ color: "rgba(250,250,250,0.6)" }}>
+                    <p className="flex items-center gap-1 mt-1 text-[11.5px]" style={{ color: "rgba(255,255,255,0.68)" }}>
                         <Clock className="w-3 h-3" />
                         {m.workHours}
                     </p>
                 )}
             </div>
-        </Link>
+        </BnLink>
     );
 }
 
@@ -170,14 +170,14 @@ export function BnSectionTitle({
                 )}
             </div>
             {href && (
-                <Link
+                <BnLink
                     href={href}
-                    className="flex items-center gap-1 text-[13px] font-bold flex-shrink-0 transition-colors hover:text-white"
+                    className="flex items-center gap-1 text-[13px] font-bold flex-shrink-0 transition-colors hover:opacity-70"
                     style={{ color: BN.gold }}
                 >
                     {hrefLabel}
                     <ChevronRight className="w-4 h-4" />
-                </Link>
+                </BnLink>
             )}
         </div>
     );

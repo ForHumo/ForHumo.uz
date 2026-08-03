@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@/i18n/routing";
+import { BnLink } from "./bn-nav";
 import { Store, Shield, Truck, Sparkles } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 
@@ -25,7 +25,7 @@ export function BnFooter() {
                         <div className="flex items-center gap-2.5 mb-3">
                             <span
                                 className="w-9 h-9 rounded-xl grid place-items-center font-black text-[15px]"
-                                style={{ background: `linear-gradient(140deg, ${BN.goldLight}, ${BN.goldDark})`, color: "#0A0A0A" }}
+                                style={{ background: `linear-gradient(140deg, ${BN.goldLight}, ${BN.goldDark})`, color: BN.onGold }}
                             >
                                 BN
                             </span>
@@ -38,15 +38,15 @@ export function BnFooter() {
                     </div>
 
                     <FooterCol title="Xaridorga">
-                        <FooterLink href="/bn/qidiruv">Barcha mahsulotlar</FooterLink>
-                        <FooterLink href="/bn/bozorlar">Bozorlar</FooterLink>
-                        <FooterLink href="/bn/dokonlar">Do&apos;konlar</FooterLink>
-                        <FooterLink href="/bn/buyurtmalarim">Buyurtmalarim</FooterLink>
+                        <FooterLink href="/qidiruv">Barcha mahsulotlar</FooterLink>
+                        <FooterLink href="/bozorlar">Bozorlar</FooterLink>
+                        <FooterLink href="/dokonlar">Do&apos;konlar</FooterLink>
+                        <FooterLink href="/buyurtmalarim">Buyurtmalarim</FooterLink>
                     </FooterCol>
 
                     <FooterCol title="Sotuvchiga">
-                        <FooterLink href="/bn/sotuvchi">Sotuvchi bo&apos;lish</FooterLink>
-                        <FooterLink href="/bn/kabinet">Kabinet</FooterLink>
+                        <FooterLink href="/sotuvchi">Sotuvchi bo&apos;lish</FooterLink>
+                        <FooterLink href="/kabinet">Kabinet</FooterLink>
                     </FooterCol>
 
                     <FooterCol title="For Humo">
@@ -101,9 +101,9 @@ function FooterCol({ title, children }: { title: string; children: React.ReactNo
 
 function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
     return (
-        <Link href={href} className="text-[13px] transition-colors hover:text-white" style={{ color: BN.text2 }}>
+        <BnLink href={href} className="text-[13px] transition-colors hover:opacity-70" style={{ color: BN.text2 }}>
             {children}
-        </Link>
+        </BnLink>
     );
 }
 
@@ -113,7 +113,7 @@ function FooterExt({ href, children }: { href: string; children: React.ReactNode
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[13px] transition-colors hover:text-white"
+            className="text-[13px] transition-colors hover:opacity-70"
             style={{ color: BN.text2 }}
         >
             {children}

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Link } from "@/i18n/routing";
+import { BnLink } from "./bn-nav";
 import { useSession, signIn } from "next-auth/react";
 import {
     Store, Building2, User, MapPin, Globe, Check, ChevronRight, ChevronLeft,
-    Landmark, ShieldCheck, LogIn, Sparkles, Info,
+    ShieldCheck, LogIn, Sparkles, Info,
 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { MOCK_MARKETS } from "@/lib/bn-mock";
@@ -74,7 +74,7 @@ export function BnSellerRegister() {
                     <button
                         onClick={() => signIn("google")}
                         className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl text-[15px] font-black transition-transform active:scale-[0.98]"
-                        style={{ background: BN.gold, color: "#0A0A0A" }}
+                        style={{ background: BN.gold, color: BN.onGold }}
                     >
                         <LogIn className="w-5 h-5" />
                         Humo ID bilan kirish
@@ -103,13 +103,13 @@ export function BnSellerRegister() {
                         Hujjatlaringiz tekshiriladi. Odatda 1 ish kuni ichida javob beramiz —
                         tasdiqlangach do&apos;koningizga mahsulot qo&apos;shishingiz mumkin bo&apos;ladi.
                     </p>
-                    <Link
-                        href="/bn"
+                    <BnLink
+                        href="/"
                         className="inline-flex items-center justify-center w-full h-12 rounded-2xl text-[15px] font-black"
-                        style={{ background: BN.gold, color: "#0A0A0A" }}
+                        style={{ background: BN.gold, color: BN.onGold }}
                     >
                         Bosh sahifaga
-                    </Link>
+                    </BnLink>
                 </div>
             </Wrap>
         );
@@ -419,7 +419,7 @@ export function BnSellerRegister() {
                             onClick={() => (step === 3 ? setSent(true) : setStep(s => (s + 1) as Step))}
                             disabled={!canNext}
                             className="flex items-center justify-center gap-1.5 flex-1 h-12 rounded-2xl text-[15px] font-black transition-all active:scale-[0.98] disabled:opacity-35"
-                            style={{ background: BN.gold, color: "#0A0A0A" }}
+                            style={{ background: BN.gold, color: BN.onGold }}
                         >
                             {step === 3 ? "Arizani yuborish" : "Davom etish"}
                             {step < 3 && <ChevronRight className="w-4 h-4" />}

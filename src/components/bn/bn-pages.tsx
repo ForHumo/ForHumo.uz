@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@/i18n/routing";
+import { BnLink } from "./bn-nav";
 import {
     Store, MapPin, Clock, Phone, ChevronRight, Star, Package,
     ShoppingCart, Heart, Globe, Navigation,
@@ -30,14 +30,14 @@ export function BnMarketPage({ slug }: { slug: string }) {
                 <img src={m.coverUrl} alt={m.name} className="w-full h-full object-cover" />
                 <div
                     className="absolute inset-0"
-                    style={{ background: "linear-gradient(to top, #0A0A0A 0%, rgba(10,10,10,0.55) 40%, rgba(10,10,10,0.2) 100%)" }}
+                    style={{ background: `linear-gradient(to top, ${BN.bg} 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.15) 100%)` }}
                 />
                 <div className="absolute inset-x-0 bottom-0">
                     <div className="mx-auto max-w-[1280px] px-4 pb-5">
-                        <nav className="flex items-center gap-1.5 text-[12px] mb-2" style={{ color: "rgba(250,250,250,0.65)" }}>
-                            <Link href="/bn" className="hover:text-white transition-colors">Bosh sahifa</Link>
+                        <nav className="flex items-center gap-1.5 text-[12px] mb-2" style={{ color: "rgba(255,255,255,0.72)" }}>
+                            <BnLink href="/" className="hover:opacity-70 transition-colors">Bosh sahifa</BnLink>
                             <ChevronRight className="w-3 h-3" />
-                            <Link href="/bn/bozorlar" className="hover:text-white transition-colors">Bozorlar</Link>
+                            <BnLink href="/bozorlar" className="hover:opacity-70 transition-colors">Bozorlar</BnLink>
                         </nav>
                         <h1 className="text-[26px] sm:text-[34px] font-black tracking-tight leading-tight">{m.name}</h1>
                     </div>
@@ -109,9 +109,9 @@ export function BnShopPage({ slug }: { slug: string }) {
     return (
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-16">
             <nav className="flex items-center gap-1.5 text-[12px] mb-5" style={{ color: BN.text3 }}>
-                <Link href="/bn" className="hover:text-white transition-colors">Bosh sahifa</Link>
+                <BnLink href="/" className="hover:opacity-70 transition-colors">Bosh sahifa</BnLink>
                 <ChevronRight className="w-3 h-3" />
-                <Link href="/bn/dokonlar" className="hover:text-white transition-colors">Do&apos;konlar</Link>
+                <BnLink href="/dokonlar" className="hover:opacity-70 transition-colors">Do&apos;konlar</BnLink>
             </nav>
 
             {/* Shapka */}
@@ -226,13 +226,13 @@ export function BnCartPage() {
                 title="Savat bo'sh"
                 text="Yoqqan mahsulotni savatga qo'shing — keyin bir marta buyurtma berasiz."
                 action={
-                    <Link
-                        href="/bn"
+                    <BnLink
+                        href="/"
                         className="inline-flex h-11 px-5 items-center rounded-xl text-[14px] font-black"
-                        style={{ background: BN.gold, color: "#0A0A0A" }}
+                        style={{ background: BN.gold, color: BN.onGold }}
                     >
                         Xaridni boshlash
-                    </Link>
+                    </BnLink>
                 }
             />
         </div>
@@ -250,13 +250,13 @@ export function BnFavoritesPage() {
                 title="Hali saqlangan mahsulot yo'q"
                 text="Mahsulot sahifasida yurak belgisini bosing — bu yerda to'planadi."
                 action={
-                    <Link
-                        href="/bn"
+                    <BnLink
+                        href="/"
                         className="inline-flex h-11 px-5 items-center rounded-xl text-[14px] font-black"
-                        style={{ background: BN.gold, color: "#0A0A0A" }}
+                        style={{ background: BN.gold, color: BN.onGold }}
                     >
                         Mahsulotlarni ko&apos;rish
-                    </Link>
+                    </BnLink>
                 }
             />
         </div>
@@ -274,13 +274,13 @@ export function BnOrdersPage() {
                 title="Hali buyurtma yo'q"
                 text="Birinchi buyurtmangizni bergach, holati shu yerda kuzatiladi."
                 action={
-                    <Link
-                        href="/bn"
+                    <BnLink
+                        href="/"
                         className="inline-flex h-11 px-5 items-center rounded-xl text-[14px] font-black"
-                        style={{ background: BN.gold, color: "#0A0A0A" }}
+                        style={{ background: BN.gold, color: BN.onGold }}
                     >
                         Xarid qilish
-                    </Link>
+                    </BnLink>
                 }
             />
         </div>
@@ -317,13 +317,13 @@ function NotFound({ what }: { what: string }) {
             title={`${what} topilmadi`}
             text="Bu havola eskirgan bo'lishi mumkin."
             action={
-                <Link
-                    href="/bn"
+                <BnLink
+                    href="/"
                     className="inline-flex h-11 px-5 items-center rounded-xl text-[14px] font-black"
-                    style={{ background: BN.gold, color: "#0A0A0A" }}
+                    style={{ background: BN.gold, color: BN.onGold }}
                 >
                     Bosh sahifaga
-                </Link>
+                </BnLink>
             }
         />
     );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link } from "@/i18n/routing";
+import { BnLink } from "./bn-nav";
 import { useSession, signIn } from "next-auth/react";
 import {
     LayoutDashboard, Package, ShoppingBag, Store, Wallet, Plus,
@@ -44,7 +44,7 @@ export function BnCabinet() {
                     <button
                         onClick={() => signIn("google")}
                         className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl text-[15px] font-black"
-                        style={{ background: BN.gold, color: "#0A0A0A" }}
+                        style={{ background: BN.gold, color: BN.onGold }}
                     >
                         <LogIn className="w-5 h-5" />
                         Kirish
@@ -65,7 +65,7 @@ export function BnCabinet() {
                 </div>
                 <button
                     className="flex items-center gap-2 h-11 px-5 rounded-2xl text-[14px] font-black transition-transform active:scale-[0.98]"
-                    style={{ background: BN.gold, color: "#0A0A0A" }}
+                    style={{ background: BN.gold, color: BN.onGold }}
                 >
                     <Plus className="w-[18px] h-[18px]" />
                     Mahsulot qo&apos;shish
@@ -100,7 +100,7 @@ export function BnCabinet() {
                     action={
                         <button
                             className="inline-flex items-center gap-2 h-11 px-5 rounded-xl text-[14px] font-black"
-                            style={{ background: BN.gold, color: "#0A0A0A" }}
+                            style={{ background: BN.gold, color: BN.onGold }}
                         >
                             <Plus className="w-4 h-4" />
                             Mahsulot qo&apos;shish
@@ -176,14 +176,14 @@ function HomeTab() {
                         Siz faqat tekshirib tasdiqlaysiz.
                     </p>
                 </div>
-                <Link
-                    href="/bn"
+                <BnLink
+                    href="/"
                     className="flex items-center gap-1.5 h-10 px-4 rounded-xl text-[13px] font-bold flex-shrink-0"
                     style={{ background: BN.goldSoft, color: BN.gold, border: `1px solid ${BN.goldEdge}` }}
                 >
                     Sinab ko&apos;rish
                     <ArrowUpRight className="w-4 h-4" />
-                </Link>
+                </BnLink>
             </div>
         </>
     );
@@ -212,7 +212,7 @@ function Todo({ done, title, text }: { done?: boolean; title: string; text: stri
                     border: `2px solid ${done ? BN.ok : "rgba(255,255,255,0.18)"}`,
                 }}
             >
-                {done && <Clock className="w-3 h-3" style={{ color: "#0A0A0A" }} strokeWidth={3} />}
+                {done && <Clock className="w-3 h-3" style={{ color: BN.onGold }} strokeWidth={3} />}
             </span>
             <span className="min-w-0">
                 <span

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link } from "@/i18n/routing";
+import { BnLink } from "./bn-nav";
 import {
     Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield,
     ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe,
@@ -34,13 +34,13 @@ export function BnProductDetail({ slug }: { slug: string }) {
                 title="Mahsulot topilmadi"
                 text="Bu havola eskirgan yoki mahsulot olib tashlangan bo'lishi mumkin."
                 action={
-                    <Link
-                        href="/bn"
+                    <BnLink
+                        href="/"
                         className="inline-flex h-11 px-5 items-center rounded-xl text-[14px] font-black"
-                        style={{ background: BN.gold, color: "#0A0A0A" }}
+                        style={{ background: BN.gold, color: BN.onGold }}
                     >
                         Bosh sahifaga
-                    </Link>
+                    </BnLink>
                 }
             />
         );
@@ -57,9 +57,9 @@ export function BnProductDetail({ slug }: { slug: string }) {
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-16">
             {/* Non-ushoq */}
             <nav className="flex items-center gap-1.5 text-[12px] mb-5 flex-wrap" style={{ color: BN.text3 }}>
-                <Link href="/bn" className="hover:text-white transition-colors">Bosh sahifa</Link>
+                <BnLink href="/" className="hover:opacity-70 transition-colors">Bosh sahifa</BnLink>
                 <ChevronRight className="w-3 h-3" />
-                <Link href={`/bn/k/${p.categorySlug}`} className="hover:text-white transition-colors">Kategoriya</Link>
+                <BnLink href={`/k/${p.categorySlug}`} className="hover:opacity-70 transition-colors">Kategoriya</BnLink>
                 <ChevronRight className="w-3 h-3" />
                 <span className="truncate max-w-[220px]" style={{ color: BN.text2 }}>{p.title}</span>
             </nav>
@@ -143,7 +143,7 @@ export function BnProductDetail({ slug }: { slug: string }) {
                     {shop && (
                         <Panel className="mt-4">
                             <h2 className="text-[15px] font-black mb-3">Sotuvchi</h2>
-                            <Link href={`/bn/d/${shop.slug}`} className="group flex items-center gap-3">
+                            <BnLink href={`/d/${shop.slug}`} className="group flex items-center gap-3">
                                 <span
                                     className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 grid place-items-center"
                                     style={{ background: BN.surfaceUp }}
@@ -157,7 +157,7 @@ export function BnProductDetail({ slug }: { slug: string }) {
                                 </span>
                                 <span className="flex-1 min-w-0">
                                     <span className="flex items-center gap-2">
-                                        <span className="text-[14px] font-black truncate transition-colors group-hover:text-[#F5B301]">
+                                        <span className="text-[14px] font-black truncate transition-colors group-hover:text-[color:var(--bn-gold)]">
                                             {shop.name}
                                         </span>
                                         {tier && shop.tier !== "NEW" && (
@@ -186,7 +186,7 @@ export function BnProductDetail({ slug }: { slug: string }) {
                                     )}
                                 </span>
                                 <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: BN.text3 }} />
-                            </Link>
+                            </BnLink>
 
                             <button
                                 className="flex items-center justify-center gap-2 w-full h-11 mt-4 rounded-xl text-[14px] font-bold transition-colors"
@@ -265,7 +265,7 @@ export function BnProductDetail({ slug }: { slug: string }) {
                         {/* Asosiy harakatlar */}
                         <button
                             className="flex items-center justify-center gap-2 w-full h-13 rounded-2xl text-[15px] font-black transition-transform active:scale-[0.98]"
-                            style={{ height: 52, background: BN.gold, color: "#0A0A0A" }}
+                            style={{ height: 52, background: BN.gold, color: BN.onGold }}
                         >
                             <ShoppingCart className="w-5 h-5" />
                             Savatga qo&apos;shish
@@ -347,7 +347,7 @@ function GalleryBtn({ side, onClick }: { side: "left" | "right"; onClick: () => 
             onClick={onClick}
             aria-label={side === "left" ? "Oldingi" : "Keyingi"}
             className="absolute top-1/2 -translate-y-1/2 w-10 h-10 grid place-items-center rounded-full backdrop-blur-sm transition-transform active:scale-90"
-            style={{ [side]: 12, background: "rgba(10,10,10,0.65)" } as React.CSSProperties}
+            style={{ [side]: 12, background: BN.glass } as React.CSSProperties}
         >
             {side === "left" ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
         </button>
