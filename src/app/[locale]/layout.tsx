@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import { Inter } from "next/font/google";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -102,6 +103,12 @@ export default async function LocaleLayout({
     // Enable static rendering
     setRequestLocale(locale);
 
+    // Ommaviy domenlar — AuthBarrier to'smaydi.
+    // bozornarxida.uz da URL "/bozorlar" ko'rinadi (middleware /uz/bn/... ga
+    // rewrite qiladi), shuning uchun yo'l bo'yicha aniqlab bo'lmaydi — host kerak.
+    const host = (await headers()).get("host")?.split(":")[0].toLowerCase() ?? "";
+    const publicHost = ["bozornarxida.uz", "www.bozornarxida.uz"].includes(host);
+
     // Providing all messages to the client
     // side is the easiest way to get started
     const messages = await getMessages();
@@ -111,7 +118,7 @@ export default async function LocaleLayout({
             <body className={`${inter.className} min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/20`}>
                 <NextIntlClientProvider messages={messages}>
                     <Providers>
-                        <AuthBarrier>
+                        <AuthBarrier publicHost={publicHost}>
                             <BackgroundEffects />
                             <Header />
                             <main className="flex-1 w-full max-w-[100vw] overflow-x-hidden">

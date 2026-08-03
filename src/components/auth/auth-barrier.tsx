@@ -85,7 +85,9 @@ function LoadingScreen() {
     );
 }
 
-export function AuthBarrier({ children }: { children: React.ReactNode }) {
+export function AuthBarrier({
+    children, publicHost = false,
+}: { children: React.ReactNode; publicHost?: boolean }) {
     const { data: session, status } = useSession();
     const params = useParams();
     const pathname = usePathname();
@@ -93,9 +95,11 @@ export function AuthBarrier({ children }: { children: React.ReactNode }) {
     const t = useTranslations("Auth");
     const tCommon = useTranslations("Common");
 
-    // Ommaviy bo'lim (masalan /bn) — darvoza ham, yuklanish ekrani ham yo'q.
-    // Sessiya kerak bo'lgan joylar (savat, kabinet) o'zlari kirish so'raydi.
-    const isPublic = isPublicPath(pathname);
+    // Ommaviy bo'lim — darvoza ham, yuklanish ekrani ham yo'q.
+    // `publicHost` serverdan keladi: bozornarxida.uz da URL "/bozorlar" bo'lgani
+    // uchun yo'l bo'yicha aniqlab bo'lmaydi (middleware rewrite qiladi).
+    // `isPublicPath` esa forhumo.uz/uz/bn/... uchun.
+    const isPublic = publicHost || isPublicPath(pathname);
 
     if (status === "loading" && !isPublic) {
         return <LoadingScreen />;
