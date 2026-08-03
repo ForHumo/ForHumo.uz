@@ -808,36 +808,36 @@ BN bozorlar ustida qurilgani uchun — bu tabiiy. Bu **BN ning asosiy farqi**.
 
 ## 11. FAZALAR
 
-### FAZA 0 — Tozalash (0 holatga qaytarish)
+### FAZA 0 — Tozalash (0 holatga qaytarish) ✅ BAJARILDI
 
-- [ ] Eski BN komponentlarini o'chirish (6 fayl)
-- [ ] Eski BN sahifalarini o'chirish (5 fayl)
-- [ ] Eski BN API'larini o'chirish (3 fayl)
-- [ ] Eski BN schema modellarini o'chirish (5 model + 4 enum)
-- [ ] `public/bn/` ga logo joylash
-- [ ] DB'dan eski BN jadvallarini tozalash
+- [x] Eski BN komponentlarini o'chirish (6 fayl)
+- [x] Eski BN sahifalarini o'chirish (5 fayl)
+- [x] Eski BN API'larini o'chirish (3 fayl)
+- [x] Eski BN schema modellarini o'chirish (5 model + 4 enum)
+- [x] `public/bn/` ga logo joylash
+- [x] DB'dan eski BN jadvallarini tozalash
 
-### FAZA 1 — Ko'rinish (UI skelet)
+### FAZA 1 — Ko'rinish (UI skelet) ✅ BAJARILDI
 
 > Foydalanuvchi so'rovi: *"oldin ko'rinishni qurib olaylik"*
 > Bu fazada **mock ma'lumot** ishlatiladi, backend yo'q.
 
-- [ ] `bn-theme.ts` — rang, konstanta, yordamchi funksiyalar
-- [ ] `bn-header.tsx` — logo, qidiruv, savat, profil (mobil menyu bilan)
-- [ ] `bn-footer.tsx`
-- [ ] `bn-product-card.tsx` — mahsulot kartasi (bozor narxi belgisi bilan)
-- [ ] `bn-shop-card.tsx` — do'kon kartasi
-- [ ] `bn-market-card.tsx` — bozor kartasi
-- [ ] Bosh sahifa — hero qidiruv, kategoriyalar, bozorlar, mahsulotlar
-- [ ] Kategoriya sahifasi — filtr paneli (atributlarga moslanuvchi)
-- [ ] Mahsulot sahifasi — galereya, narx bloki, sotuvchi bloki, sharhlar
-- [ ] Bozor sahifasi — bozor haqida, do'konlar ro'yxati
-- [ ] Do'kon sahifasi — profil, mahsulotlar
-- [ ] Savat sahifasi
-- [ ] Checkout sahifasi (3 usul: pickup / delivery / inspect)
-- [ ] Sotuvchi ariza sahifasi
-- [ ] Sotuvchi kabinet skeleti
-- [ ] Mobil tekshiruv (360px)
+- [x] `bn-theme.ts` — rang, konstanta, yordamchi funksiyalar
+- [x] `bn-header.tsx` — logo, qidiruv, savat, profil (mobil menyu bilan)
+- [x] `bn-footer.tsx`
+- [x] `bn-product-card.tsx` — mahsulot kartasi (bozor narxi belgisi bilan)
+- [x] `bn-shop-card.tsx` — do'kon kartasi
+- [x] `bn-market-card.tsx` — bozor kartasi
+- [x] Bosh sahifa — hero qidiruv, kategoriyalar, bozorlar, mahsulotlar
+- [x] Kategoriya sahifasi — filtr paneli (atributlarga moslanuvchi)
+- [x] Mahsulot sahifasi — galereya, narx bloki, sotuvchi bloki, sharhlar
+- [x] Bozor sahifasi — bozor haqida, do'konlar ro'yxati
+- [x] Do'kon sahifasi — profil, mahsulotlar
+- [x] Savat sahifasi
+- [x] Checkout sahifasi (3 usul: pickup / delivery / inspect)
+- [x] Sotuvchi ariza sahifasi
+- [x] Sotuvchi kabinet skeleti
+- [x] Mobil tekshiruv (360px)
 
 ### FAZA 2 — Ma'lumot bazasi
 
