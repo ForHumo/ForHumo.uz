@@ -9,6 +9,7 @@ import { NxVerifiedBadge } from "./nx-verified-badge";
 import { usePresence } from "@/lib/presence";
 import { upload } from "@vercel/blob/client";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
+import { NxBanModal, type BanInfo } from "./nx-ban-modal";
 
 interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
 interface Conv { conversationId: string; other: Other | null; lastMessageText: string | null; lastMessageAt: string; lastMine: boolean; unread: boolean }
@@ -169,7 +170,18 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             const res = await fetch(`/api/nexus/messages/${selected.conversationId}`, {
                 method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
             });
-            if (res.ok) { const d = await res.json(); setMessages(m => m.map(x => x.id === temp.id ? d.message : x)); loadConvs(); }
+            if (res.ok) {
+                const d = await res.json();
+                setMessages(m => m.map(x => x.id === temp.id ? d.message : x));
+                loadConvs();
+            } else {
+                setMessages(m => m.filter(x => x.id !== temp.id));
+                const wasBanned = await handleMaybeBan(res);
+                if (!wasBanned) {
+                    const e = await res.json().catch(() => ({}));
+                    alert(e.error || "Jo'natib bo'lmadi");
+                }
+            }
         } finally { setSending(false); }
     }
 
@@ -287,8 +299,11 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 loadConvs();
             } else {
                 setMessages(m => m.filter(x => x.id !== temp.id));
-                const e = await res.json().catch(() => ({}));
-                alert(e.error || "Jo'natib bo'lmadi");
+                const wasBanned = await handleMaybeBan(res);
+                if (!wasBanned) {
+                    const e = await res.json().catch(() => ({}));
+                    alert(e.error || "Jo'natib bo'lmadi");
+                }
             }
         } catch (e) {
             setMessages(m => m.filter(x => x.id !== temp.id));
@@ -301,6 +316,27 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
 
     // Video circle recorder state
     const [circleOpen, setCircleOpen] = useState(false);
+
+    // Ban modal — foydalanuvchi bloklanganida
+    const [ban, setBan] = useState<BanInfo | null>(null);
+
+    // API 403 + code:"USER_BANNED" bo'lsa ban ma'lumotini extract qiladi
+    async function handleMaybeBan(res: Response): Promise<boolean> {
+        if (res.status !== 403) return false;
+        try {
+            const d = await res.clone().json();
+            if (d?.code === "USER_BANNED" && d.banId) {
+                setBan({
+                    banId: d.banId,
+                    reason: d.error?.match(/Sabab:\s*([^\.]+)/)?.[1]?.trim() || "other",
+                    level: 0,   // real ma'lumot GET /api/user/ban-appeal orqali olinishi mumkin
+                    expiresAt: d.expiresAt ?? null,
+                });
+                return true;
+            }
+        } catch { /* ignore */ }
+        return false;
+    }
 
     // Location — statik + jonli
     const [locSheetOpen, setLocSheetOpen] = useState(false);
@@ -779,6 +815,9 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             <NxVideoCircleRecorder open={circleOpen}
                 onClose={() => setCircleOpen(false)}
                 onRecorded={(file, dur) => sendMedia(file, "video-circle", dur)} />
+
+            {/* AI moderation ban modali */}
+            <NxBanModal ban={ban} onClose={() => setBan(null)} />
 
             {/* Joylashuv sheet — statik yoki jonli muddat tanlash */}
             {locSheetOpen && (
