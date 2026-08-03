@@ -55,13 +55,13 @@ export async function GET() {
     }
     const profs = await prisma.userProfile.findMany({
         where: { id: { in: candidateIds }, username: { not: null }, accountType: "GOOGLE" },
-        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
     });
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
     const suggestedUsers = candidateIds
         .map(id => pMap[id])
         .filter((u): u is NonNullable<typeof u> => !!u)
-        .map(u => ({ name: u.name, username: u.username, image: u.image, verified: isVerifiedProfile(u), isFollowing: false, isMe: false }));
+        .map(u => ({ name: u.name, username: u.username, image: u.image, verified: isVerifiedProfile(u), verifiedCategory: isVerifiedProfile(u) ? (u.verifiedCategory || null) : null, isFollowing: false, isMe: false }));
 
     return NextResponse.json({ trendingTags, suggestedUsers });
 }

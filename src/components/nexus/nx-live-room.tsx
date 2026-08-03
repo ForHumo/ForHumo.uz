@@ -6,8 +6,9 @@ import {
 } from "lucide-react";
 import { Room, RoomEvent, Track, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
+import { NxVerifiedBadge } from "./nx-verified-badge";
 
-interface LAuthor { name: string | null; username: string | null; image: string | null; verified: boolean }
+interface LAuthor { name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
 interface RoomStream {
     id: string; title: string; category: string | null; privacy: string;
     status: "UPCOMING" | "LIVE" | "ENDED";
@@ -263,7 +264,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         <img src={avatarOf(stream?.author ?? null)} alt="" className="w-7 h-7 rounded-full object-cover bg-white" style={{ border: "1px solid rgba(239,68,68,0.3)" }} />
                         <span className="text-xs font-bold text-white truncate inline-flex items-center gap-1">
                             {stream?.author?.name || stream?.author?.username || "Streamer"}
-                            {stream?.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
+                            {stream?.author?.verified && <NxVerifiedBadge category={stream.author.verifiedCategory} size={12} />}
                         </span>
                         {isLive && (
                             <span className="ml-auto flex items-center gap-1 text-[11px] font-black" style={{ color: "#F97316" }}>
@@ -286,7 +287,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 <div className="flex items-center justify-between px-2.5 py-1.5" style={{ background: "linear-gradient(135deg,#F59E0B,#EF4444)" }}>
                                     <span className="inline-flex items-center gap-1 text-[11px] font-black text-white">
                                         <Gift className="w-3 h-3" />{m.author?.name || m.author?.username || "Foydalanuvchi"}
-                                        {m.author?.verified && <BadgeCheck className="w-3 h-3 text-white" />}
+                                        {m.author?.verified && <NxVerifiedBadge category={(m.author as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
                                     </span>
                                     <span className="text-[11px] font-black text-white">{formatMoney(m.tipAmount ?? 0, currency)}</span>
                                 </div>
@@ -298,7 +299,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 <p className="text-xs leading-relaxed min-w-0">
                                     <span className="font-black mr-1.5 inline-flex items-center gap-0.5" style={{ color: "rgba(240,160,140,0.95)" }}>
                                         {m.author?.name || m.author?.username || "Foydalanuvchi"}
-                                        {m.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
+                                        {m.author?.verified && <NxVerifiedBadge category={(m.author as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
                                     </span>
                                     <span style={{ color: "rgba(210,220,245,0.9)" }}>{m.text}</span>
                                 </p>

@@ -29,7 +29,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     }
 
     const author = await prisma.userProfile.findUnique({
-        where: { id: video.profileId }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, country: true },
+        where: { id: video.profileId }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true, country: true },
     });
 
     let isLiked = false, isSubscribed = false, isPurchased = false;
@@ -78,7 +78,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             views: video.views, createdAt: video.createdAt,
             likeCount: video._count.likes, commentCount: video._count.comments,
             isLiked, isSubscribed, isMine: video.profileId === meId,
-            author: author ? { name: author.name, username: author.username, image: author.image, verified: isVerifiedProfile(author) } : null,
+            author: author ? { name: author.name, username: author.username, image: author.image, verified: isVerifiedProfile(author), verifiedCategory: isVerifiedProfile(author) ? (author.verifiedCategory || null) : null } : null,
         },
         recommended,
     });

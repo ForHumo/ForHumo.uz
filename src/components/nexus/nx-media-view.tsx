@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { NxTrackCreate } from "./nx-track-create";
 import { formatMoney } from "@/lib/money";
+import { NxVerifiedBadge } from "./nx-verified-badge";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MediaView — REAL: Kino = NexusVideo(category=kino), Musiqa/Podkast/Audiokitob =
@@ -18,12 +19,12 @@ interface Track {
     id: string; title: string; artist: string | null; audioUrl: string; coverUrl: string | null;
     durationSec: number; kind: string; genre: string | null; plays: number;
     likeCount: number; isLiked: boolean; isMine: boolean; createdAt: string;
-    uploader: { name: string | null; username: string | null; verified: boolean } | null;
+    uploader: { name: string | null; username: string | null; verified: boolean; verifiedCategory?: string | null } | null;
 }
 interface KinoVid {
     id: string; title: string; thumbUrl: string | null; durationSec: number; views: number;
     orientation: "HORIZONTAL" | "VERTICAL"; locked: boolean; price: number; priceCurrency?: "UZS" | "USD";
-    author: { name: string | null; username: string | null; image: string | null; verified: boolean } | null;
+    author: { name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null } | null;
 }
 
 const MEDIA_TABS = [
@@ -237,7 +238,7 @@ function TrackRow({ title, accent, items, onPlay, onLike, empty, hideIfEmpty }: 
                             <p className="text-[10px] truncate flex items-center gap-1" style={{ color: "rgba(120,150,135,0.85)" }}>
                                 <span className="truncate inline-flex items-center gap-0.5">
                                     {t.artist || t.uploader?.name || t.uploader?.username || "Noma'lum"}
-                                    {t.uploader?.verified && <BadgeCheck className="w-2.5 h-2.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                    {t.uploader?.verified && <NxVerifiedBadge category={t.uploader?.verifiedCategory} size={10} />}
                                 </span>
                                 <span>·</span>
                                 <span className="flex-shrink-0">{fmtN(t.plays)} tinglash</span>

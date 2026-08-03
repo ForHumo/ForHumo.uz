@@ -39,7 +39,7 @@ export async function GET() {
 
     const caller = await prisma.userProfile.findUnique({
         where: { id: c.callerId },
-        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
     });
     return NextResponse.json({
         call: { id: c.id, kind: c.kind, status: c.status, createdAt: c.createdAt, caller },

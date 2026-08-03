@@ -49,7 +49,7 @@ export async function GET(req: Request) {
     // Mualliflar
     const authorIds = [...new Set(streams.map(s => s.profileId))];
     const profs = await prisma.userProfile.findMany({
-        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
     });
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 
@@ -72,7 +72,7 @@ export async function GET(req: Request) {
             scheduledAt: s.scheduledAt, startedAt: s.startedAt, endedAt: s.endedAt,
             viewers: viewerCounts[s.id] ?? 0, peakViewers: s.peakViewers, likes: s.likes,
             createdAt: s.createdAt,
-            author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,
+            author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null,
         };
     });
 

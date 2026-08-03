@@ -1050,6 +1050,7 @@ enum NexusNotifType {
   MENTION
   SUB_EXPIRING
   CALL_MISSED
+  MOD_WARN         // AI moderatsiya yumshoq ogohlantirish (yaqin do'st + o'rta severity)
 }
 
 // Story — 24 soatlik vaqtinchalik kontent

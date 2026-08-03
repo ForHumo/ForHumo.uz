@@ -142,7 +142,7 @@ export async function GET(req: Request) {
 
     const authorIds = [...new Set(videos.map(v => v.profileId))];
     const profs = await prisma.userProfile.findMany({
-        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, country: true },
+        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true, country: true },
     });
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 
@@ -169,7 +169,7 @@ export async function GET(req: Request) {
             price: v.price, priceCurrency: currencyForCountry(p?.country), isMature: v.isMature, isSaved: savedIds.has(v.id), locked,
             views: v.views, createdAt: v.createdAt,
             likeCount: v._count.likes, commentCount: v._count.comments,
-            author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,
+            author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null,
         };
     });
 

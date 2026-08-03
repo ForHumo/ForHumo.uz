@@ -6,7 +6,7 @@ import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Bell, Heart, MessageCircle, UserPlus, Reply,
     CheckCheck, Loader2, Flame, BadgeCheck, Music2, Coins, Radio, Gift, AtSign, BellRing, BellOff, Star, PhoneMissed,
-    Settings2, Check,
+    Settings2, Check, ShieldAlert,
 } from "lucide-react";
 import { NOTIF_TYPES, NOTIF_LABELS, type NotifTypeKey } from "@/lib/notif-types";
 import { formatMoney, type Currency } from "@/lib/money";
@@ -14,7 +14,7 @@ import { getPushState, subscribePush, unsubscribePush, type PushState } from "@/
 import { RINGTONE_LABELS, RINGTONE_DESCRIPTIONS, previewRingtone, type RingtoneVariant } from "@/lib/nexus-ringtone";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
-type NType = "LIKE" | "COMMENT" | "FOLLOW" | "REPLY" | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION" | "SUB_EXPIRING" | "CALL_MISSED";
+type NType = "LIKE" | "COMMENT" | "FOLLOW" | "REPLY" | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION" | "SUB_EXPIRING" | "CALL_MISSED" | "MOD_WARN";
 interface NActor { name: string | null; username: string | null; image: string | null; verified: boolean }
 interface Notif {
     id: string; type: NType; read: boolean; createdAt: string; actor: NActor | null; postText: string | null;
@@ -25,10 +25,12 @@ interface Notif {
 const TYPE_ICONS: Record<NType, React.ElementType> = {
     LIKE: Heart, COMMENT: MessageCircle, FOLLOW: UserPlus, REPLY: Reply,
     VIDEO_LIKE: Heart, VIDEO_COMMENT: MessageCircle, TRACK_LIKE: Music2, PURCHASE: Coins, LIVE: Radio, TIP: Gift, MENTION: AtSign, SUB_EXPIRING: Star, CALL_MISSED: PhoneMissed,
+    MOD_WARN: ShieldAlert,
 };
 const TYPE_COLORS: Record<NType, string> = {
     LIKE: "#EF4444", COMMENT: "#2B3EE8", FOLLOW: "#10B981", REPLY: "#8B5CF6",
     VIDEO_LIKE: "#EF4444", VIDEO_COMMENT: "#8B5CF6", TRACK_LIKE: "#10B981", PURCHASE: "#00CEC8", LIVE: "#EF4444", TIP: "#F59E0B", MENTION: "#2B3EE8", SUB_EXPIRING: "#8B5CF6", CALL_MISSED: "#EF4444",
+    MOD_WARN: "#F59E0B",
 };
 const TYPE_TEXT: Record<NType, string> = {
     LIKE: "postingizni yoqtirdi",
@@ -44,6 +46,7 @@ const TYPE_TEXT: Record<NType, string> = {
     MENTION: "sizni eslatib o'tdi",
     SUB_EXPIRING: "ijodkoriga obunangiz tugayapti",
     CALL_MISSED: "sizni chaqirdi (javob berilmadi)",
+    MOD_WARN: "AI moderatsiya sizning oxirgi xabaringiz shubhali topdi (agar hazil bo'lsa, do'stingiz noto'g'ri tushunmasligiga ishonch hosil qiling)",
 };
 
 // Bildirishnoma qaysi kontentga olib boradi

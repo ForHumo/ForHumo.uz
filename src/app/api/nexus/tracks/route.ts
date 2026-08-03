@@ -92,7 +92,7 @@ export async function GET(req: Request) {
 
     const authorIds = [...new Set(tracks.map(t => t.profileId))];
     const profs = await prisma.userProfile.findMany({
-        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+        where: { id: { in: authorIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
     });
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 
@@ -112,7 +112,7 @@ export async function GET(req: Request) {
                 durationSec: t.durationSec, kind: t.kind, genre: t.genre, plays: t.plays,
                 likeCount: t._count.likes, isLiked: likedIds.has(t.id),
                 isMine: t.profileId === meId, createdAt: t.createdAt,
-                uploader: p ? { name: p.name, username: p.username, verified: isVerifiedProfile(p) } : null,
+                uploader: p ? { name: p.name, username: p.username, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null,
             };
         }),
     });

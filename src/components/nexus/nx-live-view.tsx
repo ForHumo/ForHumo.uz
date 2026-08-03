@@ -6,8 +6,9 @@ import {
     Radio, Hash, Loader2, ChevronRight, Eye, Clock, BadgeCheck, CalendarClock,
 } from "lucide-react";
 import { NxLiveRoom } from "./nx-live-room";
+import { NxVerifiedBadge } from "./nx-verified-badge";
 
-interface LAuthor { name: string | null; username: string | null; image: string | null; verified: boolean }
+interface LAuthor { name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
 export interface LiveStream {
     id: string; title: string; category: string | null; status: "UPCOMING" | "LIVE" | "ENDED";
     scheduledAt: string | null; startedAt: string | null; endedAt: string | null;
@@ -207,7 +208,7 @@ function StreamCard({ s, onOpen, badge, meta, dim }: {
                 <div className="min-w-0">
                     <h4 className="text-sm font-bold text-white leading-snug line-clamp-2 group-hover:text-[#F97316] transition-colors">{s.title}</h4>
                     <p className="text-[11px] mt-1 flex items-center gap-1.5" style={{ color: "rgba(150,130,150,0.85)" }}>
-                        <span className="truncate inline-flex items-center gap-0.5">{s.author?.name || s.author?.username || "Streamer"}{s.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}</span>
+                        <span className="truncate inline-flex items-center gap-0.5">{s.author?.name || s.author?.username || "Streamer"}{s.author?.verified && <NxVerifiedBadge category={(s.author as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}</span>
                         <span>·</span>
                         <span className="flex items-center gap-0.5 flex-shrink-0">{meta}</span>
                     </p>

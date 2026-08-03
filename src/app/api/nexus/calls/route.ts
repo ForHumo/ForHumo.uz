@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     if (pusher) {
         const meProf = await prisma.userProfile.findUnique({
             where: { id: me.id },
-            select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+            select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
         });
         pusher.trigger(userChannel(peer.id), "call:incoming", {
             id: call.id, kind: call.kind, caller: meProf,
@@ -86,7 +86,7 @@ export async function GET() {
     });
     const peerIds = [...new Set(calls.map(c => (c.callerId === me.id ? c.calleeId : c.callerId)))];
     const profs = peerIds.length
-        ? await prisma.userProfile.findMany({ where: { id: { in: peerIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } })
+        ? await prisma.userProfile.findMany({ where: { id: { in: peerIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true } })
         : [];
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 

@@ -7,8 +7,9 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { X, Phone, Video, Clock, PhoneMissed, PhoneIncoming, PhoneOutgoing, BadgeCheck, Loader2, Mic, Users } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
+import { NxVerifiedBadge } from "./nx-verified-badge";
 
-interface CallPeer { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean }
+interface CallPeer { id: string; name: string | null; username: string | null; image: string | null; humoId: string | null; verified: boolean; verifiedCategory?: string | null }
 interface CallRecording { id: string; audioUrl: string; durationSec: number; sizeKb: number }
 interface GroupCallRecording { id: string; audioUrl: string; durationSec: number; sizeKb: number }
 interface GroupCallItem { id: string; roomName: string; title: string | null; status: "ACTIVE" | "ENDED"; createdAt: string; endedAt: string | null; participantCount: number; isHost: boolean; recordings?: GroupCallRecording[] }
@@ -173,7 +174,7 @@ export function NxCalls() {
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-1.5">
                                                     <p className="truncate text-sm font-bold text-white">{peerLabel}</p>
-                                                    {c.peer?.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0" style={{ color: "#00CEC8" }} />}
+                                                    {c.peer?.verified && <NxVerifiedBadge category={c.peer.verifiedCategory} size={14} />}
                                                     {c.recordings && c.recordings.length > 0 && (
                                                         <Mic className="h-3 w-3 shrink-0" style={{ color: "#00CEC8" }} />
                                                     )}

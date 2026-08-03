@@ -38,7 +38,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const ids = [...new Set(msgs.map(m => m.profileId))];
     const profs = ids.length
-        ? await prisma.userProfile.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } })
+        ? await prisma.userProfile.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true } })
         : [];
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 
@@ -47,7 +47,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             const p = pMap[m.profileId];
             return {
                 id: m.id, text: m.text, tipAmount: m.tipAmount, createdAt: m.createdAt,
-                author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,
+                author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null,
             };
         }),
     });
@@ -59,7 +59,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const me = await prisma.userProfile.findUnique({
         where: { email: session.user.email },
-        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true },
+        select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
     });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
@@ -101,7 +101,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         return NextResponse.json({
             message: {
                 id: sc.id, text: sc.text, tipAmount: sc.tipAmount, createdAt: sc.createdAt,
-                author: { name: me.name, username: me.username, image: me.image, verified: isVerifiedProfile(me) },
+                author: { name: me.name, username: me.username, image: me.image, verified: isVerifiedProfile(me), verifiedCategory: isVerifiedProfile(me) ? (me.verifiedCategory || null) : null },
             },
         });
     }

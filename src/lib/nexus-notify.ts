@@ -6,7 +6,7 @@ import { getBlockedIds } from "@/lib/nexus-block";
 export type NexusNotifType =
     | "LIKE" | "COMMENT" | "FOLLOW" | "REPLY"
     | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION" | "SUB_EXPIRING"
-    | "CALL_MISSED";
+    | "CALL_MISSED" | "MOD_WARN";
 
 const PUSH_TEXT: Record<NexusNotifType, string> = {
     LIKE: "postingizni yoqtirdi", COMMENT: "postingizga izoh qoldirdi", FOLLOW: "sizni kuzatdi",
@@ -14,6 +14,7 @@ const PUSH_TEXT: Record<NexusNotifType, string> = {
     TRACK_LIKE: "trekingizni yoqtirdi", PURCHASE: "videongizni sotib oldi", LIVE: "jonli efir boshladi",
     TIP: "sizni qo'llab-quvvatladi", MENTION: "sizni eslatib o'tdi", SUB_EXPIRING: "obunangiz tugayapti",
     CALL_MISSED: "sizni chaqirdi (javob berilmadi)",
+    MOD_WARN: "AI moderatsiya sizning oxirgi xabaringiz shubhali topdi (agar hazil bo'lsa, do'stingiz noto'g'ri tushunmasligiga ishonch hosil qiling)",
 };
 function pushUrl(o: { postId?: string | null; videoId?: string | null; trackId?: string | null; liveId?: string | null; callId?: string | null }): string {
     if (o.videoId) return `/nexus/v/${o.videoId}`;
@@ -36,7 +37,9 @@ export async function nexusNotify(opts: {
     callId?: string | null;
     amount?: number | null;
 }): Promise<void> {
-    if (!opts.recipientId || opts.recipientId === opts.actorId) return; // o'ziga emas
+    // Odatda o'ziga bildirishnoma yubormaymiz — istisno: tizim ogohlantirishlari (MOD_WARN)
+    if (!opts.recipientId) return;
+    if (opts.recipientId === opts.actorId && opts.type !== "MOD_WARN") return;
     try {
         await prisma.nexusNotification.create({
             data: {

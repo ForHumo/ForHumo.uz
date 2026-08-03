@@ -11,6 +11,7 @@ import { moderateContent } from "@/lib/ai-moderate";
 import { relationshipScore, moderationAction } from "@/lib/moderation-relationship";
 import { issueBan, isHardCategory } from "@/lib/moderation-ladder";
 import { prisma } from "@/lib/prisma";
+import { nexusNotify } from "@/lib/nexus-notify";
 
 /** DM xabari yozilgach fon'da chaqiriladi (after() yordamida javob kutmaydi). */
 export async function moderateDmMessage(opts: {
@@ -46,10 +47,17 @@ export async function moderateDmMessage(opts: {
         // "log" — hech narsa qilmaymiz (kontekstga qarab tolerantroq)
         if (action === "log") return;
 
-        // "warn" — kelajakda foydalanuvchiga toast/modal ("Bu xabar tahdid ko'rinadi...").
-        // Hozircha faqat log (UI hook keyingi bosqichda).
+        // "warn" — yaqin do'st + o'rta severity. Ban qo'yilmaydi lekin sender'ga
+        // yumshoq eslatma yuboriladi: hazil bo'lsa mayli, lekin AI shubhali topdi.
+        // Bir xabarga bir marta ogohlantirish yetarli.
         if (action === "warn") {
-            // TODO: bildirishnoma yaratish yoki client-side warning
+            try {
+                await nexusNotify({
+                    recipientId: opts.senderId,
+                    actorId: opts.senderId,        // o'ziga (tizim ogohlantirishi)
+                    type: "MOD_WARN",
+                });
+            } catch { /* fail-open */ }
             return;
         }
 
