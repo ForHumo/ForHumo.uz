@@ -8,6 +8,7 @@ import { NxPlayerProvider } from "./nx-player-ctx";
 import { NxShare } from "./nx-share";
 import { NexusFollowList } from "./nexus-follow-list";
 import { NexusProfileContent } from "./nexus-profile-content";
+import { NxHighlights } from "./nx-highlights";
 import { NxTipSheet } from "./nx-tip-sheet";
 import { NxSubscribeSheet } from "./nx-subscribe-sheet";
 import { NxCreatorSubSettings } from "./nx-creator-sub-settings";
@@ -314,10 +315,14 @@ export function NexusProfile({ username }: { username: string }) {
                                 </p>
                             </div>
                         ) : (
-                            <NexusProfileContent
-                                username={username}
-                                counts={{ posts: data.stats.posts, videos: data.stats.videos, tracks: data.stats.tracks, lives: data.stats.lives }}
-                            />
+                            <>
+                                {/* Story Highlights qatori (24s'dan tashqari saqlangan story kolleksiyalari) */}
+                                <NxHighlights username={username} isMe={data.isMe} />
+                                <NexusProfileContent
+                                    username={username}
+                                    counts={{ posts: data.stats.posts, videos: data.stats.videos, tracks: data.stats.tracks, lives: data.stats.lives }}
+                                />
+                            </>
                         )}
                     </>
                 )}
