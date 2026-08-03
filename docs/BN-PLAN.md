@@ -596,42 +596,88 @@ model BnInspectHold {
 
 ## 6. DIZAYN TIZIMI
 
-### Ranglar
+### Uch rejim (foydalanuvchi so'rovi)
 
-```
-Asosiy (oltin):     #F5B301
-Asosiy och:         #FFCE3D
-Asosiy to'q:        #C98F00
-Fon:                #0A0A0A
-Panel:              #141414
-Panel ochroq:       #1C1C1C
-Chegara:            rgba(245,179,1,0.14)
-Matn:               #FAFAFA
-Matn ikkilamchi:    #A1A1AA
-Matn xira:          #71717A
-Muvaffaqiyat:       #22C55E
-Ogohlantirish:      #F59E0B
-Xato:               #EF4444
-```
+`bn-styles.tsx` da CSS o'zgaruvchilari, `next-themes` boshqaradi.
+**Komponentlarda hech qachon hex yozilmaydi** — doim `BN.*` (`bn-theme.ts`).
 
-**Nima uchun oltin+qora:** For Humo ko'k (#2B3EE8) — BN aniq farqlanishi kerak.
-Oltin = savdo, boylik, bozor. O'zbek bozorlarining rangi.
+| | Kunduzgi | Tungi |
+|---|---|---|
+| Fon | `#FAF6EE` och bejiviy / molochniy | `#17171B` to'q kulrang (qora EMAS) |
+| Panel | `#FFFFFF` | `#1F1F25` |
+| Panel+ | `#F4EFE3` | `#28282F` |
+| Matn | `#1C1913` | `#F6F4F0` |
+| Oltin | `#B8860B` (och fonda kontrast) | `#F5B301` |
+
+**Tizim** rejimi OS sozlamasiga ergashadi.
+
+**Jonli fon:** 3 ta gradient shar sekin suzadi (`.bn-aurora`), rangi rejimga
+moslashadi, `prefers-reduced-motion` da to'xtaydi.
+
+### Logo
+
+`scripts/bn-logo.mjs` — manba `public/bn/2-version.png` (1024×1024) dan sharp
+bilan generatsiya qilinadi. **Manba o'zgarsa skriptni qayta ishga tushiring.**
+
+| Fayl | O'lcham | Qayerda |
+|---|---|---|
+| `logo.png` | 512 | Kunduzgi rejim |
+| `logo-dark.png` | 512 | Tungi rejim (qora "B" → oq, oltin "N" saqlanadi) |
+| `logo-mark.png` / `-dark.png` | 256 | Belgi |
+| `favicon.png` | 64 | Brauzer tab |
+| `apple-icon.png` | 180 | iOS |
+| `og.png` | 1200×630 | Ulashuv |
 
 ### Tipografiya
 
 - Sarlavha: `font-black` (900), `-0.02em` letter-spacing
-- Matn: `font-medium` (500)
 - Narx: `font-black` + `tabular-nums`
 
 ### Qoidalar (buzilmaydi)
 
 1. **Emoji YO'Q.** Faqat Lucide ikonlar.
 2. **Native `<select>` YO'Q.** Doim custom dropdown.
-3. **Narx doim `formatMoney()` orqali.** Qo'lda `so'm` yozilmaydi.
-4. **Mobil birinchi.** Har sahifa 360px'da ishlashi shart.
-5. **uz/ru majburiy**, en ixtiyoriy. (Bozorda ruscha ko'p)
+3. **Hex YO'Q.** Doim `BN.*` (CSS o'zgaruvchisi) — aks holda rejim buziladi.
+4. **Havolalar `BnLink` orqali** (`@/i18n/routing` Link EMAS) — toza URL uchun.
+5. **Mobil birinchi.** Har sahifa 360px'da ishlashi shart.
+6. uz / ru majburiy, en ixtiyoriy — **eng oxirida qilinadi** (foydalanuvchi qarori).
 
----
+### URL siyosati
+
+`BnBaseProvider` layout'da host'ni o'qib `base` beradi:
+
+| Domen | Havola kodda | Foydalanuvchi ko'radi |
+|---|---|---|
+| bozornarxida.uz | `/bozorlar` | `bozornarxida.uz/bozorlar` |
+| forhumo.uz | `/bozorlar` | `forhumo.uz/uz/bn/bozorlar` |
+
+### Pastki navbar (muallaq)
+
+`bn-navbar.tsx` — `fixed` pastda, hech narsaga tegmaydi, foni xira shaffof
+(`backdrop-blur 20px`), safe-area hisobga olingan.
+
+**Asosiy · Katalog · Sevimlilar · Scan · Profil**
+
+### Bosh sahifa tuzilishi
+
+1. Ikki katta karta: **Bozorlar** / **Do'konlar**
+   (hero matn va ikkinchi qidiruv YO'Q — qidiruv faqat header'da)
+2. **TOP 10 ishonchli do'kon** — AI reytingi (`baho × log10(baho soni)`)
+   + "Barchasini ko'rish" tugmasi
+3. To'rt mahsulot bo'limi — **Bozor narxidan arzon · Yangi · Top · Mavsumiy**
+   Har biri **5 ustun × 2 qator = 10 ta**, "Yana yuklash" **5 qatordan** qo'shadi
+4. Sotuvchi CTA
+
+**Kategoriyalar bosh sahifada ko'rsatilmaydi** — `/katalog` sahifasida.
+
+### Header
+
+O'ng ustun: `[Til] [Rejim] [Bildirishnoma] [Savat] [Profil]`,
+aynan ostida bir xil kenglikda **"Sotuvchi bo'lish"**.
+
+Ikkinchi qator: Katalog · Bozorlar · Do'konlar · Buyurtmalarim ·
+Mening joylashuvim · Topshirish punkti · **Humo Support**
+(→ `forhumo.uz/{locale}/support/bn/chat`, yangi oynada ochiladi).
 
 ## 7. SAHIFALAR RO'YXATI
 
@@ -639,13 +685,17 @@ Oltin = savdo, boylik, bozor. O'zbek bozorlarining rangi.
 
 | Yo'l | Nomi | Tavsif |
 |---|---|---|
-| `/` | Bosh sahifa | Qidiruv, kategoriyalar, bozorlar, tavsiya mahsulotlar |
+| `/` | Bosh sahifa | 2 karta + TOP 10 do'kon + 4 mahsulot bo'limi |
+| `/katalog` | Katalog | Barcha kategoriyalar (bosh sahifadan ko'chirildi) |
 | `/qidiruv` | Qidiruv natijalari | Filtr paneli bilan |
 | `/k/[slug]` | Kategoriya | Kategoriya mahsulotlari + atribut filtrlari |
 | `/m/[slug]` | Bozor | Bozor haqida + ichidagi do'konlar |
 | `/bozorlar` | Bozorlar ro'yxati | Xarita + ro'yxat |
+| `/dokonlar` | Do'konlar | **Reyting bo'yicha saralangan**, 3 tab: Umumiy / Bozordagi / Boshqa |
 | `/d/[slug]` | Do'kon | Do'kon profili + mahsulotlari |
 | `/p/[slug]` | Mahsulot | Rasm, narx, bozor narxi, sotuvchi, sharhlar |
+| `/scan` | Scan | Shtrix-kod/QR skaner → mahsulotni sotayotgan do'konlar |
+| `/punktlar` | Topshirish punktlari | Olib ketish nuqtalari |
 
 ### Xaridor (kirish kerak)
 
@@ -656,6 +706,10 @@ Oltin = savdo, boylik, bozor. O'zbek bozorlarining rangi.
 | `/buyurtmalarim` | Buyurtmalarim |
 | `/buyurtmalarim/[code]` | Buyurtma tafsiloti |
 | `/sevimlilar` | Sevimlilar |
+| `/profil` | Profil (Humo ID) |
+| `/bildirishnomalar` | Bildirishnomalar |
+| `/joylashuv` | Mening joylashuvim |
+| `/sozlamalar` | Sozlamalar |
 
 ### Sotuvchi
 
