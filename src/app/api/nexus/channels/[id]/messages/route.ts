@@ -6,6 +6,7 @@ import { isVerifiedProfile } from "@/lib/nexus";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { moderateOnCreate } from "@/lib/moderation";
 import { filterMediaUrls } from "@/lib/media-url";
+import { banGuard } from "@/lib/moderation-guard";
 
 async function meAndMember(email: string, channelId: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } });
@@ -34,8 +35,26 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     });
     const msgs = since ? rows : rows.reverse();
     const ids = [...new Set(msgs.map(m => m.senderId))];
-    const profs = ids.length ? await prisma.userProfile.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } }) : [];
+    const profs = ids.length ? await prisma.userProfile.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true } }) : [];
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
+
+    // Poll statistikalari
+    const pollIds = msgs.filter(m => !!m.pollQuestion).map(m => m.id);
+    const pollVoteMap = new Map<string, { counts: number[]; myVotes: number[]; total: number }>();
+    if (pollIds.length > 0) {
+        const allVotes = await prisma.nexusChannelPollVote.findMany({
+            where: { messageId: { in: pollIds } },
+            select: { messageId: true, profileId: true, optionIndex: true },
+        });
+        for (const pmId of pollIds) {
+            const m = msgs.find(x => x.id === pmId)!;
+            const votes = allVotes.filter(v => v.messageId === pmId);
+            const counts = m.pollOptions.map((_, i) => votes.filter(v => v.optionIndex === i).length);
+            const myVotes = votes.filter(v => v.profileId === me.id).map(v => v.optionIndex);
+            const total = new Set(votes.map(v => v.profileId)).size;
+            pollVoteMap.set(pmId, { counts, myVotes, total });
+        }
+    }
 
     // o'qildi belgilash
     if (member) after(() => prisma.nexusChannelMember.update({ where: { id: member.id }, data: { lastReadAt: new Date() } }).catch(() => { }));
@@ -43,9 +62,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     return NextResponse.json({
         messages: msgs.map(m => {
             const p = pMap[m.senderId];
+            const pv = pollVoteMap.get(m.id);
             return {
                 id: m.id, text: m.text, media: m.media, createdAt: m.createdAt, mine: m.senderId === me.id,
-                author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p) } : null,
+                author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null,
+                pollQuestion: m.pollQuestion, pollOptions: m.pollOptions, pollExpiresAt: m.pollExpiresAt, pollMulti: m.pollMulti,
+                pollVoteCounts: pv?.counts ?? null, pollMyVotes: pv?.myVotes ?? null, pollTotal: pv?.total ?? null,
             };
         }),
     });
@@ -64,14 +86,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const canPost = channel.type === "GROUP" ? true : (member.role === "OWNER" || member.role === "ADMIN");
     if (!canPost) return NextResponse.json({ error: "Bu kanalga faqat adminlar yoza oladi" }, { status: 403 });
 
-    const { text, media } = await req.json();
+    const body = await req.json();
+    const { text, media, pollQuestion, pollOptions, pollExpiresAt, pollMulti } = body as {
+        text?: string; media?: unknown;
+        pollQuestion?: string; pollOptions?: string[]; pollExpiresAt?: string; pollMulti?: boolean;
+    };
     const cleanText = typeof text === "string" ? text.trim().slice(0, 4000) : "";
     const cleanMedia: string[] = filterMediaUrls(media, 9);
-    if (!cleanText && !cleanMedia.length) return NextResponse.json({ error: "Bo'sh bo'lmasin" }, { status: 400 });
+    const isPoll = !!pollQuestion?.trim() && Array.isArray(pollOptions) && pollOptions.length >= 2 && pollOptions.length <= 10;
+    if (!cleanText && !cleanMedia.length && !isPoll) return NextResponse.json({ error: "Bo'sh bo'lmasin" }, { status: 400 });
+    const banned = await banGuard(me.id); if (banned) return banned;
     if (await nexusRateLimited(me.id, "channelMsg")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const msg = await prisma.nexusChannelMessage.create({
-        data: { channelId: id, senderId: me.id, text: cleanText || null, media: cleanMedia },
+        data: {
+            channelId: id, senderId: me.id, text: cleanText || null, media: cleanMedia,
+            pollQuestion: isPoll ? pollQuestion!.trim().slice(0, 300) : null,
+            pollOptions: isPoll ? pollOptions!.map(o => String(o).trim().slice(0, 100)).filter(Boolean).slice(0, 10) : [],
+            pollExpiresAt: isPoll && pollExpiresAt ? new Date(pollExpiresAt) : null,
+            pollMulti: isPoll ? !!pollMulti : false,
+        },
     });
     if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "CHANNEL_MESSAGE", targetId: msg.id, text: cleanText, kind: "kanal xabari", authorId: me.id }));
 
@@ -79,6 +113,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         message: {
             id: msg.id, text: msg.text, media: msg.media, createdAt: msg.createdAt, mine: true,
             author: { name: me.name, username: me.username, image: me.image, verified: isVerifiedProfile(me) },
+            pollQuestion: msg.pollQuestion, pollOptions: msg.pollOptions, pollExpiresAt: msg.pollExpiresAt, pollMulti: msg.pollMulti,
+            pollVoteCounts: isPoll ? msg.pollOptions.map(() => 0) : null,
+            pollMyVotes: isPoll ? [] : null, pollTotal: isPoll ? 0 : null,
         },
     });
 }

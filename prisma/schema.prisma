@@ -1498,8 +1498,25 @@ model NexusChannelMessage {
   text      String?
   media     String[] @default([])
   hidden    Boolean  @default(false)
+  // So'rovnoma (Telegram uslubi) — foydalanuvchi so'rovi bo'yicha
+  pollQuestion  String?
+  pollOptions   String[]  @default([])
+  pollExpiresAt DateTime?
+  pollMulti     Boolean   @default(false)
+  pollVotes     NexusChannelPollVote[]
   createdAt DateTime @default(now())
   @@index([channelId, createdAt])
+}
+
+model NexusChannelPollVote {
+  id          String              @id @default(cuid())
+  messageId   String
+  message     NexusChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  profileId   String
+  optionIndex Int
+  createdAt   DateTime            @default(now())
+  @@unique([messageId, profileId, optionIndex])
+  @@index([messageId])
 }
 
 // Web Push obunasi — brauzer push bildirishnomalari uchun (VAPID).

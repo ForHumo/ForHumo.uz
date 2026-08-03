@@ -2,13 +2,19 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff,
+    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2,
 } from "lucide-react";
+import { NxPollCreate } from "./nx-poll-create";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean }
 interface ChDetail { id: string; type: ChType; name: string; handle: string | null; description: string | null; avatarUrl: string | null; isPrivate: boolean; memberCount: number; isOwner: boolean; isMember: boolean; role: string | null; canPost: boolean }
-interface ChMsg { id: string; text: string | null; media: string[]; createdAt: string; mine: boolean; author: { name: string | null; username: string | null; image: string | null; verified: boolean } | null }
+interface ChMsg {
+    id: string; text: string | null; media: string[]; createdAt: string; mine: boolean;
+    author: { name: string | null; username: string | null; image: string | null; verified: boolean } | null;
+    pollQuestion?: string | null; pollOptions?: string[]; pollExpiresAt?: string | null; pollMulti?: boolean;
+    pollVoteCounts?: number[] | null; pollMyVotes?: number[] | null; pollTotal?: number | null;
+}
 
 function avatarFor(c: { name: string; avatarUrl?: string | null }) {
     return c.avatarUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${encodeURIComponent(c.name)}`;
@@ -160,6 +166,43 @@ function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }) {
     const [busy, setBusy] = useState(false);
     const [joinBusy, setJoinBusy] = useState(false);
     const [membersOpen, setMembersOpen] = useState(false);
+    const [pollOpen, setPollOpen] = useState(false);
+
+    async function sendPoll(poll: { question: string; options: string[]; expiresAt: string | null; multi: boolean }) {
+        const r = await fetch(`/api/nexus/channels/${id}/messages`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                text: "", pollQuestion: poll.question, pollOptions: poll.options,
+                pollExpiresAt: poll.expiresAt, pollMulti: poll.multi,
+            }),
+        });
+        if (r.ok) {
+            const d = await r.json();
+            setMsgs(prev => [...prev, d.message].slice(-200));
+            lastTs.current = d.message.createdAt;
+            setPollOpen(false);
+        } else {
+            const e = await r.json().catch(() => ({}));
+            throw new Error(e.error || "Xato");
+        }
+    }
+
+    async function votePoll(messageId: string, optionIndex: number) {
+        const r = await fetch(`/api/nexus/channels/${id}/messages/${messageId}/poll-vote`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ optionIndex }),
+        });
+        if (r.ok) {
+            const d = await r.json();
+            setMsgs(prev => prev.map(m => m.id === messageId
+                ? { ...m, pollVoteCounts: d.counts, pollMyVotes: d.myVotes, pollTotal: d.total }
+                : m
+            ));
+        } else {
+            const e = await r.json().catch(() => ({}));
+            alert(e.error || "Ovoz berib bo'lmadi");
+        }
+    }
     const lastTs = useRef<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -257,6 +300,54 @@ function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }) {
                                 <div className={`max-w-[78%] rounded-2xl px-3 py-2 ${m.mine ? "rounded-tr-sm" : "rounded-tl-sm"}`} style={{ background: m.mine ? "rgba(43,62,232,0.2)" : "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.15)" }}>
                                     {!m.mine && <p className="text-[11px] font-black mb-0.5 inline-flex items-center gap-1" style={{ color: "#00CEC8" }}>{m.author?.name || m.author?.username || "Foydalanuvchi"}{m.author?.verified && <BadgeCheck className="w-3 h-3" />}</p>}
                                     {m.text && <p className="text-sm whitespace-pre-wrap" style={{ color: "rgba(210,220,245,0.95)" }}>{m.text}</p>}
+                                    {/* Poll render */}
+                                    {m.pollQuestion && Array.isArray(m.pollOptions) && (() => {
+                                        const counts = m.pollVoteCounts ?? m.pollOptions.map(() => 0);
+                                        const total = m.pollTotal ?? 0;
+                                        const myVotes = m.pollMyVotes ?? [];
+                                        const expired = m.pollExpiresAt && new Date(m.pollExpiresAt) < new Date();
+                                        const showResults = myVotes.length > 0 || expired;
+                                        return (
+                                            <div className="mt-1.5 space-y-1.5" style={{ minWidth: 240 }}>
+                                                <div className="flex items-start gap-1.5">
+                                                    <BarChart2 className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-black text-white">{m.pollQuestion}</p>
+                                                        <p className="text-[10px] mt-0.5" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                                            {m.pollMulti ? "Bir necha variant" : "Bitta variant"} · {total} ovoz{expired && " · Yakunlangan"}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {m.pollOptions.map((opt, i) => {
+                                                    const cnt = counts[i] ?? 0;
+                                                    const pct = total > 0 ? Math.round((cnt / total) * 100) : 0;
+                                                    const isMyVote = myVotes.includes(i);
+                                                    return (
+                                                        <button key={i}
+                                                            onClick={() => !expired && votePoll(m.id, i)}
+                                                            disabled={!!expired}
+                                                            className="w-full text-left rounded-lg overflow-hidden relative transition active:scale-[0.98] disabled:opacity-70"
+                                                            style={{ background: "rgba(43,62,232,0.10)" }}>
+                                                            {showResults && (
+                                                                <div className="absolute inset-y-0 left-0 rounded-lg transition-all"
+                                                                    style={{
+                                                                        width: `${pct}%`,
+                                                                        background: isMyVote ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.25)",
+                                                                    }} />
+                                                            )}
+                                                            <div className="relative flex items-center gap-1.5 px-2 py-1.5">
+                                                                {showResults && (
+                                                                    <span className="text-[10px] font-black tabular-nums w-9 flex-shrink-0 text-white">{pct}%</span>
+                                                                )}
+                                                                <span className="text-xs flex-1 text-white" style={{ fontWeight: isMyVote ? 700 : 500 }}>{opt}</span>
+                                                                {isMyVote && <Check className="w-3 h-3 flex-shrink-0" style={{ color: "#00CEC8" }} strokeWidth={3} />}
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    })()}
                                     <p className="text-[9px] mt-0.5 text-right" style={{ color: "rgba(100,120,170,0.6)" }}>{timeAgo(m.createdAt)}</p>
                                 </div>
                             </div>
@@ -265,6 +356,11 @@ function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }) {
                     </div>
                     {ch.canPost ? (
                         <div className="flex gap-2 px-3 py-3 mx-1" style={{ borderTop: "1px solid rgba(43,62,232,0.12)" }}>
+                            <button onClick={() => setPollOpen(true)} title="So'rovnoma"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl text-white flex-shrink-0"
+                                style={{ background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                <BarChart2 className="w-4 h-4" />
+                            </button>
                             <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
                                 placeholder={ch.type === "CHANNEL" ? "E'lon yozing..." : "Xabar yozing..."} className="flex-1 h-10 rounded-xl px-3 text-sm text-white outline-none"
                                 style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.2)", caretColor: "#00CEC8" }} />
@@ -277,6 +373,9 @@ function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }) {
                     )}
                 </>
             )}
+
+            {/* Poll create modal */}
+            <NxPollCreate open={pollOpen} onClose={() => setPollOpen(false)} onCreated={sendPoll} />
         </div>
     );
 }

@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { banGuard } from "@/lib/moderation-guard";
+import { moderateOnCreate } from "@/lib/moderation";
+import { after } from "next/server";
 
 // GET /api/nexus/channels?scope=mine|discover&type=CHANNEL|GROUP
 export async function GET(req: Request) {
@@ -50,6 +53,7 @@ export async function POST(req: Request) {
     const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, humoId: true, username: true } });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
     if (!me.humoId || !me.username) return NextResponse.json({ error: "Humo ID kerak" }, { status: 403 });
+    const banned = await banGuard(me.id); if (banned) return banned;
     if (await nexusRateLimited(me.id, "channel")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
     const { type, name, handle, description, isPrivate, avatarUrl } = await req.json();
@@ -78,6 +82,16 @@ export async function POST(req: Request) {
             members: { create: { profileId: me.id, role: "OWNER" } },
         },
     });
+
+    // Moderatsiya — nom + tavsif + avatar. Zararli kanal nomlari (masalan porno/tarafkash) auto-hide.
+    after(() => moderateOnCreate({
+        module: "NEXUS", targetType: "CHANNEL_MESSAGE",   // Alohida "CHANNEL" target yo'q, message-level'da yashiramiz
+        targetId: channel.id,
+        text: `${channel.name}\n${channel.description || ""}\n${channel.handle || ""}`,
+        imageUrl: channel.avatarUrl,
+        kind: t === "GROUP" ? "guruh" : "kanal",
+        authorId: me.id,
+    }));
 
     return NextResponse.json({ channel: { id: channel.id, type: channel.type, name: channel.name, handle: channel.handle } });
 }
