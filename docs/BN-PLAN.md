@@ -1,8 +1,15 @@
 # BOZOR NARXIDA — To'liq loyiha rejasi
 
-> **Holat:** v1.0 reja — 2026-08-03
+> **Holat:** v1.0 reja — 2026-08-03 (qarorlar tasdiqlangan)
 > **Qoida:** Bu reja yagona manba. Rejada yo'q narsa qilinmaydi.
 > Yangi g'oya chiqsa — avval shu faylga yoziladi, keyin bajariladi.
+
+**Tasdiqlangan qarorlar:**
+| Savol | Qaror |
+|---|---|
+| BN rahbari | **Jalol — BN OWNER** (to'liq BN admin). Tizim/kod/integratsiya — founder (Abduvoris) |
+| v1 qamrov | **Barcha 10 kategoriya** to'liq atribut sxemasi bilan |
+| Komissiya | **5%** (Market bilan bir xil), naqddan olinmaydi |
 
 ---
 
@@ -177,7 +184,23 @@ Yangi kategoriya qo'shish = yangi kod emas, faqat sxema yozish.
    └── Elektr mollari
 ```
 
-**Muhim:** v1'da faqat **Avto** kategoriyasi to'liq atribut sxemasi bilan to'ldiriladi (Jalol'ning Sergeli bozori uchun). Qolganlari bo'sh sxema bilan turadi, keyin to'ldiriladi.
+**Foydalanuvchi qarori:** v1'da **barcha 10 kategoriya** to'liq atribut sxemasi bilan ishlanadi.
+Sabab: sotuvchi jalb qilish osonroq, kengroq boshlanish.
+
+Har kategoriyaga o'z sxemasi yoziladi — seed'da (`scripts/seed-bn.mjs`). Misollar:
+
+| Kategoriya | Atributlar |
+|---|---|
+| Avto → Ehtiyot qismlar | marka, model, yildan, yilgacha, holati, original/analog |
+| Elektronika → Telefonlar | brend, model, xotira, RAM, rang, holati, kafolat |
+| Kiyim → Erkaklar | o'lcham, rang, material, mavsum, brend |
+| Uy → Mebel | material, rang, o'lcham (uzunlik×kenglik×balandlik), yig'ilganmi |
+| Qurilish → Materiallar | brend, o'lchov birligi (dona/m²/kg), miqdor |
+| Oziq-ovqat | og'irlik/hajm, ishlab chiqarilgan sana, muddat |
+| Bolalar | yosh oralig'i, jins, material, xavfsizlik sertifikati |
+| Sport | turi, o'lcham, brend, holati |
+| Go'zallik | brend, hajm, turi, muddat |
+| Xizmatlar | turi, narx birligi (soat/kun/loyiha), joyi |
 
 ---
 
@@ -227,14 +250,36 @@ AI + Admin tasdiqlash → APPROVED
 Kabinet: mahsulot qo'shish, buyurtmalar, statistika, pul
 ```
 
-### 4.3 Admin (founder)
+### 4.3 Boshqaruv rollari
 
-- Sotuvchi arizalarini tasdiqlash/rad etish
-- Bozorlar boshqaruvi (yangi bozor qo'shish)
-- Kategoriya va atribut sxemalari
-- Moderatsiya navbati (AI belgilagan mahsulotlar)
-- Nizolar (xaridor ↔ sotuvchi)
-- Statistika
+BN — For Humo loyihalaridan biri. Ikki daraja boshqaruv bor:
+
+| Rol | Kim | Nima qiladi | Nima qilmaydi |
+|---|---|---|---|
+| **For Humo founder** | Abduvoris (`UZ6889574`, `@abduvoris`) | Tizim: kod, schema, env, integratsiyalar, yangilanishlar, boshqa modullar | — |
+| **BN OWNER** | Jalol — BN loyiha rahbari | BN ichidagi **hamma narsa**: do'kon arizalari, bozorlar, kategoriyalar, moderatsiya, nizolar, qoidalar, statistika | Kod, env, integratsiya, boshqa modullar |
+| **BN MODERATOR** | (kelajakda) | Moderatsiya + do'kon arizalari | Bozor/kategoriya sozlash |
+
+**Foydalanuvchi qarori:** *"Bu loyiha rahbari u bo'ladi... To'liq adminlikni unga beramiz. Faqat tizimni yurishi, o'zgartirishlar, yangilanishlar, integratsiyalarni esa men amalga oshiraman. U BNdagi barcha qoidalarni u o'rnatadi."*
+
+**Texnik amalga oshirish:**
+
+```prisma
+model BnAdmin {
+  id        String       @id @default(cuid())
+  profileId String       @unique          // UserProfile.id
+  role      BnAdminRole                   // OWNER | MODERATOR
+  addedById String?                       // kim qo'shdi (audit)
+  note      String?
+  createdAt DateTime     @default(now())
+}
+enum BnAdminRole { OWNER  MODERATOR }
+```
+
+`lib/bn-admin.ts`:
+- `requireBnAdmin()` — founder YOKI `BnAdmin` yozuvi bor
+- `requireBnOwner()` — founder YOKI `role = OWNER`
+- Founder **doim** o'tadi (`isFounderProfile()` orqali), alohida yozuv shart emas
 
 ---
 
@@ -504,6 +549,38 @@ enum BnPayStatus    { PENDING  HELD  PAID  REFUNDED }
 enum BnOrderStatus  { PLACED  CONFIRMED  READY  COMPLETED  CANCELLED  DISPUTED }
 ```
 
+### 5.6 BnAdmin — boshqaruv rollari
+
+```prisma
+model BnAdmin {
+  id        String      @id @default(cuid())
+  profileId String      @unique
+  role      BnAdminRole                    // OWNER (Jalol) | MODERATOR
+  addedById String?                        // kim qo'shdi
+  note      String?                        // "BN loyiha rahbari"
+  createdAt DateTime    @default(now())
+}
+enum BnAdminRole { OWNER  MODERATOR }
+```
+
+### 5.7 BnInspectHold — "Ko'rib sotib olish" bandi
+
+```prisma
+model BnInspectHold {
+  id        String    @id @default(cuid())
+  code      String    @unique              // "BN-4821" — xaridor aytadi
+  productId String
+  profileId String                         // xaridor
+  qty       Int       @default(1)
+  expiresAt DateTime                       // +24 soat
+  usedAt    DateTime?                      // sotuvchi tasdiqladi
+  cancelledAt DateTime?
+  createdAt DateTime  @default(now())
+  @@index([productId, expiresAt])
+  @@index([profileId, createdAt])
+}
+```
+
 **Buyurtma holatlari izohi:**
 
 | Holat | Ma'nosi |
@@ -593,15 +670,19 @@ Oltin = savdo, boylik, bozor. O'zbek bozorlarining rangi.
 | `/kabinet/dokon` | Do'kon sozlamalari |
 | `/kabinet/pul` | Daromad va yechish |
 
-### Admin (founder)
+### Boshqaruv (BN OWNER — Jalol, va founder)
 
-| Yo'l | Nomi |
-|---|---|
-| `/admin/bn/dokonlar` | Do'kon arizalari |
-| `/admin/bn/bozorlar` | Bozorlar boshqaruvi |
-| `/admin/bn/kategoriyalar` | Kategoriya va atributlar |
-| `/admin/bn/moderatsiya` | AI belgilagan mahsulotlar |
-| `/admin/bn/nizolar` | Nizolar |
+Domen ichida: `bozornarxida.uz/boshqaruv/*`
+
+| Yo'l | Nomi | Kim |
+|---|---|---|
+| `/boshqaruv` | Umumiy ko'rinish, statistika | OWNER, MODERATOR |
+| `/boshqaruv/dokonlar` | Do'kon arizalari (tasdiqlash/rad) | OWNER, MODERATOR |
+| `/boshqaruv/bozorlar` | Bozorlar boshqaruvi | OWNER |
+| `/boshqaruv/kategoriyalar` | Kategoriya va atribut sxemalari | OWNER |
+| `/boshqaruv/moderatsiya` | AI belgilagan mahsulotlar | OWNER, MODERATOR |
+| `/boshqaruv/nizolar` | Nizolar (xaridor ↔ sotuvchi) | OWNER |
+| `/boshqaruv/adminlar` | Moderator qo'shish/olib tashlash | OWNER |
 
 **Eslatma:** URL'lar o'zbekcha — bu mahalliy bozor uchun mahsulot, `bozornarxida.uz/p/nexia-tormoz` `bozornarxida.uz/product/...` dan tabiiyroq.
 
@@ -674,17 +755,19 @@ Foydalanuvchi qoidasi: **"Havfsizlik nazoratini tizim ichidagi AIga topshiramiz.
    └─→ Pul qaytadi: WalletTransaction REFUND
 ```
 
-### Komissiya
+### Komissiya — 5%
+
+**Foydalanuvchi qarori:** Market bilan bir xil — bitta qoida, tushuntirish oson.
 
 | Do'kon darajasi | Komissiya |
 |---|---|
-| NEW | 3% |
-| TRUSTED | 3% |
-| VERIFIED | 2.5% |
-| PREMIUM | 2% |
+| NEW | 5% |
+| TRUSTED | 5% |
+| VERIFIED | 4.5% |
+| PREMIUM | 4% |
 
-`BN_COMMISSION` env'da, default 0.03.
-(Market 5% — BN arzonroq, chunki bozor savdosi marjasi kichik.)
+`BN_COMMISSION` env'da, default `0.05`.
+Naqd to'lovdan komissiya **olinmaydi** (platforma faqat uchrashtiradi).
 
 ### Naqd variant
 
@@ -761,7 +844,8 @@ BN bozorlar ustida qurilgani uchun — bu tabiiy. Bu **BN ning asosiy farqi**.
 - [ ] Yangi schema yozish (yuqoridagi modellar)
 - [ ] `prisma db push`
 - [ ] Seed: 6 ta bozor (Sergeli avto, Chorsu, Malika, Abu Sahiy, Yangiobod, Qo'yliq)
-- [ ] Seed: 10 asosiy kategoriya + Avto uchun to'liq atribut sxemasi
+- [ ] Seed: **10 kategoriya + barchasiga to'liq atribut sxemasi** (~45 pastki kategoriya)
+- [ ] `BnAdmin` yozuvi: Jalol → `OWNER`
 
 ### FAZA 3 — Sotuvchi backend
 
@@ -802,11 +886,14 @@ BN bozorlar ustida qurilgani uchun — bu tabiiy. Bu **BN ning asosiy farqi**.
 
 - [ ] Mahsulot va do'kon sharhlari
 - [ ] Do'kon darajasi (tier) avtomatik hisoblash
-- [ ] Admin: do'kon arizalari
-- [ ] Admin: bozorlar
-- [ ] Admin: kategoriya/atribut
-- [ ] Admin: moderatsiya navbati
-- [ ] Admin: nizolar
+- [ ] `lib/bn-admin.ts` — `requireBnAdmin()` / `requireBnOwner()`
+- [ ] Boshqaruv: umumiy ko'rinish + statistika
+- [ ] Boshqaruv: do'kon arizalari
+- [ ] Boshqaruv: bozorlar
+- [ ] Boshqaruv: kategoriya/atribut
+- [ ] Boshqaruv: moderatsiya navbati
+- [ ] Boshqaruv: nizolar
+- [ ] Boshqaruv: adminlar (OWNER moderator qo'sha oladi)
 
 ### FAZA 8 — Launch tayyorgarligi
 

@@ -1837,198 +1837,367 @@ model UserKyc {
 
   @@index([status, submittedAt])
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
-// BOZOR NARXIDA (BN) — For Humo hamkori (Jalol) tomonidan boshqariladigan
-// avtomobil ehtiyot qismlari marketplace. Sergeli mashina bozor onlayn.
-// Foydalanuvchi so'rovi: "Sotuvchilar sotish uchun YaTT kiritishlari kerak.
-// Sotilgan zahoti pullari o'z bank hisob raqamlariga kelib tushadi.
-// 1.5% komissiya olamiz. Yetkazib berish Yandex/BTS Express bilan."
+// BOZOR NARXIDA (BN) — For Humo loyihalaridan biri. bozornarxida.uz
+// Reja: docs/BN-PLAN.md (yagona manba — o'zgarish avval o'sha faylda)
+//
+// ASOSIY G'OYA: Bozor = JOY, Do'kon = BIZNES.
+//   BnMarket (bozor)  — jismoniy bozor (Sergeli avto, Chorsu, Malika...)
+//     └── BnShop      — sotuvchining do'koni (marketId null = alohida/onlayn)
+//           └── BnProduct
+// Bozor hech narsa sotmaydi — u konteyner. 1 profil = 1 do'kon.
+//
+// UNIVERSAL KATEGORIYA: BnCategory.attributeSchema (JSON) har toifa qanday
+// maydonlar kerakligini aytadi; BnProduct.attributes qiymatlarni saqlaydi.
+// Shu tufayli avto/telefon/kiyim bir xil kod bilan ishlaydi.
+//
+// Boshqaruv: Jalol = BnAdmin OWNER (BN ichida hamma narsa).
+//            Founder (Abduvoris) = tizim/kod/integratsiya.
+// Komissiya: 5% (BN_COMMISSION env), naqddan olinmaydi.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Sotuvchi — YaTT (jismoniy shaxs sifatida daromad soliqchi) bilan ro'yxatdan o'tadi
-model BnSeller {
+// ── Bozor (JOY) ──────────────────────────────────────────────────────────────
+model BnMarket {
+  id          String   @id @default(cuid())
+  slug        String   @unique                    // "sergeli-avto-bozor"
+  name        String                              // "Sergeli avtomobil bozori"
+  nameRu      String?
+  description String?
+  city        String   @default("Toshkent")
+  district    String?                             // "Sergeli tumani"
+  address     String?
+  lat         Float?                              // xarita
+  lng         Float?
+  coverUrl    String?
+  logoUrl     String?
+  workHours   String?                             // "Dush-Yak 08:00-18:00"
+  phone       String?
+  sections    String[] @default([])               // ["12-qator", "Elektronika rastasi"]
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  shopCount   Int      @default(0)                // kesh
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  shops       BnShop[]
+
+  @@index([city, isActive, order])
+}
+
+// ── Do'kon (BIZNES) ──────────────────────────────────────────────────────────
+model BnShop {
+  id            String         @id @default(cuid())
+  profileId     String         @unique             // UserProfile.id — 1 odam = 1 do'kon
+  slug          String         @unique
+  name          String
+  description   String?
+  logoUrl       String?
+  coverUrl      String?
+
+  // Yuridik ma'lumot (MAJBURIY — YaTT yoki MChJ)
+  legalType     BnLegalType
+  innNumber     String         @unique             // STIR/INN
+  legalName     String                             // F.I.SH yoki MChJ to'liq nomi
+  phone         String
+  phoneVerified Boolean        @default(false)
+
+  // Joylashuv
+  locationType  BnLocationType
+  marketId      String?
+  market        BnMarket?      @relation(fields: [marketId], references: [id], onDelete: SetNull)
+  marketSection String?                            // "12-qator"
+  marketShopNo  String?                            // "45"
+  address       String?                            // STANDALONE uchun
+  city          String         @default("Toshkent")
+  lat           Float?
+  lng           Float?
+
+  // Bank (payout)
+  bankName      String?
+  bankAccount   String?
+  bankMfo       String?
+
+  // Holat va reyting
+  status        BnShopStatus   @default(PENDING)
+  tier          BnShopTier     @default(NEW)
+  rating        Float          @default(0)
+  ratingCount   Int            @default(0)
+  orderCount    Int            @default(0)
+  productCount  Int            @default(0)
+  approvedAt    DateTime?
+  approvedById  String?
+  rejectReason  String?
+  suspendedAt   DateTime?
+  suspendReason String?
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  products      BnProduct[]
+  orders        BnOrder[]
+  reviews       BnShopReview[]
+
+  @@index([status, createdAt])
+  @@index([marketId, status])
+  @@index([city, status])
+}
+
+enum BnLegalType {
+  YATT
+  MCHJ
+}
+enum BnLocationType {
+  IN_MARKET
+  STANDALONE
+  ONLINE
+}
+enum BnShopStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+enum BnShopTier {
+  NEW
+  TRUSTED
+  VERIFIED
+  PREMIUM
+}
+
+// ── Kategoriya (atribut sxemasi bilan — universal) ───────────────────────────
+model BnCategory {
+  id              String       @id @default(cuid())
+  slug            String       @unique
+  name            String
+  nameRu          String?
+  parentId        String?
+  parent          BnCategory?  @relation("BnCatTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children        BnCategory[] @relation("BnCatTree")
+  icon            String?                          // Lucide ikon nomi (emoji EMAS)
+  attributeSchema Json         @default("[]")      // [{key,label,type,options,required,filterable}]
+  order           Int          @default(0)
+  isActive        Boolean      @default(true)
+  productCount    Int          @default(0)         // kesh
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  products        BnProduct[]
+
+  @@index([parentId, order])
+  @@index([isActive, order])
+}
+
+// ── Mahsulot ─────────────────────────────────────────────────────────────────
+model BnProduct {
   id             String            @id @default(cuid())
-  profileId      String            @unique                    // UserProfile.id
-  // YaTT ma'lumotlari (Uzbekistan Yakka Tartibdagi Tadbirkorlik)
-  yattNumber     String            @unique                    // YaTT/INN raqami (9-11 raqam)
-  fullName       String                                        // Rasmiy F.I.SH.
-  passportSeries String?                                       // AA/AB serial
-  passportNumber String?                                       // 7 raqam
-  phone          String                                        // +998...
-  // Do'kon ma'lumotlari
-  shopName       String                                        // "Sergeli Auto Parts", "Jalol Motors" ...
-  shopSlug       String            @unique                     // URL uchun
-  logoUrl        String?
-  coverUrl       String?
+  shopId         String
+  shop           BnShop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  categoryId     String?
+  category       BnCategory?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  title          String
+  slug           String            @unique
   description    String?
-  // Manzil (asosiy do'kon)
-  address        String?                                       // "Sergeli mashina bozor, Qator 12, Do'kon 45"
-  city           String            @default("Toshkent")
-  // Bank ma'lumotlari (payout uchun)
-  bankName       String?                                       // "Xalq banki", "Ipoteka bank" ...
-  bankAccount    String?                                       // 20 raqamli hisob raqam
-  bankMFO        String?                                       // 5 raqamli MFO
-  bankINN        String?                                       // 9 raqam (YaTT bilan bir xil bo'lishi mumkin)
-  // Holat
-  status         BnSellerStatus    @default(PENDING)           // PENDING/APPROVED/REJECTED/SUSPENDED
-  approvedAt     DateTime?
-  approvedById   String?                                       // admin UserProfile.id
-  rejectReason   String?
+  images         String[]          @default([])    // maks 10
+  videos         String[]          @default([])    // maks 2
+
+  price          Int                               // so'm (butun)
+  oldPrice       Int?
+  isNegotiable   Boolean           @default(false) // "Kelishilgan narxda"
+
+  attributes     Json              @default("{}")  // kategoriya sxemasiga mos qiymatlar
+
+  stock          Int               @default(1)
+  sold           Int               @default(0)
+
+  // Olish usullari
+  allowPickup    Boolean           @default(true)
+  allowDelivery  Boolean           @default(false)
+  allowInspect   Boolean           @default(true)  // "ko'rib sotib olish"
+
+  // Bozor narxi — BN ning asosiy va'dasi
+  marketAvgPrice Int?                              // o'xshash mahsulotlar o'rtachasi
+  priceRank      String?                           // "cheap" | "fair" | "expensive"
+  priceCalcAt    DateTime?
+
+  isActive       Boolean           @default(true)
+  hidden         Boolean           @default(false) // moderatsiya
+  views          Int               @default(0)
+  rating         Float             @default(0)
+  ratingCount    Int               @default(0)
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
-  products       BnProduct[]
-  orders         BnOrder[]
-
-  @@index([status, createdAt])
-  @@index([city])
-}
-
-enum BnSellerStatus {
-  PENDING          // Admin ko'rib chiqadi
-  APPROVED         // Faol sotuvchi
-  REJECTED         // Rad etilgan (rejectReason)
-  SUSPENDED        // Vaqtincha to'xtatilgan (qoidabuzarlik)
-}
-
-// Kategoriyalar daraxti (nested — parentId bilan cheksiz chuqurlik)
-// Boshlang'ich: "Mashina turi" → "Marka" → "Ehtiyot qism turi"
-// Yoki oddiyroq: "Dvigatel qismlari", "Elektronika", "Filtrlar", ...
-model BnCategory {
-  id         String        @id @default(cuid())
-  slug       String        @unique
-  name       String                                             // "Dvigatel qismlari"
-  nameRu     String?                                             // Ruscha
-  parentId   String?
-  parent     BnCategory?   @relation("BnCategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
-  children   BnCategory[]  @relation("BnCategoryTree")
-  iconEmoji  String?                                              // UI'da ikon (kelajakda Lucide bilan almashtiriladi)
-  order      Int           @default(0)
-  isActive   Boolean       @default(true)
-  createdAt  DateTime      @default(now())
-  products   BnProduct[]
-
-  @@index([parentId, order])
-}
-
-// Mahsulot
-model BnProduct {
-  id             String              @id @default(cuid())
-  sellerId       String
-  seller         BnSeller            @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  categoryId     String?
-  category       BnCategory?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  title          String                                                    // "Nexia asboblar paneli"
-  slug           String              @unique
-  description    String?
-  // Narx UZS (Bozor Narxida faqat so'm — mahalliy bozor)
-  price          Int                                                        // butun so'm
-  oldPrice       Int?                                                       // eski narx (chegirma uchun)
-  // Rasm/videolar
-  images         String[]            @default([])                            // maks 8 rasm
-  videos         String[]            @default([])                            // maks 2 video
-  // Ombor
-  stock          Int                 @default(1)                             // hozirda qancha bor
-  sold           Int                 @default(0)                             // sotilgan
-  // Filter atributlari (car parts specific)
-  carBrand       String?                                                     // "Chevrolet", "Daewoo", "Kia", ...
-  carModel       String?                                                     // "Nexia", "Cobalt", "Damas", ...
-  carYearFrom    Int?                                                        // 2010, 2015, ...
-  carYearTo      Int?                                                        // 2018, 2023, ...
-  partCondition  String              @default("new")                         // "new" | "used" | "restored"
-  // Yetkazib berish
-  hasDelivery    Boolean             @default(false)                         // Yandex/BTS bilan
-  pickupOnly     Boolean             @default(false)                         // faqat do'kondan olib ketish
-  // Boshqa
-  isActive       Boolean             @default(true)                          // sotuvda
-  hidden         Boolean             @default(false)                         // moderatsiya bilan yashirin
-  views          Int                 @default(0)
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-
   orderItems     BnOrderItem[]
+  reviews        BnProductReview[]
 
-  @@index([sellerId, createdAt])
-  @@index([categoryId, isActive])
-  @@index([carBrand, carModel])
-  @@index([isActive, hidden])
+  @@index([shopId, createdAt])
+  @@index([categoryId, isActive, hidden])
+  @@index([isActive, hidden, createdAt])
+  @@index([price])
 }
 
-// Buyurtma
+// ── Savat va sevimlilar ──────────────────────────────────────────────────────
+model BnCartItem {
+  id        String   @id @default(cuid())
+  profileId String
+  productId String
+  qty       Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@unique([profileId, productId])
+  @@index([profileId])
+}
+
+model BnFavorite {
+  id        String   @id @default(cuid())
+  profileId String
+  productId String
+  createdAt DateTime @default(now())
+
+  @@unique([profileId, productId])
+  @@index([profileId, createdAt])
+}
+
+// ── Buyurtma ─────────────────────────────────────────────────────────────────
 model BnOrder {
-  id            String          @id @default(cuid())
-  buyerId       String                                                     // UserProfile.id
-  sellerId      String
-  seller        BnSeller        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  id            String        @id @default(cuid())
+  code          String        @unique              // "BN-2026-000123"
+  buyerId       String
+  shopId        String
+  shop          BnShop        @relation(fields: [shopId], references: [id])
   items         BnOrderItem[]
-  // Summalar
-  subtotal      Int                                                         // mahsulotlar (so'm)
-  deliveryFee   Int             @default(0)                                 // yetkazish narxi
-  commission    Int             @default(0)                                 // For Humo 1.5%
-  total         Int                                                         // xaridor to'laydi (subtotal + delivery)
-  // Yetkazib berish
-  deliveryType  BnDeliveryType  @default(PICKUP)                            // PICKUP/YANDEX/BTS
-  deliveryAddress String?
-  deliveryPhone String?
-  deliveryStatus String?                                                    // "created" | "in_transit" | "delivered" | ...
-  trackingUrl   String?                                                     // Yandex/BTS tracking havolasi
-  // To'lov
-  paymentMethod BnPaymentMethod @default(PENDING)                           // PENDING/CASH/CARD/PAYME/CLICK/UZUM
-  paymentStatus String          @default("pending")                         // "pending" | "paid" | "refunded"
-  // Holat
-  status        BnOrderStatus   @default(PLACED)
+
+  subtotal      Int
+  deliveryFee   Int           @default(0)
+  commission    Int           @default(0)          // For Humo ulushi (5%)
+  total         Int
+
+  fulfillType   BnFulfillType
+  address       String?
+  phone         String
+  note          String?
+
+  paymentMethod BnPayMethod   @default(WALLET)
+  paymentStatus BnPayStatus   @default(PENDING)
+  escrowHeld    Boolean       @default(false)      // pul ushlanganmi
+  settledAt     DateTime?                          // sotuvchiga to'langan
+
+  status        BnOrderStatus @default(PLACED)
   cancelReason  String?
-  placedAt      DateTime        @default(now())
-  paidAt        DateTime?
-  shippedAt     DateTime?
-  deliveredAt   DateTime?
+
+  placedAt      DateTime      @default(now())
+  confirmedAt   DateTime?
+  readyAt       DateTime?
+  completedAt   DateTime?
   cancelledAt   DateTime?
 
-  @@index([sellerId, placedAt])
+  @@index([shopId, placedAt])
   @@index([buyerId, placedAt])
   @@index([status, placedAt])
 }
 
 model BnOrderItem {
-  id         String     @id @default(cuid())
-  orderId    String
-  order      BnOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId  String
-  product    BnProduct  @relation(fields: [productId], references: [id])
-  title      String                                                         // snapshot
-  price      Int                                                            // snapshot per unit
-  qty        Int        @default(1)
-  imageUrl   String?                                                        // snapshot
-  createdAt  DateTime   @default(now())
+  id        String    @id @default(cuid())
+  orderId   String
+  order     BnOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   BnProduct @relation(fields: [productId], references: [id])
+  title     String                                 // snapshot
+  price     Int                                    // snapshot
+  qty       Int       @default(1)
+  imageUrl  String?
 
   @@index([orderId])
 }
 
-enum BnDeliveryType {
-  PICKUP        // Do'kondan olib ketish
-  YANDEX        // Yandex Delivery
-  BTS           // BTS Express
-  SELLER_OWN    // Sotuvchining o'zi yetkazadi
+enum BnFulfillType {
+  PICKUP
+  DELIVERY
+  INSPECT
 }
-
-enum BnPaymentMethod {
-  PENDING       // Hali tanlanmagan
-  CASH          // Naqd (do'konda yoki eshigingizda)
-  CARD          // Karta (Humo/Uzcard) — POS terminalda
-  PAYME
-  CLICK
-  UZUM
+enum BnPayMethod {
+  WALLET
+  CASH
 }
-
+enum BnPayStatus {
+  PENDING
+  HELD
+  PAID
+  REFUNDED
+}
 enum BnOrderStatus {
-  PLACED         // Buyurtma berildi (kutmoqda)
-  CONFIRMED      // Sotuvchi tasdiqladi
-  PREPARING      // Tayyorlash
-  SHIPPED        // Jo'natildi (yetkazib berishga)
-  DELIVERED      // Yetkazildi
-  COMPLETED      // Yakunlandi (7 kun keyin auto — refund muddat tugadi)
-  CANCELLED      // Bekor qilindi
+  PLACED
+  CONFIRMED
+  READY
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+// ── "Ko'rib sotib olish" bandi (24 soat) ─────────────────────────────────────
+// Xaridor bozorga borib ko'radi, yoqsa kodni aytadi. BN ning asosiy farqi.
+model BnInspectHold {
+  id          String    @id @default(cuid())
+  code        String    @unique                    // "BN-4821"
+  productId   String
+  profileId   String                               // xaridor
+  qty         Int       @default(1)
+  expiresAt   DateTime                             // +24 soat
+  usedAt      DateTime?                            // sotuvchi tasdiqladi
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([productId, expiresAt])
+  @@index([profileId, createdAt])
+}
+
+// ── Sharhlar ─────────────────────────────────────────────────────────────────
+model BnProductReview {
+  id        String    @id @default(cuid())
+  productId String
+  product   BnProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  profileId String
+  orderId   String?                                // xarid tasdig'i
+  rating    Int                                    // 1-5
+  text      String?
+  images    String[]  @default([])
+  hidden    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  @@unique([productId, profileId])
+  @@index([productId, hidden])
+}
+
+model BnShopReview {
+  id        String   @id @default(cuid())
+  shopId    String
+  shop      BnShop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  profileId String
+  orderId   String?
+  rating    Int
+  text      String?
+  hidden    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([shopId, profileId])
+  @@index([shopId, hidden])
+}
+
+// ── Boshqaruv rollari ────────────────────────────────────────────────────────
+// Jalol = OWNER (BN ichida hamma narsa). Founder doim o'tadi (yozuv shart emas).
+model BnAdmin {
+  id        String      @id @default(cuid())
+  profileId String      @unique
+  role      BnAdminRole
+  addedById String?
+  note      String?                                // "BN loyiha rahbari"
+  createdAt DateTime    @default(now())
+}
+
+enum BnAdminRole {
+  OWNER
+  MODERATOR
 }
 
 // ── Zaxira usernamelar ───────────────────────────────────────────────────────
