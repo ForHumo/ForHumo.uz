@@ -3,10 +3,24 @@
 import { useSession, signIn } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { OnboardingWizard } from "./onboarding-wizard";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
+
+// Kirishsiz ochiladigan bo'limlar (prefiks, locale'siz).
+// Bozor Narxida — marketplace: mahsulotni ko'rish, qidirish va narx solishtirish
+// uchun kirish TALAB QILINMAYDI (docs/BN-PLAN.md §4.1). Kirish faqat savat,
+// buyurtma va kabinet uchun kerak — ular o'z ichida so'raydi.
+// Qidiruv tizimlari ham shu tufayli sahifalarni indeksiy oladi.
+const PUBLIC_PREFIXES = ["/bn"];
+
+function isPublicPath(pathname: string | null): boolean {
+    if (!pathname) return false;
+    // "/uz/bn/..." → locale prefiksini olib tashlaymiz
+    const withoutLocale = pathname.replace(/^\/(uz|ru|en)(?=\/|$)/, "") || "/";
+    return PUBLIC_PREFIXES.some(p => withoutLocale === p || withoutLocale.startsWith(p + "/"));
+}
 
 // Premium loading screen
 function LoadingScreen() {
@@ -74,15 +88,20 @@ function LoadingScreen() {
 export function AuthBarrier({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();
     const params = useParams();
+    const pathname = usePathname();
     const locale = (params?.locale as string) ?? "uz";
     const t = useTranslations("Auth");
     const tCommon = useTranslations("Common");
 
-    if (status === "loading") {
+    // Ommaviy bo'lim (masalan /bn) — darvoza ham, yuklanish ekrani ham yo'q.
+    // Sessiya kerak bo'lgan joylar (savat, kabinet) o'zlari kirish so'raydi.
+    const isPublic = isPublicPath(pathname);
+
+    if (status === "loading" && !isPublic) {
         return <LoadingScreen />;
     }
 
-    if (!session) {
+    if (!session && !isPublic) {
         return (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background p-4 overflow-hidden">
                 {/* Background glow */}
@@ -161,9 +180,11 @@ export function AuthBarrier({ children }: { children: React.ReactNode }) {
         );
     }
 
-    // Show onboarding wizard if user hasn't completed it yet
-    const onboardingDone = (session.user as { onboardingDone?: boolean })?.onboardingDone;
-    if (!onboardingDone) {
+    // Show onboarding wizard if user hasn't completed it yet.
+    // Ommaviy bo'limda (masalan /bn) onboarding ham to'smaydi — mahsulotni
+    // ko'rish uchun profil to'ldirish shart emas.
+    const onboardingDone = (session?.user as { onboardingDone?: boolean } | undefined)?.onboardingDone;
+    if (session && !onboardingDone && !isPublic) {
         return (
             <OnboardingWizard
                 locale={locale}
