@@ -17,12 +17,31 @@ const LOAD_ROWS = 5;     // "Yuklash" har bosishda 5 qator qo'shadi
 
 export function BnHome() {
     // FAZA 1 — mock ro'yxatni ko'paytiramiz (yuklash tugmasini ko'rsatish uchun).
+    // Nusxalar turli do'konlarning bir xil mahsulotga qo'ygan narxi sifatida
+    // yaratiladi — bu BN ning "bozor narxi" g'oyasini real ko'rsatadi.
     // FAZA 4 da haqiqiy API paginatsiyasi bilan almashtiriladi.
     const pool = useMemo(() => {
         const out: MockProduct[] = [];
-        for (let i = 0; i < 6; i++) {
-            for (const p of MOCK_PRODUCTS) {
-                out.push(i === 0 ? p : { ...p, id: `${p.id}-r${i}` });
+        const shops = MOCK_SHOPS;
+        for (let r = 0; r < 6; r++) {
+            for (let k = 0; k < MOCK_PRODUCTS.length; k++) {
+                const p = MOCK_PRODUCTS[k];
+                if (r === 0) { out.push(p); continue; }
+                const s = shops[(k + r) % shops.length];
+                const factor = 0.88 + ((k * 7 + r * 13) % 40) / 100;   // 0.88 – 1.27
+                out.push({
+                    ...p,
+                    id: `${p.id}-r${r}`,
+                    slug: p.slug,
+                    price: Math.round((p.price * factor) / 1000) * 1000,
+                    oldPrice: null,
+                    shopSlug: s.slug,
+                    shopName: s.name,
+                    marketName: s.marketName,
+                    stock: 1 + ((k + r * 3) % 9),
+                    rating: Math.round((3.8 + ((k * 3 + r * 5) % 12) / 10) * 10) / 10,
+                    ratingCount: 4 + ((k * 11 + r * 7) % 60),
+                });
             }
         }
         return out;
