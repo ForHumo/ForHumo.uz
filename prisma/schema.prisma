@@ -1053,16 +1053,26 @@ enum NexusNotifType {
   MOD_WARN         // AI moderatsiya yumshoq ogohlantirish (yaqin do'st + o'rta severity)
 }
 
-// Story — 24 soatlik vaqtinchalik kontent
+// Story — 24 soatlik vaqtinchalik kontent (multi-slide)
+// Foydalanuvchi so'rovi: "Storis qo'yish funksiyamiz juda sodda uni
+// to'g'rilashimiz kerak" — Instagram sifati: matn overlay, sticker,
+// drawing, filter, musiqa, multi-slide, javob (DM), highlights, reaksiya.
 model NexusStory {
-  id        String              @id @default(cuid())
-  profileId String
-  mediaUrl  String
-  mediaType NexusStoryMediaType @default(IMAGE)
-  caption   String?
-  createdAt DateTime            @default(now())
-  expiresAt DateTime                              // = createdAt + 24 soat
-  views     NexusStoryView[]
+  id          String              @id @default(cuid())
+  profileId   String
+  // Backward compat: birinchi slide (eski single-slide fallback)
+  mediaUrl    String
+  mediaType   NexusStoryMediaType @default(IMAGE)
+  caption     String?
+  // Musiqa (ixtiyoriy) — barcha slidelar uchun umumiy fon
+  musicTrackId String?                            // NexusTrack.id
+  musicTitle   String?                            // qisqa yorliq (offline uchun)
+  musicUrl     String?                            // to'g'ridan-to'g'ri audio URL
+  createdAt   DateTime            @default(now())
+  expiresAt   DateTime                            // = createdAt + 24 soat
+  views       NexusStoryView[]
+  slides      NexusStorySlide[]
+  reactions   NexusStoryReaction[]
   @@index([profileId, expiresAt])
   @@index([expiresAt])
 }
@@ -1070,6 +1080,31 @@ model NexusStory {
 enum NexusStoryMediaType {
   IMAGE
   VIDEO
+  TEXT              // faqat matn (fon rangi + katta shrift)
+}
+
+// Bir story ichida bir necha slide (2-10 ta). Backward compat: agar slide
+// yo'q bo'lsa NexusStory ning o'zi bitta slide sifatida ko'riladi.
+model NexusStorySlide {
+  id         String              @id @default(cuid())
+  storyId    String
+  story      NexusStory          @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  order      Int                                     // 0-based tartib
+  mediaUrl   String                                  // rasm/video URL yoki bo'sh (TEXT uchun)
+  mediaType  NexusStoryMediaType @default(IMAGE)
+  durationMs Int?                                    // video davomiyligi (video uchun); IMAGE uchun 5s default
+  caption    String?
+  // Overlays JSON — matn, sticker, drawing pixels.
+  // Klient tomonida canvas'ga chiziladi. Namuna:
+  //   { texts: [{x,y,text,font,size,color,bg}], stickers: [{x,y,kind,value}], drawing: {strokes:[...]} }
+  overlays   Json?
+  // Filter — "none", "grayscale", "sepia", "warm", "cool", "vintage", ...
+  filter     String              @default("none")
+  // Fon rangi (TEXT slide uchun)
+  bgColor    String?
+  createdAt  DateTime            @default(now())
+  @@unique([storyId, order])
+  @@index([storyId, order])
 }
 
 // Story ko'rilganligi — halqa (seen) + ko'rganlar soni uchun
@@ -1078,9 +1113,37 @@ model NexusStoryView {
   storyId   String
   story     NexusStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
   profileId String                                // kim ko'rdi
+  slideId   String?                               // qaysi slide (ixtiyoriy)
   createdAt DateTime   @default(now())
   @@unique([storyId, profileId])
   @@index([storyId])
+}
+
+// Story'ga emoji reaksiya (Instagram uslubi — heart, laugh, wow, ...)
+model NexusStoryReaction {
+  id        String     @id @default(cuid())
+  storyId   String
+  story     NexusStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  profileId String
+  slideId   String?                               // qaysi slide
+  emoji     String                                 // "❤️" | "😂" | "😮" | "🔥" | "👏" | "😢"
+  createdAt DateTime   @default(now())
+  @@index([storyId, createdAt])
+  @@index([profileId])
+}
+
+// Story highlight — profilda saqlanadigan story kolleksiyalari
+// (24 soatdan keyin ham ko'rinadi, profil ostida yoritiladi)
+model NexusStoryHighlight {
+  id          String   @id @default(cuid())
+  profileId   String
+  title       String                              // "Sayohat", "Ishlar", ...
+  coverUrl    String?
+  storyIds    String[] @default([])               // NexusStory.id lar (24s'dan keyin ham qoladi)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([profileId, order])
 }
 
 // Shaxsiy yozishma (1:1) — user1Id < user2Id normalizatsiya
