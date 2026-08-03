@@ -132,6 +132,7 @@ export async function POST(req: Request) {
     after(() => moderateOnCreate({
         module: "MARKET", targetType: "PRODUCT", targetId: product.id,
         text: `${product.name}\n${product.description || ""}`, imageUrl: userImg, kind: "mahsulot",
+        authorId: profile.id,
     }));
 
     return NextResponse.json({ product });

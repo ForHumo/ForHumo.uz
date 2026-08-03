@@ -42,6 +42,7 @@ export async function POST(req: Request) {
     after(() => moderateOnCreate({
         module: "NEXUS", targetType: "TRACK", targetId: track.id,
         text: `${track.title}\n${track.artist || ""}`, imageUrl: track.coverUrl, kind: "post",
+        authorId: profile.id,
     }));
 
     return NextResponse.json({ track });

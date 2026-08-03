@@ -115,6 +115,7 @@ export async function POST(req: Request) {
     after(() => moderateOnCreate({
         module: "NEXUS", targetType: "LIVE", targetId: stream.id,
         text: [stream.title, stream.category].filter(Boolean).join(" — "), kind: "jonli efir sarlavhasi",
+        authorId: me.id,
     }));
 
     // Darhol jonli + ochiq efir bo'lsa — kuzatuvchilarga xabar

@@ -73,7 +73,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const msg = await prisma.nexusChannelMessage.create({
         data: { channelId: id, senderId: me.id, text: cleanText || null, media: cleanMedia },
     });
-    if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "CHANNEL_MESSAGE", targetId: msg.id, text: cleanText, kind: "kanal xabari" }));
+    if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "CHANNEL_MESSAGE", targetId: msg.id, text: cleanText, kind: "kanal xabari", authorId: me.id }));
 
     return NextResponse.json({
         message: {

@@ -78,6 +78,7 @@ export async function POST(req: Request) {
     after(() => moderateOnCreate({
         module: "NEXUS", targetType: "VIDEO", targetId: video.id,
         text: `${video.title}\n${video.description || ""}`, imageUrl: video.thumbUrl, kind: "video",
+        authorId: profile.id,
     }));
     after(() => { grantAchievement(profile.id, "nexus.first_video"); });
 

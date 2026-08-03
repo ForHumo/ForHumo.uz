@@ -119,6 +119,7 @@ export async function POST(req: Request) {
     after(() => moderateOnCreate({
         module: "MARKET", targetType: "REVIEW", targetId: review.id,
         text: review.text, imageUrl: mediaArr[0] || null, kind: "sharh",
+        authorId: profile.id,
     }));
 
     // Mahsulot reytingini qayta hisoblash

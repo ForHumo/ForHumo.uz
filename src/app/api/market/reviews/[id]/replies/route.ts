@@ -35,6 +35,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     after(() => moderateOnCreate({
         module: "MARKET", targetType: "REPLY", targetId: reply.id,
         text: reply.text, imageUrl: mediaArr[0] || null, kind: "javob",
+        authorId: profile.id,
     }));
 
     // Kimga javob berilganini aniqlab, bildirishnoma

@@ -3,6 +3,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { moderateContent, AUTO_HIDE_SEVERITY, type ModResult } from "@/lib/ai-moderate";
+import { issueBan } from "@/lib/moderation-ladder";
 
 export type ModModule = "MARKET" | "NEXUS";
 export type ModTargetType =
@@ -65,6 +66,7 @@ export interface ApplyModResult {
 
 // AI bilan tekshiradi, ModerationFlag'ni yaratadi/yangilaydi, kerak bo'lsa avto-yashiradi.
 // reporterReason berilsa — bu foydalanuvchi shikoyati (reportCount++).
+// authorId berilsa — auto-hide holatida foydalanuvchi ham ban qilinadi (progressiv).
 export async function applyModeration(opts: {
     module: ModModule;
     targetType: ModTargetType;
@@ -73,6 +75,7 @@ export async function applyModeration(opts: {
     imageUrl?: string | null;
     kind?: string;            // AI prompt uchun tavsif (masalan "mahsulot", "sharh")
     reporterReason?: string;  // bo'lsa — foydalanuvchi shikoyati
+    authorId?: string;        // yaratuvchi UserProfile.id — auto-hide bo'lsa ban issue qilamiz
 }): Promise<ApplyModResult> {
     const isReport = opts.reporterReason !== undefined;
 
@@ -137,6 +140,20 @@ export async function applyModeration(opts: {
 
     if (autoHide) await hideTarget(opts.targetType, opts.targetId, true);
 
+    // Auto-hide bo'lsa va authorId berilgan bo'lsa — progressiv ban issue qilamiz
+    // Shu tarzda takroriy qoidabuzarlik uzunroq muddatga bloklaydi
+    if (autoHide && opts.authorId && result) {
+        try {
+            await issueBan({
+                profileId: opts.authorId,
+                reason: result.categories[0] || "other",
+                contextSnippet: opts.text ? opts.text.slice(0, 200) : null,
+                aiVerdict: result.verdict,
+                aiSeverity: result.severity,
+            });
+        } catch { /* fail-open — ban issue xato bo'lsa moderation baribir ishlaydi */ }
+    }
+
     return { flagged: true, autoHidden: autoHide, result };
 }
 
@@ -149,9 +166,10 @@ export async function moderateOnCreate(opts: {
     text?: string | null;
     imageUrl?: string | null;
     kind?: string;
+    authorId?: string;   // berilsa auto-hide holatida ban ham beriladi
 }): Promise<void> {
     try {
-        await applyModeration(opts);
+        await applyModeration({ ...opts });
     } catch {
         /* fail-open */
     }

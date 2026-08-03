@@ -80,7 +80,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // Pre-publish moderatsiya
     after(() => moderateOnCreate({
         module: "NEXUS", targetType: "COMMENT", targetId: comment.id,
-        text: comment.text, kind: "izoh",
+        text: comment.text, kind: "izoh", authorId: profile.id,
     }));
 
     // Bildirishnoma — izoh post egasiga, javob ota-izoh egasiga

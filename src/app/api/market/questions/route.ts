@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     // Pre-publish moderatsiya
     after(() => moderateOnCreate({
         module: "MARKET", targetType: "QUESTION", targetId: question.id,
-        text: question.text, kind: "savol",
+        text: question.text, kind: "savol", authorId: profile.id,
     }));
 
     // Sotuvchiga bildirishnoma

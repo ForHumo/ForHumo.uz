@@ -64,7 +64,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         data: { videoId: id, profileId: profile.id, text: String(text).trim().slice(0, 1000) },
     });
     after(() => nexusNotify({ recipientId: vid.profileId, actorId: profile.id, type: "VIDEO_COMMENT", videoId: id }));
-    after(() => moderateOnCreate({ module: "NEXUS", targetType: "VIDEO_COMMENT", targetId: comment.id, text: comment.text, kind: "video izohi" }));
+    after(() => moderateOnCreate({ module: "NEXUS", targetType: "VIDEO_COMMENT", targetId: comment.id, text: comment.text, kind: "video izohi", authorId: profile.id }));
     after(() => notifyMentions({ text: comment.text, actorId: profile.id, videoId: id }));
     return NextResponse.json({
         comment: {

@@ -227,6 +227,7 @@ export async function POST(req: Request) {
     after(() => moderateOnCreate({
         module: "NEXUS", targetType: "POST", targetId: post.id,
         text: post.text, imageUrl: mediaArr[0] || null, kind: "post",
+        authorId: profile.id,
     }));
     // @mention bildirishnomalari
     after(() => notifyMentions({ text: post.text, actorId: profile.id, postId: post.id }));

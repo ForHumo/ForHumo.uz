@@ -33,7 +33,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // Pre-publish moderatsiya
     after(() => moderateOnCreate({
         module: "MARKET", targetType: "ANSWER", targetId: answer.id,
-        text: answer.text, kind: "javob",
+        text: answer.text, kind: "javob", authorId: profile.id,
     }));
 
     // Savol bergan kishiga bildirishnoma
