@@ -34,22 +34,32 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         return NextResponse.json({ error: "Noto'g'ri variant" }, { status: 400 });
     }
 
-    if (msg.pollMulti) {
-        // Multi — toggle
-        const existing = await prisma.nexusDmPollVote.findFirst({
-            where: { messageId: msgId, profileId: me.id, optionIndex }, select: { id: true },
-        });
-        if (existing) {
-            await prisma.nexusDmPollVote.delete({ where: { id: existing.id } });
+    // P2002 race: bir vaqtda ikki so'rov kelsa, ikkalasi ham bo'sh delete + create qilishga urinadi.
+    try {
+        if (msg.pollMulti) {
+            // Multi — toggle
+            const existing = await prisma.nexusDmPollVote.findFirst({
+                where: { messageId: msgId, profileId: me.id, optionIndex }, select: { id: true },
+            });
+            if (existing) {
+                await prisma.nexusDmPollVote.delete({ where: { id: existing.id } });
+            } else {
+                await prisma.nexusDmPollVote.create({ data: { messageId: msgId, profileId: me.id, optionIndex } });
+            }
         } else {
-            await prisma.nexusDmPollVote.create({ data: { messageId: msgId, profileId: me.id, optionIndex } });
+            // Single — boshqa optionlarni o'chirib, target upsert (race'da xavfsiz)
+            await prisma.$transaction([
+                prisma.nexusDmPollVote.deleteMany({ where: { messageId: msgId, profileId: me.id, optionIndex: { not: optionIndex } } }),
+                prisma.nexusDmPollVote.upsert({
+                    where: { messageId_profileId_optionIndex: { messageId: msgId, profileId: me.id, optionIndex } },
+                    create: { messageId: msgId, profileId: me.id, optionIndex },
+                    update: {},
+                }),
+            ]);
         }
-    } else {
-        // Single — barcha eskilarni o'chirib, yangisini yaratamiz
-        await prisma.$transaction([
-            prisma.nexusDmPollVote.deleteMany({ where: { messageId: msgId, profileId: me.id } }),
-            prisma.nexusDmPollVote.create({ data: { messageId: msgId, profileId: me.id, optionIndex } }),
-        ]);
+    } catch (e) {
+        const code = (e as { code?: string })?.code;
+        if (code !== "P2002") throw e;
     }
 
     // Yangilangan statistikani qaytaramiz

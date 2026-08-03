@@ -32,20 +32,33 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         return NextResponse.json({ error: "Noto'g'ri variant" }, { status: 400 });
     }
 
-    if (msg.pollMulti) {
-        const existing = await prisma.nexusChannelPollVote.findFirst({
-            where: { messageId, profileId: me.id, optionIndex }, select: { id: true },
-        });
-        if (existing) {
-            await prisma.nexusChannelPollVote.delete({ where: { id: existing.id } });
+    // P2002 race: bir xil optionga tez ikki marta bosishda "unique constraint failed" chiqmasin.
+    // Ikki so'rov bir vaqtda kelib, ikkalasi ham deleteMany 0 ta o'chirsa, ikkalasi create'da urinadi.
+    try {
+        if (msg.pollMulti) {
+            const existing = await prisma.nexusChannelPollVote.findFirst({
+                where: { messageId, profileId: me.id, optionIndex }, select: { id: true },
+            });
+            if (existing) {
+                await prisma.nexusChannelPollVote.delete({ where: { id: existing.id } });
+            } else {
+                await prisma.nexusChannelPollVote.create({ data: { messageId, profileId: me.id, optionIndex } });
+            }
         } else {
-            await prisma.nexusChannelPollVote.create({ data: { messageId, profileId: me.id, optionIndex } });
+            // Single: eskilarni (boshqa optionlar ham) o'chirib, target upsert
+            await prisma.$transaction([
+                prisma.nexusChannelPollVote.deleteMany({ where: { messageId, profileId: me.id, optionIndex: { not: optionIndex } } }),
+                prisma.nexusChannelPollVote.upsert({
+                    where: { messageId_profileId_optionIndex: { messageId, profileId: me.id, optionIndex } },
+                    create: { messageId, profileId: me.id, optionIndex },
+                    update: {},
+                }),
+            ]);
         }
-    } else {
-        await prisma.$transaction([
-            prisma.nexusChannelPollVote.deleteMany({ where: { messageId, profileId: me.id } }),
-            prisma.nexusChannelPollVote.create({ data: { messageId, profileId: me.id, optionIndex } }),
-        ]);
+    } catch (e) {
+        // P2002 — race'da boshqa so'rov allaqachon yozdi; jim o'tkazamiz, hisob to'g'ri qaytadi
+        const code = (e as { code?: string })?.code;
+        if (code !== "P2002") throw e;
     }
 
     const allVotes = await prisma.nexusChannelPollVote.findMany({
