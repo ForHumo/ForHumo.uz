@@ -3,6 +3,7 @@
 import { BnLink } from "./bn-nav";
 import { Store, Shield, Truck, Sparkles } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
+import { PoweredByForHumo } from "@/components/shared/powered-by-forhumo";
 
 export function BnFooter() {
     return (
@@ -58,13 +59,11 @@ export function BnFooter() {
             </div>
 
             <div style={{ borderTop: `1px solid ${BN.border}` }}>
-                <div className="mx-auto max-w-[1280px] px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <p className="text-[12px]" style={{ color: BN.text3 }}>
+                <div className="mx-auto max-w-[1280px] px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-2" style={{ color: BN.text3 }}>
+                    <p className="text-[12px]">
                         © {new Date().getFullYear()} Bozor Narxida
                     </p>
-                    <p className="text-[12px]" style={{ color: BN.text3 }}>
-                        For Humo loyihalaridan biri
-                    </p>
+                    <PoweredByForHumo />
                 </div>
             </div>
         </footer>

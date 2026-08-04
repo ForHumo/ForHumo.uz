@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import {
     Store, MapPin, ArrowRight, ChevronRight, Star, Package,
-    TrendingDown, Sparkles, Crown, Loader2, Globe, Warehouse,
+    TrendingDown, Sparkles, Crown, Loader2, Globe, ShoppingBag,
 } from "lucide-react";
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
@@ -40,6 +40,8 @@ export function BnHome() {
                     shopName: s.name,
                     shopVerified: s.tier === "VERIFIED" || s.tier === "PREMIUM",
                     marketName: s.marketName,
+                    district: s.district ?? null,
+                    branchName: s.branchName ?? null,
                     stock: 1 + ((k + r * 3) % 9),
                     rating: Math.round((3.8 + ((k * 3 + r * 5) % 12) / 10) * 10) / 10,
                     ratingCount: 4 + ((k * 11 + r * 7) % 60),
@@ -86,7 +88,7 @@ export function BnHome() {
                 />
                 <EntryCard
                     href="/dokonlar"
-                    icon={<Warehouse className="w-6 h-6" />}
+                    icon={<ShoppingBag className="w-6 h-6" />}
                     title="Do'konlar"
                     text="Bozordagi, ko'chadagi va onlayn do'konlar"
                     count={`${MOCK_SHOPS.length} ta do'kon`}

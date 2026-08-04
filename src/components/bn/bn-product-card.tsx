@@ -1,7 +1,7 @@
 "use client";
 
 import { BnLink } from "./bn-nav";
-import { Store, Star, Eye, Truck, BadgeCheck } from "lucide-react";
+import { Store, MapPin, Star, Eye, Truck, BadgeCheck } from "lucide-react";
 import { BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel } from "@/lib/bn-theme";
 
 export interface ProductCardData {
@@ -14,14 +14,36 @@ export interface ProductCardData {
     shopName: string;
     shopSlug: string;
     shopVerified?: boolean;         // Tasdiqlangan do'kon belgisi
-    marketName: string | null;
-    city: string;
+    marketName: string | null;      // Bozorda joylashgan bo'lsa — bozor nomi
+    city: string;                   // "Toshkent", "Samarqand"
+    district?: string | null;       // "Shayxontohur" — ko'chadagi do'kon uchun
+    branchName?: string | null;     // "Shedevr" — filial nomi (bo'lsa "Nom | Shahar, Tuman")
     rating: number;
     ratingCount: number;
     isNegotiable: boolean;
     allowDelivery: boolean;
     allowInspect: boolean;
     stock: number;
+}
+
+/** Foydalanuvchi qarori bo'yicha kontekst matni:
+ *   Bozorda:    "Sergeli avto bozori · Toshkent"
+ *   Ko'chada:   "Chilonzor Mebel · Toshkent, Shayxontohur"
+ *   Filialli:   `"Shedevr" · Toshkent, Shayxontohur`
+ *   Onlayn:     "Onlayn do'kon · Toshkent"
+ */
+export function productContextText(p: {
+    marketName: string | null; city: string;
+    district?: string | null; branchName?: string | null;
+}): { text: string; kind: "market" | "shop" } {
+    if (p.marketName) {
+        return { text: `${p.marketName} · ${p.city}`, kind: "market" };
+    }
+    const loc = p.district ? `${p.city}, ${p.district}` : p.city;
+    if (p.branchName) {
+        return { text: `"${p.branchName}" · ${loc}`, kind: "shop" };
+    }
+    return { text: loc, kind: "shop" };
 }
 
 export function BnProductCard({ p, compact = false }: { p: ProductCardData; compact?: boolean }) {
@@ -139,13 +161,20 @@ export function BnProductCard({ p, compact = false }: { p: ProductCardData; comp
 
                 <div className="flex-1" />
 
-                {/* PASTIDA: bozor (rejadagi zo'r naqsh — o'zgarmaydi) */}
-                {p.marketName && (
-                    <div className="flex items-center gap-1.5 text-[11px] min-w-0" style={{ color: BN.text3 }}>
-                        <Store className="w-3 h-3 flex-shrink-0" />
-                        <span className="truncate">{p.marketName}</span>
-                    </div>
-                )}
+                {/* PASTIDA: kontekst — bozor bo'lsa "Bozor · Shahar",
+                    do'kon bo'lsa "Shahar, Tuman" yoki `"Filial" · Shahar, Tuman`.
+                    Foydalanuvchi qarori: bozorda Store ikonkasi (zo'r naqsh) —
+                    do'konda esa MapPin, tuman ko'rinadi. */}
+                {(() => {
+                    const ctx = productContextText(p);
+                    const Icon = ctx.kind === "market" ? Store : MapPin;
+                    return (
+                        <div className="flex items-center gap-1.5 text-[11px] min-w-0" style={{ color: BN.text3 }}>
+                            <Icon className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate">{ctx.text}</span>
+                        </div>
+                    );
+                })()}
             </div>
         </BnLink>
     );

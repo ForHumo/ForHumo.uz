@@ -6,7 +6,7 @@ import { useSession, signIn } from "next-auth/react";
 import {
     Search, ShoppingCart, Menu, X, User, Bell, LayoutGrid,
     Package, ChevronRight, LogIn, Navigation, Headphones, Heart, Store,
-    Sparkles, Mic, MapPin, PackageOpen, Warehouse,
+    Mic, Camera, ShoppingBag,
 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink, useBnHref, useBnBase, BnThemeToggle, BnLangSwitch } from "./bn-nav";
@@ -16,7 +16,7 @@ import { MOCK_CATEGORIES } from "@/lib/bn-mock";
 // Faqat gorizontal 1 qatorda: Mening joylashuvim → Topshirish punkti → Buyurtmalarim → Humo Support
 const NAV = [
     { href: "/joylashuv",     label: "Mening joylashuvim", icon: Navigation },
-    { href: "/punktlar",      label: "Topshirish punkti",  icon: Warehouse },
+    { href: "/punktlar",      label: "Topshirish punkti",  icon: Package },
     { href: "/buyurtmalarim", label: "Buyurtmalarim",      icon: Package },
 ] as const;
 
@@ -90,17 +90,17 @@ export function BnHeader() {
                                         style={{ color: BN.text, caretColor: BN.gold }}
                                     />
                                     <SearchExtraBtn
-                                        label="Ovozli qidiruv"
-                                        onClick={() => alert("Ovozli qidiruv tez orada")}
+                                        label="AI bilan gaplashib qidirish"
+                                        onClick={() => router.push(to("/qidiruv?mode=voice"))}
                                     >
                                         <Mic className="w-[17px] h-[17px]" />
                                     </SearchExtraBtn>
                                     <SearchExtraBtn
-                                        label="AI qidiruv"
-                                        onClick={() => router.push(to("/qidiruv?ai=1"))}
+                                        label="Rasmdan qidirish (Skaner)"
+                                        onClick={() => router.push(to("/scan"))}
                                         gold
                                     >
-                                        <Sparkles className="w-[17px] h-[17px]" />
+                                        <Camera className="w-[17px] h-[17px]" />
                                     </SearchExtraBtn>
                                 </div>
                             </form>
@@ -232,17 +232,17 @@ export function BnHeader() {
                                     style={{ color: BN.text, caretColor: BN.gold }}
                                 />
                                 <SearchExtraBtn
-                                    label="Ovozli qidiruv"
-                                    onClick={() => alert("Ovozli qidiruv tez orada")}
+                                    label="AI bilan gaplashib qidirish"
+                                    onClick={() => router.push(to("/qidiruv?mode=voice"))}
                                 >
                                     <Mic className="w-4 h-4" />
                                 </SearchExtraBtn>
                                 <SearchExtraBtn
-                                    label="AI qidiruv"
-                                    onClick={() => router.push(to("/qidiruv?ai=1"))}
+                                    label="Rasmdan qidirish"
+                                    onClick={() => router.push(to("/scan"))}
                                     gold
                                 >
-                                    <Sparkles className="w-4 h-4" />
+                                    <Camera className="w-4 h-4" />
                                 </SearchExtraBtn>
                             </div>
                         </form>

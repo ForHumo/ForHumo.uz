@@ -12,6 +12,7 @@ import {
     Fingerprint,
     ShoppingBag,
     CreditCard,
+    Store,
 } from "lucide-react";
 import { ProjectCard } from "@/components/ui/project-card";
 import { LiveBackground } from "@/components/home/live-background";
@@ -76,6 +77,17 @@ export function HomeContent() {
             href: "/pay",
             icon: CreditCard,
             logoSrc: "/logos/alkh-pay.png",
+            status: "active",
+        },
+        {
+            // Foydalanuvchi so'rovi: ALKH Pay kartasidan keyin BN kartasi.
+            // Havola tashqi — bozornarxida.uz (o'z domeni bor).
+            title: "Bozor Narxida",
+            description: tProjects("bn_desc"),
+            href: "https://bozornarxida.uz",
+            icon: Store,
+            logoSrc: "/bn/logo.png",
+            logoSrcDark: "/bn/logo-dark.png",
             status: "active",
         },
         {

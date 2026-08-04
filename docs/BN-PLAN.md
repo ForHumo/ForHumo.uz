@@ -10,6 +10,46 @@
 | BN rahbari | **Jalol — BN OWNER** (to'liq BN admin). Tizim/kod/integratsiya — founder (Abduvoris) |
 | v1 qamrov | **Barcha 10 kategoriya** to'liq atribut sxemasi bilan |
 | Komissiya | **5%** (Market bilan bir xil), naqddan olinmaydi |
+| Integratsiyalar | **Humo ID · Humo AI · Humo Nexus · Humo Support · ALKH Pay** |
+| Til | uz/ru majburiy, en — oxirida (foydalanuvchi qarori) |
+| Humo Support | `forhumo.uz/{til}/support/bn/chat` — **eng oxirida** |
+| Poweredby | Har loyihada "Powered by [logo] **For Humo**" ("For Humo" qalin, brend rangida) |
+
+**Navbar (yakuniy tartib):** Asosiy → Katalog → Sevimlilar → Savat → Media
+(Scan olib tashlandi, header qidiruvida tugmasi sifatida bor. Profil header'da.)
+
+**Header qidiruv paneli — 2 tugma:**
+- **Mikrofon** — Ovozli AI qidiruv (shunchaki matn diktovka emas — AI bilan
+  suhbat: "Nexia 2015 uchun old tormoz, Sergelida" degan gapdan qidiruvni
+  o'zi tuzadi)
+- **Kamera/Skaner** — Rasmdan qidiruv: mahsulot rasmga olinadi yoki fayl
+  yuboriladi, AI shu asosda topadi. Chatda ham yozish mumkin.
+
+**Media bo'limi (yangi navbar):** BN ichida Nexus'ga o'xshash lenta —
+reels/rasmli postlar + chat. FAQAT sotuv/xarid kontenti. Nexus bilan
+ikki tomonlama integratsiya:
+- BN sotuvchisining Nexus kanali BN media bo'limiga avtomatik ko'chadi
+- Nexus'da BN'ga tegishli sotuvchi kontent qo'ysa (masalan #bn tegi yoki
+  BnShop bilan bog'langan post), BN media'ga takrorlanadi
+- Kontent Nexus'da bor, BN faqat ko'zoyna (filtr + qayta chiqarish) —
+  ma'lumot ikki marta saqlanmaydi
+
+**Mahsulot kartasi kontekst matni (foydalanuvchi so'rovi):**
+
+| Sotuvchi turi | Kartada ko'rinishi |
+|---|---|
+| Bozorda | "Sergeli avto bozori · Toshkent" (bozor + shahar) |
+| Ko'chadagi filial | "Chilonzor Mebel · Toshkent, Shayxontohur" (nom · shahar, tuman) |
+| Nomlangan filial | `"Shedevr" · Toshkent, Shayxontohur` |
+| Onlayn | "Onlayn do'kon · Toshkent" (yoki faqat shahar) |
+
+Bozor kartasida: `"Malika savdo majmuasi · Toshkent"` (bozor · shahar).
+
+**Do'konlar sahifasi ikonkasi:** navbar va katta kartada — **savat shakli**
+(`ShoppingBag`), bozor ikonkasidan farq qiladi.
+
+**For Humo saytida:** ALKH Pay kartasidan keyin **Bozor Narxida** loyiha
+kartasi qo'shiladi.
 
 ---
 

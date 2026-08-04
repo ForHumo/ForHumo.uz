@@ -4,18 +4,19 @@
 // Foydalanuvchi so'rovi: "Navbar muallaq turishi kerak biror joyga teginmasdan,
 // navbarni orqa foni xira shaffof bo'lishi kerak."
 
-import { Home, LayoutGrid, ScanLine, Heart, ShoppingCart } from "lucide-react";
+import { Home, LayoutGrid, Heart, ShoppingCart, Play } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink, useBnPath } from "./bn-nav";
 
-// Foydalanuvchi so'rovi (yangi tartib): Asosiy → Katalog → Scan → Sevimlilar → Savat.
+// Foydalanuvchi so'rovi (yangi tartib): Asosiy → Katalog → Sevimlilar → Savat → Media.
+// Scan olib tashlandi — header qidiruv panelida kamera ikonkasi sifatida.
 // Profil header'da bor — navbar'dan olib tashlandi.
 const ITEMS = [
     { href: "/",           label: "Asosiy",     icon: Home },
     { href: "/katalog",    label: "Katalog",    icon: LayoutGrid },
-    { href: "/scan",       label: "Scan",       icon: ScanLine },
     { href: "/sevimlilar", label: "Sevimlilar", icon: Heart },
     { href: "/savat",      label: "Savat",      icon: ShoppingCart },
+    { href: "/media",      label: "Media",      icon: Play },
 ] as const;
 
 export function BnNavbar() {

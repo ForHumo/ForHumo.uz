@@ -20,6 +20,8 @@ export interface MockShop {
     marketSlug: string | null; marketName: string | null;
     marketSection: string | null; marketShopNo: string | null;
     address: string | null; city: string;
+    district?: string | null;                       // "Shayxontohur" — ko'chadagi do'kon uchun
+    branchName?: string | null;                     // "Shedevr" — filial nomi
     rating: number; ratingCount: number; productCount: number;
 }
 
@@ -30,6 +32,7 @@ export interface MockProduct {
     categorySlug: string;
     shopSlug: string; shopName: string; shopVerified?: boolean;
     marketName: string | null; city: string;
+    district?: string | null; branchName?: string | null;
     stock: number; isNegotiable: boolean;
     allowPickup: boolean; allowDelivery: boolean; allowInspect: boolean;
     attributes: Record<string, string | number | boolean>;
@@ -160,6 +163,7 @@ export const MOCK_SHOPS: MockShop[] = [
         tier: "TRUSTED", locationType: "STANDALONE",
         marketSlug: null, marketName: null, marketSection: null, marketShopNo: null,
         address: "Chilonzor tumani, Bunyodkor ko'chasi 12", city: "Toshkent",
+        district: "Chilonzor", branchName: "Shedevr",
         rating: 4.4, ratingCount: 43, productCount: 37,
     },
     {
@@ -247,7 +251,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
         images: [img("sofa1"), img("sofa2")],
         categorySlug: "uy-mebel",
         shopSlug: "chilonzor-mebel", shopName: "Chilonzor Mebel",
-        marketName: null, city: "Toshkent",
+        marketName: null, city: "Toshkent", district: "Chilonzor", branchName: "Shedevr",
         stock: 4, isNegotiable: true,
         allowPickup: false, allowDelivery: true, allowInspect: true,
         attributes: { material: "Velur", color: "Kulrang", length: 260, assembled: false },
@@ -271,7 +275,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
         images: [img("drill1"), img("drill2")],
         categorySlug: "qurilish-asbob",
         shopSlug: "tez-yetkazish", shopName: "Tez Yetkazish",
-        marketName: null, city: "Toshkent",
+        marketName: null, city: "Toshkent", district: null,
         stock: 5, isNegotiable: false,
         allowPickup: false, allowDelivery: true, allowInspect: false,
         attributes: { brand: "Makita", power: 780, condition: "Yangi", warranty: "12 oy" },
