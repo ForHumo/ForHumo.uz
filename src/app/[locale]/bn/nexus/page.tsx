@@ -4,7 +4,7 @@ import { BnMedia } from "@/components/bn/bn-media";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-    title: "Media — Bozor Narxida",
+    title: "Nexus — Bozor Narxida",
     description: "Sotuvchilarning postlari, reels va reklamalari. Humo Nexus bilan integratsiya.",
 };
 

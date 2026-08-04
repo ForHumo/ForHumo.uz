@@ -84,13 +84,20 @@ export function BnMedia() {
             {/* Sarlavha + integratsiya izohi */}
             <div className="mb-5">
                 <div className="flex items-center gap-2 mb-2">
-                    <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight leading-none">Media</h1>
+                    <img
+                        src="/logos/humo-nexus.png"
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 object-contain flex-shrink-0"
+                    />
+                    <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight leading-none">Nexus</h1>
                     <span
                         className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10.5px] font-black"
                         style={{ background: BN.goldSoft, color: BN.gold }}
                     >
                         <Sparkles className="w-3 h-3" />
-                        Nexus bilan integratsiya
+                        Humo Nexus bilan integratsiya
                     </span>
                 </div>
                 <p className="text-[13px] leading-relaxed max-w-[640px]" style={{ color: BN.text2 }}>

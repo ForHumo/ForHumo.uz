@@ -9,6 +9,7 @@ import { BnFooter } from "@/components/bn/bn-footer";
 import { BnNavbar } from "@/components/bn/bn-navbar";
 import { BnStyles, BnAurora } from "@/components/bn/bn-styles";
 import { BnBaseProvider } from "@/components/bn/bn-nav";
+import { BnSwipeNav } from "@/components/bn/bn-swipe-nav";
 
 const BN_HOSTS = ["bozornarxida.uz", "www.bozornarxida.uz"];
 
@@ -34,12 +35,14 @@ export default async function BnLayout({
             <BnStyles />
             <BnAurora />
             <BnBaseProvider base={base} locale={locale}>
-                <div className="relative z-10 flex flex-col min-h-full">
-                    <BnHeader />
-                    <main className="flex-1 pb-24">{children}</main>
-                    <BnFooter />
-                </div>
-                <BnNavbar />
+                <BnSwipeNav>
+                    <div className="relative z-10 flex flex-col min-h-full">
+                        <BnHeader />
+                        <main className="flex-1 pb-24">{children}</main>
+                        <BnFooter />
+                    </div>
+                    <BnNavbar />
+                </BnSwipeNav>
             </BnBaseProvider>
         </div>
     );

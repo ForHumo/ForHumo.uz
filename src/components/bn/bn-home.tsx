@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import {
     Store, MapPin, ArrowRight, ChevronRight, Star, Package,
-    TrendingDown, Sparkles, Crown, Loader2, Globe, ShoppingBag,
+    TrendingDown, Sparkles, Crown, Loader2, Globe, ShoppingBasket,
 } from "lucide-react";
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
@@ -88,7 +88,7 @@ export function BnHome() {
                 />
                 <EntryCard
                     href="/dokonlar"
-                    icon={<ShoppingBag className="w-6 h-6" />}
+                    icon={<ShoppingBasket className="w-6 h-6" />}
                     title="Do'konlar"
                     text="Bozordagi, ko'chadagi va onlayn do'konlar"
                     count={`${MOCK_SHOPS.length} ta do'kon`}

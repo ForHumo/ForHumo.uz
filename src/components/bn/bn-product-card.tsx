@@ -1,7 +1,7 @@
 "use client";
 
 import { BnLink } from "./bn-nav";
-import { Store, MapPin, Star, Eye, Truck, BadgeCheck } from "lucide-react";
+import { Store, ShoppingBasket, Star, Eye, Truck, BadgeCheck } from "lucide-react";
 import { BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel } from "@/lib/bn-theme";
 
 export interface ProductCardData {
@@ -167,7 +167,7 @@ export function BnProductCard({ p, compact = false }: { p: ProductCardData; comp
                     do'konda esa MapPin, tuman ko'rinadi. */}
                 {(() => {
                     const ctx = productContextText(p);
-                    const Icon = ctx.kind === "market" ? Store : MapPin;
+                    const Icon = ctx.kind === "market" ? Store : ShoppingBasket;
                     return (
                         <div className="flex items-center gap-1.5 text-[11px] min-w-0" style={{ color: BN.text3 }}>
                             <Icon className="w-3 h-3 flex-shrink-0" />

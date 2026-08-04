@@ -1,23 +1,39 @@
 "use client";
 
-// Muallaq pastki navbar — hech narsaga tegmaydi, foni xira shaffof.
-// Foydalanuvchi so'rovi: "Navbar muallaq turishi kerak biror joyga teginmasdan,
-// navbarni orqa foni xira shaffof bo'lishi kerak."
-
-import { Home, LayoutGrid, Heart, ShoppingCart, Play } from "lucide-react";
+import { Home, LayoutGrid, Heart, ShoppingCart } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink, useBnPath } from "./bn-nav";
+import type { LucideIcon } from "lucide-react";
 
-// Foydalanuvchi so'rovi (yangi tartib): Asosiy → Katalog → Sevimlilar → Savat → Media.
-// Scan olib tashlandi — header qidiruv panelida kamera ikonkasi sifatida.
-// Profil header'da bor — navbar'dan olib tashlandi.
-const ITEMS = [
+// Foydalanuvchi so'rovi (yakuniy):
+//   Asosiy → Katalog → Sevimlilar → Savat → Nexus
+// - Scan olib tashlandi (header qidiruv panelida bor)
+// - Profil olib tashlandi (header'da bor)
+// - Media → Nexus (chunki bu Humo Nexus integratsiyasi)
+// - Nexus ikonkasi — Humo Nexus logosi (rasm)
+//
+// Swipe navigatsiya: BnSwipeNav layout'da BODY'ga bog'lanadi, chapga swipe →
+// keyingi tab, o'ngga swipe → oldingi tab. Shuning uchun bu yerdagi TARTIB
+// swipe uchun ham manba (`NAV_ORDER`).
+
+interface Item {
+    href: string;
+    label: string;
+    icon?: LucideIcon;
+    iconSrc?: string;      // rasm ikonka (Nexus uchun)
+    iconSrcAlt?: string;
+}
+
+const ITEMS: Item[] = [
     { href: "/",           label: "Asosiy",     icon: Home },
     { href: "/katalog",    label: "Katalog",    icon: LayoutGrid },
     { href: "/sevimlilar", label: "Sevimlilar", icon: Heart },
     { href: "/savat",      label: "Savat",      icon: ShoppingCart },
-    { href: "/media",      label: "Media",      icon: Play },
-] as const;
+    { href: "/nexus",      label: "Nexus",      iconSrc: "/logos/humo-nexus.png", iconSrcAlt: "Humo Nexus" },
+];
+
+/** Swipe navigatsiya uchun tartib. `swipe-nav.tsx` shu ro'yxatdan foydalanadi. */
+export const NAV_ORDER = ITEMS.map(i => i.href);
 
 export function BnNavbar() {
     const path = useBnPath();
@@ -39,7 +55,6 @@ export function BnNavbar() {
                     }}
                 >
                     {ITEMS.map(it => {
-                        const Icon = it.icon;
                         const active = it.href === "/" ? path === "/" : path.startsWith(it.href);
                         return (
                             <BnLink
@@ -52,10 +67,24 @@ export function BnNavbar() {
                                     color: active ? BN.gold : BN.text3,
                                 }}
                             >
-                                <Icon
-                                    className="w-[19px] h-[19px]"
-                                    strokeWidth={active ? 2.4 : 1.9}
-                                />
+                                {it.iconSrc ? (
+                                    <img
+                                        src={it.iconSrc}
+                                        alt={it.iconSrcAlt ?? ""}
+                                        width={20}
+                                        height={20}
+                                        className="w-[20px] h-[20px] object-contain"
+                                        style={{
+                                            filter: active ? "none" : "grayscale(1) opacity(0.75)",
+                                            transition: "filter .15s",
+                                        }}
+                                    />
+                                ) : it.icon ? (
+                                    <it.icon
+                                        className="w-[19px] h-[19px]"
+                                        strokeWidth={active ? 2.4 : 1.9}
+                                    />
+                                ) : null}
                                 <span
                                     className="text-[10px] leading-none"
                                     style={{ fontWeight: active ? 800 : 600 }}

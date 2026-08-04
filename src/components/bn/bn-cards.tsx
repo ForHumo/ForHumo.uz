@@ -1,7 +1,7 @@
 "use client";
 
 import { BnLink } from "./bn-nav";
-import { Store, MapPin, Star, Globe, Package, Clock, ChevronRight } from "lucide-react";
+import { Store, MapPin, Star, Globe, Package, Clock, ChevronRight, ShoppingBasket } from "lucide-react";
 import { BN, TIER_META, type ShopTier, type LocationType } from "@/lib/bn-theme";
 
 // ── Do'kon kartasi ──────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ export function shopLocationText(s: Pick<ShopCardData, "locationType" | "marketN
 function LocationIcon({ type }: { type: LocationType }) {
     const cls = "w-3 h-3 flex-shrink-0";
     if (type === "IN_MARKET") return <Store className={cls} />;
-    if (type === "STANDALONE") return <MapPin className={cls} />;
+    if (type === "STANDALONE") return <ShoppingBasket className={cls} />;
     return <Globe className={cls} />;
 }
 
