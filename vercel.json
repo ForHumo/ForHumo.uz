@@ -5,6 +5,7 @@
     "crons": [
         { "path": "/api/cron/stories-cleanup", "schedule": "0 3 * * *" },
         { "path": "/api/cron/interest-rebuild", "schedule": "0 4 * * *" },
-        { "path": "/api/cron/esport-brackets", "schedule": "0 5 * * *" }
+        { "path": "/api/cron/esport-brackets", "schedule": "0 5 * * *" },
+        { "path": "/api/cron/bn-inspect-expire", "schedule": "0 6 * * *" }
     ]
 }

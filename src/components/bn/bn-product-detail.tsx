@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession, signIn } from "next-auth/react";
 import { BnLink } from "./bn-nav";
 import {
-    Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield,
-    ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe,
+    Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
+    ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2,
 } from "lucide-react";
 import {
     BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel, TIER_META,
@@ -32,14 +34,90 @@ interface Props {
 
 export function BnProductDetail({ product, shop, similar, others }: Props) {
     const p = product;
+    const router = useRouter();
+    const { status } = useSession();
     const [imgIdx, setImgIdx] = useState(0);
     const [qty, setQty] = useState(1);
     const [fav, setFav] = useState(false);
+    const [cartBusy, setCartBusy] = useState(false);
+    const [cartDone, setCartDone] = useState(false);
+    const [favBusy, setFavBusy] = useState(false);
 
     const rank = priceRankOf(p.price, p.marketAvgPrice);
     const rankMeta = rank ? PRICE_RANK_META[rank] : null;
     const diff = priceDiffLabel(p.price, p.marketAvgPrice);
     const tier = shop ? TIER_META[shop.tier] : null;
+
+    // Favorit statusini yuklab olamiz (login bo'lsa)
+    useEffect(() => {
+        if (status !== "authenticated") return;
+        let cancelled = false;
+        fetch(`/api/bn/favorites?ids=${p.id}`)
+            .then(r => r.json())
+            .then(d => { if (!cancelled) setFav(!!d?.statuses?.[p.id]); })
+            .catch(() => { /* ignore */ });
+        return () => { cancelled = true; };
+    }, [status, p.id]);
+
+    async function addToCart() {
+        if (status === "unauthenticated") { signIn("google"); return; }
+        setCartBusy(true);
+        try {
+            const r = await fetch("/api/bn/cart", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ productId: p.id, qty }),
+            });
+            if (r.ok) {
+                setCartDone(true);
+                setTimeout(() => setCartDone(false), 2400);
+                router.refresh();  // header savat badge yangilanadi
+            } else if (r.status === 401) {
+                signIn("google");
+            }
+        } finally { setCartBusy(false); }
+    }
+
+    async function startInspect() {
+        if (status === "unauthenticated") { signIn("google"); return; }
+        setCartBusy(true);
+        try {
+            const r = await fetch("/api/bn/inspect", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ productId: p.id, qty }),
+            });
+            const d = await r.json();
+            if (r.ok && d?.ok) {
+                const exp = new Date(d.expiresAt).toLocaleString("uz-UZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+                alert(`Band qilindi! Kod: ${d.code}\n\nSotuvchiga shu kodni ayting. Muddat: ${exp}gacha.`);
+                router.refresh();
+            } else if (d?.error === "already_held") {
+                alert(`Bu mahsulot allaqachon band qilingan.\nKod: ${d.hold?.code}`);
+            } else if (r.status === 401) {
+                signIn("google");
+            } else {
+                alert(d?.error ?? "Xatolik yuz berdi");
+            }
+        } finally { setCartBusy(false); }
+    }
+
+    async function toggleFav() {
+        if (status === "unauthenticated") { signIn("google"); return; }
+        setFavBusy(true);
+        const prev = fav;
+        setFav(!prev);   // optimistik
+        try {
+            const r = await fetch("/api/bn/favorites", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ productId: p.id }),
+            });
+            if (!r.ok) setFav(prev);   // rollback
+            else router.refresh();
+        } catch { setFav(prev); }
+        finally { setFavBusy(false); }
+    }
 
     return (
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-16">
@@ -317,27 +395,41 @@ export function BnProductDetail({ product, shop, similar, others }: Props) {
 
                         {/* Asosiy harakatlar */}
                         <button
-                            className="flex items-center justify-center gap-2 w-full h-13 rounded-2xl text-[15px] font-black transition-transform active:scale-[0.98]"
-                            style={{ height: 52, background: BN.gold, color: BN.onGold }}
+                            onClick={addToCart}
+                            disabled={cartBusy || p.stock < 1}
+                            className="flex items-center justify-center gap-2 w-full rounded-2xl text-[15px] font-black transition-transform active:scale-[0.98] disabled:opacity-60"
+                            style={{ height: 52, background: cartDone ? BN.ok : BN.gold, color: BN.onGold }}
                         >
-                            <ShoppingCart className="w-5 h-5" />
-                            Savatga qo&apos;shish
+                            {cartBusy ? <Loader2 className="w-5 h-5 animate-spin" />
+                                : cartDone ? <><Check className="w-5 h-5" /> Savatga qo&apos;shildi</>
+                                : <><ShoppingCart className="w-5 h-5" /> Savatga qo&apos;shish</>}
                         </button>
+                        {cartDone && (
+                            <BnLink
+                                href="/savat"
+                                className="block w-full text-center mt-2 text-[12.5px] font-bold"
+                                style={{ color: BN.gold }}
+                            >
+                                Savatga o&apos;tish →
+                            </BnLink>
+                        )}
 
                         {p.allowInspect && (
                             <button
-                                className="flex items-center justify-center gap-2 w-full h-12 mt-2.5 rounded-2xl text-[14px] font-black transition-transform active:scale-[0.98]"
+                                onClick={startInspect}
+                                disabled={cartBusy}
+                                className="flex items-center justify-center gap-2 w-full h-12 mt-2.5 rounded-2xl text-[14px] font-black transition-transform active:scale-[0.98] disabled:opacity-60"
                                 style={{ background: BN.goldSoft, border: `1px solid ${BN.goldEdge}`, color: BN.gold }}
                             >
                                 <Eye className="w-[18px] h-[18px]" />
-                                Ko&apos;rib sotib olaman
+                                Ko&apos;rib sotib olaman (24 soat band)
                             </button>
                         )}
 
                         <div className="flex gap-2 mt-2.5">
-                            <SecondaryBtn onClick={() => setFav(v => !v)}>
+                            <SecondaryBtn onClick={toggleFav} disabled={favBusy}>
                                 <Heart className="w-4 h-4" style={{ fill: fav ? BN.err : "none", color: fav ? BN.err : undefined }} />
-                                Saqlash
+                                {fav ? "Saqlangan" : "Saqlash"}
                             </SecondaryBtn>
                             <SecondaryBtn onClick={() => navigator.share?.({ title: p.title, url: location.href })}>
                                 <Share2 className="w-4 h-4" />
@@ -419,11 +511,12 @@ function QtyBtn({ children, onClick, disabled }: { children: React.ReactNode; on
     );
 }
 
-function SecondaryBtn({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+function SecondaryBtn({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
     return (
         <button
             onClick={onClick}
-            className="flex items-center justify-center gap-1.5 flex-1 h-11 rounded-xl text-[13px] font-bold transition-colors"
+            disabled={disabled}
+            className="flex items-center justify-center gap-1.5 flex-1 h-11 rounded-xl text-[13px] font-bold transition-colors disabled:opacity-60"
             style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text2 }}
         >
             {children}

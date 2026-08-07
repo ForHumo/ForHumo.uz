@@ -26,7 +26,10 @@ const NAV = [
     { href: "/buyurtmalarim", label: "Buyurtmalarim",      icon: Package },
 ] as const;
 
-export function BnHeader({ categories = [] }: { categories?: BnHeaderCategoryDTO[] }) {
+export function BnHeader({
+    categories = [], cartCount = 0, favCount = 0,
+}: { categories?: BnHeaderCategoryDTO[]; cartCount?: number; favCount?: number }) {
+    void favCount;   // hozircha faqat cartCount ishlatiladi, favCount kelajakda profil menyusida
     const router = useRouter();
     const to = useBnHref();
     const { locale } = useBnBase();
@@ -148,7 +151,7 @@ export function BnHeader({ categories = [] }: { categories?: BnHeaderCategoryDTO
                                 <IconBtn href="/bildirishnomalar" label="Bildirishnomalar">
                                     <Bell className="w-[17px] h-[17px]" />
                                 </IconBtn>
-                                <IconBtn href="/savat" label="Savat">
+                                <IconBtn href="/savat" label="Savat" badge={cartCount}>
                                     <ShoppingCart className="w-[17px] h-[17px]" />
                                 </IconBtn>
 
@@ -216,7 +219,7 @@ export function BnHeader({ categories = [] }: { categories?: BnHeaderCategoryDTO
                             <IconBtn href="/bildirishnomalar" label="Bildirishnomalar" compact>
                                 <Bell className="w-4 h-4" />
                             </IconBtn>
-                            <IconBtn href="/savat" label="Savat" compact>
+                            <IconBtn href="/savat" label="Savat" compact badge={cartCount}>
                                 <ShoppingCart className="w-4 h-4" />
                             </IconBtn>
                         </div>
@@ -437,17 +440,25 @@ function SearchExtraBtn({
 }
 
 function IconBtn({
-    href, label, compact, children,
-}: { href: string; label: string; compact?: boolean; children: React.ReactNode }) {
+    href, label, compact, children, badge,
+}: { href: string; label: string; compact?: boolean; children: React.ReactNode; badge?: number }) {
     return (
         <BnLink
             href={href}
-            aria-label={label}
+            aria-label={badge && badge > 0 ? `${label} (${badge})` : label}
             title={label}
-            className={`grid place-items-center rounded-xl transition-colors ${compact ? "w-9 h-9" : "w-10 h-10"}`}
+            className={`relative grid place-items-center rounded-xl transition-colors ${compact ? "w-9 h-9" : "w-10 h-10"}`}
             style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text2 }}
         >
             {children}
+            {badge !== undefined && badge > 0 && (
+                <span
+                    className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full text-[10px] font-black leading-none tabular-nums"
+                    style={{ background: BN.gold, color: BN.onGold, border: `2px solid var(--bn-bg)` }}
+                >
+                    {badge > 99 ? "99+" : badge}
+                </span>
+            )}
         </BnLink>
     );
 }
