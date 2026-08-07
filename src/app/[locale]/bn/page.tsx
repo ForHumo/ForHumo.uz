@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BnHome } from "@/components/bn/bn-home";
+import { getHomeData } from "@/lib/bn-data";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
         + "Ko'rib sotib olish, xavfsiz to'lov, rasmiy sotuvchilar.",
 };
 
-export default function Page() {
-    return <BnHome />;
+export default async function Page() {
+    const data = await getHomeData();
+    return <BnHome initial={data} />;
 }

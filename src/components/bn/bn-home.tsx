@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
     Store, MapPin, ArrowRight, ChevronRight, Star, Package,
     TrendingDown, Sparkles, Crown, Loader2, Globe, ShoppingBasket,
@@ -12,7 +12,7 @@ import { BnHeroSlider } from "./bn-hero-slider";
 import { BnLink } from "./bn-nav";
 import { shopLocationText } from "./bn-cards";
 import { LiquidGlassNavbar } from "@/components/shared/liquid-glass-navbar";
-import { MOCK_MARKETS, MOCK_PRODUCTS, MOCK_SHOPS, type MockProduct } from "@/lib/bn-mock";
+import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 const COLS = 5;          // chapdan o'ngga 5 ta
 const INITIAL_ROWS = 2;  // tepadan pastga 2 qator
@@ -20,60 +20,17 @@ const LOAD_ROWS = 5;     // "Yuklash" har bosishda 5 qator qo'shadi
 
 type FilterKey = "cheap" | "fresh" | "top" | "seasonal";
 
-export function BnHome() {
-    // FAZA 1 — mock ro'yxatni ko'paytiramiz (yuklash tugmasini ko'rsatish uchun).
-    // Nusxalar turli do'konlarning bir xil mahsulotga qo'ygan narxi sifatida
-    // yaratiladi — bu BN ning "bozor narxi" g'oyasini real ko'rsatadi.
-    // FAZA 4 da haqiqiy API paginatsiyasi bilan almashtiriladi.
-    const pool = useMemo(() => {
-        const out: MockProduct[] = [];
-        const shops = MOCK_SHOPS;
-        for (let r = 0; r < 6; r++) {
-            for (let k = 0; k < MOCK_PRODUCTS.length; k++) {
-                const p = MOCK_PRODUCTS[k];
-                if (r === 0) { out.push(p); continue; }
-                const s = shops[(k + r) % shops.length];
-                const factor = 0.88 + ((k * 7 + r * 13) % 40) / 100;   // 0.88 – 1.27
-                out.push({
-                    ...p,
-                    id: `${p.id}-r${r}`,
-                    slug: p.slug,
-                    price: Math.round((p.price * factor) / 1000) * 1000,
-                    oldPrice: null,
-                    shopSlug: s.slug,
-                    shopName: s.name,
-                    shopVerified: s.tier === "VERIFIED" || s.tier === "PREMIUM",
-                    marketName: s.marketName,
-                    district: s.district ?? null,
-                    branchName: s.branchName ?? null,
-                    stock: 1 + ((k + r * 3) % 9),
-                    rating: Math.round((3.8 + ((k * 3 + r * 5) % 12) / 10) * 10) / 10,
-                    ratingCount: 4 + ((k * 11 + r * 7) % 60),
-                });
-            }
-        }
-        return out;
-    }, []);
+export interface BnHomeInitial {
+    markets: BnMarketDTO[];
+    topShops: BnShopDTO[];
+    cheap: BnProductDTO[];
+    fresh: BnProductDTO[];
+    top: BnProductDTO[];
+    seasonal: BnProductDTO[];
+}
 
-    const cheap = useMemo(
-        () => pool.filter(p => p.marketAvgPrice && p.price < p.marketAvgPrice)
-            .sort((a, b) => (a.price / (a.marketAvgPrice || 1)) - (b.price / (b.marketAvgPrice || 1))),
-        [pool],
-    );
-    const fresh = pool;
-    const top = useMemo(() => [...pool].sort((a, b) => b.rating - a.rating), [pool]);
-    const seasonal = useMemo(
-        () => pool.filter(p => ["kiyim", "sport", "uy"].some(k => p.categorySlug.startsWith(k))),
-        [pool],
-    );
-
-    // AI reytingi bo'yicha TOP 10 do'kon (FAZA 6 da haqiqiy tahlil)
-    const topShops = useMemo(
-        () => [...MOCK_SHOPS]
-            .sort((a, b) => (b.rating * Math.log10(b.ratingCount + 10)) - (a.rating * Math.log10(a.ratingCount + 10)))
-            .slice(0, 10),
-        [],
-    );
+export function BnHome({ initial }: { initial: BnHomeInitial }) {
+    const { markets, topShops, cheap, fresh, top, seasonal } = initial;
 
     // ── Mahsulotlar filtri (LiquidGlassNavbar bilan) ────────────────────────
     const [filter, setFilter] = useState<FilterKey>("cheap");
@@ -82,7 +39,7 @@ export function BnHome() {
     const { resolvedTheme } = useTheme();
     const navTint: "light" | "dark" = mounted && resolvedTheme === "dark" ? "dark" : "light";
 
-    const FILTER_MAP: Record<FilterKey, { title: string; subtitle?: string; icon: React.ReactNode; items: MockProduct[]; href: string }> = {
+    const FILTER_MAP: Record<FilterKey, { title: string; subtitle?: string; icon: React.ReactNode; items: BnProductDTO[]; href: string }> = {
         cheap:    { title: "Bozor narxidan arzon", subtitle: "Bozordagi o'rtacha narxdan pastda", icon: <TrendingDown className="w-[18px] h-[18px]" />, items: cheap,    href: "/qidiruv?sort=cheap" },
         fresh:    { title: "Yangi mahsulotlar",     icon: <Sparkles className="w-[18px] h-[18px]" />,     items: fresh,    href: "/qidiruv?sort=new" },
         top:      { title: "Top mahsulotlar",       subtitle: "Eng yuqori baholangan",                    icon: <Star className="w-[18px] h-[18px]" />,         items: top,      href: "/qidiruv?sort=rating" },
@@ -102,16 +59,16 @@ export function BnHome() {
                     icon={<Store className="w-6 h-6" />}
                     title="Bozorlar"
                     text="Jismoniy bozorlar — borib ko'rish mumkin"
-                    count={`${MOCK_MARKETS.length} ta bozor`}
-                    cover={MOCK_MARKETS[0].coverUrl}
+                    count={`${markets.length} ta bozor`}
+                    cover={markets[0]?.coverUrl ?? "https://picsum.photos/seed/bn-fallback-1/800/800"}
                 />
                 <EntryCard
                     href="/dokonlar"
                     icon={<ShoppingBasket className="w-6 h-6" />}
                     title="Do'konlar"
                     text="Bozordagi, ko'chadagi va onlayn do'konlar"
-                    count={`${MOCK_SHOPS.length} ta do'kon`}
-                    cover={MOCK_MARKETS[2].coverUrl}
+                    count={`${topShops.length}+ ta do'kon`}
+                    cover={markets[2]?.coverUrl ?? markets[0]?.coverUrl ?? "https://picsum.photos/seed/bn-fallback-2/800/800"}
                 />
             </section>
 
@@ -260,7 +217,7 @@ function ProductSection({
     title: string;
     subtitle?: string;
     icon: React.ReactNode;
-    items: MockProduct[];
+    items: BnProductDTO[];
     href: string;
 }) {
     const [rows, setRows] = useState(INITIAL_ROWS);
