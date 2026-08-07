@@ -9,7 +9,7 @@ import { useTheme } from "next-themes";
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnHeroSlider } from "./bn-hero-slider";
-import { BnLink } from "./bn-nav";
+import { BnLink, useBnBase } from "./bn-nav";
 import { shopLocationText } from "./bn-cards";
 import { LiquidGlassNavbar } from "@/components/shared/liquid-glass-navbar";
 import { BnShopStories } from "./bn-shop-stories";
@@ -198,15 +198,8 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
                                 Komissiya 5%, naqd savdodan olinmaydi.
                             </p>
                         </div>
-                        <BnLink
-                            href="/sotuvchi"
-                            className="flex items-center justify-center gap-2 px-7 rounded-2xl text-[15px] font-black flex-shrink-0 transition-transform active:scale-[0.97]"
-                            style={{ height: 52, background: BN.gold, color: BN.onGold }}
-                        >
-                            <Store className="w-5 h-5" />
-                            Sotuvchi bo&apos;lish
-                            <ArrowRight className="w-4 h-4" />
-                        </BnLink>
+                        <SellerCta />
+
                     </div>
                 </div>
             </section>
@@ -215,6 +208,21 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
 }
 
 // ── Mahsulot bo'limi: 5 ustun × 2 qator, "Yuklash" 5 qatordan qo'shadi ──────
+
+function SellerCta() {
+    const { hasShop } = useBnBase();
+    return (
+        <BnLink
+            href={hasShop ? "/kabinet" : "/sotuvchi"}
+            className="flex items-center justify-center gap-2 px-7 rounded-2xl text-[15px] font-black flex-shrink-0 transition-transform active:scale-[0.97]"
+            style={{ height: 52, background: BN.gold, color: BN.onGold }}
+        >
+            <Store className="w-5 h-5" />
+            {hasShop ? "Kabinetga o'tish" : "Sotuvchi bo'lish"}
+            <ArrowRight className="w-4 h-4" />
+        </BnLink>
+    );
+}
 
 function ProductSection({
     title, subtitle, icon, items, href,

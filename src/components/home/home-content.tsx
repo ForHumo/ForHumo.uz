@@ -81,10 +81,10 @@ export function HomeContent() {
         },
         {
             // Foydalanuvchi so'rovi: ALKH Pay kartasidan keyin BN kartasi.
-            // Havola tashqi — bozornarxida.uz (o'z domeni bor).
+            // Havola ichki — forhumo.uz/{locale}/bn (locale Link avtomatik qo'shadi).
             title: "Bozor Narxida",
             description: tProjects("bn_desc"),
-            href: "https://bozornarxida.uz",
+            href: "/bn",
             icon: Store,
             logoSrc: "/bn/logo.png",
             logoSrcDark: "/bn/logo-dark.png",
@@ -220,9 +220,9 @@ export function HomeContent() {
                         />
                     </div>
 
-                    {/* 7-card grid: 3 col on lg, last card centered */}
+                    {/* 8-card grid: 3 col on lg, so'nggi karta (Humo Support) markazda */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {projectsData.slice(0, 6).map((project, index) => (
+                        {projectsData.slice(0, 7).map((project, index) => (
                             <ProjectCard
                                 key={project.title}
                                 title={project.title}
@@ -237,19 +237,19 @@ export function HomeContent() {
                         ))}
                     </div>
 
-                    {/* 7th card — centered below */}
+                    {/* Oxirgi karta (Humo Support) — markazlangan */}
                     <div className="mt-6 flex justify-center">
                         <div className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.33%-16px)]">
                             <ProjectCard
-                                key={projectsData[6].title}
-                                title={projectsData[6].title}
-                                description={projectsData[6].description}
-                                href={projectsData[6].href}
-                                icon={projectsData[6].icon as React.ComponentType<{ size?: number; className?: string }>}
-                                logoSrc={projectsData[6].logoSrc}
-                                logoSrcDark={projectsData[6].logoSrcDark}
-                                status={projectsData[6].status}
-                                index={6}
+                                key={projectsData[7].title}
+                                title={projectsData[7].title}
+                                description={projectsData[7].description}
+                                href={projectsData[7].href}
+                                icon={projectsData[7].icon as React.ComponentType<{ size?: number; className?: string }>}
+                                logoSrc={projectsData[7].logoSrc}
+                                logoSrcDark={projectsData[7].logoSrcDark}
+                                status={projectsData[7].status}
+                                index={7}
                             />
                         </div>
                     </div>

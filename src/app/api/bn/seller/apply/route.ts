@@ -31,7 +31,7 @@ import { uniqueSlug } from "@/lib/bn-slug";
 export async function GET() {
     const auth = await requireBnAuth();
     if (auth instanceof NextResponse) return auth;
-    const shop = await prisma.bnShop.findUnique({
+    const shop = await prisma.bnShop.findFirst({
         where: { profileId: auth.profileId },
         include: { market: { select: { slug: true, name: true } } },
     });
@@ -41,12 +41,6 @@ export async function GET() {
 export async function POST(req: Request) {
     const auth = await requireBnAuth();
     if (auth instanceof NextResponse) return auth;
-
-    // Mavjud do'kon bo'lsa qayta yaratmaymiz
-    const existing = await prisma.bnShop.findUnique({ where: { profileId: auth.profileId } });
-    if (existing) {
-        return NextResponse.json({ error: "already_has_shop", shop: existing }, { status: 409 });
-    }
 
     const body = await req.json().catch(() => ({}));
 
@@ -81,13 +75,29 @@ export async function POST(req: Request) {
         const m = await prisma.bnMarket.findUnique({ where: { slug: marketSlug }, select: { id: true } });
         if (!m) return NextResponse.json({ error: "market_not_found" }, { status: 404 });
         marketId = m.id;
+        // Bir profil bitta bozorda faqat bitta do'kon ocha oladi
+        const dupInMarket = await prisma.bnShop.findFirst({
+            where: { profileId: auth.profileId, marketId }, select: { id: true },
+        });
+        if (dupInMarket) {
+            return NextResponse.json({ error: "market_shop_taken" }, { status: 409 });
+        }
     }
     if (locationType === "STANDALONE" && (!address || address.length < 5)) {
         return NextResponse.json({ error: "address_required" }, { status: 400 });
     }
+    if (locationType === "ONLINE") {
+        // Online do'kon — bir profilga bittasi. marketId null bo'lgani uchun composite unique ishlamaydi, qo'lda tekshiramiz.
+        const dupOnline = await prisma.bnShop.findFirst({
+            where: { profileId: auth.profileId, locationType: "ONLINE" }, select: { id: true },
+        });
+        if (dupOnline) {
+            return NextResponse.json({ error: "online_shop_taken" }, { status: 409 });
+        }
+    }
 
     // INN dublikatini tekshirish (schema level unique bo'lsa ham, aniq xato beramiz)
-    const innDup = await prisma.bnShop.findUnique({ where: { innNumber } });
+    const innDup = await prisma.bnShop.findFirst({ where: { innNumber } });
     if (innDup) {
         return NextResponse.json({ error: "inn_taken" }, { status: 409 });
     }

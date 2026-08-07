@@ -32,7 +32,7 @@ export function BnHeader({
     void favCount;   // hozircha faqat cartCount ishlatiladi, favCount kelajakda profil menyusida
     const router = useRouter();
     const to = useBnHref();
-    const { locale } = useBnBase();
+    const { locale, hasShop } = useBnBase();
     const { data: session, status } = useSession();
     const [q, setQ] = useState("");
     const [menuOpen, setMenuOpen] = useState(false);
@@ -186,12 +186,12 @@ export function BnHeader({
                             </div>
 
                             <BnLink
-                                href="/sotuvchi"
+                                href={hasShop ? "/kabinet" : "/sotuvchi"}
                                 className="flex items-center justify-center gap-1.5 h-9 rounded-xl text-[12.5px] font-black transition-colors"
                                 style={{ background: BN.goldSoft, color: BN.gold, border: `1px solid ${BN.goldEdge}` }}
                             >
                                 <Store className="w-[15px] h-[15px]" />
-                                Sotuvchi bo&apos;lish
+                                {hasShop ? "Kabinetga o'tish" : "Sotuvchi bo'lish"}
                             </BnLink>
                         </div>
                     </div>
@@ -315,13 +315,13 @@ export function BnHeader({
                             )}
 
                             <BnLink
-                                href="/sotuvchi"
+                                href={hasShop ? "/kabinet" : "/sotuvchi"}
                                 onClick={() => setMenuOpen(false)}
                                 className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl text-[14px] font-black mb-4"
                                 style={{ background: BN.gold, color: BN.onGold }}
                             >
                                 <Store className="w-[18px] h-[18px]" />
-                                Sotuvchi bo&apos;lish
+                                {hasShop ? "Kabinetga o'tish" : "Sotuvchi bo'lish"}
                             </BnLink>
 
                             {NAV.map(n => {

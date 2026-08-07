@@ -10,7 +10,7 @@ export async function PATCH(req: Request) {
     const auth = await requireBnAuth();
     if (auth instanceof NextResponse) return auth;
 
-    const shop = await prisma.bnShop.findUnique({
+    const shop = await prisma.bnShop.findFirst({
         where: { profileId: auth.profileId }, select: { id: true, status: true },
     });
     if (!shop) return NextResponse.json({ error: "no_shop" }, { status: 404 });

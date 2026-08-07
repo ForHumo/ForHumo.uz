@@ -23,12 +23,14 @@ interface BnBase {
     /** "" (bozornarxida.uz) yoki "/uz/bn" (forhumo.uz) */
     base: string;
     locale: string;
+    /** Foydalanuvchining tasdiqlangan do'koni bormi (Kabinet tugmasi uchun) */
+    hasShop?: boolean;
 }
 
-const BnBaseCtx = createContext<BnBase>({ base: "", locale: "uz" });
+const BnBaseCtx = createContext<BnBase>({ base: "", locale: "uz", hasShop: false });
 
-export function BnBaseProvider({ base, locale, children }: BnBase & { children: React.ReactNode }) {
-    return <BnBaseCtx.Provider value={{ base, locale }}>{children}</BnBaseCtx.Provider>;
+export function BnBaseProvider({ base, locale, hasShop = false, children }: BnBase & { children: React.ReactNode }) {
+    return <BnBaseCtx.Provider value={{ base, locale, hasShop }}>{children}</BnBaseCtx.Provider>;
 }
 
 export function useBnBase() {

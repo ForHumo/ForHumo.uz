@@ -22,7 +22,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
     // Foydalanuvchi allaqachon do'kon egasi bo'lsa — kabinetga
     const auth = await getBnAuth();
     if (auth) {
-        const shop = await prisma.bnShop.findUnique({
+        const shop = await prisma.bnShop.findFirst({
             where: { profileId: auth.profileId }, select: { status: true },
         });
         if (shop) {

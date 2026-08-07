@@ -23,9 +23,9 @@ interface Item {
 const ITEMS: Item[] = [
     { href: "/",           label: "Asosiy",     icon: Home },
     { href: "/katalog",    label: "Katalog",    icon: LayoutGrid },
+    { href: "/nexus",      label: "Nexus",      iconSrc: "/logos/humo-nexus.png", iconSrcAlt: "Humo Nexus" },
     { href: "/sevimlilar", label: "Sevimlilar", icon: Heart },
     { href: "/savat",      label: "Savat",      icon: ShoppingCart },
-    { href: "/nexus",      label: "Nexus",      iconSrc: "/logos/humo-nexus.png", iconSrcAlt: "Humo Nexus" },
 ];
 
 /** Swipe navigatsiya uchun tartib. `bn-swipe-nav.tsx` shu ro'yxatdan foydalanadi. */

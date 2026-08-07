@@ -10,7 +10,7 @@ export async function GET(req: Request) {
     const auth = await requireBnAuth();
     if (auth instanceof NextResponse) return auth;
 
-    const shop = await prisma.bnShop.findUnique({
+    const shop = await prisma.bnShop.findFirst({
         where: { profileId: auth.profileId }, select: { id: true, status: true },
     });
     if (!shop || shop.status !== "APPROVED") {

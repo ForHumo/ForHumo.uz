@@ -1889,8 +1889,12 @@ model BnMarket {
 // ── Do'kon (BIZNES) ──────────────────────────────────────────────────────────
 model BnShop {
   id            String         @id @default(cuid())
-  profileId     String         @unique             // UserProfile.id — 1 odam = 1 do'kon
+  profileId     String                             // UserProfile.id — bir odam ko'p do'kon ochishi mumkin (turli bozorlarda + ko'chada filiallar)
   slug          String         @unique
+  // Filial uchun ota-do'kon (STANDALONE): ko'cha do'konlari bir nechta filial ochishi mumkin
+  parentShopId  String?
+  parent        BnShop?        @relation("ShopBranches", fields: [parentShopId], references: [id], onDelete: SetNull)
+  branches      BnShop[]       @relation("ShopBranches")
   name          String
   description   String?
   logoUrl       String?
@@ -1942,6 +1946,10 @@ model BnShop {
   @@index([status, createdAt])
   @@index([marketId, status])
   @@index([city, status])
+  @@index([profileId])
+  @@index([parentShopId])
+  // Bir profil bitta bozorda bitta do'kon ocha oladi (marketId null bo'lsa — ko'chada — ko'p filial ruxsat, Postgres NULLni unique dan istisno qiladi)
+  @@unique([profileId, marketId])
 }
 
 enum BnLegalType {

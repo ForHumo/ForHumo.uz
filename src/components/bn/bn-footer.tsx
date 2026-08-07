@@ -1,12 +1,13 @@
 "use client";
 
-import { BnLink } from "./bn-nav";
+import { BnLink, useBnBase } from "./bn-nav";
 import { Store, Shield, Truck, Sparkles } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { PoweredByForHumo } from "@/components/shared/powered-by-forhumo";
 import { BnLogo } from "./bn-header";
 
 export function BnFooter() {
+    const { hasShop } = useBnBase();
     return (
         <footer style={{ borderTop: `1px solid ${BN.border}`, background: BN.surface }}>
             {/* Ishonch qatori */}
@@ -42,7 +43,11 @@ export function BnFooter() {
                     </FooterCol>
 
                     <FooterCol title="Sotuvchiga">
-                        <FooterLink href="/sotuvchi">Sotuvchi bo&apos;lish</FooterLink>
+                        {hasShop ? (
+                            <FooterLink href="/kabinet">Sotuvchi kabineti</FooterLink>
+                        ) : (
+                            <FooterLink href="/sotuvchi">Sotuvchi bo&apos;lish</FooterLink>
+                        )}
                         <FooterLink href="/kabinet">Kabinet</FooterLink>
                     </FooterCol>
 

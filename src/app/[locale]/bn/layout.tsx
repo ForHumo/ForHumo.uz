@@ -77,17 +77,20 @@ export default async function BnLayout({
     }));
 
     // Savat + sevimlilar counterlari — badge uchun. Kirmagan bo'lsa 0.
+    // Foydalanuvchining tasdiqlangan do'koni bormi — "Kabinet" tugmasi uchun.
     const auth = await getBnAuth();
-    const [cartCount, favCount] = auth ? await Promise.all([
+    const [cartCount, favCount, shop] = auth ? await Promise.all([
         prisma.bnCartItem.count({ where: { profileId: auth.profileId } }),
         prisma.bnFavorite.count({ where: { profileId: auth.profileId } }),
-    ]) : [0, 0];
+        prisma.bnShop.findFirst({ where: { profileId: auth.profileId }, select: { id: true } }),
+    ]) : [0, 0, null];
+    const hasShop = !!shop;
 
     return (
         <div className="bn-scope fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden">
             <BnStyles />
             <BnAurora />
-            <BnBaseProvider base={base} locale={locale}>
+            <BnBaseProvider base={base} locale={locale} hasShop={hasShop}>
                 <BnSwipeNav>
                     <div className="relative z-10 flex flex-col min-h-full">
                         <BnHeader categories={headerCats} cartCount={cartCount} favCount={favCount} />

@@ -6,9 +6,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     ShieldCheck, Store, MapPin, Phone, Check, X, Loader2, User,
-    Building2, ChevronRight,
+    Building2, ChevronRight, Users,
 } from "lucide-react";
 import { BN, TIER_META } from "@/lib/bn-theme";
+import { BnAdminList } from "./bn-admin-list";
 
 export interface AdminShopRow {
     id: string;
@@ -38,6 +39,7 @@ export interface AdminShopRow {
 
 interface Props {
     initial: AdminShopRow[];
+    role: "OWNER" | "MODERATOR";
 }
 
 const TABS = [
@@ -46,8 +48,9 @@ const TABS = [
     { key: "REJECTED", label: "Rad etilgan" },
 ] as const;
 
-export function BnAdminClient({ initial }: Props) {
+export function BnAdminClient({ initial, role }: Props) {
     const router = useRouter();
+    const [section, setSection] = useState<"SHOPS" | "ADMINS">("SHOPS");
     const [tab, setTab] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
     const [rows, setRows] = useState<AdminShopRow[]>(initial);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
@@ -97,11 +100,39 @@ export function BnAdminClient({ initial }: Props) {
                 </span>
                 <div>
                     <h1 className="text-[24px] sm:text-[28px] font-black tracking-tight leading-none">BN Admin</h1>
-                    <p className="text-[12.5px] mt-1" style={{ color: BN.text3 }}>Do&apos;kon arizalari va boshqaruv</p>
+                    <p className="text-[12.5px] mt-1" style={{ color: BN.text3 }}>Do&apos;kon arizalari va boshqaruv · <span style={{ color: BN.gold }}>{role}</span></p>
                 </div>
             </div>
 
-            <div className="flex items-center gap-1.5 my-6 overflow-x-auto pb-1">
+            {role === "OWNER" && (
+                <div className="flex items-center gap-1.5 mt-5 mb-3">
+                    <button
+                        onClick={() => setSection("SHOPS")}
+                        className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-[12.5px] font-bold"
+                        style={{
+                            background: section === "SHOPS" ? BN.gold : BN.surface,
+                            color: section === "SHOPS" ? BN.onGold : BN.text2,
+                            border: `1px solid ${section === "SHOPS" ? BN.gold : BN.border}`,
+                        }}
+                    >
+                        <Store className="w-3.5 h-3.5" /> Do&apos;konlar
+                    </button>
+                    <button
+                        onClick={() => setSection("ADMINS")}
+                        className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-[12.5px] font-bold"
+                        style={{
+                            background: section === "ADMINS" ? BN.gold : BN.surface,
+                            color: section === "ADMINS" ? BN.onGold : BN.text2,
+                            border: `1px solid ${section === "ADMINS" ? BN.gold : BN.border}`,
+                        }}
+                    >
+                        <Users className="w-3.5 h-3.5" /> Adminlar
+                    </button>
+                </div>
+            )}
+
+            {section === "ADMINS" && role === "OWNER" ? <BnAdminList /> : (
+            <><div className="flex items-center gap-1.5 my-6 overflow-x-auto pb-1">
                 {TABS.map(t => {
                     const count = rows.filter(s => s.status === t.key).length;
                     return (
@@ -245,6 +276,7 @@ export function BnAdminClient({ initial }: Props) {
                     })}
                 </div>
             )}
+            </>)}
         </div>
     );
 }

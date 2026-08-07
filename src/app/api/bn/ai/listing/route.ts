@@ -29,7 +29,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
     }
 
-    const shop = await prisma.bnShop.findUnique({
+    const shop = await prisma.bnShop.findFirst({
         where: { profileId: auth.profileId }, select: { status: true },
     });
     if (!shop || shop.status !== "APPROVED") {

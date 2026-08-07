@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { X, MapPin, Truck, Package, Eye, Wallet, Banknote, Loader2, BookMarked, Check } from "lucide-react";
 import { BN, fmtPrice } from "@/lib/bn-theme";
 import { useBnHref } from "./bn-nav";
+import { BnPhoneInput, isValidUzPhone } from "./bn-phone-input";
 
 interface SavedAddress {
     id: string;
@@ -37,7 +38,7 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
     const to = useBnHref();
 
     const [fulfill, setFulfill] = useState<Fulfill>("PICKUP");
-    const [phone, setPhone] = useState("+998 ");
+    const [phone, setPhone] = useState("+998");
     const [address, setAddress] = useState("");
     const [note, setNote] = useState("");
     const [pay, setPay] = useState<Pay>("WALLET");
@@ -72,9 +73,8 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
     const deliveryFee = fulfill === "DELIVERY" ? 20_000 : 0;
     const total = subtotal + deliveryFee;
 
-    const phoneDigits = phone.replace(/\D/g, "").length;
     const canSubmit =
-        phoneDigits >= 12
+        isValidUzPhone(phone)
         && (fulfill !== "DELIVERY" || address.trim().length > 4);
 
     async function submit() {
@@ -181,14 +181,7 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                     {/* Aloqa */}
                     <Section title="Aloqa">
                         <Field label="Telefon">
-                            <input
-                                type="tel"
-                                value={phone}
-                                onChange={e => setPhone(e.target.value)}
-                                inputMode="tel"
-                                className="w-full h-11 px-3 rounded-xl text-[14px] font-medium tabular-nums outline-none"
-                                style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
-                            />
+                            <BnPhoneInput value={phone} onChange={setPhone} />
                         </Field>
                         {fulfill === "DELIVERY" && (
                             <>

@@ -38,7 +38,7 @@ export default async function Page() {
         );
     }
 
-    const shopRaw = await prisma.bnShop.findUnique({
+    const shopRaw = await prisma.bnShop.findFirst({
         where: { profileId: auth.profileId },
         include: { market: { select: { name: true } } },
     });

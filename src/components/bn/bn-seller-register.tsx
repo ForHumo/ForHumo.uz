@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import type { BnMarketDTO } from "@/lib/bn-data";
+import { BnPhoneInput } from "./bn-phone-input";
 
 type Step = 0 | 1 | 2 | 3;
 type LegalType = "YATT" | "MCHJ";
@@ -26,7 +27,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
     const [legalType, setLegalType] = useState<LegalType | null>(null);
     const [inn, setInn] = useState("");
     const [legalName, setLegalName] = useState("");
-    const [phone, setPhone] = useState("+998 ");
+    const [phone, setPhone] = useState("+998");
 
     // 2-qadam
     const [shopName, setShopName] = useState("");
@@ -192,13 +193,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                             </Field>
 
                             <Field label="Telefon" hint="Xaridorlar shu raqamga qo'ng'iroq qiladi">
-                                <input
-                                    value={phone}
-                                    onChange={e => setPhone(e.target.value)}
-                                    inputMode="tel"
-                                    placeholder="+998 90 123 45 67"
-                                    className="bn-input"
-                                />
+                                <BnPhoneInput value={phone} onChange={setPhone} />
                             </Field>
                         </>
                     )}

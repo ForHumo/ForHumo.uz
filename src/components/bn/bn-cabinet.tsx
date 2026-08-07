@@ -21,6 +21,8 @@ import {
 import { BN, fmtPrice, ORDER_STATUS_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
+import { BnPhoneInput } from "./bn-phone-input";
+import { BnCategoryPicker } from "./bn-category-picker";
 
 type Tab = "home" | "products" | "orders" | "shop" | "money";
 
@@ -824,7 +826,9 @@ function CreateProductModal({
                     </FieldLabel>
 
                     <FieldLabel label="Kategoriya *">
+                        <BnCategoryPicker categories={categories} value={categorySlug} onChange={setCategorySlug} />
                         <select
+                            hidden
                             value={categorySlug}
                             onChange={e => setCategorySlug(e.target.value)}
                             className="bn-form-input"
@@ -1091,7 +1095,7 @@ function ShopTab({ shop }: { shop: CabinetShop }) {
             </FieldLabel>
 
             <FieldLabel label="Telefon">
-                <input value={phone} onChange={e => setPhone(e.target.value)} className="bn-form-input tabular-nums" />
+                <BnPhoneInput value={phone} onChange={setPhone} />
             </FieldLabel>
 
             <FieldLabel label="Ish vaqti">

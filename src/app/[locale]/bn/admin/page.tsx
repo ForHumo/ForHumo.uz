@@ -15,6 +15,7 @@ export default async function Page() {
         where: { profileId: auth.profileId }, select: { role: true },
     });
     if (admin?.role !== "OWNER" && admin?.role !== "MODERATOR") notFound();
+    const role = admin.role;
 
     const shops = await prisma.bnShop.findMany({
         orderBy: { createdAt: "desc" },
@@ -52,5 +53,5 @@ export default async function Page() {
         profile: byId.get(s.profileId) ?? null,
     }));
 
-    return <BnAdminClient initial={initial} />;
+    return <BnAdminClient initial={initial} role={role} />;
 }

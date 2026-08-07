@@ -16,7 +16,7 @@ import { uniqueSlug } from "@/lib/bn-slug";
 import { moderateOnCreate } from "@/lib/moderation";
 
 async function requireSellerShop(profileId: string) {
-    const shop = await prisma.bnShop.findUnique({
+    const shop = await prisma.bnShop.findFirst({
         where: { profileId },
         select: { id: true, status: true },
     });
