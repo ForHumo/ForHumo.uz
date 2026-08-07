@@ -22,7 +22,7 @@ export function BnFooter() {
             </div>
 
             <div style={{ borderTop: `1px solid ${BN.border}` }}>
-                <div className="mx-auto max-w-[1280px] px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div className="mx-auto max-w-[1280px] px-4 py-8 grid grid-cols-2 md:grid-cols-5 gap-8">
                     <div className="col-span-2 md:col-span-1">
                         <div className="flex items-center gap-2.5 mb-3">
                             <BnLogo size={40} />
@@ -44,6 +44,13 @@ export function BnFooter() {
                     <FooterCol title="Sotuvchiga">
                         <FooterLink href="/sotuvchi">Sotuvchi bo&apos;lish</FooterLink>
                         <FooterLink href="/kabinet">Kabinet</FooterLink>
+                    </FooterCol>
+
+                    <FooterCol title="Yordam">
+                        <FooterLink href="/yordam">Savol-javob</FooterLink>
+                        <FooterLink href="/huquqiy/foydalanish">Foydalanish shartlari</FooterLink>
+                        <FooterLink href="/huquqiy/maxfiylik">Maxfiylik</FooterLink>
+                        <FooterLink href="/huquqiy/oferta">Ommaviy oferta</FooterLink>
                     </FooterCol>
 
                     <FooterCol title="For Humo">

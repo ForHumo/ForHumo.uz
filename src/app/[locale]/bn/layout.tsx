@@ -10,6 +10,7 @@ import { BnNavbar } from "@/components/bn/bn-navbar";
 import { BnStyles, BnAurora } from "@/components/bn/bn-styles";
 import { BnBaseProvider } from "@/components/bn/bn-nav";
 import { BnSwipeNav } from "@/components/bn/bn-swipe-nav";
+import { BnOnboarding } from "@/components/bn/bn-onboarding";
 import { getCategoriesTree } from "@/lib/bn-data";
 import { getBnAuth } from "@/lib/bn-auth";
 import { prisma } from "@/lib/prisma";
@@ -19,15 +20,36 @@ const BN_HOSTS = ["bozornarxida.uz", "www.bozornarxida.uz"];
 import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
+    metadataBase: new URL("https://bozornarxida.uz"),
     title: {
         default: "Bozor Narxida | For Humo",
         template: "%s | Bozor Narxida",
     },
+    description:
+        "O'zbekiston bozorlari va do'konlari onlayn. Har mahsulot narxi bozor o'rtachasi bilan solishtiriladi. "
+        + "Ko'rib sotib olish, xavfsiz to'lov, rasmiy sotuvchilar.",
+    applicationName: "Bozor Narxida",
+    manifest: "/manifest.webmanifest",
     icons: {
         icon: "/bn/favicon.png",
         apple: "/bn/apple-icon.png",
     },
-    openGraph: { images: ["/bn/og.png"] },
+    openGraph: {
+        type: "website",
+        siteName: "Bozor Narxida",
+        title: "Bozor Narxida",
+        description: "O'zbekiston bozorlari va do'konlari onlayn.",
+        locale: "uz_UZ",
+        images: ["/bn/og.png"],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Bozor Narxida",
+        description: "O'zbekiston bozorlari va do'konlari onlayn.",
+        images: ["/bn/og.png"],
+    },
+    alternates: { canonical: "/" },
+    robots: { index: true, follow: true },
 };
 
 // iOS: safe-area-inset ishlashi uchun viewport-fit=cover
@@ -35,6 +57,7 @@ export const viewport: Viewport = {
     width: "device-width",
     initialScale: 1,
     viewportFit: "cover",
+    themeColor: "#17171B",
 };
 
 export default async function BnLayout({
@@ -77,6 +100,7 @@ export default async function BnLayout({
                         <BnFooter />
                     </div>
                     <BnNavbar />
+                    <BnOnboarding />
                 </BnSwipeNav>
             </BnBaseProvider>
         </div>

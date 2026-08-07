@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { BnShopPage } from "@/components/bn/bn-pages";
 import { getShopBySlug } from "@/lib/bn-data";
 import { prisma } from "@/lib/prisma";
+import { BnStoreLd, BnBreadcrumbLd } from "@/components/bn/bn-jsonld";
 
 export const dynamic = "force-dynamic";
 
@@ -19,5 +20,25 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     const { slug } = await params;
     const data = await getShopBySlug(slug);
     if (!data) notFound();
-    return <BnShopPage shop={data.shop} products={data.products} />;
+    const s = data.shop;
+    return (
+        <>
+            <BnStoreLd
+                slug={s.slug}
+                name={s.name}
+                description={null}
+                logo={s.logoUrl}
+                address={s.address}
+                city={s.city}
+                ratingAvg={s.rating || null}
+                ratingCount={s.ratingCount || null}
+            />
+            <BnBreadcrumbLd items={[
+                { name: "Bosh sahifa", url: "/" },
+                { name: "Do'konlar", url: "/dokonlar" },
+                { name: s.name, url: `/d/${s.slug}` },
+            ]} />
+            <BnShopPage shop={data.shop} products={data.products} />
+        </>
+    );
 }
