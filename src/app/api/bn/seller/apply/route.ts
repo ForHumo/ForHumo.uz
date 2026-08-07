@@ -26,6 +26,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
+import { canApplyForShop } from "@/lib/bn-ban";
 import { uniqueSlug } from "@/lib/bn-slug";
 
 export async function GET() {
@@ -69,15 +70,29 @@ export async function POST(req: Request) {
     if (!["IN_MARKET", "STANDALONE", "ONLINE"].includes(locationType)) {
         return NextResponse.json({ error: "invalid_location_type" }, { status: 400 });
     }
+
+    // TERMINATED/BANNED profil qayta ariza yubora olmaydi
+    const canApply = await canApplyForShop(auth.profileId, {
+        marketId: null, // marketId yuqoriroqda emas, tekshirish quyida bosqichma-bosqich
+        locationType: locationType as "IN_MARKET" | "STANDALONE" | "ONLINE",
+    });
+    if (!canApply.ok && canApply.reason === "profile_banned") {
+        return NextResponse.json({ error: "profile_banned" }, { status: 403 });
+    }
     let marketId: string | null = null;
     if (locationType === "IN_MARKET") {
         if (!marketSlug) return NextResponse.json({ error: "market_required" }, { status: 400 });
         const m = await prisma.bnMarket.findUnique({ where: { slug: marketSlug }, select: { id: true } });
         if (!m) return NextResponse.json({ error: "market_not_found" }, { status: 404 });
         marketId = m.id;
+        // Shu bozorda TERMINATED do'kon bo'lsa qaytadan ochib bo'lmaydi
+        const termCheck = await canApplyForShop(auth.profileId, { marketId, locationType: "IN_MARKET" });
+        if (!termCheck.ok) {
+            return NextResponse.json({ error: termCheck.reason }, { status: 403 });
+        }
         // Bir profil bitta bozorda faqat bitta do'kon ocha oladi
         const dupInMarket = await prisma.bnShop.findFirst({
-            where: { profileId: auth.profileId, marketId }, select: { id: true },
+            where: { profileId: auth.profileId, marketId, status: { not: "TERMINATED" } }, select: { id: true },
         });
         if (dupInMarket) {
             return NextResponse.json({ error: "market_shop_taken" }, { status: 409 });
@@ -87,9 +102,13 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "address_required" }, { status: 400 });
     }
     if (locationType === "ONLINE") {
+        const termCheck = await canApplyForShop(auth.profileId, { marketId: null, locationType: "ONLINE" });
+        if (!termCheck.ok) {
+            return NextResponse.json({ error: termCheck.reason }, { status: 403 });
+        }
         // Online do'kon — bir profilga bittasi. marketId null bo'lgani uchun composite unique ishlamaydi, qo'lda tekshiramiz.
         const dupOnline = await prisma.bnShop.findFirst({
-            where: { profileId: auth.profileId, locationType: "ONLINE" }, select: { id: true },
+            where: { profileId: auth.profileId, locationType: "ONLINE", status: { not: "TERMINATED" } }, select: { id: true },
         });
         if (dupOnline) {
             return NextResponse.json({ error: "online_shop_taken" }, { status: 409 });

@@ -1965,7 +1965,78 @@ enum BnShopStatus {
   PENDING
   APPROVED
   REJECTED
-  SUSPENDED
+  SUSPENDED         // Vaqtincha muzlatilgan (ban vaqtida)
+  TERMINATED        // Chiqarib yuborilgan — qayta ochib bo'lmaydi
+}
+
+// ── Ban tizim ───────────────────────────────────────────────────────────────
+// Ban = profil (yoki uning do'koni) muzlatiladi. Elonlar ko'rinmaydi, foydalanuvchi
+// balansidan pul yechishi mumkin. Vaqtincha (expiresAt) yoki abadiy bo'ladi.
+// AI, OWNER yoki MODERATOR ban bera oladi. Faqat OWNER/MODERATOR ban olib tashlay oladi.
+model BnBan {
+  id           String        @id @default(cuid())
+  profileId    String                                     // Kim banlangan
+  shopId       String?                                    // Aynan do'kon banlansa
+  scope        BnBanScope    @default(SHOP)               // PROFILE (butun BN'dan) yoki SHOP (bir do'kon)
+  type         BnBanType                                  // TEMP vaqtincha, PERM abadiy
+  reason       String                                     // Ichki sabab (foydalanuvchiga ko'rinmaydi to'liq)
+  publicReason String?                                    // Foydalanuvchiga qisqa xabar (ixtiyoriy)
+  expiresAt    DateTime?                                  // TEMP uchun
+  decidedBy    BnBanDecidedBy                             // AI | OWNER | MODERATOR
+  decidedById  String?                                    // OWNER/MODERATOR bo'lsa profil id
+  status       BnBanStatus   @default(ACTIVE)
+  liftedAt     DateTime?
+  liftedById   String?
+  liftReason   String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([profileId, status])
+  @@index([shopId, status])
+  @@index([status, expiresAt])
+}
+
+enum BnBanScope {
+  PROFILE
+  SHOP
+}
+enum BnBanType {
+  TEMP
+  PERM
+}
+enum BnBanStatus {
+  ACTIVE
+  LIFTED
+  EXPIRED
+}
+enum BnBanDecidedBy {
+  AI
+  OWNER
+  MODERATOR
+}
+
+// ── Chiqarib yuborish so'rovi ────────────────────────────────────────────────
+// MODERATOR yuboradi, OWNER tasdiqlaydi (yoki rad etadi). AI/OWNER to'g'ridan-to'g'ri terminate qila oladi (so'rovsiz).
+model BnTerminationRequest {
+  id            String                       @id @default(cuid())
+  profileId     String                                                        // Kim chiqariladi (BnShop.profileId)
+  shopId        String                                                        // Aynan qaysi do'kon
+  reason        String                                                        // Nima uchun (batafsil)
+  requestedById String                                                        // Kim yubordi (MODERATOR profil id)
+  status        BnTerminationRequestStatus   @default(PENDING)
+  decidedById   String?                                                       // OWNER profil id
+  decidedAt     DateTime?
+  decisionNote  String?
+  createdAt     DateTime                     @default(now())
+
+  @@index([status, createdAt])
+  @@index([shopId])
+}
+
+enum BnTerminationRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 enum BnShopTier {
   NEW

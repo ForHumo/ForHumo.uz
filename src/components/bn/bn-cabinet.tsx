@@ -39,7 +39,7 @@ export interface CabinetShop {
     slug: string;
     name: string;
     logoUrl: string | null;
-    status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
+    status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED" | "TERMINATED";
     tier: "NEW" | "TRUSTED" | "VERIFIED" | "PREMIUM";
     productCount: number;
     orderCount: number;

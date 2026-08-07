@@ -137,7 +137,7 @@ function toProductDTO(p: ProductWithRels): BnProductDTO {
 // ── Yuklovchilar ────────────────────────────────────────────────────────────
 
 const PRODUCT_INCLUDE = {
-    shop: { select: { slug: true, name: true, tier: true, city: true, market: { select: { name: true } } } },
+    shop: { select: { slug: true, name: true, tier: true, city: true, status: true, market: { select: { name: true } } } },
     category: { select: { slug: true } },
 } as const;
 
@@ -248,6 +248,9 @@ export async function getProductBySlug(slug: string) {
         include: PRODUCT_INCLUDE,
     });
     if (!p) return null;
+    // Ban/terminate qilingan do'kon mahsuloti — foydalanuvchilarga ko'rsatilmaydi
+    if (!p.isActive || p.hidden) return null;
+    if (p.shop && (p.shop as { status?: string }).status !== "APPROVED") return null;
 
     // Ijtimoiy proof — oxirgi 7 kunda bu mahsulot uchun BnOrder items soni
     const weekAgo = new Date(Date.now() - 7 * 86400_000);

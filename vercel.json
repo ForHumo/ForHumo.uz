@@ -7,6 +7,7 @@
         { "path": "/api/cron/interest-rebuild", "schedule": "0 4 * * *" },
         { "path": "/api/cron/esport-brackets", "schedule": "0 5 * * *" },
         { "path": "/api/cron/bn-inspect-expire", "schedule": "0 6 * * *" },
-        { "path": "/api/cron/bn-price-watch",   "schedule": "0 7 * * *" }
+        { "path": "/api/cron/bn-price-watch",   "schedule": "0 7 * * *" },
+        { "path": "/api/cron/bn-moderation-recheck", "schedule": "0 8 * * *" }
     ]
 }

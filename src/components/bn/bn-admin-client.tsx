@@ -6,16 +6,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     ShieldCheck, Store, MapPin, Phone, Check, X, Loader2, User,
-    Building2, ChevronRight, Users,
+    Building2, ChevronRight, Users, Ban, ShieldOff,
 } from "lucide-react";
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnAdminList } from "./bn-admin-list";
+import { BnAdminBans } from "./bn-admin-bans";
 
 export interface AdminShopRow {
     id: string;
     slug: string;
     name: string;
-    status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
+    status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED" | "TERMINATED";
     tier: "NEW" | "TRUSTED" | "VERIFIED" | "PREMIUM";
     legalType: "YATT" | "MCHJ";
     legalName: string;
@@ -43,15 +44,17 @@ interface Props {
 }
 
 const TABS = [
-    { key: "PENDING",  label: "Kutilmoqda" },
-    { key: "APPROVED", label: "Tasdiqlangan" },
-    { key: "REJECTED", label: "Rad etilgan" },
+    { key: "PENDING",    label: "Kutilmoqda" },
+    { key: "APPROVED",   label: "Tasdiqlangan" },
+    { key: "SUSPENDED",  label: "Muzlatilgan" },
+    { key: "TERMINATED", label: "Chiqarilgan" },
+    { key: "REJECTED",   label: "Rad etilgan" },
 ] as const;
 
 export function BnAdminClient({ initial, role }: Props) {
     const router = useRouter();
-    const [section, setSection] = useState<"SHOPS" | "ADMINS">("SHOPS");
-    const [tab, setTab] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
+    const [section, setSection] = useState<"SHOPS" | "ADMINS" | "BANS">("SHOPS");
+    const [tab, setTab] = useState<AdminShopRow["status"]>("PENDING");
     const [rows, setRows] = useState<AdminShopRow[]>(initial);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
     const [expanded, setExpanded] = useState<string | null>(null);
@@ -104,19 +107,30 @@ export function BnAdminClient({ initial, role }: Props) {
                 </div>
             </div>
 
-            {role === "OWNER" && (
-                <div className="flex items-center gap-1.5 mt-5 mb-3">
-                    <button
-                        onClick={() => setSection("SHOPS")}
-                        className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-[12.5px] font-bold"
-                        style={{
-                            background: section === "SHOPS" ? BN.gold : BN.surface,
-                            color: section === "SHOPS" ? BN.onGold : BN.text2,
-                            border: `1px solid ${section === "SHOPS" ? BN.gold : BN.border}`,
-                        }}
-                    >
-                        <Store className="w-3.5 h-3.5" /> Do&apos;konlar
-                    </button>
+            <div className="flex items-center gap-1.5 mt-5 mb-3 flex-wrap">
+                <button
+                    onClick={() => setSection("SHOPS")}
+                    className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-[12.5px] font-bold"
+                    style={{
+                        background: section === "SHOPS" ? BN.gold : BN.surface,
+                        color: section === "SHOPS" ? BN.onGold : BN.text2,
+                        border: `1px solid ${section === "SHOPS" ? BN.gold : BN.border}`,
+                    }}
+                >
+                    <Store className="w-3.5 h-3.5" /> Do&apos;konlar
+                </button>
+                <button
+                    onClick={() => setSection("BANS")}
+                    className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-[12.5px] font-bold"
+                    style={{
+                        background: section === "BANS" ? BN.gold : BN.surface,
+                        color: section === "BANS" ? BN.onGold : BN.text2,
+                        border: `1px solid ${section === "BANS" ? BN.gold : BN.border}`,
+                    }}
+                >
+                    <ShieldCheck className="w-3.5 h-3.5" /> Banlar
+                </button>
+                {role === "OWNER" && (
                     <button
                         onClick={() => setSection("ADMINS")}
                         className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-[12.5px] font-bold"
@@ -128,10 +142,10 @@ export function BnAdminClient({ initial, role }: Props) {
                     >
                         <Users className="w-3.5 h-3.5" /> Adminlar
                     </button>
-                </div>
-            )}
+                )}
+            </div>
 
-            {section === "ADMINS" && role === "OWNER" ? <BnAdminList /> : (
+            {section === "ADMINS" && role === "OWNER" ? <BnAdminList /> : section === "BANS" ? <BnAdminBans role={role} /> : (
             <><div className="flex items-center gap-1.5 my-6 overflow-x-auto pb-1">
                 {TABS.map(t => {
                     const count = rows.filter(s => s.status === t.key).length;
@@ -249,6 +263,12 @@ export function BnAdminClient({ initial, role }: Props) {
                                             </div>
                                         )}
 
+                                        {(s.status === "APPROVED" || s.status === "SUSPENDED") && (
+                                            <div className="flex flex-wrap items-center gap-2 pt-2">
+                                                <ShopActions shopId={s.id} shopName={s.name} role={role} status={s.status} />
+                                            </div>
+                                        )}
+
                                         {s.status === "PENDING" && (
                                             <div className="flex items-center gap-2 pt-2">
                                                 <button
@@ -277,6 +297,171 @@ export function BnAdminClient({ initial, role }: Props) {
                 </div>
             )}
             </>)}
+        </div>
+    );
+}
+
+function ShopActions({ shopId, shopName, role, status }: {
+    shopId: string; shopName: string; role: "OWNER" | "MODERATOR"; status: "APPROVED" | "SUSPENDED";
+}) {
+    const [busy, setBusy] = useState(false);
+    const [openBan, setOpenBan] = useState(false);
+    const router = useRouter();
+
+    async function requestTerminate() {
+        const reason = prompt(`"${shopName}" ni chiqarib yuborish so'rovi — sabab (batafsil):`);
+        if (!reason || reason.trim().length < 5) return;
+        setBusy(true);
+        try {
+            const r = await fetch("/api/bn/admin/termination-requests", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ shopId, reason: reason.trim() }),
+            });
+            if (r.ok) alert("So'rov yuborildi. OWNER hal qiladi.");
+            else {
+                const j = await r.json().catch(() => ({}));
+                alert(j.error === "already_pending" ? "Bu do'kon uchun so'rov allaqachon bor" : "Xatolik");
+            }
+        } finally { setBusy(false); }
+    }
+
+    async function terminateNow() {
+        const reason = prompt(`"${shopName}" ni HOZIROQ chiqarib yuborish (abadiy!) — sabab:`);
+        if (!reason || reason.trim().length < 3) return;
+        if (!confirm("Bu qaytarilmas amal. Davom etamizmi?")) return;
+        setBusy(true);
+        try {
+            const r = await fetch("/api/bn/admin/terminate", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ shopId, reason: reason.trim() }),
+            });
+            if (r.ok) { alert("Do'kon chiqarib yuborildi"); router.refresh(); }
+            else alert("Xatolik");
+        } finally { setBusy(false); }
+    }
+
+    return (
+        <>
+            {status === "APPROVED" && (
+                <button
+                    onClick={() => setOpenBan(true)}
+                    disabled={busy}
+                    className="flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-[12.5px] font-bold"
+                    style={{ background: "rgba(251,191,36,0.15)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)" }}
+                >
+                    <Ban className="w-3.5 h-3.5" /> Ban qo&apos;yish
+                </button>
+            )}
+            {role === "OWNER" ? (
+                <button
+                    onClick={terminateNow}
+                    disabled={busy}
+                    className="flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-[12.5px] font-bold"
+                    style={{ background: "#ef4444", color: "#fff" }}
+                >
+                    <ShieldOff className="w-3.5 h-3.5" /> Chiqarib yuborish
+                </button>
+            ) : (
+                <button
+                    onClick={requestTerminate}
+                    disabled={busy}
+                    className="flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-[12.5px] font-bold"
+                    style={{ background: BN.surfaceUp, color: "#ef4444", border: `1px solid ${BN.border}` }}
+                >
+                    <ShieldOff className="w-3.5 h-3.5" /> Chiqarish so&apos;rovi
+                </button>
+            )}
+            {openBan && <BanModal shopId={shopId} shopName={shopName} onClose={() => setOpenBan(false)} onDone={() => { setOpenBan(false); router.refresh(); }} />}
+        </>
+    );
+}
+
+function BanModal({ shopId, shopName, onClose, onDone }: {
+    shopId: string; shopName: string; onClose: () => void; onDone: () => void;
+}) {
+    const [type, setType] = useState<"TEMP" | "PERM">("TEMP");
+    const [days, setDays] = useState(7);
+    const [reason, setReason] = useState("");
+    const [publicReason, setPublicReason] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [err, setErr] = useState<string | null>(null);
+
+    async function submit() {
+        setBusy(true); setErr(null);
+        try {
+            const body: Record<string, unknown> = { shopId, type, reason: reason.trim(), publicReason: publicReason.trim() || null };
+            if (type === "TEMP") {
+                const exp = new Date();
+                exp.setDate(exp.getDate() + Math.max(1, days));
+                body.expiresAt = exp.toISOString();
+            }
+            const r = await fetch("/api/bn/admin/ban", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            if (!r.ok) {
+                const j = await r.json().catch(() => ({}));
+                setErr(j.error || "Xatolik");
+                return;
+            }
+            onDone();
+        } finally { setBusy(false); }
+    }
+
+    return (
+        <div className="fixed inset-0 z-[200] grid place-items-center p-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }} onClick={onClose}>
+            <div className="w-full max-w-[440px] rounded-3xl p-6 relative" style={{ background: BN.surface, border: `1px solid ${BN.border}` }} onClick={(e) => e.stopPropagation()}>
+                <button onClick={onClose} className="absolute top-4 right-4" style={{ color: BN.text3 }}><X className="w-4 h-4" /></button>
+                <h2 className="text-[17px] font-black mb-1">Ban qo&apos;yish</h2>
+                <p className="text-[13px] mb-4" style={{ color: BN.text3 }}>{shopName}</p>
+
+                {err && <div className="rounded-xl px-3 py-2 mb-3 text-[12.5px]" style={{ background: BN.errSoft, color: BN.err }}>{err}</div>}
+
+                <label className="text-[11px] uppercase tracking-wider font-bold" style={{ color: BN.text3 }}>Turi</label>
+                <div className="grid grid-cols-2 gap-2 mt-1 mb-3">
+                    {(["TEMP", "PERM"] as const).map(t => (
+                        <button key={t} onClick={() => setType(t)} className="rounded-xl px-3 py-2.5 text-[13px] font-bold"
+                            style={{
+                                background: type === t ? BN.goldSoft : BN.surfaceUp,
+                                border: `1px solid ${type === t ? BN.goldEdge : BN.border}`,
+                                color: type === t ? BN.gold : BN.text2,
+                            }}>
+                            {t === "TEMP" ? "Vaqtincha" : "Abadiy"}
+                        </button>
+                    ))}
+                </div>
+
+                {type === "TEMP" && (
+                    <>
+                        <label className="text-[11px] uppercase tracking-wider font-bold" style={{ color: BN.text3 }}>Necha kun</label>
+                        <input type="number" value={days} onChange={e => setDays(Math.max(1, Number(e.target.value) || 1))}
+                            className="w-full rounded-xl px-3 py-2.5 mt-1 mb-3 text-[14px]" min={1}
+                            style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }} />
+                    </>
+                )}
+
+                <label className="text-[11px] uppercase tracking-wider font-bold" style={{ color: BN.text3 }}>Sabab (ichki)</label>
+                <textarea value={reason} onChange={e => setReason(e.target.value)} rows={3}
+                    placeholder="Aniq nima uchun ban qo'yildi..."
+                    className="w-full rounded-xl px-3 py-2.5 mt-1 mb-3 text-[13.5px] resize-none"
+                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }} />
+
+                <label className="text-[11px] uppercase tracking-wider font-bold" style={{ color: BN.text3 }}>Sotuvchiga xabar (ixtiyoriy)</label>
+                <input value={publicReason} onChange={e => setPublicReason(e.target.value)}
+                    placeholder="Qisqa tushuntirish sotuvchi ko'radi"
+                    className="w-full rounded-xl px-3 py-2.5 mt-1 mb-4 text-[13.5px]"
+                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: "#fff" }} />
+
+                <button onClick={submit} disabled={busy || reason.trim().length < 3}
+                    className="w-full rounded-xl h-11 font-bold text-[14px] flex items-center justify-center gap-2 disabled:opacity-40"
+                    style={{ background: "#ef4444", color: "#fff" }}>
+                    {busy && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Ban qo&apos;yish
+                </button>
+            </div>
         </div>
     );
 }
