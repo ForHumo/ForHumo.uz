@@ -4,11 +4,21 @@
 // FulfillType + phone + address + paymentMethod tanlanadi va POST /api/bn/checkout
 // chaqiriladi. Muvaffaqiyatda buyurtmalarim sahifasiga o'tadi.
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, MapPin, Truck, Package, Eye, Wallet, Banknote, Loader2 } from "lucide-react";
+import { X, MapPin, Truck, Package, Eye, Wallet, Banknote, Loader2, BookMarked, Check } from "lucide-react";
 import { BN, fmtPrice } from "@/lib/bn-theme";
 import { useBnHref } from "./bn-nav";
+
+interface SavedAddress {
+    id: string;
+    label: string;
+    address: string;
+    phone: string;
+    city: string;
+    district: string | null;
+    isDefault: boolean;
+}
 
 type Fulfill = "PICKUP" | "DELIVERY" | "INSPECT";
 type Pay = "WALLET" | "CASH";
@@ -33,6 +43,31 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
     const [pay, setPay] = useState<Pay>("WALLET");
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState<string | null>(null);
+    const [saved, setSaved] = useState<SavedAddress[]>([]);
+    const [saveNext, setSaveNext] = useState(false);
+
+    // Saqlangan manzillar
+    useEffect(() => {
+        fetch("/api/bn/addresses")
+            .then(r => r.json())
+            .then(d => {
+                const items = (d.items ?? []) as SavedAddress[];
+                setSaved(items);
+                const def = items.find(a => a.isDefault) ?? items[0];
+                if (def && !address) {
+                    setAddress(def.address);
+                    setPhone(def.phone);
+                }
+            })
+            .catch(() => { /* ignore — unauth or empty */ });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    function pickSaved(a: SavedAddress) {
+        setAddress(a.address);
+        setPhone(a.phone);
+        setSaveNext(false);
+    }
 
     const deliveryFee = fulfill === "DELIVERY" ? 20_000 : 0;
     const total = subtotal + deliveryFee;
@@ -71,6 +106,17 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                     setErr(d?.error ?? "Xatolik yuz berdi.");
                 }
                 return;
+            }
+            // Manzilni kitobchaga saqlash (agar tanlangan)
+            if (saveNext && fulfill === "DELIVERY" && address) {
+                void fetch("/api/bn/addresses", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({
+                        label: "Manzil", address, phone,
+                        isDefault: saved.length === 0,
+                    }),
+                }).catch(() => { /* ignore */ });
             }
             // Muvaffaqiyat — birinchi buyurtma sahifasiga
             router.push(to(`/buyurtmalarim/${d.primary}`));
@@ -145,18 +191,57 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                             />
                         </Field>
                         {fulfill === "DELIVERY" && (
-                            <Field label="Manzil">
-                                <div className="relative">
-                                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: BN.text3 }} />
+                            <>
+                                {saved.length > 0 && (
+                                    <div>
+                                        <p className="flex items-center gap-1.5 text-[12px] font-bold mb-2" style={{ color: BN.text3 }}>
+                                            <BookMarked className="w-3.5 h-3.5" />
+                                            Saqlangan manzillar
+                                        </p>
+                                        <div className="flex gap-2 overflow-x-auto pb-1 bn-noscroll mb-2">
+                                            {saved.map(a => {
+                                                const active = a.address === address;
+                                                return (
+                                                    <button
+                                                        key={a.id}
+                                                        onClick={() => pickSaved(a)}
+                                                        className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-[12.5px] font-bold flex-shrink-0"
+                                                        style={{
+                                                            background: active ? BN.goldSoft : BN.surfaceUp,
+                                                            border: `1px solid ${active ? BN.goldEdge : BN.border}`,
+                                                            color: active ? BN.gold : BN.text2,
+                                                        }}
+                                                    >
+                                                        {active && <Check className="w-3 h-3" />}
+                                                        {a.label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                                <Field label="Manzil">
+                                    <div className="relative">
+                                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: BN.text3 }} />
+                                        <input
+                                            value={address}
+                                            onChange={e => setAddress(e.target.value)}
+                                            placeholder="Chilonzor tumani, ..."
+                                            className="w-full h-11 pl-9 pr-3 rounded-xl text-[14px] font-medium outline-none"
+                                            style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
+                                        />
+                                    </div>
+                                </Field>
+                                <label className="flex items-center gap-2 text-[12.5px] cursor-pointer" style={{ color: BN.text2 }}>
                                     <input
-                                        value={address}
-                                        onChange={e => setAddress(e.target.value)}
-                                        placeholder="Chilonzor tumani, ..."
-                                        className="w-full h-11 pl-9 pr-3 rounded-xl text-[14px] font-medium outline-none"
-                                        style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
+                                        type="checkbox"
+                                        checked={saveNext}
+                                        onChange={e => setSaveNext(e.target.checked)}
+                                        className="w-4 h-4"
                                     />
-                                </div>
-                            </Field>
+                                    Manzilni kitobchaga saqlash
+                                </label>
+                            </>
                         )}
                         <Field label="Sotuvchiga izoh (ixtiyoriy)">
                             <textarea

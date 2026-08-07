@@ -562,6 +562,28 @@ function ProductsTab({
             setBusyIds(s => { const n = new Set(s); n.delete(id); return n; });
         }
     }
+    async function quickEdit(p: CabinetProduct) {
+        const priceStr = prompt(`Narx (so'm) — hozir: ${p.price.toLocaleString("uz-UZ")}`, String(p.price));
+        if (priceStr === null) return;
+        const stockStr = prompt(`Miqdor (ombor) — hozir: ${p.stock}`, String(p.stock));
+        if (stockStr === null) return;
+        const newPrice = Math.max(1000, Math.floor(Number(priceStr.replace(/\D/g, "")) || p.price));
+        const newStock = Math.max(0, Math.floor(Number(stockStr.replace(/\D/g, "")) || 0));
+        if (newPrice === p.price && newStock === p.stock) return;
+
+        setBusyIds(s => new Set([...s, p.id]));
+        setItems(prev => prev.map(x => x.id === p.id ? { ...x, price: newPrice, stock: newStock } : x));
+        try {
+            await fetch(`/api/bn/seller/products/${p.id}`, {
+                method: "PATCH",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ price: newPrice, stock: newStock }),
+            });
+            router.refresh();
+        } finally {
+            setBusyIds(s => { const n = new Set(s); n.delete(p.id); return n; });
+        }
+    }
 
     return (
         <>
@@ -616,6 +638,15 @@ function ProductsTab({
                                         Omborda {p.stock} · {p.sold} sotildi
                                     </p>
                                     <div className="flex items-center gap-1.5 mt-auto pt-2">
+                                        <button
+                                            onClick={() => quickEdit(p)}
+                                            disabled={busy}
+                                            title="Narx / miqdorni tahrir"
+                                            className="flex items-center gap-1 h-8 px-2 rounded-lg text-[11px] font-black"
+                                            style={{ background: BN.goldSoft, color: BN.gold }}
+                                        >
+                                            Tahrir
+                                        </button>
                                         <button
                                             onClick={() => toggleActive(p.id, !p.isActive)}
                                             disabled={busy}
@@ -983,17 +1014,127 @@ function CreateProductModal({
 // ── DO'KON SOZLAMALARI ─────────────────────────────────────────────────────
 
 function ShopTab({ shop }: { shop: CabinetShop }) {
+    const router = useRouter();
+    const [name, setName] = useState(shop.name);
+    const [phone, setPhone] = useState(shop.phone);
+    const [description, setDescription] = useState("");
+    const [logoUrl, setLogoUrl] = useState(shop.logoUrl ?? "");
+    const [workHours, setWorkHours] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [msg, setMsg] = useState<string | null>(null);
+    const fileRef = useRef<HTMLInputElement>(null);
+
+    async function uploadLogo(file: File) {
+        setBusy(true); setMsg(null);
+        try {
+            const fd = new FormData();
+            fd.append("file", file);
+            fd.append("kind", "shop");
+            const r = await fetch("/api/bn/upload", { method: "POST", body: fd });
+            const d = await r.json();
+            if (r.ok) setLogoUrl(d.url);
+            else setMsg(d?.error ?? "Yuklash xatoligi");
+        } finally { setBusy(false); if (fileRef.current) fileRef.current.value = ""; }
+    }
+
+    async function save() {
+        setBusy(true); setMsg(null);
+        try {
+            const r = await fetch("/api/bn/seller/shop", {
+                method: "PATCH",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ name, phone, description, logoUrl, workHours }),
+            });
+            const d = await r.json();
+            if (r.ok) { setMsg("Saqlandi"); router.refresh(); }
+            else setMsg(d?.error ?? "Xatolik");
+        } catch { setMsg("Ulanish xatoligi"); }
+        finally { setBusy(false); }
+    }
+
     return (
-        <div className="space-y-3">
-            <InfoRow label="Do'kon nomi" value={shop.name} />
-            <InfoRow label="URL" value={`/d/${shop.slug}`} />
-            <InfoRow label="Joylashuv" value={locLabel(shop)} />
-            <InfoRow label="Telefon" value={shop.phone} />
-            <InfoRow label="Reyting" value={shop.rating > 0 ? `${shop.rating.toFixed(1)} (${shop.ratingCount} baho)` : "Hali baho yo'q"} />
-            <InfoRow label="Daraja" value={shop.tier} />
-            <p className="text-[12.5px] p-3 rounded-xl" style={{ color: BN.text3, background: BN.surfaceUp }}>
-                Sozlamalarni tahrir qilish tez orada qo&apos;shiladi. Hozircha admin bilan bog&apos;laning.
-            </p>
+        <div className="space-y-4">
+            <FieldLabel label="Do'kon logosi">
+                <div className="flex items-center gap-3">
+                    <span
+                        className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 grid place-items-center"
+                        style={{ background: BN.surfaceUp }}
+                    >
+                        {logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={logoUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                            <Store className="w-8 h-8" style={{ color: BN.text3 }} />
+                        )}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => fileRef.current?.click()}
+                        disabled={busy}
+                        className="h-11 px-4 rounded-xl text-[13px] font-bold"
+                        style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}
+                    >
+                        {busy ? <Loader2 className="w-4 h-4 animate-spin inline" /> : <><Upload className="w-4 h-4 inline mr-1" /> Yangi rasm</>}
+                    </button>
+                    <input
+                        ref={fileRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) void uploadLogo(f); }}
+                    />
+                </div>
+            </FieldLabel>
+
+            <FieldLabel label="Do'kon nomi">
+                <input value={name} onChange={e => setName(e.target.value)} className="bn-form-input" />
+            </FieldLabel>
+
+            <FieldLabel label="Telefon">
+                <input value={phone} onChange={e => setPhone(e.target.value)} className="bn-form-input tabular-nums" />
+            </FieldLabel>
+
+            <FieldLabel label="Ish vaqti">
+                <input
+                    value={workHours}
+                    onChange={e => setWorkHours(e.target.value)}
+                    placeholder="Har kuni 09:00–20:00"
+                    className="bn-form-input"
+                />
+            </FieldLabel>
+
+            <FieldLabel label="Tavsif">
+                <textarea
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    rows={3}
+                    maxLength={500}
+                    placeholder="Do&apos;koningiz haqida qisqacha (500 harfgacha)"
+                    className="bn-form-input resize-none"
+                />
+            </FieldLabel>
+
+            {msg && (
+                <p className="text-[12.5px] p-3 rounded-lg" style={{ background: BN.surfaceUp, color: BN.text2 }}>
+                    {msg}
+                </p>
+            )}
+
+            <button
+                onClick={save}
+                disabled={busy}
+                className="w-full h-12 rounded-2xl text-[15px] font-black disabled:opacity-60"
+                style={{ background: BN.gold, color: BN.onGold }}
+            >
+                {busy ? <Loader2 className="w-5 h-5 animate-spin inline" /> : "Saqlash"}
+            </button>
+
+            <div className="pt-4 space-y-2 text-[12.5px]" style={{ borderTop: `1px solid ${BN.border}`, color: BN.text3 }}>
+                <p>URL: <span className="font-bold" style={{ color: BN.text2 }}>/d/{shop.slug}</span></p>
+                <p>Joylashuv: <span className="font-bold" style={{ color: BN.text2 }}>{locLabel(shop)}</span></p>
+                <p>Reyting: <span className="font-bold" style={{ color: BN.text2 }}>{shop.rating > 0 ? `${shop.rating.toFixed(1)} (${shop.ratingCount})` : "yo'q"}</span></p>
+                <p>Daraja: <span className="font-bold" style={{ color: BN.text2 }}>{shop.tier}</span></p>
+            </div>
         </div>
     );
 }

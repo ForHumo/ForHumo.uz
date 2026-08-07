@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { BnLink } from "./bn-nav";
 import { BnBackButton } from "./bn-back-button";
+import { BnReviews } from "./bn-reviews";
 import {
     Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
     ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2, BellRing,
@@ -561,6 +562,9 @@ export function BnProductDetail({
                     </div>
                 </section>
             )}
+
+            {/* Sharhlar */}
+            <BnReviews kind="product" slug={p.slug} />
 
             {/* O'xshash mahsulotlar */}
             {similar.length > 0 && (

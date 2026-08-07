@@ -9,6 +9,7 @@ import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnShopCard, BnSectionTitle, BnEmpty, shopLocationText } from "./bn-cards";
 import { BnBackButton } from "./bn-back-button";
+import { BnReviews } from "./bn-reviews";
 import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 // ── Bozor sahifasi ──────────────────────────────────────────────────────────
@@ -230,6 +231,9 @@ export function BnShopPage({
                     {products.map(p => <BnProductCard key={p.id} p={p} compact />)}
                 </div>
             )}
+
+            {/* Sharhlar */}
+            <BnReviews kind="shop" slug={s.slug} />
         </div>
     );
 }

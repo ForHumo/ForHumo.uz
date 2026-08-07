@@ -2069,6 +2069,25 @@ enum BnFavPrivacy {
   PUBLIC      // hammaga ochiq
 }
 
+// Xaridor manzillar kitobchasi — uy, ish, va h.k. Checkout'da tanlash uchun.
+model BnAddress {
+  id         String   @id @default(cuid())
+  profileId  String
+  label      String   @default("Manzil")    // "Uy", "Ish", ...
+  address    String                          // ochiq matn
+  phone      String
+  city       String   @default("Toshkent")
+  district   String?                         // tuman
+  landmark   String?                         // "Muzey oldi"
+  latitude   Float?
+  longitude  Float?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([profileId, isDefault])
+}
+
 // Narx tushdi kuzatish — foydalanuvchi mahsulotni "kuzatishga" qo'yadi.
 // Kunlik cron narx N% pastga tushsa Nexus notification yuboradi.
 model BnPriceWatch {

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import {
     Package, LogIn, ChevronRight, Clock, Check, X, Truck, Eye,
-    Wallet, Banknote, Store, MapPin, Phone, Loader2,
+    Wallet, Banknote, Store, MapPin, Phone, Loader2, RotateCw,
 } from "lucide-react";
 import { BN, fmtPrice, ORDER_STATUS_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
@@ -402,6 +402,30 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                                 </button>
                                 {err && <p className="text-[11.5px] mt-2 text-center" style={{ color: BN.err }}>{err}</p>}
                             </>
+                        )}
+
+                        {(order.status === "COMPLETED" || order.status === "CANCELLED") && (
+                            <button
+                                onClick={async () => {
+                                    setBusy(true);
+                                    try {
+                                        const r = await fetch(`/api/bn/orders/${order.id}/reorder`, { method: "POST" });
+                                        const d = await r.json();
+                                        if (r.ok) {
+                                            const msg = `Savatga qo'shildi: ${d.added} ta${d.skipped ? ` (${d.skipped} tasi mavjud emas)` : ""}`;
+                                            alert(msg);
+                                            router.refresh();
+                                        } else {
+                                            alert(d?.error ?? "Xatolik");
+                                        }
+                                    } finally { setBusy(false); }
+                                }}
+                                disabled={busy}
+                                className="flex items-center justify-center gap-2 w-full h-11 mt-5 rounded-xl text-[13.5px] font-black transition-colors disabled:opacity-60"
+                                style={{ background: BN.gold, color: BN.onGold }}
+                            >
+                                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><RotateCw className="w-4 h-4" /> Yana buyurtma</>}
+                            </button>
                         )}
                     </Panel>
                 </aside>
