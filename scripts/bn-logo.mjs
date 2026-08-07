@@ -77,8 +77,27 @@ async function main() {
     await square(dark, 512).toFile(`${OUT}/logo-dark.png`);
     await square(light, 256).toFile(`${OUT}/logo-mark.png`);
     await square(dark, 256).toFile(`${OUT}/logo-mark-dark.png`);
-    await square(dark, 64).toFile(`${OUT}/favicon.png`);
-    await square(dark, 180).toFile(`${OUT}/apple-icon.png`);
+
+    // Favicon va apple-icon — qora fon bilan (iOS home screen oq fonda ko'rinsin)
+    // Fon: BN scope surface (#17171B)
+    async function withBg(pipeline, size, radius = 0) {
+        const inner = await pipeline.clone().resize(Math.round(size * 0.72), Math.round(size * 0.72), {
+            fit: "contain",
+            background: { r: 0, g: 0, b: 0, alpha: 0 },
+        }).toBuffer();
+        const bg = sharp({
+            create: { width: size, height: size, channels: 4, background: { r: 23, g: 23, b: 27, alpha: 1 } },
+        }).composite([{ input: inner, gravity: "center" }]).png();
+
+        if (radius > 0) {
+            // iOS o'zi rounded qiladi — biz PNG'da yumaloq shakl chizmaymiz
+            void radius;
+        }
+        return bg;
+    }
+
+    await (await withBg(dark, 64)).toFile(`${OUT}/favicon.png`);
+    await (await withBg(dark, 180)).toFile(`${OUT}/apple-icon.png`);
 
     // OG rasm — to'q fon + markazda logo
     const markBuf = await square(dark, 300).toBuffer();

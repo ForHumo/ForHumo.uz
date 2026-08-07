@@ -17,7 +17,7 @@ function parseSchema(raw: any): { key: string; label: string; labelRu?: string; 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-    title: "Kabinet — Bozor Narxida",
+    title: "Kabinet",
     robots: { index: false, follow: false },
 };
 

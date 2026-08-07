@@ -85,6 +85,7 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
                         <BnLink
                             key={s.id}
                             href={`/d/${s.slug}`}
+                            newTab
                             className="group flex items-center gap-3 p-3 rounded-2xl transition-all active:scale-[0.99]"
                             style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                         >

@@ -5,7 +5,7 @@ import { getTopShops, getHomeData } from "@/lib/bn-data";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-    title: "Nexus — Bozor Narxida",
+    title: "Nexus",
     description: "Sotuvchilarning postlari, reels va reklamalari. Humo Nexus bilan integratsiya.",
 };
 

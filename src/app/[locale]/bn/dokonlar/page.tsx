@@ -5,7 +5,7 @@ import { getTopShops } from "@/lib/bn-data";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-    title: "Do'konlar — Bozor Narxida",
+    title: "Do'konlar",
     description: "Bozordagi va ko'chadagi do'konlar reyting bo'yicha saralangan.",
 };
 

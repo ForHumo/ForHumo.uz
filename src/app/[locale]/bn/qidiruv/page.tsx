@@ -5,7 +5,7 @@ import { getMarkets, searchProducts } from "@/lib/bn-data";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Qidiruv — Bozor Narxida" };
+export const metadata: Metadata = { title: "Qidiruv" };
 
 export default async function Page({
     searchParams,

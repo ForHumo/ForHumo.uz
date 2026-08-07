@@ -16,12 +16,25 @@ import { prisma } from "@/lib/prisma";
 
 const BN_HOSTS = ["bozornarxida.uz", "www.bozornarxida.uz"];
 
-export const metadata = {
+import type { Metadata, Viewport } from "next";
+
+export const metadata: Metadata = {
+    title: {
+        default: "Bozor Narxida | For Humo",
+        template: "%s | Bozor Narxida",
+    },
     icons: {
         icon: "/bn/favicon.png",
         apple: "/bn/apple-icon.png",
     },
     openGraph: { images: ["/bn/og.png"] },
+};
+
+// iOS: safe-area-inset ishlashi uchun viewport-fit=cover
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
 };
 
 export default async function BnLayout({
@@ -55,7 +68,12 @@ export default async function BnLayout({
                 <BnSwipeNav>
                     <div className="relative z-10 flex flex-col min-h-full">
                         <BnHeader categories={headerCats} cartCount={cartCount} favCount={favCount} />
-                        <main className="flex-1 pb-24">{children}</main>
+                        <main
+                            className="flex-1"
+                            style={{ paddingBottom: "calc(96px + env(safe-area-inset-bottom))" }}
+                        >
+                            {children}
+                        </main>
                         <BnFooter />
                     </div>
                     <BnNavbar />

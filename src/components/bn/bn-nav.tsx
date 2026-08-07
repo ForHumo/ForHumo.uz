@@ -44,17 +44,20 @@ export function useBnHref() {
     };
 }
 
-/** BN havolasi — domenga mos prefiks bilan */
+/** BN havolasi — domenga mos prefiks bilan.
+ * newTab=true bo'lsa yangi oynada ochadi (Cmd/Ctrl+click yoki middle-click bilan bir xil).
+ */
 export function BnLink({
-    href, children, className, style, onClick, title, "aria-label": ariaLabel,
+    href, children, className, style, onClick, title, "aria-label": ariaLabel, newTab,
 }: {
     href: string;
     children: React.ReactNode;
     className?: string;
     style?: React.CSSProperties;
-    onClick?: () => void;
+    onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
     title?: string;
     "aria-label"?: string;
+    newTab?: boolean;
 }) {
     const to = useBnHref();
     return (
@@ -65,6 +68,7 @@ export function BnLink({
             onClick={onClick}
             title={title}
             aria-label={ariaLabel}
+            {...(newTab ? { target: "_blank", rel: "noopener noreferrer" } : {})}
         >
             {children}
         </NextLink>

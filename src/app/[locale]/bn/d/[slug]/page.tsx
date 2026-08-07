@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const { slug } = await params;
     const s = await prisma.bnShop.findUnique({ where: { slug }, select: { name: true, description: true } });
     return {
-        title: `${s?.name ?? slug.replace(/-/g, " ")} — Bozor Narxida`,
+        title: `${s?.name ?? slug.replace(/-/g, " ")}`,
         description: s?.description ?? undefined,
     };
 }

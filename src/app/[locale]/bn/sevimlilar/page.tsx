@@ -6,7 +6,7 @@ import type { BnProductDTO } from "@/lib/bn-data";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Sevimlilar — Bozor Narxida", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Sevimlilar", robots: { index: false, follow: false } };
 
 export default async function Page() {
     const auth = await getBnAuth();

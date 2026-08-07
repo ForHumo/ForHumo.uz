@@ -9,7 +9,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const { slug } = await params;
     const data = await getCategoryBySlug(slug);
     return {
-        title: `${data?.category.name ?? slug.replace(/-/g, " ")} — Bozor Narxida`,
+        title: `${data?.category.name ?? slug.replace(/-/g, " ")}`,
         description: data?.category.name
             ? `${data.category.name} kategoriyasi. ${data.products.length} ta mahsulot Toshkent bozorlari va do'konlaridan.`
             : undefined,

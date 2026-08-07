@@ -13,6 +13,7 @@ import {
 import { BN, fmtPrice, ORDER_STATUS_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
+import { BnBackButton } from "./bn-back-button";
 
 export interface OrderListItem {
     id: string;
@@ -182,6 +183,7 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
 
     return (
         <Wrap>
+            <BnBackButton className="mb-4" fallbackHref="/buyurtmalarim" />
             <nav className="flex items-center gap-1.5 text-[12px] mb-5" style={{ color: BN.text3 }}>
                 <BnLink href="/" className="hover:opacity-70">Bosh sahifa</BnLink>
                 <ChevronRight className="w-3 h-3" />

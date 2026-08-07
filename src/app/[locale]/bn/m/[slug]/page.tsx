@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const { slug } = await params;
     const m = await prisma.bnMarket.findUnique({ where: { slug }, select: { name: true, address: true } });
     return {
-        title: `${m?.name ?? slug.replace(/-/g, " ")} — Bozor Narxida`,
+        title: `${m?.name ?? slug.replace(/-/g, " ")}`,
         description: m ? `${m.name}${m.address ? ` — ${m.address}` : ""} — do'konlar va mahsulotlar ro'yxati.` : undefined,
     };
 }

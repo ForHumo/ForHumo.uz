@@ -27,6 +27,7 @@ export function BnShopCard({ s }: { s: ShopCardData }) {
     return (
         <BnLink
             href={`/d/${s.slug}`}
+            newTab
             className="group flex items-center gap-3 p-3 rounded-2xl transition-all active:scale-[0.99]"
             style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
         >
@@ -113,6 +114,7 @@ export function BnMarketCard({ m, wide = false }: { m: MarketCardData; wide?: bo
     return (
         <BnLink
             href={`/m/${m.slug}`}
+            newTab
             className="group relative overflow-hidden rounded-2xl transition-all active:scale-[0.99]"
             style={{ border: `1px solid ${BN.border}` }}
         >

@@ -33,26 +33,17 @@ export function PoweredByForHumo({ small = true, href = "https://forhumo.uz" }: 
                 Powered by
             </span>
 
-            {/* Uchburchak / paper-plane belgi (For Humo ramzi — brend rangida) */}
-            <svg
-                width={small ? 12 : 14}
-                height={small ? 12 : 14}
-                viewBox="0 0 24 24"
-                fill="none"
+            {/* For Humo rasmiy logo */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+                src="/logos/forhumo.png"
+                alt=""
                 aria-hidden="true"
-                style={{ marginTop: 1 }}
-            >
-                <defs>
-                    <linearGradient id="fh-mark-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-                        <stop offset="0%" stopColor="#2B3EE8" />
-                        <stop offset="100%" stopColor="#00CEC8" />
-                    </linearGradient>
-                </defs>
-                <path
-                    d="M22 2 L2 11 L10 13 L13 22 Z"
-                    fill="url(#fh-mark-grad)"
-                />
-            </svg>
+                width={small ? 16 : 20}
+                height={small ? 16 : 20}
+                className="object-contain"
+                style={{ width: small ? 16 : 20, height: small ? 16 : 20 }}
+            />
 
             <span
                 style={{

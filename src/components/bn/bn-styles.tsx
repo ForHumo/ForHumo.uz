@@ -101,8 +101,10 @@ export function BnStyles() {
             .bn-aurora span {
                 position: absolute;
                 border-radius: 9999px;
-                filter: blur(90px);
+                filter: blur(64px);          /* 90 → 64: mobil GPU'da sezilarli tezroq */
                 will-change: transform;
+                contain: strict;
+                transform: translateZ(0);    /* GPU layer */
             }
             .bn-aurora span:nth-child(1) {
                 width: 52vw; height: 52vw;
@@ -121,6 +123,12 @@ export function BnStyles() {
                 bottom: -14vw; left: 28vw;
                 background: var(--bn-orb-3);
                 animation: bn-float-c 38s ease-in-out infinite;
+            }
+
+            /* Kichik ekranda 3-orbni yashiramiz — GPU tejash */
+            @media (max-width: 640px) {
+                .bn-aurora span:nth-child(3) { display: none; }
+                .bn-aurora span { filter: blur(52px); }
             }
 
             @keyframes bn-float-a {

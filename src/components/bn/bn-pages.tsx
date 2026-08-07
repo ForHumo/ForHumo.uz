@@ -8,6 +8,7 @@ import {
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnShopCard, BnSectionTitle, BnEmpty, shopLocationText } from "./bn-cards";
+import { BnBackButton } from "./bn-back-button";
 import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 // ── Bozor sahifasi ──────────────────────────────────────────────────────────
@@ -37,6 +38,11 @@ export function BnMarketPage({
                     className="absolute inset-0"
                     style={{ background: `linear-gradient(to top, ${BN.bg} 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.15) 100%)` }}
                 />
+                <div className="absolute inset-x-0 top-4 pointer-events-none">
+                    <div className="mx-auto max-w-[1280px] px-4 pointer-events-auto">
+                        <BnBackButton fallbackHref="/bozorlar" />
+                    </div>
+                </div>
                 <div className="absolute inset-x-0 bottom-0">
                     <div className="mx-auto max-w-[1280px] px-4 pb-5">
                         <nav className="flex items-center gap-1.5 text-[12px] mb-2" style={{ color: "rgba(255,255,255,0.72)" }}>
@@ -112,6 +118,7 @@ export function BnShopPage({
 
     return (
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-16">
+            <BnBackButton className="mb-4" fallbackHref="/dokonlar" />
             <nav className="flex items-center gap-1.5 text-[12px] mb-5" style={{ color: BN.text3 }}>
                 <BnLink href="/" className="hover:opacity-70 transition-colors">Bosh sahifa</BnLink>
                 <ChevronRight className="w-3 h-3" />

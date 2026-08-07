@@ -4,7 +4,7 @@ import { getCategoriesTree } from "@/lib/bn-data";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Katalog — Bozor Narxida" };
+export const metadata: Metadata = { title: "Katalog" };
 
 export default async function Page() {
     const categories = await getCategoriesTree();

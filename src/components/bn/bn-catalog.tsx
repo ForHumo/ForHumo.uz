@@ -371,6 +371,7 @@ export function BnMarketsList({ markets }: { markets: BnMarketDTO[] }) {
                         <BnLink
                             key={m.id}
                             href={`/m/${m.slug}`}
+                            newTab
                             className="group rounded-2xl overflow-hidden transition-all active:scale-[0.99]"
                             style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                         >

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { BnLink } from "./bn-nav";
+import { BnBackButton } from "./bn-back-button";
 import {
     Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
     ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2,
@@ -121,6 +122,7 @@ export function BnProductDetail({ product, shop, similar, others }: Props) {
 
     return (
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-16">
+            <BnBackButton className="mb-4" />
             {/* Non-ushoq */}
             <nav className="flex items-center gap-1.5 text-[12px] mb-5 flex-wrap" style={{ color: BN.text3 }}>
                 <BnLink href="/" className="hover:opacity-70 transition-colors">Bosh sahifa</BnLink>

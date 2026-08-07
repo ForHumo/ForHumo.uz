@@ -5,7 +5,7 @@ import { getMarkets } from "@/lib/bn-data";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-    title: "Bozorlar — Bozor Narxida",
+    title: "Bozorlar",
     description: "Toshkent bozorlari onlayn: Sergeli, Chorsu, Malika, Abu Sahiy va boshqalar.",
 };
 

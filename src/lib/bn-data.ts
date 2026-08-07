@@ -6,6 +6,7 @@
 // Client fayldan import qilinsa build xatosi bo'ladi (Prisma faqat serverda).
 
 import { prisma } from "@/lib/prisma";
+import { unstable_cache } from "next/cache";
 
 // ── Tiplar (client komponent ham import qiladi) ─────────────────────────────
 // Bular MockShop/MockProduct'ga o'xshaydi lekin real DB ma'lumotidan.
@@ -284,27 +285,32 @@ export interface BnCategoryTreeDTO {
     children: { slug: string; name: string; icon: string | null; productCount: number }[];
 }
 
-export async function getCategoriesTree(): Promise<BnCategoryTreeDTO[]> {
-    const rows = await prisma.bnCategory.findMany({
-        where: { isActive: true, parentId: null },
-        orderBy: { order: "asc" },
-        include: {
-            children: {
-                where: { isActive: true },
-                orderBy: { order: "asc" },
-                select: { slug: true, name: true, icon: true, productCount: true },
+// Kategoriyalar deyarli hech qachon o'zgarmaydi — 10 daq. cache.
+export const getCategoriesTree = unstable_cache(
+    async (): Promise<BnCategoryTreeDTO[]> => {
+        const rows = await prisma.bnCategory.findMany({
+            where: { isActive: true, parentId: null },
+            orderBy: { order: "asc" },
+            include: {
+                children: {
+                    where: { isActive: true },
+                    orderBy: { order: "asc" },
+                    select: { slug: true, name: true, icon: true, productCount: true },
+                },
             },
-        },
-    });
-    return rows.map(c => ({
-        id: c.id,
-        slug: c.slug,
-        name: c.name,
-        icon: c.icon,
-        productCount: c.productCount,
-        children: c.children,
-    }));
-}
+        });
+        return rows.map(c => ({
+            id: c.id,
+            slug: c.slug,
+            name: c.name,
+            icon: c.icon,
+            productCount: c.productCount,
+            children: c.children,
+        }));
+    },
+    ["bn-categories-tree"],
+    { revalidate: 600, tags: ["bn-categories"] },
+);
 
 export async function getCategoryBySlug(slug: string) {
     const cat = await prisma.bnCategory.findUnique({

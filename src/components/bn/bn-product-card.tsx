@@ -1,10 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useSession, signIn } from "next-auth/react";
 import { BnLink } from "./bn-nav";
-import { Store, ShoppingBasket, Star, Eye, Truck, BadgeCheck } from "lucide-react";
+import { Store, ShoppingBasket, Star, Eye, Truck, BadgeCheck, Heart } from "lucide-react";
 import { BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel } from "@/lib/bn-theme";
 
 export interface ProductCardData {
+    id: string;                     // Sevimlilar toggle uchun kerak
     slug: string;
     title: string;
     price: number;
@@ -46,15 +49,53 @@ export function productContextText(p: {
     return { text: loc, kind: "shop" };
 }
 
-export function BnProductCard({ p, compact = false }: { p: ProductCardData; compact?: boolean }) {
+export function BnProductCard({
+    p, compact = false, initialFavored,
+}: { p: ProductCardData; compact?: boolean; initialFavored?: boolean }) {
     const rank = priceRankOf(p.price, p.marketAvgPrice);
     const rankMeta = rank ? PRICE_RANK_META[rank] : null;
     const diff = priceDiffLabel(p.price, p.marketAvgPrice);
     const showDiff = rank === "cheap" && diff;
 
+    const { status } = useSession();
+    const [fav, setFav] = useState<boolean>(!!initialFavored);
+    const [favBusy, setFavBusy] = useState(false);
+    const [favKnown, setFavKnown] = useState(initialFavored !== undefined);
+
+    // Login bo'lgach status yuklash (initialFavored berilmagan bo'lsa)
+    useEffect(() => {
+        if (favKnown || status !== "authenticated") return;
+        let cancelled = false;
+        fetch(`/api/bn/favorites?ids=${p.id}`)
+            .then(r => r.json())
+            .then(d => { if (!cancelled) { setFav(!!d?.statuses?.[p.id]); setFavKnown(true); } })
+            .catch(() => { /* ignore */ });
+        return () => { cancelled = true; };
+    }, [status, p.id, favKnown]);
+
+    async function toggleFav(e: React.MouseEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (status === "unauthenticated") { signIn("google"); return; }
+        if (favBusy) return;
+        setFavBusy(true);
+        const prev = fav;
+        setFav(!prev);
+        try {
+            const r = await fetch("/api/bn/favorites", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ productId: p.id }),
+            });
+            if (!r.ok) setFav(prev);
+        } catch { setFav(prev); }
+        finally { setFavBusy(false); }
+    }
+
     return (
         <BnLink
             href={`/p/${p.slug}`}
+            newTab
             className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-150 active:scale-[0.985]"
             style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
         >
@@ -84,10 +125,29 @@ export function BnProductCard({ p, compact = false }: { p: ProductCardData; comp
                     </span>
                 )}
 
-                {/* Kam qoldi */}
+                {/* Yurak — sevimlilarga qo'shish */}
+                <button
+                    onClick={toggleFav}
+                    disabled={favBusy}
+                    aria-label={fav ? "Sevimlilardan olib tashlash" : "Sevimlilarga qo'shish"}
+                    className="absolute top-2 right-2 w-9 h-9 grid place-items-center rounded-full backdrop-blur-sm transition-transform active:scale-90 disabled:opacity-60"
+                    style={{ background: BN.glass }}
+                >
+                    <Heart
+                        className="w-4 h-4 transition-colors"
+                        style={{
+                            fill:   fav ? BN.err : "transparent",
+                            color:  fav ? BN.err : "#fff",
+                            stroke: fav ? BN.err : "#fff",
+                            strokeWidth: 2.2,
+                        }}
+                    />
+                </button>
+
+                {/* Kam qoldi — endi yurak ostida */}
                 {p.stock > 0 && p.stock <= 3 && (
                     <span
-                        className="absolute top-2 right-2 px-2 py-1 rounded-lg text-[10.5px] font-black leading-none"
+                        className="absolute top-[52px] right-2 px-2 py-1 rounded-lg text-[10.5px] font-black leading-none"
                         style={{ background: BN.glass, color: BN.warn }}
                     >
                         {p.stock} ta qoldi

@@ -4,6 +4,7 @@ import { BnLink } from "./bn-nav";
 import { Store, Shield, Truck, Sparkles } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { PoweredByForHumo } from "@/components/shared/powered-by-forhumo";
+import { BnLogo } from "./bn-header";
 
 export function BnFooter() {
     return (
@@ -24,12 +25,7 @@ export function BnFooter() {
                 <div className="mx-auto max-w-[1280px] px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-8">
                     <div className="col-span-2 md:col-span-1">
                         <div className="flex items-center gap-2.5 mb-3">
-                            <span
-                                className="w-9 h-9 rounded-xl grid place-items-center font-black text-[15px]"
-                                style={{ background: `linear-gradient(140deg, ${BN.goldLight}, ${BN.goldDark})`, color: BN.onGold }}
-                            >
-                                BN
-                            </span>
+                            <BnLogo size={40} />
                             <span className="font-black text-[16px]">Bozor Narxida</span>
                         </div>
                         <p className="text-[13px] leading-relaxed" style={{ color: BN.text2 }}>

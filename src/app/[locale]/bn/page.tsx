@@ -4,8 +4,8 @@ import { getHomeData } from "@/lib/bn-data";
 
 export const dynamic = "force-dynamic";
 
+// Bosh sahifada template ishlatmaymiz — to'liq title layout metadatasidan (default).
 export const metadata: Metadata = {
-    title: "Bozor Narxida — bozorlar va do'konlar bitta joyda",
     description:
         "O'zbekiston bozorlari va do'konlari onlayn. Har mahsulot narxi bozor o'rtachasi bilan solishtiriladi. "
         + "Ko'rib sotib olish, xavfsiz to'lov, rasmiy sotuvchilar.",

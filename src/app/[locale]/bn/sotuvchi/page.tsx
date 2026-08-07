@@ -9,7 +9,7 @@ import { headers } from "next/headers";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-    title: "Sotuvchi bo'lish — Bozor Narxida",
+    title: "Sotuvchi bo'lish",
     description: "Do'koningizni onlaynga chiqaring. YaTT yoki MChJ bilan ro'yxatdan o'ting, komissiya 5%.",
 };
 

@@ -8,10 +8,10 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params;
     const data = await getProductBySlug(slug);
-    if (!data) return { title: "Mahsulot topilmadi — Bozor Narxida" };
+    if (!data) return { title: "Mahsulot topilmadi" };
     const p = data.product;
     return {
-        title: `${p.title} — Bozor Narxida`,
+        title: `${p.title}`,
         description: p.description ?? `${p.title}. ${p.price.toLocaleString("uz-UZ")} so'm. ${p.shopName} do'konidan.`,
         openGraph: p.images[0] ? { images: [p.images[0]] } : undefined,
     };

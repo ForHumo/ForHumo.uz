@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Buyurtmalarim — Bozor Narxida", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Buyurtmalarim", robots: { index: false, follow: false } };
 
 export default async function Page() {
     const auth = await getBnAuth();
