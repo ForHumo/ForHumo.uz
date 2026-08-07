@@ -2226,3 +2226,4 @@ enum ReservedCategory {
   GOVERNMENT  // president, mvd — davlat organi
   PERSONAL    // do'st/qarindosh — assignedToId bo'yicha
 }
+
