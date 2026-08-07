@@ -1,20 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
     Store, MapPin, ArrowRight, ChevronRight, Star, Package,
     TrendingDown, Sparkles, Crown, Loader2, Globe, ShoppingBasket,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnHeroSlider } from "./bn-hero-slider";
 import { BnLink } from "./bn-nav";
 import { shopLocationText } from "./bn-cards";
+import { LiquidGlassNavbar } from "@/components/shared/liquid-glass-navbar";
 import { MOCK_MARKETS, MOCK_PRODUCTS, MOCK_SHOPS, type MockProduct } from "@/lib/bn-mock";
 
 const COLS = 5;          // chapdan o'ngga 5 ta
 const INITIAL_ROWS = 2;  // tepadan pastga 2 qator
 const LOAD_ROWS = 5;     // "Yuklash" har bosishda 5 qator qo'shadi
+
+type FilterKey = "cheap" | "fresh" | "top" | "seasonal";
 
 export function BnHome() {
     // FAZA 1 — mock ro'yxatni ko'paytiramiz (yuklash tugmasini ko'rsatish uchun).
@@ -70,6 +74,21 @@ export function BnHome() {
             .slice(0, 10),
         [],
     );
+
+    // ── Mahsulotlar filtri (LiquidGlassNavbar bilan) ────────────────────────
+    const [filter, setFilter] = useState<FilterKey>("cheap");
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+    const { resolvedTheme } = useTheme();
+    const navTint: "light" | "dark" = mounted && resolvedTheme === "dark" ? "dark" : "light";
+
+    const FILTER_MAP: Record<FilterKey, { title: string; subtitle?: string; icon: React.ReactNode; items: MockProduct[]; href: string }> = {
+        cheap:    { title: "Bozor narxidan arzon", subtitle: "Bozordagi o'rtacha narxdan pastda", icon: <TrendingDown className="w-[18px] h-[18px]" />, items: cheap,    href: "/qidiruv?sort=cheap" },
+        fresh:    { title: "Yangi mahsulotlar",     icon: <Sparkles className="w-[18px] h-[18px]" />,     items: fresh,    href: "/qidiruv?sort=new" },
+        top:      { title: "Top mahsulotlar",       subtitle: "Eng yuqori baholangan",                    icon: <Star className="w-[18px] h-[18px]" />,         items: top,      href: "/qidiruv?sort=rating" },
+        seasonal: { title: "Mavsumiy mahsulotlar",  subtitle: "Hozirgi faslga mos",                       icon: <Package className="w-[18px] h-[18px]" />,      items: seasonal, href: "/qidiruv?sort=seasonal" },
+    };
+    const active = FILTER_MAP[filter];
 
     return (
         <div className="mx-auto max-w-[1280px] px-4 pt-5 pb-10">
@@ -174,33 +193,30 @@ export function BnHome() {
                 </div>
             </section>
 
-            {/* ── Mahsulot bo'limlari ── */}
+            {/* ── Mahsulot filtri (iOS 26 uslubidagi Liquid Glass navbar) ── */}
+            <section className="mb-6 flex justify-center overflow-x-auto no-scrollbar" data-no-swipe>
+                <LiquidGlassNavbar
+                    tint={navTint}
+                    accent="var(--bn-gold)"
+                    value={filter}
+                    onChange={k => setFilter(k as FilterKey)}
+                    ariaLabel="Mahsulotlar filteri"
+                    items={[
+                        { key: "cheap",    label: "Arzon",    icon: <TrendingDown className="w-4 h-4" /> },
+                        { key: "fresh",    label: "Yangi",    icon: <Sparkles className="w-4 h-4" /> },
+                        { key: "top",      label: "Top",      icon: <Star className="w-4 h-4" /> },
+                        { key: "seasonal", label: "Mavsumiy", icon: <Package className="w-4 h-4" /> },
+                    ]}
+                />
+            </section>
+
             <ProductSection
-                title="Bozor narxidan arzon"
-                subtitle="Bozordagi o'rtacha narxdan pastda"
-                icon={<TrendingDown className="w-[18px] h-[18px]" />}
-                items={cheap}
-                href="/qidiruv?sort=cheap"
-            />
-            <ProductSection
-                title="Yangi mahsulotlar"
-                icon={<Sparkles className="w-[18px] h-[18px]" />}
-                items={fresh}
-                href="/qidiruv?sort=new"
-            />
-            <ProductSection
-                title="Top mahsulotlar"
-                subtitle="Eng yuqori baholangan"
-                icon={<Star className="w-[18px] h-[18px]" />}
-                items={top}
-                href="/qidiruv?sort=rating"
-            />
-            <ProductSection
-                title="Mavsumiy mahsulotlar"
-                subtitle="Hozirgi faslga mos"
-                icon={<Package className="w-[18px] h-[18px]" />}
-                items={seasonal}
-                href="/qidiruv?sort=seasonal"
+                key={filter}
+                title={active.title}
+                subtitle={active.subtitle}
+                icon={active.icon}
+                items={active.items}
+                href={active.href}
             />
 
             {/* ── Sotuvchi CTA ── */}
