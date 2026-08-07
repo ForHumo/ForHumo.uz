@@ -9,9 +9,11 @@
 //     }
 
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 import { uniqueSlug } from "@/lib/bn-slug";
+import { moderateOnCreate } from "@/lib/moderation";
 
 async function requireSellerShop(profileId: string) {
     const shop = await prisma.bnShop.findUnique({
@@ -98,6 +100,17 @@ export async function POST(req: Request) {
         where: { id: shopRes.shop.id },
         data: { productCount: { increment: 1 } },
     });
+
+    // Pre-publish AI moderatsiya — javobni kechiktirmaydi (after)
+    after(() => moderateOnCreate({
+        module: "BN",
+        targetType: "BN_PRODUCT",
+        targetId: product.id,
+        text: `${product.title}\n\n${product.description ?? ""}`,
+        imageUrl: product.images?.[0] ?? null,
+        kind: "mahsulot",
+        authorId: auth.profileId,
+    }));
 
     return NextResponse.json({ ok: true, product });
 }

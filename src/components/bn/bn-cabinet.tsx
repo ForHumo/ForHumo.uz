@@ -9,14 +9,14 @@
 //
 // Tab: Umumiy / Buyurtmalar / Mahsulotlar / Do'kon / Pul
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import {
     LayoutDashboard, Package, ShoppingBag, Store, Wallet, Plus, X,
     TrendingUp, Eye, LogIn, ArrowUpRight, Check, Loader2, Truck,
     Clock, ChevronRight, MapPin, Phone, Building2, Trash2, EyeOff,
-    Sparkles, ShieldCheck, AlertTriangle,
+    Sparkles, ShieldCheck, AlertTriangle, Upload, Wand2,
 } from "lucide-react";
 import { BN, fmtPrice, ORDER_STATUS_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
@@ -91,6 +91,21 @@ export interface CabinetCategory {
     slug: string;
     name: string;
     isSub: boolean;
+    /** Ota kategoriya slug (agar isSub bo'lsa). Sub tanlaganda ota sxemasi ham qo'shiladi */
+    parentSlug?: string | null;
+    /** AttrDef[] — mahsulot yaratishda dinamik input generatsiya uchun */
+    attributeSchema?: AttrDef[];
+}
+
+export interface AttrDef {
+    key: string;
+    label: string;
+    labelRu?: string;
+    type: "text" | "number" | "select" | "multiselect" | "boolean";
+    options?: string[];
+    required?: boolean;
+    filterable?: boolean;
+    unit?: string;
 }
 
 interface Props {
@@ -653,6 +668,7 @@ interface CreatedProduct { id: string; slug: string; title: string; price: numbe
 function CreateProductModal({
     categories, onClose, onCreated,
 }: { categories: CabinetCategory[]; onClose: () => void; onCreated: (p: CreatedProduct) => void }) {
+    const fileRef = useRef<HTMLInputElement>(null);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [price, setPrice] = useState("");
@@ -661,21 +677,61 @@ function CreateProductModal({
     const [stock, setStock] = useState("1");
     const [categorySlug, setCategorySlug] = useState(categories[0]?.slug ?? "");
     const [images, setImages] = useState<string[]>([]);
-    const [imageUrl, setImageUrl] = useState("");
+    const [attrs, setAttrs] = useState<Record<string, string | number | boolean>>({});
     const [allowPickup, setAllowPickup] = useState(true);
     const [allowDelivery, setAllowDelivery] = useState(false);
     const [allowInspect, setAllowInspect] = useState(true);
     const [isNegotiable, setIsNegotiable] = useState(false);
     const [busy, setBusy] = useState(false);
+    const [aiBusy, setAiBusy] = useState(false);
+    const [uploadBusy, setUploadBusy] = useState(false);
     const [err, setErr] = useState<string | null>(null);
 
     const canSubmit = title.trim().length >= 3 && Number(price) >= 1000 && !!categorySlug;
+    const selectedCat = categories.find(c => c.slug === categorySlug);
+    const schema = selectedCat?.attributeSchema ?? [];
 
-    function addImage() {
-        const u = imageUrl.trim();
-        if (!u || images.includes(u)) return;
-        setImages([...images, u]);
-        setImageUrl("");
+    async function uploadImage(file: File) {
+        setErr(null); setUploadBusy(true);
+        try {
+            const fd = new FormData();
+            fd.append("file", file);
+            fd.append("kind", "product");
+            const r = await fetch("/api/bn/upload", { method: "POST", body: fd });
+            const d = await r.json();
+            if (r.ok && d?.url) setImages(prev => [...prev, d.url]);
+            else if (d?.error === "storage_not_configured") setErr("Rasm yuklash sozlanmagan.");
+            else setErr(d?.error ?? "Yuklash xatoligi");
+        } catch { setErr("Ulanish xatoligi"); }
+        finally {
+            setUploadBusy(false);
+            if (fileRef.current) fileRef.current.value = "";
+        }
+    }
+
+    async function autoFill() {
+        if (images.length === 0) { setErr("Avval rasm yuklang"); return; }
+        setAiBusy(true); setErr(null);
+        try {
+            const r = await fetch("/api/bn/ai/listing", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ imageUrl: images[0], categorySlug: categorySlug || undefined }),
+            });
+            const d = await r.json();
+            if (r.status === 503) { setErr("AI hozircha ishlamayapti"); return; }
+            if (!r.ok || !d?.result) { setErr(d?.error ?? "AI xatoligi"); return; }
+            const res = d.result;
+            if (res.hasProblem) { setErr(`AI ogohlantirishi: ${res.hasProblem}`); return; }
+            if (res.title) setTitle(res.title);
+            if (res.description) setDescription(res.description);
+            if (res.categorySlug) setCategorySlug(res.categorySlug);
+            if (res.marketAvgPrice) setMarketAvgPrice(String(res.marketAvgPrice));
+            if (res.attributes && typeof res.attributes === "object") {
+                setAttrs(prev => ({ ...prev, ...res.attributes }));
+            }
+        } catch { setErr("Ulanish xatoligi"); }
+        finally { setAiBusy(false); }
     }
 
     async function submit() {
@@ -692,6 +748,7 @@ function CreateProductModal({
                     stock: Number(stock),
                     categorySlug,
                     images,
+                    attributes: attrs,
                     isNegotiable,
                     allowPickup, allowDelivery, allowInspect,
                 }),
@@ -800,41 +857,72 @@ function CreateProductModal({
                         />
                     </FieldLabel>
 
-                    <FieldLabel label="Rasmlar (URL)">
-                        <div className="flex gap-2">
-                            <input
-                                value={imageUrl}
-                                onChange={e => setImageUrl(e.target.value)}
-                                placeholder="https://picsum.photos/seed/xxx/600/600"
-                                className="bn-form-input flex-1"
-                            />
-                            <button
-                                onClick={addImage}
-                                type="button"
-                                className="h-11 px-4 rounded-xl text-[13px] font-bold"
-                                style={{ background: BN.surfaceUp }}
-                            >
-                                <Plus className="w-4 h-4" />
-                            </button>
+                    <FieldLabel label="Rasmlar">
+                        <div className="flex gap-2 flex-wrap">
+                            {images.map((u, i) => (
+                                <div key={u} className="relative w-20 h-20 rounded-lg overflow-hidden" style={{ background: BN.surfaceUp }}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={u} alt="" className="w-full h-full object-cover" />
+                                    <button
+                                        onClick={() => setImages(images.filter((_, j) => j !== i))}
+                                        aria-label="O'chirish"
+                                        className="absolute top-0.5 right-0.5 w-5 h-5 grid place-items-center rounded-full"
+                                        style={{ background: "rgba(0,0,0,0.7)", color: "#fff" }}
+                                    >
+                                        <X className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            ))}
+                            {images.length < 10 && (
+                                <button
+                                    type="button"
+                                    onClick={() => fileRef.current?.click()}
+                                    disabled={uploadBusy}
+                                    className="w-20 h-20 rounded-lg grid place-items-center border-2 border-dashed disabled:opacity-60"
+                                    style={{ borderColor: BN.border, color: BN.text3 }}
+                                >
+                                    {uploadBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                                </button>
+                            )}
                         </div>
+                        <input
+                            ref={fileRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={e => { const f = e.target.files?.[0]; if (f) void uploadImage(f); }}
+                        />
                         {images.length > 0 && (
-                            <div className="flex gap-2 flex-wrap mt-2">
-                                {images.map((u, i) => (
-                                    <div key={u} className="relative w-16 h-16 rounded-lg overflow-hidden" style={{ background: BN.surfaceUp }}>
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={u} alt="" className="w-full h-full object-cover" />
-                                        <button
-                                            onClick={() => setImages(images.filter((_, j) => j !== i))}
-                                            className="absolute top-0.5 right-0.5 w-5 h-5 grid place-items-center rounded-full"
-                                            style={{ background: "rgba(0,0,0,0.7)", color: "#fff" }}
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
+                            <button
+                                type="button"
+                                onClick={autoFill}
+                                disabled={aiBusy}
+                                className="flex items-center justify-center gap-2 w-full h-10 mt-2 rounded-xl text-[13px] font-black disabled:opacity-60"
+                                style={{ background: BN.goldSoft, border: `1px solid ${BN.goldEdge}`, color: BN.gold }}
+                            >
+                                {aiBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Wand2 className="w-4 h-4" /> AI bilan to&apos;ldirish (rasmdan)</>}
+                            </button>
                         )}
                     </FieldLabel>
+
+                    {/* Kategoriya sxemasidagi atributlar (dinamik) */}
+                    {schema.length > 0 && (
+                        <div>
+                            <p className="text-[11px] font-black uppercase tracking-wider mb-2.5" style={{ color: BN.text3 }}>
+                                Xarakteristikalar ({selectedCat?.name})
+                            </p>
+                            <div className="space-y-3">
+                                {schema.map(a => (
+                                    <AttrInput
+                                        key={a.key}
+                                        def={a}
+                                        value={attrs[a.key]}
+                                        onChange={v => setAttrs(prev => ({ ...prev, [a.key]: v }))}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div>
                         <p className="text-[11px] font-black uppercase tracking-wider mb-2.5" style={{ color: BN.text3 }}>
@@ -961,6 +1049,71 @@ function FieldLabel({ label, children }: { label: string; children: React.ReactN
         <label className="block">
             <span className="block text-[12px] font-bold mb-1.5" style={{ color: BN.text2 }}>{label}</span>
             {children}
+        </label>
+    );
+}
+
+function AttrInput({
+    def, value, onChange,
+}: { def: AttrDef; value: string | number | boolean | undefined; onChange: (v: string | number | boolean) => void }) {
+    const label = <span className="block text-[12px] font-bold mb-1.5" style={{ color: BN.text2 }}>
+        {def.label}{def.required && <span style={{ color: BN.err }}>*</span>}
+        {def.unit && <span className="font-normal" style={{ color: BN.text3 }}> ({def.unit})</span>}
+    </span>;
+
+    if (def.type === "boolean") {
+        return (
+            <label className="flex items-center gap-2.5 h-11 px-3 rounded-xl text-[13px] font-medium cursor-pointer transition-colors"
+                style={{ background: value ? BN.goldSoft : BN.surfaceUp }}
+            >
+                <input
+                    type="checkbox"
+                    checked={!!value}
+                    onChange={e => onChange(e.target.checked)}
+                    className="w-4 h-4"
+                />
+                <span style={{ color: value ? BN.gold : BN.text }}>{def.label}</span>
+            </label>
+        );
+    }
+    if (def.type === "select" && def.options) {
+        return (
+            <label className="block">
+                {label}
+                <select
+                    value={String(value ?? "")}
+                    onChange={e => onChange(e.target.value)}
+                    className="bn-form-input"
+                >
+                    <option value="">— tanlanmagan —</option>
+                    {def.options.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+            </label>
+        );
+    }
+    if (def.type === "number") {
+        return (
+            <label className="block">
+                {label}
+                <input
+                    type="number"
+                    value={value == null ? "" : String(value)}
+                    onChange={e => onChange(e.target.value ? Number(e.target.value) : "")}
+                    className="bn-form-input tabular-nums"
+                />
+            </label>
+        );
+    }
+    // text (default) va multiselect (hozircha text-comma)
+    return (
+        <label className="block">
+            {label}
+            <input
+                type="text"
+                value={String(value ?? "")}
+                onChange={e => onChange(e.target.value)}
+                className="bn-form-input"
+            />
         </label>
     );
 }

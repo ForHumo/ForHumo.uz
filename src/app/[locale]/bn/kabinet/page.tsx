@@ -7,6 +7,13 @@ import {
 import { getBnAuth } from "@/lib/bn-auth";
 import { prisma } from "@/lib/prisma";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseSchema(raw: any): { key: string; label: string; labelRu?: string; type: "text" | "number" | "select" | "multiselect" | "boolean"; options?: string[]; required?: boolean; filterable?: boolean; unit?: string }[] {
+    if (!Array.isArray(raw)) return [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return raw.filter((x: any) => x && typeof x.key === "string" && typeof x.label === "string");
+}
+
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -106,7 +113,7 @@ export default async function Page() {
         prisma.bnCategory.findMany({
             where: { isActive: true },
             orderBy: [{ order: "asc" }, { name: "asc" }],
-            select: { slug: true, name: true, parentId: true },
+            select: { slug: true, name: true, parentId: true, attributeSchema: true, parent: { select: { slug: true, attributeSchema: true } } },
         }),
         prisma.wallet.findUnique({ where: { profileId: auth.profileId } }),
         prisma.bnOrder.aggregate({
@@ -156,12 +163,23 @@ export default async function Page() {
         categoryName: p.category?.name ?? null,
     }));
 
-    // Kategoriya ro'yxati — top-level va sub aralashgan holatda (indent bilan)
-    const categories: CabinetCategory[] = categoriesRaw.map(c => ({
-        slug: c.slug,
-        name: c.name,
-        isSub: !!c.parentId,
-    }));
+    // Kategoriya ro'yxati — top-level va sub aralashgan holatda (indent bilan).
+    // Sub uchun ota-kategoriya sxemasi ham birga bo'ladi (avto → avto-ehtiyot bir xil brand/model).
+    const categories: CabinetCategory[] = categoriesRaw.map(c => {
+        const own = parseSchema(c.attributeSchema);
+        const parent = parseSchema(c.parent?.attributeSchema);
+        // Merge: ota + o'ziniki (o'ziniki ustun — key bo'yicha)
+        const merged: Record<string, ReturnType<typeof parseSchema>[number]> = {};
+        for (const a of parent) merged[a.key] = a;
+        for (const a of own)    merged[a.key] = a;
+        return {
+            slug: c.slug,
+            name: c.name,
+            isSub: !!c.parentId,
+            parentSlug: c.parent?.slug ?? null,
+            attributeSchema: Object.values(merged),
+        };
+    });
 
     return (
         <BnCabinet
