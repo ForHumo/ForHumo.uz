@@ -11,14 +11,13 @@
 //   Kanal = Nexus profil (do'kon egasi). "Kanalim" tugmasi Nexus'da post
 //   yaratishga olib boradi (yangi post shu yerda ham ko'rinadi).
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
     Play, Image as ImageIcon, MessageCircle, Store, Sparkles, Filter,
-    Heart, MessageSquare, Share2, BadgeCheck, ArrowUpRight,
+    Heart, MessageSquare, Share2, BadgeCheck, ArrowUpRight, Loader2,
 } from "lucide-react";
-import { BN } from "@/lib/bn-theme";
+import { BN, fmtPrice } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
-import type { BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 type Tab = "feed" | "reels" | "chat";
 
@@ -32,59 +31,38 @@ interface MediaPost {
     id: string;
     kind: "image" | "reel";
     author: {
-        name: string;
         shopSlug: string;
-        avatarUrl: string;
+        shopName: string;
+        username: string | null;
+        avatarUrl: string | null;
         verified: boolean;
     };
     coverUrl: string;
     caption: string;
-    productSlug?: string;
-    productTitle?: string;
-    productPrice?: number;
-    likes: number;
-    comments: number;
-    /** Nexus'dagi asl post havolasi (integratsiya) */
-    nexusUrl?: string;
+    bnProduct: {
+        slug: string;
+        title: string;
+        price: number;
+        image: string | null;
+    } | null;
+    nexusUrl: string;
 }
 
-const CAPTIONS = [
-    "Bugun kelgan yangi tovarlar. Hozir arzon narxda!",
-    "Original mahsulot, kafolat bilan.",
-    "Katta chegirma — 3 kun ichida. Shoshiling!",
-    "Sotuvchi to'g'ridan-to'g'ri: ombordan chiqarilyapti.",
-];
-
-/** FAZA 6 — real Nexus post/reels API bilan almashtiriladi. Hozir do'kon+mahsulot ma'lumotidan
- * placeholder feed tuziladi (shu do'kon Nexus'da post qo'ymagan bo'lsa ham lenta bo'sh ko'rinmasin). */
-function buildPlaceholderFeed(shops: BnShopDTO[], products: BnProductDTO[]): MediaPost[] {
-    return shops.slice(0, 6).flatMap((s, i) => {
-        const p = products[i % Math.max(1, products.length)];
-        if (!p) return [];
-        return [{
-            id: `bnm-${i}`,
-            kind: (i % 3 === 0 ? "reel" : "image") as "image" | "reel",
-            author: {
-                name: s.name, shopSlug: s.slug,
-                avatarUrl: s.logoUrl ?? "",
-                verified: s.tier === "VERIFIED" || s.tier === "PREMIUM",
-            },
-            coverUrl: p.images[0] ?? "",
-            caption: CAPTIONS[i % CAPTIONS.length],
-            productSlug: p.slug,
-            productTitle: p.title,
-            productPrice: p.price,
-            likes: 40 + i * 17,
-            comments: 3 + i * 2,
-        }];
-    });
-}
-
-export function BnMedia({
-    shops = [], products = [],
-}: { shops?: BnShopDTO[]; products?: BnProductDTO[] }) {
+export function BnMedia() {
     const [tab, setTab] = useState<Tab>("feed");
-    const posts = useMemo(() => buildPlaceholderFeed(shops, products), [shops, products]);
+    const [posts, setPosts] = useState<MediaPost[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+        fetch("/api/bn/nexus-feed?limit=30")
+            .then(r => r.json())
+            .then(d => { if (!cancelled) setPosts(d.items ?? []); })
+            .catch(() => { /* ignore */ })
+            .finally(() => { if (!cancelled) setLoading(false); });
+        return () => { cancelled = true; };
+    }, []);
 
     return (
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-10">
@@ -151,14 +129,54 @@ export function BnMedia({
                 </a>
             </div>
 
-            {tab === "feed" && <MediaGrid posts={posts.filter(m => m.kind === "image")} />}
-            {tab === "reels" && <ReelsGrid posts={posts.filter(m => m.kind === "reel")} />}
-            {tab === "chat" && <ChatEmpty />}
+            {loading ? (
+                <div className="flex items-center justify-center py-12" style={{ color: BN.text3 }}>
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                </div>
+            ) : (
+                <>
+                    {tab === "feed" && <MediaFeedOrEmpty posts={posts.filter(m => m.kind === "image")} />}
+                    {tab === "reels" && <MediaReelsOrEmpty posts={posts.filter(m => m.kind === "reel")} />}
+                    {tab === "chat" && <ChatEmpty />}
+                </>
+            )}
         </div>
     );
 }
 
 // ── Lenta (rasmli postlar) ──────────────────────────────────────────────────
+
+function MediaFeedOrEmpty({ posts }: { posts: MediaPost[] }) {
+    if (posts.length === 0) return <NexusEmpty kind="feed" />;
+    return <MediaGrid posts={posts} />;
+}
+
+function MediaReelsOrEmpty({ posts }: { posts: MediaPost[] }) {
+    if (posts.length === 0) return <NexusEmpty kind="reels" />;
+    return <ReelsGrid posts={posts} />;
+}
+
+function NexusEmpty({ kind }: { kind: "feed" | "reels" }) {
+    return (
+        <div
+            className="rounded-3xl p-8 text-center max-w-[520px] mx-auto"
+            style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+        >
+            <span
+                className="w-14 h-14 rounded-2xl grid place-items-center mx-auto mb-4"
+                style={{ background: BN.goldSoft, color: BN.gold }}
+            >
+                {kind === "reels" ? <Play className="w-7 h-7" /> : <ImageIcon className="w-7 h-7" />}
+            </span>
+            <p className="text-[15px] font-black mb-1.5">
+                Sotuvchilar hozircha {kind === "reels" ? "reels" : "post"} qo&apos;ymagan
+            </p>
+            <p className="text-[13px] leading-relaxed" style={{ color: BN.text2 }}>
+                Do&apos;kon egalari Humo Nexus&apos;da post qo&apos;yishlari bilanoq shu yerda paydo bo&apos;ladi.
+            </p>
+        </div>
+    );
+}
 
 function MediaGrid({ posts }: { posts: MediaPost[] }) {
     return (
@@ -183,7 +201,7 @@ function MediaGrid({ posts }: { posts: MediaPost[] }) {
                         </span>
                         <span className="flex-1 min-w-0">
                             <span className="flex items-center gap-1">
-                                <span className="text-[13.5px] font-black truncate">{p.author.name}</span>
+                                <span className="text-[13.5px] font-black truncate">{p.author.shopName}</span>
                                 {p.author.verified && (
                                     <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: BN.info }} />
                                 )}
@@ -205,38 +223,54 @@ function MediaGrid({ posts }: { posts: MediaPost[] }) {
                     {/* Amallar + kontent */}
                     <div className="p-3">
                         <div className="flex items-center gap-4 mb-2">
-                            <button className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: BN.text2 }}>
+                            <a
+                                href={p.nexusUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 text-[13px] font-bold"
+                                style={{ color: BN.text2 }}
+                            >
                                 <Heart className="w-[18px] h-[18px]" />
-                                {p.likes}
-                            </button>
-                            <button className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: BN.text2 }}>
+                                Yoqadi
+                            </a>
+                            <a
+                                href={p.nexusUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 text-[13px] font-bold"
+                                style={{ color: BN.text2 }}
+                            >
                                 <MessageSquare className="w-[18px] h-[18px]" />
-                                {p.comments}
-                            </button>
-                            <button className="ml-auto" style={{ color: BN.text2 }}>
+                                Izoh
+                            </a>
+                            <a href={p.nexusUrl} target="_blank" rel="noopener noreferrer" className="ml-auto" style={{ color: BN.text2 }}>
                                 <Share2 className="w-[18px] h-[18px]" />
-                            </button>
+                            </a>
                         </div>
 
-                        <p className="text-[13.5px] leading-relaxed mb-3" style={{ color: BN.text }}>
-                            <span className="font-black">{p.author.name}</span>{" "}
-                            <span style={{ color: BN.text2 }}>{p.caption}</span>
-                        </p>
+                        {p.caption && (
+                            <p className="text-[13.5px] leading-relaxed mb-3" style={{ color: BN.text }}>
+                                <span className="font-black">{p.author.shopName}</span>{" "}
+                                <span style={{ color: BN.text2 }}>{p.caption}</span>
+                            </p>
+                        )}
 
                         {/* Mahsulot bog'lanmasi (BN farqi — Nexus'da bunday havola bo'lmaydi) */}
-                        {p.productSlug && (
+                        {p.bnProduct && (
                             <BnLink
-                                href={`/p/${p.productSlug}`}
+                                href={`/p/${p.bnProduct.slug}`}
+                                newTab
                                 className="flex items-center gap-3 p-2.5 rounded-xl transition-colors"
                                 style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}
                             >
                                 <span className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
-                                    <img src={p.coverUrl} alt="" className="w-full h-full object-cover" />
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={p.bnProduct.image ?? p.coverUrl} alt="" className="w-full h-full object-cover" />
                                 </span>
                                 <span className="flex-1 min-w-0">
-                                    <span className="block text-[12.5px] font-bold truncate">{p.productTitle}</span>
+                                    <span className="block text-[12.5px] font-bold truncate">{p.bnProduct.title}</span>
                                     <span className="block text-[13px] font-black tabular-nums mt-0.5" style={{ color: BN.gold }}>
-                                        {(p.productPrice ?? 0).toLocaleString("uz-UZ")} so&apos;m
+                                        {fmtPrice(p.bnProduct.price)}
                                     </span>
                                 </span>
                                 <span
@@ -260,12 +294,15 @@ function ReelsGrid({ posts }: { posts: MediaPost[] }) {
     return (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {posts.map(p => (
-                <BnLink
+                <a
                     key={p.id}
-                    href={`/media/${p.id}`}
+                    href={p.nexusUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="group relative rounded-2xl overflow-hidden"
                     style={{ background: BN.surfaceUp, aspectRatio: "9/16", border: `1px solid ${BN.border}` }}
                 >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                         src={p.coverUrl}
                         alt=""
@@ -285,21 +322,11 @@ function ReelsGrid({ posts }: { posts: MediaPost[] }) {
                     </span>
                     <div className="absolute inset-x-0 bottom-0 p-2.5">
                         <p className="flex items-center gap-1 text-[11.5px] font-black text-white truncate">
-                            {p.author.name}
+                            {p.author.shopName}
                             {p.author.verified && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: BN.info }} />}
                         </p>
-                        <p className="flex items-center gap-2 text-[10.5px] mt-1" style={{ color: "rgba(255,255,255,0.75)" }}>
-                            <span className="flex items-center gap-0.5">
-                                <Heart className="w-3 h-3" />
-                                {p.likes}
-                            </span>
-                            <span className="flex items-center gap-0.5">
-                                <MessageSquare className="w-3 h-3" />
-                                {p.comments}
-                            </span>
-                        </p>
                     </div>
-                </BnLink>
+                </a>
             ))}
         </div>
     );

@@ -7,7 +7,7 @@ import { BnLink } from "./bn-nav";
 import { BnBackButton } from "./bn-back-button";
 import {
     Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
-    ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2,
+    ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2, BellRing,
 } from "lucide-react";
 import {
     BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel, TIER_META,
@@ -25,15 +25,28 @@ const ATTR_LABELS: Record<string, string> = {
     volume: "Hajmi (L)", weight: "Og'irligi (kg)",
 };
 
+interface ReviewVideo {
+    id: string;
+    title: string;
+    thumbUrl: string | null;
+    views: number;
+}
+
 interface Props {
     product: BnProductDTO;
     shop: BnShopDTO | null;
     similar: BnProductDTO[];
     /** Boshqa do'konlar shu mahsulotni qanday narxda sotmoqda */
     others: BnProductDTO[];
+    /** Oxirgi 7 kunda sotilgan (ijtimoiy proof) */
+    soldRecent?: number;
+    /** Xaridor sharh reels (Nexus video tag=bn-review-<productId>) */
+    reviewVideos?: ReviewVideo[];
 }
 
-export function BnProductDetail({ product, shop, similar, others }: Props) {
+export function BnProductDetail({
+    product, shop, similar, others, soldRecent = 0, reviewVideos = [],
+}: Props) {
     const p = product;
     const router = useRouter();
     const { status } = useSession();
@@ -43,13 +56,15 @@ export function BnProductDetail({ product, shop, similar, others }: Props) {
     const [cartBusy, setCartBusy] = useState(false);
     const [cartDone, setCartDone] = useState(false);
     const [favBusy, setFavBusy] = useState(false);
+    const [priceWatch, setPriceWatch] = useState(false);
+    const [pwBusy, setPwBusy] = useState(false);
 
     const rank = priceRankOf(p.price, p.marketAvgPrice);
     const rankMeta = rank ? PRICE_RANK_META[rank] : null;
     const diff = priceDiffLabel(p.price, p.marketAvgPrice);
     const tier = shop ? TIER_META[shop.tier] : null;
 
-    // Favorit statusini yuklab olamiz (login bo'lsa)
+    // Favorit + narx kuzatuv statusini yuklab olamiz (login bo'lsa)
     useEffect(() => {
         if (status !== "authenticated") return;
         let cancelled = false;
@@ -57,8 +72,30 @@ export function BnProductDetail({ product, shop, similar, others }: Props) {
             .then(r => r.json())
             .then(d => { if (!cancelled) setFav(!!d?.statuses?.[p.id]); })
             .catch(() => { /* ignore */ });
+        fetch(`/api/bn/price-watch?productId=${p.id}`)
+            .then(r => r.json())
+            .then(d => { if (!cancelled) setPriceWatch(!!d?.watched); })
+            .catch(() => { /* ignore */ });
         return () => { cancelled = true; };
     }, [status, p.id]);
+
+    async function togglePriceWatch() {
+        if (status === "unauthenticated") { signIn("google"); return; }
+        setPwBusy(true);
+        const prev = priceWatch;
+        setPriceWatch(!prev);
+        try {
+            const r = await fetch("/api/bn/price-watch", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ productId: p.id, targetPct: 10 }),
+            });
+            const d = await r.json();
+            if (!r.ok) setPriceWatch(prev);
+            else setPriceWatch(!!d?.watched);
+        } catch { setPriceWatch(prev); }
+        finally { setPwBusy(false); }
+    }
 
     async function addToCart() {
         if (status === "unauthenticated") { signIn("google"); return; }
@@ -380,6 +417,23 @@ export function BnProductDetail({ product, shop, similar, others }: Props) {
                             </p>
                         )}
 
+                        {soldRecent >= 3 && (
+                            <p className="flex items-center gap-1.5 text-[12.5px] mb-3" style={{ color: BN.ok }}>
+                                <TrendingDown className="w-3.5 h-3.5 flex-shrink-0" style={{ transform: "scaleY(-1)" }} />
+                                <strong className="tabular-nums">{soldRecent}</strong> ta bu haftada sotildi
+                            </p>
+                        )}
+
+                        <button
+                            onClick={togglePriceWatch}
+                            disabled={pwBusy}
+                            className="flex items-center gap-1.5 mb-4 text-[12px] font-bold transition-colors disabled:opacity-60"
+                            style={{ color: priceWatch ? BN.gold : BN.text3 }}
+                        >
+                            <BellRing className="w-3.5 h-3.5" style={{ fill: priceWatch ? BN.gold : "none" }} />
+                            {priceWatch ? "Narx tushsa xabar berilyapti" : "Narx tushsa xabar bering"}
+                        </button>
+
                         {/* Miqdor */}
                         <div className="flex items-center justify-between mb-4">
                             <span className="text-[13px]" style={{ color: BN.text2 }}>
@@ -439,6 +493,16 @@ export function BnProductDetail({ product, shop, similar, others }: Props) {
                             </SecondaryBtn>
                         </div>
 
+                        <a
+                            href={`https://forhumo.uz/uz/nexus?bnProduct=${p.slug}&text=${encodeURIComponent(p.title)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 w-full h-11 mt-2.5 rounded-2xl text-[13px] font-bold"
+                            style={{ background: "linear-gradient(90deg, #2B3EE8 0%, #00CEC8 100%)", color: "#fff" }}
+                        >
+                            Nexus&apos;da ulash
+                        </a>
+
                         {/* Olish usullari */}
                         <div className="mt-5 pt-4 space-y-2.5" style={{ borderTop: `1px solid ${BN.border}` }}>
                             {p.allowPickup && (
@@ -463,6 +527,40 @@ export function BnProductDetail({ product, shop, similar, others }: Props) {
                     </Panel>
                 </div>
             </div>
+
+            {/* Xaridor sharh reels (Nexus) */}
+            {reviewVideos.length > 0 && (
+                <section className="mt-12">
+                    <BnSectionTitle title="Xaridorlar ko'rgan" subtitle="Bu mahsulotni sotib olganlar Nexus'da qoldirgan reels" />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                        {reviewVideos.map(v => (
+                            <a
+                                key={v.id}
+                                href={`https://forhumo.uz/uz/nexus/v/${v.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="relative aspect-[9/16] rounded-2xl overflow-hidden group"
+                                style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+                            >
+                                {v.thumbUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={v.thumbUrl} alt={v.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                                ) : (
+                                    <div className="w-full h-full grid place-items-center" style={{ color: BN.text3 }}>
+                                        <Eye className="w-6 h-6" />
+                                    </div>
+                                )}
+                                <div className="absolute inset-x-0 bottom-0 p-2" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent)" }}>
+                                    <p className="text-[11px] font-bold text-white line-clamp-2">{v.title}</p>
+                                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.7)" }}>
+                                        {v.views.toLocaleString("uz-UZ")} ko&apos;rildi
+                                    </p>
+                                </div>
+                            </a>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             {/* O'xshash mahsulotlar */}
             {similar.length > 0 && (

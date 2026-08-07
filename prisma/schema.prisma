@@ -917,6 +917,7 @@ model NexusPost {
   media           String[] @default([])           // rasm/video URL'lar
   hashtags        String[] @default([])
   marketProductId String?                         // ixtiyoriy — postga biriktirilgan Market mahsuloti ("Sotib olish")
+  bnProductId     String?                         // ixtiyoriy — BN mahsuloti (shoppable, BN Media integratsiya)
   privacy         NexusPostPrivacy @default(PUBLIC)  // PUBLIC / FOLLOWERS (obunachilar) / PRIVATE (faqat men)
   location        String?                         // ixtiyoriy joylashuv matni
   pollOptions     String[] @default([])           // bo'sh = so'rovnoma yo'q (2-4 variant)
@@ -933,6 +934,7 @@ model NexusPost {
 
   @@index([profileId])
   @@index([createdAt])
+  @@index([bnProductId])
 }
 
 enum NexusPostPrivacy {
@@ -2053,10 +2055,33 @@ model BnFavorite {
   id        String   @id @default(cuid())
   profileId String
   productId String
+  privacy   BnFavPrivacy @default(PRIVATE)   // Do'stlar wishlist funksiyasi
   createdAt DateTime @default(now())
 
   @@unique([profileId, productId])
   @@index([profileId, createdAt])
+  @@index([profileId, privacy])
+}
+
+enum BnFavPrivacy {
+  PRIVATE     // faqat men (default)
+  FOLLOWERS   // Nexus obunachilarim ko'radi
+  PUBLIC      // hammaga ochiq
+}
+
+// Narx tushdi kuzatish — foydalanuvchi mahsulotni "kuzatishga" qo'yadi.
+// Kunlik cron narx N% pastga tushsa Nexus notification yuboradi.
+model BnPriceWatch {
+  id           String   @id @default(cuid())
+  profileId    String
+  productId    String
+  targetPct    Int      @default(10)         // masalan: 10% (narx 10% tushsa xabar)
+  basePrice    Int                           // qo'shilgan paytdagi narx (foiz shu bilan taqqoslanadi)
+  lastNotified DateTime?
+  createdAt    DateTime @default(now())
+
+  @@unique([profileId, productId])
+  @@index([productId])
 }
 
 // ── Buyurtma ─────────────────────────────────────────────────────────────────

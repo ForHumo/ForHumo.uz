@@ -12,6 +12,7 @@ import { BnHeroSlider } from "./bn-hero-slider";
 import { BnLink } from "./bn-nav";
 import { shopLocationText } from "./bn-cards";
 import { LiquidGlassNavbar } from "@/components/shared/liquid-glass-navbar";
+import { BnShopStories } from "./bn-shop-stories";
 import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 const COLS = 5;          // chapdan o'ngga 5 ta
@@ -49,6 +50,9 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
 
     return (
         <div className="mx-auto max-w-[1280px] px-4 pt-5 pb-10">
+            {/* ── Sotuvchi Nexus stories (24 soatlik hikoyalar) ── */}
+            <BnShopStories />
+
             {/* ── Reklama slayder (Bozor/Do'kondan TEPADA) ── */}
             <BnHeroSlider />
 

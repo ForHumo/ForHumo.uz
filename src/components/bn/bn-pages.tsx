@@ -3,7 +3,7 @@
 import { BnLink } from "./bn-nav";
 import {
     Store, MapPin, Clock, Phone, ChevronRight, Star, Package,
-    ShoppingCart, Heart, Globe, Navigation,
+    ShoppingCart, Heart, Globe, Navigation, MessageCircle, AtSign,
 } from "lucide-react";
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
@@ -164,7 +164,7 @@ export function BnShopPage({
                         {shopLocationText(s)}
                     </p>
 
-                    <div className="flex items-center gap-4 text-[12.5px]" style={{ color: BN.text3 }}>
+                    <div className="flex items-center gap-4 text-[12.5px] flex-wrap" style={{ color: BN.text3 }}>
                         <span className="flex items-center gap-1">
                             <Package className="w-3.5 h-3.5" />{s.productCount} mahsulot
                         </span>
@@ -174,10 +174,34 @@ export function BnShopPage({
                                 {s.rating.toFixed(1)} ({s.ratingCount})
                             </span>
                         )}
+                        {s.ownerUsername && (
+                            <a
+                                href={`https://forhumo.uz/uz/nexus/u/${s.ownerUsername}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 transition-colors hover:text-[color:var(--bn-gold)]"
+                                aria-label="Nexus profilga o'tish"
+                            >
+                                <AtSign className="w-3.5 h-3.5" />
+                                {s.ownerUsername}
+                            </a>
+                        )}
                     </div>
                 </div>
 
                 <div className="flex sm:flex-col gap-2 flex-shrink-0">
+                    {s.ownerUsername && (
+                        <a
+                            href={`https://forhumo.uz/uz/nexus?dm=${s.ownerUsername}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 flex-1 sm:w-[180px] h-11 rounded-xl text-[13.5px] font-bold"
+                            style={{ background: BN.gold, color: BN.onGold }}
+                        >
+                            <MessageCircle className="w-4 h-4" />
+                            Yozishish
+                        </a>
+                    )}
                     <button
                         className="flex items-center justify-center gap-2 flex-1 sm:w-[180px] h-11 rounded-xl text-[13.5px] font-bold"
                         style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}

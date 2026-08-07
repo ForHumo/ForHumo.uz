@@ -40,6 +40,8 @@ export interface BnShopDTO {
     rating: number;
     ratingCount: number;
     productCount: number;
+    /** Nexus profil (bor bo'lsa) — @username, follower/onlayn chip uchun */
+    ownerUsername?: string | null;
 }
 
 export interface BnProductDTO {
@@ -74,7 +76,7 @@ export interface BnProductDTO {
 type ShopWithMarket = Awaited<ReturnType<typeof prisma.bnShop.findMany>>[number]
     & { market: { slug: string; name: string } | null };
 
-function toShopDTO(s: ShopWithMarket): BnShopDTO {
+function toShopDTO(s: ShopWithMarket, ownerUsername?: string | null): BnShopDTO {
     return {
         id: s.id,
         slug: s.slug,
@@ -93,6 +95,7 @@ function toShopDTO(s: ShopWithMarket): BnShopDTO {
         rating: s.rating,
         ratingCount: s.ratingCount,
         productCount: s.productCount,
+        ownerUsername: ownerUsername ?? null,
     };
 }
 
@@ -171,7 +174,7 @@ export async function getTopShops(limit = 10): Promise<BnShopDTO[]> {
     const sorted = shops
         .sort((a, b) => (b.rating * Math.log10(b.ratingCount + 10)) - (a.rating * Math.log10(a.ratingCount + 10)))
         .slice(0, limit);
-    return sorted.map(toShopDTO);
+    return sorted.map(s => toShopDTO(s));
 }
 
 /** Bosh sahifa uchun 4 xil feed — bir marta DBga borib qaytadi. */
@@ -228,8 +231,13 @@ export async function getShopBySlug(slug: string) {
         },
     });
     if (!shop) return null;
+    // Nexus username — do'kon egasidan
+    const owner = await prisma.userProfile.findUnique({
+        where: { id: shop.profileId },
+        select: { username: true },
+    });
     return {
-        shop: toShopDTO(shop),
+        shop: toShopDTO(shop, owner?.username),
         products: shop.products.map(toProductDTO),
     };
 }
@@ -240,6 +248,18 @@ export async function getProductBySlug(slug: string) {
         include: PRODUCT_INCLUDE,
     });
     if (!p) return null;
+
+    // Ijtimoiy proof — oxirgi 7 kunda bu mahsulot uchun BnOrder items soni
+    const weekAgo = new Date(Date.now() - 7 * 86400_000);
+    const soldRecent = await prisma.bnOrderItem.count({
+        where: {
+            productId: p.id,
+            order: {
+                status: { in: ["CONFIRMED", "READY", "COMPLETED"] },
+                placedAt: { gte: weekAgo },
+            },
+        },
+    });
 
     // Boshqa do'konlar shu mahsulotni qanday narxda sotmoqda — narx solishtirish
     // (title'ning boshi bir xil bo'lsa, o'sha mahsulot deb hisoblaymiz)
@@ -269,10 +289,23 @@ export async function getProductBySlug(slug: string) {
         orderBy: { rating: "desc" },
     });
 
+    // Xaridor sharh reels — NexusVideo hashtag "bn-review-<productId>"
+    const reviewVideos = await prisma.nexusVideo.findMany({
+        where: {
+            hidden: false,
+            tags: { has: `bn-review-${p.id}` },
+        },
+        take: 6,
+        orderBy: { createdAt: "desc" },
+        select: { id: true, title: true, thumbUrl: true, videoUrl: true, views: true, kind: true, orientation: true },
+    });
+
     return {
         product: toProductDTO(p),
         others:  others.map(toProductDTO),
         similar: similar.map(toProductDTO),
+        soldRecent,
+        reviewVideos,
     };
 }
 

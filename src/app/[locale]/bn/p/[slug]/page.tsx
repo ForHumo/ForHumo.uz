@@ -28,6 +28,10 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
             shop={shopData?.shop ?? null}
             similar={data.similar}
             others={data.others}
+            soldRecent={data.soldRecent}
+            reviewVideos={data.reviewVideos.map(v => ({
+                id: v.id, title: v.title, thumbUrl: v.thumbUrl, views: v.views,
+            }))}
         />
     );
 }

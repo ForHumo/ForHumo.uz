@@ -9,6 +9,21 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth, getBnAuth } from "@/lib/bn-auth";
 
+// PATCH /api/bn/favorites { productId, privacy: PRIVATE|FOLLOWERS|PUBLIC }
+export async function PATCH(req: Request) {
+    const auth = await requireBnAuth();
+    if (auth instanceof NextResponse) return auth;
+    const body = await req.json().catch(() => ({}));
+    const productId = String(body?.productId ?? "");
+    const privacy = ["PRIVATE", "FOLLOWERS", "PUBLIC"].includes(body?.privacy) ? body.privacy : "PRIVATE";
+    if (!productId) return NextResponse.json({ error: "productId_required" }, { status: 400 });
+    const upd = await prisma.bnFavorite.updateMany({
+        where: { profileId: auth.profileId, productId },
+        data:  { privacy },
+    });
+    return NextResponse.json({ ok: true, updated: upd.count });
+}
+
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const idsParam = searchParams.get("ids");
