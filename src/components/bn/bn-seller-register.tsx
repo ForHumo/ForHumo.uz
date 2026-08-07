@@ -19,6 +19,8 @@ const STEPS = ["Yuridik shakl", "Do'kon", "Joylashuv", "Bank"];
 export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) {
     const { status } = useSession();
     const [step, setStep] = useState<Step>(0);
+    const [submitting, setSubmitting] = useState(false);
+    const [submitErr, setSubmitErr] = useState<string | null>(null);
 
     // 1-qadam
     const [legalType, setLegalType] = useState<LegalType | null>(null);
@@ -409,6 +411,15 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                     )}
 
                     {/* Navigatsiya */}
+                    {submitErr && (
+                        <div
+                            className="mt-4 p-3 rounded-xl text-[12.5px]"
+                            style={{ background: BN.errSoft, color: BN.err, border: `1px solid ${BN.err}33` }}
+                        >
+                            {submitErr}
+                        </div>
+                    )}
+
                     <div className="flex items-center gap-2.5 mt-6">
                         {step > 0 && (
                             <button
@@ -421,13 +432,38 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                             </button>
                         )}
                         <button
-                            onClick={() => (step === 3 ? setSent(true) : setStep(s => (s + 1) as Step))}
-                            disabled={!canNext}
+                            onClick={async () => {
+                                if (step < 3) { setStep(s => (s + 1) as Step); return; }
+                                setSubmitting(true); setSubmitErr(null);
+                                try {
+                                    const r = await fetch("/api/bn/seller/apply", {
+                                        method: "POST",
+                                        headers: { "content-type": "application/json" },
+                                        body: JSON.stringify({
+                                            legalType, legalName, innNumber: inn, phone,
+                                            shopName, description: shopDesc,
+                                            locationType: locType,
+                                            marketSlug: locType === "IN_MARKET" ? marketSlug : null,
+                                            marketSection: section, marketShopNo: shopNo,
+                                            address, city: "Toshkent",
+                                            bankName, bankAccount, bankMfo,
+                                        }),
+                                    });
+                                    const d = await r.json();
+                                    if (r.ok && d?.ok) { setSent(true); }
+                                    else if (d?.error === "inn_taken") setSubmitErr("Bu INN allaqachon ro'yxatdan o'tgan.");
+                                    else if (d?.error === "already_has_shop") setSubmitErr("Sizda allaqachon do'kon bor.");
+                                    else setSubmitErr(d?.error ?? "Xatolik yuz berdi");
+                                } catch {
+                                    setSubmitErr("Ulanish xatoligi");
+                                } finally { setSubmitting(false); }
+                            }}
+                            disabled={!canNext || submitting}
                             className="flex items-center justify-center gap-1.5 flex-1 h-12 rounded-2xl text-[15px] font-black transition-all active:scale-[0.98] disabled:opacity-35"
                             style={{ background: BN.gold, color: BN.onGold }}
                         >
-                            {step === 3 ? "Arizani yuborish" : "Davom etish"}
-                            {step < 3 && <ChevronRight className="w-4 h-4" />}
+                            {submitting ? "Yuborilyapti..." : step === 3 ? "Arizani yuborish" : "Davom etish"}
+                            {step < 3 && !submitting && <ChevronRight className="w-4 h-4" />}
                         </button>
                     </div>
                 </div>
