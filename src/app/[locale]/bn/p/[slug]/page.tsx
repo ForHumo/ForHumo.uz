@@ -1,14 +1,33 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { BnProductDetail } from "@/components/bn/bn-product-detail";
+import { getProductBySlug, getShopBySlug } from "@/lib/bn-data";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params;
-    return { title: `${slug.replace(/-/g, " ")} — Bozor Narxida` };
+    const data = await getProductBySlug(slug);
+    if (!data) return { title: "Mahsulot topilmadi — Bozor Narxida" };
+    const p = data.product;
+    return {
+        title: `${p.title} — Bozor Narxida`,
+        description: p.description ?? `${p.title}. ${p.price.toLocaleString("uz-UZ")} so'm. ${p.shopName} do'konidan.`,
+        openGraph: p.images[0] ? { images: [p.images[0]] } : undefined,
+    };
 }
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-    return <BnProductDetail slug={slug} />;
+    const data = await getProductBySlug(slug);
+    if (!data) notFound();
+    const shopData = data.product.shopSlug ? await getShopBySlug(data.product.shopSlug) : null;
+    return (
+        <BnProductDetail
+            product={data.product}
+            shop={shopData?.shop ?? null}
+            similar={data.similar}
+            others={data.others}
+        />
+    );
 }

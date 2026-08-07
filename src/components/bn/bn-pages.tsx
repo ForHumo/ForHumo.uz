@@ -8,19 +8,24 @@ import {
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnShopCard, BnSectionTitle, BnEmpty, shopLocationText } from "./bn-cards";
-import {
-    MOCK_SHOPS, mockMarketBySlug, mockShopBySlug,
-    mockShopsByMarket, mockProductsByShop, MOCK_PRODUCTS,
-} from "@/lib/bn-mock";
+import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 // ── Bozor sahifasi ──────────────────────────────────────────────────────────
 
-export function BnMarketPage({ slug }: { slug: string }) {
-    const m = mockMarketBySlug(slug);
-    if (!m) return <NotFound what="Bozor" />;
+export interface BnMarketPageDTO {
+    slug: string;
+    name: string;
+    coverUrl: string;
+    address: string;
+    workHours: string;
+    shopCount: number;
+    sections: string[];
+}
 
-    const shops = mockShopsByMarket(slug);
-    const products = MOCK_PRODUCTS.filter(p => p.marketName === m.name);
+export function BnMarketPage({
+    market, shops, products,
+}: { market: BnMarketPageDTO; shops: BnShopDTO[]; products: BnProductDTO[] }) {
+    const m = market;
 
     return (
         <div className="pb-16">
@@ -99,11 +104,10 @@ export function BnMarketPage({ slug }: { slug: string }) {
 
 // ── Do'kon sahifasi ─────────────────────────────────────────────────────────
 
-export function BnShopPage({ slug }: { slug: string }) {
-    const s = mockShopBySlug(slug);
-    if (!s) return <NotFound what="Do'kon" />;
-
-    const products = mockProductsByShop(slug);
+export function BnShopPage({
+    shop, products,
+}: { shop: BnShopDTO; products: BnProductDTO[] }) {
+    const s = shop;
     const tier = TIER_META[s.tier];
 
     return (
@@ -201,16 +205,20 @@ export function BnShopPage({ slug }: { slug: string }) {
 
 // ── Do'konlar ro'yxati ──────────────────────────────────────────────────────
 
-export function BnShopsList() {
+export function BnShopsList({ shops }: { shops: BnShopDTO[] }) {
     return (
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-16">
             <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-2">Do&apos;konlar</h1>
             <p className="text-[13.5px] mb-6 max-w-[600px] leading-relaxed" style={{ color: BN.text2 }}>
                 Bozordagi do&apos;konlar, ko&apos;chadagi do&apos;konlar va onlayn sotuvchilar — hammasi bir ro&apos;yxatda.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                {MOCK_SHOPS.map(s => <BnShopCard key={s.id} s={s} />)}
-            </div>
+            {shops.length === 0 ? (
+                <BnEmpty icon={<Store className="w-6 h-6" />} title="Hozircha do'kon yo'q" />
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                    {shops.map(s => <BnShopCard key={s.id} s={s} />)}
+                </div>
+            )}
         </div>
     );
 }
@@ -308,23 +316,5 @@ function Info({ icon, label, value }: { icon: React.ReactNode; label: string; va
                 <span className="block text-[13.5px] font-bold mt-0.5 leading-snug">{value}</span>
             </span>
         </div>
-    );
-}
-
-function NotFound({ what }: { what: string }) {
-    return (
-        <BnEmpty
-            title={`${what} topilmadi`}
-            text="Bu havola eskirgan bo'lishi mumkin."
-            action={
-                <BnLink
-                    href="/"
-                    className="inline-flex h-11 px-5 items-center rounded-xl text-[14px] font-black"
-                    style={{ background: BN.gold, color: BN.onGold }}
-                >
-                    Bosh sahifaga
-                </BnLink>
-            }
-        />
     );
 }

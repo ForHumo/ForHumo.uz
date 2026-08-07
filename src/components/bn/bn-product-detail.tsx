@@ -10,10 +10,10 @@ import {
     BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel, TIER_META,
 } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
-import { BnSectionTitle, BnEmpty, shopLocationText } from "./bn-cards";
-import { mockProductBySlug, mockShopBySlug, MOCK_PRODUCTS, type MockProduct } from "@/lib/bn-mock";
+import { BnSectionTitle, shopLocationText } from "./bn-cards";
+import type { BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
-// Atribut kalitlarini o'zbekcha yorliqqa aylantirish (FAZA 2 da kategoriya sxemasidan keladi)
+// Atribut kalitlarini o'zbekcha yorliqqa aylantirish (FAZA 6 da kategoriya sxemasidan keladi)
 const ATTR_LABELS: Record<string, string> = {
     brand: "Marka", model: "Model", yearFrom: "Yildan", yearTo: "Yilgacha",
     condition: "Holati", origin: "Turi", memory: "Xotira", color: "Rang",
@@ -22,35 +22,23 @@ const ATTR_LABELS: Record<string, string> = {
     volume: "Hajmi (L)", weight: "Og'irligi (kg)",
 };
 
-export function BnProductDetail({ slug }: { slug: string }) {
-    const p = mockProductBySlug(slug);
+interface Props {
+    product: BnProductDTO;
+    shop: BnShopDTO | null;
+    similar: BnProductDTO[];
+    /** Boshqa do'konlar shu mahsulotni qanday narxda sotmoqda */
+    others: BnProductDTO[];
+}
+
+export function BnProductDetail({ product, shop, similar, others }: Props) {
+    const p = product;
     const [imgIdx, setImgIdx] = useState(0);
     const [qty, setQty] = useState(1);
     const [fav, setFav] = useState(false);
 
-    if (!p) {
-        return (
-            <BnEmpty
-                title="Mahsulot topilmadi"
-                text="Bu havola eskirgan yoki mahsulot olib tashlangan bo'lishi mumkin."
-                action={
-                    <BnLink
-                        href="/"
-                        className="inline-flex h-11 px-5 items-center rounded-xl text-[14px] font-black"
-                        style={{ background: BN.gold, color: BN.onGold }}
-                    >
-                        Bosh sahifaga
-                    </BnLink>
-                }
-            />
-        );
-    }
-
-    const shop = mockShopBySlug(p.shopSlug);
     const rank = priceRankOf(p.price, p.marketAvgPrice);
     const rankMeta = rank ? PRICE_RANK_META[rank] : null;
     const diff = priceDiffLabel(p.price, p.marketAvgPrice);
-    const similar = MOCK_PRODUCTS.filter(x => x.categorySlug === p.categorySlug && x.id !== p.id).slice(0, 6);
     const tier = shop ? TIER_META[shop.tier] : null;
 
     return (
@@ -59,8 +47,14 @@ export function BnProductDetail({ slug }: { slug: string }) {
             <nav className="flex items-center gap-1.5 text-[12px] mb-5 flex-wrap" style={{ color: BN.text3 }}>
                 <BnLink href="/" className="hover:opacity-70 transition-colors">Bosh sahifa</BnLink>
                 <ChevronRight className="w-3 h-3" />
-                <BnLink href={`/k/${p.categorySlug}`} className="hover:opacity-70 transition-colors">Kategoriya</BnLink>
-                <ChevronRight className="w-3 h-3" />
+                {p.categorySlug && (
+                    <>
+                        <BnLink href={`/k/${p.categorySlug}`} className="hover:opacity-70 transition-colors">
+                            Kategoriya
+                        </BnLink>
+                        <ChevronRight className="w-3 h-3" />
+                    </>
+                )}
                 <span className="truncate max-w-[220px]" style={{ color: BN.text2 }}>{p.title}</span>
             </nav>
 
@@ -72,12 +66,14 @@ export function BnProductDetail({ slug }: { slug: string }) {
                         className="relative aspect-square sm:aspect-[4/3] rounded-2xl overflow-hidden"
                         style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                     >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                            src={p.images[imgIdx]}
-                            alt={p.title}
-                            className="w-full h-full object-cover"
-                        />
+                        {p.images[imgIdx] ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={p.images[imgIdx]} alt={p.title} className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full grid place-items-center" style={{ color: BN.text3 }}>
+                                <Package className="w-12 h-12" />
+                            </div>
+                        )}
                         {p.images.length > 1 && (
                             <>
                                 <GalleryBtn side="left" onClick={() => setImgIdx(i => (i - 1 + p.images.length) % p.images.length)} />
@@ -121,23 +117,80 @@ export function BnProductDetail({ slug }: { slug: string }) {
                     )}
 
                     {/* Tavsif */}
-                    <Panel className="mt-5">
-                        <h2 className="text-[15px] font-black mb-3">Mahsulot haqida</h2>
-                        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-                            {Object.entries(p.attributes).map(([k, v]) => (
-                                <div
-                                    key={k}
-                                    className="flex items-center justify-between gap-3 py-2.5 text-[13px]"
-                                    style={{ borderBottom: `1px solid ${BN.border}` }}
-                                >
-                                    <dt style={{ color: BN.text3 }}>{ATTR_LABELS[k] ?? k}</dt>
-                                    <dd className="font-bold text-right">
-                                        {typeof v === "boolean" ? (v ? "Ha" : "Yo'q") : String(v)}
-                                    </dd>
-                                </div>
-                            ))}
-                        </dl>
-                    </Panel>
+                    {(p.description || Object.keys(p.attributes).length > 0) && (
+                        <Panel className="mt-5">
+                            <h2 className="text-[15px] font-black mb-3">Mahsulot haqida</h2>
+                            {p.description && (
+                                <p className="text-[13.5px] leading-relaxed mb-3" style={{ color: BN.text2 }}>
+                                    {p.description}
+                                </p>
+                            )}
+                            {Object.keys(p.attributes).length > 0 && (
+                                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                                    {Object.entries(p.attributes).map(([k, v]) => (
+                                        <div
+                                            key={k}
+                                            className="flex items-center justify-between gap-3 py-2.5 text-[13px]"
+                                            style={{ borderBottom: `1px solid ${BN.border}` }}
+                                        >
+                                            <dt style={{ color: BN.text3 }}>{ATTR_LABELS[k] ?? k}</dt>
+                                            <dd className="font-bold text-right">
+                                                {typeof v === "boolean" ? (v ? "Ha" : "Yo'q") : String(v)}
+                                            </dd>
+                                        </div>
+                                    ))}
+                                </dl>
+                            )}
+                        </Panel>
+                    )}
+
+                    {/* Boshqa do'konlar — narx solishtirish (BN ning asosiy va'dasi) */}
+                    {others.length > 0 && (
+                        <Panel className="mt-4">
+                            <h2 className="text-[15px] font-black mb-1">Bu mahsulotni boshqa do&apos;konlarda</h2>
+                            <p className="text-[12.5px] mb-3" style={{ color: BN.text3 }}>
+                                Bir xil mahsulot, turli narxda. Yaxshisini tanlang.
+                            </p>
+                            <div className="space-y-2">
+                                {others.map(o => (
+                                    <BnLink
+                                        key={o.id}
+                                        href={`/p/${o.slug}`}
+                                        className="group flex items-center gap-3 p-2.5 rounded-xl transition-colors"
+                                        style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}
+                                    >
+                                        <span
+                                            className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0"
+                                            style={{ background: BN.surface }}
+                                        >
+                                            {o.images[0] && (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img src={o.images[0]} alt="" className="w-full h-full object-cover" />
+                                            )}
+                                        </span>
+                                        <span className="flex-1 min-w-0">
+                                            <span className="block text-[13px] font-bold truncate transition-colors group-hover:text-[color:var(--bn-gold)]">
+                                                {o.shopName}
+                                            </span>
+                                            <span className="block text-[11.5px]" style={{ color: BN.text3 }}>
+                                                {o.marketName ?? o.city}
+                                            </span>
+                                        </span>
+                                        <span className="text-right flex-shrink-0">
+                                            <span className="block text-[15px] font-black tabular-nums leading-none">
+                                                {fmtPrice(o.price)}
+                                            </span>
+                                            {o.price < p.price && (
+                                                <span className="block text-[10.5px] mt-1" style={{ color: BN.ok }}>
+                                                    {Math.round(((p.price - o.price) / p.price) * 100)}% arzon
+                                                </span>
+                                            )}
+                                        </span>
+                                    </BnLink>
+                                ))}
+                            </div>
+                        </Panel>
+                    )}
 
                     {/* Sotuvchi */}
                     {shop && (
@@ -322,7 +375,7 @@ export function BnProductDetail({ slug }: { slug: string }) {
                 <section className="mt-12">
                     <BnSectionTitle title="O'xshash mahsulotlar" subtitle="Narxlarni solishtiring" />
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                        {similar.map((s: MockProduct) => <BnProductCard key={s.id} p={s} compact />)}
+                        {similar.map(s => <BnProductCard key={s.id} p={s} compact />)}
                     </div>
                 </section>
             )}

@@ -11,14 +11,14 @@
 //   Kanal = Nexus profil (do'kon egasi). "Kanalim" tugmasi Nexus'da post
 //   yaratishga olib boradi (yangi post shu yerda ham ko'rinadi).
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
     Play, Image as ImageIcon, MessageCircle, Store, Sparkles, Filter,
     Heart, MessageSquare, Share2, BadgeCheck, ArrowUpRight,
 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
-import { MOCK_SHOPS, MOCK_PRODUCTS } from "@/lib/bn-mock";
+import type { BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 type Tab = "feed" | "reels" | "chat";
 
@@ -48,36 +48,43 @@ interface MediaPost {
     nexusUrl?: string;
 }
 
-const MOCK_MEDIA: MediaPost[] = MOCK_SHOPS.slice(0, 6).flatMap((s, i) => {
-    const p = MOCK_PRODUCTS[i % MOCK_PRODUCTS.length];
-    return [
-        {
-            id: `m${i}a`,
+const CAPTIONS = [
+    "Bugun kelgan yangi tovarlar. Hozir arzon narxda!",
+    "Original mahsulot, kafolat bilan.",
+    "Katta chegirma — 3 kun ichida. Shoshiling!",
+    "Sotuvchi to'g'ridan-to'g'ri: ombordan chiqarilyapti.",
+];
+
+/** FAZA 6 — real Nexus post/reels API bilan almashtiriladi. Hozir do'kon+mahsulot ma'lumotidan
+ * placeholder feed tuziladi (shu do'kon Nexus'da post qo'ymagan bo'lsa ham lenta bo'sh ko'rinmasin). */
+function buildPlaceholderFeed(shops: BnShopDTO[], products: BnProductDTO[]): MediaPost[] {
+    return shops.slice(0, 6).flatMap((s, i) => {
+        const p = products[i % Math.max(1, products.length)];
+        if (!p) return [];
+        return [{
+            id: `bnm-${i}`,
             kind: (i % 3 === 0 ? "reel" : "image") as "image" | "reel",
             author: {
                 name: s.name, shopSlug: s.slug,
                 avatarUrl: s.logoUrl ?? "",
                 verified: s.tier === "VERIFIED" || s.tier === "PREMIUM",
             },
-            coverUrl: p.images[0],
-            caption: [
-                "Bugun kelgan yangi tovarlar. Hozir arzon narxda!",
-                "Original mahsulot, kafolat bilan. Sergeli bozorida.",
-                "Katta chegirma — 3 kun ichida. Shoshiling!",
-                "Sotuvchi to'g'ridan-to'g'ri: ombordan chiqarilyapti.",
-            ][i % 4],
+            coverUrl: p.images[0] ?? "",
+            caption: CAPTIONS[i % CAPTIONS.length],
             productSlug: p.slug,
             productTitle: p.title,
             productPrice: p.price,
             likes: 40 + i * 17,
             comments: 3 + i * 2,
-            nexusUrl: `https://forhumo.uz/uz/nexus/p/mock-${i}`,
-        },
-    ];
-});
+        }];
+    });
+}
 
-export function BnMedia() {
+export function BnMedia({
+    shops = [], products = [],
+}: { shops?: BnShopDTO[]; products?: BnProductDTO[] }) {
     const [tab, setTab] = useState<Tab>("feed");
+    const posts = useMemo(() => buildPlaceholderFeed(shops, products), [shops, products]);
 
     return (
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-10">
@@ -144,8 +151,8 @@ export function BnMedia() {
                 </a>
             </div>
 
-            {tab === "feed" && <MediaGrid posts={MOCK_MEDIA.filter(m => m.kind === "image")} />}
-            {tab === "reels" && <ReelsGrid posts={MOCK_MEDIA.filter(m => m.kind === "reel")} />}
+            {tab === "feed" && <MediaGrid posts={posts.filter(m => m.kind === "image")} />}
+            {tab === "reels" && <ReelsGrid posts={posts.filter(m => m.kind === "reel")} />}
             {tab === "chat" && <ChatEmpty />}
         </div>
     );

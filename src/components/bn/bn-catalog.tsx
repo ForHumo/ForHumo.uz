@@ -6,10 +6,7 @@ import { SlidersHorizontal, X, Search, ChevronRight, Store, Package } from "luci
 import { BN, fmtPrice } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnEmpty } from "./bn-cards";
-import {
-    MOCK_PRODUCTS, MOCK_MARKETS, MOCK_CATEGORIES,
-    mockProductsByCategory, mockSearch, type MockProduct,
-} from "@/lib/bn-mock";
+import type { BnMarketDTO, BnProductDTO } from "@/lib/bn-data";
 
 type SortKey = "new" | "cheap" | "price_asc" | "price_desc" | "rating";
 
@@ -21,15 +18,30 @@ const SORTS: { key: SortKey; label: string }[] = [
     { key: "rating",     label: "Reyting" },
 ];
 
+export interface BnCatalogCategoryDTO {
+    slug: string;
+    name: string;
+    productCount: number;
+    children: { slug: string; name: string; productCount: number }[];
+}
+
 interface Props {
-    /** Kategoriya rejimi */
-    categorySlug?: string;
+    /** Serverda tayyorlangan mahsulotlar (filtr uchun asos) */
+    initialProducts: BnProductDTO[];
+    /** Filtr dropdown uchun bozorlar */
+    markets: BnMarketDTO[];
+    /** Sarlavha uchun kategoriya (agar mavjud bo'lsa) */
+    category?: BnCatalogCategoryDTO | null;
+    /** Aynan qaysi pastki kategoriya ochilgan (breadcrumb+title uchun) */
+    activeSubSlug?: string;
     /** Qidiruv rejimi */
     query?: string;
     initialSort?: SortKey;
 }
 
-export function BnCatalog({ categorySlug, query, initialSort = "new" }: Props) {
+export function BnCatalog({
+    initialProducts, markets, category, activeSubSlug, query, initialSort = "new",
+}: Props) {
     const [sort, setSort] = useState<SortKey>(initialSort);
     const [filterOpen, setFilterOpen] = useState(false);
     const [marketSlug, setMarketSlug] = useState<string | null>(null);
@@ -38,21 +50,12 @@ export function BnCatalog({ categorySlug, query, initialSort = "new" }: Props) {
     const [onlyDelivery, setOnlyDelivery] = useState(false);
     const [maxPrice, setMaxPrice] = useState<number | null>(null);
 
-    const category = categorySlug
-        ? MOCK_CATEGORIES.find(c => c.slug === categorySlug || c.children?.some(ch => ch.slug === categorySlug))
-        : null;
-    const subCategory = category?.children?.find(ch => ch.slug === categorySlug);
-
-    const base: MockProduct[] = useMemo(() => {
-        if (categorySlug) return mockProductsByCategory(categorySlug);
-        if (query !== undefined) return mockSearch(query);
-        return MOCK_PRODUCTS;
-    }, [categorySlug, query]);
+    const subCategory = category?.children?.find(ch => ch.slug === activeSubSlug);
 
     const items = useMemo(() => {
-        let list = [...base];
+        let list = [...initialProducts];
         if (marketSlug) {
-            const mName = MOCK_MARKETS.find(m => m.slug === marketSlug)?.name;
+            const mName = markets.find(m => m.slug === marketSlug)?.name;
             list = list.filter(p => p.marketName === mName);
         }
         if (onlyCheap)    list = list.filter(p => p.marketAvgPrice && p.price < p.marketAvgPrice);
@@ -71,7 +74,7 @@ export function BnCatalog({ categorySlug, query, initialSort = "new" }: Props) {
             default: break;
         }
         return list;
-    }, [base, marketSlug, onlyCheap, onlyInspect, onlyDelivery, maxPrice, sort]);
+    }, [initialProducts, markets, marketSlug, onlyCheap, onlyInspect, onlyDelivery, maxPrice, sort]);
 
     const activeFilters =
         (marketSlug ? 1 : 0) + (onlyCheap ? 1 : 0) + (onlyInspect ? 1 : 0)
@@ -111,7 +114,7 @@ export function BnCatalog({ categorySlug, query, initialSort = "new" }: Props) {
             </div>
 
             {/* Pastki kategoriyalar */}
-            {category?.children && !subCategory && (
+            {category?.children && category.children.length > 0 && !subCategory && (
                 <div className="flex flex-wrap gap-2 mb-5">
                     {category.children.map(ch => (
                         <BnLink
@@ -257,7 +260,7 @@ export function BnCatalog({ categorySlug, query, initialSort = "new" }: Props) {
                                     onChange={() => setMarketSlug(null)}
                                     label="Barcha bozorlar va do'konlar"
                                 />
-                                {MOCK_MARKETS.map(m => (
+                                {markets.map(m => (
                                     <Radio
                                         key={m.slug}
                                         checked={marketSlug === m.slug}
@@ -349,47 +352,57 @@ function Radio({ checked, onChange, label }: { checked: boolean; onChange: () =>
 }
 
 /** Bozorlar ro'yxati sahifasi */
-export function BnMarketsList() {
+export function BnMarketsList({ markets }: { markets: BnMarketDTO[] }) {
     return (
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-16">
             <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-2">Bozorlar</h1>
             <p className="text-[13.5px] mb-6 max-w-[600px] leading-relaxed" style={{ color: BN.text2 }}>
                 Jismoniy bozorlar — do&apos;konlarni ko&apos;rib, mahsulotni band qilib borib ko&apos;rishingiz mumkin.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {MOCK_MARKETS.map(m => (
-                    <BnLink
-                        key={m.id}
-                        href={`/m/${m.slug}`}
-                        className="group rounded-2xl overflow-hidden transition-all active:scale-[0.99]"
-                        style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
-                    >
-                        <div className="aspect-[16/9] overflow-hidden" style={{ background: BN.surfaceUp }}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src={m.coverUrl}
-                                alt={m.name}
-                                loading="lazy"
-                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
-                        </div>
-                        <div className="p-4">
-                            <p className="text-[15px] font-black mb-1.5 transition-colors group-hover:text-[color:var(--bn-gold)]">
-                                {m.name}
-                            </p>
-                            <p className="text-[12.5px] mb-2" style={{ color: BN.text3 }}>{m.district}</p>
-                            <div className="flex items-center gap-3 text-[12px]" style={{ color: BN.text2 }}>
-                                <span className="flex items-center gap-1">
-                                    <Store className="w-3.5 h-3.5" />{m.shopCount} do&apos;kon
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <Package className="w-3.5 h-3.5" />{m.sections.length} bo&apos;lim
-                                </span>
+            {markets.length === 0 ? (
+                <BnEmpty
+                    icon={<Store className="w-6 h-6" />}
+                    title="Hozircha bozor ro'yxatga olinmagan"
+                    text="Tez orada Toshkent bozorlari ochiladi."
+                />
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {markets.map(m => (
+                        <BnLink
+                            key={m.id}
+                            href={`/m/${m.slug}`}
+                            className="group rounded-2xl overflow-hidden transition-all active:scale-[0.99]"
+                            style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+                        >
+                            <div className="aspect-[16/9] overflow-hidden" style={{ background: BN.surfaceUp }}>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={m.coverUrl}
+                                    alt={m.name}
+                                    loading="lazy"
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
                             </div>
-                        </div>
-                    </BnLink>
-                ))}
-            </div>
+                            <div className="p-4">
+                                <p className="text-[15px] font-black mb-1.5 transition-colors group-hover:text-[color:var(--bn-gold)]">
+                                    {m.name}
+                                </p>
+                                <p className="text-[12.5px] mb-2" style={{ color: BN.text3 }}>{m.district}</p>
+                                <div className="flex items-center gap-3 text-[12px]" style={{ color: BN.text2 }}>
+                                    <span className="flex items-center gap-1">
+                                        <Store className="w-3.5 h-3.5" />{m.shopCount} do&apos;kon
+                                    </span>
+                                    {m.workHours && (
+                                        <span className="flex items-center gap-1">
+                                            <Package className="w-3.5 h-3.5" />{m.workHours}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </BnLink>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

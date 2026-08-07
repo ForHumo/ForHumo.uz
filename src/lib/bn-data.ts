@@ -18,6 +18,7 @@ export interface BnMarketDTO {
     coverUrl: string;
     workHours: string;
     shopCount: number;
+    sections: string[];
 }
 
 export interface BnShopDTO {
@@ -44,6 +45,7 @@ export interface BnProductDTO {
     id: string;
     slug: string;
     title: string;
+    description: string | null;
     price: number;
     oldPrice: number | null;
     marketAvgPrice: number | null;
@@ -63,6 +65,7 @@ export interface BnProductDTO {
     allowInspect: boolean;
     rating: number;
     ratingCount: number;
+    attributes: Record<string, string | number | boolean>;
 }
 
 // ── Xaritalash: DB → DTO ────────────────────────────────────────────────────
@@ -103,6 +106,7 @@ function toProductDTO(p: ProductWithRels): BnProductDTO {
         id: p.id,
         slug: p.slug,
         title: p.title,
+        description: p.description,
         price: p.price,
         oldPrice: p.oldPrice,
         marketAvgPrice: p.marketAvgPrice,
@@ -122,6 +126,7 @@ function toProductDTO(p: ProductWithRels): BnProductDTO {
         allowInspect: p.allowInspect,
         rating: p.rating,
         ratingCount: p.ratingCount,
+        attributes: (p.attributes as Record<string, string | number | boolean>) ?? {},
     };
 }
 
@@ -139,7 +144,7 @@ export async function getMarkets(limit = 12): Promise<BnMarketDTO[]> {
         take: limit,
         select: {
             id: true, slug: true, name: true, district: true,
-            coverUrl: true, workHours: true, shopCount: true,
+            coverUrl: true, workHours: true, shopCount: true, sections: true,
         },
     });
     return rows.map(m => ({
@@ -150,6 +155,7 @@ export async function getMarkets(limit = 12): Promise<BnMarketDTO[]> {
         coverUrl: m.coverUrl ?? "",
         workHours: m.workHours ?? "",
         shopCount: m.shopCount,
+        sections: m.sections,
     }));
 }
 
@@ -235,36 +241,69 @@ export async function getProductBySlug(slug: string) {
     if (!p) return null;
 
     // Boshqa do'konlar shu mahsulotni qanday narxda sotmoqda — narx solishtirish
-    const others = await prisma.bnProduct.findMany({
+    // (title'ning boshi bir xil bo'lsa, o'sha mahsulot deb hisoblaymiz)
+    const titleHead = p.title.split(/[\s—\-–]/).slice(0, 3).join(" ").trim();
+    const others = titleHead.length >= 4 ? await prisma.bnProduct.findMany({
         where: {
             categoryId: p.categoryId,
             isActive: true, hidden: false,
             NOT: { id: p.id },
-            title: { contains: p.title.slice(0, 30), mode: "insensitive" },
+            title: { contains: titleHead, mode: "insensitive" },
         },
         include: PRODUCT_INCLUDE,
         take: 10,
         orderBy: { price: "asc" },
+    }) : [];
+
+    // O'xshashlar — shu kategoriyaning boshqa mahsulotlari (others'dan tashqari)
+    const otherIds = new Set(others.map(o => o.id));
+    const similar = await prisma.bnProduct.findMany({
+        where: {
+            categoryId: p.categoryId,
+            isActive: true, hidden: false,
+            NOT: { id: { in: [p.id, ...otherIds] } },
+        },
+        include: PRODUCT_INCLUDE,
+        take: 6,
+        orderBy: { rating: "desc" },
     });
 
     return {
         product: toProductDTO(p),
-        others: others.map(toProductDTO),
+        others:  others.map(toProductDTO),
+        similar: similar.map(toProductDTO),
     };
 }
 
-export async function getCategoriesTree() {
-    return prisma.bnCategory.findMany({
+export interface BnCategoryTreeDTO {
+    id: string;
+    slug: string;
+    name: string;
+    icon: string | null;
+    productCount: number;
+    children: { slug: string; name: string; icon: string | null; productCount: number }[];
+}
+
+export async function getCategoriesTree(): Promise<BnCategoryTreeDTO[]> {
+    const rows = await prisma.bnCategory.findMany({
         where: { isActive: true, parentId: null },
         orderBy: { order: "asc" },
         include: {
             children: {
                 where: { isActive: true },
                 orderBy: { order: "asc" },
-                select: { id: true, slug: true, name: true, icon: true, productCount: true },
+                select: { slug: true, name: true, icon: true, productCount: true },
             },
         },
     });
+    return rows.map(c => ({
+        id: c.id,
+        slug: c.slug,
+        name: c.name,
+        icon: c.icon,
+        productCount: c.productCount,
+        children: c.children,
+    }));
 }
 
 export async function getCategoryBySlug(slug: string) {

@@ -10,6 +10,7 @@ import { BnNavbar } from "@/components/bn/bn-navbar";
 import { BnStyles, BnAurora } from "@/components/bn/bn-styles";
 import { BnBaseProvider } from "@/components/bn/bn-nav";
 import { BnSwipeNav } from "@/components/bn/bn-swipe-nav";
+import { getCategoriesTree } from "@/lib/bn-data";
 
 const BN_HOSTS = ["bozornarxida.uz", "www.bozornarxida.uz"];
 
@@ -30,6 +31,13 @@ export default async function BnLayout({
     // O'z domenida toza URL ("/bozorlar"), forhumo.uz da prefiks ("/uz/bn/bozorlar")
     const base = BN_HOSTS.includes(host) ? "" : `/${locale}/bn`;
 
+    // Header dropdown menyusi uchun kategoriyalar (bir marta serverdan yuklab
+    // olamiz — deyarli hech qachon o'zgarmaydi, Next avto-keshlaydi).
+    const catTree = await getCategoriesTree();
+    const headerCats = catTree.map(c => ({
+        slug: c.slug, name: c.name, productCount: c.productCount,
+    }));
+
     return (
         <div className="bn-scope fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden">
             <BnStyles />
@@ -37,7 +45,7 @@ export default async function BnLayout({
             <BnBaseProvider base={base} locale={locale}>
                 <BnSwipeNav>
                     <div className="relative z-10 flex flex-col min-h-full">
-                        <BnHeader />
+                        <BnHeader categories={headerCats} />
                         <main className="flex-1 pb-24">{children}</main>
                         <BnFooter />
                     </div>

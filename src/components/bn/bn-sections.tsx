@@ -11,7 +11,7 @@ import {
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnEmpty, shopLocationText } from "./bn-cards";
-import { MOCK_CATEGORIES, MOCK_SHOPS } from "@/lib/bn-mock";
+import type { BnCategoryTreeDTO, BnShopDTO } from "@/lib/bn-data";
 
 const CAT_ICONS: Record<string, React.ReactNode> = {
     Car:            <Car className="w-6 h-6" />,
@@ -30,9 +30,18 @@ const CAT_ICONS: Record<string, React.ReactNode> = {
 // Uzum'dan o'zlashtirilgan naqsh, lekin BN uslubida: hover'da o'ng panel
 // almashadi, mobil'da esa oddiy vertikal accordion.
 
-export function BnCatalogPage() {
-    const [active, setActive] = useState<string>(MOCK_CATEGORIES[0].slug);
-    const cat = MOCK_CATEGORIES.find(c => c.slug === active) ?? MOCK_CATEGORIES[0];
+export function BnCatalogPage({ categories }: { categories: BnCategoryTreeDTO[] }) {
+    const [active, setActive] = useState<string>(categories[0]?.slug ?? "");
+    const cat = categories.find(c => c.slug === active) ?? categories[0];
+
+    if (!cat) {
+        return (
+            <Wrap>
+                <PageHead title="Katalog" />
+                <BnEmpty icon={<Store className="w-6 h-6" />} title="Hozircha kategoriya yo'q" />
+            </Wrap>
+        );
+    }
 
     return (
         <Wrap>
@@ -47,9 +56,8 @@ export function BnCatalogPage() {
                 <nav
                     className="py-2"
                     style={{ borderRight: `1px solid ${BN.border}` }}
-                    onMouseLeave={() => { /* qoldiramiz — foydalanuvchi qayta harakat qilsa yangi active */ }}
                 >
-                    {MOCK_CATEGORIES.map(c => {
+                    {categories.map(c => {
                         const isActive = c.slug === active;
                         return (
                             <button
@@ -70,7 +78,7 @@ export function BnCatalogPage() {
                                         color: isActive ? BN.gold : BN.text2,
                                     }}
                                 >
-                                    {CAT_ICONS[c.icon]
+                                    {c.icon && CAT_ICONS[c.icon]
                                         ? React.cloneElement(CAT_ICONS[c.icon] as React.ReactElement, { className: "w-5 h-5" } as never)
                                         : <Store className="w-5 h-5" />}
                                 </span>
@@ -132,7 +140,7 @@ export function BnCatalogPage() {
 
             {/* Mobil — accordion */}
             <div className="md:hidden space-y-2">
-                {MOCK_CATEGORIES.map(c => {
+                {categories.map(c => {
                     const open = c.slug === active;
                     return (
                         <div
@@ -148,7 +156,7 @@ export function BnCatalogPage() {
                                     className="w-11 h-11 rounded-xl grid place-items-center flex-shrink-0"
                                     style={{ background: BN.goldSoft, color: BN.gold }}
                                 >
-                                    {CAT_ICONS[c.icon] ?? <Store className="w-5 h-5" />}
+                                    {(c.icon && CAT_ICONS[c.icon]) ?? <Store className="w-5 h-5" />}
                                 </span>
                                 <span className="flex-1 min-w-0">
                                     <span className="block text-[14.5px] font-black truncate">{c.name}</span>
@@ -205,17 +213,17 @@ const SHOP_TABS: { key: ShopTab; label: string }[] = [
     { key: "other",  label: "Boshqa do'konlar" },
 ];
 
-export function BnShopsRanked() {
+export function BnShopsRanked({ shops }: { shops: BnShopDTO[] }) {
     const [tab, setTab] = useState<ShopTab>("all");
 
     const items = useMemo(() => {
         // AI reytingi: baho × ishonch (baho soni logarifmi) — FAZA 6 da haqiqiy tahlil
-        const score = (s: typeof MOCK_SHOPS[number]) => s.rating * Math.log10(s.ratingCount + 10);
-        let list = [...MOCK_SHOPS];
+        const score = (s: BnShopDTO) => s.rating * Math.log10(s.ratingCount + 10);
+        let list = [...shops];
         if (tab === "market") list = list.filter(s => s.locationType === "IN_MARKET");
         if (tab === "other")  list = list.filter(s => s.locationType !== "IN_MARKET");
         return list.sort((a, b) => score(b) - score(a));
-    }, [tab]);
+    }, [tab, shops]);
 
     return (
         <Wrap>

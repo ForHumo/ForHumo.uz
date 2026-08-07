@@ -8,7 +8,7 @@ import {
     ShieldCheck, LogIn, Sparkles, Info,
 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
-import { MOCK_MARKETS } from "@/lib/bn-mock";
+import type { BnMarketDTO } from "@/lib/bn-data";
 
 type Step = 0 | 1 | 2 | 3;
 type LegalType = "YATT" | "MCHJ";
@@ -16,7 +16,7 @@ type LocType = "IN_MARKET" | "STANDALONE" | "ONLINE";
 
 const STEPS = ["Yuridik shakl", "Do'kon", "Joylashuv", "Bank"];
 
-export function BnSellerRegister() {
+export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) {
     const { status } = useSession();
     const [step, setStep] = useState<Step>(0);
 
@@ -44,7 +44,7 @@ export function BnSellerRegister() {
 
     const [sent, setSent] = useState(false);
 
-    const market = MOCK_MARKETS.find(m => m.slug === marketSlug);
+    const market = markets.find(m => m.slug === marketSlug);
 
     const canNext =
         step === 0 ? !!legalType && inn.replace(/\D/g, "").length >= 9 && legalName.trim().length > 2 && phone.replace(/\D/g, "").length >= 12 :
@@ -275,7 +275,12 @@ export function BnSellerRegister() {
                                 <>
                                     <Field label="Qaysi bozor?">
                                         <div className="grid grid-cols-1 gap-1.5">
-                                            {MOCK_MARKETS.map(m => (
+                                            {markets.length === 0 && (
+                                                <p className="text-[12.5px] p-2 rounded-lg" style={{ color: BN.text3, background: BN.surfaceUp }}>
+                                                    Bozor ro&apos;yxati hozircha bo&apos;sh.
+                                                </p>
+                                            )}
+                                            {markets.map(m => (
                                                 <button
                                                     key={m.slug}
                                                     onClick={() => { setMarketSlug(m.slug); setSection(""); }}

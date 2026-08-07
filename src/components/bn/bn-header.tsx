@@ -10,7 +10,13 @@ import {
 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink, useBnHref, useBnBase, BnThemeToggle, BnLangSwitch } from "./bn-nav";
-import { MOCK_CATEGORIES } from "@/lib/bn-mock";
+
+/** Header uchun kichik kategoriya DTO (dropdown menyu) */
+export interface BnHeaderCategoryDTO {
+    slug: string;
+    name: string;
+    productCount: number;
+}
 
 // Foydalanuvchi so'rovi: Katalog/Bozorlar/Do'konlar OLIB TASHLANDI (navbar/asosiy'da bor).
 // Faqat gorizontal 1 qatorda: Mening joylashuvim → Topshirish punkti → Buyurtmalarim → Humo Support
@@ -20,7 +26,7 @@ const NAV = [
     { href: "/buyurtmalarim", label: "Buyurtmalarim",      icon: Package },
 ] as const;
 
-export function BnHeader() {
+export function BnHeader({ categories = [] }: { categories?: BnHeaderCategoryDTO[] }) {
     const router = useRouter();
     const to = useBnHref();
     const { locale } = useBnBase();
@@ -360,7 +366,7 @@ export function BnHeader() {
                             <p className="px-3 pt-5 pb-2 text-[11px] font-black uppercase tracking-wider" style={{ color: BN.text3 }}>
                                 Kategoriyalar
                             </p>
-                            {MOCK_CATEGORIES.map(c => (
+                            {categories.map(c => (
                                 <BnLink
                                     key={c.slug}
                                     href={`/k/${c.slug}`}
