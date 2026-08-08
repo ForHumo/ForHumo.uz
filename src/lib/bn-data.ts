@@ -322,16 +322,21 @@ export interface BnCategoryTreeDTO {
 }
 
 // Kategoriyalar deyarli hech qachon o'zgarmaydi — 10 daq. cache.
+// productCount real-vaqt hisoblanadi (_count) chunki eski `productCount` fielda kesh eskirib qoladi.
 export const getCategoriesTree = unstable_cache(
     async (): Promise<BnCategoryTreeDTO[]> => {
         const rows = await prisma.bnCategory.findMany({
             where: { isActive: true, parentId: null },
             orderBy: { order: "asc" },
             include: {
+                _count: { select: { products: { where: { isActive: true, hidden: false } } } },
                 children: {
                     where: { isActive: true },
                     orderBy: { order: "asc" },
-                    select: { slug: true, name: true, icon: true, productCount: true },
+                    select: {
+                        slug: true, name: true, icon: true,
+                        _count: { select: { products: { where: { isActive: true, hidden: false } } } },
+                    },
                 },
             },
         });
@@ -340,8 +345,10 @@ export const getCategoriesTree = unstable_cache(
             slug: c.slug,
             name: c.name,
             icon: c.icon,
-            productCount: c.productCount,
-            children: c.children,
+            productCount: c._count.products + c.children.reduce((s, ch) => s + ch._count.products, 0),
+            children: c.children.map(ch => ({
+                slug: ch.slug, name: ch.name, icon: ch.icon, productCount: ch._count.products,
+            })),
         }));
     },
     ["bn-categories-tree"],
