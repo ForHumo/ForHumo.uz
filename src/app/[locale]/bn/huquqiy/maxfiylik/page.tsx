@@ -13,7 +13,7 @@ export default function Page() {
             title="Maxfiylik siyosati"
             subtitle="Sizning ma'lumotlaringiz — bizning javobgarligimiz"
             updatedAt="2026-08-07"
-            icon={Shield}
+            iconEl={<Shield className="w-5 h-5" />}
         >
             <h2>1. Qanday ma'lumot to'playmiz</h2>
             <h3>1.1. Siz beradigan ma'lumot</h3>

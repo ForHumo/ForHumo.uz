@@ -13,7 +13,7 @@ export default function Page() {
             title="Foydalanish shartlari"
             subtitle="Bozor Narxida (BN) platformasidan foydalanish qoidalari"
             updatedAt="2026-08-07"
-            icon={FileText}
+            iconEl={<FileText className="w-5 h-5" />}
         >
             <h2>1. Umumiy qoidalar</h2>
             <p>

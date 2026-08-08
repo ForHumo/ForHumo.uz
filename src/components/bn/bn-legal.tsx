@@ -1,22 +1,25 @@
-"use client";
-
 // BN huquqiy sahifalar uchun umumiy shablon (foydalanish/maxfiylik/oferta/yordam).
+// SERVER COMPONENT — page.tsx'lardan chaqiriladi (client bo'lish shart emas,
+// klientda hech nima interaktiv emas). MUHIM: Server → Client chegarada
+// funksiya (masalan lucide icon komponentini) prop sifatida yuborib bo'lmaydi
+// (Next 15'da 500 xato). Shu sabab `iconEl` — JSX element sifatida qabul qilinadi.
 
-import { ChevronRight, Shield, FileText, Info } from "lucide-react";
+import { ChevronRight, FileText, Info } from "lucide-react";
 import { BnLink } from "./bn-nav";
 import { BnBackButton } from "./bn-back-button";
 import { BN } from "@/lib/bn-theme";
 import type { ReactNode } from "react";
 
 export function BnLegalPage({
-    title, subtitle, updatedAt, icon: Icon = FileText, children,
+    title, subtitle, updatedAt, iconEl, children,
 }: {
     title: string;
     subtitle?: string;
     updatedAt?: string;
-    icon?: typeof Shield;
+    iconEl?: ReactNode;
     children: ReactNode;
 }) {
+    const icon = iconEl ?? <FileText className="w-5 h-5" />;
     return (
         <div className="mx-auto max-w-[820px] px-4 pt-4 pb-16">
             <BnBackButton fallbackHref="/" />
@@ -33,7 +36,7 @@ export function BnLegalPage({
                         className="w-11 h-11 rounded-2xl grid place-items-center"
                         style={{ background: "rgba(96,165,250,0.15)", color: "#60a5fa" }}
                     >
-                        <Icon className="w-5 h-5" />
+                        {icon}
                     </div>
                     <div>
                         <h1 className="text-[26px] font-black tracking-tight leading-tight">{title}</h1>

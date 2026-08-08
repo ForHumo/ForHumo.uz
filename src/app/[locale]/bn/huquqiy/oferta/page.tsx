@@ -13,7 +13,7 @@ export default function Page() {
             title="Ommaviy oferta"
             subtitle="Xarid va sotuv shartlari"
             updatedAt="2026-08-07"
-            icon={FileText}
+            iconEl={<FileText className="w-5 h-5" />}
         >
             <h2>1. Oferta predmeti</h2>
             <p>
