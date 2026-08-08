@@ -40,6 +40,9 @@ export interface BnShopDTO {
     rating: number;
     ratingCount: number;
     productCount: number;
+    /** Xarita koordinatlari (STANDALONE do'kon uchun kritik) */
+    lat: number | null;
+    lng: number | null;
     /** Nexus profil (bor bo'lsa) — @username, follower/onlayn chip uchun */
     ownerUsername?: string | null;
 }
@@ -95,6 +98,8 @@ function toShopDTO(s: ShopWithMarket, ownerUsername?: string | null): BnShopDTO 
         rating: s.rating,
         ratingCount: s.ratingCount,
         productCount: s.productCount,
+        lat: s.lat,
+        lng: s.lng,
         ownerUsername: ownerUsername ?? null,
     };
 }

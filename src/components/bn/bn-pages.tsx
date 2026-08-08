@@ -10,6 +10,7 @@ import { BnProductCard } from "./bn-product-card";
 import { BnShopCard, BnSectionTitle, BnEmpty, shopLocationText } from "./bn-cards";
 import { BnBackButton } from "./bn-back-button";
 import { BnReviews } from "./bn-reviews";
+import { BnMapView } from "./bn-map-view";
 import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 // ── Bozor sahifasi ──────────────────────────────────────────────────────────
@@ -22,6 +23,8 @@ export interface BnMarketPageDTO {
     workHours: string;
     shopCount: number;
     sections: string[];
+    lat?: number | null;
+    lng?: number | null;
 }
 
 export function BnMarketPage({
@@ -65,6 +68,13 @@ export function BnMarketPage({
                 </div>
 
                 {/* Bo'limlar */}
+                {m.lat != null && m.lng != null && (
+                    <section className="mb-8">
+                        <BnSectionTitle title="Xarita" subtitle="Bozor joylashuvi" />
+                        <BnMapView lat={m.lat} lng={m.lng} label={m.name} height={260} />
+                    </section>
+                )}
+
                 {m.sections.length > 0 && (
                     <section className="mb-8">
                         <BnSectionTitle title="Bo'limlar" />
@@ -116,6 +126,7 @@ export function BnShopPage({
 }: { shop: BnShopDTO; products: BnProductDTO[] }) {
     const s = shop;
     const tier = TIER_META[s.tier];
+    const hasMap = s.lat != null && s.lng != null;
 
     return (
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-16">
@@ -230,6 +241,14 @@ export function BnShopPage({
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
                     {products.map(p => <BnProductCard key={p.id} p={p} compact />)}
                 </div>
+            )}
+
+            {/* Xarita — STANDALONE/IN_MARKET do'kon uchun */}
+            {hasMap && (
+                <section className="mt-10">
+                    <BnSectionTitle title="Xarita" subtitle="Do'konga borish uchun" />
+                    <BnMapView lat={s.lat!} lng={s.lng!} label={s.name} height={240} />
+                </section>
             )}
 
             {/* Sharhlar */}

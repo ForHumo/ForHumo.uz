@@ -10,6 +10,7 @@ import {
 import { BN } from "@/lib/bn-theme";
 import type { BnMarketDTO } from "@/lib/bn-data";
 import { BnPhoneInput } from "./bn-phone-input";
+import { BnMapPicker, type BnLatLng } from "./bn-map-picker";
 
 type Step = 0 | 1 | 2 | 3;
 type LegalType = "YATT" | "MCHJ";
@@ -39,6 +40,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
     const [section, setSection] = useState("");
     const [shopNo, setShopNo] = useState("");
     const [address, setAddress] = useState("");
+    const [shopLoc, setShopLoc] = useState<{ lat: number; lng: number } | null>(null);
 
     // 4-qadam
     const [bankName, setBankName] = useState("");
@@ -333,12 +335,11 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                             )}
 
                             {locType === "STANDALONE" && (
-                                <Field label="To'liq manzil">
-                                    <input
-                                        value={address}
-                                        onChange={e => setAddress(e.target.value)}
-                                        placeholder="Chilonzor tumani, Bunyodkor ko'chasi 12"
-                                        className="bn-input"
+                                <Field label="Do'kon manzili (xaritada)" hint="Xaridor xaritada aynan joyni ko'radi va yo'l ko'rsatiladi">
+                                    <BnMapPicker
+                                        value={shopLoc ? { lat: shopLoc.lat, lng: shopLoc.lng, address } : null}
+                                        onChange={(v: BnLatLng) => { setShopLoc({ lat: v.lat, lng: v.lng }); setAddress(v.address); }}
+                                        placeholder="Do'koningiz turgan joyni belgilang"
                                     />
                                 </Field>
                             )}
@@ -441,6 +442,8 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                                             marketSlug: locType === "IN_MARKET" ? marketSlug : null,
                                             marketSection: section, marketShopNo: shopNo,
                                             address, city: "Toshkent",
+                                            lat: shopLoc?.lat ?? null,
+                                            lng: shopLoc?.lng ?? null,
                                             bankName, bankAccount, bankMfo,
                                         }),
                                     });

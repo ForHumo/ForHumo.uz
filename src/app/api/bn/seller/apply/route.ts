@@ -57,6 +57,9 @@ export async function POST(req: Request) {
     const marketShopNo  = String(body?.marketShopNo ?? "").trim() || null;
     const address = String(body?.address ?? "").trim() || null;
     const city    = String(body?.city ?? "Toshkent").trim() || "Toshkent";
+    // Xarita koordinatalari (STANDALONE uchun kritik — xaridor "olib ketish"da aynan joyni bilishi kerak)
+    const lat = typeof body?.lat === "number" ? body.lat : null;
+    const lng = typeof body?.lng === "number" ? body.lng : null;
     const bankName    = String(body?.bankName ?? "").trim() || null;
     const bankAccount = String(body?.bankAccount ?? "").replace(/\D/g, "") || null;
     const bankMfo     = String(body?.bankMfo ?? "").replace(/\D/g, "") || null;
@@ -144,6 +147,7 @@ export async function POST(req: Request) {
                 marketShopNo,
                 address,
                 city,
+                lat, lng,
                 bankName,
                 bankAccount,
                 bankMfo,

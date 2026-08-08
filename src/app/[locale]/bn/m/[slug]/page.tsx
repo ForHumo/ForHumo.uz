@@ -39,6 +39,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         rating: s.rating,
         ratingCount: s.ratingCount,
         productCount: s.productCount,
+        lat: s.lat,
+        lng: s.lng,
     }));
 
     // Shu bozordagi mahsulotlar (do'konlar orqali)
@@ -90,6 +92,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
                 workHours: m.workHours ?? "",
                 shopCount: m.shopCount,
                 sections: m.sections,
+                lat: m.lat,
+                lng: m.lng,
             }}
             shops={shops}
             products={products}

@@ -28,6 +28,9 @@ export async function POST(req: Request) {
     const district = String(b?.district ?? "").trim() || null;
     const landmark = String(b?.landmark ?? "").trim().slice(0, 120) || null;
     const isDefault = !!b?.isDefault;
+    // Xarita koordinatalari (ixtiyoriy, lekin kuryer uchun juda muhim)
+    const latitude  = typeof b?.latitude === "number" ? b.latitude : null;
+    const longitude = typeof b?.longitude === "number" ? b.longitude : null;
 
     if (address.length < 5) return NextResponse.json({ error: "address_short" }, { status: 400 });
     if (phone.replace(/\D/g, "").length < 9) return NextResponse.json({ error: "phone_invalid" }, { status: 400 });
@@ -40,7 +43,7 @@ export async function POST(req: Request) {
     }
 
     const created = await prisma.bnAddress.create({
-        data: { profileId: auth.profileId, label, address, phone, city, district, landmark, isDefault },
+        data: { profileId: auth.profileId, label, address, phone, city, district, landmark, isDefault, latitude, longitude },
     });
     return NextResponse.json({ ok: true, address: created });
 }

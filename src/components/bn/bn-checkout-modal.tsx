@@ -6,10 +6,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, MapPin, Truck, Package, Eye, Wallet, Banknote, Loader2, BookMarked, Check } from "lucide-react";
+import { X, Truck, Package, Eye, Wallet, Banknote, Loader2, BookMarked, Check } from "lucide-react";
 import { BN, fmtPrice } from "@/lib/bn-theme";
 import { useBnHref } from "./bn-nav";
 import { BnPhoneInput, isValidUzPhone } from "./bn-phone-input";
+import { BnMapPicker, type BnLatLng } from "./bn-map-picker";
 
 interface SavedAddress {
     id: string;
@@ -19,6 +20,8 @@ interface SavedAddress {
     city: string;
     district: string | null;
     isDefault: boolean;
+    latitude?: number | null;
+    longitude?: number | null;
 }
 
 type Fulfill = "PICKUP" | "DELIVERY" | "INSPECT";
@@ -39,7 +42,7 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
 
     const [fulfill, setFulfill] = useState<Fulfill>("PICKUP");
     const [phone, setPhone] = useState("+998");
-    const [address, setAddress] = useState("");
+    const [address, setAddress] = useState<BnLatLng | null>(null);
     const [note, setNote] = useState("");
     const [pay, setPay] = useState<Pay>("WALLET");
     const [busy, setBusy] = useState(false);
@@ -56,7 +59,11 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                 setSaved(items);
                 const def = items.find(a => a.isDefault) ?? items[0];
                 if (def && !address) {
-                    setAddress(def.address);
+                    setAddress({
+                        lat: def.latitude ?? 41.2995,
+                        lng: def.longitude ?? 69.2401,
+                        address: def.address,
+                    });
                     setPhone(def.phone);
                 }
             })
@@ -65,7 +72,11 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
     }, []);
 
     function pickSaved(a: SavedAddress) {
-        setAddress(a.address);
+        setAddress({
+            lat: a.latitude ?? 41.2995,
+            lng: a.longitude ?? 69.2401,
+            address: a.address,
+        });
         setPhone(a.phone);
         setSaveNext(false);
     }
@@ -75,7 +86,7 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
 
     const canSubmit =
         isValidUzPhone(phone)
-        && (fulfill !== "DELIVERY" || address.trim().length > 4);
+        && (fulfill !== "DELIVERY" || (address !== null && address.address.length > 4));
 
     async function submit() {
         setBusy(true);
@@ -87,7 +98,9 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                 body: JSON.stringify({
                     fulfillType: fulfill,
                     phone,
-                    address: fulfill === "DELIVERY" ? address : null,
+                    address: fulfill === "DELIVERY" ? address?.address ?? null : null,
+                    latitude: fulfill === "DELIVERY" ? address?.lat ?? null : null,
+                    longitude: fulfill === "DELIVERY" ? address?.lng ?? null : null,
                     note: note.trim() || null,
                     paymentMethod: pay,
                 }),
@@ -113,7 +126,11 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                     method: "POST",
                     headers: { "content-type": "application/json" },
                     body: JSON.stringify({
-                        label: "Manzil", address, phone,
+                        label: "Manzil",
+                        address: address.address,
+                        latitude: address.lat,
+                        longitude: address.lng,
+                        phone,
                         isDefault: saved.length === 0,
                     }),
                 }).catch(() => { /* ignore */ });
@@ -193,7 +210,7 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                                         </p>
                                         <div className="flex gap-2 overflow-x-auto pb-1 bn-noscroll mb-2">
                                             {saved.map(a => {
-                                                const active = a.address === address;
+                                                const active = a.address === address?.address;
                                                 return (
                                                     <button
                                                         key={a.id}
@@ -213,17 +230,12 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                                         </div>
                                     </div>
                                 )}
-                                <Field label="Manzil">
-                                    <div className="relative">
-                                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: BN.text3 }} />
-                                        <input
-                                            value={address}
-                                            onChange={e => setAddress(e.target.value)}
-                                            placeholder="Chilonzor tumani, ..."
-                                            className="w-full h-11 pl-9 pr-3 rounded-xl text-[14px] font-medium outline-none"
-                                            style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
-                                        />
-                                    </div>
+                                <Field label="Yetkazish manzili">
+                                    <BnMapPicker
+                                        value={address}
+                                        onChange={setAddress}
+                                        placeholder="Xaritada uy joyingizni belgilang"
+                                    />
                                 </Field>
                                 <label className="flex items-center gap-2 text-[12.5px] cursor-pointer" style={{ color: BN.text2 }}>
                                     <input
