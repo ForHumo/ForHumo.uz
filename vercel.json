@@ -9,6 +9,7 @@
         { "path": "/api/cron/bn-inspect-expire", "schedule": "0 6 * * *" },
         { "path": "/api/cron/bn-price-watch",   "schedule": "0 7 * * *" },
         { "path": "/api/cron/bn-moderation-recheck", "schedule": "0 8 * * *" },
-        { "path": "/api/cron/bn-interest-rebuild",   "schedule": "0 9 * * *" }
+        { "path": "/api/cron/bn-interest-rebuild",   "schedule": "0 9 * * *" },
+        { "path": "/api/cron/bn-verified-recompute", "schedule": "0 10 * * *" }
     ]
 }

@@ -1930,6 +1930,14 @@ model BnShop {
   ratingCount   Int            @default(0)
   orderCount    Int            @default(0)
   productCount  Int            @default(0)
+
+  // Tasdiqlanganlik (galochka) — kunlik cron hisoblaydi.
+  // NONE = yo'q; RETAIL = chakana sotuvchi galochkasi; WHOLESALE = ulgurji galochka.
+  // Kriteriyalar: 50/100 muvaffaqiyatli buyurtma, reyting 4.7/4.8+, rad etilgan 3/2%dan kam,
+  // 90/180 kun faol, ogohlantirish/ban yo'q. Sotib olib bo'lmaydi.
+  verifiedTier    BnVerifiedTier  @default(NONE)
+  verifiedAt      DateTime?
+  verifiedProgress Json           @default("{}")   // motivatsiya paneli uchun kesh
   approvedAt    DateTime?
   approvedById  String?
   rejectReason  String?
@@ -2091,6 +2099,12 @@ enum BnShopTier {
   PREMIUM
 }
 
+enum BnVerifiedTier {
+  NONE
+  RETAIL      // Chakana sotuvchi galochkasi
+  WHOLESALE   // Ulgurji galochkasi (retail'dan qiyinroq)
+}
+
 // ── Kategoriya (atribut sxemasi bilan — universal) ───────────────────────────
 model BnCategory {
   id              String       @id @default(cuid())
@@ -2146,6 +2160,12 @@ model BnProduct {
   // ko'rsatiladi, foydalanuvchi tasdig'i bilan ochiladi. Diniga ZID mahsulot
   // umuman taqiqlanadi (bu flag emas — BLOCK bo'ladi).
   isMature       Boolean           @default(false)
+
+  // Ulgurji (B2B) — faqat BN do'kon egalari ko'radi va sotib oladi.
+  // wholesaleTiers = [{minQty:20,price:8000},{minQty:50,price:7500},{minQty:100,price:7000}]
+  isWholesale    Boolean           @default(false)
+  minWholesaleQty Int?                              // minimal buyurtma (masalan 20)
+  wholesaleTiers Json              @default("[]")   // narx pog'onalari
 
   // Bozor narxi — BN ning asosiy va'dasi
   marketAvgPrice Int?                              // o'xshash mahsulotlar o'rtachasi

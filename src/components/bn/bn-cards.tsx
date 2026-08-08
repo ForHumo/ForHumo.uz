@@ -1,7 +1,7 @@
 "use client";
 
 import { BnLink } from "./bn-nav";
-import { Store, MapPin, Star, Globe, Package, Clock, ChevronRight, ShoppingBasket } from "lucide-react";
+import { Store, MapPin, Star, Globe, Package, Clock, ChevronRight, ShoppingBasket, BadgeCheck } from "lucide-react";
 import { BN, TIER_META, type ShopTier, type LocationType } from "@/lib/bn-theme";
 
 // ── Do'kon kartasi ──────────────────────────────────────────────────────────
@@ -20,6 +20,7 @@ export interface ShopCardData {
     rating: number;
     ratingCount: number;
     productCount: number;
+    verifiedTier?: "NONE" | "RETAIL" | "WHOLESALE";  // tasdiqlangan sotuvchi galochkasi
 }
 
 export function BnShopCard({ s }: { s: ShopCardData }) {
@@ -48,6 +49,14 @@ export function BnShopCard({ s }: { s: ShopCardData }) {
                     <p className="text-[14px] font-black truncate transition-colors group-hover:text-[color:var(--bn-gold)]">
                         {s.name}
                     </p>
+                    {s.verifiedTier && s.verifiedTier !== "NONE" && (
+                        <BadgeCheck
+                            className="w-4 h-4 flex-shrink-0"
+                            style={{ color: s.verifiedTier === "WHOLESALE" ? BN.gold : BN.info }}
+                            strokeWidth={2.6}
+                            aria-label={s.verifiedTier === "WHOLESALE" ? "Tasdiqlangan ulgurji sotuvchi" : "Tasdiqlangan sotuvchi"}
+                        />
+                    )}
                     {s.tier !== "NEW" && (
                         <span
                             className="px-1.5 py-0.5 rounded-md text-[9.5px] font-black leading-none flex-shrink-0"

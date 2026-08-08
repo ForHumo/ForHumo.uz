@@ -15,6 +15,7 @@ import { requireBnAuth } from "@/lib/bn-auth";
 import { uniqueSlug } from "@/lib/bn-slug";
 import { moderateOnCreate } from "@/lib/moderation";
 import { checkForbiddenKeywords, moderateBnProduct } from "@/lib/bn-moderation";
+import { parseTiers } from "@/lib/bn-wholesale";
 
 async function requireSellerShop(profileId: string) {
     const shop = await prisma.bnShop.findFirst({
@@ -86,6 +87,13 @@ export async function POST(req: Request) {
         return cnt > 0;
     });
 
+    // Ulgurji (B2B): faqat isWholesale=true bo'lsa minQty va tiers qabul qilamiz
+    const isWholesale = !!body?.isWholesale;
+    const minWholesaleQty = isWholesale
+        ? Math.max(2, Math.floor(Number(body?.minWholesaleQty) || 2))
+        : null;
+    const wholesaleTiers = isWholesale ? parseTiers(body?.wholesaleTiers) : [];
+
     const product = await prisma.bnProduct.create({
         data: {
             slug,
@@ -101,6 +109,9 @@ export async function POST(req: Request) {
             allowDelivery: !!body?.allowDelivery,
             allowInspect:  body?.allowInspect === false ? false : true,
             isMature: !!body?.isMature,
+            isWholesale,
+            minWholesaleQty,
+            wholesaleTiers: wholesaleTiers as never,
             isActive: true,
             hidden: false,
         },

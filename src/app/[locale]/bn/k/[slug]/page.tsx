@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BnCatalog, type BnCatalogCategoryDTO } from "@/components/bn/bn-catalog";
 import { getCategoryBySlug, getMarkets } from "@/lib/bn-data";
+import { getBnAuth } from "@/lib/bn-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +19,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-    const data = await getCategoryBySlug(slug);
+    const auth = await getBnAuth();
+    const data = await getCategoryBySlug(slug, auth?.profileId ?? null);
     if (!data) notFound();
 
     const c = data.category;
     // Agar pastki kategoriya bosilgan bo'lsa — ota-kategoriya breadcrumb uchun kerak
-    const parent = c.parent ? await getCategoryBySlug(c.parent.slug) : null;
+    const parent = c.parent ? await getCategoryBySlug(c.parent.slug, auth?.profileId ?? null) : null;
     const rootCat = parent?.category ?? c;
     const activeSubSlug = c.parentId ? c.slug : undefined;
 

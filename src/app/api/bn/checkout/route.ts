@@ -23,6 +23,8 @@ import { requireBnAuth } from "@/lib/bn-auth";
 import { getOrCreateWalletTx } from "@/lib/wallet";
 import { orderRef } from "@/lib/bn-settle";
 import { trackBnEvent } from "@/lib/bn-events";
+import { viewerCanSeeWholesale } from "@/lib/bn-data";
+import { minQtyForProduct, parseTiers, priceForQty } from "@/lib/bn-wholesale";
 
 const DELIVERY_FEE = 20_000;   // Toshkent — flat tarif (FAZA 6 da API bilan almashtiriladi)
 
@@ -68,9 +70,19 @@ export async function POST(req: Request) {
     });
     const byId = new Map(products.map(p => [p.id, p]));
 
+    // Ulgurji tekshiruvi (kamida bitta ulgurji mahsulot bo'lsa)
+    const hasWholesale = products.some(p => p.isWholesale);
+    if (hasWholesale) {
+        const canBuy = await viewerCanSeeWholesale(auth.profileId);
+        if (!canBuy) {
+            return NextResponse.json({ error: "wholesale_shop_required", message: "Ulgurji mahsulotni sotib olish uchun BN'da do'kon oching" }, { status: 403 });
+        }
+    }
+
     // Har item mavjud va aktivligini tekshirish + do'kon bo'yicha guruhlash
+    // Ulgurji uchun narx dinamik — tier'ga qarab hisoblanadi.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const groups = new Map<string, { productId: string; qty: number; product: any }[]>();
+    const groups = new Map<string, { productId: string; qty: number; unitPrice: number; product: any }[]>();
     for (const it of cartItems) {
         const p = byId.get(it.productId);
         if (!p || !p.isActive || p.hidden) {
@@ -79,15 +91,23 @@ export async function POST(req: Request) {
         if (p.stock < it.qty) {
             return NextResponse.json({ error: "insufficient_stock", productId: it.productId, available: p.stock }, { status: 409 });
         }
+        let unitPrice = p.price;
+        if (p.isWholesale) {
+            const minQty = minQtyForProduct(true, p.minWholesaleQty);
+            if (it.qty < minQty) {
+                return NextResponse.json({ error: "wholesale_min_qty", productId: it.productId, minQty, message: `Kamida ${minQty} dona buyurtma qiling` }, { status: 400 });
+            }
+            unitPrice = priceForQty(p.price, parseTiers(p.wholesaleTiers), it.qty);
+        }
         const key = p.shopId;
         const arr = groups.get(key) ?? [];
-        arr.push({ productId: it.productId, qty: it.qty, product: p });
+        arr.push({ productId: it.productId, qty: it.qty, unitPrice, product: p });
         groups.set(key, arr);
     }
 
     // WALLET bo'lsa — jami summani oldindan hisoblab, balansni tekshirish
     const totalAll = [...groups.values()].reduce((s, g) => {
-        const sub = g.reduce((x, i) => x + i.product.price * i.qty, 0);
+        const sub = g.reduce((x, i) => x + i.unitPrice * i.qty, 0);
         const del = fulfillType === "DELIVERY" ? DELIVERY_FEE : 0;
         return s + sub + del;
     }, 0);
@@ -119,7 +139,7 @@ export async function POST(req: Request) {
             }
 
             for (const [shopId, items] of groups.entries()) {
-                const subtotal = items.reduce((s, i) => s + i.product.price * i.qty, 0);
+                const subtotal = items.reduce((s, i) => s + i.unitPrice * i.qty, 0);
                 const deliveryFee = fulfillType === "DELIVERY" ? DELIVERY_FEE : 0;
                 const total = subtotal + deliveryFee;
                 const code = genOrderCode();
@@ -145,7 +165,7 @@ export async function POST(req: Request) {
                             create: items.map(i => ({
                                 productId: i.productId,
                                 title: i.product.title,
-                                price: i.product.price,
+                                price: i.unitPrice,       // ulgurji tier narxi
                                 qty: i.qty,
                                 imageUrl: i.product.images?.[0] ?? null,
                             })),

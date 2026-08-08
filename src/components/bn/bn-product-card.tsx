@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { BnLink } from "./bn-nav";
-import { Store, ShoppingBasket, Star, Eye, Truck, BadgeCheck, Heart } from "lucide-react";
+import { Store, ShoppingBasket, Star, Eye, Truck, BadgeCheck, Heart, Package } from "lucide-react";
 import { BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel } from "@/lib/bn-theme";
 
 export interface ProductCardData {
@@ -28,6 +28,9 @@ export interface ProductCardData {
     allowInspect: boolean;
     stock: number;
     isMature?: boolean;             // 18+ — rasmi xiralashtiriladi
+    isWholesale?: boolean;          // Ulgurji — B2B badge
+    minWholesaleQty?: number | null;
+    shopVerifiedTier?: "NONE" | "RETAIL" | "WHOLESALE";  // tasdiqlangan sotuvchi galochkasi
 }
 
 /** Foydalanuvchi qarori bo'yicha kontekst matni:
@@ -127,8 +130,19 @@ export function BnProductCard({
                     </span>
                 )}
 
+                {/* Ulgurji belgi */}
+                {p.isWholesale && !p.isMature && (
+                    <span
+                        className="absolute top-2 left-2 px-2 py-1 rounded-lg text-[10.5px] font-black leading-none flex items-center gap-1"
+                        style={{ background: BN.gold, color: BN.onGold }}
+                    >
+                        <Package className="w-3 h-3" /> Ulgurji
+                        {p.minWholesaleQty ? <span className="opacity-80">· {p.minWholesaleQty}+</span> : null}
+                    </span>
+                )}
+
                 {/* Arzon belgisi — BN ning asosiy va'dasi */}
-                {showDiff && !p.isMature && (
+                {showDiff && !p.isMature && !p.isWholesale && (
                     <span
                         className="absolute top-2 left-2 px-2 py-1 rounded-lg text-[10.5px] font-black leading-none"
                         style={{ background: BN.ok, color: BN.onGold }}
@@ -182,7 +196,14 @@ export function BnProductCard({
                 {/* TEPADA: qaysi do'kon sotayapti (ikonkasiz — foydalanuvchi qarori) */}
                 <div className="flex items-center gap-1 mb-1.5 text-[11.5px] font-bold min-w-0">
                     <span className="truncate" style={{ color: BN.text2 }}>{p.shopName}</span>
-                    {p.shopVerified && (
+                    {p.shopVerifiedTier && p.shopVerifiedTier !== "NONE" ? (
+                        <BadgeCheck
+                            className="w-3.5 h-3.5 flex-shrink-0"
+                            style={{ color: p.shopVerifiedTier === "WHOLESALE" ? BN.gold : BN.info }}
+                            strokeWidth={2.6}
+                            aria-label={p.shopVerifiedTier === "WHOLESALE" ? "Tasdiqlangan ulgurji" : "Tasdiqlangan sotuvchi"}
+                        />
+                    ) : p.shopVerified && (
                         <BadgeCheck
                             className="w-3.5 h-3.5 flex-shrink-0"
                             style={{ color: BN.info }}

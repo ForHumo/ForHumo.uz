@@ -45,6 +45,8 @@ export interface BnShopDTO {
     lng: number | null;
     /** Nexus profil (bor bo'lsa) — @username, follower/onlayn chip uchun */
     ownerUsername?: string | null;
+    /** Tasdiqlanganlik (galochka) — cron avtomatik hisoblab qo'yadi */
+    verifiedTier?: "NONE" | "RETAIL" | "WHOLESALE";
 }
 
 export interface BnProductDTO {
@@ -74,6 +76,12 @@ export interface BnProductDTO {
     attributes: Record<string, string | number | boolean>;
     /** 18+ tovar (ichki kiyim, kondom, sog'liq buyumi). UI'da xiralashadi. */
     isMature?: boolean;
+    /** Ulgurji (B2B) — faqat BN do'kon egalari sotib oladi */
+    isWholesale?: boolean;
+    minWholesaleQty?: number | null;
+    wholesaleTiers?: { minQty: number; price: number }[];
+    /** Sotuvchi galochkasi — cron avtomatik hisoblab qo'yadi */
+    shopVerifiedTier?: "NONE" | "RETAIL" | "WHOLESALE";
 }
 
 // ── Xaritalash: DB → DTO ────────────────────────────────────────────────────
@@ -103,12 +111,13 @@ function toShopDTO(s: ShopWithMarket, ownerUsername?: string | null): BnShopDTO 
         lat: s.lat,
         lng: s.lng,
         ownerUsername: ownerUsername ?? null,
+        verifiedTier: (s.verifiedTier as "NONE" | "RETAIL" | "WHOLESALE" | undefined) ?? "NONE",
     };
 }
 
 type ProductWithRels = Awaited<ReturnType<typeof prisma.bnProduct.findMany>>[number]
     & {
-        shop: { slug: string; name: string; tier: string; market: { name: string } | null; city: string } | null;
+        shop: { slug: string; name: string; tier: string; verifiedTier?: string; market: { name: string } | null; city: string } | null;
         category: { slug: string } | null;
     };
 
@@ -139,13 +148,34 @@ function toProductDTO(p: ProductWithRels): BnProductDTO {
         ratingCount: p.ratingCount,
         attributes: (p.attributes as Record<string, string | number | boolean>) ?? {},
         isMature: p.isMature ?? false,
+        isWholesale: p.isWholesale ?? false,
+        minWholesaleQty: p.minWholesaleQty,
+        wholesaleTiers: Array.isArray(p.wholesaleTiers) ? p.wholesaleTiers as { minQty: number; price: number }[] : [],
+        shopVerifiedTier: (p.shop?.verifiedTier as "NONE" | "RETAIL" | "WHOLESALE" | undefined) ?? "NONE",
     };
+}
+
+// Ulgurji gating — do'kon egalari (BN'da APPROVED shop) va admin/OWNER'lar ulgurji ko'radi.
+// Boshqalar uchun listing'lardan yashiriladi.
+export async function viewerCanSeeWholesale(profileId: string | null): Promise<boolean> {
+    if (!profileId) return false;
+    const shop = await prisma.bnShop.findFirst({
+        where: { profileId, status: "APPROVED" },
+        select: { id: true },
+    });
+    if (shop) return true;
+    // Admin/OWNER ham hamma narsani ko'rishi mumkin
+    const admin = await prisma.bnAdmin.findUnique({
+        where: { profileId },
+        select: { id: true },
+    });
+    return !!admin;
 }
 
 // ── Yuklovchilar ────────────────────────────────────────────────────────────
 
 const PRODUCT_INCLUDE = {
-    shop: { select: { slug: true, name: true, tier: true, city: true, status: true, market: { select: { name: true } } } },
+    shop: { select: { slug: true, name: true, tier: true, verifiedTier: true, city: true, status: true, market: { select: { name: true } } } },
     category: { select: { slug: true } },
 } as const;
 
@@ -186,13 +216,19 @@ export async function getTopShops(limit = 10): Promise<BnShopDTO[]> {
 }
 
 /** Bosh sahifa uchun 5 xil feed — bir marta DBga borib qaytadi.
- *  profileId berilsa "Siz uchun" (rekomendatsiya) ham qo'shiladi. */
+ *  profileId berilsa "Siz uchun" (rekomendatsiya) ham qo'shiladi.
+ *  Ulgurji mahsulotlar: faqat BN do'kon egalari va admin'lar ko'radi. */
 export async function getHomeData(profileId: string | null = null) {
+    const seeWholesale = await viewerCanSeeWholesale(profileId);
+    const baseWhere = seeWholesale
+        ? { isActive: true, hidden: false }
+        : { isActive: true, hidden: false, isWholesale: false };
+
     const [markets, topShops, allProducts, forYou] = await Promise.all([
         getMarkets(6),
         getTopShops(10),
         prisma.bnProduct.findMany({
-            where: { isActive: true, hidden: false },
+            where: baseWhere,
             include: PRODUCT_INCLUDE,
             take: 200,   // yetarli — 4 feed × ko'p qator
             orderBy: { createdAt: "desc" },
@@ -252,7 +288,7 @@ export async function getShopBySlug(slug: string) {
     };
 }
 
-export async function getProductBySlug(slug: string) {
+export async function getProductBySlug(slug: string, profileId: string | null = null) {
     const p = await prisma.bnProduct.findUnique({
         where: { slug },
         include: PRODUCT_INCLUDE,
@@ -261,6 +297,11 @@ export async function getProductBySlug(slug: string) {
     // Ban/terminate qilingan do'kon mahsuloti — foydalanuvchilarga ko'rsatilmaydi
     if (!p.isActive || p.hidden) return null;
     if (p.shop && (p.shop as { status?: string }).status !== "APPROVED") return null;
+    // Ulgurji — faqat BN do'kon egalari va admin'lar ko'radi
+    if (p.isWholesale) {
+        const canSee = await viewerCanSeeWholesale(profileId);
+        if (!canSee) return null;
+    }
 
     // Ijtimoiy proof — oxirgi 7 kunda bu mahsulot uchun BnOrder items soni
     const weekAgo = new Date(Date.now() - 7 * 86400_000);
@@ -365,7 +406,7 @@ export const getCategoriesTree = unstable_cache(
     { revalidate: 600, tags: ["bn-categories"] },
 );
 
-export async function getCategoryBySlug(slug: string) {
+export async function getCategoryBySlug(slug: string, profileId: string | null = null) {
     const cat = await prisma.bnCategory.findUnique({
         where: { slug },
         include: {
@@ -379,12 +420,14 @@ export async function getCategoryBySlug(slug: string) {
     });
     if (!cat) return null;
 
+    const seeWholesale = await viewerCanSeeWholesale(profileId);
     // Mahsulotlar: bu kategoriya + pastki kategoriyalari
     const childIds = cat.children.map(c => c.id);
     const products = await prisma.bnProduct.findMany({
         where: {
             isActive: true, hidden: false,
             categoryId: { in: [cat.id, ...childIds] },
+            ...(seeWholesale ? {} : { isWholesale: false }),
         },
         include: PRODUCT_INCLUDE,
         orderBy: { createdAt: "desc" },
@@ -400,11 +443,21 @@ export async function searchProducts(opts: {
     marketSlug?: string;
     sort?: "cheap" | "new" | "rating" | "seasonal";
     limit?: number;
+    profileId?: string | null;
+    /** Faqat ulgurji mahsulotlar kerak (/bn/ulgurji sahifasi uchun) */
+    wholesaleOnly?: boolean;
 }): Promise<BnProductDTO[]> {
-    const { q, categorySlug, marketSlug, sort = "new", limit = 60 } = opts;
+    const { q, categorySlug, marketSlug, sort = "new", limit = 60, profileId = null, wholesaleOnly = false } = opts;
 
+    const seeWholesale = await viewerCanSeeWholesale(profileId);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = { isActive: true, hidden: false };
+    if (wholesaleOnly) {
+        if (!seeWholesale) return [];  // do'kon yo'q — bo'sh
+        where.isWholesale = true;
+    } else if (!seeWholesale) {
+        where.isWholesale = false;
+    }
     if (q?.trim()) {
         where.OR = [
             { title: { contains: q.trim(), mode: "insensitive" } },

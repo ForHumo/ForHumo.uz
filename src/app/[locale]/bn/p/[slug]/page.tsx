@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params;
-    const data = await getProductBySlug(slug);
+    const auth = await getBnAuth();
+    const data = await getProductBySlug(slug, auth?.profileId ?? null);
     if (!data) return { title: "Mahsulot topilmadi" };
     const p = data.product;
     return {
@@ -23,12 +24,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-    const data = await getProductBySlug(slug);
+    const auth = await getBnAuth();
+    const data = await getProductBySlug(slug, auth?.profileId ?? null);
     if (!data) notFound();
     const shopData = data.product.shopSlug ? await getShopBySlug(data.product.shopSlug) : null;
 
     // Rekomendatsiya signali — VIEW (kuchsiz, weight 1)
-    const auth = await getBnAuth();
     if (auth) {
         const productId = data.product.id;
         after(() => trackBnEvent({ profileId: auth.profileId, productId, type: "VIEW" }));

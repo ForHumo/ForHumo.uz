@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BnCatalog } from "@/components/bn/bn-catalog";
 import { BnVoiceSearchClient } from "@/components/bn/bn-voice-search-client";
 import { getMarkets, searchProducts } from "@/lib/bn-data";
+import { getBnAuth } from "@/lib/bn-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +18,10 @@ export default async function Page({
         return <BnVoiceSearchClient initialQuery={sp.q ?? ""} />;
     }
 
+    const auth = await getBnAuth();
     const sort = sp.sort === "cheap" ? "cheap" : "new";
     const [products, markets] = await Promise.all([
-        searchProducts({ q: sp.q, sort }),
+        searchProducts({ q: sp.q, sort, profileId: auth?.profileId ?? null }),
         getMarkets(20),
     ]);
     return (

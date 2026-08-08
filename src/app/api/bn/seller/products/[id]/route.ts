@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
+import { parseTiers } from "@/lib/bn-wholesale";
 
 export async function PATCH(
     req: Request,
@@ -41,6 +42,20 @@ export async function PATCH(
     if (typeof body?.categorySlug === "string") {
         const cat = await prisma.bnCategory.findUnique({ where: { slug: body.categorySlug }, select: { id: true } });
         if (cat) data.categoryId = cat.id;
+    }
+    if (typeof body?.isMature === "boolean") data.isMature = body.isMature;
+    if (typeof body?.isWholesale === "boolean") {
+        data.isWholesale = body.isWholesale;
+        if (!body.isWholesale) {
+            data.minWholesaleQty = null;
+            data.wholesaleTiers = [];
+        }
+    }
+    if (body?.minWholesaleQty !== undefined) {
+        data.minWholesaleQty = body.minWholesaleQty == null ? null : Math.max(2, Math.floor(Number(body.minWholesaleQty)));
+    }
+    if (body?.wholesaleTiers !== undefined) {
+        data.wholesaleTiers = parseTiers(body.wholesaleTiers);
     }
 
     const updated = await prisma.bnProduct.update({ where: { id }, data });

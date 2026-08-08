@@ -12,6 +12,8 @@ import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 import { trackBnEvent } from "@/lib/bn-events";
+import { viewerCanSeeWholesale } from "@/lib/bn-data";
+import { minQtyForProduct } from "@/lib/bn-wholesale";
 
 export async function GET() {
     const auth = await requireBnAuth();
@@ -69,13 +71,24 @@ export async function POST(req: Request) {
 
     const product = await prisma.bnProduct.findUnique({
         where: { id: productId },
-        select: { id: true, stock: true, isActive: true, hidden: true },
+        select: { id: true, stock: true, isActive: true, hidden: true, isWholesale: true, minWholesaleQty: true },
     });
     if (!product || !product.isActive || product.hidden) {
         return NextResponse.json({ error: "product_unavailable" }, { status: 404 });
     }
     if (product.stock < 1) {
         return NextResponse.json({ error: "out_of_stock" }, { status: 409 });
+    }
+    // Ulgurji: faqat do'kon egalari sotib oladi + min qty
+    if (product.isWholesale) {
+        const canBuy = await viewerCanSeeWholesale(auth.profileId);
+        if (!canBuy) {
+            return NextResponse.json({ error: "wholesale_shop_required", message: "Ulgurji mahsulotni faqat BN'da do'kon ochgan sotuvchilar sotib oladi" }, { status: 403 });
+        }
+        const minQty = minQtyForProduct(true, product.minWholesaleQty);
+        if (qty < minQty) {
+            return NextResponse.json({ error: "wholesale_min_qty", minQty, message: `Kamida ${minQty} dona buyurtma qilish shart` }, { status: 400 });
+        }
     }
 
     const existing = await prisma.bnCartItem.findUnique({
@@ -112,8 +125,15 @@ export async function PATCH(req: Request) {
 
     const product = await prisma.bnProduct.findUnique({
         where: { id: item.productId },
-        select: { stock: true },
+        select: { stock: true, isWholesale: true, minWholesaleQty: true },
     });
+    // Ulgurji: min qty pastga tushmasin
+    if (product?.isWholesale) {
+        const minQty = minQtyForProduct(true, product.minWholesaleQty);
+        if (qty < minQty) {
+            return NextResponse.json({ error: "wholesale_min_qty", minQty, message: `Kamida ${minQty} dona qolishi kerak` }, { status: 400 });
+        }
+    }
     const capped = Math.min(qty, product?.stock ?? qty);
 
     const updated = await prisma.bnCartItem.update({

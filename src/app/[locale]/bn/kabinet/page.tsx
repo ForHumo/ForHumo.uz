@@ -6,6 +6,7 @@ import {
 } from "@/components/bn/bn-cabinet";
 import { getBnAuth } from "@/lib/bn-auth";
 import { prisma } from "@/lib/prisma";
+import { computeShopVerification } from "@/lib/bn-verified";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseSchema(raw: any): { key: string; label: string; labelRu?: string; type: "text" | "number" | "select" | "multiselect" | "boolean"; options?: string[]; required?: boolean; filterable?: boolean; unit?: string }[] {
@@ -55,6 +56,11 @@ export default async function Page() {
         );
     }
 
+    // APPROVED bo'lsa live progress hisoblab beramiz (cron kutilmaydi)
+    const verifiedProgress = shopRaw.status === "APPROVED"
+        ? await computeShopVerification(shopRaw.id)
+        : null;
+
     const shop: CabinetShop = {
         id: shopRaw.id,
         slug: shopRaw.slug,
@@ -75,6 +81,8 @@ export default async function Page() {
         phone: shopRaw.phone,
         rejectReason: shopRaw.rejectReason,
         verified: shopRaw.phoneVerified,
+        verifiedTier: verifiedProgress?.tier ?? "NONE",
+        verifiedProgress: verifiedProgress,
     };
 
     // APPROVED emas — statistika/ro'yxatlar kerak emas

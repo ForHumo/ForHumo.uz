@@ -54,6 +54,23 @@ export interface CabinetShop {
     phone: string;
     rejectReason: string | null;
     verified: boolean;
+    verifiedTier?: "NONE" | "RETAIL" | "WHOLESALE";
+    verifiedProgress?: VerifiedProgress | null;
+}
+
+// Tasdiqlanganlik progress — server hisoblaydi, UI ko'rsatadi
+export interface VerifiedCriteria {
+    orders: { current: number; target: number; ok: boolean };
+    rating: { current: number; target: number; count: number; countTarget: number; ok: boolean };
+    rejection: { current: number; target: number; ok: boolean };
+    activeDays: { current: number; target: number; ok: boolean };
+    banFree: { ok: boolean };
+}
+export interface VerifiedProgress {
+    tier: "NONE" | "RETAIL" | "WHOLESALE";
+    retail: VerifiedCriteria & { qualified: boolean };
+    wholesale: VerifiedCriteria & { qualified: boolean };
+    uniqueBuyers?: { current: number; target: number; ok: boolean };
 }
 
 export interface CabinetStats {
@@ -349,6 +366,8 @@ function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetSta
                 <Stat icon={<Eye className="w-[18px] h-[18px]" />} label="Reyting" value={shop.rating > 0 ? shop.rating.toFixed(1) : "—"} hint={`${shop.ratingCount} baho`} />
             </div>
 
+            {shop.verifiedProgress && <VerifiedProgressCard progress={shop.verifiedProgress} />}
+
             {recent.length > 0 ? (
                 <div
                     className="p-5 rounded-2xl mb-6"
@@ -393,6 +412,96 @@ function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetSta
                 </div>
             </div>
         </>
+    );
+}
+
+// ── TASDIQLANGANLIK PROGRESS ────────────────────────────────────────────────
+
+function VerifiedProgressCard({ progress }: { progress: VerifiedProgress }) {
+    // Ustuvor darslik: agar RETAIL emas → RETAIL ni ko'rsatamiz; RETAIL bo'lsa WHOLESALE ni ko'rsatamiz
+    const target = progress.tier === "NONE" ? "retail" as const : "wholesale" as const;
+    const data = target === "retail" ? progress.retail : progress.wholesale;
+    const uniqueBuyers = target === "wholesale" ? progress.uniqueBuyers : undefined;
+
+    const rows: { label: string; ok: boolean; text: string }[] = [
+        { label: "Muvaffaqiyatli buyurtma", ok: data.orders.ok, text: `${data.orders.current} / ${data.orders.target}` },
+        { label: `Reyting (${data.rating.count} sharh)`, ok: data.rating.ok, text: `${data.rating.current.toFixed(2)} / ${data.rating.target}` },
+        { label: "Rad etilgan buyurtma", ok: data.rejection.ok, text: `${data.rejection.current}% (talab: <${data.rejection.target}%)` },
+        { label: "Faol muddat", ok: data.activeDays.ok, text: `${data.activeDays.current} / ${data.activeDays.target} kun` },
+        { label: "Ogohlantirish yo'q", ok: data.banFree.ok, text: data.banFree.ok ? "Ha" : "Bor" },
+    ];
+    if (uniqueBuyers) {
+        rows.push({ label: "Unikal xaridor", ok: uniqueBuyers.ok, text: `${uniqueBuyers.current} / ${uniqueBuyers.target}` });
+    }
+
+    const okCount = rows.filter(r => r.ok).length;
+    const percent = Math.round((okCount / rows.length) * 100);
+
+    const isAchieved = progress.tier !== "NONE";
+    const targetLabel = target === "retail" ? "Chakana sotuvchi galochkasi" : "Ulgurji sotuvchi galochkasi";
+
+    return (
+        <div
+            className="p-5 rounded-2xl mb-6"
+            style={{ background: BN.surface, border: `1px solid ${isAchieved ? BN.borderGold : BN.border}` }}
+        >
+            <div className="flex items-start gap-3 mb-4">
+                <span
+                    className="w-11 h-11 rounded-xl grid place-items-center flex-shrink-0"
+                    style={{ background: BN.goldSoft, color: BN.gold }}
+                >
+                    <ShieldCheck className="w-5 h-5" />
+                </span>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                        <p className="text-[14px] font-black">Tasdiqlanganlik belgisi</p>
+                        {progress.tier === "RETAIL" && (
+                            <span
+                                className="px-2 py-0.5 rounded-md text-[10.5px] font-black leading-none"
+                                style={{ background: `${BN.info}1F`, color: BN.info }}
+                            >
+                                Chakana ✓
+                            </span>
+                        )}
+                        {progress.tier === "WHOLESALE" && (
+                            <span
+                                className="px-2 py-0.5 rounded-md text-[10.5px] font-black leading-none"
+                                style={{ background: BN.goldSoft, color: BN.gold }}
+                            >
+                                Ulgurji ✓
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-[12px]" style={{ color: BN.text2 }}>
+                        {targetLabel} — {percent}% bajardingiz. Sotib olib bo'lmaydi, faqat natijaga qarab beriladi.
+                    </p>
+                </div>
+            </div>
+
+            <div className="mb-4 h-2 rounded-full overflow-hidden" style={{ background: BN.surfaceUp }}>
+                <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${percent}%`, background: percent === 100 ? BN.ok : BN.gold }}
+                />
+            </div>
+
+            <div className="space-y-2">
+                {rows.map((r, i) => (
+                    <div key={i} className="flex items-center gap-2 text-[12.5px]">
+                        <span
+                            className="w-5 h-5 rounded-full grid place-items-center flex-shrink-0"
+                            style={{ background: r.ok ? `${BN.ok}22` : `${BN.text3}22`, color: r.ok ? BN.ok : BN.text3 }}
+                        >
+                            {r.ok ? <Check className="w-3 h-3" strokeWidth={3} /> : <X className="w-3 h-3" strokeWidth={3} />}
+                        </span>
+                        <span className="flex-1" style={{ color: BN.text }}>{r.label}</span>
+                        <span className="font-black tabular-nums" style={{ color: r.ok ? BN.ok : BN.text2 }}>
+                            {r.text}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
 }
 
@@ -716,6 +825,9 @@ function CreateProductModal({
     const [allowInspect, setAllowInspect] = useState(true);
     const [isNegotiable, setIsNegotiable] = useState(false);
     const [isMature, setIsMature] = useState(false);
+    const [isWholesale, setIsWholesale] = useState(false);
+    const [minWholesaleQty, setMinWholesaleQty] = useState("20");
+    const [wholesaleTiers, setWholesaleTiers] = useState<{ minQty: string; price: string }[]>([]);
     const [busy, setBusy] = useState(false);
     const [aiBusy, setAiBusy] = useState(false);
     const [uploadBusy, setUploadBusy] = useState(false);
@@ -785,6 +897,13 @@ function CreateProductModal({
                     attributes: attrs,
                     isNegotiable,
                     isMature,
+                    isWholesale,
+                    minWholesaleQty: isWholesale ? Number(minWholesaleQty) || 2 : null,
+                    wholesaleTiers: isWholesale
+                        ? wholesaleTiers
+                            .map(t => ({ minQty: Number(t.minQty) || 0, price: Number(t.price) || 0 }))
+                            .filter(t => t.minQty > 0 && t.price > 0)
+                        : [],
                     allowPickup, allowDelivery, allowInspect,
                 }),
             });
@@ -971,8 +1090,86 @@ function CreateProductModal({
                             <ToggleRow checked={allowInspect} onChange={setAllowInspect} icon={<Eye className="w-4 h-4" />} label="Ko'rib sotib olish (24 soat band)" />
                             <ToggleRow checked={isNegotiable} onChange={setIsNegotiable} icon={<Building2 className="w-4 h-4" />} label="Narx kelishilishi mumkin" />
                             <ToggleRow checked={isMature} onChange={setIsMature} icon={<Eye className="w-4 h-4" />} label="18+ mahsulot (ichki kiyim, kondom, sog'liq)" />
+                            <ToggleRow checked={isWholesale} onChange={setIsWholesale} icon={<Package className="w-4 h-4" />} label="Ulgurji (faqat BN do'kon egalari sotib oladi)" />
                         </div>
                     </div>
+
+                    {isWholesale && (
+                        <div className="rounded-2xl p-3.5" style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}>
+                            <div className="flex items-center gap-2 mb-2.5">
+                                <ShieldCheck className="w-4 h-4" style={{ color: BN.gold }} />
+                                <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: BN.text3 }}>
+                                    Ulgurji sozlamalar
+                                </p>
+                            </div>
+
+                            <label className="block text-[12px] font-semibold mb-1.5" style={{ color: BN.text2 }}>
+                                Minimal buyurtma (dona)
+                            </label>
+                            <input
+                                type="number"
+                                min={2}
+                                value={minWholesaleQty}
+                                onChange={e => setMinWholesaleQty(e.target.value)}
+                                className="w-full h-11 rounded-xl px-3.5 text-[14px]"
+                                style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+                                placeholder="20"
+                            />
+                            <p className="text-[11px] mt-1" style={{ color: BN.text3 }}>
+                                Xaridor kamida shu miqdorda sotib olishi shart
+                            </p>
+
+                            <div className="mt-3.5">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="block text-[12px] font-semibold" style={{ color: BN.text2 }}>
+                                        Narx pog'onalari (ixtiyoriy)
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setWholesaleTiers(prev => [...prev, { minQty: "", price: "" }])}
+                                        className="flex items-center gap-1 text-[11px] font-black"
+                                        style={{ color: BN.gold }}
+                                    >
+                                        <Plus className="w-3.5 h-3.5" /> Pog'ona qo'shish
+                                    </button>
+                                </div>
+                                <p className="text-[11px] mb-2" style={{ color: BN.text3 }}>
+                                    Ko'proq olsa arzonroq. Misol: 20 dona → 8000 so'm; 50 dona → 7500 so'm.
+                                </p>
+                                {wholesaleTiers.map((tier, idx) => (
+                                    <div key={idx} className="flex gap-2 mb-2">
+                                        <input
+                                            type="number"
+                                            min={2}
+                                            placeholder="Miqdor"
+                                            value={tier.minQty}
+                                            onChange={e => setWholesaleTiers(prev => prev.map((t, i) => i === idx ? { ...t, minQty: e.target.value } : t))}
+                                            className="flex-1 h-10 rounded-lg px-3 text-[13px]"
+                                            style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+                                        />
+                                        <input
+                                            type="number"
+                                            min={1000}
+                                            placeholder="Narx (so'm)"
+                                            value={tier.price}
+                                            onChange={e => setWholesaleTiers(prev => prev.map((t, i) => i === idx ? { ...t, price: e.target.value } : t))}
+                                            className="flex-1 h-10 rounded-lg px-3 text-[13px]"
+                                            style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setWholesaleTiers(prev => prev.filter((_, i) => i !== idx))}
+                                            className="w-10 h-10 grid place-items-center rounded-lg"
+                                            style={{ background: BN.errSoft, color: BN.err }}
+                                            aria-label="O'chirish"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {err && (
                         <div className="p-3 rounded-xl text-[12.5px]" style={{ background: BN.errSoft, color: BN.err }}>
