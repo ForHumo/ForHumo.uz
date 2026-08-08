@@ -72,6 +72,8 @@ export interface BnProductDTO {
     rating: number;
     ratingCount: number;
     attributes: Record<string, string | number | boolean>;
+    /** 18+ tovar (ichki kiyim, kondom, sog'liq buyumi). UI'da xiralashadi. */
+    isMature?: boolean;
 }
 
 // ── Xaritalash: DB → DTO ────────────────────────────────────────────────────
@@ -136,6 +138,7 @@ function toProductDTO(p: ProductWithRels): BnProductDTO {
         rating: p.rating,
         ratingCount: p.ratingCount,
         attributes: (p.attributes as Record<string, string | number | boolean>) ?? {},
+        isMature: p.isMature ?? false,
     };
 }
 

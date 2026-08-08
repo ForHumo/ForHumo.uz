@@ -27,6 +27,7 @@ export interface ProductCardData {
     allowDelivery: boolean;
     allowInspect: boolean;
     stock: number;
+    isMature?: boolean;             // 18+ — rasmi xiralashtiriladi
 }
 
 /** Foydalanuvchi qarori bo'yicha kontekst matni:
@@ -108,6 +109,7 @@ export function BnProductCard({
                         alt={p.title}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+                        style={p.isMature ? { filter: "blur(18px)" } : undefined}
                     />
                 ) : (
                     <div className="w-full h-full grid place-items-center" style={{ color: BN.text3 }}>
@@ -115,8 +117,18 @@ export function BnProductCard({
                     </div>
                 )}
 
+                {/* 18+ belgi */}
+                {p.isMature && (
+                    <span
+                        className="absolute top-2 left-2 px-2 py-1 rounded-lg text-[11px] font-black leading-none"
+                        style={{ background: "#ef4444", color: "#fff" }}
+                    >
+                        18+
+                    </span>
+                )}
+
                 {/* Arzon belgisi — BN ning asosiy va'dasi */}
-                {showDiff && (
+                {showDiff && !p.isMature && (
                     <span
                         className="absolute top-2 left-2 px-2 py-1 rounded-lg text-[10.5px] font-black leading-none"
                         style={{ background: BN.ok, color: BN.onGold }}

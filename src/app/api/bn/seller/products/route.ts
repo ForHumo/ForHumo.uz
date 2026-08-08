@@ -100,6 +100,7 @@ export async function POST(req: Request) {
             allowPickup:  body?.allowPickup === false ? false : true,
             allowDelivery: !!body?.allowDelivery,
             allowInspect:  body?.allowInspect === false ? false : true,
+            isMature: !!body?.isMature,
             isActive: true,
             hidden: false,
         },
@@ -124,6 +125,12 @@ export async function POST(req: Request) {
             await prisma.bnProduct.update({
                 where: { id: product.id },
                 data: { isActive: false, hidden: true },
+            });
+        } else if (bnRes && bnRes.isMature && !product.isMature) {
+            // AI 18+ deb aniqladi, sotuvchi belgilamagan — avto belgilaymiz
+            await prisma.bnProduct.update({
+                where: { id: product.id },
+                data: { isMature: true },
             });
         }
         // Umumiy moderatsiya (ModerationFlag yozadi, admin ko'radi)

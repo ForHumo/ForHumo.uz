@@ -2096,6 +2096,11 @@ model BnProduct {
   allowDelivery  Boolean           @default(false)
   allowInspect   Boolean           @default(true)  // "ko'rib sotib olish"
 
+  // 18+ tovar (masalan ichki kiyim, kondom, sog'liq buyumlari). Xiralashtirib
+  // ko'rsatiladi, foydalanuvchi tasdig'i bilan ochiladi. Diniga ZID mahsulot
+  // umuman taqiqlanadi (bu flag emas — BLOCK bo'ladi).
+  isMature       Boolean           @default(false)
+
   // Bozor narxi — BN ning asosiy va'dasi
   marketAvgPrice Int?                              // o'xshash mahsulotlar o'rtachasi
   priceRank      String?                           // "cheap" | "fair" | "expensive"

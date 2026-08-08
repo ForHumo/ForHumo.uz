@@ -715,6 +715,7 @@ function CreateProductModal({
     const [allowDelivery, setAllowDelivery] = useState(false);
     const [allowInspect, setAllowInspect] = useState(true);
     const [isNegotiable, setIsNegotiable] = useState(false);
+    const [isMature, setIsMature] = useState(false);
     const [busy, setBusy] = useState(false);
     const [aiBusy, setAiBusy] = useState(false);
     const [uploadBusy, setUploadBusy] = useState(false);
@@ -783,6 +784,7 @@ function CreateProductModal({
                     images,
                     attributes: attrs,
                     isNegotiable,
+                    isMature,
                     allowPickup, allowDelivery, allowInspect,
                 }),
             });
@@ -968,6 +970,7 @@ function CreateProductModal({
                             <ToggleRow checked={allowDelivery} onChange={setAllowDelivery} icon={<Truck className="w-4 h-4" />} label="Yetkazib berish" />
                             <ToggleRow checked={allowInspect} onChange={setAllowInspect} icon={<Eye className="w-4 h-4" />} label="Ko'rib sotib olish (24 soat band)" />
                             <ToggleRow checked={isNegotiable} onChange={setIsNegotiable} icon={<Building2 className="w-4 h-4" />} label="Narx kelishilishi mumkin" />
+                            <ToggleRow checked={isMature} onChange={setIsMature} icon={<Eye className="w-4 h-4" />} label="18+ mahsulot (ichki kiyim, kondom, sog'liq)" />
                         </div>
                     </div>
 

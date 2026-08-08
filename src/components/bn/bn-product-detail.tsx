@@ -59,6 +59,18 @@ export function BnProductDetail({
     const [favBusy, setFavBusy] = useState(false);
     const [priceWatch, setPriceWatch] = useState(false);
     const [pwBusy, setPwBusy] = useState(false);
+    // 18+ tovar — foydalanuvchi tasdiqlagunicha rasm xiralashadi
+    const [matureRevealed, setMatureRevealed] = useState(false);
+    useEffect(() => {
+        if (!p.isMature) { setMatureRevealed(true); return; }
+        try {
+            if (localStorage.getItem("bn-mature-accepted") === "1") setMatureRevealed(true);
+        } catch {}
+    }, [p.isMature]);
+    function acceptMature() {
+        try { localStorage.setItem("bn-mature-accepted", "1"); } catch {}
+        setMatureRevealed(true);
+    }
 
     const rank = priceRankOf(p.price, p.marketAvgPrice);
     const rankMeta = rank ? PRICE_RANK_META[rank] : null;
@@ -186,10 +198,33 @@ export function BnProductDetail({
                     >
                         {p.images[imgIdx] ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={p.images[imgIdx]} alt={p.title} className="w-full h-full object-cover" />
+                            <img
+                                src={p.images[imgIdx]}
+                                alt={p.title}
+                                className="w-full h-full object-cover"
+                                style={p.isMature && !matureRevealed ? { filter: "blur(24px)" } : undefined}
+                            />
                         ) : (
                             <div className="w-full h-full grid place-items-center" style={{ color: BN.text3 }}>
                                 <Package className="w-12 h-12" />
+                            </div>
+                        )}
+                        {p.isMature && !matureRevealed && (
+                            <div className="absolute inset-0 grid place-items-center p-4" style={{ background: "rgba(0,0,0,0.55)" }}>
+                                <div className="max-w-sm text-center">
+                                    <span className="inline-block px-3 py-1 rounded-full text-[12px] font-black mb-3" style={{ background: "#ef4444", color: "#fff" }}>18+ tovar</span>
+                                    <p className="text-[15px] font-bold mb-1">Bu mahsulot balog'atga yetganlar uchun</p>
+                                    <p className="text-[13px] mb-4" style={{ color: BN.text2 }}>
+                                        Ko'rishni davom ettirasizmi?
+                                    </p>
+                                    <button
+                                        onClick={acceptMature}
+                                        className="w-full h-11 rounded-xl text-[14px] font-bold"
+                                        style={{ background: BN.gold, color: BN.onGold }}
+                                    >
+                                        Ha, davom etaman
+                                    </button>
+                                </div>
                             </div>
                         )}
                         {p.images.length > 1 && (
