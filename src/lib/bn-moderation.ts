@@ -43,21 +43,34 @@ const FORBIDDEN: Array<{ category: string; label: string; patterns: RegExp[]; se
         label: "Alkogol",
         severity: 0.9,
         patterns: [
-            /\bvodka\b/iu,
-            /\bviski\b/iu,
-            /\bwhiskey\b/iu,
-            /\bwine\b/iu,
-            /\bvino\b/iu,
-            /\bpivo\b/iu,
-            /\bbeer\b/iu,
-            /\bконьяк\b/iu,
-            /\bkonyak\b/iu,
-            /\bshampan/iu,
-            /\bшампан/iu,
-            /\bспирт\b/iu,
-            /\bspirt\b/iu,
-            /\balkogol/iu,
-            /\bалкоголь\b/iu,
+            // O'zbekcha
+            /\baroq\b/iu, /\barok\b/iu, /\barak\b/iu,
+            /\bmusalas\b/iu, /\bмусаллас/iu,      // musalas — uzum vinosi
+            /\bpivo\b/iu, /\bпиво/iu,
+            /\bkonyak\b/iu, /\bконьяк/iu,
+            /\bshampan/iu, /\bшампан/iu,
+            /\bspirt\b/iu, /\bспирт/iu,
+            /\balkogol/iu, /\bалкоголь/iu,
+            /\bmartini\b/iu, /\bмартини/iu,
+            /\bjigulyov/iu, /\bжигулёвск/iu,       // pivo brendi
+            /\bbaltika\b/iu, /\bбалтика/iu,        // pivo brendi
+            /\bqoraqizil\s+vino/iu,                // qora qizil vino (mahsulot nomi)
+            /\bqizil\s+vino/iu,
+            /\boq\s+vino/iu,
+            // Ruscha
+            /\bвино\b/iu, /\bвиски/iu,
+            /\bром\b/iu, /\bтекила/iu, /\bджин\b/iu,
+            /\bликер/iu, /\bликёр/iu,
+            /\bсамогон/iu,
+            /\bслабоалкогольн/iu,
+            // Inglizcha
+            /\bvodka\b/iu, /\bviski\b/iu, /\bwhiskey\b/iu,
+            /\bwine\b/iu, /\bvino\b/iu,
+            /\bbeer\b/iu, /\bale\b/iu, /\blager\b/iu,
+            /\btequila\b/iu, /\brum\b/iu, /\bgin\b/iu,
+            /\bcocktail\b/iu, /\bkokteyl/iu, /\bкоктейль/iu,
+            /\bchampagne/iu, /\bprosecco/iu,
+            /\bliqueur/iu, /\bliquor/iu,
         ],
     },
     {
