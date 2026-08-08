@@ -119,12 +119,12 @@ export default async function LocaleLayout({
                 <NextIntlClientProvider messages={messages}>
                     <Providers>
                         <AuthBarrier publicHost={publicHost}>
-                            <BackgroundEffects />
-                            <Header />
+                            {!publicHost && <BackgroundEffects />}
+                            {!publicHost && <Header />}
                             <main className="flex-1 w-full max-w-[100vw] overflow-x-hidden">
                                 {children}
                             </main>
-                            <Footer />
+                            {!publicHost && <Footer />}
                         </AuthBarrier>
                     </Providers>
                 </NextIntlClientProvider>
