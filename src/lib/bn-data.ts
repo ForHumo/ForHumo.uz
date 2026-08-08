@@ -185,9 +185,10 @@ export async function getTopShops(limit = 10): Promise<BnShopDTO[]> {
     return sorted.map(s => toShopDTO(s));
 }
 
-/** Bosh sahifa uchun 4 xil feed — bir marta DBga borib qaytadi. */
-export async function getHomeData() {
-    const [markets, topShops, allProducts] = await Promise.all([
+/** Bosh sahifa uchun 5 xil feed — bir marta DBga borib qaytadi.
+ *  profileId berilsa "Siz uchun" (rekomendatsiya) ham qo'shiladi. */
+export async function getHomeData(profileId: string | null = null) {
+    const [markets, topShops, allProducts, forYou] = await Promise.all([
         getMarkets(6),
         getTopShops(10),
         prisma.bnProduct.findMany({
@@ -196,6 +197,7 @@ export async function getHomeData() {
             take: 200,   // yetarli — 4 feed × ko'p qator
             orderBy: { createdAt: "desc" },
         }),
+        profileId ? getRecommendedProducts(profileId, 12) : Promise.resolve([] as BnProductDTO[]),
     ]);
 
     const productDTOs = allProducts.map(toProductDTO);
@@ -209,7 +211,7 @@ export async function getHomeData() {
         ["kiyim", "sport", "uy"].some(k => p.categorySlug.startsWith(k))
     );
 
-    return { markets, topShops, cheap, fresh, top, seasonal };
+    return { markets, topShops, cheap, fresh, top, seasonal, forYou };
 }
 
 export async function getMarketBySlug(slug: string) {
@@ -438,4 +440,41 @@ export async function searchProducts(opts: {
         return dtos.filter(p => ["kiyim", "sport", "uy"].some(k => p.categorySlug.startsWith(k)));
     }
     return dtos;
+}
+
+// ── Rekomendatsiya: "Siz uchun" ──────────────────────────────────────────────
+// Foydalanuvchi qiziqishi asosida top mahsulotlar. Cold start (interest yo'q)
+// bo'lsa reyting+sold asosida trend qaytaradi.
+
+import { getUserInterest, scoreProduct, type RankableProduct } from "@/lib/bn-rank";
+
+export async function getRecommendedProducts(profileId: string | null, limit = 12): Promise<BnProductDTO[]> {
+    // Nomzodlar: oxirgi 200 faol mahsulot (yaqin, sifatli)
+    const candidates = await prisma.bnProduct.findMany({
+        where: {
+            isActive: true, hidden: false,
+            shop: { status: "APPROVED" },
+        },
+        include: {
+            category: { select: { slug: true, parentId: true, parent: { select: { slug: true } } } },
+            shop: { select: { id: true, slug: true, name: true, tier: true, marketId: true, city: true, market: { select: { name: true } } } },
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 200,
+    });
+
+    const interest = await getUserInterest(profileId);
+    // Har mahsulot uchun ball
+    const scored = candidates.map(p => ({
+        p,
+        score: scoreProduct(p as unknown as RankableProduct, interest),
+    }));
+    // Ball bo'yicha saralab, top N
+    scored.sort((a, b) => b.score - a.score);
+    const top = scored.slice(0, limit).map(x => x.p);
+    // DTO ga aylantiramiz — mavjud toProductDTO'ga mos qilib
+    return top.map(p => {
+        const shape = { ...p, shop: p.shop ? { ...p.shop, status: "APPROVED" as const } : null };
+        return toProductDTO(shape as unknown as ProductWithRels);
+    });
 }

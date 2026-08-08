@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 import { BnProductDetail } from "@/components/bn/bn-product-detail";
 import { getProductBySlug, getShopBySlug } from "@/lib/bn-data";
 import { BnProductLd, BnBreadcrumbLd } from "@/components/bn/bn-jsonld";
+import { getBnAuth } from "@/lib/bn-auth";
+import { trackBnEvent } from "@/lib/bn-events";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +26,13 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     const data = await getProductBySlug(slug);
     if (!data) notFound();
     const shopData = data.product.shopSlug ? await getShopBySlug(data.product.shopSlug) : null;
+
+    // Rekomendatsiya signali — VIEW (kuchsiz, weight 1)
+    const auth = await getBnAuth();
+    if (auth) {
+        const productId = data.product.id;
+        after(() => trackBnEvent({ profileId: auth.profileId, productId, type: "VIEW" }));
+    }
     const p = data.product;
     return (
         <>

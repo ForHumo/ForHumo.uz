@@ -5,7 +5,8 @@
 //   GET   /api/bn/favorites?ids=id1,id2,...     — bir necha mahsulot statusini bir requestda tekshirish
 //                                                  { statuses: {id: boolean} }
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+import { trackBnEvent } from "@/lib/bn-events";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth, getBnAuth } from "@/lib/bn-auth";
 
@@ -119,6 +120,9 @@ export async function POST(req: Request) {
         }
     }
 
+    if (favored) {
+        after(() => trackBnEvent({ profileId: auth.profileId, productId, type: "FAV" }));
+    }
     const count = await prisma.bnFavorite.count({ where: { profileId: auth.profileId } });
     return NextResponse.json({ ok: true, favored, count });
 }

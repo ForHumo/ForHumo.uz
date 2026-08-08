@@ -28,10 +28,11 @@ export interface BnHomeInitial {
     fresh: BnProductDTO[];
     top: BnProductDTO[];
     seasonal: BnProductDTO[];
+    forYou?: BnProductDTO[];
 }
 
 export function BnHome({ initial }: { initial: BnHomeInitial }) {
-    const { markets, topShops, cheap, fresh, top, seasonal } = initial;
+    const { markets, topShops, cheap, fresh, top, seasonal, forYou } = initial;
 
     // ── Mahsulotlar filtri (LiquidGlassNavbar bilan) ────────────────────────
     const [filter, setFilter] = useState<FilterKey>("cheap");
@@ -75,6 +76,17 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
                     cover={markets[2]?.coverUrl ?? markets[0]?.coverUrl ?? "https://picsum.photos/seed/bn-fallback-2/800/800"}
                 />
             </section>
+
+            {/* ── Siz uchun (personalizatsiya) — faqat kirganlar uchun ── */}
+            {forYou && forYou.length > 0 && (
+                <ProductSection
+                    title="Siz uchun"
+                    subtitle="Qiziqishlaringiz asosida AI tavsiya qildi"
+                    icon={<Sparkles className="w-[18px] h-[18px]" />}
+                    href="/qidiruv?sort=recommended"
+                    items={forYou}
+                />
+            )}
 
             {/* ── TOP 10 ishonchli do'kon ── */}
             <section className="mb-10">

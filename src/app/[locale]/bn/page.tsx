@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BnHome } from "@/components/bn/bn-home";
 import { getHomeData } from "@/lib/bn-data";
 import { BnOrgLd, BnWebsiteLd } from "@/components/bn/bn-jsonld";
+import { getBnAuth } from "@/lib/bn-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,8 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-    const data = await getHomeData();
+    const auth = await getBnAuth();
+    const data = await getHomeData(auth?.profileId ?? null);
     return (
         <>
             <BnOrgLd />

@@ -17,11 +17,12 @@
 //   6. Savatni tozalaydi
 //   7. Barchasi bitta $transaction ichida — hech biri bajarilmasa hech biri o'zgarmaydi
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 import { getOrCreateWalletTx } from "@/lib/wallet";
 import { orderRef } from "@/lib/bn-settle";
+import { trackBnEvent } from "@/lib/bn-events";
 
 const DELIVERY_FEE = 20_000;   // Toshkent — flat tarif (FAZA 6 da API bilan almashtiriladi)
 
@@ -196,6 +197,14 @@ export async function POST(req: Request) {
         }
         return NextResponse.json({ error: "checkout_failed", detail: msg }, { status: 500 });
     }
+
+    // Rekomendatsiya signali — PURCHASE (eng kuchli, weight 10)
+    const purchasedIds = cartItems.map(i => i.productId);
+    after(async () => {
+        for (const pid of purchasedIds) {
+            await trackBnEvent({ profileId: auth.profileId, productId: pid, type: "PURCHASE" });
+        }
+    });
 
     return NextResponse.json({
         ok: true,

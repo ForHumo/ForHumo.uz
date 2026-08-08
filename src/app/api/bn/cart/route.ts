@@ -8,9 +8,10 @@
 // Idempotent qo'shish: profileId+productId unique — qayta bosilsa qty += qty
 // yoki mavjud qiymatga tenglashadi (POST body'ida `set: true` bo'lsa).
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
+import { trackBnEvent } from "@/lib/bn-events";
 
 export async function GET() {
     const auth = await requireBnAuth();
@@ -90,6 +91,8 @@ export async function POST(req: Request) {
     });
 
     const count = await prisma.bnCartItem.count({ where: { profileId: auth.profileId } });
+    // Rekomendatsiya signali (fail-safe, javobni kechiktirmaydi)
+    after(() => trackBnEvent({ profileId: auth.profileId, productId, type: "CART" }));
     return NextResponse.json({ ok: true, item, count });
 }
 

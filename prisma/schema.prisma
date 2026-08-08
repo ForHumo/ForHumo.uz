@@ -2038,6 +2038,52 @@ enum BnTerminationRequestStatus {
   APPROVED
   REJECTED
 }
+
+// ── Rekomendatsiya tizim ─────────────────────────────────────────────────────
+// Foydalanuvchi hodisalari — mahsulot bilan har o'zaro ta'sir. Kunlik cron
+// bularni yig'ib qiziqish vektoriga aylantiradi (BnInterest).
+
+model BnUserEvent {
+  id         String          @id @default(cuid())
+  profileId  String
+  productId  String
+  type       BnEventType
+  weight     Float           @default(1)   // signal darajasi (VIEW=1, CART=3, FAV=4, PURCHASE=10)
+  createdAt  DateTime        @default(now())
+
+  @@index([profileId, createdAt])
+  @@index([productId, createdAt])
+  @@index([type, createdAt])
+}
+
+enum BnEventType {
+  VIEW
+  CART
+  FAV
+  PURCHASE
+}
+
+// Foydalanuvchining qiziqish vektori — kunlik cron hisoblab yozadi.
+// Cold start yoki hech qanday event yo'q bo'lsa null bo'ladi.
+model BnInterest {
+  id              String   @id @default(cuid())
+  profileId       String   @unique
+  // JSON: { "elektronika": 8.5, "kiyim": 3.2, ... } — kategoriya slug → score
+  categoryScores  Json     @default("{}")
+  // JSON: { "shopId1": 5.5, "shopId2": 2.1, ... }
+  shopScores      Json     @default("{}")
+  // JSON: { "marketId1": 4.0, ... }
+  marketScores    Json     @default("{}")
+  // Foydalanuvchi o'rtacha narx tanlovi
+  avgPrice        Int?
+  minPrice        Int?
+  maxPrice        Int?
+  // Foydalanuvchi ko'p ishlatgan atributlar (masalan: brand=Samsung)
+  attrScores      Json     @default("{}")
+  updatedAt       DateTime @updatedAt
+
+  @@index([updatedAt])
+}
 enum BnShopTier {
   NEW
   TRUSTED
