@@ -56,25 +56,17 @@ export function BnLegalPage({
                 {children}
             </article>
 
-            <style jsx global>{`
-                .prose-bn h2 {
-                    font-size: 20px; font-weight: 800; letter-spacing: -0.01em;
-                    margin: 28px 0 10px; color: #fff;
-                }
-                .prose-bn h3 {
-                    font-size: 16px; font-weight: 700; margin: 20px 0 8px; color: #fff;
-                }
+            <style dangerouslySetInnerHTML={{ __html: `
+                .prose-bn h2 { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; margin: 28px 0 10px; color: #fff; }
+                .prose-bn h3 { font-size: 16px; font-weight: 700; margin: 20px 0 8px; color: #fff; }
                 .prose-bn p { margin: 8px 0; }
                 .prose-bn ul { list-style: disc; padding-left: 22px; margin: 8px 0; }
                 .prose-bn ol { list-style: decimal; padding-left: 22px; margin: 8px 0; }
                 .prose-bn li { margin: 4px 0; }
                 .prose-bn a { color: #60a5fa; text-decoration: underline; }
                 .prose-bn strong { color: #fff; font-weight: 700; }
-                .prose-bn hr {
-                    border: none; border-top: 1px solid rgba(255,255,255,0.08);
-                    margin: 24px 0;
-                }
-            `}</style>
+                .prose-bn hr { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 24px 0; }
+            ` }} />
         </div>
     );
 }
