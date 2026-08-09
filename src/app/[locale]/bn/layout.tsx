@@ -31,7 +31,12 @@ export const metadata: Metadata = {
     applicationName: "Bozor Narxida",
     manifest: "/manifest.webmanifest",
     icons: {
-        icon: "/bn/favicon.png",
+        icon: [
+            { url: "/bn/favicon.ico", sizes: "any" },
+            { url: "/bn/favicon.png", type: "image/png", sizes: "32x32" },
+            { url: "/bn/icon-192.png", type: "image/png", sizes: "192x192" },
+            { url: "/bn/icon-512.png", type: "image/png", sizes: "512x512" },
+        ],
         apple: "/bn/apple-icon.png",
     },
     openGraph: {

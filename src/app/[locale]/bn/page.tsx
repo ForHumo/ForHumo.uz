@@ -6,8 +6,10 @@ import { getBnAuth } from "@/lib/bn-auth";
 
 export const dynamic = "force-dynamic";
 
-// Bosh sahifada template ishlatmaymiz — to'liq title layout metadatasidan (default).
+// Bosh sahifa: absolute — root layout template ("%s | For Humo")ni chetlab o'tamiz,
+// aks holda "Bozor Narxida | For Humo | For Humo" bo'lib qoladi.
 export const metadata: Metadata = {
+    title: { absolute: "Bozor Narxida | For Humo" },
     description:
         "O'zbekiston bozorlari va do'konlari onlayn. Har mahsulot narxi bozor o'rtachasi bilan solishtiriladi. "
         + "Ko'rib sotib olish, xavfsiz to'lov, rasmiy sotuvchilar.",
