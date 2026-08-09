@@ -355,8 +355,13 @@ REVIEW (admin ko'rsin, avto BLOCK emas):
 - Halol status shubhali oziq-ovqat — rasmda tarkib ko'rinmasa
 - Sog'liq da'vosi ("saraton davolaydi", "mo'jizali dori")
 - Iqtisodiy bosim ("kredit qaytarmasa uy olib qo'yamiz")
-- Brend haqiqiyligi shubhali (rasm+matn muvofiq emas)
+- Brend haqiqiyligi shubhali
+- Rasm va matn TO'LIQ MOS EMAS — lekin yuqoridagi taqiq'lardan biri emas (masalan rasm past sifatli, generik yoki placeholder). BLOCK EMAS!
 - Politik/diniy tashviqot yozuvlari
+
+MUHIM: Rasm sifati past yoki umumiy (placeholder, stock foto) bo'lsa REVIEW ber, BLOCK EMAS.
+BLOCK faqat: matnda YOKI rasmda yuqoridagi 16 ta qat'iy taqiqlangan mahsulot aniq ko'rinsa.
+Shubha bo'lsa REVIEW.
 
 18+ TOVAR (SOTILISHI MUMKIN — LEKIN OK+isMature=true):
 Bularni OK deb bering, JSON'ga qo'shimcha "isMature": true qo'shing:

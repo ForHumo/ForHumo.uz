@@ -125,18 +125,25 @@ export async function POST(req: Request) {
 
     // Pre-publish AI moderatsiya — javobni kechiktirmaydi (after).
     // BN-spetsifik strict moderatsiya (rasm+matn birga).
+    // AUTO-HIDE faqat: kalit-so'z BLOCK (yuqori ishonch) YOKI AI BLOCK + severity >= 0.85.
+    // Aks holda REVIEW navbatiga tushadi (admin ko'radi), avtomatik yashirilmaydi.
+    // Sabab: false-positive yuqori narxga tushiradi (Michelin shina rasmi picsum bo'lsa ham block bo'lmasin).
     after(async () => {
         const bnRes = await moderateBnProduct({
             title: product.title,
             description: product.description,
             imageUrl: product.images?.[0] ?? null,
         });
-        // BLOCK bo'lsa avtomatik yashirish
-        if (bnRes && bnRes.verdict === "BLOCK") {
+        const shouldAutoHide = bnRes && bnRes.verdict === "BLOCK" && (
+            !!bnRes.keywordHit || bnRes.severity >= 0.85
+        );
+        if (shouldAutoHide) {
             await prisma.bnProduct.update({
                 where: { id: product.id },
                 data: { isActive: false, hidden: true },
             });
+            // eslint-disable-next-line no-console
+            console.log(`[bn-moderation] AUTO-HIDE product=${product.id} reason="${bnRes!.reason}" severity=${bnRes!.severity} keyword=${bnRes!.keywordHit?.label ?? "—"}`);
         } else if (bnRes && bnRes.isMature && !product.isMature) {
             // AI 18+ deb aniqladi, sotuvchi belgilamagan — avto belgilaymiz
             await prisma.bnProduct.update({
@@ -145,6 +152,7 @@ export async function POST(req: Request) {
             });
         }
         // Umumiy moderatsiya (ModerationFlag yozadi, admin ko'radi)
+        // BLOCK bo'lsa ham REVIEW bo'lsa ham — admin navbatga tushadi.
         await moderateOnCreate({
             module: "BN",
             targetType: "BN_PRODUCT",

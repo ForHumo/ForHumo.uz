@@ -46,7 +46,9 @@ export async function GET(req: Request) {
             });
             checked++;
             if (!res) continue;
-            if (res.verdict === "BLOCK") {
+            // Auto-hide faqat yuqori ishonch bilan: kalit-so'z BLOCK yoki AI severity >= 0.85
+            const shouldAutoHide = res.verdict === "BLOCK" && (!!res.keywordHit || res.severity >= 0.85);
+            if (shouldAutoHide) {
                 await prisma.bnProduct.update({
                     where: { id: p.id },
                     data: { isActive: false, hidden: true },
@@ -61,7 +63,8 @@ export async function GET(req: Request) {
                     },
                 });
                 blocked++;
-            } else if (res.verdict === "REVIEW") {
+            } else if (res.verdict === "REVIEW" || res.verdict === "BLOCK") {
+                // BLOCK past ishonch bilan ham REVIEW navbatiga tushadi (admin qaror qiladi)
                 await prisma.moderationFlag.upsert({
                     where: { module_targetType_targetId: { module: "BN", targetType: "BN_PRODUCT", targetId: p.id } },
                     update: { aiVerdict: "REVIEW", aiSeverity: res.severity, aiReason: res.reason || "Cron re-check" },
