@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { after } from "next/server";
 import { notify } from "@/lib/market-notify";
 import { settleOrder } from "@/lib/market-settle";
+import { triggerMarketReviewRequest } from "@/lib/market-agent-trigger";
 
 // POST /api/market/orders/[id]/accept — xaridor buyurtmani qabul qildi
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -46,6 +48,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
             image: item.product.images?.[0],
         });
     }
+
+    // @market_agent xaridorga sharh so'rovi DM yuboradi (har mahsulotga alohida karta)
+    after(() => triggerMarketReviewRequest(order.id));
 
     return NextResponse.json({ ok: true, status: "DELIVERED" });
 }

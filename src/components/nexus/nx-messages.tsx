@@ -4,8 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet } from "lucide-react";
+import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag } from "lucide-react";
 import { formatMoney } from "@/lib/money";
+import Image from "next/image";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 import { usePresence } from "@/lib/presence";
 import { upload } from "@vercel/blob/client";
@@ -24,6 +25,15 @@ interface Msg {
     pollQuestion?: string | null; pollOptions?: string[]; pollExpiresAt?: string | null; pollMulti?: boolean;
     pollVoteCounts?: number[] | null; pollMyVotes?: number[] | null; pollTotal?: number | null;
     transferAmount?: number | null; transferCurrency?: string | null; transferNote?: string | null;
+    // Agent (bot) xabari
+    agentKind?: string | null;
+    agentPayload?: {
+        kind?: string; productId?: string; productSlug?: string;
+        title?: string; image?: string | null; price?: number; currency?: string;
+        requestedRating?: boolean; orderId?: string; body?: string;
+    } | null;
+    agentActionRef?: string | null;
+    myRating?: number | null;
 }
 interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isMe: boolean }
 
@@ -828,6 +838,11 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                                 );
                                             })()
                                         )}
+                                        {m.mediaType === "agent" && m.agentPayload && m.agentPayload.kind === "product-review" && (
+                                            <AgentReviewCard message={m} onRated={(rev) => {
+                                                setMessages(prev => prev.map(x => x.id === m.id ? { ...x, agentActionRef: rev.id, myRating: rev.rating } : x));
+                                            }} />
+                                        )}
                                         {m.mediaType === "transfer" && m.transferAmount && m.transferCurrency && (
                                             <div className="px-3.5 py-3 min-w-[240px]">
                                                 <div className="flex items-center gap-3">
@@ -1172,5 +1187,104 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 </div>
             </div>
         </>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AgentReviewCard — @market_agent "product-review" xabari uchun UI
+// (mahsulot rasmi + nom + narx + 5 yulduz). Yulduz bosilsa POST agent-action.
+// ─────────────────────────────────────────────────────────────────────────────
+function AgentReviewCard({
+    message, onRated,
+}: {
+    message: Msg;
+    onRated: (review: { id: string; rating: number }) => void;
+}) {
+    const p = message.agentPayload!;
+    const [rating, setRating] = useState<number>(message.myRating ?? 0);
+    const [hover, setHover] = useState<number>(0);
+    const [busy, setBusy] = useState(false);
+    const [confirmed, setConfirmed] = useState<boolean>(!!message.agentActionRef);
+
+    async function submit(stars: number) {
+        setBusy(true);
+        try {
+            const r = await fetch(`/api/nexus/messages/${message.id}/agent-action`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ rating: stars }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setRating(stars);
+                setConfirmed(true);
+                if (d.review) onRated({ id: d.review.id, rating: d.review.rating });
+            }
+        } finally { setBusy(false); }
+    }
+
+    const showStars = hover || rating;
+
+    return (
+        <div className="px-3 py-3 min-w-[260px] max-w-[340px]">
+            {/* Mahsulot */}
+            <div className="flex items-center gap-3 mb-3">
+                <div className="w-14 h-14 rounded-xl overflow-hidden bg-white/10 flex-shrink-0">
+                    {p.image
+                        ? <Image src={p.image} alt={p.title || ""} width={56} height={56} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center"><ShoppingBag className="w-6 h-6 text-white/40" /></div>
+                    }
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-white truncate">{p.title}</p>
+                    <p className="text-xs font-black mt-0.5" style={{ color: "#00CEC8" }}>
+                        {typeof p.price === "number" ? formatMoney(p.price, (p.currency as "UZS" | "USD") ?? "UZS") : ""}
+                    </p>
+                </div>
+            </div>
+
+            {/* Matn */}
+            <p className="text-xs text-white/70 mb-3 leading-relaxed">
+                {p.body || "Sotib olganingiz uchun rahmat! Fikringizni bildiring:"}
+            </p>
+
+            {/* Yulduzlar */}
+            <div className="flex items-center gap-1 mb-2" onMouseLeave={() => setHover(0)}>
+                {[1, 2, 3, 4, 5].map(n => (
+                    <button
+                        key={n}
+                        type="button"
+                        disabled={busy}
+                        onMouseEnter={() => !busy && setHover(n)}
+                        onClick={() => !busy && submit(n)}
+                        className="p-1 disabled:opacity-40 active:scale-90 transition"
+                        aria-label={`${n} yulduz`}
+                    >
+                        <Star
+                            size={26}
+                            className={n <= showStars ? "text-yellow-400" : "text-white/25"}
+                            fill={n <= showStars ? "#facc15" : "none"}
+                            strokeWidth={2}
+                        />
+                    </button>
+                ))}
+                {busy && <Loader2 size={14} className="animate-spin text-white/50 ml-2" />}
+            </div>
+
+            {confirmed && (
+                <p className="text-[11px] mt-1" style={{ color: "#00CEC8" }}>
+                    <Check className="w-3 h-3 inline mr-1" />
+                    Baho qabul qilindi. Rasm/video/matn bilan qo'shimcha sharh yozing.
+                </p>
+            )}
+
+            {p.productSlug && (
+                <a href={`/market/product/${p.productSlug}`} target="_blank" rel="noopener noreferrer"
+                    className="text-[11px] font-medium mt-2 inline-block hover:underline"
+                    style={{ color: "#00CEC8" }}>
+                    Mahsulotni ochish →
+                </a>
+            )}
+        </div>
     );
 }

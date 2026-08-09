@@ -76,6 +76,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 pollVoteCounts: pv?.counts ?? null, pollMyVotes: pv?.myVotes ?? null, pollTotal: pv?.total ?? null,
                 transferAmount: m.transferAmount ? Number(m.transferAmount) : null,
                 transferCurrency: m.transferCurrency, transferNote: m.transferNote,
+                agentKind: m.agentKind, agentPayload: m.agentPayload, agentActionRef: m.agentActionRef,
             };
         }),
         other: p ? {

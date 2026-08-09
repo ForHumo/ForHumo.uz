@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { notify } from "@/lib/market-notify";
 import { settleOrder } from "@/lib/market-settle";
+import { triggerMarketReviewRequest } from "@/lib/market-agent-trigger";
 import { sendSms } from "@/lib/sms";
 
 type Status = "PENDING" | "PAID" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
@@ -68,7 +69,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     } else {
         await prisma.marketOrder.update({ where: { id }, data: { status } });
         // Yetkazildi → sotuvchilarga to'lov
-        if (status === "DELIVERED") await settleOrder(id);
+        if (status === "DELIVERED") {
+            await settleOrder(id);
+            // @market_agent DM (har mahsulotga sharh so'rovi)
+            after(() => triggerMarketReviewRequest(id));
+        }
     }
 
     // Bildirishnoma
