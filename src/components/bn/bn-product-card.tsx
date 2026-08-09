@@ -5,6 +5,7 @@ import { useSession, signIn } from "next-auth/react";
 import { BnLink } from "./bn-nav";
 import { Store, ShoppingBasket, Star, Eye, Truck, BadgeCheck, Heart, Package } from "lucide-react";
 import { BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel } from "@/lib/bn-theme";
+import { getFavoriteIds, peekFavorite, updateFavorite, subscribeFavorites } from "@/lib/bn-favorites-store";
 
 export interface ProductCardData {
     id: string;                     // Sevimlilar toggle uchun kerak
@@ -62,20 +63,25 @@ export function BnProductCard({
     const showDiff = rank === "cheap" && diff;
 
     const { status } = useSession();
+    // MUHIM: hydration mismatch'ni oldini olish uchun boshlang'ich holat DOIM bir xil bo'lishi kerak
+    // (server undefined = false, client kesh'dan olmasin). Kesh'dan qiymatni useEffect'da yuklaymiz.
     const [fav, setFav] = useState<boolean>(!!initialFavored);
     const [favBusy, setFavBusy] = useState(false);
-    const [favKnown, setFavKnown] = useState(initialFavored !== undefined);
 
-    // Login bo'lgach status yuklash (initialFavored berilmagan bo'lsa)
+    // Global favorites store — bitta batch so'rov barcha kartalar uchun.
+    // Kesh mavjud bo'lsa darhol, yo'q bo'lsa fon rejimida yuklaydi.
     useEffect(() => {
-        if (favKnown || status !== "authenticated") return;
+        if (initialFavored !== undefined) return;
+        if (status !== "authenticated") return;
         let cancelled = false;
-        fetch(`/api/bn/favorites?ids=${p.id}`)
-            .then(r => r.json())
-            .then(d => { if (!cancelled) { setFav(!!d?.statuses?.[p.id]); setFavKnown(true); } })
-            .catch(() => { /* ignore */ });
-        return () => { cancelled = true; };
-    }, [status, p.id, favKnown]);
+        const sync = () => {
+            const v = peekFavorite(p.id);
+            if (!cancelled && v !== undefined) setFav(v);
+        };
+        void getFavoriteIds().then(sync);
+        const unsub = subscribeFavorites(sync);
+        return () => { cancelled = true; unsub(); };
+    }, [status, p.id, initialFavored]);
 
     async function toggleFav(e: React.MouseEvent) {
         e.preventDefault();
@@ -85,14 +91,15 @@ export function BnProductCard({
         setFavBusy(true);
         const prev = fav;
         setFav(!prev);
+        updateFavorite(p.id, !prev);
         try {
             const r = await fetch("/api/bn/favorites", {
                 method: "POST",
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify({ productId: p.id }),
             });
-            if (!r.ok) setFav(prev);
-        } catch { setFav(prev); }
+            if (!r.ok) { setFav(prev); updateFavorite(p.id, prev); }
+        } catch { setFav(prev); updateFavorite(p.id, prev); }
         finally { setFavBusy(false); }
     }
 
