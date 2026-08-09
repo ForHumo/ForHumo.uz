@@ -66,22 +66,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         }
     }
 
-    let product = null;
-    if (post.marketProductId) {
-        const pr = await prisma.marketProduct.findFirst({
-            where: { id: post.marketProductId, isActive: true },
-            select: { slug: true, name: true, images: true, price: true, oldPrice: true },
-        });
-        if (pr) product = { slug: pr.slug, name: pr.name, image: pr.images?.[0] ?? null, price: String(pr.price), oldPrice: pr.oldPrice ? String(pr.oldPrice) : null };
-    }
-
     return NextResponse.json({
         post: {
             id: post.id, text: post.text, media: post.media, hashtags: post.hashtags,
-            marketProductId: post.marketProductId, shareCount: post.shareCount, createdAt: post.createdAt, editedAt: post.editedAt,
+            shareCount: post.shareCount, createdAt: post.createdAt, editedAt: post.editedAt,
             privacy: post.privacy, location: post.location,
             pollOptions: post.pollOptions, pollEndsAt: post.pollEndsAt, pollVotes, myVote,
-            product,
             author: author ? { name: author.name, username: author.username, image: author.image, verified: isVerifiedProfile(author) } : null,
             likes: post._count.likes, comments: post._count.comments,
             liked, saved, isMine: post.profileId === myId,

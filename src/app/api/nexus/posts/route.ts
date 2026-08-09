@@ -23,20 +23,6 @@ async function myProfileId(): Promise<string | null> {
     return p?.id ?? null;
 }
 
-interface AttachedProduct { slug: string; name: string; image: string | null; price: string; oldPrice: string | null }
-async function loadAttachedProducts(ids: (string | null)[]): Promise<Record<string, AttachedProduct>> {
-    const productIds = [...new Set(ids.filter((x): x is string => !!x))];
-    if (!productIds.length) return {};
-    const prods = await prisma.marketProduct.findMany({
-        where: { id: { in: productIds }, isActive: true },
-        select: { id: true, slug: true, name: true, images: true, price: true, oldPrice: true },
-    });
-    return Object.fromEntries(prods.map(p => [p.id, {
-        slug: p.slug, name: p.name, image: p.images?.[0] ?? null,
-        price: String(p.price), oldPrice: p.oldPrice ? String(p.oldPrice) : null,
-    }]));
-}
-
 // GET /api/nexus/posts?tab=explore|following&offset=&limit=
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -138,9 +124,6 @@ export async function GET(req: Request) {
         savedIds = saves.map(s => s.postId);
     }
 
-    // Biriktirilgan Market mahsulotlari ("Sotib olish")
-    const prodMap = await loadAttachedProducts(posts.map(p => p.marketProductId));
-
     // So'rovnoma natijalari + mening ovozim
     const pollIds = posts.filter(p => p.pollOptions.length > 0).map(p => p.id);
     const voteCounts: Record<string, Record<number, number>> = {};
@@ -162,12 +145,11 @@ export async function GET(req: Request) {
         const a = pMap[p.profileId];
         return {
             id: p.id, text: p.text, media: p.media, hashtags: p.hashtags,
-            marketProductId: p.marketProductId, shareCount: p.shareCount, createdAt: p.createdAt, editedAt: p.editedAt,
+            shareCount: p.shareCount, createdAt: p.createdAt, editedAt: p.editedAt,
             privacy: p.privacy, location: p.location,
             pollOptions: p.pollOptions, pollEndsAt: p.pollEndsAt,
             pollVotes: p.pollOptions.length ? p.pollOptions.map((_, i) => voteCounts[p.id]?.[i] ?? 0) : [],
             myVote: p.id in myVotes ? myVotes[p.id] : null,
-            product: p.marketProductId ? prodMap[p.marketProductId] ?? null : null,
             author: a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a), verifiedCategory: isVerifiedProfile(a) ? (a.verifiedCategory || null) : null } : null,
             likes: p._count.likes, comments: p._count.comments,
             liked: likedIds.includes(p.id), saved: savedIds.includes(p.id),
@@ -188,7 +170,7 @@ export async function POST(req: Request) {
     const banned = await banGuard(profile.id); if (banned) return banned;
     if (await nexusRateLimited(profile.id, "post")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
-    const { text, media, marketProductId, privacy, location, pollOptions, pollDurationHours } = await req.json();
+    const { text, media, privacy, location, pollOptions, pollDurationHours } = await req.json();
     const mediaArr: string[] = filterMediaUrls(media, 10);
     const clean = typeof text === "string" ? text.trim().slice(0, 5000) : "";
 
@@ -208,14 +190,12 @@ export async function POST(req: Request) {
         : privacy === "SUBSCRIBERS" && profile.subPrice > 0 ? "SUBSCRIBERS"
         : "PUBLIC";
 
-    const attachId = typeof marketProductId === "string" && marketProductId ? marketProductId : null;
     const post = await prisma.nexusPost.create({
         data: {
             profileId: profile.id,
             text: clean || null,
             media: mediaArr,
             hashtags: extractHashtags(clean),
-            marketProductId: attachId,
             privacy: priv,
             location: typeof location === "string" && location.trim() ? location.trim().slice(0, 120) : null,
             pollOptions: hasPoll ? cleanPoll : [],
@@ -236,16 +216,13 @@ export async function POST(req: Request) {
     // Yutuq (birinchi post)
     after(() => { grantAchievement(profile.id, "nexus.first_post"); });
 
-    const prodMap = await loadAttachedProducts([attachId]);
-
     return NextResponse.json({
         post: {
             id: post.id, text: post.text, media: post.media, hashtags: post.hashtags,
-            marketProductId: post.marketProductId, shareCount: 0, createdAt: post.createdAt,
+            shareCount: 0, createdAt: post.createdAt,
             privacy: post.privacy, location: post.location,
             pollOptions: post.pollOptions, pollEndsAt: post.pollEndsAt,
             pollVotes: post.pollOptions.map(() => 0), myVote: null,
-            product: attachId ? prodMap[attachId] ?? null : null,
             author: { name: profile.name, username: profile.username, image: profile.image, verified: isVerifiedProfile(profile), verifiedCategory: isVerifiedProfile(profile) ? (profile.verifiedCategory || null) : null },
             likes: 0, comments: 0, liked: false, saved: false, isMine: true,
         },

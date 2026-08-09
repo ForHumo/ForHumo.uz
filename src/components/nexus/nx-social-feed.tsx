@@ -9,7 +9,7 @@ import { NxText } from "./nx-rich-text";
 import {
     Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
     BadgeCheck, Image as ImgIcon, Loader2, Trash2, Send, X, Flag,
-    ShoppingBag, Search, MapPin, Lock, Users, BarChart2, CheckCircle2, Star, Pencil,
+    MapPin, Lock, Users, BarChart2, CheckCircle2, Star, Pencil,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxVerifiedBadge } from "./nx-verified-badge";
@@ -18,11 +18,9 @@ import { NxVerifiedBadge } from "./nx-verified-badge";
 // Tiplar (real API)
 // ─────────────────────────────────────────────────────────────────────────────
 interface Author { name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
-interface AttachedProduct { slug: string; name: string; image: string | null; price: string; oldPrice: string | null }
-interface PickedProduct { id: string; slug: string; name: string; image: string | null; price: string }
 interface Post {
     id: string; text: string | null; media: string[]; hashtags: string[];
-    marketProductId: string | null; product?: AttachedProduct | null; shareCount: number; createdAt: string;
+    shareCount: number; createdAt: string;
     privacy?: "PUBLIC" | "FOLLOWERS" | "SUBSCRIBERS" | "PRIVATE"; location?: string | null;
     pollOptions?: string[]; pollEndsAt?: string | null; pollVotes?: number[]; myVote?: number | null;
     editedAt?: string | null;
@@ -60,8 +58,6 @@ export function NxSocialFeed({ authorUsername, tag, postId }: { authorUsername?:
 
     const [postText, setPostText] = useState("");
     const [media, setMedia] = useState<string[]>([]);
-    const [attached, setAttached] = useState<PickedProduct | null>(null);
-    const [pickerOpen, setPickerOpen] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [sending, setSending] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
@@ -163,15 +159,15 @@ export function NxSocialFeed({ authorUsername, tag, postId }: { authorUsername?:
     }
 
     async function submitPost() {
-        if (!postText.trim() && !media.length && !attached) return;
+        if (!postText.trim() && !media.length) return;
         setSending(true);
         try {
             const res = await fetch("/api/nexus/posts", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: postText, media, marketProductId: attached?.id ?? null }),
+                body: JSON.stringify({ text: postText, media }),
             });
             const d = await res.json();
-            if (res.ok) { setPosts(prev => [d.post, ...prev]); setPostText(""); setMedia([]); setAttached(null); }
+            if (res.ok) { setPosts(prev => [d.post, ...prev]); setPostText(""); setMedia([]); }
         } finally { setSending(false); }
     }
 
@@ -220,22 +216,6 @@ export function NxSocialFeed({ authorUsername, tag, postId }: { authorUsername?:
                     </div>
                 )}
 
-                {/* Biriktirilgan mahsulot */}
-                {attached && (
-                    <div className="mt-3 ml-12 flex items-center gap-2.5 rounded-xl p-2" style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-white/10">
-                            {attached.image && <img src={attached.image} alt="" className="w-full h-full object-cover" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-white truncate">{attached.name}</p>
-                            <p className="text-[11px] font-black" style={{ color: "#00CEC8" }}>{formatMoney(Number(attached.price), "UZS")}</p>
-                        </div>
-                        <button onClick={() => setAttached(null)} className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center flex-shrink-0">
-                            <X className="w-3 h-3 text-white" />
-                        </button>
-                    </div>
-                )}
-
                 <div className="mt-3 flex items-center justify-between pl-12">
                     <div className="flex items-center gap-2">
                         <button onClick={() => fileRef.current?.click()} disabled={uploading} title="Rasm/video"
@@ -243,19 +223,13 @@ export function NxSocialFeed({ authorUsername, tag, postId }: { authorUsername?:
                             {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#00CEC8" }} /> : <ImgIcon className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.60)" }} />}
                         </button>
                         <input ref={fileRef} type="file" accept="image/*,video/*" multiple onChange={e => pickFiles(e.target.files)} className="hidden" />
-                        <button onClick={() => setPickerOpen(true)} title="Mahsulot biriktirish"
-                            className="w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-150" style={{ background: "rgba(43,62,232,0.08)" }}>
-                            <ShoppingBag className="w-3.5 h-3.5" style={{ color: attached ? "#00CEC8" : "rgba(140,160,210,0.60)" }} />
-                        </button>
                     </div>
-                    <button onClick={submitPost} disabled={sending || uploading || (!postText.trim() && !media.length && !attached)}
+                    <button onClick={submitPost} disabled={sending || uploading || (!postText.trim() && !media.length)}
                         className="px-4 py-1.5 rounded-xl text-xs font-black text-white transition-all duration-150 active:scale-95 disabled:opacity-40"
                         style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
                         {sending ? "Yuborilmoqda..." : "Ulashish"}
                     </button>
                 </div>
-
-                {pickerOpen && <ProductPicker onPick={(p) => { setAttached(p); setPickerOpen(false); }} onClose={() => setPickerOpen(false)} />}
             </div>
             )}
 
@@ -498,28 +472,6 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
                 </div>
             )}
 
-            {/* Biriktirilgan mahsulot — Sotib olish (Nexus × Market) */}
-            {p.product && (
-                <Link href={`/market/product/${p.product.slug}`}
-                    className="mx-4 mb-3 flex items-center gap-3 rounded-xl p-2.5 transition-all active:scale-[.99]"
-                    style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)" }}>
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
-                        {p.product.image && <img src={p.product.image} alt="" className="w-full h-full object-cover" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-white truncate">{p.product.name}</p>
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-black" style={{ color: "#00CEC8" }}>{formatMoney(Number(p.product.price), "UZS")}</span>
-                            {p.product.oldPrice && <span className="text-[10px] line-through" style={{ color: "rgba(80,100,150,0.7)" }}>{formatMoney(Number(p.product.oldPrice), "UZS")}</span>}
-                        </div>
-                    </div>
-                    <span className="px-3 py-1.5 rounded-xl text-[11px] font-black text-white flex items-center gap-1 flex-shrink-0"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                        <ShoppingBag className="w-3 h-3" /> Sotib olish
-                    </span>
-                </Link>
-            )}
-
             {/* Harakatlar */}
             <div className="flex items-center gap-1 px-4 pb-3 pt-1" style={{ borderTop: "1px solid rgba(43,62,232,0.08)" }}>
                 <LikeBtn liked={p.liked} count={p.likes} onClick={onLike} />
@@ -619,67 +571,6 @@ function CommentsSection({ postId, onAdded }: { postId: string; onAdded: () => v
                     )}
                 </>
             )}
-        </div>
-    );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Mahsulot tanlash (Nexus × Market)
-// ─────────────────────────────────────────────────────────────────────────────
-function ProductPicker({ onPick, onClose }: { onPick: (p: PickedProduct) => void; onClose: () => void }) {
-    const [q, setQ] = useState("");
-    const [results, setResults] = useState<PickedProduct[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        let cancel = false;
-        setLoading(true);
-        const t = setTimeout(async () => {
-            try {
-                const data = await fetch(`/api/market/products?q=${encodeURIComponent(q)}&limit=12`).then(r => r.json());
-                if (cancel) return;
-                const list: PickedProduct[] = (data.products ?? []).map((p: { id: string; slug: string; name: string; images: string[]; price: string | number }) => ({
-                    id: p.id, slug: p.slug, name: p.name, image: p.images?.[0] ?? null, price: String(p.price),
-                }));
-                setResults(list);
-            } finally { if (!cancel) setLoading(false); }
-        }, 300);
-        return () => { cancel = true; clearTimeout(t); };
-    }, [q]);
-
-    return (
-        <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4" onClick={onClose}>
-            <div onClick={e => e.stopPropagation()} className="w-full sm:max-w-md rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "rgba(8,14,32,0.98)", border: "1px solid rgba(43,62,232,0.25)", maxHeight: "80vh" }}>
-                <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.15)" }}>
-                    <h3 className="text-sm font-black text-white">Mahsulot biriktirish</h3>
-                    <button onClick={onClose} className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "rgba(43,62,232,0.12)" }}>
-                        <X className="w-3.5 h-3.5 text-white/60" />
-                    </button>
-                </div>
-                <div className="p-3">
-                    <div className="relative">
-                        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "rgba(140,160,210,0.6)" }} />
-                        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Mahsulot qidirish..." autoComplete="off"
-                            className="w-full text-sm text-white outline-none rounded-xl pl-9 pr-3 py-2.5" style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.18)" }} />
-                    </div>
-                </div>
-                <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-2">
-                    {loading ? (
-                        <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>
-                    ) : results.length === 0 ? (
-                        <p className="text-xs text-center py-8" style={{ color: "rgba(80,100,150,0.7)" }}>Mahsulot topilmadi</p>
-                    ) : results.map(p => (
-                        <button key={p.id} onClick={() => onPick(p)} className="w-full flex items-center gap-3 rounded-xl p-2 text-left transition-all active:scale-[.99]" style={{ background: "rgba(43,62,232,0.06)" }}>
-                            <div className="w-11 h-11 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">{p.image && <img src={p.image} alt="" className="w-full h-full object-cover" />}</div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold text-white truncate">{p.name}</p>
-                                <p className="text-[11px] font-black" style={{ color: "#00CEC8" }}>{formatMoney(Number(p.price), "UZS")}</p>
-                            </div>
-                        </button>
-                    ))}
-                </div>
-            </div>
         </div>
     );
 }

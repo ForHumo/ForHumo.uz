@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { encryptLocation, decryptLocation } from "@/lib/crypto";
 import { isFounderProfile } from "@/lib/founders";
 import { checkReservedUsername } from "@/lib/reserved-username";
+import { isReservedByAgentRule, AGENT_CREATOR_OWNER } from "@/lib/nexus-agent";
 
 const EDIT_WINDOW_MS = 14 * 24 * 60 * 60 * 1000; // 14 kun
 
@@ -88,6 +89,11 @@ export async function PATCH(req: Request) {
     if (body.username !== undefined && body.username !== "") {
         if (!/^[a-zA-Z0-9_]{3,20}$/.test(body.username)) {
             return NextResponse.json({ error: "username_invalid" }, { status: 400 });
+        }
+        const isCreatorOwner = (current.username ?? "").toLowerCase() === AGENT_CREATOR_OWNER;
+        const agentRule = isReservedByAgentRule(body.username, { isCreatorOwner });
+        if (agentRule.reserved) {
+            return NextResponse.json({ error: "username_reserved", message: agentRule.reason }, { status: 400 });
         }
         const reserved = await checkReservedUsername(body.username, { profileId: current.id, isFounder });
         if (reserved.reserved) {

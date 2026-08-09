@@ -115,6 +115,8 @@ model UserProfile {
   supportTickets SupportTicket[]
   marketWorker    MarketWorker? @relation("MarketWorkerProfile")
   marketWorkersAdded MarketWorker[] @relation("MarketWorkerAddedBy")
+  nexusAgent      NexusAgent?   @relation("NexusAgentProfile")
+  nexusAgentsCreated NexusAgent[] @relation("NexusAgentOwner")
   emailCodes    EmailVerificationCode[]
   identities    Identity[]
   wallet        Wallet?
@@ -147,6 +149,23 @@ model SupportTicket {
 
   @@index([profileId, updatedAt(sort: Desc)])
   @@index([status, updatedAt(sort: Desc)])
+}
+
+// ── Nexus Agentlar (Telegram Bot API ekvivalenti) ────────────────────────────
+// Agent = maxsus UserProfile (username `_agent` bilan tugaydi). Foydalanuvchilar
+// bilan bir tomonlama (agent → user) DM orqali strukturaviy xabar almashadi.
+// Yaratuvchi: @create (BotFather ekvivalenti). Hozircha faqat @abduvoris.
+model NexusAgent {
+  id           String       @id @default(cuid())
+  profileId    String       @unique
+  profile      UserProfile  @relation("NexusAgentProfile", fields: [profileId], references: [id], onDelete: Cascade)
+  module       String                                                          // ID/AI/NEXUS/ESPORT/MARKET/PAY/SUPPORT/BN
+  ownerId      String                                                          // yaratuvchi profileId (@create egasi)
+  ownerProfile UserProfile  @relation("NexusAgentOwner", fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  webhookUrl   String?                                                         // ixtiyoriy tashqi integratsiya
+  isSystem     Boolean      @default(false)                                    // rasmiy agent (bir marta seed qilingan)
+  createdAt    DateTime     @default(now())
+  @@index([ownerId])
 }
 
 // Humo Market — Owner tomonidan taklif qilingan worker'lar.
@@ -951,7 +970,6 @@ model NexusPost {
   text            String?
   media           String[] @default([])           // rasm/video URL'lar
   hashtags        String[] @default([])
-  marketProductId String?                         // ixtiyoriy — postga biriktirilgan Market mahsuloti ("Sotib olish")
   bnProductId     String?                         // ixtiyoriy — BN mahsuloti (shoppable, BN Media integratsiya)
   privacy         NexusPostPrivacy @default(PUBLIC)  // PUBLIC / FOLLOWERS (obunachilar) / PRIVATE (faqat men)
   location        String?                         // ixtiyoriy joylashuv matni
@@ -1229,6 +1247,10 @@ model NexusMessage {
   transferCurrency  String?                                    // "UZS" | "USD"
   transferRef       String?                                    // WalletTransaction ref (xfer:UUID)
   transferNote      String?                                    // izoh (<= 120)
+  // Agent xabari (mediaType="agent")
+  agentKind         String?                                    // "product-review"|"support-status"|"pay-tx"|...
+  agentPayload      Json?                                      // {productId, image, title, price, requestedRating:true}
+  agentActionRef    String?                                    // MarketReview.id yoki boshqa yozuv id (foydalanuvchi javob bergach yoziladi)
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
 }
