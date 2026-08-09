@@ -10,6 +10,7 @@ import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import {
     Home, ChevronRight, Search, ShoppingCart,
     ChevronDown, X, Layers, Bell, Clock, Sparkles,
+    ClipboardList, MapPin, HeadsetIcon,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
@@ -343,6 +344,40 @@ export function MarketNavbar() {
                                 <ShoppingCart size={16} />
                                 <span className="hidden sm:block">Savat</span>
                             </Link>
+
+                            {/* Buyurtmalarim */}
+                            {session?.user && (
+                                <Link href="/market/orders"
+                                    className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl
+                                        hover:bg-green-50 dark:hover:bg-green-900/20
+                                        text-gray-600 dark:text-white/60 hover:text-green-600 dark:hover:text-green-400
+                                        text-sm font-semibold transition-all"
+                                    title="Buyurtmalarim">
+                                    <ClipboardList size={16} />
+                                    <span className="hidden lg:block">Buyurtmalar</span>
+                                </Link>
+                            )}
+
+                            {/* Xarita */}
+                            <Link href="/market/catalog"
+                                className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl
+                                    hover:bg-green-50 dark:hover:bg-green-900/20
+                                    text-gray-600 dark:text-white/60 hover:text-green-600 dark:hover:text-green-400
+                                    text-sm font-semibold transition-all"
+                                title="Humo Market xaritasi">
+                                <MapPin size={16} />
+                                <span className="hidden lg:block">Xarita</span>
+                            </Link>
+
+                            {/* Humo Support — yon panel ochadi */}
+                            <button
+                                type="button"
+                                onClick={() => window.dispatchEvent(new Event("support:open"))}
+                                className="p-2 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20
+                                    text-gray-500 dark:text-white/50 hover:text-green-600 dark:hover:text-green-400 transition-all"
+                                title="Humo Support">
+                                <HeadsetIcon size={18} />
+                            </button>
 
                             {/* Bildirishnoma */}
                             {session?.user && (

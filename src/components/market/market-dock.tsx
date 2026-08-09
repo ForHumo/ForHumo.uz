@@ -4,23 +4,24 @@ import { Link } from "@/i18n/routing";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-    Home, Grid3X3, Heart, ShoppingCart, Shield,
+    Home, Grid3X3, Heart, ShoppingCart, Sparkles,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface DockItem {
     icon: React.ElementType;
     label: string;
-    href: string;
+    href?: string;
     key: string;
     accent?: boolean;
+    action?: "ai";
 }
 
-// Public dock — barcha foydalanuvchilarga. Owner/Worker'ga Admin havolasi
-// alohida (staff bo'lganda) qo'shiladi.
+// 5 element: Asosiy / Katalog / Humo AI (markazda accent) / Sevimlilar / Savat
 const DOCK_ITEMS: DockItem[] = [
     { icon: Home,         label: "Asosiy",   href: "/market",          key: "home"     },
     { icon: Grid3X3,      label: "Katalog",  href: "/market/catalog",  key: "catalog"  },
+    { icon: Sparkles,     label: "Humo AI",                             key: "ai", accent: true, action: "ai" },
     { icon: Heart,        label: "Sevimli",  href: "/market/wishlist", key: "wishlist" },
     { icon: ShoppingCart, label: "Savat",    href: "/market/cart",     key: "cart"     },
 ];
@@ -28,20 +29,16 @@ const DOCK_ITEMS: DockItem[] = [
 export function MarketDock() {
     const pathname = usePathname();
     const [cartCount, setCartCount] = useState(0);
-    const [isStaff, setIsStaff] = useState(false);
 
     useEffect(() => {
         fetch("/api/market/cart")
             .then(r => r.json())
             .then(d => setCartCount(d.items?.length ?? 0))
             .catch(() => {});
-        fetch("/api/market/admin/me")
-            .then(r => r.json())
-            .then(d => setIsStaff(!!d.isOwner || !!d.isWorker))
-            .catch(() => {});
     }, [pathname]);
 
     function isActive(item: DockItem) {
+        if (!item.href) return false;
         if (item.key === "home") return /\/market$/.test(pathname);
         return pathname.includes(item.href.replace("/market", ""));
     }
@@ -59,30 +56,32 @@ export function MarketDock() {
                 border border-green-100/80 dark:border-green-900/20
                 rounded-full shadow-2xl shadow-green-900/10
                 pointer-events-auto">
-                {[
-                    ...DOCK_ITEMS,
-                    ...(isStaff ? [{ icon: Shield, label: "Admin", href: "/market/admin", key: "admin", accent: true } as DockItem] : []),
-                ].map((item) => {
+                {DOCK_ITEMS.map((item) => {
                     const Icon = item.icon;
                     const active = isActive(item);
                     const isCart = item.key === "cart";
 
                     if (item.accent) {
+                        // AI tugmasi — global event dispatch, sahifa navigatsiyasi yo'q
                         return (
-                            <Link key={item.key} href={item.href}
-                                className="mx-1 w-11 h-11 rounded-full
+                            <button key={item.key} type="button"
+                                onClick={() => {
+                                    if (item.action === "ai") window.dispatchEvent(new Event("humo-ai:open"));
+                                }}
+                                title={item.label}
+                                className="mx-1 w-12 h-12 rounded-full
                                     bg-gradient-to-br from-green-500 to-emerald-600
                                     flex items-center justify-center
                                     shadow-lg shadow-green-500/30
                                     hover:from-green-400 hover:to-emerald-500
-                                    transition-all duration-200">
-                                <Icon size={20} className="text-white" strokeWidth={2.5} />
-                            </Link>
+                                    active:scale-95 transition-all duration-200">
+                                <Icon size={22} className="text-white" strokeWidth={2.5} />
+                            </button>
                         );
                     }
 
                     return (
-                        <Link key={item.key} href={item.href}>
+                        <Link key={item.key} href={item.href ?? "/market"}>
                             <motion.div
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}

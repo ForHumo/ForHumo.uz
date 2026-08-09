@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import {
-    BadgeCheck, TrendingUp, ArrowRight, Flame, Zap, Tag, ChevronRight,
+    TrendingUp, Flame, Zap, Tag, ChevronRight,
 } from "lucide-react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ProductCard } from "./product-card";
@@ -119,8 +119,8 @@ export function MarketHome() {
                                 Humo Market
                             </h1>
                             <p className="text-white/70 text-lg mb-8 max-w-xl">
-                                O'z brendingizni yarating, mahsulotlaringizni joylab soting.
-                                To'lov — <span className="text-white font-bold">hamyondan</span> darrov.
+                                Sifatli mahsulotlar, tez yetkazish. To'lov —
+                                <span className="text-white font-bold"> hamyondan</span> darrov.
                             </p>
                             <div className="flex gap-3">
                                 <Link href={`/market/catalog`}
@@ -128,12 +128,6 @@ export function MarketHome() {
                                         bg-white text-green-700 font-bold text-sm
                                         hover:bg-green-50 transition-all shadow-lg shadow-black/10">
                                     <Tag size={16} /> Katalogni ko'rish
-                                </Link>
-                                <Link href={`/market/brand/create`}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-2xl
-                                        bg-white/15 border border-white/25 text-white font-bold text-sm
-                                        hover:bg-white/20 transition-all">
-                                    + Brend ochish
                                 </Link>
                             </div>
                         </motion.div>
@@ -208,34 +202,6 @@ export function MarketHome() {
                             </div>
                         )}
                     </section>
-
-                    {/* ── Brend bo'lish banner ── */}
-                    <motion.section
-                        initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="relative overflow-hidden rounded-3xl
-                            bg-gradient-to-br from-green-600/10 to-emerald-500/5
-                            dark:from-green-900/20 dark:to-emerald-900/10
-                            border border-green-200/60 dark:border-green-700/20 p-8">
-                        <div className="max-w-lg">
-                            <BadgeCheck size={28} className="text-green-500 mb-3" />
-                            <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
-                                O'z brendingizni oching
-                            </h3>
-                            <p className="text-gray-500 dark:text-white/40 text-sm mb-5 leading-relaxed">
-                                Mahsulotlaringizni Humo Market da soting. Brendingiz tasdiqlansa —
-                                rasmiy belgini olasiz va mijozlar ishonchi oshadi.
-                            </p>
-                            <Link href={`/market/brand/create`}
-                                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl
-                                    bg-gradient-to-r from-green-600 to-emerald-500
-                                    text-white font-bold text-sm
-                                    hover:from-green-500 hover:to-emerald-400
-                                    shadow-lg shadow-green-500/20 transition-all">
-                                Brend ochish <ArrowRight size={15} />
-                            </Link>
-                        </div>
-                    </motion.section>
 
                 </div>
             </div>

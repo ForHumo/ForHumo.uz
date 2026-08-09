@@ -60,6 +60,17 @@ export function SupportDock() {
 
     const currentModule = useMemo(() => detectModule(pathname ?? "", host), [pathname, host]);
 
+    // Tashqi tugmalar (masalan Market header'i) event orqali ochishi mumkin
+    useEffect(() => {
+        const h = () => { setOpen(true); setView(activeId ? "thread" : "list"); };
+        window.addEventListener("support:open", h);
+        return () => window.removeEventListener("support:open", h);
+    }, [activeId]);
+
+    // Suzuvchi tugma qaysi sahifalarda ko'rinmasin — module'lar Header'ida
+    // o'z tugmalariga ega
+    const hideFloating = (pathname ?? "").includes("/market");
+
     // Badge — kirgan bo'lsa har 60s
     useEffect(() => {
         if (authStatus !== "authenticated") return;
@@ -160,6 +171,7 @@ export function SupportDock() {
     return (
         <>
             {/* Suzuvchi tugma */}
+            {!hideFloating && (
             <button
                 type="button"
                 aria-label="Support"
@@ -178,6 +190,7 @@ export function SupportDock() {
                     </span>
                 )}
             </button>
+            )}
 
             {/* Panel */}
             {open && (

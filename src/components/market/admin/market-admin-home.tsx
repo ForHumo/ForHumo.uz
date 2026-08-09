@@ -4,15 +4,13 @@
 // Owner + Worker uchun umumiy havolalar; Worker'lar bo'limi faqat Owner'ga.
 
 import { Link } from "@/i18n/routing";
-import { Users, Package, Store, ClipboardList, Plus, BarChart2, User as UserIcon } from "lucide-react";
+import { Users, Package, ClipboardList, Plus, BarChart2 } from "lucide-react";
 
 const CARDS = [
     { href: "/market/admin/products/add", icon: Plus,   label: "Mahsulot qo'shish", desc: "Yangi e'lon joylash", accent: true },
     { href: "/market/admin/products",     icon: Package, label: "Mahsulotlar",        desc: "Barcha e'lonlar" },
-    { href: "/market/admin/brands",       icon: Store,   label: "Brendlar",           desc: "Brend boshqaruvi" },
     { href: "/market/admin/orders",       icon: ClipboardList, label: "Buyurtmalar",  desc: "Kelgan buyurtmalar" },
     { href: "/market/admin/dashboard",    icon: BarChart2, label: "Statistika",       desc: "Sotuv hisobotlari" },
-    { href: "/market/admin/profile",      icon: UserIcon, label: "Profil",           desc: "Do'kon profili" },
 ];
 
 export function MarketAdminHome({ isOwner }: { isOwner: boolean }) {
