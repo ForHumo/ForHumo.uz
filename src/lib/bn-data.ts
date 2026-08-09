@@ -502,11 +502,14 @@ export async function searchProducts(opts: {
 import { getUserInterest, scoreProduct, type RankableProduct } from "@/lib/bn-rank";
 
 export async function getRecommendedProducts(profileId: string | null, limit = 12): Promise<BnProductDTO[]> {
+    // Ulgurji gating — do'konsiz odam ulgurji mahsulot tavsiya olmaydi
+    const seeWholesale = await viewerCanSeeWholesale(profileId);
     // Nomzodlar: oxirgi 200 faol mahsulot (yaqin, sifatli)
     const candidates = await prisma.bnProduct.findMany({
         where: {
             isActive: true, hidden: false,
             shop: { status: "APPROVED" },
+            ...(seeWholesale ? {} : { isWholesale: false }),
         },
         include: {
             category: { select: { slug: true, parentId: true, parent: { select: { slug: true } } } },

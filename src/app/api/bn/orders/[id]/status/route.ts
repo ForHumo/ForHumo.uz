@@ -98,6 +98,16 @@ export async function POST(
                 link: "/buyurtmalarim",
             });
         }
+        // COMPLETED bo'lganda — "Sharh yozing" chaqiruvi (boshqalarga foydali)
+        if (next === "COMPLETED") {
+            await bnNotify({
+                profileId: order.buyerId,
+                type: "REVIEW_RECEIVED",   // schema'da alohida REVIEW_PROMPT yo'q — REVIEW_RECEIVED bilan
+                title: "Sharh yozing",
+                body: `${order.code} yakunlandi. Fikringiz boshqa xaridorlar uchun muhim.`,
+                link: "/buyurtmalarim",
+            });
+        }
     });
 
     // Escrow harakati

@@ -58,7 +58,7 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
             <BnHeroSlider />
 
             {/* ── Ikkita asosiy kirish nuqtasi ── */}
-            <section className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10">
+            <section className="grid grid-cols-2 gap-2 sm:gap-3 mb-8 sm:mb-10">
                 <EntryCard
                     href="/bozorlar"
                     icon={<Store className="w-6 h-6" />}
@@ -102,7 +102,7 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
                             key={s.id}
                             href={`/d/${s.slug}`}
                             newTab
-                            className="group flex items-center gap-3 p-3 rounded-2xl transition-all active:scale-[0.99]"
+                            className={`group flex items-center gap-3 p-3 rounded-2xl transition-all active:scale-[0.99] ${i >= 3 ? "hidden md:flex" : ""}`}
                             style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                         >
                             <span
@@ -193,29 +193,36 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
                 href={active.href}
             />
 
-            {/* ── Sotuvchi CTA ── */}
-            <section className="mt-4">
-                <div
-                    className="relative overflow-hidden rounded-3xl p-7 sm:p-10"
-                    style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}
-                >
-                    <div className="relative flex flex-col md:flex-row md:items-center gap-6">
-                        <div className="flex-1 min-w-0">
-                            <h3 className="text-[22px] sm:text-[26px] font-black tracking-tight leading-tight mb-3">
-                                Do&apos;koningiz bormi? Onlaynga chiqaring
-                            </h3>
-                            <p className="text-[14px] leading-relaxed max-w-[560px]" style={{ color: BN.text2 }}>
-                                Bozordagi do&apos;kon ham, ko&apos;chadagi do&apos;kon ham bo&apos;ladi.
-                                Mahsulot rasmini yuklaysiz — Humo AI nomi, tavsifi va narx tavsiyasini o&apos;zi yozadi.
-                                Komissiya 5%, naqd savdodan olinmaydi.
-                            </p>
-                        </div>
-                        <SellerCta />
-
-                    </div>
-                </div>
-            </section>
+            {/* ── Sotuvchi CTA — faqat do'koni yo'q foydalanuvchilarga ── */}
+            <SellerBanner />
         </div>
+    );
+}
+
+function SellerBanner() {
+    const { hasShop } = useBnBase();
+    if (hasShop) return null;   // do'koni bor odam uchun ko'rsatmaymiz
+    return (
+        <section className="mt-4">
+            <div
+                className="relative overflow-hidden rounded-3xl p-7 sm:p-10"
+                style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}
+            >
+                <div className="relative flex flex-col md:flex-row md:items-center gap-6">
+                    <div className="flex-1 min-w-0">
+                        <h3 className="text-[22px] sm:text-[26px] font-black tracking-tight leading-tight mb-3">
+                            Do&apos;koningiz bormi? Onlaynga chiqaring
+                        </h3>
+                        <p className="text-[14px] leading-relaxed max-w-[560px]" style={{ color: BN.text2 }}>
+                            Bozordagi do&apos;kon ham, ko&apos;chadagi do&apos;kon ham bo&apos;ladi.
+                            Mahsulot rasmini yuklaysiz — Humo AI nomi, tavsifi va narx tavsiyasini o&apos;zi yozadi.
+                            Komissiya 5%, naqd savdodan olinmaydi.
+                        </p>
+                    </div>
+                    <SellerCta />
+                </div>
+            </div>
+        </section>
     );
 }
 
@@ -340,8 +347,8 @@ function EntryCard({
     return (
         <BnLink
             href={href}
-            className="group relative overflow-hidden rounded-3xl transition-all active:scale-[0.99]"
-            style={{ border: `1px solid ${BN.border}`, minHeight: 168 }}
+            className="group relative overflow-hidden rounded-2xl sm:rounded-3xl transition-all active:scale-[0.99]"
+            style={{ border: `1px solid ${BN.border}` }}
         >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -355,24 +362,24 @@ function EntryCard({
                 style={{ background: "linear-gradient(105deg, var(--bn-surface) 42%, rgba(0,0,0,0.35) 100%)" }}
             />
 
-            <div className="relative h-full flex flex-col justify-between p-5" style={{ minHeight: 168 }}>
+            <div className="relative flex flex-col justify-between p-3 sm:p-5 min-h-[140px] sm:min-h-[168px]">
                 <span
-                    className="w-12 h-12 rounded-2xl grid place-items-center"
+                    className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl grid place-items-center"
                     style={{ background: BN.goldSoft, color: BN.gold }}
                 >
                     {icon}
                 </span>
 
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <h2 className="text-[22px] font-black tracking-tight leading-none">{title}</h2>
+                    <div className="flex items-center gap-1.5 mb-0.5 sm:mb-1">
+                        <h2 className="text-[16px] sm:text-[22px] font-black tracking-tight leading-none">{title}</h2>
                         <ArrowRight
-                            className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                            className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-1"
                             style={{ color: BN.gold }}
                         />
                     </div>
-                    <p className="text-[13px] leading-snug max-w-[260px]" style={{ color: BN.text2 }}>{text}</p>
-                    <p className="text-[11.5px] font-bold mt-2" style={{ color: BN.gold }}>{count}</p>
+                    <p className="hidden sm:block text-[13px] leading-snug max-w-[260px]" style={{ color: BN.text2 }}>{text}</p>
+                    <p className="text-[10.5px] sm:text-[11.5px] font-bold mt-1 sm:mt-2" style={{ color: BN.gold }}>{count}</p>
                 </div>
             </div>
         </BnLink>
