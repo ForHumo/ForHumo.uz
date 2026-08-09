@@ -36,9 +36,11 @@ export function HumoAiModal() {
                     inset-x-3 bottom-3 top-14 rounded-2xl
                     md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[560px] md:h-[720px] md:max-h-[calc(100vh-32px)]"
             >
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-green-100 dark:border-green-900/30 shrink-0">
-                    <div className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-br from-violet-600 to-fuchsia-500 flex items-center justify-center">
-                        <Image src="/logos/humo-ai.png" alt="Humo AI" width={36} height={36} className="w-full h-full object-cover" />
+                <div className="flex items-center gap-3 px-4 py-3 border-b border-green-100 dark:border-green-900/30 shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-white flex items-center justify-center shrink-0
+                        ring-1 ring-gray-200 dark:ring-white/10">
+                        <Image src="/logos/humo-ai-icon-black.png" alt="Humo AI" width={28} height={28}
+                            className="w-7 h-7 object-contain" />
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="text-sm font-black text-gray-900 dark:text-white leading-tight">Humo AI</div>

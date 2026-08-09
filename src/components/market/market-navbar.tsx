@@ -9,9 +9,10 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import {
     Home, ChevronRight, Search, ShoppingCart,
-    ChevronDown, X, Layers, Bell, Clock, Sparkles,
-    ClipboardList, MapPin, HeadsetIcon,
+    ChevronDown, X, Layers, Bell, Clock,
+    ClipboardList, MapPin, HeadsetIcon, Shield, LogOut, User as UserIcon,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { VerifiedBadge } from "./verified-badge";
@@ -20,6 +21,73 @@ import { formatMoney, type Currency } from "@/lib/money";
 interface Suggestions {
     brands: { slug: string; name: string; logo: string | null; verified: boolean }[];
     products: { slug: string; name: string; price: string; currency?: Currency; images: string[] }[];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ProfileMenu — avatar bosilsa ochiladi. Staff (Owner+Worker) uchun
+// "Boshqaruv paneli" havolasi ko'rinadi.
+// ─────────────────────────────────────────────────────────────────────────────
+function ProfileMenu({ image, name, isStaff }: { image?: string | null; name?: string | null; isStaff: boolean }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
+        document.addEventListener("mousedown", h);
+        return () => document.removeEventListener("mousedown", h);
+    }, []);
+    return (
+        <div className="relative" ref={ref}>
+            <button onClick={() => setOpen(o => !o)} className="relative group block" aria-label="Profil">
+                <div className="w-8 h-8 rounded-full overflow-hidden
+                    ring-2 ring-green-200/80 dark:ring-green-700/30
+                    group-hover:ring-green-400/50 transition-all">
+                    {image ? (
+                        <Image src={image} alt="" width={32} height={32} className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-green-600 to-emerald-400
+                            flex items-center justify-center text-white text-xs font-bold">
+                            {(name ?? "U")[0].toUpperCase()}
+                        </div>
+                    )}
+                </div>
+                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full
+                    bg-emerald-400 ring-2 ring-white dark:ring-[#050F07]" />
+            </button>
+            {open && (
+                <div className="absolute right-0 top-full mt-2 w-56 z-50
+                    bg-white/98 dark:bg-[#0a1a0d]/98 backdrop-blur-xl
+                    border border-green-100 dark:border-green-900/30
+                    rounded-2xl shadow-2xl shadow-green-900/10 overflow-hidden py-1">
+                    <Link href="/id" onClick={() => setOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-green-50 dark:hover:bg-green-900/15
+                            text-gray-700 dark:text-white/70 text-sm">
+                        <UserIcon size={15} /> Humo ID
+                    </Link>
+                    <Link href="/market/orders" onClick={() => setOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-green-50 dark:hover:bg-green-900/15
+                            text-gray-700 dark:text-white/70 text-sm">
+                        <ClipboardList size={15} /> Buyurtmalarim
+                    </Link>
+                    {isStaff && (
+                        <>
+                            <div className="my-1 border-t border-green-100 dark:border-green-900/20" />
+                            <Link href="/market/admin" onClick={() => setOpen(false)}
+                                className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-green-50 dark:hover:bg-green-900/15
+                                    text-green-700 dark:text-green-400 text-sm font-bold">
+                                <Shield size={15} /> Boshqaruv paneli
+                            </Link>
+                        </>
+                    )}
+                    <div className="my-1 border-t border-green-100 dark:border-green-900/20" />
+                    <button onClick={() => { setOpen(false); signOut(); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/15
+                            text-red-600 dark:text-red-400 text-sm text-left">
+                        <LogOut size={15} /> Chiqish
+                    </button>
+                </div>
+            )}
+        </div>
+    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -140,9 +208,11 @@ export function MarketNavbar() {
         try { localStorage.removeItem("market_search_history"); } catch { /* */ }
     }
 
+    const [isStaff, setIsStaff] = useState(false);
     useEffect(() => {
         if (!session?.user) return;
         fetch("/api/market/notifications").then(r => r.json()).then(d => setUnread(d.unread ?? 0)).catch(() => {});
+        fetch("/api/market/admin/me").then(r => r.json()).then(d => setIsStaff(!!d.isOwner || !!d.isWorker)).catch(() => {});
     }, [session?.user]);
 
     function runSearch(term?: string) {
@@ -263,10 +333,11 @@ export function MarketNavbar() {
                             {/* Humo AI — qidiruv ichida */}
                             <button type="button" title="Humo AI"
                                 onClick={() => window.dispatchEvent(new Event("humo-ai:open"))}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl flex items-center justify-center
-                                    bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-md shadow-green-500/25
-                                    hover:from-green-400 hover:to-emerald-500 active:scale-95 transition-all">
-                                <Sparkles size={16} />
+                                className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl flex items-center justify-center
+                                    bg-white shadow-md ring-1 ring-gray-200 dark:ring-white/10
+                                    hover:scale-105 active:scale-95 transition">
+                                <Image src="/logos/humo-ai-icon-black.png" alt="Humo AI" width={22} height={22}
+                                    className="w-[22px] h-[22px] object-contain" />
                             </button>
 
                             {/* Jonli takliflar / qidiruv tarixi dropdown */}
@@ -339,23 +410,11 @@ export function MarketNavbar() {
                             <LanguageSwitcher />
                             <ThemeToggle />
                             {session?.user && (
-                                <Link href="/id" className="relative group">
-                                    <div className="w-8 h-8 rounded-full overflow-hidden
-                                        ring-2 ring-green-200/80 dark:ring-green-700/30
-                                        group-hover:ring-green-400/50 transition-all">
-                                        {session.user.image ? (
-                                            <Image src={session.user.image} alt=""
-                                                width={32} height={32} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full bg-gradient-to-br from-green-600 to-emerald-400
-                                                flex items-center justify-center text-white text-xs font-bold">
-                                                {(session.user.name ?? "U")[0].toUpperCase()}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full
-                                        bg-emerald-400 ring-2 ring-white dark:ring-[#050F07]" />
-                                </Link>
+                                <ProfileMenu
+                                    image={session.user.image}
+                                    name={session.user.name}
+                                    isStaff={isStaff}
+                                />
                             )}
                         </div>
                     </div>

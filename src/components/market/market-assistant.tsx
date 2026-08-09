@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Sparkles, Send, Loader2, ChevronRight, Bot } from "lucide-react";
+import { Send, Loader2, ChevronRight, Mic, Camera } from "lucide-react";
 import { ProductCard } from "./product-card";
 
 interface Product {
@@ -22,6 +23,58 @@ export function MarketAssistant() {
     const endRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+
+    // Ovozli qidiruv (browser SpeechRecognition — server round-trip yo'q)
+    const [listening, setListening] = useState(false);
+    const recognitionRef = useRef<any>(null);
+    function toggleVoice() {
+        if (typeof window === "undefined") return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SR) { alert("Brauzer ovozli qidiruvni qo'llab-quvvatlamaydi"); return; }
+        if (listening) { recognitionRef.current?.stop(); return; }
+        const r = new SR();
+        r.lang = "uz-UZ";
+        r.interimResults = false;
+        r.maxAlternatives = 1;
+        r.onresult = (e: any) => {
+            const t = e.results?.[0]?.[0]?.transcript ?? "";
+            if (t) { setInput(t); setTimeout(() => send(t), 100); }
+        };
+        r.onend = () => setListening(false);
+        r.onerror = () => setListening(false);
+        recognitionRef.current = r;
+        setListening(true);
+        r.start();
+    }
+
+    // Rasmli qidiruv (blob upload → base64 → chat message)
+    const imgInputRef = useRef<HTMLInputElement>(null);
+    async function sendImage(file: File) {
+        if (loading) return;
+        setLoading(true);
+        try {
+            const fd = new FormData();
+            fd.append("file", file);
+            const up = await fetch("/api/market/upload", { method: "POST", body: fd });
+            if (!up.ok) { alert("Rasm yuklab bo'lmadi"); setLoading(false); return; }
+            const { url } = await up.json();
+            const userMsg: Msg = { role: "user", content: `[Rasm]\n${url}` };
+            const next = [...messages, userMsg];
+            setMessages(next);
+            const res = await fetch("/api/ai/chat", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    messages: next.map(m => ({ role: m.role, content: m.content })),
+                    imageUrl: url,
+                }),
+            });
+            const d = await res.json();
+            if (!res.ok) setMessages(m => [...m, { role: "assistant", content: d.error || "Rasm tahlil qilinmadi" }]);
+            else setMessages(m => [...m, { role: "assistant", content: d.reply, products: d.products ?? [] }]);
+        } catch { setMessages(m => [...m, { role: "assistant", content: "Xatolik" }]); }
+        finally { setLoading(false); }
+    }
 
     async function send(text?: string) {
         const content = (text ?? input).trim();
@@ -50,12 +103,13 @@ export function MarketAssistant() {
                 <span className="text-gray-600 dark:text-white/50">AI yordamchi</span>
             </nav>
 
-            <div className="flex items-center gap-2 mb-5">
-                <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 flex items-center justify-center">
-                    <Bot size={18} className="text-white" />
+            <div className="flex items-center gap-3 mb-5">
+                <div className="w-11 h-11 rounded-2xl bg-white dark:bg-white flex items-center justify-center ring-1 ring-gray-200 dark:ring-white/10">
+                    <Image src="/logos/humo-ai-icon-black.png" alt="Humo AI" width={32} height={32}
+                        className="w-8 h-8 object-contain" />
                 </div>
                 <div>
-                    <h1 className="text-lg font-black text-gray-900 dark:text-white leading-tight">AI yordamchi</h1>
+                    <h1 className="text-lg font-black text-gray-900 dark:text-white leading-tight">Humo AI</h1>
                     <p className="text-xs text-gray-400 dark:text-white/30 leading-tight">Sizga mos mahsulotni topib beraman</p>
                 </div>
             </div>
@@ -101,15 +155,32 @@ export function MarketAssistant() {
                 </div>
             )}
 
-            {/* Kirish */}
+            {/* Kirish: rasm + ovoz + matn + jo'natish */}
+            <input ref={imgInputRef} type="file" accept="image/*" className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) sendImage(f); e.target.value = ""; }} />
             <div className="flex gap-2 sticky bottom-4">
+                <button onClick={() => imgInputRef.current?.click()} disabled={loading}
+                    title="Rasm bilan qidirish"
+                    className="w-11 h-11 shrink-0 rounded-2xl bg-white dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
+                        text-gray-500 hover:text-green-600 hover:border-green-400 dark:hover:border-green-500/50 flex items-center justify-center transition disabled:opacity-40">
+                    <Camera size={18} />
+                </button>
+                <button onClick={toggleVoice} disabled={loading}
+                    title="Ovoz bilan qidirish"
+                    className={`w-11 h-11 shrink-0 rounded-2xl border flex items-center justify-center transition disabled:opacity-40 ${
+                        listening
+                            ? "bg-red-500 text-white border-red-500 animate-pulse"
+                            : "bg-white dark:bg-white/[0.05] border-gray-200 dark:border-white/[0.08] text-gray-500 hover:text-green-600 hover:border-green-400 dark:hover:border-green-500/50"
+                    }`}>
+                    <Mic size={18} />
+                </button>
                 <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
                     placeholder="Xabar yozing..." disabled={loading}
-                    className="flex-1 bg-white dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
-                        focus:border-violet-400 dark:focus:border-violet-500/50 rounded-2xl px-4 py-3 text-sm
+                    className="flex-1 min-w-0 bg-white dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.08]
+                        focus:border-green-400 dark:focus:border-green-500/50 rounded-2xl px-4 py-3 text-sm
                         text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/20 outline-none transition" />
                 <button onClick={() => send()} disabled={loading || !input.trim()}
-                    className="px-5 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white font-bold
+                    className="px-5 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 text-white font-bold
                         disabled:opacity-40 flex items-center transition-all">
                     {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                 </button>
