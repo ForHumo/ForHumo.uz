@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { checkReservedUsername } from "@/lib/reserved-username";
 import { isFounderProfile } from "@/lib/founders";
-import { isReservedByAgentRule, AGENT_CREATOR_OWNER } from "@/lib/nexus-agent";
+import { isReservedByAgentRule } from "@/lib/nexus-agent";
 
 // Simple in-memory rate limit: max 40 checks/min per user
 const rl = new Map<string, number[]>();
@@ -41,10 +41,10 @@ export async function GET(req: Request) {
         select: { id: true, humoId: true, username: true },
     });
     const isFounder = me ? isFounderProfile(me) : false;
-    const isCreatorOwner = (me?.username ?? "").toLowerCase() === AGENT_CREATOR_OWNER;
 
-    // Agent qoidasi: `_agent` va `create` maxsus — hozircha faqat @abduvoris tanlay oladi
-    const agentRule = isReservedByAgentRule(q, { isCreatorOwner });
+    // Agent qoidasi: profil uchun `_agent` va `create` bo'lmasin
+    // (bu nomlar @create sahifasidan agent yaratganda beriladi)
+    const agentRule = isReservedByAgentRule(q);
     if (agentRule.reserved) {
         return NextResponse.json({ available: false, reason: "reserved", message: agentRule.reason });
     }
