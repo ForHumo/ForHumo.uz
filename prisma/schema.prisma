@@ -136,9 +136,29 @@ model SupportTicket {
   profile     UserProfile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
   email       String
   subject     String
-  message     String
-  status      String       @default("open")
+  message     String       // dastlabki xabar (backward compat)
+  status      String       @default("open")     // open / pending / closed
+  module      String?                            // "bn"|"nexus"|"market"|"pay"|"id"|"esport"|"ai"|"support"
+  updatedAt   DateTime     @default(now()) @updatedAt
   createdAt   DateTime     @default(now())
+  messages    SupportMessage[]
+
+  @@index([profileId, updatedAt(sort: Desc)])
+  @@index([status, updatedAt(sort: Desc)])
+}
+
+model SupportMessage {
+  id           String        @id @default(cuid())
+  ticketId     String
+  ticket       SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorRole   String        // "USER" | "ADMIN"
+  authorId     String?       // profileId
+  body         String        // <= 2000
+  readByUser   Boolean       @default(true)
+  readByAdmin  Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+
+  @@index([ticketId, createdAt])
 }
 
 model EmailVerificationCode {

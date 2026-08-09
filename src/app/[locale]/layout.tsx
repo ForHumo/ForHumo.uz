@@ -10,6 +10,7 @@ import { Footer } from "@/components/layout/footer";
 import { Providers } from "@/app/providers";
 import { BackgroundEffects } from "@/components/background-effects";
 import { AuthBarrier } from "@/components/auth/auth-barrier";
+import { SupportDock } from "@/components/support/support-dock";
 import "@/app/globals.css";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
@@ -126,6 +127,7 @@ export default async function LocaleLayout({
                             </main>
                             {!publicHost && <Footer />}
                         </AuthBarrier>
+                        <SupportDock />
                     </Providers>
                 </NextIntlClientProvider>
             </body>
