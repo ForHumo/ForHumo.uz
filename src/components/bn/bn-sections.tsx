@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import {
     Car, Smartphone, Shirt, Sofa, Hammer, ShoppingBasket, Baby, Dumbbell,
     Sparkles, Wrench, Store, MapPin, Globe, Star, Package, ChevronRight,
     ScanLine, Camera, Bell, Navigation, User, LogIn, Crown, Settings,
-    ShoppingCart, Heart, LogOut, ShieldCheck,
+    ShoppingCart, Heart, LogOut, ShieldCheck, Loader2,
 } from "lucide-react";
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
@@ -451,12 +451,93 @@ export function BnNotificationsPage() {
     return (
         <Wrap>
             <PageHead title="Bildirishnomalar" />
+            <BnNotificationsClient />
+        </Wrap>
+    );
+}
+
+function BnNotificationsClient() {
+    const [items, setItems] = useState<Array<{
+        id: string; type: string; title: string; body: string | null;
+        link: string | null; read: boolean; createdAt: string;
+    }>>([]);
+    const [loading, setLoading] = useState(true);
+    const [unread, setUnread] = useState(0);
+
+    useEffect(() => {
+        fetch("/api/bn/notifications")
+            .then(r => r.json())
+            .then(d => { setItems(d.items ?? []); setUnread(d.unreadCount ?? 0); })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }, []);
+
+    async function markAllRead() {
+        try {
+            await fetch("/api/bn/notifications/read", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ all: true }),
+            });
+            setItems(prev => prev.map(x => ({ ...x, read: true })));
+            setUnread(0);
+        } catch { /* ignore */ }
+    }
+
+    if (loading) return <div className="grid place-items-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+    if (items.length === 0) {
+        return (
             <BnEmpty
                 icon={<Bell className="w-6 h-6" />}
                 title="Yangi bildirishnoma yo'q"
                 text="Buyurtma holati o'zgarganda va narx tushganda shu yerda xabar beramiz."
             />
-        </Wrap>
+        );
+    }
+
+    return (
+        <div>
+            {unread > 0 && (
+                <div className="flex items-center justify-between mb-3">
+                    <span className="text-[12px]" style={{ color: BN.text3 }}>{unread} yangi</span>
+                    <button
+                        onClick={markAllRead}
+                        className="text-[12px] font-black"
+                        style={{ color: BN.gold }}
+                    >
+                        Hammasini o&apos;qildi
+                    </button>
+                </div>
+            )}
+            <div className="space-y-2">
+                {items.map(n => (
+                    <div
+                        key={n.id}
+                        className="p-3.5 rounded-2xl"
+                        style={{
+                            background: n.read ? BN.surface : BN.surfaceUp,
+                            border: `1px solid ${n.read ? BN.border : BN.borderGold}`,
+                        }}
+                    >
+                        <div className="flex items-start gap-2 mb-1">
+                            {!n.read && <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ background: BN.gold }} />}
+                            <div className="flex-1">
+                                <p className="text-[13.5px] font-black" style={{ color: BN.text }}>{n.title}</p>
+                                {n.body && <p className="text-[12.5px] mt-0.5" style={{ color: BN.text2 }}>{n.body}</p>}
+                                <p className="text-[10.5px] mt-1.5" style={{ color: BN.text3 }}>
+                                    {new Date(n.createdAt).toLocaleString("uz-UZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                </p>
+                            </div>
+                            {n.link && (
+                                <BnLink href={n.link} className="text-[11.5px] font-black flex-shrink-0" style={{ color: BN.gold }}>
+                                    Ko&apos;rish →
+                                </BnLink>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
 }
 

@@ -2182,6 +2182,7 @@ model BnProduct {
 
   orderItems     BnOrderItem[]
   reviews        BnProductReview[]
+  variants       BnProductVariant[]
 
   @@index([shopId, createdAt])
   @@index([categoryId, isActive, hidden])
@@ -2194,10 +2195,12 @@ model BnCartItem {
   id        String   @id @default(cuid())
   profileId String
   productId String
+  variantId String?                                          // agar variant tanlangan bo'lsa
+  variant   BnProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
   qty       Int      @default(1)
   createdAt DateTime @default(now())
 
-  @@unique([profileId, productId])
+  @@unique([profileId, productId, variantId])
   @@index([profileId])
 }
 
@@ -2292,15 +2295,17 @@ model BnOrder {
 }
 
 model BnOrderItem {
-  id        String    @id @default(cuid())
-  orderId   String
-  order     BnOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String
-  product   BnProduct @relation(fields: [productId], references: [id])
-  title     String                                 // snapshot
-  price     Int                                    // snapshot
-  qty       Int       @default(1)
-  imageUrl  String?
+  id          String    @id @default(cuid())
+  orderId     String
+  order       BnOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     BnProduct @relation(fields: [productId], references: [id])
+  variantId   String?                                 // tanlangan variant (agar bor bo'lsa)
+  variantName String?                                 // denorm — variant o'chsa ham tarix
+  title       String                                  // snapshot
+  price       Int                                     // snapshot (variant narxi bo'lsa)
+  qty         Int       @default(1)
+  imageUrl    String?
 
   @@index([orderId])
 }
@@ -2392,6 +2397,88 @@ model BnAdmin {
 enum BnAdminRole {
   OWNER
   MODERATOR
+}
+
+// ── Mahsulot variantlari (rang/o'lcham/xotira) ───────────────────────────────
+// Kiyim/poyabzal/telefon uchun majburiy — har variantda alohida narx va stok.
+// Mahsulotda variant bo'lsa: `BnProduct.price`=eng arzoni, `stock`=yig'indi.
+model BnProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  product   BnProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String                                        // "Qora / XL", "256 GB / Kumush"
+  price     Int                                            // so'm (butun)
+  oldPrice  Int?
+  stock     Int      @default(0)
+  image     String?
+  sort      Int      @default(0)
+  createdAt DateTime @default(now())
+
+  cartItems BnCartItem[]
+
+  @@index([productId, sort])
+}
+
+// ── BN bildirishnomalar ──────────────────────────────────────────────────────
+// Order status o'zgargani, sharh, boyot, narx tushdi... — xaridor/sotuvchiga.
+model BnNotification {
+  id        String        @id @default(cuid())
+  profileId String                                         // qabul qiluvchi UserProfile.id
+  type      BnNotifType
+  title     String
+  body      String?
+  link      String?                                        // bosilganda o'tadigan manzil (masalan /buyurtmalarim/xxx)
+  read      Boolean       @default(false)
+  createdAt DateTime      @default(now())
+
+  @@index([profileId, read])
+  @@index([profileId, createdAt])
+}
+
+enum BnNotifType {
+  ORDER_PLACED         // Sotuvchiga: yangi buyurtma keldi
+  ORDER_CONFIRMED      // Xaridorga: sotuvchi tasdiqladi
+  ORDER_READY          // Xaridorga: mahsulot tayyor
+  ORDER_COMPLETED      // Xaridorga: buyurtma yakunlandi
+  ORDER_CANCELLED      // Xaridorga: sotuvchi bekor qildi (yoki aksincha)
+  REVIEW_RECEIVED      // Sotuvchiga: yangi sharh
+  PRICE_DROP           // Xaridorga: kuzatilgan mahsulot narxi tushdi
+  BAN_APPLIED          // Sotuvchiga: sizga ban qo'yildi
+  BAN_LIFTED           // Sotuvchiga: ban olib tashlandi
+  RETURN_REQUESTED     // Sotuvchiga: qaytarish so'ralgan
+  RETURN_DECIDED       // Xaridorga: qaytarish qabul/rad
+  SHOP_APPROVED        // Sotuvchiga: do'kon tasdiqlandi
+  SHOP_REJECTED        // Sotuvchiga: do'kon rad etildi
+}
+
+// ── Qaytarish (return) tizimi ────────────────────────────────────────────────
+// Xaridor mahsulotni qaytarishi mumkin — sabab bilan.
+// Sotuvchi qabul qilsa: stok tiklanadi, xaridor puli qaytariladi (WALLET).
+model BnReturn {
+  id           String            @id @default(cuid())
+  orderId      String                                       // BnOrder.id
+  buyerId      String                                       // xaridor
+  reason       String                                       // qisqa sabab
+  detail       String?                                      // batafsil (ixtiyoriy)
+  images       String[]          @default([])               // dalil rasm URL'lari (maks 5)
+  status       BnReturnStatus    @default(REQUESTED)
+  decidedById  String?                                      // sotuvchi profileId
+  decidedAt    DateTime?
+  decisionNote String?                                      // sotuvchi izohi
+  refunded     Boolean           @default(false)            // hamyonga qaytarilganmi
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([orderId])
+  @@index([buyerId, createdAt])
+  @@index([status, createdAt])
+}
+
+enum BnReturnStatus {
+  REQUESTED     // Xaridor so'radi
+  APPROVED      // Sotuvchi qabul qildi (mahsulot qaytariladi, pul tiklanadi)
+  REJECTED      // Sotuvchi rad etdi (sabab bilan)
+  CANCELLED     // Xaridor o'zi bekor qildi
 }
 
 // ── Boykot brendlar ──────────────────────────────────────────────────────────

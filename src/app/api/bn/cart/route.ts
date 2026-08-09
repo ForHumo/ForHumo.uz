@@ -21,6 +21,7 @@ export async function GET() {
 
     const items = await prisma.bnCartItem.findMany({
         where: { profileId: auth.profileId },
+        include: { variant: true },
         orderBy: { createdAt: "desc" },
     });
 
@@ -38,14 +39,22 @@ export async function GET() {
         .map(i => {
             const p = byId.get(i.productId);
             if (!p) return null;
+            // Variant tanlangan bo'lsa uning narxi va rasmi
+            const price = i.variant?.price ?? p.price;
+            const image = i.variant?.image ?? p.images[0] ?? null;
             return {
                 id: i.id,
                 qty: i.qty,
+                variantId: i.variantId,
+                variantName: i.variant?.name ?? null,
                 createdAt: i.createdAt,
                 product: {
-                    id: p.id, slug: p.slug, title: p.title, price: p.price,
-                    marketAvgPrice: p.marketAvgPrice, images: p.images,
-                    stock: p.stock, allowDelivery: p.allowDelivery, allowInspect: p.allowInspect,
+                    id: p.id, slug: p.slug, title: p.title,
+                    price,   // variant narxi bo'lsa uni ishlatamiz
+                    marketAvgPrice: p.marketAvgPrice,
+                    images: image ? [image] : p.images,
+                    stock: i.variant?.stock ?? p.stock,
+                    allowDelivery: p.allowDelivery, allowInspect: p.allowInspect,
                     isActive: p.isActive, hidden: p.hidden,
                     shopSlug: p.shop?.slug ?? "", shopName: p.shop?.name ?? "",
                     marketName: p.shop?.market?.name ?? null,
@@ -64,8 +73,8 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => ({}));
     const productId = String(body?.productId ?? "");
+    const variantId = typeof body?.variantId === "string" ? body.variantId : null;
     // Chakana uchun 99 chegara (spam himoyasi), ulgurji uchun 10000 (real B2B).
-    // Mahsulotni yuklab olib real chegarani belgilaymiz.
     const rawQty = Math.max(1, Number(body?.qty) || 1);
     const set = body?.set === true;
 
@@ -73,8 +82,19 @@ export async function POST(req: Request) {
 
     const product = await prisma.bnProduct.findUnique({
         where: { id: productId },
-        select: { id: true, stock: true, isActive: true, hidden: true, isWholesale: true, minWholesaleQty: true },
+        select: { id: true, stock: true, isActive: true, hidden: true, isWholesale: true, minWholesaleQty: true,
+            variants: { select: { id: true, stock: true } } },
     });
+
+    // Variant tanlangan bo'lsa uni tekshiramiz
+    if (variantId) {
+        const v = product?.variants?.find(x => x.id === variantId);
+        if (!v) return NextResponse.json({ error: "variant_not_found" }, { status: 404 });
+    }
+    // Mahsulotda variantlar bor bo'lsa, variant tanlash majburiy
+    if (product?.variants && product.variants.length > 0 && !variantId) {
+        return NextResponse.json({ error: "variant_required" }, { status: 400 });
+    }
     const maxQty = product?.isWholesale ? 10000 : 99;
     const qty = Math.min(maxQty, rawQty);
     if (!product || !product.isActive || product.hidden) {
@@ -95,16 +115,20 @@ export async function POST(req: Request) {
         }
     }
 
+    const effectiveStock = variantId
+        ? (product.variants?.find(x => x.id === variantId)?.stock ?? 0)
+        : product.stock;
+
     const existing = await prisma.bnCartItem.findUnique({
-        where: { profileId_productId: { profileId: auth.profileId, productId } },
+        where: { profileId_productId_variantId: { profileId: auth.profileId, productId, variantId } },
     });
 
-    const targetQty = set ? qty : Math.min(product.stock, (existing?.qty ?? 0) + qty);
+    const targetQty = set ? qty : Math.min(effectiveStock, (existing?.qty ?? 0) + qty);
 
     const item = await prisma.bnCartItem.upsert({
-        where: { profileId_productId: { profileId: auth.profileId, productId } },
+        where: { profileId_productId_variantId: { profileId: auth.profileId, productId, variantId } },
         update: { qty: targetQty },
-        create: { profileId: auth.profileId, productId, qty: targetQty },
+        create: { profileId: auth.profileId, productId, variantId, qty: targetQty },
     });
 
     const count = await prisma.bnCartItem.count({ where: { profileId: auth.profileId } });

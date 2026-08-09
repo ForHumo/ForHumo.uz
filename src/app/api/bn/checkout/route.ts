@@ -25,6 +25,7 @@ import { orderRef } from "@/lib/bn-settle";
 import { trackBnEvent } from "@/lib/bn-events";
 import { viewerCanSeeWholesale } from "@/lib/bn-data";
 import { minQtyForProduct, parseTiers, priceForQty } from "@/lib/bn-wholesale";
+import { bnNotify } from "@/lib/bn-notify";
 
 const DELIVERY_FEE = 20_000;   // Toshkent — flat tarif (FAZA 6 da API bilan almashtiriladi)
 
@@ -59,6 +60,7 @@ export async function POST(req: Request) {
     // Savatni yig'ib olamiz (tranzaksiyadan tashqarida — o'qish yetarli)
     const cartItems = await prisma.bnCartItem.findMany({
         where: { profileId: auth.profileId },
+        include: { variant: true },
     });
     if (cartItems.length === 0) {
         return NextResponse.json({ error: "cart_empty" }, { status: 400 });
@@ -81,27 +83,35 @@ export async function POST(req: Request) {
 
     // Har item mavjud va aktivligini tekshirish + do'kon bo'yicha guruhlash
     // Ulgurji uchun narx dinamik — tier'ga qarab hisoblanadi.
+    // Variant tanlangan bo'lsa variant narxi va zapasi.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const groups = new Map<string, { productId: string; qty: number; unitPrice: number; product: any }[]>();
+    const groups = new Map<string, { productId: string; variantId: string | null; variantName: string | null; qty: number; unitPrice: number; product: any }[]>();
     for (const it of cartItems) {
         const p = byId.get(it.productId);
         if (!p || !p.isActive || p.hidden) {
             return NextResponse.json({ error: "item_unavailable", productId: it.productId }, { status: 409 });
         }
-        if (p.stock < it.qty) {
-            return NextResponse.json({ error: "insufficient_stock", productId: it.productId, available: p.stock }, { status: 409 });
+        // Variant tanlangan bo'lsa variant zapasi va narxi
+        const effectiveStock = it.variant?.stock ?? p.stock;
+        if (effectiveStock < it.qty) {
+            return NextResponse.json({ error: "insufficient_stock", productId: it.productId, available: effectiveStock }, { status: 409 });
         }
-        let unitPrice = p.price;
+        let unitPrice = it.variant?.price ?? p.price;
         if (p.isWholesale) {
             const minQty = minQtyForProduct(true, p.minWholesaleQty);
             if (it.qty < minQty) {
                 return NextResponse.json({ error: "wholesale_min_qty", productId: it.productId, minQty, message: `Kamida ${minQty} dona buyurtma qiling` }, { status: 400 });
             }
-            unitPrice = priceForQty(p.price, parseTiers(p.wholesaleTiers), it.qty);
+            unitPrice = priceForQty(unitPrice, parseTiers(p.wholesaleTiers), it.qty);
         }
         const key = p.shopId;
         const arr = groups.get(key) ?? [];
-        arr.push({ productId: it.productId, qty: it.qty, unitPrice, product: p });
+        arr.push({
+            productId: it.productId,
+            variantId: it.variantId,
+            variantName: it.variant?.name ?? null,
+            qty: it.qty, unitPrice, product: p,
+        });
         groups.set(key, arr);
     }
 
@@ -164,8 +174,10 @@ export async function POST(req: Request) {
                         items: {
                             create: items.map(i => ({
                                 productId: i.productId,
+                                variantId: i.variantId,
+                                variantName: i.variantName,
                                 title: i.product.title,
-                                price: i.unitPrice,       // ulgurji tier narxi
+                                price: i.unitPrice,       // ulgurji tier yoki variant narxi
                                 qty: i.qty,
                                 imageUrl: i.product.images?.[0] ?? null,
                             })),
@@ -174,14 +186,26 @@ export async function POST(req: Request) {
                 });
                 createdCodes.push(order.code);
 
-                // Stokni atomik kamaytirish + oversell guard (stok >= qty shart)
+                // Stokni atomik kamaytirish + oversell guard
                 for (const i of items) {
-                    const upd = await tx.bnProduct.updateMany({
-                        where: { id: i.productId, stock: { gte: i.qty } },
-                        data:  { stock: { decrement: i.qty }, sold: { increment: i.qty } },
-                    });
-                    if (upd.count === 0) {
-                        throw new Error(`OVERSELL:${i.productId}`);
+                    if (i.variantId) {
+                        // Variant zapasi
+                        const upd = await tx.bnProductVariant.updateMany({
+                            where: { id: i.variantId, stock: { gte: i.qty } },
+                            data:  { stock: { decrement: i.qty } },
+                        });
+                        if (upd.count === 0) throw new Error(`OVERSELL:${i.productId}`);
+                        // Mahsulot sold denorm
+                        await tx.bnProduct.update({
+                            where: { id: i.productId },
+                            data: { sold: { increment: i.qty }, stock: { decrement: i.qty } },
+                        }).catch(() => {});
+                    } else {
+                        const upd = await tx.bnProduct.updateMany({
+                            where: { id: i.productId, stock: { gte: i.qty } },
+                            data:  { stock: { decrement: i.qty }, sold: { increment: i.qty } },
+                        });
+                        if (upd.count === 0) throw new Error(`OVERSELL:${i.productId}`);
                     }
                 }
 
@@ -223,6 +247,21 @@ export async function POST(req: Request) {
     after(async () => {
         for (const pid of purchasedIds) {
             await trackBnEvent({ profileId: auth.profileId, productId: pid, type: "PURCHASE" });
+        }
+        // Sotuvchilarga "yangi buyurtma" bildirishnoma
+        for (const [shopId] of groups.entries()) {
+            const shopOwner = await prisma.bnShop.findUnique({
+                where: { id: shopId }, select: { profileId: true, name: true },
+            });
+            if (shopOwner?.profileId) {
+                await bnNotify({
+                    profileId: shopOwner.profileId,
+                    type: "ORDER_PLACED",
+                    title: "Yangi buyurtma keldi",
+                    body: `${shopOwner.name} do'koningizga yangi buyurtma`,
+                    link: "/kabinet",
+                });
+            }
         }
     });
 

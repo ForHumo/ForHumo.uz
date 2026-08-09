@@ -12,10 +12,11 @@
 //
 // POST /api/bn/orders/[id]/status   body: { status: "CONFIRMED"|"READY"|"COMPLETED"|"CANCELLED", reason?: string }
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 import { refundOrder, settleOrder } from "@/lib/bn-settle";
+import { bnNotify } from "@/lib/bn-notify";
 
 const ALLOWED_FROM: Record<string, Set<string>> = {
     PLACED:    new Set(["CONFIRMED", "CANCELLED"]),
@@ -74,6 +75,30 @@ export async function POST(
     if (next === "CANCELLED") { update.cancelledAt = now; update.cancelReason = reason ?? "Sotuvchi bekor qildi"; }
 
     await prisma.bnOrder.update({ where: { id: order.id }, data: update });
+
+    // Xaridorga bildirishnoma (fail-safe)
+    after(async () => {
+        const titles: Record<string, { t: string; b: string }> = {
+            CONFIRMED: { t: "Buyurtma tasdiqlandi", b: `${order.code} — sotuvchi tasdiqladi` },
+            READY:     { t: "Mahsulot tayyor",      b: `${order.code} — olib ketishga tayyor` },
+            COMPLETED: { t: "Buyurtma yakunlandi",  b: `${order.code} — muvaffaqiyatli yakunlandi` },
+            CANCELLED: { t: "Buyurtma bekor qilindi", b: `${order.code} — ${reason ?? "sotuvchi bekor qildi"}` },
+        };
+        const meta = titles[next];
+        if (meta) {
+            const typeMap: Record<string, "ORDER_CONFIRMED" | "ORDER_READY" | "ORDER_COMPLETED" | "ORDER_CANCELLED"> = {
+                CONFIRMED: "ORDER_CONFIRMED", READY: "ORDER_READY",
+                COMPLETED: "ORDER_COMPLETED", CANCELLED: "ORDER_CANCELLED",
+            };
+            await bnNotify({
+                profileId: order.buyerId,
+                type: typeMap[next],
+                title: meta.t,
+                body: meta.b,
+                link: "/buyurtmalarim",
+            });
+        }
+    });
 
     // Escrow harakati
     if (next === "COMPLETED") {

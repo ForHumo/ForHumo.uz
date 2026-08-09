@@ -8,7 +8,7 @@ import { BnBackButton } from "./bn-back-button";
 import { BnReviews } from "./bn-reviews";
 import {
     Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
-    ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2, BellRing,
+    ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2, BellRing, MessageCircle,
 } from "lucide-react";
 import {
     BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel, TIER_META,
@@ -394,13 +394,36 @@ export function BnProductDetail({
                                 <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: BN.text3 }} />
                             </BnLink>
 
-                            <button
-                                className="flex items-center justify-center gap-2 w-full h-11 mt-4 rounded-xl text-[14px] font-bold transition-colors"
-                                style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
-                            >
-                                <Phone className="w-4 h-4" />
-                                Sotuvchiga qo&apos;ng&apos;iroq qilish
-                            </button>
+                            <div className="grid grid-cols-2 gap-2 mt-4">
+                                <button
+                                    className="flex items-center justify-center gap-2 h-11 rounded-xl text-[13px] font-bold transition-colors"
+                                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
+                                >
+                                    <Phone className="w-4 h-4" />
+                                    Qo&apos;ng&apos;iroq
+                                </button>
+                                {shop.ownerUsername ? (
+                                    <a
+                                        href={`https://forhumo.uz/uz/nexus?dm=${shop.ownerUsername}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center gap-2 h-11 rounded-xl text-[13px] font-bold transition-colors"
+                                        style={{ background: BN.gold, color: BN.onGold }}
+                                    >
+                                        <MessageCircle className="w-4 h-4" />
+                                        Yozish
+                                    </a>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="flex items-center justify-center gap-2 h-11 rounded-xl text-[13px] font-bold opacity-40"
+                                        style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text3 }}
+                                    >
+                                        <MessageCircle className="w-4 h-4" />
+                                        Yozish
+                                    </button>
+                                )}
+                            </div>
                         </Panel>
                     )}
                 </div>

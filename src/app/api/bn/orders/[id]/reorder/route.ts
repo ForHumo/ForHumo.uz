@@ -32,9 +32,10 @@ export async function POST(
 
         try {
             await prisma.bnCartItem.upsert({
-                where: { profileId_productId: { profileId: auth.profileId, productId: it.productId } },
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                where: { profileId_productId_variantId: { profileId: auth.profileId, productId: it.productId, variantId: it.variantId as any } },
                 update: { qty: { increment: Math.min(it.qty, p.stock) } },
-                create: { profileId: auth.profileId, productId: it.productId, qty: Math.min(it.qty, p.stock) },
+                create: { profileId: auth.profileId, productId: it.productId, variantId: it.variantId, qty: Math.min(it.qty, p.stock) },
             });
             added++;
         } catch { skipped++; }
