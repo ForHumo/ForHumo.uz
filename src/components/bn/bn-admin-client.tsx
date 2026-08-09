@@ -11,6 +11,7 @@ import {
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnAdminList } from "./bn-admin-list";
 import { BnAdminBans } from "./bn-admin-bans";
+import { BnAdminBoycott } from "./bn-admin-boycott";
 
 export interface AdminShopRow {
     id: string;
@@ -53,7 +54,7 @@ const TABS = [
 
 export function BnAdminClient({ initial, role }: Props) {
     const router = useRouter();
-    const [section, setSection] = useState<"SHOPS" | "ADMINS" | "BANS">("SHOPS");
+    const [section, setSection] = useState<"SHOPS" | "ADMINS" | "BANS" | "BOYCOTT">("SHOPS");
     const [tab, setTab] = useState<AdminShopRow["status"]>("PENDING");
     const [rows, setRows] = useState<AdminShopRow[]>(initial);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
@@ -130,6 +131,17 @@ export function BnAdminClient({ initial, role }: Props) {
                 >
                     <ShieldCheck className="w-3.5 h-3.5" /> Banlar
                 </button>
+                <button
+                    onClick={() => setSection("BOYCOTT")}
+                    className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-[12.5px] font-bold"
+                    style={{
+                        background: section === "BOYCOTT" ? BN.gold : BN.surface,
+                        color: section === "BOYCOTT" ? BN.onGold : BN.text2,
+                        border: `1px solid ${section === "BOYCOTT" ? BN.gold : BN.border}`,
+                    }}
+                >
+                    <ShieldOff className="w-3.5 h-3.5" /> Boykot
+                </button>
                 {role === "OWNER" && (
                     <button
                         onClick={() => setSection("ADMINS")}
@@ -145,7 +157,7 @@ export function BnAdminClient({ initial, role }: Props) {
                 )}
             </div>
 
-            {section === "ADMINS" && role === "OWNER" ? <BnAdminList /> : section === "BANS" ? <BnAdminBans role={role} /> : (
+            {section === "ADMINS" && role === "OWNER" ? <BnAdminList /> : section === "BANS" ? <BnAdminBans role={role} /> : section === "BOYCOTT" ? <BnAdminBoycott role={role} /> : (
             <><div className="flex items-center gap-1.5 my-6 overflow-x-auto pb-1">
                 {TABS.map(t => {
                     const count = rows.filter(s => s.status === t.key).length;

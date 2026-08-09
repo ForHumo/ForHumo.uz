@@ -2394,6 +2394,25 @@ enum BnAdminRole {
   MODERATOR
 }
 
+// ── Boykot brendlar ──────────────────────────────────────────────────────────
+// OWNER (@abduvoris/@x) yozadi. Bu brendlar mahsuloti BN'da sotilmaydi.
+// Sabab: har xil (siyosiy, axloqiy, sifat, boykot chaqiruvi).
+// Mahsulot yaratilayotganda title/description tekshiriladi, mos kelsa BLOCK.
+// Foydalanuvchi /bn/boykot sahifada ro'yxatni + sabablarini ko'radi.
+model BnBoycottBrand {
+  id         String   @id @default(cuid())
+  name       String   @unique                       // Asosiy nom (masalan "Coca-Cola")
+  aliases    String[] @default([])                  // Boshqa nomlar/sinonimlar ("coke", "coca cola")
+  reason     String                                 // Nima uchun (foydalanuvchiga ko'rinadigan)
+  detail     String?                                // Batafsil (ixtiyoriy)
+  categories String[] @default([])                  // Yo'nalish teglari ("ichimlik", "siyosiy")
+  addedById  String                                 // OWNER profileId
+  addedAt    DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([addedAt])
+}
+
 // ── Zaxira usernamelar ───────────────────────────────────────────────────────
 // Foydalanuvchi olmaydigan @nomlar (tizim, brend, mashhur odam, davlat,
 // PERSONAL — yaqin odamlarga ajratilgan). VIP toifa keyin 10K+ faol

@@ -16,6 +16,7 @@ import { uniqueSlug } from "@/lib/bn-slug";
 import { moderateOnCreate } from "@/lib/moderation";
 import { checkForbiddenKeywords, moderateBnProduct } from "@/lib/bn-moderation";
 import { parseTiers } from "@/lib/bn-wholesale";
+import { checkBoycott } from "@/lib/bn-boycott";
 
 async function requireSellerShop(profileId: string) {
     const shop = await prisma.bnShop.findFirst({
@@ -68,6 +69,16 @@ export async function POST(req: Request) {
         return NextResponse.json({
             error: "forbidden_keyword",
             reason: `Taqiqlangan: ${forbidden.label}. BN'da bunday mahsulot sotib bo'lmaydi.`,
+        }, { status: 422 });
+    }
+
+    // Boykot brend tekshiruvi — darhol bloklash
+    const boycott = await checkBoycott(`${title} ${description ?? ""}`);
+    if (boycott) {
+        return NextResponse.json({
+            error: "boycott_brand",
+            brandName: boycott.name,
+            reason: `"${boycott.name}" brendi BN'da boykot ro'yxatida: ${boycott.reason}`,
         }, { status: 422 });
     }
 
