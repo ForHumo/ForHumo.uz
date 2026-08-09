@@ -1,10 +1,7 @@
-import { setRequestLocale } from "next-intl/server";
-import { ProductAdd } from "@/components/market/product-add";
-
-export async function generateMetadata() { return { title: "Mahsulot qo'shish | Humo Market" }; }
+// Eski marshrut — endi Owner/Worker'lar uchun /market/admin/products/add ga o'tadi.
+import { redirect } from "@/i18n/routing";
 
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
-    setRequestLocale(locale);
-    return <ProductAdd />;
+    redirect({ href: "/market/admin/products/add", locale });
 }

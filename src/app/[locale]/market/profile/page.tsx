@@ -1,10 +1,7 @@
-import { setRequestLocale } from "next-intl/server";
-import { MarketProfile } from "@/components/market/market-profile";
-
-export async function generateMetadata() { return { title: "Mening profilim | Humo Market" }; }
+// Eski marshrut — endi Owner/Worker'lar uchun /market/admin/profile ga o'tadi.
+import { redirect } from "@/i18n/routing";
 
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
-    setRequestLocale(locale);
-    return <MarketProfile />;
+    redirect({ href: "/market/admin/profile", locale });
 }

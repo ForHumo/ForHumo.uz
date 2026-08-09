@@ -4,7 +4,7 @@ import { Link } from "@/i18n/routing";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-    Home, Grid3X3, Heart, Plus, ShoppingCart, Store, User,
+    Home, Grid3X3, Heart, ShoppingCart, Shield,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -13,27 +13,31 @@ interface DockItem {
     label: string;
     href: string;
     key: string;
-    accent?: boolean; // "+" tugmasi
+    accent?: boolean;
 }
 
+// Public dock — barcha foydalanuvchilarga. Owner/Worker'ga Admin havolasi
+// alohida (staff bo'lganda) qo'shiladi.
 const DOCK_ITEMS: DockItem[] = [
     { icon: Home,         label: "Asosiy",   href: "/market",          key: "home"     },
     { icon: Grid3X3,      label: "Katalog",  href: "/market/catalog",  key: "catalog"  },
     { icon: Heart,        label: "Sevimli",  href: "/market/wishlist", key: "wishlist" },
-    { icon: Plus,         label: "Qo'shish", href: "/market/product/add", key: "add", accent: true },
     { icon: ShoppingCart, label: "Savat",    href: "/market/cart",     key: "cart"     },
-    { icon: Store,        label: "Brend",    href: "/market/brand/manage", key: "brand" },
-    { icon: User,         label: "Profil",   href: "/market/profile",  key: "profile"  },
 ];
 
 export function MarketDock() {
     const pathname = usePathname();
     const [cartCount, setCartCount] = useState(0);
+    const [isStaff, setIsStaff] = useState(false);
 
     useEffect(() => {
         fetch("/api/market/cart")
             .then(r => r.json())
             .then(d => setCartCount(d.items?.length ?? 0))
+            .catch(() => {});
+        fetch("/api/market/admin/me")
+            .then(r => r.json())
+            .then(d => setIsStaff(!!d.isOwner || !!d.isWorker))
             .catch(() => {});
     }, [pathname]);
 
@@ -55,7 +59,10 @@ export function MarketDock() {
                 border border-green-100/80 dark:border-green-900/20
                 rounded-full shadow-2xl shadow-green-900/10
                 pointer-events-auto">
-                {DOCK_ITEMS.map((item) => {
+                {[
+                    ...DOCK_ITEMS,
+                    ...(isStaff ? [{ icon: Shield, label: "Admin", href: "/market/admin", key: "admin", accent: true } as DockItem] : []),
+                ].map((item) => {
                     const Icon = item.icon;
                     const active = isActive(item);
                     const isCart = item.key === "cart";

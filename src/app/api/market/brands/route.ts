@@ -41,6 +41,11 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    // Faqat Humo Market staff (Owner + Worker) yangi brend ocha oladi.
+    const { getMarketStaff } = await import("@/lib/market-staff");
+    const staff = await getMarketStaff();
+    if (!staff) return NextResponse.json({ error: "Faqat Humo Market xodimlari brend ocha oladi" }, { status: 403 });
+
     const { name, slug, description, categories, logo } = await req.json();
     const cats: string[] = Array.isArray(categories) ? categories.filter((x: unknown) => typeof x === "string") : [];
     if (!name?.trim() || !slug?.trim())

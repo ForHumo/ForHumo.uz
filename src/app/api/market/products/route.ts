@@ -62,6 +62,11 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    // Faqat Humo Market staff (Owner + Worker) mahsulot joylay oladi.
+    const { getMarketStaff } = await import("@/lib/market-staff");
+    const staff = await getMarketStaff();
+    if (!staff) return NextResponse.json({ error: "Faqat Humo Market xodimlari mahsulot joylay oladi" }, { status: 403 });
+
     const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
     if (!profile) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 

@@ -113,6 +113,8 @@ model UserProfile {
   lastLoginAt   DateTime?
   loginEvents   LoginEvent[]
   supportTickets SupportTicket[]
+  marketWorker    MarketWorker? @relation("MarketWorkerProfile")
+  marketWorkersAdded MarketWorker[] @relation("MarketWorkerAddedBy")
   emailCodes    EmailVerificationCode[]
   identities    Identity[]
   wallet        Wallet?
@@ -145,6 +147,19 @@ model SupportTicket {
 
   @@index([profileId, updatedAt(sort: Desc)])
   @@index([status, updatedAt(sort: Desc)])
+}
+
+// Humo Market — Owner tomonidan taklif qilingan worker'lar.
+// Owner = founder (isFounderProfile). Worker = quyidagi jadvalda profileId'si bor.
+// Worker keyinchalik username o'zgartirsa ham huquqi qoladi (ID bo'yicha bog'langan).
+model MarketWorker {
+  id                String       @id @default(cuid())
+  profileId         String       @unique
+  profile           UserProfile  @relation("MarketWorkerProfile", fields: [profileId], references: [id], onDelete: Cascade)
+  addedByProfileId  String                                        // owner profileId
+  addedByProfile    UserProfile  @relation("MarketWorkerAddedBy", fields: [addedByProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdAt         DateTime     @default(now())
+  @@index([addedByProfileId])
 }
 
 model SupportMessage {
