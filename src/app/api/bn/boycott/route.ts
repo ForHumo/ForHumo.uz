@@ -2,6 +2,7 @@
 // POST/PATCH/DELETE faqat OWNER.
 
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 import { isBnOwner } from "@/lib/bn-admin";
@@ -41,6 +42,7 @@ export async function POST(req: Request) {
                 addedById: auth.profileId,
             },
         });
+        revalidateTag("bn-boycott");
         return NextResponse.json({ ok: true, brand: created });
     } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);

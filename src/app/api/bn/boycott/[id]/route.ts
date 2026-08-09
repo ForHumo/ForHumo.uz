@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 import { isBnOwner } from "@/lib/bn-admin";
@@ -27,6 +28,7 @@ export async function PATCH(
     }
     try {
         const updated = await prisma.bnBoycottBrand.update({ where: { id }, data });
+        revalidateTag("bn-boycott");
         return NextResponse.json({ ok: true, brand: updated });
     } catch {
         return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -45,6 +47,7 @@ export async function DELETE(
     const { id } = await params;
     try {
         await prisma.bnBoycottBrand.delete({ where: { id } });
+        revalidateTag("bn-boycott");
         return NextResponse.json({ ok: true });
     } catch {
         return NextResponse.json({ error: "not_found" }, { status: 404 });
