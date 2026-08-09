@@ -64,7 +64,9 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => ({}));
     const productId = String(body?.productId ?? "");
-    const qty = Math.max(1, Math.min(99, Number(body?.qty) || 1));
+    // Chakana uchun 99 chegara (spam himoyasi), ulgurji uchun 10000 (real B2B).
+    // Mahsulotni yuklab olib real chegarani belgilaymiz.
+    const rawQty = Math.max(1, Number(body?.qty) || 1);
     const set = body?.set === true;
 
     if (!productId) return NextResponse.json({ error: "productId_required" }, { status: 400 });
@@ -73,6 +75,8 @@ export async function POST(req: Request) {
         where: { id: productId },
         select: { id: true, stock: true, isActive: true, hidden: true, isWholesale: true, minWholesaleQty: true },
     });
+    const maxQty = product?.isWholesale ? 10000 : 99;
+    const qty = Math.min(maxQty, rawQty);
     if (!product || !product.isActive || product.hidden) {
         return NextResponse.json({ error: "product_unavailable" }, { status: 404 });
     }
@@ -115,7 +119,7 @@ export async function PATCH(req: Request) {
 
     const body = await req.json().catch(() => ({}));
     const id = String(body?.id ?? "");
-    const qty = Math.max(1, Math.min(99, Number(body?.qty) || 1));
+    const rawQty = Math.max(1, Number(body?.qty) || 1);
     if (!id) return NextResponse.json({ error: "id_required" }, { status: 400 });
 
     const item = await prisma.bnCartItem.findUnique({ where: { id } });
@@ -127,6 +131,7 @@ export async function PATCH(req: Request) {
         where: { id: item.productId },
         select: { stock: true, isWholesale: true, minWholesaleQty: true },
     });
+    const qty = Math.min(product?.isWholesale ? 10000 : 99, rawQty);
     // Ulgurji: min qty pastga tushmasin
     if (product?.isWholesale) {
         const minQty = minQtyForProduct(true, product.minWholesaleQty);

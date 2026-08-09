@@ -4,15 +4,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendPushToProfile } from "@/lib/push";
+import { assertCron } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function GET(req: Request) {
-    const auth = req.headers.get("authorization") ?? "";
-    if (process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
-        return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+    const authRes = assertCron(req);
+    if (authRes) return authRes;
 
     const watches = await prisma.bnPriceWatch.findMany({ take: 2000 });
     if (watches.length === 0) return NextResponse.json({ ok: true, checked: 0 });

@@ -4,15 +4,14 @@
 import { NextResponse } from "next/server";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { assertCron } from "@/lib/cron-auth";
 
 const EVENT_WINDOW_DAYS = 60;   // Oxirgi 60 kun eventlari hisobga olinadi
 const MAX_USERS_PER_RUN = 500;  // Har cron 500 foydalanuvchi (bepul reja limiti)
 
 export async function GET(req: Request) {
-    const authHeader = req.headers.get("authorization") ?? "";
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+    const authRes = assertCron(req);
+    if (authRes) return authRes;
 
     // Oxirgi N kun ichida biror event qilgan noyob foydalanuvchilar
     const since = new Date(Date.now() - EVENT_WINDOW_DAYS * 86400_000);

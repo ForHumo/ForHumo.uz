@@ -7,17 +7,15 @@ import { NextResponse } from "next/server";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { moderateBnProduct } from "@/lib/bn-moderation";
+import { assertCron } from "@/lib/cron-auth";
 // hideTarget imported for direct hiding; we use bnProduct.update below
 
 const MAX_PRODUCTS_PER_RUN = 300; // Kunlik chegara — Gemini quota'ni tejash
 const LOOKBACK_HOURS = 30;         // Oxirgi 30 soatda yangilangan yoki hech qachon re-check qilinmagan
 
 export async function GET(req: Request) {
-    // Vercel Cron avto Bearer token bilan chaqiradi; kunga bir marta
-    const authHeader = req.headers.get("authorization") ?? "";
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+    const authRes = assertCron(req);
+    if (authRes) return authRes;
 
     const since = new Date(Date.now() - LOOKBACK_HOURS * 3600_000);
 

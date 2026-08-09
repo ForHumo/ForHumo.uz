@@ -5,14 +5,13 @@ import { NextResponse } from "next/server";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { recomputeShopVerified } from "@/lib/bn-verified";
+import { assertCron } from "@/lib/cron-auth";
 
 const MAX_SHOPS_PER_RUN = 500;   // Vercel Hobby limiti
 
 export async function GET(req: Request) {
-    const authHeader = req.headers.get("authorization") ?? "";
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+    const authRes = assertCron(req);
+    if (authRes) return authRes;
 
     // Faqat APPROVED do'konlar — TERMINATED yoki PENDING'ga galochka kerakmas
     const shops = await prisma.bnShop.findMany({
