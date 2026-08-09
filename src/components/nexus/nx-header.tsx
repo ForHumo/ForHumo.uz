@@ -2,9 +2,10 @@
 
 import React, { useRef, useCallback, useState, useEffect } from "react";
 import Image from "next/image";
-import { Search, Bell, ChevronDown, Menu, PlusSquare, MessageCircle, Compass } from "lucide-react";
+import { Search, Bell, ChevronDown, Menu, PlusSquare, MessageCircle, Compass, Home, HeadsetIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useNxPlayer } from "./nx-player-ctx";
+import Link from "next/link";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxHeader — asosiy header
@@ -28,12 +29,25 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
                 borderBottom: "1px solid rgba(43,62,232,0.18)",
             }}
         >
-            {/* ── Menu button ───────────────────────────────────────── */}
+            {/* ── Menu button (chapdan ochiladi) ───────────────────── */}
             <HeaderIconBtn
                 onClick={onMenuOpen ?? (() => {})}
                 icon={Menu}
                 iconColor="rgba(160,176,224,0.80)"
             />
+
+            {/* ── Asosiy sahifaga qaytish ───────────────────────────── */}
+            <Link
+                href="/"
+                className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors"
+                style={{
+                    background: "rgba(43,62,232,0.08)",
+                    border: "1px solid rgba(43,62,232,0.18)",
+                }}
+                title="For Humo"
+            >
+                <Home className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+            </Link>
 
             {/* ── Logo ──────────────────────────────────────────────── */}
             <div className="flex items-center gap-2.5 flex-shrink-0">
@@ -90,6 +104,13 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
                     icon={Compass}
                     iconColor="rgba(160,176,224,0.80)"
                     className="hidden sm:flex"
+                />
+
+                {/* Humo Support — yon panel ochadi */}
+                <HeaderIconBtn
+                    onClick={() => window.dispatchEvent(new Event("support:open"))}
+                    icon={HeadsetIcon}
+                    iconColor="rgba(160,176,224,0.80)"
                 />
 
                 {/* Xabarlar */}

@@ -10,6 +10,7 @@ import {
     Settings, LogOut, BadgeCheck,
     Edit3, Save, X, Loader2, Trash2,
     Bookmark, ShoppingBag, Wallet, Play, ExternalLink,
+    Sparkles, Circle, Plus,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
@@ -70,20 +71,22 @@ export { MediaView } from "./nx-media-view";
 // SOCIAL VIEW — Postlar, Chat, Kanal, Guruh, Bot
 // ─────────────────────────────────────────────────────────────────────────────
 const SOCIAL_TABS = [
-    { id: "posts",   icon: Flame,         label: "Postlar"  },
-    { id: "chat",    icon: MessageCircle, label: "Chatlar"  },
-    { id: "channel", icon: Hash,          label: "Kanallar" },
-    { id: "group",   icon: Users,         label: "Guruhlar" },
-    { id: "bot",     icon: Bot,           label: "Botlar"   },
-];
+    { id: "recommendation", icon: Sparkles,       label: "Recommendation" },
+    { id: "all",            icon: Flame,          label: "All"            },
+    { id: "unread",         icon: Circle,         label: "Unread"         },
+    { id: "private",        icon: MessageCircle,  label: "Private"        },
+    { id: "groups",         icon: Users,          label: "Groups"         },
+    { id: "channels",       icon: Hash,           label: "Channels"       },
+    { id: "agents",         icon: Bot,            label: "Agents"         },
+] as const;
 
 export function SocialView() {
-    const [sub, setSub] = useState("posts");
+    const [sub, setSub] = useState<string>("recommendation");
 
     return (
         <ViewShell>
-            {/* Sub-tablar */}
-            <div className="mx-4 mt-4 mb-3 flex gap-2">
+            {/* Sub-tablar (Telegram uslubidagi papkalar) */}
+            <div className="mx-4 mt-4 mb-3 flex gap-2 overflow-x-auto scrollbar-hide">
                 {SOCIAL_TABS.map(({ id, icon: Icon, label }) => (
                     <button
                         key={id}
@@ -101,30 +104,77 @@ export function SocialView() {
                         <Icon className="w-3.5 h-3.5" />{label}
                     </button>
                 ))}
+                {/* Custom papka yaratish (Telegramdagi kabi) — hozircha placeholder */}
+                <button
+                    onClick={() => alert("Custom papka — tez kunda")}
+                    title="Custom papka yaratish"
+                    className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl transition-all active:scale-95"
+                    style={{
+                        background: "rgba(11,18,40,0.60)",
+                        border: "1px dashed rgba(43,62,232,0.35)",
+                        color: "rgba(140,160,210,0.85)",
+                    }}
+                >
+                    <Plus className="w-4 h-4" />
+                </button>
             </div>
 
-            {sub === "posts" && <NxSocialFeed />}
-
-            {sub === "chat" && <NxChatList />}
-
-            {sub === "channel" && <NxChannels type="CHANNEL" />}
-            {sub === "group" && <NxChannels type="GROUP" />}
-
-            {/* Botlar — backend hali qurilmagan, halol holat */}
-            {sub === "bot" && (
-                <div className="mx-4 flex flex-col items-center justify-center py-14 px-6 text-center rounded-2xl"
-                    style={{ background: "rgba(11,18,40,0.50)", border: "1px dashed rgba(43,62,232,0.25)" }}>
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
-                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}>
-                        <Bot className="w-6 h-6" style={{ color: "rgba(43,62,232,0.55)" }} />
-                    </div>
-                    <p className="text-sm font-black text-white mb-1">Botlar — tez kunda</p>
-                    <p className="text-xs max-w-xs leading-relaxed" style={{ color: "rgba(120,140,190,0.75)" }}>
-                        Bu bo&apos;lim keyingi bosqichda quriladi.
-                    </p>
-                </div>
-            )}
+            {sub === "recommendation" && <NxSocialFeed />}
+            {sub === "all"            && <NxSocialFeed />}
+            {sub === "unread"         && <NxChatList />}
+            {sub === "private"        && <NxChatList />}
+            {sub === "groups"         && <NxChannels type="GROUP" />}
+            {sub === "channels"       && <NxChannels type="CHANNEL" />}
+            {sub === "agents"         && <AgentsTab />}
         </ViewShell>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Agents tab — foydalanuvchining agentlari + yaratish tugmasi
+// ─────────────────────────────────────────────────────────────────────────────
+function AgentsTab() {
+    const [agents, setAgents] = useState<Array<{ id: string; username: string | null; name: string | null; image: string | null; module: string }>>([]);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        fetch("/api/nexus/agents").then(r => r.ok ? r.json() : { items: [] })
+            .then(d => setAgents(d.items ?? []))
+            .finally(() => setLoading(false));
+    }, []);
+    return (
+        <div className="mx-4 space-y-3">
+            <a href="/create" target="_blank" rel="noopener noreferrer"
+                className="block p-4 rounded-2xl text-center active:scale-[0.98] transition"
+                style={{ background: "linear-gradient(135deg,rgba(43,62,232,0.25),rgba(0,206,200,0.15))", border: "1px solid rgba(43,62,232,0.30)" }}>
+                <Bot className="w-6 h-6 mx-auto mb-2" style={{ color: "#00CEC8" }} />
+                <p className="text-sm font-black text-white">Yangi agent yaratish</p>
+                <p className="text-[11px] mt-1" style={{ color: "rgba(160,176,224,0.75)" }}>
+                    @create orqali o&apos;z agentingiz (@...agent)
+                </p>
+            </a>
+            {loading ? (
+                <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-white/30" /></div>
+            ) : agents.length === 0 ? (
+                <p className="text-center py-8 text-xs" style={{ color: "rgba(140,160,210,0.60)" }}>
+                    Hali agentlaringiz yo&apos;q
+                </p>
+            ) : agents.map(a => (
+                <a key={a.id} href={`/nexus/u/${a.username}`}
+                    className="flex items-center gap-3 p-3 rounded-2xl"
+                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                    <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0"
+                        style={{ background: "rgba(43,62,232,0.15)" }}>
+                        {a.image ? <img src={a.image} alt="" className="w-full h-full object-cover" /> : <Bot className="w-5 h-5 text-white/50" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-white truncate">{a.name}</p>
+                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.70)" }}>
+                            @{a.username} • {a.module}
+                        </p>
+                    </div>
+                </a>
+            ))}
+        </div>
     );
 }
 

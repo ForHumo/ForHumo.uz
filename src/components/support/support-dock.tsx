@@ -69,7 +69,7 @@ export function SupportDock() {
 
     // Suzuvchi tugma qaysi sahifalarda ko'rinmasin — module'lar Header'ida
     // o'z tugmalariga ega
-    const hideFloating = (pathname ?? "").includes("/market");
+    const hideFloating = (pathname ?? "").includes("/market") || (pathname ?? "").includes("/nexus");
 
     // Badge — kirgan bo'lsa har 60s
     useEffect(() => {

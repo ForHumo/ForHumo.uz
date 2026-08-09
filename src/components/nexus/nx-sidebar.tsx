@@ -46,13 +46,13 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
 
             {/* Drawer */}
             <aside
-                className="fixed top-0 right-0 bottom-0 z-[56] flex flex-col w-72 max-w-[88vw] transition-transform duration-300"
+                className="fixed top-0 left-0 bottom-0 z-[56] flex flex-col w-72 max-w-[88vw] transition-transform duration-300"
                 style={{
                     background: "rgba(8,12,32,0.97)",
                     backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
                     borderLeft: "1px solid rgba(43,62,232,0.22)",
                     boxShadow: "-8px 0 48px rgba(43,62,232,0.12)",
-                    transform: open ? "translateX(0)" : "translateX(100%)",
+                    transform: open ? "translateX(0)" : "translateX(-100%)",
                 }}
             >
                 {/* Header */}
@@ -123,7 +123,7 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
                     {/* Sozlamalar / Yordam / Chiqish */}
                     <div className="px-4 pb-4 pt-1">
                         <SidebarItem icon={Settings} label="Sozlamalar" onClick={() => { onClose(); onOpenSettings?.(); }} />
-                        <SidebarLink icon={HelpCircle} label="Yordam va aloqa" href="/support" onClose={onClose} />
+                        <SidebarItem icon={HelpCircle} label="Humo Support" onClick={() => { onClose(); window.dispatchEvent(new Event("support:open")); }} />
                         <button onClick={() => signOut()}
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-red-400 transition-colors duration-150 mt-1"
                             style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.16)" }}>
