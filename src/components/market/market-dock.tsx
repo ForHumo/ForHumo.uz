@@ -71,13 +71,14 @@ export function MarketDock() {
                                 }}
                                 title={item.label}
                                 className="flex flex-col items-center gap-1 min-w-[64px] active:scale-95 transition">
-                                <div className="w-14 h-14 -mt-4 rounded-full
-                                    bg-white flex items-center justify-center
+                                <div className="w-14 h-14 -mt-4 rounded-full overflow-hidden
+                                    bg-gradient-to-br from-green-500 to-emerald-600
+                                    flex items-center justify-center
                                     shadow-lg shadow-green-500/40
                                     ring-4 ring-white/85 dark:ring-[#050F07]/92
                                     hover:scale-105 transition">
-                                    <Image src="/logos/humo-ai-icon-black.png" alt="Humo AI"
-                                        width={38} height={38} className="w-9 h-9 object-contain" />
+                                    <Image src="/logos/humo-ai-white.png" alt="Humo AI"
+                                        width={56} height={56} className="w-full h-full object-cover scale-125" />
                                 </div>
                                 <span className="text-[10px] font-bold text-green-600 dark:text-green-400 leading-none pb-1">
                                     {item.label}

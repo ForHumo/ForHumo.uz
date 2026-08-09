@@ -333,11 +333,11 @@ export function MarketNavbar() {
                             {/* Humo AI — qidiruv ichida */}
                             <button type="button" title="Humo AI"
                                 onClick={() => window.dispatchEvent(new Event("humo-ai:open"))}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl flex items-center justify-center
-                                    bg-white shadow-md ring-1 ring-gray-200 dark:ring-white/10
+                                className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl overflow-hidden
+                                    bg-gradient-to-br from-green-500 to-emerald-600 shadow-md
                                     hover:scale-105 active:scale-95 transition">
-                                <Image src="/logos/humo-ai-icon-black.png" alt="Humo AI" width={22} height={22}
-                                    className="w-[22px] h-[22px] object-contain" />
+                                <Image src="/logos/humo-ai-white.png" alt="Humo AI" width={36} height={36}
+                                    className="w-full h-full object-cover scale-125" />
                             </button>
 
                             {/* Jonli takliflar / qidiruv tarixi dropdown */}

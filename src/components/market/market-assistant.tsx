@@ -104,9 +104,9 @@ export function MarketAssistant() {
             </nav>
 
             <div className="flex items-center gap-3 mb-5">
-                <div className="w-11 h-11 rounded-2xl bg-white dark:bg-white flex items-center justify-center ring-1 ring-gray-200 dark:ring-white/10">
-                    <Image src="/logos/humo-ai-icon-black.png" alt="Humo AI" width={32} height={32}
-                        className="w-8 h-8 object-contain" />
+                <div className="w-11 h-11 rounded-2xl overflow-hidden bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                    <Image src="/logos/humo-ai-white.png" alt="Humo AI" width={44} height={44}
+                        className="w-full h-full object-cover scale-125" />
                 </div>
                 <div>
                     <h1 className="text-lg font-black text-gray-900 dark:text-white leading-tight">Humo AI</h1>
