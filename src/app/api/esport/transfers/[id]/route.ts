@@ -9,7 +9,7 @@ import { isProfileBlocked, canManageTeam } from "@/lib/esport-block";
 // { action: approve|reject, fee? }
 //  PLAYER_PENDING → o'yinchi: approve (erkin bo'lsa darhol DONE; jamoadagi bo'lsa AWAIT_FEE) / reject
 //  AWAIT_FEE      → xaridor: action=setfee + fee (≥ marketValue) → CLUB_PENDING
-//  CLUB_PENDING   → sotuvchi jamoa: approve (ALKH Pay + ko'chirish → DONE) / reject
+//  CLUB_PENDING   → sotuvchi jamoa: approve (For Pay + ko'chirish → DONE) / reject
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const me = await getMyProfile();
@@ -64,7 +64,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         return NextResponse.json({ ok: true, message: "Haq taklifi sotuvchi jamoaga yuborildi" });
     }
 
-    // 3) Sotuvchi jamoa haqni qabul qiladi → ALKH Pay + ko'chirish
+    // 3) Sotuvchi jamoa haqni qabul qiladi → For Pay + ko'chirish
     if (tr.status === "CLUB_PENDING") {
         if (!isClub) return NextResponse.json({ error: "Faqat sotuvchi jamoa egasi javob beradi" }, { status: 403 });
         if (action === "reject") {

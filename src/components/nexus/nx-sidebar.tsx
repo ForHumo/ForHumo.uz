@@ -115,7 +115,7 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
 
                     {/* Boshqa For Humo modullari */}
                     <SidebarSection title="For Humo">
-                        <SidebarLink icon={Wallet} label="ALKH Pay — hamyon" href="/pay" onClose={onClose} />
+                        <SidebarLink icon={Wallet} label="For Pay — hamyon" href="/pay" onClose={onClose} />
                         <SidebarLink icon={ShoppingBag} label="Humo Market" href="/market" onClose={onClose} />
                         <SidebarLink icon={Fingerprint} label="Humo ID" href="/id" onClose={onClose} />
                     </SidebarSection>

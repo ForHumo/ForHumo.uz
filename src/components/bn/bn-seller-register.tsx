@@ -364,7 +364,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                         <>
                             <StepTitle
                                 title="Pul qayerga tushsin?"
-                                text="Sotuvdan tushgan pul ALKH Pay hamyoningizga keladi, u yerdan bank hisobingizga yechasiz."
+                                text="Sotuvdan tushgan pul For Pay hamyoningizga keladi, u yerdan bank hisobingizga yechasiz."
                             />
                             <Field label="Bank nomi">
                                 <input
@@ -399,7 +399,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                             >
                                 <ShieldCheck className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: BN.ok }} />
                                 <p className="text-[12.5px] leading-relaxed" style={{ color: BN.text2 }}>
-                                    Komissiya <strong style={{ color: BN.text }}>5%</strong> — faqat ALKH Pay orqali
+                                    Komissiya <strong style={{ color: BN.text }}>5%</strong> — faqat For Pay orqali
                                     to&apos;langan buyurtmalardan. Naqd savdodan komissiya olinmaydi.
                                 </p>
                             </div>

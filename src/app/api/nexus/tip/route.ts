@@ -37,7 +37,7 @@ export async function POST(req: Request) {
         recipientCountry: rec.country,
     });
 
-    if (result === "no_funds") return NextResponse.json({ error: "Mablag' yetarli emas — ALKH Pay hamyoningizni to'ldiring" }, { status: 402 });
+    if (result === "no_funds") return NextResponse.json({ error: "Mablag' yetarli emas — For Pay hamyoningizni to'ldiring" }, { status: 402 });
     if (result === "self") return NextResponse.json({ error: "O'zingizga tip yubora olmaysiz" }, { status: 400 });
     if (result !== "ok") return NextResponse.json({ error: "Noto'g'ri miqdor" }, { status: 400 });
 

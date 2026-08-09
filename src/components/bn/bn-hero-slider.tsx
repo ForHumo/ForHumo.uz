@@ -68,7 +68,7 @@ const SLIDES: Slide[] = [
     {
         id: "s5",
         title: "Pul kafolat ostida",
-        subtitle: "ALKH Pay orqali to'laysiz — qabul qilmaguningizcha sotuvchiga o'tmaydi",
+        subtitle: "For Pay orqali to'laysiz — qabul qilmaguningizcha sotuvchiga o'tmaydi",
         cta: "Xavfsizlik haqida",
         href: "/#safety",
         bg: ["#15803D", "#0F5E2F"],

@@ -6,7 +6,7 @@ import { convert, roundMoney, type Currency } from "@/lib/money";
 
 const SPLIT = [0.6, 0.25, 0.15]; // 1-o'rin / 2-o'rin / 3-o'rin
 
-// POST /api/esport/admin/tournaments/[id]/payout — yutuqни g'oliblarga ALKH Pay orqali to'lash
+// POST /api/esport/admin/tournaments/[id]/payout — yutuqни g'oliblarga For Pay orqali to'lash
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
     if (!await getEsportAdmin()) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
     const { id } = await params;

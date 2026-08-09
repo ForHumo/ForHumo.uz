@@ -179,7 +179,7 @@ export function ProfileView() {
                 if (d?.profile) setVerified(!!d.profile.verified);
             })
             .catch(() => { });
-        // Real Zij balansi (ALKH Pay)
+        // Real Zij balansi (For Pay)
         fetch("/api/pay/wallet")
             .then(r => r.ok ? r.json() : null)
             .then(d => { if (d && d.balance != null) { setBalance(Number(d.balance)); setBalanceCurrency(d.currency === "USD" ? "USD" : "UZS"); } })

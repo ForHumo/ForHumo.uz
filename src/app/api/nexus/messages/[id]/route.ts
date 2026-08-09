@@ -74,6 +74,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 locLat: m.locLat, locLng: m.locLng, locUpdatedAt: m.locUpdatedAt, locExpiresAt: m.locExpiresAt,
                 pollQuestion: m.pollQuestion, pollOptions: m.pollOptions, pollExpiresAt: m.pollExpiresAt, pollMulti: m.pollMulti,
                 pollVoteCounts: pv?.counts ?? null, pollMyVotes: pv?.myVotes ?? null, pollTotal: pv?.total ?? null,
+                transferAmount: m.transferAmount ? Number(m.transferAmount) : null,
+                transferCurrency: m.transferCurrency, transferNote: m.transferNote,
             };
         }),
         other: p ? {

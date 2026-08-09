@@ -1,6 +1,6 @@
 "use client";
 
-// Har For Humo loyihasida (BN, Nexus, Market, ALKH Pay, eSport) footer'da:
+// Har For Humo loyihasida (BN, Nexus, Market, For Pay, eSport) footer'da:
 //     "Powered by [logo] For Humo"
 // Foydalanuvchi so'rovi: "For Humo" qalin va brend rangida (ko'k gradient)
 // bo'lsin.

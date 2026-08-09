@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2 } from "lucide-react";
+import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet } from "lucide-react";
+import { formatMoney } from "@/lib/money";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 import { usePresence } from "@/lib/presence";
 import { upload } from "@vercel/blob/client";
@@ -22,6 +23,7 @@ interface Msg {
     locUpdatedAt?: string | null; locExpiresAt?: string | null;
     pollQuestion?: string | null; pollOptions?: string[]; pollExpiresAt?: string | null; pollMulti?: boolean;
     pollVoteCounts?: number[] | null; pollMyVotes?: number[] | null; pollTotal?: number | null;
+    transferAmount?: number | null; transferCurrency?: string | null; transferNote?: string | null;
 }
 interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isMe: boolean }
 
@@ -91,6 +93,12 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     const [query, setQuery] = useState("");
     const [sending, setSending] = useState(false);
     const [newOpen, setNewOpen] = useState(false);
+    // For Pay DM transfer modali
+    const [transferOpen, setTransferOpen] = useState(false);
+    const [transferAmount, setTransferAmount] = useState("");
+    const [transferNote, setTransferNote] = useState("");
+    const [transferError, setTransferError] = useState<string | null>(null);
+    const [transferBusy, setTransferBusy] = useState(false);
 
     // "yozmoqda..." event'larini eshitish — faqat hozirgi selected peer'dan
     useEffect(() => {
@@ -348,6 +356,33 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 const e = await res.json().catch(() => ({}));
                 throw new Error(e.error || "Jo'natib bo'lmadi");
             }
+        }
+    }
+
+    async function sendTransfer() {
+        if (!selected) return;
+        const amt = Number(transferAmount.replace(/[^\d.,]/g, "").replace(",", "."));
+        if (!amt || amt <= 0) { setTransferError("Miqdorni kiriting"); return; }
+        setTransferError(null); setTransferBusy(true);
+        try {
+            const res = await fetch(`/api/nexus/messages/${selected.conversationId}/transfer`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: amt, note: transferNote.trim() || undefined }),
+            });
+            if (res.ok) {
+                const d = await res.json();
+                setMessages(m => [...m, d.message]);
+                loadConvs();
+                setTransferOpen(false);
+                setTransferAmount(""); setTransferNote("");
+            } else {
+                const e = await res.json().catch(() => ({}));
+                setTransferError(e.error || "Yuborib bo'lmadi");
+            }
+        } catch {
+            setTransferError("Tarmoq xatosi");
+        } finally {
+            setTransferBusy(false);
         }
     }
 
@@ -793,6 +828,31 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                                 );
                                             })()
                                         )}
+                                        {m.mediaType === "transfer" && m.transferAmount && m.transferCurrency && (
+                                            <div className="px-3.5 py-3 min-w-[240px]">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+                                                        style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgba(0,206,200,0.18)" }}>
+                                                        <Wallet className="w-5 h-5" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-[10px] font-medium uppercase tracking-wider"
+                                                            style={{ color: m.mine ? "rgba(255,255,255,0.65)" : "rgba(140,160,210,0.75)" }}>
+                                                            {m.mine ? "Yuborildi" : "Qabul qilindi"} • For Pay
+                                                        </p>
+                                                        <p className="text-base font-black" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                            {formatMoney(m.transferAmount, m.transferCurrency as "UZS" | "USD")}
+                                                        </p>
+                                                        {m.transferNote && (
+                                                            <p className="text-[11px] mt-0.5 truncate"
+                                                                style={{ color: m.mine ? "rgba(255,255,255,0.75)" : "rgba(140,160,210,0.85)" }}>
+                                                                {m.transferNote}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                         {m.mediaType === "file" && (
                                             <a href={m.mediaUrl || "#"} target="_blank" rel="noopener noreferrer"
                                                 className="flex items-center gap-3 px-3.5 py-3 min-w-[220px]" style={{ textDecoration: "none" }}>
@@ -890,6 +950,15 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                             style={{ background: "rgba(43,62,232,0.10)" }}>
                             <BarChart2 className="w-4 h-4 text-white" />
                         </button>
+                        <button onClick={() => {
+                                setTransferAmount(""); setTransferNote(""); setTransferError(null);
+                                setTransferOpen(true);
+                            }}
+                            title="Pul yuborish (For Pay)"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 hover:scale-105 active:scale-95 transition-transform"
+                            style={{ background: "linear-gradient(135deg,rgba(0,206,200,0.20),rgba(43,62,232,0.20))" }}>
+                            <Wallet className="w-4 h-4 text-white" />
+                        </button>
                         <input value={input} onChange={e => {
                                 setInput(e.target.value);
                                 const now = Date.now();
@@ -939,6 +1008,77 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
 
             {/* Poll create modal */}
             <NxPollCreate open={pollOpen} onClose={() => setPollOpen(false)} onCreated={sendPoll} />
+
+            {/* For Pay — pul yuborish modali */}
+            {transferOpen && (
+                <>
+                    <div className="fixed inset-0 z-[80]" style={{ background: "rgba(5,8,24,0.70)" }} onClick={() => !transferBusy && setTransferOpen(false)} />
+                    <div className="fixed z-[80] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-sm rounded-2xl overflow-hidden"
+                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
+                        <div className="px-5 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                style={{ background: "linear-gradient(135deg,rgba(0,206,200,0.20),rgba(43,62,232,0.20))" }}>
+                                <Wallet className="w-5 h-5 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-sm font-black text-white">Pul yuborish</h3>
+                                <p className="text-[11px] mt-0.5 truncate" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                    For Pay orqali {selected?.other?.username ? `@${selected.other.username}` : "foydalanuvchiga"}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="p-5 space-y-3">
+                            <div>
+                                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                    Miqdor
+                                </label>
+                                <input
+                                    value={transferAmount}
+                                    onChange={e => setTransferAmount(e.target.value)}
+                                    placeholder="10 000"
+                                    inputMode="decimal"
+                                    autoFocus
+                                    className="w-full mt-1.5 px-3 py-3 rounded-xl text-lg font-black text-white bg-transparent focus:outline-none"
+                                    style={{ border: "1px solid rgba(43,62,232,0.30)" }}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                    Izoh (ixtiyoriy)
+                                </label>
+                                <input
+                                    value={transferNote}
+                                    onChange={e => setTransferNote(e.target.value)}
+                                    placeholder="Nima uchun"
+                                    maxLength={120}
+                                    className="w-full mt-1.5 px-3 py-2.5 rounded-xl text-sm text-white bg-transparent focus:outline-none"
+                                    style={{ border: "1px solid rgba(43,62,232,0.20)" }}
+                                />
+                            </div>
+                            {transferError && (
+                                <p className="text-xs font-medium" style={{ color: "#EF4444" }}>{transferError}</p>
+                            )}
+                        </div>
+                        <div className="p-3 flex gap-2" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                            <button
+                                onClick={() => !transferBusy && setTransferOpen(false)}
+                                disabled={transferBusy}
+                                className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white disabled:opacity-40"
+                                style={{ background: "rgba(43,62,232,0.10)" }}>
+                                Bekor
+                            </button>
+                            <button
+                                onClick={sendTransfer}
+                                disabled={transferBusy || !transferAmount.trim()}
+                                className="flex-1 py-2.5 rounded-xl text-xs font-black text-white disabled:opacity-40 flex items-center justify-center gap-2"
+                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                {transferBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                Yuborish
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
 
             {/* Joylashuv sheet — statik yoki jonli muddat tanlash */}
             {locSheetOpen && (

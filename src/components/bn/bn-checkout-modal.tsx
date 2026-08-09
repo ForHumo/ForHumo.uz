@@ -267,7 +267,7 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                             active={pay === "WALLET"}
                             onClick={() => setPay("WALLET")}
                             icon={<Wallet className="w-4 h-4" />}
-                            title="ALKH Pay hamyondan"
+                            title="For Pay hamyondan"
                             desc="Pul kafolat ostida ushlanadi. Qabul qilmaguningizcha sotuvchiga o'tmaydi."
                         />
                         <Choice

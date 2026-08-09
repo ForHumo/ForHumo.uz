@@ -1365,7 +1365,7 @@ function MoneyTab({ balance, orderCount }: { balance: number; orderCount: number
                 style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}
             >
                 <p className="text-[11.5px] font-bold uppercase tracking-wider mb-1" style={{ color: BN.text3 }}>
-                    ALKH Pay balansingiz
+                    For Pay balansingiz
                 </p>
                 <p className="text-[32px] font-black tabular-nums leading-none">{fmtPrice(balance)}</p>
                 <p className="text-[12.5px] mt-2" style={{ color: BN.text3 }}>
@@ -1380,7 +1380,7 @@ function MoneyTab({ balance, orderCount }: { balance: number; orderCount: number
                 style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text }}
             >
                 <Wallet className="w-4 h-4" />
-                ALKH Pay ochish (yechish)
+                For Pay ochish (yechish)
                 <ArrowUpRight className="w-4 h-4" />
             </a>
         </div>

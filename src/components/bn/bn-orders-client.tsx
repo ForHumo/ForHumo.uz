@@ -253,7 +253,7 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                         )}
                         {order.paymentMethod === "WALLET" && (
                             <p className="text-[12px] mt-1" style={{ color: BN.text3 }}>
-                                Pul ALKH Pay hamyoningizga qaytarildi.
+                                Pul For Pay hamyoningizga qaytarildi.
                             </p>
                         )}
                     </div>
@@ -381,7 +381,7 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
 
                         <div className="flex items-center gap-2 mt-4 text-[12px]" style={{ color: BN.text3 }}>
                             {order.paymentMethod === "WALLET"
-                                ? <><Wallet className="w-3.5 h-3.5" style={{ color: BN.gold }} /> ALKH Pay hamyondan</>
+                                ? <><Wallet className="w-3.5 h-3.5" style={{ color: BN.gold }} /> For Pay hamyondan</>
                                 : <><Banknote className="w-3.5 h-3.5" style={{ color: BN.gold }} /> Naqd (do&apos;konda)</>}
                             {order.escrowHeld && (
                                 <span className="ml-auto px-1.5 py-0.5 rounded text-[10px] font-black" style={{ background: BN.okSoft, color: BN.ok }}>

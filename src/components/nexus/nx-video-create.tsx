@@ -375,7 +375,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                                                 style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", caretColor: "#00CEC8" }} />
                                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black" style={{ color: "#00CEC8" }}>{currencySymbol(myCurrency)}</span>
                                         </div>
-                                        <p className="text-[10px] mt-1" style={{ color: "rgba(120,140,185,0.7)" }}>Sotib olingach pul ALKH Pay hisobingizga tushadi.</p>
+                                        <p className="text-[10px] mt-1" style={{ color: "rgba(120,140,185,0.7)" }}>Sotib olingach pul For Pay hisobingizga tushadi.</p>
                                     </div>
                                 )}
                             </div>

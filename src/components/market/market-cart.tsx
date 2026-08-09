@@ -423,7 +423,7 @@ export function MarketCart({ defaultTab = "cart" }: { defaultTab?: Tab }) {
                                                     <AlertCircle size={13} className="text-red-500 mt-0.5 shrink-0" />
                                                     <div className="text-xs text-red-600 dark:text-red-400">
                                                         <p className="font-semibold">Balans yetarli emas</p>
-                                                        <Link href="/pay" className="underline mt-0.5 inline-block">ALKH Pay da to'ldirish</Link>
+                                                        <Link href="/pay" className="underline mt-0.5 inline-block">For Pay da to'ldirish</Link>
                                                     </div>
                                                 </div>
                                             )}

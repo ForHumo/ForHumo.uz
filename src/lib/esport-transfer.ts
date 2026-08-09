@@ -1,4 +1,4 @@
-// Transfer ijrosi — haq (ALKH Pay) + sportchini yangi tarkibga ko'chirish (atomik).
+// Transfer ijrosi — haq (For Pay) + sportchini yangi tarkibga ko'chirish (atomik).
 // Haq: sotuvchi jamoa egasi oladi; erkin sportchi bo'lsa — sportchining o'zi (signing bonus).
 import { prisma } from "@/lib/prisma";
 import { roundMoney, convert, currencyForCountry, type Currency } from "@/lib/money";
@@ -100,7 +100,7 @@ export async function executeTransfer(transferId: string): Promise<TransferResul
 export const TRANSFER_MSG: Record<TransferResult, string> = {
     ok: "Transfer amalga oshdi",
     not_found: "Taklif topilmadi yoki yopilgan",
-    no_funds: "Mablag' yetarli emas — ALKH Pay hamyonni to'ldiring",
+    no_funds: "Mablag' yetarli emas — For Pay hamyonni to'ldiring",
     roster_full: "Yangi tarkib to'lgan",
     locked: "Jamoa turnirda — transfer turnir tugagach mumkin",
     invalid: "Transfer amalga oshmadi",

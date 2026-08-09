@@ -75,7 +75,7 @@ export function SellerDashboard() {
             {/* Komissiya eslatmasi */}
             <p className="text-xs text-gray-400 dark:text-white/30 mb-8 -mt-3">
                 Sotuvlardan <span className="font-semibold text-gray-500 dark:text-white/50">5% platforma komissiyasi</span> ushlanadi.
-                To&apos;lov buyurtma <span className="font-semibold text-gray-500 dark:text-white/50">yetkazilgandan keyin</span> hamyoningizga (ALKH Pay) tushadi.
+                To&apos;lov buyurtma <span className="font-semibold text-gray-500 dark:text-white/50">yetkazilgandan keyin</span> hamyoningizga (For Pay) tushadi.
             </p>
 
             {/* 7 kunlik daromad */}

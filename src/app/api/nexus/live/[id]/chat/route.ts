@@ -88,7 +88,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             donorId: me.id, recipientId: stream.profileId, amount: tip,
             targetType: "LIVE", targetId: id, message: cleanText,
         });
-        if (result === "no_funds") return NextResponse.json({ error: "Mablag' yetarli emas — ALKH Pay hamyoningizni to'ldiring" }, { status: 402 });
+        if (result === "no_funds") return NextResponse.json({ error: "Mablag' yetarli emas — For Pay hamyoningizni to'ldiring" }, { status: 402 });
         if (result !== "ok") return NextResponse.json({ error: "Super Chat amalga oshmadi" }, { status: 400 });
 
         const sc = await prisma.nexusLiveMessage.create({

@@ -143,7 +143,7 @@ export function NxVideoPlayer() {
                             </div>
                             <div>
                                 <p className="text-sm font-black text-white mb-1">Pullik video</p>
-                                <p className="text-xs leading-relaxed" style={{ color: "rgba(150,170,220,0.8)" }}>Sotib olganingizdan so&apos;ng video ochiladi, pul avtorning ALKH Pay hisobiga tushadi.</p>
+                                <p className="text-xs leading-relaxed" style={{ color: "rgba(150,170,220,0.8)" }}>Sotib olganingizdan so&apos;ng video ochiladi, pul avtorning For Pay hisobiga tushadi.</p>
                             </div>
                             <button onClick={buy} disabled={buying}
                                 className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-60"

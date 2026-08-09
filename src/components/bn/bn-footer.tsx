@@ -61,7 +61,7 @@ export function BnFooter() {
                     <FooterCol title="For Humo">
                         <FooterExt href="https://forhumo.uz">For Humo</FooterExt>
                         <FooterExt href="https://forhumo.uz/uz/id">Humo ID</FooterExt>
-                        <FooterExt href="https://forhumo.uz/uz/pay">ALKH Pay</FooterExt>
+                        <FooterExt href="https://forhumo.uz/uz/pay">For Pay</FooterExt>
                     </FooterCol>
                 </div>
             </div>

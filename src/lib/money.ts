@@ -1,4 +1,4 @@
-// ALKH Pay — real pul (valyuta) yagona manbai.
+// For Pay — real pul (valyuta) yagona manbai.
 // O'zbekiston foydalanuvchilari: so'm (UZS). Xorijiy: dollar (USD).
 // "Zij" tushunchasi olib tashlandi — endi real valyuta. (Ichki DB model nomlari
 // (Wallet/WalletTransaction) eski qoldi, lekin ular foydalanuvchiga ko'rinmaydi.)

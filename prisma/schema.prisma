@@ -1209,6 +1209,11 @@ model NexusMessage {
   pollExpiresAt  DateTime?                                 // NULL = cheklovsiz
   pollMulti      Boolean           @default(false)         // bir necha variant tanlash mumkinmi
   pollVotes      NexusDmPollVote[]
+  // Pul o'tkazma (mediaType="transfer"): sender→recipient darhol (immediate)
+  transferAmount    Decimal?  @db.Decimal(18, 2)
+  transferCurrency  String?                                    // "UZS" | "USD"
+  transferRef       String?                                    // WalletTransaction ref (xfer:UUID)
+  transferNote      String?                                    // izoh (<= 120)
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
 }

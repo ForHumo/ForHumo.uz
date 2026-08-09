@@ -63,7 +63,7 @@ const RULES: Section[] = [
     {
         title: ["Transfer", "Трансфер", "Transfer"],
         items: [
-            ["Futbol modeli: jamoa o'yinchiga oylik taklif yuboradi → o'yinchi qabul qiladi → xaridor jamoa sotuvchi jamoaga haq taklif qiladi → qabul qilinsa ALKH Pay orqali to'lov.", "Футбольная модель: команда предлагает игроку зарплату → игрок принимает → клуб-покупатель предлагает отступные клубу-продавцу → при согласии оплата через ALKH Pay.", "Football model: a team offers the player a salary → player accepts → buying club offers a fee to the selling club → on agreement, payment via ALKH Pay."],
+            ["Futbol modeli: jamoa o'yinchiga oylik taklif yuboradi → o'yinchi qabul qiladi → xaridor jamoa sotuvchi jamoaga haq taklif qiladi → qabul qilinsa For Pay orqali to'lov.", "Футбольная модель: команда предлагает игроку зарплату → игрок принимает → клуб-покупатель предлагает отступные клубу-продавцу → при согласии оплата через For Pay.", "Football model: a team offers the player a salary → player accepts → buying club offers a fee to the selling club → on agreement, payment via For Pay."],
             ["Transfer haqi transfermarket narxidan kam bo'lmaydi; narxni admin/ega belgilaydi.", "Отступные не ниже трансферной стоимости; цену устанавливает админ/владелец.", "The fee is not below the market value; the price is set by an admin/owner."],
             ["Jamoa egasini transfer qilib bo'lmaydi — avval egalik o'tkazilsin yoki jamoa o'chirilsin.", "Владельца команды нельзя трансферить — сначала передать владение или удалить команду.", "A team owner cannot be transferred — first transfer ownership or delete the team."],
         ],
@@ -79,7 +79,7 @@ const RULES: Section[] = [
     {
         title: ["Mukofot", "Призовые", "Prize"],
         items: [
-            ["Yutuq fondi g'oliblarga: 1-o'rin 60%, 2-o'rin 25%, 3-o'rin 15% — ALKH Pay orqali to'lanadi.", "Призовой фонд победителям: 1-е место 60%, 2-е 25%, 3-е 15% — через ALKH Pay.", "Prize pool to winners: 1st 60%, 2nd 25%, 3rd 15% — paid via ALKH Pay."],
+            ["Yutuq fondi g'oliblarga: 1-o'rin 60%, 2-o'rin 25%, 3-o'rin 15% — For Pay orqali to'lanadi.", "Призовой фонд победителям: 1-е место 60%, 2-е 25%, 3-е 15% — через For Pay.", "Prize pool to winners: 1st 60%, 2nd 25%, 3rd 15% — paid via For Pay."],
         ],
     },
     {

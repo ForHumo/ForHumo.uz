@@ -33,6 +33,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         return { ok: true as const, funded: Number(upd.prizeFunded) };
     });
 
-    if (!result.ok) return NextResponse.json({ error: "Hamyonda mablag' yetarli emas — ALKH Pay'ni to'ldiring" }, { status: 402 });
+    if (!result.ok) return NextResponse.json({ error: "Hamyonda mablag' yetarli emas — For Pay'ni to'ldiring" }, { status: 402 });
     return NextResponse.json({ ok: true, prizeFunded: result.funded });
 }

@@ -73,7 +73,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         });
 
         if (result === "no_funds") {
-            return NextResponse.json({ error: "Mablag' yetarli emas — ALKH Pay hamyoningizni to'ldiring" }, { status: 402 });
+            return NextResponse.json({ error: "Mablag' yetarli emas — For Pay hamyoningizni to'ldiring" }, { status: 402 });
         }
         // Avtorga "videongiz sotib olindi" bildirishnomasi
         after(() => nexusNotify({ recipientId: video.profileId, actorId: me.id, type: "PURCHASE", videoId: id }));

@@ -123,7 +123,7 @@ export function NexusAnalytics() {
                     <div className="mt-5 rounded-2xl px-4 py-3 flex items-center gap-2.5" style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.16)" }}>
                         <Coins className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(120,140,185,0.7)" }} />
                         <p className="text-[11px]" style={{ color: "rgba(150,170,210,0.8)" }}>
-                            Daromad <span className="font-bold text-white">ALKH Pay</span> hamyoningizda. Real pulga yechish keyingi bosqichda ulanadi.
+                            Daromad <span className="font-bold text-white">For Pay</span> hamyoningizda. Real pulga yechish keyingi bosqichda ulanadi.
                         </p>
                     </div>
                 </div>

@@ -72,7 +72,7 @@ export function HomeContent() {
             status: "active",
         },
         {
-            title: "ALKH Pay",
+            title: "For Pay",
             description: tProjects("pay_desc"),
             href: "/pay",
             icon: CreditCard,
@@ -80,7 +80,7 @@ export function HomeContent() {
             status: "active",
         },
         {
-            // Foydalanuvchi so'rovi: ALKH Pay kartasidan keyin BN kartasi.
+            // Foydalanuvchi so'rovi: For Pay kartasidan keyin BN kartasi.
             // Havola ichki — forhumo.uz/{locale}/bn (locale Link avtomatik qo'shadi).
             title: "Bozor Narxida",
             description: tProjects("bn_desc"),

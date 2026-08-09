@@ -106,7 +106,7 @@ export async function POST(req: Request) {
             return { ok: true as const, expiresAt };
         });
 
-        if (result === "no_funds") return NextResponse.json({ error: "Mablag' yetarli emas — ALKH Pay hamyoningizni to'ldiring" }, { status: 402 });
+        if (result === "no_funds") return NextResponse.json({ error: "Mablag' yetarli emas — For Pay hamyoningizni to'ldiring" }, { status: 402 });
 
         after(() => nexusNotify({ recipientId: creatorId2, actorId: me.id, type: "TIP", amount: price }));
         return NextResponse.json({ ok: true, active: true, expiresAt: result.expiresAt });
