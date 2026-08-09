@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { Link, useRouter } from "@/i18n/routing";
 import Image from "next/image";
 import { Star, ShoppingCart, Flame, CheckCircle2, Loader2, Heart } from "lucide-react";
-import { VerifiedBadge } from "./verified-badge";
 import { formatMoney, type Currency } from "@/lib/money";
 import { useFxRate, toUsdRef } from "@/lib/fx-client";
 import { useShowUsdRef } from "@/lib/user-pref";
@@ -131,16 +130,6 @@ export function ProductCard({
             </Link>
 
             <div className={compact ? "p-2.5" : "p-4"}>
-                {/* Brend — bosilsa brend sahifasi ochiladi */}
-                <div className="flex items-center gap-1 mb-1">
-                    <Link href={`/market/brand/${product.brand.slug}`}
-                        className={`${compact ? "text-[10px]" : "text-xs"} text-gray-400 dark:text-white/25 font-medium truncate
-                            hover:text-green-600 dark:hover:text-green-400 transition-colors`}>
-                        {product.brand.name}
-                    </Link>
-                    {product.brand.verified && <VerifiedBadge size={compact ? 10 : 12} />}
-                </div>
-
                 {/* Nom */}
                 <Link href={`/market/product/${product.slug}`}>
                     <p className={`text-gray-900 dark:text-white font-semibold line-clamp-2 leading-tight mb-2

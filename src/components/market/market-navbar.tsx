@@ -236,8 +236,8 @@ export function MarketNavbar() {
 
                         {/* Qidiruv */}
                         <div className="flex-1 relative">
-                            <Search size={15}
-                                className="absolute left-3.5 top-1/2 -translate-y-1/2
+                            <Search size={17}
+                                className="absolute left-4 top-1/2 -translate-y-1/2
                                     text-gray-400 dark:text-white/25 pointer-events-none" />
                             <input
                                 type="search"
@@ -255,18 +255,19 @@ export function MarketNavbar() {
                                 className="w-full bg-gray-50/90 dark:bg-white/[0.05]
                                     border border-gray-200/80 dark:border-white/[0.08]
                                     focus:border-green-400 dark:focus:border-green-500/50
-                                    rounded-xl pl-10 pr-11 py-2.5
-                                    text-gray-900 dark:text-white text-sm
-                                    placeholder:text-gray-400 dark:placeholder:text-white/20
+                                    rounded-2xl pl-11 pr-12 py-3
+                                    text-gray-900 dark:text-white text-[15px]
+                                    placeholder:text-gray-400 dark:placeholder:text-white/25
                                     outline-none transition-all duration-200"
                             />
-                            {/* AI qidiruv */}
-                            <Link href="/market/ai-search" title="AI qidiruv"
-                                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center
-                                    bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 text-violet-500 dark:text-violet-300
-                                    hover:from-violet-500/25 hover:to-fuchsia-500/25 transition-all">
-                                <Sparkles size={14} />
-                            </Link>
+                            {/* Humo AI — qidiruv ichida */}
+                            <button type="button" title="Humo AI"
+                                onClick={() => window.dispatchEvent(new Event("humo-ai:open"))}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl flex items-center justify-center
+                                    bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-md shadow-green-500/25
+                                    hover:from-green-400 hover:to-emerald-500 active:scale-95 transition-all">
+                                <Sparkles size={16} />
+                            </button>
 
                             {/* Jonli takliflar / qidiruv tarixi dropdown */}
                             <AnimatePresence>
@@ -333,67 +334,8 @@ export function MarketNavbar() {
                             </AnimatePresence>
                         </div>
 
-                        {/* O'ng: cart + til + tema + avatar */}
+                        {/* O'ng: til + tema + avatar (2-qatordagi tugmalar pastda) */}
                         <div className="flex items-center gap-2 shrink-0">
-                            <Link href={`/market/cart`}
-                                className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl
-                                    bg-green-50 dark:bg-green-900/15
-                                    hover:bg-green-100 dark:hover:bg-green-900/25
-                                    text-green-700 dark:text-green-400
-                                    text-sm font-semibold transition-all">
-                                <ShoppingCart size={16} />
-                                <span className="hidden sm:block">Savat</span>
-                            </Link>
-
-                            {/* Buyurtmalarim */}
-                            {session?.user && (
-                                <Link href="/market/orders"
-                                    className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl
-                                        hover:bg-green-50 dark:hover:bg-green-900/20
-                                        text-gray-600 dark:text-white/60 hover:text-green-600 dark:hover:text-green-400
-                                        text-sm font-semibold transition-all"
-                                    title="Buyurtmalarim">
-                                    <ClipboardList size={16} />
-                                    <span className="hidden lg:block">Buyurtmalar</span>
-                                </Link>
-                            )}
-
-                            {/* Xarita */}
-                            <Link href="/market/catalog"
-                                className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl
-                                    hover:bg-green-50 dark:hover:bg-green-900/20
-                                    text-gray-600 dark:text-white/60 hover:text-green-600 dark:hover:text-green-400
-                                    text-sm font-semibold transition-all"
-                                title="Humo Market xaritasi">
-                                <MapPin size={16} />
-                                <span className="hidden lg:block">Xarita</span>
-                            </Link>
-
-                            {/* Humo Support — yon panel ochadi */}
-                            <button
-                                type="button"
-                                onClick={() => window.dispatchEvent(new Event("support:open"))}
-                                className="p-2 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20
-                                    text-gray-500 dark:text-white/50 hover:text-green-600 dark:hover:text-green-400 transition-all"
-                                title="Humo Support">
-                                <HeadsetIcon size={18} />
-                            </button>
-
-                            {/* Bildirishnoma */}
-                            {session?.user && (
-                                <Link href="/market/notifications"
-                                    className="relative p-2 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20
-                                        text-gray-500 dark:text-white/50 hover:text-green-600 dark:hover:text-green-400 transition-all">
-                                    <Bell size={18} />
-                                    {unread > 0 && (
-                                        <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1
-                                            bg-red-500 rounded-full flex items-center justify-center">
-                                            <span className="text-[9px] font-black text-white">{unread > 9 ? "9+" : unread}</span>
-                                        </span>
-                                    )}
-                                </Link>
-                            )}
-
                             <LanguageSwitcher />
                             <ThemeToggle />
                             {session?.user && (
@@ -416,6 +358,54 @@ export function MarketNavbar() {
                                 </Link>
                             )}
                         </div>
+                    </div>
+
+                    {/* 2-qator: tugmalar (Buyurtmalar, Xarita, Support, Bildirishnoma) */}
+                    <div className="flex items-center gap-1 sm:gap-2 h-11 border-t border-green-100/60 dark:border-green-900/15 overflow-x-auto scrollbar-hide">
+                        {session?.user && (
+                            <Link href="/market/orders"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                                    hover:bg-green-50 dark:hover:bg-green-900/20
+                                    text-gray-600 dark:text-white/60 hover:text-green-600 dark:hover:text-green-400
+                                    text-sm font-semibold transition-all whitespace-nowrap">
+                                <ClipboardList size={15} />
+                                <span>Buyurtmalar</span>
+                            </Link>
+                        )}
+                        <Link href="/market/catalog"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                                hover:bg-green-50 dark:hover:bg-green-900/20
+                                text-gray-600 dark:text-white/60 hover:text-green-600 dark:hover:text-green-400
+                                text-sm font-semibold transition-all whitespace-nowrap">
+                            <MapPin size={15} />
+                            <span>Xarita</span>
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={() => window.dispatchEvent(new Event("support:open"))}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                                hover:bg-green-50 dark:hover:bg-green-900/20
+                                text-gray-600 dark:text-white/60 hover:text-green-600 dark:hover:text-green-400
+                                text-sm font-semibold transition-all whitespace-nowrap">
+                            <HeadsetIcon size={15} />
+                            <span>Support</span>
+                        </button>
+                        {session?.user && (
+                            <Link href="/market/notifications"
+                                className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                                    hover:bg-green-50 dark:hover:bg-green-900/20
+                                    text-gray-600 dark:text-white/60 hover:text-green-600 dark:hover:text-green-400
+                                    text-sm font-semibold transition-all whitespace-nowrap">
+                                <Bell size={15} />
+                                <span>Bildirishnoma</span>
+                                {unread > 0 && (
+                                    <span className="min-w-[18px] h-[18px] px-1
+                                        bg-red-500 rounded-full flex items-center justify-center">
+                                        <span className="text-[9px] font-black text-white">{unread > 9 ? "9+" : unread}</span>
+                                    </span>
+                                )}
+                            </Link>
+                        )}
                     </div>
                 </div>
             </div>

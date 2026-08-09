@@ -1,7 +1,7 @@
-import { setRequestLocale } from "next-intl/server";
-import { CreateBrand } from "@/components/market/create-brand";
-export default async function CreateBrandPage({ params }: { params: Promise<{ locale: string }> }) {
+// Brend yaratish endi imkonsiz — Humo Market yagona brend.
+import { redirect } from "@/i18n/routing";
+
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
-    setRequestLocale(locale);
-    return <CreateBrand />;
+    redirect({ href: "/market", locale });
 }

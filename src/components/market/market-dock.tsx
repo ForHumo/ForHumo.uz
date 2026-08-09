@@ -50,11 +50,11 @@ export function MarketDock() {
             transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 25 }}
             className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-4 px-4 pointer-events-none"
         >
-            <div className="flex items-center gap-1 px-3 py-2.5
-                bg-white/80 dark:bg-[#050F07]/90
+            <div className="flex items-end gap-2 px-4 py-2
+                bg-white/85 dark:bg-[#050F07]/92
                 backdrop-blur-xl
                 border border-green-100/80 dark:border-green-900/20
-                rounded-full shadow-2xl shadow-green-900/10
+                rounded-3xl shadow-2xl shadow-green-900/10
                 pointer-events-auto">
                 {DOCK_ITEMS.map((item) => {
                     const Icon = item.icon;
@@ -62,61 +62,51 @@ export function MarketDock() {
                     const isCart = item.key === "cart";
 
                     if (item.accent) {
-                        // AI tugmasi — global event dispatch, sahifa navigatsiyasi yo'q
+                        // AI tugmasi — kattaroq, ustidan chiqib turadi (raised)
                         return (
                             <button key={item.key} type="button"
                                 onClick={() => {
                                     if (item.action === "ai") window.dispatchEvent(new Event("humo-ai:open"));
                                 }}
                                 title={item.label}
-                                className="mx-1 w-12 h-12 rounded-full
+                                className="flex flex-col items-center gap-1 min-w-[64px] active:scale-95 transition">
+                                <div className="w-14 h-14 -mt-4 rounded-full
                                     bg-gradient-to-br from-green-500 to-emerald-600
                                     flex items-center justify-center
-                                    shadow-lg shadow-green-500/30
-                                    hover:from-green-400 hover:to-emerald-500
-                                    active:scale-95 transition-all duration-200">
-                                <Icon size={22} className="text-white" strokeWidth={2.5} />
+                                    shadow-lg shadow-green-500/40
+                                    ring-4 ring-white/85 dark:ring-[#050F07]/92
+                                    hover:from-green-400 hover:to-emerald-500">
+                                    <Icon size={24} className="text-white" strokeWidth={2.5} />
+                                </div>
+                                <span className="text-[10px] font-bold text-green-600 dark:text-green-400 leading-none pb-1">
+                                    {item.label}
+                                </span>
                             </button>
                         );
                     }
 
                     return (
-                        <Link key={item.key} href={item.href ?? "/market"}>
-                            <motion.div
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                className={`relative flex flex-col items-center justify-center
-                                    w-12 h-12 rounded-2xl transition-all duration-200
-                                    ${active
-                                        ? "bg-green-100/80 dark:bg-green-900/30"
-                                        : "hover:bg-gray-100/80 dark:hover:bg-white/[0.05]"
-                                    }`}
-                            >
+                        <Link key={item.key} href={item.href ?? "/market"}
+                            className="min-w-[62px] flex flex-col items-center gap-1 py-1.5 px-2 rounded-2xl transition">
+                            <div className={`relative flex items-center justify-center
+                                w-11 h-9 rounded-xl transition
+                                ${active ? "bg-green-100/80 dark:bg-green-900/30" : "hover:bg-gray-100/80 dark:hover:bg-white/[0.05]"}`}>
                                 <Icon size={20}
-                                    className={active
-                                        ? "text-green-600 dark:text-green-400"
-                                        : "text-gray-500 dark:text-white/40"
-                                    }
+                                    className={active ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-white/50"}
                                     strokeWidth={active ? 2.5 : 1.8}
                                 />
-                                {/* Savat badge */}
                                 {isCart && cartCount > 0 && (
-                                    <motion.div
-                                        initial={{ scale: 0 }} animate={{ scale: 1 }}
-                                        className="absolute -top-0.5 -right-0.5 w-4 h-4
-                                            bg-green-500 rounded-full
-                                            flex items-center justify-center">
+                                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1
+                                        bg-green-500 rounded-full flex items-center justify-center">
                                         <span className="text-[9px] font-black text-white">{cartCount}</span>
-                                    </motion.div>
+                                    </span>
                                 )}
-                                {/* Aktiv dot */}
-                                {active && (
-                                    <motion.div
-                                        layoutId="market-dock-dot"
-                                        className="absolute bottom-1 w-1 h-1 rounded-full bg-green-500"
-                                    />
-                                )}
-                            </motion.div>
+                            </div>
+                            <span className={`text-[10px] font-semibold leading-none ${
+                                active ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-white/45"
+                            }`}>
+                                {item.label}
+                            </span>
                         </Link>
                     );
                 })}
