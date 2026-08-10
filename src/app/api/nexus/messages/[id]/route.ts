@@ -9,6 +9,7 @@ import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { isBlockedBetween } from "@/lib/nexus-block";
 import { checkBanned, moderateDmMessage } from "@/lib/moderation-dm";
 import { BAN_LABELS } from "@/lib/moderation-ladder";
+import { appendUserReplyToOpenReview } from "@/lib/agent-review-followup";
 
 async function meAndConv(email: string, id: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true } });
@@ -192,6 +193,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             mediaType: msg.mediaType,
         });
     });
+
+    // Agent-review follow-up: agar suhbat @market_agent bilan bo'lsa va oxirgi
+    // agent kartasida sharh yaratilgan bo'lsa, ushbu javob mediasi/matni
+    // avtomatik ushbu sharhga qo'shiladi.
+    after(() => appendUserReplyToOpenReview({
+        conversationId: id,
+        senderId: me.id,
+        text: clean,
+        mediaUrl: msg.mediaUrl,
+        mediaType: msg.mediaType,
+    }));
 
     return NextResponse.json({
         message: {
