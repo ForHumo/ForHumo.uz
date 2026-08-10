@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, BarChart2, Mic, Smile } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2 } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { formatMoney } from "@/lib/money";
 
@@ -75,6 +75,66 @@ export function NxSocialDesktop() {
     const [uploading, setUploading] = useState(false);
     const [locBusy, setLocBusy] = useState(false);
     const [transferOpen, setTransferOpen] = useState(false);
+    const [emojiOpen, setEmojiOpen] = useState(false);
+
+    // Ovoz yozish
+    const recorderRef = useRef<MediaRecorder | null>(null);
+    const recStreamRef = useRef<MediaStream | null>(null);
+    const recChunksRef = useRef<Blob[]>([]);
+    const recStartRef = useRef<number>(0);
+    const recCancelRef = useRef<boolean>(false);
+    const recTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const [recording, setRecording] = useState(false);
+    const [recSeconds, setRecSeconds] = useState(0);
+
+    async function startVoice() {
+        if (recording || uploading || !selectedId) return;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            recStreamRef.current = stream;
+            recChunksRef.current = [];
+            recCancelRef.current = false;
+            const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus"
+                : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm"
+                : MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4"
+                : "";
+            const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+            rec.ondataavailable = e => { if (e.data && e.data.size > 0) recChunksRef.current.push(e.data); };
+            rec.onstop = () => {
+                stream.getTracks().forEach(t => t.stop());
+                recStreamRef.current = null;
+                if (recCancelRef.current) return;
+                const finalMime = rec.mimeType || "audio/webm";
+                const blob = new Blob(recChunksRef.current, { type: finalMime });
+                const ext = finalMime.includes("mp4") ? "m4a" : "webm";
+                const file = new File([blob], `voice-${Date.now()}.${ext}`, { type: finalMime });
+                uploadFile(file);
+            };
+            recorderRef.current = rec;
+            recStartRef.current = Date.now();
+            rec.start(100);
+            setRecording(true);
+            setRecSeconds(0);
+            recTimerRef.current = setInterval(() => {
+                setRecSeconds(Math.floor((Date.now() - recStartRef.current) / 1000));
+            }, 200);
+        } catch (e) {
+            alert(e instanceof Error ? e.message : "Mikrofonga ruxsat berilmadi");
+        }
+    }
+    function stopVoice(cancel = false) {
+        if (!recording) return;
+        recCancelRef.current = cancel;
+        if (recTimerRef.current) { clearInterval(recTimerRef.current); recTimerRef.current = null; }
+        setRecording(false);
+        try { recorderRef.current?.stop(); } catch { /* ignore */ }
+        recorderRef.current = null;
+    }
+    useEffect(() => () => {
+        if (recTimerRef.current) clearInterval(recTimerRef.current);
+        try { recorderRef.current?.stop(); } catch { /* ignore */ }
+        recStreamRef.current?.getTracks().forEach(t => t.stop());
+    }, []);
 
     async function uploadFile(file: File) {
         if (!selectedId || uploading) return;
@@ -475,40 +535,64 @@ export function NxSocialDesktop() {
                             <div ref={bottomRef} />
                         </div>
 
-                        {/* Composer — Telegram uslubi: chap ikonlar + input + o'ng ikonlar */}
-                        <div className="p-3 flex items-center gap-2 flex-shrink-0"
+                        {/* Composer — Telegram uslubi */}
+                        <div className="p-3 flex items-center gap-2 flex-shrink-0 relative"
                             style={{ borderTop: "1px solid rgba(43,62,232,0.14)", background: "rgba(8,12,32,0.55)" }}>
-                            {/* Chap: attach kabi Telegram menyusi */}
                             <input ref={fileInputRef} type="file"
                                 accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip,.txt"
                                 onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f); e.target.value = ""; }}
                                 className="hidden" />
-                            <ComposerBtn icon={Paperclip} title="Fayl/rasm/video" onClick={() => fileInputRef.current?.click()} loading={uploading} />
-                            <ComposerBtn icon={MapPin} title="Joylashuv" onClick={() => sendLocation()} loading={locBusy} />
-                            <ComposerBtn icon={Wallet} title="Pul yuborish" onClick={() => setTransferOpen(true)} accent />
 
-                            {/* Matn kiriti */}
-                            <input
-                                value={input}
-                                onChange={e => setInput(e.target.value)}
-                                onKeyDown={e => e.key === "Enter" && send()}
-                                placeholder="Xabar yozing..."
-                                className="flex-1 min-w-0 h-10 px-4 rounded-xl bg-transparent text-white text-sm focus:outline-none"
-                                style={{ border: "1px solid rgba(43,62,232,0.20)" }}
-                            />
-
-                            {/* O'ng: emoji/gif — hozircha placeholder, keyingi bosqichda */}
-                            <ComposerBtn icon={Smile} title="Emoji / Sticker / GIF (tez kunda)" onClick={() => alert("Emoji/Sticker/GIF — tez kunda")} />
-
-                            {/* Jo'natish yoki ovoz */}
-                            {input.trim() ? (
-                                <button onClick={send} disabled={sending}
-                                    className="w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-40"
-                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                                    {sending ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Send className="w-4 h-4 text-white" />}
-                                </button>
+                            {recording ? (
+                                <>
+                                    <ComposerBtn icon={Trash2} title="Bekor qilish" onClick={() => stopVoice(true)} accent={false} />
+                                    <div className="flex-1 flex items-center gap-3 px-4 h-10 rounded-xl"
+                                        style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.30)" }}>
+                                        <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#EF4444" }} />
+                                        <span className="text-xs font-bold text-white flex-1">Ovoz yozilmoqda</span>
+                                        <span className="text-xs font-black tabular-nums" style={{ color: "#EF4444" }}>
+                                            {String(Math.floor(recSeconds / 60)).padStart(2, "0")}:
+                                            {String(recSeconds % 60).padStart(2, "0")}
+                                        </span>
+                                    </div>
+                                    <button onClick={() => stopVoice(false)} title="Jo'natish"
+                                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                        <Send className="w-4 h-4 text-white" />
+                                    </button>
+                                </>
                             ) : (
-                                <ComposerBtn icon={Mic} title="Ovozli xabar (tez kunda)" onClick={() => alert("Ovozli xabar — tez kunda")} />
+                                <>
+                                    <ComposerBtn icon={Paperclip} title="Fayl/rasm/video" onClick={() => fileInputRef.current?.click()} loading={uploading} />
+                                    <ComposerBtn icon={MapPin} title="Joylashuv" onClick={() => sendLocation()} loading={locBusy} />
+                                    <ComposerBtn icon={Wallet} title="Pul yuborish" onClick={() => setTransferOpen(true)} accent />
+                                    <input
+                                        value={input}
+                                        onChange={e => setInput(e.target.value)}
+                                        onKeyDown={e => e.key === "Enter" && send()}
+                                        placeholder="Xabar yozing..."
+                                        className="flex-1 min-w-0 h-10 px-4 rounded-xl bg-transparent text-white text-sm focus:outline-none"
+                                        style={{ border: "1px solid rgba(43,62,232,0.20)" }}
+                                    />
+                                    <ComposerBtn icon={Smile} title="Emoji" onClick={() => setEmojiOpen(v => !v)} accent={emojiOpen} />
+                                    {input.trim() ? (
+                                        <button onClick={send} disabled={sending}
+                                            className="w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-40"
+                                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                            {sending ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Send className="w-4 h-4 text-white" />}
+                                        </button>
+                                    ) : (
+                                        <ComposerBtn icon={Mic} title="Ovozli xabar (bosib turing)" onClick={startVoice} />
+                                    )}
+                                </>
+                            )}
+
+                            {/* Emoji picker (composer ustidagi popover) */}
+                            {emojiOpen && (
+                                <EmojiPicker
+                                    onPick={(emoji) => { setInput(prev => prev + emoji); }}
+                                    onClose={() => setEmojiOpen(false)}
+                                />
                             )}
                         </div>
 
@@ -725,6 +809,57 @@ function TransferSheet({
                 </div>
             </div>
         </>
+    );
+}
+
+// Oddiy emoji picker (native emoji, 8 kategoriya)
+const EMOJI_CATEGORIES: Array<{ name: string; emojis: string[] }> = [
+    { name: "Yuz",     emojis: ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","☺️","😚","😙","🥲","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷"] },
+    { name: "Qo'l",    emojis: ["👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏"] },
+    { name: "Yurak",   emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟"] },
+    { name: "Uy",      emojis: ["🏠","🏡","🏘️","🏢","🏬","🏣","🏤","🏥","🏦","🏨","🏩","🏪","🏫","🏛️","💒","⛪","🕌","🕍","🛕","🏛"] },
+    { name: "Ovqat",   emojis: ["🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🥬","🥒","🌶️","🫑","🌽","🥕","🫒","🧄","🧅","🥔","🍠","🥯","🍞","🥐","🥖","🫓","🥨","🥞","🧇","🧀","🍖","🍗","🥩","🥓","🍔","🍟","🍕"] },
+    { name: "Sport",   emojis: ["⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🎱","🪀","🏓","🏸","🏒","🏑","🥍","🏏","🪃","🥅","⛳","🪁","🏹","🎣","🥊","🥋","🎽","🛹","🛼","🛷","⛸️","🥌","🎿","⛷️","🏂","🪂","🏋️","🤼","🤸","⛹️","🤾","🏌️","🏇","🧘"] },
+    { name: "Belgi",   emojis: ["✅","❌","⭕","🚫","💯","🔥","💥","💫","⭐","🌟","✨","💦","💤","💨","🎉","🎊","🎁","🎀","🏆","🥇","🥈","🥉","🏅","🎖️"] },
+    { name: "Boshqa",  emojis: ["🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🛻","🚚","🚛","🚜","🏍️","🛵","🚲","🛴","🛺","✈️","🛫","🛬","🛩️","🚁","🛸","🚀","🛰️","🚢","⛵","🛶","🚤"] },
+];
+
+function EmojiPicker({ onPick, onClose }: { onPick: (emoji: string) => void; onClose: () => void }) {
+    const [cat, setCat] = useState(0);
+    const ref = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); }
+        setTimeout(() => document.addEventListener("mousedown", h), 0);
+        return () => document.removeEventListener("mousedown", h);
+    }, [onClose]);
+    return (
+        <div ref={ref}
+            className="absolute bottom-full right-2 mb-2 w-[340px] rounded-2xl overflow-hidden z-40"
+            style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+            <div className="flex gap-1 p-2 border-b overflow-x-auto scrollbar-hide"
+                style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                {EMOJI_CATEGORIES.map((c, i) => (
+                    <button key={c.name}
+                        onClick={() => setCat(i)}
+                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold flex-shrink-0"
+                        style={cat === i
+                            ? { background: "rgba(43,62,232,0.25)", color: "#fff" }
+                            : { color: "rgba(140,160,210,0.70)" }
+                        }>
+                        {c.name}
+                    </button>
+                ))}
+            </div>
+            <div className="p-2 max-h-[280px] overflow-y-auto grid grid-cols-8 gap-1">
+                {EMOJI_CATEGORIES[cat].emojis.map(e => (
+                    <button key={e}
+                        onClick={() => { onPick(e); /* pickerni ochiq qoldiramiz — bir necha marta tanlash mumkin */ }}
+                        className="w-9 h-9 text-lg rounded-lg hover:bg-white/[0.06] active:scale-90 transition">
+                        {e}
+                    </button>
+                ))}
+            </div>
+        </div>
     );
 }
 
