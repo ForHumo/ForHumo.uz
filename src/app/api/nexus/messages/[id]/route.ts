@@ -217,3 +217,28 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         },
     });
 }
+
+// DELETE /api/nexus/messages/[id] — o'z xabarini o'chirish (messageId orqali)
+// query: ?messageId=... (chunki [id] konversatsiya ID'si)
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { id } = await params;
+    const url = new URL(req.url);
+    const messageId = url.searchParams.get("messageId");
+    if (!messageId) return NextResponse.json({ error: "messageId kerak" }, { status: 400 });
+
+    const me = await prisma.userProfile.findUnique({
+        where: { email: session.user.email }, select: { id: true },
+    });
+    if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+
+    const msg = await prisma.nexusMessage.findUnique({
+        where: { id: messageId }, select: { id: true, senderId: true, conversationId: true },
+    });
+    if (!msg || msg.conversationId !== id) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    if (msg.senderId !== me.id) return NextResponse.json({ error: "Faqat o'z xabaringizni o'chirasiz" }, { status: 403 });
+
+    await prisma.nexusMessage.delete({ where: { id: messageId } });
+    return NextResponse.json({ ok: true });
+}

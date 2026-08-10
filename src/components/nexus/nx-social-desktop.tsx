@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2 } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
@@ -99,6 +99,22 @@ export function NxSocialDesktop() {
         setTimeout(() => document.addEventListener("mousedown", h), 0);
         return () => document.removeEventListener("mousedown", h);
     }, [moreOpen]);
+
+    async function deleteMessage(messageId: string) {
+        if (!selectedId) return;
+        if (!confirm("Xabarni o'chirilsinmi?")) return;
+        const r = await fetch(`/api/nexus/messages/${selectedId}?messageId=${messageId}`, { method: "DELETE" });
+        if (r.ok) {
+            setMessages(m => m.filter(x => x.id !== messageId));
+            loadConvs();
+        } else {
+            alert("O'chirib bo'lmadi");
+        }
+    }
+
+    function copyMessage(text: string) {
+        navigator.clipboard.writeText(text).catch(() => {});
+    }
 
     async function togglePeerAction(action: "block" | "mute") {
         if (!peer?.username) return;
@@ -561,7 +577,24 @@ export function NxSocialDesktop() {
                                 ? messages.filter(m => (m.text ?? "").toLowerCase().includes(searchQuery.toLowerCase()))
                                 : messages
                             ).map(m => (
-                                <div key={m.id} className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
+                                <div key={m.id} className={`group flex items-center gap-1 ${m.mine ? "justify-end flex-row-reverse" : "justify-start"}`}>
+                                    {/* Hover amallar: copy (barcha) + delete (o'zim) */}
+                                    <div className="opacity-0 group-hover:opacity-100 transition flex gap-1 flex-shrink-0">
+                                        {m.text && (
+                                            <button onClick={() => copyMessage(m.text)} title="Nusxa olish"
+                                                className="w-7 h-7 rounded-md flex items-center justify-center"
+                                                style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                                <Copy className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                            </button>
+                                        )}
+                                        {m.mine && (
+                                            <button onClick={() => deleteMessage(m.id)} title="O'chirish"
+                                                className="w-7 h-7 rounded-md flex items-center justify-center"
+                                                style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(239,68,68,0.30)" }}>
+                                                <Trash2 className="w-3 h-3" style={{ color: "#EF4444" }} />
+                                            </button>
+                                        )}
+                                    </div>
                                     <div className="max-w-[70%] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words"
                                         style={m.mine
                                             ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)", color: "#fff", borderBottomRightRadius: "6px" }
