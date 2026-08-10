@@ -16,6 +16,7 @@ import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxStories } from "./nx-stories";
 import { NxHomeRows } from "./nx-home-rows";
+import { NxFolderModal } from "./nx-folder-modal";
 import { NxSocialFeed } from "./nx-social-feed";
 import { NxChatList } from "./nx-chat-list";
 import { NxChannels } from "./nx-channels";
@@ -80,8 +81,32 @@ const SOCIAL_TABS = [
     { id: "agents",         icon: Bot,            label: "Agents"         },
 ] as const;
 
+interface UserFolder {
+    id: string; name: string; emoji: string | null; color: string | null;
+    includeTypes: string[]; includeUnread: boolean;
+    includeChatIds: string[]; excludeChatIds: string[];
+    sort: number;
+}
+
 export function SocialView() {
     const [sub, setSub] = useState<string>("recommendation");
+    const [folders, setFolders] = useState<UserFolder[]>([]);
+    const [folderModalOpen, setFolderModalOpen] = useState(false);
+
+    useEffect(() => {
+        fetch("/api/nexus/folders").then(r => r.ok ? r.json() : { items: [] })
+            .then(d => setFolders(d.items ?? []))
+            .catch(() => {});
+    }, []);
+
+    async function delFolder(id: string) {
+        if (!confirm("Papkani o'chirilsinmi?")) return;
+        const r = await fetch(`/api/nexus/folders/${id}`, { method: "DELETE" });
+        if (r.ok) {
+            setFolders(f => f.filter(x => x.id !== id));
+            if (sub === `folder:${id}`) setSub("recommendation");
+        }
+    }
 
     return (
         <ViewShell>
@@ -104,10 +129,31 @@ export function SocialView() {
                         <Icon className="w-3.5 h-3.5" />{label}
                     </button>
                 ))}
-                {/* Custom papka yaratish (Telegramdagi kabi) — hozircha placeholder */}
+                {/* Foydalanuvchi papkalari */}
+                {folders.map(f => (
+                    <button
+                        key={f.id}
+                        onClick={() => setSub(`folder:${f.id}`)}
+                        onDoubleClick={() => delFolder(f.id)}
+                        title="Ikki marta bosing — o'chirish"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition-all duration-200 active:scale-95"
+                        style={sub === `folder:${f.id}` ? {
+                            background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                            color: "white",
+                        } : {
+                            background: "rgba(11,18,40,0.60)",
+                            border: `1px solid ${f.color ? colorHex(f.color) + "55" : "rgba(43,62,232,0.22)"}`,
+                            color: f.color ? colorHex(f.color) : "rgba(140,160,210,0.85)",
+                        }}
+                    >
+                        <span className="text-sm leading-none">{f.emoji ?? "📁"}</span>
+                        {f.name}
+                    </button>
+                ))}
+                {/* Yangi papka yaratish */}
                 <button
-                    onClick={() => alert("Custom papka — tez kunda")}
-                    title="Custom papka yaratish"
+                    onClick={() => setFolderModalOpen(true)}
+                    title="Yangi papka"
                     className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl transition-all active:scale-95"
                     style={{
                         background: "rgba(11,18,40,0.60)",
@@ -126,7 +172,50 @@ export function SocialView() {
             {sub === "groups"         && <NxChannels type="GROUP" />}
             {sub === "channels"       && <NxChannels type="CHANNEL" />}
             {sub === "agents"         && <AgentsTab />}
+            {sub.startsWith("folder:") && (
+                <FolderView folder={folders.find(f => `folder:${f.id}` === sub) ?? null} />
+            )}
+
+            <NxFolderModal
+                open={folderModalOpen}
+                onClose={() => setFolderModalOpen(false)}
+                onSaved={(f) => setFolders(prev => [...prev, f])}
+            />
         </ViewShell>
+    );
+}
+
+function colorHex(color: string | null): string {
+    if (!color) return "rgba(140,160,210,0.85)";
+    const map: Record<string, string> = {
+        red: "#EF4444", orange: "#F97316", violet: "#8B5CF6",
+        green: "#10B981", blue: "#3B82F6", cyan: "#06B6D4", pink: "#EC4899",
+    };
+    return map[color] ?? "rgba(140,160,210,0.85)";
+}
+
+// Papka ichi — filtrga qarab tegishli ro'yxatni ko'rsatadi
+function FolderView({ folder }: { folder: UserFolder | null }) {
+    if (!folder) return null;
+    const types = folder.includeTypes;
+    const showChannels = types.length === 0 || types.includes("channel");
+    const showGroups   = types.length === 0 || types.includes("group");
+    const showChats    = types.length === 0 || types.includes("private") || types.includes("bot") || folder.includeUnread;
+    return (
+        <div className="space-y-2">
+            {showChats && <NxChatList />}
+            {showGroups && <NxChannels type="GROUP" />}
+            {showChannels && <NxChannels type="CHANNEL" />}
+            {types.length === 0 && !folder.includeUnread && (
+                <div className="mx-4 flex flex-col items-center justify-center py-10 px-6 text-center rounded-2xl"
+                    style={{ background: "rgba(11,18,40,0.50)", border: "1px dashed rgba(43,62,232,0.25)" }}>
+                    <p className="text-sm font-black text-white mb-1">Papka bo&apos;sh</p>
+                    <p className="text-xs" style={{ color: "rgba(140,160,210,0.75)" }}>
+                        Papkaga chat turlarini qo&apos;shing (o&apos;chirish uchun ikki marta bosing)
+                    </p>
+                </div>
+            )}
+        </div>
     );
 }
 

@@ -117,6 +117,7 @@ model UserProfile {
   marketWorkersAdded MarketWorker[] @relation("MarketWorkerAddedBy")
   nexusAgent      NexusAgent?   @relation("NexusAgentProfile")
   nexusAgentsCreated NexusAgent[] @relation("NexusAgentOwner")
+  nexusFolders    NexusChatFolder[] @relation("NexusFolderProfile")
   emailCodes    EmailVerificationCode[]
   identities    Identity[]
   wallet        Wallet?
@@ -149,6 +150,26 @@ model SupportTicket {
 
   @@index([profileId, updatedAt(sort: Desc)])
   @@index([status, updatedAt(sort: Desc)])
+}
+
+// ── Nexus foydalanuvchi papkalari (Telegram-style custom folders) ────────────
+// Har foydalanuvchi o'z chatlarini turli papkalarga bo'lib olishi mumkin.
+// Papka filtri: turlar (private/channel/group/bot) + aniq chat ID (include/exclude).
+model NexusChatFolder {
+  id             String       @id @default(cuid())
+  profileId      String
+  profile        UserProfile  @relation("NexusFolderProfile", fields: [profileId], references: [id], onDelete: Cascade)
+  name           String                                         // "Ish", "IT" ...
+  emoji          String?                                        // masalan "📁"
+  color          String?                                        // "red"|"orange"|"violet"|... (Telegram uslubi)
+  includeTypes   String[]     @default([])                      // ["private","channel","group","bot","contacts","noncontacts"]
+  includeUnread  Boolean      @default(false)                   // faqat o'qilmagan
+  includeChatIds String[]     @default([])                      // qo'shimcha profile/chat IDlar
+  excludeChatIds String[]     @default([])
+  sort           Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  @@index([profileId, sort])
 }
 
 // ── Nexus Agentlar (Telegram Bot API ekvivalenti) ────────────────────────────
