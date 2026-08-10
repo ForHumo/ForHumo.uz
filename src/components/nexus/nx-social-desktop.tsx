@@ -8,8 +8,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2 } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2 } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
+import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
+import { NxPollCreate } from "./nx-poll-create";
 import { formatMoney } from "@/lib/money";
 
 interface Conv {
@@ -30,6 +32,13 @@ interface Msg {
     transferAmount?: number | null;
     transferCurrency?: string | null;
     transferNote?: string | null;
+    pollQuestion?: string | null;
+    pollOptions?: string[];
+    pollVoteCounts?: number[] | null;
+    pollMyVotes?: number[] | null;
+    pollTotal?: number | null;
+    locLat?: number | null;
+    locLng?: number | null;
 }
 
 interface PeerInfo {
@@ -76,6 +85,8 @@ export function NxSocialDesktop() {
     const [locBusy, setLocBusy] = useState(false);
     const [transferOpen, setTransferOpen] = useState(false);
     const [emojiOpen, setEmojiOpen] = useState(false);
+    const [circleOpen, setCircleOpen] = useState(false);
+    const [pollOpen, setPollOpen] = useState(false);
 
     // Ovoz yozish
     const recorderRef = useRef<MediaRecorder | null>(null);
@@ -136,7 +147,7 @@ export function NxSocialDesktop() {
         recStreamRef.current?.getTracks().forEach(t => t.stop());
     }, []);
 
-    async function uploadFile(file: File) {
+    async function uploadFile(file: File, overrideKind?: "image" | "video" | "audio" | "file" | "video-circle") {
         if (!selectedId || uploading) return;
         setUploading(true);
         try {
@@ -147,10 +158,10 @@ export function NxSocialDesktop() {
                 access: "public",
                 handleUploadUrl: "/api/market/upload/client-token",
             });
-            const kind = file.type.startsWith("image/") ? "image"
+            const kind = overrideKind ?? (file.type.startsWith("image/") ? "image"
                 : file.type.startsWith("video/") ? "video"
                 : file.type.startsWith("audio/") ? "audio"
-                : "file";
+                : "file");
             const r = await fetch(`/api/nexus/messages/${selectedId}`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -502,6 +513,56 @@ export function NxSocialDesktop() {
                                                 <Paperclip className="w-3 h-3" /> Fayl yuklab olish
                                             </a>
                                         )}
+                                        {m.mediaType === "poll" && m.pollQuestion && m.pollOptions && (
+                                            <div className="mb-1 rounded-lg overflow-hidden p-3"
+                                                style={{ background: m.mine ? "rgba(255,255,255,0.10)" : "rgba(0,206,200,0.08)" }}>
+                                                <div className="flex items-center gap-1.5 mb-2">
+                                                    <BarChart2 className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.85)" }}>
+                                                        So&apos;rovnoma
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm font-bold mb-2">{m.pollQuestion}</p>
+                                                <div className="space-y-1.5">
+                                                    {m.pollOptions.map((opt, i) => {
+                                                        const count = m.pollVoteCounts?.[i] ?? 0;
+                                                        const total = m.pollTotal ?? 0;
+                                                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                                                        return (
+                                                            <div key={i} className="relative rounded-md overflow-hidden"
+                                                                style={{ background: "rgba(0,0,0,0.30)" }}>
+                                                                <div className="absolute inset-y-0 left-0 transition-all"
+                                                                    style={{ width: `${pct}%`, background: "rgba(0,206,200,0.20)" }} />
+                                                                <div className="relative flex items-center justify-between px-2.5 py-1.5">
+                                                                    <span className="text-xs">{opt}</span>
+                                                                    <span className="text-[10px] font-bold" style={{ color: "rgba(140,160,210,0.85)" }}>{pct}%</span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <p className="text-[10px] mt-2" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                    {(m.pollTotal ?? 0)} ovoz
+                                                </p>
+                                            </div>
+                                        )}
+                                        {m.mediaType === "location" && typeof m.locLat === "number" && typeof m.locLng === "number" && (
+                                            <a href={`https://www.google.com/maps?q=${m.locLat},${m.locLng}`}
+                                                target="_blank" rel="noopener noreferrer"
+                                                className="mb-1 block rounded-lg overflow-hidden p-3"
+                                                style={{ background: m.mine ? "rgba(255,255,255,0.10)" : "rgba(0,206,200,0.08)" }}>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                                                        style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgba(0,206,200,0.20)" }}>
+                                                        <MapPin className="w-4 h-4" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-sm font-bold">Joylashuv</p>
+                                                        <p className="text-[10px] opacity-75">Google Maps'da ochish</p>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        )}
                                         {m.mediaType === "transfer" && m.transferAmount && m.transferCurrency && (
                                             <div className="mb-1 rounded-lg overflow-hidden"
                                                 style={{ background: m.mine ? "rgba(255,255,255,0.12)" : "rgba(0,206,200,0.10)" }}>
@@ -565,6 +626,8 @@ export function NxSocialDesktop() {
                                 <>
                                     <ComposerBtn icon={Paperclip} title="Fayl/rasm/video" onClick={() => fileInputRef.current?.click()} loading={uploading} />
                                     <ComposerBtn icon={MapPin} title="Joylashuv" onClick={() => sendLocation()} loading={locBusy} />
+                                    <ComposerBtn icon={BarChart2} title="So'rovnoma" onClick={() => setPollOpen(true)} />
+                                    <ComposerBtn icon={Camera} title="Video-circle" onClick={() => setCircleOpen(true)} />
                                     <ComposerBtn icon={Wallet} title="Pul yuborish" onClick={() => setTransferOpen(true)} accent />
                                     <input
                                         value={input}
@@ -605,6 +668,36 @@ export function NxSocialDesktop() {
                                 onSent={msg => { setMessages(m => [...m, msg]); loadConvs(); setTransferOpen(false); }}
                             />
                         )}
+
+                        {/* Video-circle recorder */}
+                        <NxVideoCircleRecorder
+                            open={circleOpen}
+                            onClose={() => setCircleOpen(false)}
+                            onRecorded={(file) => { setCircleOpen(false); uploadFile(file, "video-circle"); }}
+                        />
+
+                        {/* Poll create */}
+                        <NxPollCreate
+                            open={pollOpen}
+                            onClose={() => setPollOpen(false)}
+                            onCreated={async (poll) => {
+                                if (!selectedId) return;
+                                const r = await fetch(`/api/nexus/messages/${selectedId}`, {
+                                    method: "POST", headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        text: "", mediaType: "poll",
+                                        pollQuestion: poll.question, pollOptions: poll.options,
+                                        pollExpiresAt: poll.expiresAt, pollMulti: poll.multi,
+                                    }),
+                                });
+                                if (r.ok) {
+                                    const d = await r.json();
+                                    setMessages(m => [...m, d.message]);
+                                    loadConvs();
+                                    setPollOpen(false);
+                                }
+                            }}
+                        />
                     </>
                 )}
             </div>
