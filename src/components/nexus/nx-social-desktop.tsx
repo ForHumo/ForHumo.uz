@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
@@ -70,6 +70,7 @@ export function NxSocialDesktop() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [messages, setMessages] = useState<Msg[]>([]);
     const [loadingMsgs, setLoadingMsgs] = useState(false);
+    const [peerReadAt, setPeerReadAt] = useState<string | null>(null);
     const [peer, setPeer] = useState<PeerInfo | null>(null);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
@@ -291,6 +292,7 @@ export function NxSocialDesktop() {
             if (r.ok) {
                 const d = await r.json();
                 setMessages(d.messages ?? []);
+                setPeerReadAt(d.peerReadAt ?? null);
                 if (d.other) {
                     setPeer({
                         id: d.other.id, name: d.other.name, username: d.other.username,
@@ -733,6 +735,20 @@ export function NxSocialDesktop() {
                                         {m.text && (
                                             <div>{searchOpen && searchQuery.trim() ? highlightText(m.text, searchQuery) : m.text}</div>
                                         )}
+                                        {/* Vaqt + o'qildi belgisi (faqat mening xabarlarim uchun 2 tick) */}
+                                        <div className={`flex items-center gap-1 mt-0.5 ${m.mine ? "justify-end" : "justify-start"}`}>
+                                            <span className="text-[9px] opacity-60">
+                                                {new Date(m.createdAt).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })}
+                                            </span>
+                                            {m.mine && (
+                                                (() => {
+                                                    const read = peerReadAt && new Date(m.createdAt) <= new Date(peerReadAt);
+                                                    return read
+                                                        ? <CheckCheck className="w-3 h-3" style={{ color: "#00CEC8" }} strokeWidth={2.5} />
+                                                        : <Check className="w-3 h-3 opacity-70" strokeWidth={2.5} />;
+                                                })()
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
