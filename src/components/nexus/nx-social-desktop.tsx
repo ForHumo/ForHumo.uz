@@ -12,6 +12,7 @@ import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, Mor
 import { NxChannelRoom } from "./nx-channels";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
+import { useNxPlayer } from "./nx-player-ctx";
 import { formatMoney } from "@/lib/money";
 
 interface Conv {
@@ -61,6 +62,7 @@ interface ChannelItem {
 type ListTab = "dm" | "groups" | "channels";
 
 export function NxSocialDesktop() {
+    const { startCall } = useNxPlayer();
     const [listTab, setListTab] = useState<ListTab>("dm");
     const [convs, setConvs] = useState<Conv[]>([]);
     const [loadingConvs, setLoadingConvs] = useState(true);
@@ -89,6 +91,32 @@ export function NxSocialDesktop() {
     const [pollOpen, setPollOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [moreOpen, setMoreOpen] = useState(false);
+    const moreRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (!moreOpen) return;
+        function h(e: MouseEvent) { if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false); }
+        setTimeout(() => document.addEventListener("mousedown", h), 0);
+        return () => document.removeEventListener("mousedown", h);
+    }, [moreOpen]);
+
+    async function togglePeerAction(action: "block" | "mute") {
+        if (!peer?.username) return;
+        try {
+            const r = await fetch(`/api/nexus/${action}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: peer.username }),
+            });
+            if (r.ok) {
+                const d = await r.json().catch(() => ({}));
+                alert(action === "block"
+                    ? (d.blocked ? "Foydalanuvchi bloklandi" : "Blokdan chiqarildi")
+                    : (d.muted ? "Ovozsizlantirildi" : "Ovoz qaytarildi")
+                );
+                setMoreOpen(false);
+            }
+        } catch { /* ignore */ }
+    }
 
     // Ovoz yozish
     const recorderRef = useRef<MediaRecorder | null>(null);
@@ -460,13 +488,38 @@ export function NxSocialDesktop() {
                                 title={searchOpen ? "Qidiruvni yopish" : "Suhbatda qidirish"}
                                 onClick={() => { setSearchOpen(v => !v); setSearchQuery(""); }}
                             />
-                            {!peer?.isAgent && (
+                            {!peer?.isAgent && peer?.id && (
                                 <>
-                                    <IconBtn icon={Phone} title="Ovozli chaqiruv" />
-                                    <IconBtn icon={Video} title="Video chaqiruv" />
+                                    <IconBtn icon={Phone} title="Ovozli chaqiruv"
+                                        onClick={() => peer.id && startCall(peer.id, "AUDIO")} />
+                                    <IconBtn icon={Video} title="Video chaqiruv"
+                                        onClick={() => peer.id && startCall(peer.id, "VIDEO")} />
                                 </>
                             )}
-                            <IconBtn icon={MoreVertical} title="Ko'proq" />
+                            <div className="relative" ref={moreRef}>
+                                <IconBtn icon={MoreVertical} title="Ko'proq" onClick={() => setMoreOpen(v => !v)} />
+                                {moreOpen && (
+                                    <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl overflow-hidden z-30"
+                                        style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                        {peer?.username && (
+                                            <a href={`/nexus/u/${peer.username}`} target="_blank" rel="noopener noreferrer"
+                                                className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05]"
+                                                onClick={() => setMoreOpen(false)}>
+                                                <BadgeCheck className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Profilni ochish
+                                            </a>
+                                        )}
+                                        <button onClick={() => togglePeerAction("mute")}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                            <BotIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Ovozsizlantirish
+                                        </button>
+                                        <button onClick={() => togglePeerAction("block")}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-red-500/10 text-left"
+                                            style={{ color: "#EF4444" }}>
+                                            <X className="w-4 h-4" /> Bloklash
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                             <IconBtn
                                 icon={showInfo ? X : MessageSquare}
                                 title={showInfo ? "Info panelni yopish" : "Info panel"}
