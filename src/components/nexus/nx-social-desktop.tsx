@@ -87,6 +87,8 @@ export function NxSocialDesktop() {
     const [emojiOpen, setEmojiOpen] = useState(false);
     const [circleOpen, setCircleOpen] = useState(false);
     const [pollOpen, setPollOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
 
     // Ovoz yozish
     const recorderRef = useRef<MediaRecorder | null>(null);
@@ -453,7 +455,11 @@ export function NxSocialDesktop() {
                                     {peer?.username ? `@${peer.username}` : ""}
                                 </p>
                             </div>
-                            <IconBtn icon={Search} title="Qidirish (tez kunda)" />
+                            <IconBtn
+                                icon={searchOpen ? X : Search}
+                                title={searchOpen ? "Qidiruvni yopish" : "Suhbatda qidirish"}
+                                onClick={() => { setSearchOpen(v => !v); setSearchQuery(""); }}
+                            />
                             {!peer?.isAgent && (
                                 <>
                                     <IconBtn icon={Phone} title="Ovozli chaqiruv" />
@@ -468,13 +474,40 @@ export function NxSocialDesktop() {
                             />
                         </div>
 
+                        {/* Qidiruv paneli (Search tugmasi bosilsa) */}
+                        {searchOpen && (
+                            <div className="px-4 py-2 flex items-center gap-2 flex-shrink-0"
+                                style={{ borderBottom: "1px solid rgba(43,62,232,0.14)", background: "rgba(11,18,40,0.55)" }}>
+                                <Search className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.60)" }} />
+                                <input
+                                    autoFocus
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                    placeholder="Suhbatda qidirish..."
+                                    className="flex-1 h-8 bg-transparent text-white text-sm focus:outline-none"
+                                />
+                                {searchQuery && (
+                                    <span className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                        {(() => {
+                                            const q = searchQuery.toLowerCase();
+                                            const count = messages.filter(m => (m.text ?? "").toLowerCase().includes(q)).length;
+                                            return `${count} ta natija`;
+                                        })()}
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
                         {/* Messages */}
                         <div className="flex-1 overflow-y-auto p-4 space-y-2">
                             {loadingMsgs && messages.length === 0 ? (
                                 <div className="flex justify-center py-10">
                                     <Loader2 className="w-5 h-5 animate-spin text-white/30" />
                                 </div>
-                            ) : messages.map(m => (
+                            ) : (searchOpen && searchQuery.trim()
+                                ? messages.filter(m => (m.text ?? "").toLowerCase().includes(searchQuery.toLowerCase()))
+                                : messages
+                            ).map(m => (
                                 <div key={m.id} className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
                                     <div className="max-w-[70%] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words"
                                         style={m.mine
@@ -589,7 +622,9 @@ export function NxSocialDesktop() {
                                                 )}
                                             </div>
                                         )}
-                                        {m.text && <div>{m.text}</div>}
+                                        {m.text && (
+                                            <div>{searchOpen && searchQuery.trim() ? highlightText(m.text, searchQuery) : m.text}</div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -902,6 +937,18 @@ function TransferSheet({
                 </div>
             </div>
         </>
+    );
+}
+
+// Matn ichida qidiruv so'zini <mark> bilan belgilash
+function highlightText(text: string, query: string): React.ReactNode {
+    const q = query.trim();
+    if (!q) return text;
+    const parts = text.split(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"));
+    return parts.map((part, i) =>
+        part.toLowerCase() === q.toLowerCase()
+            ? <mark key={i} style={{ background: "rgba(255,220,0,0.35)", color: "inherit", padding: "0 2px", borderRadius: 3 }}>{part}</mark>
+            : <span key={i}>{part}</span>
     );
 }
 
