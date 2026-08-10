@@ -8,11 +8,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
 import { useNxPlayer } from "./nx-player-ctx";
+import { usePresence } from "@/lib/presence";
+import { useSession } from "next-auth/react";
 import { formatMoney } from "@/lib/money";
 
 interface Conv {
@@ -27,6 +29,7 @@ interface Conv {
 interface Msg {
     id: string; text: string; mine: boolean; createdAt: string;
     mediaUrl?: string | null; mediaType?: string | null;
+    mediaName?: string | null; mediaSize?: number | null;
     agentKind?: string | null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     agentPayload?: any;
@@ -66,6 +69,22 @@ type ListTab = "dm" | "groups" | "channels";
 
 export function NxSocialDesktop() {
     const { startCall } = useNxPlayer();
+    const { onTyping, sendTyping, isOnline } = usePresence();
+    const { data: session } = useSession();
+    const [myProfileId, setMyProfileId] = useState<string | null>(null);
+    const [myName, setMyName] = useState<string | null>(null);
+    const [peerTyping, setPeerTyping] = useState(false);
+    const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastTypingSentRef = useRef<number>(0);
+
+    // Mening profileId (typing event ichida ishlatiladi)
+    useEffect(() => {
+        if (!session?.user?.email) return;
+        fetch("/api/user/profile").then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.profile) { setMyProfileId(d.profile.id); setMyName(d.profile.name); } })
+            .catch(() => {});
+    }, [session?.user?.email]);
+
     const [listTab, setListTab] = useState<ListTab>("dm");
     const [convs, setConvs] = useState<Conv[]>([]);
     const [loadingConvs, setLoadingConvs] = useState(true);
@@ -74,6 +93,21 @@ export function NxSocialDesktop() {
     const [loadingMsgs, setLoadingMsgs] = useState(false);
     const [peerReadAt, setPeerReadAt] = useState<string | null>(null);
     const [peer, setPeer] = useState<PeerInfo | null>(null);
+
+    // Typing event'larini eshitish (faqat hozirgi peer bilan)
+    useEffect(() => {
+        const off = onTyping((e) => {
+            if (!peer?.id || !myProfileId) return;
+            if (e.fromId !== peer.id) return;
+            if (e.toId !== myProfileId) return;
+            setPeerTyping(true);
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = setTimeout(() => setPeerTyping(false), 3000);
+        });
+        return () => { off(); };
+    }, [onTyping, myProfileId, peer?.id]);
+
+    useEffect(() => { setPeerTyping(false); }, [peer?.id]);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
     const [showInfo, setShowInfo] = useState(true);
@@ -101,6 +135,8 @@ export function NxSocialDesktop() {
     const [reactPickerFor, setReactPickerFor] = useState<string | null>(null);
     const [galleryIdx, setGalleryIdx] = useState<number | null>(null);
     const galleryImages = messages.filter(m => m.mediaType === "image" && m.mediaUrl);
+    const [translated, setTranslated] = useState<Record<string, string>>({});
+    const [translating, setTranslating] = useState<Record<string, boolean>>({});
     const [moreOpen, setMoreOpen] = useState(false);
     const moreRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -138,6 +174,29 @@ export function NxSocialDesktop() {
             setMessages(m => m.map(x => x.id === editingId ? { ...x, text, editedAt: new Date().toISOString() } : x));
             setEditingId(null);
             setEditingText("");
+        }
+    }
+
+    async function translateMessage(messageId: string, text: string) {
+        if (translated[messageId]) {
+            // Ikkinchi bosishda tarjimani yashirish
+            setTranslated(prev => { const n = { ...prev }; delete n[messageId]; return n; });
+            return;
+        }
+        setTranslating(prev => ({ ...prev, [messageId]: true }));
+        try {
+            const r = await fetch("/api/ai/translate", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text, target: "uz" }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setTranslated(prev => ({ ...prev, [messageId]: d.translated }));
+            } else {
+                alert("Tarjima qilib bo'lmadi");
+            }
+        } finally {
+            setTranslating(prev => { const n = { ...prev }; delete n[messageId]; return n; });
         }
     }
 
@@ -536,8 +595,11 @@ export function NxSocialDesktop() {
                                             style={{ background: "rgba(0,206,200,0.18)", color: "#00CEC8" }}>AGENT</span>
                                     )}
                                 </div>
-                                <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.70)" }}>
-                                    {peer?.username ? `@${peer.username}` : ""}
+                                <p className="text-[11px]" style={{ color: peerTyping ? "#00CEC8" : "rgba(140,160,210,0.70)" }}>
+                                    {peerTyping
+                                        ? "yozmoqda..."
+                                        : peer?.id && isOnline(peer.id) ? "onlayn"
+                                        : peer?.username ? `@${peer.username}` : ""}
                                 </p>
                             </div>
                             <IconBtn
@@ -639,11 +701,22 @@ export function NxSocialDesktop() {
                                             </button>
                                         )}
                                         {m.text && (
-                                            <button onClick={() => copyMessage(m.text)} title="Nusxa olish"
-                                                className="w-7 h-7 rounded-md flex items-center justify-center"
-                                                style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                                <Copy className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                            </button>
+                                            <>
+                                                <button onClick={() => translateMessage(m.id, m.text)} title="Tarjima qilish"
+                                                    disabled={!!translating[m.id]}
+                                                    className="w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-40"
+                                                    style={{ background: translated[m.id] ? "rgba(0,206,200,0.20)" : "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                                    {translating[m.id]
+                                                        ? <Loader2 className="w-3 h-3 animate-spin" style={{ color: "#00CEC8" }} />
+                                                        : <Languages className="w-3 h-3" style={{ color: translated[m.id] ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
+                                                    }
+                                                </button>
+                                                <button onClick={() => copyMessage(m.text)} title="Nusxa olish"
+                                                    className="w-7 h-7 rounded-md flex items-center justify-center"
+                                                    style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                                    <Copy className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                </button>
+                                            </>
                                         )}
                                         {m.mine && (
                                             <button onClick={() => deleteMessage(m.id)} title="O'chirish"
@@ -708,10 +781,22 @@ export function NxSocialDesktop() {
                                                 style={{ width: 200, height: 200, objectFit: "cover" }} />
                                         )}
                                         {m.mediaType === "file" && m.mediaUrl && (
-                                            <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer"
-                                                className="flex items-center gap-2 px-3 py-2 rounded-lg mb-1 text-xs"
-                                                style={{ background: "rgba(255,255,255,0.10)" }}>
-                                                <Paperclip className="w-3 h-3" /> Fayl yuklab olish
+                                            <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer" download={m.mediaName ?? true}
+                                                className="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 min-w-[240px]"
+                                                style={{ background: m.mine ? "rgba(255,255,255,0.12)" : "rgba(0,206,200,0.10)", textDecoration: "none" }}>
+                                                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                                                    style={{ background: m.mine ? "rgba(255,255,255,0.18)" : "rgba(0,206,200,0.20)" }}>
+                                                    <FileIcon className="w-5 h-5" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-xs font-bold truncate" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                        {m.mediaName || "Fayl"}
+                                                    </p>
+                                                    <p className="text-[10px] opacity-70">
+                                                        {typeof m.mediaSize === "number" ? formatBytes(m.mediaSize) : ""}
+                                                    </p>
+                                                </div>
+                                                <Download className="w-4 h-4 flex-shrink-0 opacity-70" />
                                             </a>
                                         )}
                                         {m.mediaType === "poll" && m.pollQuestion && m.pollOptions && (
@@ -796,6 +881,13 @@ export function NxSocialDesktop() {
                                                 {m.editedAt && (
                                                     <span className="ml-1.5 text-[10px] opacity-50 italic">(tahrirlangan)</span>
                                                 )}
+                                            </div>
+                                        )}
+                                        {translated[m.id] && (
+                                            <div className="mt-1.5 pl-2 py-1 rounded text-xs italic"
+                                                style={{ borderLeft: "2px solid #00CEC8", background: "rgba(0,206,200,0.08)" }}>
+                                                <span className="text-[9px] font-bold uppercase tracking-wider mr-1.5" style={{ color: "#00CEC8" }}>Tarjima</span>
+                                                {translated[m.id]}
                                             </div>
                                         )}
                                         {editingId === m.id && (
@@ -905,7 +997,15 @@ export function NxSocialDesktop() {
                                     <ComposerBtn icon={Wallet} title="Pul yuborish" onClick={() => setTransferOpen(true)} accent />
                                     <input
                                         value={input}
-                                        onChange={e => setInput(e.target.value)}
+                                        onChange={e => {
+                                            setInput(e.target.value);
+                                            // Typing signal — 2 sekundda bir marta
+                                            const now = Date.now();
+                                            if (peer?.id && myProfileId && now - lastTypingSentRef.current > 2000) {
+                                                sendTyping(peer.id, myProfileId, myName);
+                                                lastTypingSentRef.current = now;
+                                            }
+                                        }}
                                         onKeyDown={e => e.key === "Enter" && send()}
                                         placeholder="Xabar yozing..."
                                         className="flex-1 min-w-0 h-10 px-4 rounded-xl bg-transparent text-white text-sm focus:outline-none"
@@ -1241,6 +1341,14 @@ function TransferSheet({
             </div>
         </>
     );
+}
+
+// Fayl hajmini o'qish uchun qulay formatga o'girish
+function formatBytes(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
 // Matn ichida qidiruv so'zini <mark> bilan belgilash
