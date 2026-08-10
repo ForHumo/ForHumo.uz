@@ -41,15 +41,40 @@ function ViewShell({ children }: { children: React.ReactNode }) {
 // FEED VIEW — bosh sahifa
 // ─────────────────────────────────────────────────────────────────────────────
 export function FeedView() {
+    const [feedTab, setFeedTab] = useState<"foryou" | "following" | "explore">("foryou");
     return (
         <ViewShell>
+            {/* Top-level tab bar (Telegram-style) */}
+            <div className="mx-4 mt-4 mb-3 flex gap-2 overflow-x-auto scrollbar-hide">
+                {([
+                    { id: "foryou",    label: "Recommendation" },
+                    { id: "following", label: "Following" },
+                    { id: "explore",   label: "Trending" },
+                ] as const).map(t => (
+                    <button
+                        key={t.id}
+                        onClick={() => setFeedTab(t.id)}
+                        className="px-4 py-2 rounded-xl text-xs font-black flex-shrink-0 transition-all duration-200 active:scale-95"
+                        style={feedTab === t.id ? {
+                            background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                            color: "white",
+                        } : {
+                            background: "rgba(11,18,40,0.60)",
+                            border: "1px solid rgba(43,62,232,0.22)",
+                            color: "rgba(140,160,210,0.85)",
+                        }}>
+                        {t.label}
+                    </button>
+                ))}
+            </div>
+
             <NxStories />
             {/* Yangi foydalanuvchi uchun 5 qadam checklist (bajarilsa avtomatik yashadi) */}
             <NxOnboarding />
-            {/* Real kontent qatorlari: jonli / yangi video / yangi musiqa */}
-            <NxHomeRows />
-            {/* Real postlar lentasi (composer bilan) */}
-            <NxSocialFeed />
+            {/* Recommendation'da: kontent qatorlari (jonli/video/musiqa) — boshqa tab'larda yashiriladi */}
+            {feedTab === "foryou" && <NxHomeRows />}
+            {/* Real postlar lentasi (composer bilan) — tabga qarab filtrlanadi */}
+            <NxSocialFeed controlledTab={feedTab} hideTabBar />
         </ViewShell>
     );
 }

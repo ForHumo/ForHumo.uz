@@ -43,14 +43,19 @@ function avatarOf(a: Author | null) {
 // ─────────────────────────────────────────────────────────────────────────────
 // NxSocialFeed
 // ─────────────────────────────────────────────────────────────────────────────
-export function NxSocialFeed({ authorUsername, tag, postId }: { authorUsername?: string; tag?: string; postId?: string } = {}) {
+export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideTabBar }: {
+    authorUsername?: string; tag?: string; postId?: string;
+    controlledTab?: "foryou" | "following" | "explore";
+    hideTabBar?: boolean;
+} = {}) {
     const profileMode = !!authorUsername || !!tag || !!postId;
     const { openShareSheet } = useNxPlayer();
     const { data: session } = useSession();
     const PAGE = 15;
 
     const [posts, setPosts] = useState<Post[]>([]);
-    const [tab, setTab] = useState<"foryou" | "following" | "explore">("foryou");
+    const [tabState, setTab] = useState<"foryou" | "following" | "explore">("foryou");
+    const tab = controlledTab ?? tabState;
     const [loading, setLoading] = useState(true);
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(false);
@@ -173,8 +178,8 @@ export function NxSocialFeed({ authorUsername, tag, postId }: { authorUsername?:
 
     return (
         <div className="max-w-2xl mx-auto">
-            {/* ── Tab (faqat umumiy feed) ── */}
-            {!profileMode && (
+            {/* ── Tab (faqat umumiy feed va tashqi controlled emas) ── */}
+            {!profileMode && !hideTabBar && (
             <div className="flex gap-0 mx-4 mt-4 mb-3 rounded-2xl overflow-hidden"
                 style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.18)" }}>
                 {(["foryou", "following", "explore"] as const).map(t => (
@@ -182,7 +187,7 @@ export function NxSocialFeed({ authorUsername, tag, postId }: { authorUsername?:
                         className="flex-1 py-2.5 text-xs font-black transition-all duration-200"
                         style={tab === t ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" } : { color: "rgba(140,160,210,0.75)" }}
                     >
-                        {t === "foryou" ? "Senga mos" : t === "following" ? "Obunalar" : "Kashfiyot"}
+                        {t === "foryou" ? "Recommendation" : t === "following" ? "Following" : "Explore"}
                     </button>
                 ))}
             </div>
