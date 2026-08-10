@@ -117,8 +117,8 @@ interface UserFolder {
 export function SocialView() {
     return (
         <>
-            {/* PC (lg+) — 3-ustunli Telegram uslubidagi layout */}
-            <div className="hidden lg:flex flex-1 min-h-0 h-full">
+            {/* PC (lg+) — 3-ustunli Telegram uslubidagi layout, to'liq width/height */}
+            <div className="hidden lg:block absolute inset-0">
                 <NxSocialDesktop />
             </div>
             {/* Mobile / tablet — mavjud tabsli UI */}

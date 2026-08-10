@@ -8,8 +8,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, BarChart2, Mic, Smile } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
+import { formatMoney } from "@/lib/money";
 
 interface Conv {
     conversationId: string;
@@ -26,6 +27,9 @@ interface Msg {
     agentKind?: string | null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     agentPayload?: any;
+    transferAmount?: number | null;
+    transferCurrency?: string | null;
+    transferNote?: string | null;
 }
 
 interface PeerInfo {
@@ -65,6 +69,65 @@ export function NxSocialDesktop() {
     const [channels, setChannels] = useState<ChannelItem[]>([]);
     const [loadingChannels, setLoadingChannels] = useState(false);
     const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
+
+    // Composer state
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploading, setUploading] = useState(false);
+    const [locBusy, setLocBusy] = useState(false);
+    const [transferOpen, setTransferOpen] = useState(false);
+
+    async function uploadFile(file: File) {
+        if (!selectedId || uploading) return;
+        setUploading(true);
+        try {
+            // Katta faylni Vercel Blob orqali (client upload)
+            const { upload } = await import("@vercel/blob/client");
+            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+            const blob = await upload(`nx-dm/${selectedId}/${Date.now()}-${safeName}`, file, {
+                access: "public",
+                handleUploadUrl: "/api/market/upload/client-token",
+            });
+            const kind = file.type.startsWith("image/") ? "image"
+                : file.type.startsWith("video/") ? "video"
+                : file.type.startsWith("audio/") ? "audio"
+                : "file";
+            const r = await fetch(`/api/nexus/messages/${selectedId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text: "", mediaUrl: blob.url, mediaType: kind, mediaMime: file.type,
+                    mediaName: file.name, mediaSize: file.size,
+                }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setMessages(m => [...m, d.message]);
+                loadConvs();
+            }
+        } catch (e) {
+            alert("Yuklab bo'lmadi: " + (e instanceof Error ? e.message : "xato"));
+        } finally { setUploading(false); }
+    }
+
+    async function sendLocation() {
+        if (!selectedId || locBusy) return;
+        setLocBusy(true);
+        try {
+            const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+                navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 8000 })
+            );
+            const r = await fetch(`/api/nexus/messages/${selectedId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: "", mediaType: "location", locLat: pos.coords.latitude, locLng: pos.coords.longitude }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setMessages(m => [...m, d.message]);
+                loadConvs();
+            }
+        } catch {
+            alert("Joylashuvni olib bo'lmadi");
+        } finally { setLocBusy(false); }
+    }
 
     // Group/Channel listni yuklash
     useEffect(() => {
@@ -162,7 +225,7 @@ export function NxSocialDesktop() {
         : convs;
 
     return (
-        <div className="flex h-full min-h-0 pb-[88px]" style={{ background: "#050818" }}>
+        <div className="flex w-full h-full min-h-0 pb-[88px]" style={{ background: "#050818" }}>
             {/* ── COL 1: Chat list ─────────────────────────────────────── */}
             <div className="w-[320px] flex-shrink-0 flex flex-col border-r"
                 style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.55)" }}>
@@ -319,6 +382,7 @@ export function NxSocialDesktop() {
                                     {peer?.username ? `@${peer.username}` : ""}
                                 </p>
                             </div>
+                            <IconBtn icon={Search} title="Qidirish (tez kunda)" />
                             {!peer?.isAgent && (
                                 <>
                                     <IconBtn icon={Phone} title="Ovozli chaqiruv" />
@@ -375,8 +439,34 @@ export function NxSocialDesktop() {
                                             <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer"
                                                 className="flex items-center gap-2 px-3 py-2 rounded-lg mb-1 text-xs"
                                                 style={{ background: "rgba(255,255,255,0.10)" }}>
-                                                📎 Fayl yuklab olish
+                                                <Paperclip className="w-3 h-3" /> Fayl yuklab olish
                                             </a>
+                                        )}
+                                        {m.mediaType === "transfer" && m.transferAmount && m.transferCurrency && (
+                                            <div className="mb-1 rounded-lg overflow-hidden"
+                                                style={{ background: m.mine ? "rgba(255,255,255,0.12)" : "rgba(0,206,200,0.10)" }}>
+                                                <div className="flex items-center gap-2.5 p-2.5">
+                                                    <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                                                        style={{ background: m.mine ? "rgba(255,255,255,0.18)" : "rgba(0,206,200,0.20)" }}>
+                                                        <Wallet className="w-4 h-4" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-[10px] font-medium uppercase tracking-wider"
+                                                            style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "rgba(140,160,210,0.75)" }}>
+                                                            {m.mine ? "Yuborildi" : "Qabul qilindi"} • For Pay
+                                                        </p>
+                                                        <p className="text-base font-black" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                            {formatMoney(m.transferAmount, m.transferCurrency as "UZS" | "USD")}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {m.transferNote && (
+                                                    <div className="px-2.5 pb-2 text-[11px]"
+                                                        style={{ color: m.mine ? "rgba(255,255,255,0.85)" : "rgba(220,230,255,0.85)" }}>
+                                                        {m.transferNote}
+                                                    </div>
+                                                )}
+                                            </div>
                                         )}
                                         {m.text && <div>{m.text}</div>}
                                     </div>
@@ -385,25 +475,52 @@ export function NxSocialDesktop() {
                             <div ref={bottomRef} />
                         </div>
 
-                        {/* Composer */}
+                        {/* Composer — Telegram uslubi: chap ikonlar + input + o'ng ikonlar */}
                         <div className="p-3 flex items-center gap-2 flex-shrink-0"
                             style={{ borderTop: "1px solid rgba(43,62,232,0.14)", background: "rgba(8,12,32,0.55)" }}>
+                            {/* Chap: attach kabi Telegram menyusi */}
+                            <input ref={fileInputRef} type="file"
+                                accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip,.txt"
+                                onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f); e.target.value = ""; }}
+                                className="hidden" />
+                            <ComposerBtn icon={Paperclip} title="Fayl/rasm/video" onClick={() => fileInputRef.current?.click()} loading={uploading} />
+                            <ComposerBtn icon={MapPin} title="Joylashuv" onClick={() => sendLocation()} loading={locBusy} />
+                            <ComposerBtn icon={Wallet} title="Pul yuborish" onClick={() => setTransferOpen(true)} accent />
+
+                            {/* Matn kiriti */}
                             <input
                                 value={input}
                                 onChange={e => setInput(e.target.value)}
                                 onKeyDown={e => e.key === "Enter" && send()}
                                 placeholder="Xabar yozing..."
-                                className="flex-1 h-10 px-4 rounded-xl bg-transparent text-white text-sm focus:outline-none"
+                                className="flex-1 min-w-0 h-10 px-4 rounded-xl bg-transparent text-white text-sm focus:outline-none"
                                 style={{ border: "1px solid rgba(43,62,232,0.20)" }}
                             />
-                            <button
-                                onClick={send}
-                                disabled={sending || !input.trim()}
-                                className="w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-40"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                                {sending ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Send className="w-4 h-4 text-white" />}
-                            </button>
+
+                            {/* O'ng: emoji/gif — hozircha placeholder, keyingi bosqichda */}
+                            <ComposerBtn icon={Smile} title="Emoji / Sticker / GIF (tez kunda)" onClick={() => alert("Emoji/Sticker/GIF — tez kunda")} />
+
+                            {/* Jo'natish yoki ovoz */}
+                            {input.trim() ? (
+                                <button onClick={send} disabled={sending}
+                                    className="w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-40"
+                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    {sending ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Send className="w-4 h-4 text-white" />}
+                                </button>
+                            ) : (
+                                <ComposerBtn icon={Mic} title="Ovozli xabar (tez kunda)" onClick={() => alert("Ovozli xabar — tez kunda")} />
+                            )}
                         </div>
+
+                        {/* Transfer modali */}
+                        {transferOpen && (
+                            <TransferSheet
+                                convId={selectedId}
+                                peerUsername={peer?.username ?? undefined}
+                                onClose={() => setTransferOpen(false)}
+                                onSent={msg => { setMessages(m => [...m, msg]); loadConvs(); setTransferOpen(false); }}
+                            />
+                        )}
                     </>
                 )}
             </div>
@@ -511,6 +628,103 @@ function InfoRow({ label, value }: { label: string; value: string }) {
             <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.55)" }}>{label}</p>
             <p className="text-sm text-white mt-0.5 break-words">{value}</p>
         </div>
+    );
+}
+
+function ComposerBtn({ icon: Icon, title, onClick, loading, accent }: {
+    icon: React.ElementType; title: string; onClick?: () => void;
+    loading?: boolean; accent?: boolean;
+}) {
+    return (
+        <button onClick={onClick} disabled={loading} title={title}
+            className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition disabled:opacity-40 active:scale-95"
+            style={accent
+                ? { background: "linear-gradient(135deg,rgba(0,206,200,0.20),rgba(43,62,232,0.20))" }
+                : { background: "rgba(43,62,232,0.08)" }
+            }>
+            {loading
+                ? <Loader2 className="w-4 h-4 text-white animate-spin" />
+                : <Icon className="w-4 h-4" style={{ color: accent ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
+            }
+        </button>
+    );
+}
+
+// Pul yuborish yon paneli — nx-messages.tsx dagi modal bilan bir xil endpoint
+function TransferSheet({
+    convId, peerUsername, onClose, onSent,
+}: {
+    convId: string | null;
+    peerUsername?: string;
+    onClose: () => void;
+    onSent: (msg: Msg) => void;
+}) {
+    const [amount, setAmount] = useState("");
+    const [note, setNote] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [err, setErr] = useState<string | null>(null);
+
+    async function submit() {
+        if (!convId) return;
+        const amt = Number(amount.replace(/[^\d.,]/g, "").replace(",", "."));
+        if (!amt || amt <= 0) { setErr("Miqdorni kiriting"); return; }
+        setErr(null); setBusy(true);
+        try {
+            const r = await fetch(`/api/nexus/messages/${convId}/transfer`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: amt, note: note.trim() || undefined }),
+            });
+            const d = await r.json();
+            if (!r.ok) { setErr(d.error ?? "Yuborib bo'lmadi"); return; }
+            onSent(d.message);
+        } finally { setBusy(false); }
+    }
+
+    return (
+        <>
+            <div className="fixed inset-0 z-[80]" style={{ background: "rgba(5,8,24,0.70)" }} onClick={() => !busy && onClose()} />
+            <div className="fixed z-[80] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-sm rounded-2xl overflow-hidden"
+                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
+                <div className="px-5 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        style={{ background: "linear-gradient(135deg,rgba(0,206,200,0.20),rgba(43,62,232,0.20))" }}>
+                        <Wallet className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-black text-white">Pul yuborish</h3>
+                        <p className="text-[11px] mt-0.5 truncate" style={{ color: "rgba(140,160,210,0.75)" }}>
+                            For Pay orqali {peerUsername ? `@${peerUsername}` : "foydalanuvchiga"}
+                        </p>
+                    </div>
+                </div>
+                <div className="p-5 space-y-3">
+                    <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.75)" }}>Miqdor</label>
+                        <input value={amount} onChange={e => setAmount(e.target.value)} placeholder="10 000" inputMode="decimal" autoFocus
+                            className="w-full mt-1.5 px-3 py-3 rounded-xl text-lg font-black text-white bg-transparent focus:outline-none"
+                            style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                    </div>
+                    <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.75)" }}>Izoh (ixtiyoriy)</label>
+                        <input value={note} onChange={e => setNote(e.target.value)} placeholder="Nima uchun" maxLength={120}
+                            className="w-full mt-1.5 px-3 py-2.5 rounded-xl text-sm text-white bg-transparent focus:outline-none"
+                            style={{ border: "1px solid rgba(43,62,232,0.20)" }} />
+                    </div>
+                    {err && <p className="text-xs" style={{ color: "#EF4444" }}>{err}</p>}
+                </div>
+                <div className="p-3 flex gap-2" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                    <button onClick={() => !busy && onClose()} disabled={busy}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white disabled:opacity-40"
+                        style={{ background: "rgba(43,62,232,0.10)" }}>Bekor</button>
+                    <button onClick={submit} disabled={busy || !amount.trim()}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-black text-white disabled:opacity-40 flex items-center justify-center gap-2"
+                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        {busy && <Loader2 size={14} className="animate-spin" />}
+                        Yuborish
+                    </button>
+                </div>
+            </div>
+        </>
     );
 }
 
