@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { getOrCreateWallet, walletCurrency } from "@/lib/wallet";
 import { minAmount, roundMoney, convert, formatMoney } from "@/lib/money";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
+import { after } from "next/server";
+import { triggerPayAgentDM } from "@/lib/pay-agent-trigger";
 
 // POST /api/pay/transfer — username bo'yicha pul yuborish.
 // Yuboruvchi o'z valyutasida tanlaydi; qabul qiluvchi o'z valyutasida (kerak bo'lsa konvert) oladi.
@@ -58,6 +60,13 @@ export async function POST(req: Request) {
         return senderNew;
     });
     if (result === null) return NextResponse.json({ error: "Balans yetarli emas" }, { status: 400 });
+
+    // @pay_agent qabul qiluvchiga DM (o'tkazma keldi)
+    after(() => triggerPayAgentDM({
+        kind: "transfer_in", profileId: receiver.id,
+        amount: recvAmount, currency: rCur as "UZS" | "USD",
+        fromUsername: sender.username, note: desc,
+    }));
 
     return NextResponse.json({
         balance: result, currency: sCur,

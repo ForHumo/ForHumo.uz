@@ -264,6 +264,24 @@ export function NxSocialDesktop() {
                                         {m.mediaType === "image" && m.mediaUrl && (
                                             <img src={m.mediaUrl} alt="" className="max-w-full max-h-80 rounded-md mb-1" />
                                         )}
+                                        {m.mediaType === "video" && m.mediaUrl && (
+                                            <video src={m.mediaUrl} controls playsInline className="max-w-full max-h-80 rounded-md mb-1" />
+                                        )}
+                                        {m.mediaType === "audio" && m.mediaUrl && (
+                                            <audio src={m.mediaUrl} controls className="w-full max-w-[240px] mb-1" style={{ height: 34 }} />
+                                        )}
+                                        {m.mediaType === "video-circle" && m.mediaUrl && (
+                                            <video src={m.mediaUrl} controls playsInline
+                                                className="rounded-full mb-1"
+                                                style={{ width: 200, height: 200, objectFit: "cover" }} />
+                                        )}
+                                        {m.mediaType === "file" && m.mediaUrl && (
+                                            <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer"
+                                                className="flex items-center gap-2 px-3 py-2 rounded-lg mb-1 text-xs"
+                                                style={{ background: "rgba(255,255,255,0.10)" }}>
+                                                📎 Fayl yuklab olish
+                                            </a>
+                                        )}
                                         {m.text && <div>{m.text}</div>}
                                     </div>
                                 </div>
@@ -334,6 +352,9 @@ export function NxSocialDesktop() {
                         )}
                     </div>
 
+                    {/* Umumiy media (suhbatdagi barcha rasmlar) */}
+                    <SharedMediaSection messages={messages} />
+
                     {peer?.username && (
                         <div className="p-4 border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
                             <Link href={`/nexus/u/${peer.username}`}
@@ -345,6 +366,30 @@ export function NxSocialDesktop() {
                     )}
                 </div>
             )}
+        </div>
+    );
+}
+
+// Umumiy media — suhbatdagi barcha rasmlar (grid 3x)
+function SharedMediaSection({ messages }: { messages: Msg[] }) {
+    const images = messages
+        .filter(m => m.mediaType === "image" && m.mediaUrl)
+        .slice(-9)
+        .reverse();
+    if (images.length === 0) return null;
+    return (
+        <div className="p-4 border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: "rgba(140,160,210,0.55)" }}>
+                Umumiy media
+            </p>
+            <div className="grid grid-cols-3 gap-1">
+                {images.map(m => (
+                    <a key={m.id} href={m.mediaUrl!} target="_blank" rel="noopener noreferrer"
+                        className="aspect-square rounded-md overflow-hidden bg-white/[0.05]">
+                        <img src={m.mediaUrl!} alt="" className="w-full h-full object-cover" />
+                    </a>
+                ))}
+            </div>
         </div>
     );
 }

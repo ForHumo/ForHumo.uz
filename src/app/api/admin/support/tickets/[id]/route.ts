@@ -4,9 +4,10 @@
 //   POST   /api/admin/support/tickets/[id]           → admin javob  body:{ body }
 //   PATCH  /api/admin/support/tickets/[id]           → status  body:{ status }
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireFounder } from "@/lib/admin-guard";
+import { triggerSupportAgentDM } from "@/lib/support-agent-trigger";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
     const admin = await requireFounder();
@@ -68,6 +69,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         where: { id }, data: { status: "pending", updatedAt: new Date() },
     });
 
+    // @support_agent foydalanuvchi DM'iga xabar yuboradi
+    after(() => triggerSupportAgentDM({ ticketId: id, kind: "admin-reply", adminReplyBody: text }));
+
     return NextResponse.json({
         ok: true,
         message: {
@@ -88,5 +92,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         return NextResponse.json({ error: "invalid_status" }, { status: 400 });
     }
     await prisma.supportTicket.update({ where: { id }, data: { status } });
+    after(() => triggerSupportAgentDM({ ticketId: id, kind: "status-changed", newStatus: status }));
     return NextResponse.json({ ok: true, status });
 }
