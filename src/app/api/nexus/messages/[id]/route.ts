@@ -53,6 +53,21 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         }
     }
 
+    // Reaksiyalar (agar bor bo'lsa)
+    const allReactions = await prisma.nexusMessageReaction.findMany({
+        where: { messageId: { in: messages.map(m => m.id) } },
+        select: { messageId: true, emoji: true, profileId: true },
+    });
+    const reactionMap = new Map<string, Map<string, { count: number; mine: boolean }>>();
+    for (const r of allReactions) {
+        if (!reactionMap.has(r.messageId)) reactionMap.set(r.messageId, new Map());
+        const m2 = reactionMap.get(r.messageId)!;
+        const cur = m2.get(r.emoji) ?? { count: 0, mine: false };
+        cur.count++;
+        if (r.profileId === me.id) cur.mine = true;
+        m2.set(r.emoji, cur);
+    }
+
     // Reply preview: replyToId'lar → xabar snapshot (matn, sender)
     const replyIds = messages.map(m => m.replyToId).filter((x): x is string => !!x);
     const replyMap = new Map<string, { id: string; text: string; senderName: string | null; mine: boolean }>();
@@ -102,6 +117,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 transferCurrency: m.transferCurrency, transferNote: m.transferNote,
                 agentKind: m.agentKind, agentPayload: m.agentPayload, agentActionRef: m.agentActionRef,
                 replyTo: m.replyToId ? (replyMap.get(m.replyToId) ?? null) : null,
+                editedAt: m.editedAt,
+                reactions: reactionMap.get(m.id)
+                    ? [...reactionMap.get(m.id)!.entries()].map(([emoji, s]) => ({ emoji, count: s.count, mine: s.mine }))
+                    : [],
             };
         }),
         other: p ? {

@@ -1274,8 +1274,23 @@ model NexusMessage {
   agentActionRef    String?                                    // MarketReview.id yoki boshqa yozuv id (foydalanuvchi javob bergach yoziladi)
   // Reply — boshqa xabarga javob (Telegram uslubi)
   replyToId         String?
+  // Tahrirlash
+  editedAt          DateTime?
+  // Emoji reaksiyalar
+  reactions         NexusMessageReaction[]
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
+}
+
+model NexusMessageReaction {
+  id         String       @id @default(cuid())
+  messageId  String
+  message    NexusMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  profileId  String
+  emoji      String                                                         // "❤️" | "👍" | ...
+  createdAt  DateTime     @default(now())
+  @@unique([messageId, profileId, emoji])
+  @@index([messageId])
 }
 
 model NexusDmPollVote {

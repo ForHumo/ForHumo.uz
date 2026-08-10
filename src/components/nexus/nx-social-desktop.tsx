@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
@@ -41,6 +41,8 @@ interface Msg {
     locLat?: number | null;
     locLng?: number | null;
     replyTo?: { id: string; text: string; senderName: string | null; mine: boolean } | null;
+    editedAt?: string | null;
+    reactions?: Array<{ emoji: string; count: number; mine: boolean }>;
 }
 
 interface PeerInfo {
@@ -94,6 +96,11 @@ export function NxSocialDesktop() {
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [replyTo, setReplyTo] = useState<Msg | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingText, setEditingText] = useState("");
+    const [reactPickerFor, setReactPickerFor] = useState<string | null>(null);
+    const [galleryIdx, setGalleryIdx] = useState<number | null>(null);
+    const galleryImages = messages.filter(m => m.mediaType === "image" && m.mediaUrl);
     const [moreOpen, setMoreOpen] = useState(false);
     const moreRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -117,6 +124,34 @@ export function NxSocialDesktop() {
 
     function copyMessage(text: string) {
         navigator.clipboard.writeText(text).catch(() => {});
+    }
+
+    async function saveEdit() {
+        if (!selectedId || !editingId) return;
+        const text = editingText.trim();
+        if (text.length < 1) { setEditingId(null); return; }
+        const r = await fetch(`/api/nexus/messages/${selectedId}/edit`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messageId: editingId, text }),
+        });
+        if (r.ok) {
+            setMessages(m => m.map(x => x.id === editingId ? { ...x, text, editedAt: new Date().toISOString() } : x));
+            setEditingId(null);
+            setEditingText("");
+        }
+    }
+
+    async function toggleReaction(messageId: string, emoji: string) {
+        if (!selectedId) return;
+        const r = await fetch(`/api/nexus/messages/${selectedId}/react`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messageId, emoji }),
+        });
+        if (r.ok) {
+            const d = await r.json();
+            setMessages(m => m.map(x => x.id === messageId ? { ...x, reactions: d.reactions ?? [] } : x));
+        }
+        setReactPickerFor(null);
     }
 
     async function togglePeerAction(action: "block" | "mute") {
@@ -584,13 +619,25 @@ export function NxSocialDesktop() {
                                 : messages
                             ).map(m => (
                                 <div key={m.id} className={`group flex items-center gap-1 ${m.mine ? "justify-end flex-row-reverse" : "justify-start"}`}>
-                                    {/* Hover amallar: reply + copy + delete */}
-                                    <div className="opacity-0 group-hover:opacity-100 transition flex gap-1 flex-shrink-0">
+                                    {/* Hover amallar: react + reply + edit + copy + delete */}
+                                    <div className="opacity-0 group-hover:opacity-100 transition flex gap-1 flex-shrink-0 relative">
+                                        <button onClick={() => setReactPickerFor(m.id === reactPickerFor ? null : m.id)} title="Reaksiya"
+                                            className="w-7 h-7 rounded-md flex items-center justify-center"
+                                            style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                            <Smile className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        </button>
                                         <button onClick={() => setReplyTo(m)} title="Javob berish"
                                             className="w-7 h-7 rounded-md flex items-center justify-center"
                                             style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
                                             <Reply className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
                                         </button>
+                                        {m.mine && m.text && !m.mediaType && (
+                                            <button onClick={() => { setEditingId(m.id); setEditingText(m.text); }} title="Tahrirlash"
+                                                className="w-7 h-7 rounded-md flex items-center justify-center"
+                                                style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                                <Edit3 className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                            </button>
+                                        )}
                                         {m.text && (
                                             <button onClick={() => copyMessage(m.text)} title="Nusxa olish"
                                                 className="w-7 h-7 rounded-md flex items-center justify-center"
@@ -604,6 +651,17 @@ export function NxSocialDesktop() {
                                                 style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(239,68,68,0.30)" }}>
                                                 <Trash2 className="w-3 h-3" style={{ color: "#EF4444" }} />
                                             </button>
+                                        )}
+                                        {reactPickerFor === m.id && (
+                                            <div className="absolute top-full mt-1 z-30 flex gap-1 p-1.5 rounded-lg"
+                                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                                {["❤️","👍","😂","😮","😢","🔥","🙏","👏"].map(e => (
+                                                    <button key={e} onClick={() => toggleReaction(m.id, e)}
+                                                        className="w-7 h-7 text-base rounded hover:bg-white/[0.08] active:scale-90">
+                                                        {e}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         )}
                                     </div>
                                     <div className="max-w-[70%] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words"
@@ -732,8 +790,44 @@ export function NxSocialDesktop() {
                                                 )}
                                             </div>
                                         )}
-                                        {m.text && (
-                                            <div>{searchOpen && searchQuery.trim() ? highlightText(m.text, searchQuery) : m.text}</div>
+                                        {m.text && editingId !== m.id && (
+                                            <div>
+                                                {searchOpen && searchQuery.trim() ? highlightText(m.text, searchQuery) : m.text}
+                                                {m.editedAt && (
+                                                    <span className="ml-1.5 text-[10px] opacity-50 italic">(tahrirlangan)</span>
+                                                )}
+                                            </div>
+                                        )}
+                                        {editingId === m.id && (
+                                            <div className="flex flex-col gap-1.5">
+                                                <textarea value={editingText} onChange={e => setEditingText(e.target.value)}
+                                                    rows={2} autoFocus
+                                                    className="bg-black/30 rounded p-1.5 text-sm focus:outline-none resize-none"
+                                                    style={{ color: "#fff", border: "1px solid rgba(255,255,255,0.20)" }} />
+                                                <div className="flex gap-1.5 justify-end">
+                                                    <button onClick={() => setEditingId(null)}
+                                                        className="text-[11px] font-bold px-2 py-1 rounded"
+                                                        style={{ background: "rgba(0,0,0,0.30)", color: "#fff" }}>Bekor</button>
+                                                    <button onClick={saveEdit}
+                                                        className="text-[11px] font-bold px-2 py-1 rounded"
+                                                        style={{ background: "rgba(0,206,200,0.30)", color: "#fff" }}>Saqlash</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {m.reactions && m.reactions.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {m.reactions.map(r => (
+                                                    <button key={r.emoji} onClick={() => toggleReaction(m.id, r.emoji)}
+                                                        className="px-1.5 py-0.5 rounded-full text-[11px] flex items-center gap-0.5 transition"
+                                                        style={{
+                                                            background: r.mine ? "rgba(0,206,200,0.25)" : "rgba(255,255,255,0.10)",
+                                                            border: `1px solid ${r.mine ? "rgba(0,206,200,0.50)" : "rgba(255,255,255,0.15)"}`,
+                                                        }}>
+                                                        <span>{r.emoji}</span>
+                                                        <span className="font-bold opacity-90">{r.count}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
                                         )}
                                         {/* Vaqt + o'qildi belgisi (faqat mening xabarlarim uchun 2 tick) */}
                                         <div className={`flex items-center gap-1 mt-0.5 ${m.mine ? "justify-end" : "justify-start"}`}>
@@ -882,6 +976,15 @@ export function NxSocialDesktop() {
                 )}
             </div>
 
+            {/* Media galereya modali (o'ng panel'dagi rasmni bosilsa) */}
+            {galleryIdx !== null && galleryImages.length > 0 && (
+                <MediaGallery
+                    images={galleryImages}
+                    startIndex={galleryIdx}
+                    onClose={() => setGalleryIdx(null)}
+                />
+            )}
+
             {/* ── COL 3: Peer info (chat info) — faqat DM tanlangan bo'lsa ── */}
             {selectedId && !selectedChannel && showInfo && (
                 <div className="w-[320px] flex-shrink-0 flex flex-col border-l overflow-y-auto"
@@ -923,7 +1026,7 @@ export function NxSocialDesktop() {
                     </div>
 
                     {/* Umumiy media (suhbatdagi barcha rasmlar) */}
-                    <SharedMediaSection messages={messages} />
+                    <SharedMediaSection messages={messages} onOpen={i => setGalleryIdx(i)} />
 
                     {peer?.username && (
                         <div className="p-4 border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
@@ -941,25 +1044,80 @@ export function NxSocialDesktop() {
 }
 
 // Umumiy media — suhbatdagi barcha rasmlar (grid 3x)
-function SharedMediaSection({ messages }: { messages: Msg[] }) {
+function SharedMediaSection({ messages, onOpen }: { messages: Msg[]; onOpen: (index: number) => void }) {
     const images = messages
-        .filter(m => m.mediaType === "image" && m.mediaUrl)
-        .slice(-9)
-        .reverse();
+        .filter(m => m.mediaType === "image" && m.mediaUrl);
     if (images.length === 0) return null;
+    const displayed = images.slice(-9).reverse();
+    // Original indexlarini saqlash — galery to'liq images bilan
     return (
         <div className="p-4 border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
             <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: "rgba(140,160,210,0.55)" }}>
-                Umumiy media
+                Umumiy media ({images.length})
             </p>
             <div className="grid grid-cols-3 gap-1">
-                {images.map(m => (
-                    <a key={m.id} href={m.mediaUrl!} target="_blank" rel="noopener noreferrer"
-                        className="aspect-square rounded-md overflow-hidden bg-white/[0.05]">
-                        <img src={m.mediaUrl!} alt="" className="w-full h-full object-cover" />
-                    </a>
-                ))}
+                {displayed.map(m => {
+                    const idx = images.findIndex(x => x.id === m.id);
+                    return (
+                        <button key={m.id} onClick={() => onOpen(idx)}
+                            className="aspect-square rounded-md overflow-hidden bg-white/[0.05] active:scale-95 transition">
+                            <img src={m.mediaUrl!} alt="" className="w-full h-full object-cover" />
+                        </button>
+                    );
+                })}
             </div>
+        </div>
+    );
+}
+
+// Media galereya modali — o'q bilan next/prev
+function MediaGallery({
+    images, startIndex, onClose,
+}: {
+    images: Array<{ mediaUrl?: string | null }>;
+    startIndex: number;
+    onClose: () => void;
+}) {
+    const [idx, setIdx] = useState(startIndex);
+    useEffect(() => {
+        const h = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+            if (e.key === "ArrowLeft") setIdx(i => Math.max(0, i - 1));
+            if (e.key === "ArrowRight") setIdx(i => Math.min(images.length - 1, i + 1));
+        };
+        window.addEventListener("keydown", h);
+        return () => window.removeEventListener("keydown", h);
+    }, [images.length, onClose]);
+    const cur = images[idx];
+    if (!cur?.mediaUrl) return null;
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.92)" }} onClick={onClose}>
+            <button onClick={e => { e.stopPropagation(); onClose(); }}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(255,255,255,0.10)" }}>
+                <X className="w-5 h-5 text-white" />
+            </button>
+            <div className="absolute top-4 left-4 text-xs text-white/70">
+                {idx + 1} / {images.length}
+            </div>
+            {idx > 0 && (
+                <button onClick={e => { e.stopPropagation(); setIdx(i => i - 1); }}
+                    className="absolute left-4 w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{ background: "rgba(255,255,255,0.10)" }}>
+                    <ChevronLeft className="w-5 h-5 text-white" />
+                </button>
+            )}
+            {idx < images.length - 1 && (
+                <button onClick={e => { e.stopPropagation(); setIdx(i => i + 1); }}
+                    className="absolute right-4 w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{ background: "rgba(255,255,255,0.10)" }}>
+                    <ChevronRight className="w-5 h-5 text-white" />
+                </button>
+            )}
+            <img src={cur.mediaUrl} alt=""
+                className="max-w-[92vw] max-h-[92vh] object-contain rounded-lg"
+                onClick={e => e.stopPropagation()} />
         </div>
     );
 }
