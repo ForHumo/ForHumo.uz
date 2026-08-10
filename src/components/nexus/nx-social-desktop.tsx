@@ -8,7 +8,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone } from "lucide-react";
+import { NxChannelRoom } from "./nx-channels";
 
 interface Conv {
     conversationId: string;
@@ -38,7 +39,16 @@ interface PeerInfo {
     isAgent?: boolean;
 }
 
+interface ChannelItem {
+    id: string; type: "CHANNEL" | "GROUP";
+    name: string; handle: string | null; avatarUrl: string | null;
+    description: string | null; memberCount: number;
+}
+
+type ListTab = "dm" | "groups" | "channels";
+
 export function NxSocialDesktop() {
+    const [listTab, setListTab] = useState<ListTab>("dm");
     const [convs, setConvs] = useState<Conv[]>([]);
     const [loadingConvs, setLoadingConvs] = useState(true);
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -50,6 +60,28 @@ export function NxSocialDesktop() {
     const [showInfo, setShowInfo] = useState(true);
     const [filter, setFilter] = useState("");
     const bottomRef = useRef<HTMLDivElement>(null);
+
+    // Channel/Group state
+    const [channels, setChannels] = useState<ChannelItem[]>([]);
+    const [loadingChannels, setLoadingChannels] = useState(false);
+    const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
+
+    // Group/Channel listni yuklash
+    useEffect(() => {
+        if (listTab === "dm") return;
+        const type = listTab === "groups" ? "GROUP" : "CHANNEL";
+        setLoadingChannels(true);
+        fetch(`/api/nexus/channels?scope=mine&type=${type}`)
+            .then(r => r.ok ? r.json() : { channels: [] })
+            .then(d => setChannels(d.channels ?? []))
+            .finally(() => setLoadingChannels(false));
+    }, [listTab]);
+
+    // Tab o'zgarganda tanlangan chat/channel'ni tozalash
+    useEffect(() => {
+        setSelectedId(null);
+        setSelectedChannel(null);
+    }, [listTab]);
 
     // Suhbatlar ro'yxati
     const loadConvs = useCallback(async () => {
@@ -134,21 +166,80 @@ export function NxSocialDesktop() {
             {/* ── COL 1: Chat list ─────────────────────────────────────── */}
             <div className="w-[320px] flex-shrink-0 flex flex-col border-r"
                 style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.55)" }}>
-                <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-                            style={{ color: "rgba(140,160,210,0.50)" }} />
-                        <input
-                            value={filter}
-                            onChange={e => setFilter(e.target.value)}
-                            placeholder="Qidirish..."
-                            className="w-full h-9 pl-9 pr-3 rounded-xl bg-transparent text-white text-sm focus:outline-none"
-                            style={{ border: "1px solid rgba(43,62,232,0.20)" }}
-                        />
-                    </div>
+                {/* Tab bar: DM | Groups | Channels */}
+                <div className="p-2 flex gap-1 flex-shrink-0"
+                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    {([
+                        { id: "dm" as const,       icon: MessageSquare, label: "DM" },
+                        { id: "groups" as const,   icon: Users,         label: "Groups" },
+                        { id: "channels" as const, icon: Hash,          label: "Channels" },
+                    ]).map(t => (
+                        <button key={t.id}
+                            onClick={() => setListTab(t.id)}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold transition"
+                            style={listTab === t.id ? {
+                                background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                                color: "#fff",
+                            } : {
+                                background: "rgba(43,62,232,0.06)",
+                                color: "rgba(140,160,210,0.80)",
+                            }}>
+                            <t.icon className="w-3.5 h-3.5" /> {t.label}
+                        </button>
+                    ))}
                 </div>
+
+                {listTab === "dm" && (
+                    <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                                style={{ color: "rgba(140,160,210,0.50)" }} />
+                            <input
+                                value={filter}
+                                onChange={e => setFilter(e.target.value)}
+                                placeholder="Qidirish..."
+                                className="w-full h-9 pl-9 pr-3 rounded-xl bg-transparent text-white text-sm focus:outline-none"
+                                style={{ border: "1px solid rgba(43,62,232,0.20)" }}
+                            />
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex-1 overflow-y-auto">
-                    {loadingConvs && convs.length === 0 ? (
+                    {listTab !== "dm" ? (
+                        // Groups/Channels ro'yxati
+                        loadingChannels ? (
+                            <div className="flex justify-center py-10">
+                                <Loader2 className="w-5 h-5 animate-spin text-white/30" />
+                            </div>
+                        ) : channels.length === 0 ? (
+                            <div className="text-center py-10 px-4 text-xs" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                {listTab === "groups" ? "Guruhlar yo'q" : "Kanallar yo'q"}
+                            </div>
+                        ) : channels.map(c => (
+                            <button key={c.id}
+                                onClick={() => setSelectedChannel(c.id)}
+                                className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors border-b"
+                                style={{
+                                    borderColor: "rgba(43,62,232,0.06)",
+                                    background: selectedChannel === c.id ? "rgba(43,62,232,0.18)" : "transparent",
+                                }}>
+                                <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center"
+                                    style={{ background: "rgba(43,62,232,0.15)" }}>
+                                    {c.avatarUrl
+                                        ? <img src={c.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                        : (c.type === "CHANNEL" ? <Megaphone className="w-5 h-5 text-white/50" /> : <Users className="w-5 h-5 text-white/50" />)
+                                    }
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-white truncate">{c.name}</p>
+                                    <p className="text-[11px] truncate" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                        {c.handle ? `@${c.handle} · ` : ""}{c.memberCount} a&apos;zo
+                                    </p>
+                                </div>
+                            </button>
+                        ))
+                    ) : loadingConvs && convs.length === 0 ? (
                         <div className="flex justify-center py-10">
                             <Loader2 className="w-5 h-5 animate-spin text-white/30" />
                         </div>
@@ -186,19 +277,24 @@ export function NxSocialDesktop() {
                 </div>
             </div>
 
-            {/* ── COL 2: Selected chat ─────────────────────────────────── */}
+            {/* ── COL 2: Selected chat/channel ─────────────────────────── */}
             <div className="flex-1 flex flex-col min-w-0"
                 style={{ background: "rgba(11,18,40,0.35)" }}>
-                {!selectedId ? (
+                {selectedChannel ? (
+                    // Channel/Group xonasi — mavjud NxChannelRoom embed
+                    <NxChannelRoom id={selectedChannel} onBack={() => setSelectedChannel(null)} />
+                ) : !selectedId ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-3 px-8 text-center">
                         <div className="w-20 h-20 rounded-3xl flex items-center justify-center"
                             style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}>
                             <MessageSquare className="w-9 h-9" style={{ color: "rgba(43,62,232,0.55)" }} />
                         </div>
                         <div>
-                            <p className="text-base font-black text-white mb-1">Suhbatni tanlang</p>
+                            <p className="text-base font-black text-white mb-1">
+                                {listTab === "dm" ? "Suhbatni tanlang" : listTab === "groups" ? "Guruhni tanlang" : "Kanalni tanlang"}
+                            </p>
                             <p className="text-xs" style={{ color: "rgba(120,140,185,0.75)" }}>
-                                Chapdagi ro&apos;yxatdan chat oching
+                                Chapdagi ro&apos;yxatdan oching
                             </p>
                         </div>
                     </div>
@@ -312,8 +408,8 @@ export function NxSocialDesktop() {
                 )}
             </div>
 
-            {/* ── COL 3: Peer info (chat info) ─────────────────────────── */}
-            {selectedId && showInfo && (
+            {/* ── COL 3: Peer info (chat info) — faqat DM tanlangan bo'lsa ── */}
+            {selectedId && !selectedChannel && showInfo && (
                 <div className="w-[320px] flex-shrink-0 flex flex-col border-l overflow-y-auto"
                     style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.65)" }}>
                     <div className="p-5 text-center border-b" style={{ borderColor: "rgba(43,62,232,0.14)" }}>

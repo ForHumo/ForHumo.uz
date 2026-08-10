@@ -158,7 +158,7 @@ function CreateChannel({ type, onClose, onCreated }: { type: ChType; onClose: ()
     );
 }
 
-function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }) {
+export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }) {
     const [ch, setCh] = useState<ChDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [msgs, setMsgs] = useState<ChMsg[]>([]);
