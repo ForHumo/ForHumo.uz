@@ -17,6 +17,7 @@ import { useNxPlayer } from "./nx-player-ctx";
 import { NxStories } from "./nx-stories";
 import { NxHomeRows } from "./nx-home-rows";
 import { NxFolderModal } from "./nx-folder-modal";
+import { NxSocialDesktop } from "./nx-social-desktop";
 import { NxSocialFeed } from "./nx-social-feed";
 import { NxChatList } from "./nx-chat-list";
 import { NxChannels } from "./nx-channels";
@@ -89,6 +90,21 @@ interface UserFolder {
 }
 
 export function SocialView() {
+    return (
+        <>
+            {/* PC (lg+) — 3-ustunli Telegram uslubidagi layout */}
+            <div className="hidden lg:flex flex-1 min-h-0 h-full">
+                <NxSocialDesktop />
+            </div>
+            {/* Mobile / tablet — mavjud tabsli UI */}
+            <div className="lg:hidden">
+                <SocialViewMobile />
+            </div>
+        </>
+    );
+}
+
+function SocialViewMobile() {
     const [sub, setSub] = useState<string>("recommendation");
     const [folders, setFolders] = useState<UserFolder[]>([]);
     const [folderModalOpen, setFolderModalOpen] = useState(false);
