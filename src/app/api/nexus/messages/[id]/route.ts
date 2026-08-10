@@ -53,6 +53,29 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         }
     }
 
+    // Reply preview: replyToId'lar → xabar snapshot (matn, sender)
+    const replyIds = messages.map(m => m.replyToId).filter((x): x is string => !!x);
+    const replyMap = new Map<string, { id: string; text: string; senderName: string | null; mine: boolean }>();
+    if (replyIds.length) {
+        const originals = await prisma.nexusMessage.findMany({
+            where: { id: { in: [...new Set(replyIds)] } },
+            select: { id: true, text: true, senderId: true },
+        });
+        const senderIds = [...new Set(originals.map(o => o.senderId))];
+        const senders = await prisma.userProfile.findMany({
+            where: { id: { in: senderIds } }, select: { id: true, name: true, username: true },
+        });
+        const senderMap = new Map(senders.map(s => [s.id, s.name ?? s.username ?? ""]));
+        for (const o of originals) {
+            replyMap.set(o.id, {
+                id: o.id,
+                text: (o.text ?? "").slice(0, 120),
+                senderName: senderMap.get(o.senderId) ?? null,
+                mine: o.senderId === me.id,
+            });
+        }
+    }
+
     // Peer'ning oxirgi o'qigan vaqti (mening xabarlarim uchun 2 ptichka hisoblash)
     const peerReadAt = conv.user1Id === me.id ? conv.user2ReadAt : conv.user1ReadAt;
 
@@ -78,6 +101,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 transferAmount: m.transferAmount ? Number(m.transferAmount) : null,
                 transferCurrency: m.transferCurrency, transferNote: m.transferNote,
                 agentKind: m.agentKind, agentPayload: m.agentPayload, agentActionRef: m.agentActionRef,
+                replyTo: m.replyToId ? (replyMap.get(m.replyToId) ?? null) : null,
             };
         }),
         other: p ? {
@@ -125,6 +149,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         mediaName?: string; mediaSize?: number; durationMs?: number;
         locLat?: number; locLng?: number; locExpiresAt?: string | null;
         pollQuestion?: string; pollOptions?: string[]; pollExpiresAt?: string | null; pollMulti?: boolean;
+        replyToId?: string;
     };
     const text = String(body.text ?? "").trim();
     const isLocation = body.mediaType === "location" && typeof body.locLat === "number" && typeof body.locLng === "number";
@@ -140,11 +165,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         return NextResponse.json({ error: "Noto'g'ri media turi" }, { status: 400 });
     }
 
+    // Reply — mavjud xabar aynan shu suhbatga tegishli bo'lishi shart
+    let replyToId: string | null = null;
+    if (typeof body.replyToId === "string" && body.replyToId) {
+        const target = await prisma.nexusMessage.findUnique({
+            where: { id: body.replyToId }, select: { id: true, conversationId: true },
+        });
+        if (target && target.conversationId === id) replyToId = target.id;
+    }
+
     const msg = await prisma.nexusMessage.create({
         data: {
             conversationId: id,
             senderId: me.id,
             text: clean,
+            replyToId,
             mediaUrl: hasMedia && !isLocation && !isPoll ? body.mediaUrl : null,
             mediaType: hasMedia ? body.mediaType : null,
             mediaMime: hasMedia && !isLocation && !isPoll ? (body.mediaMime ?? null) : null,

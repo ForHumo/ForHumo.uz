@@ -1272,6 +1272,8 @@ model NexusMessage {
   agentKind         String?                                    // "product-review"|"support-status"|"pay-tx"|...
   agentPayload      Json?                                      // {productId, image, title, price, requestedRating:true}
   agentActionRef    String?                                    // MarketReview.id yoki boshqa yozuv id (foydalanuvchi javob bergach yoziladi)
+  // Reply — boshqa xabarga javob (Telegram uslubi)
+  replyToId         String?
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
 }

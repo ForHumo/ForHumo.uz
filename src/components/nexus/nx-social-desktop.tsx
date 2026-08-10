@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
@@ -40,6 +40,7 @@ interface Msg {
     pollTotal?: number | null;
     locLat?: number | null;
     locLng?: number | null;
+    replyTo?: { id: string; text: string; senderName: string | null; mine: boolean } | null;
 }
 
 interface PeerInfo {
@@ -91,6 +92,7 @@ export function NxSocialDesktop() {
     const [pollOpen, setPollOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [replyTo, setReplyTo] = useState<Msg | null>(null);
     const [moreOpen, setMoreOpen] = useState(false);
     const moreRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -318,11 +320,13 @@ export function NxSocialDesktop() {
         if (!selectedId || !input.trim() || sending) return;
         setSending(true);
         const text = input.trim();
+        const replyToIdSnap = replyTo?.id ?? null;
         setInput("");
+        setReplyTo(null);
         try {
             const r = await fetch(`/api/nexus/messages/${selectedId}`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text }),
+                body: JSON.stringify({ text, replyToId: replyToIdSnap }),
             });
             if (r.ok) {
                 const d = await r.json();
@@ -578,8 +582,13 @@ export function NxSocialDesktop() {
                                 : messages
                             ).map(m => (
                                 <div key={m.id} className={`group flex items-center gap-1 ${m.mine ? "justify-end flex-row-reverse" : "justify-start"}`}>
-                                    {/* Hover amallar: copy (barcha) + delete (o'zim) */}
+                                    {/* Hover amallar: reply + copy + delete */}
                                     <div className="opacity-0 group-hover:opacity-100 transition flex gap-1 flex-shrink-0">
+                                        <button onClick={() => setReplyTo(m)} title="Javob berish"
+                                            className="w-7 h-7 rounded-md flex items-center justify-center"
+                                            style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                            <Reply className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        </button>
                                         {m.text && (
                                             <button onClick={() => copyMessage(m.text)} title="Nusxa olish"
                                                 className="w-7 h-7 rounded-md flex items-center justify-center"
@@ -600,6 +609,19 @@ export function NxSocialDesktop() {
                                             ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)", color: "#fff", borderBottomRightRadius: "6px" }
                                             : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.92)", borderBottomLeftRadius: "6px" }
                                         }>
+                                        {m.replyTo && (
+                                            <div className="mb-2 pl-2 pr-2 py-1.5 rounded-md text-xs"
+                                                style={{
+                                                    background: m.mine ? "rgba(0,0,0,0.20)" : "rgba(0,206,200,0.10)",
+                                                    borderLeft: `3px solid ${m.mine ? "#fff" : "#00CEC8"}`,
+                                                }}>
+                                                <p className="font-bold text-[11px] mb-0.5"
+                                                    style={{ color: m.mine ? "#fff" : "#00CEC8" }}>
+                                                    {m.replyTo.mine ? "Siz" : (m.replyTo.senderName ?? "Foydalanuvchi")}
+                                                </p>
+                                                <p className="opacity-80 line-clamp-2">{m.replyTo.text || "(media)"}</p>
+                                            </div>
+                                        )}
                                         {m.mediaType === "agent" && m.agentPayload && (
                                             <div className="mb-2 p-2 rounded-lg" style={{ background: "rgba(0,0,0,0.25)" }}>
                                                 {m.agentPayload.image && (
@@ -717,9 +739,30 @@ export function NxSocialDesktop() {
                             <div ref={bottomRef} />
                         </div>
 
+                        {/* Reply preview (composer ustida) */}
+                        {replyTo && (
+                            <div className="px-3 py-2 flex items-center gap-2 flex-shrink-0"
+                                style={{ borderTop: "1px solid rgba(43,62,232,0.14)", background: "rgba(11,18,40,0.65)" }}>
+                                <Reply className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                <div className="flex-1 min-w-0 pl-2 border-l-2" style={{ borderColor: "#00CEC8" }}>
+                                    <p className="text-[11px] font-bold" style={{ color: "#00CEC8" }}>
+                                        Javob: {replyTo.mine ? "o'zingizga" : "@" + (peer?.username ?? "foydalanuvchi")}
+                                    </p>
+                                    <p className="text-xs truncate" style={{ color: "rgba(220,230,255,0.80)" }}>
+                                        {replyTo.text || "(media xabar)"}
+                                    </p>
+                                </div>
+                                <button onClick={() => setReplyTo(null)} title="Bekor"
+                                    className="w-7 h-7 rounded-md flex items-center justify-center"
+                                    style={{ background: "rgba(43,62,232,0.10)" }}>
+                                    <X className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                </button>
+                            </div>
+                        )}
+
                         {/* Composer — Telegram uslubi */}
                         <div className="p-3 flex items-center gap-2 flex-shrink-0 relative"
-                            style={{ borderTop: "1px solid rgba(43,62,232,0.14)", background: "rgba(8,12,32,0.55)" }}>
+                            style={{ borderTop: replyTo ? "none" : "1px solid rgba(43,62,232,0.14)", background: "rgba(8,12,32,0.55)" }}>
                             <input ref={fileInputRef} type="file"
                                 accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip,.txt"
                                 onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f); e.target.value = ""; }}
