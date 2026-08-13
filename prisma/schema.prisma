@@ -1235,6 +1235,12 @@ model NexusConversation {
   // Chatni pinga qo'yish — har foydalanuvchi alohida (Telegram uslubi)
   pinnedByUser1   DateTime?                                   // user1 chatni pinga qo'ygan vaqti
   pinnedByUser2   DateTime?                                   // user2 chatni pinga qo'ygan vaqti
+  // Arxiv — har foydalanuvchi alohida (asosiy ro'yxatdan yashiriladi, "Arxiv"da qoladi)
+  archivedByUser1 DateTime?
+  archivedByUser2 DateTime?
+  // Mute — har foydalanuvchi alohida (bildirishnoma/badge kuchsizlantiriladi)
+  mutedByUser1    DateTime?
+  mutedByUser2    DateTime?
   createdAt       DateTime  @default(now())
   messages        NexusMessage[]
   @@unique([user1Id, user2Id])

@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
@@ -26,6 +26,8 @@ interface Conv {
     lastMine: boolean;
     unread: boolean;
     pinned?: boolean;
+    muted?: boolean;
+    archived?: boolean;
 }
 
 interface Msg {
@@ -451,16 +453,22 @@ export function NxSocialDesktop() {
         setSelectedChannel(null);
     }, [listTab]);
 
+    // Arxiv rejimi (per-tab, session ichida)
+    const [showArchived, setShowArchived] = useState(false);
+    const [archivedCount, setArchivedCount] = useState(0);
+
     // Suhbatlar ro'yxati
     const loadConvs = useCallback(async () => {
         try {
-            const r = await fetch("/api/nexus/messages", { cache: "no-store" });
+            const url = showArchived ? "/api/nexus/messages?archived=1" : "/api/nexus/messages";
+            const r = await fetch(url, { cache: "no-store" });
             if (r.ok) {
                 const d = await r.json();
                 setConvs(d.conversations ?? []);
+                setArchivedCount(d.archivedCount ?? 0);
             }
         } finally { setLoadingConvs(false); }
-    }, []);
+    }, [showArchived]);
     useEffect(() => { loadConvs(); }, [loadConvs]);
 
     // Har 6 sekundda ro'yxatni yangilash (unread badge)
@@ -468,6 +476,65 @@ export function NxSocialDesktop() {
         const t = setInterval(loadConvs, 6000);
         return () => clearInterval(t);
     }, [loadConvs]);
+
+    // Chatni arxiv/mute qilish (per-user, optimistic)
+    const toggleConvArchive = useCallback(async (convId: string, currentlyArchived: boolean) => {
+        // Ochilib turgan chat arxivga tushsa, uni yopamiz
+        if (!currentlyArchived && convId === selectedId) setSelectedId(null);
+        setConvs(prev => prev.filter(c => c.conversationId !== convId));
+        setArchivedCount(n => currentlyArchived ? Math.max(0, n - 1) : n + 1);
+        try {
+            await fetch(`/api/nexus/messages/${convId}/archive-conv`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ archive: !currentlyArchived }),
+            });
+        } finally { loadConvs(); }
+    }, [selectedId, loadConvs]);
+
+    const toggleConvMute = useCallback(async (convId: string, currentlyMuted: boolean) => {
+        setConvs(prev => prev.map(c => c.conversationId === convId ? { ...c, muted: !currentlyMuted } : c));
+        try {
+            await fetch(`/api/nexus/messages/${convId}/mute-conv`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mute: !currentlyMuted }),
+            });
+        } finally { loadConvs(); }
+    }, [loadConvs]);
+
+    // Draft avto-saqlash — localStorage'da (per-chat)
+    const draftKey = (convId: string) => `nexus:dm:draft:${convId}`;
+    // Suhbat almashinuvida: joriyni saqlash + yangisidan qayta tiklash
+    const prevSelectedRef = useRef<string | null>(null);
+    useEffect(() => {
+        // Oldingi chatning draft'ini yozib qo'yish
+        const prev = prevSelectedRef.current;
+        if (prev && prev !== selectedId) {
+            try {
+                if (input.trim()) localStorage.setItem(draftKey(prev), input);
+                else localStorage.removeItem(draftKey(prev));
+            } catch {}
+        }
+        // Yangi tanlangan chatning draft'ini olish
+        if (selectedId && selectedId !== prev) {
+            try {
+                const d = localStorage.getItem(draftKey(selectedId));
+                setInput(d ?? "");
+            } catch { setInput(""); }
+        }
+        prevSelectedRef.current = selectedId;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedId]);
+    // Har o'zgarishda avto-saqlash (debounce 400ms)
+    useEffect(() => {
+        if (!selectedId) return;
+        const t = setTimeout(() => {
+            try {
+                if (input.trim()) localStorage.setItem(draftKey(selectedId), input);
+                else localStorage.removeItem(draftKey(selectedId));
+            } catch {}
+        }, 400);
+        return () => clearTimeout(t);
+    }, [input, selectedId]);
 
     // Tanlangan suhbat xabarlari
     const loadMsgs = useCallback(async (convId: string) => {
@@ -509,6 +576,7 @@ export function NxSocialDesktop() {
         const text = input.trim();
         const replyToIdSnap = replyTo?.id ?? null;
         setInput("");
+        try { localStorage.removeItem(draftKey(selectedId)); } catch {}
         setReplyTo(null);
         try {
             const r = await fetch(`/api/nexus/messages/${selectedId}`, {
@@ -576,6 +644,32 @@ export function NxSocialDesktop() {
                     </div>
                 )}
 
+                {/* Arxiv toggle — faqat DM tab uchun */}
+                {listTab === "dm" && (archivedCount > 0 || showArchived) && (
+                    <button onClick={() => { setShowArchived(v => !v); setSelectedId(null); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 border-b transition hover:bg-white/[0.04]"
+                        style={{
+                            borderColor: "rgba(43,62,232,0.14)",
+                            background: showArchived ? "rgba(0,206,200,0.06)" : "transparent",
+                        }}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ background: showArchived ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.15)" }}>
+                            {showArchived
+                                ? <Inbox className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                : <Archive className="w-4 h-4" style={{ color: "rgba(180,195,235,0.85)" }} />
+                            }
+                        </div>
+                        <p className="flex-1 text-left text-xs font-bold" style={{ color: "rgba(220,230,255,0.95)" }}>
+                            {showArchived ? "← Faol suhbatlar" : "Arxiv"}
+                        </p>
+                        {!showArchived && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                                style={{ background: "rgba(43,62,232,0.20)", color: "rgba(180,195,235,0.85)" }}>
+                                {archivedCount}
+                            </span>
+                        )}
+                    </button>
+                )}
                 <div className="flex-1 overflow-y-auto">
                     {listTab !== "dm" ? (
                         // Groups/Channels ro'yxati
@@ -643,23 +737,51 @@ export function NxSocialDesktop() {
                                     </p>
                                 </div>
                                 <div className="flex flex-col items-end gap-1">
-                                    {c.pinned && <Pin className="w-3 h-3" style={{ color: "rgba(0,206,200,0.75)" }} />}
+                                    <div className="flex items-center gap-1">
+                                        {c.muted && <BellOff className="w-3 h-3" style={{ color: "rgba(140,160,210,0.65)" }} />}
+                                        {c.pinned && <Pin className="w-3 h-3" style={{ color: "rgba(0,206,200,0.75)" }} />}
+                                    </div>
                                     {c.unread && (
                                         <span className="w-2 h-2 rounded-full flex-shrink-0"
-                                            style={{ background: "#00CEC8", boxShadow: "0 0 6px rgba(0,206,200,0.7)" }} />
+                                            style={{
+                                                background: c.muted ? "rgba(140,160,210,0.60)" : "#00CEC8",
+                                                boxShadow: c.muted ? "none" : "0 0 6px rgba(0,206,200,0.7)",
+                                            }} />
                                     )}
                                 </div>
                             </button>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); toggleConvPin(c.conversationId, !!c.pinned); }}
-                                title={c.pinned ? "Pindan olib tashlash" : "Pinga qo'yish"}
-                                className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition w-6 h-6 rounded flex items-center justify-center"
-                                style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                {c.pinned
-                                    ? <PinOff className="w-3 h-3" style={{ color: "#00CEC8" }} />
-                                    : <Pin className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                }
-                            </button>
+                            <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition flex gap-1">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); toggleConvPin(c.conversationId, !!c.pinned); }}
+                                    title={c.pinned ? "Pindan olib tashlash" : "Pinga qo'yish"}
+                                    className="w-6 h-6 rounded flex items-center justify-center"
+                                    style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                    {c.pinned
+                                        ? <PinOff className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                        : <Pin className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                    }
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); toggleConvMute(c.conversationId, !!c.muted); }}
+                                    title={c.muted ? "Ovozni qaytarish" : "Ovozsizlantirish"}
+                                    className="w-6 h-6 rounded flex items-center justify-center"
+                                    style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                    {c.muted
+                                        ? <Bell className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                        : <BellOff className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                    }
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); toggleConvArchive(c.conversationId, !!c.archived || showArchived); }}
+                                    title={showArchived ? "Arxivdan chiqarish" : "Arxivga qo'yish"}
+                                    className="w-6 h-6 rounded flex items-center justify-center"
+                                    style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                    {showArchived
+                                        ? <ArchiveRestore className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                        : <Archive className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                    }
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -735,10 +857,29 @@ export function NxSocialDesktop() {
                                                 <BadgeCheck className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Profilni ochish
                                             </a>
                                         )}
-                                        <button onClick={() => togglePeerAction("mute")}
-                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
-                                            <BotIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Ovozsizlantirish
-                                        </button>
+                                        {(() => {
+                                            const cur = convs.find(x => x.conversationId === selectedId);
+                                            const muted = !!cur?.muted;
+                                            const archived = !!cur?.archived || showArchived;
+                                            return (
+                                                <>
+                                                    <button onClick={() => { if (selectedId) toggleConvMute(selectedId, muted); setMoreOpen(false); }}
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                                        {muted
+                                                            ? <><Bell className="w-4 h-4" style={{ color: "#00CEC8" }} /> Ovozni qaytarish</>
+                                                            : <><BellOff className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Chatni ovozsizlantirish</>
+                                                        }
+                                                    </button>
+                                                    <button onClick={() => { if (selectedId) toggleConvArchive(selectedId, archived); setMoreOpen(false); }}
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                                        {archived
+                                                            ? <><ArchiveRestore className="w-4 h-4" style={{ color: "#00CEC8" }} /> Arxivdan chiqarish</>
+                                                            : <><Archive className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Arxivga qo&apos;yish</>
+                                                        }
+                                                    </button>
+                                                </>
+                                            );
+                                        })()}
                                         <button onClick={() => togglePeerAction("block")}
                                             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-red-500/10 text-left"
                                             style={{ color: "#EF4444" }}>
