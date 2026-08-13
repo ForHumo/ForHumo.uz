@@ -10,6 +10,7 @@ import { isBlockedBetween } from "@/lib/nexus-block";
 import { checkBanned, moderateDmMessage } from "@/lib/moderation-dm";
 import { BAN_LABELS } from "@/lib/moderation-ladder";
 import { appendUserReplyToOpenReview } from "@/lib/agent-review-followup";
+import { sendPushToProfile, pushAvailable } from "@/lib/push";
 
 async function meAndConv(email: string, id: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true } });
@@ -321,6 +322,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         mediaUrl: msg.mediaUrl,
         mediaType: msg.mediaType,
     }));
+
+    // WebPush bildirishnoma — jadvalli bo'lmasa va mute qilinmagan bo'lsa
+    if (!scheduledFor && pushAvailable()) {
+        after(async () => {
+            const recipientId = otherId(conv, me.id);
+            const isRecipientMuted = conv.user1Id === recipientId ? !!conv.mutedByUser1 : !!conv.mutedByUser2;
+            if (isRecipientMuted) return;
+            const sender = await prisma.userProfile.findUnique({
+                where: { id: me.id }, select: { name: true, username: true },
+            });
+            const senderName = sender?.name ?? sender?.username ?? "Foydalanuvchi";
+            const preview = clean || (msg.mediaType ? `[${msg.mediaType}]` : "Yangi xabar");
+            await sendPushToProfile(recipientId, {
+                title: senderName,
+                body: preview.slice(0, 120),
+                url: sender?.username ? `/nexus?dm=${sender.username}` : "/nexus",
+                tag: `dm-${id}`,
+            });
+        });
+    }
 
     return NextResponse.json({
         message: {

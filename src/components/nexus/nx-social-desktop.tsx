@@ -13,6 +13,9 @@ import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxStatusModal } from "./nx-status-modal";
 import { searchShortcodes } from "./nx-emoji-shortcodes";
+import { NxMarkdown } from "./nx-markdown";
+import { addWatermarkToImage } from "./nx-image-watermark";
+import { pushSupported, getPushState, subscribePush, unsubscribePush, type PushState } from "@/lib/push-client";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
 import { NxVoicePlayer } from "./nx-voice-player";
@@ -173,6 +176,34 @@ export function NxSocialDesktop() {
     const [scheduleDateTime, setScheduleDateTime] = useState<string>("");
     // Yangi kanal/guruh yaratish modali
     const [createChannelOpen, setCreateChannelOpen] = useState<"CHANNEL" | "GROUP" | null>(null);
+    // Push notif state
+    const [pushState, setPushState] = useState<PushState>("unsupported");
+    useEffect(() => {
+        if (!pushSupported()) return;
+        getPushState().then(setPushState).catch(() => {});
+    }, []);
+    async function togglePush() {
+        if (pushState === "subscribed") {
+            setPushState(await unsubscribePush());
+        } else if (pushState === "denied") {
+            alert("Bildirishnomalar bloklangan. Brauzer sozlamalaridan ruxsat berishingiz kerak.");
+        } else {
+            setPushState(await subscribePush());
+        }
+    }
+
+    // Watermark toggle (rasm yuklashda avto qo'llaniladi)
+    const [watermarkOn, setWatermarkOn] = useState<boolean>(false);
+    useEffect(() => {
+        try { setWatermarkOn(localStorage.getItem("nexus:dm:watermark") === "on"); } catch {}
+    }, []);
+    function toggleWatermark() {
+        setWatermarkOn(v => {
+            const nv = !v;
+            try { localStorage.setItem("nexus:dm:watermark", nv ? "on" : "off"); } catch {}
+            return nv;
+        });
+    }
     // Mening statusim modali + hozirgi status (session start'da yuklab olish)
     const [statusModalOpen, setStatusModalOpen] = useState(false);
     const [myStatus, setMyStatus] = useState<{ emoji: string | null; text: string | null }>({ emoji: null, text: null });
@@ -825,6 +856,14 @@ export function NxSocialDesktop() {
 
     async function uploadFile(file: File, overrideKind?: "image" | "video" | "audio" | "file" | "video-circle") {
         if (!selectedId || uploading) return;
+        // Watermark: yoqilgan va rasm bo'lsa (session'da o'z username bilan)
+        if (watermarkOn && file.type.startsWith("image/") && myProfileId) {
+            try {
+                // Username'ni session'dan olamiz — availableProfile ehtimoli bo'lmasa @user
+                const wmText = `@${session?.user?.email?.split("@")[0] ?? "user"} · ForHumo.uz`;
+                file = await addWatermarkToImage(file, wmText);
+            } catch { /* watermark fail — original bilan davom */ }
+        }
         setUploading(true);
         setUploadInfo({ name: file.name, size: file.size, progress: 0 });
         try {
@@ -1443,6 +1482,29 @@ export function NxSocialDesktop() {
                                     : <VolumeX className="w-3.5 h-3.5" style={{ color: "#EF4444" }} />
                                 }
                             </button>
+                            <button onClick={toggleWatermark}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg transition hover:bg-white/[0.04]"
+                                style={{
+                                    background: watermarkOn ? "rgba(0,206,200,0.12)" : "rgba(43,62,232,0.06)",
+                                    border: `1px solid ${watermarkOn ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.15)"}`,
+                                }}
+                                title={watermarkOn ? "Watermark yoqilgan — rasmga @username qo'shiladi" : "Watermark o'chirilgan"}>
+                                <span className="text-[9px] font-black" style={{ color: watermarkOn ? "#00CEC8" : "rgba(160,176,224,0.85)" }}>WM</span>
+                            </button>
+                            {pushState !== "unsupported" && (
+                                <button onClick={togglePush}
+                                    className="w-8 h-8 flex items-center justify-center rounded-lg transition hover:bg-white/[0.04]"
+                                    style={{
+                                        background: pushState === "subscribed" ? "rgba(0,206,200,0.12)" : "rgba(43,62,232,0.06)",
+                                        border: `1px solid ${pushState === "subscribed" ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.15)"}`,
+                                    }}
+                                    title={pushState === "subscribed" ? "Push bildirishnoma yoqilgan" : pushState === "denied" ? "Push bloklangan" : "Push bildirishnomani yoqish"}>
+                                    {pushState === "subscribed"
+                                        ? <Bell className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                        : <BellOff className="w-3.5 h-3.5" style={{ color: pushState === "denied" ? "#EF4444" : "rgba(160,176,224,0.85)" }} />
+                                    }
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
@@ -2205,7 +2267,9 @@ export function NxSocialDesktop() {
                                         )}
                                         {m.text && editingId !== m.id && (
                                             <div>
-                                                {searchOpen && searchQuery.trim() ? highlightText(m.text, searchQuery) : m.text}
+                                                {searchOpen && searchQuery.trim()
+                                                    ? highlightText(m.text, searchQuery)
+                                                    : <NxMarkdown text={m.text} />}
                                                 {m.editedAt && (
                                                     <span className="ml-1.5 text-[10px] opacity-50 italic">(tahrirlangan)</span>
                                                 )}
