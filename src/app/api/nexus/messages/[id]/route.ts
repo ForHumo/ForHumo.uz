@@ -31,11 +31,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     // Eng yangi 100 xabar (desc) — keyin klient uchun xronologik tartibga (asc) qaytaramiz.
     // Avval asc edi → 100+ xabarli suhbatda eng yangilari ko'rinmay qolardi.
     // Self-destruct: muddati o'tgan xabarlarni chiqarmaymiz.
+    // Jadvalga qo'yilgan xabarlar faqat jo'natuvchining o'ziga ko'rinadi (draft-like).
     const now = new Date();
     const recent = await prisma.nexusMessage.findMany({
         where: {
             conversationId: id,
             OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+            AND: [{
+                OR: [
+                    { scheduledFor: null },
+                    { scheduledFor: { lte: now } },
+                    { senderId: me.id },
+                ],
+            }],
         },
         orderBy: { createdAt: "desc" }, take: 100,
     });
@@ -43,6 +51,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     // Fon rejimda: allaqachon muddati o'tgan xabarlarni tozalash (fire-and-forget)
     prisma.nexusMessage.deleteMany({
         where: { conversationId: id, expiresAt: { lte: now } },
+    }).catch(() => {});
+    // Muddati kelgan jadvalli xabarlarni "faollashtirish" — cron kelgunga qadar
+    prisma.nexusMessage.updateMany({
+        where: { conversationId: id, scheduledFor: { lte: now, not: null } },
+        data: { scheduledFor: null },
     }).catch(() => {});
 
     // Poll xabarlar uchun ovoz statistikasini yig'ish
@@ -130,6 +143,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 editedAt: m.editedAt,
                 pinnedAt: m.pinnedAt,
                 expiresAt: m.expiresAt,
+                scheduledFor: m.scheduledFor,
                 reactions: reactionMap.get(m.id)
                     ? [...reactionMap.get(m.id)!.entries()].map(([emoji, s]) => ({ emoji, count: s.count, mine: s.mine }))
                     : [],
@@ -182,6 +196,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         pollQuestion?: string; pollOptions?: string[]; pollExpiresAt?: string | null; pollMulti?: boolean;
         replyToId?: string;
         selfDestructSeconds?: number;                          // TTL — shu sekunddan keyin o'chadi
+        scheduledFor?: string;                                 // ISO vaqt — jadvalga qo'yish
     };
     const text = String(body.text ?? "").trim();
     const isLocation = body.mediaType === "location" && typeof body.locLat === "number" && typeof body.locLng === "number";
@@ -211,6 +226,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         ? Math.max(5, Math.min(86400, Math.floor(body.selfDestructSeconds)))
         : null;
     const expiresAt = ttl ? new Date(Date.now() + ttl * 1000) : null;
+    // Jadvalga qo'yish — kelajakdagi vaqt bo'lishi shart (kamida 30s'dan keyin, maks 30 kun)
+    let scheduledFor: Date | null = null;
+    if (typeof body.scheduledFor === "string" && body.scheduledFor) {
+        const t = new Date(body.scheduledFor);
+        const nowMs = Date.now();
+        if (!isNaN(t.getTime()) && t.getTime() > nowMs + 30_000 && t.getTime() < nowMs + 30 * 86400 * 1000) {
+            scheduledFor = t;
+        } else {
+            return NextResponse.json({ error: "Jadval vaqti kamida 30 sekunddan keyin va 30 kundan oldin bo'lishi kerak" }, { status: 400 });
+        }
+    }
 
     const msg = await prisma.nexusMessage.create({
         data: {
@@ -219,6 +245,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             text: clean,
             replyToId,
             expiresAt,
+            scheduledFor,
             mediaUrl: hasMedia && !isLocation && !isPoll ? body.mediaUrl : null,
             mediaType: hasMedia ? body.mediaType : null,
             mediaMime: hasMedia && !isLocation && !isPoll ? (body.mediaMime ?? null) : null,
@@ -246,15 +273,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         || (hasMedia ? (previewLabels[body.mediaType!] || "Media") : "")
         || "...";
 
-    await prisma.nexusConversation.update({
-        where: { id },
-        data: {
-            lastMessageAt: new Date(),
-            lastMessageText: preview.slice(0, 120),
-            lastSenderId: me.id,
-            ...(conv.user1Id === me.id ? { user1ReadAt: new Date() } : { user2ReadAt: new Date() }),
-        },
-    });
+    // Jadvalga qo'yilgan xabar suhbat preview'ini yangilamaydi — hali yuborilmagan
+    if (!scheduledFor) {
+        await prisma.nexusConversation.update({
+            where: { id },
+            data: {
+                lastMessageAt: new Date(),
+                lastMessageText: preview.slice(0, 120),
+                lastSenderId: me.id,
+                ...(conv.user1Id === me.id ? { user1ReadAt: new Date() } : { user2ReadAt: new Date() }),
+            },
+        });
+    }
 
     // AI moderatsiya asinxron ishga tushiriladi — javobni kechiktirmaydi
     after(async () => {
@@ -289,6 +319,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             pollVoteCounts: isPoll ? msg.pollOptions.map(() => 0) : null,
             pollMyVotes: isPoll ? [] : null, pollTotal: isPoll ? 0 : null,
             expiresAt: msg.expiresAt,
+            scheduledFor: msg.scheduledFor,
         },
     });
 }

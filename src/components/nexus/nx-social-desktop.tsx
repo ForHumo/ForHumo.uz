@@ -8,8 +8,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
+import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
 import { NxVoicePlayer } from "./nx-voice-player";
@@ -53,6 +54,7 @@ interface Msg {
     durationMs?: number | null;
     pinnedAt?: string | null;
     expiresAt?: string | null;
+    scheduledFor?: string | null;
 }
 
 interface PeerInfo {
@@ -125,6 +127,7 @@ export function NxSocialDesktop() {
     const [channels, setChannels] = useState<ChannelItem[]>([]);
     const [loadingChannels, setLoadingChannels] = useState(false);
     const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
+    const [channelsBump, setChannelsBump] = useState(0);
 
     // Composer state
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -155,6 +158,11 @@ export function NxSocialDesktop() {
     // Self-destruct: keyingi xabar necha sekunddan keyin o'chsin (null = doimiy)
     const [nextTtl, setNextTtl] = useState<number | null>(null);
     const [ttlPickerOpen, setTtlPickerOpen] = useState(false);
+    // Xabar jadvalga qo'yish
+    const [scheduleOpen, setScheduleOpen] = useState(false);
+    const [scheduleDateTime, setScheduleDateTime] = useState<string>("");
+    // Yangi kanal/guruh yaratish modali
+    const [createChannelOpen, setCreateChannelOpen] = useState<"CHANNEL" | "GROUP" | null>(null);
     // Xabar countdown taymer'i uchun soniyalar (har 1s'da yangilanadi)
     const [tickSec, setTickSec] = useState(0);
     useEffect(() => {
@@ -524,7 +532,7 @@ export function NxSocialDesktop() {
             .then(r => r.ok ? r.json() : { channels: [] })
             .then(d => setChannels(d.channels ?? []))
             .finally(() => setLoadingChannels(false));
-    }, [listTab]);
+    }, [listTab, channelsBump]);
 
     // Tab o'zgarganda tanlangan chat/channel'ni tozalash
     useEffect(() => {
@@ -722,6 +730,44 @@ export function NxSocialDesktop() {
         return m ? m[1].replace(/[.,;:!?)]+$/, "") : null;
     }
 
+    // Jadvalga qo'yish (kelajakdagi vaqt) — undo-send bypass qilinadi
+    async function scheduleSend() {
+        if (!selectedId || !input.trim()) return;
+        if (!scheduleDateTime) { alert("Sana/vaqtni tanlang"); return; }
+        const iso = new Date(scheduleDateTime).toISOString();
+        const text = input.trim();
+        const replyToIdSnap = replyTo?.id ?? null;
+        try {
+            const r = await fetch(`/api/nexus/messages/${selectedId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text, replyToId: replyToIdSnap, scheduledFor: iso }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setMessages(m => [...m, d.message]);
+                setInput("");
+                try { localStorage.removeItem(draftKey(selectedId)); } catch {}
+                setReplyTo(null);
+                setScheduleOpen(false);
+                setScheduleDateTime("");
+                loadConvs();
+            } else {
+                const d = await r.json().catch(() => ({}));
+                alert(d?.error ?? "Jadvalga qo'yib bo'lmadi");
+            }
+        } catch {
+            alert("Xato — qayta urinib ko'ring");
+        }
+    }
+
+    // Jadvalga qo'yilgan xabarni bekor qilish (o'chirish)
+    async function cancelScheduled(m: Msg) {
+        if (!selectedId) return;
+        if (!confirm("Jadvalga qo'yilgan xabarni bekor qilasizmi?")) return;
+        const r = await fetch(`/api/nexus/messages/${selectedId}?messageId=${m.id}`, { method: "DELETE" });
+        if (r.ok) setMessages(prev => prev.filter(x => x.id !== m.id));
+    }
+
     // Bosishga 5s'lik "undo" bufferini boshlaydi. Aslida POST 5s'dan keyin ketadi.
     function send() {
         if (!selectedId || !input.trim() || sending || pendingSend) return;
@@ -787,7 +833,7 @@ export function NxSocialDesktop() {
             {/* ── COL 1: Chat list ─────────────────────────────────────── */}
             <div className="w-[320px] flex-shrink-0 flex flex-col border-r"
                 style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.55)" }}>
-                {/* Tab bar: DM | Groups | Channels */}
+                {/* Tab bar: DM | Groups | Channels + Plus (new) */}
                 <div className="p-2 flex gap-1 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     {([
@@ -808,6 +854,15 @@ export function NxSocialDesktop() {
                             <t.icon className="w-3.5 h-3.5" /> {t.label}
                         </button>
                     ))}
+                    {listTab !== "dm" && (
+                        <button
+                            onClick={() => setCreateChannelOpen(listTab === "groups" ? "GROUP" : "CHANNEL")}
+                            title={`Yangi ${listTab === "groups" ? "guruh" : "kanal"}`}
+                            className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
+                            style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                            <Plus className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        </button>
+                    )}
                 </div>
 
                 {listTab === "dm" && (
@@ -1531,6 +1586,21 @@ export function NxSocialDesktop() {
                                                 ))}
                                             </div>
                                         )}
+                                        {/* Jadvalda turgan xabar belgi (faqat egasiga ko'rinadi) */}
+                                        {m.scheduledFor && (
+                                            <div className="flex items-center gap-1.5 mt-1 px-2 py-1 rounded-md"
+                                                style={{ background: "rgba(43,62,232,0.20)", border: "1px dashed rgba(0,206,200,0.40)" }}>
+                                                <Clock className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                                <span className="text-[10px] font-black" style={{ color: "#00CEC8" }}>
+                                                    Jadvalda: {new Date(m.scheduledFor).toLocaleString("uz-UZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                                </span>
+                                                <button onClick={(e) => { e.stopPropagation(); cancelScheduled(m); }}
+                                                    className="ml-1 text-[10px] font-bold px-1.5 rounded hover:bg-white/[0.06]"
+                                                    style={{ color: "#EF4444" }}>
+                                                    Bekor
+                                                </button>
+                                            </div>
+                                        )}
                                         {/* Vaqt + o'qildi belgisi (faqat mening xabarlarim uchun 2 tick) + self-destruct */}
                                         <div className={`flex items-center gap-1 mt-0.5 ${m.mine ? "justify-end" : "justify-start"}`}>
                                             {m.expiresAt && (() => {
@@ -1667,6 +1737,57 @@ export function NxSocialDesktop() {
                                     <ComposerBtn icon={BarChart2} title="So'rovnoma" onClick={() => setPollOpen(true)} />
                                     <ComposerBtn icon={Camera} title="Video-circle" onClick={() => setCircleOpen(true)} />
                                     <ComposerBtn icon={Wallet} title="Pul yuborish" onClick={() => setTransferOpen(true)} accent />
+                                    <div className="relative">
+                                        <ComposerBtn
+                                            icon={Clock}
+                                            title="Jadvalga qo'yish (keyinroq yuborish)"
+                                            onClick={() => {
+                                                // Default: 1 soat keyin
+                                                if (!scheduleDateTime) {
+                                                    const d = new Date(Date.now() + 3600 * 1000);
+                                                    // datetime-local formati: YYYY-MM-DDTHH:MM
+                                                    const pad = (n: number) => String(n).padStart(2, "0");
+                                                    setScheduleDateTime(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+                                                }
+                                                setScheduleOpen(v => !v);
+                                            }}
+                                            accent={scheduleOpen}
+                                        />
+                                        {scheduleOpen && (
+                                            <div className="absolute bottom-full mb-2 right-0 z-30 rounded-lg overflow-hidden p-3"
+                                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 240 }}>
+                                                <p className="text-[10px] font-black uppercase tracking-wider mb-1.5" style={{ color: "#00CEC8" }}>Qachon jo&apos;natilsin</p>
+                                                <input type="datetime-local" value={scheduleDateTime}
+                                                    onChange={e => setScheduleDateTime(e.target.value)}
+                                                    className="w-full h-9 px-2 rounded text-xs text-white bg-transparent focus:outline-none mb-2"
+                                                    style={{ border: "1px solid rgba(43,62,232,0.30)", colorScheme: "dark" }} />
+                                                <div className="flex gap-1.5 mb-2">
+                                                    {[
+                                                        { s: 3600, label: "1 soat" },
+                                                        { s: 3 * 3600, label: "3 soat" },
+                                                        { s: 86400, label: "Ertaga" },
+                                                    ].map(o => (
+                                                        <button key={o.label}
+                                                            onClick={() => {
+                                                                const d = new Date(Date.now() + o.s * 1000);
+                                                                const pad = (n: number) => String(n).padStart(2, "0");
+                                                                setScheduleDateTime(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+                                                            }}
+                                                            className="flex-1 text-[10px] font-bold py-1 rounded hover:bg-white/[0.08]"
+                                                            style={{ color: "rgba(220,230,255,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                                            {o.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <button onClick={scheduleSend}
+                                                    disabled={!input.trim() || !scheduleDateTime}
+                                                    className="w-full h-9 rounded text-xs font-black text-white disabled:opacity-40"
+                                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                                    Jadvalga qo&apos;yish
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="relative">
                                         <ComposerBtn
                                             icon={nextTtl ? Flame : Timer}
@@ -1920,6 +2041,17 @@ export function NxSocialDesktop() {
             )}
 
             {/* Reaksiya bergan foydalanuvchilar */}
+            {/* Yangi kanal/guruh yaratish modali */}
+            {createChannelOpen && (
+                <NxChannelCreateModal
+                    initialType={createChannelOpen}
+                    onClose={() => setCreateChannelOpen(null)}
+                    onCreated={(id) => {
+                        setSelectedChannel(id);
+                        setChannelsBump(n => n + 1);
+                    }}
+                />
+            )}
             {reactionUsers && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
                     style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
@@ -2030,28 +2162,73 @@ interface ChannelMember {
 function NxChannelInfoPanel({ id }: { id: string }) {
     const [info, setInfo] = useState<ChannelInfo | null>(null);
     const [members, setMembers] = useState<ChannelMember[]>([]);
+    const [canManage, setCanManage] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [memberMenuFor, setMemberMenuFor] = useState<string | null>(null);
+    const [actionBusy, setActionBusy] = useState<string | null>(null);
+
+    const reloadMembers = useCallback(async () => {
+        const mr = await fetch(`/api/nexus/channels/${id}/members`).then(r => r.ok ? r.json() : null).catch(() => null);
+        if (mr?.members) {
+            setMembers(mr.members);
+            setCanManage(!!mr.canManage);
+        }
+    }, [id]);
 
     useEffect(() => {
         let stop = false;
         setLoading(true);
         setInfo(null);
         setMembers([]);
+        setCanManage(false);
         (async () => {
             try {
                 const d = await fetch(`/api/nexus/channels/${id}`).then(r => r.json());
                 if (stop || !d?.channel) return;
                 setInfo(d.channel);
-                if (d.channel.isMember) {
-                    const mr = await fetch(`/api/nexus/channels/${id}/members`).then(r => r.ok ? r.json() : null).catch(() => null);
-                    if (!stop && mr?.members) setMembers(mr.members);
-                }
+                if (d.channel.isMember) await reloadMembers();
             } finally {
                 if (!stop) setLoading(false);
             }
         })();
         return () => { stop = true; };
-    }, [id]);
+    }, [id, reloadMembers]);
+
+    async function changeRole(profileId: string, role: "ADMIN" | "MEMBER") {
+        setActionBusy(profileId);
+        try {
+            const r = await fetch(`/api/nexus/channels/${id}/members`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ profileId, role }),
+            });
+            if (r.ok) {
+                setMembers(prev => prev.map(m => m.profileId === profileId ? { ...m, role } : m));
+            } else {
+                const d = await r.json().catch(() => ({}));
+                alert(d?.error ?? "Bajarib bo'lmadi");
+            }
+        } finally {
+            setActionBusy(null);
+            setMemberMenuFor(null);
+        }
+    }
+    async function kickMember(profileId: string, displayName: string) {
+        if (!confirm(`${displayName}ni chiqarasizmi?`)) return;
+        setActionBusy(profileId);
+        try {
+            const r = await fetch(`/api/nexus/channels/${id}/members?profileId=${profileId}`, { method: "DELETE" });
+            if (r.ok) {
+                setMembers(prev => prev.filter(m => m.profileId !== profileId));
+                setInfo(prev => prev ? { ...prev, memberCount: Math.max(0, prev.memberCount - 1) } : prev);
+            } else {
+                const d = await r.json().catch(() => ({}));
+                alert(d?.error ?? "Chiqarib bo'lmadi");
+            }
+        } finally {
+            setActionBusy(null);
+            setMemberMenuFor(null);
+        }
+    }
 
     if (loading) {
         return (
@@ -2094,8 +2271,11 @@ function NxChannelInfoPanel({ id }: { id: string }) {
                         A&apos;zolar ({members.length})
                     </p>
                     <div className="space-y-1">
-                        {members.slice(0, 20).map(m => (
-                            <div key={m.profileId} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/[0.04]">
+                        {members.slice(0, 20).map(m => {
+                            const displayName = m.name ?? m.username ?? "Foydalanuvchi";
+                            const showMenu = canManage && m.role !== "OWNER";
+                            return (
+                            <div key={m.profileId} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/[0.04] relative">
                                 {m.image
                                     ? <Image src={m.image} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                                     : <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
@@ -2105,15 +2285,50 @@ function NxChannelInfoPanel({ id }: { id: string }) {
                                 }
                                 <div className="min-w-0 flex-1">
                                     <p className="text-xs font-bold truncate flex items-center gap-1" style={{ color: "rgba(220,230,255,0.95)" }}>
-                                        {m.name ?? m.username ?? "Foydalanuvchi"}
+                                        {displayName}
                                         {m.verified && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: "#00CEC8" }} />}
                                     </p>
                                     <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.70)" }}>
                                         {m.role === "OWNER" ? "Ega" : m.role === "ADMIN" ? "Admin" : "A'zo"}
                                     </p>
                                 </div>
+                                {showMenu && (
+                                    <button onClick={() => setMemberMenuFor(memberMenuFor === m.profileId ? null : m.profileId)}
+                                        disabled={actionBusy === m.profileId}
+                                        className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/[0.08] disabled:opacity-40">
+                                        {actionBusy === m.profileId
+                                            ? <Loader2 className="w-3 h-3 animate-spin" style={{ color: "#00CEC8" }} />
+                                            : <MoreVertical className="w-3 h-3" style={{ color: "rgba(160,176,224,0.75)" }} />
+                                        }
+                                    </button>
+                                )}
+                                {memberMenuFor === m.profileId && (
+                                    <div className="absolute right-2 top-full mt-1 z-30 rounded-lg overflow-hidden min-w-[140px]"
+                                        style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)" }}>
+                                        {m.role === "ADMIN" ? (
+                                            <button onClick={() => changeRole(m.profileId, "MEMBER")}
+                                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white hover:bg-white/[0.06] text-left">
+                                                <ShieldOff className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                Adminlikdan olib tashlash
+                                            </button>
+                                        ) : (
+                                            <button onClick={() => changeRole(m.profileId, "ADMIN")}
+                                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white hover:bg-white/[0.06] text-left">
+                                                <Shield className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                                Admin qilish
+                                            </button>
+                                        )}
+                                        <button onClick={() => kickMember(m.profileId, displayName)}
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-red-500/10 text-left"
+                                            style={{ color: "#EF4444" }}>
+                                            <X className="w-3.5 h-3.5" />
+                                            Chiqarish
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                        ))}
+                            );
+                        })}
                         {members.length > 20 && (
                             <p className="text-[10px] text-center mt-2" style={{ color: "rgba(140,160,210,0.50)" }}>
                                 +{members.length - 20} boshqa a&apos;zo

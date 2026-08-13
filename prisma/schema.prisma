@@ -1291,10 +1291,13 @@ model NexusMessage {
   pinnedAt          DateTime?
   // Self-destruct: xabar shu vaqtdan keyin avtomatik o'chiriladi (NULL = doimiy)
   expiresAt         DateTime?
+  // Jadvalga qo'yilgan xabar — bu vaqtga qadar suhbatda ko'rinmaydi (cron faollashtiradi)
+  scheduledFor      DateTime?
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
   @@index([conversationId, pinnedAt])
   @@index([expiresAt])
+  @@index([scheduledFor])
 }
 
 model NexusMessageReaction {

@@ -52,3 +52,31 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     await prisma.nexusChannelMember.update({ where: { id: target.id }, data: { role: newRole } });
     return NextResponse.json({ ok: true, profileId, role: newRole });
 }
+
+// DELETE /api/nexus/channels/[id]/members?profileId=X — a'zoni chiqarish (kick, faqat owner)
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+    if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
+
+    const { id } = await params;
+    const url = new URL(req.url);
+    const profileId = url.searchParams.get("profileId");
+    if (!profileId) return NextResponse.json({ error: "profileId kerak" }, { status: 400 });
+
+    const channel = await prisma.nexusChannel.findUnique({ where: { id }, select: { ownerId: true } });
+    if (!channel || channel.ownerId !== me.id) return NextResponse.json({ error: "Faqat egasi" }, { status: 403 });
+    if (profileId === me.id) return NextResponse.json({ error: "Egani chiqara olmaysiz" }, { status: 400 });
+
+    const target = await prisma.nexusChannelMember.findUnique({
+        where: { channelId_profileId: { channelId: id, profileId } },
+    });
+    if (!target || target.role === "OWNER") return NextResponse.json({ error: "Noto'g'ri a'zo" }, { status: 400 });
+
+    await prisma.nexusChannelMember.delete({ where: { id: target.id } });
+    await prisma.nexusChannel.update({
+        where: { id }, data: { memberCount: { decrement: 1 } },
+    });
+    return NextResponse.json({ ok: true });
+}
