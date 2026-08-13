@@ -12,6 +12,7 @@ import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, Mor
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxStatusModal } from "./nx-status-modal";
+import { searchShortcodes } from "./nx-emoji-shortcodes";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
 import { NxVoicePlayer } from "./nx-voice-player";
@@ -175,6 +176,43 @@ export function NxSocialDesktop() {
     // Mening statusim modali + hozirgi status (session start'da yuklab olish)
     const [statusModalOpen, setStatusModalOpen] = useState(false);
     const [myStatus, setMyStatus] = useState<{ emoji: string | null; text: string | null }>({ emoji: null, text: null });
+    // Emoji shortcode autocomplete — composer'da :word yozganda popover
+    const [emojiCode, setEmojiCode] = useState<string | null>(null);
+    const [emojiCodeSuggestions, setEmojiCodeSuggestions] = useState<Array<{ code: string; emoji: string }>>([]);
+    const [emojiCodeIdx, setEmojiCodeIdx] = useState(0);
+    useEffect(() => {
+        const el = composerInputRef.current;
+        if (!el) return;
+        const pos = el.selectionStart ?? input.length;
+        const before = input.slice(0, pos);
+        // Oxirgi bo'shliqdan boshlab :word (word ichida a-z, 0-9, _, +, -)
+        const m = before.match(/(?:^|\s):([a-z0-9_+\-]{1,20})$/i);
+        if (!m) { setEmojiCode(null); return; }
+        setEmojiCode(m[1]);
+        setEmojiCodeIdx(0);
+    }, [input]);
+    useEffect(() => {
+        if (emojiCode === null) { setEmojiCodeSuggestions([]); return; }
+        setEmojiCodeSuggestions(searchShortcodes(emojiCode, 8));
+    }, [emojiCode]);
+    function insertEmojiShortcode(emoji: string) {
+        const el = composerInputRef.current;
+        const pos = el?.selectionStart ?? input.length;
+        const before = input.slice(0, pos);
+        const after = input.slice(pos);
+        const replaced = before.replace(/(?:^|\s):([a-z0-9_+\-]{1,20})$/i, (mm) => {
+            const leading = mm.startsWith(" ") || mm.startsWith("\n") ? mm[0] : "";
+            return `${leading}${emoji}`;
+        });
+        setInput(replaced + after);
+        setEmojiCode(null);
+        setTimeout(() => {
+            const newPos = replaced.length;
+            el?.focus();
+            el?.setSelectionRange(newPos, newPos);
+        }, 0);
+    }
+
     // @mention autocomplete — composer'da @ yozganda popover
     interface MentionSuggestion { username: string; name: string | null; image: string | null }
     const [mentionQuery, setMentionQuery] = useState<string | null>(null); // null = yopiq
@@ -1698,6 +1736,16 @@ export function NxSocialDesktop() {
                                                 </>
                                             );
                                         })()}
+                                        <button onClick={async () => {
+                                            if (!selectedId) return;
+                                            if (!confirm("Chatni tozalasizmi? Sizga xabarlar ko'rinmaydi (u kishida qoladi)")) return;
+                                            const r = await fetch(`/api/nexus/messages/${selectedId}/clear`, { method: "POST" });
+                                            if (r.ok) { setMessages([]); loadConvs(); setMoreOpen(false); }
+                                        }}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-white/[0.05] text-left"
+                                            style={{ color: "rgba(220,230,255,0.90)" }}>
+                                            <Trash2 className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Chatni tozalash
+                                        </button>
                                         <button onClick={() => togglePeerAction("block")}
                                             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-red-500/10 text-left"
                                             style={{ color: "#EF4444" }}>
@@ -1815,8 +1863,17 @@ export function NxSocialDesktop() {
                                     : messages;
                                 return list.map((m, i) => {
                                     const prev = i > 0 ? list[i - 1] : null;
+                                    const next = i < list.length - 1 ? list[i + 1] : null;
                                     const showDate = !prev || !isSameDay(prev.createdAt, m.createdAt);
                                     const dateLabel = showDate ? formatDateSeparator(m.createdAt) : null;
+                                    // Xabar guruhlash: bir muallif + 5 daqiqa ichida
+                                    const GROUP_MS = 5 * 60 * 1000;
+                                    const groupWithPrev = !!prev && prev.mine === m.mine
+                                        && !dateLabel
+                                        && (new Date(m.createdAt).getTime() - new Date(prev.createdAt).getTime() < GROUP_MS);
+                                    const groupWithNext = !!next && next.mine === m.mine
+                                        && isSameDay(m.createdAt, next.createdAt)
+                                        && (new Date(next.createdAt).getTime() - new Date(m.createdAt).getTime() < GROUP_MS);
                                     return (
                                         <div key={m.id}>
                                             {dateLabel && (
@@ -1830,7 +1887,11 @@ export function NxSocialDesktop() {
                                 <div data-msg-id={m.id}
                                     onClick={() => { if (selectMode) toggleSelectMsg(m.id); }}
                                     className={`group flex items-center gap-1 ${m.mine ? "justify-end flex-row-reverse" : "justify-start"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
-                                    style={selectedIds.has(m.id) ? { background: "rgba(0,206,200,0.10)" } : undefined}>
+                                    style={{
+                                        ...(selectedIds.has(m.id) ? { background: "rgba(0,206,200,0.10)" } : {}),
+                                        // Guruh ichida yuqori marginni kamaytiramiz (bir-biriga yaqin)
+                                        marginTop: groupWithPrev ? -6 : undefined,
+                                    }}>
                                     {selectMode && (
                                         <div className="flex-shrink-0 flex items-center justify-center w-6 h-6">
                                             {selectedIds.has(m.id)
@@ -1954,11 +2015,18 @@ export function NxSocialDesktop() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="max-w-[70%] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words"
-                                        style={m.mine
-                                            ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)", color: "#fff", borderBottomRightRadius: "6px" }
-                                            : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.92)", borderBottomLeftRadius: "6px" }
-                                        }>
+                                    <div className="max-w-[70%] px-3.5 py-2 text-sm whitespace-pre-wrap break-words"
+                                        style={{
+                                            ...(m.mine
+                                                ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)", color: "#fff" }
+                                                : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.92)" }
+                                            ),
+                                            // Guruhlash: yuqori/pastki burchak radius'i mos ravishda yumshoq
+                                            borderTopLeftRadius:  m.mine ? 16 : (groupWithPrev ? 4 : 16),
+                                            borderTopRightRadius: m.mine ? (groupWithPrev ? 4 : 16) : 16,
+                                            borderBottomLeftRadius:  m.mine ? 16 : (groupWithNext ? 4 : 6),
+                                            borderBottomRightRadius: m.mine ? (groupWithNext ? 4 : 6) : 16,
+                                        }}>
                                         {m.replyTo && (
                                             <div className="mb-2 pl-2 pr-2 py-1.5 rounded-md text-xs"
                                                 style={{
@@ -2237,8 +2305,9 @@ export function NxSocialDesktop() {
                                                 </button>
                                             </div>
                                         )}
-                                        {/* Vaqt + o'qildi belgisi (faqat mening xabarlarim uchun 2 tick) + self-destruct */}
-                                        <div className={`flex items-center gap-1 mt-0.5 ${m.mine ? "justify-end" : "justify-start"}`}>
+                                        {/* Vaqt + o'qildi belgisi — faqat guruhning oxirgi xabarida to'liq ko'rsatiladi */}
+                                        <div className={`flex items-center gap-1 mt-0.5 ${m.mine ? "justify-end" : "justify-start"}`}
+                                            style={groupWithNext ? { opacity: 0, height: 0, overflow: "hidden", margin: 0 } : undefined}>
                                             {m.bookmarked && (
                                                 <BookmarkCheck className="w-3 h-3" style={{ color: "#F59E0B" }} />
                                             )}
@@ -2296,6 +2365,28 @@ export function NxSocialDesktop() {
                             )}
                         </div>
 
+                        {/* Emoji shortcode popover (:smile → 😊) */}
+                        {emojiCode !== null && emojiCodeSuggestions.length > 0 && (
+                            <div className="mx-3 mb-1 rounded-xl overflow-hidden flex-shrink-0"
+                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 -4px 16px rgba(0,0,0,0.30)" }}>
+                                <p className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border-b"
+                                    style={{ color: "#F59E0B", borderColor: "rgba(43,62,232,0.20)" }}>
+                                    :{emojiCode} · ↑↓ · Enter/Tab — kiritish · Esc — bekor
+                                </p>
+                                <div className="max-h-48 overflow-y-auto">
+                                    {emojiCodeSuggestions.map((s, i) => (
+                                        <button key={s.code}
+                                            onClick={() => insertEmojiShortcode(s.emoji)}
+                                            onMouseEnter={() => setEmojiCodeIdx(i)}
+                                            className="w-full flex items-center gap-2.5 px-3 py-1.5 text-left transition"
+                                            style={{ background: i === emojiCodeIdx ? "rgba(245,158,11,0.10)" : "transparent" }}>
+                                            <span className="text-xl flex-shrink-0">{s.emoji}</span>
+                                            <span className="text-xs font-bold" style={{ color: "rgba(220,230,255,0.90)" }}>:{s.code}:</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         {/* @mention autocomplete popover */}
                         {mentionQuery !== null && mentionSuggestions.length > 0 && (
                             <div className="mx-3 mb-1 rounded-xl overflow-hidden flex-shrink-0"
@@ -2555,6 +2646,18 @@ export function NxSocialDesktop() {
                                             }
                                         }}
                                         onKeyDown={e => {
+                                            // Emoji shortcode popover navigatsiyasi
+                                            if (emojiCode !== null && emojiCodeSuggestions.length > 0) {
+                                                if (e.key === "ArrowDown") { e.preventDefault(); setEmojiCodeIdx(i => (i + 1) % emojiCodeSuggestions.length); return; }
+                                                if (e.key === "ArrowUp") { e.preventDefault(); setEmojiCodeIdx(i => (i - 1 + emojiCodeSuggestions.length) % emojiCodeSuggestions.length); return; }
+                                                if (e.key === "Enter" || e.key === "Tab") {
+                                                    e.preventDefault();
+                                                    const pick = emojiCodeSuggestions[emojiCodeIdx];
+                                                    if (pick) insertEmojiShortcode(pick.emoji);
+                                                    return;
+                                                }
+                                                if (e.key === "Escape") { e.preventDefault(); setEmojiCode(null); return; }
+                                            }
                                             // Mention popover navigatsiyasi
                                             if (mentionQuery !== null && mentionSuggestions.length > 0) {
                                                 if (e.key === "ArrowDown") { e.preventDefault(); setMentionIdx(i => (i + 1) % mentionSuggestions.length); return; }

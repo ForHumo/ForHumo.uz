@@ -32,18 +32,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     // Avval asc edi → 100+ xabarli suhbatda eng yangilari ko'rinmay qolardi.
     // Self-destruct: muddati o'tgan xabarlarni chiqarmaymiz.
     // Jadvalga qo'yilgan xabarlar faqat jo'natuvchining o'ziga ko'rinadi (draft-like).
+    // Tozalangan (clearedBeforeUserN) suhbatlar shu vaqtdan oldingi xabarlarni yashiradi.
     const now = new Date();
+    const clearedBefore = conv.user1Id === me.id ? conv.clearedBeforeUser1 : conv.clearedBeforeUser2;
     const recent = await prisma.nexusMessage.findMany({
         where: {
             conversationId: id,
             OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-            AND: [{
-                OR: [
-                    { scheduledFor: null },
-                    { scheduledFor: { lte: now } },
-                    { senderId: me.id },
-                ],
-            }],
+            AND: [
+                { OR: [{ scheduledFor: null }, { scheduledFor: { lte: now } }, { senderId: me.id }] },
+                ...(clearedBefore ? [{ createdAt: { gt: clearedBefore } }] : []),
+            ],
         },
         orderBy: { createdAt: "desc" }, take: 100,
     });

@@ -1246,6 +1246,9 @@ model NexusConversation {
   // Mute — har foydalanuvchi alohida (bildirishnoma/badge kuchsizlantiriladi)
   mutedByUser1    DateTime?
   mutedByUser2    DateTime?
+  // Tozalash: shu vaqtdan oldingi xabarlar shu foydalanuvchiga ko'rsatilmaydi
+  clearedBeforeUser1 DateTime?
+  clearedBeforeUser2 DateTime?
   createdAt       DateTime  @default(now())
   messages        NexusMessage[]
   @@unique([user1Id, user2Id])
