@@ -1644,6 +1644,8 @@ model NexusChannelMessage {
   pinnedAt  DateTime?
   // Tahrirlash vaqti (foydalanuvchi o'z xabarini tahrirlagan bo'lsa)
   editedAt  DateTime?
+  // Reply — boshqa xabarga javob (shu kanalda)
+  replyToId String?
   // So'rovnoma (Telegram uslubi) — foydalanuvchi so'rovi bo'yicha
   pollQuestion  String?
   pollOptions   String[]  @default([])

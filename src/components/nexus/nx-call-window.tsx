@@ -536,15 +536,37 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         await enableCamera(next);
     }, [videoBusy, videoSource, facing, enableCamera]);
 
-    // Ekran ulashish (faqat kompyuter brauzerlari)
+    // Ekran ulashish (faqat kompyuter brauzerlari) — tizim ovoz + kursor bilan
     const enableScreen = useCallback(async () => {
         if (screenBusy || !canScreen) return;
         setScreenBusy(true);
         try {
-            const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+            const s = await navigator.mediaDevices.getDisplayMedia({
+                video: {
+                    cursor: "always",                 // kursor ham ko'rinsin
+                    frameRate: { ideal: 30, max: 60 },
+                    displaySurface: "monitor",        // default: butun ekran
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } as any,
+                audio: true,                          // tizim ovoz (Chrome/Edge)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any);
             const [t] = s.getVideoTracks();
             if (!t) throw new Error("Ekran oqim topilmadi");
             t.onended = () => { disableVideo(); };
+            // Ovoz treki mavjud bo'lsa peer'ga qo'shamiz (aks holda faqat video)
+            const [audioTrack] = s.getAudioTracks();
+            if (audioTrack && pcRef.current) {
+                const audioSender = pcRef.current.getSenders().find(x => x.track?.kind === "audio");
+                if (audioSender) {
+                    // Mavjud mikrofon audio'ni saqlab qolib, ekran audio'sini mixlash oson emas.
+                    // Buning uchun WebAudio kerak — hozircha faqat mikrofon qoladi.
+                    // Ekran audio treki e'tibordan chetda qoladi (kelajakda mixer).
+                    try { audioTrack.stop(); } catch {}
+                } else {
+                    pcRef.current.addTrack(audioTrack, s);
+                }
+            }
             await applyVideoTrack(t, "screen");
         } catch (e) {
             const msg = e instanceof Error ? e.message : "";

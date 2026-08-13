@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile,
+    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward,
 } from "lucide-react";
 import { NxPollCreate } from "./nx-poll-create";
 
@@ -17,6 +17,7 @@ interface ChMsg {
     pinnedAt?: string | null;
     editedAt?: string | null;
     reactions?: Array<{ emoji: string; count: number; mine: boolean }>;
+    replyTo?: { id: string; text: string | null; senderName: string | null } | null;
 }
 
 function avatarFor(c: { name: string; avatarUrl?: string | null }) {
@@ -249,9 +250,12 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         if (!input.trim() || busy) return;
         setBusy(true);
         const text = input.trim(); setInput("");
+        const replyToIdSnap = replyTo?.id ?? null;
+        setReplyTo(null);
         try {
             const r = await fetch(`/api/nexus/channels/${id}/messages`, {
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text, ...(replyToIdSnap ? { replyToId: replyToIdSnap } : {}) }),
             });
             if (r.ok) { const d = await r.json(); setMsgs(prev => [...prev, d.message].slice(-200)); lastTs.current = d.message.createdAt; }
         } finally { setBusy(false); }
@@ -271,6 +275,45 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [editingText, setEditingText] = useState("");
     // Reaksiya emoji tanlagich
     const [reactPickerFor, setReactPickerFor] = useState<string | null>(null);
+    // Reply — javob berilayotgan xabar
+    const [replyTo, setReplyTo] = useState<ChMsg | null>(null);
+    // Forward — kanal xabarni DM'ga jo'natish
+    const [forwardMsg, setForwardMsg] = useState<ChMsg | null>(null);
+    const [dmList, setDmList] = useState<Array<{ conversationId: string; other: { name: string | null; username: string | null; image: string | null } | null }>>([]);
+    const [forwarding, setForwarding] = useState(false);
+    useEffect(() => {
+        if (!forwardMsg) return;
+        fetch("/api/nexus/messages").then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.conversations) setDmList(d.conversations); })
+            .catch(() => {});
+    }, [forwardMsg]);
+    async function forwardToDm(convId: string) {
+        if (!forwardMsg) return;
+        setForwarding(true);
+        try {
+            const prefix = `↪ Kanaldan (${ch?.name ?? ""})\n`;
+            const text = forwardMsg.text ? prefix + forwardMsg.text : prefix;
+            const media = forwardMsg.media?.[0] ?? null;
+            const body: Record<string, unknown> = { text };
+            // Kanal media[] birinchi elementini DM mediaUrl sifatida
+            if (media) {
+                body.mediaUrl = media;
+                body.mediaType = /\.(png|jpe?g|gif|webp)$/i.test(media) ? "image"
+                    : /\.(mp4|webm|mov)$/i.test(media) ? "video"
+                    : /\.(mp3|webm|m4a|wav|ogg)$/i.test(media) ? "audio"
+                    : "file";
+            }
+            const r = await fetch(`/api/nexus/messages/${convId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            if (r.ok) setForwardMsg(null);
+            else {
+                const d = await r.json().catch(() => ({}));
+                alert(d?.error ?? "Yuborib bo'lmadi");
+            }
+        } finally { setForwarding(false); }
+    }
 
     async function editMsg(m: ChMsg) {
         if (!m.text) return;
@@ -394,6 +437,22 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                 <img src={m.author?.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(m.author?.username || "u")}`} alt="" className="w-7 h-7 rounded-lg object-cover bg-white flex-shrink-0" />
                                 <div className={`max-w-[78%] rounded-2xl px-3 py-2 ${m.mine ? "rounded-tr-sm" : "rounded-tl-sm"}`} style={{ background: m.mine ? "rgba(43,62,232,0.2)" : "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.15)" }}>
                                     {!m.mine && <p className="text-[11px] font-black mb-0.5 inline-flex items-center gap-1" style={{ color: "#00CEC8" }}>{m.author?.name || m.author?.username || "Foydalanuvchi"}{m.author?.verified && <BadgeCheck className="w-3 h-3" />}</p>}
+                                    {m.replyTo && (
+                                        <button onClick={() => {
+                                            const el = document.querySelector<HTMLElement>(`[data-ch-msg-id="${m.replyTo!.id}"]`);
+                                            el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                                            el?.animate([{ background: "rgba(0,206,200,0.15)" }, { background: "transparent" }], { duration: 1400, iterations: 1 });
+                                        }}
+                                            className="mb-1.5 pl-2 pr-2 py-1 rounded-md text-xs text-left w-full"
+                                            style={{ background: "rgba(0,0,0,0.20)", borderLeft: "3px solid #00CEC8" }}>
+                                            <p className="font-bold text-[11px] mb-0.5" style={{ color: "#00CEC8" }}>
+                                                {m.replyTo.senderName ?? "Foydalanuvchi"}
+                                            </p>
+                                            <p className="opacity-80 line-clamp-2" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                                {m.replyTo.text || "(media)"}
+                                            </p>
+                                        </button>
+                                    )}
                                     {m.text && editingId !== m.id && (
                                         <p className="text-sm whitespace-pre-wrap" style={{ color: "rgba(210,220,245,0.95)" }}>
                                             {m.text}
@@ -493,6 +552,16 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
                                         <Smile className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
                                     </button>
+                                    <button onClick={() => setReplyTo(m)} title="Javob berish"
+                                        className="w-7 h-7 rounded-md flex items-center justify-center"
+                                        style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                        <Reply className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                    </button>
+                                    <button onClick={() => setForwardMsg(m)} title="DM'ga yuborish"
+                                        className="w-7 h-7 rounded-md flex items-center justify-center"
+                                        style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                        <Forward className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                    </button>
                                     {m.mine && m.text && (
                                         <button onClick={() => editMsg(m)} title="Tahrirlash"
                                             className="w-7 h-7 rounded-md flex items-center justify-center"
@@ -537,6 +606,25 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                         ))}
                         <div ref={bottomRef} />
                     </div>
+                    {/* Reply preview (composer ustida) */}
+                    {replyTo && (
+                        <div className="mx-3 mt-2 px-3 py-2 rounded-xl flex items-center gap-2"
+                            style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                            <Reply className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                            <div className="min-w-0 flex-1">
+                                <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "#00CEC8" }}>
+                                    Javob: {replyTo.author?.name ?? replyTo.author?.username ?? "Foydalanuvchi"}
+                                </p>
+                                <p className="text-xs truncate" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                    {replyTo.text || (replyTo.media?.length ? "[media]" : "(bo'sh)")}
+                                </p>
+                            </div>
+                            <button onClick={() => setReplyTo(null)}
+                                className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
+                                <X className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            </button>
+                        </div>
+                    )}
                     {ch.canPost ? (
                         <div className="flex gap-2 px-3 py-3 mx-1" style={{ borderTop: "1px solid rgba(43,62,232,0.12)" }}>
                             <button onClick={() => setPollOpen(true)} title="So'rovnoma"
@@ -559,6 +647,61 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
 
             {/* Poll create modal */}
             <NxPollCreate open={pollOpen} onClose={() => setPollOpen(false)} onCreated={sendPoll} />
+
+            {/* Forward to DM modal */}
+            {forwardMsg && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+                    style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
+                    onClick={() => !forwarding && setForwardMsg(null)}>
+                    <div onClick={e => e.stopPropagation()}
+                        className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
+                        style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "80vh" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                            <div className="flex items-center gap-2">
+                                <Forward className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Kimga yuborish</p>
+                            </div>
+                            <button onClick={() => setForwardMsg(null)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
+                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            </button>
+                        </div>
+                        <div className="p-3 border-b text-xs italic line-clamp-2" style={{ borderColor: "rgba(43,62,232,0.20)", color: "rgba(160,176,224,0.75)" }}>
+                            {forwardMsg.text || (forwardMsg.media?.length ? "[media]" : "(bo'sh)")}
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-2">
+                            {dmList.length === 0 ? (
+                                <p className="text-xs text-center py-6" style={{ color: "rgba(140,160,210,0.60)" }}>DM suhbat topilmadi</p>
+                            ) : (
+                                dmList.map(c => (
+                                    <button key={c.conversationId} onClick={() => forwardToDm(c.conversationId)}
+                                        disabled={forwarding}
+                                        className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/[0.04] transition disabled:opacity-40 text-left">
+                                        {c.other?.image
+                                            ? <img src={c.other.image} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                                            : <div className="w-9 h-9 rounded-full flex-shrink-0" style={{ background: "rgba(43,62,232,0.20)" }} />
+                                        }
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-bold truncate" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                                {c.other?.name ?? c.other?.username ?? "Foydalanuvchi"}
+                                            </p>
+                                            {c.other?.username && (
+                                                <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.65)" }}>@{c.other.username}</p>
+                                            )}
+                                        </div>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                        {forwarding && (
+                            <div className="p-3 border-t flex items-center justify-center gap-2" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                                <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#00CEC8" }} />
+                                <span className="text-xs" style={{ color: "rgba(160,176,224,0.85)" }}>Yuborilmoqda...</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

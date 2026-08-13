@@ -56,6 +56,28 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         }
     }
 
+    // Reply preview: shu 100 xabar orasidan yoki alohida fetch bilan
+    const replyIds = msgs.map(m => m.replyToId).filter((x): x is string => !!x);
+    const replyMap = new Map<string, { id: string; text: string | null; senderName: string | null }>();
+    if (replyIds.length) {
+        const originals = await prisma.nexusChannelMessage.findMany({
+            where: { id: { in: [...new Set(replyIds)] } },
+            select: { id: true, text: true, senderId: true, media: true },
+        });
+        const senderIds = [...new Set(originals.map(o => o.senderId))];
+        const senders = await prisma.userProfile.findMany({
+            where: { id: { in: senderIds } }, select: { id: true, name: true, username: true },
+        });
+        const senderMap = new Map(senders.map(s => [s.id, s.name ?? s.username ?? ""]));
+        for (const o of originals) {
+            replyMap.set(o.id, {
+                id: o.id,
+                text: o.text ? o.text.slice(0, 120) : (o.media?.length ? "[media]" : null),
+                senderName: senderMap.get(o.senderId) ?? null,
+            });
+        }
+    }
+
     // Reaksiyalarni yig'ish
     const allReactions = await prisma.nexusChannelMessageReaction.findMany({
         where: { messageId: { in: msgs.map(m => m.id) } },
@@ -85,6 +107,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 pollVoteCounts: pv?.counts ?? null, pollMyVotes: pv?.myVotes ?? null, pollTotal: pv?.total ?? null,
                 pinnedAt: m.pinnedAt,
                 editedAt: m.editedAt,
+                replyTo: m.replyToId ? (replyMap.get(m.replyToId) ?? null) : null,
                 reactions: reactionMap.get(m.id)
                     ? [...reactionMap.get(m.id)!.entries()].map(([e, s]) => ({ emoji: e, count: s.count, mine: s.mine }))
                     : [],
@@ -107,9 +130,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!canPost) return NextResponse.json({ error: "Bu kanalga faqat adminlar yoza oladi" }, { status: 403 });
 
     const body = await req.json();
-    const { text, media, pollQuestion, pollOptions, pollExpiresAt, pollMulti } = body as {
+    const { text, media, pollQuestion, pollOptions, pollExpiresAt, pollMulti, replyToId } = body as {
         text?: string; media?: unknown;
         pollQuestion?: string; pollOptions?: string[]; pollExpiresAt?: string; pollMulti?: boolean;
+        replyToId?: string;
     };
     const cleanText = typeof text === "string" ? text.trim().slice(0, 4000) : "";
     const cleanMedia: string[] = filterMediaUrls(media, 9);
@@ -118,9 +142,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const banned = await banGuard(me.id); if (banned) return banned;
     if (await nexusRateLimited(me.id, "channelMsg")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
+    // Reply — mavjud xabar shu kanalga tegishli bo'lishi kerak
+    let validReplyToId: string | null = null;
+    if (typeof replyToId === "string" && replyToId) {
+        const target = await prisma.nexusChannelMessage.findUnique({
+            where: { id: replyToId }, select: { id: true, channelId: true },
+        });
+        if (target && target.channelId === id) validReplyToId = target.id;
+    }
+
     const msg = await prisma.nexusChannelMessage.create({
         data: {
             channelId: id, senderId: me.id, text: cleanText || null, media: cleanMedia,
+            replyToId: validReplyToId,
             pollQuestion: isPoll ? pollQuestion!.trim().slice(0, 300) : null,
             pollOptions: isPoll ? pollOptions!.map(o => String(o).trim().slice(0, 100)).filter(Boolean).slice(0, 10) : [],
             pollExpiresAt: isPoll && pollExpiresAt ? new Date(pollExpiresAt) : null,
@@ -129,6 +163,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     });
     if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "CHANNEL_MESSAGE", targetId: msg.id, text: cleanText, kind: "kanal xabari", authorId: me.id }));
 
+    // Reply preview qaytarish (agar bor bo'lsa)
+    let replyToOut: { id: string; text: string | null; senderName: string | null } | null = null;
+    if (validReplyToId) {
+        const r = await prisma.nexusChannelMessage.findUnique({
+            where: { id: validReplyToId }, select: { id: true, text: true, senderId: true, media: true },
+        });
+        if (r) {
+            const sender = await prisma.userProfile.findUnique({
+                where: { id: r.senderId }, select: { name: true, username: true },
+            });
+            replyToOut = {
+                id: r.id,
+                text: r.text ? r.text.slice(0, 120) : (r.media?.length ? "[media]" : null),
+                senderName: sender?.name ?? sender?.username ?? null,
+            };
+        }
+    }
+
     return NextResponse.json({
         message: {
             id: msg.id, text: msg.text, media: msg.media, createdAt: msg.createdAt, mine: true,
@@ -136,6 +188,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             pollQuestion: msg.pollQuestion, pollOptions: msg.pollOptions, pollExpiresAt: msg.pollExpiresAt, pollMulti: msg.pollMulti,
             pollVoteCounts: isPoll ? msg.pollOptions.map(() => 0) : null,
             pollMyVotes: isPoll ? [] : null, pollTotal: isPoll ? 0 : null,
+            replyTo: replyToOut,
+            reactions: [],
         },
     });
 }
