@@ -124,7 +124,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     });
 
     const oid = otherId(conv, me.id);
-    const p = await prisma.userProfile.findUnique({ where: { id: oid }, select: { name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true } });
+    const p = await prisma.userProfile.findUnique({
+        where: { id: oid },
+        select: { name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true, statusEmoji: true, statusText: true, statusExpiresAt: true },
+    });
+    // Muddati o'tgan statusni yashirish
+    const statusActive = p?.statusExpiresAt ? new Date(p.statusExpiresAt) > new Date() : true;
 
     return NextResponse.json({
         messages: messages.map(m => {
@@ -153,6 +158,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             name: p.name, username: p.username, image: p.image,
             verified: isVerifiedProfile(p),
             verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null,
+            statusEmoji: statusActive ? p.statusEmoji : null,
+            statusText: statusActive ? p.statusText : null,
         } : null,
         peerReadAt,
     });

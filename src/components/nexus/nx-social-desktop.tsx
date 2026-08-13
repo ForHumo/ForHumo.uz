@@ -8,9 +8,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
+import { NxStatusModal } from "./nx-status-modal";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
 import { NxVoicePlayer } from "./nx-voice-player";
@@ -68,6 +69,8 @@ interface PeerInfo {
     verified: boolean;
     bio?: string | null;
     isAgent?: boolean;
+    statusEmoji?: string | null;
+    statusText?: string | null;
 }
 
 interface ChannelItem {
@@ -168,6 +171,42 @@ export function NxSocialDesktop() {
     const [scheduleDateTime, setScheduleDateTime] = useState<string>("");
     // Yangi kanal/guruh yaratish modali
     const [createChannelOpen, setCreateChannelOpen] = useState<"CHANNEL" | "GROUP" | null>(null);
+    // Mening statusim modali + hozirgi status (session start'da yuklab olish)
+    const [statusModalOpen, setStatusModalOpen] = useState(false);
+    const [myStatus, setMyStatus] = useState<{ emoji: string | null; text: string | null }>({ emoji: null, text: null });
+    // Chat mavzu (per-chat) — localStorage'da theme id saqlanadi
+    const [chatTheme, setChatTheme] = useState<string>("default");
+    const [themePickerOpen, setThemePickerOpen] = useState(false);
+    const themeKey = (convId: string) => `nexus:dm:theme:${convId}`;
+    // Chat almashinsa mavzuni tiklash
+    useEffect(() => {
+        if (!selectedId) return;
+        try { setChatTheme(localStorage.getItem(themeKey(selectedId)) || "default"); }
+        catch { setChatTheme("default"); }
+    }, [selectedId]);
+    function pickTheme(id: string) {
+        if (!selectedId) return;
+        setChatTheme(id);
+        try {
+            if (id === "default") localStorage.removeItem(themeKey(selectedId));
+            else localStorage.setItem(themeKey(selectedId), id);
+        } catch {}
+        setThemePickerOpen(false);
+    }
+    useEffect(() => {
+        if (!session?.user?.email) return;
+        fetch("/api/user/profile").then(r => r.ok ? r.json() : null)
+            .then(d => {
+                if (d && (d.statusEmoji || d.statusText)) {
+                    // Muddati tugagan bo'lsa ko'rsatmaymiz
+                    const active = !d.statusExpiresAt || new Date(d.statusExpiresAt) > new Date();
+                    setMyStatus({
+                        emoji: active ? (d.statusEmoji ?? null) : null,
+                        text: active ? (d.statusText ?? null) : null,
+                    });
+                }
+            }).catch(() => {});
+    }, [session?.user?.email]);
     // Xabar countdown taymer'i uchun soniyalar (har 1s'da yangilanadi)
     const [tickSec, setTickSec] = useState(0);
     useEffect(() => {
@@ -302,6 +341,40 @@ export function NxSocialDesktop() {
     function hideTranslation(messageId: string) {
         setTranslated(prev => { const n = { ...prev }; delete n[messageId]; return n; });
     }
+
+    // TTS: xabar matnini ovoz bilan eshittirish (Web Speech API — brauzer o'zi)
+    const [speakingId, setSpeakingId] = useState<string | null>(null);
+    function speakMessage(messageId: string, text: string) {
+        if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+            alert("Sizning brauzeringiz ovozli eshittirishni qo'llab-quvvatlamaydi");
+            return;
+        }
+        // Agar shu xabar o'qilayotgan bo'lsa — to'xtatish
+        if (speakingId === messageId) {
+            window.speechSynthesis.cancel();
+            setSpeakingId(null);
+            return;
+        }
+        // Boshqa xabar ochiq bo'lsa — birinchi to'xtatish
+        window.speechSynthesis.cancel();
+
+        const u = new SpeechSynthesisUtterance(text);
+        // Til taxmini: kirill harflar → ruscha, cheks/lotin ko'proq bo'lsa uz/en
+        const cyr = /[а-яё]/i.test(text);
+        u.lang = cyr ? "ru-RU" : "en-US"; // O'zbekcha TTS Chrome'da yo'q — inglizcha fonetikada
+        u.rate = 1.0;
+        u.pitch = 1.0;
+        u.onend = () => setSpeakingId(null);
+        u.onerror = () => setSpeakingId(null);
+        setSpeakingId(messageId);
+        window.speechSynthesis.speak(u);
+    }
+    // Sahifa tark etilsa — o'qishni to'xtatish
+    useEffect(() => () => {
+        if (typeof window !== "undefined" && "speechSynthesis" in window) {
+            window.speechSynthesis.cancel();
+        }
+    }, []);
 
     async function toggleMessagePin(m: Msg) {
         if (!selectedId) return;
@@ -715,6 +788,8 @@ export function NxSocialDesktop() {
                         humoId: d.other.humoId ?? null,
                         bio: d.other.bio ?? null,
                         isAgent: (d.other.username ?? "").toLowerCase().endsWith("_agent"),
+                        statusEmoji: d.other.statusEmoji ?? null,
+                        statusText: d.other.statusText ?? null,
                     });
                 }
             }
@@ -974,7 +1049,7 @@ export function NxSocialDesktop() {
                 </div>
 
                 {listTab === "dm" && (
-                    <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    <div className="p-3 flex-shrink-0 space-y-2" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
                                 style={{ color: "rgba(140,160,210,0.50)" }} />
@@ -986,6 +1061,18 @@ export function NxSocialDesktop() {
                                 style={{ border: "1px solid rgba(43,62,232,0.20)" }}
                             />
                         </div>
+                        {/* Mening statusim */}
+                        <button onClick={() => setStatusModalOpen(true)}
+                            className="w-full flex items-center gap-2 h-8 px-2.5 rounded-lg transition hover:bg-white/[0.04] text-left"
+                            style={{
+                                background: myStatus.emoji || myStatus.text ? "rgba(0,206,200,0.08)" : "rgba(43,62,232,0.06)",
+                                border: `1px solid ${myStatus.emoji || myStatus.text ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.15)"}`,
+                            }}>
+                            <span className="text-base flex-shrink-0">{myStatus.emoji || "✨"}</span>
+                            <span className="text-[11px] truncate flex-1" style={{ color: myStatus.text ? "#00CEC8" : "rgba(140,160,210,0.75)" }}>
+                                {myStatus.text || "Maxsus status qo'shish"}
+                            </span>
+                        </button>
                     </div>
                 )}
 
@@ -1134,7 +1221,7 @@ export function NxSocialDesktop() {
 
             {/* ── COL 2: Selected chat/channel ─────────────────────────── */}
             <div className="flex-1 flex flex-col min-w-0"
-                style={{ background: "rgba(11,18,40,0.35)" }}>
+                style={{ background: (selectedId && !selectedChannel) ? (CHAT_THEMES[chatTheme] ?? CHAT_THEMES.default).bg : "rgba(11,18,40,0.35)" }}>
                 {selectedChannel ? (
                     // Channel/Group xonasi — mavjud NxChannelRoom embed
                     <NxChannelRoom id={selectedChannel} onBack={() => setSelectedChannel(null)} />
@@ -1200,9 +1287,11 @@ export function NxSocialDesktop() {
                                             style={{ background: "rgba(0,206,200,0.18)", color: "#00CEC8" }}>AGENT</span>
                                     )}
                                 </div>
-                                <p className="text-[11px]" style={{ color: peerTyping ? "#00CEC8" : "rgba(140,160,210,0.70)" }}>
+                                <p className="text-[11px] flex items-center gap-1" style={{ color: peerTyping ? "#00CEC8" : "rgba(140,160,210,0.70)" }}>
                                     {peerTyping
                                         ? "yozmoqda..."
+                                        : (peer?.statusEmoji || peer?.statusText)
+                                            ? <><span>{peer.statusEmoji}</span><span className="truncate">{peer.statusText}</span></>
                                         : peer?.id && isOnline(peer.id) ? "onlayn"
                                         : peer?.username ? `@${peer.username}` : ""}
                                 </p>
@@ -1235,6 +1324,10 @@ export function NxSocialDesktop() {
                                         <button onClick={() => { setSelectMode(true); setMoreOpen(false); }}
                                             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
                                             <CheckSquare className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Xabarlarni tanlash
+                                        </button>
+                                        <button onClick={() => { setThemePickerOpen(true); setMoreOpen(false); }}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                            <Palette className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Chat mavzu
                                         </button>
                                         <button onClick={() => exportChat("html")}
                                             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
@@ -1473,6 +1566,18 @@ export function NxSocialDesktop() {
                                                         </div>
                                                     )}
                                                 </div>
+                                                <button onClick={() => speakMessage(m.id, m.text)}
+                                                    title={speakingId === m.id ? "To'xtatish" : "Eshittirish"}
+                                                    className="w-7 h-7 rounded-md flex items-center justify-center"
+                                                    style={{
+                                                        background: speakingId === m.id ? "rgba(0,206,200,0.20)" : "rgba(11,18,40,0.65)",
+                                                        border: `1px solid ${speakingId === m.id ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.25)"}`,
+                                                    }}>
+                                                    {speakingId === m.id
+                                                        ? <VolumeX className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                                        : <Volume2 className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                    }
+                                                </button>
                                                 <button onClick={() => copyMessage(m.text)} title="Nusxa olish"
                                                     className="w-7 h-7 rounded-md flex items-center justify-center"
                                                     style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
@@ -2274,6 +2379,56 @@ export function NxSocialDesktop() {
             )}
 
             {/* Reaksiya bergan foydalanuvchilar */}
+            {/* Chat mavzu tanlash modali */}
+            {themePickerOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+                    style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
+                    onClick={() => setThemePickerOpen(false)}>
+                    <div onClick={e => e.stopPropagation()}
+                        className="w-full max-w-md rounded-2xl overflow-hidden"
+                        style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                            <div className="flex items-center gap-2">
+                                <Palette className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Chat mavzu</p>
+                            </div>
+                            <button onClick={() => setThemePickerOpen(false)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
+                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            </button>
+                        </div>
+                        <div className="p-4 grid grid-cols-3 gap-2">
+                            {Object.entries(CHAT_THEMES).map(([id, t]) => (
+                                <button key={id} onClick={() => pickTheme(id)}
+                                    className="flex flex-col items-center gap-1.5 py-3 rounded-xl transition"
+                                    style={{
+                                        background: chatTheme === id ? "rgba(0,206,200,0.15)" : "rgba(43,62,232,0.08)",
+                                        border: `1px solid ${chatTheme === id ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.20)"}`,
+                                    }}>
+                                    <div className="w-14 h-14 rounded-lg"
+                                        style={{ background: t.swatch, border: "1px solid rgba(255,255,255,0.10)" }} />
+                                    <span className="text-[10px] font-bold" style={{ color: chatTheme === id ? "#00CEC8" : "rgba(220,230,255,0.85)" }}>
+                                        {t.label}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                        <p className="px-4 pb-4 text-[10px] text-center" style={{ color: "rgba(140,160,210,0.55)" }}>
+                            Mavzu faqat sizga ko'rinadi — brauzeringizda saqlanadi
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Mening statusim modali */}
+            {statusModalOpen && (
+                <NxStatusModal
+                    initialEmoji={myStatus.emoji}
+                    initialText={myStatus.text}
+                    onClose={() => setStatusModalOpen(false)}
+                    onSaved={(e, t) => setMyStatus({ emoji: e, text: t })}
+                />
+            )}
             {/* Yangi kanal/guruh yaratish modali */}
             {createChannelOpen && (
                 <NxChannelCreateModal
@@ -2746,6 +2901,16 @@ function TransferSheet({
         </>
     );
 }
+
+// Chat mavzular — 6 ta preset. Fon = CSS background.
+const CHAT_THEMES: Record<string, { label: string; bg: string; swatch: string }> = {
+    default: { label: "Standart", bg: "rgba(11,18,40,0.35)", swatch: "linear-gradient(135deg,#0B1228,#1a2050)" },
+    ocean:   { label: "Okean",    bg: "linear-gradient(135deg,#0a1a2e,#0d3a5c 60%,#1a5d7a)", swatch: "linear-gradient(135deg,#0d3a5c,#1a5d7a)" },
+    sunset:  { label: "Quyosh botishi", bg: "linear-gradient(135deg,#2d1b3e,#5c1a3a 60%,#7a2d1a)", swatch: "linear-gradient(135deg,#5c1a3a,#c04a2d)" },
+    forest:  { label: "O'rmon",   bg: "linear-gradient(135deg,#0f2818,#1a4028 60%,#2d5c3a)", swatch: "linear-gradient(135deg,#1a4028,#3a8250)" },
+    mono:    { label: "Grafit",   bg: "linear-gradient(135deg,#1a1a1a,#2d2d2d)", swatch: "linear-gradient(135deg,#2d2d2d,#4a4a4a)" },
+    lavender:{ label: "Lavanda",  bg: "linear-gradient(135deg,#1a1a3a,#2a1a4a 60%,#4a2a6a)", swatch: "linear-gradient(135deg,#2a1a4a,#7a4aaa)" },
+};
 
 // Ikki sana bir kunda ekanini tekshirish (mahalliy vaqt bo'yicha)
 function isSameDay(a: string | Date, b: string | Date): boolean {

@@ -100,6 +100,11 @@ model UserProfile {
   // Rate-limit: user-initiated profile edits allowed once per 14 days
   profileEditedAt DateTime?
 
+  // Maxsus status (Slack/Discord uslubi) — emoji + qisqa matn, ixtiyoriy amal muddati
+  statusEmoji     String?             // "🎮", "💻", "😴", ...
+  statusText      String?             // "O'yinda", "Ishda", "Uxlayapman"
+  statusExpiresAt DateTime?           // NULL = doimiy; bo'lsa keyin avto-tozalanadi
+
   // Ikkinchi valyutani (USD) narxlar yonida referens sifatida ko'rsatish
   showUsdRef    Boolean  @default(false)
 

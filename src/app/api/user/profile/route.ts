@@ -26,6 +26,7 @@ export async function GET() {
             location: true, locationIv: true,
             phone: true, level: true, emailVerified: true, onboardingDone: true,
             profileEditedAt: true, showUsdRef: true,
+            statusEmoji: true, statusText: true, statusExpiresAt: true,
             createdAt: true,
         },
     });
