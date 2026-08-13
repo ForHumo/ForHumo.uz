@@ -174,6 +174,107 @@ export function NxSocialDesktop() {
     // Mening statusim modali + hozirgi status (session start'da yuklab olish)
     const [statusModalOpen, setStatusModalOpen] = useState(false);
     const [myStatus, setMyStatus] = useState<{ emoji: string | null; text: string | null }>({ emoji: null, text: null });
+    // @mention autocomplete — composer'da @ yozganda popover
+    interface MentionSuggestion { username: string; name: string | null; image: string | null }
+    const [mentionQuery, setMentionQuery] = useState<string | null>(null); // null = yopiq
+    const [mentionSuggestions, setMentionSuggestions] = useState<MentionSuggestion[]>([]);
+    const [mentionIdx, setMentionIdx] = useState(0);
+    // Composer input o'zgarganda @ ni topish
+    useEffect(() => {
+        // Oxirgi bo'shliqdan boshlab "@" bilan boshlanadigan token
+        const el = composerInputRef.current;
+        if (!el) return;
+        const pos = el.selectionStart ?? input.length;
+        const before = input.slice(0, pos);
+        const m = before.match(/(?:^|\s)@([a-z0-9_]{0,20})$/i);
+        if (!m) { setMentionQuery(null); return; }
+        setMentionQuery(m[1]);
+        setMentionIdx(0);
+    }, [input]);
+    // Suggestion source: (1) hozirgi peer, (2) yaqin convs peerlari, (3) API qidiruv
+    useEffect(() => {
+        if (mentionQuery === null) { setMentionSuggestions([]); return; }
+        const q = mentionQuery.toLowerCase();
+        const local: MentionSuggestion[] = [];
+        // Peer
+        if (peer?.username && peer.username.toLowerCase().includes(q)) {
+            local.push({ username: peer.username, name: peer.name, image: peer.image });
+        }
+        // Convs peerlari
+        for (const c of convs) {
+            if (!c.other?.username) continue;
+            if (local.find(x => x.username === c.other!.username)) continue;
+            if (c.other.username.toLowerCase().includes(q)) {
+                local.push({ username: c.other.username, name: c.other.name, image: c.other.image });
+            }
+        }
+        setMentionSuggestions(local.slice(0, 5));
+        // Agar mahalliy natijalar oz bo'lsa API dan qo'shimcha izlash (2+ belgi)
+        if (q.length >= 2 && local.length < 5) {
+            const t = setTimeout(async () => {
+                try {
+                    const r = await fetch(`/api/nexus/search?q=${encodeURIComponent(q)}&type=users`, { cache: "no-store" });
+                    if (!r.ok) return;
+                    const d = await r.json();
+                    const users = Array.isArray(d?.users) ? d.users : [];
+                    setMentionSuggestions(prev => {
+                        const merged = [...prev];
+                        for (const u of users) {
+                            if (!u.username || merged.find(x => x.username === u.username)) continue;
+                            merged.push({ username: u.username, name: u.name ?? null, image: u.image ?? null });
+                            if (merged.length >= 8) break;
+                        }
+                        return merged;
+                    });
+                } catch {}
+            }, 250);
+            return () => clearTimeout(t);
+        }
+    }, [mentionQuery, peer, convs]);
+
+    function insertMention(username: string) {
+        const el = composerInputRef.current;
+        const pos = el?.selectionStart ?? input.length;
+        const before = input.slice(0, pos);
+        const after = input.slice(pos);
+        const replaced = before.replace(/(?:^|\s)@[a-z0-9_]{0,20}$/i, (m) => {
+            // @token bilan almashtiramiz
+            const leading = m.startsWith(" ") || m.startsWith("\n") ? m[0] : "";
+            return `${leading}@${username} `;
+        });
+        setInput(replaced + after);
+        setMentionQuery(null);
+        setTimeout(() => {
+            const newPos = replaced.length;
+            el?.focus();
+            el?.setSelectionRange(newPos, newPos);
+        }, 0);
+    }
+
+    // Klaviatura yorliqlari uchun ref'lar (composer va chat-list qidiruvga fokus qo'yish)
+    const filterInputRef = useRef<HTMLInputElement | null>(null);
+    const composerInputRef = useRef<HTMLInputElement | null>(null);
+    const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
+    // NOTE: useEffect'i return oldida (barcha state e'lonlaridan keyin) — TDZ oldini olish uchun
+
+    // Chat statistika
+    interface ChatStats {
+        total: number; mineCount: number; peerCount: number;
+        mediaCounts: Record<string, number>;
+        reactionCount: number;
+        firstDate: string | null;
+        days: number; avgPerDay: number;
+        topDay: { date: string; count: number } | null;
+    }
+    const [chatStats, setChatStats] = useState<ChatStats | null>(null);
+    useEffect(() => {
+        if (!selectedId || !showInfo) { setChatStats(null); return; }
+        fetch(`/api/nexus/messages/${selectedId}/stats`, { cache: "no-store" })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (d) setChatStats(d); })
+            .catch(() => {});
+    }, [selectedId, showInfo]);
+
     // Chat mavzu (per-chat) — localStorage'da theme id saqlanadi
     const [chatTheme, setChatTheme] = useState<string>("default");
     const [themePickerOpen, setThemePickerOpen] = useState(false);
@@ -1002,6 +1103,67 @@ export function NxSocialDesktop() {
         if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     }, []);
 
+    // Klaviatura yorliqlari (barcha state e'lonlaridan keyin — TDZ oldini olish)
+    useEffect(() => {
+        function onKey(e: KeyboardEvent) {
+            const target = e.target as HTMLElement | null;
+            const inField = !!target && (
+                target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable
+            );
+
+            // Esc: modallar/panellar yopilishi
+            if (e.key === "Escape") {
+                if (statusModalOpen) { setStatusModalOpen(false); return; }
+                if (themePickerOpen) { setThemePickerOpen(false); return; }
+                if (createChannelOpen) { setCreateChannelOpen(null); return; }
+                if (shortcutsHelpOpen) { setShortcutsHelpOpen(false); return; }
+                if (galleryIdx !== null) { setGalleryIdx(null); return; }
+                if (forwardMsg || bulkForwardOpen) { setForwardMsg(null); setBulkForwardOpen(false); return; }
+                if (reactionUsers) { setReactionUsers(null); return; }
+                if (selectMode) { exitSelectMode(); return; }
+                if (searchOpen) { setSearchOpen(false); setSearchQuery(""); return; }
+                if (replyTo) { setReplyTo(null); return; }
+                if (editingId) { setEditingId(null); return; }
+            }
+
+            const mod = e.ctrlKey || e.metaKey;
+
+            if (mod && (e.key === "k" || e.key === "K")) {
+                e.preventDefault();
+                filterInputRef.current?.focus();
+                filterInputRef.current?.select();
+                return;
+            }
+            if (mod && (e.key === "f" || e.key === "F") && selectedId) {
+                e.preventDefault();
+                setSearchOpen(true);
+                return;
+            }
+            if (mod && e.key === "/") {
+                e.preventDefault();
+                setShortcutsHelpOpen(v => !v);
+                return;
+            }
+            // ArrowUp: oxirgi o'z matn xabarini tahrirlash (composer bo'sh yoki input tashqarisida)
+            if (!inField || (target === composerInputRef.current && !input)) {
+                if (e.key === "ArrowUp" && selectedId && !editingId) {
+                    const last = [...messages].reverse().find(m => m.mine && m.text && !m.mediaType);
+                    if (last) {
+                        e.preventDefault();
+                        setEditingId(last.id);
+                        setEditingText(last.text);
+                    }
+                }
+            }
+        }
+        document.addEventListener("keydown", onKey);
+        return () => document.removeEventListener("keydown", onKey);
+    }, [
+        selectedId, searchOpen, replyTo, editingId, selectMode, forwardMsg, bulkForwardOpen,
+        reactionUsers, galleryIdx, statusModalOpen, themePickerOpen, createChannelOpen,
+        shortcutsHelpOpen, messages, input,
+    ]);
+
     const filteredConvs = filter.trim()
         ? convs.filter(c => {
             const q = filter.toLowerCase();
@@ -1054,9 +1216,10 @@ export function NxSocialDesktop() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
                                 style={{ color: "rgba(140,160,210,0.50)" }} />
                             <input
+                                ref={filterInputRef}
                                 value={filter}
                                 onChange={e => setFilter(e.target.value)}
-                                placeholder="Qidirish..."
+                                placeholder="Qidirish... (Ctrl+K)"
                                 className="w-full h-9 pl-9 pr-3 rounded-xl bg-transparent text-white text-sm focus:outline-none"
                                 style={{ border: "1px solid rgba(43,62,232,0.20)" }}
                             />
@@ -1328,6 +1491,11 @@ export function NxSocialDesktop() {
                                         <button onClick={() => { setThemePickerOpen(true); setMoreOpen(false); }}
                                             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
                                             <Palette className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Chat mavzu
+                                        </button>
+                                        <button onClick={() => { setShortcutsHelpOpen(true); setMoreOpen(false); }}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                            <span className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded" style={{ background: "rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.85)" }}>?</span>
+                                            Yorliqlar (Ctrl+/)
                                         </button>
                                         <button onClick={() => exportChat("html")}
                                             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
@@ -1943,6 +2111,37 @@ export function NxSocialDesktop() {
                             )}
                         </div>
 
+                        {/* @mention autocomplete popover */}
+                        {mentionQuery !== null && mentionSuggestions.length > 0 && (
+                            <div className="mx-3 mb-1 rounded-xl overflow-hidden flex-shrink-0"
+                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 -4px 16px rgba(0,0,0,0.30)" }}>
+                                <p className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border-b"
+                                    style={{ color: "#00CEC8", borderColor: "rgba(43,62,232,0.20)" }}>
+                                    @{mentionQuery || "..."} · ↑↓ · Enter — tanlash · Esc — bekor
+                                </p>
+                                {mentionSuggestions.map((s, i) => (
+                                    <button key={s.username}
+                                        onClick={() => insertMention(s.username)}
+                                        onMouseEnter={() => setMentionIdx(i)}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition"
+                                        style={{ background: i === mentionIdx ? "rgba(0,206,200,0.10)" : "transparent" }}>
+                                        {s.image
+                                            ? <Image src={s.image} alt="" width={28} height={28} className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                                            : <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                                                style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                <BotIcon className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                            </div>
+                                        }
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-bold truncate" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                                {s.name ?? s.username}
+                                            </p>
+                                            <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.75)" }}>@{s.username}</p>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                         {/* Fayl yuklash progress bar */}
                         {uploadInfo && (
                             <div className="px-3 py-2 flex-shrink-0"
@@ -2159,6 +2358,7 @@ export function NxSocialDesktop() {
                                         )}
                                     </div>
                                     <input
+                                        ref={composerInputRef}
                                         value={input}
                                         onChange={e => {
                                             setInput(e.target.value);
@@ -2169,7 +2369,21 @@ export function NxSocialDesktop() {
                                                 lastTypingSentRef.current = now;
                                             }
                                         }}
-                                        onKeyDown={e => e.key === "Enter" && send()}
+                                        onKeyDown={e => {
+                                            // Mention popover navigatsiyasi
+                                            if (mentionQuery !== null && mentionSuggestions.length > 0) {
+                                                if (e.key === "ArrowDown") { e.preventDefault(); setMentionIdx(i => (i + 1) % mentionSuggestions.length); return; }
+                                                if (e.key === "ArrowUp") { e.preventDefault(); setMentionIdx(i => (i - 1 + mentionSuggestions.length) % mentionSuggestions.length); return; }
+                                                if (e.key === "Enter" || e.key === "Tab") {
+                                                    e.preventDefault();
+                                                    const pick = mentionSuggestions[mentionIdx];
+                                                    if (pick) insertMention(pick.username);
+                                                    return;
+                                                }
+                                                if (e.key === "Escape") { e.preventDefault(); setMentionQuery(null); return; }
+                                            }
+                                            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+                                        }}
                                         placeholder="Xabar yozing..."
                                         className="flex-1 min-w-0 h-10 px-4 rounded-xl bg-transparent text-white text-sm focus:outline-none"
                                         style={{ border: "1px solid rgba(43,62,232,0.20)" }}
@@ -2294,6 +2508,51 @@ export function NxSocialDesktop() {
                     </div>
 
                     {/* Umumiy media (suhbatdagi barcha rasmlar) */}
+                    {/* Chat statistikasi */}
+                    {chatStats && chatStats.total > 0 && (
+                        <div className="p-4 border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                            <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: "rgba(140,160,210,0.55)" }}>
+                                Statistika
+                            </p>
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                                <StatCard label="Jami xabar" value={chatStats.total.toLocaleString("uz-UZ")} />
+                                <StatCard label="Kunlik o'rt." value={chatStats.avgPerDay.toString()} />
+                                <StatCard label="Siz" value={chatStats.mineCount.toString()} accent />
+                                <StatCard label="U kishi" value={chatStats.peerCount.toString()} />
+                                <StatCard label="Reaksiyalar" value={chatStats.reactionCount.toString()} />
+                                <StatCard label="Kunlar" value={chatStats.days.toString()} />
+                            </div>
+                            {/* Media taqsimoti */}
+                            {Object.keys(chatStats.mediaCounts).length > 0 && (
+                                <div className="space-y-1 mt-2">
+                                    {Object.entries(chatStats.mediaCounts).sort((a, b) => b[1] - a[1]).map(([type, count]) => (
+                                        <div key={type} className="flex items-center justify-between text-[11px]">
+                                            <span style={{ color: "rgba(180,195,235,0.85)" }}>
+                                                {type === "image" ? "🖼 Rasm" : type === "video" ? "🎥 Video" :
+                                                 type === "audio" ? "🎙 Ovoz" : type === "file" ? "📎 Fayl" :
+                                                 type === "video-circle" ? "⭕ Dumaloq video" : type === "poll" ? "📊 So'rovnoma" :
+                                                 type === "location" ? "📍 Joylashuv" : type === "transfer" ? "💰 O'tkazma" :
+                                                 type === "agent" ? "🤖 Agent" : type}
+                                            </span>
+                                            <span className="font-bold" style={{ color: "#00CEC8" }}>{count}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {/* Boshlangan sana + eng ko'p yozgan kun */}
+                            {chatStats.firstDate && (
+                                <p className="text-[10px] mt-3 pt-2 border-t" style={{ color: "rgba(140,160,210,0.60)", borderColor: "rgba(43,62,232,0.10)" }}>
+                                    Boshlangan: {new Date(chatStats.firstDate).toLocaleDateString("uz-UZ", { day: "numeric", month: "long", year: "numeric" })}
+                                </p>
+                            )}
+                            {chatStats.topDay && (
+                                <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                    Rekord: {new Date(chatStats.topDay.date).toLocaleDateString("uz-UZ", { day: "numeric", month: "short" })}
+                                    — <span className="font-bold" style={{ color: "#00CEC8" }}>{chatStats.topDay.count}</span> xabar
+                                </p>
+                            )}
+                        </div>
+                    )}
                     <SharedMediaSection messages={messages} onOpen={i => setGalleryIdx(i)} />
 
                     {peer?.username && (
@@ -2379,6 +2638,50 @@ export function NxSocialDesktop() {
             )}
 
             {/* Reaksiya bergan foydalanuvchilar */}
+            {/* Klaviatura yorliqlari yordami */}
+            {shortcutsHelpOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+                    style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
+                    onClick={() => setShortcutsHelpOpen(false)}>
+                    <div onClick={e => e.stopPropagation()}
+                        className="w-full max-w-md rounded-2xl overflow-hidden"
+                        style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)" }}>
+                        <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                            <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Klaviatura yorliqlari</p>
+                            <button onClick={() => setShortcutsHelpOpen(false)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
+                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            </button>
+                        </div>
+                        <div className="p-4 space-y-2">
+                            {[
+                                { keys: ["Ctrl", "K"], label: "Chatlarda qidirish" },
+                                { keys: ["Ctrl", "F"], label: "Shu chatda qidirish" },
+                                { keys: ["Ctrl", "/"], label: "Yorliqlar ro'yxati" },
+                                { keys: ["Enter"], label: "Xabar yuborish" },
+                                { keys: ["Shift", "Enter"], label: "Yangi qatorga o'tish" },
+                                { keys: ["↑"], label: "Oxirgi xabaringizni tahrirlash" },
+                                { keys: ["Esc"], label: "Yopish / bekor qilish" },
+                            ].map((s, i) => (
+                                <div key={i} className="flex items-center justify-between py-1.5">
+                                    <span className="text-xs" style={{ color: "rgba(220,230,255,0.85)" }}>{s.label}</span>
+                                    <div className="flex items-center gap-1">
+                                        {s.keys.map((k, j) => (
+                                            <span key={j}>
+                                                {j > 0 && <span className="mx-0.5 text-[10px] opacity-50">+</span>}
+                                                <kbd className="text-[10px] font-black px-2 py-0.5 rounded"
+                                                    style={{ background: "rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.95)", border: "1px solid rgba(43,62,232,0.35)" }}>
+                                                    {k}
+                                                </kbd>
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Chat mavzu tanlash modali */}
             {themePickerOpen && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
@@ -2496,6 +2799,20 @@ export function NxSocialDesktop() {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+// Kichik statistika kartasi
+function StatCard({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+    return (
+        <div className="p-2 rounded-lg"
+            style={{
+                background: accent ? "rgba(0,206,200,0.08)" : "rgba(43,62,232,0.06)",
+                border: `1px solid ${accent ? "rgba(0,206,200,0.25)" : "rgba(43,62,232,0.14)"}`,
+            }}>
+            <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>{label}</p>
+            <p className="text-sm font-black" style={{ color: accent ? "#00CEC8" : "rgba(220,230,255,0.95)" }}>{value}</p>
         </div>
     );
 }
