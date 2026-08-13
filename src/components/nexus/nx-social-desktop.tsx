@@ -48,6 +48,8 @@ interface Msg {
     pollTotal?: number | null;
     locLat?: number | null;
     locLng?: number | null;
+    locUpdatedAt?: string | null;
+    locExpiresAt?: string | null;
     replyTo?: { id: string; text: string; senderName: string | null; mine: boolean } | null;
     editedAt?: string | null;
     reactions?: Array<{ emoji: string; count: number; mine: boolean }>;
@@ -139,6 +141,9 @@ export function NxSocialDesktop() {
     const [pollOpen, setPollOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState<Array<{ id: string; text: string; mine: boolean; createdAt: string; mediaType: string | null; mediaUrl: string | null }> | null>(null);
+    const [searchTotal, setSearchTotal] = useState(0);
+    const [searchBusy, setSearchBusy] = useState(false);
     const [replyTo, setReplyTo] = useState<Msg | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingText, setEditingText] = useState("");
@@ -473,6 +478,7 @@ export function NxSocialDesktop() {
     async function uploadFile(file: File, overrideKind?: "image" | "video" | "audio" | "file" | "video-circle") {
         if (!selectedId || uploading) return;
         setUploading(true);
+        setUploadInfo({ name: file.name, size: file.size, progress: 0 });
         try {
             // Katta faylni Vercel Blob orqali (client upload)
             const { upload } = await import("@vercel/blob/client");
@@ -480,6 +486,10 @@ export function NxSocialDesktop() {
             const blob = await upload(`nx-dm/${selectedId}/${Date.now()}-${safeName}`, file, {
                 access: "public",
                 handleUploadUrl: "/api/market/upload/client-token",
+                onUploadProgress: (e) => {
+                    // e.percentage: 0..100 (Vercel blob client-side hodisasi)
+                    setUploadInfo(prev => prev ? { ...prev, progress: Math.round(e.percentage) } : prev);
+                },
             });
             const kind = overrideKind ?? (file.type.startsWith("image/") ? "image"
                 : file.type.startsWith("video/") ? "video"
@@ -499,19 +509,27 @@ export function NxSocialDesktop() {
             }
         } catch (e) {
             alert("Yuklab bo'lmadi: " + (e instanceof Error ? e.message : "xato"));
-        } finally { setUploading(false); }
+        } finally { setUploading(false); setUploadInfo(null); }
     }
+    const [uploadInfo, setUploadInfo] = useState<{ name: string; size: number; progress: number } | null>(null);
 
-    async function sendLocation() {
+    async function sendLocation(liveMinutes?: number) {
         if (!selectedId || locBusy) return;
         setLocBusy(true);
         try {
             const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
                 navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 8000 })
             );
+            const body: Record<string, unknown> = {
+                text: "", mediaType: "location",
+                locLat: pos.coords.latitude, locLng: pos.coords.longitude,
+            };
+            if (liveMinutes && liveMinutes > 0) {
+                body.locExpiresAt = new Date(Date.now() + liveMinutes * 60 * 1000).toISOString();
+            }
             const r = await fetch(`/api/nexus/messages/${selectedId}`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: "", mediaType: "location", locLat: pos.coords.latitude, locLng: pos.coords.longitude }),
+                body: JSON.stringify(body),
             });
             if (r.ok) {
                 const d = await r.json();
@@ -520,8 +538,66 @@ export function NxSocialDesktop() {
             }
         } catch {
             alert("Joylashuvni olib bo'lmadi");
-        } finally { setLocBusy(false); }
+        } finally { setLocBusy(false); setLocationPickerOpen(false); }
     }
+
+    // Jonli joylashuv — muddat tugagunicha har 30 sekundda pozitsiyani yangilash
+    const liveLocationTimersRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
+    useEffect(() => {
+        // O'zim jo'natgan va hali muddati o'tmagan barcha jonli joylashuvlar uchun
+        const now = Date.now();
+        for (const m of messages) {
+            if (!m.mine || m.mediaType !== "location" || !m.locExpiresAt) continue;
+            const expMs = new Date(m.locExpiresAt).getTime();
+            if (expMs <= now) continue;
+            if (liveLocationTimersRef.current.has(m.id)) continue;
+            const iv = setInterval(async () => {
+                try {
+                    const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+                        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 8000 })
+                    );
+                    if (!selectedId) return;
+                    await fetch(`/api/nexus/messages/${selectedId}/live-location`, {
+                        method: "PATCH", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ messageId: m.id, lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                    });
+                } catch { /* muvaffaqiyatsiz — keyingi urinishga */ }
+            }, 30_000);
+            liveLocationTimersRef.current.set(m.id, iv);
+            // Muddati tugaganda taymer'ni to'xtatish
+            const delay = Math.max(0, expMs - now);
+            setTimeout(() => {
+                const t = liveLocationTimersRef.current.get(m.id);
+                if (t) { clearInterval(t); liveLocationTimersRef.current.delete(m.id); }
+            }, delay);
+        }
+        // Suhbat almashinsa — barcha taymerlarni to'xtatish
+        return () => {
+            // Muhim: cleanup faqat komponent unmount'da chaqirilishi kerak,
+            // messages o'zgarishida emas — shuning uchun to'liq cleanup pastdagi effektda
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [messages, selectedId]);
+    useEffect(() => () => {
+        const timers = liveLocationTimersRef.current;
+        for (const t of timers.values()) clearInterval(t);
+        timers.clear();
+    }, []);
+
+    // Jonli joylashuvni to'xtatish (o'z xabari)
+    async function stopLiveLocation(messageId: string) {
+        if (!selectedId) return;
+        if (!confirm("Jonli joylashuvni to'xtatasizmi?")) return;
+        const r = await fetch(`/api/nexus/messages/${selectedId}/live-location?messageId=${messageId}`, { method: "DELETE" });
+        if (r.ok) {
+            const iv = liveLocationTimersRef.current.get(messageId);
+            if (iv) { clearInterval(iv); liveLocationTimersRef.current.delete(messageId); }
+            // Optimistik: locExpiresAt = now
+            setMessages(prev => prev.map(x => x.id === messageId ? { ...x, locExpiresAt: new Date().toISOString() } : x));
+        }
+    }
+
+    const [locationPickerOpen, setLocationPickerOpen] = useState(false);
 
     // Group/Channel listni yuklash
     useEffect(() => {
@@ -693,6 +769,38 @@ export function NxSocialDesktop() {
     function scrollToBottom() {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
         setUnreadInView(0);
+    }
+
+    // Server-side qidiruv (debounced 300ms)
+    useEffect(() => {
+        if (!searchOpen || !selectedId) { setSearchResults(null); setSearchTotal(0); return; }
+        const q = searchQuery.trim();
+        if (q.length < 2) { setSearchResults(null); setSearchTotal(0); return; }
+        setSearchBusy(true);
+        const t = setTimeout(async () => {
+            try {
+                const r = await fetch(`/api/nexus/messages/${selectedId}/search?q=${encodeURIComponent(q)}&limit=50`, { cache: "no-store" });
+                if (r.ok) {
+                    const d = await r.json();
+                    setSearchResults(d.results ?? []);
+                    setSearchTotal(d.total ?? 0);
+                }
+            } finally { setSearchBusy(false); }
+        }, 300);
+        return () => { clearTimeout(t); };
+    }, [searchQuery, searchOpen, selectedId]);
+
+    function jumpToMessage(messageId: string) {
+        const el = document.querySelector<HTMLElement>(`[data-msg-id="${messageId}"]`);
+        if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.animate([
+                { background: "rgba(0,206,200,0.20)" }, { background: "transparent" },
+            ], { duration: 1400, iterations: 1 });
+        } else {
+            // Xabar joriy 100'da yo'q — thread'ni qayta yuklab, keyin izlab topamiz
+            alert("Bu xabar hozirgi ko'rinishda emas — biroz yuqoriga aylantirib ko'ring");
+        }
     }
 
     // URL preview: yangi xabarlar kelganda birinchi URL uchun preview olish
@@ -1177,24 +1285,56 @@ export function NxSocialDesktop() {
 
                         {/* Qidiruv paneli (Search tugmasi bosilsa) */}
                         {searchOpen && (
-                            <div className="px-4 py-2 flex items-center gap-2 flex-shrink-0"
+                            <div className="flex-shrink-0"
                                 style={{ borderBottom: "1px solid rgba(43,62,232,0.14)", background: "rgba(11,18,40,0.55)" }}>
-                                <Search className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.60)" }} />
-                                <input
-                                    autoFocus
-                                    value={searchQuery}
-                                    onChange={e => setSearchQuery(e.target.value)}
-                                    placeholder="Suhbatda qidirish..."
-                                    className="flex-1 h-8 bg-transparent text-white text-sm focus:outline-none"
-                                />
-                                {searchQuery && (
-                                    <span className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>
-                                        {(() => {
-                                            const q = searchQuery.toLowerCase();
-                                            const count = messages.filter(m => (m.text ?? "").toLowerCase().includes(q)).length;
-                                            return `${count} ta natija`;
-                                        })()}
-                                    </span>
+                                <div className="px-4 py-2 flex items-center gap-2">
+                                    <Search className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.60)" }} />
+                                    <input
+                                        autoFocus
+                                        value={searchQuery}
+                                        onChange={e => setSearchQuery(e.target.value)}
+                                        placeholder="Suhbatda qidirish (kamida 2 belgi)..."
+                                        className="flex-1 h-8 bg-transparent text-white text-sm focus:outline-none"
+                                    />
+                                    {searchBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#00CEC8" }} />}
+                                    {searchQuery.trim().length >= 2 && !searchBusy && (
+                                        <span className="text-[11px] font-bold" style={{ color: "rgba(140,160,210,0.85)" }}>
+                                            {searchTotal} natija
+                                        </span>
+                                    )}
+                                </div>
+                                {/* Natijalar ro'yxati (server-side, 50 tagacha) */}
+                                {searchResults && searchResults.length > 0 && (
+                                    <div className="max-h-64 overflow-y-auto border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                                        {searchResults.map(r => (
+                                            <button key={r.id} onClick={() => jumpToMessage(r.id)}
+                                                className="w-full text-left px-4 py-2 border-b hover:bg-white/[0.04] transition"
+                                                style={{ borderColor: "rgba(43,62,232,0.08)" }}>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded"
+                                                        style={{ background: r.mine ? "rgba(43,62,232,0.20)" : "rgba(0,206,200,0.15)", color: r.mine ? "rgba(180,195,235,0.90)" : "#00CEC8" }}>
+                                                        {r.mine ? "Siz" : "Peer"}
+                                                    </span>
+                                                    <span className="text-[10px] tabular-nums" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                        {new Date(r.createdAt).toLocaleDateString("uz-UZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs mt-1 line-clamp-2" style={{ color: "rgba(220,230,255,0.90)" }}>
+                                                    {highlightText(r.text ?? (r.mediaType ? `[${r.mediaType}]` : ""), searchQuery)}
+                                                </p>
+                                            </button>
+                                        ))}
+                                        {searchTotal > searchResults.length && (
+                                            <p className="text-[10px] text-center py-2" style={{ color: "rgba(140,160,210,0.55)" }}>
+                                                +{searchTotal - searchResults.length} boshqa natija — aniqroq qidiruv yozing
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                                {searchResults && searchResults.length === 0 && searchQuery.trim().length >= 2 && !searchBusy && (
+                                    <p className="px-4 py-3 text-xs text-center" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                        Hech narsa topilmadi
+                                    </p>
                                 )}
                             </div>
                         )}
@@ -1456,23 +1596,64 @@ export function NxSocialDesktop() {
                                                 </p>
                                             </div>
                                         )}
-                                        {m.mediaType === "location" && typeof m.locLat === "number" && typeof m.locLng === "number" && (
-                                            <a href={`https://www.google.com/maps?q=${m.locLat},${m.locLng}`}
-                                                target="_blank" rel="noopener noreferrer"
-                                                className="mb-1 block rounded-lg overflow-hidden p-3"
-                                                style={{ background: m.mine ? "rgba(255,255,255,0.10)" : "rgba(0,206,200,0.08)" }}>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                                                        style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgba(0,206,200,0.20)" }}>
-                                                        <MapPin className="w-4 h-4" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
-                                                    </div>
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="text-sm font-bold">Joylashuv</p>
-                                                        <p className="text-[10px] opacity-75">Google Maps'da ochish</p>
-                                                    </div>
+                                        {m.mediaType === "location" && typeof m.locLat === "number" && typeof m.locLng === "number" && (() => {
+                                            void tickSec; // sekundlik re-render
+                                            const isLive = !!m.locExpiresAt;
+                                            const expMs = m.locExpiresAt ? new Date(m.locExpiresAt).getTime() : 0;
+                                            const active = isLive && expMs > Date.now();
+                                            const leftSec = active ? Math.floor((expMs - Date.now()) / 1000) : 0;
+                                            const leftLabel = leftSec >= 60 ? `${Math.floor(leftSec / 60)} daq` : `${leftSec}s`;
+                                            const updated = m.locUpdatedAt ? Math.floor((Date.now() - new Date(m.locUpdatedAt).getTime()) / 1000) : 0;
+                                            const updatedLabel = updated < 60 ? `${updated}s oldin` : updated < 3600 ? `${Math.floor(updated / 60)} daq oldin` : `${Math.floor(updated / 3600)} soat oldin`;
+                                            return (
+                                                <div className="mb-1 rounded-lg overflow-hidden"
+                                                    style={{
+                                                        background: m.mine ? "rgba(255,255,255,0.10)" : "rgba(0,206,200,0.08)",
+                                                        border: active ? `1px solid ${m.mine ? "rgba(255,255,255,0.25)" : "rgba(0,206,200,0.40)"}` : undefined,
+                                                    }}>
+                                                    <a href={`https://www.google.com/maps?q=${m.locLat},${m.locLng}`}
+                                                        target="_blank" rel="noopener noreferrer"
+                                                        className="flex items-center gap-2 p-3"
+                                                        style={{ textDecoration: "none" }}>
+                                                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 relative"
+                                                            style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgba(0,206,200,0.20)" }}>
+                                                            <MapPin className="w-4 h-4" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
+                                                            {active && (
+                                                                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full animate-pulse"
+                                                                    style={{ background: "#00CEC8", boxShadow: "0 0 6px #00CEC8" }} />
+                                                            )}
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-sm font-bold flex items-center gap-1.5">
+                                                                {active ? "Jonli joylashuv" : isLive ? "Jonli — tugagan" : "Joylashuv"}
+                                                                {active && (
+                                                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full"
+                                                                        style={{ background: m.mine ? "rgba(255,255,255,0.20)" : "rgba(0,206,200,0.25)", color: m.mine ? "#fff" : "#00CEC8" }}>
+                                                                        {leftLabel}
+                                                                    </span>
+                                                                )}
+                                                            </p>
+                                                            <p className="text-[10px] opacity-75">
+                                                                {active && m.locUpdatedAt
+                                                                    ? `Yangilangan: ${updatedLabel}`
+                                                                    : "Google Maps'da ochish"}
+                                                            </p>
+                                                        </div>
+                                                    </a>
+                                                    {active && m.mine && (
+                                                        <button onClick={() => stopLiveLocation(m.id)}
+                                                            className="w-full py-1.5 text-[10px] font-black uppercase tracking-wider border-t"
+                                                            style={{
+                                                                background: "rgba(239,68,68,0.10)",
+                                                                borderColor: m.mine ? "rgba(255,255,255,0.15)" : "rgba(0,206,200,0.15)",
+                                                                color: "#EF4444",
+                                                            }}>
+                                                            To&apos;xtatish
+                                                        </button>
+                                                    )}
                                                 </div>
-                                            </a>
-                                        )}
+                                            );
+                                        })()}
                                         {m.mediaType === "transfer" && m.transferAmount && m.transferCurrency && (
                                             <div className="mb-1 rounded-lg overflow-hidden"
                                                 style={{ background: m.mine ? "rgba(255,255,255,0.12)" : "rgba(0,206,200,0.10)" }}>
@@ -1657,6 +1838,32 @@ export function NxSocialDesktop() {
                             )}
                         </div>
 
+                        {/* Fayl yuklash progress bar */}
+                        {uploadInfo && (
+                            <div className="px-3 py-2 flex-shrink-0"
+                                style={{ borderTop: "1px solid rgba(43,62,232,0.20)", background: "rgba(11,18,40,0.85)" }}>
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                    <p className="text-xs font-bold truncate flex-1" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                        {uploadInfo.name}
+                                    </p>
+                                    <span className="text-[10px] tabular-nums font-black" style={{ color: "#00CEC8" }}>
+                                        {uploadInfo.progress}%
+                                    </span>
+                                    <span className="text-[10px] tabular-nums opacity-70" style={{ color: "rgba(220,230,255,0.75)" }}>
+                                        {formatBytes(uploadInfo.size)}
+                                    </span>
+                                </div>
+                                <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(43,62,232,0.15)" }}>
+                                    <div className="h-full transition-all duration-200 rounded-full"
+                                        style={{
+                                            width: `${uploadInfo.progress}%`,
+                                            background: "linear-gradient(90deg,#2B3EE8,#00CEC8)",
+                                        }} />
+                                </div>
+                            </div>
+                        )}
+
                         {/* Undo-send bar (5s grace period) */}
                         {pendingSend && (
                             <div className="px-3 py-2 flex items-center gap-2 flex-shrink-0"
@@ -1733,7 +1940,33 @@ export function NxSocialDesktop() {
                             ) : (
                                 <>
                                     <ComposerBtn icon={Paperclip} title="Fayl/rasm/video" onClick={() => fileInputRef.current?.click()} loading={uploading} />
-                                    <ComposerBtn icon={MapPin} title="Joylashuv" onClick={() => sendLocation()} loading={locBusy} />
+                                    <div className="relative">
+                                        <ComposerBtn icon={MapPin} title="Joylashuv"
+                                            onClick={() => setLocationPickerOpen(v => !v)}
+                                            loading={locBusy}
+                                            accent={locationPickerOpen} />
+                                        {locationPickerOpen && (
+                                            <div className="absolute bottom-full mb-2 left-0 z-30 rounded-lg overflow-hidden"
+                                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 180 }}>
+                                                <p className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border-b"
+                                                    style={{ color: "#00CEC8", borderColor: "rgba(43,62,232,0.20)" }}>
+                                                    Joylashuv turi
+                                                </p>
+                                                <button onClick={() => sendLocation()}
+                                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white hover:bg-white/[0.06] text-left">
+                                                    <MapPin className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                    Statik joylashuv
+                                                </button>
+                                                {[15, 60, 480].map(mins => (
+                                                    <button key={mins} onClick={() => sendLocation(mins)}
+                                                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white hover:bg-white/[0.06] text-left">
+                                                        <MapPin className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                                        Jonli — {mins < 60 ? `${mins} daq` : `${mins / 60} soat`}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                     <ComposerBtn icon={BarChart2} title="So'rovnoma" onClick={() => setPollOpen(true)} />
                                     <ComposerBtn icon={Camera} title="Video-circle" onClick={() => setCircleOpen(true)} />
                                     <ComposerBtn icon={Wallet} title="Pul yuborish" onClick={() => setTransferOpen(true)} accent />
