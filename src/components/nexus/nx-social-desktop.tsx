@@ -8,10 +8,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
+import { NxVoicePlayer } from "./nx-voice-player";
 import { useNxPlayer } from "./nx-player-ctx";
 import { usePresence } from "@/lib/presence";
 import { useSession } from "next-auth/react";
@@ -46,6 +47,7 @@ interface Msg {
     replyTo?: { id: string; text: string; senderName: string | null; mine: boolean } | null;
     editedAt?: string | null;
     reactions?: Array<{ emoji: string; count: number; mine: boolean }>;
+    durationMs?: number | null;
 }
 
 interface PeerInfo {
@@ -137,6 +139,11 @@ export function NxSocialDesktop() {
     const galleryImages = messages.filter(m => m.mediaType === "image" && m.mediaUrl);
     const [translated, setTranslated] = useState<Record<string, string>>({});
     const [translating, setTranslating] = useState<Record<string, boolean>>({});
+    // Forward: qaysi xabar forward qilinmoqda va uni qaysi suhbatga jo'natish
+    const [forwardMsg, setForwardMsg] = useState<Msg | null>(null);
+    const [forwarding, setForwarding] = useState(false);
+    // Reaksiya bergan foydalanuvchilar modali
+    const [reactionUsers, setReactionUsers] = useState<{ messageId: string; emoji: string; users: Array<{ name: string | null; username: string | null; image: string | null; mine: boolean }> | null } | null>(null);
     const [moreOpen, setMoreOpen] = useState(false);
     const moreRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -197,6 +204,61 @@ export function NxSocialDesktop() {
             }
         } finally {
             setTranslating(prev => { const n = { ...prev }; delete n[messageId]; return n; });
+        }
+    }
+
+    async function openReactionUsers(messageId: string, emoji: string) {
+        if (!selectedId) return;
+        setReactionUsers({ messageId, emoji, users: null });
+        try {
+            const r = await fetch(`/api/nexus/messages/${selectedId}/reactions?messageId=${messageId}&emoji=${encodeURIComponent(emoji)}`);
+            if (r.ok) {
+                const d = await r.json();
+                setReactionUsers({ messageId, emoji, users: d.users ?? [] });
+            } else {
+                setReactionUsers({ messageId, emoji, users: [] });
+            }
+        } catch {
+            setReactionUsers({ messageId, emoji, users: [] });
+        }
+    }
+
+    async function forwardToConv(targetConvId: string) {
+        if (!forwardMsg) return;
+        setForwarding(true);
+        try {
+            const body: Record<string, unknown> = {};
+            const src = forwardMsg;
+            // Matn: original matn oldiga "→ Yuborilgan" belgisi
+            const prefix = "↪ Yuborilgan xabar\n";
+            if (src.text) body.text = prefix + src.text;
+            else body.text = prefix;
+            // Media (agent/transfer/poll/location'lar forward'ga tushmaydi — faqat oddiy media)
+            if (src.mediaUrl && src.mediaType && ["image", "video", "audio", "file", "video-circle"].includes(src.mediaType)) {
+                body.mediaUrl = src.mediaUrl;
+                body.mediaType = src.mediaType;
+                if (src.mediaName) body.mediaName = src.mediaName;
+                if (typeof src.mediaSize === "number") body.mediaSize = src.mediaSize;
+                if (typeof src.durationMs === "number") body.durationMs = src.durationMs;
+            }
+            const r = await fetch(`/api/nexus/messages/${targetConvId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            if (r.ok) {
+                setForwardMsg(null);
+                // Agar shu suhbatga forward qilingan bo'lsa — thread'ni yangilash
+                if (targetConvId === selectedId) {
+                    const d = await r.json();
+                    if (d?.message) setMessages(m => [...m, d.message as Msg]);
+                }
+                loadConvs();
+            } else {
+                const d = await r.json().catch(() => ({}));
+                alert(d?.error ?? "Yuborib bo'lmadi");
+            }
+        } finally {
+            setForwarding(false);
         }
     }
 
@@ -693,6 +755,11 @@ export function NxSocialDesktop() {
                                             style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
                                             <Reply className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
                                         </button>
+                                        <button onClick={() => setForwardMsg(m)} title="Yuborish (forward)"
+                                            className="w-7 h-7 rounded-md flex items-center justify-center"
+                                            style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                            <Forward className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        </button>
                                         {m.mine && m.text && !m.mediaType && (
                                             <button onClick={() => { setEditingId(m.id); setEditingText(m.text); }} title="Tahrirlash"
                                                 className="w-7 h-7 rounded-md flex items-center justify-center"
@@ -773,7 +840,9 @@ export function NxSocialDesktop() {
                                             <video src={m.mediaUrl} controls playsInline className="max-w-full max-h-80 rounded-md mb-1" />
                                         )}
                                         {m.mediaType === "audio" && m.mediaUrl && (
-                                            <audio src={m.mediaUrl} controls className="w-full max-w-[240px] mb-1" style={{ height: 34 }} />
+                                            <div className="mb-1">
+                                                <NxVoicePlayer src={m.mediaUrl} mine={m.mine} seed={m.id} initialDurationMs={m.durationMs} />
+                                            </div>
                                         )}
                                         {m.mediaType === "video-circle" && m.mediaUrl && (
                                             <video src={m.mediaUrl} controls playsInline
@@ -909,7 +978,10 @@ export function NxSocialDesktop() {
                                         {m.reactions && m.reactions.length > 0 && (
                                             <div className="flex flex-wrap gap-1 mt-1">
                                                 {m.reactions.map(r => (
-                                                    <button key={r.emoji} onClick={() => toggleReaction(m.id, r.emoji)}
+                                                    <button key={r.emoji}
+                                                        onClick={(e) => e.ctrlKey || e.metaKey ? toggleReaction(m.id, r.emoji) : openReactionUsers(m.id, r.emoji)}
+                                                        onDoubleClick={() => toggleReaction(m.id, r.emoji)}
+                                                        title="Bosish — kim reaksiya berganini ko'rish · Ctrl/Dbl — o'chirish"
                                                         className="px-1.5 py-0.5 rounded-full text-[11px] flex items-center gap-0.5 transition"
                                                         style={{
                                                             background: r.mine ? "rgba(0,206,200,0.25)" : "rgba(255,255,255,0.10)",
@@ -1137,6 +1209,126 @@ export function NxSocialDesktop() {
                             </Link>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Forward modali — qaysi suhbatga jo'natish */}
+            {forwardMsg && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+                    style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
+                    onClick={() => !forwarding && setForwardMsg(null)}>
+                    <div onClick={e => e.stopPropagation()}
+                        className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
+                        style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "80vh" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                            <div className="flex items-center gap-2">
+                                <Forward className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Kimga yuborish</p>
+                            </div>
+                            <button onClick={() => !forwarding && setForwardMsg(null)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
+                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            </button>
+                        </div>
+                        <div className="p-3 border-b text-xs italic line-clamp-2" style={{ borderColor: "rgba(43,62,232,0.20)", color: "rgba(160,176,224,0.75)" }}>
+                            {forwardMsg.text || (forwardMsg.mediaType ? `[${forwardMsg.mediaType}]` : "(bo'sh)")}
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-2">
+                            {convs.filter(c => c.other).length === 0 ? (
+                                <p className="text-xs text-center py-6" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                    Suhbat topilmadi
+                                </p>
+                            ) : (
+                                convs.map(c => (
+                                    <button key={c.conversationId} onClick={() => forwardToConv(c.conversationId)}
+                                        disabled={forwarding}
+                                        className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/[0.04] transition disabled:opacity-40 text-left">
+                                        {c.other?.image
+                                            ? <Image src={c.other.image} alt="" width={36} height={36} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                                            : <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                                                style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                <BotIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                            </div>
+                                        }
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-bold truncate" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                                {c.other?.name ?? c.other?.username ?? "Foydalanuvchi"}
+                                            </p>
+                                            {c.other?.username && (
+                                                <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                                    @{c.other.username}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                        {forwarding && (
+                            <div className="p-3 border-t flex items-center justify-center gap-2" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                                <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#00CEC8" }} />
+                                <span className="text-xs" style={{ color: "rgba(160,176,224,0.85)" }}>Yuborilmoqda...</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Reaksiya bergan foydalanuvchilar */}
+            {reactionUsers && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+                    style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
+                    onClick={() => setReactionUsers(null)}>
+                    <div onClick={e => e.stopPropagation()}
+                        className="w-full max-w-sm rounded-2xl overflow-hidden flex flex-col"
+                        style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "70vh" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xl">{reactionUsers.emoji}</span>
+                                <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                    Reaksiya berganlar
+                                </p>
+                            </div>
+                            <button onClick={() => setReactionUsers(null)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
+                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-2">
+                            {reactionUsers.users === null ? (
+                                <div className="flex justify-center py-8">
+                                    <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#00CEC8" }} />
+                                </div>
+                            ) : reactionUsers.users.length === 0 ? (
+                                <p className="text-xs text-center py-6" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                    Reaksiya topilmadi
+                                </p>
+                            ) : (
+                                reactionUsers.users.map((u, i) => (
+                                    <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
+                                        {u.image
+                                            ? <Image src={u.image} alt="" width={36} height={36} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                                            : <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                                                style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                <BotIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                            </div>
+                                        }
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-bold truncate" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                                {u.name ?? u.username ?? "Foydalanuvchi"}
+                                                {u.mine && <span className="ml-1.5 text-[9px] font-bold" style={{ color: "#00CEC8" }}>(Siz)</span>}
+                                            </p>
+                                            {u.username && (
+                                                <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                                    @{u.username}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

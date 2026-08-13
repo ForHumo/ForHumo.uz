@@ -13,6 +13,7 @@ import { upload } from "@vercel/blob/client";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxBanModal, type BanInfo } from "./nx-ban-modal";
 import { NxPollCreate } from "./nx-poll-create";
+import { NxVoicePlayer } from "./nx-voice-player";
 
 interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
 interface Conv { conversationId: string; other: Other | null; lastMessageText: string | null; lastMessageAt: string; lastMine: boolean; unread: boolean }
@@ -717,12 +718,8 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                             </div>
                                         )}
                                         {m.mediaType === "audio" && m.mediaUrl && (
-                                            <div className="px-3 py-2.5 flex items-center gap-2.5 min-w-[240px]">
-                                                <Music className="w-4 h-4 flex-shrink-0" style={{ color: m.mine ? "rgba(255,255,255,0.9)" : "#00CEC8" }} />
-                                                <audio src={m.mediaUrl} controls className="flex-1 h-8" style={{ maxWidth: 200 }} />
-                                                {typeof m.durationMs === "number" && m.durationMs > 0 && (
-                                                    <span className="text-[10px] tabular-nums" style={{ color: m.mine ? "rgba(255,255,255,0.75)" : "rgba(140,160,210,0.75)" }}>{fmtDuration(m.durationMs)}</span>
-                                                )}
+                                            <div className="px-2 pt-1">
+                                                <NxVoicePlayer src={m.mediaUrl} mine={m.mine} seed={m.id} initialDurationMs={m.durationMs} />
                                             </div>
                                         )}
                                         {m.mediaType === "poll" && m.pollQuestion && Array.isArray(m.pollOptions) && (
