@@ -30,10 +30,20 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     // Eng yangi 100 xabar (desc) — keyin klient uchun xronologik tartibga (asc) qaytaramiz.
     // Avval asc edi → 100+ xabarli suhbatda eng yangilari ko'rinmay qolardi.
+    // Self-destruct: muddati o'tgan xabarlarni chiqarmaymiz.
+    const now = new Date();
     const recent = await prisma.nexusMessage.findMany({
-        where: { conversationId: id }, orderBy: { createdAt: "desc" }, take: 100,
+        where: {
+            conversationId: id,
+            OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+        },
+        orderBy: { createdAt: "desc" }, take: 100,
     });
     const messages = recent.reverse();
+    // Fon rejimda: allaqachon muddati o'tgan xabarlarni tozalash (fire-and-forget)
+    prisma.nexusMessage.deleteMany({
+        where: { conversationId: id, expiresAt: { lte: now } },
+    }).catch(() => {});
 
     // Poll xabarlar uchun ovoz statistikasini yig'ish
     const pollMsgIds = messages.filter(m => m.mediaType === "poll").map(m => m.id);
@@ -119,6 +129,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 replyTo: m.replyToId ? (replyMap.get(m.replyToId) ?? null) : null,
                 editedAt: m.editedAt,
                 pinnedAt: m.pinnedAt,
+                expiresAt: m.expiresAt,
                 reactions: reactionMap.get(m.id)
                     ? [...reactionMap.get(m.id)!.entries()].map(([emoji, s]) => ({ emoji, count: s.count, mine: s.mine }))
                     : [],
@@ -170,6 +181,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         locLat?: number; locLng?: number; locExpiresAt?: string | null;
         pollQuestion?: string; pollOptions?: string[]; pollExpiresAt?: string | null; pollMulti?: boolean;
         replyToId?: string;
+        selfDestructSeconds?: number;                          // TTL — shu sekunddan keyin o'chadi
     };
     const text = String(body.text ?? "").trim();
     const isLocation = body.mediaType === "location" && typeof body.locLat === "number" && typeof body.locLng === "number";
@@ -194,12 +206,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         if (target && target.conversationId === id) replyToId = target.id;
     }
 
+    // Self-destruct: 5s..24soat oralig'ida ruxsat
+    const ttl = typeof body.selfDestructSeconds === "number"
+        ? Math.max(5, Math.min(86400, Math.floor(body.selfDestructSeconds)))
+        : null;
+    const expiresAt = ttl ? new Date(Date.now() + ttl * 1000) : null;
+
     const msg = await prisma.nexusMessage.create({
         data: {
             conversationId: id,
             senderId: me.id,
             text: clean,
             replyToId,
+            expiresAt,
             mediaUrl: hasMedia && !isLocation && !isPoll ? body.mediaUrl : null,
             mediaType: hasMedia ? body.mediaType : null,
             mediaMime: hasMedia && !isLocation && !isPoll ? (body.mediaMime ?? null) : null,
@@ -269,6 +288,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             pollQuestion: msg.pollQuestion, pollOptions: msg.pollOptions, pollExpiresAt: msg.pollExpiresAt, pollMulti: msg.pollMulti,
             pollVoteCounts: isPoll ? msg.pollOptions.map(() => 0) : null,
             pollMyVotes: isPoll ? [] : null, pollTotal: isPoll ? 0 : null,
+            expiresAt: msg.expiresAt,
         },
     });
 }

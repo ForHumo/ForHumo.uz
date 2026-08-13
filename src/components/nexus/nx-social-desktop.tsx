@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
@@ -52,6 +52,7 @@ interface Msg {
     reactions?: Array<{ emoji: string; count: number; mine: boolean }>;
     durationMs?: number | null;
     pinnedAt?: string | null;
+    expiresAt?: string | null;
 }
 
 interface PeerInfo {
@@ -146,6 +147,20 @@ export function NxSocialDesktop() {
     const [translatePickerFor, setTranslatePickerFor] = useState<string | null>(null);
     // URL preview: URL → { title, image, description, siteName } (yoki null = topilmadi)
     const [linkPreview, setLinkPreview] = useState<Record<string, { title: string | null; image: string | null; description: string | null; siteName: string | null; url: string } | null>>({});
+    // Undo-send: 5 sekundlik grace period
+    const [pendingSend, setPendingSend] = useState<{ text: string; replyToId: string | null; convId: string; ttl: number | null } | null>(null);
+    const [undoTick, setUndoTick] = useState(5);
+    const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const undoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    // Self-destruct: keyingi xabar necha sekunddan keyin o'chsin (null = doimiy)
+    const [nextTtl, setNextTtl] = useState<number | null>(null);
+    const [ttlPickerOpen, setTtlPickerOpen] = useState(false);
+    // Xabar countdown taymer'i uchun soniyalar (har 1s'da yangilanadi)
+    const [tickSec, setTickSec] = useState(0);
+    useEffect(() => {
+        const iv = setInterval(() => setTickSec(s => s + 1), 1000);
+        return () => clearInterval(iv);
+    }, []);
     // Forward: qaysi xabar forward qilinmoqda va uni qaysi suhbatga jo'natish
     const [forwardMsg, setForwardMsg] = useState<Msg | null>(null);
     const [forwarding, setForwarding] = useState(false);
@@ -707,26 +722,56 @@ export function NxSocialDesktop() {
         return m ? m[1].replace(/[.,;:!?)]+$/, "") : null;
     }
 
-    async function send() {
-        if (!selectedId || !input.trim() || sending) return;
-        setSending(true);
+    // Bosishga 5s'lik "undo" bufferini boshlaydi. Aslida POST 5s'dan keyin ketadi.
+    function send() {
+        if (!selectedId || !input.trim() || sending || pendingSend) return;
         const text = input.trim();
         const replyToIdSnap = replyTo?.id ?? null;
         setInput("");
         try { localStorage.removeItem(draftKey(selectedId)); } catch {}
         setReplyTo(null);
+        setPendingSend({ text, replyToId: replyToIdSnap, convId: selectedId, ttl: nextTtl });
+        setUndoTick(5);
+        // Har sekundda hisoblagichni yangilash
+        undoIntervalRef.current = setInterval(() => setUndoTick(t => Math.max(0, t - 1)), 1000);
+        // 5s'dan keyin yuborish
+        undoTimerRef.current = setTimeout(() => flushPending(), 5000);
+    }
+    async function flushPending() {
+        const p = pendingSend;
+        if (undoIntervalRef.current) { clearInterval(undoIntervalRef.current); undoIntervalRef.current = null; }
+        if (undoTimerRef.current) { clearTimeout(undoTimerRef.current); undoTimerRef.current = null; }
+        setPendingSend(null);
+        if (!p) return;
+        setSending(true);
+        setNextTtl(null);
         try {
-            const r = await fetch(`/api/nexus/messages/${selectedId}`, {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text, replyToId: replyToIdSnap }),
+            const body: Record<string, unknown> = { text: p.text };
+            if (p.replyToId) body.replyToId = p.replyToId;
+            if (p.ttl) body.selfDestructSeconds = p.ttl;
+            const r = await fetch(`/api/nexus/messages/${p.convId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
             });
             if (r.ok) {
                 const d = await r.json();
-                setMessages(m => [...m, d.message]);
+                // Faqat shu suhbat ochilgan bo'lsa xabarni ko'rsatamiz
+                if (p.convId === selectedId) setMessages(m => [...m, d.message]);
                 loadConvs();
             }
         } finally { setSending(false); }
     }
+    function cancelPending() {
+        if (undoIntervalRef.current) { clearInterval(undoIntervalRef.current); undoIntervalRef.current = null; }
+        if (undoTimerRef.current) { clearTimeout(undoTimerRef.current); undoTimerRef.current = null; }
+        // Matnni kompozitorga qaytarish
+        if (pendingSend) setInput(pendingSend.text);
+        setPendingSend(null);
+    }
+    // Enter yoki send ustidan yangi xabar kelsa: darhol jo'natish (yig'ilib qolmasin)
+    useEffect(() => () => {
+        if (undoIntervalRef.current) clearInterval(undoIntervalRef.current);
+        if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    }, []);
 
     const filteredConvs = filter.trim()
         ? convs.filter(c => {
@@ -1486,8 +1531,24 @@ export function NxSocialDesktop() {
                                                 ))}
                                             </div>
                                         )}
-                                        {/* Vaqt + o'qildi belgisi (faqat mening xabarlarim uchun 2 tick) */}
+                                        {/* Vaqt + o'qildi belgisi (faqat mening xabarlarim uchun 2 tick) + self-destruct */}
                                         <div className={`flex items-center gap-1 mt-0.5 ${m.mine ? "justify-end" : "justify-start"}`}>
+                                            {m.expiresAt && (() => {
+                                                // tickSec — har 1s'da yangilanadi, shu erda re-render tetiklaydi
+                                                void tickSec;
+                                                const left = Math.max(0, Math.floor((new Date(m.expiresAt).getTime() - Date.now()) / 1000));
+                                                if (left === 0) return null;
+                                                const label = left >= 3600 ? `${Math.floor(left / 3600)}s`
+                                                    : left >= 60 ? `${Math.floor(left / 60)}daq`
+                                                    : `${left}s`;
+                                                return (
+                                                    <span className="text-[9px] flex items-center gap-0.5 font-bold" title="Bu xabar avtomatik o'chadi"
+                                                        style={{ color: "#F97316" }}>
+                                                        <Flame className="w-2.5 h-2.5" />
+                                                        {label}
+                                                    </span>
+                                                );
+                                            })()}
                                             <span className="text-[9px] opacity-60">
                                                 {new Date(m.createdAt).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })}
                                             </span>
@@ -1525,6 +1586,32 @@ export function NxSocialDesktop() {
                                 </button>
                             )}
                         </div>
+
+                        {/* Undo-send bar (5s grace period) */}
+                        {pendingSend && (
+                            <div className="px-3 py-2 flex items-center gap-2 flex-shrink-0"
+                                style={{ borderTop: "1px solid rgba(0,206,200,0.30)", background: "rgba(0,206,200,0.10)" }}>
+                                <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold truncate" style={{ color: "#00CEC8" }}>
+                                        Yuborilmoqda... {undoTick}s
+                                    </p>
+                                    <p className="text-[10px] truncate opacity-75" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                        {pendingSend.text.slice(0, 80)}
+                                    </p>
+                                </div>
+                                <button onClick={cancelPending}
+                                    className="text-[11px] font-black px-3 py-1.5 rounded-md"
+                                    style={{ background: "rgba(11,18,40,0.85)", color: "#fff", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                    BEKOR
+                                </button>
+                                <button onClick={flushPending}
+                                    className="text-[11px] font-black px-3 py-1.5 rounded-md"
+                                    style={{ background: "rgba(0,206,200,0.30)", color: "#fff", border: "1px solid rgba(0,206,200,0.50)" }}>
+                                    DARHOL
+                                </button>
+                            </div>
+                        )}
 
                         {/* Reply preview (composer ustida) */}
                         {replyTo && (
@@ -1580,6 +1667,38 @@ export function NxSocialDesktop() {
                                     <ComposerBtn icon={BarChart2} title="So'rovnoma" onClick={() => setPollOpen(true)} />
                                     <ComposerBtn icon={Camera} title="Video-circle" onClick={() => setCircleOpen(true)} />
                                     <ComposerBtn icon={Wallet} title="Pul yuborish" onClick={() => setTransferOpen(true)} accent />
+                                    <div className="relative">
+                                        <ComposerBtn
+                                            icon={nextTtl ? Flame : Timer}
+                                            title={nextTtl ? `${nextTtl}s'dan keyin o'chadi — o'zgartirish` : "O'zini o'chiruvchi xabar"}
+                                            onClick={() => setTtlPickerOpen(v => !v)}
+                                            accent={!!nextTtl || ttlPickerOpen}
+                                        />
+                                        {ttlPickerOpen && (
+                                            <div className="absolute bottom-full mb-2 right-0 z-30 rounded-lg overflow-hidden"
+                                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 140 }}>
+                                                {[
+                                                    { s: null, label: "Doimiy" },
+                                                    { s: 10, label: "10 sekund" },
+                                                    { s: 60, label: "1 daqiqa" },
+                                                    { s: 300, label: "5 daqiqa" },
+                                                    { s: 3600, label: "1 soat" },
+                                                    { s: 86400, label: "24 soat" },
+                                                ].map(o => (
+                                                    <button key={o.label}
+                                                        onClick={() => { setNextTtl(o.s); setTtlPickerOpen(false); }}
+                                                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white hover:bg-white/[0.06] text-left"
+                                                        style={nextTtl === o.s ? { background: "rgba(0,206,200,0.14)", color: "#00CEC8" } : undefined}>
+                                                        {o.s === null
+                                                            ? <Timer className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.75)" }} />
+                                                            : <Flame className="w-3.5 h-3.5" style={{ color: "#F97316" }} />
+                                                        }
+                                                        {o.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                     <input
                                         value={input}
                                         onChange={e => {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2,
+    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff,
 } from "lucide-react";
 import { NxPollCreate } from "./nx-poll-create";
 
@@ -14,6 +14,7 @@ interface ChMsg {
     author: { name: string | null; username: string | null; image: string | null; verified: boolean } | null;
     pollQuestion?: string | null; pollOptions?: string[]; pollExpiresAt?: string | null; pollMulti?: boolean;
     pollVoteCounts?: number[] | null; pollMyVotes?: number[] | null; pollTotal?: number | null;
+    pinnedAt?: string | null;
 }
 
 function avatarFor(c: { name: string; avatarUrl?: string | null }) {
@@ -263,6 +264,22 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         onBack();
     }
 
+    // Kanal xabarini pinga qo'yish / olib tashlash (faqat ega/admin)
+    async function toggleChannelPin(m: ChMsg) {
+        const isPinned = !!m.pinnedAt;
+        const url = `/api/nexus/channels/${id}/messages/${m.id}/pin`;
+        const opts: RequestInit = isPinned ? { method: "DELETE" } : { method: "POST" };
+        const r = await fetch(url, opts);
+        if (r.ok) {
+            const nowIso = new Date().toISOString();
+            setMsgs(prev => prev.map(x => x.id === m.id ? { ...x, pinnedAt: isPinned ? null : nowIso } : x));
+        } else {
+            const d = await r.json().catch(() => ({}));
+            alert(d?.error ?? "Bajarib bo'lmadi");
+        }
+    }
+    const canManage = ch?.isOwner || ch?.role === "ADMIN";
+
     if (loading) return <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: "#2B3EE8" }} /></div>;
     if (!ch) return <div className="px-4 py-10 text-center text-sm text-white/60">Topilmadi <button onClick={onBack} className="block mx-auto mt-3 text-xs underline">Orqaga</button></div>;
 
@@ -291,11 +308,43 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                 </div>
             ) : (
                 <>
+                    {/* Pinlangan xabarlar banneri */}
+                    {(() => {
+                        const pinned = msgs.filter(m => m.pinnedAt)
+                            .sort((a, b) => new Date(b.pinnedAt!).getTime() - new Date(a.pinnedAt!).getTime());
+                        if (pinned.length === 0) return null;
+                        const top = pinned[0];
+                        return (
+                            <button onClick={() => {
+                                const el = document.querySelector<HTMLElement>(`[data-ch-msg-id="${top.id}"]`);
+                                el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                                el?.animate([
+                                    { background: "rgba(0,206,200,0.15)" }, { background: "transparent" },
+                                ], { duration: 1400, iterations: 1 });
+                            }} className="mx-3 mb-1 w-[calc(100%-24px)] flex items-center gap-2 px-3 py-2 rounded-xl text-left hover:bg-white/[0.03]"
+                                style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                <Pin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "#00CEC8" }}>
+                                        Pinlangan xabar{pinned.length > 1 ? ` (${pinned.length})` : ""}
+                                    </p>
+                                    <p className="text-xs truncate" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                        {top.text || "(media)"}
+                                    </p>
+                                </div>
+                                {canManage && (
+                                    <PinOff onClick={(e) => { e.stopPropagation(); toggleChannelPin(top); }}
+                                        className="w-3.5 h-3.5 flex-shrink-0 opacity-60 hover:opacity-100 cursor-pointer"
+                                        style={{ color: "rgba(160,176,224,0.85)" }} />
+                                )}
+                            </button>
+                        );
+                    })()}
                     <div className="flex-1 overflow-y-auto px-3 min-h-0" style={{ scrollbarWidth: "none" }}>
                         {msgs.length === 0 ? (
                             <p className="text-xs text-center py-8" style={{ color: "rgba(120,140,185,0.6)" }}>{ch.canPost ? "Birinchi xabarni yozing" : "Hali xabar yo'q"}</p>
                         ) : msgs.map(m => (
-                            <div key={m.id} className={`flex gap-2 py-1.5 ${m.mine ? "flex-row-reverse" : ""}`}>
+                            <div key={m.id} data-ch-msg-id={m.id} className={`group flex gap-2 py-1.5 ${m.mine ? "flex-row-reverse" : ""}`}>
                                 <img src={m.author?.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(m.author?.username || "u")}`} alt="" className="w-7 h-7 rounded-lg object-cover bg-white flex-shrink-0" />
                                 <div className={`max-w-[78%] rounded-2xl px-3 py-2 ${m.mine ? "rounded-tr-sm" : "rounded-tl-sm"}`} style={{ background: m.mine ? "rgba(43,62,232,0.2)" : "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.15)" }}>
                                     {!m.mine && <p className="text-[11px] font-black mb-0.5 inline-flex items-center gap-1" style={{ color: "#00CEC8" }}>{m.author?.name || m.author?.username || "Foydalanuvchi"}{m.author?.verified && <BadgeCheck className="w-3 h-3" />}</p>}
@@ -348,8 +397,25 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                             </div>
                                         );
                                     })()}
-                                    <p className="text-[9px] mt-0.5 text-right" style={{ color: "rgba(100,120,170,0.6)" }}>{timeAgo(m.createdAt)}</p>
+                                    <div className="flex items-center gap-1 mt-0.5 justify-end">
+                                        {m.pinnedAt && <Pin className="w-2.5 h-2.5" style={{ color: "#00CEC8" }} />}
+                                        <p className="text-[9px]" style={{ color: "rgba(100,120,170,0.6)" }}>{timeAgo(m.createdAt)}</p>
+                                    </div>
                                 </div>
+                                {canManage && (
+                                    <button onClick={() => toggleChannelPin(m)}
+                                        title={m.pinnedAt ? "Pindan olib tashlash" : "Pinga qo'yish"}
+                                        className="opacity-0 group-hover:opacity-100 transition self-center w-7 h-7 rounded-md flex items-center justify-center"
+                                        style={{
+                                            background: m.pinnedAt ? "rgba(0,206,200,0.18)" : "rgba(11,18,40,0.65)",
+                                            border: `1px solid ${m.pinnedAt ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.25)"}`,
+                                        }}>
+                                        {m.pinnedAt
+                                            ? <PinOff className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                            : <Pin className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        }
+                                    </button>
+                                )}
                             </div>
                         ))}
                         <div ref={bottomRef} />

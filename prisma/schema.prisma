@@ -1289,9 +1289,12 @@ model NexusMessage {
   reactions         NexusMessageReaction[]
   // Xabarni pinga qo'yish (suhbatda global — ikkala ishtirokchi ham ko'radi)
   pinnedAt          DateTime?
+  // Self-destruct: xabar shu vaqtdan keyin avtomatik o'chiriladi (NULL = doimiy)
+  expiresAt         DateTime?
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
   @@index([conversationId, pinnedAt])
+  @@index([expiresAt])
 }
 
 model NexusMessageReaction {
@@ -1612,6 +1615,8 @@ model NexusChannelMessage {
   text      String?
   media     String[] @default([])
   hidden    Boolean  @default(false)
+  // Xabarni pinga qo'yish (kanal/guruhda global — a'zolar ko'radi)
+  pinnedAt  DateTime?
   // So'rovnoma (Telegram uslubi) — foydalanuvchi so'rovi bo'yicha
   pollQuestion  String?
   pollOptions   String[]  @default([])
@@ -1620,6 +1625,7 @@ model NexusChannelMessage {
   pollVotes     NexusChannelPollVote[]
   createdAt DateTime @default(now())
   @@index([channelId, createdAt])
+  @@index([channelId, pinnedAt])
 }
 
 model NexusChannelPollVote {
