@@ -13,7 +13,7 @@ async function meAndMsg(email: string, channelId: string, messageId: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true } });
     if (!me) return { error: "profile", status: 404 as const };
     const msg = await prisma.nexusChannelMessage.findUnique({
-        where: { id: messageId }, select: { id: true, channelId: true, senderId: true, hidden: true },
+        where: { id: messageId }, select: { id: true, channelId: true, senderId: true, hidden: true, text: true },
     });
     if (!msg || msg.channelId !== channelId) return { error: "not_found", status: 404 as const };
     return { me, msg };
@@ -30,6 +30,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const body = await req.json().catch(() => ({}));
     const text = String(body?.text ?? "").trim().slice(0, MAX_TEXT);
     if (!text) return NextResponse.json({ error: "Matn bo'sh bo'lmasin" }, { status: 400 });
+
+    // Eski matnni tarixga saqlash
+    await prisma.nexusChannelMessageEdit.create({
+        data: { messageId: r.msg.id, previousText: r.msg.text ?? "" },
+    });
 
     const updated = await prisma.nexusChannelMessage.update({
         where: { id: messageId },

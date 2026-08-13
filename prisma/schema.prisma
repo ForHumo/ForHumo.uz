@@ -1303,6 +1303,7 @@ model NexusMessage {
   expiresAt         DateTime?
   // Jadvalga qo'yilgan xabar — bu vaqtga qadar suhbatda ko'rinmaydi (cron faollashtiradi)
   scheduledFor      DateTime?
+  edits             NexusMessageEdit[]
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
   @@index([conversationId, pinnedAt])
@@ -1342,6 +1343,16 @@ model NexusDmPollVote {
   createdAt    DateTime      @default(now())
   @@unique([messageId, profileId, optionIndex])
   @@index([messageId])
+}
+
+model NexusMessageEdit {
+  id           String       @id @default(cuid())
+  messageId    String
+  message      NexusMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  previousText String       @db.Text
+  editedAt     DateTime     @default(now())
+
+  @@index([messageId, editedAt])
 }
 
 // ── Nexus Calls (1:1 WebRTC ovoz/video) ──────────────────────────────────────
@@ -1654,9 +1665,20 @@ model NexusChannelMessage {
   pollVotes     NexusChannelPollVote[]
   reactions     NexusChannelMessageReaction[]
   bookmarks     NexusChannelMessageBookmark[]
+  edits         NexusChannelMessageEdit[]
   createdAt DateTime @default(now())
   @@index([channelId, createdAt])
   @@index([channelId, pinnedAt])
+}
+
+model NexusChannelMessageEdit {
+  id           String              @id @default(cuid())
+  messageId    String
+  message      NexusChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  previousText String              @db.Text
+  editedAt     DateTime            @default(now())
+
+  @@index([messageId, editedAt])
 }
 
 model NexusChannelPollVote {

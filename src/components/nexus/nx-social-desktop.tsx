@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxStatusModal } from "./nx-status-modal";
@@ -391,6 +391,25 @@ export function NxSocialDesktop() {
     const [bulkForwardOpen, setBulkForwardOpen] = useState(false);
     // Reaksiya bergan foydalanuvchilar modali
     const [reactionUsers, setReactionUsers] = useState<{ messageId: string; emoji: string; users: Array<{ name: string | null; username: string | null; image: string | null; mine: boolean }> | null } | null>(null);
+    // Tahrirlash tarixi modali
+    const [historyModalOpen, setHistoryModalOpen] = useState(false);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyItems, setHistoryItems] = useState<Array<{ id: string; previousText: string; editedAt: string }>>([]);
+
+    async function openHistory(msgId: string) {
+        setHistoryModalOpen(true);
+        setHistoryLoading(true);
+        setHistoryItems([]);
+        try {
+            const r = await fetch(`/api/nexus/messages/${msgId}/history`);
+            if (r.ok) {
+                const d = await r.json();
+                setHistoryItems(d.edits ?? []);
+            }
+        } finally {
+            setHistoryLoading(false);
+        }
+    }
     // Ko'p tanlash rejimi
     const [selectMode, setSelectMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -1362,6 +1381,7 @@ export function NxSocialDesktop() {
 
             // Esc: modallar/panellar yopilishi
             if (e.key === "Escape") {
+                if (historyModalOpen) { setHistoryModalOpen(false); return; }
                 if (statusModalOpen) { setStatusModalOpen(false); return; }
                 if (themePickerOpen) { setThemePickerOpen(false); return; }
                 if (createChannelOpen) { setCreateChannelOpen(null); return; }
@@ -1409,7 +1429,7 @@ export function NxSocialDesktop() {
         return () => document.removeEventListener("keydown", onKey);
     }, [
         selectedId, searchOpen, replyTo, editingId, selectMode, forwardMsg, bulkForwardOpen,
-        reactionUsers, galleryIdx, statusModalOpen, themePickerOpen, createChannelOpen,
+        reactionUsers, historyModalOpen, galleryIdx, statusModalOpen, themePickerOpen, createChannelOpen,
         shortcutsHelpOpen, messages, input,
     ]);
 
@@ -2307,7 +2327,15 @@ export function NxSocialDesktop() {
                                                     ? highlightText(m.text, searchQuery)
                                                     : <NxMarkdown text={m.text} />}
                                                 {m.editedAt && (
-                                                    <span className="ml-1.5 text-[10px] opacity-50 italic">(tahrirlangan)</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openHistory(m.id)}
+                                                        className="ml-1.5 text-[10px] opacity-60 hover:opacity-100 hover:underline italic cursor-pointer inline-flex items-center gap-0.5 transition"
+                                                        style={{ color: "#00CEC8" }}
+                                                        title="Tahrirlash tarixini ko'rish"
+                                                    >
+                                                        (tahrirlangan)
+                                                    </button>
                                                 )}
                                             </div>
                                         )}
@@ -3336,6 +3364,62 @@ export function NxSocialDesktop() {
                                                     @{u.username}
                                                 </p>
                                             )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Tahrirlash tarixi modali */}
+            {historyModalOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+                    style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
+                    onClick={() => setHistoryModalOpen(false)}>
+                    <div onClick={e => e.stopPropagation()}
+                        className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
+                        style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "75vh" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                            <div className="flex items-center gap-2">
+                                <History className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                    Tahrirlash tarixi
+                                </p>
+                            </div>
+                            <button onClick={() => setHistoryModalOpen(false)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
+                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                            {historyLoading ? (
+                                <div className="flex justify-center py-8">
+                                    <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#00CEC8" }} />
+                                </div>
+                            ) : historyItems.length === 0 ? (
+                                <p className="text-xs text-center py-6" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                    Oldingi versiyalar topilmadi
+                                </p>
+                            ) : (
+                                historyItems.map((item, idx) => (
+                                    <div key={item.id || idx} className="p-3 rounded-xl space-y-1.5"
+                                        style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                                        <div className="flex items-center justify-between text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                            <span className="flex items-center gap-1">
+                                                <Clock className="w-3 h-3" />
+                                                {new Date(item.editedAt).toLocaleString("uz-UZ", {
+                                                    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+                                                })}
+                                            </span>
+                                            <span className="font-bold text-[9px] uppercase px-1.5 py-0.5 rounded"
+                                                style={{ background: "rgba(0,206,200,0.10)", color: "#00CEC8" }}>
+                                                Versiya {historyItems.length - idx}
+                                            </span>
+                                        </div>
+                                        <div className="text-xs whitespace-pre-wrap break-words rounded-lg p-2"
+                                            style={{ background: "rgba(0,0,0,0.30)", color: "rgba(220,230,255,0.90)" }}>
+                                            {item.previousText || "(Bo'sh matn)"}
                                         </div>
                                     </div>
                                 ))

@@ -21,10 +21,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
     const msg = await prisma.nexusMessage.findUnique({
-        where: { id: messageId }, select: { id: true, senderId: true, conversationId: true },
+        where: { id: messageId }, select: { id: true, senderId: true, conversationId: true, text: true },
     });
     if (!msg || msg.conversationId !== id) return NextResponse.json({ error: "not_found" }, { status: 404 });
     if (msg.senderId !== me.id) return NextResponse.json({ error: "Faqat o'z xabaringizni tahrirlaysiz" }, { status: 403 });
+
+    // Eski matnni tarixga saqlash
+    await prisma.nexusMessageEdit.create({
+        data: { messageId: msg.id, previousText: msg.text ?? "" },
+    });
 
     const updated = await prisma.nexusMessage.update({
         where: { id: messageId }, data: { text, editedAt: new Date() },
