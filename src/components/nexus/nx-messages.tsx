@@ -719,7 +719,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                         )}
                                         {m.mediaType === "audio" && m.mediaUrl && (
                                             <div className="px-2 pt-1">
-                                                <NxVoicePlayer src={m.mediaUrl} mine={m.mine} seed={m.id} initialDurationMs={m.durationMs} />
+                                                <NxVoicePlayer src={m.mediaUrl} mine={m.mine} seed={m.id} initialDurationMs={m.durationMs} enableTranscribe />
                                             </div>
                                         )}
                                         {m.mediaType === "poll" && m.pollQuestion && Array.isArray(m.pollOptions) && (

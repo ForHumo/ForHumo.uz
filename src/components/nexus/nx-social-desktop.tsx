@@ -2121,7 +2121,7 @@ export function NxSocialDesktop() {
                                         )}
                                         {m.mediaType === "audio" && m.mediaUrl && (
                                             <div className="mb-1">
-                                                <NxVoicePlayer src={m.mediaUrl} mine={m.mine} seed={m.id} initialDurationMs={m.durationMs} />
+                                                <NxVoicePlayer src={m.mediaUrl} mine={m.mine} seed={m.id} initialDurationMs={m.durationMs} enableTranscribe />
                                             </div>
                                         )}
                                         {m.mediaType === "video-circle" && m.mediaUrl && (

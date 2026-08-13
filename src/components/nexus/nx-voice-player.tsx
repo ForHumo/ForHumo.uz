@@ -5,13 +5,14 @@
 // Faqat vizual iluziya; foydalanuvchi tajribasi Telegram/WhatsApp'ga o'xshaydi.
 
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, FileText, Loader2 } from "lucide-react";
 
 interface Props {
     src: string;
     mine?: boolean;
     seed?: string;
     initialDurationMs?: number | null;
+    enableTranscribe?: boolean;                                 // AI transkripsiya tugmasini ko'rsatish
 }
 
 // Deterministik pseudo-random (0..1) — URL'dan seed
@@ -40,12 +41,33 @@ function fmtTime(sec: number): string {
 
 const BAR_COUNT = 32;
 
-export function NxVoicePlayer({ src, mine, seed, initialDurationMs }: Props) {
+export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTranscribe }: Props) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [playing, setPlaying] = useState(false);
     const [duration, setDuration] = useState<number>(initialDurationMs ? initialDurationMs / 1000 : 0);
     const [current, setCurrent] = useState(0);
     const bars = seededBars(seed || src, BAR_COUNT);
+    // Transkripsiya holati
+    const [transcribing, setTranscribing] = useState(false);
+    const [transcript, setTranscript] = useState<string | null>(null);
+
+    async function transcribe() {
+        if (transcript) { setTranscript(null); return; }
+        setTranscribing(true);
+        try {
+            const r = await fetch("/api/ai/transcribe", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ audioUrl: src }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setTranscript(d.text ?? "");
+            } else {
+                const d = await r.json().catch(() => ({}));
+                alert(d?.error ?? "Transkripsiya bo'lmadi");
+            }
+        } finally { setTranscribing(false); }
+    }
 
     useEffect(() => {
         const a = audioRef.current;
@@ -86,7 +108,8 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs }: Props) {
     const dimColor = mine ? "rgba(255,255,255,0.35)" : "rgba(0,206,200,0.30)";
 
     return (
-        <div className="flex items-center gap-2 py-1 min-w-[220px]">
+        <div className="flex flex-col gap-1 min-w-[220px]">
+        <div className="flex items-center gap-2 py-1">
             <button
                 onClick={toggle}
                 aria-label={playing ? "To'xtatish" : "Eshitish"}
@@ -127,7 +150,33 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs }: Props) {
                     {fmtTime(playing || current > 0 ? current : duration)}
                 </p>
             </div>
+            {enableTranscribe && (
+                <button onClick={transcribe} disabled={transcribing}
+                    title={transcript ? "Transkriptni yashirish" : "AI orqali matnga aylantirish"}
+                    className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 disabled:opacity-40"
+                    style={{
+                        background: transcript ? "rgba(0,206,200,0.20)" : (mine ? "rgba(255,255,255,0.14)" : "rgba(0,206,200,0.10)"),
+                        border: `1px solid ${transcript ? "rgba(0,206,200,0.50)" : (mine ? "rgba(255,255,255,0.20)" : "rgba(0,206,200,0.30)")}`,
+                    }}>
+                    {transcribing
+                        ? <Loader2 className="w-3 h-3 animate-spin" style={{ color: activeColor }} />
+                        : <FileText className="w-3 h-3" style={{ color: transcript ? "#00CEC8" : activeColor }} />
+                    }
+                </button>
+            )}
             <audio ref={audioRef} src={src} preload="metadata" className="hidden" />
+        </div>
+        {transcript && (
+            <div className="pl-2 pr-1 pt-1 text-xs italic"
+                style={{
+                    borderLeft: `2px solid ${mine ? "rgba(255,255,255,0.60)" : "#00CEC8"}`,
+                    color: mine ? "rgba(255,255,255,0.90)" : "rgba(220,230,255,0.85)",
+                }}>
+                <span className="text-[9px] font-black uppercase tracking-wider mr-1.5"
+                    style={{ color: mine ? "rgba(255,255,255,0.75)" : "#00CEC8" }}>Transkript</span>
+                {transcript}
+            </div>
+        )}
         </div>
     );
 }

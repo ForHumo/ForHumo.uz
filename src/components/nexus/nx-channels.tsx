@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff,
+    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile,
 } from "lucide-react";
 import { NxPollCreate } from "./nx-poll-create";
 
@@ -15,6 +15,8 @@ interface ChMsg {
     pollQuestion?: string | null; pollOptions?: string[]; pollExpiresAt?: string | null; pollMulti?: boolean;
     pollVoteCounts?: number[] | null; pollMyVotes?: number[] | null; pollTotal?: number | null;
     pinnedAt?: string | null;
+    editedAt?: string | null;
+    reactions?: Array<{ emoji: string; count: number; mine: boolean }>;
 }
 
 function avatarFor(c: { name: string; avatarUrl?: string | null }) {
@@ -264,6 +266,50 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         onBack();
     }
 
+    // Tahrirlash rejimi
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingText, setEditingText] = useState("");
+    // Reaksiya emoji tanlagich
+    const [reactPickerFor, setReactPickerFor] = useState<string | null>(null);
+
+    async function editMsg(m: ChMsg) {
+        if (!m.text) return;
+        setEditingId(m.id); setEditingText(m.text);
+    }
+    async function saveEdit() {
+        if (!editingId) return;
+        const text = editingText.trim();
+        if (!text) { setEditingId(null); return; }
+        const r = await fetch(`/api/nexus/channels/${id}/messages/${editingId}`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+        });
+        if (r.ok) {
+            setMsgs(prev => prev.map(x => x.id === editingId ? { ...x, text, editedAt: new Date().toISOString() } : x));
+            setEditingId(null); setEditingText("");
+        } else {
+            const d = await r.json().catch(() => ({}));
+            alert(d?.error ?? "Tahrirlab bo'lmadi");
+        }
+    }
+    async function deleteMsg(m: ChMsg) {
+        if (!confirm("Xabarni o'chirilsinmi?")) return;
+        const r = await fetch(`/api/nexus/channels/${id}/messages/${m.id}`, { method: "DELETE" });
+        if (r.ok) setMsgs(prev => prev.filter(x => x.id !== m.id));
+        else alert("O'chirib bo'lmadi");
+    }
+    async function toggleReact(m: ChMsg, emoji: string) {
+        const r = await fetch(`/api/nexus/channels/${id}/messages/${m.id}/react`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ emoji }),
+        });
+        if (r.ok) {
+            const d = await r.json();
+            setMsgs(prev => prev.map(x => x.id === m.id ? { ...x, reactions: d.reactions ?? [] } : x));
+        }
+        setReactPickerFor(null);
+    }
+
     // Kanal xabarini pinga qo'yish / olib tashlash (faqat ega/admin)
     async function toggleChannelPin(m: ChMsg) {
         const isPinned = !!m.pinnedAt;
@@ -348,7 +394,28 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                 <img src={m.author?.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(m.author?.username || "u")}`} alt="" className="w-7 h-7 rounded-lg object-cover bg-white flex-shrink-0" />
                                 <div className={`max-w-[78%] rounded-2xl px-3 py-2 ${m.mine ? "rounded-tr-sm" : "rounded-tl-sm"}`} style={{ background: m.mine ? "rgba(43,62,232,0.2)" : "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.15)" }}>
                                     {!m.mine && <p className="text-[11px] font-black mb-0.5 inline-flex items-center gap-1" style={{ color: "#00CEC8" }}>{m.author?.name || m.author?.username || "Foydalanuvchi"}{m.author?.verified && <BadgeCheck className="w-3 h-3" />}</p>}
-                                    {m.text && <p className="text-sm whitespace-pre-wrap" style={{ color: "rgba(210,220,245,0.95)" }}>{m.text}</p>}
+                                    {m.text && editingId !== m.id && (
+                                        <p className="text-sm whitespace-pre-wrap" style={{ color: "rgba(210,220,245,0.95)" }}>
+                                            {m.text}
+                                            {m.editedAt && <span className="ml-1.5 text-[10px] opacity-50 italic">(tahrirlangan)</span>}
+                                        </p>
+                                    )}
+                                    {editingId === m.id && (
+                                        <div className="flex flex-col gap-1.5">
+                                            <textarea value={editingText} onChange={e => setEditingText(e.target.value)}
+                                                rows={2} autoFocus
+                                                className="bg-black/30 rounded p-1.5 text-sm focus:outline-none resize-none w-full"
+                                                style={{ color: "#fff", border: "1px solid rgba(255,255,255,0.20)" }} />
+                                            <div className="flex gap-1.5 justify-end">
+                                                <button onClick={() => setEditingId(null)}
+                                                    className="text-[11px] font-bold px-2 py-1 rounded"
+                                                    style={{ background: "rgba(0,0,0,0.30)", color: "#fff" }}>Bekor</button>
+                                                <button onClick={saveEdit}
+                                                    className="text-[11px] font-bold px-2 py-1 rounded"
+                                                    style={{ background: "rgba(0,206,200,0.30)", color: "#fff" }}>Saqlash</button>
+                                            </div>
+                                        </div>
+                                    )}
                                     {/* Poll render */}
                                     {m.pollQuestion && Array.isArray(m.pollOptions) && (() => {
                                         const counts = m.pollVoteCounts ?? m.pollOptions.map(() => 0);
@@ -397,25 +464,75 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                             </div>
                                         );
                                     })()}
+                                    {/* Reaksiya chiplari */}
+                                    {m.reactions && m.reactions.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {m.reactions.map(r => (
+                                                <button key={r.emoji} onClick={() => toggleReact(m, r.emoji)}
+                                                    className="px-1.5 py-0.5 rounded-full text-[11px] flex items-center gap-0.5 transition"
+                                                    style={{
+                                                        background: r.mine ? "rgba(0,206,200,0.25)" : "rgba(255,255,255,0.08)",
+                                                        border: `1px solid ${r.mine ? "rgba(0,206,200,0.50)" : "rgba(255,255,255,0.14)"}`,
+                                                    }}>
+                                                    <span>{r.emoji}</span>
+                                                    <span className="font-bold opacity-90">{r.count}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                     <div className="flex items-center gap-1 mt-0.5 justify-end">
                                         {m.pinnedAt && <Pin className="w-2.5 h-2.5" style={{ color: "#00CEC8" }} />}
                                         <p className="text-[9px]" style={{ color: "rgba(100,120,170,0.6)" }}>{timeAgo(m.createdAt)}</p>
                                     </div>
                                 </div>
-                                {canManage && (
-                                    <button onClick={() => toggleChannelPin(m)}
-                                        title={m.pinnedAt ? "Pindan olib tashlash" : "Pinga qo'yish"}
-                                        className="opacity-0 group-hover:opacity-100 transition self-center w-7 h-7 rounded-md flex items-center justify-center"
-                                        style={{
-                                            background: m.pinnedAt ? "rgba(0,206,200,0.18)" : "rgba(11,18,40,0.65)",
-                                            border: `1px solid ${m.pinnedAt ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.25)"}`,
-                                        }}>
-                                        {m.pinnedAt
-                                            ? <PinOff className="w-3 h-3" style={{ color: "#00CEC8" }} />
-                                            : <Pin className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                        }
+                                {/* Hover amallar: react + edit + pin + delete */}
+                                <div className="opacity-0 group-hover:opacity-100 transition self-center flex flex-col gap-1 relative">
+                                    <button onClick={() => setReactPickerFor(reactPickerFor === m.id ? null : m.id)}
+                                        title="Reaksiya"
+                                        className="w-7 h-7 rounded-md flex items-center justify-center"
+                                        style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                        <Smile className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
                                     </button>
-                                )}
+                                    {m.mine && m.text && (
+                                        <button onClick={() => editMsg(m)} title="Tahrirlash"
+                                            className="w-7 h-7 rounded-md flex items-center justify-center"
+                                            style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                            <Edit3 className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        </button>
+                                    )}
+                                    {canManage && (
+                                        <button onClick={() => toggleChannelPin(m)}
+                                            title={m.pinnedAt ? "Pindan olib tashlash" : "Pinga qo'yish"}
+                                            className="w-7 h-7 rounded-md flex items-center justify-center"
+                                            style={{
+                                                background: m.pinnedAt ? "rgba(0,206,200,0.18)" : "rgba(11,18,40,0.65)",
+                                                border: `1px solid ${m.pinnedAt ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.25)"}`,
+                                            }}>
+                                            {m.pinnedAt
+                                                ? <PinOff className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                                : <Pin className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                            }
+                                        </button>
+                                    )}
+                                    {(m.mine || canManage) && (
+                                        <button onClick={() => deleteMsg(m)} title="O'chirish"
+                                            className="w-7 h-7 rounded-md flex items-center justify-center"
+                                            style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(239,68,68,0.30)" }}>
+                                            <Trash2 className="w-3 h-3" style={{ color: "#EF4444" }} />
+                                        </button>
+                                    )}
+                                    {reactPickerFor === m.id && (
+                                        <div className="absolute right-8 top-0 z-30 flex gap-1 p-1.5 rounded-lg"
+                                            style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                            {["❤️","👍","😂","😮","😢","🔥","🙏","👏"].map(e => (
+                                                <button key={e} onClick={() => toggleReact(m, e)}
+                                                    className="w-7 h-7 text-base rounded hover:bg-white/[0.08] active:scale-90">
+                                                    {e}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ))}
                         <div ref={bottomRef} />

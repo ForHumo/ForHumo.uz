@@ -1642,12 +1642,15 @@ model NexusChannelMessage {
   hidden    Boolean  @default(false)
   // Xabarni pinga qo'yish (kanal/guruhda global — a'zolar ko'radi)
   pinnedAt  DateTime?
+  // Tahrirlash vaqti (foydalanuvchi o'z xabarini tahrirlagan bo'lsa)
+  editedAt  DateTime?
   // So'rovnoma (Telegram uslubi) — foydalanuvchi so'rovi bo'yicha
   pollQuestion  String?
   pollOptions   String[]  @default([])
   pollExpiresAt DateTime?
   pollMulti     Boolean   @default(false)
   pollVotes     NexusChannelPollVote[]
+  reactions     NexusChannelMessageReaction[]
   createdAt DateTime @default(now())
   @@index([channelId, createdAt])
   @@index([channelId, pinnedAt])
@@ -1661,6 +1664,18 @@ model NexusChannelPollVote {
   optionIndex Int
   createdAt   DateTime            @default(now())
   @@unique([messageId, profileId, optionIndex])
+  @@index([messageId])
+}
+
+// Kanal/guruh xabariga emoji reaksiya (per-user)
+model NexusChannelMessageReaction {
+  id         String              @id @default(cuid())
+  messageId  String
+  message    NexusChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  profileId  String
+  emoji      String
+  createdAt  DateTime            @default(now())
+  @@unique([messageId, profileId, emoji])
   @@index([messageId])
 }
 

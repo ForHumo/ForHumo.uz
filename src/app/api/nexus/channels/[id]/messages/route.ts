@@ -56,6 +56,21 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         }
     }
 
+    // Reaksiyalarni yig'ish
+    const allReactions = await prisma.nexusChannelMessageReaction.findMany({
+        where: { messageId: { in: msgs.map(m => m.id) } },
+        select: { messageId: true, emoji: true, profileId: true },
+    });
+    const reactionMap = new Map<string, Map<string, { count: number; mine: boolean }>>();
+    for (const r of allReactions) {
+        if (!reactionMap.has(r.messageId)) reactionMap.set(r.messageId, new Map());
+        const m2 = reactionMap.get(r.messageId)!;
+        const cur = m2.get(r.emoji) ?? { count: 0, mine: false };
+        cur.count++;
+        if (r.profileId === me.id) cur.mine = true;
+        m2.set(r.emoji, cur);
+    }
+
     // o'qildi belgilash
     if (member) after(() => prisma.nexusChannelMember.update({ where: { id: member.id }, data: { lastReadAt: new Date() } }).catch(() => { }));
 
@@ -69,6 +84,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 pollQuestion: m.pollQuestion, pollOptions: m.pollOptions, pollExpiresAt: m.pollExpiresAt, pollMulti: m.pollMulti,
                 pollVoteCounts: pv?.counts ?? null, pollMyVotes: pv?.myVotes ?? null, pollTotal: pv?.total ?? null,
                 pinnedAt: m.pinnedAt,
+                editedAt: m.editedAt,
+                reactions: reactionMap.get(m.id)
+                    ? [...reactionMap.get(m.id)!.entries()].map(([e, s]) => ({ emoji: e, count: s.count, mine: s.mine }))
+                    : [],
             };
         }),
     });
