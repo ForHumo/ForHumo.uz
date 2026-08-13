@@ -117,6 +117,47 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     const [selected, setSelected] = useState<{ conversationId: string; other: Other | null } | null>(null);
     const [messages, setMessages] = useState<Msg[]>([]);
     const [input, setInput] = useState("");
+    // Mobile action sheet — long-press yoki chap ustunga tap bilan tanlangan xabar
+    const [actionMsg, setActionMsg] = useState<Msg | null>(null);
+    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    function startLongPress(m: Msg) {
+        if (longPressTimer.current) clearTimeout(longPressTimer.current);
+        longPressTimer.current = setTimeout(() => {
+            setActionMsg(m);
+            if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(30);
+        }, 450);
+    }
+    function cancelLongPress() {
+        if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
+    }
+    async function actionToggleBookmark(m: Msg) {
+        const now = !m.bookmarked;
+        const conv = selected?.conversationId; if (!conv) return;
+        const r = await fetch(`/api/nexus/messages/${conv}/bookmark${now ? "" : `?messageId=${m.id}`}`,
+            now
+                ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messageId: m.id }) }
+                : { method: "DELETE" }
+        );
+        if (r.ok) setMessages(prev => prev.map(x => x.id === m.id ? { ...x, bookmarked: now } : x));
+        setActionMsg(null);
+    }
+    async function actionDelete(m: Msg) {
+        const conv = selected?.conversationId; if (!conv) return;
+        if (!confirm("Xabarni o'chirilsinmi?")) return;
+        const r = await fetch(`/api/nexus/messages/${conv}?messageId=${m.id}`, { method: "DELETE" });
+        if (r.ok) setMessages(prev => prev.filter(x => x.id !== m.id));
+        setActionMsg(null);
+    }
+    async function actionTranslate(m: Msg, target: "uz" | "ru" | "en") {
+        setActionMsg(null);
+        try {
+            const r = await fetch("/api/ai/translate", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: m.text, target }),
+            });
+            if (r.ok) { const d = await r.json(); alert(`Tarjima:\n\n${d.translated}`); }
+        } catch {}
+    }
     const [query, setQuery] = useState("");
     const [sending, setSending] = useState(false);
     const [newOpen, setNewOpen] = useState(false);
@@ -704,7 +745,12 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                     const isTemp = m.id.startsWith("tmp-");
                     const hasMedia = !!m.mediaType && (m.mediaUrl || isTemp);
                     return (
-                        <div key={m.id} className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
+                        <div key={m.id}
+                            onTouchStart={() => startLongPress(m)}
+                            onTouchEnd={cancelLongPress}
+                            onTouchMove={cancelLongPress}
+                            onContextMenu={(e) => { e.preventDefault(); setActionMsg(m); }}
+                            className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
                             <div className="flex flex-col gap-0.5 max-w-[75%] lg:max-w-[60%]">
                                 {/* Media qism (agar mavjud bo'lsa) */}
                                 {hasMedia && (
@@ -1050,6 +1096,78 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
 
             {/* AI moderation ban modali */}
             <NxBanModal ban={ban} onClose={() => setBan(null)} />
+
+            {/* Mobile action sheet — xabar bosilganda pastdan chiqadi */}
+            {actionMsg && (
+                <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center"
+                    style={{ background: "rgba(3,7,25,0.65)", backdropFilter: "blur(4px)" }}
+                    onClick={() => setActionMsg(null)}>
+                    <div onClick={e => e.stopPropagation()}
+                        className="w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl overflow-hidden"
+                        style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)" }}>
+                        {/* Xabar preview */}
+                        <div className="px-4 py-3 border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                            <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                {actionMsg.mine ? "Sizning xabaringiz" : "Xabar"}
+                            </p>
+                            <p className="text-xs line-clamp-2" style={{ color: "rgba(220,230,255,0.90)" }}>
+                                {actionMsg.text || (actionMsg.mediaType ? `[${actionMsg.mediaType}]` : "(media)")}
+                            </p>
+                        </div>
+                        {/* Amallar */}
+                        <div className="p-2">
+                            {actionMsg.text && (
+                                <>
+                                    <button onClick={() => { copyText(actionMsg.text); setActionMsg(null); }}
+                                        className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/[0.05] text-left">
+                                        <Copy className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        <span className="text-sm" style={{ color: "rgba(220,230,255,0.95)" }}>Nusxa olish</span>
+                                    </button>
+                                    <button onClick={() => { speakText(actionMsg.text); setActionMsg(null); }}
+                                        className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/[0.05] text-left">
+                                        <Volume2 className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        <span className="text-sm" style={{ color: "rgba(220,230,255,0.95)" }}>Eshittirish</span>
+                                    </button>
+                                    <div className="flex items-center gap-2 px-3 py-2">
+                                        <Languages className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        <span className="text-sm mr-2" style={{ color: "rgba(220,230,255,0.95)" }}>Tarjima:</span>
+                                        {(["uz", "ru", "en"] as const).map(lg => (
+                                            <button key={lg} onClick={() => actionTranslate(actionMsg, lg)}
+                                                className="text-[11px] font-black px-2 py-1 rounded"
+                                                style={{ background: "rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.95)" }}>
+                                                {lg.toUpperCase()}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                            <button onClick={() => actionToggleBookmark(actionMsg)}
+                                className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/[0.05] text-left">
+                                {actionMsg.bookmarked
+                                    ? <BookmarkCheck className="w-4 h-4" style={{ color: "#F59E0B" }} />
+                                    : <Bookmark className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                }
+                                <span className="text-sm" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                    {actionMsg.bookmarked ? "Saqlashdan olib tashlash" : "Saqlash"}
+                                </span>
+                            </button>
+                            {actionMsg.mine && (
+                                <button onClick={() => actionDelete(actionMsg)}
+                                    className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-red-500/10 text-left">
+                                    <Trash2 className="w-4 h-4" style={{ color: "#EF4444" }} />
+                                    <span className="text-sm" style={{ color: "#EF4444" }}>O&apos;chirish</span>
+                                </button>
+                            )}
+                            <button onClick={() => setActionMsg(null)}
+                                className="w-full flex items-center justify-center gap-3 px-3 py-3 rounded-lg hover:bg-white/[0.05] text-left mt-1"
+                                style={{ background: "rgba(43,62,232,0.10)" }}>
+                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                <span className="text-sm font-bold" style={{ color: "rgba(220,230,255,0.95)" }}>Bekor</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Poll create modal */}
             <NxPollCreate open={pollOpen} onClose={() => setPollOpen(false)} onCreated={sendPoll} />

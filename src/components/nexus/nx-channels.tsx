@@ -279,6 +279,34 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [reactPickerFor, setReactPickerFor] = useState<string | null>(null);
     // Reply — javob berilayotgan xabar
     const [replyTo, setReplyTo] = useState<ChMsg | null>(null);
+    // Moderatsiya inboxi (owner/admin uchun)
+    interface ModFlag {
+        id: string; messageId: string; reportCount: number;
+        lastReason: string | null;
+        aiVerdict: string | null; aiSeverity: number | null; aiReason: string | null;
+        createdAt: string;
+        message: { text: string | null; createdAt: string; hidden: boolean;
+            sender: { name: string | null; username: string | null; image: string | null } | null } | null;
+    }
+    const [modOpen, setModOpen] = useState(false);
+    const [modFlags, setModFlags] = useState<ModFlag[]>([]);
+    const [modCount, setModCount] = useState(0);
+    // Faqat owner/admin uchun periodic fetch
+    useEffect(() => {
+        if (!ch?.isOwner && ch?.role !== "ADMIN") return;
+        let stop = false;
+        async function load() {
+            const r = await fetch(`/api/nexus/channels/${id}/moderation`, { cache: "no-store" }).catch(() => null);
+            if (!r?.ok || stop) return;
+            const d = await r.json();
+            setModCount(d.total ?? 0);
+            setModFlags(d.flags ?? []);
+        }
+        load();
+        const iv = setInterval(load, 60_000);
+        return () => { stop = true; clearInterval(iv); };
+    }, [id, ch?.isOwner, ch?.role]);
+
     // Server-side qidiruv
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -499,6 +527,19 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                             ? <X className="w-4 h-4" style={{ color: "#00CEC8" }} />
                             : <Search className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} />
                         }
+                    </button>
+                )}
+                {(ch.isOwner || ch.role === "ADMIN") && (
+                    <button onClick={() => setModOpen(true)} title="Moderatsiya inboxi"
+                        className="relative w-8 h-8 rounded-xl flex items-center justify-center"
+                        style={{ background: modCount > 0 ? "rgba(239,68,68,0.15)" : "rgba(43,62,232,0.12)" }}>
+                        <Shield className="w-4 h-4" style={{ color: modCount > 0 ? "#EF4444" : "rgba(180,195,235,0.95)" }} />
+                        {modCount > 0 && (
+                            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black flex items-center justify-center"
+                                style={{ background: "#EF4444", color: "#fff" }}>
+                                {modCount > 99 ? "99+" : modCount}
+                            </span>
+                        )}
                     </button>
                 )}
                 {ch.isOwner && <button onClick={() => setMembersOpen(true)} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "rgba(43,62,232,0.12)" }}><Users className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} /></button>}
@@ -885,6 +926,99 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
 
             {/* Poll create modal */}
             <NxPollCreate open={pollOpen} onClose={() => setPollOpen(false)} onCreated={sendPoll} />
+
+            {/* Moderatsiya inboxi modali */}
+            {modOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+                    style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
+                    onClick={() => setModOpen(false)}>
+                    <div onClick={e => e.stopPropagation()}
+                        className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col"
+                        style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "85vh" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                            <div className="flex items-center gap-2">
+                                <Shield className="w-4 h-4" style={{ color: modFlags.length > 0 ? "#EF4444" : "#00CEC8" }} />
+                                <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Moderatsiya inboxi</p>
+                                {modFlags.length > 0 && (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                        style={{ background: "rgba(239,68,68,0.15)", color: "#EF4444" }}>{modFlags.length}</span>
+                                )}
+                            </div>
+                            <button onClick={() => setModOpen(false)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
+                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto">
+                            {modFlags.length === 0 ? (
+                                <p className="text-xs text-center py-10" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                    Hozircha shikoyat yoki bayroqli xabar yo&apos;q
+                                </p>
+                            ) : (
+                                modFlags.map(f => (
+                                    <div key={f.id} className="px-4 py-3 border-b" style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            {f.message?.sender?.image
+                                                ? <img src={f.message.sender.image} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+                                                : <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "rgba(43,62,232,0.20)" }} />
+                                            }
+                                            <span className="text-[10px] font-black truncate" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                                {f.message?.sender?.name ?? f.message?.sender?.username ?? "Foydalanuvchi"}
+                                            </span>
+                                            {f.reportCount > 0 && (
+                                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                                    style={{ background: "rgba(239,68,68,0.15)", color: "#EF4444" }}>
+                                                    {f.reportCount} shikoyat
+                                                </span>
+                                            )}
+                                            {f.aiVerdict && f.aiVerdict !== "OK" && (
+                                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                                    style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B" }}>
+                                                    AI: {f.aiVerdict}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs mb-1 line-clamp-2" style={{ color: "rgba(220,230,255,0.90)" }}>
+                                            {f.message?.text ?? "(o'chirilgan yoki media)"}
+                                        </p>
+                                        {(f.lastReason || f.aiReason) && (
+                                            <p className="text-[10px] italic mb-2" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                                {f.lastReason ? `Sabab: ${f.lastReason}` : f.aiReason}
+                                            </p>
+                                        )}
+                                        <div className="flex gap-2">
+                                            <button onClick={() => {
+                                                setModOpen(false);
+                                                jumpToChMsg(f.messageId);
+                                            }}
+                                                className="text-[10px] font-bold px-2 py-1 rounded"
+                                                style={{ background: "rgba(43,62,232,0.15)", color: "rgba(220,230,255,0.95)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                                Ko&apos;rish
+                                            </button>
+                                            <button onClick={async () => {
+                                                const m = msgs.find(x => x.id === f.messageId);
+                                                if (m) { await deleteMsg(m); setModFlags(prev => prev.filter(x => x.id !== f.id)); setModCount(c => Math.max(0, c - 1)); }
+                                                else {
+                                                    // Xabar joriy ro'yxatda yo'q — DELETE endpoint bilan urinamiz
+                                                    const r = await fetch(`/api/nexus/channels/${id}/messages/${f.messageId}`, { method: "DELETE" });
+                                                    if (r.ok) { setModFlags(prev => prev.filter(x => x.id !== f.id)); setModCount(c => Math.max(0, c - 1)); }
+                                                }
+                                            }}
+                                                className="text-[10px] font-bold px-2 py-1 rounded"
+                                                style={{ background: "rgba(239,68,68,0.15)", color: "#EF4444", border: "1px solid rgba(239,68,68,0.30)" }}>
+                                                O&apos;chirish
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        <div className="p-3 border-t text-[10px] text-center" style={{ borderColor: "rgba(43,62,232,0.14)", color: "rgba(140,160,210,0.55)" }}>
+                            Har 1 daqiqada avtomatik yangilanadi
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Forward to DM modal */}
             {forwardMsg && (

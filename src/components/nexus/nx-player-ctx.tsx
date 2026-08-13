@@ -254,6 +254,9 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
     const [dmTarget, setDmTarget] = useState<string | null>(null);
     const openDM = useCallback((username: string) => { setDmTarget(username); setMessagesOpen(true); }, []);
 
+    /* ── Chat + Call birga: chat ochilsa call avto-minimize ── */
+    // (activeCall va callMinimized quyida e'lon qilinadi — effect useEffect pastda)
+
     /* ── Chaqiruv (WebRTC 1:1) ── */
     const [activeCall, setActiveCall] = useState<ActiveCallState | null>(null);
     const [incoming, setIncoming] = useState<IncomingCall | null>(null);
@@ -265,6 +268,14 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
         setJoinGroupCallId(id);
         setGroupCallOpen(true);
     }, []);
+
+    // Chat ochilsa: aktiv call bo'lsa avto-minimize (foydalanuvchi chat bilan
+    // parallel ishlashi uchun). Chat yopilsa call kengaytiriladi.
+    useEffect(() => {
+        if (messagesOpen && activeCall && !callMinimized) setCallMinimized(true);
+        else if (!messagesOpen && activeCall && callMinimized) setCallMinimized(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [messagesOpen, activeCall]);
     const consumeJoinGroupCallId = useCallback(() => {
         const id = joinGroupCallId;
         setJoinGroupCallId(null);
