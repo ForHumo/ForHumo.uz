@@ -1653,6 +1653,7 @@ model NexusChannelMessage {
   pollMulti     Boolean   @default(false)
   pollVotes     NexusChannelPollVote[]
   reactions     NexusChannelMessageReaction[]
+  bookmarks     NexusChannelMessageBookmark[]
   createdAt DateTime @default(now())
   @@index([channelId, createdAt])
   @@index([channelId, pinnedAt])
@@ -1679,6 +1680,18 @@ model NexusChannelMessageReaction {
   createdAt  DateTime            @default(now())
   @@unique([messageId, profileId, emoji])
   @@index([messageId])
+}
+
+// Kanal xabari bookmark — per-user (shaxsiy saqlash)
+model NexusChannelMessageBookmark {
+  id         String              @id @default(cuid())
+  messageId  String
+  message    NexusChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  profileId  String
+  note       String?
+  createdAt  DateTime            @default(now())
+  @@unique([messageId, profileId])
+  @@index([profileId, createdAt])
 }
 
 // Web Push obunasi — brauzer push bildirishnomalari uchun (VAPID).

@@ -7,6 +7,7 @@ import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { moderateOnCreate } from "@/lib/moderation";
 import { filterMediaUrls } from "@/lib/media-url";
 import { banGuard } from "@/lib/moderation-guard";
+import { sendPushToProfile, pushAvailable } from "@/lib/push";
 
 async function meAndMember(email: string, channelId: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } });
@@ -78,6 +79,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         }
     }
 
+    // Mening bookmark qilgan xabarlarim (shu 100 ichida)
+    const myBookmarks = await prisma.nexusChannelMessageBookmark.findMany({
+        where: { profileId: me.id, messageId: { in: msgs.map(m => m.id) } },
+        select: { messageId: true },
+    });
+    const bookmarkedSet = new Set(myBookmarks.map(b => b.messageId));
+
     // Reaksiyalarni yig'ish
     const allReactions = await prisma.nexusChannelMessageReaction.findMany({
         where: { messageId: { in: msgs.map(m => m.id) } },
@@ -108,6 +116,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 pinnedAt: m.pinnedAt,
                 editedAt: m.editedAt,
                 replyTo: m.replyToId ? (replyMap.get(m.replyToId) ?? null) : null,
+                bookmarked: bookmarkedSet.has(m.id),
                 reactions: reactionMap.get(m.id)
                     ? [...reactionMap.get(m.id)!.entries()].map(([e, s]) => ({ emoji: e, count: s.count, mine: s.mine }))
                     : [],
@@ -162,6 +171,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         },
     });
     if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "CHANNEL_MESSAGE", targetId: msg.id, text: cleanText, kind: "kanal xabari", authorId: me.id }));
+
+    // Push notif — barcha a'zolarga (senderdan tashqari), 500 tagacha
+    if (pushAvailable()) {
+        after(async () => {
+            const members = await prisma.nexusChannelMember.findMany({
+                where: { channelId: id, profileId: { not: me.id } },
+                select: { profileId: true }, take: 500,
+            });
+            if (members.length === 0) return;
+            const senderName = me.name ?? me.username ?? "Foydalanuvchi";
+            const chLabel = channel.name;
+            const preview = cleanText || (cleanMedia.length ? "[media]" : isPoll ? "[so'rovnoma]" : "Yangi xabar");
+            const url = channel.handle ? `/nexus?channel=${channel.handle}` : "/nexus";
+            await Promise.all(members.map(m => sendPushToProfile(m.profileId, {
+                title: `${chLabel} · ${senderName}`,
+                body: preview.slice(0, 120),
+                url,
+                tag: `ch-${id}`,
+            }).catch(() => {})));
+        });
+    }
 
     // Reply preview qaytarish (agar bor bo'lsa)
     let replyToOut: { id: string; text: string | null; senderName: string | null } | null = null;

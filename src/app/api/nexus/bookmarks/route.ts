@@ -42,26 +42,68 @@ export async function GET() {
     });
     const pMap = new Map(peers.map(p => [p.id, p]));
 
-    return NextResponse.json({
-        bookmarks: rows.map(r => {
-            const c = r.message.conversation;
-            const oid = c.user1Id === me.id ? c.user2Id : c.user1Id;
-            const p = pMap.get(oid);
-            return {
-                id: r.id,
-                messageId: r.message.id,
-                conversationId: r.message.conversationId,
-                note: r.note,
-                createdAt: r.createdAt,
-                message: {
-                    text: r.message.text,
-                    mine: r.message.senderId === me.id,
-                    createdAt: r.message.createdAt,
-                    mediaType: r.message.mediaType,
-                    mediaUrl: r.message.mediaUrl,
+    // Kanal xabar bookmarklari
+    const chRows = await prisma.nexusChannelMessageBookmark.findMany({
+        where: { profileId: me.id },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        include: {
+            message: {
+                select: {
+                    id: true, text: true, senderId: true, createdAt: true,
+                    channelId: true,
+                    channel: { select: { name: true, type: true, handle: true, avatarUrl: true } },
                 },
-                peer: p ? { name: p.name, username: p.username, image: p.image } : null,
-            };
-        }),
+            },
+        },
     });
+
+    const dmBookmarks = rows.map(r => {
+        const c = r.message.conversation;
+        const oid = c.user1Id === me.id ? c.user2Id : c.user1Id;
+        const p = pMap.get(oid);
+        return {
+            id: r.id,
+            kind: "dm" as const,
+            messageId: r.message.id,
+            conversationId: r.message.conversationId,
+            note: r.note,
+            createdAt: r.createdAt,
+            message: {
+                text: r.message.text,
+                mine: r.message.senderId === me.id,
+                createdAt: r.message.createdAt,
+                mediaType: r.message.mediaType,
+                mediaUrl: r.message.mediaUrl,
+            },
+            peer: p ? { name: p.name, username: p.username, image: p.image } : null,
+        };
+    });
+    const chBookmarks = chRows.map(r => ({
+        id: r.id,
+        kind: "channel" as const,
+        messageId: r.message.id,
+        channelId: r.message.channelId,
+        note: r.note,
+        createdAt: r.createdAt,
+        message: {
+            text: r.message.text,
+            mine: r.message.senderId === me.id,
+            createdAt: r.message.createdAt,
+            mediaType: null,
+            mediaUrl: null,
+        },
+        channel: r.message.channel ? {
+            name: r.message.channel.name,
+            type: r.message.channel.type,
+            handle: r.message.channel.handle,
+            image: r.message.channel.avatarUrl,
+        } : null,
+    }));
+
+    // Ikkalasini birga tartibga solish (createdAt desc)
+    const combined = [...dmBookmarks, ...chBookmarks]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return NextResponse.json({ bookmarks: combined });
 }

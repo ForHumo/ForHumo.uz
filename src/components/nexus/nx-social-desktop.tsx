@@ -581,11 +581,18 @@ export function NxSocialDesktop() {
         }
     }
 
-    // Saqlangan xabarlar paneli
+    // Saqlangan xabarlar paneli (DM + kanal)
     interface BookmarkItem {
-        id: string; messageId: string; conversationId: string; note: string | null; createdAt: string;
-        message: { text: string; mine: boolean; createdAt: string; mediaType: string | null; mediaUrl: string | null };
-        peer: { name: string | null; username: string | null; image: string | null } | null;
+        id: string;
+        kind: "dm" | "channel";
+        messageId: string;
+        conversationId?: string;
+        channelId?: string;
+        note: string | null;
+        createdAt: string;
+        message: { text: string | null; mine: boolean; createdAt: string; mediaType: string | null; mediaUrl: string | null };
+        peer?: { name: string | null; username: string | null; image: string | null } | null;
+        channel?: { name: string; type: "CHANNEL" | "GROUP"; handle: string | null; image: string | null } | null;
     }
     const [bookmarksOpen, setBookmarksOpen] = useState(false);
     const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
@@ -603,24 +610,42 @@ export function NxSocialDesktop() {
     useEffect(() => { if (bookmarksOpen) loadBookmarks(); }, [bookmarksOpen]);
 
     // Draftlar paneli — barcha chatlardagi mavjud draftlar (localStorage aggregate)
-    interface DraftItem { convId: string; text: string; peer: { name: string | null; username: string | null; image: string | null } | null }
+    interface DraftItem {
+        kind: "dm" | "channel";
+        id: string;                  // convId yoki channelId
+        text: string;
+        peer?: { name: string | null; username: string | null; image: string | null } | null;
+        channel?: { id: string; name?: string } | null;
+    }
     const [draftsOpen, setDraftsOpen] = useState(false);
     const [drafts, setDrafts] = useState<DraftItem[]>([]);
     const DRAFT_PREFIX = "nexus:dm:draft:";
+    const CH_DRAFT_PREFIX = "nexus:ch:draft:";
     function loadDrafts() {
         try {
             const items: DraftItem[] = [];
             for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i);
-                if (!k?.startsWith(DRAFT_PREFIX)) continue;
-                const convId = k.slice(DRAFT_PREFIX.length);
-                const text = localStorage.getItem(k)?.trim();
-                if (!text) continue;
-                const c = convs.find(x => x.conversationId === convId);
-                items.push({
-                    convId, text,
-                    peer: c?.other ? { name: c.other.name, username: c.other.username, image: c.other.image } : null,
-                });
+                if (!k) continue;
+                if (k.startsWith(DRAFT_PREFIX)) {
+                    const convId = k.slice(DRAFT_PREFIX.length);
+                    const text = localStorage.getItem(k)?.trim();
+                    if (!text) continue;
+                    const c = convs.find(x => x.conversationId === convId);
+                    items.push({
+                        kind: "dm", id: convId, text,
+                        peer: c?.other ? { name: c.other.name, username: c.other.username, image: c.other.image } : null,
+                    });
+                } else if (k.startsWith(CH_DRAFT_PREFIX)) {
+                    const chId = k.slice(CH_DRAFT_PREFIX.length);
+                    const text = localStorage.getItem(k)?.trim();
+                    if (!text) continue;
+                    const c = channels.find(x => x.id === chId);
+                    items.push({
+                        kind: "channel", id: chId, text,
+                        channel: c ? { id: chId, name: c.name } : { id: chId },
+                    });
+                }
             }
             setDrafts(items);
         } catch {
@@ -628,21 +653,28 @@ export function NxSocialDesktop() {
         }
     }
     useEffect(() => { if (draftsOpen) loadDrafts(); }, [draftsOpen, convs]);
-    // Draft'ni o'chirish
-    function deleteDraft(convId: string) {
-        try { localStorage.removeItem(DRAFT_PREFIX + convId); } catch {}
-        setDrafts(prev => prev.filter(d => d.convId !== convId));
-        if (convId === selectedId) setInput("");
+    // Draft'ni o'chirish (DM yoki kanal)
+    function deleteDraft(d: DraftItem) {
+        try {
+            if (d.kind === "dm") {
+                localStorage.removeItem(DRAFT_PREFIX + d.id);
+                if (d.id === selectedId) setInput("");
+            } else {
+                localStorage.removeItem(CH_DRAFT_PREFIX + d.id);
+            }
+        } catch {}
+        setDrafts(prev => prev.filter(x => x.id !== d.id || x.kind !== d.kind));
     }
-    // Jami draft soni (chat list badge uchun)
+    // Jami draft soni (chat list badge uchun) — DM + kanal
     const [draftCount, setDraftCount] = useState(0);
     useEffect(() => {
         try {
             let n = 0;
             for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i);
-                if (!k?.startsWith(DRAFT_PREFIX)) continue;
-                if (localStorage.getItem(k)?.trim()) n++;
+                if (!k) continue;
+                if ((k.startsWith(DRAFT_PREFIX) || k.startsWith(CH_DRAFT_PREFIX))
+                    && localStorage.getItem(k)?.trim()) n++;
             }
             setDraftCount(n);
         } catch {}
@@ -3024,23 +3056,39 @@ export function NxSocialDesktop() {
                             ) : (
                                 bookmarks.map(b => (
                                     <button key={b.id} onClick={() => {
-                                        setSelectedId(b.conversationId);
-                                        setBookmarksOpen(false);
-                                        setTimeout(() => jumpToMessage(b.messageId), 500);
+                                        if (b.kind === "dm" && b.conversationId) {
+                                            setSelectedId(b.conversationId);
+                                            setBookmarksOpen(false);
+                                            setTimeout(() => jumpToMessage(b.messageId), 500);
+                                        } else if (b.kind === "channel" && b.channelId) {
+                                            setListTab(b.channel?.type === "GROUP" ? "groups" : "channels");
+                                            setSelectedChannel(b.channelId);
+                                            setBookmarksOpen(false);
+                                        }
                                     }}
                                         className="w-full text-left px-4 py-3 border-b hover:bg-white/[0.04] transition"
                                         style={{ borderColor: "rgba(43,62,232,0.10)" }}>
                                         <div className="flex items-center gap-2 mb-1">
-                                            {b.peer?.image
-                                                ? <Image src={b.peer.image} alt="" width={20} height={20} className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
-                                                : <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "rgba(43,62,232,0.20)" }} />
-                                            }
-                                            <span className="text-[10px] font-black" style={{ color: "rgba(220,230,255,0.85)" }}>
-                                                {b.peer?.name ?? b.peer?.username ?? "Foydalanuvchi"}
+                                            {b.kind === "dm" ? (
+                                                b.peer?.image
+                                                    ? <Image src={b.peer.image} alt="" width={20} height={20} className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+                                                    : <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "rgba(43,62,232,0.20)" }} />
+                                            ) : (
+                                                <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                    {b.channel?.type === "GROUP"
+                                                        ? <Users className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                        : <Megaphone className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                    }
+                                                </div>
+                                            )}
+                                            <span className="text-[10px] font-black truncate" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                                {b.kind === "dm"
+                                                    ? (b.peer?.name ?? b.peer?.username ?? "Foydalanuvchi")
+                                                    : (b.channel?.name ?? "Kanal")}
                                             </span>
                                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                                                style={{ background: b.message.mine ? "rgba(43,62,232,0.20)" : "rgba(0,206,200,0.15)", color: b.message.mine ? "rgba(180,195,235,0.90)" : "#00CEC8" }}>
-                                                {b.message.mine ? "Siz" : "U"}
+                                                style={{ background: b.kind === "channel" ? "rgba(0,206,200,0.15)" : (b.message.mine ? "rgba(43,62,232,0.20)" : "rgba(0,206,200,0.15)"), color: b.kind === "channel" ? "#00CEC8" : (b.message.mine ? "rgba(180,195,235,0.90)" : "#00CEC8") }}>
+                                                {b.kind === "channel" ? (b.channel?.type === "GROUP" ? "Guruh" : "Kanal") : (b.message.mine ? "Siz" : "U")}
                                             </span>
                                             <span className="ml-auto text-[10px] tabular-nums" style={{ color: "rgba(140,160,210,0.60)" }}>
                                                 {new Date(b.message.createdAt).toLocaleDateString("uz-UZ", { day: "numeric", month: "short" })}
@@ -3086,29 +3134,38 @@ export function NxSocialDesktop() {
                                 </p>
                             ) : (
                                 drafts.map(d => (
-                                    <div key={d.convId}
+                                    <div key={`${d.kind}:${d.id}`}
                                         className="flex items-center gap-3 px-4 py-3 border-b hover:bg-white/[0.04] transition"
                                         style={{ borderColor: "rgba(43,62,232,0.10)" }}>
-                                        {d.peer?.image
-                                            ? <Image src={d.peer.image} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                                            : <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                                        {d.kind === "dm" ? (
+                                            d.peer?.image
+                                                ? <Image src={d.peer.image} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                                                : <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                                                    style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                    <BotIcon className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                </div>
+                                        ) : (
+                                            <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
                                                 style={{ background: "rgba(43,62,232,0.20)" }}>
-                                                <BotIcon className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                <Megaphone className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
                                             </div>
-                                        }
+                                        )}
                                         <button onClick={() => {
-                                            setSelectedId(d.convId);
+                                            if (d.kind === "dm") setSelectedId(d.id);
+                                            else setSelectedChannel(d.id);
                                             setDraftsOpen(false);
                                         }}
                                             className="min-w-0 flex-1 text-left">
                                             <p className="text-xs font-bold truncate" style={{ color: "rgba(220,230,255,0.95)" }}>
-                                                {d.peer?.name ?? d.peer?.username ?? "Foydalanuvchi"}
+                                                {d.kind === "dm"
+                                                    ? (d.peer?.name ?? d.peer?.username ?? "Foydalanuvchi")
+                                                    : (d.channel?.name ?? "Kanal")}
                                             </p>
                                             <p className="text-[11px] italic line-clamp-1" style={{ color: "rgba(140,160,210,0.85)" }}>
                                                 {d.text}
                                             </p>
                                         </button>
-                                        <button onClick={() => deleteDraft(d.convId)}
+                                        <button onClick={() => deleteDraft(d)}
                                             title="Draft'ni o'chirish"
                                             className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
                                             style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.25)" }}>

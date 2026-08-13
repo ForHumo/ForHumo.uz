@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward,
+    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward, Bookmark, BookmarkCheck,
 } from "lucide-react";
 import { NxPollCreate } from "./nx-poll-create";
 
@@ -18,6 +18,7 @@ interface ChMsg {
     editedAt?: string | null;
     reactions?: Array<{ emoji: string; count: number; mine: boolean }>;
     replyTo?: { id: string; text: string | null; senderName: string | null } | null;
+    bookmarked?: boolean;
 }
 
 function avatarFor(c: { name: string; avatarUrl?: string | null }) {
@@ -250,6 +251,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         if (!input.trim() || busy) return;
         setBusy(true);
         const text = input.trim(); setInput("");
+        try { localStorage.removeItem(CH_DRAFT_PREFIX + id); } catch {}
         const replyToIdSnap = replyTo?.id ?? null;
         setReplyTo(null);
         try {
@@ -277,6 +279,27 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [reactPickerFor, setReactPickerFor] = useState<string | null>(null);
     // Reply — javob berilayotgan xabar
     const [replyTo, setReplyTo] = useState<ChMsg | null>(null);
+    // Draft — per-channel localStorage
+    const CH_DRAFT_PREFIX = "nexus:ch:draft:";
+    // Chat ochilganda draft'ni tiklash
+    useEffect(() => {
+        try {
+            const d = localStorage.getItem(CH_DRAFT_PREFIX + id);
+            if (d) setInput(d);
+        } catch {}
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
+    // Har input o'zgarishida (400ms debounce) saqlash
+    useEffect(() => {
+        const t = setTimeout(() => {
+            try {
+                if (input.trim()) localStorage.setItem(CH_DRAFT_PREFIX + id, input);
+                else localStorage.removeItem(CH_DRAFT_PREFIX + id);
+            } catch {}
+        }, 400);
+        return () => clearTimeout(t);
+    }, [input, id]);
+
     // Forward — kanal xabarni DM'ga jo'natish
     const [forwardMsg, setForwardMsg] = useState<ChMsg | null>(null);
     const [dmList, setDmList] = useState<Array<{ conversationId: string; other: { name: string | null; username: string | null; image: string | null } | null }>>([]);
@@ -341,6 +364,16 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         if (r.ok) setMsgs(prev => prev.filter(x => x.id !== m.id));
         else alert("O'chirib bo'lmadi");
     }
+    async function toggleBookmark(m: ChMsg) {
+        const now = !m.bookmarked;
+        setMsgs(prev => prev.map(x => x.id === m.id ? { ...x, bookmarked: now } : x));
+        const url = `/api/nexus/channels/${id}/messages/${m.id}/bookmark`;
+        const r = await fetch(url, now
+            ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }
+            : { method: "DELETE" });
+        if (!r.ok) setMsgs(prev => prev.map(x => x.id === m.id ? { ...x, bookmarked: !now } : x));
+    }
+
     async function toggleReact(m: ChMsg, emoji: string) {
         const r = await fetch(`/api/nexus/channels/${id}/messages/${m.id}/react`, {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -561,6 +594,18 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         className="w-7 h-7 rounded-md flex items-center justify-center"
                                         style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
                                         <Forward className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                    </button>
+                                    <button onClick={() => toggleBookmark(m)}
+                                        title={m.bookmarked ? "Saqlashdan olib tashlash" : "Saqlash"}
+                                        className="w-7 h-7 rounded-md flex items-center justify-center"
+                                        style={{
+                                            background: m.bookmarked ? "rgba(245,158,11,0.18)" : "rgba(11,18,40,0.65)",
+                                            border: `1px solid ${m.bookmarked ? "rgba(245,158,11,0.40)" : "rgba(43,62,232,0.25)"}`,
+                                        }}>
+                                        {m.bookmarked
+                                            ? <BookmarkCheck className="w-3 h-3" style={{ color: "#F59E0B" }} />
+                                            : <Bookmark className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        }
                                     </button>
                                     {m.mine && m.text && (
                                         <button onClick={() => editMsg(m)} title="Tahrirlash"
