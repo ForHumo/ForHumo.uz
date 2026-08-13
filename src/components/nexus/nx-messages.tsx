@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag } from "lucide-react";
+import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag, Bookmark, BookmarkCheck, Volume2, VolumeX, Languages, Copy, Pin } from "lucide-react";
 import { formatMoney } from "@/lib/money";
 import Image from "next/image";
 import { NxVerifiedBadge } from "./nx-verified-badge";
@@ -14,6 +14,7 @@ import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxBanModal, type BanInfo } from "./nx-ban-modal";
 import { NxPollCreate } from "./nx-poll-create";
 import { NxVoicePlayer } from "./nx-voice-player";
+import { NxMarkdown } from "./nx-markdown";
 
 interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
 interface Conv { conversationId: string; other: Other | null; lastMessageText: string | null; lastMessageAt: string; lastMine: boolean; unread: boolean }
@@ -35,8 +36,23 @@ interface Msg {
     } | null;
     agentActionRef?: string | null;
     myRating?: number | null;
+    // Yangi maydonlar (parity)
+    bookmarked?: boolean;
+    pinnedAt?: string | null;
+    editedAt?: string | null;
 }
 interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isMe: boolean }
+
+// Xabar matnini clipboard'ga nusxa olish
+function copyText(text: string) { navigator.clipboard.writeText(text).catch(() => {}); }
+// TTS eshittirish
+function speakText(text: string) {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = /[а-яё]/i.test(text) ? "ru-RU" : "en-US";
+    window.speechSynthesis.speak(u);
+}
 
 // Media turini MIME'dan aniqlash
 function detectMediaType(mime: string): "image" | "video" | "audio" | "file" {
@@ -892,16 +908,33 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                         )}
                                     </div>
                                 )}
-                                {/* Matn qism (agar bo'lsa) */}
+                                {/* Matn qism (agar bo'lsa) — markdown render bilan */}
                                 {m.text && (
                                     <div className="px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words"
                                         style={m.mine
                                             ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)", color: "#fff", borderBottomRightRadius: "4px" }
                                             : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.92)", borderBottomLeftRadius: "4px" }}>
-                                        {m.text}
+                                        <NxMarkdown text={m.text} />
+                                        {m.editedAt && <span className="ml-1.5 text-[10px] opacity-50 italic">(tahrirlangan)</span>}
                                     </div>
                                 )}
                                 <div className={`flex items-center gap-1 px-1 ${m.mine ? "justify-end" : "justify-start"}`}>
+                                    {m.text && (
+                                        <>
+                                            <button onClick={() => copyText(m.text)}
+                                                title="Nusxa olish"
+                                                className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/[0.08] active:scale-90">
+                                                <Copy className="w-3 h-3" style={{ color: "rgba(140,160,210,0.65)" }} />
+                                            </button>
+                                            <button onClick={() => speakText(m.text)}
+                                                title="Eshittirish"
+                                                className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/[0.08] active:scale-90">
+                                                <Volume2 className="w-3 h-3" style={{ color: "rgba(140,160,210,0.65)" }} />
+                                            </button>
+                                        </>
+                                    )}
+                                    {m.bookmarked && <BookmarkCheck className="w-3 h-3" style={{ color: "#F59E0B" }} />}
+                                    {m.pinnedAt && <Pin className="w-3 h-3" style={{ color: "#00CEC8" }} />}
                                     <span className="text-[10px]" style={{ color: "rgba(80,100,150,0.7)" }}>{timeShort(m.createdAt)}</span>
                                     {m.mine && (
                                         isRead

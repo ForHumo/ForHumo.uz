@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward, Bookmark, BookmarkCheck,
+    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward, Bookmark, BookmarkCheck, Search, Volume2, VolumeX, Languages, Copy,
 } from "lucide-react";
 import { NxPollCreate } from "./nx-poll-create";
 
@@ -279,6 +279,81 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [reactPickerFor, setReactPickerFor] = useState<string | null>(null);
     // Reply — javob berilayotgan xabar
     const [replyTo, setReplyTo] = useState<ChMsg | null>(null);
+    // Server-side qidiruv
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState<Array<{ id: string; text: string | null; createdAt: string; mine: boolean; hasMedia: boolean; sender: { name: string | null; username: string | null; image: string | null } | null }> | null>(null);
+    const [searchTotal, setSearchTotal] = useState(0);
+    const [searchBusy, setSearchBusy] = useState(false);
+    useEffect(() => {
+        if (!searchOpen) { setSearchResults(null); setSearchTotal(0); return; }
+        const q = searchQuery.trim();
+        if (q.length < 2) { setSearchResults(null); setSearchTotal(0); return; }
+        setSearchBusy(true);
+        const t = setTimeout(async () => {
+            try {
+                const r = await fetch(`/api/nexus/channels/${id}/messages/search?q=${encodeURIComponent(q)}&limit=50`, { cache: "no-store" });
+                if (r.ok) {
+                    const d = await r.json();
+                    setSearchResults(d.results ?? []);
+                    setSearchTotal(d.total ?? 0);
+                }
+            } finally { setSearchBusy(false); }
+        }, 300);
+        return () => clearTimeout(t);
+    }, [searchQuery, searchOpen, id]);
+    function jumpToChMsg(msgId: string) {
+        const el = document.querySelector<HTMLElement>(`[data-ch-msg-id="${msgId}"]`);
+        if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.animate([{ background: "rgba(0,206,200,0.20)" }, { background: "transparent" }], { duration: 1400, iterations: 1 });
+        } else {
+            alert("Xabar hozirgi ko'rinishda emas — biroz yuqoriga aylantiring");
+        }
+    }
+
+    // TTS (Web Speech API)
+    const [speakingId, setSpeakingId] = useState<string | null>(null);
+    function speakMsg(msgId: string, text: string) {
+        if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+        if (speakingId === msgId) { window.speechSynthesis.cancel(); setSpeakingId(null); return; }
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = /[а-яё]/i.test(text) ? "ru-RU" : "en-US";
+        u.onend = () => setSpeakingId(null);
+        u.onerror = () => setSpeakingId(null);
+        setSpeakingId(msgId);
+        window.speechSynthesis.speak(u);
+    }
+    useEffect(() => () => {
+        if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+    }, []);
+
+    // Tarjima (Gemini) + dropdown
+    const [translated, setTranslated] = useState<Record<string, string>>({});
+    const [translating, setTranslating] = useState<Record<string, boolean>>({});
+    const [translatePickerFor, setTranslatePickerFor] = useState<string | null>(null);
+    async function translateMsg(msgId: string, text: string, target: "uz" | "ru" | "en") {
+        setTranslatePickerFor(null);
+        setTranslating(prev => ({ ...prev, [msgId]: true }));
+        try {
+            const r = await fetch("/api/ai/translate", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text, target }),
+            });
+            if (r.ok) { const d = await r.json(); setTranslated(prev => ({ ...prev, [msgId]: d.translated })); }
+            else alert("Tarjima qilib bo'lmadi");
+        } finally {
+            setTranslating(prev => { const n = { ...prev }; delete n[msgId]; return n; });
+        }
+    }
+    function hideTranslated(msgId: string) {
+        setTranslated(prev => { const n = { ...prev }; delete n[msgId]; return n; });
+    }
+    function copyMsg(text: string) {
+        navigator.clipboard.writeText(text).catch(() => {});
+    }
+
     // Draft — per-channel localStorage
     const CH_DRAFT_PREFIX = "nexus:ch:draft:";
     // Chat ochilganda draft'ni tiklash
@@ -415,11 +490,73 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                     <p className="text-sm font-black text-white truncate">{ch.name}</p>
                     <p className="text-[11px]" style={{ color: "rgba(120,140,185,0.8)" }}>{ch.type === "CHANNEL" ? "Kanal" : "Guruh"} · {ch.memberCount} a&apos;zo</p>
                 </div>
+                {ch.isMember && (
+                    <button onClick={() => { setSearchOpen(v => !v); setSearchQuery(""); }}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center"
+                        style={{ background: searchOpen ? "rgba(0,206,200,0.15)" : "rgba(43,62,232,0.12)" }}
+                        title={searchOpen ? "Qidiruvni yopish" : "Kanalda qidirish"}>
+                        {searchOpen
+                            ? <X className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                            : <Search className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} />
+                        }
+                    </button>
+                )}
                 {ch.isOwner && <button onClick={() => setMembersOpen(true)} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "rgba(43,62,232,0.12)" }}><Users className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} /></button>}
                 {ch.isMember && <button onClick={leaveOrDelete} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.1)" }}>{ch.isOwner ? <Trash2 className="w-4 h-4" style={{ color: "#ff8a96" }} /> : <X className="w-4 h-4" style={{ color: "#ff8a96" }} />}</button>}
             </div>
 
             {membersOpen && <ChannelMembers id={id} onClose={() => setMembersOpen(false)} />}
+
+            {/* Qidiruv paneli */}
+            {searchOpen && ch.isMember && (
+                <div className="mx-2 mb-2 rounded-xl overflow-hidden"
+                    style={{ background: "rgba(11,18,40,0.6)", border: "1px solid rgba(43,62,232,0.18)" }}>
+                    <div className="px-3 py-2 flex items-center gap-2">
+                        <Search className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.60)" }} />
+                        <input autoFocus value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            placeholder="Kanalda qidirish (2+ belgi)..."
+                            className="flex-1 h-8 bg-transparent text-white text-sm focus:outline-none" />
+                        {searchBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#00CEC8" }} />}
+                        {searchQuery.trim().length >= 2 && !searchBusy && (
+                            <span className="text-[11px] font-bold" style={{ color: "rgba(140,160,210,0.85)" }}>{searchTotal} natija</span>
+                        )}
+                    </div>
+                    {searchResults && searchResults.length > 0 && (
+                        <div className="max-h-64 overflow-y-auto border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                            {searchResults.map(r => (
+                                <button key={r.id} onClick={() => jumpToChMsg(r.id)}
+                                    className="w-full text-left px-3 py-2 border-b hover:bg-white/[0.04] transition"
+                                    style={{ borderColor: "rgba(43,62,232,0.08)" }}>
+                                    <div className="flex items-center gap-2">
+                                        {r.sender?.image
+                                            ? <img src={r.sender.image} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+                                            : <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ background: "rgba(43,62,232,0.20)" }} />
+                                        }
+                                        <span className="text-[10px] font-black truncate" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                            {r.sender?.name ?? r.sender?.username ?? "Foydalanuvchi"}
+                                        </span>
+                                        <span className="ml-auto text-[10px] tabular-nums" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                            {new Date(r.createdAt).toLocaleDateString("uz-UZ", { day: "numeric", month: "short" })}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs mt-0.5 line-clamp-2" style={{ color: "rgba(220,230,255,0.90)" }}>
+                                        {r.text ?? (r.hasMedia ? "[media]" : "")}
+                                    </p>
+                                </button>
+                            ))}
+                            {searchTotal > searchResults.length && (
+                                <p className="text-[10px] text-center py-2" style={{ color: "rgba(140,160,210,0.55)" }}>
+                                    +{searchTotal - searchResults.length} boshqa natija — aniqroq qidiruv yozing
+                                </p>
+                            )}
+                        </div>
+                    )}
+                    {searchResults && searchResults.length === 0 && searchQuery.trim().length >= 2 && !searchBusy && (
+                        <p className="px-3 py-2 text-xs text-center" style={{ color: "rgba(140,160,210,0.60)" }}>Hech narsa topilmadi</p>
+                    )}
+                </div>
+            )}
 
             {!ch.isMember ? (
                 <div className="flex flex-col items-center justify-center flex-1 px-6 text-center">
@@ -491,6 +628,13 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                             {m.text}
                                             {m.editedAt && <span className="ml-1.5 text-[10px] opacity-50 italic">(tahrirlangan)</span>}
                                         </p>
+                                    )}
+                                    {translated[m.id] && (
+                                        <div className="mt-1.5 pl-2 py-1 rounded text-xs italic"
+                                            style={{ borderLeft: "2px solid #00CEC8", background: "rgba(0,206,200,0.08)" }}>
+                                            <span className="text-[9px] font-bold uppercase tracking-wider mr-1.5" style={{ color: "#00CEC8" }}>Tarjima</span>
+                                            {translated[m.id]}
+                                        </div>
                                     )}
                                     {editingId === m.id && (
                                         <div className="flex flex-col gap-1.5">
@@ -607,6 +751,55 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                             : <Bookmark className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
                                         }
                                     </button>
+                                    {m.text && (
+                                        <>
+                                            <button onClick={() => speakMsg(m.id, m.text!)}
+                                                title={speakingId === m.id ? "To'xtatish" : "Eshittirish"}
+                                                className="w-7 h-7 rounded-md flex items-center justify-center"
+                                                style={{
+                                                    background: speakingId === m.id ? "rgba(0,206,200,0.20)" : "rgba(11,18,40,0.65)",
+                                                    border: `1px solid ${speakingId === m.id ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.25)"}`,
+                                                }}>
+                                                {speakingId === m.id
+                                                    ? <VolumeX className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                                    : <Volume2 className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                }
+                                            </button>
+                                            <div className="relative">
+                                                <button onClick={() => translated[m.id]
+                                                    ? hideTranslated(m.id)
+                                                    : setTranslatePickerFor(translatePickerFor === m.id ? null : m.id)}
+                                                    title="Tarjima" disabled={!!translating[m.id]}
+                                                    className="w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-40"
+                                                    style={{
+                                                        background: translated[m.id] ? "rgba(0,206,200,0.20)" : "rgba(11,18,40,0.65)",
+                                                        border: "1px solid rgba(43,62,232,0.25)",
+                                                    }}>
+                                                    {translating[m.id]
+                                                        ? <Loader2 className="w-3 h-3 animate-spin" style={{ color: "#00CEC8" }} />
+                                                        : <Languages className="w-3 h-3" style={{ color: translated[m.id] ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
+                                                    }
+                                                </button>
+                                                {translatePickerFor === m.id && (
+                                                    <div className="absolute right-full mr-1 top-0 z-30 flex gap-1 p-1 rounded-lg"
+                                                        style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                                        {(["uz", "ru", "en"] as const).map(lg => (
+                                                            <button key={lg} onClick={() => translateMsg(m.id, m.text!, lg)}
+                                                                className="text-[10px] font-black px-2 py-1 rounded hover:bg-white/[0.08]"
+                                                                style={{ color: "rgba(220,230,255,0.95)" }}>
+                                                                {lg.toUpperCase()}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <button onClick={() => copyMsg(m.text!)} title="Nusxa olish"
+                                                className="w-7 h-7 rounded-md flex items-center justify-center"
+                                                style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                                <Copy className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                            </button>
+                                        </>
+                                    )}
                                     {m.mine && m.text && (
                                         <button onClick={() => editMsg(m)} title="Tahrirlash"
                                             className="w-7 h-7 rounded-md flex items-center justify-center"
