@@ -47,6 +47,11 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
     const [duration, setDuration] = useState<number>(initialDurationMs ? initialDurationMs / 1000 : 0);
     const [current, setCurrent] = useState(0);
     const bars = seededBars(seed || src, BAR_COUNT);
+    // O'ynayotgan level (0..1) — bar balandligini kuchsizlantiradi/kuchaytiradi
+    const [audioLevel, setAudioLevel] = useState(0);
+    const audioCtxRef = useRef<AudioContext | null>(null);
+    const analyserRef = useRef<AnalyserNode | null>(null);
+    const rafRef = useRef<number | null>(null);
     // Transkripsiya holati
     const [transcribing, setTranscribing] = useState(false);
     const [transcript, setTranscript] = useState<string | null>(null);
@@ -87,12 +92,56 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
         };
     }, []);
 
+    function ensureAnalyser() {
+        const a = audioRef.current;
+        if (!a || analyserRef.current) return;
+        try {
+            const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+            if (!AC) return;
+            const ctx = new AC();
+            const src = ctx.createMediaElementSource(a);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 128;
+            src.connect(analyser);
+            analyser.connect(ctx.destination);
+            audioCtxRef.current = ctx;
+            analyserRef.current = analyser;
+        } catch { /* ba'zi brauzerlar cross-origin audio bilan cheklaydi */ }
+    }
+    function stopAnalyserLoop() {
+        if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+        setAudioLevel(0);
+    }
+    function startAnalyserLoop() {
+        const analyser = analyserRef.current;
+        if (!analyser) return;
+        const buf = new Uint8Array(analyser.frequencyBinCount);
+        const loop = () => {
+            analyser.getByteFrequencyData(buf);
+            // O'rtacha level 0..255 → 0..1
+            let sum = 0;
+            for (let i = 0; i < buf.length; i++) sum += buf[i];
+            const avg = sum / (buf.length * 255);
+            setAudioLevel(avg);
+            rafRef.current = requestAnimationFrame(loop);
+        };
+        loop();
+    }
     function toggle() {
         const a = audioRef.current;
         if (!a) return;
-        if (playing) { a.pause(); setPlaying(false); }
-        else { a.play().then(() => setPlaying(true)).catch(() => {}); }
+        if (playing) { a.pause(); setPlaying(false); stopAnalyserLoop(); }
+        else {
+            ensureAnalyser();
+            audioCtxRef.current?.resume().catch(() => {});
+            a.play().then(() => { setPlaying(true); startAnalyserLoop(); }).catch(() => {});
+        }
     }
+    // Cleanup: komponent unmount'da AudioContext yopish
+    useEffect(() => () => {
+        stopAnalyserLoop();
+        try { audioCtxRef.current?.close(); } catch {}
+    }, []);
 
     function onBarClick(e: React.MouseEvent<HTMLDivElement>) {
         const a = audioRef.current;
@@ -133,14 +182,19 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
                 >
                     {bars.map((h, i) => {
                         const active = (i + 1) / BAR_COUNT <= progress;
+                        // O'ynayotgan payt: barlar audioLevel bilan pulsatsiya qiladi
+                        // (o'rtadagilar ko'proq — dolg'a effekti)
+                        const centerBias = 1 - Math.abs((i / (BAR_COUNT - 1)) - 0.5) * 1.4;
+                        const pulse = playing ? 1 + audioLevel * centerBias * 0.9 : 1;
                         return (
                             <div
                                 key={i}
                                 className="rounded-full transition-colors"
                                 style={{
                                     width: 2.5,
-                                    height: `${Math.round(h * 22)}px`,
+                                    height: `${Math.round(h * 22 * pulse)}px`,
                                     background: active ? activeColor : dimColor,
+                                    transition: "height 90ms linear, background-color 200ms",
                                 }}
                             />
                         );

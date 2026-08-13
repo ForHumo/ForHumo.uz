@@ -130,6 +130,16 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     function cancelLongPress() {
         if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
     }
+    async function actionReact(m: Msg, emoji: string) {
+        const conv = selected?.conversationId; if (!conv) return;
+        try {
+            await fetch(`/api/nexus/messages/${conv}/react`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messageId: m.id, emoji }),
+            });
+        } catch {}
+        setActionMsg(null);
+    }
     async function actionToggleBookmark(m: Msg) {
         const now = !m.bookmarked;
         const conv = selected?.conversationId; if (!conv) return;
@@ -1113,6 +1123,16 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                             <p className="text-xs line-clamp-2" style={{ color: "rgba(220,230,255,0.90)" }}>
                                 {actionMsg.text || (actionMsg.mediaType ? `[${actionMsg.mediaType}]` : "(media)")}
                             </p>
+                        </div>
+                        {/* Tez reaksiyalar (8 emoji) */}
+                        <div className="px-2 py-2 border-b flex gap-1 overflow-x-auto"
+                            style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                            {["❤️", "👍", "😂", "😮", "😢", "🔥", "🙏", "👏"].map(e => (
+                                <button key={e} onClick={() => actionReact(actionMsg, e)}
+                                    className="flex-shrink-0 w-10 h-10 rounded-full text-xl hover:bg-white/[0.08] active:scale-90 transition">
+                                    {e}
+                                </button>
+                            ))}
                         </div>
                         {/* Amallar */}
                         <div className="p-2">

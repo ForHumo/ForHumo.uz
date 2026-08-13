@@ -5,6 +5,7 @@ import {
     Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward, Bookmark, BookmarkCheck, Search, Volume2, VolumeX, Languages, Copy,
 } from "lucide-react";
 import { NxPollCreate } from "./nx-poll-create";
+import { NxMarkdown } from "./nx-markdown";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean }
@@ -665,10 +666,10 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         </button>
                                     )}
                                     {m.text && editingId !== m.id && (
-                                        <p className="text-sm whitespace-pre-wrap" style={{ color: "rgba(210,220,245,0.95)" }}>
-                                            {m.text}
+                                        <div className="text-sm whitespace-pre-wrap" style={{ color: "rgba(210,220,245,0.95)" }}>
+                                            <NxMarkdown text={m.text} />
                                             {m.editedAt && <span className="ml-1.5 text-[10px] opacity-50 italic">(tahrirlangan)</span>}
-                                        </p>
+                                        </div>
                                     )}
                                     {translated[m.id] && (
                                         <div className="mt-1.5 pl-2 py-1 rounded text-xs italic"

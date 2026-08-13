@@ -914,16 +914,20 @@ export function NxSocialDesktop() {
                 : file.type.startsWith("video/") ? "video"
                 : file.type.startsWith("audio/") ? "audio"
                 : "file");
+            // Reply rejim ochiq bo'lsa — media xabarga replyToId biriktiriladi
+            const replyToIdSnap = replyTo?.id ?? null;
             const r = await fetch(`/api/nexus/messages/${selectedId}`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     text: "", mediaUrl: blob.url, mediaType: kind, mediaMime: file.type,
                     mediaName: file.name, mediaSize: file.size,
+                    ...(replyToIdSnap ? { replyToId: replyToIdSnap } : {}),
                 }),
             });
             if (r.ok) {
                 const d = await r.json();
                 setMessages(m => [...m, d.message]);
+                if (replyToIdSnap) setReplyTo(null); // yuborilgach reply preview yopiladi
                 loadConvs();
             }
         } catch (e) {
