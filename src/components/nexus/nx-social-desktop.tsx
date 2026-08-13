@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
@@ -146,8 +146,17 @@ export function NxSocialDesktop() {
     // Forward: qaysi xabar forward qilinmoqda va uni qaysi suhbatga jo'natish
     const [forwardMsg, setForwardMsg] = useState<Msg | null>(null);
     const [forwarding, setForwarding] = useState(false);
+    // Ommaviy forward rejimi (bir necha xabar birga)
+    const [bulkForwardOpen, setBulkForwardOpen] = useState(false);
     // Reaksiya bergan foydalanuvchilar modali
     const [reactionUsers, setReactionUsers] = useState<{ messageId: string; emoji: string; users: Array<{ name: string | null; username: string | null; image: string | null; mine: boolean }> | null } | null>(null);
+    // Ko'p tanlash rejimi
+    const [selectMode, setSelectMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    // "Pastga scroll" tugmasi + yangi xabar hisoblagichi
+    const [showScrollDown, setShowScrollDown] = useState(false);
+    const [unreadInView, setUnreadInView] = useState(0);
+    const msgsContainerRef = useRef<HTMLDivElement>(null);
     const [moreOpen, setMoreOpen] = useState(false);
     const moreRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -156,6 +165,59 @@ export function NxSocialDesktop() {
         setTimeout(() => document.addEventListener("mousedown", h), 0);
         return () => document.removeEventListener("mousedown", h);
     }, [moreOpen]);
+
+    // Ko'p tanlash rejimi — xabarni toggle qilish
+    function toggleSelectMsg(id: string) {
+        setSelectedIds(prev => {
+            const n = new Set(prev);
+            if (n.has(id)) n.delete(id); else n.add(id);
+            return n;
+        });
+    }
+    function exitSelectMode() {
+        setSelectMode(false);
+        setSelectedIds(new Set());
+    }
+    // Ommaviy o'chirish (faqat mening xabarlarim)
+    async function bulkDelete() {
+        if (!selectedId || selectedIds.size === 0) return;
+        const mineIds = messages.filter(m => selectedIds.has(m.id) && m.mine).map(m => m.id);
+        if (mineIds.length === 0) { alert("Faqat o'z xabaringizni o'chirasiz"); return; }
+        if (!confirm(`${mineIds.length} ta xabar o'chirilsinmi?`)) return;
+        await Promise.all(mineIds.map(id =>
+            fetch(`/api/nexus/messages/${selectedId}?messageId=${id}`, { method: "DELETE" })
+                .catch(() => null)
+        ));
+        setMessages(prev => prev.filter(m => !mineIds.includes(m.id)));
+        exitSelectMode();
+        loadConvs();
+    }
+    // Ommaviy forward — bir necha xabarni bitta suhbatga jo'natish
+    async function bulkForwardToConv(targetConvId: string) {
+        if (selectedIds.size === 0) return;
+        const items = messages.filter(m => selectedIds.has(m.id));
+        // Xabar tartibida (yuqoridan pastga)
+        for (const src of items) {
+            const body: Record<string, unknown> = {};
+            const prefix = "↪ Yuborilgan xabar\n";
+            body.text = src.text ? prefix + src.text : prefix;
+            if (src.mediaUrl && src.mediaType && ["image", "video", "audio", "file", "video-circle"].includes(src.mediaType)) {
+                body.mediaUrl = src.mediaUrl;
+                body.mediaType = src.mediaType;
+                if (src.mediaName) body.mediaName = src.mediaName;
+                if (typeof src.mediaSize === "number") body.mediaSize = src.mediaSize;
+                if (typeof src.durationMs === "number") body.durationMs = src.durationMs;
+            }
+            await fetch(`/api/nexus/messages/${targetConvId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            }).catch(() => null);
+        }
+        setForwardMsg(null);
+        exitSelectMode();
+        if (targetConvId === selectedId) loadMsgs(targetConvId);
+        loadConvs();
+    }
 
     async function deleteMessage(messageId: string) {
         if (!selectedId) return;
@@ -565,10 +627,48 @@ export function NxSocialDesktop() {
         return () => clearInterval(t);
     }, [selectedId, loadMsgs]);
 
-    // Yangi xabar kelganda pastga scroll
+    // Yangi xabar kelganda: pastga yaqin bo'lsa scroll, aks holda hisoblagichga qo'sh
+    const prevMsgCountRef = useRef(0);
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        const container = msgsContainerRef.current;
+        const prevCount = prevMsgCountRef.current;
+        const delta = messages.length - prevCount;
+        prevMsgCountRef.current = messages.length;
+        if (!container) return;
+        const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+        if (nearBottom) {
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        } else if (delta > 0) {
+            // Yangi xabarlar bor, foydalanuvchi yuqoriga qaragan — hisoblagich ko'paytir
+            setUnreadInView(n => n + delta);
+        }
     }, [messages]);
+
+    // Suhbat almashinsa: scroll pastga, hisoblagich nolga
+    useEffect(() => {
+        setUnreadInView(0);
+        setShowScrollDown(false);
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "auto" }), 50);
+    }, [selectedId]);
+
+    // Scroll pozitsiyasini kuzatish — pastdan uzoq bo'lsa "scroll down" tugmasini ko'rsat
+    useEffect(() => {
+        const container = msgsContainerRef.current;
+        if (!container) return;
+        function onScroll() {
+            if (!container) return;
+            const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+            setShowScrollDown(!nearBottom);
+            if (nearBottom) setUnreadInView(0);
+        }
+        container.addEventListener("scroll", onScroll, { passive: true });
+        return () => container.removeEventListener("scroll", onScroll);
+    }, [selectedId]);
+
+    function scrollToBottom() {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        setUnreadInView(0);
+    }
 
     async function send() {
         if (!selectedId || !input.trim() || sending) return;
@@ -810,7 +910,37 @@ export function NxSocialDesktop() {
                     </div>
                 ) : (
                     <>
-                        {/* Chat header */}
+                        {/* Chat header — select rejimda toolbar bilan almashadi */}
+                        {selectMode ? (
+                            <div className="px-4 py-3 flex items-center gap-3 flex-shrink-0"
+                                style={{ borderBottom: "1px solid rgba(0,206,200,0.30)", background: "rgba(0,206,200,0.06)" }}>
+                                <IconBtn icon={X} title="Chiqish" onClick={exitSelectMode} />
+                                <div className="flex-1">
+                                    <p className="text-sm font-black" style={{ color: "#00CEC8" }}>
+                                        {selectedIds.size} ta tanlandi
+                                    </p>
+                                    <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                        Xabar tanlash rejimi
+                                    </p>
+                                </div>
+                                <IconBtn icon={Forward} title="Ommaviy jo'natish"
+                                    onClick={() => selectedIds.size > 0 && setBulkForwardOpen(true)} />
+                                <IconBtn icon={Copy} title="Nusxa olish"
+                                    onClick={() => {
+                                        const items = messages.filter(m => selectedIds.has(m.id));
+                                        const text = items.map(m => m.text || `[${m.mediaType ?? "media"}]`).join("\n");
+                                        navigator.clipboard.writeText(text).catch(() => {});
+                                        exitSelectMode();
+                                    }} />
+                                <button onClick={bulkDelete}
+                                    disabled={selectedIds.size === 0}
+                                    title="O'chirish"
+                                    className="w-9 h-9 rounded-xl flex items-center justify-center disabled:opacity-40"
+                                    style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.30)" }}>
+                                    <Trash2 className="w-4 h-4" style={{ color: "#EF4444" }} />
+                                </button>
+                            </div>
+                        ) : (
                         <div className="px-4 py-3 flex items-center gap-3 flex-shrink-0"
                             style={{ borderBottom: "1px solid rgba(43,62,232,0.14)", background: "rgba(8,12,32,0.55)" }}>
                             <ConvAvatar other={peer} />
@@ -857,6 +987,10 @@ export function NxSocialDesktop() {
                                                 <BadgeCheck className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Profilni ochish
                                             </a>
                                         )}
+                                        <button onClick={() => { setSelectMode(true); setMoreOpen(false); }}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                            <CheckSquare className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Xabarlarni tanlash
+                                        </button>
                                         {(() => {
                                             const cur = convs.find(x => x.conversationId === selectedId);
                                             const muted = !!cur?.muted;
@@ -894,6 +1028,7 @@ export function NxSocialDesktop() {
                                 onClick={() => setShowInfo(v => !v)}
                             />
                         </div>
+                        )}
 
                         {/* Qidiruv paneli (Search tugmasi bosilsa) */}
                         {searchOpen && (
@@ -953,18 +1088,43 @@ export function NxSocialDesktop() {
                         })()}
 
                         {/* Messages */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                        <div ref={msgsContainerRef} className="flex-1 overflow-y-auto p-4 space-y-2 relative">
                             {loadingMsgs && messages.length === 0 ? (
                                 <div className="flex justify-center py-10">
                                     <Loader2 className="w-5 h-5 animate-spin text-white/30" />
                                 </div>
-                            ) : (searchOpen && searchQuery.trim()
-                                ? messages.filter(m => (m.text ?? "").toLowerCase().includes(searchQuery.toLowerCase()))
-                                : messages
-                            ).map(m => (
-                                <div key={m.id} data-msg-id={m.id} className={`group flex items-center gap-1 ${m.mine ? "justify-end flex-row-reverse" : "justify-start"}`}>
+                            ) : (() => {
+                                const list = searchOpen && searchQuery.trim()
+                                    ? messages.filter(m => (m.text ?? "").toLowerCase().includes(searchQuery.toLowerCase()))
+                                    : messages;
+                                return list.map((m, i) => {
+                                    const prev = i > 0 ? list[i - 1] : null;
+                                    const showDate = !prev || !isSameDay(prev.createdAt, m.createdAt);
+                                    const dateLabel = showDate ? formatDateSeparator(m.createdAt) : null;
+                                    return (
+                                        <div key={m.id}>
+                                            {dateLabel && (
+                                                <div className="flex justify-center my-3">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
+                                                        style={{ background: "rgba(11,18,40,0.85)", color: "rgba(160,176,224,0.75)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                                                        {dateLabel}
+                                                    </span>
+                                                </div>
+                                            )}
+                                <div data-msg-id={m.id}
+                                    onClick={() => { if (selectMode) toggleSelectMsg(m.id); }}
+                                    className={`group flex items-center gap-1 ${m.mine ? "justify-end flex-row-reverse" : "justify-start"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
+                                    style={selectedIds.has(m.id) ? { background: "rgba(0,206,200,0.10)" } : undefined}>
+                                    {selectMode && (
+                                        <div className="flex-shrink-0 flex items-center justify-center w-6 h-6">
+                                            {selectedIds.has(m.id)
+                                                ? <CheckSquare className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                                : <Square className="w-4 h-4" style={{ color: "rgba(160,176,224,0.60)" }} />
+                                            }
+                                        </div>
+                                    )}
                                     {/* Hover amallar: react + reply + edit + copy + delete */}
-                                    <div className="opacity-0 group-hover:opacity-100 transition flex gap-1 flex-shrink-0 relative">
+                                    <div className={`transition flex gap-1 flex-shrink-0 relative ${selectMode ? "hidden" : "opacity-0 group-hover:opacity-100"}`}>
                                         <button onClick={() => setReactPickerFor(m.id === reactPickerFor ? null : m.id)} title="Reaksiya"
                                             className="w-7 h-7 rounded-md flex items-center justify-center"
                                             style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
@@ -1241,8 +1401,28 @@ export function NxSocialDesktop() {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                        </div>
+                                    );
+                                });
+                            })()}
                             <div ref={bottomRef} />
+                            {showScrollDown && (
+                                <button onClick={scrollToBottom}
+                                    className="fixed bottom-28 right-[calc(320px+24px)] w-11 h-11 rounded-full flex items-center justify-center transition hover:scale-105 active:scale-95 z-30"
+                                    style={{
+                                        background: "rgba(11,18,40,0.95)",
+                                        border: "1px solid rgba(43,62,232,0.40)",
+                                        boxShadow: "0 4px 20px rgba(0,0,0,0.50)",
+                                    }}>
+                                    <ChevronDown className="w-5 h-5" style={{ color: "rgba(220,230,255,0.90)" }} />
+                                    {unreadInView > 0 && (
+                                        <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full text-[10px] font-black flex items-center justify-center"
+                                            style={{ background: "#00CEC8", color: "#0B1228" }}>
+                                            {unreadInView > 99 ? "99+" : unreadInView}
+                                        </span>
+                                    )}
+                                </button>
+                            )}
                         </div>
 
                         {/* Reply preview (composer ustida) */}
@@ -1450,25 +1630,30 @@ export function NxSocialDesktop() {
             )}
 
             {/* Forward modali — qaysi suhbatga jo'natish */}
-            {forwardMsg && (
+            {(forwardMsg || bulkForwardOpen) && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
                     style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
-                    onClick={() => !forwarding && setForwardMsg(null)}>
+                    onClick={() => !forwarding && (setForwardMsg(null), setBulkForwardOpen(false))}>
                     <div onClick={e => e.stopPropagation()}
                         className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
                         style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "80vh" }}>
                         <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
                             <div className="flex items-center gap-2">
                                 <Forward className="w-4 h-4" style={{ color: "#00CEC8" }} />
-                                <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Kimga yuborish</p>
+                                <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                    {bulkForwardOpen ? `${selectedIds.size} ta xabarni kimga yuborish` : "Kimga yuborish"}
+                                </p>
                             </div>
-                            <button onClick={() => !forwarding && setForwardMsg(null)}
+                            <button onClick={() => !forwarding && (setForwardMsg(null), setBulkForwardOpen(false))}
                                 className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
                                 <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                             </button>
                         </div>
                         <div className="p-3 border-b text-xs italic line-clamp-2" style={{ borderColor: "rgba(43,62,232,0.20)", color: "rgba(160,176,224,0.75)" }}>
-                            {forwardMsg.text || (forwardMsg.mediaType ? `[${forwardMsg.mediaType}]` : "(bo'sh)")}
+                            {bulkForwardOpen
+                                ? `${selectedIds.size} ta tanlangan xabar birga jo'natiladi`
+                                : (forwardMsg?.text || (forwardMsg?.mediaType ? `[${forwardMsg.mediaType}]` : "(bo'sh)"))
+                            }
                         </div>
                         <div className="flex-1 overflow-y-auto p-2">
                             {convs.filter(c => c.other).length === 0 ? (
@@ -1477,7 +1662,10 @@ export function NxSocialDesktop() {
                                 </p>
                             ) : (
                                 convs.map(c => (
-                                    <button key={c.conversationId} onClick={() => forwardToConv(c.conversationId)}
+                                    <button key={c.conversationId}
+                                        onClick={() => bulkForwardOpen
+                                            ? bulkForwardToConv(c.conversationId)
+                                            : forwardToConv(c.conversationId)}
                                         disabled={forwarding}
                                         className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/[0.04] transition disabled:opacity-40 text-left">
                                         {c.other?.image
@@ -1889,6 +2077,29 @@ function TransferSheet({
             </div>
         </>
     );
+}
+
+// Ikki sana bir kunda ekanini tekshirish (mahalliy vaqt bo'yicha)
+function isSameDay(a: string | Date, b: string | Date): boolean {
+    const da = new Date(a), db = new Date(b);
+    return da.getFullYear() === db.getFullYear()
+        && da.getMonth() === db.getMonth()
+        && da.getDate() === db.getDate();
+}
+// Chat ichidagi sana ajratkichi uchun matn (Bugun/Kecha/13 avgust)
+function formatDateSeparator(iso: string | Date): string {
+    const d = new Date(iso);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yest = new Date(today); yest.setDate(yest.getDate() - 1);
+    const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    if (target.getTime() === today.getTime()) return "Bugun";
+    if (target.getTime() === yest.getTime()) return "Kecha";
+    // Agar shu yilgi bo'lsa yilni yashirish
+    const sameYear = d.getFullYear() === now.getFullYear();
+    return d.toLocaleDateString("uz-UZ", {
+        day: "numeric", month: "long", ...(sameYear ? {} : { year: "numeric" }),
+    });
 }
 
 // Fayl hajmini o'qish uchun qulay formatga o'girish
