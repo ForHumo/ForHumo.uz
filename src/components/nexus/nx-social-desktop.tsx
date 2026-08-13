@@ -143,6 +143,9 @@ export function NxSocialDesktop() {
     const galleryImages = messages.filter(m => m.mediaType === "image" && m.mediaUrl);
     const [translated, setTranslated] = useState<Record<string, string>>({});
     const [translating, setTranslating] = useState<Record<string, boolean>>({});
+    const [translatePickerFor, setTranslatePickerFor] = useState<string | null>(null);
+    // URL preview: URL → { title, image, description, siteName } (yoki null = topilmadi)
+    const [linkPreview, setLinkPreview] = useState<Record<string, { title: string | null; image: string | null; description: string | null; siteName: string | null; url: string } | null>>({});
     // Forward: qaysi xabar forward qilinmoqda va uni qaysi suhbatga jo'natish
     const [forwardMsg, setForwardMsg] = useState<Msg | null>(null);
     const [forwarding, setForwarding] = useState(false);
@@ -250,17 +253,13 @@ export function NxSocialDesktop() {
         }
     }
 
-    async function translateMessage(messageId: string, text: string) {
-        if (translated[messageId]) {
-            // Ikkinchi bosishda tarjimani yashirish
-            setTranslated(prev => { const n = { ...prev }; delete n[messageId]; return n; });
-            return;
-        }
+    async function translateMessage(messageId: string, text: string, target: "uz" | "ru" | "en" = "uz") {
+        setTranslatePickerFor(null);
         setTranslating(prev => ({ ...prev, [messageId]: true }));
         try {
             const r = await fetch("/api/ai/translate", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text, target: "uz" }),
+                body: JSON.stringify({ text, target }),
             });
             if (r.ok) {
                 const d = await r.json();
@@ -271,6 +270,9 @@ export function NxSocialDesktop() {
         } finally {
             setTranslating(prev => { const n = { ...prev }; delete n[messageId]; return n; });
         }
+    }
+    function hideTranslation(messageId: string) {
+        setTranslated(prev => { const n = { ...prev }; delete n[messageId]; return n; });
     }
 
     async function toggleMessagePin(m: Msg) {
@@ -670,6 +672,41 @@ export function NxSocialDesktop() {
         setUnreadInView(0);
     }
 
+    // URL preview: yangi xabarlar kelganda birinchi URL uchun preview olish
+    useEffect(() => {
+        const urlRe = /(https?:\/\/[^\s]+)/i;
+        for (const m of messages) {
+            if (!m.text) continue;
+            const match = m.text.match(urlRe);
+            if (!match) continue;
+            const u = match[1].replace(/[.,;:!?)]+$/, ""); // trailing punctuation trim
+            if (u in linkPreview) continue; // allaqachon olingan yoki so'ralgan
+            setLinkPreview(prev => ({ ...prev, [u]: null })); // hozirlik uchun
+            fetch(`/api/nexus/link-preview?url=${encodeURIComponent(u)}`, { cache: "force-cache" })
+                .then(r => r.ok ? r.json() : null)
+                .then(d => {
+                    if (!d?.ok) return;
+                    setLinkPreview(prev => ({ ...prev, [u]: { title: d.title, image: d.image, description: d.description, siteName: d.siteName, url: d.url } }));
+                })
+                .catch(() => {});
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [messages]);
+
+    // Suhbatni eksport qilish (HTML/JSON)
+    function exportChat(format: "html" | "json") {
+        if (!selectedId) return;
+        window.open(`/api/nexus/messages/${selectedId}/export?format=${format}`, "_blank");
+        setMoreOpen(false);
+    }
+
+    // Xabar matnidagi birinchi URL (agar bor bo'lsa) — preview render uchun
+    function firstUrlInText(text: string | null | undefined): string | null {
+        if (!text) return null;
+        const m = text.match(/(https?:\/\/[^\s]+)/i);
+        return m ? m[1].replace(/[.,;:!?)]+$/, "") : null;
+    }
+
     async function send() {
         if (!selectedId || !input.trim() || sending) return;
         setSending(true);
@@ -991,6 +1028,14 @@ export function NxSocialDesktop() {
                                             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
                                             <CheckSquare className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Xabarlarni tanlash
                                         </button>
+                                        <button onClick={() => exportChat("html")}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                            <Download className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> HTML eksport
+                                        </button>
+                                        <button onClick={() => exportChat("json")}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                            <FileIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> JSON eksport
+                                        </button>
                                         {(() => {
                                             const cur = convs.find(x => x.conversationId === selectedId);
                                             const muted = !!cur?.muted;
@@ -1161,15 +1206,33 @@ export function NxSocialDesktop() {
                                         )}
                                         {m.text && (
                                             <>
-                                                <button onClick={() => translateMessage(m.id, m.text)} title="Tarjima qilish"
-                                                    disabled={!!translating[m.id]}
-                                                    className="w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-40"
-                                                    style={{ background: translated[m.id] ? "rgba(0,206,200,0.20)" : "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                                    {translating[m.id]
-                                                        ? <Loader2 className="w-3 h-3 animate-spin" style={{ color: "#00CEC8" }} />
-                                                        : <Languages className="w-3 h-3" style={{ color: translated[m.id] ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
-                                                    }
-                                                </button>
+                                                <div className="relative">
+                                                    <button onClick={() => translated[m.id]
+                                                        ? hideTranslation(m.id)
+                                                        : setTranslatePickerFor(translatePickerFor === m.id ? null : m.id)}
+                                                        title="Tarjima qilish"
+                                                        disabled={!!translating[m.id]}
+                                                        className="w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-40"
+                                                        style={{ background: translated[m.id] ? "rgba(0,206,200,0.20)" : "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                                        {translating[m.id]
+                                                            ? <Loader2 className="w-3 h-3 animate-spin" style={{ color: "#00CEC8" }} />
+                                                            : <Languages className="w-3 h-3" style={{ color: translated[m.id] ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
+                                                        }
+                                                    </button>
+                                                    {translatePickerFor === m.id && (
+                                                        <div className="absolute top-full mt-1 left-0 z-30 flex gap-1 p-1 rounded-lg"
+                                                            style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)" }}>
+                                                            {(["uz", "ru", "en"] as const).map(lg => (
+                                                                <button key={lg}
+                                                                    onClick={() => translateMessage(m.id, m.text, lg)}
+                                                                    className="text-[10px] font-black px-2 py-1 rounded hover:bg-white/[0.08]"
+                                                                    style={{ color: "rgba(220,230,255,0.95)" }}>
+                                                                    {lg === "uz" ? "UZ" : lg === "ru" ? "RU" : "EN"}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 <button onClick={() => copyMessage(m.text)} title="Nusxa olish"
                                                     className="w-7 h-7 rounded-md flex items-center justify-center"
                                                     style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
@@ -1351,6 +1414,44 @@ export function NxSocialDesktop() {
                                                 {translated[m.id]}
                                             </div>
                                         )}
+                                        {/* URL preview (birinchi URL) */}
+                                        {(() => {
+                                            const u = firstUrlInText(m.text);
+                                            if (!u) return null;
+                                            const p = linkPreview[u];
+                                            if (!p || (!p.title && !p.image && !p.description)) return null;
+                                            return (
+                                                <a href={p.url} target="_blank" rel="noopener noreferrer"
+                                                    className="mt-2 block rounded-lg overflow-hidden max-w-[320px]"
+                                                    style={{
+                                                        background: m.mine ? "rgba(255,255,255,0.10)" : "rgba(0,206,200,0.08)",
+                                                        border: `1px solid ${m.mine ? "rgba(255,255,255,0.14)" : "rgba(0,206,200,0.20)"}`,
+                                                    }}>
+                                                    {p.image && (
+                                                        <img src={p.image} alt="" className="w-full max-h-40 object-cover" />
+                                                    )}
+                                                    <div className="p-2">
+                                                        {p.siteName && (
+                                                            <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5"
+                                                                style={{ color: m.mine ? "rgba(255,255,255,0.65)" : "#00CEC8" }}>
+                                                                {p.siteName}
+                                                            </p>
+                                                        )}
+                                                        {p.title && (
+                                                            <p className="text-xs font-black line-clamp-2"
+                                                                style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                                {p.title}
+                                                            </p>
+                                                        )}
+                                                        {p.description && (
+                                                            <p className="text-[11px] mt-0.5 line-clamp-2 opacity-75">
+                                                                {p.description}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </a>
+                                            );
+                                        })()}
                                         {editingId === m.id && (
                                             <div className="flex flex-col gap-1.5">
                                                 <textarea value={editingText} onChange={e => setEditingText(e.target.value)}
