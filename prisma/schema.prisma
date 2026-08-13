@@ -1232,6 +1232,9 @@ model NexusConversation {
   lastSenderId    String?
   user1ReadAt     DateTime?
   user2ReadAt     DateTime?
+  // Chatni pinga qo'yish — har foydalanuvchi alohida (Telegram uslubi)
+  pinnedByUser1   DateTime?                                   // user1 chatni pinga qo'ygan vaqti
+  pinnedByUser2   DateTime?                                   // user2 chatni pinga qo'ygan vaqti
   createdAt       DateTime  @default(now())
   messages        NexusMessage[]
   @@unique([user1Id, user2Id])
@@ -1278,8 +1281,11 @@ model NexusMessage {
   editedAt          DateTime?
   // Emoji reaksiyalar
   reactions         NexusMessageReaction[]
+  // Xabarni pinga qo'yish (suhbatda global — ikkala ishtirokchi ham ko'radi)
+  pinnedAt          DateTime?
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
+  @@index([conversationId, pinnedAt])
 }
 
 model NexusMessageReaction {

@@ -18,6 +18,15 @@ export async function GET() {
         where: { OR: [{ user1Id: me.id }, { user2Id: me.id }] },
         orderBy: { lastMessageAt: "desc" }, take: 50,
     });
+    // Menga tegishli pinlangan suhbatlarni yuqoriga ko'tarish (Telegram uslubi)
+    convs.sort((a, b) => {
+        const aPin = a.user1Id === me.id ? a.pinnedByUser1 : a.pinnedByUser2;
+        const bPin = b.user1Id === me.id ? b.pinnedByUser1 : b.pinnedByUser2;
+        if (aPin && !bPin) return -1;
+        if (!aPin && bPin) return 1;
+        if (aPin && bPin) return bPin.getTime() - aPin.getTime();
+        return b.lastMessageAt.getTime() - a.lastMessageAt.getTime();
+    });
     const otherIds = [...new Set(convs.map(c => otherId(c, me.id)))];
     const profs = await prisma.userProfile.findMany({
         where: { id: { in: otherIds } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
@@ -30,6 +39,7 @@ export async function GET() {
         const p = pMap[oid];
         const unread = hasUnread(c, me.id);
         if (unread) totalUnread++;
+        const pinned = !!(c.user1Id === me.id ? c.pinnedByUser1 : c.pinnedByUser2);
         return {
             conversationId: c.id,
             other: p ? {
@@ -41,6 +51,7 @@ export async function GET() {
             lastMessageAt: c.lastMessageAt,
             lastMine: c.lastSenderId === me.id,
             unread,
+            pinned,
         };
     });
 

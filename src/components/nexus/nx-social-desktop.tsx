@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxVideoCircleRecorder } from "./nx-video-circle-recorder";
 import { NxPollCreate } from "./nx-poll-create";
@@ -25,6 +25,7 @@ interface Conv {
     lastMessageAt: string;
     lastMine: boolean;
     unread: boolean;
+    pinned?: boolean;
 }
 
 interface Msg {
@@ -48,6 +49,7 @@ interface Msg {
     editedAt?: string | null;
     reactions?: Array<{ emoji: string; count: number; mine: boolean }>;
     durationMs?: number | null;
+    pinnedAt?: string | null;
 }
 
 interface PeerInfo {
@@ -205,6 +207,33 @@ export function NxSocialDesktop() {
         } finally {
             setTranslating(prev => { const n = { ...prev }; delete n[messageId]; return n; });
         }
+    }
+
+    async function toggleMessagePin(m: Msg) {
+        if (!selectedId) return;
+        const isPinned = !!m.pinnedAt;
+        const url = `/api/nexus/messages/${selectedId}/pin${isPinned ? `?messageId=${m.id}` : ""}`;
+        const opts: RequestInit = isPinned
+            ? { method: "DELETE" }
+            : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messageId: m.id }) };
+        const r = await fetch(url, opts);
+        if (r.ok) {
+            const nowIso = new Date().toISOString();
+            setMessages(prev => prev.map(x =>
+                x.id === m.id ? { ...x, pinnedAt: isPinned ? null : nowIso } : x
+            ));
+        } else {
+            const d = await r.json().catch(() => ({}));
+            alert(d?.error ?? "Bajarib bo'lmadi");
+        }
+    }
+
+    async function toggleConvPin(convId: string, currentlyPinned: boolean) {
+        const r = await fetch(`/api/nexus/messages/${convId}/pin-conv`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pin: !currentlyPinned }),
+        });
+        if (r.ok) loadConvs();
     }
 
     async function openReactionUsers(messageId: string, emoji: string) {
@@ -590,31 +619,48 @@ export function NxSocialDesktop() {
                             Suhbatlar yo&apos;q
                         </div>
                     ) : filteredConvs.map(c => (
-                        <button
-                            key={c.conversationId}
-                            onClick={() => setSelectedId(c.conversationId)}
-                            className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors border-b"
-                            style={{
-                                borderColor: "rgba(43,62,232,0.06)",
-                                background: selectedId === c.conversationId ? "rgba(43,62,232,0.18)" : "transparent",
-                            }}>
-                            <ConvAvatar other={c.other} />
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5">
-                                    <p className="text-sm font-bold text-white truncate">
-                                        {c.other?.name ?? (c.other?.username ? `@${c.other.username}` : "Ismsiz")}
+                        <div key={c.conversationId} className="group relative">
+                            <button
+                                onClick={() => setSelectedId(c.conversationId)}
+                                onContextMenu={(e) => { e.preventDefault(); toggleConvPin(c.conversationId, !!c.pinned); }}
+                                className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors border-b"
+                                style={{
+                                    borderColor: "rgba(43,62,232,0.06)",
+                                    background: selectedId === c.conversationId
+                                        ? "rgba(43,62,232,0.18)"
+                                        : c.pinned ? "rgba(0,206,200,0.04)" : "transparent",
+                                }}>
+                                <ConvAvatar other={c.other} />
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                        <p className="text-sm font-bold text-white truncate">
+                                            {c.other?.name ?? (c.other?.username ? `@${c.other.username}` : "Ismsiz")}
+                                        </p>
+                                        {c.other?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
+                                    </div>
+                                    <p className="text-[11px] truncate" style={{ color: c.unread ? "#FFFFFF" : "rgba(140,160,210,0.70)" }}>
+                                        {c.lastMine ? "Siz: " : ""}{c.lastMessageText ?? ""}
                                     </p>
-                                    {c.other?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
                                 </div>
-                                <p className="text-[11px] truncate" style={{ color: c.unread ? "#FFFFFF" : "rgba(140,160,210,0.70)" }}>
-                                    {c.lastMine ? "Siz: " : ""}{c.lastMessageText ?? ""}
-                                </p>
-                            </div>
-                            {c.unread && (
-                                <span className="w-2 h-2 rounded-full flex-shrink-0"
-                                    style={{ background: "#00CEC8", boxShadow: "0 0 6px rgba(0,206,200,0.7)" }} />
-                            )}
-                        </button>
+                                <div className="flex flex-col items-end gap-1">
+                                    {c.pinned && <Pin className="w-3 h-3" style={{ color: "rgba(0,206,200,0.75)" }} />}
+                                    {c.unread && (
+                                        <span className="w-2 h-2 rounded-full flex-shrink-0"
+                                            style={{ background: "#00CEC8", boxShadow: "0 0 6px rgba(0,206,200,0.7)" }} />
+                                    )}
+                                </div>
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); toggleConvPin(c.conversationId, !!c.pinned); }}
+                                title={c.pinned ? "Pindan olib tashlash" : "Pinga qo'yish"}
+                                className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition w-6 h-6 rounded flex items-center justify-center"
+                                style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                {c.pinned
+                                    ? <PinOff className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                    : <Pin className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                }
+                            </button>
+                        </div>
                     ))}
                 </div>
             </div>
@@ -732,6 +778,39 @@ export function NxSocialDesktop() {
                             </div>
                         )}
 
+                        {/* Pinlangan xabarlar banneri */}
+                        {(() => {
+                            const pinned = messages.filter(m => m.pinnedAt)
+                                .sort((a, b) => new Date(b.pinnedAt!).getTime() - new Date(a.pinnedAt!).getTime());
+                            if (pinned.length === 0) return null;
+                            const top = pinned[0];
+                            return (
+                                <button
+                                    onClick={() => {
+                                        const el = document.querySelector<HTMLElement>(`[data-msg-id="${top.id}"]`);
+                                        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                                        el?.animate([
+                                            { background: "rgba(0,206,200,0.15)" }, { background: "transparent" },
+                                        ], { duration: 1400, iterations: 1 });
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-4 py-2 border-b transition hover:bg-white/[0.02] text-left"
+                                    style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                                    <Pin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#00CEC8" }}>
+                                            Pinlangan xabar {pinned.length > 1 && `(${pinned.length})`}
+                                        </p>
+                                        <p className="text-xs truncate" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                            {top.text || (top.mediaType ? `[${top.mediaType}]` : "(media)")}
+                                        </p>
+                                    </div>
+                                    <PinOff onClick={(e) => { e.stopPropagation(); toggleMessagePin(top); }}
+                                        className="w-3.5 h-3.5 flex-shrink-0 opacity-60 hover:opacity-100 cursor-pointer"
+                                        style={{ color: "rgba(160,176,224,0.85)" }} />
+                                </button>
+                            );
+                        })()}
+
                         {/* Messages */}
                         <div className="flex-1 overflow-y-auto p-4 space-y-2">
                             {loadingMsgs && messages.length === 0 ? (
@@ -742,7 +821,7 @@ export function NxSocialDesktop() {
                                 ? messages.filter(m => (m.text ?? "").toLowerCase().includes(searchQuery.toLowerCase()))
                                 : messages
                             ).map(m => (
-                                <div key={m.id} className={`group flex items-center gap-1 ${m.mine ? "justify-end flex-row-reverse" : "justify-start"}`}>
+                                <div key={m.id} data-msg-id={m.id} className={`group flex items-center gap-1 ${m.mine ? "justify-end flex-row-reverse" : "justify-start"}`}>
                                     {/* Hover amallar: react + reply + edit + copy + delete */}
                                     <div className="opacity-0 group-hover:opacity-100 transition flex gap-1 flex-shrink-0 relative">
                                         <button onClick={() => setReactPickerFor(m.id === reactPickerFor ? null : m.id)} title="Reaksiya"
@@ -759,6 +838,18 @@ export function NxSocialDesktop() {
                                             className="w-7 h-7 rounded-md flex items-center justify-center"
                                             style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
                                             <Forward className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        </button>
+                                        <button onClick={() => toggleMessagePin(m)}
+                                            title={m.pinnedAt ? "Pindan olib tashlash" : "Suhbatga pinlash"}
+                                            className="w-7 h-7 rounded-md flex items-center justify-center"
+                                            style={{
+                                                background: m.pinnedAt ? "rgba(0,206,200,0.18)" : "rgba(11,18,40,0.65)",
+                                                border: `1px solid ${m.pinnedAt ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.25)"}`,
+                                            }}>
+                                            {m.pinnedAt
+                                                ? <PinOff className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                                : <Pin className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                            }
                                         </button>
                                         {m.mine && m.text && !m.mediaType && (
                                             <button onClick={() => { setEditingId(m.id); setEditingText(m.text); }} title="Tahrirlash"
@@ -1157,6 +1248,11 @@ export function NxSocialDesktop() {
                 />
             )}
 
+            {/* ── COL 3 (kanal/guruh): Info paneli ─────────────── */}
+            {selectedChannel && showInfo && (
+                <NxChannelInfoPanel id={selectedChannel} />
+            )}
+
             {/* ── COL 3: Peer info (chat info) — faqat DM tanlangan bo'lsa ── */}
             {selectedId && !selectedChannel && showInfo && (
                 <div className="w-[320px] flex-shrink-0 flex flex-col border-l overflow-y-auto"
@@ -1358,6 +1454,125 @@ function SharedMediaSection({ messages, onOpen }: { messages: Msg[]; onOpen: (in
                     );
                 })}
             </div>
+        </div>
+    );
+}
+
+// Kanal/Guruh info paneli (4-ustunli desktop layout uchun)
+interface ChannelInfo {
+    id: string;
+    type: "CHANNEL" | "GROUP";
+    name: string;
+    handle: string | null;
+    description: string | null;
+    avatarUrl: string | null;
+    memberCount: number;
+    isOwner: boolean;
+    isMember: boolean;
+}
+interface ChannelMember {
+    profileId: string;
+    role: string;
+    name: string | null;
+    username: string | null;
+    image: string | null;
+    verified?: boolean;
+}
+function NxChannelInfoPanel({ id }: { id: string }) {
+    const [info, setInfo] = useState<ChannelInfo | null>(null);
+    const [members, setMembers] = useState<ChannelMember[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let stop = false;
+        setLoading(true);
+        setInfo(null);
+        setMembers([]);
+        (async () => {
+            try {
+                const d = await fetch(`/api/nexus/channels/${id}`).then(r => r.json());
+                if (stop || !d?.channel) return;
+                setInfo(d.channel);
+                if (d.channel.isMember) {
+                    const mr = await fetch(`/api/nexus/channels/${id}/members`).then(r => r.ok ? r.json() : null).catch(() => null);
+                    if (!stop && mr?.members) setMembers(mr.members);
+                }
+            } finally {
+                if (!stop) setLoading(false);
+            }
+        })();
+        return () => { stop = true; };
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className="w-[320px] flex-shrink-0 flex items-center justify-center border-l"
+                style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.65)" }}>
+                <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#00CEC8" }} />
+            </div>
+        );
+    }
+    if (!info) return null;
+
+    const avatar = info.avatarUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${encodeURIComponent(info.name)}`;
+    const kindLabel = info.type === "CHANNEL" ? "Kanal" : "Guruh";
+    const KindIcon = info.type === "CHANNEL" ? Megaphone : Users;
+
+    return (
+        <div className="w-[320px] flex-shrink-0 flex flex-col border-l overflow-y-auto"
+            style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.65)" }}>
+            <div className="p-5 text-center border-b" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                <img src={avatar} alt="" className="w-24 h-24 rounded-3xl object-cover mx-auto mb-3 bg-white" />
+                <p className="text-base font-black text-white truncate">{info.name}</p>
+                {info.handle && (
+                    <p className="text-xs mt-0.5" style={{ color: "rgba(140,160,210,0.75)" }}>@{info.handle}</p>
+                )}
+                <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                    style={{ background: "rgba(0,206,200,0.12)", color: "#00CEC8" }}>
+                    <KindIcon className="w-3 h-3" />
+                    {kindLabel} · {info.memberCount} a&apos;zo
+                </div>
+            </div>
+            {info.description && (
+                <div className="p-4 border-b" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "rgba(140,160,210,0.55)" }}>Tavsif</p>
+                    <p className="text-xs whitespace-pre-wrap" style={{ color: "rgba(220,230,255,0.90)" }}>{info.description}</p>
+                </div>
+            )}
+            {members.length > 0 && (
+                <div className="p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: "rgba(140,160,210,0.55)" }}>
+                        A&apos;zolar ({members.length})
+                    </p>
+                    <div className="space-y-1">
+                        {members.slice(0, 20).map(m => (
+                            <div key={m.profileId} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/[0.04]">
+                                {m.image
+                                    ? <Image src={m.image} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                                    : <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                                        style={{ background: "rgba(43,62,232,0.20)" }}>
+                                        <BotIcon className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                    </div>
+                                }
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold truncate flex items-center gap-1" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                        {m.name ?? m.username ?? "Foydalanuvchi"}
+                                        {m.verified && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                    </p>
+                                    <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                        {m.role === "OWNER" ? "Ega" : m.role === "ADMIN" ? "Admin" : "A'zo"}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                        {members.length > 20 && (
+                            <p className="text-[10px] text-center mt-2" style={{ color: "rgba(140,160,210,0.50)" }}>
+                                +{members.length - 20} boshqa a&apos;zo
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

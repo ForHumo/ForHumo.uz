@@ -118,6 +118,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 agentKind: m.agentKind, agentPayload: m.agentPayload, agentActionRef: m.agentActionRef,
                 replyTo: m.replyToId ? (replyMap.get(m.replyToId) ?? null) : null,
                 editedAt: m.editedAt,
+                pinnedAt: m.pinnedAt,
                 reactions: reactionMap.get(m.id)
                     ? [...reactionMap.get(m.id)!.entries()].map(([emoji, s]) => ({ emoji, count: s.count, mine: s.mine }))
                     : [],
