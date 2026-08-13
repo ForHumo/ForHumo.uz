@@ -1292,6 +1292,8 @@ model NexusMessage {
   editedAt          DateTime?
   // Emoji reaksiyalar
   reactions         NexusMessageReaction[]
+  // Bookmark (per-user shaxsiy saqlash)
+  bookmarks         NexusMessageBookmark[]
   // Xabarni pinga qo'yish (suhbatda global — ikkala ishtirokchi ham ko'radi)
   pinnedAt          DateTime?
   // Self-destruct: xabar shu vaqtdan keyin avtomatik o'chiriladi (NULL = doimiy)
@@ -1314,6 +1316,18 @@ model NexusMessageReaction {
   createdAt  DateTime     @default(now())
   @@unique([messageId, profileId, emoji])
   @@index([messageId])
+}
+
+// Xabar bookmark — per-user (o'z shaxsiy saqlash ro'yxati)
+model NexusMessageBookmark {
+  id         String       @id @default(cuid())
+  messageId  String
+  message    NexusMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  profileId  String                                                         // saqlangan foydalanuvchi
+  note       String?                                                        // ixtiyoriy izoh
+  createdAt  DateTime     @default(now())
+  @@unique([messageId, profileId])
+  @@index([profileId, createdAt])
 }
 
 model NexusDmPollVote {

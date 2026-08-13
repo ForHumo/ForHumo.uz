@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxStatusModal } from "./nx-status-modal";
@@ -58,6 +58,7 @@ interface Msg {
     pinnedAt?: string | null;
     expiresAt?: string | null;
     scheduledFor?: string | null;
+    bookmarked?: boolean;
 }
 
 interface PeerInfo {
@@ -442,6 +443,141 @@ export function NxSocialDesktop() {
     function hideTranslation(messageId: string) {
         setTranslated(prev => { const n = { ...prev }; delete n[messageId]; return n; });
     }
+
+    // Yangi xabar tovushi — WebAudio API bilan (fayl yo'q — tozan sintez)
+    const [soundOn, setSoundOn] = useState<boolean>(true);
+    useEffect(() => {
+        try { setSoundOn(localStorage.getItem("nexus:dm:sound") !== "off"); } catch {}
+    }, []);
+    function toggleSound() {
+        setSoundOn(v => {
+            const nv = !v;
+            try { localStorage.setItem("nexus:dm:sound", nv ? "on" : "off"); } catch {}
+            return nv;
+        });
+    }
+    // Qisqa "tin" tovushi (500Hz sine, 100ms fade)
+    function playNotifSound() {
+        if (!soundOn) return;
+        try {
+            const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+            if (!AC) return;
+            const ctx = new AC();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.20);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.22);
+            setTimeout(() => ctx.close().catch(() => {}), 300);
+        } catch {}
+    }
+    // Suhbat ro'yxatidan yangi peer xabari kelganda tovush chalinishi.
+    // convs.totalUnread yoki peer's lastMine=false + lastMessageAt o'zgarganda.
+    const lastConvSigRef = useRef<string>("");
+    useEffect(() => {
+        // Signature: peer xabari (lastMine=false + hozirgi vaqtdan yaqin) va tab yashirin bo'lmasa
+        const peerNew = convs.filter(c => !c.lastMine && !c.pinned);
+        // Faqat 'lastMessageAt' vaqti bo'yicha eng yangi 5 tasi
+        const sig = peerNew.slice(0, 5)
+            .map(c => `${c.conversationId}:${c.lastMessageAt}`)
+            .sort().join("|");
+        if (lastConvSigRef.current && sig !== lastConvSigRef.current) {
+            // Yangi xabar sezildi
+            if (!document.hidden) playNotifSound();
+        }
+        lastConvSigRef.current = sig;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [convs]);
+
+    // Xabar bookmark toggle
+    async function toggleBookmark(m: Msg) {
+        if (!selectedId) return;
+        const now = !m.bookmarked;
+        // Optimistic
+        setMessages(prev => prev.map(x => x.id === m.id ? { ...x, bookmarked: now } : x));
+        const url = `/api/nexus/messages/${selectedId}/bookmark${now ? "" : `?messageId=${m.id}`}`;
+        const opts: RequestInit = now
+            ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messageId: m.id }) }
+            : { method: "DELETE" };
+        const r = await fetch(url, opts);
+        if (!r.ok) {
+            // Rollback
+            setMessages(prev => prev.map(x => x.id === m.id ? { ...x, bookmarked: !now } : x));
+        }
+    }
+
+    // Saqlangan xabarlar paneli
+    interface BookmarkItem {
+        id: string; messageId: string; conversationId: string; note: string | null; createdAt: string;
+        message: { text: string; mine: boolean; createdAt: string; mediaType: string | null; mediaUrl: string | null };
+        peer: { name: string | null; username: string | null; image: string | null } | null;
+    }
+    const [bookmarksOpen, setBookmarksOpen] = useState(false);
+    const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
+    const [bookmarksLoading, setBookmarksLoading] = useState(false);
+    async function loadBookmarks() {
+        setBookmarksLoading(true);
+        try {
+            const r = await fetch("/api/nexus/bookmarks", { cache: "no-store" });
+            if (r.ok) {
+                const d = await r.json();
+                setBookmarks(d.bookmarks ?? []);
+            }
+        } finally { setBookmarksLoading(false); }
+    }
+    useEffect(() => { if (bookmarksOpen) loadBookmarks(); }, [bookmarksOpen]);
+
+    // Draftlar paneli — barcha chatlardagi mavjud draftlar (localStorage aggregate)
+    interface DraftItem { convId: string; text: string; peer: { name: string | null; username: string | null; image: string | null } | null }
+    const [draftsOpen, setDraftsOpen] = useState(false);
+    const [drafts, setDrafts] = useState<DraftItem[]>([]);
+    const DRAFT_PREFIX = "nexus:dm:draft:";
+    function loadDrafts() {
+        try {
+            const items: DraftItem[] = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (!k?.startsWith(DRAFT_PREFIX)) continue;
+                const convId = k.slice(DRAFT_PREFIX.length);
+                const text = localStorage.getItem(k)?.trim();
+                if (!text) continue;
+                const c = convs.find(x => x.conversationId === convId);
+                items.push({
+                    convId, text,
+                    peer: c?.other ? { name: c.other.name, username: c.other.username, image: c.other.image } : null,
+                });
+            }
+            setDrafts(items);
+        } catch {
+            setDrafts([]);
+        }
+    }
+    useEffect(() => { if (draftsOpen) loadDrafts(); }, [draftsOpen, convs]);
+    // Draft'ni o'chirish
+    function deleteDraft(convId: string) {
+        try { localStorage.removeItem(DRAFT_PREFIX + convId); } catch {}
+        setDrafts(prev => prev.filter(d => d.convId !== convId));
+        if (convId === selectedId) setInput("");
+    }
+    // Jami draft soni (chat list badge uchun)
+    const [draftCount, setDraftCount] = useState(0);
+    useEffect(() => {
+        try {
+            let n = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (!k?.startsWith(DRAFT_PREFIX)) continue;
+                if (localStorage.getItem(k)?.trim()) n++;
+            }
+            setDraftCount(n);
+        } catch {}
+    }, [input, selectedId, draftsOpen]);
 
     // TTS: xabar matnini ovoz bilan eshittirish (Web Speech API — brauzer o'zi)
     const [speakingId, setSpeakingId] = useState<string | null>(null);
@@ -1236,6 +1372,40 @@ export function NxSocialDesktop() {
                                 {myStatus.text || "Maxsus status qo'shish"}
                             </span>
                         </button>
+                        {/* Bookmark + Drafts + Sound toggle */}
+                        <div className="flex gap-1">
+                            <button onClick={() => setBookmarksOpen(v => !v)}
+                                className="flex-1 flex items-center gap-1.5 h-8 px-2 rounded-lg transition hover:bg-white/[0.04]"
+                                style={{
+                                    background: bookmarksOpen ? "rgba(245,158,11,0.10)" : "rgba(43,62,232,0.06)",
+                                    border: `1px solid ${bookmarksOpen ? "rgba(245,158,11,0.30)" : "rgba(43,62,232,0.15)"}`,
+                                }}
+                                title="Saqlangan xabarlar">
+                                <BookmarkCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: bookmarksOpen ? "#F59E0B" : "rgba(160,176,224,0.85)" }} />
+                                <span className="text-[10px] font-bold" style={{ color: bookmarksOpen ? "#F59E0B" : "rgba(220,230,255,0.85)" }}>Saqlangan</span>
+                            </button>
+                            <button onClick={() => setDraftsOpen(v => !v)}
+                                className="flex-1 flex items-center gap-1.5 h-8 px-2 rounded-lg transition hover:bg-white/[0.04]"
+                                style={{
+                                    background: draftsOpen ? "rgba(0,206,200,0.10)" : "rgba(43,62,232,0.06)",
+                                    border: `1px solid ${draftsOpen ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.15)"}`,
+                                }}
+                                title="Draftlar">
+                                <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: draftsOpen ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
+                                <span className="text-[10px] font-bold" style={{ color: draftsOpen ? "#00CEC8" : "rgba(220,230,255,0.85)" }}>
+                                    Draft{draftCount > 0 ? ` (${draftCount})` : ""}
+                                </span>
+                            </button>
+                            <button onClick={toggleSound}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg transition hover:bg-white/[0.04]"
+                                style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.15)" }}
+                                title={soundOn ? "Tovushni o'chirish" : "Tovushni yoqish"}>
+                                {soundOn
+                                    ? <Volume2 className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                    : <VolumeX className="w-3.5 h-3.5" style={{ color: "#EF4444" }} />
+                                }
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -1698,6 +1868,18 @@ export function NxSocialDesktop() {
                                                 : <Pin className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
                                             }
                                         </button>
+                                        <button onClick={() => toggleBookmark(m)}
+                                            title={m.bookmarked ? "Saqlashdan olib tashlash" : "Saqlash"}
+                                            className="w-7 h-7 rounded-md flex items-center justify-center"
+                                            style={{
+                                                background: m.bookmarked ? "rgba(245,158,11,0.18)" : "rgba(11,18,40,0.65)",
+                                                border: `1px solid ${m.bookmarked ? "rgba(245,158,11,0.40)" : "rgba(43,62,232,0.25)"}`,
+                                            }}>
+                                            {m.bookmarked
+                                                ? <BookmarkCheck className="w-3 h-3" style={{ color: "#F59E0B" }} />
+                                                : <Bookmark className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                            }
+                                        </button>
                                         {m.mine && m.text && !m.mediaType && (
                                             <button onClick={() => { setEditingId(m.id); setEditingText(m.text); }} title="Tahrirlash"
                                                 className="w-7 h-7 rounded-md flex items-center justify-center"
@@ -2057,6 +2239,9 @@ export function NxSocialDesktop() {
                                         )}
                                         {/* Vaqt + o'qildi belgisi (faqat mening xabarlarim uchun 2 tick) + self-destruct */}
                                         <div className={`flex items-center gap-1 mt-0.5 ${m.mine ? "justify-end" : "justify-start"}`}>
+                                            {m.bookmarked && (
+                                                <BookmarkCheck className="w-3 h-3" style={{ color: "#F59E0B" }} />
+                                            )}
                                             {m.expiresAt && (() => {
                                                 // tickSec — har 1s'da yangilanadi, shu erda re-render tetiklaydi
                                                 void tickSec;
@@ -2638,6 +2823,138 @@ export function NxSocialDesktop() {
             )}
 
             {/* Reaksiya bergan foydalanuvchilar */}
+            {/* Saqlangan xabarlar paneli */}
+            {bookmarksOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+                    style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
+                    onClick={() => setBookmarksOpen(false)}>
+                    <div onClick={e => e.stopPropagation()}
+                        className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col"
+                        style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "80vh" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                            <div className="flex items-center gap-2">
+                                <BookmarkCheck className="w-4 h-4" style={{ color: "#F59E0B" }} />
+                                <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Saqlangan xabarlar</p>
+                                {bookmarks.length > 0 && (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                        style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B" }}>{bookmarks.length}</span>
+                                )}
+                            </div>
+                            <button onClick={() => setBookmarksOpen(false)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
+                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto">
+                            {bookmarksLoading ? (
+                                <div className="flex justify-center py-10">
+                                    <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#00CEC8" }} />
+                                </div>
+                            ) : bookmarks.length === 0 ? (
+                                <p className="text-xs text-center py-10" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                    Hozirgacha saqlangan xabar yo&apos;q
+                                </p>
+                            ) : (
+                                bookmarks.map(b => (
+                                    <button key={b.id} onClick={() => {
+                                        setSelectedId(b.conversationId);
+                                        setBookmarksOpen(false);
+                                        setTimeout(() => jumpToMessage(b.messageId), 500);
+                                    }}
+                                        className="w-full text-left px-4 py-3 border-b hover:bg-white/[0.04] transition"
+                                        style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            {b.peer?.image
+                                                ? <Image src={b.peer.image} alt="" width={20} height={20} className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+                                                : <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ background: "rgba(43,62,232,0.20)" }} />
+                                            }
+                                            <span className="text-[10px] font-black" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                                {b.peer?.name ?? b.peer?.username ?? "Foydalanuvchi"}
+                                            </span>
+                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                                style={{ background: b.message.mine ? "rgba(43,62,232,0.20)" : "rgba(0,206,200,0.15)", color: b.message.mine ? "rgba(180,195,235,0.90)" : "#00CEC8" }}>
+                                                {b.message.mine ? "Siz" : "U"}
+                                            </span>
+                                            <span className="ml-auto text-[10px] tabular-nums" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                {new Date(b.message.createdAt).toLocaleDateString("uz-UZ", { day: "numeric", month: "short" })}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs line-clamp-2" style={{ color: "rgba(220,230,255,0.90)" }}>
+                                            {b.message.text || (b.message.mediaType ? `[${b.message.mediaType}]` : "(media)")}
+                                        </p>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Draftlar paneli */}
+            {draftsOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+                    style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
+                    onClick={() => setDraftsOpen(false)}>
+                    <div onClick={e => e.stopPropagation()}
+                        className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col"
+                        style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "80vh" }}>
+                        <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                            <div className="flex items-center gap-2">
+                                <FileText className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Yakunlanmagan draftlar</p>
+                                {drafts.length > 0 && (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                        style={{ background: "rgba(0,206,200,0.15)", color: "#00CEC8" }}>{drafts.length}</span>
+                                )}
+                            </div>
+                            <button onClick={() => setDraftsOpen(false)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
+                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto">
+                            {drafts.length === 0 ? (
+                                <p className="text-xs text-center py-10" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                    Draft yo&apos;q — barcha xabarlaringiz yuborilgan
+                                </p>
+                            ) : (
+                                drafts.map(d => (
+                                    <div key={d.convId}
+                                        className="flex items-center gap-3 px-4 py-3 border-b hover:bg-white/[0.04] transition"
+                                        style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                                        {d.peer?.image
+                                            ? <Image src={d.peer.image} alt="" width={32} height={32} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                                            : <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                                                style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                <BotIcon className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                            </div>
+                                        }
+                                        <button onClick={() => {
+                                            setSelectedId(d.convId);
+                                            setDraftsOpen(false);
+                                        }}
+                                            className="min-w-0 flex-1 text-left">
+                                            <p className="text-xs font-bold truncate" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                                {d.peer?.name ?? d.peer?.username ?? "Foydalanuvchi"}
+                                            </p>
+                                            <p className="text-[11px] italic line-clamp-1" style={{ color: "rgba(140,160,210,0.85)" }}>
+                                                {d.text}
+                                            </p>
+                                        </button>
+                                        <button onClick={() => deleteDraft(d.convId)}
+                                            title="Draft'ni o'chirish"
+                                            className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
+                                            style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                                            <Trash2 className="w-3 h-3" style={{ color: "#EF4444" }} />
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Klaviatura yorliqlari yordami */}
             {shortcutsHelpOpen && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"

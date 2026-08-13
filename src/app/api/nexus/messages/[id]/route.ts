@@ -81,6 +81,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         where: { messageId: { in: messages.map(m => m.id) } },
         select: { messageId: true, emoji: true, profileId: true },
     });
+    // Mening bookmark qilgan xabarlarim (shu suhbatda)
+    const myBookmarks = await prisma.nexusMessageBookmark.findMany({
+        where: { profileId: me.id, messageId: { in: messages.map(m => m.id) } },
+        select: { messageId: true },
+    });
+    const bookmarkedSet = new Set(myBookmarks.map(b => b.messageId));
     const reactionMap = new Map<string, Map<string, { count: number; mine: boolean }>>();
     for (const r of allReactions) {
         if (!reactionMap.has(r.messageId)) reactionMap.set(r.messageId, new Map());
@@ -149,6 +155,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 pinnedAt: m.pinnedAt,
                 expiresAt: m.expiresAt,
                 scheduledFor: m.scheduledFor,
+                bookmarked: bookmarkedSet.has(m.id),
                 reactions: reactionMap.get(m.id)
                     ? [...reactionMap.get(m.id)!.entries()].map(([emoji, s]) => ({ emoji, count: s.count, mine: s.mine }))
                     : [],
