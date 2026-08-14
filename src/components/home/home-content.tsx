@@ -76,7 +76,7 @@ export function HomeContent() {
             description: tProjects("pay_desc"),
             href: "/pay",
             icon: CreditCard,
-            logoSrc: "/logos/alkh-pay.png",
+            logoSrc: "/logos/for-pay.png",
             status: "active",
         },
         {

@@ -26,7 +26,7 @@ const SERVICES = [
     { key: "nexus",   label: "Humo Nexus",    href: "/nexus",       logo: "/logos/humo-nexus.png"    },
     { key: "esport",  label: "Humo eSport",   href: "/esport",      logo: "/logos/humo-esport.png"   },
     { key: "market",  label: "Humo Market",   href: "/coming-soon", logo: "/logos/humo-market.png"   },
-    { key: "pay",     label: "For Pay",       href: "/pay", logo: "/logos/alkh-pay.png"      },
+    { key: "pay",     label: "For Pay",       href: "/pay", logo: "/logos/for-pay.png"       },
     { key: "support", label: "Humo Support",  href: "/support", logo: "/logos/humo-support.png"  },
 ];
 

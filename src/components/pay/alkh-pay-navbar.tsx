@@ -8,7 +8,7 @@ export function AlkhPayNavbar() {
         <ModuleNavbar
             config={{
                 name: "For Pay",
-                logoSrc: "/logos/alkh-pay.png",
+                logoSrc: "/logos/for-pay.png",
                 href: "/pay",
                 accentFrom: "from-blue-500",
                 accentTo: "to-cyan-400",
