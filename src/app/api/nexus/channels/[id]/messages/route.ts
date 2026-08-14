@@ -106,6 +106,24 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     // o'qildi belgilash
     if (member) after(() => prisma.nexusChannelMember.update({ where: { id: member.id }, data: { lastReadAt: new Date() } }).catch(() => { }));
 
+    // Kanal komment: har top-level xabar uchun izoh (reply) soni
+    // Faqat channel.allowComments && kanal xabari uchun (guruh emas) mazmunli.
+    const commentCounts = new Map<string, number>();
+    if (channel.type === "CHANNEL" && channel.allowComments && msgs.length > 0) {
+        // Faqat replyToId=null bo'lgan xabarlar top-level
+        const topLevelIds = msgs.filter(m => !m.replyToId).map(m => m.id);
+        if (topLevelIds.length > 0) {
+            const grouped = await prisma.nexusChannelMessage.groupBy({
+                by: ["replyToId"],
+                where: { channelId: id, replyToId: { in: topLevelIds }, hidden: false },
+                _count: { _all: true },
+            });
+            for (const g of grouped) {
+                if (g.replyToId) commentCounts.set(g.replyToId, g._count._all);
+            }
+        }
+    }
+
     // Anonim admin — owner o'z anonim xabarini ko'radi (mine=true), lekin
     // boshqa a'zolar author o'rniga guruh nomi ko'radi va senderId yashiriladi.
     const isOwner = member?.role === "OWNER";
@@ -129,6 +147,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 pollVoteCounts: pv?.counts ?? null, pollMyVotes: pv?.myVotes ?? null, pollTotal: pv?.total ?? null,
                 pinnedAt: m.pinnedAt,
                 editedAt: m.editedAt,
+                commentCount: commentCounts.get(m.id) ?? 0,
+                replyToId: m.replyToId,
                 replyTo: m.replyToId ? (replyMap.get(m.replyToId) ?? null) : null,
                 bookmarked: bookmarkedSet.has(m.id),
                 reactions: reactionMap.get(m.id)
@@ -148,9 +168,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!me || !channel || channel.hidden) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
     if (!member) return NextResponse.json({ error: "Avval a'zo bo'ling" }, { status: 403 });
 
-    // CHANNEL — faqat owner/admin yozadi; GROUP — permissions asosida
+    // CHANNEL — faqat owner/admin yozadi (top-level).
+    // Agar allowComments=true VA replyToId bor bo'lsa — oddiy a'zolar izoh yozishi mumkin.
     if (channel.type === "CHANNEL" && member.role !== "OWNER" && member.role !== "ADMIN") {
-        return NextResponse.json({ error: "Bu kanalga faqat adminlar yoza oladi" }, { status: 403 });
+        const bodyPreview = await req.clone().json().catch(() => ({}));
+        const hasReply = typeof bodyPreview?.replyToId === "string" && bodyPreview.replyToId.length > 0;
+        if (!channel.allowComments || !hasReply) {
+            return NextResponse.json({
+                error: channel.allowComments
+                    ? "Faqat izoh yozing (mavjud xabarga javob)"
+                    : "Bu kanalga faqat adminlar yoza oladi",
+            }, { status: 403 });
+        }
     }
     // Guruh ruxsatlari (fine-grained)
     const perms = effectivePermissions(member.role, channel.defaultPermissions, member.permissions);

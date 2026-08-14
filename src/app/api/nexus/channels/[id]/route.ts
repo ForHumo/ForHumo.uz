@@ -31,6 +31,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             myIsAnonymous: membership?.isAnonymous ?? false,
             rules: channel.rules,
             coverUrl: channel.coverUrl,
+            allowComments: channel.allowComments,
             createdAt: channel.createdAt,
         },
     });
@@ -48,11 +49,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!m || (m.role !== "OWNER" && m.role !== "ADMIN")) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
 
     const body = await req.json();
-    const { name, description, avatarUrl, coverUrl, rules, slowModeSeconds, defaultPermissions } = body as {
+    const { name, description, avatarUrl, coverUrl, rules, slowModeSeconds, defaultPermissions, allowComments } = body as {
         name?: string; description?: string; avatarUrl?: string;
         coverUrl?: string; rules?: string;
         slowModeSeconds?: number;
         defaultPermissions?: Record<string, boolean>;
+        allowComments?: boolean;
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = {};
@@ -61,6 +63,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (typeof avatarUrl === "string") data.avatarUrl = avatarUrl || null;
     if (typeof coverUrl === "string") data.coverUrl = coverUrl || null;
     if (typeof rules === "string") data.rules = rules.trim().slice(0, 4000) || null;
+    if (typeof allowComments === "boolean") data.allowComments = allowComments;
     // Slow mode — 0..3600 sekund (0 = o'chirilgan, max 1 soat)
     if (typeof slowModeSeconds === "number") {
         data.slowModeSeconds = Math.max(0, Math.min(3600, Math.floor(slowModeSeconds)));

@@ -12,7 +12,7 @@ import { subscribeUserChannel } from "@/lib/pusher-client";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean }
-interface ChDetail { id: string; type: ChType; name: string; handle: string | null; description: string | null; avatarUrl: string | null; isPrivate: boolean; memberCount: number; isOwner: boolean; isMember: boolean; role: string | null; canPost: boolean }
+interface ChDetail { id: string; type: ChType; name: string; handle: string | null; description: string | null; avatarUrl: string | null; isPrivate: boolean; memberCount: number; isOwner: boolean; isMember: boolean; role: string | null; canPost: boolean; allowComments?: boolean }
 interface ChMsg {
     id: string; text: string | null; media: string[]; createdAt: string; mine: boolean;
     author: { name: string | null; username: string | null; image: string | null; verified: boolean } | null;
@@ -22,7 +22,18 @@ interface ChMsg {
     editedAt?: string | null;
     reactions?: Array<{ emoji: string; count: number; mine: boolean }>;
     replyTo?: { id: string; text: string | null; senderName: string | null } | null;
+    replyToId?: string | null;
     bookmarked?: boolean;
+    commentCount?: number;
+}
+interface ChComment {
+    id: string;
+    text: string | null;
+    media: string[];
+    createdAt: string;
+    editedAt?: string | null;
+    mine: boolean;
+    author: { name: string | null; username: string | null; image: string | null; verified: boolean } | null;
 }
 
 function avatarFor(c: { name: string; avatarUrl?: string | null }) {
@@ -181,6 +192,57 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
     const [joinBusy, setJoinBusy] = useState(false);
+
+    // Kanal komment (Telegram uslub) — ochilgan izohlar
+    const [commentsFor, setCommentsFor] = useState<string | null>(null);
+    const [comments, setComments] = useState<ChComment[]>([]);
+    const [loadingComments, setLoadingComments] = useState(false);
+    const [commentInput, setCommentInput] = useState("");
+    const [sendingComment, setSendingComment] = useState(false);
+
+    async function loadComments(msgId: string) {
+        setLoadingComments(true);
+        try {
+            const r = await fetch(`/api/nexus/channels/${id}/messages/${msgId}/comments?limit=100`);
+            if (r.ok) {
+                const d = await r.json();
+                setComments(d.comments ?? []);
+            }
+        } finally { setLoadingComments(false); }
+    }
+
+    async function openComments(msgId: string) {
+        if (commentsFor === msgId) {
+            setCommentsFor(null);
+            setComments([]);
+            return;
+        }
+        setCommentsFor(msgId);
+        setCommentInput("");
+        await loadComments(msgId);
+    }
+
+    async function sendComment(msgId: string) {
+        const t = commentInput.trim();
+        if (!t || sendingComment) return;
+        setSendingComment(true);
+        try {
+            const r = await fetch(`/api/nexus/channels/${id}/messages`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: t, replyToId: msgId }),
+            });
+            if (r.ok) {
+                setCommentInput("");
+                await loadComments(msgId);
+                // commentCount ni ham +1
+                setMsgs(prev => prev.map(x => x.id === msgId
+                    ? { ...x, commentCount: (x.commentCount ?? 0) + 1 } : x));
+            } else {
+                const d = await r.json().catch(() => ({}));
+                alert(d?.error ?? "Izoh yuborilmadi");
+            }
+        } finally { setSendingComment(false); }
+    }
     const [membersOpen, setMembersOpen] = useState(false);
     const [pollOpen, setPollOpen] = useState(false);
 
@@ -238,7 +300,10 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                 if (stop || !d.messages?.length) return;
                 setMsgs(prev => {
                     const seen = new Set(prev.map((m: ChMsg) => m.id));
-                    const fresh = d.messages.filter((m: ChMsg) => !seen.has(m.id));
+                    // Kanal komment (reply): asosiy oqimga tushmasin — faqat izohlar paneli ko'radi
+                    const fresh = d.messages.filter((m: ChMsg) =>
+                        !seen.has(m.id) && (ch?.type === "GROUP" || !m.replyToId)
+                    );
                     return fresh.length ? [...prev, ...fresh].slice(-200) : prev;
                 });
                 lastTs.current = d.messages[d.messages.length - 1].createdAt;
@@ -258,11 +323,25 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const onMsgNew = (data: { channelId?: string; message: any }) => {
             if (data?.channelId !== id || !data?.message) return;
+            const msg = data.message as ChMsg;
+            // Kanal + reply — izoh, asosiy oqimga tushmasin, faqat parent commentCount ni bump
+            if (ch?.type === "CHANNEL" && msg.replyToId) {
+                setMsgs(prev => prev.map(x => x.id === msg.replyToId
+                    ? { ...x, commentCount: (x.commentCount ?? 0) + 1 } : x));
+                // Agar hozir shu parent uchun izohlar ochiq bo'lsa — comments'ga ham qo'shamiz
+                if (commentsFor === msg.replyToId) {
+                    setComments(prev => prev.some(c => c.id === msg.id) ? prev : [...prev, {
+                        id: msg.id, text: msg.text, media: msg.media, createdAt: msg.createdAt,
+                        editedAt: msg.editedAt ?? null, mine: msg.mine, author: msg.author,
+                    } as ChComment]);
+                }
+                return;
+            }
             setMsgs(prev => {
-                if (prev.some(m => m.id === data.message.id)) return prev;
-                return [...prev, data.message as ChMsg].slice(-200);
+                if (prev.some(m => m.id === msg.id)) return prev;
+                return [...prev, msg].slice(-200);
             });
-            lastTs.current = data.message.createdAt;
+            lastTs.current = msg.createdAt;
         };
         pusherCh.bind("nx:msg:new", onMsgNew);
         return () => { pusherCh.unbind("nx:msg:new", onMsgNew); };
@@ -814,6 +893,79 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                     <span className="font-bold opacity-90">{r.count}</span>
                                                 </button>
                                             ))}
+                                        </div>
+                                    )}
+                                    {/* Kanal komment chip (Telegram uslub) — faqat CHANNEL + allowComments + top-level */}
+                                    {ch?.type === "CHANNEL" && ch.allowComments && !m.replyToId && (
+                                        <button onClick={() => openComments(m.id)}
+                                            className="mt-1 flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-bold transition hover:brightness-110"
+                                            style={{
+                                                background: commentsFor === m.id ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.10)",
+                                                border: `1px solid ${commentsFor === m.id ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.25)"}`,
+                                                color: commentsFor === m.id ? "#00CEC8" : "rgba(160,176,224,0.95)",
+                                            }}>
+                                            <Reply className="w-3 h-3" />
+                                            {(m.commentCount ?? 0) > 0
+                                                ? `${m.commentCount} izoh`
+                                                : "Izoh yozish"}
+                                        </button>
+                                    )}
+                                    {/* Izohlar paneli (kengaytiriladigan) */}
+                                    {commentsFor === m.id && (
+                                        <div className="mt-2 p-2 rounded-lg space-y-2"
+                                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                                            {loadingComments && comments.length === 0 ? (
+                                                <div className="flex justify-center py-2">
+                                                    <Loader2 className="w-4 h-4 animate-spin text-white/40" />
+                                                </div>
+                                            ) : comments.length === 0 ? (
+                                                <p className="text-[10px] text-center py-2" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                    Hali izoh yo&apos;q — birinchi bo&apos;lib yozing
+                                                </p>
+                                            ) : (
+                                                <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                                                    {comments.map(c => (
+                                                        <div key={c.id} className="flex items-start gap-2 text-xs">
+                                                            <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0"
+                                                                style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                                {c.author?.image
+                                                                    ? <img src={c.author.image} alt="" className="w-full h-full object-cover" />
+                                                                    : <span className="w-full h-full flex items-center justify-center text-[10px] font-black text-white">
+                                                                        {(c.author?.name ?? c.author?.username ?? "?")[0]?.toUpperCase()}
+                                                                    </span>
+                                                                }
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <span className="text-[10px] font-bold" style={{ color: "#00CEC8" }}>
+                                                                    {c.author?.name ?? c.author?.username ?? "Foydalanuvchi"}
+                                                                </span>
+                                                                <span className="text-[9px] ml-1.5" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                                    {timeAgo(c.createdAt)}
+                                                                </span>
+                                                                <p className="text-xs mt-0.5 text-white/90 break-words">{c.text}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {ch?.isMember && (
+                                                <div className="flex gap-1.5 pt-1 border-t" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                                    <input
+                                                        value={commentInput}
+                                                        onChange={e => setCommentInput(e.target.value)}
+                                                        onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendComment(m.id); } }}
+                                                        placeholder="Izoh yozing..."
+                                                        className="flex-1 h-8 px-2.5 rounded-lg bg-transparent text-white text-xs focus:outline-none"
+                                                        style={{ border: "1px solid rgba(43,62,232,0.30)" }}
+                                                    />
+                                                    <button onClick={() => sendComment(m.id)}
+                                                        disabled={sendingComment || !commentInput.trim()}
+                                                        className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-40"
+                                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                                        {sendingComment ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <Send className="w-3.5 h-3.5 text-white" />}
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                     <div className="flex items-center gap-1 mt-0.5 justify-end">

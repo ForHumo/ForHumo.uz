@@ -1671,6 +1671,10 @@ model NexusChannel {
   // Slow mode — xabar yuborish tezligini cheklash (guruh uchun anti-spam).
   // 0 = o'chirilgan. > 0 = har user shu sekunddan tez xabar yuborolmaydi.
   slowModeSeconds Int  @default(0)
+  // Kanal komment (Telegram uslub) — CHANNEL tipida foydalanuvchilar
+  // top-level xabar yozolmaydi, lekin izoh (replyToId) yozishi mumkin.
+  // GROUP uchun ta'siri yo'q — u yerda hamma default yozadi.
+  allowComments Boolean @default(false)
   // Guruh sozlamalari — kim nima qila oladi (default a'zolar uchun).
   // JSON: { sendMessages: true, sendMedia: true, sendLinks: true, embedLinks: true,
   //         addMembers: false, pinMessages: false, changeInfo: false }
