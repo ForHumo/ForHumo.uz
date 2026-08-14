@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxGroupCreateModal } from "./nx-group-create-modal";
@@ -26,6 +26,8 @@ import { useNxPlayer } from "./nx-player-ctx";
 import { usePresence } from "@/lib/presence";
 import { subscribeUserChannel } from "@/lib/pusher-client";
 import { formatLastSeen } from "@/lib/last-seen";
+import { isLocked, isUnlockedNow, lockNow } from "@/lib/chat-lock";
+import { NxChatLockModal } from "./nx-chat-lock-modal";
 import { useSession } from "next-auth/react";
 import { formatMoney } from "@/lib/money";
 
@@ -129,6 +131,11 @@ export function NxSocialDesktop() {
     const selectedIdRef = useRef<string | null>(null);
     const loadConvsRef = useRef<(() => void) | null>(null);
     useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
+
+    // Chat lock — modal state
+    const [lockModal, setLockModal] = useState<{ convId: string; mode: "setup" | "unlock" | "remove" } | null>(null);
+    const [lockTick, setLockTick] = useState(0); // re-render trigger localStorage o'zgargach
+    const rerenderLocks = () => setLockTick(t => t + 1);
 
     // Typing event'larini eshitish (faqat hozirgi peer bilan)
     useEffect(() => {
@@ -1810,7 +1817,14 @@ export function NxSocialDesktop() {
                     ) : filteredConvs.map(c => (
                         <div key={c.conversationId} className="group relative">
                             <button
-                                onClick={() => setSelectedId(c.conversationId)}
+                                onClick={() => {
+                                    // Chat lock — qulflangan bo'lsa avval unlock so'raymiz
+                                    if (isLocked(c.conversationId) && !isUnlockedNow(c.conversationId)) {
+                                        setLockModal({ convId: c.conversationId, mode: "unlock" });
+                                        return;
+                                    }
+                                    setSelectedId(c.conversationId);
+                                }}
                                 onContextMenu={(e) => { e.preventDefault(); toggleConvPin(c.conversationId, !!c.pinned); }}
                                 className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors border-b"
                                 style={{
@@ -1819,20 +1833,43 @@ export function NxSocialDesktop() {
                                         ? "rgba(43,62,232,0.18)"
                                         : c.pinned ? "rgba(0,206,200,0.04)" : "transparent",
                                 }}>
-                                <ConvAvatar other={c.other} online={!!c.other?.id && isOnline(c.other.id)} />
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-1.5">
-                                        <p className="text-sm font-bold text-white truncate">
-                                            {c.other?.name ?? (c.other?.username ? `@${c.other.username}` : "Ismsiz")}
-                                        </p>
-                                        {c.other?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
-                                    </div>
-                                    <p className="text-[11px] truncate" style={{ color: c.unread ? "#FFFFFF" : "rgba(140,160,210,0.70)" }}>
-                                        {c.lastMine ? "Siz: " : ""}{c.lastMessageText ?? ""}
-                                    </p>
-                                </div>
+                                {(() => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                                    lockTick; // force re-eval on localStorage o'zgargach
+                                    const locked = isLocked(c.conversationId) && !isUnlockedNow(c.conversationId);
+                                    return locked ? (
+                                        <>
+                                            <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
+                                                style={{ background: "linear-gradient(135deg,#1a1a3a,#2a1a4a)" }}>
+                                                <Lock className="w-5 h-5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-white truncate">Yopiq suhbat</p>
+                                                <p className="text-[11px] truncate" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                    Ochish uchun ustiga bosing
+                                                </p>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <ConvAvatar other={c.other} online={!!c.other?.id && isOnline(c.other.id)} />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-1.5">
+                                                    <p className="text-sm font-bold text-white truncate">
+                                                        {c.other?.name ?? (c.other?.username ? `@${c.other.username}` : "Ismsiz")}
+                                                    </p>
+                                                    {c.other?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
+                                                </div>
+                                                <p className="text-[11px] truncate" style={{ color: c.unread ? "#FFFFFF" : "rgba(140,160,210,0.70)" }}>
+                                                    {c.lastMine ? "Siz: " : ""}{c.lastMessageText ?? ""}
+                                                </p>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
                                 <div className="flex flex-col items-end gap-1">
                                     <div className="flex items-center gap-1">
+                                        {isLocked(c.conversationId) && <Lock className="w-3 h-3" style={{ color: "#00CEC8" }} />}
                                         {c.muted && <BellOff className="w-3 h-3" style={{ color: "rgba(140,160,210,0.65)" }} />}
                                         {c.pinned && <Pin className="w-3 h-3" style={{ color: "rgba(0,206,200,0.75)" }} />}
                                     </div>
@@ -1874,6 +1911,30 @@ export function NxSocialDesktop() {
                                     {showArchived
                                         ? <ArchiveRestore className="w-3 h-3" style={{ color: "#00CEC8" }} />
                                         : <Archive className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                    }
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const locked = isLocked(c.conversationId);
+                                        if (!locked) {
+                                            setLockModal({ convId: c.conversationId, mode: "setup" });
+                                        } else if (isUnlockedNow(c.conversationId)) {
+                                            // Ochilgan — qayta yopamiz (tez tugma)
+                                            lockNow(c.conversationId);
+                                            if (selectedIdRef.current === c.conversationId) setSelectedId(null);
+                                            rerenderLocks();
+                                        } else {
+                                            // Qulflangan va yopiq — remove uchun avval unlock
+                                            setLockModal({ convId: c.conversationId, mode: "remove" });
+                                        }
+                                    }}
+                                    title={isLocked(c.conversationId) ? (isUnlockedNow(c.conversationId) ? "Chatni qayta yopish" : "Qulfni olib tashlash") : "Chatni qulflash"}
+                                    className="w-6 h-6 rounded flex items-center justify-center"
+                                    style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                    {isLocked(c.conversationId)
+                                        ? <Unlock className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                        : <Lock className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
                                     }
                                 </button>
                             </div>
@@ -3545,6 +3606,25 @@ export function NxSocialDesktop() {
                     onCreated={(id) => {
                         setSelectedChannel(id);
                         setChannelsBump(n => n + 1);
+                    }}
+                />
+            )}
+            {/* Chat lock modal (setup / unlock / remove) */}
+            {lockModal && (
+                <NxChatLockModal
+                    convId={lockModal.convId}
+                    mode={lockModal.mode}
+                    onClose={() => setLockModal(null)}
+                    onDone={(result) => {
+                        setLockModal(null);
+                        rerenderLocks();
+                        if (result === "unlocked") {
+                            // Muvaffaqiyatli unlock — chatga o'tish
+                            setSelectedId(lockModal.convId);
+                        }
+                        if (result === "removed") {
+                            // Lock olib tashlandi
+                        }
                     }}
                 />
             )}
