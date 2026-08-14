@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     X, Bell, Shield, Globe, Moon, Wifi, Download, Eye,
     Volume2, Smartphone, CreditCard, ChevronRight, Check,
-    Lock, UserCircle, Sliders,
+    Lock, UserCircle, Sliders, MessageSquare, Loader2, Image as ImageIcon,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -299,20 +299,127 @@ function NotificationsPanel() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Panel — Maxfiylik
 // ─────────────────────────────────────────────────────────────────────────────
+type PrivacyValue = "all" | "contacts" | "none";
+const PRIVACY_LABELS: Record<PrivacyValue, string> = {
+    all: "Hammaga",
+    contacts: "Kontaktlar",
+    none: "Hech kim",
+};
+
 function PrivacyPanel() {
+    const [state, setState] = useState<{ privacyDm: PrivacyValue; privacyLastSeen: PrivacyValue; privacyProfilePhoto: PrivacyValue } | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetch("/api/user/privacy").then(r => r.ok ? r.json() : null)
+            .then(d => { if (d) setState({
+                privacyDm: (d.privacyDm ?? "all") as PrivacyValue,
+                privacyLastSeen: (d.privacyLastSeen ?? "all") as PrivacyValue,
+                privacyProfilePhoto: (d.privacyProfilePhoto ?? "all") as PrivacyValue,
+            }); })
+            .finally(() => setLoading(false));
+    }, []);
+
+    async function update(key: "privacyDm" | "privacyLastSeen" | "privacyProfilePhoto", value: PrivacyValue) {
+        if (!state) return;
+        setSaving(key);
+        const prev = state[key];
+        setState(s => s ? { ...s, [key]: value } : s);
+        try {
+            const r = await fetch("/api/user/privacy", {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ [key]: value }),
+            });
+            if (!r.ok) setState(s => s ? { ...s, [key]: prev } : s);
+        } finally { setSaving(null); }
+    }
+
+    if (loading || !state) {
+        return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-white/40" /></div>;
+    }
+
     return (
         <>
-            <SettingsGroup title="Ko'rinish">
-                <SettingsRow icon={Eye}    label="Profil ochiq / yopiq"  description="Kim ko'ra oladi"            right={<SelectBadge options={["Hammaga","Obunalar","Faqat men"]} defaultVal="Hammaga" />} />
-                <SettingsRow icon={Eye}    label="Ko'rish tarixi"        description="Boshqalar ko'rishi"          right={<Toggle />} />
-                <SettingsRow icon={Shield} label="Blok ro'yxati"         description="Bloklangan foydalanuvchilar" right={<ArrowRight />} />
+            <SettingsGroup title="Kim menga aloqada bo'la oladi">
+                <PrivacyRow
+                    icon={MessageSquare}
+                    label="Kim menga xabar yozadi"
+                    description="DM ochish uchun kim ruxsat oladi"
+                    value={state.privacyDm}
+                    onChange={v => update("privacyDm", v)}
+                    saving={saving === "privacyDm"}
+                />
+                <PrivacyRow
+                    icon={Eye}
+                    label="Oxirgi ko'rilgan / onlayn"
+                    description="Kim ko'ra oladi"
+                    value={state.privacyLastSeen}
+                    onChange={v => update("privacyLastSeen", v)}
+                    saving={saving === "privacyLastSeen"}
+                />
+                <PrivacyRow
+                    icon={ImageIcon}
+                    label="Profil rasmim"
+                    description="Kim ko'ra oladi (chat, feed)"
+                    value={state.privacyProfilePhoto}
+                    onChange={v => update("privacyProfilePhoto", v)}
+                    saving={saving === "privacyProfilePhoto"}
+                />
             </SettingsGroup>
 
-            <SettingsGroup title="Ma'lumotlar">
-                <SettingsRow icon={Shield} label="Ma'lumotlarni yuklab olish" description="Shaxsiy arxiv"         right={<ArrowRight />} />
-                <SettingsRow icon={Shield} label="Hisobni o'chirish"          description="Qaytarib bo'lmaydi"    right={<ArrowRight />} />
+            <SettingsGroup title="Xavfsizlik">
+                <SettingsRow icon={Shield} label="Blok ro'yxati" description="Bloklangan foydalanuvchilar" right={<ArrowRight />} />
+                <SettingsRow icon={Lock}   label="Chat qulflari" description="Biometric/PIN bilan yashirilgan" right={<ArrowRight />} />
             </SettingsGroup>
+
+            <p className="text-[10px] text-white/40 px-4 mt-2">
+                &quot;Kontaktlar&quot; = siz kuzatgan va sizni kuzatgan foydalanuvchilar.
+            </p>
         </>
+    );
+}
+
+function PrivacyRow({ icon: Icon, label, description, value, onChange, saving }: {
+    icon: React.ElementType;
+    label: string;
+    description: string;
+    value: PrivacyValue;
+    onChange: (v: PrivacyValue) => void;
+    saving: boolean;
+}) {
+    const options: PrivacyValue[] = ["all", "contacts", "none"];
+    return (
+        <div className="px-3 py-2.5 border-b" style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+            <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: "rgba(43,62,232,0.15)" }}>
+                    <Icon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-white">{label}</p>
+                    <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.65)" }}>{description}</p>
+                </div>
+                {saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-white/40" />}
+            </div>
+            <div className="flex gap-1 pl-11">
+                {options.map(opt => (
+                    <button key={opt} type="button" onClick={() => onChange(opt)} disabled={saving}
+                        className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition disabled:opacity-50"
+                        style={value === opt ? {
+                            background: "rgba(0,206,200,0.15)",
+                            color: "#00CEC8",
+                            border: "1px solid rgba(0,206,200,0.40)",
+                        } : {
+                            background: "rgba(43,62,232,0.06)",
+                            color: "rgba(140,160,210,0.85)",
+                            border: "1px solid rgba(43,62,232,0.20)",
+                        }}>
+                        {PRIVACY_LABELS[opt]}
+                    </button>
+                ))}
+            </div>
+        </div>
     );
 }
 

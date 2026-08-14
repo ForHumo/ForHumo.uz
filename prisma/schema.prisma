@@ -122,6 +122,12 @@ model UserProfile {
   // Privacy — kim mening online/last seen ma'lumotimni ko'ra oladi:
   //   "all" — hamma (default), "contacts" — bir-birini follow qilganlar, "none" — hech kim
   privacyLastSeen String @default("all")
+  // Kim menga DM yozishi mumkin:
+  //   "all" — hamma (default), "contacts" — men kuzatgan yoki meni kuzatgan, "none" — hech kim
+  privacyDm       String @default("all")
+  // Kim mening profil rasmimni ko'radi (chat, feed vaqti):
+  //   "all" — hamma (default), "contacts" — kontaktlar, "none" — hech kim
+  privacyProfilePhoto String @default("all")
   loginEvents   LoginEvent[]
   supportTickets SupportTicket[]
   marketWorker    MarketWorker? @relation("MarketWorkerProfile")

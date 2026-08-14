@@ -134,7 +134,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const oid = otherId(conv, me.id);
     const p = await prisma.userProfile.findUnique({
         where: { id: oid },
-        select: { name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true, statusEmoji: true, statusText: true, statusExpiresAt: true, lastSeenAt: true, privacyLastSeen: true },
+        select: { name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true, statusEmoji: true, statusText: true, statusExpiresAt: true, lastSeenAt: true, privacyLastSeen: true, privacyProfilePhoto: true },
     });
     // Muddati o'tgan statusni yashirish
     const statusActive = p?.statusExpiresAt ? new Date(p.statusExpiresAt) > new Date() : true;
@@ -184,16 +184,20 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 invoicePaidAt: m.invoicePaidAt,
             };
         }),
-        other: p ? {
-            name: p.name, username: p.username, image: p.image,
-            verified: isVerifiedProfile(p),
-            verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null,
-            statusEmoji: statusActive ? p.statusEmoji : null,
-            statusText: statusActive ? p.statusText : null,
-            // Last seen — privacy'ga bo'ysunadi (all | contacts | none)
-            // Hozircha "contacts" — bir-birini follow qilganlar (keyingi bosqichda tekshiruvli)
-            lastSeenAt: p.privacyLastSeen === "none" ? null : p.lastSeenAt,
-        } : null,
+        other: p ? await (async () => {
+            const { checkPrivacy } = await import("@/lib/privacy");
+            const canSeeLastSeen = await checkPrivacy(me.id, oid, p.privacyLastSeen as "all" | "contacts" | "none");
+            const canSeePhoto = await checkPrivacy(me.id, oid, p.privacyProfilePhoto as "all" | "contacts" | "none");
+            return {
+                name: p.name, username: p.username,
+                image: canSeePhoto ? p.image : null,
+                verified: isVerifiedProfile(p),
+                verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null,
+                statusEmoji: statusActive ? p.statusEmoji : null,
+                statusText: statusActive ? p.statusText : null,
+                lastSeenAt: canSeeLastSeen ? p.lastSeenAt : null,
+            };
+        })() : null,
         peerReadAt,
     });
 }
@@ -209,6 +213,31 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (conv.user1Id !== me.id && conv.user2Id !== me.id) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
 
     if (await isBlockedBetween(me.id, otherId(conv, me.id))) return NextResponse.json({ error: "Bu suhbatga yoza olmaysiz" }, { status: 403 });
+
+    // Privacy: qabul qiluvchining privacyDm sozlamasi. Agar suhbatda oldin
+    // xabar bo'lgan bo'lsa (ya'ni qabul qiluvchi javob bergan) — ochiq deb hisoblaymiz.
+    const recipientId = otherId(conv, me.id);
+    const recipient = await prisma.userProfile.findUnique({
+        where: { id: recipientId }, select: { privacyDm: true },
+    });
+    if (recipient && recipient.privacyDm !== "all") {
+        // Recipient allaqachon javob bergan bo'lsa (mavjud xabar bo'lsa) — ruxsat
+        const priorExists = await prisma.nexusMessage.count({
+            where: { conversationId: id, senderId: recipientId },
+        });
+        if (priorExists === 0) {
+            const { checkPrivacy } = await import("@/lib/privacy");
+            const allowed = await checkPrivacy(me.id, recipientId, recipient.privacyDm as "all" | "contacts" | "none");
+            if (!allowed) {
+                return NextResponse.json({
+                    error: recipient.privacyDm === "none"
+                        ? "Bu foydalanuvchi xabar qabul qilmaydi"
+                        : "Bu foydalanuvchi faqat kontaktlaridan xabar qabul qiladi",
+                    code: "PRIVACY_DM",
+                }, { status: 403 });
+            }
+        }
+    }
 
     // AI moderation bloki tekshiruvi — foydalanuvchi aktiv ban ostidami?
     const banCheck = await checkBanned(me.id);
