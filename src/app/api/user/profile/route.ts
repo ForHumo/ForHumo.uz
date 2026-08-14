@@ -137,7 +137,13 @@ export async function PATCH(req: Request) {
     if (body.coverImage !== undefined) data.coverImage = body.coverImage || null;
     if (body.image      !== undefined) data.image      = body.image ?? null;
     if (body.showUsdRef !== undefined) data.showUsdRef = !!body.showUsdRef;
-    if (body.phone      !== undefined) data.phone      = body.phone?.trim() || null;
+    if (body.phone      !== undefined) {
+        const phoneVal = body.phone?.trim() || null;
+        data.phone = phoneVal;
+        // phoneHash — kontakt sinxronizatsiyasi uchun (raw raqam saqlanmaydi bu ustunda)
+        const { normalizeAndHash } = await import("@/lib/phone-hash");
+        data.phoneHash = phoneVal ? normalizeAndHash(phoneVal) : null;
+    }
     if (body.onboardingDone !== undefined) data.onboardingDone = body.onboardingDone;
     if (isProfileEdit && !isFounder) data.profileEditedAt = new Date();
     if (body.location !== undefined) {

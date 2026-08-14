@@ -64,6 +64,10 @@ model UserProfile {
 
   // Contact
   phone         String?
+  // Kontakt sinxronizatsiyasi uchun raqamning SHA-256 hashi (E.164 normalizatsiya).
+  // Boshqa foydalanuvchilar mening telefonimni topib men bilan bog'lanishi uchun.
+  // Raw raqam saqlanmaydi (bu ustunda). phone o'zgarganda phoneHash ham yangilanadi.
+  phoneHash     String? @unique
 
   // Verification level:  0 = basic (Google only)
   //                      1 = email confirmed
@@ -1374,6 +1378,22 @@ model NexusMessage {
   @@index([expiresAt])
   @@index([scheduledFor])
   @@index([broadcastListId])
+}
+
+// Kontakt sinxronizatsiya (WhatsApp/Telegram uslub) — foydalanuvchining telefondagi
+// kontaktlaridan qay biri ForHumo'da borligini topish uchun.
+//
+// Xavfsizlik: Raw telefon raqam serverda saqlanmaydi. Faqat SHA-256 hash (pepper bilan).
+// nameHint ixtiyoriy (telefon egasining ismini foydalanuvchi ko'rsatishi uchun local hint).
+model NexusContactHash {
+  id         String   @id @default(cuid())
+  ownerId    String                                  // kimning kontakti (UserProfile.id)
+  phoneHash  String                                  // normalized phone → sha256
+  nameHint   String?                                 // ownerning telefonda ko'rgan ismi (yordamchi)
+  addedAt    DateTime @default(now())
+  @@unique([ownerId, phoneHash])
+  @@index([ownerId])
+  @@index([phoneHash])
 }
 
 // Broadcast list (WhatsApp uslub) — bir marta yozib, ro'yxatdagi barcha
