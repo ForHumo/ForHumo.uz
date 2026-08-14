@@ -451,22 +451,49 @@ export function NxSocialDesktop() {
 
     // Chat mavzu (per-chat) — localStorage'da theme id saqlanadi
     const [chatTheme, setChatTheme] = useState<string>("default");
+    const [customWallpaperUrl, setCustomWallpaperUrl] = useState<string | null>(null);
     const [themePickerOpen, setThemePickerOpen] = useState(false);
+    const [uploadingWallpaper, setUploadingWallpaper] = useState(false);
     const themeKey = (convId: string) => `nexus:dm:theme:${convId}`;
+    const wallpaperKey = (convId: string) => `nexus:dm:wallpaper:${convId}`;
     // Chat almashinsa mavzuni tiklash
     useEffect(() => {
         if (!selectedId) return;
-        try { setChatTheme(localStorage.getItem(themeKey(selectedId)) || "default"); }
-        catch { setChatTheme("default"); }
+        try {
+            setChatTheme(localStorage.getItem(themeKey(selectedId)) || "default");
+            setCustomWallpaperUrl(localStorage.getItem(wallpaperKey(selectedId)));
+        } catch { setChatTheme("default"); setCustomWallpaperUrl(null); }
     }, [selectedId]);
     function pickTheme(id: string) {
         if (!selectedId) return;
         setChatTheme(id);
+        setCustomWallpaperUrl(null);
         try {
             if (id === "default") localStorage.removeItem(themeKey(selectedId));
             else localStorage.setItem(themeKey(selectedId), id);
+            localStorage.removeItem(wallpaperKey(selectedId));
         } catch {}
         setThemePickerOpen(false);
+    }
+    // Custom wallpaper — foydalanuvchi rasmni Vercel Blob'ga yuklaydi.
+    async function uploadWallpaper(file: File) {
+        if (!selectedId || !file.type.startsWith("image/")) return;
+        setUploadingWallpaper(true);
+        try {
+            // Vercel Blob client upload — mavjud infrastruktura
+            const { upload } = await import("@vercel/blob/client");
+            const blob = await upload(`wallpapers/${Date.now()}-${file.name}`, file, {
+                access: "public",
+                handleUploadUrl: "/api/market/upload/client-token",
+            });
+            setCustomWallpaperUrl(blob.url);
+            setChatTheme("default");
+            try {
+                localStorage.setItem(wallpaperKey(selectedId), blob.url);
+                localStorage.removeItem(themeKey(selectedId));
+            } catch {}
+            setThemePickerOpen(false);
+        } finally { setUploadingWallpaper(false); }
     }
     useEffect(() => {
         if (!session?.user?.email) return;
@@ -936,6 +963,16 @@ export function NxSocialDesktop() {
         if (r.ok) {
             const d = await r.json();
             setMessages(m => m.map(x => x.id === messageId ? { ...x, reactions: d.reactions ?? [] } : x));
+            // Emoji burst — xabar joyidan yuqoriga uchadigan animatsiya (Telegram uslub).
+            // Faqat reaksiya qo'shilganda (olib tashlanganda emas) — mine flag'i true bo'lgan reaksiyalar orasida shu emoji bor bo'lsa yangi qo'shildi deb hisoblaymiz.
+            const added = (d.reactions ?? []).some((rx: { emoji: string; mine: boolean }) => rx.emoji === emoji && rx.mine);
+            if (added && typeof window !== "undefined") {
+                const el = document.querySelector(`[data-msg-id="${messageId}"]`) as HTMLElement | null;
+                const rect = el?.getBoundingClientRect();
+                const x = rect ? rect.left + rect.width / 2 - 20 : window.innerWidth / 2;
+                const y = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+                window.dispatchEvent(new CustomEvent("nx:reaction:burst", { detail: { emoji, x, y } }));
+            }
         }
         setReactPickerFor(null);
     }
@@ -1847,7 +1884,13 @@ export function NxSocialDesktop() {
 
             {/* ── COL 2: Selected chat/channel ─────────────────────────── */}
             <div className="flex-1 flex flex-col min-w-0"
-                style={{ background: (selectedId && !selectedChannel) ? (CHAT_THEMES[chatTheme] ?? CHAT_THEMES.default).bg : "rgba(11,18,40,0.35)" }}>
+                style={{
+                    background: (selectedId && !selectedChannel)
+                        ? (customWallpaperUrl
+                            ? `linear-gradient(rgba(5,8,20,0.55), rgba(5,8,20,0.55)), url("${customWallpaperUrl}") center/cover no-repeat`
+                            : (CHAT_THEMES[chatTheme] ?? CHAT_THEMES.default).bg)
+                        : "rgba(11,18,40,0.35)",
+                }}>
                 {selectedChannel ? (
                     // Channel/Group xonasi — mavjud NxChannelRoom embed
                     <NxChannelRoom id={selectedChannel} onBack={() => setSelectedChannel(null)} />
@@ -3423,24 +3466,53 @@ export function NxSocialDesktop() {
                                 <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                             </button>
                         </div>
-                        <div className="p-4 grid grid-cols-3 gap-2">
+                        <div className="p-4 grid grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto">
                             {Object.entries(CHAT_THEMES).map(([id, t]) => (
                                 <button key={id} onClick={() => pickTheme(id)}
                                     className="flex flex-col items-center gap-1.5 py-3 rounded-xl transition"
                                     style={{
-                                        background: chatTheme === id ? "rgba(0,206,200,0.15)" : "rgba(43,62,232,0.08)",
-                                        border: `1px solid ${chatTheme === id ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.20)"}`,
+                                        background: (chatTheme === id && !customWallpaperUrl) ? "rgba(0,206,200,0.15)" : "rgba(43,62,232,0.08)",
+                                        border: `1px solid ${(chatTheme === id && !customWallpaperUrl) ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.20)"}`,
                                     }}>
                                     <div className="w-14 h-14 rounded-lg"
                                         style={{ background: t.swatch, border: "1px solid rgba(255,255,255,0.10)" }} />
-                                    <span className="text-[10px] font-bold" style={{ color: chatTheme === id ? "#00CEC8" : "rgba(220,230,255,0.85)" }}>
+                                    <span className="text-[10px] font-bold" style={{ color: (chatTheme === id && !customWallpaperUrl) ? "#00CEC8" : "rgba(220,230,255,0.85)" }}>
                                         {t.label}
                                     </span>
                                 </button>
                             ))}
+                            {/* Custom wallpaper — foydalanuvchi rasm yuklaydi */}
+                            <label
+                                className="flex flex-col items-center gap-1.5 py-3 rounded-xl transition cursor-pointer"
+                                style={{
+                                    background: customWallpaperUrl ? "rgba(0,206,200,0.15)" : "rgba(43,62,232,0.08)",
+                                    border: `1px dashed ${customWallpaperUrl ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.35)"}`,
+                                }}>
+                                <input type="file" accept="image/*" className="hidden"
+                                    onChange={e => {
+                                        const f = e.target.files?.[0];
+                                        if (f) void uploadWallpaper(f);
+                                        e.target.value = "";
+                                    }} />
+                                <div className="w-14 h-14 rounded-lg flex items-center justify-center overflow-hidden"
+                                    style={{
+                                        background: customWallpaperUrl
+                                            ? `url("${customWallpaperUrl}") center/cover`
+                                            : "linear-gradient(135deg,rgba(43,62,232,0.20),rgba(0,206,200,0.15))",
+                                        border: "1px solid rgba(255,255,255,0.10)",
+                                    }}>
+                                    {uploadingWallpaper
+                                        ? <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#00CEC8" }} />
+                                        : !customWallpaperUrl && <Plus className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                                    }
+                                </div>
+                                <span className="text-[10px] font-bold" style={{ color: customWallpaperUrl ? "#00CEC8" : "rgba(220,230,255,0.85)" }}>
+                                    {customWallpaperUrl ? "Mening rasmim" : "Rasm yuklash"}
+                                </span>
+                            </label>
                         </div>
                         <p className="px-4 pb-4 text-[10px] text-center" style={{ color: "rgba(140,160,210,0.55)" }}>
-                            Mavzu faqat sizga ko'rinadi — brauzeringizda saqlanadi
+                            Mavzu faqat sizga ko&apos;rinadi — brauzeringizda saqlanadi
                         </p>
                     </div>
                 </div>
@@ -4022,6 +4094,13 @@ const CHAT_THEMES: Record<string, { label: string; bg: string; swatch: string }>
     forest:  { label: "O'rmon",   bg: "linear-gradient(135deg,#0f2818,#1a4028 60%,#2d5c3a)", swatch: "linear-gradient(135deg,#1a4028,#3a8250)" },
     mono:    { label: "Grafit",   bg: "linear-gradient(135deg,#1a1a1a,#2d2d2d)", swatch: "linear-gradient(135deg,#2d2d2d,#4a4a4a)" },
     lavender:{ label: "Lavanda",  bg: "linear-gradient(135deg,#1a1a3a,#2a1a4a 60%,#4a2a6a)", swatch: "linear-gradient(135deg,#2a1a4a,#7a4aaa)" },
+    // Yangi fonlar — WhatsApp/Telegram uslubidagi katta variantlar
+    aurora:  { label: "Aurora",   bg: "linear-gradient(135deg,#0b0f2e 0%,#1e2352 30%,#2d1e5c 60%,#4a1e5c 100%)", swatch: "linear-gradient(135deg,#2d1e5c,#7a3ea8)" },
+    crimson: { label: "Qizil",    bg: "linear-gradient(135deg,#1a0808,#3a0d15 60%,#5c1f2c)", swatch: "linear-gradient(135deg,#3a0d15,#8b2c3a)" },
+    emerald: { label: "Zumrad",   bg: "linear-gradient(135deg,#052018,#0d3a2b 60%,#1a5c42)", swatch: "linear-gradient(135deg,#0d3a2b,#2a8060)" },
+    midnight:{ label: "Yarim tun",bg: "linear-gradient(135deg,#000814,#001d3d 60%,#003566)", swatch: "linear-gradient(135deg,#001d3d,#0a4a8a)" },
+    peach:   { label: "Shaftoli", bg: "linear-gradient(135deg,#2c1810,#5c2f1a 60%,#8a4a2c)", swatch: "linear-gradient(135deg,#5c2f1a,#c47850)" },
+    nordic:  { label: "Nordik",   bg: "linear-gradient(135deg,#1e2530,#2e3948 60%,#3e5063)", swatch: "linear-gradient(135deg,#2e3948,#6a7e94)" },
 };
 
 // Ikki sana bir kunda ekanini tekshirish (mahalliy vaqt bo'yicha)

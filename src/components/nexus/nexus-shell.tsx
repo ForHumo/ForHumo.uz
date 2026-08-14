@@ -29,6 +29,7 @@ import { NxStoryCreate } from "./nx-story-create";
 import { NxShare } from "./nx-share";
 import { NxReport } from "./nx-report";
 import { NxPushPrompt } from "./nx-push-prompt";
+import { NxReactionBurstLayer } from "./nx-reaction-burst";
 import { usePresence } from "@/lib/presence";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -126,6 +127,9 @@ export function NexusShell() {
 
                 {/* Push notification prompt (30s ichida bir marta) */}
                 <NxPushPrompt />
+
+                {/* Reaksiya burst animatsiyasi (window event orqali chaqiriladi) */}
+                <NxReactionBurstLayer />
             </div>
         </NxPlayerProvider>
     );

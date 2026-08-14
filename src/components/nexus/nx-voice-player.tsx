@@ -41,11 +41,15 @@ function fmtTime(sec: number): string {
 
 const BAR_COUNT = 32;
 
+// Voice speed tanlash (Telegram/WhatsApp/podkast uslub)
+const SPEEDS = [1, 1.5, 2] as const;
+
 export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTranscribe }: Props) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [playing, setPlaying] = useState(false);
     const [duration, setDuration] = useState<number>(initialDurationMs ? initialDurationMs / 1000 : 0);
     const [current, setCurrent] = useState(0);
+    const [speedIdx, setSpeedIdx] = useState(0); // 0=1x, 1=1.5x, 2=2x
     const bars = seededBars(seed || src, BAR_COUNT);
     // O'ynayotgan level (0..1) — bar balandligini kuchsizlantiradi/kuchaytiradi
     const [audioLevel, setAudioLevel] = useState(0);
@@ -204,6 +208,25 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
                     {fmtTime(playing || current > 0 ? current : duration)}
                 </p>
             </div>
+            {/* Speed tanlash — playback tezligini o'zgartirish (1x/1.5x/2x) */}
+            <button
+                type="button"
+                onClick={() => {
+                    const next = (speedIdx + 1) % SPEEDS.length;
+                    setSpeedIdx(next);
+                    if (audioRef.current) audioRef.current.playbackRate = SPEEDS[next];
+                }}
+                title={`Tezlik: ${SPEEDS[speedIdx]}×`}
+                className="min-w-[28px] h-7 px-1.5 rounded-md flex items-center justify-center flex-shrink-0 text-[10px] font-black tabular-nums"
+                style={{
+                    background: speedIdx > 0
+                        ? (mine ? "rgba(255,255,255,0.20)" : "rgba(0,206,200,0.15)")
+                        : (mine ? "rgba(255,255,255,0.08)" : "rgba(43,62,232,0.08)"),
+                    color: speedIdx > 0 ? activeColor : (mine ? "rgba(255,255,255,0.75)" : "rgba(140,160,210,0.85)"),
+                }}
+            >
+                {SPEEDS[speedIdx]}×
+            </button>
             {enableTranscribe && (
                 <button onClick={transcribe} disabled={transcribing}
                     title={transcript ? "Transkriptni yashirish" : "AI orqali matnga aylantirish"}

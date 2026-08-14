@@ -142,10 +142,24 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({
         messages: messages.map(m => {
             const pv = pollVotesMap.get(m.id);
+            const mine = m.senderId === me.id;
+            // View-once — sender har doim ko'radi; qabul qiluvchi faqat ochilmagan
+            // bo'lsa placeholder ko'radi ("Ochish" tugmasi UI). Ochilgach media hidden.
+            const hideMedia = m.viewOnce && !mine && !m.viewedAt;      // hali ochilmagan → placeholder
+            const alreadyViewed = m.viewOnce && !mine && !!m.viewedAt; // ochilib bo'lgan
             return {
-                id: m.id, text: m.text, mine: m.senderId === me.id, createdAt: m.createdAt,
-                mediaUrl: m.mediaUrl, mediaType: m.mediaType, mediaMime: m.mediaMime,
-                mediaName: m.mediaName, mediaSize: m.mediaSize, durationMs: m.durationMs,
+                id: m.id,
+                text: hideMedia || alreadyViewed ? "" : m.text,
+                mine, createdAt: m.createdAt,
+                // View-once: URL yashirilgan, faqat mediaType turi qoladi (UI badge uchun).
+                mediaUrl: hideMedia || alreadyViewed ? null : m.mediaUrl,
+                mediaType: m.mediaType,
+                mediaMime: hideMedia || alreadyViewed ? null : m.mediaMime,
+                mediaName: hideMedia || alreadyViewed ? null : m.mediaName,
+                mediaSize: hideMedia || alreadyViewed ? null : m.mediaSize,
+                durationMs: hideMedia || alreadyViewed ? null : m.durationMs,
+                viewOnce: m.viewOnce,
+                viewedAt: m.viewedAt,
                 locLat: m.locLat, locLng: m.locLng, locUpdatedAt: m.locUpdatedAt, locExpiresAt: m.locExpiresAt,
                 pollQuestion: m.pollQuestion, pollOptions: m.pollOptions, pollExpiresAt: m.pollExpiresAt, pollMulti: m.pollMulti,
                 pollVoteCounts: pv?.counts ?? null, pollMyVotes: pv?.myVotes ?? null, pollTotal: pv?.total ?? null,
@@ -222,6 +236,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         scheduledFor?: string;                                 // ISO vaqt — jadvalga qo'yish
         forwardedFromId?: string;                              // Forward: asl yozuvchi profil ID
         forwardedFromName?: string;                            // Forward: asl yozuvchi ismi/username (snapshot)
+        viewOnce?: boolean;                                    // View-once: 1 martalik xabar
     };
     const text = String(body.text ?? "").trim();
     const isLocation = body.mediaType === "location" && typeof body.locLat === "number" && typeof body.locLng === "number";
@@ -279,6 +294,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             scheduledFor,
             forwardedFromId,
             forwardedFromName,
+            // View-once — faqat media (image/video/audio) uchun mazmunli;
+            // matn xabari view-once emas.
+            viewOnce: !!body.viewOnce && !!body.mediaUrl,
             mediaUrl: hasMedia && !isLocation && !isPoll ? body.mediaUrl : null,
             mediaType: hasMedia ? body.mediaType : null,
             mediaMime: hasMedia && !isLocation && !isPoll ? (body.mediaMime ?? null) : null,

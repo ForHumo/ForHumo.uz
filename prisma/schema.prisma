@@ -1260,6 +1260,10 @@ model NexusConversation {
   // Tozalash: shu vaqtdan oldingi xabarlar shu foydalanuvchiga ko'rsatilmaydi
   clearedBeforeUser1 DateTime?
   clearedBeforeUser2 DateTime?
+  // Auto-delete (WhatsApp uslub) — chatdagi barcha xabarlar shu sekunddan keyin
+  // avtomatik o'chiriladi (kunlik cron). 0 = o'chirilgan. Har ikkala foydalanuvchi
+  // uchun umumiy (chat-wide) sozlama.
+  autoDeleteAfterSeconds Int @default(0)
   createdAt       DateTime  @default(now())
   messages        NexusMessage[]
   @@unique([user1Id, user2Id])
@@ -1325,6 +1329,10 @@ model NexusMessage {
   // xabarni ikkalasi uchun ham o'chira oladi. Client tomon "Bu xabar
   // o'chirildi" tombstone ko'rsatadi (matn/media tozalanadi).
   deletedForEveryoneAt DateTime?
+  // View-once (WhatsApp) — 1 martalik xabar. Qabul qiluvchi ochsa viewedAt yoziladi;
+  // ikkinchi marta ochib bo'lmaydi. Serverdan ham matn/media null qaytadi.
+  viewOnce   Boolean  @default(false)
+  viewedAt   DateTime?
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
   @@index([conversationId, pinnedAt])
