@@ -1,10 +1,13 @@
 import { getServerSession } from "next-auth";
 import { setRequestLocale } from "next-intl/server";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Link } from "@/i18n/routing";
 import { Fingerprint, LogIn, ArrowRight } from "lucide-react";
 import { NexusUsernameGate } from "@/components/nexus/nexus-username-gate";
+import { verify2faToken, TWO_FA_COOKIE_NAME } from "@/lib/2fa-cookie";
 
 // Nexus — global header/footer ustini yopadi, o'z to'liq ekran qobig'i bor.
 // DARVOZA: Humo Nexus faqat Humo ID + @username olgan foydalanuvchilar uchun.
@@ -17,14 +20,27 @@ export default async function NexusLayout({ children, params }: {
 
     const session = await getServerSession(authOptions);
     let signedIn = false, hasHumoId = false, username: string | null = null, firstName: string | null = null;
+    let profileId: string | null = null;
+    let totpEnabled = false;
     if (session?.user?.email) {
         signedIn = true;
         const p = await prisma.userProfile.findUnique({
-            where: { email: session.user.email }, select: { humoId: true, username: true, firstName: true },
+            where: { email: session.user.email }, select: { id: true, humoId: true, username: true, firstName: true, totpEnabled: true },
         });
         hasHumoId = !!p?.humoId;
         username = p?.username ?? null;
         firstName = p?.firstName ?? null;
+        profileId = p?.id ?? null;
+        totpEnabled = !!p?.totpEnabled;
+    }
+
+    // 2FA gate — TOTP yoqilgan bo'lsa, challenge cookie'siz Nexus'ga kira olmaydi
+    if (signedIn && totpEnabled && profileId) {
+        const cookieStore = await cookies();
+        const token = cookieStore.get(TWO_FA_COOKIE_NAME)?.value;
+        if (!verify2faToken(token, profileId)) {
+            redirect(`/${locale}/2fa/challenge?next=/${locale}/nexus`);
+        }
     }
 
     // Humo ID bor, lekin username yo'q — Nexus uchun majburiy

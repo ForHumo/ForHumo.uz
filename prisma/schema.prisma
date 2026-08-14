@@ -115,6 +115,13 @@ model UserProfile {
   // Nexus chaqiruv ringtone (signature/whisper/pulse/melody/classic) — default signature
   ringtone      String   @default("signature")
 
+  // 2FA (TOTP RFC 6238) — authenticator app (Google Authenticator, Authy, 1Password, ...)
+  // Google OAuth ustidan qo'shimcha bosqich: sign-in → TOTP kod → sessiya
+  totpEnabled       Boolean   @default(false)
+  totpSecret        String?              // base32-encoded shared secret (20 baytli)
+  totpEnabledAt     DateTime?
+  totpBackupCodes   Json?                // string[] — SHA-256 hex hashlangan; ishlatilgani ro'yxatdan chiqadi
+
   lastLoginAt   DateTime?
   // Oxirgi faollik vaqti — presence + REST fallback (heartbeat) bilan yangilanadi.
   // Onlayn: presence-nexus'da bor. Offline: lastSeenAt ko'rsatiladi (privacy'ga bo'ysunadi).
