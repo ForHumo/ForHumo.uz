@@ -12,6 +12,7 @@ import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, Mor
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxGroupCreateModal } from "./nx-group-create-modal";
+import { isFounderProfile } from "@/lib/founders";
 import { NxStatusModal } from "./nx-status-modal";
 import { searchShortcodes } from "./nx-emoji-shortcodes";
 import { NxMarkdown } from "./nx-markdown";
@@ -1477,6 +1478,17 @@ export function NxSocialDesktop() {
                             style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
                             <Plus className="w-4 h-4" style={{ color: "#00CEC8" }} />
                         </button>
+                    )}
+                    {(() => {
+                        const su = session?.user as { username?: string | null; humoId?: string | null } | undefined;
+                        return isFounderProfile({ username: su?.username ?? null, humoId: su?.humoId ?? null });
+                    })() && (
+                        <Link href="/nexus/admin"
+                            title="Nexus admin"
+                            className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
+                            style={{ background: "rgba(245,158,11,0.14)", border: "1px solid rgba(245,158,11,0.35)" }}>
+                            <Shield className="w-4 h-4" style={{ color: "#F59E0B" }} />
+                        </Link>
                     )}
                 </div>
 
