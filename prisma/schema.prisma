@@ -1321,6 +1321,10 @@ model NexusMessage {
   // Yetkazildi — client Pusher orqali qabul qilganini serverga bildirgan vaqt.
   // NULL = hali yetmagan (offline/no push). Not-null = qurilma qabul qildi.
   deliveredAt       DateTime?
+  // "Hamma uchun o'chirish" (WhatsApp uslub) — 60 daqiqa ichida yozuvchi
+  // xabarni ikkalasi uchun ham o'chira oladi. Client tomon "Bu xabar
+  // o'chirildi" tombstone ko'rsatadi (matn/media tozalanadi).
+  deletedForEveryoneAt DateTime?
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
   @@index([conversationId, pinnedAt])

@@ -73,6 +73,7 @@ interface Msg {
     forwardedFromName?: string | null;
     deliveredAt?: string | null;
     senderId?: string;
+    deletedForEveryoneAt?: string | null;
 }
 
 interface PeerInfo {
@@ -208,11 +209,24 @@ export function NxSocialDesktop() {
             ));
         };
 
+        // Xabar hamma uchun o'chirilganda — tombstone yangilanadi
+        const onDelete = (data: { convId: string; messageId: string; tombstone?: boolean; deletedAt: string }) => {
+            if (!data?.messageId) return;
+            if (selectedIdRef.current !== data.convId) return;
+            setMessages(prev => prev.map(m =>
+                m.id === data.messageId
+                    ? { ...m, text: "", mediaUrl: null, mediaType: null, deletedForEveryoneAt: data.deletedAt }
+                    : m
+            ));
+        };
+
         ch.bind("nx:msg:new", onMsgNewWithDeliver);
         ch.bind("nx:msg:delivered", onDelivered);
+        ch.bind("nx:msg:delete", onDelete);
         return () => {
             ch.unbind("nx:msg:new", onMsgNewWithDeliver);
             ch.unbind("nx:msg:delivered", onDelivered);
+            ch.unbind("nx:msg:delete", onDelete);
         };
     }, [myProfileId]);
 

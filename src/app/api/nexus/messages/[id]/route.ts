@@ -164,6 +164,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 forwardedFromId: m.forwardedFromId,
                 forwardedFromName: m.forwardedFromName,
                 deliveredAt: m.deliveredAt,
+                deletedForEveryoneAt: m.deletedForEveryoneAt,
             };
         }),
         other: p ? {
