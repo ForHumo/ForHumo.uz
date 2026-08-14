@@ -11,6 +11,7 @@ import { Link } from "@/i18n/routing";
 import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
+import { NxGroupCreateModal } from "./nx-group-create-modal";
 import { NxStatusModal } from "./nx-status-modal";
 import { searchShortcodes } from "./nx-emoji-shortcodes";
 import { NxMarkdown } from "./nx-markdown";
@@ -3305,10 +3306,20 @@ export function NxSocialDesktop() {
                     onSaved={(e, t) => setMyStatus({ emoji: e, text: t })}
                 />
             )}
-            {/* Yangi kanal/guruh yaratish modali */}
-            {createChannelOpen && (
+            {/* Yangi kanal yaratish modali (public/handle bilan) */}
+            {createChannelOpen === "CHANNEL" && (
                 <NxChannelCreateModal
-                    initialType={createChannelOpen}
+                    initialType="CHANNEL"
+                    onClose={() => setCreateChannelOpen(null)}
+                    onCreated={(id) => {
+                        setSelectedChannel(id);
+                        setChannelsBump(n => n + 1);
+                    }}
+                />
+            )}
+            {/* Yangi guruh yaratish modali (do'stlar tanlash oqimi) */}
+            {createChannelOpen === "GROUP" && (
+                <NxGroupCreateModal
                     onClose={() => setCreateChannelOpen(null)}
                     onCreated={(id) => {
                         setSelectedChannel(id);

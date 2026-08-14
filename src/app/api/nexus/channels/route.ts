@@ -56,9 +56,25 @@ export async function POST(req: Request) {
     const banned = await banGuard(me.id); if (banned) return banned;
     if (await nexusRateLimited(me.id, "channel")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
-    const { type, name, handle, description, isPrivate, avatarUrl } = await req.json();
+    const { type, name, handle, description, isPrivate, avatarUrl, memberIds } = await req.json();
     if (!name?.trim()) return NextResponse.json({ error: "Nom kerak" }, { status: 400 });
     const t = type === "GROUP" ? "GROUP" : "CHANNEL";
+
+    // GROUP uchun — yaratuvchi tanlagan a'zolarni darhol qo'shish (multi-select do'stlar oqimi).
+    // Faqat GROUP + isPrivate=true bilan ishlaydi; jami 20 kishidan oshmasin.
+    let initialMemberIds: string[] = [];
+    if (t === "GROUP" && Array.isArray(memberIds)) {
+        const clean = [...new Set(
+            (memberIds as unknown[]).filter((x): x is string => typeof x === "string" && x !== me.id)
+        )];
+        if (clean.length > 19) return NextResponse.json({ error: "Guruhda maksimal 20 kishi" }, { status: 400 });
+        if (clean.length > 0) {
+            const found = await prisma.userProfile.findMany({
+                where: { id: { in: clean } }, select: { id: true },
+            });
+            initialMemberIds = found.map(f => f.id);
+        }
+    }
 
     // handle — ixtiyoriy, noyob, [a-z0-9_]{3,20}
     let cleanHandle: string | null = null;
@@ -78,8 +94,13 @@ export async function POST(req: Request) {
             ownerId: me.id, type: t, name: String(name).trim().slice(0, 80),
             handle: cleanHandle, description: typeof description === "string" ? description.trim().slice(0, 500) : null,
             avatarUrl: typeof avatarUrl === "string" && avatarUrl ? avatarUrl : null,
-            isPrivate: isPrivate === true, memberCount: 1,
-            members: { create: { profileId: me.id, role: "OWNER" } },
+            isPrivate: isPrivate === true, memberCount: 1 + initialMemberIds.length,
+            members: {
+                create: [
+                    { profileId: me.id, role: "OWNER" },
+                    ...initialMemberIds.map(profileId => ({ profileId, role: "MEMBER" as const })),
+                ],
+            },
         },
     });
 
