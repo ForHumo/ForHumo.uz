@@ -39,7 +39,7 @@ export function HumoIdNavbar() {
                     { label: "Tasdiqlash", href: "/id/verify" },
                 ],
             }}
-            extra={<div className="flex items-center gap-2">{levelBadge}<NavbarSupportButton /></div>}
+            extra={<div className="flex items-center gap-2">{levelBadge}<NavbarSupportButton variant="blue" /></div>}
         />
     );
 }

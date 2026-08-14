@@ -6,9 +6,131 @@
 // Sahifadan chiqmaydi.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { HeadsetIcon, X, ArrowLeft, Send, Plus, Loader2, MessageCircle, CheckCircle2 } from "lucide-react";
+import { HeadsetIcon, X, ArrowLeft, Send, Plus, Loader2, MessageCircle, CheckCircle2, AlertTriangle, Lightbulb, Bug, CreditCard, HelpCircle, Clock, ShieldCheck, ChevronRight } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
+
+// ── Welcome ekran (birinchi marta kirganda / murojaat yo'q holatda) ─────────
+interface QuickStart { subject: string; message: string }
+interface QuickCategory { id: string; icon: typeof Bug; title: string; desc: string; sample: QuickStart; tone: string }
+
+function SupportWelcome({ moduleLabel, onQuickStart }: { moduleLabel: string; onQuickStart: (pre: QuickStart) => void }) {
+    const categories: QuickCategory[] = [
+        {
+            id: "bug",
+            icon: Bug,
+            title: "Xato / nosozlik",
+            desc: "Biror narsa ishlamayapti",
+            tone: "text-red-600 dark:text-red-400 bg-red-500/10",
+            sample: {
+                subject: `[${moduleLabel}] Xato haqida`,
+                message: `Modul: ${moduleLabel}\nNima kutgan edim: \nNima yuz berdi: \nQanday takrorlash mumkin: `,
+            },
+        },
+        {
+            id: "account",
+            icon: ShieldCheck,
+            title: "Hisob / kirish",
+            desc: "Login, parol, 2FA, ma'lumot",
+            tone: "text-blue-600 dark:text-blue-400 bg-blue-500/10",
+            sample: {
+                subject: "Hisob bilan bog'liq savol",
+                message: "Muammoni batafsil yozing: ",
+            },
+        },
+        {
+            id: "billing",
+            icon: CreditCard,
+            title: "To'lov / hamyon",
+            desc: "For Pay, buyurtma, chek",
+            tone: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10",
+            sample: {
+                subject: "To'lov haqida savol",
+                message: "Tranzaksiya ma'lumotlari (id, sana, summa): \nMuammo: ",
+            },
+        },
+        {
+            id: "feedback",
+            icon: Lightbulb,
+            title: "Taklif / fikr",
+            desc: "Yangi imkoniyat, yaxshilash",
+            tone: "text-amber-600 dark:text-amber-400 bg-amber-500/10",
+            sample: {
+                subject: "Taklif",
+                message: "Fikrimni ulashmoqchiman: ",
+            },
+        },
+        {
+            id: "other",
+            icon: HelpCircle,
+            title: "Boshqa savol",
+            desc: "Bo'sh forma",
+            tone: "text-neutral-600 dark:text-neutral-400 bg-neutral-500/10",
+            sample: { subject: "", message: "" },
+        },
+    ];
+
+    return (
+        <div className="p-4 space-y-4">
+            {/* Salom + tavsif */}
+            <div className="text-center pt-2 pb-1">
+                <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center mb-2 shadow-lg shadow-blue-500/25">
+                    <HeadsetIcon className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-base font-black">Salom! Qanday yordam beray?</div>
+                <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
+                    Muammoingizni tanlang — biz sizga tez yordam beramiz.
+                </div>
+            </div>
+
+            {/* Response time indikator */}
+            <div className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
+                <Clock className="w-3.5 h-3.5" />
+                <span>O'rtacha javob vaqti — 4 soat ichida</span>
+            </div>
+
+            {/* Kategoriya kartalar */}
+            <div className="space-y-2">
+                {categories.map(c => (
+                    <button
+                        key={c.id}
+                        onClick={() => onQuickStart(c.sample)}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900/60 transition-colors text-left group"
+                    >
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${c.tone}`}>
+                            <c.icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-neutral-900 dark:text-neutral-100 truncate">{c.title}</div>
+                            <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{c.desc}</div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-neutral-300 dark:text-neutral-700 group-hover:text-neutral-500 dark:group-hover:text-neutral-500 transition-colors flex-shrink-0" />
+                    </button>
+                ))}
+            </div>
+
+            {/* Boshqa aloqa kanallari */}
+            <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800">
+                <div className="text-xs font-bold text-neutral-500 mb-2">Yoki bevosita:</div>
+                <div className="grid grid-cols-2 gap-2">
+                    <a href="https://t.me/ForHumo_Support" target="_blank" rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1.5 h-9 rounded-lg bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] text-xs font-bold transition-colors">
+                        <MessageCircle className="w-3.5 h-3.5" /> Telegram
+                    </a>
+                    <a href="mailto:support@forhumo.uz"
+                        className="flex items-center justify-center gap-1.5 h-9 rounded-lg bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-bold transition-colors">
+                        <AlertTriangle className="w-3.5 h-3.5" /> Email
+                    </a>
+                </div>
+            </div>
+
+            <div className="text-[10px] text-center text-neutral-400 dark:text-neutral-600 pt-1">
+                Barcha murojaatlar shifrlangan va faqat Support jamoasiga ko'rinadi.
+            </div>
+        </div>
+    );
+}
+
 
 type Ticket = {
     id: string;
@@ -258,9 +380,14 @@ export function SupportDock() {
                                     {loading && tickets.length === 0 ? (
                                         <div className="flex justify-center py-8"><Loader2 className="animate-spin text-neutral-400" /></div>
                                     ) : tickets.length === 0 ? (
-                                        <div className="p-6 text-center text-sm text-neutral-500">
-                                            Hali murojaatlaringiz yo'q.
-                                        </div>
+                                        <SupportWelcome
+                                            moduleLabel={MODULE_LABEL[currentModule] ?? "For Humo"}
+                                            onQuickStart={(pre) => {
+                                                setSubject(pre.subject);
+                                                setFirstMsg(pre.message);
+                                                setView("new");
+                                            }}
+                                        />
                                     ) : (
                                         <div className="space-y-1">
                                             {tickets.map(t => (
@@ -358,11 +485,11 @@ export function SupportDock() {
                             )}
                         </div>
 
-                        {/* Bottom */}
-                        {authStatus === "authenticated" && view === "list" && (
+                        {/* Bottom — faqat mavjud tiketlar bor bo'lsa ko'rsatiladi (welcome ekran o'z tugmasiga ega) */}
+                        {authStatus === "authenticated" && view === "list" && tickets.length > 0 && (
                             <button
                                 onClick={() => setView("new")}
-                                className="m-3 py-2.5 rounded-full bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-sm font-medium flex items-center justify-center gap-2"
+                                className="m-3 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition-all"
                             >
                                 <Plus size={16} /> Yangi murojaat
                             </button>

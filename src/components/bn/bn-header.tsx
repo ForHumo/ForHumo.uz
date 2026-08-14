@@ -38,7 +38,7 @@ export function BnHeader({
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
-    const supportUrl = `/${locale}/support`;
+    void locale;   // Humo Support endi yon panel (SupportDock event) — locale ishlatilmaydi
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 8);
@@ -130,16 +130,15 @@ export function BnHeader({
                                         </BnLink>
                                     );
                                 })}
-                                <a
-                                    href={supportUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl text-[12.5px] font-bold whitespace-nowrap flex-shrink-0"
+                                <button
+                                    type="button"
+                                    onClick={() => window.dispatchEvent(new Event("support:open"))}
+                                    className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl text-[12.5px] font-bold whitespace-nowrap flex-shrink-0 hover:opacity-80 transition-opacity"
                                     style={{ color: BN.text2 }}
                                 >
                                     <Headphones className="w-[15px] h-[15px]" />
                                     Humo Support
-                                </a>
+                                </button>
                             </nav>
                         </div>
 
@@ -346,16 +345,14 @@ export function BnHeader({
                                 <span style={{ color: BN.gold }}><Heart className="w-[18px] h-[18px]" /></span>
                                 Sevimlilar
                             </BnLink>
-                            <a
-                                href={supportUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={() => setMenuOpen(false)}
-                                className="flex items-center gap-3 h-12 px-3 rounded-xl text-[14px] font-bold"
+                            <button
+                                type="button"
+                                onClick={() => { setMenuOpen(false); window.dispatchEvent(new Event("support:open")); }}
+                                className="flex items-center gap-3 h-12 px-3 rounded-xl text-[14px] font-bold text-left"
                             >
                                 <span style={{ color: BN.gold }}><Headphones className="w-[18px] h-[18px]" /></span>
                                 Humo Support
-                            </a>
+                            </button>
 
                             <div className="flex items-center gap-2 px-3 pt-4">
                                 <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: BN.text3 }}>

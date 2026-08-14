@@ -14,7 +14,7 @@ export function AlkhPayNavbar() {
                 accentTo: "to-cyan-400",
                 glowColor: "rgba(0,170,255,0.45)",
             }}
-            extra={<NavbarSupportButton />}
+            extra={<NavbarSupportButton variant="cyan" />}
         />
     );
 }

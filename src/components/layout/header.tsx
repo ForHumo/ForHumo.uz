@@ -60,11 +60,12 @@ const SOCIALS: Record<string, SocialSet> = {
 interface BrandNavItemProps {
     href: string;
     productName: string;
+    prefix?: string;                              // "Humo" (default), "For", "Bozor"
     socialKey?: keyof typeof SOCIALS;
     onClose?: () => void;
 }
 
-function BrandNavItem({ href, productName, socialKey, onClose }: BrandNavItemProps) {
+function BrandNavItem({ href, productName, prefix = "Humo", socialKey, onClose }: BrandNavItemProps) {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const tSocial = useTranslations("Social");
@@ -84,7 +85,7 @@ function BrandNavItem({ href, productName, socialKey, onClose }: BrandNavItemPro
     const innerContent = (
         <>
             <span className="text-[9px] font-bold leading-none tracking-widest uppercase opacity-45 group-hover:opacity-65 transition-opacity">
-                Humo
+                {prefix}
             </span>
             <span className="text-[12.5px] font-semibold leading-tight flex items-center gap-0.5">
                 {productName}
@@ -127,7 +128,7 @@ function BrandNavItem({ href, productName, socialKey, onClose }: BrandNavItemPro
                     onClick={() => { setOpen(false); onClose?.(); }}
                 >
                     <span className="w-3.5" />
-                    Humo {productName}
+                    {prefix} {productName}
                 </Link>
 
                 <div className="h-px bg-border my-1" />
@@ -157,7 +158,7 @@ function MobileAccordionItem({
     tSocial,
     onClose,
 }: {
-    item: { key: string; product: string; href: string; socialKey?: keyof typeof SOCIALS };
+    item: { key: string; product: string; href: string; prefix?: string; socialKey?: keyof typeof SOCIALS };
     tSocial: ReturnType<typeof useTranslations<"Social">>;
     onClose: () => void;
 }) {
@@ -172,7 +173,7 @@ function MobileAccordionItem({
                     className="flex-1 text-base font-medium text-foreground hover:text-primary py-3 px-3 rounded-md hover:bg-accent transition-colors"
                     onClick={onClose}
                 >
-                    Humo {item.product}
+                    {item.prefix ?? "Humo"} {item.product}
                 </Link>
                 {s && (
                     <button
@@ -313,14 +314,16 @@ export function Header() {
         { name: t("projects"), href: "/#project" },
     ];
 
-    const brandItems: { key: string; product: string; href: string; socialKey?: keyof typeof SOCIALS }[] = [
+    // prefix — kichik "HUMO" ustki yozuv o'rnida ko'rinadi. Pay/BN uchun brand
+    // nomining birinchi so'zi ("For", "Bozor") "Humo" o'rniga chiqadi.
+    const brandItems: { key: string; product: string; href: string; prefix?: string; socialKey?: keyof typeof SOCIALS }[] = [
         { key: "id",      product: t("id"),      href: "/id",          socialKey: "id"       },
         { key: "ai",      product: t("ai"),      href: "/ai",          socialKey: "ai"       },
         { key: "nexus",   product: t("nexus"),   href: "/nexus",       socialKey: "nexus"    },
         { key: "esport",  product: t("esport"),  href: "/esport",      socialKey: "esport"   },
         { key: "market",  product: t("market"),  href: "/coming-soon", socialKey: "market"   },
-        { key: "pay",     product: "For Pay",    href: "/coming-soon", socialKey: "pay"      },
-        { key: "bn",      product: "Bozor Narxida", href: "/bn",       socialKey: "bn"       },
+        { key: "pay",     product: "Pay",        href: "/coming-soon", prefix: "For",   socialKey: "pay" },
+        { key: "bn",      product: "Narxida",    href: "/bn",          prefix: "Bozor", socialKey: "bn"  },
         { key: "support", product: "Support",    href: "/support",     socialKey: "support"  },
     ];
 
@@ -357,6 +360,7 @@ export function Header() {
                             key={item.key}
                             href={item.href}
                             productName={item.product}
+                            prefix={item.prefix}
                             socialKey={item.socialKey}
                         />
                     ))}

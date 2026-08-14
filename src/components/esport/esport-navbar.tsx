@@ -63,7 +63,7 @@ export default function EsportNavbar() {
                     <div className="flex shrink-0 items-center gap-2">
                         <LanguageSwitcher />
                         <ThemeToggle />
-                        <NavbarSupportButton />
+                        <NavbarSupportButton variant="green" />
                         {session?.user && <EsportNotifications />}
                         {session?.user && (
                             <Link href="/id" title="Humo ID" className="group relative">
