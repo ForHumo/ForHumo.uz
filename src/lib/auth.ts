@@ -1,6 +1,9 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { headers } from "next/headers";
+import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { isJtiRevoked, bumpLastSeenAt } from "@/lib/auth-session-cache";
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -36,22 +39,18 @@ export const authOptions: NextAuthOptions = {
                         },
                         select: { id: true, level: true, image: true },
                     });
-                    // Google profil rasmini saqlash (boshqalar sharh/brendlarda ko'rishi uchun).
-                    // Faqat hali avatar bo'lmasa — qo'lda yuklangan avatarni qoplamaymiz.
                     if (user.image && !profile.image) {
                         await prisma.userProfile.update({
                             where: { id: profile.id },
                             data:  { image: user.image },
                         });
                     }
-                    // Promote to level 1 (email verified) without downgrading KYC users
                     if (isGoogle && profile.level < 1) {
                         await prisma.userProfile.update({
                             where: { id: profile.id },
                             data:  { level: 1 },
                         });
                     }
-                    // Keep last 10 login events per user
                     await prisma.loginEvent.create({
                         data: { profileId: profile.id },
                     });
@@ -76,6 +75,9 @@ export const authOptions: NextAuthOptions = {
         // Embed onboardingDone into the JWT so AuthBarrier needs no extra fetch.
         // Re-fetch from DB while onboardingDone is still false so that a plain
         // page reload after wizard completion sees the updated value immediately.
+        //
+        // Multi-device: `jti` yaratiladi va AuthSession jadvaliga yoziladi. Har
+        // request'da bu jti revoked emasligi tekshiriladi (60s cache).
         async jwt({ token, trigger }) {
             if (trigger === "signIn" || trigger === "update" || !token.onboardingDone || token.coverImage === undefined) {
                 if (token.email) {
@@ -94,6 +96,36 @@ export const authOptions: NextAuthOptions = {
                     }
                 }
             }
+
+            // Multi-device: signIn'da jti yaratamiz va AuthSession yozamiz.
+            // Backfill: eski JWT'larda jti bo'lmasa ham yaratamiz (bir marta),
+            // toki sessiya multi-device panelida ko'rinsin va bekor qilish mumkin bo'lsin.
+            if (!token.jti && token.profileId && typeof token.profileId === "string") {
+                const jti = crypto.randomBytes(16).toString("hex");
+                try {
+                    const h = await headers();
+                    const ua = h.get("user-agent")?.slice(0, 200) ?? null;
+                    const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+                    await prisma.authSession.create({
+                        data: { jti, profileId: token.profileId, deviceHint: ua, ipHint: ip, origin: trigger === "signIn" ? "google" : "backfill" },
+                    });
+                    token.jti = jti;
+                } catch {
+                    // fallback: jti yozilmasa ham sessiya ishlaydi
+                }
+            }
+
+            // Revocation tekshiruv — jti bor bo'lsa
+            if (token.jti && typeof token.jti === "string") {
+                const revoked = await isJtiRevoked(token.jti);
+                if (revoked) {
+                    // Bo'sh token qaytarish → NextAuth foydalanuvchini chiqarib yuboradi
+                    return {};
+                }
+                // Non-blocking lastSeenAt bump (throttled)
+                void bumpLastSeenAt(token.jti);
+            }
+
             return token;
         },
 
@@ -111,6 +143,8 @@ export const authOptions: NextAuthOptions = {
                 session.user.username       = token.username  as string | null;
                 // @ts-ignore
                 session.user.coverImage     = token.coverImage as string | null;
+                // @ts-ignore
+                session.user.jti            = token.jti as string | null;
             }
             return session;
         },

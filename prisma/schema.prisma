@@ -1396,6 +1396,26 @@ model NexusContactHash {
   @@index([phoneHash])
 }
 
+// Aktiv sessiyalar (multi-device). Foydalanuvchi bir necha qurilmada
+// login bo'lishi mumkin; har biri alohida jti (JWT ID) bilan yozib boriladi.
+// Foydalanuvchi qaysi qurilmada kirganini ko'rishi va uzoqdan chiqarishi mumkin.
+//
+// JWT decrypt bo'lganda `jti` topilib, bu jadvalda revokedAt bo'lmagan bo'lsa
+// sessiya yaroqli. Aks holda auth callback bo'sh token qaytaradi → re-login.
+model AuthSession {
+  id           String    @id @default(cuid())
+  jti          String    @unique              // JWT identifier — token'da saqlanadi
+  profileId    String                          // UserProfile.id
+  deviceHint   String?                         // User-Agent qisqacha (browser + OS)
+  ipHint       String?
+  origin       String    @default("google")    // "google" | "qr" (kelajakda kengayadi)
+  createdAt    DateTime  @default(now())
+  lastSeenAt   DateTime  @default(now())       // har jwt callback'da yangilanadi (throttled)
+  revokedAt    DateTime?                       // NULL = aktiv; sana = uzoqdan chiqarilgan
+  @@index([profileId, revokedAt])
+  @@index([lastSeenAt])
+}
+
 // QR login (WhatsApp Web uslub). Desktop QR ko'rsatadi, telefon tasdiqlaydi,
 // desktop avtomatik login bo'ladi. Google auth qoidasi buzilmaydi — bu faqat
 // mavjud Google akkaunti egasi uchun qayta-kirish (re-authentication) mexanizmi.

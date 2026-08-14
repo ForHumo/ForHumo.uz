@@ -11,11 +11,12 @@
 
 import { NextResponse } from "next/server";
 import { encode } from "next-auth/jwt";
+import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 
 const SESSION_MAX_AGE_SEC = 30 * 24 * 60 * 60;   // 30 kun (NextAuth default)
 
-export async function POST(_req: Request, { params }: { params: Promise<{ code: string }> }) {
+export async function POST(req: Request, { params }: { params: Promise<{ code: string }> }) {
     const { code } = await params;
 
     const r = await prisma.authQrRequest.findUnique({ where: { code } });
@@ -42,6 +43,16 @@ export async function POST(_req: Request, { params }: { params: Promise<{ code: 
     const secret = process.env.NEXTAUTH_SECRET;
     if (!secret) return NextResponse.json({ error: "Server sozlanmagan" }, { status: 500 });
 
+    // Multi-device: jti + AuthSession yozuvi (QR consume alohida sessiya)
+    const jti = crypto.randomBytes(16).toString("hex");
+    const ua = req.headers.get("user-agent")?.slice(0, 200) ?? r.deviceHint;
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? r.ipHint;
+    try {
+        await prisma.authSession.create({
+            data: { jti, profileId: me.id, deviceHint: ua, ipHint: ip, origin: "qr" },
+        });
+    } catch { /* silent */ }
+
     const token = await encode({
         secret,
         maxAge: SESSION_MAX_AGE_SEC,
@@ -58,6 +69,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ code: 
             username:       me.username,
             coverImage:     me.coverImage,
             onboardingDone: me.onboardingDone,
+            jti,
         },
     });
 
