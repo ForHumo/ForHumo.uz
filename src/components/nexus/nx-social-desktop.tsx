@@ -24,6 +24,8 @@ import { NxPollCreate } from "./nx-poll-create";
 import { NxVoicePlayer } from "./nx-voice-player";
 import { useNxPlayer } from "./nx-player-ctx";
 import { usePresence } from "@/lib/presence";
+import { subscribeUserChannel } from "@/lib/pusher-client";
+import { formatLastSeen } from "@/lib/last-seen";
 import { useSession } from "next-auth/react";
 import { formatMoney } from "@/lib/money";
 
@@ -69,6 +71,8 @@ interface Msg {
     mediaMime?: string | null;
     forwardedFromId?: string | null;
     forwardedFromName?: string | null;
+    deliveredAt?: string | null;
+    senderId?: string;
 }
 
 interface PeerInfo {
@@ -82,6 +86,7 @@ interface PeerInfo {
     isAgent?: boolean;
     statusEmoji?: string | null;
     statusText?: string | null;
+    lastSeenAt?: string | null;
 }
 
 interface ChannelItem {
@@ -119,6 +124,11 @@ export function NxSocialDesktop() {
     const [peerReadAt, setPeerReadAt] = useState<string | null>(null);
     const [peer, setPeer] = useState<PeerInfo | null>(null);
 
+    // Refs — real-time event handler ichida so'nggi qiymatga ega bo'lish uchun
+    const selectedIdRef = useRef<string | null>(null);
+    const loadConvsRef = useRef<(() => void) | null>(null);
+    useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
+
     // Typing event'larini eshitish (faqat hozirgi peer bilan)
     useEffect(() => {
         const off = onTyping((e) => {
@@ -131,6 +141,80 @@ export function NxSocialDesktop() {
         });
         return () => { off(); };
     }, [onTyping, myProfileId, peer?.id]);
+
+    // Real-time DM push — mening private-user kanalimga subscribe
+    // Xabar `nx:msg:new` event: agar hozirgi ochiq suhbatga tegishli bo'lsa darhol
+    // append qilamiz, aks holda suhbatlar ro'yxatini bump qilib preview yangilaymiz.
+    useEffect(() => {
+        if (!myProfileId) return;
+        const ch = subscribeUserChannel(myProfileId);
+        if (!ch) return;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const onMsgNew = (data: { convId: string; message: any }) => {
+            if (!data?.convId || !data?.message) return;
+
+            // Hozirgi ochiq suhbatga tegishli bo'lsa xabarga append (agar dup emas)
+            if (selectedIdRef.current === data.convId) {
+                setMessages(prev => {
+                    if (prev.some(m => m.id === data.message.id)) return prev;
+                    return [...prev, data.message as Msg];
+                });
+            }
+
+            // Suhbatlar ro'yxatini yangilash — lastMessage, tartib, unread
+            setConvs(prev => {
+                const idx = prev.findIndex(c => c.conversationId === data.convId);
+                if (idx === -1) {
+                    // Yangi suhbat — full reload
+                    setTimeout(() => loadConvsRef.current?.(), 300);
+                    return prev;
+                }
+                const updated = [...prev];
+                const c = { ...updated[idx] };
+                c.lastMessageText = data.message.text?.slice(0, 120)
+                    || (data.message.mediaType ? `[${data.message.mediaType}]` : "");
+                c.lastMessageAt = data.message.createdAt;
+                c.lastMine = !!data.message.mine;
+                if (selectedIdRef.current !== data.convId && !data.message.mine) {
+                    c.unread = true;
+                }
+                updated.splice(idx, 1);
+                updated.unshift(c);
+                return updated;
+            });
+        };
+
+        // Yetkazildi confirm — sender bo'lmagan xabarlar uchun serverga xabar berish
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const onMsgNewWithDeliver = (data: { convId: string; message: any }) => {
+            onMsgNew(data);
+            // Sender men emas bo'lsa — deliver confirm
+            if (data?.message && !data.message.mine && data.message.id) {
+                fetch("/api/nexus/messages/deliver", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ messageIds: [data.message.id] }),
+                }).catch(() => {});
+            }
+        };
+
+        // Sender'ga: xabar yetkazildi (per-message tick)
+        const onDelivered = (data: { messageIds: string[]; deliveredAt: string }) => {
+            if (!data?.messageIds?.length) return;
+            const set = new Set(data.messageIds);
+            setMessages(prev => prev.map(m =>
+                set.has(m.id) ? { ...m, deliveredAt: data.deliveredAt } : m
+            ));
+        };
+
+        ch.bind("nx:msg:new", onMsgNewWithDeliver);
+        ch.bind("nx:msg:delivered", onDelivered);
+        return () => {
+            ch.unbind("nx:msg:new", onMsgNewWithDeliver);
+            ch.unbind("nx:msg:delivered", onDelivered);
+        };
+    }, [myProfileId]);
 
     useEffect(() => { setPeerTyping(false); }, [peer?.id]);
     const [input, setInput] = useState("");
@@ -1088,13 +1172,15 @@ export function NxSocialDesktop() {
             }
         } finally { setLoadingConvs(false); }
     }, [showArchived]);
-    useEffect(() => { loadConvs(); }, [loadConvs]);
+    useEffect(() => { loadConvs(); loadConvsRef.current = loadConvs; }, [loadConvs]);
 
-    // Har 6 sekundda ro'yxatni yangilash (unread badge)
+    // Real-time push yoqilgan bo'lsa 6s polling — long fallback 30s
+    // (Pusher yo'q bo'lsa yoki disconnect'da qopqoq)
     useEffect(() => {
-        const t = setInterval(loadConvs, 6000);
+        const interval = myProfileId ? 30_000 : 6_000;
+        const t = setInterval(loadConvs, interval);
         return () => clearInterval(t);
-    }, [loadConvs]);
+    }, [loadConvs, myProfileId]);
 
     // Chatni arxiv/mute qilish (per-user, optimistic)
     const toggleConvArchive = useCallback(async (convId: string, currentlyArchived: boolean) => {
@@ -1173,7 +1259,17 @@ export function NxSocialDesktop() {
                         isAgent: (d.other.username ?? "").toLowerCase().endsWith("_agent"),
                         statusEmoji: d.other.statusEmoji ?? null,
                         statusText: d.other.statusText ?? null,
+                        lastSeenAt: d.other.lastSeenAt ?? null,
                     });
+                }
+                // Undelivered xabarlarni deliver qilish (o'qish PATCH mavjud, delivered alohida)
+                const undelivered = (d.messages ?? []).filter((m: Msg) => !m.mine && !m.deliveredAt).map((m: Msg) => m.id);
+                if (undelivered.length > 0) {
+                    fetch("/api/nexus/messages/deliver", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ messageIds: undelivered }),
+                    }).catch(() => {});
                 }
             }
         } finally { setLoadingMsgs(false); }
@@ -1181,10 +1277,12 @@ export function NxSocialDesktop() {
     useEffect(() => {
         if (!selectedId) { setMessages([]); setPeer(null); return; }
         loadMsgs(selectedId);
-        // Poll xabarlar (thread ochiq bo'lsa)
-        const t = setInterval(() => loadMsgs(selectedId), 4000);
+        // Pusher real-time bo'lsa 20s fallback (edit/delete uchun),
+        // aks holda 4s polling (Pusher yo'q brauzerlar uchun).
+        const interval = myProfileId ? 20_000 : 4_000;
+        const t = setInterval(() => loadMsgs(selectedId), interval);
         return () => clearInterval(t);
-    }, [selectedId, loadMsgs]);
+    }, [selectedId, loadMsgs, myProfileId]);
 
     // Yangi xabar kelganda: pastga yaqin bo'lsa scroll, aks holda hisoblagichga qo'sh
     const prevMsgCountRef = useRef(0);
@@ -1670,7 +1768,7 @@ export function NxSocialDesktop() {
                                         ? "rgba(43,62,232,0.18)"
                                         : c.pinned ? "rgba(0,206,200,0.04)" : "transparent",
                                 }}>
-                                <ConvAvatar other={c.other} />
+                                <ConvAvatar other={c.other} online={!!c.other?.id && isOnline(c.other.id)} />
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
                                         <p className="text-sm font-bold text-white truncate">
@@ -1789,7 +1887,7 @@ export function NxSocialDesktop() {
                         ) : (
                         <div className="px-4 py-3 flex items-center gap-3 flex-shrink-0"
                             style={{ borderBottom: "1px solid rgba(43,62,232,0.14)", background: "rgba(8,12,32,0.55)" }}>
-                            <ConvAvatar other={peer} />
+                            <ConvAvatar other={peer} online={!!peer?.id && isOnline(peer.id)} />
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5">
                                     <p className="text-sm font-bold text-white truncate">
@@ -1807,6 +1905,7 @@ export function NxSocialDesktop() {
                                         : (peer?.statusEmoji || peer?.statusText)
                                             ? <><span>{peer.statusEmoji}</span><span className="truncate">{peer.statusText}</span></>
                                         : peer?.id && isOnline(peer.id) ? "onlayn"
+                                        : peer?.lastSeenAt ? formatLastSeen(peer.lastSeenAt, false)
                                         : peer?.username ? `@${peer.username}` : ""}
                                 </p>
                             </div>
@@ -2492,10 +2591,15 @@ export function NxSocialDesktop() {
                                             </span>
                                             {m.mine && (
                                                 (() => {
+                                                    // 3 holat WhatsApp uslubida:
+                                                    //   ✓ (kulrang)  — server qabul qildi (yuborildi)
+                                                    //   ✓✓ (kulrang) — qurilma yetkazdi (deliveredAt)
+                                                    //   ✓✓ (moviy)   — o'qildi (peerReadAt > createdAt)
                                                     const read = peerReadAt && new Date(m.createdAt) <= new Date(peerReadAt);
-                                                    return read
-                                                        ? <CheckCheck className="w-3 h-3" style={{ color: "#00CEC8" }} strokeWidth={2.5} />
-                                                        : <Check className="w-3 h-3 opacity-70" strokeWidth={2.5} />;
+                                                    const delivered = !!m.deliveredAt;
+                                                    if (read) return <CheckCheck className="w-3 h-3" style={{ color: "#00CEC8" }} strokeWidth={2.5} />;
+                                                    if (delivered) return <CheckCheck className="w-3 h-3 opacity-70" strokeWidth={2.5} />;
+                                                    return <Check className="w-3 h-3 opacity-70" strokeWidth={2.5} />;
                                                 })()
                                             )}
                                         </div>
@@ -3769,16 +3873,22 @@ function MediaGallery({
     );
 }
 
-function ConvAvatar({ other }: { other: { name: string | null; username: string | null; image: string | null } | null }) {
+function ConvAvatar({ other, online }: { other: { name: string | null; username: string | null; image: string | null } | null; online?: boolean }) {
     return (
-        <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-            {other?.image ? (
-                <Image src={other.image} alt="" width={44} height={44} className="w-full h-full object-cover" />
-            ) : (
-                <span className="text-sm font-black text-white">
-                    {(other?.name ?? other?.username ?? "?")[0]?.toUpperCase()}
-                </span>
+        <div className="relative flex-shrink-0">
+            <div className="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center"
+                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                {other?.image ? (
+                    <Image src={other.image} alt="" width={44} height={44} className="w-full h-full object-cover" />
+                ) : (
+                    <span className="text-sm font-black text-white">
+                        {(other?.name ?? other?.username ?? "?")[0]?.toUpperCase()}
+                    </span>
+                )}
+            </div>
+            {online && (
+                <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2"
+                    style={{ background: "#22C55E", borderColor: "#0B1228" }} />
             )}
         </div>
     );

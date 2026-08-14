@@ -35,3 +35,29 @@ export type NxCallEvent =
     | "signal:offer"      // WebRTC offer
     | "signal:answer"     // WebRTC answer
     | "signal:ice";       // WebRTC ICE candidate
+
+/** DM / kanal xabar hodisalari — foydalanuvchining private-user-<id> kanaliga triggerlanadi. */
+export type NxMsgEvent =
+    | "nx:msg:new"        // yangi xabar (DM yoki kanal)
+    | "nx:msg:edit"       // xabar tahrirlandi
+    | "nx:msg:delete"     // xabar o'chirildi
+    | "nx:msg:read"       // suhbat o'qildi (peerReadAt yangilandi)
+    | "nx:msg:delivered"  // xabar yetkazildi (per-message tick)
+    | "nx:msg:reaction"   // reaksiya qo'shildi/olib tashlandi
+    | "nx:conv:updated";  // suhbat metadata (pin/archive/mute)
+
+// Non-blocking Pusher trigger — xato bo'lsa silent (asilib qolmasin).
+export async function pusherTrigger(
+    channel: string,
+    event: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: any,
+): Promise<void> {
+    const p = getPusher();
+    if (!p) return;
+    try {
+        await p.trigger(channel, event, data);
+    } catch {
+        // Fail-safe — real-time xato foydalanuvchini bloklamaydi
+    }
+}

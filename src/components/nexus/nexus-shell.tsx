@@ -136,6 +136,14 @@ export function NexusShell() {
 // ─────────────────────────────────────────────────────────────────────────────
 function PresenceKeepalive() {
     usePresence();
+    // Heartbeat — REST fallback (presence bo'lmagan brauzerlar uchun).
+    // Har 60s'da server-ga bildiramiz: hali onlayn.
+    useEffect(() => {
+        const ping = () => fetch("/api/user/heartbeat", { method: "POST" }).catch(() => {});
+        ping();
+        const iv = setInterval(ping, 60_000);
+        return () => clearInterval(iv);
+    }, []);
     return null;
 }
 

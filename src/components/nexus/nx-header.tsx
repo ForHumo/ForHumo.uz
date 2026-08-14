@@ -328,12 +328,16 @@ function MessagesButton({ onOpen }: { onOpen: () => void }) {
     useEffect(() => {
         if (messagesOpen) return;
         let cancel = false;
-        const fetchCount = () => fetch("/api/nexus/messages/count")
+        // Yagona unread jami: DM + kanal + guruh (bildirishnoma alohida — BellButton'da).
+        const fetchCount = () => fetch("/api/nexus/unread-total")
             .then(r => r.ok ? r.json() : null)
-            .then(d => { if (!cancel && d) setUnread(d.unread ?? 0); })
+            .then(d => {
+                if (cancel || !d) return;
+                setUnread((d.dm ?? 0) + (d.channel ?? 0) + (d.group ?? 0));
+            })
             .catch(() => { });
         fetchCount();
-        const t = setInterval(fetchCount, 60000);
+        const t = setInterval(fetchCount, 30_000);
         return () => { cancel = true; clearInterval(t); };
     }, [messagesOpen]);
 
@@ -366,7 +370,7 @@ function MessagesButton({ onOpen }: { onOpen: () => void }) {
             {unread > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-black text-white"
                     style={{ background: "#10B981", boxShadow: "0 0 6px rgba(16,185,129,0.8)" }}>
-                    {unread > 9 ? "9+" : unread}
+                    {unread > 99 ? "99+" : unread}
                 </span>
             )}
         </button>

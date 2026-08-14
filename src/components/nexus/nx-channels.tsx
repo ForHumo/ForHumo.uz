@@ -4,9 +4,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
     Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward, Bookmark, BookmarkCheck, Search, Volume2, VolumeX, Languages, Copy, History, Clock,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { NxPollCreate } from "./nx-poll-create";
 import { NxMarkdown } from "./nx-markdown";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
+import { subscribeUserChannel } from "@/lib/pusher-client";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean }
@@ -166,6 +168,13 @@ function CreateChannel({ type, onClose, onCreated }: { type: ChType; onClose: ()
 }
 
 export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }) {
+    const { data: session } = useSession();
+    const [myProfileId, setMyProfileId] = useState<string | null>(null);
+    useEffect(() => {
+        if (!session?.user?.email) return;
+        fetch("/api/user/profile").then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.profile) setMyProfileId(d.profile.id); }).catch(() => {});
+    }, [session?.user?.email]);
     const [ch, setCh] = useState<ChDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [msgs, setMsgs] = useState<ChMsg[]>([]);
@@ -218,7 +227,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     }, [id]);
     useEffect(() => { loadDetail(); }, [loadDetail]);
 
-    // Xabar polling (a'zo bo'lsa)
+    // Xabar polling (a'zo bo'lsa) — Pusher bo'lsa 20s fallback, aks holda 4s
     useEffect(() => {
         if (!ch?.isMember) return;
         let stop = false;
@@ -236,9 +245,28 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             } catch { /* noop */ }
         };
         poll();
-        const iv = setInterval(poll, 4000);
+        const interval = myProfileId ? 20_000 : 4_000;
+        const iv = setInterval(poll, interval);
         return () => { stop = true; clearInterval(iv); };
-    }, [ch?.isMember, id]);
+    }, [ch?.isMember, id, myProfileId]);
+
+    // Real-time push — kanal xabari kelganda darhol ko'rsatish
+    useEffect(() => {
+        if (!ch?.isMember || !myProfileId) return;
+        const pusherCh = subscribeUserChannel(myProfileId);
+        if (!pusherCh) return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const onMsgNew = (data: { channelId?: string; message: any }) => {
+            if (data?.channelId !== id || !data?.message) return;
+            setMsgs(prev => {
+                if (prev.some(m => m.id === data.message.id)) return prev;
+                return [...prev, data.message as ChMsg].slice(-200);
+            });
+            lastTs.current = data.message.createdAt;
+        };
+        pusherCh.bind("nx:msg:new", onMsgNew);
+        return () => { pusherCh.unbind("nx:msg:new", onMsgNew); };
+    }, [ch?.isMember, id, myProfileId]);
 
     useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 

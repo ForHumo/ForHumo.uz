@@ -12,6 +12,7 @@ import { BAN_LABELS } from "@/lib/moderation-ladder";
 import { appendUserReplyToOpenReview } from "@/lib/agent-review-followup";
 import { sendPushToProfile, pushAvailable } from "@/lib/push";
 import { sendToAgentWebhook } from "@/lib/agent-webhook";
+import { pusherTrigger, userChannel } from "@/lib/pusher-server";
 
 async function meAndConv(email: string, id: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true } });
@@ -133,7 +134,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const oid = otherId(conv, me.id);
     const p = await prisma.userProfile.findUnique({
         where: { id: oid },
-        select: { name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true, statusEmoji: true, statusText: true, statusExpiresAt: true },
+        select: { name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true, statusEmoji: true, statusText: true, statusExpiresAt: true, lastSeenAt: true, privacyLastSeen: true },
     });
     // Muddati o'tgan statusni yashirish
     const statusActive = p?.statusExpiresAt ? new Date(p.statusExpiresAt) > new Date() : true;
@@ -162,6 +163,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                     : [],
                 forwardedFromId: m.forwardedFromId,
                 forwardedFromName: m.forwardedFromName,
+                deliveredAt: m.deliveredAt,
             };
         }),
         other: p ? {
@@ -170,6 +172,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null,
             statusEmoji: statusActive ? p.statusEmoji : null,
             statusText: statusActive ? p.statusText : null,
+            // Last seen — privacy'ga bo'ysunadi (all | contacts | none)
+            // Hozircha "contacts" — bir-birini follow qilganlar (keyingi bosqichda tekshiruvli)
+            lastSeenAt: p.privacyLastSeen === "none" ? null : p.lastSeenAt,
         } : null,
         peerReadAt,
     });
@@ -336,6 +341,38 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         mediaType: msg.mediaType,
     }));
 
+    // Real-time push (Pusher) — qabul qiluvchi va yuboruvchi qurilmalariga.
+    // Client'lar `private-user-<myId>` kanaliga subscribe bo'lgan.
+    // Client-side event handler `convId`ni ko'radi va o'z suhbatiga append qiladi.
+    if (!scheduledFor) {
+        const recipientId = otherId(conv, me.id);
+        const pushMsg = {
+            convId: id,
+            message: {
+                id: msg.id, text: msg.text, mine: false, createdAt: msg.createdAt,
+                mediaUrl: msg.mediaUrl, mediaType: msg.mediaType, mediaMime: msg.mediaMime,
+                mediaName: msg.mediaName, mediaSize: msg.mediaSize, durationMs: msg.durationMs,
+                locLat: msg.locLat, locLng: msg.locLng, locUpdatedAt: msg.locUpdatedAt, locExpiresAt: msg.locExpiresAt,
+                pollQuestion: msg.pollQuestion, pollOptions: msg.pollOptions,
+                pollExpiresAt: msg.pollExpiresAt, pollMulti: msg.pollMulti,
+                pollVoteCounts: isPoll ? msg.pollOptions.map(() => 0) : null,
+                pollMyVotes: isPoll ? [] : null, pollTotal: isPoll ? 0 : null,
+                senderId: me.id,
+                replyToId,
+                forwardedFromId: msg.forwardedFromId,
+                forwardedFromName: msg.forwardedFromName,
+                editedAt: null,
+                pinnedAt: null,
+                expiresAt: msg.expiresAt,
+                bookmarked: false,
+                reactions: [],
+            },
+        };
+        after(() => pusherTrigger(userChannel(recipientId), "nx:msg:new", pushMsg));
+        // Yuboruvchi ham boshqa qurilmalarida ko'rishi uchun (multi-device sync foundation)
+        after(() => pusherTrigger(userChannel(me.id), "nx:msg:new", { ...pushMsg, message: { ...pushMsg.message, mine: true } }));
+    }
+
     // Agent webhook — qabul qiluvchi agent bo'lsa, uning webhookUrl'iga POST.
     // Javob bo'lsa yangi agent xabari sifatida suhbatga yoziladi.
     if (!scheduledFor) {
@@ -378,7 +415,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                     mediaMime: reply.mediaMime ?? null,
                     mediaName: reply.mediaName ?? null,
                 },
-                select: { id: true, text: true, mediaType: true },
             });
             const agentPreview = agentMsg.text || (agentMsg.mediaType ? `[${agentMsg.mediaType}]` : "Yangi xabar");
             await prisma.nexusConversation.update({
@@ -387,6 +423,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                     lastMessageAt: new Date(),
                     lastMessageText: agentPreview.slice(0, 120),
                     lastSenderId: recipientId,
+                },
+            });
+            // Real-time — foydalanuvchi agent javobini darhol ko'rsin
+            await pusherTrigger(userChannel(me.id), "nx:msg:new", {
+                convId: id,
+                message: {
+                    id: agentMsg.id, text: agentMsg.text, mine: false, createdAt: agentMsg.createdAt,
+                    mediaUrl: agentMsg.mediaUrl, mediaType: agentMsg.mediaType, mediaMime: agentMsg.mediaMime,
+                    mediaName: agentMsg.mediaName, mediaSize: agentMsg.mediaSize, durationMs: agentMsg.durationMs,
+                    senderId: recipientId,
+                    reactions: [],
                 },
             });
         });

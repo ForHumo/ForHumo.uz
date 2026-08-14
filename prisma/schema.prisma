@@ -116,6 +116,12 @@ model UserProfile {
   ringtone      String   @default("signature")
 
   lastLoginAt   DateTime?
+  // Oxirgi faollik vaqti — presence + REST fallback (heartbeat) bilan yangilanadi.
+  // Onlayn: presence-nexus'da bor. Offline: lastSeenAt ko'rsatiladi (privacy'ga bo'ysunadi).
+  lastSeenAt    DateTime?
+  // Privacy — kim mening online/last seen ma'lumotimni ko'ra oladi:
+  //   "all" — hamma (default), "contacts" — bir-birini follow qilganlar, "none" — hech kim
+  privacyLastSeen String @default("all")
   loginEvents   LoginEvent[]
   supportTickets SupportTicket[]
   marketWorker    MarketWorker? @relation("MarketWorkerProfile")
@@ -1312,6 +1318,9 @@ model NexusMessage {
   // Forward (yuborilgan) — asl yozuvchining profil ID'si (relation bez FK — profil o'chib ketsa xabar qoladi)
   forwardedFromId   String?
   forwardedFromName String?                                       // asl yozuvchining ismi/username (snapshot)
+  // Yetkazildi — client Pusher orqali qabul qilganini serverga bildirgan vaqt.
+  // NULL = hali yetmagan (offline/no push). Not-null = qurilma qabul qildi.
+  deliveredAt       DateTime?
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
   @@index([conversationId, pinnedAt])

@@ -8,6 +8,7 @@ import { moderateOnCreate } from "@/lib/moderation";
 import { filterMediaUrls } from "@/lib/media-url";
 import { banGuard } from "@/lib/moderation-guard";
 import { sendPushToProfile, pushAvailable } from "@/lib/push";
+import { pusherTrigger, userChannel } from "@/lib/pusher-server";
 
 async function meAndMember(email: string, channelId: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } });
@@ -211,15 +212,33 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         }
     }
 
+    // Real-time push — kanal a'zolariga (sender bilan birga) o'z private-user kanaliga.
+    // Yuborilgan xabar client-side'da darhol ko'rinadi (polling kutmasdan).
+    const outMsg = {
+        id: msg.id, text: msg.text, media: msg.media, createdAt: msg.createdAt,
+        senderId: me.id,
+        author: { name: me.name, username: me.username, image: me.image, verified: isVerifiedProfile(me) },
+        pollQuestion: msg.pollQuestion, pollOptions: msg.pollOptions,
+        pollExpiresAt: msg.pollExpiresAt, pollMulti: msg.pollMulti,
+        pollVoteCounts: isPoll ? msg.pollOptions.map(() => 0) : null,
+        pollMyVotes: isPoll ? [] : null, pollTotal: isPoll ? 0 : null,
+        replyTo: replyToOut,
+        reactions: [],
+    };
+    after(async () => {
+        const members = await prisma.nexusChannelMember.findMany({
+            where: { channelId: id },
+            select: { profileId: true }, take: 500,
+        });
+        await Promise.all(members.map(m =>
+            pusherTrigger(userChannel(m.profileId), "nx:msg:new", {
+                channelId: id,
+                message: { ...outMsg, mine: m.profileId === me.id },
+            })
+        ));
+    });
+
     return NextResponse.json({
-        message: {
-            id: msg.id, text: msg.text, media: msg.media, createdAt: msg.createdAt, mine: true,
-            author: { name: me.name, username: me.username, image: me.image, verified: isVerifiedProfile(me) },
-            pollQuestion: msg.pollQuestion, pollOptions: msg.pollOptions, pollExpiresAt: msg.pollExpiresAt, pollMulti: msg.pollMulti,
-            pollVoteCounts: isPoll ? msg.pollOptions.map(() => 0) : null,
-            pollMyVotes: isPoll ? [] : null, pollTotal: isPoll ? 0 : null,
-            replyTo: replyToOut,
-            reactions: [],
-        },
+        message: { ...outMsg, mine: true },
     });
 }
