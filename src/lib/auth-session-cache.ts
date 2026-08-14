@@ -20,9 +20,10 @@ export async function isJtiRevoked(jti: string): Promise<boolean> {
         const s = await prisma.authSession.findUnique({
             where: { jti }, select: { revokedAt: true },
         });
-        // Yozuv topilmasa (masalan eski JWT) — revoked deb hisoblaymiz, chunki
-        // AuthSession'siz sessiyani boshqarib bo'lmaydi.
-        const revoked = !s || s.revokedAt !== null;
+        // FAIL-OPEN: yozuv topilmasa (backfill xatosi, race, DB touch) — foydalanuvchini
+        // AUTO-CHIQARIB YUBORMAYMIZ. Faqat aniq revokedAt bo'lsa true qaytadi.
+        // Aks holda auth.ts qayta backfill qilib qo'yadi (idempotent).
+        const revoked = s ? s.revokedAt !== null : false;
         cache.set(jti, { revoked, checkedAt: now });
         // Xotira o'sishini oldini olish
         if (cache.size > 5000) {

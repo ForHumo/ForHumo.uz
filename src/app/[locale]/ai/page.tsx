@@ -57,7 +57,10 @@ export default function AIPage() {
     return (
         <iframe
             key="ai-frame"
-            src="/ai-static/"
+            // MUHIM: `/ai-static/` middleware tomonidan `/uz/ai-static/` ga rewrite
+            // bo'ladi (next-intl localePrefix:"always") → 404. `index.html` .dot
+            // bilan bo'lgani uchun matcher chetlab o'tadi.
+            src="/ai-static/index.html"
             style={{
                 position: "fixed",
                 inset: 0,

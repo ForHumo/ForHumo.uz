@@ -93,7 +93,7 @@ export function HomeContent() {
         {
             title: "Humo Support",
             description: tProjects("support_desc"),
-            href: "/coming-soon",
+            href: "/support",
             icon: Headset,
             logoSrc: "/logos/humo-support.png",
             status: "active",

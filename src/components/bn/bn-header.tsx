@@ -38,7 +38,7 @@ export function BnHeader({
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
-    const supportUrl = `https://forhumo.uz/${locale}/support/bn/chat`;
+    const supportUrl = `/${locale}/support`;
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 8);
