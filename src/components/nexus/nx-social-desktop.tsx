@@ -76,6 +76,7 @@ interface Msg {
     deliveredAt?: string | null;
     senderId?: string;
     deletedForEveryoneAt?: string | null;
+    buttons?: Array<Array<{ text: string; callbackData?: string; url?: string }>> | null;
 }
 
 interface PeerInfo {
@@ -136,6 +137,18 @@ export function NxSocialDesktop() {
     const [lockModal, setLockModal] = useState<{ convId: string; mode: "setup" | "unlock" | "remove" } | null>(null);
     const [lockTick, setLockTick] = useState(0); // re-render trigger localStorage o'zgargach
     const rerenderLocks = () => setLockTick(t => t + 1);
+
+    // Bot commands autocomplete (peer agent bo'lsa /cmd list)
+    const [agentCommands, setAgentCommands] = useState<Array<{ cmd: string; description: string }>>([]);
+    const [cmdPopoverOpen, setCmdPopoverOpen] = useState(false);
+    const [cmdFilter, setCmdFilter] = useState("");
+    useEffect(() => {
+        if (!peer?.isAgent || !peer.id) { setAgentCommands([]); return; }
+        fetch(`/api/nexus/agents/by-profile/${peer.id}/commands`)
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.commands) setAgentCommands(d.commands); })
+            .catch(() => {});
+    }, [peer?.id, peer?.isAgent]);
 
     // Typing event'larini eshitish (faqat hozirgi peer bilan)
     useEffect(() => {
@@ -2721,6 +2734,40 @@ export function NxSocialDesktop() {
                                                 })()
                                             )}
                                         </div>
+                                        {/* Inline tugmalar (agent xabari uchun) — Telegram uslub */}
+                                        {Array.isArray(m.buttons) && m.buttons.length > 0 && (
+                                            <div className="mt-2 flex flex-col gap-1">
+                                                {m.buttons.map((row, ri) => (
+                                                    <div key={ri} className="flex gap-1">
+                                                        {row.map((btn, bi) => (
+                                                            <button
+                                                                key={bi}
+                                                                type="button"
+                                                                onClick={async () => {
+                                                                    if (btn.url) {
+                                                                        window.open(btn.url, "_blank", "noopener");
+                                                                        return;
+                                                                    }
+                                                                    if (!btn.callbackData || !selectedId) return;
+                                                                    await fetch(`/api/nexus/messages/${selectedId}/callback`, {
+                                                                        method: "POST",
+                                                                        headers: { "Content-Type": "application/json" },
+                                                                        body: JSON.stringify({ messageId: m.id, callbackData: btn.callbackData }),
+                                                                    }).catch(() => {});
+                                                                }}
+                                                                className="flex-1 min-w-0 py-1.5 px-2 rounded-md text-[11px] font-bold text-white truncate transition hover:brightness-110 active:scale-95"
+                                                                style={{
+                                                                    background: m.mine ? "rgba(255,255,255,0.14)" : "rgba(0,206,200,0.18)",
+                                                                    border: `1px solid ${m.mine ? "rgba(255,255,255,0.20)" : "rgba(0,206,200,0.35)"}`,
+                                                                }}
+                                                            >
+                                                                {btn.text}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                         </div>
@@ -3015,16 +3062,58 @@ export function NxSocialDesktop() {
                                             </div>
                                         )}
                                     </div>
+                                    {/* Bot commands autocomplete popover */}
+                                    {cmdPopoverOpen && agentCommands.length > 0 && (() => {
+                                        const filtered = agentCommands.filter(c => c.cmd.startsWith(cmdFilter));
+                                        if (filtered.length === 0) return null;
+                                        return (
+                                            <div className="absolute bottom-full mb-2 left-3 z-40 rounded-xl overflow-hidden max-h-64 overflow-y-auto"
+                                                style={{
+                                                    background: "rgba(11,18,40,0.98)",
+                                                    border: "1px solid rgba(43,62,232,0.35)",
+                                                    boxShadow: "0 12px 32px rgba(0,0,0,0.60)",
+                                                    minWidth: 280,
+                                                }}>
+                                                {filtered.map((c, i) => (
+                                                    <button
+                                                        key={c.cmd}
+                                                        type="button"
+                                                        onMouseDown={e => {
+                                                            e.preventDefault();
+                                                            setInput("/" + c.cmd);
+                                                            setCmdPopoverOpen(false);
+                                                            setTimeout(() => composerInputRef.current?.focus(), 0);
+                                                        }}
+                                                        className="w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-white/[0.06] transition"
+                                                        style={i === 0 ? { background: "rgba(0,206,200,0.10)" } : undefined}
+                                                    >
+                                                        <span className="text-xs font-mono font-bold flex-shrink-0" style={{ color: "#00CEC8" }}>
+                                                            /{c.cmd}
+                                                        </span>
+                                                        <span className="text-xs text-white/70 truncate">{c.description}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
                                     <input
                                         ref={composerInputRef}
                                         value={input}
                                         onChange={e => {
-                                            setInput(e.target.value);
+                                            const v = e.target.value;
+                                            setInput(v);
                                             // Typing signal — 2 sekundda bir marta
                                             const now = Date.now();
                                             if (peer?.id && myProfileId && now - lastTypingSentRef.current > 2000) {
                                                 sendTyping(peer.id, myProfileId, myName);
                                                 lastTypingSentRef.current = now;
+                                            }
+                                            // Bot commands autocomplete — "/" bilan boshlansa
+                                            if (peer?.isAgent && agentCommands.length > 0 && /^\/[a-z0-9_]*$/i.test(v)) {
+                                                setCmdPopoverOpen(true);
+                                                setCmdFilter(v.slice(1).toLowerCase());
+                                            } else {
+                                                setCmdPopoverOpen(false);
                                             }
                                         }}
                                         onKeyDown={e => {

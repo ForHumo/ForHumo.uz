@@ -57,10 +57,16 @@ export function verifySignature(secret: string, timestamp: string, body: string,
     }
 }
 
+export interface AgentInlineButton {
+    text: string;               // 1-32 belgi (ko'rinuvchi matn)
+    callbackData?: string;      // 1-64 belgi (agent'ga qaytadi)
+    url?: string;               // yoki tashqi havola (yangi tab)
+}
+
 export interface AgentWebhookPayload {
-    event: "message.created";
-    chatId: string;         // NexusConversation id
-    messageId: string;
+    event: "message.created" | "callback.query";
+    chatId: string;             // NexusConversation id
+    messageId: string;          // asosiy xabar id (yoki callback holatida bosilgan xabar)
     from: {
         profileId: string;
         username: string | null;
@@ -69,7 +75,9 @@ export interface AgentWebhookPayload {
     text: string;
     mediaUrl: string | null;
     mediaType: string | null;
-    timestamp: number;      // unix seconds
+    // Faqat event="callback.query" holatida:
+    callbackData?: string;
+    timestamp: number;          // unix seconds
 }
 
 export interface AgentWebhookReply {
@@ -78,6 +86,8 @@ export interface AgentWebhookReply {
     mediaType?: string;
     mediaMime?: string;
     mediaName?: string;
+    // Inline tugmalar (Telegram uslub) — qatorlar: [[btn1, btn2], [btn3]]
+    buttons?: AgentInlineButton[][];
 }
 
 // Server → Agent POST. Javob bo'lsa qaytariladi (caller uni yangi agent xabari sifatida yozadi).
@@ -126,7 +136,28 @@ export async function sendToAgentWebhook(
             if (typeof data.mediaMime === "string") reply.mediaMime = data.mediaMime.slice(0, 100);
             if (typeof data.mediaName === "string") reply.mediaName = data.mediaName.slice(0, 200);
         }
-        if (!reply.text && !reply.mediaUrl) return null;
+        // Inline tugmalar — 8x3 grid maksimum (safety cap)
+        if (Array.isArray(data.buttons)) {
+            const rows: AgentInlineButton[][] = [];
+            for (const row of data.buttons.slice(0, 8)) {
+                if (!Array.isArray(row)) continue;
+                const cleanRow: AgentInlineButton[] = [];
+                for (const b of row.slice(0, 3)) {
+                    if (!b || typeof b !== "object") continue;
+                    const btn = b as { text?: unknown; callbackData?: unknown; url?: unknown };
+                    if (typeof btn.text !== "string" || !btn.text.trim()) continue;
+                    const out: AgentInlineButton = { text: btn.text.trim().slice(0, 32) };
+                    if (typeof btn.callbackData === "string") out.callbackData = btn.callbackData.slice(0, 64);
+                    if (typeof btn.url === "string" && (btn.url.startsWith("http://") || btn.url.startsWith("https://"))) {
+                        out.url = btn.url.slice(0, 500);
+                    }
+                    if (out.callbackData || out.url) cleanRow.push(out);
+                }
+                if (cleanRow.length > 0) rows.push(cleanRow);
+            }
+            if (rows.length > 0) reply.buttons = rows;
+        }
+        if (!reply.text && !reply.mediaUrl && !reply.buttons) return null;
         return reply;
     } catch {
         // AbortError, network xatoligi, TLS — hammasi silent

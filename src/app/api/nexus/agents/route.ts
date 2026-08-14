@@ -45,6 +45,7 @@ export async function GET() {
             module: a.module,
             isSystem: a.isSystem,
             webhookUrl: a.webhookUrl,
+            commands: a.commands,
             createdAt: a.createdAt.toISOString(),
         })),
     });

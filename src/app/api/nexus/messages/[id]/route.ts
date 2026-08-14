@@ -179,6 +179,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 forwardedFromName: m.forwardedFromName,
                 deliveredAt: m.deliveredAt,
                 deletedForEveryoneAt: m.deletedForEveryoneAt,
+                buttons: m.buttons,
             };
         }),
         other: p ? {
@@ -433,6 +434,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                     mediaType: reply.mediaType ?? null,
                     mediaMime: reply.mediaMime ?? null,
                     mediaName: reply.mediaName ?? null,
+                    // Inline tugmalar (agar agent qaytargan bo'lsa)
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    ...(reply.buttons ? { buttons: reply.buttons as any } : {}),
                 },
             });
             const agentPreview = agentMsg.text || (agentMsg.mediaType ? `[${agentMsg.mediaType}]` : "Yangi xabar");
@@ -452,6 +456,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                     mediaUrl: agentMsg.mediaUrl, mediaType: agentMsg.mediaType, mediaMime: agentMsg.mediaMime,
                     mediaName: agentMsg.mediaName, mediaSize: agentMsg.mediaSize, durationMs: agentMsg.durationMs,
                     senderId: recipientId,
+                    buttons: agentMsg.buttons,
                     reactions: [],
                 },
             });

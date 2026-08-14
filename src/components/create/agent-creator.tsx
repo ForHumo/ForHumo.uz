@@ -10,10 +10,12 @@ import { useSession, signIn } from "next-auth/react";
 import { Bot, Plus, Loader2, Trash2, Copy, ExternalLink, Check, ArrowLeft, AlertCircle, Settings, Link as LinkIcon, RefreshCw, Save, EyeOff, Eye } from "lucide-react";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 
+type BotCommand = { cmd: string; description: string };
 type Agent = {
     id: string; profileId: string;
     username: string | null; name: string | null; image: string | null; humoId: string | null;
     module: string; isSystem: boolean; webhookUrl: string | null;
+    commands?: BotCommand[] | null;
     createdAt: string;
 };
 
@@ -286,6 +288,46 @@ function AgentSettingsPanel({ agent, onSaved }: { agent: Agent; onSaved: () => v
         } finally { setRotating(false); }
     }
 
+    // Commands editor
+    const [commands, setCommands] = useState<BotCommand[]>(agent.commands ?? []);
+    const [savingCmds, setSavingCmds] = useState(false);
+    const [savedCmds, setSavedCmds] = useState(false);
+    function addCmd() {
+        if (commands.length >= 32) return;
+        setCommands(cs => [...cs, { cmd: "", description: "" }]);
+    }
+    function updCmd(i: number, key: "cmd" | "description", value: string) {
+        setCommands(cs => cs.map((c, idx) => idx === i ? { ...c, [key]: value } : c));
+    }
+    function delCmd(i: number) {
+        setCommands(cs => cs.filter((_, idx) => idx !== i));
+    }
+    async function saveCommands() {
+        setSavingCmds(true); setErr(null); setSavedCmds(false);
+        try {
+            // Bo'sh yoki noto'g'ri qatorlarni tozalash
+            const cleaned = commands
+                .map(c => ({
+                    cmd: c.cmd.trim().toLowerCase().replace(/^\//, "").slice(0, 32),
+                    description: c.description.trim().slice(0, 256),
+                }))
+                .filter(c => /^[a-z0-9_]{1,32}$/.test(c.cmd) && c.description.length > 0);
+            const r = await fetch(`/api/nexus/agents/${agent.id}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ commands: cleaned }),
+            });
+            if (r.ok) {
+                setCommands(cleaned);
+                setSavedCmds(true);
+                onSaved();
+                setTimeout(() => setSavedCmds(false), 2000);
+            } else {
+                const d = await r.json().catch(() => ({}));
+                setErr(d?.error ?? "Saqlab bo'lmadi");
+            }
+        } finally { setSavingCmds(false); }
+    }
+
     return (
         <div className="px-4 pb-4 space-y-3 border-t" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
             <div className="pt-3">
@@ -336,6 +378,61 @@ function AgentSettingsPanel({ agent, onSaved }: { agent: Agent; onSaved: () => v
                         Kalit yangilash (eski ishlamay qoladi)
                     </button>
                 )}
+            </div>
+
+            {/* Bot commands (Telegram uslub) */}
+            <div>
+                <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">
+                        Bot commands ({commands.length}/32)
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                        <button type="button" onClick={addCmd} disabled={commands.length >= 32}
+                            className="px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 disabled:opacity-40"
+                            style={{ background: "rgba(43,62,232,0.10)", color: "rgba(220,230,255,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                            <Plus size={10} /> Qo&apos;shish
+                        </button>
+                        <button type="button" onClick={saveCommands} disabled={savingCmds}
+                            className="px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 disabled:opacity-40"
+                            style={{
+                                background: savedCmds ? "rgba(34,197,94,0.20)" : "rgba(0,206,200,0.14)",
+                                border: `1px solid ${savedCmds ? "rgba(34,197,94,0.35)" : "rgba(0,206,200,0.30)"}`,
+                                color: savedCmds ? "#22C55E" : "#00CEC8",
+                            }}>
+                            {savingCmds ? <Loader2 size={10} className="animate-spin" /> : savedCmds ? <Check size={10} /> : <Save size={10} />}
+                            {savedCmds ? "Saqlandi" : "Saqlash"}
+                        </button>
+                    </div>
+                </div>
+                {commands.length === 0 ? (
+                    <p className="text-[10px] text-white/40 mt-2">
+                        DM composer&apos;da &quot;/&quot; bosilganda foydalanuvchi ko&apos;radi
+                    </p>
+                ) : (
+                    <div className="mt-2 space-y-1.5">
+                        {commands.map((c, i) => (
+                            <div key={i} className="flex items-center gap-1.5">
+                                <span className="text-[11px] text-white/50">/</span>
+                                <input value={c.cmd} onChange={e => updCmd(i, "cmd", e.target.value.replace(/[^a-z0-9_]/gi, "").toLowerCase())}
+                                    placeholder="start" maxLength={32}
+                                    className="w-24 px-2 py-1.5 rounded-lg bg-transparent text-white text-xs font-mono focus:outline-none"
+                                    style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                                <input value={c.description} onChange={e => updCmd(i, "description", e.target.value)}
+                                    placeholder="Botni ishga tushirish" maxLength={256}
+                                    className="flex-1 px-2 py-1.5 rounded-lg bg-transparent text-white text-xs focus:outline-none"
+                                    style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                                <button type="button" onClick={() => delCmd(i)}
+                                    className="p-1.5 rounded-md hover:bg-red-500/15 text-red-400">
+                                    <Trash2 size={12} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                <p className="text-[10px] text-white/40 mt-1.5">
+                    <AlertCircle size={9} className="inline -mt-0.5 mr-1" />
+                    Foydalanuvchi tanlaganda &quot;/cmd&quot; xabar sifatida yuboriladi
+                </p>
             </div>
 
             {err && <p className="text-xs" style={{ color: "#EF4444" }}>{err}</p>}

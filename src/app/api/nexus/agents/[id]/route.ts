@@ -43,8 +43,30 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const name = typeof body?.name === "string" ? body.name.trim().slice(0, 50) : undefined;
     const image = typeof body?.image === "string" ? body.image.trim().slice(0, 500) : undefined;
 
-    if (webhookUrl !== undefined) {
-        await prisma.nexusAgent.update({ where: { id }, data: { webhookUrl: webhookUrl || null } });
+    // Commands — [{cmd, description}] massiv. Har biri cmd 1-32 belgi (a-z, 0-9, _),
+    // description 1-256 belgi. Maks 32 command.
+    let commands: Array<{ cmd: string; description: string }> | undefined;
+    if (Array.isArray(body?.commands)) {
+        const cleaned: Array<{ cmd: string; description: string }> = [];
+        for (const raw of body.commands as unknown[]) {
+            if (!raw || typeof raw !== "object") continue;
+            const c = raw as { cmd?: unknown; description?: unknown };
+            const cmd = typeof c.cmd === "string" ? c.cmd.trim().toLowerCase().replace(/^\//, "") : "";
+            const description = typeof c.description === "string" ? c.description.trim() : "";
+            if (!/^[a-z0-9_]{1,32}$/.test(cmd)) continue;
+            if (!description || description.length > 256) continue;
+            cleaned.push({ cmd, description });
+            if (cleaned.length >= 32) break;
+        }
+        commands = cleaned;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const agentData: any = {};
+    if (webhookUrl !== undefined) agentData.webhookUrl = webhookUrl || null;
+    if (commands !== undefined) agentData.commands = commands;
+    if (Object.keys(agentData).length > 0) {
+        await prisma.nexusAgent.update({ where: { id }, data: agentData });
     }
     if (name !== undefined || image !== undefined) {
         await prisma.userProfile.update({

@@ -200,6 +200,11 @@ model NexusAgent {
   // (yaratilganda yoki qayta generatsiya paytida), hash saqlanmaydi — foydalanuvchi
   // xohlasa qayta olishi mumkin (rotate).
   apiKey       String?      @unique
+  // Bot commands menyu (Telegram BotFather uslub) — JSON massiv:
+  //   [{ cmd: "start", description: "Botni ishga tushirish" }, ...]
+  //   cmd: 1-32 belgi (a-z, 0-9, _), description: 1-256 belgi
+  //   Chat composer'da "/" bosilsa autocomplete ko'rsatiladi.
+  commands     Json?
   isSystem     Boolean      @default(false)                                    // rasmiy agent (bir marta seed qilingan)
   createdAt    DateTime     @default(now())
   @@index([ownerId])
@@ -1333,6 +1338,10 @@ model NexusMessage {
   // ikkinchi marta ochib bo'lmaydi. Serverdan ham matn/media null qaytadi.
   viewOnce   Boolean  @default(false)
   viewedAt   DateTime?
+  // Bot inline tugmalari (Telegram uslub) — agent javobida qatorlar:
+  //   [[{ text: "OK", callbackData: "ok" }, { text: "Bekor", callbackData: "cancel" }], ...]
+  //   Bosilsa agent webhook'iga event="callback.query" yuboriladi.
+  buttons    Json?
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
   @@index([conversationId, pinnedAt])
