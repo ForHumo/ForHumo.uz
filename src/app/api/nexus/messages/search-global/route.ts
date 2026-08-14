@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getBlockedIds } from "@/lib/nexus-block";
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
@@ -30,10 +31,13 @@ export async function GET(req: Request) {
         select: { id: true, user1Id: true, user2Id: true },
     });
     const convIds = myConvs.map(c => c.id);
+    // Blok: bloklangan foydalanuvchilar xabarlari qidiruv natijasidan chiqmaydi
+    const blockedIds = await getBlockedIds(me.id);
     const dmMsgs = convIds.length ? await prisma.nexusMessage.findMany({
         where: {
             conversationId: { in: convIds },
             text: { contains: q, mode: "insensitive" },
+            ...(blockedIds.size > 0 ? { senderId: { notIn: [...blockedIds] } } : {}),
         },
         orderBy: { createdAt: "desc" },
         take: limit,
@@ -64,6 +68,7 @@ export async function GET(req: Request) {
             channelId: { in: channelIds },
             text: { contains: q, mode: "insensitive" },
             hidden: false,
+            ...(blockedIds.size > 0 ? { senderId: { notIn: [...blockedIds] } } : {}),
         },
         orderBy: { createdAt: "desc" },
         take: limit,

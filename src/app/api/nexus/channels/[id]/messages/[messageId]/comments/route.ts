@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
+import { getBlockedIds } from "@/lib/nexus-block";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string; messageId: string }> }) {
     const { id, messageId } = await params;
@@ -40,8 +41,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const { searchParams } = new URL(req.url);
     const limit = Math.min(200, Math.max(1, Number(searchParams.get("limit") || 50)));
 
+    // Blok: bloklangan foydalanuvchilar izohlari ko'rinmasin
+    const blockedIds = await getBlockedIds(me.id);
     const comments = await prisma.nexusChannelMessage.findMany({
-        where: { channelId: id, replyToId: messageId, hidden: false },
+        where: {
+            channelId: id, replyToId: messageId, hidden: false,
+            ...(blockedIds.size > 0 ? { senderId: { notIn: [...blockedIds] } } : {}),
+        },
         orderBy: { createdAt: "asc" },
         take: limit,
     });

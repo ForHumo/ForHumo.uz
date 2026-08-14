@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getBlockedIds } from "@/lib/nexus-block";
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 30;
@@ -36,10 +37,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         if (!member) return NextResponse.json({ error: "Yopiq kanal" }, { status: 403 });
     }
 
+    // Blok: bloklangan foydalanuvchilar xabarlari qidiruv natijasidan ham chiqmasin
+    const blockedIds = await getBlockedIds(me.id);
     const where = {
         channelId: id,
         hidden: false,
         text: { contains: q, mode: "insensitive" as const },
+        ...(blockedIds.size > 0 ? { senderId: { notIn: [...blockedIds] } } : {}),
     };
     const [rows, total] = await Promise.all([
         prisma.nexusChannelMessage.findMany({

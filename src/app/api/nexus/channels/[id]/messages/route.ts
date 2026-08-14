@@ -10,6 +10,7 @@ import { banGuard } from "@/lib/moderation-guard";
 import { sendPushToProfile, pushAvailable } from "@/lib/push";
 import { pusherTrigger, userChannel } from "@/lib/pusher-server";
 import { effectivePermissions, slowModeRemaining, containsUrl } from "@/lib/channel-permissions";
+import { getBlockedIds } from "@/lib/nexus-block";
 
 async function meAndMember(email: string, channelId: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } });
@@ -30,10 +31,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const { searchParams } = new URL(req.url);
     const since = searchParams.get("since");
+    // Blok: men bloklaganlar va meni bloklaganlar xabarlarini yashiramiz.
+    // O'z xabarim doim ko'rinadi (blok o'z-o'ziga qo'llanmaydi).
+    const blockedIds = await getBlockedIds(me.id);
     // Inkremental polling (since bor) → asc. Birinchi yuklash (since yo'q) → eng yangi 100 (desc),
     // so'ng xronologik tartibga qaytaramiz. Aks holda 100+ xabarli kanalda yangilar ko'rinmay qolardi.
     const rows = await prisma.nexusChannelMessage.findMany({
-        where: { channelId: id, hidden: false, ...(since ? { createdAt: { gt: new Date(since) } } : {}) },
+        where: {
+            channelId: id, hidden: false,
+            ...(blockedIds.size > 0 ? { senderId: { notIn: [...blockedIds] } } : {}),
+            ...(since ? { createdAt: { gt: new Date(since) } } : {}),
+        },
         orderBy: { createdAt: since ? "asc" : "desc" }, take: 100,
     });
     const msgs = since ? rows : rows.reverse();
@@ -321,12 +329,28 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             where: { channelId: id },
             select: { profileId: true }, take: 500,
         });
-        await Promise.all(members.map(m =>
-            pusherTrigger(userChannel(m.profileId), "nx:msg:new", {
-                channelId: id,
-                message: { ...outMsg, mine: m.profileId === me.id },
-            })
-        ));
+        // Blok: sender bilan blok bo'lgan a'zolarga Pusher yubormaymiz (ular xabarni ko'rmaydi)
+        const blockedPairs = await prisma.nexusBlock.findMany({
+            where: {
+                OR: [
+                    { blockerId: me.id, blockedId: { in: members.map(m => m.profileId) } },
+                    { blockedId: me.id, blockerId: { in: members.map(m => m.profileId) } },
+                ],
+            },
+            select: { blockerId: true, blockedId: true },
+        });
+        const blockedOfSender = new Set<string>();
+        for (const b of blockedPairs) {
+            blockedOfSender.add(b.blockerId === me.id ? b.blockedId : b.blockerId);
+        }
+        await Promise.all(members
+            .filter(m => !blockedOfSender.has(m.profileId))
+            .map(m =>
+                pusherTrigger(userChannel(m.profileId), "nx:msg:new", {
+                    channelId: id,
+                    message: { ...outMsg, mine: m.profileId === me.id },
+                })
+            ));
     });
 
     return NextResponse.json({
