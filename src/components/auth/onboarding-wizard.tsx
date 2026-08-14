@@ -10,6 +10,8 @@ import { DatePickerCalendar } from "@/components/ui/date-picker-calendar";
 import { LocationPicker } from "@/components/ui/location-picker";
 import { ImageCropModal } from "@/components/ui/image-crop-modal";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { signOut } from "next-auth/react";
+import { LogOut } from "lucide-react";
 
 // ─── Country data ─────────────────────────────────────────────────────────────
 const COUNTRIES_RAW = [
@@ -456,6 +458,19 @@ export function OnboardingWizard({ onComplete, locale }: WizardProps) {
             {/* Language switcher top-right */}
             <div className="absolute top-4 right-4 z-10">
                 <LanguageSwitcher />
+            </div>
+
+            {/* Sign out top-left — allaqachon hisobi bor foydalanuvchilar uchun
+                 (masalan JWT cookie'si bo'shalib qolgan bo'lsa qayta kirish uchun) */}
+            <div className="absolute top-4 left-4 z-10">
+                <button
+                    type="button"
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-bold transition-colors backdrop-blur-sm"
+                >
+                    <LogOut className="w-3.5 h-3.5" />
+                    Chiqish / boshqa hisob
+                </button>
             </div>
 
             <AnimatePresence mode="wait">

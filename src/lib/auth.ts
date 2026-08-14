@@ -78,7 +78,13 @@ export const authOptions: NextAuthOptions = {
         //
         // Multi-device: `jti` yaratiladi va AuthSession jadvaliga yoziladi. Har
         // request'da bu jti revoked emasligi tekshiriladi (60s cache).
-        async jwt({ token, trigger }) {
+        async jwt({ token, trigger, user }) {
+            // SELF-HEAL: eski buggy holatda cookie'da email yo'q bo'lib qolgan bo'lishi mumkin.
+            // Google sign-in'da user obyektida email keladi — token'ga qayta yozib qo'yamiz.
+            if (!token.email && user?.email) token.email = user.email;
+            if (!token.name && user?.name)   token.name  = user.name;
+            if (!token.picture && user?.image) token.picture = user.image;
+
             if (trigger === "signIn" || trigger === "update" || !token.onboardingDone || token.coverImage === undefined) {
                 if (token.email) {
                     try {
