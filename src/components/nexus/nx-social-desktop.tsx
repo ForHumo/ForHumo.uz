@@ -16,6 +16,7 @@ import { isFounderProfile } from "@/lib/founders";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { NxStatusModal } from "./nx-status-modal";
 import { NxInlinePopover } from "./nx-inline-popover";
+import { NxE2eBanner } from "./nx-e2e-banner";
 import { encryptForRecipient, decryptFromSender } from "@/lib/e2e-crypto";
 import { getMyIdentity } from "@/lib/e2e-storage";
 import { searchShortcodes } from "./nx-emoji-shortcodes";
@@ -2302,6 +2303,15 @@ export function NxSocialDesktop() {
                                 </button>
                             );
                         })()}
+
+                        {/* E2E banner — ikkalasi ham kalit bor bo'lsa */}
+                        {e2eAvailable && peerE2eKey && myE2eIdentity && (
+                            <NxE2eBanner
+                                peerName={peer?.name ?? peer?.username ?? "Peer"}
+                                peerFingerprint={peerE2eKey.fingerprint}
+                                myFingerprint={myE2eIdentity.fingerprint}
+                            />
+                        )}
 
                         {/* Messages */}
                         <div ref={msgsContainerRef} className="flex-1 overflow-y-auto p-4 space-y-2 relative">

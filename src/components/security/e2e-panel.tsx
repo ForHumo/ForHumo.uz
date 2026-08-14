@@ -5,9 +5,10 @@
 // Bosqich 2 (keyingi PR): DM composer va message view'ni E2E ga o'tkazish.
 
 import { useEffect, useState } from "react";
-import { Lock, Loader2, KeyRound, Copy, Check, AlertCircle, Trash2, RefreshCw, ShieldCheck } from "lucide-react";
+import { Lock, Loader2, KeyRound, Copy, Check, AlertCircle, Trash2, RefreshCw, ShieldCheck, Download, Upload } from "lucide-react";
 import { generateIdentityKeyPair, computeFingerprint } from "@/lib/e2e-crypto";
 import { saveMyIdentity, getMyIdentity, clearMyIdentity } from "@/lib/e2e-storage";
+import { E2eBackupModal } from "./e2e-backup-modal";
 
 interface ServerKey {
     id: string;
@@ -28,6 +29,7 @@ export function E2ePanel() {
     const [copied, setCopied] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [confirmReset, setConfirmReset] = useState(false);
+    const [backupMode, setBackupMode] = useState<"export" | "import" | null>(null);
 
     async function load() {
         setLoading(true); setError(null);
@@ -138,6 +140,10 @@ export function E2ePanel() {
                         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
                         Kalit yaratish va yoqish
                     </button>
+                    <button onClick={() => setBackupMode("import")} disabled={busy}
+                        className="mt-2 w-full h-10 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50">
+                        <Upload className="w-3.5 h-3.5" /> Boshqa qurilmadan backup'dan tiklash
+                    </button>
                 </div>
             )}
 
@@ -154,10 +160,14 @@ export function E2ePanel() {
                         </div>
                         <div className="text-xs opacity-60 mt-1">Qurilma: {activeServerKey.deviceLabel || "Noma'lum"} · {new Date(activeServerKey.createdAt).toLocaleDateString()}</div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
+                        <button onClick={() => setBackupMode("export")} disabled={busy}
+                            className="h-11 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50">
+                            <Download className="w-4 h-4" /> Backup
+                        </button>
                         <button onClick={enableOrRotate} disabled={busy}
                             className="h-11 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50">
-                            <RefreshCw className="w-4 h-4" /> Yangi kalit
+                            <RefreshCw className="w-4 h-4" /> Yangi
                         </button>
                         <button onClick={() => setConfirmReset(true)} disabled={busy}
                             className="h-11 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50">
@@ -201,6 +211,10 @@ export function E2ePanel() {
                 <div className="mt-3 p-3 rounded-xl bg-red-500/10 text-red-500 text-xs font-bold flex items-center gap-2">
                     <AlertCircle className="w-4 h-4" /> {error}
                 </div>
+            )}
+
+            {backupMode && (
+                <E2eBackupModal mode={backupMode} onClose={() => setBackupMode(null)} onImported={load} />
             )}
 
             {confirmReset && (

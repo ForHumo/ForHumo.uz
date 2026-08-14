@@ -115,3 +115,68 @@ export async function decryptFromSender(myPrivateJwk: JsonWebKey, payload: Encry
     );
     return new TextDecoder().decode(plain);
 }
+
+// ---- Passphrase-asosli backup (multi-device eksport / import) ----
+//
+// PBKDF2-SHA256 (200k iters, 16-bayt salt) → AES-256-GCM. Foydalanuvchi passphrase
+// yodlab qo'yadi (yoki xavfsiz joyda saqlaydi). Backup string (base64) boshqa
+// qurilmaga import qilinsa — private key va identity qayta tiklanadi.
+//
+// Format (JSON, keyin base64):
+//   { v:1, salt: b64, iv: b64, ct: b64 }
+// ct = AES-GCM(passKey, JSON({ privateJwk, publicKey, fingerprint }))
+
+const PBKDF2_ITERS = 200_000;
+const BACKUP_V = 1;
+
+interface BackupEnvelope { v: number; salt: string; iv: string; ct: string }
+interface BackupInner { privateJwk: JsonWebKey; publicKey: string; fingerprint: string }
+
+async function deriveBackupKey(passphrase: string, salt: ArrayBuffer): Promise<CryptoKey> {
+    const base = await crypto.subtle.importKey(
+        "raw", new TextEncoder().encode(passphrase),
+        { name: "PBKDF2" }, false, ["deriveKey"],
+    );
+    return crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt, iterations: PBKDF2_ITERS, hash: "SHA-256" },
+        base,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"],
+    );
+}
+
+export async function exportBackup(inner: BackupInner, passphrase: string): Promise<string> {
+    if (!passphrase || passphrase.length < 8) throw new Error("Passphrase kamida 8 belgi bo'lsin");
+    const saltBuf = new ArrayBuffer(16);
+    crypto.getRandomValues(new Uint8Array(saltBuf));
+    const ivBuf = new ArrayBuffer(12);
+    crypto.getRandomValues(new Uint8Array(ivBuf));
+    const key  = await deriveBackupKey(passphrase, saltBuf);
+    const pt   = new TextEncoder().encode(JSON.stringify(inner));
+    const ct   = await crypto.subtle.encrypt({ name: "AES-GCM", iv: ivBuf }, key, pt);
+    const env: BackupEnvelope = {
+        v:  BACKUP_V,
+        salt: bufToB64(saltBuf),
+        iv:   bufToB64(ivBuf),
+        ct:   bufToB64(ct),
+    };
+    return btoa(JSON.stringify(env));
+}
+
+export async function importBackup(backupB64: string, passphrase: string): Promise<BackupInner> {
+    let env: BackupEnvelope;
+    try { env = JSON.parse(atob(backupB64.trim())); }
+    catch { throw new Error("Backup formati noto'g'ri"); }
+    if (env.v !== BACKUP_V) throw new Error(`Noma'lum backup versiyasi: ${env.v}`);
+    const salt = b64ToBuf(env.salt);
+    const iv   = b64ToBuf(env.iv);
+    const key  = await deriveBackupKey(passphrase, salt);
+    let pt: ArrayBuffer;
+    try {
+        pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, b64ToBuf(env.ct));
+    } catch {
+        throw new Error("Passphrase noto'g'ri yoki backup buzilgan");
+    }
+    return JSON.parse(new TextDecoder().decode(pt)) as BackupInner;
+}
