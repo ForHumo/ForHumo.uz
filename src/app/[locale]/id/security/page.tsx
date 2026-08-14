@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { TwoFaPanel } from "@/components/security/two-fa-panel";
 import { DataExportPanel } from "@/components/security/data-export-panel";
 import { SessionsPanel } from "@/components/security/sessions-panel";
+import { BusinessProfilePanel } from "@/components/security/business-profile-panel";
 
 export const metadata = { title: "Xavfsizlik | Humo ID" };
 
@@ -32,6 +33,7 @@ export default async function SecurityPage({ params }: { params: Promise<{ local
                 accountName={me.username || me.humoId || me.email || "user"}
             />
             <SessionsPanel />
+            <BusinessProfilePanel />
             <DataExportPanel />
         </div>
     );

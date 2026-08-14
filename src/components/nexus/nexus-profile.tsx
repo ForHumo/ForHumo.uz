@@ -12,6 +12,7 @@ import { NxHighlights } from "./nx-highlights";
 import { NxTipSheet } from "./nx-tip-sheet";
 import { NxSubscribeSheet } from "./nx-subscribe-sheet";
 import { NxCreatorSubSettings } from "./nx-creator-sub-settings";
+import { NxBusinessBanner } from "./nx-business-banner";
 import { formatMoney } from "@/lib/money";
 import { usePresence } from "@/lib/presence";
 
@@ -239,6 +240,9 @@ export function NexusProfile({ username }: { username: string }) {
                                 {data.profile.username && <p className="text-sm font-mono" style={{ color: "#00CEC8" }}>@{data.profile.username}</p>}
                                 {data.profile.bio && <p className="text-sm mt-2 leading-relaxed" style={{ color: "rgba(180,195,235,0.8)" }}>{data.profile.bio}</p>}
                             </div>
+
+                            {/* Business banner (agar profil business bo'lsa) */}
+                            {data.profile.username && <NxBusinessBanner username={data.profile.username} />}
 
                             {/* Statistika */}
                             <div className="flex gap-6 mt-4">

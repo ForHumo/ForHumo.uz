@@ -1396,6 +1396,32 @@ model NexusContactHash {
   @@index([phoneHash])
 }
 
+// Business profil (Instagram Business uslub) — foydalanuvchi o'zini biznes
+// sifatida ko'rsatishi mumkin. Nexus profilida "Business" badge + tez amallar
+// (qo'ng'iroq/email/marshrut). Buyurtma qabul qilish keyingi PR'da (booking).
+//
+// Kategoriya: erkin matn (foydalanuvchi kiritadi — "Kafe", "Barber", "Studio").
+// Ish vaqti: haftalik jadval JSON — [{ day: 0..6, open: "09:00", close: "22:00" }].
+// Yopiq kunlar shu massivda umuman bo'lmasa.
+model BusinessProfile {
+  id           String   @id @default(cuid())
+  profileId    String   @unique                    // UserProfile.id (1:1)
+  category     String                              // "Kafe", "Barber", "Fitnes studiya", ...
+  subcategory  String?                             // ixtiyoriy
+  address      String?                             // ko'chsa xarita bilan mos keladi
+  lat          Float?                              // xarita uchun
+  lng          Float?
+  phone        String?                             // qo'ng'iroq tugmasi uchun (bosh telefondan alohida bo'lishi mumkin)
+  email        String?                             // email tugmasi uchun
+  website      String?                             // ixtiyoriy
+  // Haftalik ish vaqti — [{ day: 0=Ya, 1=Du, ..., 6=Sha, open: "09:00", close: "22:00" }]
+  hours        Json?
+  // Statistika (kelajakda: ko'rish, bosilishlar)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@index([category])
+}
+
 // Aktiv sessiyalar (multi-device). Foydalanuvchi bir necha qurilmada
 // login bo'lishi mumkin; har biri alohida jti (JWT ID) bilan yozib boriladi.
 // Foydalanuvchi qaysi qurilmada kirganini ko'rishi va uzoqdan chiqarishi mumkin.
