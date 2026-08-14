@@ -1342,6 +1342,12 @@ model NexusMessage {
   //   [[{ text: "OK", callbackData: "ok" }, { text: "Bekor", callbackData: "cancel" }], ...]
   //   Bosilsa agent webhook'iga event="callback.query" yuboriladi.
   buttons    Json?
+  // Bot invoice (to'lov so'rovi) — Telegram uslubi:
+  //   { amount: number, currency: "UZS"|"USD", description: string, payload?: string }
+  //   Foydalanuvchi bosgach summa agent hamyoniga o'tadi va agent webhook'iga
+  //   event="invoice.paid" yuboriladi.
+  invoice    Json?
+  invoicePaidAt DateTime?
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
   @@index([conversationId, pinnedAt])

@@ -99,6 +99,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                 mediaName: reply.mediaName ?? null,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ...(reply.buttons ? { buttons: reply.buttons as any } : {}),
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ...(reply.invoice ? { invoice: reply.invoice as any } : {}),
             },
         });
         const preview = agentMsg.text || (agentMsg.mediaType ? `[${agentMsg.mediaType}]` : "Yangi xabar");
@@ -116,7 +118,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                 id: agentMsg.id, text: agentMsg.text, mine: false, createdAt: agentMsg.createdAt,
                 mediaUrl: agentMsg.mediaUrl, mediaType: agentMsg.mediaType,
                 mediaMime: agentMsg.mediaMime, mediaName: agentMsg.mediaName,
-                senderId: otherPeerId, buttons: agentMsg.buttons, reactions: [],
+                senderId: otherPeerId, buttons: agentMsg.buttons,
+                invoice: agentMsg.invoice, invoicePaidAt: agentMsg.invoicePaidAt,
+                reactions: [],
             },
         });
     });

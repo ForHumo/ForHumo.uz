@@ -63,10 +63,17 @@ export interface AgentInlineButton {
     url?: string;               // yoki tashqi havola (yangi tab)
 }
 
+export interface AgentInvoice {
+    amount: number;             // > 0, foydalanuvchi valyutasida
+    currency: "UZS" | "USD";
+    description: string;        // 1-200 belgi
+    payload?: string;           // ixtiyoriy: agent identifikator (invoice.paid webhook'da qaytariladi)
+}
+
 export interface AgentWebhookPayload {
-    event: "message.created" | "callback.query";
+    event: "message.created" | "callback.query" | "invoice.paid";
     chatId: string;             // NexusConversation id
-    messageId: string;          // asosiy xabar id (yoki callback holatida bosilgan xabar)
+    messageId: string;          // asosiy xabar id (yoki callback/invoice holatida bosilgan xabar)
     from: {
         profileId: string;
         username: string | null;
@@ -77,6 +84,14 @@ export interface AgentWebhookPayload {
     mediaType: string | null;
     // Faqat event="callback.query" holatida:
     callbackData?: string;
+    // Faqat event="invoice.paid" holatida:
+    invoice?: {
+        amount: number;
+        currency: string;
+        description: string;
+        payload?: string;
+        txRef: string;          // to'lov ledger ref
+    };
     timestamp: number;          // unix seconds
 }
 
@@ -88,6 +103,8 @@ export interface AgentWebhookReply {
     mediaName?: string;
     // Inline tugmalar (Telegram uslub) — qatorlar: [[btn1, btn2], [btn3]]
     buttons?: AgentInlineButton[][];
+    // To'lov invoice (Telegram uslub) — ekranda "To'lash X UZS" tugmasi paydo bo'ladi.
+    invoice?: AgentInvoice;
 }
 
 // Server → Agent POST. Javob bo'lsa qaytariladi (caller uni yangi agent xabari sifatida yozadi).
@@ -157,7 +174,20 @@ export async function sendToAgentWebhook(
             }
             if (rows.length > 0) reply.buttons = rows;
         }
-        if (!reply.text && !reply.mediaUrl && !reply.buttons) return null;
+        // Invoice — to'lov so'rovi
+        if (data.invoice && typeof data.invoice === "object") {
+            const inv = data.invoice as { amount?: unknown; currency?: unknown; description?: unknown; payload?: unknown };
+            const amount = typeof inv.amount === "number" ? inv.amount : NaN;
+            const currency = inv.currency === "USD" ? "USD" : (inv.currency === "UZS" ? "UZS" : null);
+            const description = typeof inv.description === "string" ? inv.description.trim().slice(0, 200) : "";
+            if (amount > 0 && amount < 1_000_000_000 && currency && description) {
+                reply.invoice = {
+                    amount, currency: currency as "UZS" | "USD", description,
+                    ...(typeof inv.payload === "string" ? { payload: inv.payload.slice(0, 128) } : {}),
+                };
+            }
+        }
+        if (!reply.text && !reply.mediaUrl && !reply.buttons && !reply.invoice) return null;
         return reply;
     } catch {
         // AbortError, network xatoligi, TLS — hammasi silent

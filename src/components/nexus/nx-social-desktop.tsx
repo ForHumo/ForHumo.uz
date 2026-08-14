@@ -77,6 +77,8 @@ interface Msg {
     senderId?: string;
     deletedForEveryoneAt?: string | null;
     buttons?: Array<Array<{ text: string; callbackData?: string; url?: string }>> | null;
+    invoice?: { amount: number; currency: "UZS" | "USD"; description: string; payload?: string } | null;
+    invoicePaidAt?: string | null;
 }
 
 interface PeerInfo {
@@ -240,13 +242,24 @@ export function NxSocialDesktop() {
             ));
         };
 
+        // Invoice to'landi — tugma yashiradi, "To'langan" ko'rsatadi
+        const onInvoicePaid = (data: { convId: string; messageId: string; paidAt: string }) => {
+            if (!data?.messageId) return;
+            if (selectedIdRef.current !== data.convId) return;
+            setMessages(prev => prev.map(m =>
+                m.id === data.messageId ? { ...m, invoicePaidAt: data.paidAt } : m
+            ));
+        };
+
         ch.bind("nx:msg:new", onMsgNewWithDeliver);
         ch.bind("nx:msg:delivered", onDelivered);
         ch.bind("nx:msg:delete", onDelete);
+        ch.bind("nx:msg:invoice-paid", onInvoicePaid);
         return () => {
             ch.unbind("nx:msg:new", onMsgNewWithDeliver);
             ch.unbind("nx:msg:delivered", onDelivered);
             ch.unbind("nx:msg:delete", onDelete);
+            ch.unbind("nx:msg:invoice-paid", onInvoicePaid);
         };
     }, [myProfileId]);
 
@@ -2734,6 +2747,62 @@ export function NxSocialDesktop() {
                                                 })()
                                             )}
                                         </div>
+                                        {/* Bot invoice — to'lov so'rovi (Telegram uslub) */}
+                                        {m.invoice && (
+                                            <div className="mt-2 p-3 rounded-lg"
+                                                style={{
+                                                    background: m.mine ? "rgba(0,0,0,0.20)" : "rgba(245,158,11,0.10)",
+                                                    border: `1px solid ${m.mine ? "rgba(255,255,255,0.15)" : "rgba(245,158,11,0.30)"}`,
+                                                }}>
+                                                <div className="flex items-center gap-2 mb-1.5">
+                                                    <Wallet className="w-4 h-4" style={{ color: m.mine ? "rgba(255,255,255,0.85)" : "#F59E0B" }} />
+                                                    <span className="text-[10px] font-black uppercase tracking-wider"
+                                                        style={{ color: m.mine ? "rgba(255,255,255,0.75)" : "#F59E0B" }}>
+                                                        To&apos;lov so&apos;rovi
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs mb-2" style={{ color: m.mine ? "rgba(255,255,255,0.85)" : "rgba(220,230,255,0.90)" }}>
+                                                    {m.invoice.description}
+                                                </p>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="text-base font-black" style={{ color: m.mine ? "#fff" : "#F59E0B" }}>
+                                                        {new Intl.NumberFormat("uz-UZ").format(m.invoice.amount)} {m.invoice.currency === "USD" ? "$" : "so'm"}
+                                                    </span>
+                                                    {m.invoicePaidAt ? (
+                                                        <span className="flex items-center gap-1 text-xs font-bold"
+                                                            style={{ color: "#22C55E" }}>
+                                                            <Check className="w-3.5 h-3.5" /> To&apos;langan
+                                                        </span>
+                                                    ) : m.mine ? (
+                                                        <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.60)" }}>
+                                                            To&apos;lov kutilmoqda
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={async () => {
+                                                                if (!selectedId) return;
+                                                                if (!confirm(`${new Intl.NumberFormat("uz-UZ").format(m.invoice!.amount)} ${m.invoice!.currency === "USD" ? "$" : "so'm"} to'lansinmi?`)) return;
+                                                                const r = await fetch(`/api/nexus/messages/${selectedId}/pay-invoice`, {
+                                                                    method: "POST", headers: { "Content-Type": "application/json" },
+                                                                    body: JSON.stringify({ messageId: m.id }),
+                                                                });
+                                                                const d = await r.json().catch(() => ({}));
+                                                                if (r.ok) {
+                                                                    setMessages(prev => prev.map(x => x.id === m.id
+                                                                        ? { ...x, invoicePaidAt: new Date().toISOString() } : x));
+                                                                } else {
+                                                                    alert(d?.error ?? "To'lov muvaffaqiyatsiz");
+                                                                }
+                                                            }}
+                                                            className="px-3 py-1.5 rounded-lg text-xs font-black text-white transition hover:brightness-110 active:scale-95"
+                                                            style={{ background: "linear-gradient(135deg,#F59E0B,#F97316)" }}>
+                                                            To&apos;lash
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                         {/* Inline tugmalar (agent xabari uchun) — Telegram uslub */}
                                         {Array.isArray(m.buttons) && m.buttons.length > 0 && (
                                             <div className="mt-2 flex flex-col gap-1">
