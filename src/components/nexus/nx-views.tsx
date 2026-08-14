@@ -206,8 +206,8 @@ function SocialViewMobile() {
                 </button>
             </div>
 
-            {sub === "recommendation" && <NxSocialFeed />}
-            {sub === "all"            && <NxSocialFeed />}
+            {sub === "recommendation" && <NxSocialFeed controlledTab="foryou" hideTabBar />}
+            {sub === "all"            && <NxSocialFeed controlledTab="explore" hideTabBar />}
             {sub === "unread"         && <NxChatList />}
             {sub === "private"        && <NxChatList />}
             {sub === "groups"         && <NxChannels type="GROUP" />}

@@ -7,13 +7,20 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { X, Users, Loader2, Check, UserCheck, Bot as BotIcon } from "lucide-react";
+import { X, Users, Loader2, Check, UserCheck, Bot as BotIcon, FolderPlus } from "lucide-react";
 
 interface Contact {
     profileId: string;
     name: string | null;
     username: string | null;
     image: string | null;
+}
+
+interface Folder {
+    id: string;
+    name: string;
+    emoji: string | null;
+    color: string | null;
 }
 
 interface Props {
@@ -28,14 +35,19 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
     const [loadingContacts, setLoadingContacts] = useState(true);
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState<string | null>(null);
+    const [folders, setFolders] = useState<Folder[]>([]);
+    const [folderId, setFolderId] = useState<string | null>(null);
 
     useEffect(() => {
         let stop = false;
         (async () => {
             try {
-                const r = await fetch("/api/nexus/messages");
-                if (r.ok && !stop) {
-                    const d = await r.json();
+                const [conRes, foldRes] = await Promise.all([
+                    fetch("/api/nexus/messages"),
+                    fetch("/api/nexus/folders"),
+                ]);
+                if (conRes.ok && !stop) {
+                    const d = await conRes.json();
                     const list: Contact[] = [];
                     const seen = new Set<string>();
                     for (const c of d?.conversations ?? []) {
@@ -50,6 +62,10 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                         }
                     }
                     setContacts(list);
+                }
+                if (foldRes.ok && !stop) {
+                    const d = await foldRes.json();
+                    setFolders(d?.items ?? []);
                 }
             } catch {
                 // Ignore load error
@@ -98,6 +114,14 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
             });
             const d = await r.json().catch(() => ({}));
             if (r.ok && d?.channel?.id) {
+                // Papka tanlangan bo'lsa — yangi guruhni papkaga qo'shamiz
+                if (folderId) {
+                    fetch(`/api/nexus/folders/${folderId}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ addChatId: d.channel.id }),
+                    }).catch(() => { /* muvaffaqiyatsiz bo'lsa jim */ });
+                }
                 onCreated(d.channel.id);
                 onClose();
             } else {
@@ -140,6 +164,48 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                             className="w-full h-10 px-3 mt-1 rounded-lg bg-transparent text-white text-sm focus:outline-none"
                             style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
                     </div>
+                    {folders.length > 0 && (
+                        <div>
+                            <label className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
+                                style={{ color: "rgba(140,160,210,0.65)" }}>
+                                <FolderPlus className="w-3 h-3" /> Papka (ixtiyoriy)
+                            </label>
+                            <div className="mt-1 flex gap-1.5 overflow-x-auto scrollbar-hide">
+                                <button type="button" onClick={() => setFolderId(null)}
+                                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex-shrink-0 transition"
+                                    style={folderId === null ? {
+                                        background: "rgba(0,206,200,0.14)",
+                                        color: "#00CEC8",
+                                        border: "1px solid rgba(0,206,200,0.35)",
+                                    } : {
+                                        background: "rgba(43,62,232,0.06)",
+                                        color: "rgba(140,160,210,0.75)",
+                                        border: "1px solid rgba(43,62,232,0.20)",
+                                    }}>
+                                    Yo&apos;q
+                                </button>
+                                {folders.map(f => {
+                                    const sel = folderId === f.id;
+                                    return (
+                                        <button key={f.id} type="button" onClick={() => setFolderId(f.id)}
+                                            className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex-shrink-0 transition flex items-center gap-1"
+                                            style={sel ? {
+                                                background: "rgba(0,206,200,0.14)",
+                                                color: "#00CEC8",
+                                                border: "1px solid rgba(0,206,200,0.35)",
+                                            } : {
+                                                background: "rgba(43,62,232,0.06)",
+                                                color: "rgba(140,160,210,0.85)",
+                                                border: "1px solid rgba(43,62,232,0.20)",
+                                            }}>
+                                            {f.emoji && <span>{f.emoji}</span>}
+                                            {f.name}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* A'zolar tanlash ro'yxati */}

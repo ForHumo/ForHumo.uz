@@ -36,6 +36,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (typeof body?.includeUnread === "boolean") data.includeUnread = body.includeUnread;
     if (typeof body?.sort === "number") data.sort = Math.max(0, Math.floor(body.sort));
 
+    // addChatId / removeChatId — includeChatIds ro'yxatiga qo'shish/olib tashlash (kanal ID, guruh ID, profile ID)
+    const addId = typeof body?.addChatId === "string" ? body.addChatId.trim() : null;
+    const removeId = typeof body?.removeChatId === "string" ? body.removeChatId.trim() : null;
+    if (addId || removeId) {
+        let list = [...folder.includeChatIds];
+        if (addId && !list.includes(addId)) list.push(addId);
+        if (removeId) list = list.filter(x => x !== removeId);
+        data.includeChatIds = list.slice(0, 200);      // sanity cap
+    }
+
     await prisma.nexusChatFolder.update({ where: { id }, data });
     return NextResponse.json({ ok: true });
 }
