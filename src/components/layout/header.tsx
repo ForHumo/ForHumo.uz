@@ -45,11 +45,13 @@ interface SocialSet {
 }
 
 const SOCIALS: Record<string, SocialSet> = {
+    id:      { channel: "https://t.me/ForHumo_ID",      bot: "https://t.me/ForHumo_IDBot",      youtube: "https://www.youtube.com/@ForHumo_ID",      instagram: "https://www.instagram.com/forhumo_id"      },
     ai:      { channel: "https://t.me/ForHumo_AI",      bot: "https://t.me/ForHumo_AIBot",      youtube: "https://www.youtube.com/@ForHumo_AI",      instagram: "https://www.instagram.com/forhumo_ai/"      },
     nexus:   { channel: "https://t.me/ForHumo_Nexus",   bot: "https://t.me/ForHumo_NexusBot",   youtube: "https://www.youtube.com/@ForHumo_Nexus",   instagram: "https://www.instagram.com/forhumo_nexus/"   },
     esport:  { channel: "https://t.me/ForHumo_eSport",  bot: "https://t.me/ForHumo_eSportBot",  youtube: "https://www.youtube.com/@ForHumo_eSport",  instagram: "https://www.instagram.com/forhumo_esport/"  },
     market:  { channel: "https://t.me/ForHumo_Market",  bot: "https://t.me/ForHumo_MarketBot",  youtube: "https://www.youtube.com/@ForHumo_Market",  instagram: "https://www.instagram.com/forhumo_market/"  },
     pay:     { channel: "https://t.me/ForHumo_Pay",     bot: "https://t.me/ForHumo_PayBot",     youtube: "https://www.youtube.com/@ForHumo_Pay",     instagram: "https://www.instagram.com/forhumo_pay/"     },
+    bn:      { channel: "https://t.me/BozorNarxidauz",  bot: "https://t.me/BozorNarxidaBot",    youtube: "https://www.youtube.com/@BozorNarxida",    instagram: "https://www.instagram.com/bozor.narxida"   },
     support: { channel: "https://t.me/ForHumo_Support", bot: "https://t.me/ForHumo_SupportBot", youtube: "https://www.youtube.com/@ForHumo_Support", instagram: "https://www.instagram.com/forhumo_support/" },
 };
 
@@ -312,12 +314,13 @@ export function Header() {
     ];
 
     const brandItems: { key: string; product: string; href: string; socialKey?: keyof typeof SOCIALS }[] = [
-        { key: "id",      product: t("id"),      href: "/id",          socialKey: undefined  },
+        { key: "id",      product: t("id"),      href: "/id",          socialKey: "id"       },
         { key: "ai",      product: t("ai"),      href: "/ai",          socialKey: "ai"       },
         { key: "nexus",   product: t("nexus"),   href: "/nexus",       socialKey: "nexus"    },
         { key: "esport",  product: t("esport"),  href: "/esport",      socialKey: "esport"   },
         { key: "market",  product: t("market"),  href: "/coming-soon", socialKey: "market"   },
-        { key: "pay",     product: t("pay"),     href: "/coming-soon", socialKey: "pay"      },
+        { key: "pay",     product: "For Pay",    href: "/coming-soon", socialKey: "pay"      },
+        { key: "bn",      product: "Bozor Narxida", href: "/bn",       socialKey: "bn"       },
         { key: "support", product: "Support",    href: "/support",     socialKey: "support"  },
     ];
 

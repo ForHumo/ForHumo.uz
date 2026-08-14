@@ -1,6 +1,7 @@
 "use client";
 
 import { ModuleNavbar } from "@/components/layout/module-navbar";
+import { NavbarSupportButton } from "@/components/layout/navbar-support-button";
 
 export function HumoAiNavbar() {
     return (
@@ -13,6 +14,7 @@ export function HumoAiNavbar() {
                 accentTo: "to-purple-400",
                 glowColor: "rgba(139,92,246,0.45)",
             }}
+            extra={<NavbarSupportButton />}
         />
     );
 }

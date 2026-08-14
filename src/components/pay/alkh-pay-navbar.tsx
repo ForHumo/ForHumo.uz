@@ -1,6 +1,7 @@
 "use client";
 
 import { ModuleNavbar } from "@/components/layout/module-navbar";
+import { NavbarSupportButton } from "@/components/layout/navbar-support-button";
 
 export function AlkhPayNavbar() {
     return (
@@ -13,6 +14,7 @@ export function AlkhPayNavbar() {
                 accentTo: "to-cyan-400",
                 glowColor: "rgba(0,170,255,0.45)",
             }}
+            extra={<NavbarSupportButton />}
         />
     );
 }

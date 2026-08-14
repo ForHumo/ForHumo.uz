@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useLocale } from "next-intl";
 import { ShieldCheck } from "lucide-react";
+import { NavbarSupportButton } from "@/components/layout/navbar-support-button";
 
 export function HumoIdNavbar() {
     const { data: session } = useSession();
@@ -38,7 +39,7 @@ export function HumoIdNavbar() {
                     { label: "Tasdiqlash", href: "/id/verify" },
                 ],
             }}
-            extra={levelBadge}
+            extra={<div className="flex items-center gap-2">{levelBadge}<NavbarSupportButton /></div>}
         />
     );
 }

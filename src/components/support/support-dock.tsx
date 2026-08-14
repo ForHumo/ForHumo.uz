@@ -67,9 +67,11 @@ export function SupportDock() {
         return () => window.removeEventListener("support:open", h);
     }, [activeId]);
 
-    // Suzuvchi tugma qaysi sahifalarda ko'rinmasin — module'lar Header'ida
-    // o'z tugmalariga ega
-    const hideFloating = (pathname ?? "").includes("/market") || (pathname ?? "").includes("/nexus");
+    // Suzuvchi tugma butunlay yashiringan — barcha modul navbarlarida (id/ai/nexus/
+    // market/esport/pay/bn) Support tugmasi bor va bosh sahifada global header'da
+    // "Support" nav qismi bor. Panel esa `support:open` event orqali ochiladi.
+    const hideFloating = true;
+    void pathname;
 
     // Badge — kirgan bo'lsa har 60s
     useEffect(() => {

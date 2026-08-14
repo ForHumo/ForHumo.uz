@@ -220,9 +220,9 @@ export function HomeContent() {
                         />
                     </div>
 
-                    {/* 8-card grid: 3 col on lg, so'nggi karta (Humo Support) markazda */}
+                    {/* Loyihalar gridi — barcha kartalar bir xil tartibda (BN dan keyin Support) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {projectsData.slice(0, 7).map((project, index) => (
+                        {projectsData.map((project, index) => (
                             <ProjectCard
                                 key={project.title}
                                 title={project.title}
@@ -235,23 +235,6 @@ export function HomeContent() {
                                 index={index}
                             />
                         ))}
-                    </div>
-
-                    {/* Oxirgi karta (Humo Support) — markazlangan */}
-                    <div className="mt-6 flex justify-center">
-                        <div className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.33%-16px)]">
-                            <ProjectCard
-                                key={projectsData[7].title}
-                                title={projectsData[7].title}
-                                description={projectsData[7].description}
-                                href={projectsData[7].href}
-                                icon={projectsData[7].icon as React.ComponentType<{ size?: number; className?: string }>}
-                                logoSrc={projectsData[7].logoSrc}
-                                logoSrcDark={projectsData[7].logoSrcDark}
-                                status={projectsData[7].status}
-                                index={7}
-                            />
-                        </div>
                     </div>
 
                 </div>

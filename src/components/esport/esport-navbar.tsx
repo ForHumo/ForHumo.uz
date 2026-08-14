@@ -10,6 +10,7 @@ import { Home, User, Users, Trophy, BarChart3, ArrowLeftRight, ShieldCheck, type
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import EsportNotifications from "@/components/esport/esport-notifications";
+import { NavbarSupportButton } from "@/components/layout/navbar-support-button";
 import { useEsT } from "@/lib/esport-i18n";
 
 const LINKS: { tkey: string; href: string; icon: LucideIcon }[] = [
@@ -62,6 +63,7 @@ export default function EsportNavbar() {
                     <div className="flex shrink-0 items-center gap-2">
                         <LanguageSwitcher />
                         <ThemeToggle />
+                        <NavbarSupportButton />
                         {session?.user && <EsportNotifications />}
                         {session?.user && (
                             <Link href="/id" title="Humo ID" className="group relative">
