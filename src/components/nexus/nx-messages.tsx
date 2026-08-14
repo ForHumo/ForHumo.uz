@@ -44,7 +44,8 @@ interface Msg {
 interface SUser { name: string | null; username: string | null; image: string | null; verified: boolean; isMe: boolean }
 
 // Xabar matnini clipboard'ga nusxa olish
-function copyText(text: string) { navigator.clipboard.writeText(text).catch(() => {}); }
+import { copyToClipboard } from "@/lib/copy-to-clipboard";
+function copyText(text: string) { void copyToClipboard(text); }
 // TTS eshittirish
 function speakText(text: string) {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;

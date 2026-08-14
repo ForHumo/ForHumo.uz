@@ -13,6 +13,7 @@ import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxGroupCreateModal } from "./nx-group-create-modal";
 import { isFounderProfile } from "@/lib/founders";
+import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { NxStatusModal } from "./nx-status-modal";
 import { searchShortcodes } from "./nx-emoji-shortcodes";
 import { NxMarkdown } from "./nx-markdown";
@@ -65,6 +66,9 @@ interface Msg {
     expiresAt?: string | null;
     scheduledFor?: string | null;
     bookmarked?: boolean;
+    mediaMime?: string | null;
+    forwardedFromId?: string | null;
+    forwardedFromName?: string | null;
 }
 
 interface PeerInfo {
@@ -494,7 +498,7 @@ export function NxSocialDesktop() {
     }
 
     function copyMessage(text: string) {
-        navigator.clipboard.writeText(text).catch(() => {});
+        void copyToClipboard(text);
     }
 
     async function saveEdit() {
@@ -784,18 +788,26 @@ export function NxSocialDesktop() {
         try {
             const body: Record<string, unknown> = {};
             const src = forwardMsg;
-            // Matn: original matn oldiga "→ Yuborilgan" belgisi
-            const prefix = "↪ Yuborilgan xabar\n";
-            if (src.text) body.text = prefix + src.text;
-            else body.text = prefix;
+            // Forward indikator UI'da alohida ko'rsatiladi (badge), matn oldiga prefix qo'shmaymiz.
+            if (src.text) body.text = src.text;
             // Media (agent/transfer/poll/location'lar forward'ga tushmaydi — faqat oddiy media)
             if (src.mediaUrl && src.mediaType && ["image", "video", "audio", "file", "video-circle"].includes(src.mediaType)) {
                 body.mediaUrl = src.mediaUrl;
                 body.mediaType = src.mediaType;
+                body.mediaMime = src.mediaMime;
                 if (src.mediaName) body.mediaName = src.mediaName;
                 if (typeof src.mediaSize === "number") body.mediaSize = src.mediaSize;
                 if (typeof src.durationMs === "number") body.durationMs = src.durationMs;
             }
+            // Forward indikator — asl yozuvchi ID va nomini olib o'tamiz.
+            // Agar src o'zi forwarded bo'lsa, asl manba saqlanadi (zanjirlanmaydi).
+            const su = session?.user as { profileId?: string | null; name?: string | null } | undefined;
+            const origName = src.forwardedFromName
+                ?? (src.mine ? (su?.name ?? null) : (peer?.name ?? peer?.username ?? null));
+            const origId = src.forwardedFromId
+                ?? (src.mine ? (su?.profileId ?? null) : (peer?.id ?? null));
+            if (origId) body.forwardedFromId = origId;
+            if (origName) body.forwardedFromName = origName;
             const r = await fetch(`/api/nexus/messages/${targetConvId}`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body),
@@ -1763,7 +1775,7 @@ export function NxSocialDesktop() {
                                     onClick={() => {
                                         const items = messages.filter(m => selectedIds.has(m.id));
                                         const text = items.map(m => m.text || `[${m.mediaType ?? "media"}]`).join("\n");
-                                        navigator.clipboard.writeText(text).catch(() => {});
+                                        void copyToClipboard(text);
                                         exitSelectMode();
                                     }} />
                                 <button onClick={bulkDelete}
@@ -2158,6 +2170,13 @@ export function NxSocialDesktop() {
                                             borderBottomLeftRadius:  m.mine ? 16 : (groupWithNext ? 4 : 6),
                                             borderBottomRightRadius: m.mine ? (groupWithNext ? 4 : 6) : 16,
                                         }}>
+                                        {m.forwardedFromName && (
+                                            <div className="flex items-center gap-1 mb-1.5 text-[10px] opacity-70"
+                                                style={{ color: m.mine ? "rgba(255,255,255,0.85)" : "rgba(180,192,224,0.85)" }}>
+                                                <Forward className="w-3 h-3" />
+                                                <span>Yuborildi: <strong>{m.forwardedFromName}</strong></span>
+                                            </div>
+                                        )}
                                         {m.replyTo && (
                                             <div className="mb-2 pl-2 pr-2 py-1.5 rounded-md text-xs"
                                                 style={{

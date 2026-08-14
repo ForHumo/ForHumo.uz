@@ -1304,6 +1304,9 @@ model NexusMessage {
   // Jadvalga qo'yilgan xabar — bu vaqtga qadar suhbatda ko'rinmaydi (cron faollashtiradi)
   scheduledFor      DateTime?
   edits             NexusMessageEdit[]
+  // Forward (yuborilgan) — asl yozuvchining profil ID'si (relation bez FK — profil o'chib ketsa xabar qoladi)
+  forwardedFromId   String?
+  forwardedFromName String?                                       // asl yozuvchining ismi/username (snapshot)
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
   @@index([conversationId, pinnedAt])

@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { NxPollCreate } from "./nx-poll-create";
 import { NxMarkdown } from "./nx-markdown";
+import { copyToClipboard } from "@/lib/copy-to-clipboard";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean }
@@ -380,7 +381,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         setTranslated(prev => { const n = { ...prev }; delete n[msgId]; return n; });
     }
     function copyMsg(text: string) {
-        navigator.clipboard.writeText(text).catch(() => {});
+        void copyToClipboard(text);
     }
 
     // Draft — per-channel localStorage

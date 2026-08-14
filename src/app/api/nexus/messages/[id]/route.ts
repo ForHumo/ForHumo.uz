@@ -159,6 +159,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 reactions: reactionMap.get(m.id)
                     ? [...reactionMap.get(m.id)!.entries()].map(([emoji, s]) => ({ emoji, count: s.count, mine: s.mine }))
                     : [],
+                forwardedFromId: m.forwardedFromId,
+                forwardedFromName: m.forwardedFromName,
             };
         }),
         other: p ? {
@@ -211,6 +213,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         replyToId?: string;
         selfDestructSeconds?: number;                          // TTL — shu sekunddan keyin o'chadi
         scheduledFor?: string;                                 // ISO vaqt — jadvalga qo'yish
+        forwardedFromId?: string;                              // Forward: asl yozuvchi profil ID
+        forwardedFromName?: string;                            // Forward: asl yozuvchi ismi/username (snapshot)
     };
     const text = String(body.text ?? "").trim();
     const isLocation = body.mediaType === "location" && typeof body.locLat === "number" && typeof body.locLng === "number";
@@ -252,6 +256,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         }
     }
 
+    // Forward: asl yozuvchi profil ID va nom snapshot (agar berilgan bo'lsa)
+    const forwardedFromId = typeof body.forwardedFromId === "string" ? body.forwardedFromId : null;
+    const forwardedFromName = typeof body.forwardedFromName === "string"
+        ? body.forwardedFromName.trim().slice(0, 80) || null
+        : null;
+
     const msg = await prisma.nexusMessage.create({
         data: {
             conversationId: id,
@@ -260,6 +270,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             replyToId,
             expiresAt,
             scheduledFor,
+            forwardedFromId,
+            forwardedFromName,
             mediaUrl: hasMedia && !isLocation && !isPoll ? body.mediaUrl : null,
             mediaType: hasMedia ? body.mediaType : null,
             mediaMime: hasMedia && !isLocation && !isPoll ? (body.mediaMime ?? null) : null,
@@ -354,6 +366,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             pollMyVotes: isPoll ? [] : null, pollTotal: isPoll ? 0 : null,
             expiresAt: msg.expiresAt,
             scheduledFor: msg.scheduledFor,
+            forwardedFromId: msg.forwardedFromId,
+            forwardedFromName: msg.forwardedFromName,
         },
     });
 }
