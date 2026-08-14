@@ -106,13 +106,25 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     // o'qildi belgilash
     if (member) after(() => prisma.nexusChannelMember.update({ where: { id: member.id }, data: { lastReadAt: new Date() } }).catch(() => { }));
 
+    // Anonim admin — owner o'z anonim xabarini ko'radi (mine=true), lekin
+    // boshqa a'zolar author o'rniga guruh nomi ko'radi va senderId yashiriladi.
+    const isOwner = member?.role === "OWNER";
+
     return NextResponse.json({
         messages: msgs.map(m => {
             const p = pMap[m.senderId];
             const pv = pollVoteMap.get(m.id);
+            const mine = m.senderId === me.id;
+            const anon = m.anonymous;
+            // Owner har doim real author'ni ko'radi (moderatsiya uchun);
+            // boshqa a'zolar anonim bo'lsa faqat guruh nomi.
+            const publicAuthor = anon && !mine && !isOwner
+                ? { name: channel.name, username: null, image: channel.avatarUrl, verified: false, verifiedCategory: null }
+                : (p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null);
             return {
-                id: m.id, text: m.text, media: m.media, createdAt: m.createdAt, mine: m.senderId === me.id,
-                author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null,
+                id: m.id, text: m.text, media: m.media, createdAt: m.createdAt, mine,
+                anonymous: anon,
+                author: publicAuthor,
                 pollQuestion: m.pollQuestion, pollOptions: m.pollOptions, pollExpiresAt: m.pollExpiresAt, pollMulti: m.pollMulti,
                 pollVoteCounts: pv?.counts ?? null, pollMyVotes: pv?.myVotes ?? null, pollTotal: pv?.total ?? null,
                 pinnedAt: m.pinnedAt,
@@ -191,9 +203,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         if (target && target.channelId === id) validReplyToId = target.id;
     }
 
+    // Anonim admin — faqat OWNER/ADMIN uchun mazmunli, faqat GROUP tipida
+    const isAnonymous = channel.type === "GROUP"
+        && (member.role === "OWNER" || member.role === "ADMIN")
+        && !!member.isAnonymous;
+
     const msg = await prisma.nexusChannelMessage.create({
         data: {
             channelId: id, senderId: me.id, text: cleanText || null, media: cleanMedia,
+            anonymous: isAnonymous,
             replyToId: validReplyToId,
             pollQuestion: isPoll ? pollQuestion!.trim().slice(0, 300) : null,
             pollOptions: isPoll ? pollOptions!.map(o => String(o).trim().slice(0, 100)).filter(Boolean).slice(0, 10) : [],
@@ -251,11 +269,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     // Real-time push — kanal a'zolariga (sender bilan birga) o'z private-user kanaliga.
-    // Yuborilgan xabar client-side'da darhol ko'rinadi (polling kutmasdan).
+    // Anonim rejim: umumiy javobda author o'rniga guruh nomi/avatari, senderId yashirilgan.
+    // Real senderId serverda saqlanadi (moderatsiya + o'zim ko'rish uchun).
+    const publicAuthor = isAnonymous
+        ? { name: channel.name, username: null, image: channel.avatarUrl, verified: false }
+        : { name: me.name, username: me.username, image: me.image, verified: isVerifiedProfile(me) };
     const outMsg = {
         id: msg.id, text: msg.text, media: msg.media, createdAt: msg.createdAt,
-        senderId: me.id,
-        author: { name: me.name, username: me.username, image: me.image, verified: isVerifiedProfile(me) },
+        // Anonim: senderId null bo'ladi push payload'da (owner o'zi ko'ra oladi lekin faqat mine flag orqali)
+        senderId: isAnonymous ? null : me.id,
+        anonymous: isAnonymous,
+        author: publicAuthor,
         pollQuestion: msg.pollQuestion, pollOptions: msg.pollOptions,
         pollExpiresAt: msg.pollExpiresAt, pollMulti: msg.pollMulti,
         pollVoteCounts: isPoll ? msg.pollOptions.map(() => 0) : null,

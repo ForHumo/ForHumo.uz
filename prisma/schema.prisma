@@ -1635,6 +1635,10 @@ model NexusChannel {
   isPrivate   Boolean  @default(false)            // private = faqat taklif/havola bilan
   memberCount Int      @default(1)
   hidden      Boolean  @default(false)            // moderatsiya
+  // Guruh qoidalari (Markdown qo'llab-quvvatlaydi). Guruh haqida modal'da ko'rsatiladi.
+  rules       String?  @db.Text
+  // Cover rasm (guruh sahifasi ustki banner uchun) — ixtiyoriy.
+  coverUrl    String?
   // Slow mode — xabar yuborish tezligini cheklash (guruh uchun anti-spam).
   // 0 = o'chirilgan. > 0 = har user shu sekunddan tez xabar yuborolmaydi.
   slowModeSeconds Int  @default(0)
@@ -1684,6 +1688,10 @@ model NexusChannelMember {
   permissions Json?
   // Slow mode kuzatuvi — oxirgi xabar vaqti (spam cheklovi uchun).
   lastMsgAt DateTime?
+  // Anonim admin (Telegram uslub) — faqat OWNER/ADMIN uchun mazmunli.
+  // TRUE bo'lsa: yozgan xabarlarda sender ismi o'rniga guruh nomi ko'rinadi,
+  // avatar o'rniga guruh avatari. Real senderId serverda saqlanadi (moderatsiya uchun).
+  isAnonymous Boolean @default(false)
   @@unique([channelId, profileId])
   @@index([profileId])
 }
@@ -1699,6 +1707,8 @@ model NexusChannelMessage {
   channelId String
   channel   NexusChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
   senderId  String
+  // Anonim rejimda yuborilganmi (snapshot — keyingi role o'zgarishlar bu xabarga ta'sir qilmasin)
+  anonymous Boolean  @default(false)
   text      String?
   media     String[] @default([])
   hidden    Boolean  @default(false)
