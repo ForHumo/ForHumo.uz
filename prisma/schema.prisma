@@ -1396,6 +1396,34 @@ model NexusContactHash {
   @@index([phoneHash])
 }
 
+// QR login (WhatsApp Web uslub). Desktop QR ko'rsatadi, telefon tasdiqlaydi,
+// desktop avtomatik login bo'ladi. Google auth qoidasi buzilmaydi — bu faqat
+// mavjud Google akkaunti egasi uchun qayta-kirish (re-authentication) mexanizmi.
+//
+// Oqim:
+//   1. Desktop (anonim): POST /api/auth/qr/start  → { code, url }
+//   2. Desktop QR chizadi (URL = /nexus/qr/<code>) va status'ni pollingdan boshlaydi
+//   3. Telefon (login qilingan) URL'ga o'tadi → "Kirishga ruxsatmi?" tasdiqlaydi
+//   4. POST /api/auth/qr/<code>/approve — status=APPROVED, approvedProfileId=me.id
+//   5. Desktop pollingda "APPROVED" ko'radi → POST /api/auth/qr/<code>/consume
+//   6. Server NextAuth JWT cookie'sini serverda yaratib qaytaradi → desktop reload → login
+//
+// TTL: 3 daqiqa (approved bo'lmasa EXPIRED). Ishlatilgan kod qayta ishlatilmaydi.
+model AuthQrRequest {
+  id                 String   @id @default(cuid())
+  code               String   @unique              // qisqa random (12 belgi) — QR ichida
+  status             String   @default("PENDING")  // PENDING | APPROVED | CONSUMED | EXPIRED
+  deviceHint         String?                       // desktop UA snippet (tasdiqlashda ko'rsatiladi)
+  ipHint             String?                       // ip (ma'lumot uchun)
+  approvedProfileId  String?                       // kim tasdiqladi (UserProfile.id)
+  approvedAt         DateTime?
+  consumedAt         DateTime?
+  createdAt          DateTime @default(now())
+  expiresAt          DateTime                      // createdAt + 3 daq
+  @@index([status, expiresAt])
+  @@index([expiresAt])
+}
+
 // Broadcast list (WhatsApp uslub) — bir marta yozib, ro'yxatdagi barcha
 // kontaktlarga individual DM tarzida yetkaziladi. Qabul qiluvchi oddiy shaxsiy
 // xabar ko'radi (list mavjudligi haqida bilmaydi). Faqat egasi ro'yxatni ko'ra
