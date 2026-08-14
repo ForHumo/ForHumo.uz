@@ -182,6 +182,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 buttons: m.buttons,
                 invoice: m.invoice,
                 invoicePaidAt: m.invoicePaidAt,
+                e2ePayload: m.e2ePayload,
             };
         }),
         other: p ? await (async () => {
@@ -269,12 +270,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         forwardedFromId?: string;                              // Forward: asl yozuvchi profil ID
         forwardedFromName?: string;                            // Forward: asl yozuvchi ismi/username (snapshot)
         viewOnce?: boolean;                                    // View-once: 1 martalik xabar
+        // End-to-end shifrlash payload — bo'lsa server plaintext ko'rmaydi;
+        // moderatsiya/tarjima/qidiruv o'tkazib yuboriladi
+        e2ePayload?: { ephemeralPub: string; iv: string; ciphertext: string; v: number; senderKeyId?: string };
     };
     const text = String(body.text ?? "").trim();
     const isLocation = body.mediaType === "location" && typeof body.locLat === "number" && typeof body.locLng === "number";
     const isPoll = body.mediaType === "poll" && !!body.pollQuestion?.trim() && Array.isArray(body.pollOptions) && body.pollOptions.length >= 2 && body.pollOptions.length <= 10;
     const hasMedia = (!!body.mediaUrl && !!body.mediaType) || isLocation || isPoll;
-    if (!text && !hasMedia) return NextResponse.json({ error: "Xabar bo'sh bo'lmasin" }, { status: 400 });
+    // E2E payload validatsiya
+    const e2e = body.e2ePayload;
+    const isE2e = !!(e2e && typeof e2e.ephemeralPub === "string" && typeof e2e.iv === "string" && typeof e2e.ciphertext === "string" && e2e.v === 1);
+    if (isE2e) {
+        // Format tekshiruv: base64 ko'rinishida bo'lsin, hajm cheklovi
+        if (e2e!.ciphertext.length > 20_000 || e2e!.ephemeralPub.length > 800 || e2e!.iv.length > 40) {
+            return NextResponse.json({ error: "E2E payload juda katta" }, { status: 400 });
+        }
+    }
+    if (!text && !hasMedia && !isE2e) return NextResponse.json({ error: "Xabar bo'sh bo'lmasin" }, { status: 400 });
     if (await nexusRateLimited(me.id, "dm")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
     const clean = text.slice(0, 2000);
 
@@ -320,7 +333,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         data: {
             conversationId: id,
             senderId: me.id,
-            text: clean,
+            // E2E'da matn saqlanmaydi (client'da payload deshifrlanadi)
+            text: isE2e ? "" : clean,
+            e2ePayload: isE2e ? JSON.parse(JSON.stringify(e2e)) : undefined,
             replyToId,
             expiresAt,
             scheduledFor,
@@ -417,6 +432,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                 expiresAt: msg.expiresAt,
                 bookmarked: false,
                 reactions: [],
+                e2ePayload: msg.e2ePayload,
             },
         };
         after(() => pusherTrigger(userChannel(recipientId), "nx:msg:new", pushMsg));
@@ -532,6 +548,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             scheduledFor: msg.scheduledFor,
             forwardedFromId: msg.forwardedFromId,
             forwardedFromName: msg.forwardedFromName,
+            e2ePayload: msg.e2ePayload,
         },
     });
 }

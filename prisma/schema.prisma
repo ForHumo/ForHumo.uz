@@ -1384,6 +1384,10 @@ model NexusMessage {
   // Broadcast — bu xabar broadcast list orqali fan-out qilingan bo'lsa uning ID'si
   // (WhatsApp uslub: qabul qiluvchi buni bilmaydi, oddiy DM sifatida ko'radi).
   broadcastListId String?
+  // End-to-end shifrlash payload (yuboruvchi shifrlagan, server hech qachon plaintext ko'rmaydi).
+  // Struktura: { ephemeralPub, iv, ciphertext, v, senderKeyId }
+  // Bo'lsa: text = "" (yoki placeholder), moderatsiya, tarjima, TTS, qidiruv ishlamaydi.
+  e2ePayload Json?
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
   @@index([conversationId, pinnedAt])

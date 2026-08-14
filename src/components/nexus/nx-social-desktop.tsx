@@ -16,6 +16,8 @@ import { isFounderProfile } from "@/lib/founders";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { NxStatusModal } from "./nx-status-modal";
 import { NxInlinePopover } from "./nx-inline-popover";
+import { encryptForRecipient, decryptFromSender } from "@/lib/e2e-crypto";
+import { getMyIdentity } from "@/lib/e2e-storage";
 import { searchShortcodes } from "./nx-emoji-shortcodes";
 import { NxMarkdown } from "./nx-markdown";
 import { addWatermarkToImage } from "./nx-image-watermark";
@@ -80,6 +82,9 @@ interface Msg {
     buttons?: Array<Array<{ text: string; callbackData?: string; url?: string }>> | null;
     invoice?: { amount: number; currency: "UZS" | "USD"; description: string; payload?: string } | null;
     invoicePaidAt?: string | null;
+    e2ePayload?: { ephemeralPub: string; iv: string; ciphertext: string; v: number } | null;
+    // Client tomon in-memory deshifrlangan matn (UI'da text o'rniga ko'rsatiladi)
+    e2eDecrypted?: string | null;
 }
 
 interface PeerInfo {
@@ -265,6 +270,50 @@ export function NxSocialDesktop() {
     }, [myProfileId]);
 
     useEffect(() => { setPeerTyping(false); }, [peer?.id]);
+
+    // E2E: peer aktiv public kaliti + mening identity (IndexedDB'dan)
+    const [peerE2eKey, setPeerE2eKey] = useState<{ publicKey: string; fingerprint: string; keyId: string } | null>(null);
+    const [myE2eIdentity, setMyE2eIdentity] = useState<{ privateJwk: JsonWebKey; fingerprint: string } | null>(null);
+    useEffect(() => {
+        let cancelled = false;
+        setPeerE2eKey(null);
+        if (!peer?.username) return;
+        fetch(`/api/user/e2e/keys/by-username/${encodeURIComponent(peer.username)}`)
+            .then(r => r.json())
+            .then(d => {
+                if (cancelled) return;
+                if (d?.publicKey) setPeerE2eKey({ publicKey: d.publicKey, fingerprint: d.fingerprint, keyId: d.keyId });
+            })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, [peer?.username]);
+    useEffect(() => {
+        getMyIdentity().then(id => { if (id) setMyE2eIdentity({ privateJwk: id.privateJwk, fingerprint: id.fingerprint }); }).catch(() => {});
+    }, []);
+    // Ikkalasi ham bor bo'lsa E2E mumkin
+    const e2eAvailable = !!(peerE2eKey && myE2eIdentity);
+
+    // Kelgan e2ePayload xabarlarni deshifrlash (client tomon, background)
+    useEffect(() => {
+        if (!myE2eIdentity) return;
+        const toDecrypt = messages.filter(m => m.e2ePayload && m.e2eDecrypted == null);
+        if (toDecrypt.length === 0) return;
+        let cancelled = false;
+        (async () => {
+            for (const m of toDecrypt) {
+                try {
+                    const plain = await decryptFromSender(myE2eIdentity.privateJwk, m.e2ePayload!);
+                    if (cancelled) return;
+                    setMessages(prev => prev.map(x => x.id === m.id ? { ...x, e2eDecrypted: plain } : x));
+                } catch {
+                    if (cancelled) return;
+                    setMessages(prev => prev.map(x => x.id === m.id ? { ...x, e2eDecrypted: "[Deshifrlab bo'lmadi]" } : x));
+                }
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [messages, myE2eIdentity]);
+
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
     const [showInfo, setShowInfo] = useState(true);
@@ -1541,16 +1590,32 @@ export function NxSocialDesktop() {
         setSending(true);
         setNextTtl(null);
         try {
-            const body: Record<string, unknown> = { text: p.text };
+            const body: Record<string, unknown> = {};
             if (p.replyToId) body.replyToId = p.replyToId;
             if (p.ttl) body.selfDestructSeconds = p.ttl;
+            // E2E: agar ikkala tomonda kalit bor bo'lsa — matnni shifrlab yuboramiz
+            const canE2e = !!(peerE2eKey && myE2eIdentity);
+            let localMirror: string | null = null;   // UI'da darhol ko'rsatish uchun
+            if (canE2e && p.text) {
+                try {
+                    const payload = await encryptForRecipient(peerE2eKey!.publicKey, p.text);
+                    body.e2ePayload = { ...payload, senderKeyId: undefined };
+                    localMirror = p.text;
+                } catch {
+                    // Shifrlash muvaffaqiyatsiz bo'lsa fallback — plaintext
+                    body.text = p.text;
+                }
+            } else {
+                body.text = p.text;
+            }
             const r = await fetch(`/api/nexus/messages/${p.convId}`, {
                 method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
             });
             if (r.ok) {
                 const d = await r.json();
-                // Faqat shu suhbat ochilgan bo'lsa xabarni ko'rsatamiz
-                if (p.convId === selectedId) setMessages(m => [...m, d.message]);
+                // E2E xabar bo'lsa — client tomon ko'rsatish uchun deshifrlangan variantni qo'shamiz
+                const msgOut = localMirror ? { ...d.message, e2eDecrypted: localMirror } : d.message;
+                if (p.convId === selectedId) setMessages(m => [...m, msgOut]);
                 loadConvs();
             }
         } finally { setSending(false); }
@@ -2597,7 +2662,18 @@ export function NxSocialDesktop() {
                                                 )}
                                             </div>
                                         )}
-                                        {m.text && editingId !== m.id && (
+                                        {/* E2E: e2ePayload bo'lsa deshifrlangan matn ko'rsatiladi; hali deshifrlanmagan bo'lsa placeholder */}
+                                        {m.e2ePayload && editingId !== m.id && (
+                                            <div className="flex items-start gap-1.5">
+                                                <Lock className="w-3 h-3 mt-1 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                                <div className="flex-1 min-w-0">
+                                                    {m.e2eDecrypted != null
+                                                        ? <NxMarkdown text={m.e2eDecrypted} />
+                                                        : <span className="text-xs opacity-60 italic">Shifrlangan xabar deshifrlanmoqda...</span>}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {m.text && !m.e2ePayload && editingId !== m.id && (
                                             <div>
                                                 {searchOpen && searchQuery.trim()
                                                     ? highlightText(m.text, searchQuery)
