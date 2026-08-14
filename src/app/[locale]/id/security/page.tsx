@@ -7,6 +7,7 @@ import { TwoFaPanel } from "@/components/security/two-fa-panel";
 import { DataExportPanel } from "@/components/security/data-export-panel";
 import { SessionsPanel } from "@/components/security/sessions-panel";
 import { BusinessProfilePanel } from "@/components/security/business-profile-panel";
+import { E2ePanel } from "@/components/security/e2e-panel";
 
 export const metadata = { title: "Xavfsizlik | Humo ID" };
 
@@ -33,6 +34,7 @@ export default async function SecurityPage({ params }: { params: Promise<{ local
                 accountName={me.username || me.humoId || me.email || "user"}
             />
             <SessionsPanel />
+            <E2ePanel />
             <BusinessProfilePanel />
             <DataExportPanel />
         </div>

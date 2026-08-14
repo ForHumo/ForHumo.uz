@@ -1408,6 +1408,27 @@ model NexusContactHash {
   @@index([phoneHash])
 }
 
+// End-to-end shifrlash kalitlari (Signal/WhatsApp uslub).
+// Foydalanuvchi shu qurilmada kalit juftligi yaratganda public key shu jadvalga
+// yuklanadi (private key faqat brauzer IndexedDB'sida qoladi). Boshqa foydalanuvchi
+// shu odamga E2E DM yozganda ECDH orqali shared secret hosil qilib, AES-GCM bilan
+// shifrlaydi.
+//
+// Algoritm: ECDH P-256 (Web Crypto SPKI base64) + AES-256-GCM.
+// Kalit rotatsiya: eski kalit revokedAt bilan belgilanadi (o'chirilmaydi — eski
+// xabarlarni deshifrlash uchun kerak bo'lishi mumkin).
+model UserE2eKey {
+  id           String    @id @default(cuid())
+  profileId    String                              // UserProfile.id
+  publicKey    String                              // SPKI DER, base64
+  keyAlgorithm String    @default("ECDH-P256")     // kelajakda "X25519" ham
+  fingerprint  String                              // SHA-256(publicKey) qisqartma — UI'da ko'rsatiladi
+  deviceLabel  String?                             // "Chrome · Windows" — qaysi qurilmadan
+  createdAt    DateTime  @default(now())
+  revokedAt    DateTime?
+  @@index([profileId, revokedAt])
+}
+
 // Business profil (Instagram Business uslub) — foydalanuvchi o'zini biznes
 // sifatida ko'rsatishi mumkin. Nexus profilida "Business" badge + tez amallar
 // (qo'ng'iroq/email/marshrut). Buyurtma qabul qilish keyingi PR'da (booking).
