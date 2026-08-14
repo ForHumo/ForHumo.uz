@@ -130,6 +130,16 @@ model UserProfile {
   // Rate-limit: `lastExportAt` bo'yicha (JSON eksporti resurs talabchan).
   lastExportAt      DateTime?
 
+  // Nearby (yaqin atrofdagi) — opt-in geolokatsiya. Foydalanuvchi yoqsa, boshqa
+  // opt-in foydalanuvchilar uni topib DM yozishi mumkin. 24 soatdan eski koordinatalar
+  // hisobga olinmaydi (nearbyUpdatedAt > now-24h filtri).
+  //
+  // Xavfsizlik: koordinatalar boshqalarga qaytmaydi — faqat masofa (Haversine).
+  nearbyEnabled     Boolean   @default(false)
+  nearbyLat         Float?
+  nearbyLng         Float?
+  nearbyUpdatedAt   DateTime?
+
   lastLoginAt   DateTime?
   // Oxirgi faollik vaqti — presence + REST fallback (heartbeat) bilan yangilanadi.
   // Onlayn: presence-nexus'da bor. Offline: lastSeenAt ko'rsatiladi (privacy'ga bo'ysunadi).
@@ -156,6 +166,8 @@ model UserProfile {
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([nearbyEnabled, nearbyUpdatedAt])
 }
 
 model LoginEvent {
