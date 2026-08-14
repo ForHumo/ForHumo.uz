@@ -9,6 +9,7 @@ import { filterMediaUrls } from "@/lib/media-url";
 import { banGuard } from "@/lib/moderation-guard";
 import { sendPushToProfile, pushAvailable } from "@/lib/push";
 import { pusherTrigger, userChannel } from "@/lib/pusher-server";
+import { effectivePermissions, slowModeRemaining, containsUrl } from "@/lib/channel-permissions";
 
 async function meAndMember(email: string, channelId: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true } });
@@ -135,9 +136,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!me || !channel || channel.hidden) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
     if (!member) return NextResponse.json({ error: "Avval a'zo bo'ling" }, { status: 403 });
 
-    // CHANNEL — faqat owner/admin yozadi; GROUP — har bir a'zo
-    const canPost = channel.type === "GROUP" ? true : (member.role === "OWNER" || member.role === "ADMIN");
-    if (!canPost) return NextResponse.json({ error: "Bu kanalga faqat adminlar yoza oladi" }, { status: 403 });
+    // CHANNEL — faqat owner/admin yozadi; GROUP — permissions asosida
+    if (channel.type === "CHANNEL" && member.role !== "OWNER" && member.role !== "ADMIN") {
+        return NextResponse.json({ error: "Bu kanalga faqat adminlar yoza oladi" }, { status: 403 });
+    }
+    // Guruh ruxsatlari (fine-grained)
+    const perms = effectivePermissions(member.role, channel.defaultPermissions, member.permissions);
+    if (channel.type === "GROUP" && !perms.sendMessages) {
+        return NextResponse.json({ error: "Bu guruhda xabar yuborish taqiqlangan" }, { status: 403 });
+    }
+
+    // Slow mode — guruh a'zolar uchun (owner/admin bekor qilinadi)
+    if (channel.type === "GROUP" && member.role === "MEMBER" && channel.slowModeSeconds > 0) {
+        const remain = slowModeRemaining(channel.slowModeSeconds, member.lastMsgAt);
+        if (remain > 0) {
+            return NextResponse.json({
+                error: `Slow mode: ${remain} sekunddan keyin yozing`,
+                code: "SLOW_MODE",
+                retryAfter: remain,
+            }, { status: 429 });
+        }
+    }
 
     const body = await req.json();
     const { text, media, pollQuestion, pollOptions, pollExpiresAt, pollMulti, replyToId } = body as {
@@ -149,6 +168,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const cleanMedia: string[] = filterMediaUrls(media, 9);
     const isPoll = !!pollQuestion?.trim() && Array.isArray(pollOptions) && pollOptions.length >= 2 && pollOptions.length <= 10;
     if (!cleanText && !cleanMedia.length && !isPoll) return NextResponse.json({ error: "Bo'sh bo'lmasin" }, { status: 400 });
+
+    // Fine-grained ruxsat: media va link cheklovi (guruh uchun)
+    if (channel.type === "GROUP") {
+        if (cleanMedia.length > 0 && !perms.sendMedia) {
+            return NextResponse.json({ error: "Media yuborish taqiqlangan" }, { status: 403 });
+        }
+        if (cleanText && containsUrl(cleanText) && !perms.sendLinks) {
+            return NextResponse.json({ error: "Havola yuborish taqiqlangan" }, { status: 403 });
+        }
+    }
+
     const banned = await banGuard(me.id); if (banned) return banned;
     if (await nexusRateLimited(me.id, "channelMsg")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
@@ -172,6 +202,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         },
     });
     if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "CHANNEL_MESSAGE", targetId: msg.id, text: cleanText, kind: "kanal xabari", authorId: me.id }));
+
+    // Slow mode uchun member.lastMsgAt yangilash
+    if (channel.type === "GROUP" && channel.slowModeSeconds > 0) {
+        after(() => prisma.nexusChannelMember.update({
+            where: { channelId_profileId: { channelId: id, profileId: me.id } },
+            data: { lastMsgAt: msg.createdAt },
+        }).catch(() => {}));
+    }
 
     // Push notif — barcha a'zolarga (senderdan tashqari), 500 tagacha
     if (pushAvailable()) {

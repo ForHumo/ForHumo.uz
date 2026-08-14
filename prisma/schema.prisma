@@ -1631,10 +1631,35 @@ model NexusChannel {
   isPrivate   Boolean  @default(false)            // private = faqat taklif/havola bilan
   memberCount Int      @default(1)
   hidden      Boolean  @default(false)            // moderatsiya
+  // Slow mode — xabar yuborish tezligini cheklash (guruh uchun anti-spam).
+  // 0 = o'chirilgan. > 0 = har user shu sekunddan tez xabar yuborolmaydi.
+  slowModeSeconds Int  @default(0)
+  // Guruh sozlamalari — kim nima qila oladi (default a'zolar uchun).
+  // JSON: { sendMessages: true, sendMedia: true, sendLinks: true, embedLinks: true,
+  //         addMembers: false, pinMessages: false, changeInfo: false }
+  // NULL = default (hammasi ochiq). Owner/admin har doim to'liq huquqli.
+  defaultPermissions Json?
   createdAt   DateTime @default(now())
   members     NexusChannelMember[]
   messages    NexusChannelMessage[]
+  invites     NexusChannelInvite[]
   @@index([type, isPrivate, createdAt])
+}
+
+// Havola bilan qo'shilish (guruh/kanal)
+model NexusChannelInvite {
+  id         String       @id @default(cuid())
+  channelId  String
+  channel    NexusChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  code       String       @unique      // qisqa, unik (base32 ~10 belgi)
+  createdById String                    // yaratuvchi profileId
+  expiresAt  DateTime?                  // NULL = doimiy
+  maxUses    Int?                       // NULL = cheklovsiz
+  usesCount  Int          @default(0)
+  revokedAt  DateTime?                  // egasi bekor qilgan
+  createdAt  DateTime     @default(now())
+  @@index([channelId])
+  @@index([code])
 }
 
 enum NexusChannelType {
@@ -1650,6 +1675,11 @@ model NexusChannelMember {
   role      NexusChannelRole @default(MEMBER)
   lastReadAt DateTime?
   joinedAt  DateTime @default(now())
+  // Per-member permission override (NULL = guruh default'iga tayanadi).
+  // Muted/restricted user'lar uchun individual cheklov (Telegram uslub).
+  permissions Json?
+  // Slow mode kuzatuvi — oxirgi xabar vaqti (spam cheklovi uchun).
+  lastMsgAt DateTime?
   @@unique([channelId, profileId])
   @@index([profileId])
 }

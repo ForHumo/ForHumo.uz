@@ -67,7 +67,7 @@ export async function POST(req: Request) {
         const clean = [...new Set(
             (memberIds as unknown[]).filter((x): x is string => typeof x === "string" && x !== me.id)
         )];
-        if (clean.length > 19) return NextResponse.json({ error: "Guruhda maksimal 20 kishi" }, { status: 400 });
+        if (clean.length > 499) return NextResponse.json({ error: "Guruhda maksimal 500 kishi" }, { status: 400 });
         if (clean.length > 0) {
             const found = await prisma.userProfile.findMany({
                 where: { id: { in: clean } }, select: { id: true },

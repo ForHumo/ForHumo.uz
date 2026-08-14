@@ -81,7 +81,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
             const next = new Set(prev);
             if (next.has(id)) next.delete(id);
             else {
-                if (next.size >= 19) return prev; // max 19 peers + creator = 20
+                if (next.size >= 499) return prev; // max 499 peers + creator = 500
                 next.add(id);
             }
             return next;
@@ -95,7 +95,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
             return;
         }
         if (selectedIds.size < 1) {
-            setErr("Kamida 1 ta a'zo tanlang (jami 2-20 kishi)");
+            setErr("Kamida 1 ta a'zo tanlang (jami 2-500 kishi)");
             return;
         }
 
@@ -215,7 +215,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                             A&apos;zolarni tanlang
                         </span>
                         <span className="text-[10px] font-bold" style={{ color: "#00CEC8" }}>
-                            {selectedIds.size} / 19 tanlandi
+                            {selectedIds.size} / 499 tanlandi
                         </span>
                     </div>
 

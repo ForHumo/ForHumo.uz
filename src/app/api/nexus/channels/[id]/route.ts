@@ -26,6 +26,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             description: channel.description, avatarUrl: channel.avatarUrl, isPrivate: channel.isPrivate,
             memberCount: channel.memberCount, isOwner: channel.ownerId === me.id,
             isMember: !!membership, role: membership?.role ?? null, canPost,
+            slowModeSeconds: channel.slowModeSeconds,
+            defaultPermissions: channel.defaultPermissions,
         },
     });
 }
@@ -41,13 +43,38 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const m = await prisma.nexusChannelMember.findUnique({ where: { channelId_profileId: { channelId: id, profileId: me.id } } });
     if (!m || (m.role !== "OWNER" && m.role !== "ADMIN")) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
 
-    const { name, description, avatarUrl } = await req.json();
-    const data: { name?: string; description?: string | null; avatarUrl?: string | null } = {};
+    const body = await req.json();
+    const { name, description, avatarUrl, slowModeSeconds, defaultPermissions } = body as {
+        name?: string; description?: string; avatarUrl?: string;
+        slowModeSeconds?: number;
+        defaultPermissions?: Record<string, boolean>;
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: any = {};
     if (typeof name === "string" && name.trim()) data.name = name.trim().slice(0, 80);
     if (typeof description === "string") data.description = description.trim().slice(0, 500) || null;
     if (typeof avatarUrl === "string") data.avatarUrl = avatarUrl || null;
+    // Slow mode — 0..3600 sekund (0 = o'chirilgan, max 1 soat)
+    if (typeof slowModeSeconds === "number") {
+        data.slowModeSeconds = Math.max(0, Math.min(3600, Math.floor(slowModeSeconds)));
+    }
+    // Default permissions — faqat ma'lum flag'lar (owner tomonidan)
+    if (defaultPermissions && typeof defaultPermissions === "object" && m.role === "OWNER") {
+        const allowed = ["sendMessages", "sendMedia", "sendLinks", "embedLinks", "addMembers", "pinMessages", "changeInfo"];
+        const cleaned: Record<string, boolean> = {};
+        for (const k of allowed) {
+            if (typeof defaultPermissions[k] === "boolean") cleaned[k] = defaultPermissions[k];
+        }
+        data.defaultPermissions = cleaned;
+    }
     const updated = await prisma.nexusChannel.update({ where: { id }, data });
-    return NextResponse.json({ ok: true, channel: { id: updated.id, name: updated.name, description: updated.description, avatarUrl: updated.avatarUrl } });
+    return NextResponse.json({
+        ok: true,
+        channel: {
+            id: updated.id, name: updated.name, description: updated.description, avatarUrl: updated.avatarUrl,
+            slowModeSeconds: updated.slowModeSeconds, defaultPermissions: updated.defaultPermissions,
+        },
+    });
 }
 
 // DELETE /api/nexus/channels/[id] — o'chirish (faqat owner)
