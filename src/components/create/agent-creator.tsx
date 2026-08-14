@@ -7,7 +7,8 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { useSession, signIn } from "next-auth/react";
-import { Bot, Plus, Loader2, Trash2, Copy, ExternalLink, Check, ArrowLeft, AlertCircle } from "lucide-react";
+import { Bot, Plus, Loader2, Trash2, Copy, ExternalLink, Check, ArrowLeft, AlertCircle, Settings, Link as LinkIcon, RefreshCw, Save, EyeOff, Eye } from "lucide-react";
+import { copyToClipboard } from "@/lib/copy-to-clipboard";
 
 type Agent = {
     id: string; profileId: string;
@@ -62,6 +63,9 @@ export function AgentCreator() {
         if (r.ok) load();
     }
 
+    // Sozlamalar (webhook/kalit) panelini kengaytirish holati — id → open
+    const [openSettings, setOpenSettings] = useState<string | null>(null);
+
     if (status === "unauthenticated") {
         return (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6"
@@ -115,7 +119,7 @@ export function AgentCreator() {
                                 </p>
                                 <div className="mt-2 flex items-center gap-2 rounded-xl p-2" style={{ background: "rgba(0,0,0,0.35)" }}>
                                     <code className="flex-1 text-xs text-white font-mono break-all">{freshKey.apiKey}</code>
-                                    <button onClick={() => navigator.clipboard.writeText(freshKey.apiKey)}
+                                    <button onClick={() => void copyToClipboard(freshKey.apiKey)}
                                         className="p-1.5 rounded-lg hover:bg-white/[0.06]"><Copy size={14} className="text-white/70" /></button>
                                 </div>
                                 <button onClick={() => setFreshKey(null)}
@@ -190,28 +194,44 @@ export function AgentCreator() {
                             Hali agentlaringiz yo'q
                         </div>
                     ) : agents.map(a => (
-                        <div key={a.id} className="p-4 rounded-2xl flex items-center gap-3"
+                        <div key={a.id} className="rounded-2xl"
                             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(43,62,232,0.12)" }}>
-                            <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
-                                style={{ background: "rgba(43,62,232,0.15)" }}>
-                                {a.image ? (
-                                    <Image src={a.image} alt="" width={44} height={44} className="w-full h-full object-cover" />
-                                ) : (
-                                    <Bot className="w-5 h-5 text-white/50" />
+                            <div className="p-4 flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
+                                    style={{ background: "rgba(43,62,232,0.15)" }}>
+                                    {a.image ? (
+                                        <Image src={a.image} alt="" width={44} height={44} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Bot className="w-5 h-5 text-white/50" />
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-white truncate flex items-center gap-1.5">
+                                        {a.name}
+                                        {a.webhookUrl && <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#22C55E" }} title="Webhook faol" />}
+                                    </p>
+                                    <p className="text-[11px] text-white/50">@{a.username} • {a.module}</p>
+                                </div>
+                                {!a.isSystem && (
+                                    <button onClick={() => setOpenSettings(openSettings === a.id ? null : a.id)}
+                                        className="p-2 rounded-lg hover:bg-white/[0.05] text-white/60" title="Sozlamalar">
+                                        <Settings size={14} />
+                                    </button>
+                                )}
+                                <Link href={`/nexus/u/${a.username}`}
+                                    className="p-2 rounded-lg hover:bg-white/[0.05] text-white/60" title="Ochish">
+                                    <ExternalLink size={14} />
+                                </Link>
+                                {!a.isSystem && (
+                                    <button onClick={() => del(a.id)}
+                                        className="p-2 rounded-lg hover:bg-red-500/15 text-red-400" title="O'chirish">
+                                        <Trash2 size={14} />
+                                    </button>
                                 )}
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-white truncate">{a.name}</p>
-                                <p className="text-[11px] text-white/50">@{a.username} • {a.module}</p>
-                            </div>
-                            <Link href={`/nexus/u/${a.username}`}
-                                className="p-2 rounded-lg hover:bg-white/[0.05] text-white/60" title="Ochish">
-                                <ExternalLink size={14} />
-                            </Link>
-                            <button onClick={() => del(a.id)}
-                                className="p-2 rounded-lg hover:bg-red-500/15 text-red-400" title="O'chirish">
-                                <Trash2 size={14} />
-                            </button>
+                            {openSettings === a.id && !a.isSystem && (
+                                <AgentSettingsPanel agent={a} onSaved={load} />
+                            )}
                         </div>
                     ))}
                 </div>
@@ -221,6 +241,133 @@ export function AgentCreator() {
                     strukturaviy xabar almashadi. Har agent maks {max} tagacha (foydalanuvchida).
                 </p>
             </div>
+        </div>
+    );
+}
+
+// Har agent uchun sozlamalar paneli: webhook URL saqlash, API kalitni qayta yaratish.
+function AgentSettingsPanel({ agent, onSaved }: { agent: Agent; onSaved: () => void }) {
+    const [url, setUrl] = useState(agent.webhookUrl ?? "");
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const [rotating, setRotating] = useState(false);
+    const [rotatedKey, setRotatedKey] = useState<string | null>(null);
+    const [showKey, setShowKey] = useState(false);
+    const [err, setErr] = useState<string | null>(null);
+
+    async function saveWebhook() {
+        setSaving(true); setErr(null); setSaved(false);
+        try {
+            const clean = url.trim();
+            const r = await fetch(`/api/nexus/agents/${agent.id}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ webhookUrl: clean }),
+            });
+            if (r.ok) { setSaved(true); onSaved(); setTimeout(() => setSaved(false), 2000); }
+            else {
+                const d = await r.json().catch(() => ({}));
+                setErr(d?.error ?? "Saqlab bo'lmadi");
+            }
+        } finally { setSaving(false); }
+    }
+
+    async function rotate() {
+        if (!confirm("Yangi API kalit yaratilsinmi? Eski kalit darhol ishlamay qoladi.")) return;
+        setRotating(true); setErr(null);
+        try {
+            const r = await fetch(`/api/nexus/agents/${agent.id}/regenerate-key`, { method: "POST" });
+            const d = await r.json().catch(() => ({}));
+            if (r.ok && d?.apiKey) {
+                setRotatedKey(d.apiKey);
+                setShowKey(true);
+            } else {
+                setErr(d?.error ?? "Kalit yaratib bo'lmadi");
+            }
+        } finally { setRotating(false); }
+    }
+
+    return (
+        <div className="px-4 pb-4 space-y-3 border-t" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+            <div className="pt-3">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-white/50 flex items-center gap-1">
+                    <LinkIcon size={10} /> Webhook URL
+                </label>
+                <div className="mt-1.5 flex gap-2">
+                    <input value={url} onChange={e => setUrl(e.target.value)}
+                        placeholder="https://sizning-serveringiz.uz/webhook"
+                        className="flex-1 px-3 py-2 rounded-xl bg-transparent text-white text-xs font-mono focus:outline-none"
+                        style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                    <button onClick={saveWebhook} disabled={saving}
+                        className="px-3 py-2 rounded-xl text-xs font-bold text-white flex items-center gap-1 disabled:opacity-40"
+                        style={{ background: saved ? "rgba(34,197,94,0.20)" : "rgba(0,206,200,0.14)", border: `1px solid ${saved ? "rgba(34,197,94,0.35)" : "rgba(0,206,200,0.30)"}`, color: saved ? "#22C55E" : "#00CEC8" }}>
+                        {saving ? <Loader2 size={12} className="animate-spin" /> : saved ? <Check size={12} /> : <Save size={12} />}
+                        {saved ? "Saqlandi" : "Saqlash"}
+                    </button>
+                </div>
+                <p className="text-[10px] text-white/40 mt-1.5">
+                    Foydalanuvchi agentga DM yozganda shu URL'ga POST yuboriladi.
+                    Javob JSON: <code className="text-[#00CEC8]">{"{ text: string }"}</code>
+                </p>
+            </div>
+
+            <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">API kalit</label>
+                {rotatedKey ? (
+                    <div className="mt-1.5 rounded-xl p-2" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                        <div className="flex items-center gap-2">
+                            <code className={`flex-1 text-xs text-white font-mono break-all ${showKey ? "" : "select-none blur-sm"}`}>{rotatedKey}</code>
+                            <button onClick={() => setShowKey(v => !v)} className="p-1.5 rounded-lg hover:bg-white/[0.06]"
+                                title={showKey ? "Yashirish" : "Ko'rsatish"}>
+                                {showKey ? <EyeOff size={12} className="text-white/70" /> : <Eye size={12} className="text-white/70" />}
+                            </button>
+                            <button onClick={() => void copyToClipboard(rotatedKey)}
+                                className="p-1.5 rounded-lg hover:bg-white/[0.06]"><Copy size={12} className="text-white/70" /></button>
+                        </div>
+                        <p className="text-[10px] text-white/50 mt-1.5">
+                            <AlertCircle size={9} className="inline -mt-0.5 mr-1" />
+                            Bu kalit bir marta ko&apos;rsatiladi. Saqlab qo&apos;ying.
+                        </p>
+                    </div>
+                ) : (
+                    <button onClick={rotate} disabled={rotating}
+                        className="mt-1.5 w-full px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-40"
+                        style={{ background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.30)", color: "#F59E0B" }}>
+                        {rotating ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                        Kalit yangilash (eski ishlamay qoladi)
+                    </button>
+                )}
+            </div>
+
+            {err && <p className="text-xs" style={{ color: "#EF4444" }}>{err}</p>}
+
+            <details className="text-[10px] text-white/50">
+                <summary className="cursor-pointer text-white/70 font-bold">Webhook payload / imzo tekshiruvi</summary>
+                <pre className="mt-2 p-2 rounded-lg overflow-x-auto text-[10px] leading-relaxed"
+                    style={{ background: "rgba(0,0,0,0.35)", color: "rgba(220,230,255,0.75)" }}>
+{`POST <webhookUrl>
+Headers:
+  X-Forhumo-Event: message.created
+  X-Forhumo-Timestamp: <unix seconds>
+  X-Forhumo-Signature: sha256=<hex>
+
+Body (JSON):
+  {
+    event: "message.created",
+    chatId, messageId,
+    from: { profileId, username, name },
+    text, mediaUrl, mediaType, timestamp
+  }
+
+Imzo tekshiruv (Node.js):
+  const expected = "sha256=" + crypto
+    .createHmac("sha256", API_KEY)
+    .update(\`\${timestamp}.\${rawBody}\`)
+    .digest("hex");
+
+Javob (JSON, 200):
+  { text?: string, mediaUrl?, mediaType?, mediaMime?, mediaName? }`}
+                </pre>
+            </details>
         </div>
     );
 }

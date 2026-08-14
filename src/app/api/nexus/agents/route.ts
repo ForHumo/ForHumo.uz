@@ -8,11 +8,11 @@
 //     - tizim agenti nomlari (id_agent, market_agent, ...) band
 
 import { NextResponse } from "next/server";
-import crypto from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateAgentUsername, MAX_AGENTS_PER_USER } from "@/lib/nexus-agent";
+import { generateApiKey } from "@/lib/agent-webhook";
 
 async function me() {
     const s = await getServerSession(authOptions);
@@ -91,17 +91,18 @@ export async function POST(req: Request) {
         },
     });
 
+    // API kalit yaratish va DB'ga saqlash (webhook HMAC uchun secret).
+    // Bir marta javobda ko'rsatiladi — foydalanuvchi keyin qayta olishi mumkin (rotate).
+    const apiKey = generateApiKey();
     const agent = await prisma.nexusAgent.create({
         data: {
             profileId: profile.id,
             ownerId: owner.id,
             module: "CUSTOM",
             isSystem: false,
+            apiKey,
         },
     });
-
-    // Kalit generatsiya (kelajakda webhook uchun kerak — hozircha ko'rsatib qo'yamiz)
-    const apiKey = `agk_${crypto.randomBytes(16).toString("hex")}`;
 
     return NextResponse.json({
         ok: true,

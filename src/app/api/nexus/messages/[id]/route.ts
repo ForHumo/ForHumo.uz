@@ -11,6 +11,7 @@ import { checkBanned, moderateDmMessage } from "@/lib/moderation-dm";
 import { BAN_LABELS } from "@/lib/moderation-ladder";
 import { appendUserReplyToOpenReview } from "@/lib/agent-review-followup";
 import { sendPushToProfile, pushAvailable } from "@/lib/push";
+import { sendToAgentWebhook } from "@/lib/agent-webhook";
 
 async function meAndConv(email: string, id: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true } });
@@ -334,6 +335,62 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         mediaUrl: msg.mediaUrl,
         mediaType: msg.mediaType,
     }));
+
+    // Agent webhook — qabul qiluvchi agent bo'lsa, uning webhookUrl'iga POST.
+    // Javob bo'lsa yangi agent xabari sifatida suhbatga yoziladi.
+    if (!scheduledFor) {
+        after(async () => {
+            const recipientId = otherId(conv, me.id);
+            const agent = await prisma.nexusAgent.findUnique({
+                where: { profileId: recipientId },
+                select: { profileId: true, webhookUrl: true, apiKey: true },
+            });
+            if (!agent || !agent.webhookUrl || !agent.apiKey) return;
+
+            const senderProfile = await prisma.userProfile.findUnique({
+                where: { id: me.id }, select: { username: true, name: true },
+            });
+
+            const reply = await sendToAgentWebhook(agent, {
+                event: "message.created",
+                chatId: id,
+                messageId: msg.id,
+                from: {
+                    profileId: me.id,
+                    username: senderProfile?.username ?? null,
+                    name: senderProfile?.name ?? null,
+                },
+                text: msg.text,
+                mediaUrl: msg.mediaUrl,
+                mediaType: msg.mediaType,
+                timestamp: Math.floor(Date.now() / 1000),
+            });
+            if (!reply) return;
+
+            // Agent javobi — o'sha suhbatga yangi xabar
+            const agentMsg = await prisma.nexusMessage.create({
+                data: {
+                    conversationId: id,
+                    senderId: recipientId,
+                    text: reply.text ?? "",
+                    mediaUrl: reply.mediaUrl ?? null,
+                    mediaType: reply.mediaType ?? null,
+                    mediaMime: reply.mediaMime ?? null,
+                    mediaName: reply.mediaName ?? null,
+                },
+                select: { id: true, text: true, mediaType: true },
+            });
+            const agentPreview = agentMsg.text || (agentMsg.mediaType ? `[${agentMsg.mediaType}]` : "Yangi xabar");
+            await prisma.nexusConversation.update({
+                where: { id },
+                data: {
+                    lastMessageAt: new Date(),
+                    lastMessageText: agentPreview.slice(0, 120),
+                    lastSenderId: recipientId,
+                },
+            });
+        });
+    }
 
     // WebPush bildirishnoma — jadvalli bo'lmasa va mute qilinmagan bo'lsa
     if (!scheduledFor && pushAvailable()) {

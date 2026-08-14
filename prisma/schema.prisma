@@ -189,6 +189,11 @@ model NexusAgent {
   ownerId      String                                                          // yaratuvchi profileId (@create egasi)
   ownerProfile UserProfile  @relation("NexusAgentOwner", fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   webhookUrl   String?                                                         // ixtiyoriy tashqi integratsiya
+  // API kaliti — HMAC uchun secret va agent so'rov autentifikatsiyasi.
+  // Prefix: agk_ + 32 hex bayt (agk_ + 64 hex chars). Bir marta ko'rsatiladi
+  // (yaratilganda yoki qayta generatsiya paytida), hash saqlanmaydi — foydalanuvchi
+  // xohlasa qayta olishi mumkin (rotate).
+  apiKey       String?      @unique
   isSystem     Boolean      @default(false)                                    // rasmiy agent (bir marta seed qilingan)
   createdAt    DateTime     @default(now())
   @@index([ownerId])
