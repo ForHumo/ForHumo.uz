@@ -13,6 +13,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { otherId } from "@/lib/nexus-dm";
 import { pusherTrigger, userChannel } from "@/lib/pusher-server";
+import { fireAgentEventIfPeer } from "@/lib/agent-webhook";
 
 const WINDOW_MS = 60 * 60 * 1000; // 60 daqiqa
 
@@ -68,6 +69,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const otherPeerId = otherId(conv, me.id);
     after(() => pusherTrigger(userChannel(otherPeerId), "nx:msg:delete", { convId: id, messageId, tombstone: true, deletedAt: now.toISOString() }));
     after(() => pusherTrigger(userChannel(me.id), "nx:msg:delete", { convId: id, messageId, tombstone: true, deletedAt: now.toISOString() }));
+
+    // Agent system event — peer agent bo'lsa message.deleted webhook fire
+    after(() => fireAgentEventIfPeer(prisma, otherPeerId, {
+        event: "message.deleted",
+        chatId: id,
+        messageId,
+        text: "",
+        mediaUrl: null,
+        mediaType: null,
+        fromProfileId: me.id,
+    }));
 
     return NextResponse.json({ ok: true, deletedAt: now.toISOString() });
 }

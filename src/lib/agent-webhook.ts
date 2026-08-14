@@ -30,6 +30,43 @@ export function generateApiKey(): string {
     return AGENT_KEY_PREFIX + crypto.randomBytes(32).toString("hex");
 }
 
+// Yuqori darajali yordamchi — agar suhbatdagi peer agent bo'lsa system eventini fire qiladi.
+// Fail-safe: agent yo'q yoki webhook sozlanmagan bo'lsa hech nima qilmaydi.
+// Ishlatish: edit/delete/pin endpoint'larida after() ichida chaqiring.
+export async function fireAgentEventIfPeer(
+    prisma: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        nexusAgent: { findUnique: (args: any) => Promise<any> };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        userProfile: { findUnique: (args: any) => Promise<any> };
+    },
+    peerProfileId: string,
+    payload: Omit<AgentWebhookPayload, "from" | "timestamp"> & { fromProfileId: string },
+): Promise<void> {
+    const agent = await prisma.nexusAgent.findUnique({
+        where: { profileId: peerProfileId },
+        select: { profileId: true, webhookUrl: true, apiKey: true },
+    });
+    if (!agent || !agent.webhookUrl || !agent.apiKey) return;
+
+    const senderProfile = await prisma.userProfile.findUnique({
+        where: { id: payload.fromProfileId },
+        select: { username: true, name: true },
+    });
+
+    const { fromProfileId, ...rest } = payload;
+    void fromProfileId;
+    await sendToAgentWebhook(agent, {
+        ...rest,
+        from: {
+            profileId: payload.fromProfileId,
+            username: senderProfile?.username ?? null,
+            name: senderProfile?.name ?? null,
+        },
+        timestamp: Math.floor(Date.now() / 1000),
+    });
+}
+
 // HMAC-SHA256: `sha256=<hex>` format (GitHub webhook naqshi)
 export function signPayload(secret: string, timestamp: string, body: string): string {
     const h = crypto.createHmac("sha256", secret);
@@ -70,8 +107,17 @@ export interface AgentInvoice {
     payload?: string;           // ixtiyoriy: agent identifikator (invoice.paid webhook'da qaytariladi)
 }
 
+export type AgentWebhookEvent =
+    | "message.created"     // yangi xabar
+    | "message.edited"      // foydalanuvchi xabarini tahrirladi
+    | "message.deleted"     // foydalanuvchi hamma uchun o'chirdi
+    | "message.pinned"      // xabar pinga qo'yildi
+    | "message.unpinned"    // pindan olindi
+    | "callback.query"      // inline tugma bosildi
+    | "invoice.paid";       // invoice to'landi
+
 export interface AgentWebhookPayload {
-    event: "message.created" | "callback.query" | "invoice.paid";
+    event: AgentWebhookEvent;
     chatId: string;             // NexusConversation id
     messageId: string;          // asosiy xabar id (yoki callback/invoice holatida bosilgan xabar)
     from: {
@@ -92,6 +138,8 @@ export interface AgentWebhookPayload {
         payload?: string;
         txRef: string;          // to'lov ledger ref
     };
+    // Faqat event="message.edited" holatida — eski matn (agar mavjud bo'lsa)
+    previousText?: string;
     timestamp: number;          // unix seconds
 }
 

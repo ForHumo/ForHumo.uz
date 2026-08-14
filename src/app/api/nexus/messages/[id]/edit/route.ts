@@ -2,10 +2,12 @@
 //   POST /api/nexus/messages/[convId]/edit
 //     body: { messageId, text }
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { otherId } from "@/lib/nexus-dm";
+import { fireAgentEventIfPeer } from "@/lib/agent-webhook";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
@@ -34,5 +36,25 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const updated = await prisma.nexusMessage.update({
         where: { id: messageId }, data: { text, editedAt: new Date() },
     });
+
+    // Agent system event — peer agent bo'lsa uning webhook'iga message.edited fire
+    const conv = await prisma.nexusConversation.findUnique({
+        where: { id }, select: { user1Id: true, user2Id: true },
+    });
+    if (conv) {
+        const peerId = otherId(conv, me.id);
+        const previousText = msg.text ?? "";
+        after(() => fireAgentEventIfPeer(prisma, peerId, {
+            event: "message.edited",
+            chatId: id,
+            messageId: updated.id,
+            text: updated.text,
+            mediaUrl: null,
+            mediaType: null,
+            previousText,
+            fromProfileId: me.id,
+        }));
+    }
+
     return NextResponse.json({ ok: true, message: { id: updated.id, text: updated.text, editedAt: updated.editedAt } });
 }

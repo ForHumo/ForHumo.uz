@@ -3,10 +3,12 @@
 //   DELETE /api/nexus/messages/[convId]/pin?messageId=X
 // Ikkala ishtirokchi ham ko'radi (global pin — Telegram uslubi).
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { otherId } from "@/lib/nexus-dm";
+import { fireAgentEventIfPeer } from "@/lib/agent-webhook";
 
 const MAX_PINNED = 3;
 
@@ -50,6 +52,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     await prisma.nexusMessage.update({ where: { id: messageId }, data: { pinnedAt: new Date() } });
+
+    // Agent system event — peer agent bo'lsa message.pinned webhook fire
+    const peerId = otherId(a.conv, a.me.id);
+    after(() => fireAgentEventIfPeer(prisma, peerId, {
+        event: "message.pinned",
+        chatId: id,
+        messageId,
+        text: "",
+        mediaUrl: null,
+        mediaType: null,
+        fromProfileId: a.me.id,
+    }));
+
     return NextResponse.json({ ok: true, pinned: true });
 }
 
@@ -70,5 +85,18 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     if (!msg || msg.conversationId !== id) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
     await prisma.nexusMessage.update({ where: { id: messageId }, data: { pinnedAt: null } });
+
+    // Agent system event — message.unpinned
+    const peerId = otherId(a.conv, a.me.id);
+    after(() => fireAgentEventIfPeer(prisma, peerId, {
+        event: "message.unpinned",
+        chatId: id,
+        messageId,
+        text: "",
+        mediaUrl: null,
+        mediaType: null,
+        fromProfileId: a.me.id,
+    }));
+
     return NextResponse.json({ ok: true, pinned: false });
 }
