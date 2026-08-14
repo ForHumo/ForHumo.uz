@@ -122,6 +122,10 @@ model UserProfile {
   totpEnabledAt     DateTime?
   totpBackupCodes   Json?                // string[] — SHA-256 hex hashlangan; ishlatilgani ro'yxatdan chiqadi
 
+  // GDPR data portability — foydalanuvchi 7 kunda 1 marta o'z ma'lumotlarini yuklab olishi mumkin.
+  // Rate-limit: `lastExportAt` bo'yicha (JSON eksporti resurs talabchan).
+  lastExportAt      DateTime?
+
   lastLoginAt   DateTime?
   // Oxirgi faollik vaqti — presence + REST fallback (heartbeat) bilan yangilanadi.
   // Onlayn: presence-nexus'da bor. Offline: lastSeenAt ko'rsatiladi (privacy'ga bo'ysunadi).

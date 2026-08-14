@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { TwoFaPanel } from "@/components/security/two-fa-panel";
+import { DataExportPanel } from "@/components/security/data-export-panel";
 
 export const metadata = { title: "Xavfsizlik | Humo ID" };
 
@@ -29,6 +30,7 @@ export default async function SecurityPage({ params }: { params: Promise<{ local
                 enabledAt={me.totpEnabledAt?.toISOString() ?? null}
                 accountName={me.username || me.humoId || me.email || "user"}
             />
+            <DataExportPanel />
         </div>
     );
 }
