@@ -15,6 +15,7 @@ import { NxGroupCreateModal } from "./nx-group-create-modal";
 import { isFounderProfile } from "@/lib/founders";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { NxStatusModal } from "./nx-status-modal";
+import { NxInlinePopover } from "./nx-inline-popover";
 import { searchShortcodes } from "./nx-emoji-shortcodes";
 import { NxMarkdown } from "./nx-markdown";
 import { addWatermarkToImage } from "./nx-image-watermark";
@@ -3131,6 +3132,8 @@ export function NxSocialDesktop() {
                                             </div>
                                         )}
                                     </div>
+                                    {/* Bot inline mode popover — "@botname query" */}
+                                    <NxInlinePopover text={input} convId={selectedId} onSent={() => setInput("")} />
                                     {/* Bot commands autocomplete popover */}
                                     {cmdPopoverOpen && agentCommands.length > 0 && (() => {
                                         const filtered = agentCommands.filter(c => c.cmd.startsWith(cmdFilter));

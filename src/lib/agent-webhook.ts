@@ -114,7 +114,8 @@ export type AgentWebhookEvent =
     | "message.pinned"      // xabar pinga qo'yildi
     | "message.unpinned"    // pindan olindi
     | "callback.query"      // inline tugma bosildi
-    | "invoice.paid";       // invoice to'landi
+    | "invoice.paid"        // invoice to'landi
+    | "inline.query";       // @bot query composer'da — agent natijalar qaytaradi
 
 export interface AgentWebhookPayload {
     event: AgentWebhookEvent;
@@ -140,7 +141,29 @@ export interface AgentWebhookPayload {
     };
     // Faqat event="message.edited" holatida — eski matn (agar mavjud bo'lsa)
     previousText?: string;
+    // Faqat event="inline.query" holatida — foydalanuvchi kiritgan so'rov
+    query?: string;
     timestamp: number;          // unix seconds
+}
+
+// Inline mode — agent qaytargan bitta natija.
+export interface AgentInlineResult {
+    id: string;                 // agent tomonidan tayin, dedup uchun
+    title: string;              // 1-100 belgi (ro'yxatda ko'rinuvchi sarlavha)
+    description?: string;       // 1-200 belgi (subtitle)
+    thumbnailUrl?: string;      // rasm URL (avatar, small preview)
+    message: {                  // tanlangan holda yuboriladigan xabar
+        text?: string;          // 1-2000 belgi
+        mediaUrl?: string;
+        mediaType?: string;     // "image" | "video" | "audio" | "file"
+        mediaMime?: string;
+        mediaName?: string;
+    };
+}
+
+export interface AgentInlineReply {
+    results: AgentInlineResult[];   // maks 20 ta
+    cacheSeconds?: number;          // ixtiyoriy (hozircha ishlatilmaydi)
 }
 
 export interface AgentWebhookReply {
@@ -240,6 +263,73 @@ export async function sendToAgentWebhook(
     } catch {
         // AbortError, network xatoligi, TLS — hammasi silent
         return null;
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
+
+// Inline query — bot'ga @bot query yuborib natijalarni oladi.
+// Xato/timeout/yaroqsiz javob → bo'sh massiv (caller silent qaytadi).
+export async function fetchAgentInlineResults(
+    agent: { webhookUrl: string | null; apiKey: string | null },
+    payload: AgentWebhookPayload,
+): Promise<AgentInlineResult[]> {
+    if (!agent.webhookUrl || !agent.apiKey) return [];
+    const body = JSON.stringify(payload);
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const signature = signPayload(agent.apiKey, timestamp, body);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
+    try {
+        const r = await fetch(agent.webhookUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                [WEBHOOK_EVENT_HEADER]: payload.event,
+                [WEBHOOK_TIMESTAMP_HEADER]: timestamp,
+                [WEBHOOK_SIGNATURE_HEADER]: signature,
+                "User-Agent": "ForHumo-Agent-Webhook/1",
+            },
+            body,
+            signal: controller.signal,
+        });
+        if (!r.ok) return [];
+        const ct = r.headers.get("content-type") ?? "";
+        if (!ct.includes("application/json")) return [];
+        const data = await r.json().catch(() => null) as AgentInlineReply | null;
+        if (!data || !Array.isArray(data.results)) return [];
+
+        const out: AgentInlineResult[] = [];
+        for (const raw of data.results.slice(0, 20)) {
+            if (!raw || typeof raw !== "object") continue;
+            const r0 = raw as Partial<AgentInlineResult> & { message?: Partial<AgentInlineResult["message"]> };
+            if (typeof r0.id !== "string" || !r0.id.trim()) continue;
+            if (typeof r0.title !== "string" || !r0.title.trim()) continue;
+            const msg = r0.message ?? {};
+            const cleanMsg: AgentInlineResult["message"] = {};
+            if (typeof msg.text === "string" && msg.text.trim()) cleanMsg.text = msg.text.trim().slice(0, 2000);
+            if (typeof msg.mediaUrl === "string" && msg.mediaUrl.startsWith("http")) {
+                cleanMsg.mediaUrl = msg.mediaUrl.slice(0, 1000);
+                cleanMsg.mediaType = typeof msg.mediaType === "string" && ["image", "video", "audio", "file"].includes(msg.mediaType)
+                    ? msg.mediaType : "file";
+                if (typeof msg.mediaMime === "string") cleanMsg.mediaMime = msg.mediaMime.slice(0, 100);
+                if (typeof msg.mediaName === "string") cleanMsg.mediaName = msg.mediaName.slice(0, 200);
+            }
+            if (!cleanMsg.text && !cleanMsg.mediaUrl) continue;   // bo'sh xabar — o'tkazamiz
+
+            const clean: AgentInlineResult = {
+                id:      r0.id.trim().slice(0, 100),
+                title:   r0.title.trim().slice(0, 100),
+                message: cleanMsg,
+            };
+            if (typeof r0.description === "string" && r0.description.trim()) clean.description = r0.description.trim().slice(0, 200);
+            if (typeof r0.thumbnailUrl === "string" && r0.thumbnailUrl.startsWith("http")) clean.thumbnailUrl = r0.thumbnailUrl.slice(0, 1000);
+            out.push(clean);
+        }
+        return out;
+    } catch {
+        return [];
     } finally {
         clearTimeout(timeoutId);
     }
