@@ -1361,11 +1361,40 @@ model NexusMessage {
   //   event="invoice.paid" yuboriladi.
   invoice    Json?
   invoicePaidAt DateTime?
+  // Broadcast — bu xabar broadcast list orqali fan-out qilingan bo'lsa uning ID'si
+  // (WhatsApp uslub: qabul qiluvchi buni bilmaydi, oddiy DM sifatida ko'radi).
+  broadcastListId String?
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
   @@index([conversationId, pinnedAt])
   @@index([expiresAt])
   @@index([scheduledFor])
+  @@index([broadcastListId])
+}
+
+// Broadcast list (WhatsApp uslub) — bir marta yozib, ro'yxatdagi barcha
+// kontaktlarga individual DM tarzida yetkaziladi. Qabul qiluvchi oddiy shaxsiy
+// xabar ko'radi (list mavjudligi haqida bilmaydi). Faqat egasi ro'yxatni ko'ra
+// oladi va tahrirlashi mumkin.
+model NexusBroadcastList {
+  id         String                     @id @default(cuid())
+  ownerId    String                                                  // UserProfile.id
+  name       String                                                  // "Do'stlar", "Xarid mijozlari"
+  createdAt  DateTime                   @default(now())
+  updatedAt  DateTime                   @updatedAt
+  members    NexusBroadcastListMember[]
+  @@index([ownerId, updatedAt])
+}
+
+model NexusBroadcastListMember {
+  id         String              @id @default(cuid())
+  listId     String
+  list       NexusBroadcastList  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  profileId  String                                                    // UserProfile.id — qabul qiluvchi
+  addedAt    DateTime            @default(now())
+  @@unique([listId, profileId])
+  @@index([listId])
+  @@index([profileId])
 }
 
 model NexusMessageReaction {
