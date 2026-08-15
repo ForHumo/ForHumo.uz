@@ -109,7 +109,7 @@ interface ChannelItem {
     description: string | null; memberCount: number;
 }
 
-type ListTab = "dm" | "groups" | "channels" | "agents";
+type ListTab = "all" | "unread" | "private" | "groups" | "channels" | "agents";
 interface AgentItem {
     id: string; profileId: string;
     username: string | null; name: string | null; image: string | null; humoId: string | null;
@@ -134,7 +134,9 @@ export function NxSocialDesktop() {
             .catch(() => {});
     }, [session?.user?.email]);
 
-    const [listTab, setListTab] = useState<ListTab>("dm");
+    const [listTab, setListTab] = useState<ListTab>("all");
+    // DM-list ko'rinishida qaysi tab: All, Unread, Private uchun DM ro'yxati ko'rsatiladi
+    const isDmListTab = listTab === "all" || listTab === "unread" || listTab === "private";
     const [convs, setConvs] = useState<Conv[]>([]);
     const [loadingConvs, setLoadingConvs] = useState(true);
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -1536,7 +1538,7 @@ export function NxSocialDesktop() {
 
     // Group/Channel listni yuklash
     useEffect(() => {
-        if (listTab === "dm") return;
+        if (listTab !== "groups" && listTab !== "channels") return;
         const type = listTab === "groups" ? "GROUP" : "CHANNEL";
         setLoadingChannels(true);
         fetch(`/api/nexus/channels?scope=mine&type=${type}`)
@@ -1973,42 +1975,50 @@ export function NxSocialDesktop() {
         shortcutsHelpOpen, messages, input,
     ]);
 
+    const baseConvs = listTab === "unread" ? convs.filter(c => c.unread) : convs;
     const filteredConvs = filter.trim()
-        ? convs.filter(c => {
+        ? baseConvs.filter(c => {
             const q = filter.toLowerCase();
             return (c.other?.name ?? "").toLowerCase().includes(q)
                 || (c.other?.username ?? "").toLowerCase().includes(q)
                 || (c.lastMessageText ?? "").toLowerCase().includes(q);
         })
-        : convs;
+        : baseConvs;
 
     return (
         <div className="flex w-full h-full min-h-0 pb-[88px]" style={{ background: "#050818" }}>
             {/* ── COL 1: Chat list ─────────────────────────────────────── */}
             <div className="w-[320px] flex-shrink-0 flex flex-col border-r"
                 style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.55)" }}>
-                {/* Tab bar: DM | Groups | Channels + Plus (new) */}
-                <div className="p-2 flex gap-1 flex-shrink-0"
+                {/* Tab bar (6 majburiy tab: All/Unread/Private/Groups/Channels/Agents) — horizontal scroll */}
+                <div className="p-2 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    <div className="flex items-center gap-1 overflow-x-auto nx-hide-scrollbar">
                     {([
-                        { id: "dm" as const,       icon: MessageSquare, label: "DM" },
-                        { id: "groups" as const,   icon: Users,         label: "Groups" },
-                        { id: "channels" as const, icon: Hash,          label: "Channels" },
-                        { id: "agents" as const,   icon: BotIcon,       label: "Agents" },
+                        { id: "all" as const,      icon: Inbox,         label: "Barchasi" },
+                        { id: "unread" as const,   icon: BellOff,       label: "O'qilmagan" },
+                        { id: "private" as const,  icon: MessageSquare, label: "Shaxsiy" },
+                        { id: "groups" as const,   icon: Users,         label: "Guruhlar" },
+                        { id: "channels" as const, icon: Hash,          label: "Kanallar" },
+                        { id: "agents" as const,   icon: BotIcon,       label: "Agentlar" },
                     ]).map(t => (
                         <button key={t.id}
                             onClick={() => setListTab(t.id)}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold transition"
+                            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition whitespace-nowrap"
                             style={listTab === t.id ? {
                                 background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
                                 color: "#fff",
                             } : {
                                 background: "rgba(43,62,232,0.06)",
                                 color: "rgba(140,160,210,0.80)",
+                                border: "1px solid rgba(43,62,232,0.15)",
                             }}>
                             <t.icon className="w-3.5 h-3.5" /> {t.label}
                         </button>
                     ))}
+                    </div>
+                    <div className="flex items-center gap-1 mt-2">
+                    <div className="flex-1" />
                     {(listTab === "groups" || listTab === "channels") && (
                         <button
                             onClick={() => setCreateChannelOpen(listTab === "groups" ? "GROUP" : "CHANNEL")}
@@ -2039,7 +2049,7 @@ export function NxSocialDesktop() {
                         </Link>
                     )}
                     {/* Sidebar sozlamalari menyusi (Sound/Watermark/Push) — Telegram uslub */}
-                    {listTab === "dm" && (
+                    {isDmListTab && (
                         <div className="relative" ref={sidebarSettingsRef}>
                             <button
                                 onClick={() => setSidebarSettingsOpen(v => !v)}
@@ -2093,9 +2103,10 @@ export function NxSocialDesktop() {
                             )}
                         </div>
                     )}
+                    </div>
                 </div>
 
-                {listTab === "dm" && (
+                {isDmListTab && (
                     <div className="p-3 flex-shrink-0 space-y-2" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                         <div className="flex items-center gap-2">
                             <div className="relative flex-1 min-w-0">
@@ -2226,8 +2237,8 @@ export function NxSocialDesktop() {
                     </div>
                 )}
 
-                {/* Arxiv toggle — faqat DM tab uchun */}
-                {listTab === "dm" && (archivedCount > 0 || showArchived) && (
+                {/* Arxiv toggle — faqat DM-list tab'lari uchun */}
+                {isDmListTab && (archivedCount > 0 || showArchived) && (
                     <button onClick={() => { setShowArchived(v => !v); setSelectedId(null); }}
                         className="w-full flex items-center gap-2.5 px-3 py-2.5 border-b transition hover:bg-white/[0.04]"
                         style={{
@@ -2313,7 +2324,7 @@ export function NxSocialDesktop() {
                                 ))}
                             </>
                         )
-                    ) : listTab !== "dm" ? (
+                    ) : (listTab === "groups" || listTab === "channels") ? (
                         // Groups/Channels ro'yxati
                         loadingChannels ? (
                             <div className="flex justify-center py-10">
@@ -2506,10 +2517,11 @@ export function NxSocialDesktop() {
                         </div>
                         <div>
                             <p className="text-base font-black text-white mb-1">
-                                {listTab === "dm" ? "Suhbatni tanlang"
-                                    : listTab === "groups" ? "Guruhni tanlang"
+                                {listTab === "groups" ? "Guruhni tanlang"
                                     : listTab === "channels" ? "Kanalni tanlang"
-                                    : "Agentni tanlang"}
+                                    : listTab === "agents" ? "Agentni tanlang"
+                                    : listTab === "unread" ? "O'qilmagan xabar yo'q"
+                                    : "Suhbatni tanlang"}
                             </p>
                             <p className="text-xs" style={{ color: "rgba(120,140,185,0.75)" }}>
                                 Chapdagi ro&apos;yxatdan oching
