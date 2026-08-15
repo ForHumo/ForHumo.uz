@@ -3653,7 +3653,7 @@ export function NxSocialDesktop() {
                                             onMouseEnter={() => setEmojiCodeIdx(i)}
                                             className="w-full flex items-center gap-2.5 px-3 py-1.5 text-left transition"
                                             style={{ background: i === emojiCodeIdx ? "rgba(245,158,11,0.10)" : "transparent" }}>
-                                            <span className="text-xl flex-shrink-0">{s.emoji}</span>
+                                            <Emoji char={s.emoji} size={20} className="flex-shrink-0" />
                                             <span className="text-xs font-bold" style={{ color: "rgba(220,230,255,0.90)" }}>:{s.code}:</span>
                                         </button>
                                     ))}
@@ -5882,12 +5882,13 @@ function EmojiPicker({ onPick, onClose }: { onPick: (emoji: string) => void; onC
                     </button>
                 ))}
             </div>
-            <div className="p-2 max-h-[280px] overflow-y-auto grid grid-cols-8 gap-1">
+            <div className="p-2 max-h-[280px] overflow-y-auto nx-scrollbar grid grid-cols-8 gap-1">
                 {EMOJI_CATEGORIES[cat].emojis.map(e => (
                     <button key={e}
                         onClick={() => { onPick(e); /* pickerni ochiq qoldiramiz — bir necha marta tanlash mumkin */ }}
-                        className="w-9 h-9 text-lg rounded-lg hover:bg-white/[0.06] active:scale-90 transition">
-                        {e}
+                        title={e}
+                        className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/[0.06] active:scale-90 transition-transform">
+                        <Emoji char={e} size={24} />
                     </button>
                 ))}
             </div>
