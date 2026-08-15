@@ -94,7 +94,17 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
     const { id } = await params;
-    const res = await prisma.nexusChannel.deleteMany({ where: { id, ownerId: me.id } });
-    if (!res.count) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+
+    // Rasmiy tizim kanal/guruhini o'chirish taqiq (faqat mute mumkin)
+    const ch = await prisma.nexusChannel.findUnique({ where: { id }, select: { isSystem: true, ownerId: true } });
+    if (!ch) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
+    if (ch.isSystem) {
+        return NextResponse.json({
+            error: "Rasmiy For Humo kanal/guruhi o'chirilmaydi. Ovozsizlantirish (mute) uchun sozlamalardan foydalaning.",
+        }, { status: 403 });
+    }
+    if (ch.ownerId !== me.id) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+
+    await prisma.nexusChannel.delete({ where: { id } });
     return NextResponse.json({ ok: true });
 }

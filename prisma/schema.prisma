@@ -1842,6 +1842,9 @@ model NexusChannel {
   // Slow mode — xabar yuborish tezligini cheklash (guruh uchun anti-spam).
   // 0 = o'chirilgan. > 0 = har user shu sekunddan tez xabar yuborolmaydi.
   slowModeSeconds Int  @default(0)
+  // Rasmiy For Humo tizim kanal/guruhi — har foydalanuvchida majburiy,
+  // o'chirilmaydi, chiqib bo'lmaydi. Faqat mute qilinishi mumkin.
+  isSystem    Boolean  @default(false)
   // Kanal komment (Telegram uslub) — CHANNEL tipida foydalanuvchilar
   // top-level xabar yozolmaydi, lekin izoh (replyToId) yozishi mumkin.
   // GROUP uchun ta'siri yo'q — u yerda hamma default yozadi.

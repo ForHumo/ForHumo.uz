@@ -11,7 +11,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
     const { id } = await params;
-    const channel = await prisma.nexusChannel.findUnique({ where: { id }, select: { id: true, ownerId: true, isPrivate: true, hidden: true } });
+    const channel = await prisma.nexusChannel.findUnique({ where: { id }, select: { id: true, ownerId: true, isPrivate: true, hidden: true, isSystem: true } });
     if (!channel || channel.hidden) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
 
     const existing = await prisma.nexusChannelMember.findUnique({
@@ -19,6 +19,11 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     });
 
     if (existing) {
+        if (channel.isSystem) {
+            return NextResponse.json({
+                error: "Rasmiy For Humo kanal/guruhidan chiqib bo'lmaydi. Ovozsizlantirish (mute) uchun sozlamalardan foydalaning.",
+            }, { status: 403 });
+        }
         if (channel.ownerId === me.id) return NextResponse.json({ error: "Egasi chiqa olmaydi (o'chiring)" }, { status: 400 });
         await prisma.$transaction([
             prisma.nexusChannelMember.delete({ where: { id: existing.id } }),

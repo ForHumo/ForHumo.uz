@@ -6,6 +6,7 @@ import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { banGuard } from "@/lib/moderation-guard";
 import { moderateOnCreate } from "@/lib/moderation";
 import { after } from "next/server";
+import { ensureSystemChannelsAndMembership } from "@/lib/ensure-system-channels";
 
 // GET /api/nexus/channels?scope=mine|discover&type=CHANNEL|GROUP
 export async function GET(req: Request) {
@@ -20,14 +21,18 @@ export async function GET(req: Request) {
     const type = typeParam === "GROUP" ? "GROUP" : typeParam === "CHANNEL" ? "CHANNEL" : undefined;
 
     if (scope === "mine") {
+        // Rasmiy For Humo channels/guruhlarga avto-membership qo'shamiz (majburiy)
+        await ensureSystemChannelsAndMembership(me.id);
+
         const memberships = await prisma.nexusChannelMember.findMany({
             where: { profileId: me.id, channel: { hidden: false, ...(type ? { type } : {}) } },
             include: { channel: true },
-            orderBy: { joinedAt: "desc" },
+            orderBy: [{ channel: { isSystem: "desc" } }, { joinedAt: "desc" }],
         });
         const channels = memberships.map(m => ({
             id: m.channel.id, type: m.channel.type, name: m.channel.name, handle: m.channel.handle,
             avatarUrl: m.channel.avatarUrl, memberCount: m.channel.memberCount, role: m.role, isMember: true,
+            isSystem: m.channel.isSystem,
         }));
         return NextResponse.json({ channels });
     }
