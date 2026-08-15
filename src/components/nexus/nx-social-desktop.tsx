@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxGroupCreateModal } from "./nx-group-create-modal";
@@ -17,6 +17,7 @@ import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { NxStatusModal, statusIconForKey, statusColorForKey } from "./nx-status-modal";
 import { Emoji } from "@/lib/twemoji";
 import { NxGifPicker } from "./nx-gif-picker";
+import { NxStickerPicker } from "./nx-sticker-picker";
 import { NxInlinePopover } from "./nx-inline-popover";
 import { NxE2eBanner } from "./nx-e2e-banner";
 import { encryptForRecipient, decryptFromSender } from "@/lib/e2e-crypto";
@@ -474,6 +475,8 @@ export function NxSocialDesktop() {
     }, [peer?.id, myProfileId]);
     // GIF picker (Giphy)
     const [gifPickerOpen, setGifPickerOpen] = useState(false);
+    // Sticker picker
+    const [stickerPickerOpen, setStickerPickerOpen] = useState(false);
     // Sana picker — sana separator bosilsa kalendar ochiladi va shu kunga jump qiladi
     const [datePickerOpen, setDatePickerOpen] = useState(false);
     const [pickerMonth, setPickerMonth] = useState<Date>(new Date());
@@ -3029,17 +3032,20 @@ export function NxSocialDesktop() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="max-w-[70%] px-3.5 py-2 text-sm whitespace-pre-wrap break-words"
+                                    <div className={`max-w-[70%] ${m.mediaType === "sticker" ? "p-0" : "px-3.5 py-2"} text-sm whitespace-pre-wrap break-words`}
                                         style={{
-                                            ...(m.mine
-                                                ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)", color: "#fff" }
-                                                : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.92)" }
+                                            // Sticker uchun bubble transparent va border yo'q (Telegram uslub)
+                                            ...(m.mediaType === "sticker"
+                                                ? { background: "transparent", color: m.mine ? "#fff" : "rgba(220,230,255,0.92)" }
+                                                : m.mine
+                                                    ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)", color: "#fff" }
+                                                    : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.92)" }
                                             ),
-                                            // Guruhlash: yuqori/pastki burchak radius'i mos ravishda yumshoq
-                                            borderTopLeftRadius:  m.mine ? 16 : (groupWithPrev ? 4 : 16),
-                                            borderTopRightRadius: m.mine ? (groupWithPrev ? 4 : 16) : 16,
-                                            borderBottomLeftRadius:  m.mine ? 16 : (groupWithNext ? 4 : 6),
-                                            borderBottomRightRadius: m.mine ? (groupWithNext ? 4 : 6) : 16,
+                                            // Guruhlash: yuqori/pastki burchak radius'i mos ravishda yumshoq (sticker uchun ta'siri yo'q)
+                                            borderTopLeftRadius:  m.mediaType === "sticker" ? 0 : (m.mine ? 16 : (groupWithPrev ? 4 : 16)),
+                                            borderTopRightRadius: m.mediaType === "sticker" ? 0 : (m.mine ? (groupWithPrev ? 4 : 16) : 16),
+                                            borderBottomLeftRadius:  m.mediaType === "sticker" ? 0 : (m.mine ? 16 : (groupWithNext ? 4 : 6)),
+                                            borderBottomRightRadius: m.mediaType === "sticker" ? 0 : (m.mine ? (groupWithNext ? 4 : 6) : 16),
                                         }}>
                                         {m.forwardedFromName && (
                                             <div className="flex items-center gap-1 mb-1.5 text-[10px] opacity-70"
@@ -3083,6 +3089,10 @@ export function NxSocialDesktop() {
                                                 ? <video src={m.mediaUrl} autoPlay loop muted playsInline
                                                     className="max-w-full max-h-64 rounded-md mb-1" />
                                                 : <img src={m.mediaUrl} alt="GIF" className="max-w-full max-h-64 rounded-md mb-1" />
+                                        )}
+                                        {m.mediaType === "sticker" && m.mediaUrl && (
+                                            <img src={m.mediaUrl} alt={m.text ?? "sticker"} draggable={false}
+                                                className="mb-1" style={{ width: 120, height: 120 }} />
                                         )}
                                         {m.mediaType === "audio" && m.mediaUrl && (
                                             <div className="mb-1">
@@ -3701,6 +3711,7 @@ export function NxSocialDesktop() {
                                                 <div className="grid grid-cols-3 gap-1">
                                                     <AttachMenuItem icon={Paperclip} label="Fayl" onClick={() => { setAttachOpen(false); fileInputRef.current?.click(); }} />
                                                     <AttachMenuItem icon={FileIcon} label="GIF" onClick={() => { setAttachOpen(false); setGifPickerOpen(true); }} />
+                                                    <AttachMenuItem icon={Sticker} label="Sticker" onClick={() => { setAttachOpen(false); setStickerPickerOpen(true); }} />
                                                     <AttachMenuItem icon={MapPin} label="Joylashuv" onClick={() => { setAttachOpen(false); setLocationPickerOpen(true); }} />
                                                     <AttachMenuItem icon={BarChart2} label="So'rovnoma" onClick={() => { setAttachOpen(false); setPollOpen(true); }} />
                                                     <AttachMenuItem icon={Wallet} label="Pul" onClick={() => { setAttachOpen(false); setTransferOpen(true); }} accent />
@@ -4581,6 +4592,32 @@ export function NxSocialDesktop() {
                             })
                             .finally(() => setLoadingAgents(false));
                         setAgentCreateOpen(false);
+                    }}
+                />
+            )}
+            {/* Sticker picker */}
+            {stickerPickerOpen && (
+                <NxStickerPicker
+                    onClose={() => setStickerPickerOpen(false)}
+                    onPick={async (url, emoji) => {
+                        setStickerPickerOpen(false);
+                        if (!selectedId) return;
+                        try {
+                            const r = await fetch(`/api/nexus/messages/${selectedId}`, {
+                                method: "POST", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    text: emoji,
+                                    mediaUrl: url,
+                                    mediaType: "sticker",
+                                    mediaMime: "image/svg+xml",
+                                }),
+                            });
+                            if (r.ok) {
+                                const d = await r.json();
+                                setMessages(m => [...m, d.message]);
+                                loadConvs();
+                            }
+                        } catch { /* ignore */ }
                     }}
                 />
             )}
