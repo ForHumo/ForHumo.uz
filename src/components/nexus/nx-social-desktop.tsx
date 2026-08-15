@@ -421,6 +421,9 @@ export function NxSocialDesktop() {
             }
         } finally { setNewDmBusy(false); }
     }
+    // Sana picker — sana separator bosilsa kalendar ochiladi va shu kunga jump qiladi
+    const [datePickerOpen, setDatePickerOpen] = useState(false);
+    const [pickerMonth, setPickerMonth] = useState<Date>(new Date());
     // Sidebar Settings menyu (Telegram uslub — sound/watermark/push ichida)
     const [sidebarSettingsOpen, setSidebarSettingsOpen] = useState(false);
     const sidebarSettingsRef = useRef<HTMLDivElement | null>(null);
@@ -1610,6 +1613,23 @@ export function NxSocialDesktop() {
         }
     }
 
+    // Sana bo'yicha jump — kalendar picker'dan chaqiriladi
+    function jumpToDate(target: Date) {
+        const d0 = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+        const d1 = d0 + 24 * 3600 * 1000;
+        // O'sha kuni birinchi xabarni topish (yoki eng yaqin keyingi)
+        const targetMsg = messages.find(m => {
+            const t = new Date(m.createdAt).getTime();
+            return t >= d0 && t < d1;
+        }) ?? messages.find(m => new Date(m.createdAt).getTime() >= d0);
+        setDatePickerOpen(false);
+        if (targetMsg) {
+            setTimeout(() => jumpToMessage(targetMsg.id), 100);
+        } else {
+            alert("Bu kunda xabar yo'q");
+        }
+    }
+
     // URL preview: yangi xabarlar kelganda birinchi URL uchun preview olish
     useEffect(() => {
         const urlRe = /(https?:\/\/[^\s]+)/i;
@@ -2635,10 +2655,18 @@ export function NxSocialDesktop() {
                                         <div key={m.id}>
                                             {dateLabel && (
                                                 <div className="flex justify-center my-3">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
+                                                    <button
+                                                        onClick={() => {
+                                                            // Bosilgan sanadagi oyni ochamiz
+                                                            const d = new Date(m.createdAt);
+                                                            setPickerMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+                                                            setDatePickerOpen(true);
+                                                        }}
+                                                        title="Sana bo'yicha o'tish"
+                                                        className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full transition hover:brightness-125 active:scale-95"
                                                         style={{ background: "rgba(11,18,40,0.85)", color: "rgba(160,176,224,0.75)", border: "1px solid rgba(43,62,232,0.20)" }}>
                                                         {dateLabel}
-                                                    </span>
+                                                    </button>
                                                 </div>
                                             )}
                                 <div data-msg-id={m.id}
@@ -4175,6 +4203,17 @@ export function NxSocialDesktop() {
                     }}
                 />
             )}
+            {/* Sana picker modal (sana separator bosilsa) */}
+            {datePickerOpen && (
+                <DatePickerModal
+                    month={pickerMonth}
+                    onMonthChange={setPickerMonth}
+                    minDate={messages.length > 0 ? new Date(messages[0].createdAt) : new Date()}
+                    maxDate={new Date()}
+                    onPick={jumpToDate}
+                    onClose={() => setDatePickerOpen(false)}
+                />
+            )}
             {/* Chat lock modal (setup / unlock / remove) */}
             {lockModal && (
                 <NxChatLockModal
@@ -4631,6 +4670,97 @@ function InfoRow({ label, value }: { label: string; value: string }) {
         <div className="px-2 py-2 rounded-lg hover:bg-white/[0.03]">
             <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.55)" }}>{label}</p>
             <p className="text-sm text-white mt-0.5 break-words">{value}</p>
+        </div>
+    );
+}
+
+// Sana picker modal — chat ichida BUGUN/13 avgust bosilsa ochiladi
+function DatePickerModal({ month, onMonthChange, minDate, maxDate, onPick, onClose }: {
+    month: Date;
+    onMonthChange: (d: Date) => void;
+    minDate: Date;
+    maxDate: Date;
+    onPick: (d: Date) => void;
+    onClose: () => void;
+}) {
+    const minD0 = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate()).getTime();
+    const maxD0 = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate()).getTime();
+    const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
+    const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+    // Toshkent kalendari: Dushanba boshlanadi (0=Yak, 1=Du, ...)
+    // JS Date.getDay: 0=Yak. Bizga Du=0 kerak → shift = (getDay + 6) % 7
+    const firstDayShift = (monthStart.getDay() + 6) % 7;
+    const days: Array<Date | null> = [];
+    for (let i = 0; i < firstDayShift; i++) days.push(null);
+    for (let d = 1; d <= monthEnd.getDate(); d++) days.push(new Date(month.getFullYear(), month.getMonth(), d));
+    while (days.length % 7 !== 0) days.push(null);
+
+    const canPrev = new Date(month.getFullYear(), month.getMonth(), 1).getTime() > minD0;
+    const canNext = new Date(month.getFullYear(), month.getMonth() + 1, 1).getTime() <= maxD0;
+
+    const monthLabel = month.toLocaleDateString("uz-UZ", { year: "numeric", month: "long" });
+    const wd = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"];
+
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+            style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
+            onClick={onClose}>
+            <div onClick={e => e.stopPropagation()}
+                className="w-full max-w-xs rounded-2xl overflow-hidden p-4"
+                style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)" }}>
+                <div className="flex items-center justify-between mb-3">
+                    <button onClick={() => canPrev && onMonthChange(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+                        disabled={!canPrev}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
+                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        <ChevronLeft className="w-4 h-4 text-white" />
+                    </button>
+                    <p className="text-sm font-black capitalize" style={{ color: "rgba(220,230,255,0.95)" }}>
+                        {monthLabel}
+                    </p>
+                    <button onClick={() => canNext && onMonthChange(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+                        disabled={!canNext}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
+                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        <ChevronRight className="w-4 h-4 text-white" />
+                    </button>
+                </div>
+                <div className="grid grid-cols-7 gap-1 mb-1">
+                    {wd.map(w => (
+                        <div key={w} className="text-center text-[10px] font-bold py-1"
+                            style={{ color: "rgba(140,160,210,0.60)" }}>{w}</div>
+                    ))}
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                    {days.map((d, i) => {
+                        if (!d) return <div key={i} />;
+                        const dT = d.getTime();
+                        const outOfRange = dT < minD0 || dT > maxD0;
+                        const isToday = dT === new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime();
+                        return (
+                            <button key={i}
+                                onClick={() => !outOfRange && onPick(d)}
+                                disabled={outOfRange}
+                                className="aspect-square rounded-lg text-xs font-bold transition disabled:opacity-25 hover:brightness-125 active:scale-90"
+                                style={{
+                                    background: isToday
+                                        ? "linear-gradient(135deg,#2B3EE8,#00CEC8)"
+                                        : outOfRange ? "transparent" : "rgba(43,62,232,0.10)",
+                                    color: isToday ? "#fff" : outOfRange ? "rgba(140,160,210,0.40)" : "rgba(220,230,255,0.95)",
+                                }}>
+                                {d.getDate()}
+                            </button>
+                        );
+                    })}
+                </div>
+                <div className="mt-3 flex items-center justify-between text-[10px]" style={{ color: "rgba(140,160,210,0.65)" }}>
+                    <span>
+                        {minDate.toLocaleDateString("uz-UZ", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                    <span>→</span>
+                    <span>Bugun</span>
+                </div>
+            </div>
         </div>
     );
 }
