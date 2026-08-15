@@ -46,6 +46,17 @@ export async function POST(req: Request) {
     if (!targetId) return NextResponse.json({ error: "Foydalanuvchi topilmadi" }, { status: 404 });
     if (targetId === me.id) return NextResponse.json({ error: "O'zingizni bloklay olmaysiz" }, { status: 400 });
 
+    // Rasmiy tizim agentini bloklab bo'lmaydi (faqat mute qilinishi mumkin)
+    const isSystemAgent = await prisma.nexusAgent.findFirst({
+        where: { profileId: targetId, isSystem: true },
+        select: { id: true },
+    });
+    if (isSystemAgent) {
+        return NextResponse.json({
+            error: "Rasmiy For Humo agentini bloklab bo'lmaydi. Ovozsizlantirish (mute) uchun chat menyusidan foydalaning.",
+        }, { status: 400 });
+    }
+
     const existing = await prisma.nexusBlock.findUnique({
         where: { blockerId_blockedId: { blockerId: me.id, blockedId: targetId } },
     });

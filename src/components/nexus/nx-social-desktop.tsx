@@ -2299,13 +2299,14 @@ export function NxSocialDesktop() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-1">
                                                 <p className="text-sm font-bold text-white truncate">{a.name ?? a.username}</p>
+                                                {a.isSystem && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
                                                 {a.isSystem && (
-                                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded"
-                                                        style={{ background: "rgba(0,206,200,0.18)", color: "#00CEC8" }}>AGENT</span>
+                                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
+                                                        style={{ background: "rgba(0,206,200,0.18)", color: "#00CEC8" }}>RASMIY</span>
                                                 )}
                                             </div>
                                             <p className="text-[11px] truncate" style={{ color: "rgba(140,160,210,0.70)" }}>
-                                                @{a.username}{a.module && a.module !== "CUSTOM" ? ` · ${a.module.toLowerCase()}` : ""}
+                                                @{a.username}{a.module && a.module !== "CUSTOM" && a.module !== "MAIN" ? ` · ${a.module.toLowerCase()}` : ""}
                                             </p>
                                         </div>
                                     </button>

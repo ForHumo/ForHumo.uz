@@ -14,6 +14,7 @@ import { prisma } from "@/lib/prisma";
 import { validateAgentUsername, MAX_AGENTS_PER_USER } from "@/lib/nexus-agent";
 import { generateApiKey } from "@/lib/agent-webhook";
 import { isFounderProfile } from "@/lib/founders";
+import { ensureSystemAgents } from "@/lib/ensure-system-agents";
 
 async function me() {
     const s = await getServerSession(authOptions);
@@ -33,9 +34,13 @@ export async function GET() {
     const owner = await me();
     if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    // Rasmiy tizim agentlari mavjudligini ta'minlaymiz (avto-seed).
+    await ensureSystemAgents();
+
+    // Har foydalanuvchida ko'rinadi: 1) o'zining custom agentlari, 2) hamma tizim agentlari
     const agents = await prisma.nexusAgent.findMany({
-        where: { ownerId: owner.id },
-        orderBy: { createdAt: "desc" },
+        where: { OR: [{ ownerId: owner.id }, { isSystem: true }] },
+        orderBy: [{ isSystem: "desc" }, { createdAt: "desc" }],
         include: { profile: { select: { username: true, name: true, image: true, humoId: true } } },
     });
 
