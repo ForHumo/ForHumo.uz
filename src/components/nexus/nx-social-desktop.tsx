@@ -2134,46 +2134,60 @@ export function NxSocialDesktop() {
                         ) : (
                         <div className="px-4 py-3 flex items-center gap-3 flex-shrink-0"
                             style={{ borderBottom: "1px solid rgba(43,62,232,0.14)", background: "rgba(8,12,32,0.55)" }}>
-                            <ConvAvatar other={peer} online={!!peer?.id && isOnline(peer.id)} />
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5">
-                                    <p className="text-sm font-bold text-white truncate">
-                                        {peer?.name ?? (peer?.username ? `@${peer.username}` : "")}
+                            {/* Telegram uslub — avatar+nom bosilsa info paneli ochiladi/yopiladi */}
+                            <button
+                                type="button"
+                                onClick={() => setShowInfo(v => !v)}
+                                title={showInfo ? "Info panelni yopish" : "Suhbat haqida"}
+                                className="flex-1 min-w-0 flex items-center gap-3 -mx-1 px-1 py-0.5 rounded-lg hover:bg-white/[0.04] transition text-left"
+                            >
+                                <ConvAvatar other={peer} online={!!peer?.id && isOnline(peer.id)} />
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                        <p className="text-sm font-bold text-white truncate">
+                                            {peer?.name ?? (peer?.username ? `@${peer.username}` : "")}
+                                        </p>
+                                        {peer?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
+                                        {peer?.isAgent && (
+                                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md"
+                                                style={{ background: "rgba(0,206,200,0.18)", color: "#00CEC8" }}>AGENT</span>
+                                        )}
+                                    </div>
+                                    <p className="text-[11px] flex items-center gap-1" style={{ color: peerTyping ? "#00CEC8" : "rgba(140,160,210,0.70)" }}>
+                                        {peerTyping
+                                            ? "yozmoqda..."
+                                            : (peer?.statusEmoji || peer?.statusText)
+                                                ? <><span>{peer.statusEmoji}</span><span className="truncate">{peer.statusText}</span></>
+                                            : peer?.id && isOnline(peer.id) ? "onlayn"
+                                            : peer?.lastSeenAt ? formatLastSeen(peer.lastSeenAt, false)
+                                            : peer?.username ? `@${peer.username}` : ""}
                                     </p>
-                                    {peer?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
-                                    {peer?.isAgent && (
-                                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md"
-                                            style={{ background: "rgba(0,206,200,0.18)", color: "#00CEC8" }}>AGENT</span>
-                                    )}
                                 </div>
-                                <p className="text-[11px] flex items-center gap-1" style={{ color: peerTyping ? "#00CEC8" : "rgba(140,160,210,0.70)" }}>
-                                    {peerTyping
-                                        ? "yozmoqda..."
-                                        : (peer?.statusEmoji || peer?.statusText)
-                                            ? <><span>{peer.statusEmoji}</span><span className="truncate">{peer.statusText}</span></>
-                                        : peer?.id && isOnline(peer.id) ? "onlayn"
-                                        : peer?.lastSeenAt ? formatLastSeen(peer.lastSeenAt, false)
-                                        : peer?.username ? `@${peer.username}` : ""}
-                                </p>
-                            </div>
+                            </button>
                             <IconBtn
                                 icon={searchOpen ? X : Search}
                                 title={searchOpen ? "Qidiruvni yopish" : "Suhbatda qidirish"}
                                 onClick={() => { setSearchOpen(v => !v); setSearchQuery(""); }}
                             />
-                            {!peer?.isAgent && peer?.id && (
-                                <>
-                                    <IconBtn icon={Phone} title="Ovozli chaqiruv"
-                                        onClick={() => peer.id && startCall(peer.id, "AUDIO")} />
-                                    <IconBtn icon={Video} title="Video chaqiruv"
-                                        onClick={() => peer.id && startCall(peer.id, "VIDEO")} />
-                                </>
-                            )}
                             <div className="relative" ref={moreRef}>
                                 <IconBtn icon={MoreVertical} title="Ko'proq" onClick={() => setMoreOpen(v => !v)} />
                                 {moreOpen && (
                                     <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl overflow-hidden z-30"
                                         style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                        {/* Telegram uslub — chaqiruv variantlari More ichida */}
+                                        {!peer?.isAgent && peer?.id && (
+                                            <>
+                                                <button onClick={() => { if (peer.id) startCall(peer.id, "AUDIO"); setMoreOpen(false); }}
+                                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                                    <Phone className="w-4 h-4" style={{ color: "#00CEC8" }} /> Ovozli chaqiruv
+                                                </button>
+                                                <button onClick={() => { if (peer.id) startCall(peer.id, "VIDEO"); setMoreOpen(false); }}
+                                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                                    style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                                    <Video className="w-4 h-4" style={{ color: "#00CEC8" }} /> Video chaqiruv
+                                                </button>
+                                            </>
+                                        )}
                                         {peer?.username && (
                                             <a href={`/nexus/u/${peer.username}`} target="_blank" rel="noopener noreferrer"
                                                 className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05]"
@@ -2243,11 +2257,6 @@ export function NxSocialDesktop() {
                                     </div>
                                 )}
                             </div>
-                            <IconBtn
-                                icon={showInfo ? X : MessageSquare}
-                                title={showInfo ? "Info panelni yopish" : "Info panel"}
-                                onClick={() => setShowInfo(v => !v)}
-                            />
                         </div>
                         )}
 
