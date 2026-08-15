@@ -14,7 +14,7 @@ import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxGroupCreateModal } from "./nx-group-create-modal";
 import { isFounderProfile } from "@/lib/founders";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
-import { NxStatusModal } from "./nx-status-modal";
+import { NxStatusModal, statusIconForKey, statusColorForKey } from "./nx-status-modal";
 import { NxInlinePopover } from "./nx-inline-popover";
 import { NxE2eBanner } from "./nx-e2e-banner";
 import { encryptForRecipient, decryptFromSender } from "@/lib/e2e-crypto";
@@ -2185,10 +2185,12 @@ export function NxSocialDesktop() {
                                 background: myStatus.emoji || myStatus.text ? "rgba(0,206,200,0.08)" : "rgba(43,62,232,0.06)",
                                 border: `1px solid ${myStatus.emoji || myStatus.text ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.15)"}`,
                             }}>
-                            {myStatus.emoji
-                                ? <span className="text-base flex-shrink-0">{myStatus.emoji}</span>
-                                : <Sparkles className="w-3.5 h-3.5 flex-shrink-0" style={{ color: myStatus.text ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
-                            }
+                            {(() => {
+                                const StatusIcon = statusIconForKey(myStatus.emoji);
+                                const statusColor = statusColorForKey(myStatus.emoji);
+                                if (StatusIcon) return <StatusIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: statusColor ?? "#00CEC8" }} />;
+                                return <Sparkles className="w-3.5 h-3.5 flex-shrink-0" style={{ color: myStatus.text ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />;
+                            })()}
                             <span className="text-[11px] truncate flex-1" style={{ color: myStatus.text ? "#00CEC8" : "rgba(140,160,210,0.75)" }}>
                                 {myStatus.text || "Maxsus status qo'shish"}
                             </span>
@@ -2565,7 +2567,16 @@ export function NxSocialDesktop() {
                                         {peerTyping
                                             ? "yozmoqda..."
                                             : (peer?.statusEmoji || peer?.statusText)
-                                                ? <><span>{peer.statusEmoji}</span><span className="truncate">{peer.statusText}</span></>
+                                                ? (() => {
+                                                    const StatusIcon = statusIconForKey(peer?.statusEmoji);
+                                                    const statusColor = statusColorForKey(peer?.statusEmoji);
+                                                    return (
+                                                        <>
+                                                            {StatusIcon && <StatusIcon className="w-3 h-3" style={{ color: statusColor ?? undefined }} />}
+                                                            <span className="truncate">{peer?.statusText}</span>
+                                                        </>
+                                                    );
+                                                })()
                                             : peer?.id && isOnline(peer.id) ? "onlayn"
                                             : peer?.lastSeenAt ? formatLastSeen(peer.lastSeenAt, false)
                                             : peer?.username ? `@${peer.username}` : ""}
@@ -2977,8 +2988,13 @@ export function NxSocialDesktop() {
                                         )}
                                         {m.mediaType === "video-circle" && m.mediaUrl && (
                                             <video src={m.mediaUrl} controls playsInline
-                                                className="rounded-full mb-1"
-                                                style={{ width: 200, height: 200, objectFit: "cover" }} />
+                                                className="mb-1"
+                                                style={{
+                                                    width: 220, height: 220,
+                                                    borderRadius: "44%",
+                                                    objectFit: "cover",
+                                                    background: "#000",
+                                                }} />
                                         )}
                                         {m.mediaType === "file" && m.mediaUrl && (
                                             <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer" download={m.mediaName ?? true}
@@ -3539,8 +3555,12 @@ export function NxSocialDesktop() {
                                         accent={false}
                                     />
                                     {videoRecording && videoStreamRef.current && (
-                                        <div className="flex-shrink-0 relative rounded-full overflow-hidden"
-                                            style={{ width: 40, height: 40, border: "2px solid rgba(0,206,200,0.60)" }}>
+                                        <div className="flex-shrink-0 relative overflow-hidden"
+                                            style={{
+                                                width: 40, height: 40,
+                                                borderRadius: "44%",
+                                                border: "2px solid rgba(0,206,200,0.60)",
+                                            }}>
                                             <video ref={videoPreviewRef} muted playsInline autoPlay
                                                 className="w-full h-full object-cover" />
                                         </div>
@@ -3549,7 +3569,7 @@ export function NxSocialDesktop() {
                                         style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.30)" }}>
                                         <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#EF4444" }} />
                                         <span className="text-xs font-bold text-white flex-1">
-                                            {videoRecording ? "Dumaloq video" : "Ovoz yozilmoqda"}
+                                            {videoRecording ? "Video xabar yozilmoqda" : "Ovozli xabar yozilmoqda"}
                                         </span>
                                         <span className="text-xs font-black tabular-nums" style={{ color: "#EF4444" }}>
                                             {(() => {
@@ -3577,7 +3597,6 @@ export function NxSocialDesktop() {
                                                 style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", minWidth: 260 }}>
                                                 <div className="grid grid-cols-3 gap-1">
                                                     <AttachMenuItem icon={Paperclip} label="Fayl" onClick={() => { setAttachOpen(false); fileInputRef.current?.click(); }} />
-                                                    <AttachMenuItem icon={Camera} label="Video-doira" onClick={() => { setAttachOpen(false); setCircleOpen(true); }} />
                                                     <AttachMenuItem icon={MapPin} label="Joylashuv" onClick={() => { setAttachOpen(false); setLocationPickerOpen(true); }} />
                                                     <AttachMenuItem icon={BarChart2} label="So'rovnoma" onClick={() => { setAttachOpen(false); setPollOpen(true); }} />
                                                     <AttachMenuItem icon={Wallet} label="Pul" onClick={() => { setAttachOpen(false); setTransferOpen(true); }} accent />
