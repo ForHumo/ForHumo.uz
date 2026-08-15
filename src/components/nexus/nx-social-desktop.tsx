@@ -2547,7 +2547,7 @@ export function NxSocialDesktop() {
                                             )}
                                 <div data-msg-id={m.id}
                                     onClick={() => { if (selectMode) toggleSelectMsg(m.id); }}
-                                    className={`group flex items-center gap-1 ${m.mine ? "justify-end flex-row-reverse" : "justify-start"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
+                                    className={`group flex items-center gap-1 ${m.mine ? "flex-row-reverse justify-start" : "justify-start"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
                                     style={{
                                         ...(selectedIds.has(m.id) ? { background: "rgba(0,206,200,0.10)" } : {}),
                                         // Guruh ichida yuqori marginni kamaytiramiz (bir-biriga yaqin)
@@ -3114,8 +3114,9 @@ export function NxSocialDesktop() {
                             })()}
                             <div ref={bottomRef} />
                             {showScrollDown && (
+                                <div className="sticky bottom-3 flex justify-end pointer-events-none z-20">
                                 <button onClick={scrollToBottom}
-                                    className="fixed bottom-28 right-[calc(320px+24px)] w-11 h-11 rounded-full flex items-center justify-center transition hover:scale-105 active:scale-95 z-30"
+                                    className="pointer-events-auto w-11 h-11 rounded-full flex items-center justify-center transition hover:scale-105 active:scale-95 relative"
                                     style={{
                                         background: "rgba(11,18,40,0.95)",
                                         border: "1px solid rgba(43,62,232,0.40)",
@@ -3129,6 +3130,7 @@ export function NxSocialDesktop() {
                                         </span>
                                     )}
                                 </button>
+                                </div>
                             )}
                         </div>
 
