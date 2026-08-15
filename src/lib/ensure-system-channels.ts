@@ -16,6 +16,7 @@ interface SystemChannelSpec {
     name: string;
     description: string;
     avatarUrl: string;
+    welcome: string;   // birinchi xabar (pinned)
 }
 
 export const OFFICIAL_CHANNELS: SystemChannelSpec[] = [
@@ -25,6 +26,7 @@ export const OFFICIAL_CHANNELS: SystemChannelSpec[] = [
         name: "For Humo",
         description: "For Humo rasmiy kanali — yangiliklar, yangilanishlar, e'lonlar.",
         avatarUrl: "/logo.png",
+        welcome: "Assalomu alaykum va For Humo super-app'ga xush kelibsiz!\n\nBu kanal orqali platformamizning barcha yangi funksiyalari, muhim e'lonlar va tizim yangilanishlari haqida birinchilardan bo'lib xabardor bo'lasiz.\n\nHumo ID, Humo AI, Humo Nexus, Humo eSport, Humo Market, For Pay, Bozor Narxida — hammasi bir joyda. Har bir modulning o'z rasmiy kanali ham mavjud.",
     },
     {
         handle: "forhumo_chat",
@@ -32,6 +34,7 @@ export const OFFICIAL_CHANNELS: SystemChannelSpec[] = [
         name: "For Humo hamjamiyat",
         description: "For Humo foydalanuvchilari uchun rasmiy suhbat guruhi.",
         avatarUrl: "/logo.png",
+        welcome: "For Humo hamjamiyati guruhiga xush kelibsiz!\n\nBu yerda foydalanuvchilar bilan tanishish, taklif va fikr-mulohazalar almashish, savol berish mumkin. Iltimos hurmat bilan muomala qiling.\n\nQoidalar: hurmatsiz muomala, spam, reklama, siyosiy/diniy tortishuvlar taqiq. Buzganlar admin tomonidan ogohlantiriladi.",
     },
     {
         handle: "id_news",
@@ -39,6 +42,7 @@ export const OFFICIAL_CHANNELS: SystemChannelSpec[] = [
         name: "Humo ID yangiliklari",
         description: "Humo ID moduli yangilanishlari va e'lonlari.",
         avatarUrl: "/logos/humo-id.png",
+        welcome: "Humo ID — For Humo super-app'ining yagona identity tizimi.\n\nBu kanalda: yangi tasdiqlash darajalari, xavfsizlik yangilanishlari, profil tahrirlash imkoniyatlari va boshqa Humo ID bilan bog'liq e'lonlar chiqadi.",
     },
     {
         handle: "nexus_news",
@@ -46,6 +50,7 @@ export const OFFICIAL_CHANNELS: SystemChannelSpec[] = [
         name: "Humo Nexus yangiliklari",
         description: "Nexus platform yangilanishlari.",
         avatarUrl: "/logos/humo-nexus.png",
+        welcome: "Humo Nexus — ijtimoiy tarmoq va messenger platformasi.\n\nYangi post turlari, video/audio funksiyalar, DM yangilanishlari, kanal/guruh imkoniyatlari va boshqa Nexus xususiyatlari haqida shu yerda bilib olasiz.",
     },
     {
         handle: "market_deals",
@@ -53,6 +58,7 @@ export const OFFICIAL_CHANNELS: SystemChannelSpec[] = [
         name: "Humo Market — chegirmalar",
         description: "Humo Market'dagi eng foydali takliflar va aksiyalar.",
         avatarUrl: "/logos/humo-market.png",
+        welcome: "Humo Market chegirmalar kanaliga xush kelibsiz!\n\nBu yerda: eng foydali takliflar, aksiyalar, yangi mahsulotlar, promo-kodlar va sotuvchilar bilan bog'liq maxsus e'lonlar bo'ladi.\n\nSotib olish uchun havolalar to'g'ridan-to'g'ri Humo Market'ga olib boradi.",
     },
 ];
 
@@ -107,6 +113,20 @@ async function seedChannelsIfNeeded(): Promise<string[]> {
                     },
                 });
                 ids.push(created.id);
+            }
+
+            // Welcome xabar seed — agar kanal hali bo'sh bo'lsa
+            const channelId = ids[ids.length - 1];
+            const hasMessages = await prisma.nexusChannelMessage.count({ where: { channelId } });
+            if (hasMessages === 0) {
+                await prisma.nexusChannelMessage.create({
+                    data: {
+                        channelId,
+                        senderId: founder.id,
+                        text: spec.welcome,
+                        pinnedAt: new Date(),
+                    },
+                });
             }
         } catch (e) {
             console.error("[ensureSystemChannels]", spec.handle, e instanceof Error ? e.message : e);
