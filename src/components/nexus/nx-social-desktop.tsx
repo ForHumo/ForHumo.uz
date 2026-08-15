@@ -1186,6 +1186,22 @@ export function NxSocialDesktop() {
         } catch { /* ignore */ }
     }
 
+    // Composer mode: Ovoz yoki Dumaloq video (Telegram tap-swap uslubi)
+    const [composerMode, setComposerMode] = useState<"voice" | "video">("voice");
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem("nexus:composer:mode");
+            if (saved === "voice" || saved === "video") setComposerMode(saved);
+        } catch { /* ignore */ }
+    }, []);
+    function toggleComposerMode() {
+        setComposerMode(prev => {
+            const next: "voice" | "video" = prev === "voice" ? "video" : "voice";
+            try { localStorage.setItem("nexus:composer:mode", next); } catch { /* ignore */ }
+            return next;
+        });
+    }
+
     // Ovoz yozish
     const recorderRef = useRef<MediaRecorder | null>(null);
     const recStreamRef = useRef<MediaStream | null>(null);
@@ -1195,6 +1211,128 @@ export function NxSocialDesktop() {
     const recTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const [recording, setRecording] = useState(false);
     const [recSeconds, setRecSeconds] = useState(0);
+
+    // Dumaloq video yozish (Telegram hold-to-record + 1-daq chain)
+    const VIDEO_MAX_SEC = 60;
+    const videoRecorderRef = useRef<MediaRecorder | null>(null);
+    const videoStreamRef = useRef<MediaStream | null>(null);
+    const videoChunksRef = useRef<Blob[]>([]);
+    const videoStartRef = useRef<number>(0);
+    const videoCancelRef = useRef<boolean>(false);
+    const videoHoldRef = useRef<boolean>(false); // barmoq hali bosilib turibdimi
+    const videoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const videoPreviewRef = useRef<HTMLVideoElement | null>(null);
+    const [videoRecording, setVideoRecording] = useState(false);
+    const [videoSeconds, setVideoSeconds] = useState(0);
+
+    async function startVideoRecording() {
+        if (videoRecording || uploading || !selectedId) return;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { width: 480, height: 480, facingMode: "user" },
+                audio: true,
+            });
+            videoStreamRef.current = stream;
+            videoHoldRef.current = true;
+            setVideoRecording(true);
+            beginVideoSegment(stream);
+        } catch (e) {
+            alert(e instanceof Error ? e.message : "Kameraga ruxsat berilmadi");
+            videoHoldRef.current = false;
+        }
+    }
+
+    function beginVideoSegment(stream: MediaStream) {
+        videoChunksRef.current = [];
+        videoCancelRef.current = false;
+        const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus") ? "video/webm;codecs=vp9,opus"
+            : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus") ? "video/webm;codecs=vp8,opus"
+            : MediaRecorder.isTypeSupported("video/webm") ? "video/webm"
+            : "";
+        const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+        rec.ondataavailable = e => { if (e.data && e.data.size > 0) videoChunksRef.current.push(e.data); };
+        rec.onstop = () => {
+            const cancelled = videoCancelRef.current;
+            if (!cancelled && videoChunksRef.current.length > 0) {
+                const finalMime = rec.mimeType || "video/webm";
+                const blob = new Blob(videoChunksRef.current, { type: finalMime });
+                const file = new File([blob], `video-circle-${Date.now()}.webm`, { type: finalMime });
+                void uploadFile(file, "video-circle");
+            }
+            // Chain: 1 daqiqa to'lgan va hali barmoq bosilib turgan bo'lsa yangi segment
+            if (videoHoldRef.current && !cancelled) {
+                beginVideoSegment(stream);
+                return;
+            }
+            // Yakuniy to'xtash
+            stream.getTracks().forEach(t => t.stop());
+            videoStreamRef.current = null;
+            setVideoRecording(false);
+            setVideoSeconds(0);
+        };
+        videoRecorderRef.current = rec;
+        videoStartRef.current = Date.now();
+        rec.start(100);
+        setVideoSeconds(0);
+        if (videoTimerRef.current) clearInterval(videoTimerRef.current);
+        videoTimerRef.current = setInterval(() => {
+            const s = Math.floor((Date.now() - videoStartRef.current) / 1000);
+            setVideoSeconds(s);
+            if (s >= VIDEO_MAX_SEC) {
+                // 60s to'ldi — segmentni to'xtatib yuboramiz; chain onstop'da
+                if (videoTimerRef.current) { clearInterval(videoTimerRef.current); videoTimerRef.current = null; }
+                try { rec.stop(); } catch { /* ignore */ }
+            }
+        }, 200);
+    }
+
+    function stopVideoRecording(cancel = false) {
+        videoHoldRef.current = false;
+        videoCancelRef.current = cancel;
+        if (videoTimerRef.current) { clearInterval(videoTimerRef.current); videoTimerRef.current = null; }
+        try { videoRecorderRef.current?.stop(); } catch { /* ignore */ }
+        videoRecorderRef.current = null;
+    }
+
+    useEffect(() => () => {
+        if (videoTimerRef.current) clearInterval(videoTimerRef.current);
+        try { videoRecorderRef.current?.stop(); } catch { /* ignore */ }
+        videoStreamRef.current?.getTracks().forEach(t => t.stop());
+    }, []);
+
+    // Hold-to-record dispatcher: mode'ga qarab video/voice boshlaydi
+    const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const holdActiveRef = useRef(false);
+    function handleHoldStart() {
+        if (recording || videoRecording) return;
+        holdActiveRef.current = false;
+        if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+        // 200ms bosib tursa → recording; aks holda tap → mode swap
+        holdTimerRef.current = setTimeout(() => {
+            holdActiveRef.current = true;
+            if (composerMode === "video") void startVideoRecording();
+            else void startVoice();
+        }, 200);
+    }
+    function handleHoldEnd(cancel = false) {
+        if (holdTimerRef.current) { clearTimeout(holdTimerRef.current); holdTimerRef.current = null; }
+        if (!holdActiveRef.current) {
+            // Tez tap — mode toggle
+            toggleComposerMode();
+            return;
+        }
+        holdActiveRef.current = false;
+        if (composerMode === "video") stopVideoRecording(cancel);
+        else stopVoice(cancel);
+    }
+
+    // Video stream preview element'ga ulash
+    useEffect(() => {
+        if (videoRecording && videoPreviewRef.current && videoStreamRef.current) {
+            videoPreviewRef.current.srcObject = videoStreamRef.current;
+            videoPreviewRef.current.play().catch(() => { /* autoplay-block */ });
+        }
+    }, [videoRecording]);
 
     async function startVoice() {
         if (recording || uploading || !selectedId) return;
@@ -3392,19 +3530,38 @@ export function NxSocialDesktop() {
                                 onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f); e.target.value = ""; }}
                                 className="hidden" />
 
-                            {recording ? (
+                            {recording || videoRecording ? (
                                 <>
-                                    <ComposerBtn icon={Trash2} title="Bekor qilish" onClick={() => stopVoice(true)} accent={false} />
+                                    <ComposerBtn
+                                        icon={Trash2}
+                                        title="Bekor qilish"
+                                        onClick={() => videoRecording ? stopVideoRecording(true) : stopVoice(true)}
+                                        accent={false}
+                                    />
+                                    {videoRecording && videoStreamRef.current && (
+                                        <div className="flex-shrink-0 relative rounded-full overflow-hidden"
+                                            style={{ width: 40, height: 40, border: "2px solid rgba(0,206,200,0.60)" }}>
+                                            <video ref={videoPreviewRef} muted playsInline autoPlay
+                                                className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
                                     <div className="flex-1 flex items-center gap-3 px-4 h-10 rounded-xl"
                                         style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.30)" }}>
                                         <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#EF4444" }} />
-                                        <span className="text-xs font-bold text-white flex-1">Ovoz yozilmoqda</span>
+                                        <span className="text-xs font-bold text-white flex-1">
+                                            {videoRecording ? "Dumaloq video" : "Ovoz yozilmoqda"}
+                                        </span>
                                         <span className="text-xs font-black tabular-nums" style={{ color: "#EF4444" }}>
-                                            {String(Math.floor(recSeconds / 60)).padStart(2, "0")}:
-                                            {String(recSeconds % 60).padStart(2, "0")}
+                                            {(() => {
+                                                const s = videoRecording ? videoSeconds : recSeconds;
+                                                return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+                                            })()}
+                                            {videoRecording && <span className="opacity-70"> / 1:00</span>}
                                         </span>
                                     </div>
-                                    <button onClick={() => stopVoice(false)} title="Jo'natish"
+                                    <button
+                                        onClick={() => videoRecording ? stopVideoRecording(false) : stopVoice(false)}
+                                        title="Jo'natish"
                                         className="w-10 h-10 rounded-xl flex items-center justify-center"
                                         style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
                                         <Send className="w-4 h-4 text-white" />
@@ -3640,7 +3797,23 @@ export function NxSocialDesktop() {
                                             {sending ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Send className="w-4 h-4 text-white" />}
                                         </button>
                                     ) : (
-                                        <ComposerBtn icon={Mic} title="Ovozli xabar (bosib turing)" onClick={startVoice} />
+                                        // Telegram uslubi: tap → mode swap (Mic <-> Camera), hold → yozib olish
+                                        <button
+                                            onPointerDown={handleHoldStart}
+                                            onPointerUp={() => handleHoldEnd(false)}
+                                            onPointerLeave={() => holdActiveRef.current && handleHoldEnd(true)}
+                                            onPointerCancel={() => handleHoldEnd(true)}
+                                            title={composerMode === "voice"
+                                                ? "Ovozli xabar (bosib turing) — tap: video ko'chirish"
+                                                : "Dumaloq video (bosib turing) — tap: ovozga ko'chirish"}
+                                            className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition active:scale-95 select-none"
+                                            style={{ background: "rgba(43,62,232,0.08)", touchAction: "none" }}
+                                        >
+                                            {composerMode === "voice"
+                                                ? <Mic className="w-4 h-4" style={{ color: "rgba(160,176,224,0.90)" }} />
+                                                : <Camera className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                            }
+                                        </button>
                                     )}
                                 </>
                             )}
