@@ -351,6 +351,18 @@ export function NxSocialDesktop() {
     const [translatePickerFor, setTranslatePickerFor] = useState<string | null>(null);
     // Per-xabar 3-dot menyu (Telegram uslub — barcha kam ishlatiluvchi amallar shu yerda)
     const [msgMenuFor, setMsgMenuFor] = useState<string | null>(null);
+    // Chat list per-item 3-dot menyu
+    const [convMenuFor, setConvMenuFor] = useState<string | null>(null);
+    useEffect(() => {
+        if (!convMenuFor) return;
+        function onDown(e: MouseEvent) {
+            const t = e.target as HTMLElement;
+            if (t.closest("[data-conv-menu]")) return;
+            setConvMenuFor(null);
+        }
+        window.addEventListener("mousedown", onDown);
+        return () => window.removeEventListener("mousedown", onDown);
+    }, [convMenuFor]);
     useEffect(() => {
         if (!msgMenuFor) return;
         function onDown(e: MouseEvent) {
@@ -1984,76 +1996,76 @@ export function NxSocialDesktop() {
                                         </>
                                     );
                                 })()}
-                                <div className="flex flex-col items-end gap-1">
+                                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                    {/* Telegram uslub — vaqt tepada */}
+                                    <span className="text-[10px] tabular-nums" style={{ color: c.unread ? "#00CEC8" : "rgba(140,160,210,0.65)" }}>
+                                        {formatConvTime(c.lastMessageAt)}
+                                    </span>
                                     <div className="flex items-center gap-1">
                                         {isLocked(c.conversationId) && <Lock className="w-3 h-3" style={{ color: "#00CEC8" }} />}
                                         {c.muted && <BellOff className="w-3 h-3" style={{ color: "rgba(140,160,210,0.65)" }} />}
                                         {c.pinned && <Pin className="w-3 h-3" style={{ color: "rgba(0,206,200,0.75)" }} />}
+                                        {c.unread && (
+                                            <span className="w-2 h-2 rounded-full"
+                                                style={{
+                                                    background: c.muted ? "rgba(140,160,210,0.60)" : "#00CEC8",
+                                                    boxShadow: c.muted ? "none" : "0 0 6px rgba(0,206,200,0.7)",
+                                                }} />
+                                        )}
                                     </div>
-                                    {c.unread && (
-                                        <span className="w-2 h-2 rounded-full flex-shrink-0"
-                                            style={{
-                                                background: c.muted ? "rgba(140,160,210,0.60)" : "#00CEC8",
-                                                boxShadow: c.muted ? "none" : "0 0 6px rgba(0,206,200,0.7)",
-                                            }} />
-                                    )}
                                 </div>
                             </button>
-                            <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition flex gap-1">
+                            {/* Hover'da bitta 3-dot menyu — barcha amallar shu yerda */}
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition" data-conv-menu>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); toggleConvPin(c.conversationId, !!c.pinned); }}
-                                    title={c.pinned ? "Pindan olib tashlash" : "Pinga qo'yish"}
-                                    className="w-6 h-6 rounded flex items-center justify-center"
-                                    style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                    {c.pinned
-                                        ? <PinOff className="w-3 h-3" style={{ color: "#00CEC8" }} />
-                                        : <Pin className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                    }
+                                    onClick={(e) => { e.stopPropagation(); setConvMenuFor(convMenuFor === c.conversationId ? null : c.conversationId); }}
+                                    title="Amallar"
+                                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                                    style={{ background: "rgba(11,18,40,0.92)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 2px 6px rgba(0,0,0,0.40)" }}>
+                                    <MoreVertical className="w-3.5 h-3.5" style={{ color: "rgba(200,215,245,0.95)" }} />
                                 </button>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); toggleConvMute(c.conversationId, !!c.muted); }}
-                                    title={c.muted ? "Ovozni qaytarish" : "Ovozsizlantirish"}
-                                    className="w-6 h-6 rounded flex items-center justify-center"
-                                    style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                    {c.muted
-                                        ? <Bell className="w-3 h-3" style={{ color: "#00CEC8" }} />
-                                        : <BellOff className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                    }
-                                </button>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); toggleConvArchive(c.conversationId, !!c.archived || showArchived); }}
-                                    title={showArchived ? "Arxivdan chiqarish" : "Arxivga qo'yish"}
-                                    className="w-6 h-6 rounded flex items-center justify-center"
-                                    style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                    {showArchived
-                                        ? <ArchiveRestore className="w-3 h-3" style={{ color: "#00CEC8" }} />
-                                        : <Archive className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                    }
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const locked = isLocked(c.conversationId);
-                                        if (!locked) {
-                                            setLockModal({ convId: c.conversationId, mode: "setup" });
-                                        } else if (isUnlockedNow(c.conversationId)) {
-                                            // Ochilgan — qayta yopamiz (tez tugma)
-                                            lockNow(c.conversationId);
-                                            if (selectedIdRef.current === c.conversationId) setSelectedId(null);
-                                            rerenderLocks();
-                                        } else {
-                                            // Qulflangan va yopiq — remove uchun avval unlock
-                                            setLockModal({ convId: c.conversationId, mode: "remove" });
-                                        }
-                                    }}
-                                    title={isLocked(c.conversationId) ? (isUnlockedNow(c.conversationId) ? "Chatni qayta yopish" : "Qulfni olib tashlash") : "Chatni qulflash"}
-                                    className="w-6 h-6 rounded flex items-center justify-center"
-                                    style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                    {isLocked(c.conversationId)
-                                        ? <Unlock className="w-3 h-3" style={{ color: "#00CEC8" }} />
-                                        : <Lock className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                    }
-                                </button>
+                                {convMenuFor === c.conversationId && (
+                                    <div className="absolute right-0 top-full mt-1 z-40 rounded-xl overflow-hidden min-w-[180px]"
+                                        style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                        <MsgMenuItem
+                                            icon={c.pinned ? PinOff : Pin}
+                                            label={c.pinned ? "Pindan olish" : "Pinga qo'yish"}
+                                            accent={!!c.pinned}
+                                            onClick={() => { toggleConvPin(c.conversationId, !!c.pinned); setConvMenuFor(null); }}
+                                        />
+                                        <MsgMenuItem
+                                            icon={c.muted ? Bell : BellOff}
+                                            label={c.muted ? "Ovozni qaytarish" : "Ovozsizlantirish"}
+                                            accent={!!c.muted}
+                                            onClick={() => { toggleConvMute(c.conversationId, !!c.muted); setConvMenuFor(null); }}
+                                        />
+                                        <MsgMenuItem
+                                            icon={showArchived ? ArchiveRestore : Archive}
+                                            label={showArchived ? "Arxivdan chiqarish" : "Arxivga qo'yish"}
+                                            onClick={() => { toggleConvArchive(c.conversationId, !!c.archived || showArchived); setConvMenuFor(null); }}
+                                        />
+                                        <MsgMenuItem
+                                            icon={isLocked(c.conversationId) ? Unlock : Lock}
+                                            label={isLocked(c.conversationId)
+                                                ? (isUnlockedNow(c.conversationId) ? "Chatni qayta yopish" : "Qulfni olib tashlash")
+                                                : "Chatni qulflash"}
+                                            accent={isLocked(c.conversationId)}
+                                            onClick={() => {
+                                                setConvMenuFor(null);
+                                                const locked = isLocked(c.conversationId);
+                                                if (!locked) {
+                                                    setLockModal({ convId: c.conversationId, mode: "setup" });
+                                                } else if (isUnlockedNow(c.conversationId)) {
+                                                    lockNow(c.conversationId);
+                                                    if (selectedIdRef.current === c.conversationId) setSelectedId(null);
+                                                    rerenderLocks();
+                                                } else {
+                                                    setLockModal({ convId: c.conversationId, mode: "remove" });
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -4514,6 +4526,24 @@ function formatDateSeparator(iso: string | Date): string {
     return d.toLocaleDateString("uz-UZ", {
         day: "numeric", month: "long", ...(sameYear ? {} : { year: "numeric" }),
     });
+}
+
+// Chat list ustunidagi vaqt: bugun→HH:mm, o'tgan 7 kun→hafta kuni, undan oldingi→dd.mm(.yy)
+function formatConvTime(iso: string | Date): string {
+    const d = new Date(iso);
+    const now = new Date();
+    if (isSameDay(d, now)) {
+        return d.toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit", hour12: false });
+    }
+    const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 7) {
+        // Hafta kuni qisqa (Du/Se/Ch/Pa/Ju/Sh/Ya)
+        return d.toLocaleDateString("uz-UZ", { weekday: "short" });
+    }
+    const sameYear = d.getFullYear() === now.getFullYear();
+    return sameYear
+        ? d.toLocaleDateString("uz-UZ", { day: "2-digit", month: "2-digit" })
+        : d.toLocaleDateString("uz-UZ", { day: "2-digit", month: "2-digit", year: "2-digit" });
 }
 
 // Fayl hajmini o'qish uchun qulay formatga o'girish
