@@ -1090,18 +1090,26 @@ export function NxSocialDesktop() {
         } catch {}
         setDrafts(prev => prev.filter(x => x.id !== d.id || x.kind !== d.kind));
     }
+    // Har suhbat uchun draft matn (chat list'da 'Draft: ...' ko'rsatish uchun)
+    const [draftsByConv, setDraftsByConv] = useState<Map<string, string>>(new Map());
     // Jami draft soni (chat list badge uchun) — DM + kanal
     const [draftCount, setDraftCount] = useState(0);
     useEffect(() => {
         try {
             let n = 0;
+            const dm = new Map<string, string>();
             for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i);
                 if (!k) continue;
                 if ((k.startsWith(DRAFT_PREFIX) || k.startsWith(CH_DRAFT_PREFIX))
                     && localStorage.getItem(k)?.trim()) n++;
+                if (k.startsWith(DRAFT_PREFIX)) {
+                    const val = localStorage.getItem(k)?.trim();
+                    if (val) dm.set(k.slice(DRAFT_PREFIX.length), val);
+                }
             }
             setDraftCount(n);
+            setDraftsByConv(dm);
         } catch {}
     }, [input, selectedId, draftsOpen]);
 
@@ -2511,13 +2519,29 @@ export function NxSocialDesktop() {
                                                     {c.isSelf && <Bookmark className="w-3 h-3" style={{ color: "#F59E0B" }} fill="#F59E0B" />}
                                                     {!c.isSelf && c.other?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
                                                 </div>
-                                                <p className="text-[11px] truncate" style={{ color: c.unread ? "#FFFFFF" : (c.other?.id && typingByPeerId.has(c.other.id) ? "#00CEC8" : "rgba(140,160,210,0.70)") }}>
-                                                    {c.isSelf
-                                                        ? (c.lastMessageText || "O'zingizga xabar yozing")
-                                                        : (c.other?.id && typingByPeerId.has(c.other.id))
-                                                            ? "yozmoqda..."
-                                                            : `${c.lastMine ? "Siz: " : ""}${c.lastMessageText ?? ""}`}
-                                                </p>
+                                                {(() => {
+                                                    const draft = draftsByConv.get(c.conversationId);
+                                                    const isTyping = !!(c.other?.id && typingByPeerId.has(c.other.id));
+                                                    // Prioritet: 1) typing, 2) draft, 3) oxirgi xabar
+                                                    if (isTyping) {
+                                                        return <p className="text-[11px] truncate" style={{ color: "#00CEC8" }}>yozmoqda...</p>;
+                                                    }
+                                                    if (draft && c.conversationId !== selectedId) {
+                                                        return (
+                                                            <p className="text-[11px] truncate" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                                                <span className="font-black" style={{ color: "#F59E0B" }}>Draft: </span>
+                                                                <span>{draft}</span>
+                                                            </p>
+                                                        );
+                                                    }
+                                                    return (
+                                                        <p className="text-[11px] truncate" style={{ color: c.unread ? "#FFFFFF" : "rgba(140,160,210,0.70)" }}>
+                                                            {c.isSelf
+                                                                ? (c.lastMessageText || "O'zingizga xabar yozing")
+                                                                : `${c.lastMine ? "Siz: " : ""}${c.lastMessageText ?? ""}`}
+                                                        </p>
+                                                    );
+                                                })()}
                                             </div>
                                         </>
                                     );
