@@ -1273,6 +1273,18 @@ export function NxSocialDesktop() {
     }
 
     const [locationPickerOpen, setLocationPickerOpen] = useState(false);
+    // Telegram uslub — attach menu (+ tugma)
+    const [attachOpen, setAttachOpen] = useState(false);
+    const attachMenuRef = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        if (!attachOpen) return;
+        function onClick(e: MouseEvent) {
+            if (!attachMenuRef.current) return;
+            if (!attachMenuRef.current.contains(e.target as Node)) setAttachOpen(false);
+        }
+        window.addEventListener("mousedown", onClick);
+        return () => window.removeEventListener("mousedown", onClick);
+    }, [attachOpen]);
 
     // Group/Channel listni yuklash
     useEffect(() => {
@@ -3104,120 +3116,139 @@ export function NxSocialDesktop() {
                                 </>
                             ) : (
                                 <>
-                                    <ComposerBtn icon={Paperclip} title="Fayl/rasm/video" onClick={() => fileInputRef.current?.click()} loading={uploading} />
-                                    <div className="relative">
-                                        <ComposerBtn icon={MapPin} title="Joylashuv"
-                                            onClick={() => setLocationPickerOpen(v => !v)}
-                                            loading={locBusy}
-                                            accent={locationPickerOpen} />
-                                        {locationPickerOpen && (
-                                            <div className="absolute bottom-full mb-2 left-0 z-30 rounded-lg overflow-hidden"
-                                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 180 }}>
-                                                <p className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border-b"
-                                                    style={{ color: "#00CEC8", borderColor: "rgba(43,62,232,0.20)" }}>
-                                                    Joylashuv turi
-                                                </p>
-                                                <button onClick={() => sendLocation()}
-                                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white hover:bg-white/[0.06] text-left">
-                                                    <MapPin className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                                    Statik joylashuv
-                                                </button>
-                                                {[15, 60, 480].map(mins => (
-                                                    <button key={mins} onClick={() => sendLocation(mins)}
-                                                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white hover:bg-white/[0.06] text-left">
-                                                        <MapPin className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
-                                                        Jonli — {mins < 60 ? `${mins} daq` : `${mins / 60} soat`}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <ComposerBtn icon={BarChart2} title="So'rovnoma" onClick={() => setPollOpen(true)} />
-                                    <ComposerBtn icon={Camera} title="Video-circle" onClick={() => setCircleOpen(true)} />
-                                    <ComposerBtn icon={Wallet} title="Pul yuborish" onClick={() => setTransferOpen(true)} accent />
-                                    <div className="relative">
-                                        <ComposerBtn
-                                            icon={Clock}
-                                            title="Jadvalga qo'yish (keyinroq yuborish)"
-                                            onClick={() => {
-                                                // Default: 1 soat keyin
-                                                if (!scheduleDateTime) {
-                                                    const d = new Date(Date.now() + 3600 * 1000);
-                                                    // datetime-local formati: YYYY-MM-DDTHH:MM
-                                                    const pad = (n: number) => String(n).padStart(2, "0");
-                                                    setScheduleDateTime(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
-                                                }
-                                                setScheduleOpen(v => !v);
-                                            }}
-                                            accent={scheduleOpen}
-                                        />
-                                        {scheduleOpen && (
-                                            <div className="absolute bottom-full mb-2 right-0 z-30 rounded-lg overflow-hidden p-3"
-                                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 240 }}>
-                                                <p className="text-[10px] font-black uppercase tracking-wider mb-1.5" style={{ color: "#00CEC8" }}>Qachon jo&apos;natilsin</p>
-                                                <input type="datetime-local" value={scheduleDateTime}
-                                                    onChange={e => setScheduleDateTime(e.target.value)}
-                                                    className="w-full h-9 px-2 rounded text-xs text-white bg-transparent focus:outline-none mb-2"
-                                                    style={{ border: "1px solid rgba(43,62,232,0.30)", colorScheme: "dark" }} />
-                                                <div className="flex gap-1.5 mb-2">
-                                                    {[
-                                                        { s: 3600, label: "1 soat" },
-                                                        { s: 3 * 3600, label: "3 soat" },
-                                                        { s: 86400, label: "Ertaga" },
-                                                    ].map(o => (
-                                                        <button key={o.label}
-                                                            onClick={() => {
-                                                                const d = new Date(Date.now() + o.s * 1000);
+                                    {/* Telegram uslub — bitta "+" tugma, ichida barcha ilovalar */}
+                                    <div className="relative" ref={attachMenuRef}>
+                                        <ComposerBtn icon={Plus} title="Ilova qo'shish" onClick={() => setAttachOpen(v => !v)} accent={attachOpen} loading={uploading || locBusy} />
+                                        {attachOpen && (
+                                            <div className="absolute bottom-full mb-2 left-0 z-30 rounded-2xl overflow-hidden p-2"
+                                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", minWidth: 260 }}>
+                                                <div className="grid grid-cols-3 gap-1">
+                                                    <AttachMenuItem icon={Paperclip} label="Fayl" onClick={() => { setAttachOpen(false); fileInputRef.current?.click(); }} />
+                                                    <AttachMenuItem icon={Camera} label="Video-doira" onClick={() => { setAttachOpen(false); setCircleOpen(true); }} />
+                                                    <AttachMenuItem icon={MapPin} label="Joylashuv" onClick={() => { setAttachOpen(false); setLocationPickerOpen(true); }} />
+                                                    <AttachMenuItem icon={BarChart2} label="So'rovnoma" onClick={() => { setAttachOpen(false); setPollOpen(true); }} />
+                                                    <AttachMenuItem icon={Wallet} label="Pul" onClick={() => { setAttachOpen(false); setTransferOpen(true); }} accent />
+                                                    <AttachMenuItem
+                                                        icon={Clock}
+                                                        label="Jadval"
+                                                        onClick={() => {
+                                                            setAttachOpen(false);
+                                                            if (!scheduleDateTime) {
+                                                                const d = new Date(Date.now() + 3600 * 1000);
                                                                 const pad = (n: number) => String(n).padStart(2, "0");
                                                                 setScheduleDateTime(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
-                                                            }}
-                                                            className="flex-1 text-[10px] font-bold py-1 rounded hover:bg-white/[0.08]"
-                                                            style={{ color: "rgba(220,230,255,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                                            {o.label}
-                                                        </button>
-                                                    ))}
+                                                            }
+                                                            setScheduleOpen(true);
+                                                        }}
+                                                    />
+                                                    <AttachMenuItem
+                                                        icon={nextTtl ? Flame : Timer}
+                                                        label={nextTtl ? "Taymer" : "O'chuvchi"}
+                                                        onClick={() => { setAttachOpen(false); setTtlPickerOpen(true); }}
+                                                        accent={!!nextTtl}
+                                                    />
                                                 </div>
-                                                <button onClick={scheduleSend}
-                                                    disabled={!input.trim() || !scheduleDateTime}
-                                                    className="w-full h-9 rounded text-xs font-black text-white disabled:opacity-40"
-                                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                                                    Jadvalga qo&apos;yish
-                                                </button>
                                             </div>
                                         )}
                                     </div>
-                                    <div className="relative">
-                                        <ComposerBtn
-                                            icon={nextTtl ? Flame : Timer}
-                                            title={nextTtl ? `${nextTtl}s'dan keyin o'chadi — o'zgartirish` : "O'zini o'chiruvchi xabar"}
-                                            onClick={() => setTtlPickerOpen(v => !v)}
-                                            accent={!!nextTtl || ttlPickerOpen}
-                                        />
-                                        {ttlPickerOpen && (
-                                            <div className="absolute bottom-full mb-2 right-0 z-30 rounded-lg overflow-hidden"
-                                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 140 }}>
+
+                                    {/* Location sub-picker (attach menu'dan chaqiriladi) */}
+                                    {locationPickerOpen && (
+                                        <div className="absolute bottom-full mb-2 left-3 z-30 rounded-lg overflow-hidden"
+                                            style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 200 }}>
+                                            <div className="px-3 py-1.5 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                                                <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "#00CEC8" }}>Joylashuv turi</p>
+                                                <button onClick={() => setLocationPickerOpen(false)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-white/[0.08]">
+                                                    <X className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                </button>
+                                            </div>
+                                            <button onClick={() => { sendLocation(); setLocationPickerOpen(false); }}
+                                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white hover:bg-white/[0.06] text-left">
+                                                <MapPin className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                Statik joylashuv
+                                            </button>
+                                            {[15, 60, 480].map(mins => (
+                                                <button key={mins} onClick={() => { sendLocation(mins); setLocationPickerOpen(false); }}
+                                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white hover:bg-white/[0.06] text-left">
+                                                    <MapPin className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                                    Jonli — {mins < 60 ? `${mins} daq` : `${mins / 60} soat`}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Schedule sub-picker */}
+                                    {scheduleOpen && (
+                                        <div className="absolute bottom-full mb-2 left-3 z-30 rounded-lg overflow-hidden p-3"
+                                            style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 260 }}>
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "#00CEC8" }}>Qachon jo&apos;natilsin</p>
+                                                <button onClick={() => setScheduleOpen(false)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-white/[0.08]">
+                                                    <X className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                </button>
+                                            </div>
+                                            <input type="datetime-local" value={scheduleDateTime}
+                                                onChange={e => setScheduleDateTime(e.target.value)}
+                                                className="w-full h-9 px-2 rounded text-xs text-white bg-transparent focus:outline-none mb-2"
+                                                style={{ border: "1px solid rgba(43,62,232,0.30)", colorScheme: "dark" }} />
+                                            <div className="flex gap-1.5 mb-2">
                                                 {[
-                                                    { s: null, label: "Doimiy" },
-                                                    { s: 10, label: "10 sekund" },
-                                                    { s: 60, label: "1 daqiqa" },
-                                                    { s: 300, label: "5 daqiqa" },
                                                     { s: 3600, label: "1 soat" },
-                                                    { s: 86400, label: "24 soat" },
+                                                    { s: 3 * 3600, label: "3 soat" },
+                                                    { s: 86400, label: "Ertaga" },
                                                 ].map(o => (
                                                     <button key={o.label}
-                                                        onClick={() => { setNextTtl(o.s); setTtlPickerOpen(false); }}
-                                                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white hover:bg-white/[0.06] text-left"
-                                                        style={nextTtl === o.s ? { background: "rgba(0,206,200,0.14)", color: "#00CEC8" } : undefined}>
-                                                        {o.s === null
-                                                            ? <Timer className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.75)" }} />
-                                                            : <Flame className="w-3.5 h-3.5" style={{ color: "#F97316" }} />
-                                                        }
+                                                        onClick={() => {
+                                                            const d = new Date(Date.now() + o.s * 1000);
+                                                            const pad = (n: number) => String(n).padStart(2, "0");
+                                                            setScheduleDateTime(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+                                                        }}
+                                                        className="flex-1 text-[10px] font-bold py-1 rounded hover:bg-white/[0.08]"
+                                                        style={{ color: "rgba(220,230,255,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
                                                         {o.label}
                                                     </button>
                                                 ))}
                                             </div>
-                                        )}
-                                    </div>
+                                            <button onClick={scheduleSend}
+                                                disabled={!input.trim() || !scheduleDateTime}
+                                                className="w-full h-9 rounded text-xs font-black text-white disabled:opacity-40"
+                                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                                Jadvalga qo&apos;yish
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* TTL sub-picker */}
+                                    {ttlPickerOpen && (
+                                        <div className="absolute bottom-full mb-2 left-3 z-30 rounded-lg overflow-hidden"
+                                            style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)", minWidth: 160 }}>
+                                            <div className="px-3 py-1.5 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                                                <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "#00CEC8" }}>Taymer</p>
+                                                <button onClick={() => setTtlPickerOpen(false)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-white/[0.08]">
+                                                    <X className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                </button>
+                                            </div>
+                                            {[
+                                                { s: null, label: "Doimiy" },
+                                                { s: 10, label: "10 sekund" },
+                                                { s: 60, label: "1 daqiqa" },
+                                                { s: 300, label: "5 daqiqa" },
+                                                { s: 3600, label: "1 soat" },
+                                                { s: 86400, label: "24 soat" },
+                                            ].map(o => (
+                                                <button key={o.label}
+                                                    onClick={() => { setNextTtl(o.s); setTtlPickerOpen(false); }}
+                                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white hover:bg-white/[0.06] text-left"
+                                                    style={nextTtl === o.s ? { background: "rgba(0,206,200,0.14)", color: "#00CEC8" } : undefined}>
+                                                    {o.s === null
+                                                        ? <Timer className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.75)" }} />
+                                                        : <Flame className="w-3.5 h-3.5" style={{ color: "#F97316" }} />
+                                                    }
+                                                    {o.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                     {/* Bot inline mode popover — "@botname query" */}
                                     <NxInlinePopover text={input} convId={selectedId} onSent={() => setInput("")} />
                                     {/* Bot commands autocomplete popover */}
@@ -4331,6 +4362,27 @@ function ComposerBtn({ icon: Icon, title, onClick, loading, accent }: {
                 ? <Loader2 className="w-4 h-4 text-white animate-spin" />
                 : <Icon className="w-4 h-4" style={{ color: accent ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
             }
+        </button>
+    );
+}
+
+// Telegram uslub attach menu (+) ichidagi kartochka
+function AttachMenuItem({ icon: Icon, label, onClick, accent }: {
+    icon: React.ElementType; label: string; onClick?: () => void; accent?: boolean;
+}) {
+    return (
+        <button onClick={onClick} type="button"
+            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]"
+            style={accent ? { background: "rgba(0,206,200,0.10)" } : undefined}>
+            <span className="w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ background: accent
+                    ? "linear-gradient(135deg,rgba(0,206,200,0.25),rgba(43,62,232,0.25))"
+                    : "rgba(43,62,232,0.14)" }}>
+                <Icon className="w-4 h-4" style={{ color: accent ? "#00CEC8" : "rgba(200,215,245,0.90)" }} />
+            </span>
+            <span className="text-[10px] font-bold" style={{ color: accent ? "#00CEC8" : "rgba(220,230,255,0.85)" }}>
+                {label}
+            </span>
         </button>
     );
 }
