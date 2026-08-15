@@ -18,6 +18,7 @@ import { NxStatusModal, statusIconForKey, statusColorForKey } from "./nx-status-
 import { Emoji } from "@/lib/twemoji";
 import { NxGifPicker } from "./nx-gif-picker";
 import { NxStickerPicker } from "./nx-sticker-picker";
+import { useTabBadge } from "@/lib/tab-badge";
 import { NxInlinePopover } from "./nx-inline-popover";
 import { NxE2eBanner } from "./nx-e2e-banner";
 import { encryptForRecipient, decryptFromSender } from "@/lib/e2e-crypto";
@@ -473,6 +474,9 @@ export function NxSocialDesktop() {
             .then(d => { setCommonGroups(d.groups ?? []); setCommonChannels(d.channels ?? []); })
             .catch(() => { setCommonGroups([]); setCommonChannels([]); });
     }, [peer?.id, myProfileId]);
+    // Browser tab title + favicon badge — o'qilmagan xabarlar soni
+    const totalUnread = convs.filter(c => c.unread && !c.muted && !c.isSelf).length;
+    useTabBadge(totalUnread);
     // GIF picker (Giphy)
     const [gifPickerOpen, setGifPickerOpen] = useState(false);
     // Sticker picker
