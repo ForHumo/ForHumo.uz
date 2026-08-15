@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag, Bookmark, BookmarkCheck, Volume2, VolumeX, Languages, Copy, Pin, Plus } from "lucide-react";
+import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag, Bookmark, BookmarkCheck, Volume2, VolumeX, Languages, Copy, Pin, Plus, MoreVertical } from "lucide-react";
 import { formatMoney } from "@/lib/money";
 import Image from "next/image";
 import { NxVerifiedBadge } from "./nx-verified-badge";
@@ -515,6 +515,18 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
         window.addEventListener("mousedown", onDown);
         return () => window.removeEventListener("mousedown", onDown);
     }, [attachOpen]);
+    // Mobile chat header 3-dot More menyu (chaqiruvlar shu yerda)
+    const [headerMoreOpen, setHeaderMoreOpen] = useState(false);
+    const headerMoreRef = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        if (!headerMoreOpen) return;
+        function onDown(e: MouseEvent) {
+            if (headerMoreRef.current?.contains(e.target as Node)) return;
+            setHeaderMoreOpen(false);
+        }
+        window.addEventListener("mousedown", onDown);
+        return () => window.removeEventListener("mousedown", onDown);
+    }, [headerMoreOpen]);
     const [locBusy, setLocBusy] = useState(false);
     const liveLocWatchRef = useRef<Set<string>>(new Set());   // ish faoli bo'lgan msg ID'lari
     const liveLocIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -731,27 +743,43 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                         ) : null}
                     </div>
                 </Link>
+                {/* Chaqiruvlar + profil — hammasi 3-dot More menyusi ichida (Telegram uslub) */}
                 {selected.other?.id && (
-                    <>
-                        <button onClick={() => selected.other?.id && startCall(selected.other.id, "AUDIO")}
-                            title="Ovozli chaqiruv"
+                    <div className="relative" ref={headerMoreRef}>
+                        <button onClick={() => setHeaderMoreOpen(v => !v)}
+                            title="Ko'proq"
                             className="w-8 h-8 flex items-center justify-center rounded-xl transition-transform hover:scale-110 active:scale-95"
-                            style={{ background: "rgba(43,62,232,0.10)" }}>
-                            <Phone className="w-4 h-4 text-white" />
+                            style={{
+                                background: headerMoreOpen ? "rgba(0,206,200,0.18)" : "rgba(43,62,232,0.10)",
+                            }}>
+                            <MoreVertical className="w-4 h-4 text-white" />
                         </button>
-                        <button onClick={() => selected.other?.id && startCall(selected.other.id, "VIDEO")}
-                            title="Video chaqiruv"
-                            className="w-8 h-8 flex items-center justify-center rounded-xl transition-transform hover:scale-110 active:scale-95"
-                            style={{ background: "rgba(43,62,232,0.10)" }}>
-                            <Video className="w-4 h-4 text-white" />
-                        </button>
-                        <button onClick={() => selected.other?.id && startGroupCall(selected.other.id, selected.other?.name || null)}
-                            title="Guruh chaqiruv"
-                            className="w-8 h-8 flex items-center justify-center rounded-xl transition-transform hover:scale-110 active:scale-95"
-                            style={{ background: "rgba(0,206,200,0.15)" }}>
-                            <Users className="w-4 h-4 text-white" />
-                        </button>
-                    </>
+                        {headerMoreOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-52 rounded-2xl overflow-hidden z-30"
+                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                <button onClick={() => { if (selected.other?.id) startCall(selected.other.id, "AUDIO"); setHeaderMoreOpen(false); }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                    <Phone className="w-4 h-4" style={{ color: "#00CEC8" }} /> Ovozli chaqiruv
+                                </button>
+                                <button onClick={() => { if (selected.other?.id) startCall(selected.other.id, "VIDEO"); setHeaderMoreOpen(false); }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                    <Video className="w-4 h-4" style={{ color: "#00CEC8" }} /> Video chaqiruv
+                                </button>
+                                <button onClick={() => { if (selected.other?.id) startGroupCall(selected.other.id, selected.other?.name || null); setHeaderMoreOpen(false); }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                    style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                    <Users className="w-4 h-4" style={{ color: "#00CEC8" }} /> Guruh chaqiruv
+                                </button>
+                                {selected.other?.username && (
+                                    <a href={`/nexus/u/${selected.other.username}`} target="_blank" rel="noopener noreferrer"
+                                        className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05]"
+                                        onClick={() => setHeaderMoreOpen(false)}>
+                                        <BadgeCheck className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Profilni ochish
+                                    </a>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 )}
                 {/* Yopish tugmasi faqat mobil'da — lg'da chap ustunda ham bor */}
                 <button onClick={close} className="lg:hidden w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }}>
