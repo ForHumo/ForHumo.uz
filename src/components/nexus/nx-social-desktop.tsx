@@ -477,6 +477,30 @@ export function NxSocialDesktop() {
     // Browser tab title + favicon badge — o'qilmagan xabarlar soni
     const totalUnread = convs.filter(c => c.unread && !c.muted && !c.isSelf).length;
     useTabBadge(totalUnread);
+    // Global DM message search (sidebar 'filter' input'iga yozganda)
+    interface GlobalSearchItem {
+        messageId: string; conversationId: string; text: string;
+        createdAt: string; mine: boolean; isSelf: boolean;
+        peer: { id: string; name: string | null; username: string | null; image: string | null } | null;
+    }
+    const [globalMsgResults, setGlobalMsgResults] = useState<GlobalSearchItem[]>([]);
+    const [globalMsgBusy, setGlobalMsgBusy] = useState(false);
+    useEffect(() => {
+        const q = filter.trim();
+        if (q.length < 2) { setGlobalMsgResults([]); return; }
+        const t = setTimeout(async () => {
+            setGlobalMsgBusy(true);
+            try {
+                const r = await fetch(`/api/nexus/messages/search-all?q=${encodeURIComponent(q)}&limit=15`, { cache: "no-store" });
+                if (r.ok) {
+                    const d = await r.json();
+                    setGlobalMsgResults(d.items ?? []);
+                }
+            } catch { /* ignore */ }
+            finally { setGlobalMsgBusy(false); }
+        }, 350);
+        return () => clearTimeout(t);
+    }, [filter]);
     // GIF picker (Giphy)
     const [gifPickerOpen, setGifPickerOpen] = useState(false);
     // Sticker picker
@@ -2571,6 +2595,58 @@ export function NxSocialDesktop() {
                             </div>
                         </div>
                     ))}
+                    {/* Global message search results — filter uzunligi 2+ va natija bor bo'lsa */}
+                    {isDmListTab && filter.trim().length >= 2 && (
+                        <div className="border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                            <div className="px-3 py-2 flex items-center justify-between">
+                                <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                    Xabarlar ichidan
+                                </p>
+                                {globalMsgBusy && <Loader2 className="w-3 h-3 animate-spin" style={{ color: "#00CEC8" }} />}
+                            </div>
+                            {!globalMsgBusy && globalMsgResults.length === 0 && (
+                                <p className="px-3 py-2 text-[11px]" style={{ color: "rgba(140,160,210,0.55)" }}>
+                                    Xabar topilmadi
+                                </p>
+                            )}
+                            {globalMsgResults.map(r => (
+                                <button key={r.messageId}
+                                    onClick={() => {
+                                        setSelectedId(r.conversationId);
+                                        setTimeout(() => jumpToMessage(r.messageId), 400);
+                                    }}
+                                    className="w-full flex items-start gap-3 px-3 py-2.5 text-left transition hover:bg-white/[0.04] border-b"
+                                    style={{ borderColor: "rgba(43,62,232,0.06)" }}>
+                                    {r.isSelf ? (
+                                        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                                            style={{ background: "linear-gradient(135deg,#F59E0B,#EA580C)" }}>
+                                            <Bookmark className="w-4 h-4 text-white" fill="#fff" />
+                                        </div>
+                                    ) : r.peer?.image ? (
+                                        <img src={r.peer.image} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                                    ) : (
+                                        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black text-white"
+                                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                            {(r.peer?.name || r.peer?.username || "?")[0]?.toUpperCase()}
+                                        </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-xs font-bold text-white truncate flex-1">
+                                                {r.isSelf ? "Saqlangan" : (r.peer?.name ?? r.peer?.username ?? "?")}
+                                            </p>
+                                            <span className="text-[10px] flex-shrink-0" style={{ color: "rgba(140,160,210,0.55)" }}>
+                                                {new Date(r.createdAt).toLocaleDateString("uz-UZ", { day: "numeric", month: "short" })}
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] mt-0.5 line-clamp-2" style={{ color: "rgba(200,215,245,0.85)" }}>
+                                            {r.mine ? "Siz: " : ""}{highlightText(r.text ?? "", filter)}
+                                        </p>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
