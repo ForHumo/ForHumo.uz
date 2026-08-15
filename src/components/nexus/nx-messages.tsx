@@ -16,6 +16,9 @@ import { NxPollCreate } from "./nx-poll-create";
 import { NxVoicePlayer } from "./nx-voice-player";
 import { NxMarkdown } from "./nx-markdown";
 import { Emoji } from "@/lib/twemoji";
+import { NxGifPicker } from "./nx-gif-picker";
+import { NxStickerPicker } from "./nx-sticker-picker";
+import { Sticker } from "lucide-react";
 
 interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
 interface Conv { conversationId: string; other: Other | null; lastMessageText: string | null; lastMessageAt: string; lastMine: boolean; unread: boolean }
@@ -506,6 +509,8 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     const [locSheetOpen, setLocSheetOpen] = useState(false);
     // Telegram uslub — bitta "+" attach menyu
     const [attachOpen, setAttachOpen] = useState(false);
+    const [gifPickerOpen, setGifPickerOpen] = useState(false);
+    const [stickerPickerOpen, setStickerPickerOpen] = useState(false);
     const attachMenuRef = useRef<HTMLDivElement | null>(null);
     useEffect(() => {
         if (!attachOpen) return;
@@ -816,6 +821,16 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                         )}
                                         {m.mediaType === "video" && m.mediaUrl && (
                                             <video src={m.mediaUrl} controls playsInline className="max-w-full max-h-80" />
+                                        )}
+                                        {m.mediaType === "gif" && m.mediaUrl && (
+                                            m.mediaUrl.endsWith(".mp4")
+                                                ? <video src={m.mediaUrl} autoPlay loop muted playsInline
+                                                    className="max-w-full max-h-64" />
+                                                : <img src={m.mediaUrl} alt="GIF" className="max-w-full max-h-64" />
+                                        )}
+                                        {m.mediaType === "sticker" && m.mediaUrl && (
+                                            <img src={m.mediaUrl} alt={m.text ?? "sticker"} draggable={false}
+                                                style={{ width: 120, height: 120 }} />
                                         )}
                                         {m.mediaType === "video-circle" && m.mediaUrl && (
                                             <div className="p-2">
@@ -1139,6 +1154,22 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                             </span>
                                             <span className="text-[10px] font-bold" style={{ color: "#00CEC8" }}>Pul</span>
                                         </button>
+                                        <button type="button"
+                                            onClick={() => { setAttachOpen(false); setGifPickerOpen(true); }}
+                                            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
+                                            <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(43,62,232,0.14)" }}>
+                                                <FileIcon className="w-4 h-4" style={{ color: "rgba(200,215,245,0.90)" }} />
+                                            </span>
+                                            <span className="text-[10px] font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>GIF</span>
+                                        </button>
+                                        <button type="button"
+                                            onClick={() => { setAttachOpen(false); setStickerPickerOpen(true); }}
+                                            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
+                                            <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(43,62,232,0.14)" }}>
+                                                <Sticker className="w-4 h-4" style={{ color: "rgba(200,215,245,0.90)" }} />
+                                            </span>
+                                            <span className="text-[10px] font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>Sticker</span>
+                                        </button>
                                     </div>
                                 </div>
                             )}
@@ -1189,6 +1220,57 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
 
             {/* AI moderation ban modali */}
             <NxBanModal ban={ban} onClose={() => setBan(null)} />
+
+            {/* GIF picker (Giphy) */}
+            {gifPickerOpen && (
+                <NxGifPicker
+                    onClose={() => setGifPickerOpen(false)}
+                    onPick={async (g) => {
+                        setGifPickerOpen(false);
+                        if (!selected) return;
+                        try {
+                            const r = await fetch(`/api/nexus/messages/${selected.conversationId}`, {
+                                method: "POST", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    text: "",
+                                    mediaUrl: g.url,
+                                    mediaType: "gif",
+                                    mediaMime: g.url.endsWith(".mp4") ? "video/mp4" : "image/gif",
+                                }),
+                            });
+                            if (r.ok) {
+                                const d = await r.json();
+                                setMessages(m => [...m, d.message]);
+                            }
+                        } catch { /* ignore */ }
+                    }}
+                />
+            )}
+            {/* Sticker picker */}
+            {stickerPickerOpen && (
+                <NxStickerPicker
+                    onClose={() => setStickerPickerOpen(false)}
+                    onPick={async (url, emoji) => {
+                        setStickerPickerOpen(false);
+                        if (!selected) return;
+                        try {
+                            const r = await fetch(`/api/nexus/messages/${selected.conversationId}`, {
+                                method: "POST", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    text: emoji,
+                                    mediaUrl: url,
+                                    mediaType: "sticker",
+                                    mediaMime: "image/svg+xml",
+                                }),
+                            });
+                            if (r.ok) {
+                                const d = await r.json();
+                                setMessages(m => [...m, d.message]);
+                            }
+                        } catch { /* ignore */ }
+                    }}
+                />
+            )}
 
             {/* Mobile action sheet — xabar bosilganda pastdan chiqadi */}
             {actionMsg && (
