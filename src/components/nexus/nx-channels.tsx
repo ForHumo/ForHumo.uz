@@ -386,6 +386,18 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [editingText, setEditingText] = useState("");
     // Reaksiya emoji tanlagich
     const [reactPickerFor, setReactPickerFor] = useState<string | null>(null);
+    // Per-xabar 3-dot More menyu (Telegram uslub — kam ishlatiluvchi amallar shu yerda)
+    const [chMsgMenuFor, setChMsgMenuFor] = useState<string | null>(null);
+    useEffect(() => {
+        if (!chMsgMenuFor) return;
+        function onDown(e: MouseEvent) {
+            const t = e.target as HTMLElement;
+            if (t.closest("[data-ch-msg-menu]")) return;
+            setChMsgMenuFor(null);
+        }
+        window.addEventListener("mousedown", onDown);
+        return () => window.removeEventListener("mousedown", onDown);
+    }, [chMsgMenuFor]);
     // Reply — javob berilayotgan xabar
     const [replyTo, setReplyTo] = useState<ChMsg | null>(null);
     // Moderatsiya inboxi (owner/admin uchun)
@@ -1025,7 +1037,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         <p className="text-[9px]" style={{ color: "rgba(100,120,170,0.6)" }}>{timeAgo(m.createdAt)}</p>
                                     </div>
                                 </div>
-                                {/* Hover amallar: react + edit + pin + delete */}
+                                {/* Hover amallar (Telegram uslub) — faqat 3 ta: Reaksiya + Javob + 3-dot */}
                                 <div className="opacity-0 group-hover:opacity-100 transition self-center flex flex-col gap-1 relative">
                                     <button onClick={() => setReactPickerFor(reactPickerFor === m.id ? null : m.id)}
                                         title="Reaksiya"
@@ -1038,100 +1050,97 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
                                         <Reply className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
                                     </button>
-                                    <button onClick={() => setForwardMsg(m)} title="DM'ga yuborish"
-                                        className="w-7 h-7 rounded-md flex items-center justify-center"
-                                        style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                        <Forward className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                    </button>
-                                    <button onClick={() => toggleBookmark(m)}
-                                        title={m.bookmarked ? "Saqlashdan olib tashlash" : "Saqlash"}
-                                        className="w-7 h-7 rounded-md flex items-center justify-center"
-                                        style={{
-                                            background: m.bookmarked ? "rgba(245,158,11,0.18)" : "rgba(11,18,40,0.65)",
-                                            border: `1px solid ${m.bookmarked ? "rgba(245,158,11,0.40)" : "rgba(43,62,232,0.25)"}`,
-                                        }}>
-                                        {m.bookmarked
-                                            ? <BookmarkCheck className="w-3 h-3" style={{ color: "#F59E0B" }} />
-                                            : <Bookmark className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                        }
-                                    </button>
-                                    {m.text && (
-                                        <>
-                                            <button onClick={() => speakMsg(m.id, m.text!)}
-                                                title={speakingId === m.id ? "To'xtatish" : "Eshittirish"}
-                                                className="w-7 h-7 rounded-md flex items-center justify-center"
-                                                style={{
-                                                    background: speakingId === m.id ? "rgba(0,206,200,0.20)" : "rgba(11,18,40,0.65)",
-                                                    border: `1px solid ${speakingId === m.id ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.25)"}`,
-                                                }}>
-                                                {speakingId === m.id
-                                                    ? <VolumeX className="w-3 h-3" style={{ color: "#00CEC8" }} />
-                                                    : <Volume2 className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                                }
-                                            </button>
-                                            <div className="relative">
-                                                <button onClick={() => translated[m.id]
-                                                    ? hideTranslated(m.id)
-                                                    : setTranslatePickerFor(translatePickerFor === m.id ? null : m.id)}
-                                                    title="Tarjima" disabled={!!translating[m.id]}
-                                                    className="w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-40"
-                                                    style={{
-                                                        background: translated[m.id] ? "rgba(0,206,200,0.20)" : "rgba(11,18,40,0.65)",
-                                                        border: "1px solid rgba(43,62,232,0.25)",
-                                                    }}>
-                                                    {translating[m.id]
-                                                        ? <Loader2 className="w-3 h-3 animate-spin" style={{ color: "#00CEC8" }} />
-                                                        : <Languages className="w-3 h-3" style={{ color: translated[m.id] ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
-                                                    }
-                                                </button>
-                                                {translatePickerFor === m.id && (
-                                                    <div className="absolute right-full mr-1 top-0 z-30 flex gap-1 p-1 rounded-lg"
-                                                        style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)" }}>
-                                                        {(["uz", "ru", "en"] as const).map(lg => (
-                                                            <button key={lg} onClick={() => translateMsg(m.id, m.text!, lg)}
-                                                                className="text-[10px] font-black px-2 py-1 rounded hover:bg-white/[0.08]"
-                                                                style={{ color: "rgba(220,230,255,0.95)" }}>
-                                                                {lg.toUpperCase()}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <button onClick={() => copyMsg(m.text!)} title="Nusxa olish"
-                                                className="w-7 h-7 rounded-md flex items-center justify-center"
-                                                style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                                <Copy className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                            </button>
-                                        </>
-                                    )}
-                                    {m.mine && m.text && (
-                                        <button onClick={() => editMsg(m)} title="Tahrirlash"
-                                            className="w-7 h-7 rounded-md flex items-center justify-center"
-                                            style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                            <Edit3 className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                        </button>
-                                    )}
-                                    {canManage && (
-                                        <button onClick={() => toggleChannelPin(m)}
-                                            title={m.pinnedAt ? "Pindan olib tashlash" : "Pinga qo'yish"}
+                                    <div className="relative" data-ch-msg-menu>
+                                        <button onClick={() => setChMsgMenuFor(chMsgMenuFor === m.id ? null : m.id)} title="Ko'proq"
                                             className="w-7 h-7 rounded-md flex items-center justify-center"
                                             style={{
-                                                background: m.pinnedAt ? "rgba(0,206,200,0.18)" : "rgba(11,18,40,0.65)",
-                                                border: `1px solid ${m.pinnedAt ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.25)"}`,
+                                                background: chMsgMenuFor === m.id ? "rgba(0,206,200,0.18)" : "rgba(11,18,40,0.65)",
+                                                border: "1px solid rgba(43,62,232,0.25)",
                                             }}>
-                                            {m.pinnedAt
-                                                ? <PinOff className="w-3 h-3" style={{ color: "#00CEC8" }} />
-                                                : <Pin className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                            }
+                                            <MoreVertical className="w-3 h-3" style={{ color: chMsgMenuFor === m.id ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
                                         </button>
-                                    )}
-                                    {(m.mine || canManage) && (
-                                        <button onClick={() => deleteMsg(m)} title="O'chirish"
-                                            className="w-7 h-7 rounded-md flex items-center justify-center"
-                                            style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(239,68,68,0.30)" }}>
-                                            <Trash2 className="w-3 h-3" style={{ color: "#EF4444" }} />
-                                        </button>
-                                    )}
+                                        {chMsgMenuFor === m.id && (
+                                            <div className="absolute right-full mr-1 top-0 z-40 rounded-xl overflow-hidden min-w-[180px]"
+                                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                                <button onClick={() => { setForwardMsg(m); setChMsgMenuFor(null); }}
+                                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                                    <Forward className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> DM&apos;ga yuborish
+                                                </button>
+                                                <button onClick={() => { toggleBookmark(m); setChMsgMenuFor(null); }}
+                                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                                    {m.bookmarked
+                                                        ? <><BookmarkCheck className="w-4 h-4" style={{ color: "#F59E0B" }} /> Saqlashdan olish</>
+                                                        : <><Bookmark className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Saqlash</>
+                                                    }
+                                                </button>
+                                                {m.text && (
+                                                    <button onClick={() => { copyMsg(m.text!); setChMsgMenuFor(null); }}
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                                        <Copy className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Nusxa olish
+                                                    </button>
+                                                )}
+                                                {m.text && (
+                                                    <button onClick={() => {
+                                                        if (translated[m.id]) { hideTranslated(m.id); setChMsgMenuFor(null); }
+                                                        else { setTranslatePickerFor(m.id); setChMsgMenuFor(null); }
+                                                    }}
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                                        <Languages className="w-4 h-4" style={{ color: translated[m.id] ? "#00CEC8" : "rgba(160,176,224,0.80)" }} />
+                                                        {translated[m.id] ? "Tarjimani yashirish" : "Tarjima qilish"}
+                                                    </button>
+                                                )}
+                                                {m.text && (
+                                                    <button onClick={() => { speakMsg(m.id, m.text!); setChMsgMenuFor(null); }}
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                                        {speakingId === m.id
+                                                            ? <VolumeX className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                                            : <Volume2 className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                                        }
+                                                        {speakingId === m.id ? "TTS to'xtatish" : "Ovoz bilan o'qish"}
+                                                    </button>
+                                                )}
+                                                {m.mine && m.text && (
+                                                    <button onClick={() => { editMsg(m); setChMsgMenuFor(null); }}
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                                        <Edit3 className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Tahrirlash
+                                                    </button>
+                                                )}
+                                                {canManage && (
+                                                    <button onClick={() => { toggleChannelPin(m); setChMsgMenuFor(null); }}
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                                        {m.pinnedAt
+                                                            ? <><PinOff className="w-4 h-4" style={{ color: "#00CEC8" }} /> Pindan olish</>
+                                                            : <><Pin className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Pinlash</>
+                                                        }
+                                                    </button>
+                                                )}
+                                                {(m.mine || canManage) && (
+                                                    <button onClick={() => { deleteMsg(m); setChMsgMenuFor(null); }}
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-red-500/10 text-left"
+                                                        style={{ color: "#EF4444" }}>
+                                                        <Trash2 className="w-4 h-4" /> O&apos;chirish
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                        {/* Tarjima sub-picker (menudan chaqiriladi) */}
+                                        {translatePickerFor === m.id && (
+                                            <div className="absolute right-full mr-1 top-0 z-40 flex gap-1 p-1.5 rounded-lg"
+                                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)" }}>
+                                                {(["uz", "ru", "en"] as const).map(lg => (
+                                                    <button key={lg} onClick={() => translateMsg(m.id, m.text!, lg)}
+                                                        className="text-[10px] font-black px-2.5 py-1.5 rounded hover:bg-white/[0.08]"
+                                                        style={{ color: "rgba(220,230,255,0.95)" }}>
+                                                        {lg.toUpperCase()}
+                                                    </button>
+                                                ))}
+                                                <button onClick={() => setTranslatePickerFor(null)}
+                                                    className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/[0.08]">
+                                                    <X className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                     {reactPickerFor === m.id && (
                                         <div className="absolute right-8 top-0 z-30 flex gap-1 p-1.5 rounded-lg"
                                             style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)" }}>
