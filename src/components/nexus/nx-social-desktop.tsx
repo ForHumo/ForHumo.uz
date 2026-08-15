@@ -2038,28 +2038,41 @@ export function NxSocialDesktop() {
                 <div className="p-2 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <div className="flex items-center gap-1 overflow-x-auto nx-hide-scrollbar">
-                    {([
-                        { id: "all" as const,      icon: Inbox,         label: "Barchasi" },
-                        { id: "unread" as const,   icon: BellOff,       label: "O'qilmagan" },
-                        { id: "private" as const,  icon: MessageSquare, label: "Shaxsiy" },
-                        { id: "groups" as const,   icon: Users,         label: "Guruhlar" },
-                        { id: "channels" as const, icon: Hash,          label: "Kanallar" },
-                        { id: "agents" as const,   icon: BotIcon,       label: "Agentlar" },
-                    ]).map(t => (
-                        <button key={t.id}
-                            onClick={() => setListTab(t.id)}
-                            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition whitespace-nowrap"
-                            style={listTab === t.id ? {
-                                background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
-                                color: "#fff",
-                            } : {
-                                background: "rgba(43,62,232,0.06)",
-                                color: "rgba(140,160,210,0.80)",
-                                border: "1px solid rgba(43,62,232,0.15)",
-                            }}>
-                            <t.icon className="w-3.5 h-3.5" /> {t.label}
-                        </button>
-                    ))}
+                    {(() => {
+                        // Tab bo'yicha o'qilmagan hisoblash (muted chatlar sanamaydi)
+                        const unreadDMs = convs.filter(c => c.unread && !c.muted && !c.isSelf).length;
+                        return ([
+                            { id: "all" as const,      icon: Inbox,         label: "Barchasi",   badge: unreadDMs },
+                            { id: "unread" as const,   icon: BellOff,       label: "O'qilmagan", badge: unreadDMs },
+                            { id: "private" as const,  icon: MessageSquare, label: "Shaxsiy",    badge: unreadDMs },
+                            { id: "groups" as const,   icon: Users,         label: "Guruhlar",   badge: 0 },
+                            { id: "channels" as const, icon: Hash,          label: "Kanallar",   badge: 0 },
+                            { id: "agents" as const,   icon: BotIcon,       label: "Agentlar",   badge: 0 },
+                        ]).map(t => (
+                            <button key={t.id}
+                                onClick={() => setListTab(t.id)}
+                                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition whitespace-nowrap relative"
+                                style={listTab === t.id ? {
+                                    background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                                    color: "#fff",
+                                } : {
+                                    background: "rgba(43,62,232,0.06)",
+                                    color: "rgba(140,160,210,0.80)",
+                                    border: "1px solid rgba(43,62,232,0.15)",
+                                }}>
+                                <t.icon className="w-3.5 h-3.5" /> {t.label}
+                                {t.badge > 0 && (
+                                    <span className="ml-0.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black flex items-center justify-center"
+                                        style={{
+                                            background: listTab === t.id ? "rgba(255,255,255,0.30)" : "#00CEC8",
+                                            color: listTab === t.id ? "#fff" : "#0B1228",
+                                        }}>
+                                        {t.badge > 99 ? "99+" : t.badge}
+                                    </span>
+                                )}
+                            </button>
+                        ));
+                    })()}
                     </div>
                     <div className="flex items-center gap-1 mt-2">
                     <div className="flex-1" />
