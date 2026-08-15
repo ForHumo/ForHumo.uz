@@ -124,6 +124,9 @@ export function NxSocialDesktop() {
     const [myProfileId, setMyProfileId] = useState<string | null>(null);
     const [myName, setMyName] = useState<string | null>(null);
     const [peerTyping, setPeerTyping] = useState(false);
+    // Kim yozayapti — barcha suhbatlar bo'yicha (chat list preview'da "yozmoqda..." uchun)
+    const [typingByPeerId, setTypingByPeerId] = useState<Set<string>>(new Set());
+    const typingClearTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastTypingSentRef = useRef<number>(0);
 
@@ -170,15 +173,41 @@ export function NxSocialDesktop() {
             .catch(() => {});
     }, [peer?.id, peer?.isAgent]);
 
-    // Typing event'larini eshitish (faqat hozirgi peer bilan)
+    // Typing event'larini eshitish
+    // 1) Hozirgi peer bilan — header'da "yozmoqda..." (peerTyping state)
+    // 2) Har qanday peer'dan — chat list preview'da "yozmoqda..." (typingByPeerId set)
     useEffect(() => {
         const off = onTyping((e) => {
-            if (!peer?.id || !myProfileId) return;
-            if (e.fromId !== peer.id) return;
-            if (e.toId !== myProfileId) return;
-            setPeerTyping(true);
-            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-            typingTimeoutRef.current = setTimeout(() => setPeerTyping(false), 3000);
+            if (!myProfileId) return;
+            if (e.toId !== myProfileId) return; // faqat menga qaratilgan
+
+            // 1) Chat list uchun barcha peerlar
+            setTypingByPeerId(prev => {
+                if (prev.has(e.fromId)) return prev;
+                const next = new Set(prev);
+                next.add(e.fromId);
+                return next;
+            });
+            // 5s'da auto-clear (2s sender + kichik buffer)
+            const oldTimer = typingClearTimersRef.current.get(e.fromId);
+            if (oldTimer) clearTimeout(oldTimer);
+            const nt = setTimeout(() => {
+                setTypingByPeerId(prev => {
+                    if (!prev.has(e.fromId)) return prev;
+                    const next = new Set(prev);
+                    next.delete(e.fromId);
+                    return next;
+                });
+                typingClearTimersRef.current.delete(e.fromId);
+            }, 5000);
+            typingClearTimersRef.current.set(e.fromId, nt);
+
+            // 2) Header uchun hozirgi peer
+            if (peer?.id && e.fromId === peer.id) {
+                setPeerTyping(true);
+                if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                typingTimeoutRef.current = setTimeout(() => setPeerTyping(false), 5000);
+            }
         });
         return () => { off(); };
     }, [onTyping, myProfileId, peer?.id]);
@@ -2423,10 +2452,12 @@ export function NxSocialDesktop() {
                                                     {c.isSelf && <Bookmark className="w-3 h-3" style={{ color: "#F59E0B" }} fill="#F59E0B" />}
                                                     {!c.isSelf && c.other?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
                                                 </div>
-                                                <p className="text-[11px] truncate" style={{ color: c.unread ? "#FFFFFF" : "rgba(140,160,210,0.70)" }}>
+                                                <p className="text-[11px] truncate" style={{ color: c.unread ? "#FFFFFF" : (c.other?.id && typingByPeerId.has(c.other.id) ? "#00CEC8" : "rgba(140,160,210,0.70)") }}>
                                                     {c.isSelf
                                                         ? (c.lastMessageText || "O'zingizga xabar yozing")
-                                                        : `${c.lastMine ? "Siz: " : ""}${c.lastMessageText ?? ""}`}
+                                                        : (c.other?.id && typingByPeerId.has(c.other.id))
+                                                            ? "yozmoqda..."
+                                                            : `${c.lastMine ? "Siz: " : ""}${c.lastMessageText ?? ""}`}
                                                 </p>
                                             </div>
                                         </>
@@ -2599,7 +2630,11 @@ export function NxSocialDesktop() {
                                         {selectedConv?.isSelf
                                             ? "faqat siz ko'rasiz"
                                             : peerTyping
-                                            ? "yozmoqda..."
+                                            ? <span className="flex items-center gap-1">yozmoqda<span className="inline-flex gap-0.5">
+                                                <span className="w-1 h-1 rounded-full bg-current animate-pulse" style={{ animationDelay: "0ms" }} />
+                                                <span className="w-1 h-1 rounded-full bg-current animate-pulse" style={{ animationDelay: "150ms" }} />
+                                                <span className="w-1 h-1 rounded-full bg-current animate-pulse" style={{ animationDelay: "300ms" }} />
+                                            </span></span>
                                             : (peer?.statusEmoji || peer?.statusText)
                                                 ? (() => {
                                                     const StatusIcon = statusIconForKey(peer?.statusEmoji);
