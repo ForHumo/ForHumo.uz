@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { NxPollCreate } from "./nx-poll-create";
 import { NxMarkdown } from "./nx-markdown";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
+import { Emoji } from "@/lib/twemoji";
 import { subscribeUserChannel } from "@/lib/pusher-client";
 
 type ChType = "CHANNEL" | "GROUP";
@@ -1146,8 +1147,8 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                             style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)" }}>
                                             {["❤️","👍","😂","😮","😢","🔥","🙏","👏"].map(e => (
                                                 <button key={e} onClick={() => toggleReact(m, e)}
-                                                    className="w-7 h-7 text-base rounded hover:bg-white/[0.08] active:scale-90">
-                                                    {e}
+                                                    className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/[0.08] active:scale-90 transition-transform">
+                                                    <Emoji char={e} size={22} />
                                                 </button>
                                             ))}
                                         </div>

@@ -15,6 +15,7 @@ import { NxGroupCreateModal } from "./nx-group-create-modal";
 import { isFounderProfile } from "@/lib/founders";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { NxStatusModal, statusIconForKey, statusColorForKey } from "./nx-status-modal";
+import { Emoji } from "@/lib/twemoji";
 import { NxInlinePopover } from "./nx-inline-popover";
 import { NxE2eBanner } from "./nx-e2e-banner";
 import { encryptForRecipient, decryptFromSender } from "@/lib/e2e-crypto";
@@ -3018,8 +3019,8 @@ export function NxSocialDesktop() {
                                                 style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)" }}>
                                                 {["❤️","👍","😂","😮","😢","🔥","🙏","👏"].map(e => (
                                                     <button key={e} onClick={() => toggleReaction(m.id, e)}
-                                                        className="w-7 h-7 text-base rounded hover:bg-white/[0.08] active:scale-90">
-                                                        {e}
+                                                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/[0.08] active:scale-90 transition-transform">
+                                                        <Emoji char={e} size={22} />
                                                     </button>
                                                 ))}
                                             </div>
@@ -3327,7 +3328,7 @@ export function NxSocialDesktop() {
                                                             background: r.mine ? "rgba(0,206,200,0.25)" : "rgba(255,255,255,0.10)",
                                                             border: `1px solid ${r.mine ? "rgba(0,206,200,0.50)" : "rgba(255,255,255,0.15)"}`,
                                                         }}>
-                                                        <span>{r.emoji}</span>
+                                                        <Emoji char={r.emoji} size={14} />
                                                         <span className="font-bold opacity-90">{r.count}</span>
                                                     </button>
                                                 ))}

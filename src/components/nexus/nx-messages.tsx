@@ -15,6 +15,7 @@ import { NxBanModal, type BanInfo } from "./nx-ban-modal";
 import { NxPollCreate } from "./nx-poll-create";
 import { NxVoicePlayer } from "./nx-voice-player";
 import { NxMarkdown } from "./nx-markdown";
+import { Emoji } from "@/lib/twemoji";
 
 interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
 interface Conv { conversationId: string; other: Other | null; lastMessageText: string | null; lastMessageAt: string; lastMine: boolean; unread: boolean }
@@ -1211,8 +1212,8 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                             style={{ borderColor: "rgba(43,62,232,0.20)" }}>
                             {["❤️", "👍", "😂", "😮", "😢", "🔥", "🙏", "👏"].map(e => (
                                 <button key={e} onClick={() => actionReact(actionMsg, e)}
-                                    className="flex-shrink-0 w-10 h-10 rounded-full text-xl hover:bg-white/[0.08] active:scale-90 transition">
-                                    {e}
+                                    className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/[0.08] active:scale-90 transition-transform">
+                                    <Emoji char={e} size={26} />
                                 </button>
                             ))}
                         </div>
