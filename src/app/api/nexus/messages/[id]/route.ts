@@ -13,6 +13,7 @@ import { appendUserReplyToOpenReview } from "@/lib/agent-review-followup";
 import { sendPushToProfile, pushAvailable } from "@/lib/push";
 import { sendToAgentWebhook } from "@/lib/agent-webhook";
 import { pusherTrigger, userChannel } from "@/lib/pusher-server";
+import { seedAgentWelcomeIfNeeded } from "@/lib/agent-welcome";
 
 async function meAndConv(email: string, id: string) {
     const me = await prisma.userProfile.findUnique({ where: { email }, select: { id: true } });
@@ -30,6 +31,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
     if (!conv) return NextResponse.json({ error: "Suhbat topilmadi" }, { status: 404 });
     if (conv.user1Id !== me.id && conv.user2Id !== me.id) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+
+    // Rasmiy agent bilan birinchi ochilishda avto-welcome xabar yuboriladi
+    const otherProfileId = otherId(conv, me.id);
+    await seedAgentWelcomeIfNeeded(id, me.id, otherProfileId);
 
     // Eng yangi 100 xabar (desc) — keyin klient uchun xronologik tartibga (asc) qaytaramiz.
     // Avval asc edi → 100+ xabarli suhbatda eng yangilari ko'rinmay qolardi.
