@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxGroupCreateModal } from "./nx-group-create-modal";
@@ -353,6 +353,50 @@ export function NxSocialDesktop() {
     const [msgMenuFor, setMsgMenuFor] = useState<string | null>(null);
     // Chat list per-item 3-dot menyu
     const [convMenuFor, setConvMenuFor] = useState<string | null>(null);
+    // "Yangi suhbat" — Telegram uslub PenSquare tugma + user search dropdown
+    const [newDmOpen, setNewDmOpen] = useState(false);
+    const [newDmQuery, setNewDmQuery] = useState("");
+    interface NewDmUser { name: string | null; username: string | null; image: string | null; verified: boolean; isMe: boolean }
+    const [newDmResults, setNewDmResults] = useState<NewDmUser[]>([]);
+    const [newDmBusy, setNewDmBusy] = useState(false);
+    const newDmRef = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        if (!newDmOpen) return;
+        function onDown(e: MouseEvent) {
+            if (newDmRef.current?.contains(e.target as Node)) return;
+            setNewDmOpen(false); setNewDmQuery(""); setNewDmResults([]);
+        }
+        window.addEventListener("mousedown", onDown);
+        return () => window.removeEventListener("mousedown", onDown);
+    }, [newDmOpen]);
+    useEffect(() => {
+        if (!newDmOpen) return;
+        const q = newDmQuery.trim();
+        if (!q) { setNewDmResults([]); return; }
+        const t = setTimeout(async () => {
+            try {
+                const d = await fetch(`/api/nexus/search?q=${encodeURIComponent(q)}`).then(r => r.json());
+                setNewDmResults((d.users ?? []).filter((u: NewDmUser) => !u.isMe && u.username));
+            } catch { setNewDmResults([]); }
+        }, 300);
+        return () => clearTimeout(t);
+    }, [newDmOpen, newDmQuery]);
+    async function openNewConversation(u: NewDmUser) {
+        if (!u.username || newDmBusy) return;
+        setNewDmBusy(true);
+        try {
+            const r = await fetch("/api/nexus/messages", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: u.username }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setSelectedId(d.conversationId);
+                setNewDmOpen(false); setNewDmQuery(""); setNewDmResults([]);
+                loadConvs();
+            }
+        } finally { setNewDmBusy(false); }
+    }
     // Sidebar Settings menyu (Telegram uslub — sound/watermark/push ichida)
     const [sidebarSettingsOpen, setSidebarSettingsOpen] = useState(false);
     const sidebarSettingsRef = useRef<HTMLDivElement | null>(null);
@@ -1858,17 +1902,89 @@ export function NxSocialDesktop() {
 
                 {listTab === "dm" && (
                     <div className="p-3 flex-shrink-0 space-y-2" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-                                style={{ color: "rgba(140,160,210,0.50)" }} />
-                            <input
-                                ref={filterInputRef}
-                                value={filter}
-                                onChange={e => setFilter(e.target.value)}
-                                placeholder="Qidirish... (Ctrl+K)"
-                                className="w-full h-9 pl-9 pr-3 rounded-xl bg-transparent text-white text-sm focus:outline-none"
-                                style={{ border: "1px solid rgba(43,62,232,0.20)" }}
-                            />
+                        <div className="flex items-center gap-2">
+                            <div className="relative flex-1 min-w-0">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                                    style={{ color: "rgba(140,160,210,0.50)" }} />
+                                <input
+                                    ref={filterInputRef}
+                                    value={filter}
+                                    onChange={e => setFilter(e.target.value)}
+                                    placeholder="Qidirish... (Ctrl+K)"
+                                    className="w-full h-9 pl-9 pr-3 rounded-xl bg-transparent text-white text-sm focus:outline-none"
+                                    style={{ border: "1px solid rgba(43,62,232,0.20)" }}
+                                />
+                            </div>
+                            {/* Telegram uslub — "Yangi suhbat" (compose) tugma */}
+                            <div className="relative" ref={newDmRef}>
+                                <button
+                                    onClick={() => setNewDmOpen(v => !v)}
+                                    title="Yangi suhbat"
+                                    className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl transition active:scale-95"
+                                    style={{
+                                        background: newDmOpen
+                                            ? "linear-gradient(135deg,#2B3EE8,#00CEC8)"
+                                            : "rgba(0,206,200,0.12)",
+                                        border: `1px solid ${newDmOpen ? "transparent" : "rgba(0,206,200,0.30)"}`,
+                                    }}>
+                                    <PenSquare className="w-4 h-4" style={{ color: newDmOpen ? "#fff" : "#00CEC8" }} />
+                                </button>
+                                {newDmOpen && (
+                                    <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl overflow-hidden z-30 flex flex-col"
+                                        style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", maxHeight: 360 }}>
+                                        <div className="p-2 border-b flex items-center gap-2" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
+                                            <Search className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.55)" }} />
+                                            <input
+                                                autoFocus
+                                                value={newDmQuery}
+                                                onChange={e => setNewDmQuery(e.target.value)}
+                                                placeholder="Foydalanuvchi qidirish..."
+                                                className="flex-1 h-8 bg-transparent text-white text-sm focus:outline-none"
+                                            />
+                                            <button onClick={() => { setNewDmOpen(false); setNewDmQuery(""); setNewDmResults([]); }}
+                                                className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/[0.08]">
+                                                <X className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                            </button>
+                                        </div>
+                                        <div className="flex-1 overflow-y-auto">
+                                            {newDmQuery.trim() === "" ? (
+                                                <p className="px-4 py-6 text-center text-xs" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                    Ism yoki @username yozib qidiring
+                                                </p>
+                                            ) : newDmResults.length === 0 ? (
+                                                <p className="px-4 py-6 text-center text-xs" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                    Hech kim topilmadi
+                                                </p>
+                                            ) : (
+                                                newDmResults.map((u, i) => (
+                                                    <button key={i} onClick={() => openNewConversation(u)}
+                                                        disabled={newDmBusy}
+                                                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/[0.05] text-left disabled:opacity-60">
+                                                        {u.image
+                                                            ? <img src={u.image} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0 bg-white" />
+                                                            : <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black text-white"
+                                                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                                                {(u.name || u.username || "?")[0]?.toUpperCase()}
+                                                            </div>
+                                                        }
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="flex items-center gap-1">
+                                                                <p className="text-sm font-bold text-white truncate">{u.name || u.username}</p>
+                                                                {u.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                                            </div>
+                                                            {u.username && (
+                                                                <p className="text-[11px] truncate" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                                                    @{u.username}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </button>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         {/* Mening statusim */}
                         <button onClick={() => setStatusModalOpen(true)}
