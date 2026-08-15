@@ -349,6 +349,18 @@ export function NxSocialDesktop() {
     const [translated, setTranslated] = useState<Record<string, string>>({});
     const [translating, setTranslating] = useState<Record<string, boolean>>({});
     const [translatePickerFor, setTranslatePickerFor] = useState<string | null>(null);
+    // Per-xabar 3-dot menyu (Telegram uslub — barcha kam ishlatiluvchi amallar shu yerda)
+    const [msgMenuFor, setMsgMenuFor] = useState<string | null>(null);
+    useEffect(() => {
+        if (!msgMenuFor) return;
+        function onDown(e: MouseEvent) {
+            const t = e.target as HTMLElement;
+            if (t.closest("[data-msg-menu]")) return;
+            setMsgMenuFor(null);
+        }
+        window.addEventListener("mousedown", onDown);
+        return () => window.removeEventListener("mousedown", onDown);
+    }, [msgMenuFor]);
     // URL preview: URL → { title, image, description, siteName } (yoki null = topilmadi)
     const [linkPreview, setLinkPreview] = useState<Record<string, { title: string | null; image: string | null; description: string | null; siteName: string | null; url: string } | null>>({});
     // Undo-send: 5 sekundlik grace period
@@ -2374,7 +2386,7 @@ export function NxSocialDesktop() {
                                             }
                                         </div>
                                     )}
-                                    {/* Hover amallar: react + reply + edit + copy + delete */}
+                                    {/* Hover amallar (Telegram uslub) — faqat 3 ta: Reaksiya, Javob, 3-dot */}
                                     <div className={`transition flex gap-1 flex-shrink-0 relative ${selectMode ? "hidden" : "opacity-0 group-hover:opacity-100"}`}>
                                         <button onClick={() => setReactPickerFor(m.id === reactPickerFor ? null : m.id)} title="Reaksiya"
                                             className="w-7 h-7 rounded-md flex items-center justify-center"
@@ -2386,97 +2398,80 @@ export function NxSocialDesktop() {
                                             style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
                                             <Reply className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
                                         </button>
-                                        <button onClick={() => setForwardMsg(m)} title="Yuborish (forward)"
-                                            className="w-7 h-7 rounded-md flex items-center justify-center"
-                                            style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                            <Forward className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                        </button>
-                                        <button onClick={() => toggleMessagePin(m)}
-                                            title={m.pinnedAt ? "Pindan olib tashlash" : "Suhbatga pinlash"}
-                                            className="w-7 h-7 rounded-md flex items-center justify-center"
-                                            style={{
-                                                background: m.pinnedAt ? "rgba(0,206,200,0.18)" : "rgba(11,18,40,0.65)",
-                                                border: `1px solid ${m.pinnedAt ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.25)"}`,
-                                            }}>
-                                            {m.pinnedAt
-                                                ? <PinOff className="w-3 h-3" style={{ color: "#00CEC8" }} />
-                                                : <Pin className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                            }
-                                        </button>
-                                        <button onClick={() => toggleBookmark(m)}
-                                            title={m.bookmarked ? "Saqlashdan olib tashlash" : "Saqlash"}
-                                            className="w-7 h-7 rounded-md flex items-center justify-center"
-                                            style={{
-                                                background: m.bookmarked ? "rgba(245,158,11,0.18)" : "rgba(11,18,40,0.65)",
-                                                border: `1px solid ${m.bookmarked ? "rgba(245,158,11,0.40)" : "rgba(43,62,232,0.25)"}`,
-                                            }}>
-                                            {m.bookmarked
-                                                ? <BookmarkCheck className="w-3 h-3" style={{ color: "#F59E0B" }} />
-                                                : <Bookmark className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                            }
-                                        </button>
-                                        {m.mine && m.text && !m.mediaType && (
-                                            <button onClick={() => { setEditingId(m.id); setEditingText(m.text); }} title="Tahrirlash"
+                                        <div className="relative" data-msg-menu>
+                                            <button onClick={() => setMsgMenuFor(msgMenuFor === m.id ? null : m.id)} title="Ko'proq"
                                                 className="w-7 h-7 rounded-md flex items-center justify-center"
-                                                style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                                <Edit3 className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                style={{ background: msgMenuFor === m.id ? "rgba(0,206,200,0.18)" : "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                                <MoreVertical className="w-3 h-3" style={{ color: msgMenuFor === m.id ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
                                             </button>
-                                        )}
-                                        {m.text && (
-                                            <>
-                                                <div className="relative">
-                                                    <button onClick={() => translated[m.id]
-                                                        ? hideTranslation(m.id)
-                                                        : setTranslatePickerFor(translatePickerFor === m.id ? null : m.id)}
-                                                        title="Tarjima qilish"
-                                                        disabled={!!translating[m.id]}
-                                                        className="w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-40"
-                                                        style={{ background: translated[m.id] ? "rgba(0,206,200,0.20)" : "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                                        {translating[m.id]
-                                                            ? <Loader2 className="w-3 h-3 animate-spin" style={{ color: "#00CEC8" }} />
-                                                            : <Languages className="w-3 h-3" style={{ color: translated[m.id] ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
-                                                        }
-                                                    </button>
-                                                    {translatePickerFor === m.id && (
-                                                        <div className="absolute top-full mt-1 left-0 z-30 flex gap-1 p-1 rounded-lg"
-                                                            style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)" }}>
-                                                            {(["uz", "ru", "en"] as const).map(lg => (
-                                                                <button key={lg}
-                                                                    onClick={() => translateMessage(m.id, m.text, lg)}
-                                                                    className="text-[10px] font-black px-2 py-1 rounded hover:bg-white/[0.08]"
-                                                                    style={{ color: "rgba(220,230,255,0.95)" }}>
-                                                                    {lg === "uz" ? "UZ" : lg === "ru" ? "RU" : "EN"}
-                                                                </button>
-                                                            ))}
-                                                        </div>
+                                            {msgMenuFor === m.id && (
+                                                <div className="absolute top-full mt-1 right-0 z-40 rounded-xl overflow-hidden min-w-[180px]"
+                                                    style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                                    <MsgMenuItem icon={Forward} label="Yuborish" onClick={() => { setForwardMsg(m); setMsgMenuFor(null); }} />
+                                                    <MsgMenuItem
+                                                        icon={m.pinnedAt ? PinOff : Pin}
+                                                        label={m.pinnedAt ? "Pindan olish" : "Pinlash"}
+                                                        accent={!!m.pinnedAt}
+                                                        onClick={() => { toggleMessagePin(m); setMsgMenuFor(null); }}
+                                                    />
+                                                    <MsgMenuItem
+                                                        icon={m.bookmarked ? BookmarkCheck : Bookmark}
+                                                        label={m.bookmarked ? "Saqlashdan olish" : "Saqlash"}
+                                                        accent={!!m.bookmarked}
+                                                        onClick={() => { toggleBookmark(m); setMsgMenuFor(null); }}
+                                                    />
+                                                    {m.mine && m.text && !m.mediaType && (
+                                                        <MsgMenuItem icon={Edit3} label="Tahrirlash"
+                                                            onClick={() => { setEditingId(m.id); setEditingText(m.text); setMsgMenuFor(null); }} />
+                                                    )}
+                                                    {m.text && (
+                                                        <MsgMenuItem icon={Copy} label="Nusxa olish"
+                                                            onClick={() => { copyMessage(m.text); setMsgMenuFor(null); }} />
+                                                    )}
+                                                    {m.text && (
+                                                        <MsgMenuItem
+                                                            icon={Languages}
+                                                            label={translated[m.id] ? "Tarjimani yashirish" : "Tarjima qilish"}
+                                                            accent={!!translated[m.id]}
+                                                            onClick={() => {
+                                                                if (translated[m.id]) { hideTranslation(m.id); setMsgMenuFor(null); }
+                                                                else { setTranslatePickerFor(m.id); setMsgMenuFor(null); }
+                                                            }}
+                                                        />
+                                                    )}
+                                                    {m.text && (
+                                                        <MsgMenuItem
+                                                            icon={speakingId === m.id ? VolumeX : Volume2}
+                                                            label={speakingId === m.id ? "TTS to'xtatish" : "Ovoz bilan o'qish"}
+                                                            accent={speakingId === m.id}
+                                                            onClick={() => { speakMessage(m.id, m.text); setMsgMenuFor(null); }}
+                                                        />
+                                                    )}
+                                                    {m.mine && (
+                                                        <MsgMenuItem icon={Trash2} label="O'chirish" danger
+                                                            onClick={() => { deleteMessage(m.id); setMsgMenuFor(null); }} />
                                                     )}
                                                 </div>
-                                                <button onClick={() => speakMessage(m.id, m.text)}
-                                                    title={speakingId === m.id ? "To'xtatish" : "Eshittirish"}
-                                                    className="w-7 h-7 rounded-md flex items-center justify-center"
-                                                    style={{
-                                                        background: speakingId === m.id ? "rgba(0,206,200,0.20)" : "rgba(11,18,40,0.65)",
-                                                        border: `1px solid ${speakingId === m.id ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.25)"}`,
-                                                    }}>
-                                                    {speakingId === m.id
-                                                        ? <VolumeX className="w-3 h-3" style={{ color: "#00CEC8" }} />
-                                                        : <Volume2 className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                                    }
-                                                </button>
-                                                <button onClick={() => copyMessage(m.text)} title="Nusxa olish"
-                                                    className="w-7 h-7 rounded-md flex items-center justify-center"
-                                                    style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                                    <Copy className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                                </button>
-                                            </>
-                                        )}
-                                        {m.mine && (
-                                            <button onClick={() => deleteMessage(m.id)} title="O'chirish"
-                                                className="w-7 h-7 rounded-md flex items-center justify-center"
-                                                style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(239,68,68,0.30)" }}>
-                                                <Trash2 className="w-3 h-3" style={{ color: "#EF4444" }} />
-                                            </button>
-                                        )}
+                                            )}
+                                            {/* Tarjima sub-picker (menudan chaqiriladi) */}
+                                            {translatePickerFor === m.id && (
+                                                <div className="absolute top-full mt-1 right-0 z-40 flex gap-1 p-1.5 rounded-lg"
+                                                    style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.50)" }}>
+                                                    {(["uz", "ru", "en"] as const).map(lg => (
+                                                        <button key={lg}
+                                                            onClick={() => translateMessage(m.id, m.text, lg)}
+                                                            className="text-[10px] font-black px-2.5 py-1.5 rounded hover:bg-white/[0.08]"
+                                                            style={{ color: "rgba(220,230,255,0.95)" }}>
+                                                            {lg === "uz" ? "UZ" : lg === "ru" ? "RU" : "EN"}
+                                                        </button>
+                                                    ))}
+                                                    <button onClick={() => setTranslatePickerFor(null)}
+                                                        className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/[0.08]">
+                                                        <X className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                         {reactPickerFor === m.id && (
                                             <div className="absolute top-full mt-1 z-30 flex gap-1 p-1.5 rounded-lg"
                                                 style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)" }}>
@@ -4362,6 +4357,22 @@ function ComposerBtn({ icon: Icon, title, onClick, loading, accent }: {
                 ? <Loader2 className="w-4 h-4 text-white animate-spin" />
                 : <Icon className="w-4 h-4" style={{ color: accent ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
             }
+        </button>
+    );
+}
+
+// Xabar ustidagi 3-dot menyu qatori (Telegram context-menu uslub)
+function MsgMenuItem({ icon: Icon, label, onClick, accent, danger }: {
+    icon: React.ElementType; label: string; onClick?: () => void; accent?: boolean; danger?: boolean;
+}) {
+    const color = danger ? "#EF4444" : accent ? "#00CEC8" : "rgba(220,230,255,0.90)";
+    const iconColor = danger ? "#EF4444" : accent ? "#00CEC8" : "rgba(160,176,224,0.85)";
+    return (
+        <button onClick={onClick} type="button"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-left transition hover:bg-white/[0.06]"
+            style={{ color }}>
+            <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: iconColor }} />
+            <span className="flex-1 truncate">{label}</span>
         </button>
     );
 }
