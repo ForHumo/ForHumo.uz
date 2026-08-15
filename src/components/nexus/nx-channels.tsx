@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward, Bookmark, BookmarkCheck, Search, Volume2, VolumeX, Languages, Copy, History, Clock,
+    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward, Bookmark, BookmarkCheck, Search, Volume2, VolumeX, Languages, Copy, History, Clock, MoreVertical, LogOut,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { NxPollCreate } from "./nx-poll-create";
@@ -418,6 +418,18 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
 
     // Server-side qidiruv
     const [searchOpen, setSearchOpen] = useState(false);
+    // Telegram uslub — kanal xonasi header 3-dot More menyu
+    const [chMoreOpen, setChMoreOpen] = useState(false);
+    const chMoreRef = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        if (!chMoreOpen) return;
+        function onDown(e: MouseEvent) {
+            if (chMoreRef.current?.contains(e.target as Node)) return;
+            setChMoreOpen(false);
+        }
+        window.addEventListener("mousedown", onDown);
+        return () => window.removeEventListener("mousedown", onDown);
+    }, [chMoreOpen]);
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<Array<{ id: string; text: string | null; createdAt: string; mine: boolean; hasMedia: boolean; sender: { name: string | null; username: string | null; image: string | null } | null }> | null>(null);
     const [searchTotal, setSearchTotal] = useState(0);
@@ -657,21 +669,61 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                         }
                     </button>
                 )}
-                {(ch.isOwner || ch.role === "ADMIN") && (
-                    <button onClick={() => setModOpen(true)} title="Moderatsiya inboxi"
-                        className="relative w-8 h-8 rounded-xl flex items-center justify-center"
-                        style={{ background: modCount > 0 ? "rgba(239,68,68,0.15)" : "rgba(43,62,232,0.12)" }}>
-                        <Shield className="w-4 h-4" style={{ color: modCount > 0 ? "#EF4444" : "rgba(180,195,235,0.95)" }} />
-                        {modCount > 0 && (
-                            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black flex items-center justify-center"
-                                style={{ background: "#EF4444", color: "#fff" }}>
-                                {modCount > 99 ? "99+" : modCount}
-                            </span>
+                {/* Telegram uslub — barcha kam ishlatiluvchi amallar 3-dot menyusi ichida */}
+                {ch.isMember && (
+                    <div className="relative" ref={chMoreRef}>
+                        <button onClick={() => setChMoreOpen(v => !v)}
+                            title="Ko'proq"
+                            className="relative w-8 h-8 rounded-xl flex items-center justify-center"
+                            style={{
+                                background: chMoreOpen
+                                    ? "rgba(0,206,200,0.15)"
+                                    : modCount > 0 ? "rgba(239,68,68,0.15)" : "rgba(43,62,232,0.12)",
+                            }}>
+                            <MoreVertical className="w-4 h-4" style={{ color: modCount > 0 && !chMoreOpen ? "#EF4444" : "rgba(180,195,235,0.95)" }} />
+                            {modCount > 0 && !chMoreOpen && (
+                                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black flex items-center justify-center"
+                                    style={{ background: "#EF4444", color: "#fff" }}>
+                                    {modCount > 99 ? "99+" : modCount}
+                                </span>
+                            )}
+                        </button>
+                        {chMoreOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-52 rounded-2xl overflow-hidden z-30"
+                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                {(ch.isOwner || ch.role === "ADMIN") && (
+                                    <button onClick={() => { setModOpen(true); setChMoreOpen(false); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                        <Shield className="w-4 h-4" style={{ color: modCount > 0 ? "#EF4444" : "#00CEC8" }} />
+                                        <span className="flex-1">Moderatsiya</span>
+                                        {modCount > 0 && (
+                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                                style={{ background: "rgba(239,68,68,0.15)", color: "#EF4444" }}>
+                                                {modCount > 99 ? "99+" : modCount}
+                                            </span>
+                                        )}
+                                    </button>
+                                )}
+                                {ch.isOwner && (
+                                    <button onClick={() => { setMembersOpen(true); setChMoreOpen(false); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <Users className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <span className="flex-1">A&apos;zolar</span>
+                                    </button>
+                                )}
+                                <button onClick={() => { leaveOrDelete(); setChMoreOpen(false); }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-red-500/10 text-left"
+                                    style={{ color: "#EF4444" }}>
+                                    {ch.isOwner
+                                        ? <><Trash2 className="w-4 h-4" /> <span className="flex-1">{ch.type === "CHANNEL" ? "Kanalni o'chirish" : "Guruhni o'chirish"}</span></>
+                                        : <><LogOut className="w-4 h-4" /> <span className="flex-1">{ch.type === "CHANNEL" ? "Kanaldan chiqish" : "Guruhdan chiqish"}</span></>
+                                    }
+                                </button>
+                            </div>
                         )}
-                    </button>
+                    </div>
                 )}
-                {ch.isOwner && <button onClick={() => setMembersOpen(true)} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "rgba(43,62,232,0.12)" }}><Users className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} /></button>}
-                {ch.isMember && <button onClick={leaveOrDelete} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.1)" }}>{ch.isOwner ? <Trash2 className="w-4 h-4" style={{ color: "#ff8a96" }} /> : <X className="w-4 h-4" style={{ color: "#ff8a96" }} />}</button>}
             </div>
 
             {membersOpen && <ChannelMembers id={id} onClose={() => setMembersOpen(false)} />}
