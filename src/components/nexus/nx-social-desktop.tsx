@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxGroupCreateModal } from "./nx-group-create-modal";
@@ -353,6 +353,18 @@ export function NxSocialDesktop() {
     const [msgMenuFor, setMsgMenuFor] = useState<string | null>(null);
     // Chat list per-item 3-dot menyu
     const [convMenuFor, setConvMenuFor] = useState<string | null>(null);
+    // Sidebar Settings menyu (Telegram uslub — sound/watermark/push ichida)
+    const [sidebarSettingsOpen, setSidebarSettingsOpen] = useState(false);
+    const sidebarSettingsRef = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        if (!sidebarSettingsOpen) return;
+        function onDown(e: MouseEvent) {
+            if (sidebarSettingsRef.current?.contains(e.target as Node)) return;
+            setSidebarSettingsOpen(false);
+        }
+        window.addEventListener("mousedown", onDown);
+        return () => window.removeEventListener("mousedown", onDown);
+    }, [sidebarSettingsOpen]);
     useEffect(() => {
         if (!convMenuFor) return;
         function onDown(e: MouseEvent) {
@@ -1787,6 +1799,61 @@ export function NxSocialDesktop() {
                             <Shield className="w-4 h-4" style={{ color: "#F59E0B" }} />
                         </Link>
                     )}
+                    {/* Sidebar sozlamalari menyusi (Sound/Watermark/Push) — Telegram uslub */}
+                    {listTab === "dm" && (
+                        <div className="relative" ref={sidebarSettingsRef}>
+                            <button
+                                onClick={() => setSidebarSettingsOpen(v => !v)}
+                                title="Sozlamalar"
+                                className="w-9 h-9 flex items-center justify-center rounded-lg transition"
+                                style={{
+                                    background: sidebarSettingsOpen ? "rgba(0,206,200,0.14)" : "rgba(43,62,232,0.06)",
+                                    border: `1px solid ${sidebarSettingsOpen ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.15)"}`,
+                                }}>
+                                <Settings className="w-4 h-4" style={{ color: sidebarSettingsOpen ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
+                            </button>
+                            {sidebarSettingsOpen && (
+                                <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl overflow-hidden z-30"
+                                    style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
+                                    <button onClick={() => { toggleSound(); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                        {soundOn
+                                            ? <Volume2 className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                            : <VolumeX className="w-4 h-4" style={{ color: "#EF4444" }} />
+                                        }
+                                        <span className="flex-1">{soundOn ? "Tovush yoqilgan" : "Tovush o'chiq"}</span>
+                                    </button>
+                                    <button onClick={() => { toggleWatermark(); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                        <span className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded"
+                                            style={{ background: watermarkOn ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.20)", color: watermarkOn ? "#00CEC8" : "rgba(160,176,224,0.85)" }}>WM</span>
+                                        <span className="flex-1">{watermarkOn ? "Watermark yoqilgan" : "Watermark o'chiq"}</span>
+                                    </button>
+                                    {pushState !== "unsupported" && (
+                                        <button onClick={() => { togglePush(); }}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                            {pushState === "subscribed"
+                                                ? <Bell className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                                : <BellOff className="w-4 h-4" style={{ color: pushState === "denied" ? "#EF4444" : "rgba(160,176,224,0.85)" }} />
+                                            }
+                                            <span className="flex-1">
+                                                {pushState === "subscribed" ? "Push bildirishnoma"
+                                                    : pushState === "denied" ? "Push bloklangan"
+                                                    : "Push yoqish"}
+                                            </span>
+                                        </button>
+                                    )}
+                                    <button onClick={() => { setShortcutsHelpOpen(true); setSidebarSettingsOpen(false); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-t"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <span className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded"
+                                            style={{ background: "rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.85)" }}>?</span>
+                                        <span className="flex-1">Klaviatura yorliqlari</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {listTab === "dm" && (
@@ -1810,12 +1877,15 @@ export function NxSocialDesktop() {
                                 background: myStatus.emoji || myStatus.text ? "rgba(0,206,200,0.08)" : "rgba(43,62,232,0.06)",
                                 border: `1px solid ${myStatus.emoji || myStatus.text ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.15)"}`,
                             }}>
-                            <span className="text-base flex-shrink-0">{myStatus.emoji || "✨"}</span>
+                            {myStatus.emoji
+                                ? <span className="text-base flex-shrink-0">{myStatus.emoji}</span>
+                                : <Sparkles className="w-3.5 h-3.5 flex-shrink-0" style={{ color: myStatus.text ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
+                            }
                             <span className="text-[11px] truncate flex-1" style={{ color: myStatus.text ? "#00CEC8" : "rgba(140,160,210,0.75)" }}>
                                 {myStatus.text || "Maxsus status qo'shish"}
                             </span>
                         </button>
-                        {/* Bookmark + Drafts + Sound toggle */}
+                        {/* Faqat 2 ta panel-toggle: Saqlangan + Drafts (Sound/WM/Push Settings menyuga o'tdi) */}
                         <div className="flex gap-1">
                             <button onClick={() => setBookmarksOpen(v => !v)}
                                 className="flex-1 flex items-center gap-1.5 h-8 px-2 rounded-lg transition hover:bg-white/[0.04]"
@@ -1839,38 +1909,6 @@ export function NxSocialDesktop() {
                                     Draft{draftCount > 0 ? ` (${draftCount})` : ""}
                                 </span>
                             </button>
-                            <button onClick={toggleSound}
-                                className="w-8 h-8 flex items-center justify-center rounded-lg transition hover:bg-white/[0.04]"
-                                style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.15)" }}
-                                title={soundOn ? "Tovushni o'chirish" : "Tovushni yoqish"}>
-                                {soundOn
-                                    ? <Volume2 className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                    : <VolumeX className="w-3.5 h-3.5" style={{ color: "#EF4444" }} />
-                                }
-                            </button>
-                            <button onClick={toggleWatermark}
-                                className="w-8 h-8 flex items-center justify-center rounded-lg transition hover:bg-white/[0.04]"
-                                style={{
-                                    background: watermarkOn ? "rgba(0,206,200,0.12)" : "rgba(43,62,232,0.06)",
-                                    border: `1px solid ${watermarkOn ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.15)"}`,
-                                }}
-                                title={watermarkOn ? "Watermark yoqilgan — rasmga @username qo'shiladi" : "Watermark o'chirilgan"}>
-                                <span className="text-[9px] font-black" style={{ color: watermarkOn ? "#00CEC8" : "rgba(160,176,224,0.85)" }}>WM</span>
-                            </button>
-                            {pushState !== "unsupported" && (
-                                <button onClick={togglePush}
-                                    className="w-8 h-8 flex items-center justify-center rounded-lg transition hover:bg-white/[0.04]"
-                                    style={{
-                                        background: pushState === "subscribed" ? "rgba(0,206,200,0.12)" : "rgba(43,62,232,0.06)",
-                                        border: `1px solid ${pushState === "subscribed" ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.15)"}`,
-                                    }}
-                                    title={pushState === "subscribed" ? "Push bildirishnoma yoqilgan" : pushState === "denied" ? "Push bloklangan" : "Push bildirishnomani yoqish"}>
-                                    {pushState === "subscribed"
-                                        ? <Bell className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
-                                        : <BellOff className="w-3.5 h-3.5" style={{ color: pushState === "denied" ? "#EF4444" : "rgba(160,176,224,0.85)" }} />
-                                    }
-                                </button>
-                            )}
                         </div>
                     </div>
                 )}
