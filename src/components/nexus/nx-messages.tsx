@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
-import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag, Bookmark, BookmarkCheck, Volume2, VolumeX, Languages, Copy, Pin } from "lucide-react";
+import { X, Send, ArrowLeft, Search, Loader2, PenSquare, Phone, Video, Users, MessageSquare, Check, CheckCheck, Paperclip, FileIcon, Download, Music, Mic, Trash2, Camera, MapPin, Navigation, StopCircle, BadgeCheck, BarChart2, Wallet, Star, ShoppingBag, Bookmark, BookmarkCheck, Volume2, VolumeX, Languages, Copy, Pin, Plus } from "lucide-react";
 import { formatMoney } from "@/lib/money";
 import Image from "next/image";
 import { NxVerifiedBadge } from "./nx-verified-badge";
@@ -503,6 +503,18 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
 
     // Location — statik + jonli
     const [locSheetOpen, setLocSheetOpen] = useState(false);
+    // Telegram uslub — bitta "+" attach menyu
+    const [attachOpen, setAttachOpen] = useState(false);
+    const attachMenuRef = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        if (!attachOpen) return;
+        function onDown(e: MouseEvent) {
+            if (attachMenuRef.current?.contains(e.target as Node)) return;
+            setAttachOpen(false);
+        }
+        window.addEventListener("mousedown", onDown);
+        return () => window.removeEventListener("mousedown", onDown);
+    }, [attachOpen]);
     const [locBusy, setLocBusy] = useState(false);
     const liveLocWatchRef = useRef<Set<string>>(new Set());   // ish faoli bo'lgan msg ID'lari
     const liveLocIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -1032,35 +1044,76 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                         </button>
                     </>
                 ) : (
-                    /* ── Oddiy rejim: attach + input + mic/send ── */
+                    /* ── Oddiy rejim: "+" attach + input + mic/send (Telegram uslub) ── */
                     <>
-                        <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                            title="Fayl biriktirish"
-                            className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40 hover:scale-105 active:scale-95 transition-transform"
-                            style={{ background: "rgba(43,62,232,0.10)" }}>
-                            {uploading ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Paperclip className="w-4 h-4 text-white" />}
-                        </button>
-                        <button onClick={() => setLocSheetOpen(true)} disabled={locBusy}
-                            title="Joylashuv"
-                            className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40 hover:scale-105 active:scale-95 transition-transform hidden sm:flex"
-                            style={{ background: "rgba(43,62,232,0.10)" }}>
-                            {locBusy ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <MapPin className="w-4 h-4 text-white" />}
-                        </button>
-                        <button onClick={() => setPollOpen(true)}
-                            title="So'rovnoma"
-                            className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 hover:scale-105 active:scale-95 transition-transform hidden sm:flex"
-                            style={{ background: "rgba(43,62,232,0.10)" }}>
-                            <BarChart2 className="w-4 h-4 text-white" />
-                        </button>
-                        <button onClick={() => {
-                                setTransferAmount(""); setTransferNote(""); setTransferError(null);
-                                setTransferOpen(true);
-                            }}
-                            title="Pul yuborish (For Pay)"
-                            className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 hover:scale-105 active:scale-95 transition-transform"
-                            style={{ background: "linear-gradient(135deg,rgba(0,206,200,0.20),rgba(43,62,232,0.20))" }}>
-                            <Wallet className="w-4 h-4 text-white" />
-                        </button>
+                        <div className="relative" ref={attachMenuRef}>
+                            <button onClick={() => setAttachOpen(v => !v)} disabled={uploading || locBusy}
+                                title="Ilova qo'shish"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40 hover:scale-105 active:scale-95 transition-transform"
+                                style={{
+                                    background: attachOpen
+                                        ? "linear-gradient(135deg,rgba(0,206,200,0.28),rgba(43,62,232,0.28))"
+                                        : "rgba(43,62,232,0.10)",
+                                }}>
+                                {(uploading || locBusy)
+                                    ? <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                    : <Plus className={`w-4 h-4 text-white transition-transform ${attachOpen ? "rotate-45" : ""}`} />
+                                }
+                            </button>
+                            {attachOpen && (
+                                <div className="absolute bottom-full mb-2 left-0 z-30 rounded-2xl overflow-hidden p-2"
+                                    style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", minWidth: 260 }}>
+                                    <div className="grid grid-cols-3 gap-1">
+                                        <button type="button"
+                                            onClick={() => { setAttachOpen(false); fileInputRef.current?.click(); }}
+                                            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
+                                            <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(43,62,232,0.14)" }}>
+                                                <Paperclip className="w-4 h-4" style={{ color: "rgba(200,215,245,0.90)" }} />
+                                            </span>
+                                            <span className="text-[10px] font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>Fayl</span>
+                                        </button>
+                                        <button type="button"
+                                            onClick={() => { setAttachOpen(false); setCircleOpen(true); }}
+                                            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
+                                            <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(43,62,232,0.14)" }}>
+                                                <Camera className="w-4 h-4" style={{ color: "rgba(200,215,245,0.90)" }} />
+                                            </span>
+                                            <span className="text-[10px] font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>Video-doira</span>
+                                        </button>
+                                        <button type="button"
+                                            onClick={() => { setAttachOpen(false); setLocSheetOpen(true); }}
+                                            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
+                                            <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(43,62,232,0.14)" }}>
+                                                <MapPin className="w-4 h-4" style={{ color: "rgba(200,215,245,0.90)" }} />
+                                            </span>
+                                            <span className="text-[10px] font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>Joylashuv</span>
+                                        </button>
+                                        <button type="button"
+                                            onClick={() => { setAttachOpen(false); setPollOpen(true); }}
+                                            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]">
+                                            <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(43,62,232,0.14)" }}>
+                                                <BarChart2 className="w-4 h-4" style={{ color: "rgba(200,215,245,0.90)" }} />
+                                            </span>
+                                            <span className="text-[10px] font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>So&apos;rovnoma</span>
+                                        </button>
+                                        <button type="button"
+                                            onClick={() => {
+                                                setAttachOpen(false);
+                                                setTransferAmount(""); setTransferNote(""); setTransferError(null);
+                                                setTransferOpen(true);
+                                            }}
+                                            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition active:scale-95 hover:bg-white/[0.06]"
+                                            style={{ background: "rgba(0,206,200,0.10)" }}>
+                                            <span className="w-9 h-9 rounded-full flex items-center justify-center"
+                                                style={{ background: "linear-gradient(135deg,rgba(0,206,200,0.25),rgba(43,62,232,0.25))" }}>
+                                                <Wallet className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                            </span>
+                                            <span className="text-[10px] font-bold" style={{ color: "#00CEC8" }}>Pul</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                         <input value={input} onChange={e => {
                                 setInput(e.target.value);
                                 const now = Date.now();
