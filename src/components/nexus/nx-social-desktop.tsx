@@ -3024,6 +3024,12 @@ export function NxSocialDesktop() {
                                             )}
                                 <div data-msg-id={m.id}
                                     onClick={() => { if (selectMode) toggleSelectMsg(m.id); }}
+                                    onContextMenu={(e) => {
+                                        // Right-click -> 3-dot menu (Telegram Web uslub). Select mode'da bloklamaymiz.
+                                        if (selectMode) return;
+                                        e.preventDefault();
+                                        setMsgMenuFor(msgMenuFor === m.id ? null : m.id);
+                                    }}
                                     className={`group flex items-center gap-1 flex-row-reverse ${m.mine ? "justify-start" : "justify-end"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
                                     style={{
                                         ...(selectedIds.has(m.id) ? { background: "rgba(0,206,200,0.10)" } : {}),
@@ -3159,7 +3165,10 @@ export function NxSocialDesktop() {
                                             </div>
                                         )}
                                         {m.replyTo && (
-                                            <div className="mb-2 pl-2 pr-2 py-1.5 rounded-md text-xs"
+                                            <button type="button"
+                                                onClick={(e) => { e.stopPropagation(); if (m.replyTo) jumpToMessage(m.replyTo.id); }}
+                                                title="Asl xabarga o'tish"
+                                                className="w-full mb-2 pl-2 pr-2 py-1.5 rounded-md text-xs text-left transition hover:brightness-125 active:scale-[0.98] block"
                                                 style={{
                                                     background: m.mine ? "rgba(0,0,0,0.20)" : "rgba(0,206,200,0.10)",
                                                     borderLeft: `3px solid ${m.mine ? "#fff" : "#00CEC8"}`,
@@ -3169,7 +3178,7 @@ export function NxSocialDesktop() {
                                                     {m.replyTo.mine ? "Siz" : (m.replyTo.senderName ?? "Foydalanuvchi")}
                                                 </p>
                                                 <p className="opacity-80 line-clamp-2">{m.replyTo.text || "(media)"}</p>
-                                            </div>
+                                            </button>
                                         )}
                                         {m.mediaType === "agent" && m.agentPayload && (
                                             <div className="mb-2 p-2 rounded-lg" style={{ background: "rgba(0,0,0,0.25)" }}>
