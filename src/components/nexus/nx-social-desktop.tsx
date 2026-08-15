@@ -2249,7 +2249,7 @@ export function NxSocialDesktop() {
                         )}
                     </button>
                 )}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto nx-scrollbar">
                     {listTab === "agents" ? (
                         // Agents ro'yxati
                         loadingAgents ? (
@@ -2778,7 +2778,7 @@ export function NxSocialDesktop() {
                         )}
 
                         {/* Messages */}
-                        <div ref={msgsContainerRef} className="flex-1 overflow-y-auto p-4 space-y-2 relative">
+                        <div ref={msgsContainerRef} className="flex-1 overflow-y-auto nx-scrollbar p-4 space-y-2 relative">
                             {loadingMsgs && messages.length === 0 ? (
                                 <div className="flex justify-center py-10">
                                     <Loader2 className="w-5 h-5 animate-spin text-white/30" />
@@ -2820,7 +2820,7 @@ export function NxSocialDesktop() {
                                             )}
                                 <div data-msg-id={m.id}
                                     onClick={() => { if (selectMode) toggleSelectMsg(m.id); }}
-                                    className={`group flex items-center gap-1 ${m.mine ? "flex-row-reverse justify-start" : "justify-start"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
+                                    className={`group flex items-center gap-1 flex-row-reverse ${m.mine ? "justify-start" : "justify-end"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
                                     style={{
                                         ...(selectedIds.has(m.id) ? { background: "rgba(0,206,200,0.10)" } : {}),
                                         // Guruh ichida yuqori marginni kamaytiramiz (bir-biriga yaqin)
@@ -3905,7 +3905,7 @@ export function NxSocialDesktop() {
 
             {/* ── COL 3: Peer info (chat info) — faqat DM tanlangan bo'lsa ── */}
             {selectedId && !selectedChannel && showInfo && (
-                <div className="w-[320px] flex-shrink-0 flex flex-col border-l overflow-y-auto"
+                <div className="w-[320px] flex-shrink-0 flex flex-col border-l overflow-y-auto nx-scrollbar"
                     style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.65)" }}>
                     <div className="p-5 text-center border-b" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
                         <div className="w-24 h-24 rounded-3xl overflow-hidden mx-auto mb-3 flex items-center justify-center"
