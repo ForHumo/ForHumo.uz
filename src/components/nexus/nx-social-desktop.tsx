@@ -16,6 +16,7 @@ import { isFounderProfile } from "@/lib/founders";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { NxStatusModal, statusIconForKey, statusColorForKey } from "./nx-status-modal";
 import { Emoji } from "@/lib/twemoji";
+import { NxGifPicker } from "./nx-gif-picker";
 import { NxInlinePopover } from "./nx-inline-popover";
 import { NxE2eBanner } from "./nx-e2e-banner";
 import { encryptForRecipient, decryptFromSender } from "@/lib/e2e-crypto";
@@ -471,6 +472,8 @@ export function NxSocialDesktop() {
             .then(d => { setCommonGroups(d.groups ?? []); setCommonChannels(d.channels ?? []); })
             .catch(() => { setCommonGroups([]); setCommonChannels([]); });
     }, [peer?.id, myProfileId]);
+    // GIF picker (Giphy)
+    const [gifPickerOpen, setGifPickerOpen] = useState(false);
     // Sana picker — sana separator bosilsa kalendar ochiladi va shu kunga jump qiladi
     const [datePickerOpen, setDatePickerOpen] = useState(false);
     const [pickerMonth, setPickerMonth] = useState<Date>(new Date());
@@ -3075,6 +3078,12 @@ export function NxSocialDesktop() {
                                         {m.mediaType === "video" && m.mediaUrl && (
                                             <video src={m.mediaUrl} controls playsInline className="max-w-full max-h-80 rounded-md mb-1" />
                                         )}
+                                        {m.mediaType === "gif" && m.mediaUrl && (
+                                            m.mediaUrl.endsWith(".mp4")
+                                                ? <video src={m.mediaUrl} autoPlay loop muted playsInline
+                                                    className="max-w-full max-h-64 rounded-md mb-1" />
+                                                : <img src={m.mediaUrl} alt="GIF" className="max-w-full max-h-64 rounded-md mb-1" />
+                                        )}
                                         {m.mediaType === "audio" && m.mediaUrl && (
                                             <div className="mb-1">
                                                 <NxVoicePlayer src={m.mediaUrl} mine={m.mine} seed={m.id} initialDurationMs={m.durationMs} enableTranscribe />
@@ -3691,6 +3700,7 @@ export function NxSocialDesktop() {
                                                 style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", minWidth: 260 }}>
                                                 <div className="grid grid-cols-3 gap-1">
                                                     <AttachMenuItem icon={Paperclip} label="Fayl" onClick={() => { setAttachOpen(false); fileInputRef.current?.click(); }} />
+                                                    <AttachMenuItem icon={FileIcon} label="GIF" onClick={() => { setAttachOpen(false); setGifPickerOpen(true); }} />
                                                     <AttachMenuItem icon={MapPin} label="Joylashuv" onClick={() => { setAttachOpen(false); setLocationPickerOpen(true); }} />
                                                     <AttachMenuItem icon={BarChart2} label="So'rovnoma" onClick={() => { setAttachOpen(false); setPollOpen(true); }} />
                                                     <AttachMenuItem icon={Wallet} label="Pul" onClick={() => { setAttachOpen(false); setTransferOpen(true); }} accent />
@@ -4571,6 +4581,32 @@ export function NxSocialDesktop() {
                             })
                             .finally(() => setLoadingAgents(false));
                         setAgentCreateOpen(false);
+                    }}
+                />
+            )}
+            {/* GIF picker (Giphy) */}
+            {gifPickerOpen && (
+                <NxGifPicker
+                    onClose={() => setGifPickerOpen(false)}
+                    onPick={async (g) => {
+                        setGifPickerOpen(false);
+                        if (!selectedId) return;
+                        try {
+                            const r = await fetch(`/api/nexus/messages/${selectedId}`, {
+                                method: "POST", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    text: "",
+                                    mediaUrl: g.url,
+                                    mediaType: "gif",
+                                    mediaMime: g.url.endsWith(".mp4") ? "video/mp4" : "image/gif",
+                                }),
+                            });
+                            if (r.ok) {
+                                const d = await r.json();
+                                setMessages(m => [...m, d.message]);
+                                loadConvs();
+                            }
+                        } catch { /* ignore */ }
                     }}
                 />
             )}
