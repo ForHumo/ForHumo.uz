@@ -108,7 +108,12 @@ interface ChannelItem {
     description: string | null; memberCount: number;
 }
 
-type ListTab = "dm" | "groups" | "channels";
+type ListTab = "dm" | "groups" | "channels" | "agents";
+interface AgentItem {
+    id: string; profileId: string;
+    username: string | null; name: string | null; image: string | null; humoId: string | null;
+    module: string; isSystem: boolean; createdAt: string;
+}
 
 export function NxSocialDesktop() {
     const { startCall } = useNxPlayer();
@@ -324,6 +329,25 @@ export function NxSocialDesktop() {
     // Channel/Group state
     const [channels, setChannels] = useState<ChannelItem[]>([]);
     const [loadingChannels, setLoadingChannels] = useState(false);
+    const [agents, setAgents] = useState<AgentItem[]>([]);
+    const [agentsMax, setAgentsMax] = useState<number | null>(null);
+    const [agentsUnlimited, setAgentsUnlimited] = useState(false);
+    const [loadingAgents, setLoadingAgents] = useState(false);
+    const [agentCreateOpen, setAgentCreateOpen] = useState(false);
+    // Agents tabini ochganda yuklaymiz
+    useEffect(() => {
+        if (listTab !== "agents") return;
+        setLoadingAgents(true);
+        fetch("/api/nexus/agents", { cache: "no-store" })
+            .then(r => r.ok ? r.json() : { items: [], max: null, unlimited: false })
+            .then(d => {
+                setAgents(d.items ?? []);
+                setAgentsMax(d.max ?? null);
+                setAgentsUnlimited(!!d.unlimited);
+            })
+            .catch(() => {})
+            .finally(() => setLoadingAgents(false));
+    }, [listTab]);
     const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
     const [channelsBump, setChannelsBump] = useState(0);
 
@@ -1809,6 +1833,7 @@ export function NxSocialDesktop() {
                         { id: "dm" as const,       icon: MessageSquare, label: "DM" },
                         { id: "groups" as const,   icon: Users,         label: "Groups" },
                         { id: "channels" as const, icon: Hash,          label: "Channels" },
+                        { id: "agents" as const,   icon: BotIcon,       label: "Agents" },
                     ]).map(t => (
                         <button key={t.id}
                             onClick={() => setListTab(t.id)}
@@ -1823,10 +1848,19 @@ export function NxSocialDesktop() {
                             <t.icon className="w-3.5 h-3.5" /> {t.label}
                         </button>
                     ))}
-                    {listTab !== "dm" && (
+                    {(listTab === "groups" || listTab === "channels") && (
                         <button
                             onClick={() => setCreateChannelOpen(listTab === "groups" ? "GROUP" : "CHANNEL")}
                             title={`Yangi ${listTab === "groups" ? "guruh" : "kanal"}`}
+                            className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
+                            style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                            <Plus className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        </button>
+                    )}
+                    {listTab === "agents" && (
+                        <button
+                            onClick={() => setAgentCreateOpen(true)}
+                            title="Yangi agent"
                             className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
                             style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
                             <Plus className="w-4 h-4" style={{ color: "#00CEC8" }} />
@@ -2056,7 +2090,66 @@ export function NxSocialDesktop() {
                     </button>
                 )}
                 <div className="flex-1 overflow-y-auto">
-                    {listTab !== "dm" ? (
+                    {listTab === "agents" ? (
+                        // Agents ro'yxati
+                        loadingAgents ? (
+                            <div className="flex justify-center py-10">
+                                <Loader2 className="w-5 h-5 animate-spin text-white/30" />
+                            </div>
+                        ) : (
+                            <>
+                                <div className="px-3 py-2 border-b flex items-center justify-between gap-2"
+                                    style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                                    <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                        {agentsUnlimited
+                                            ? `${agents.filter(a => !a.isSystem).length} ta agentingiz (limit yo'q)`
+                                            : `${agents.filter(a => !a.isSystem).length} / ${agentsMax ?? 10} agent`}
+                                    </p>
+                                    <button onClick={() => setAgentCreateOpen(true)}
+                                        className="flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded"
+                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }}>
+                                        <Plus className="w-3 h-3" /> Yaratish
+                                    </button>
+                                </div>
+                                {agents.length === 0 ? (
+                                    <div className="text-center py-10 px-4 text-xs" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                        Hali agent yo&apos;q — &quot;Yaratish&quot; tugmasini bosing
+                                    </div>
+                                ) : agents.map(a => (
+                                    <button key={a.id}
+                                        onClick={() => a.username && openNewConversation({ name: a.name, username: a.username, image: a.image, verified: false, isMe: false })}
+                                        className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors border-b hover:bg-white/[0.04]"
+                                        style={{ borderColor: "rgba(43,62,232,0.06)" }}>
+                                        <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center relative"
+                                            style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                            {a.image
+                                                ? <img src={a.image} alt="" className="w-full h-full object-cover" />
+                                                : <BotIcon className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                                            }
+                                            {a.isSystem && (
+                                                <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center"
+                                                    style={{ background: "#00CEC8" }}>
+                                                    <Shield className="w-2.5 h-2.5" style={{ color: "#0B1228" }} />
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-1">
+                                                <p className="text-sm font-bold text-white truncate">{a.name ?? a.username}</p>
+                                                {a.isSystem && (
+                                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded"
+                                                        style={{ background: "rgba(0,206,200,0.18)", color: "#00CEC8" }}>AGENT</span>
+                                                )}
+                                            </div>
+                                            <p className="text-[11px] truncate" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                                @{a.username}{a.module && a.module !== "CUSTOM" ? ` · ${a.module.toLowerCase()}` : ""}
+                                            </p>
+                                        </div>
+                                    </button>
+                                ))}
+                            </>
+                        )
+                    ) : listTab !== "dm" ? (
                         // Groups/Channels ro'yxati
                         loadingChannels ? (
                             <div className="flex justify-center py-10">
@@ -2246,7 +2339,10 @@ export function NxSocialDesktop() {
                         </div>
                         <div>
                             <p className="text-base font-black text-white mb-1">
-                                {listTab === "dm" ? "Suhbatni tanlang" : listTab === "groups" ? "Guruhni tanlang" : "Kanalni tanlang"}
+                                {listTab === "dm" ? "Suhbatni tanlang"
+                                    : listTab === "groups" ? "Guruhni tanlang"
+                                    : listTab === "channels" ? "Kanalni tanlang"
+                                    : "Agentni tanlang"}
                             </p>
                             <p className="text-xs" style={{ color: "rgba(120,140,185,0.75)" }}>
                                 Chapdagi ro&apos;yxatdan oching
@@ -4059,6 +4155,26 @@ export function NxSocialDesktop() {
                     }}
                 />
             )}
+            {/* Yangi agent yaratish modali — @BotFather naqshi */}
+            {agentCreateOpen && (
+                <AgentCreateModal
+                    unlimited={agentsUnlimited}
+                    onClose={() => setAgentCreateOpen(false)}
+                    onCreated={() => {
+                        // Ro'yxatni qayta yuklash
+                        setLoadingAgents(true);
+                        fetch("/api/nexus/agents", { cache: "no-store" })
+                            .then(r => r.ok ? r.json() : { items: [] })
+                            .then(d => {
+                                setAgents(d.items ?? []);
+                                setAgentsMax(d.max ?? null);
+                                setAgentsUnlimited(!!d.unlimited);
+                            })
+                            .finally(() => setLoadingAgents(false));
+                        setAgentCreateOpen(false);
+                    }}
+                />
+            )}
             {/* Chat lock modal (setup / unlock / remove) */}
             {lockModal && (
                 <NxChatLockModal
@@ -4515,6 +4631,135 @@ function InfoRow({ label, value }: { label: string; value: string }) {
         <div className="px-2 py-2 rounded-lg hover:bg-white/[0.03]">
             <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.55)" }}>{label}</p>
             <p className="text-sm text-white mt-0.5 break-words">{value}</p>
+        </div>
+    );
+}
+
+// Agent yaratish modali — Telegram @BotFather naqshi
+function AgentCreateModal({ unlimited, onClose, onCreated }: {
+    unlimited: boolean;
+    onClose: () => void;
+    onCreated: () => void;
+}) {
+    const [username, setUsername] = useState("");
+    const [name, setName] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [err, setErr] = useState<string | null>(null);
+    const [apiKey, setApiKey] = useState<string | null>(null);
+
+    async function submit() {
+        setErr(null);
+        const u = username.trim().replace(/^@/, "").toLowerCase();
+        const withSuffix = u.endsWith("_agent") ? u : `${u}_agent`;
+        if (!name.trim()) { setErr("Ismni kiriting"); return; }
+        if (u.length < 2) { setErr("Username juda qisqa"); return; }
+        setBusy(true);
+        try {
+            const r = await fetch("/api/nexus/agents", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: withSuffix, name: name.trim() }),
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { setErr(d?.error ?? "Xatolik yuz berdi"); return; }
+            if (d.apiKey) setApiKey(d.apiKey);
+            else onCreated();
+        } finally { setBusy(false); }
+    }
+
+    if (apiKey) {
+        return (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+                style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}>
+                <div className="w-full max-w-md rounded-2xl overflow-hidden p-5"
+                    style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)" }}>
+                    <div className="flex items-center gap-2 mb-3">
+                        <BotIcon className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                        <p className="text-sm font-black text-white flex-1">Agent yaratildi</p>
+                    </div>
+                    <p className="text-xs mb-2" style={{ color: "rgba(200,215,245,0.85)" }}>
+                        Quyidagi API kalitni saqlab qo&apos;ying — u faqat bir marta ko&apos;rsatiladi.
+                        Webhook bilan xabar yuborish uchun kerak.
+                    </p>
+                    <div className="p-2 rounded-lg mb-3 break-all font-mono text-xs"
+                        style={{ background: "rgba(0,0,0,0.40)", border: "1px solid rgba(0,206,200,0.30)", color: "#00CEC8" }}>
+                        {apiKey}
+                    </div>
+                    <div className="flex gap-2">
+                        <button onClick={() => copyToClipboard(apiKey)}
+                            className="flex-1 h-9 rounded-lg text-xs font-bold text-white"
+                            style={{ background: "rgba(43,62,232,0.20)", border: "1px solid rgba(43,62,232,0.35)" }}>
+                            Nusxa olish
+                        </button>
+                        <button onClick={() => { setApiKey(null); onCreated(); }}
+                            className="flex-1 h-9 rounded-lg text-xs font-black text-white"
+                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            Yopish
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+            style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
+            onClick={() => !busy && onClose()}>
+            <div onClick={e => e.stopPropagation()}
+                className="w-full max-w-md rounded-2xl overflow-hidden p-5"
+                style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)" }}>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <BotIcon className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                        <p className="text-sm font-black text-white">Yangi agent yaratish</p>
+                    </div>
+                    <button onClick={onClose} disabled={busy}
+                        className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
+                        <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                    </button>
+                </div>
+                <label className="block mb-3">
+                    <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.75)" }}>
+                        Nomi (ko&apos;rinadigan)
+                    </span>
+                    <input value={name} onChange={e => setName(e.target.value)}
+                        maxLength={50} placeholder="Masalan: Mening yordamchim"
+                        className="mt-1 w-full h-10 px-3 rounded-lg bg-transparent text-white text-sm focus:outline-none"
+                        style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                </label>
+                <label className="block mb-3">
+                    <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.75)" }}>
+                        Username (_agent bilan tugaydi)
+                    </span>
+                    <div className="mt-1 flex items-center gap-1">
+                        <span className="text-sm font-black" style={{ color: "rgba(140,160,210,0.85)" }}>@</span>
+                        <input value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                            maxLength={26} placeholder="my_helper"
+                            className="flex-1 h-10 px-3 rounded-lg bg-transparent text-white text-sm focus:outline-none"
+                            style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
+                        <span className="text-xs font-bold" style={{ color: "#00CEC8" }}>_agent</span>
+                    </div>
+                    <p className="mt-1 text-[10px]" style={{ color: "rgba(140,160,210,0.60)" }}>
+                        4-32 belgi: a-z, 0-9, _
+                    </p>
+                </label>
+                {err && (
+                    <p className="mb-3 text-[11px] font-bold p-2 rounded"
+                        style={{ background: "rgba(239,68,68,0.10)", color: "#EF4444", border: "1px solid rgba(239,68,68,0.30)" }}>
+                        {err}
+                    </p>
+                )}
+                <p className="mb-3 text-[10px]" style={{ color: "rgba(140,160,210,0.65)" }}>
+                    {unlimited
+                        ? "Sizga cheklov qo'yilmagan — istagancha agent yaratishingiz mumkin."
+                        : "Har foydalanuvchida maksimal 10 ta agent bo'lishi mumkin."}
+                </p>
+                <button onClick={submit} disabled={busy || !name.trim() || username.trim().length < 2}
+                    className="w-full h-10 rounded-xl text-sm font-black text-white disabled:opacity-40"
+                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                    {busy ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Yaratish"}
+                </button>
+            </div>
         </div>
     );
 }

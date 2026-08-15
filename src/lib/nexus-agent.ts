@@ -9,7 +9,7 @@
 
 export const AGENT_SUFFIX = "_agent";
 export const AGENT_CREATOR_USERNAME = "create";
-export const MAX_AGENTS_PER_USER = 5;
+export const MAX_AGENTS_PER_USER = 10;
 
 // Rasmiy tizim agentlari — hech kim ularni ololmas
 export const RESERVED_SYSTEM_AGENTS = new Set([

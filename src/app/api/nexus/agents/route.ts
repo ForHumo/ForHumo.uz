@@ -13,6 +13,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateAgentUsername, MAX_AGENTS_PER_USER } from "@/lib/nexus-agent";
 import { generateApiKey } from "@/lib/agent-webhook";
+import { isFounderProfile } from "@/lib/founders";
 
 async function me() {
     const s = await getServerSession(authOptions);
@@ -21,6 +22,11 @@ async function me() {
         where: { email: s.user.email },
         select: { id: true, username: true, humoId: true },
     });
+}
+
+// Founder — cheklovsiz agent yarata oladi
+function isUnlimited(p: { username: string | null; humoId: string | null }): boolean {
+    return isFounderProfile(p);
 }
 
 export async function GET() {
@@ -34,7 +40,8 @@ export async function GET() {
     });
 
     return NextResponse.json({
-        max: MAX_AGENTS_PER_USER,
+        max: isUnlimited(owner) ? null : MAX_AGENTS_PER_USER,
+        unlimited: isUnlimited(owner),
         items: agents.map(a => ({
             id: a.id,
             profileId: a.profileId,
@@ -65,12 +72,14 @@ export async function POST(req: Request) {
     const v = validateAgentUsername(usernameRaw);
     if (!v.ok) return NextResponse.json({ error: v.error }, { status: 400 });
 
-    // Cheklov: 1 foydalanuvchida MAX_AGENTS_PER_USER ta agent
-    const count = await prisma.nexusAgent.count({ where: { ownerId: owner.id, isSystem: false } });
-    if (count >= MAX_AGENTS_PER_USER) {
-        return NextResponse.json({
-            error: `Har foydalanuvchida maksimal ${MAX_AGENTS_PER_USER} ta agent bo'lishi mumkin`,
-        }, { status: 400 });
+    // Cheklov: 1 foydalanuvchida MAX_AGENTS_PER_USER ta agent (founder — cheksiz)
+    if (!isUnlimited(owner)) {
+        const count = await prisma.nexusAgent.count({ where: { ownerId: owner.id, isSystem: false } });
+        if (count >= MAX_AGENTS_PER_USER) {
+            return NextResponse.json({
+                error: `Har foydalanuvchida maksimal ${MAX_AGENTS_PER_USER} ta agent bo'lishi mumkin`,
+            }, { status: 400 });
+        }
     }
 
     // Nom band emasligini tekshirish
