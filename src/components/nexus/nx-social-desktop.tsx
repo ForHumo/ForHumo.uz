@@ -459,6 +459,17 @@ export function NxSocialDesktop() {
     // Info panel batafsil ko'rinishi (Photos/Videos/Voice/... alohida sahifa)
     const [infoView, setInfoView] = useState<string | null>(null);
     useEffect(() => { setInfoView(null); }, [selectedId]);
+    // Umumiy guruh/kanallar (info panel'da ko'rsatiladi)
+    interface CommonChannel { id: string; type: "CHANNEL" | "GROUP"; name: string; handle: string | null; avatarUrl: string | null; memberCount: number; isSystem: boolean }
+    const [commonGroups, setCommonGroups] = useState<CommonChannel[]>([]);
+    const [commonChannels, setCommonChannels] = useState<CommonChannel[]>([]);
+    useEffect(() => {
+        if (!peer?.id || peer.id === myProfileId) { setCommonGroups([]); setCommonChannels([]); return; }
+        fetch(`/api/nexus/common-channels?peerId=${encodeURIComponent(peer.id)}`, { cache: "no-store" })
+            .then(r => r.ok ? r.json() : { groups: [], channels: [] })
+            .then(d => { setCommonGroups(d.groups ?? []); setCommonChannels(d.channels ?? []); })
+            .catch(() => { setCommonGroups([]); setCommonChannels([]); });
+    }, [peer?.id, myProfileId]);
     // Sana picker — sana separator bosilsa kalendar ochiladi va shu kunga jump qiladi
     const [datePickerOpen, setDatePickerOpen] = useState(false);
     const [pickerMonth, setPickerMonth] = useState<Date>(new Date());
@@ -4073,6 +4084,77 @@ export function NxSocialDesktop() {
                         </div>
                     )}
                     <SharedMediaSection messages={messages} onOpen={i => setGalleryIdx(i)} />
+
+                    {/* Umumiy guruh + kanallar (Telegram uslub) */}
+                    {(commonGroups.length > 0 || commonChannels.length > 0) && (
+                        <div className="p-4 border-t space-y-2" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.55)" }}>
+                                Umumiy
+                            </p>
+                            {commonGroups.length > 0 && (
+                                <div>
+                                    <p className="text-[10px] mb-1" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                        {commonGroups.length} umumiy guruh
+                                    </p>
+                                    <div className="space-y-1">
+                                        {commonGroups.slice(0, 5).map(g => (
+                                            <button key={g.id}
+                                                onClick={() => { setListTab("groups"); setSelectedChannel(g.id); }}
+                                                className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/[0.04] text-left"
+                                                style={{ background: "rgba(43,62,232,0.06)" }}>
+                                                <div className="w-8 h-8 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center"
+                                                    style={{ background: "rgba(43,62,232,0.15)" }}>
+                                                    {g.avatarUrl
+                                                        ? <img src={g.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                                        : <Users className="w-4 h-4" style={{ color: "rgba(180,195,235,0.60)" }} />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-1">
+                                                        <p className="text-xs font-bold text-white truncate">{g.name}</p>
+                                                        {g.isSystem && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                                    </div>
+                                                    <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                        {g.memberCount} a&apos;zo
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {commonChannels.length > 0 && (
+                                <div>
+                                    <p className="text-[10px] mb-1 mt-2" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                        {commonChannels.length} umumiy kanal
+                                    </p>
+                                    <div className="space-y-1">
+                                        {commonChannels.slice(0, 5).map(g => (
+                                            <button key={g.id}
+                                                onClick={() => { setListTab("channels"); setSelectedChannel(g.id); }}
+                                                className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/[0.04] text-left"
+                                                style={{ background: "rgba(43,62,232,0.06)" }}>
+                                                <div className="w-8 h-8 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center"
+                                                    style={{ background: "rgba(43,62,232,0.15)" }}>
+                                                    {g.avatarUrl
+                                                        ? <img src={g.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                                        : <Megaphone className="w-4 h-4" style={{ color: "rgba(180,195,235,0.60)" }} />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-1">
+                                                        <p className="text-xs font-bold text-white truncate">{g.name}</p>
+                                                        {g.isSystem && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                                    </div>
+                                                    <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                        {g.memberCount} a&apos;zo
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {peer?.username && (
                         <div className="p-4 border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
