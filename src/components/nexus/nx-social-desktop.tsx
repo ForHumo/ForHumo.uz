@@ -37,6 +37,7 @@ import { formatMoney } from "@/lib/money";
 
 interface Conv {
     conversationId: string;
+    isSelf?: boolean;
     other: { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean } | null;
     lastMessageText: string | null;
     lastMessageAt: string;
@@ -141,6 +142,8 @@ export function NxSocialDesktop() {
     const [loadingMsgs, setLoadingMsgs] = useState(false);
     const [peerReadAt, setPeerReadAt] = useState<string | null>(null);
     const [peer, setPeer] = useState<PeerInfo | null>(null);
+    // Tanlangan suhbat obyekti (isSelf, muted, pinned, arxiv holatlarini olish uchun)
+    const selectedConv = convs.find(c => c.conversationId === selectedId) ?? null;
 
     // Refs — real-time event handler ichida so'nggi qiymatga ega bo'lish uchun
     const selectedIdRef = useRef<string | null>(null);
@@ -2388,16 +2391,19 @@ export function NxSocialDesktop() {
                                         </>
                                     ) : (
                                         <>
-                                            <ConvAvatar other={c.other} online={!!c.other?.id && isOnline(c.other.id)} />
+                                            <ConvAvatar other={c.other} online={!c.isSelf && !!c.other?.id && isOnline(c.other.id)} isSelf={c.isSelf} />
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-1.5">
                                                     <p className="text-sm font-bold text-white truncate">
-                                                        {c.other?.name ?? (c.other?.username ? `@${c.other.username}` : "Ismsiz")}
+                                                        {c.isSelf ? "Saqlangan xabarlar" : (c.other?.name ?? (c.other?.username ? `@${c.other.username}` : "Ismsiz"))}
                                                     </p>
-                                                    {c.other?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
+                                                    {c.isSelf && <Bookmark className="w-3 h-3" style={{ color: "#F59E0B" }} fill="#F59E0B" />}
+                                                    {!c.isSelf && c.other?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
                                                 </div>
                                                 <p className="text-[11px] truncate" style={{ color: c.unread ? "#FFFFFF" : "rgba(140,160,210,0.70)" }}>
-                                                    {c.lastMine ? "Siz: " : ""}{c.lastMessageText ?? ""}
+                                                    {c.isSelf
+                                                        ? (c.lastMessageText || "O'zingizga xabar yozing")
+                                                        : `${c.lastMine ? "Siz: " : ""}${c.lastMessageText ?? ""}`}
                                                 </p>
                                             </div>
                                         </>
@@ -2551,20 +2557,24 @@ export function NxSocialDesktop() {
                                 title={showInfo ? "Info panelni yopish" : "Suhbat haqida"}
                                 className="flex-1 min-w-0 flex items-center gap-3 -mx-1 px-1 py-0.5 rounded-lg hover:bg-white/[0.04] transition text-left"
                             >
-                                <ConvAvatar other={peer} online={!!peer?.id && isOnline(peer.id)} />
+                                <ConvAvatar other={peer} online={!selectedConv?.isSelf && !!peer?.id && isOnline(peer.id)} isSelf={selectedConv?.isSelf} />
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
                                         <p className="text-sm font-bold text-white truncate">
-                                            {peer?.name ?? (peer?.username ? `@${peer.username}` : "")}
+                                            {selectedConv?.isSelf
+                                                ? "Saqlangan xabarlar"
+                                                : (peer?.name ?? (peer?.username ? `@${peer.username}` : ""))}
                                         </p>
-                                        {peer?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
-                                        {peer?.isAgent && (
+                                        {!selectedConv?.isSelf && peer?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
+                                        {!selectedConv?.isSelf && peer?.isAgent && (
                                             <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md"
                                                 style={{ background: "rgba(0,206,200,0.18)", color: "#00CEC8" }}>AGENT</span>
                                         )}
                                     </div>
                                     <p className="text-[11px] flex items-center gap-1" style={{ color: peerTyping ? "#00CEC8" : "rgba(140,160,210,0.70)" }}>
-                                        {peerTyping
+                                        {selectedConv?.isSelf
+                                            ? "faqat siz ko'rasiz"
+                                            : peerTyping
                                             ? "yozmoqda..."
                                             : (peer?.statusEmoji || peer?.statusText)
                                                 ? (() => {
@@ -4836,7 +4846,17 @@ function MediaGallery({
     );
 }
 
-function ConvAvatar({ other, online }: { other: { name: string | null; username: string | null; image: string | null } | null; online?: boolean }) {
+function ConvAvatar({ other, online, isSelf }: { other: { name: string | null; username: string | null; image: string | null } | null; online?: boolean; isSelf?: boolean }) {
+    if (isSelf) {
+        return (
+            <div className="relative flex-shrink-0">
+                <div className="w-11 h-11 rounded-full flex items-center justify-center"
+                    style={{ background: "linear-gradient(135deg,#F59E0B,#EA580C)" }}>
+                    <Bookmark className="w-5 h-5 text-white" fill="#fff" />
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="relative flex-shrink-0">
             <div className="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center"
