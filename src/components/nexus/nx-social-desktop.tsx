@@ -1447,7 +1447,7 @@ export function NxSocialDesktop() {
                 const blob = new Blob(recChunksRef.current, { type: finalMime });
                 const ext = finalMime.includes("mp4") ? "m4a" : "webm";
                 const file = new File([blob], `voice-${Date.now()}.${ext}`, { type: finalMime });
-                uploadFile(file);
+                uploadFile(file, "audio");
             };
             recorderRef.current = rec;
             recStartRef.current = Date.now();
@@ -2084,17 +2084,19 @@ export function NxSocialDesktop() {
                     {(() => {
                         // Tab bo'yicha o'qilmagan hisoblash (muted chatlar sanamaydi)
                         const unreadDMs = convs.filter(c => c.unread && !c.muted && !c.isSelf).length;
+                        // 320px sidebar'ga 6 ta tab sig'ishi uchun qisqa label + icon
                         return ([
-                            { id: "all" as const,      icon: Inbox,         label: "Barchasi",   badge: unreadDMs },
-                            { id: "unread" as const,   icon: BellOff,       label: "O'qilmagan", badge: unreadDMs },
-                            { id: "private" as const,  icon: MessageSquare, label: "Shaxsiy",    badge: unreadDMs },
-                            { id: "groups" as const,   icon: Users,         label: "Guruhlar",   badge: 0 },
-                            { id: "channels" as const, icon: Hash,          label: "Kanallar",   badge: 0 },
-                            { id: "agents" as const,   icon: BotIcon,       label: "Agentlar",   badge: 0 },
+                            { id: "all" as const,      icon: Inbox,         label: "All",     badge: unreadDMs },
+                            { id: "unread" as const,   icon: BellOff,       label: "Yangi",   badge: unreadDMs },
+                            { id: "private" as const,  icon: MessageSquare, label: "DM",      badge: unreadDMs },
+                            { id: "groups" as const,   icon: Users,         label: "Guruh",   badge: 0 },
+                            { id: "channels" as const, icon: Hash,          label: "Kanal",   badge: 0 },
+                            { id: "agents" as const,   icon: BotIcon,       label: "Agent",   badge: 0 },
                         ]).map(t => (
                             <button key={t.id}
                                 onClick={() => setListTab(t.id)}
-                                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition whitespace-nowrap relative"
+                                title={t.label}
+                                className="flex-shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-full text-[10px] font-bold transition whitespace-nowrap relative"
                                 style={listTab === t.id ? {
                                     background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
                                     color: "#fff",
@@ -2103,9 +2105,9 @@ export function NxSocialDesktop() {
                                     color: "rgba(140,160,210,0.80)",
                                     border: "1px solid rgba(43,62,232,0.15)",
                                 }}>
-                                <t.icon className="w-3.5 h-3.5" /> {t.label}
+                                <t.icon className="w-3 h-3" /> {t.label}
                                 {t.badge > 0 && (
-                                    <span className="ml-0.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black flex items-center justify-center"
+                                    <span className="ml-0.5 min-w-[14px] h-3.5 px-1 rounded-full text-[8px] font-black flex items-center justify-center"
                                         style={{
                                             background: listTab === t.id ? "rgba(255,255,255,0.30)" : "#00CEC8",
                                             color: listTab === t.id ? "#fff" : "#0B1228",
@@ -2787,6 +2789,15 @@ export function NxSocialDesktop() {
                                     </p>
                                 </div>
                             </button>
+                            {/* Phone + Video header'da (self-chat va agent'lardan tashqari) */}
+                            {!selectedConv?.isSelf && !peer?.isAgent && peer?.id && (
+                                <>
+                                    <IconBtn icon={Phone} title="Ovozli chaqiruv"
+                                        onClick={() => peer.id && startCall(peer.id, "AUDIO")} />
+                                    <IconBtn icon={Video} title="Video chaqiruv"
+                                        onClick={() => peer.id && startCall(peer.id, "VIDEO")} />
+                                </>
+                            )}
                             <IconBtn
                                 icon={searchOpen ? X : Search}
                                 title={searchOpen ? "Qidiruvni yopish" : "Suhbatda qidirish"}
@@ -3191,9 +3202,16 @@ export function NxSocialDesktop() {
                                                 )}
                                             </div>
                                         )}
-                                        {m.mediaType === "image" && m.mediaUrl && (
-                                            <img src={m.mediaUrl} alt="" className="max-w-full max-h-80 rounded-md mb-1" />
-                                        )}
+                                        {m.mediaType === "image" && m.mediaUrl && (() => {
+                                            const idx = galleryImages.findIndex(x => x.id === m.id);
+                                            return (
+                                                <button type="button"
+                                                    onClick={(e) => { e.stopPropagation(); if (idx >= 0) setGalleryIdx(idx); }}
+                                                    className="block mb-1 rounded-md overflow-hidden active:scale-[0.98] transition-transform">
+                                                    <img src={m.mediaUrl} alt="" className="max-w-full max-h-80 cursor-zoom-in" />
+                                                </button>
+                                            );
+                                        })()}
                                         {m.mediaType === "video" && m.mediaUrl && (
                                             <video src={m.mediaUrl} controls playsInline className="max-w-full max-h-80 rounded-md mb-1" />
                                         )}
@@ -3213,14 +3231,19 @@ export function NxSocialDesktop() {
                                             </div>
                                         )}
                                         {m.mediaType === "video-circle" && m.mediaUrl && (
-                                            <video src={m.mediaUrl} controls playsInline
-                                                className="mb-1"
+                                            <div className="mb-1 overflow-hidden bg-black relative"
                                                 style={{
-                                                    width: 220, height: 220,
+                                                    width: 240, height: 240,
                                                     borderRadius: "44%",
-                                                    objectFit: "cover",
-                                                    background: "#000",
-                                                }} />
+                                                    border: "1px solid rgba(0,206,200,0.30)",
+                                                }}>
+                                                <video src={m.mediaUrl} controls playsInline
+                                                    className="w-full h-full object-cover" />
+                                                <span className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
+                                                    style={{ background: "rgba(0,206,200,0.20)", color: "#00CEC8" }}>
+                                                    <Camera className="w-2.5 h-2.5" /> Video xabar
+                                                </span>
+                                            </div>
                                         )}
                                         {m.mediaType === "file" && m.mediaUrl && (
                                             <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer" download={m.mediaName ?? true}
@@ -3769,7 +3792,19 @@ export function NxSocialDesktop() {
                             style={{ borderTop: replyTo ? "none" : "1px solid rgba(43,62,232,0.14)", background: "rgba(8,12,32,0.55)" }}>
                             <input ref={fileInputRef} type="file"
                                 accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip,.txt"
-                                onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f); e.target.value = ""; }}
+                                onChange={e => {
+                                    const f = e.target.files?.[0];
+                                    if (f) {
+                                        // Attach orqali audio yuborilsa "file" sifatida ko'rsatiladi
+                                        // (voice message emas — u alohida hold-mic bilan yoziladi)
+                                        const kind = f.type.startsWith("image/") ? "image"
+                                            : f.type.startsWith("video/") ? "video"
+                                            : f.type.startsWith("audio/") ? "file"
+                                            : "file";
+                                        uploadFile(f, kind);
+                                    }
+                                    e.target.value = "";
+                                }}
                                 className="hidden" />
 
                             {recording || videoRecording ? (
