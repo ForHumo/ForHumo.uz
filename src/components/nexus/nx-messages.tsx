@@ -317,7 +317,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 const blob = new Blob(recChunksRef.current, { type: finalMime });
                 const ext = finalMime.includes("mp4") ? "m4a" : "webm";
                 const file = new File([blob], `voice-${Date.now()}.${ext}`, { type: finalMime });
-                sendMedia(file);
+                sendMedia(file, "audio");
             };
             recorderRef.current = rec;
             recStartRef.current = Date.now();
@@ -815,8 +815,10 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                         ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)" }
                                         : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)" }}>
                                         {m.mediaType === "image" && m.mediaUrl && (
-                                            <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer" className="block">
-                                                <img src={m.mediaUrl} alt="" className="max-w-full max-h-80 object-contain" />
+                                            <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer"
+                                                className="block active:scale-[0.98] transition-transform">
+                                                <img src={m.mediaUrl} alt="" loading="lazy"
+                                                    className="max-w-full max-h-80 object-contain cursor-zoom-in" />
                                             </a>
                                         )}
                                         {m.mediaType === "video" && m.mediaUrl && (
@@ -834,9 +836,13 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                         )}
                                         {m.mediaType === "video-circle" && m.mediaUrl && (
                                             <div className="p-2">
-                                                <div className="relative rounded-full overflow-hidden bg-black"
-                                                    style={{ width: 200, height: 200, border: "2px solid rgba(255,255,255,0.15)" }}>
+                                                <div className="relative overflow-hidden bg-black"
+                                                    style={{ width: 220, height: 220, borderRadius: "44%", border: "1px solid rgba(0,206,200,0.30)" }}>
                                                     <video src={m.mediaUrl} controls playsInline className="w-full h-full object-cover" />
+                                                    <span className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
+                                                        style={{ background: "rgba(0,206,200,0.20)", color: "#00CEC8" }}>
+                                                        <Camera className="w-2.5 h-2.5" /> Video xabar
+                                                    </span>
                                                 </div>
                                                 {typeof m.durationMs === "number" && m.durationMs > 0 && (
                                                     <p className="text-[10px] mt-1 text-center tabular-nums"
@@ -1065,7 +1071,16 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             <div className="flex-shrink-0 px-4 py-3 flex items-center gap-2" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
                 <input ref={fileInputRef} type="file"
                     accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt"
-                    onChange={e => { const f = e.target.files?.[0]; if (f) sendMedia(f); }}
+                    onChange={e => {
+                        const f = e.target.files?.[0];
+                        if (f) {
+                            const kind = f.type.startsWith("image/") ? "image"
+                                : f.type.startsWith("video/") ? "video"
+                                : f.type.startsWith("audio/") ? "file"  // .mp3/.wav → file card, voice EMAS
+                                : "file";
+                            sendMedia(f, kind);
+                        }
+                    }}
                     className="hidden" />
                 {recording ? (
                     /* ── Ovoz yozish rejimi: bekor + timer + jo'natish ── */

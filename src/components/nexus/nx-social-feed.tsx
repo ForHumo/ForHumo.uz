@@ -464,14 +464,21 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
                 );
             })()}
 
-            {/* Media */}
+            {/* Media (Nexus feed rasm/video kartochka — DM bilan bir xil dizayn) */}
             {p.media.length > 0 && (
                 <div className={`mx-4 mb-3 grid gap-1.5 ${p.media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
                     {p.media.map((url, i) => (
-                        <div key={i} className="relative rounded-xl overflow-hidden" style={{ background: "rgba(43,62,232,0.10)" }}>
-                            {isVid(url)
-                                ? <video src={url} controls className="w-full max-h-[420px] object-cover" />
-                                : <img src={url} alt="" className="w-full max-h-[420px] object-cover" />}
+                        <div key={i} className="relative rounded-xl overflow-hidden bg-black">
+                            {isVid(url) ? (
+                                <video src={url} controls playsInline preload="metadata"
+                                    className="w-full max-h-[420px] object-cover cursor-pointer" />
+                            ) : (
+                                <a href={url} target="_blank" rel="noopener noreferrer"
+                                    className="block active:scale-[0.99] transition-transform">
+                                    <img src={url} alt="" loading="lazy"
+                                        className="w-full max-h-[420px] object-cover cursor-zoom-in" />
+                                </a>
+                            )}
                         </div>
                     ))}
                 </div>

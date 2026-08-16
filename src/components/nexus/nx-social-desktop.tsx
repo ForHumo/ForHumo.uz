@@ -2201,6 +2201,10 @@ export function NxSocialDesktop() {
                                             style={{ background: "rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.85)" }}>?</span>
                                         <span className="flex-1">Klaviatura yorliqlari</span>
                                     </button>
+                                    <div className="px-3 py-2 border-t text-[10px]"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)", color: "rgba(140,160,210,0.65)" }}>
+                                        Rasm va videolar asl sifatida yuklanadi (siqilish yo&apos;q). Watermark faqat rasmga qo&apos;shiladi (yoqilgan bo&apos;lsa).
+                                    </div>
                                 </div>
                             )}
                         </div>
