@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
+import { useTranslations, useLocale } from "next-intl";
 import {
     Search, ShoppingCart, Menu, X, User, Bell, LayoutGrid,
     Package, ChevronRight, LogIn, Navigation, Headphones, Heart, Store,
@@ -21,9 +22,9 @@ export interface BnHeaderCategoryDTO {
 // Foydalanuvchi so'rovi: Katalog/Bozorlar/Do'konlar OLIB TASHLANDI (navbar/asosiy'da bor).
 // Faqat gorizontal 1 qatorda: Mening joylashuvim → Topshirish punkti → Buyurtmalarim → Humo Support
 const NAV = [
-    { href: "/joylashuv",     label: "Mening joylashuvim", icon: Navigation },
-    { href: "/punktlar",      label: "Topshirish punkti",  icon: Package },
-    { href: "/buyurtmalarim", label: "Buyurtmalarim",      icon: Package },
+    { href: "/joylashuv",     labelKey: "location",     icon: Navigation },
+    { href: "/punktlar",      labelKey: "pickupPoint",  icon: Package },
+    { href: "/buyurtmalarim", labelKey: "myOrders",     icon: Package },
 ] as const;
 
 export function BnHeader({
@@ -32,13 +33,14 @@ export function BnHeader({
     void favCount;   // hozircha faqat cartCount ishlatiladi, favCount kelajakda profil menyusida
     const router = useRouter();
     const to = useBnHref();
-    const { locale, hasShop } = useBnBase();
+    const { hasShop } = useBnBase();
     const { data: session, status } = useSession();
+    const t = useTranslations("bn");
+    const tNav = useTranslations("bn.nav");
+    const localeIntl = useLocale();
     const [q, setQ] = useState("");
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
-
-    void locale;   // Humo Support endi yon panel (SupportDock event) — locale ishlatilmaydi
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 8);
@@ -77,7 +79,7 @@ export function BnHeader({
                     <div className="hidden md:flex items-start gap-4 py-3">
                         <BnLink href="/" className="flex items-center gap-2.5 flex-shrink-0 group h-14">
                             <BnLogo size={52} />
-                            <span className="font-black text-[19px] tracking-tight leading-none">Bozor Narxida</span>
+                            <span className="font-black text-[19px] tracking-tight leading-none">{t("brandName")}</span>
                         </BnLink>
 
                         <div className="flex-1 min-w-0 flex flex-col gap-2.5">
@@ -94,18 +96,18 @@ export function BnHeader({
                                     <input
                                         value={q}
                                         onChange={e => setQ(e.target.value)}
-                                        placeholder="Mahsulot, do'kon yoki bozor qidiring..."
+                                        placeholder={t("search.placeholder")}
                                         className="flex-1 h-full pl-11 pr-2 bg-transparent text-[14px] outline-none"
                                         style={{ color: BN.text, caretColor: BN.gold }}
                                     />
                                     <SearchExtraBtn
-                                        label="AI bilan gaplashib qidirish"
+                                        label={t("search.voice")}
                                         onClick={() => router.push(to("/qidiruv?mode=voice"))}
                                     >
                                         <Mic className="w-[17px] h-[17px]" />
                                     </SearchExtraBtn>
                                     <SearchExtraBtn
-                                        label="Rasmdan qidirish (Skaner)"
+                                        label={t("search.camera")}
                                         onClick={() => router.push(to("/scan"))}
                                         gold
                                     >
@@ -126,7 +128,7 @@ export function BnHeader({
                                             style={{ color: BN.text2 }}
                                         >
                                             <Icon className="w-[15px] h-[15px]" />
-                                            {n.label}
+                                            {tNav(n.labelKey)}
                                         </BnLink>
                                     );
                                 })}
@@ -137,7 +139,7 @@ export function BnHeader({
                                     style={{ color: BN.text2 }}
                                 >
                                     <Headphones className="w-[15px] h-[15px]" />
-                                    Humo Support
+                                    {tNav("support")}
                                 </button>
                             </nav>
                         </div>
@@ -147,10 +149,10 @@ export function BnHeader({
                             <div className="flex items-center gap-1.5">
                                 <BnLangSwitch />
                                 <BnThemeToggle />
-                                <IconBtn href="/bildirishnomalar" label="Bildirishnomalar">
+                                <IconBtn href="/bildirishnomalar" label={tNav("notifications")}>
                                     <Bell className="w-[17px] h-[17px]" />
                                 </IconBtn>
-                                <IconBtn href="/savat" label="Savat" badge={cartCount}>
+                                <IconBtn href="/savat" label={tNav("cart")} badge={cartCount}>
                                     <ShoppingCart className="w-[17px] h-[17px]" />
                                 </IconBtn>
 
@@ -169,7 +171,7 @@ export function BnHeader({
                                             </span>
                                         )}
                                         <span className="text-[13px] font-bold max-w-[100px] truncate">
-                                            {session?.user?.name ?? "Profil"}
+                                            {session?.user?.name ?? tNav("profile")}
                                         </span>
                                     </BnLink>
                                 ) : (
@@ -179,7 +181,7 @@ export function BnHeader({
                                         style={{ background: BN.gold, color: BN.onGold }}
                                     >
                                         <LogIn className="w-4 h-4" />
-                                        Kirish
+                                        {t("auth.signIn")}
                                     </button>
                                 )}
                             </div>
@@ -190,7 +192,7 @@ export function BnHeader({
                                 style={{ background: BN.goldSoft, color: BN.gold, border: `1px solid ${BN.goldEdge}` }}
                             >
                                 <Store className="w-[15px] h-[15px]" />
-                                {hasShop ? "Kabinetga o'tish" : "Sotuvchi bo'lish"}
+                                {hasShop ? t("seller.openCabinet") : t("seller.become")}
                             </BnLink>
                         </div>
                     </div>
@@ -200,7 +202,7 @@ export function BnHeader({
                         <div className="flex items-center gap-2.5 h-14">
                             <button
                                 onClick={() => setMenuOpen(true)}
-                                aria-label="Menyu"
+                                aria-label={tNav("menu")}
                                 className="w-9 h-9 -ml-1 grid place-items-center rounded-xl flex-shrink-0"
                                 style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                             >
@@ -209,16 +211,16 @@ export function BnHeader({
 
                             <BnLink href="/" className="flex items-center gap-2 flex-shrink-0">
                                 <BnLogo size={42} />
-                                <span className="font-black text-[16px] tracking-tight leading-none">Bozor Narxida</span>
+                                <span className="font-black text-[16px] tracking-tight leading-none">{t("brandName")}</span>
                             </BnLink>
 
                             <div className="flex-1" />
 
                             <BnThemeToggle compact />
-                            <IconBtn href="/bildirishnomalar" label="Bildirishnomalar" compact>
+                            <IconBtn href="/bildirishnomalar" label={tNav("notifications")} compact>
                                 <Bell className="w-4 h-4" />
                             </IconBtn>
-                            <IconBtn href="/savat" label="Savat" compact badge={cartCount}>
+                            <IconBtn href="/savat" label={tNav("cart")} compact badge={cartCount}>
                                 <ShoppingCart className="w-4 h-4" />
                             </IconBtn>
                         </div>
@@ -235,18 +237,18 @@ export function BnHeader({
                                 <input
                                     value={q}
                                     onChange={e => setQ(e.target.value)}
-                                    placeholder="Nima qidiryapsiz?"
+                                    placeholder={t("search.placeholderShort")}
                                     className="flex-1 h-full pl-10 pr-2 bg-transparent text-[14px] outline-none"
                                     style={{ color: BN.text, caretColor: BN.gold }}
                                 />
                                 <SearchExtraBtn
-                                    label="AI bilan gaplashib qidirish"
+                                    label={t("search.voice")}
                                     onClick={() => router.push(to("/qidiruv?mode=voice"))}
                                 >
                                     <Mic className="w-4 h-4" />
                                 </SearchExtraBtn>
                                 <SearchExtraBtn
-                                    label="Rasmdan qidirish"
+                                    label={t("search.cameraShort")}
                                     onClick={() => router.push(to("/scan"))}
                                     gold
                                 >
@@ -269,11 +271,11 @@ export function BnHeader({
                         <div className="flex items-center justify-between h-16 px-4" style={{ borderBottom: `1px solid ${BN.border}` }}>
                             <div className="flex items-center gap-2">
                                 <BnLogo size={30} />
-                                <span className="font-black text-[15px]">Bozor Narxida</span>
+                                <span className="font-black text-[15px]">{t("brandName")}</span>
                             </div>
                             <button
                                 onClick={() => setMenuOpen(false)}
-                                aria-label="Yopish"
+                                aria-label={tNav("close")}
                                 className="w-9 h-9 grid place-items-center rounded-lg"
                                 style={{ background: BN.surfaceUp }}
                             >
@@ -298,7 +300,7 @@ export function BnHeader({
                                         </span>
                                     )}
                                     <span className="min-w-0">
-                                        <span className="block text-[14px] font-black truncate">{session?.user?.name ?? "Profil"}</span>
+                                        <span className="block text-[14px] font-black truncate">{session?.user?.name ?? tNav("profile")}</span>
                                         <span className="block text-[11.5px]" style={{ color: BN.text3 }}>Humo ID</span>
                                     </span>
                                 </BnLink>
@@ -309,7 +311,7 @@ export function BnHeader({
                                     style={{ background: BN.surfaceUp, color: BN.text }}
                                 >
                                     <LogIn className="w-[18px] h-[18px]" />
-                                    Humo ID bilan kirish
+                                    {t("auth.signInWithHumoID")}
                                 </button>
                             )}
 
@@ -320,7 +322,7 @@ export function BnHeader({
                                 style={{ background: BN.gold, color: BN.onGold }}
                             >
                                 <Store className="w-[18px] h-[18px]" />
-                                {hasShop ? "Kabinetga o'tish" : "Sotuvchi bo'lish"}
+                                {hasShop ? t("seller.openCabinet") : t("seller.become")}
                             </BnLink>
 
                             {NAV.map(n => {
@@ -333,7 +335,7 @@ export function BnHeader({
                                         className="flex items-center gap-3 h-12 px-3 rounded-xl text-[14px] font-bold"
                                     >
                                         <span style={{ color: BN.gold }}><Icon className="w-[18px] h-[18px]" /></span>
-                                        {n.label}
+                                        {tNav(n.labelKey)}
                                     </BnLink>
                                 );
                             })}
@@ -343,7 +345,7 @@ export function BnHeader({
                                 className="flex items-center gap-3 h-12 px-3 rounded-xl text-[14px] font-bold"
                             >
                                 <span style={{ color: BN.gold }}><Heart className="w-[18px] h-[18px]" /></span>
-                                Sevimlilar
+                                {tNav("favorites")}
                             </BnLink>
                             <button
                                 type="button"
@@ -351,12 +353,12 @@ export function BnHeader({
                                 className="flex items-center gap-3 h-12 px-3 rounded-xl text-[14px] font-bold text-left"
                             >
                                 <span style={{ color: BN.gold }}><Headphones className="w-[18px] h-[18px]" /></span>
-                                Humo Support
+                                {tNav("support")}
                             </button>
 
                             <div className="flex items-center gap-2 px-3 pt-4">
                                 <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: BN.text3 }}>
-                                    Til va rejim
+                                    {tNav("themeAndLang")}
                                 </span>
                                 <div className="flex-1" />
                                 <BnLangSwitch compact />
@@ -364,7 +366,7 @@ export function BnHeader({
                             </div>
 
                             <p className="px-3 pt-5 pb-2 text-[11px] font-black uppercase tracking-wider" style={{ color: BN.text3 }}>
-                                Kategoriyalar
+                                {tNav("categories")}
                             </p>
                             {categories.map(c => (
                                 <BnLink
@@ -375,7 +377,7 @@ export function BnHeader({
                                 >
                                     <span>{c.name}</span>
                                     <span className="flex items-center gap-1.5 text-[11px]" style={{ color: BN.text3 }}>
-                                        {c.productCount.toLocaleString("uz-UZ")}
+                                        {c.productCount.toLocaleString(localeIntl)}
                                         <ChevronRight className="w-3.5 h-3.5" />
                                     </span>
                                 </BnLink>

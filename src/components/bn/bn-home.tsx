@@ -6,6 +6,7 @@ import {
     TrendingDown, Sparkles, Crown, Loader2, Globe, ShoppingBasket,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnHeroSlider } from "./bn-hero-slider";
@@ -33,6 +34,7 @@ export interface BnHomeInitial {
 
 export function BnHome({ initial }: { initial: BnHomeInitial }) {
     const { markets, topShops, cheap, fresh, top, seasonal, forYou } = initial;
+    const t = useTranslations("bn.home");
 
     // ── Mahsulotlar filtri (LiquidGlassNavbar bilan) ────────────────────────
     const [filter, setFilter] = useState<FilterKey>("cheap");
@@ -42,10 +44,10 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
     const navTint: "light" | "dark" = mounted && resolvedTheme === "dark" ? "dark" : "light";
 
     const FILTER_MAP: Record<FilterKey, { title: string; subtitle?: string; icon: React.ReactNode; items: BnProductDTO[]; href: string }> = {
-        cheap:    { title: "Bozor narxidan arzon", subtitle: "Bozordagi o'rtacha narxdan pastda", icon: <TrendingDown className="w-[18px] h-[18px]" />, items: cheap,    href: "/qidiruv?sort=cheap" },
-        fresh:    { title: "Yangi mahsulotlar",     icon: <Sparkles className="w-[18px] h-[18px]" />,     items: fresh,    href: "/qidiruv?sort=new" },
-        top:      { title: "Top mahsulotlar",       subtitle: "Eng yuqori baholangan",                    icon: <Star className="w-[18px] h-[18px]" />,         items: top,      href: "/qidiruv?sort=rating" },
-        seasonal: { title: "Mavsumiy mahsulotlar",  subtitle: "Hozirgi faslga mos",                       icon: <Package className="w-[18px] h-[18px]" />,      items: seasonal, href: "/qidiruv?sort=seasonal" },
+        cheap:    { title: t("cheapTitle"),    subtitle: t("cheapSub"),    icon: <TrendingDown className="w-[18px] h-[18px]" />, items: cheap,    href: "/qidiruv?sort=cheap" },
+        fresh:    { title: t("freshTitle"),                                icon: <Sparkles className="w-[18px] h-[18px]" />,     items: fresh,    href: "/qidiruv?sort=new" },
+        top:      { title: t("topTitle"),      subtitle: t("topSub"),      icon: <Star className="w-[18px] h-[18px]" />,         items: top,      href: "/qidiruv?sort=rating" },
+        seasonal: { title: t("seasonalTitle"), subtitle: t("seasonalSub"), icon: <Package className="w-[18px] h-[18px]" />,      items: seasonal, href: "/qidiruv?sort=seasonal" },
     };
     const active = FILTER_MAP[filter];
 
@@ -62,17 +64,17 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
                 <EntryCard
                     href="/bozorlar"
                     icon={<Store className="w-6 h-6" />}
-                    title="Bozorlar"
-                    text="Jismoniy bozorlar — borib ko'rish mumkin"
-                    count={`${markets.length} ta bozor`}
+                    title={t("markets")}
+                    text={t("marketsText")}
+                    count={t("marketsCount", { n: markets.length })}
                     cover={markets[0]?.coverUrl ?? "https://picsum.photos/seed/bn-fallback-1/800/800"}
                 />
                 <EntryCard
                     href="/dokonlar"
                     icon={<ShoppingBasket className="w-6 h-6" />}
-                    title="Do'konlar"
-                    text="Bozordagi, ko'chadagi va onlayn do'konlar"
-                    count={`${topShops.length}+ ta do'kon`}
+                    title={t("shops")}
+                    text={t("shopsText")}
+                    count={t("shopsCount", { n: topShops.length })}
                     cover={markets[2]?.coverUrl ?? markets[0]?.coverUrl ?? "https://picsum.photos/seed/bn-fallback-2/800/800"}
                 />
             </section>
@@ -80,8 +82,8 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
             {/* ── Siz uchun (personalizatsiya) — faqat kirganlar uchun ── */}
             {forYou && forYou.length > 0 && (
                 <ProductSection
-                    title="Siz uchun"
-                    subtitle="Qiziqishlaringiz asosida AI tavsiya qildi"
+                    title={t("forYou")}
+                    subtitle={t("forYouSub")}
                     icon={<Sparkles className="w-[18px] h-[18px]" />}
                     href="/qidiruv?sort=recommended"
                     items={forYou}
@@ -91,10 +93,10 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
             {/* ── TOP 10 ishonchli do'kon ── */}
             <section className="mb-10">
                 <SectionHead
-                    title="Ishonchli do'konlar"
-                    subtitle="Reyting va xaridor faolligiga qarab AI tuzgan TOP 10"
+                    title={t("trustedShops")}
+                    subtitle={t("trustedShopsSub")}
                     href="/dokonlar"
-                    hrefLabel="Barchasini ko'rish"
+                    hrefLabel={t("seeAll")}
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                     {topShops.map((s, i) => (
@@ -174,12 +176,12 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
                     accent="var(--bn-gold)"
                     value={filter}
                     onChange={k => setFilter(k as FilterKey)}
-                    ariaLabel="Mahsulotlar filteri"
+                    ariaLabel={t("filterAria")}
                     items={[
-                        { key: "cheap",    label: "Arzon",    icon: <TrendingDown className="w-4 h-4" /> },
-                        { key: "fresh",    label: "Yangi",    icon: <Sparkles className="w-4 h-4" /> },
-                        { key: "top",      label: "Top",      icon: <Star className="w-4 h-4" /> },
-                        { key: "seasonal", label: "Mavsumiy", icon: <Package className="w-4 h-4" /> },
+                        { key: "cheap",    label: t("cheap"),    icon: <TrendingDown className="w-4 h-4" /> },
+                        { key: "fresh",    label: t("fresh"),    icon: <Sparkles className="w-4 h-4" /> },
+                        { key: "top",      label: t("top"),      icon: <Star className="w-4 h-4" /> },
+                        { key: "seasonal", label: t("seasonal"), icon: <Package className="w-4 h-4" /> },
                     ]}
                 />
             </section>
@@ -201,6 +203,7 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
 
 function SellerBanner() {
     const { hasShop } = useBnBase();
+    const t = useTranslations("bn.home");
     if (hasShop) return null;   // do'koni bor odam uchun ko'rsatmaymiz
     return (
         <section className="mt-4">
@@ -211,12 +214,10 @@ function SellerBanner() {
                 <div className="relative flex flex-col md:flex-row md:items-center gap-6">
                     <div className="flex-1 min-w-0">
                         <h3 className="text-[22px] sm:text-[26px] font-black tracking-tight leading-tight mb-3">
-                            Do&apos;koningiz bormi? Onlaynga chiqaring
+                            {t("sellerCta")}
                         </h3>
                         <p className="text-[14px] leading-relaxed max-w-[560px]" style={{ color: BN.text2 }}>
-                            Bozordagi do&apos;kon ham, ko&apos;chadagi do&apos;kon ham bo&apos;ladi.
-                            Mahsulot rasmini yuklaysiz — Humo AI nomi, tavsifi va narx tavsiyasini o&apos;zi yozadi.
-                            Komissiya 5%, naqd savdodan olinmaydi.
+                            {t("sellerCtaText")}
                         </p>
                     </div>
                     <SellerCta />
@@ -230,6 +231,7 @@ function SellerBanner() {
 
 function SellerCta() {
     const { hasShop } = useBnBase();
+    const t = useTranslations("bn.seller");
     return (
         <BnLink
             href={hasShop ? "/kabinet" : "/sotuvchi"}
@@ -237,7 +239,7 @@ function SellerCta() {
             style={{ height: 52, background: BN.gold, color: BN.onGold }}
         >
             <Store className="w-5 h-5" />
-            {hasShop ? "Kabinetga o'tish" : "Sotuvchi bo'lish"}
+            {hasShop ? t("openCabinet") : t("become")}
             <ArrowRight className="w-4 h-4" />
         </BnLink>
     );
@@ -252,6 +254,7 @@ function ProductSection({
     items: BnProductDTO[];
     href: string;
 }) {
+    const t = useTranslations("bn.home");
     const [rows, setRows] = useState(INITIAL_ROWS);
     const [busy, setBusy] = useState(false);
 
@@ -283,7 +286,7 @@ function ProductSection({
                         style={{ background: BN.surface, border: `1px solid ${BN.borderGold}`, color: BN.gold }}
                     >
                         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                        Yana yuklash
+                        {t("loadMore")}
                     </button>
                 </div>
             )}
@@ -294,7 +297,7 @@ function ProductSection({
 // ── Yordamchilar ────────────────────────────────────────────────────────────
 
 function SectionHead({
-    title, subtitle, icon, href, hrefLabel = "Barchasi",
+    title, subtitle, icon, href, hrefLabel,
 }: {
     title: string;
     subtitle?: string;
@@ -302,6 +305,8 @@ function SectionHead({
     href?: string;
     hrefLabel?: string;
 }) {
+    const t = useTranslations("bn.home");
+    const label = hrefLabel ?? t("allBtn");
     return (
         <div className="flex items-end justify-between gap-3 mb-4">
             <div className="min-w-0 flex items-center gap-2.5">
@@ -326,7 +331,7 @@ function SectionHead({
                     className="flex items-center gap-1 text-[13px] font-bold flex-shrink-0 whitespace-nowrap"
                     style={{ color: BN.gold }}
                 >
-                    {hrefLabel}
+                    {label}
                     <ChevronRight className="w-4 h-4" />
                 </BnLink>
             )}

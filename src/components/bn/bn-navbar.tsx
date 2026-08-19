@@ -7,6 +7,7 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, type PointerEvent as ReactPointerEvent } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { Home, LayoutGrid, Heart, ShoppingCart } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
@@ -14,18 +15,18 @@ import { useBnPath, useBnHref } from "./bn-nav";
 
 interface Item {
     href: string;
-    label: string;
+    labelKey: string;
     icon?: LucideIcon;
     iconSrc?: string;
     iconSrcAlt?: string;
 }
 
 const ITEMS: Item[] = [
-    { href: "/",           label: "Asosiy",     icon: Home },
-    { href: "/katalog",    label: "Katalog",    icon: LayoutGrid },
-    { href: "/nexus",      label: "Nexus",      iconSrc: "/logos/humo-nexus.png", iconSrcAlt: "Humo Nexus" },
-    { href: "/sevimlilar", label: "Sevimlilar", icon: Heart },
-    { href: "/savat",      label: "Savat",      icon: ShoppingCart },
+    { href: "/",           labelKey: "main",      icon: Home },
+    { href: "/katalog",    labelKey: "catalog",   icon: LayoutGrid },
+    { href: "/nexus",      labelKey: "nexus",     iconSrc: "/logos/humo-nexus.png", iconSrcAlt: "Humo Nexus" },
+    { href: "/sevimlilar", labelKey: "favorites", icon: Heart },
+    { href: "/savat",      labelKey: "cart",      icon: ShoppingCart },
 ];
 
 /** Swipe navigatsiya uchun tartib. `bn-swipe-nav.tsx` shu ro'yxatdan foydalanadi. */
@@ -37,6 +38,8 @@ export function BnNavbar() {
     const router = useRouter();
     const to = useBnHref();
     const path = useBnPath();
+    const tNav = useTranslations("bn.nav");
+    const tNavbar = useTranslations("bn.navbar");
 
     const wrapRef = useRef<HTMLDivElement>(null);
     const btnRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -139,7 +142,7 @@ export function BnNavbar() {
                 <div
                     ref={wrapRef}
                     role="tablist"
-                    aria-label="Asosiy navigatsiya"
+                    aria-label={tNavbar("ariaLabel")}
                     onPointerDown={onPointerDown}
                     onPointerMove={onPointerMove}
                     onPointerUp={onPointerUp}
@@ -175,6 +178,7 @@ export function BnNavbar() {
 
                     {ITEMS.map((it, i) => {
                         const active = i === shownIdx;
+                        const label = tNav(it.labelKey);
                         return (
                             <button
                                 key={it.href}
@@ -183,7 +187,7 @@ export function BnNavbar() {
                                 aria-selected={i === activeIdx}
                                 type="button"
                                 onClick={() => { if (!draggedRef.current) navigate(i); }}
-                                aria-label={it.label}
+                                aria-label={label}
                                 className="relative z-10 flex flex-col items-center justify-center gap-1 flex-1 h-[52px] rounded-2xl focus:outline-none"
                                 style={{
                                     color: active ? BN.gold : BN.text3,
@@ -194,7 +198,7 @@ export function BnNavbar() {
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img
                                         src={it.iconSrc}
-                                        alt={it.iconSrcAlt ?? ""}
+                                        alt={it.iconSrcAlt ?? label}
                                         width={20}
                                         height={20}
                                         className="w-[20px] h-[20px] object-contain pointer-events-none"
@@ -213,7 +217,7 @@ export function BnNavbar() {
                                     className="text-[10px] leading-none pointer-events-none"
                                     style={{ fontWeight: active ? 800 : 600 }}
                                 >
-                                    {it.label}
+                                    {label}
                                 </span>
                             </button>
                         );

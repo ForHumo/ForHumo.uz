@@ -11,9 +11,10 @@
 
 import { createContext, useContext } from "react";
 import NextLink from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Sun, Moon, Monitor, Check } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 
@@ -89,13 +90,14 @@ export function useBnPath(): string {
 // ── Rejim almashtirgich (Kunduzgi / Tungi / Tizim) ──────────────────────────
 
 const MODES = [
-    { key: "light",  label: "Kunduzgi", icon: Sun },
-    { key: "dark",   label: "Tungi",    icon: Moon },
-    { key: "system", label: "Tizim",    icon: Monitor },
+    { key: "light",  icon: Sun },
+    { key: "dark",   icon: Moon },
+    { key: "system", icon: Monitor },
 ] as const;
 
 export function BnThemeToggle({ compact = false }: { compact?: boolean }) {
     const { theme, setTheme, resolvedTheme } = useTheme();
+    const t = useTranslations("bn.theme");
     const [mounted, setMounted] = useState(false);
     const [open, setOpen] = useState(false);
 
@@ -111,8 +113,8 @@ export function BnThemeToggle({ compact = false }: { compact?: boolean }) {
         <div className="relative">
             <button
                 onClick={() => setOpen(v => !v)}
-                aria-label="Rejim"
-                title="Rejim"
+                aria-label={t("label")}
+                title={t("label")}
                 className={`grid place-items-center rounded-xl transition-colors ${compact ? "w-9 h-9" : "w-10 h-10"}`}
                 style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text2 }}
             >
@@ -140,7 +142,7 @@ export function BnThemeToggle({ compact = false }: { compact?: boolean }) {
                                     }}
                                 >
                                     <Icon className="w-4 h-4 flex-shrink-0" />
-                                    <span className="flex-1 text-left">{m.label}</span>
+                                    <span className="flex-1 text-left">{t(m.key)}</span>
                                     {active && <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={3} />}
                                 </button>
                             );
@@ -153,26 +155,41 @@ export function BnThemeToggle({ compact = false }: { compact?: boolean }) {
 }
 
 // ── Til almashtirgich ───────────────────────────────────────────────────────
-// Hozircha faqat UZ faol. RU/EN — foydalanuvchi so'roviga ko'ra keyin
-// ("3ta til bo'ladi lekin uni ohirida qilamiz hozir emas").
+// UZ (asosiy), RU (tabiiy), EN (turistlar/xorij) — barchasi faol.
 
 const LANGS = [
-    { key: "uz", label: "O'zbekcha", short: "UZ", ready: true },
-    { key: "ru", label: "Русский",   short: "RU", ready: false },
-    { key: "en", label: "English",   short: "EN", ready: false },
+    { key: "uz", label: "O'zbekcha", short: "UZ" },
+    { key: "ru", label: "Русский",   short: "RU" },
+    { key: "en", label: "English",   short: "EN" },
 ] as const;
+
+/** Joriy path'dan locale prefiksini tozalab, yangi locale bilan qaytaradi.
+ *  Ishlaydi hamma domenda: forhumo.uz (/uz/bn/*) ham, bozornarxida.uz (/uz/*) ham. */
+function localizedPath(pathname: string, newLocale: string): string {
+    const rest = pathname.replace(/^\/(uz|ru|en)(?=\/|$)/, "") || "/";
+    return `/${newLocale}${rest === "/" ? "" : rest}` || "/";
+}
 
 export function BnLangSwitch({ compact = false }: { compact?: boolean }) {
     const { locale } = useBnBase();
+    const t = useTranslations("bn.lang");
+    const router = useRouter();
+    const pathname = usePathname() ?? "/";
     const [open, setOpen] = useState(false);
     const active = LANGS.find(l => l.key === locale) ?? LANGS[0];
+
+    function pick(next: string) {
+        setOpen(false);
+        if (next === locale) return;
+        router.push(localizedPath(pathname, next));
+    }
 
     return (
         <div className="relative">
             <button
                 onClick={() => setOpen(v => !v)}
-                aria-label="Til"
-                title="Til"
+                aria-label={t("label")}
+                title={t("label")}
                 className={`grid place-items-center rounded-xl text-[12px] font-black transition-colors ${compact ? "w-9 h-9" : "w-10 h-10"}`}
                 style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text2 }}
             >
@@ -189,9 +206,8 @@ export function BnLangSwitch({ compact = false }: { compact?: boolean }) {
                         {LANGS.map(l => (
                             <button
                                 key={l.key}
-                                onClick={() => setOpen(false)}
-                                disabled={!l.ready}
-                                className="flex items-center gap-2.5 w-full h-10 px-2.5 rounded-xl text-[13px] font-bold transition-colors disabled:opacity-40"
+                                onClick={() => pick(l.key)}
+                                className="flex items-center gap-2.5 w-full h-10 px-2.5 rounded-xl text-[13px] font-bold transition-colors"
                                 style={{
                                     background: l.key === locale ? BN.goldSoft : "transparent",
                                     color: l.key === locale ? BN.gold : BN.text,
@@ -201,9 +217,7 @@ export function BnLangSwitch({ compact = false }: { compact?: boolean }) {
                                     {l.short}
                                 </span>
                                 <span className="flex-1 text-left">{l.label}</span>
-                                {l.key === locale
-                                    ? <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={3} />
-                                    : !l.ready && <span className="text-[10px]" style={{ color: BN.text3 }}>tez orada</span>}
+                                {l.key === locale && <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={3} />}
                             </button>
                         ))}
                     </div>

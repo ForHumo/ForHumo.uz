@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
+import { useTranslations, useLocale } from "next-intl";
 import { BnLink } from "./bn-nav";
 import { Store, ShoppingBasket, Star, Eye, Truck, BadgeCheck, Heart, Package } from "lucide-react";
 import { BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel } from "@/lib/bn-theme";
@@ -62,6 +63,8 @@ export function BnProductCard({
     const diff = priceDiffLabel(p.price, p.marketAvgPrice);
     const showDiff = rank === "cheap" && diff;
 
+    const t = useTranslations("bn.card");
+    const locale = useLocale();
     const { status } = useSession();
     // MUHIM: hydration mismatch'ni oldini olish uchun boshlang'ich holat DOIM bir xil bo'lishi kerak
     // (server undefined = false, client kesh'dan olmasin). Kesh'dan qiymatni useEffect'da yuklaymiz.
@@ -143,7 +146,7 @@ export function BnProductCard({
                         className="absolute top-2 left-2 px-2 py-1 rounded-lg text-[10.5px] font-black leading-none flex items-center gap-1"
                         style={{ background: BN.gold, color: BN.onGold }}
                     >
-                        <Package className="w-3 h-3" /> Ulgurji
+                        <Package className="w-3 h-3" /> {t("wholesale")}
                         {p.minWholesaleQty ? <span className="opacity-80">· {p.minWholesaleQty}+</span> : null}
                     </span>
                 )}
@@ -162,7 +165,7 @@ export function BnProductCard({
                 <button
                     onClick={toggleFav}
                     disabled={favBusy}
-                    aria-label={fav ? "Sevimlilardan olib tashlash" : "Sevimlilarga qo'shish"}
+                    aria-label={fav ? t("removeFromFav") : t("addToFav")}
                     className="absolute top-2 right-2 w-9 h-9 grid place-items-center rounded-full backdrop-blur-sm transition-transform active:scale-90 disabled:opacity-60"
                     style={{ background: BN.glass }}
                 >
@@ -183,17 +186,17 @@ export function BnProductCard({
                         className="absolute top-[52px] right-2 px-2 py-1 rounded-lg text-[10.5px] font-black leading-none"
                         style={{ background: BN.glass, color: BN.warn }}
                     >
-                        {p.stock} ta qoldi
+                        {t("fewLeft", { n: p.stock })}
                     </span>
                 )}
 
                 {/* Pastki belgilar */}
                 <div className="absolute bottom-2 left-2 flex items-center gap-1">
                     {p.allowInspect && (
-                        <Chip icon={<Eye className="w-3 h-3" />} text="Ko'rib olish" />
+                        <Chip icon={<Eye className="w-3 h-3" />} text={t("inspect")} />
                     )}
                     {p.allowDelivery && !compact && (
-                        <Chip icon={<Truck className="w-3 h-3" />} text="Yetkazish" />
+                        <Chip icon={<Truck className="w-3 h-3" />} text={t("delivery")} />
                     )}
                 </div>
             </div>
@@ -208,7 +211,7 @@ export function BnProductCard({
                             className="w-3.5 h-3.5 flex-shrink-0"
                             style={{ color: p.shopVerifiedTier === "WHOLESALE" ? BN.gold : BN.info }}
                             strokeWidth={2.6}
-                            aria-label={p.shopVerifiedTier === "WHOLESALE" ? "Tasdiqlangan ulgurji" : "Tasdiqlangan sotuvchi"}
+                            aria-label={p.shopVerifiedTier === "WHOLESALE" ? t("verifiedWholesale") : t("verifiedRetail")}
                         />
                     ) : p.shopVerified && (
                         <BadgeCheck
@@ -232,7 +235,7 @@ export function BnProductCard({
                     </span>
                     {p.oldPrice && p.oldPrice > p.price && (
                         <span className="text-[12px] line-through tabular-nums" style={{ color: BN.text3 }}>
-                            {p.oldPrice.toLocaleString("uz-UZ")}
+                            {p.oldPrice.toLocaleString(locale)}
                         </span>
                     )}
                 </div>
@@ -241,13 +244,13 @@ export function BnProductCard({
                 {rankMeta && p.marketAvgPrice && (
                     <p className="text-[11px] mb-1.5 leading-none" style={{ color: rankMeta.color }}>
                         {rank === "fair"
-                            ? "Bozor narxida"
-                            : `Bozorda o'rtacha ${p.marketAvgPrice.toLocaleString("uz-UZ")}`}
+                            ? t("atMarketPrice")
+                            : t("avgAtMarket", { price: p.marketAvgPrice.toLocaleString(locale) })}
                     </p>
                 )}
                 {p.isNegotiable && !rankMeta && (
                     <p className="text-[11px] mb-1.5 leading-none" style={{ color: BN.text3 }}>
-                        Kelishilgan narxda
+                        {t("negotiable")}
                     </p>
                 )}
 
