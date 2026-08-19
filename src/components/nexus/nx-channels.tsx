@@ -12,7 +12,7 @@ import { Emoji } from "@/lib/twemoji";
 import { subscribeUserChannel } from "@/lib/pusher-client";
 
 type ChType = "CHANNEL" | "GROUP";
-interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean }
+interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean; isSystem?: boolean }
 interface ChDetail { id: string; type: ChType; name: string; handle: string | null; description: string | null; avatarUrl: string | null; isPrivate: boolean; memberCount: number; isOwner: boolean; isMember: boolean; role: string | null; canPost: boolean; allowComments?: boolean }
 interface ChMsg {
     id: string; text: string | null; media: string[]; createdAt: string; mine: boolean;
@@ -103,7 +103,14 @@ export function NxChannels({ type }: { type: ChType }) {
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-sm font-bold text-white truncate">{c.name}</span>
+                                    {c.isSystem && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
                                     {c.type === "CHANNEL" ? <Megaphone className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(120,140,185,0.7)" }} /> : null}
+                                    {c.isSystem && (
+                                        <span className="ml-auto text-[9px] font-black px-1.5 py-0.5 rounded-md flex-shrink-0"
+                                            style={{ background: "rgba(0,206,200,0.15)", color: "#00CEC8", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                            RASMIY
+                                        </span>
+                                    )}
                                 </div>
                                 <p className="text-[11px] truncate" style={{ color: "rgba(120,140,185,0.8)" }}>
                                     {c.handle ? `@${c.handle} · ` : ""}{c.memberCount} a&apos;zo{c.description ? ` · ${c.description}` : ""}

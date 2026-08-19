@@ -10,7 +10,7 @@ import {
     Settings, LogOut, BadgeCheck,
     Edit3, Save, X, Loader2, Trash2,
     Bookmark, ShoppingBag, Wallet, Play, ExternalLink,
-    Sparkles, Circle, Plus,
+    Sparkles, Circle, Plus, Folder,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
@@ -98,13 +98,13 @@ export { MediaView } from "./nx-media-view";
 // SOCIAL VIEW — Postlar, Chat, Kanal, Guruh, Bot
 // ─────────────────────────────────────────────────────────────────────────────
 const SOCIAL_TABS = [
-    { id: "recommendation", icon: Sparkles,       label: "Recommendation" },
-    { id: "all",            icon: Flame,          label: "All"            },
-    { id: "unread",         icon: Circle,         label: "Unread"         },
-    { id: "private",        icon: MessageCircle,  label: "Private"        },
-    { id: "groups",         icon: Users,          label: "Groups"         },
-    { id: "channels",       icon: Hash,           label: "Channels"       },
-    { id: "agents",         icon: Bot,            label: "Agents"         },
+    { id: "recommendation", icon: Sparkles,       label: "Tavsiya"    },
+    { id: "all",            icon: Flame,          label: "Barchasi"   },
+    { id: "unread",         icon: Circle,         label: "O'qilmagan" },
+    { id: "private",        icon: MessageCircle,  label: "Shaxsiy"    },
+    { id: "groups",         icon: Users,          label: "Guruhlar"   },
+    { id: "channels",       icon: Hash,           label: "Kanallar"   },
+    { id: "agents",         icon: Bot,            label: "Agentlar"   },
 ] as const;
 
 interface UserFolder {
@@ -187,7 +187,7 @@ function SocialViewMobile() {
                             color: f.color ? colorHex(f.color) : "rgba(140,160,210,0.85)",
                         }}
                     >
-                        <span className="text-sm leading-none">{f.emoji ?? "📁"}</span>
+                        <Folder className="w-3.5 h-3.5" />
                         {f.name}
                     </button>
                 ))}
@@ -208,7 +208,7 @@ function SocialViewMobile() {
 
             {sub === "recommendation" && <NxSocialFeed controlledTab="foryou" hideTabBar />}
             {sub === "all"            && <NxSocialFeed controlledTab="explore" hideTabBar />}
-            {sub === "unread"         && <NxChatList />}
+            {sub === "unread"         && <NxChatList filterUnread />}
             {sub === "private"        && <NxChatList />}
             {sub === "groups"         && <NxChannels type="GROUP" />}
             {sub === "channels"       && <NxChannels type="CHANNEL" />}
