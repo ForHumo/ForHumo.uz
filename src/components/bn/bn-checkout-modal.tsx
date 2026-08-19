@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { X, Truck, Package, Eye, Wallet, Banknote, Loader2, BookMarked, Check } from "lucide-react";
 import { BN, fmtPrice } from "@/lib/bn-theme";
 import { useBnHref } from "./bn-nav";
@@ -39,6 +40,8 @@ interface Props {
 export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: Props) {
     const router = useRouter();
     const to = useBnHref();
+    const t = useTranslations("bn.checkout");
+    const tNav = useTranslations("bn.nav");
 
     const [fulfill, setFulfill] = useState<Fulfill>("PICKUP");
     const [phone, setPhone] = useState("+998");
@@ -108,15 +111,15 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
             const d = await r.json();
             if (!r.ok || !d?.ok) {
                 if (d?.error === "insufficient_balance") {
-                    setErr(`Hamyonda yetarli mablag' yo'q. Kerak: ${fmtPrice(d.need)}, hamyonda: ${fmtPrice(d.have)}`);
+                    setErr(t("errInsufficient", { need: fmtPrice(d.need), have: fmtPrice(d.have) }));
                 } else if (d?.error === "cart_empty") {
-                    setErr("Savat bo'sh.");
+                    setErr(t("errCartEmpty"));
                 } else if (d?.error === "insufficient_stock") {
-                    setErr("Mahsulot yetarli emas — miqdorni kamaytiring.");
+                    setErr(t("errStock"));
                 } else if (d?.error === "oversell") {
-                    setErr("Mahsulot boshqa xaridor tomonidan yechildi. Qayta urinib ko'ring.");
+                    setErr(t("errOversell"));
                 } else {
-                    setErr(d?.error ?? "Xatolik yuz berdi.");
+                    setErr(d?.error ?? t("errGeneric"));
                 }
                 return;
             }
@@ -126,7 +129,7 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                     method: "POST",
                     headers: { "content-type": "application/json" },
                     body: JSON.stringify({
-                        label: "Manzil",
+                        label: t("addressLabel"),
                         address: address.address,
                         latitude: address.lat,
                         longitude: address.lng,
@@ -138,7 +141,7 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
             // Muvaffaqiyat — birinchi buyurtma sahifasiga
             router.push(to(`/buyurtmalarim/${d.primary}`));
         } catch {
-            setErr("Ulanish xatoligi. Qayta urinib ko'ring.");
+            setErr(t("errNet"));
         } finally { setBusy(false); }
     }
 
@@ -154,10 +157,10 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                     className="sticky top-0 flex items-center justify-between h-16 px-4 z-10"
                     style={{ background: BN.surface, borderBottom: `1px solid ${BN.border}` }}
                 >
-                    <span className="text-[16px] font-black">Buyurtmani rasmiylashtirish</span>
+                    <span className="text-[16px] font-black">{t("title")}</span>
                     <button
                         onClick={onClose}
-                        aria-label="Yopish"
+                        aria-label={tNav("close")}
                         className="w-9 h-9 grid place-items-center rounded-lg"
                         style={{ background: BN.surfaceUp }}
                     >
@@ -167,21 +170,21 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
 
                 <div className="p-4 space-y-6">
                     {/* Olish usuli */}
-                    <Section title="Olish usuli">
+                    <Section title={t("fulfill")}>
                         <Choice
                             active={fulfill === "PICKUP"}
                             onClick={() => setFulfill("PICKUP")}
                             icon={<Package className="w-4 h-4" />}
-                            title="Do'kondan olib ketaman"
-                            desc="Bepul. Do'konga borib olasiz."
+                            title={t("fulfillPickup")}
+                            desc={t("fulfillPickupDesc")}
                         />
                         {canDelivery && (
                             <Choice
                                 active={fulfill === "DELIVERY"}
                                 onClick={() => setFulfill("DELIVERY")}
                                 icon={<Truck className="w-4 h-4" />}
-                                title="Yetkazib berish"
-                                desc={`Toshkent bo'ylab ${fmtPrice(20_000)}`}
+                                title={t("fulfillDelivery")}
+                                desc={t("fulfillDeliveryDesc", { price: fmtPrice(20_000) })}
                             />
                         )}
                         {canInspect && (
@@ -189,15 +192,15 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                                 active={fulfill === "INSPECT"}
                                 onClick={() => setFulfill("INSPECT")}
                                 icon={<Eye className="w-4 h-4" />}
-                                title="Ko'rib sotib olaman"
-                                desc="24 soat band. Borib ko'rasiz, yoqsa to'laysiz."
+                                title={t("fulfillInspect")}
+                                desc={t("fulfillInspectDesc")}
                             />
                         )}
                     </Section>
 
                     {/* Aloqa */}
-                    <Section title="Aloqa">
-                        <Field label="Telefon">
+                    <Section title={t("contact")}>
+                        <Field label={t("phone")}>
                             <BnPhoneInput value={phone} onChange={setPhone} />
                         </Field>
                         {fulfill === "DELIVERY" && (
@@ -206,7 +209,7 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                                     <div>
                                         <p className="flex items-center gap-1.5 text-[12px] font-bold mb-2" style={{ color: BN.text3 }}>
                                             <BookMarked className="w-3.5 h-3.5" />
-                                            Saqlangan manzillar
+                                            {t("savedAddresses")}
                                         </p>
                                         <div className="flex gap-2 overflow-x-auto pb-1 bn-noscroll mb-2">
                                             {saved.map(a => {
@@ -230,11 +233,11 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                                         </div>
                                     </div>
                                 )}
-                                <Field label="Yetkazish manzili">
+                                <Field label={t("deliveryAddress")}>
                                     <BnMapPicker
                                         value={address}
                                         onChange={setAddress}
-                                        placeholder="Xaritada uy joyingizni belgilang"
+                                        placeholder={t("mapPlaceholder")}
                                     />
                                 </Field>
                                 <label className="flex items-center gap-2 text-[12.5px] cursor-pointer" style={{ color: BN.text2 }}>
@@ -244,17 +247,17 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                                         onChange={e => setSaveNext(e.target.checked)}
                                         className="w-4 h-4"
                                     />
-                                    Manzilni kitobchaga saqlash
+                                    {t("saveAddress")}
                                 </label>
                             </>
                         )}
-                        <Field label="Sotuvchiga izoh (ixtiyoriy)">
+                        <Field label={t("note")}>
                             <textarea
                                 value={note}
                                 onChange={e => setNote(e.target.value)}
                                 rows={2}
                                 maxLength={240}
-                                placeholder="Masalan: qo'ng'iroq qilmang, kutib turaman"
+                                placeholder={t("notePh")}
                                 className="w-full p-3 rounded-xl text-[14px] font-medium outline-none resize-none"
                                 style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
                             />
@@ -262,20 +265,20 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                     </Section>
 
                     {/* To'lov */}
-                    <Section title="To'lov">
+                    <Section title={t("payment")}>
                         <Choice
                             active={pay === "WALLET"}
                             onClick={() => setPay("WALLET")}
                             icon={<Wallet className="w-4 h-4" />}
-                            title="For Pay hamyondan"
-                            desc="Pul kafolat ostida ushlanadi. Qabul qilmaguningizcha sotuvchiga o'tmaydi."
+                            title={t("payWallet")}
+                            desc={t("payWalletDesc")}
                         />
                         <Choice
                             active={pay === "CASH"}
                             onClick={() => setPay("CASH")}
                             icon={<Banknote className="w-4 h-4" />}
-                            title="Naqd (do'konda)"
-                            desc="Komissiyasiz. Kafolat yo'q."
+                            title={t("payCash")}
+                            desc={t("payCashDesc")}
                         />
                     </Section>
 
@@ -295,13 +298,13 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                     style={{ background: BN.surface, borderTop: `1px solid ${BN.border}` }}
                 >
                     <div className="space-y-1.5 text-[13.5px]">
-                        <SumRow label="Mahsulotlar" value={fmtPrice(subtotal)} />
-                        {deliveryFee > 0 && <SumRow label="Yetkazish" value={fmtPrice(deliveryFee)} />}
+                        <SumRow label={t("productsRow")} value={fmtPrice(subtotal)} />
+                        {deliveryFee > 0 && <SumRow label={t("deliveryRow")} value={fmtPrice(deliveryFee)} />}
                         <div
                             className="flex items-baseline justify-between pt-2"
                             style={{ borderTop: `1px solid ${BN.border}` }}
                         >
-                            <span className="text-[14px] font-bold">Jami</span>
+                            <span className="text-[14px] font-bold">{t("total")}</span>
                             <span className="text-[20px] font-black tabular-nums">{fmtPrice(total)}</span>
                         </div>
                     </div>
@@ -312,7 +315,7 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                         className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl text-[15px] font-black transition-transform active:scale-[0.98] disabled:opacity-60"
                         style={{ background: BN.gold, color: BN.onGold }}
                     >
-                        {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : `Buyurtma berish — ${fmtPrice(total)}`}
+                        {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : t("submit", { total: fmtPrice(total) })}
                     </button>
                 </div>
             </div>

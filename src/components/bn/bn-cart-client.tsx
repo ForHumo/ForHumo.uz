@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
     ShoppingCart, Trash2, Plus, Minus, LogIn, ArrowRight, Loader2,
     Store, Truck, Eye, Package,
@@ -44,6 +45,9 @@ interface Props {
 export function BnCartClient({ initial, unauthenticated }: Props) {
     const router = useRouter();
     const { status } = useSession();
+    const t = useTranslations("bn.cart");
+    const tProd = useTranslations("bn.product");
+    const tAuth = useTranslations("bn");
     const [items, setItems] = useState<CartItem[]>(initial);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
     const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -82,7 +86,7 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
     }
 
     async function clear() {
-        if (!confirm("Savatni to'liq bo'shatasizmi?")) return;
+        if (!confirm(t("clearConfirm"))) return;
         setItems([]);
         try {
             await fetch(`/api/bn/cart?all=1`, { method: "DELETE" });
@@ -93,7 +97,7 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
     if (notAuth) {
         return (
             <Wrap>
-                <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">Savat</h1>
+                <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">{t("title")}</h1>
                 <div
                     className="max-w-[440px] mx-auto p-7 rounded-3xl text-center"
                     style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
@@ -104,10 +108,9 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                     >
                         <ShoppingCart className="w-7 h-7" />
                     </span>
-                    <p className="text-[18px] font-black mb-2">Kiring va davom eting</p>
+                    <p className="text-[18px] font-black mb-2">{t("signInTitle")}</p>
                     <p className="text-[13.5px] leading-relaxed mb-5" style={{ color: BN.text2 }}>
-                        Savatga qo&apos;shilganlar profilga bog&apos;lanadi. Har qurilmangizdan
-                        bir xil savatni ko&apos;rasiz.
+                        {t("signInText")}
                     </p>
                     <button
                         onClick={() => signIn("google")}
@@ -115,7 +118,7 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                         style={{ background: BN.gold, color: BN.onGold }}
                     >
                         <LogIn className="w-5 h-5" />
-                        Humo ID bilan kirish
+                        {tAuth("auth.signInWithHumoID")}
                     </button>
                 </div>
             </Wrap>
@@ -125,18 +128,18 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
     if (items.length === 0) {
         return (
             <Wrap>
-                <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">Savat</h1>
+                <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">{t("title")}</h1>
                 <BnEmpty
                     icon={<ShoppingCart className="w-6 h-6" />}
-                    title="Savat bo'sh"
-                    text="Yoqqan mahsulotni savatga qo'shing — keyin bir marta buyurtma berasiz."
+                    title={t("empty")}
+                    text={t("emptyText")}
                     action={
                         <BnLink
                             href="/"
                             className="inline-flex h-11 px-5 items-center rounded-xl text-[14px] font-black"
                             style={{ background: BN.gold, color: BN.onGold }}
                         >
-                            Xaridni boshlash
+                            {t("startShopping")}
                         </BnLink>
                     }
                 />
@@ -161,7 +164,7 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
         <Wrap>
             <div className="flex items-center justify-between gap-3 mb-6">
                 <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight">
-                    Savat <span className="text-[15px] font-bold" style={{ color: BN.text3 }}>{items.length} ta</span>
+                    {t("title")} <span className="text-[15px] font-bold" style={{ color: BN.text3 }}>{items.length} {t("countUnit")}</span>
                 </h1>
                 <button
                     onClick={clear}
@@ -169,7 +172,7 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                     style={{ color: BN.err }}
                 >
                     <Trash2 className="w-3.5 h-3.5" />
-                    Bo&apos;shatish
+                    {t("clear")}
                 </button>
             </div>
 
@@ -232,19 +235,19 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                                                         </span>
                                                         {rankMeta && (
                                                             <span className="text-[10.5px] font-bold" style={{ color: rankMeta.color }}>
-                                                                {rank === "cheap" ? "arzon" : rank === "fair" ? "bozor narxida" : "qimmat"}
+                                                                {rank === "cheap" ? t("rankCheap") : rank === "fair" ? t("rankFair") : t("rankExpensive")}
                                                             </span>
                                                         )}
                                                     </div>
                                                     <div className="flex items-center gap-2 text-[11px]" style={{ color: BN.text3 }}>
                                                         {p.allowDelivery && (
-                                                            <span className="flex items-center gap-1"><Truck className="w-3 h-3" />Yetkazish</span>
+                                                            <span className="flex items-center gap-1"><Truck className="w-3 h-3" />{tProd("wayDelivery")}</span>
                                                         )}
                                                         {p.allowInspect && (
-                                                            <span className="flex items-center gap-1"><Eye className="w-3 h-3" />Ko&apos;rib olish</span>
+                                                            <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{tProd("wayInspect")}</span>
                                                         )}
                                                         <span>·</span>
-                                                        <span>Omborda {p.stock} ta</span>
+                                                        <span>{t("stockLabel", { n: p.stock })}</span>
                                                     </div>
                                                 </div>
 
@@ -252,7 +255,7 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                                                     <button
                                                         onClick={() => remove(it.id)}
                                                         disabled={busy}
-                                                        aria-label="O'chirish"
+                                                        aria-label={t("remove")}
                                                         className="w-8 h-8 grid place-items-center rounded-lg transition-colors hover:text-[color:var(--bn-err)]"
                                                         style={{ color: BN.text3 }}
                                                     >
@@ -288,18 +291,18 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                         className="rounded-2xl p-5"
                         style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                     >
-                        <h2 className="text-[15px] font-black mb-4">Buyurtma yig&apos;indisi</h2>
+                        <h2 className="text-[15px] font-black mb-4">{t("summary")}</h2>
 
                         <div className="space-y-2.5 text-[13.5px]">
-                            <SumRow label={`Mahsulotlar (${items.length})`} value={fmtPrice(subtotal)} />
-                            <SumRow label="Yetkazish (Toshkent)" value={delivery > 0 ? fmtPrice(delivery) : "Bepul"} />
+                            <SumRow label={t("productsN", { n: items.length })} value={fmtPrice(subtotal)} />
+                            <SumRow label={t("deliveryTashkent")} value={delivery > 0 ? fmtPrice(delivery) : t("free")} />
                         </div>
 
                         <div
                             className="flex items-baseline justify-between mt-4 pt-4"
                             style={{ borderTop: `1px solid ${BN.border}` }}
                         >
-                            <span className="text-[14px] font-bold">Jami</span>
+                            <span className="text-[14px] font-bold">{t("total")}</span>
                             <span className="text-[22px] font-black tabular-nums">{fmtPrice(total)}</span>
                         </div>
 
@@ -308,7 +311,7 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                             className="flex items-center justify-center gap-2 w-full h-13 mt-5 rounded-2xl text-[15px] font-black transition-transform active:scale-[0.98]"
                             style={{ height: 52, background: BN.gold, color: BN.onGold }}
                         >
-                            Buyurtma berish
+                            {t("checkout")}
                             <ArrowRight className="w-4 h-4" />
                         </button>
 
@@ -323,7 +326,7 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
 
                         <p className="flex items-center gap-1.5 text-[11.5px] mt-3" style={{ color: BN.text3 }}>
                             <Package className="w-3 h-3" />
-                            Pul kafolat ostida ushlanadi
+                            {t("escrowNote")}
                         </p>
                     </div>
                 </aside>

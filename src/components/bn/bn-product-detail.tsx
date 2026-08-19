@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
+import { useTranslations, useLocale } from "next-intl";
 import { BnLink } from "./bn-nav";
 import { BnBackButton } from "./bn-back-button";
 import { BnReviews } from "./bn-reviews";
@@ -16,15 +17,6 @@ import {
 import { BnProductCard } from "./bn-product-card";
 import { BnSectionTitle, shopLocationText } from "./bn-cards";
 import type { BnProductDTO, BnShopDTO } from "@/lib/bn-data";
-
-// Atribut kalitlarini o'zbekcha yorliqqa aylantirish (FAZA 6 da kategoriya sxemasidan keladi)
-const ATTR_LABELS: Record<string, string> = {
-    brand: "Marka", model: "Model", yearFrom: "Yildan", yearTo: "Yilgacha",
-    condition: "Holati", origin: "Turi", memory: "Xotira", color: "Rang",
-    warranty: "Kafolat", material: "Material", size: "O'lcham", season: "Mavsum",
-    length: "Uzunligi (sm)", assembled: "Yig'ilgan", power: "Quvvat (Vt)",
-    volume: "Hajmi (L)", weight: "Og'irligi (kg)",
-};
 
 interface ReviewVideo {
     id: string;
@@ -51,6 +43,10 @@ export function BnProductDetail({
     const p = product;
     const router = useRouter();
     const { status } = useSession();
+    const t = useTranslations("bn.product");
+    const tCrumb = useTranslations("bn.breadcrumb");
+    const tAttr = useTranslations("bn.attr");
+    const locale = useLocale();
     const [imgIdx, setImgIdx] = useState(0);
     const [qty, setQty] = useState(1);
     const [fav, setFav] = useState(false);
@@ -140,15 +136,15 @@ export function BnProductDetail({
             });
             const d = await r.json();
             if (r.ok && d?.ok) {
-                const exp = new Date(d.expiresAt).toLocaleString("uz-UZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
-                alert(`Band qilindi! Kod: ${d.code}\n\nSotuvchiga shu kodni ayting. Muddat: ${exp}gacha.`);
+                const exp = new Date(d.expiresAt).toLocaleString(locale, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+                alert(`${t("holdOkTitle")} ${t("holdCode")}: ${d.code}\n\n${t("holdOkBody", { t: exp })}`);
                 router.refresh();
             } else if (d?.error === "already_held") {
-                alert(`Bu mahsulot allaqachon band qilingan.\nKod: ${d.hold?.code}`);
+                alert(`${t("holdAlready")}\n${t("holdCode")}: ${d.hold?.code}`);
             } else if (r.status === 401) {
                 signIn("google");
             } else {
-                alert(d?.error ?? "Xatolik yuz berdi");
+                alert(d?.error ?? t("holdError"));
             }
         } finally { setCartBusy(false); }
     }
@@ -175,12 +171,12 @@ export function BnProductDetail({
             <BnBackButton className="mb-4" />
             {/* Non-ushoq */}
             <nav className="flex items-center gap-1.5 text-[12px] mb-5 flex-wrap" style={{ color: BN.text3 }}>
-                <BnLink href="/" className="hover:opacity-70 transition-colors">Bosh sahifa</BnLink>
+                <BnLink href="/" className="hover:opacity-70 transition-colors">{tCrumb("home")}</BnLink>
                 <ChevronRight className="w-3 h-3" />
                 {p.categorySlug && (
                     <>
                         <BnLink href={`/k/${p.categorySlug}`} className="hover:opacity-70 transition-colors">
-                            Kategoriya
+                            {tCrumb("category")}
                         </BnLink>
                         <ChevronRight className="w-3 h-3" />
                     </>
@@ -212,31 +208,31 @@ export function BnProductDetail({
                         {p.isMature && !matureRevealed && (
                             <div className="absolute inset-0 grid place-items-center p-4" style={{ background: "rgba(0,0,0,0.55)" }}>
                                 <div className="max-w-sm text-center">
-                                    <span className="inline-block px-3 py-1 rounded-full text-[12px] font-black mb-3" style={{ background: "#ef4444", color: "#fff" }}>18+ tovar</span>
-                                    <p className="text-[15px] font-bold mb-1">Bu mahsulot balog'atga yetganlar uchun</p>
+                                    <span className="inline-block px-3 py-1 rounded-full text-[12px] font-black mb-3" style={{ background: "#ef4444", color: "#fff" }}>{t("matureBadge")}</span>
+                                    <p className="text-[15px] font-bold mb-1">{t("matureTitle")}</p>
                                     <p className="text-[13px] mb-4" style={{ color: BN.text2 }}>
-                                        Ko'rishni davom ettirasizmi?
+                                        {t("matureAsk")}
                                     </p>
                                     <button
                                         onClick={acceptMature}
                                         className="w-full h-11 rounded-xl text-[14px] font-bold"
                                         style={{ background: BN.gold, color: BN.onGold }}
                                     >
-                                        Ha, davom etaman
+                                        {t("matureConfirm")}
                                     </button>
                                 </div>
                             </div>
                         )}
                         {p.images.length > 1 && (
                             <>
-                                <GalleryBtn side="left" onClick={() => setImgIdx(i => (i - 1 + p.images.length) % p.images.length)} />
-                                <GalleryBtn side="right" onClick={() => setImgIdx(i => (i + 1) % p.images.length)} />
+                                <GalleryBtn side="left" onClick={() => setImgIdx(i => (i - 1 + p.images.length) % p.images.length)} label={t("galleryPrev")} />
+                                <GalleryBtn side="right" onClick={() => setImgIdx(i => (i + 1) % p.images.length)} label={t("galleryNext")} />
                                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                                     {p.images.map((_, i) => (
                                         <button
                                             key={i}
                                             onClick={() => setImgIdx(i)}
-                                            aria-label={`Rasm ${i + 1}`}
+                                            aria-label={t("galleryImageN", { n: i + 1 })}
                                             className="w-1.5 h-1.5 rounded-full transition-all"
                                             style={{
                                                 background: i === imgIdx ? BN.gold : "rgba(250,250,250,0.4)",
@@ -272,7 +268,7 @@ export function BnProductDetail({
                     {/* Tavsif */}
                     {(p.description || Object.keys(p.attributes).length > 0) && (
                         <Panel className="mt-5">
-                            <h2 className="text-[15px] font-black mb-3">Mahsulot haqida</h2>
+                            <h2 className="text-[15px] font-black mb-3">{t("about")}</h2>
                             {p.description && (
                                 <p className="text-[13.5px] leading-relaxed mb-3" style={{ color: BN.text2 }}>
                                     {p.description}
@@ -286,9 +282,9 @@ export function BnProductDetail({
                                             className="flex items-center justify-between gap-3 py-2.5 text-[13px]"
                                             style={{ borderBottom: `1px solid ${BN.border}` }}
                                         >
-                                            <dt style={{ color: BN.text3 }}>{ATTR_LABELS[k] ?? k}</dt>
+                                            <dt style={{ color: BN.text3 }}>{tAttr.has(k) ? tAttr(k) : k}</dt>
                                             <dd className="font-bold text-right">
-                                                {typeof v === "boolean" ? (v ? "Ha" : "Yo'q") : String(v)}
+                                                {typeof v === "boolean" ? (v ? t("yes") : t("no")) : String(v)}
                                             </dd>
                                         </div>
                                     ))}
@@ -300,9 +296,9 @@ export function BnProductDetail({
                     {/* Boshqa do'konlar — narx solishtirish (BN ning asosiy va'dasi) */}
                     {others.length > 0 && (
                         <Panel className="mt-4">
-                            <h2 className="text-[15px] font-black mb-1">Bu mahsulotni boshqa do&apos;konlarda</h2>
+                            <h2 className="text-[15px] font-black mb-1">{t("othersTitle")}</h2>
                             <p className="text-[12.5px] mb-3" style={{ color: BN.text3 }}>
-                                Bir xil mahsulot, turli narxda. Yaxshisini tanlang.
+                                {t("othersSub")}
                             </p>
                             <div className="space-y-2">
                                 {others.map(o => (
@@ -335,7 +331,7 @@ export function BnProductDetail({
                                             </span>
                                             {o.price < p.price && (
                                                 <span className="block text-[10.5px] mt-1" style={{ color: BN.ok }}>
-                                                    {Math.round(((p.price - o.price) / p.price) * 100)}% arzon
+                                                    {t("othersCheaper", { pct: Math.round(((p.price - o.price) / p.price) * 100) })}
                                                 </span>
                                             )}
                                         </span>
@@ -348,7 +344,7 @@ export function BnProductDetail({
                     {/* Sotuvchi */}
                     {shop && (
                         <Panel className="mt-4">
-                            <h2 className="text-[15px] font-black mb-3">Sotuvchi</h2>
+                            <h2 className="text-[15px] font-black mb-3">{t("seller")}</h2>
                             <BnLink href={`/d/${shop.slug}`} className="group flex items-center gap-3">
                                 <span
                                     className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 grid place-items-center"
@@ -387,7 +383,7 @@ export function BnProductDetail({
                                         <span className="flex items-center gap-1 text-[12px] mt-1" style={{ color: BN.gold }}>
                                             <Star className="w-3 h-3 fill-current" />
                                             {shop.rating.toFixed(1)}
-                                            <span style={{ color: BN.text3 }}>· {shop.ratingCount} baho · {shop.productCount} mahsulot</span>
+                                            <span style={{ color: BN.text3 }}>· {t("sellerRatings", { n: shop.ratingCount, p: shop.productCount })}</span>
                                         </span>
                                     )}
                                 </span>
@@ -400,18 +396,18 @@ export function BnProductDetail({
                                     style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
                                 >
                                     <Phone className="w-4 h-4" />
-                                    Qo&apos;ng&apos;iroq
+                                    {t("sellerCall")}
                                 </button>
                                 {shop.ownerUsername ? (
                                     <a
-                                        href={`https://forhumo.uz/uz/nexus?dm=${shop.ownerUsername}`}
+                                        href={`https://forhumo.uz/${locale}/nexus?dm=${shop.ownerUsername}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center justify-center gap-2 h-11 rounded-xl text-[13px] font-bold transition-colors"
                                         style={{ background: BN.gold, color: BN.onGold }}
                                     >
                                         <MessageCircle className="w-4 h-4" />
-                                        Yozish
+                                        {t("sellerMessage")}
                                     </a>
                                 ) : (
                                     <button
@@ -420,7 +416,7 @@ export function BnProductDetail({
                                         style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text3 }}
                                     >
                                         <MessageCircle className="w-4 h-4" />
-                                        Yozish
+                                        {t("sellerMessage")}
                                     </button>
                                 )}
                             </div>
@@ -440,7 +436,7 @@ export function BnProductDetail({
                             </span>
                             {p.oldPrice && p.oldPrice > p.price && (
                                 <span className="text-[15px] line-through tabular-nums" style={{ color: BN.text3 }}>
-                                    {p.oldPrice.toLocaleString("uz-UZ")}
+                                    {p.oldPrice.toLocaleString(locale)}
                                 </span>
                             )}
                         </div>
@@ -457,12 +453,12 @@ export function BnProductDetail({
                                 />
                                 <div className="min-w-0 text-[12.5px] leading-relaxed">
                                     <p className="font-black" style={{ color: rankMeta.color }}>
-                                        {rank === "fair" ? "Bozor narxida" : diff}
+                                        {rank === "fair" ? t("atMarketPrice") : diff}
                                     </p>
                                     <p style={{ color: BN.text2 }}>
-                                        Bozordagi o&apos;rtacha narx:{" "}
+                                        {t("marketAvgLabel")}{" "}
                                         <span className="font-bold tabular-nums" style={{ color: BN.text }}>
-                                            {p.marketAvgPrice.toLocaleString("uz-UZ")} so&apos;m
+                                            {p.marketAvgPrice.toLocaleString(locale)} {t("currencySom")}
                                         </span>
                                     </p>
                                 </div>
@@ -472,14 +468,14 @@ export function BnProductDetail({
                         {p.isNegotiable && (
                             <p className="flex items-center gap-1.5 text-[12.5px] mb-4" style={{ color: BN.text2 }}>
                                 <Info className="w-3.5 h-3.5 flex-shrink-0" style={{ color: BN.gold }} />
-                                Sotuvchi bilan narx kelishilishi mumkin
+                                {t("negotiableNote")}
                             </p>
                         )}
 
                         {soldRecent >= 3 && (
                             <p className="flex items-center gap-1.5 text-[12.5px] mb-3" style={{ color: BN.ok }}>
                                 <TrendingDown className="w-3.5 h-3.5 flex-shrink-0" style={{ transform: "scaleY(-1)" }} />
-                                <strong className="tabular-nums">{soldRecent}</strong> ta bu haftada sotildi
+                                <strong className="tabular-nums">{soldRecent}</strong> {t("soldRecent")}
                             </p>
                         )}
 
@@ -490,13 +486,13 @@ export function BnProductDetail({
                             style={{ color: priceWatch ? BN.gold : BN.text3 }}
                         >
                             <BellRing className="w-3.5 h-3.5" style={{ fill: priceWatch ? BN.gold : "none" }} />
-                            {priceWatch ? "Narx tushsa xabar berilyapti" : "Narx tushsa xabar bering"}
+                            {priceWatch ? t("watchOn") : t("watchOff")}
                         </button>
 
                         {/* Miqdor */}
                         <div className="flex items-center justify-between mb-4">
                             <span className="text-[13px]" style={{ color: BN.text2 }}>
-                                Omborda: <span className="font-bold" style={{ color: BN.text }}>{p.stock} ta</span>
+                                {t("stockLabel")} <span className="font-bold" style={{ color: BN.text }}>{p.stock} {t("stockUnit")}</span>
                             </span>
                             <div
                                 className="flex items-center rounded-xl overflow-hidden"
@@ -516,8 +512,8 @@ export function BnProductDetail({
                             style={{ height: 52, background: cartDone ? BN.ok : BN.gold, color: BN.onGold }}
                         >
                             {cartBusy ? <Loader2 className="w-5 h-5 animate-spin" />
-                                : cartDone ? <><Check className="w-5 h-5" /> Savatga qo&apos;shildi</>
-                                : <><ShoppingCart className="w-5 h-5" /> Savatga qo&apos;shish</>}
+                                : cartDone ? <><Check className="w-5 h-5" /> {t("addedToCart")}</>
+                                : <><ShoppingCart className="w-5 h-5" /> {t("addToCart")}</>}
                         </button>
                         {cartDone && (
                             <BnLink
@@ -525,7 +521,7 @@ export function BnProductDetail({
                                 className="block w-full text-center mt-2 text-[12.5px] font-bold"
                                 style={{ color: BN.gold }}
                             >
-                                Savatga o&apos;tish →
+                                {t("goToCart")}
                             </BnLink>
                         )}
 
@@ -537,50 +533,50 @@ export function BnProductDetail({
                                 style={{ background: BN.goldSoft, border: `1px solid ${BN.goldEdge}`, color: BN.gold }}
                             >
                                 <Eye className="w-[18px] h-[18px]" />
-                                Ko&apos;rib sotib olaman (24 soat band)
+                                {t("inspectAction")}
                             </button>
                         )}
 
                         <div className="flex gap-2 mt-2.5">
                             <SecondaryBtn onClick={toggleFav} disabled={favBusy}>
                                 <Heart className="w-4 h-4" style={{ fill: fav ? BN.err : "none", color: fav ? BN.err : undefined }} />
-                                {fav ? "Saqlangan" : "Saqlash"}
+                                {fav ? t("favSaved") : t("fav")}
                             </SecondaryBtn>
                             <SecondaryBtn onClick={() => navigator.share?.({ title: p.title, url: location.href })}>
                                 <Share2 className="w-4 h-4" />
-                                Ulashish
+                                {t("share")}
                             </SecondaryBtn>
                         </div>
 
                         <a
-                            href={`https://forhumo.uz/uz/nexus?bnProduct=${p.slug}&text=${encodeURIComponent(p.title)}`}
+                            href={`https://forhumo.uz/${locale}/nexus?bnProduct=${p.slug}&text=${encodeURIComponent(p.title)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center justify-center gap-2 w-full h-11 mt-2.5 rounded-2xl text-[13px] font-bold"
                             style={{ background: "linear-gradient(90deg, #2B3EE8 0%, #00CEC8 100%)", color: "#fff" }}
                         >
-                            Nexus&apos;da ulash
+                            {t("shareOnNexus")}
                         </a>
 
                         {/* Olish usullari */}
                         <div className="mt-5 pt-4 space-y-2.5" style={{ borderTop: `1px solid ${BN.border}` }}>
                             {p.allowPickup && (
-                                <Way icon={<Package className="w-4 h-4" />} title="Do'kondan olib ketish" text="Bepul" />
+                                <Way icon={<Package className="w-4 h-4" />} title={t("wayPickup")} text={t("wayPickupFree")} />
                             )}
                             {p.allowDelivery && (
-                                <Way icon={<Truck className="w-4 h-4" />} title="Yetkazib berish" text="Toshkent bo'ylab 20 000 so'm" />
+                                <Way icon={<Truck className="w-4 h-4" />} title={t("wayDelivery")} text={t("wayDeliveryText")} />
                             )}
                             {p.allowInspect && (
                                 <Way
                                     icon={<Eye className="w-4 h-4" />}
-                                    title="Ko'rib sotib olish"
-                                    text="24 soat band qilamiz — borib ko'rasiz, yoqsa to'laysiz"
+                                    title={t("wayInspect")}
+                                    text={t("wayInspectText")}
                                 />
                             )}
                             <Way
                                 icon={<Shield className="w-4 h-4" />}
-                                title="Pul kafolat ostida"
-                                text="Qabul qilmaguningizcha sotuvchiga o'tmaydi"
+                                title={t("wayEscrow")}
+                                text={t("wayEscrowText")}
                             />
                         </div>
                     </Panel>
@@ -590,12 +586,12 @@ export function BnProductDetail({
             {/* Xaridor sharh reels (Nexus) */}
             {reviewVideos.length > 0 && (
                 <section className="mt-12">
-                    <BnSectionTitle title="Xaridorlar ko'rgan" subtitle="Bu mahsulotni sotib olganlar Nexus'da qoldirgan reels" />
+                    <BnSectionTitle title={t("reviewReels")} subtitle={t("reviewReelsSub")} />
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                         {reviewVideos.map(v => (
                             <a
                                 key={v.id}
-                                href={`https://forhumo.uz/uz/nexus/v/${v.id}`}
+                                href={`https://forhumo.uz/${locale}/nexus/v/${v.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="relative aspect-[9/16] rounded-2xl overflow-hidden group"
@@ -612,7 +608,7 @@ export function BnProductDetail({
                                 <div className="absolute inset-x-0 bottom-0 p-2" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent)" }}>
                                     <p className="text-[11px] font-bold text-white line-clamp-2">{v.title}</p>
                                     <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.7)" }}>
-                                        {v.views.toLocaleString("uz-UZ")} ko&apos;rildi
+                                        {v.views.toLocaleString(locale)} {t("reviewViews")}
                                     </p>
                                 </div>
                             </a>
@@ -627,7 +623,7 @@ export function BnProductDetail({
             {/* O'xshash mahsulotlar */}
             {similar.length > 0 && (
                 <section className="mt-12">
-                    <BnSectionTitle title="O'xshash mahsulotlar" subtitle="Narxlarni solishtiring" />
+                    <BnSectionTitle title={t("similar")} subtitle={t("similarSub")} />
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
                         {similar.map(s => <BnProductCard key={s.id} p={s} compact />)}
                     </div>
@@ -648,11 +644,11 @@ function Panel({ children, className = "" }: { children: React.ReactNode; classN
     );
 }
 
-function GalleryBtn({ side, onClick }: { side: "left" | "right"; onClick: () => void }) {
+function GalleryBtn({ side, onClick, label }: { side: "left" | "right"; onClick: () => void; label: string }) {
     return (
         <button
             onClick={onClick}
-            aria-label={side === "left" ? "Oldingi" : "Keyingi"}
+            aria-label={label}
             className="absolute top-1/2 -translate-y-1/2 w-10 h-10 grid place-items-center rounded-full backdrop-blur-sm transition-transform active:scale-90"
             style={{ [side]: 12, background: BN.glass } as React.CSSProperties}
         >
