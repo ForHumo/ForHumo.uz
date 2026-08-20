@@ -1196,7 +1196,8 @@
       "inviteCta": "Havolani olish"
     },
     "ach": {
-      "title": "Yutuqlarim"
+      "title": "Yutuqlarim",
+      "newBadge": "YANGI"
     }
   }
 }

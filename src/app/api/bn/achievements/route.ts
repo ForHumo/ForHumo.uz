@@ -25,20 +25,26 @@ export async function GET() {
         }).catch(() => 0),
     ]);
 
-    const earnedByCode = new Map(earned.map(e => [e.code, e.earnedAt.toISOString()]));
+    const earnedByCode = new Map(earned.map(e => [e.code, e.earnedAt]));
+    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
 
-    const items = bnCatalog.map(a => ({
-        code: a.code,
-        title: a.title,
-        description: a.description,
-        icon: a.icon,
-        tier: a.tier,
-        earnedAt: earnedByCode.get(a.code) ?? null,
-        // Ba'zi yutuqlarga progress qo'shamiz (X/N)
-        progress: a.code === "bn.referral_10"
-            ? { current: Math.min(referralRewarded, 10), target: 10 }
-            : null,
-    }));
+    const items = bnCatalog.map(a => {
+        const earnedAt = earnedByCode.get(a.code);
+        return {
+            code: a.code,
+            title: a.title,
+            description: a.description,
+            icon: a.icon,
+            tier: a.tier,
+            earnedAt: earnedAt ? earnedAt.toISOString() : null,
+            // "NEW" badge — oxirgi 24 soatda olinganlar
+            isNew: earnedAt ? earnedAt.getTime() > dayAgo : false,
+            // Ba'zi yutuqlarga progress qo'shamiz (X/N)
+            progress: a.code === "bn.referral_10"
+                ? { current: Math.min(referralRewarded, 10), target: 10 }
+                : null,
+        };
+    });
 
     return NextResponse.json({
         items,

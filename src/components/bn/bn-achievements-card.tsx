@@ -20,6 +20,7 @@ interface Item {
     icon: string;
     tier: "bronze" | "silver" | "gold" | "platinum";
     earnedAt: string | null;
+    isNew: boolean;
     progress: { current: number; target: number } | null;
 }
 
@@ -83,6 +84,12 @@ export function BnAchievementsCard() {
                                 border: `1px solid ${earned ? `${tierColor}44` : BN.border}`,
                                 opacity: earned ? 1 : 0.65,
                             }}>
+                            {item.isNew && (
+                                <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md text-[8.5px] font-black tabular-nums leading-none"
+                                    style={{ background: BN.gold, color: BN.onGold }}>
+                                    {t("newBadge")}
+                                </span>
+                            )}
                             <span className="w-10 h-10 rounded-xl grid place-items-center flex-shrink-0"
                                 style={{ background: earned ? tierColor : BN.surface, color: earned ? "#000" : BN.text3 }}>
                                 {earned

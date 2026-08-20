@@ -1196,7 +1196,8 @@
       "inviteCta": "Get your link"
     },
     "ach": {
-      "title": "My achievements"
+      "title": "My achievements",
+      "newBadge": "NEW"
     }
   }
 }

@@ -4,6 +4,7 @@
 //   3. Notification tizimiga integratsiya (kelajakda).
 
 import { prisma } from "@/lib/prisma";
+import { sendPushToProfile } from "@/lib/push";
 
 export type AchievementCategory = "esport" | "nexus" | "market" | "pay" | "id" | "bn";
 export type AchievementTier = "bronze" | "silver" | "gold" | "platinum";
@@ -81,8 +82,24 @@ export async function grantAchievement(profileId: string, code: string, meta?: R
                 meta: meta ? (meta as never) : undefined,
             },
         });
+        // Web Push xabar — foydalanuvchi darhol ko'radi (fail-safe).
+        // BN yutuqlari uchun kabinet MoneyTab'ga link (Achievement kartochkasi shu yerda).
+        void sendPushToProfile(profileId, {
+            title: pushTitleFor(def.tier),
+            body: `${def.title} — ${def.description}`,
+            url: def.category === "bn" ? "https://bozornarxida.uz/kabinet" : undefined,
+            tag: `ach:${def.code}`,
+        }).catch(() => { /* ignore */ });
         return true;
     } catch { return false; }
+}
+
+function pushTitleFor(tier: AchievementTier): string {
+    // Emoji ISHLATMAYMIZ (CLAUDE.md qoidasi) — tier so'zli badge.
+    if (tier === "platinum") return "Platinum yutuq!";
+    if (tier === "gold") return "Oltin yutuq!";
+    if (tier === "silver") return "Kumush yutuq!";
+    return "Yangi yutuq!";
 }
 
 /** Foydalanuvchining yutuqlari (kategoriya bo'yicha guruh). */
