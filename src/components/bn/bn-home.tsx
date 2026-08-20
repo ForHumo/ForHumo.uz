@@ -16,6 +16,7 @@ import { LiquidGlassNavbar } from "@/components/shared/liquid-glass-navbar";
 import { BnShopStories } from "./bn-shop-stories";
 import { BnReferralHero } from "./bn-referral-hero";
 import { BnInstallCard } from "./bn-install-card";
+import { BnNearbyRow } from "./bn-nearby-row";
 import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 const COLS = 5;          // chapdan o'ngga 5 ta
@@ -87,6 +88,9 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
                     cover={markets[2]?.coverUrl ?? markets[0]?.coverUrl ?? "https://picsum.photos/seed/bn-fallback-2/800/800"}
                 />
             </section>
+
+            {/* ── Yaqin do'konlar (geolocation) — permission bersa ko'rinadi ── */}
+            <BnNearbyRow />
 
             {/* ── Siz uchun (personalizatsiya) — faqat kirganlar uchun ── */}
             {forYou && forYou.length > 0 && (

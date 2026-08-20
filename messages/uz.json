@@ -1198,6 +1198,14 @@
     "ach": {
       "title": "Yutuqlarim",
       "newBadge": "YANGI"
+    },
+    "nearby": {
+      "promptTitle": "Yaqin do'konlarni ko'ring",
+      "promptText": "Bir bosishda joylashuvingizga eng yaqin do'konlar chiqadi.",
+      "promptCta": "Joyni topish",
+      "title": "Sizga yaqin do'konlar",
+      "subtitle": "{n} ta do'kon 5 km ichida",
+      "loading": "Yuklanmoqda..."
     }
   }
 }

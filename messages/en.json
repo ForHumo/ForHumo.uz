@@ -1198,6 +1198,14 @@
     "ach": {
       "title": "My achievements",
       "newBadge": "NEW"
+    },
+    "nearby": {
+      "promptTitle": "See nearby shops",
+      "promptText": "One tap to find shops closest to you.",
+      "promptCta": "Locate me",
+      "title": "Shops near you",
+      "subtitle": "{n} shops within 5 km",
+      "loading": "Loading..."
     }
   }
 }
