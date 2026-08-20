@@ -1217,6 +1217,11 @@
     },
     "shops": {
       "allTiers": "Barchasi"
+    },
+    "trending": {
+      "title": "Hozir trendda",
+      "subtitle": "So'nggi 7 kunda eng ko'p qiziqtirgan mahsulotlar",
+      "allBtn": "Ko'proq"
     }
   }
 }

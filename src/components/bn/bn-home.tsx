@@ -17,6 +17,7 @@ import { BnShopStories } from "./bn-shop-stories";
 import { BnReferralHero } from "./bn-referral-hero";
 import { BnInstallCard } from "./bn-install-card";
 import { BnNearbyRow } from "./bn-nearby-row";
+import { BnTrendingRow } from "./bn-trending-row";
 import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 const COLS = 5;          // chapdan o'ngga 5 ta
@@ -91,6 +92,9 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
 
             {/* ── Yaqin do'konlar (geolocation) — permission bersa ko'rinadi ── */}
             <BnNearbyRow />
+
+            {/* ── Trend mahsulotlar (7-kun view+order top) — data bo'lsa ko'rinadi ── */}
+            <BnTrendingRow />
 
             {/* ── Siz uchun (personalizatsiya) — faqat kirganlar uchun ── */}
             {forYou && forYou.length > 0 && (

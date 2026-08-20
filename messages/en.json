@@ -1217,6 +1217,11 @@
     },
     "shops": {
       "allTiers": "All"
+    },
+    "trending": {
+      "title": "Trending now",
+      "subtitle": "Most popular products in the last 7 days",
+      "allBtn": "More"
     }
   }
 }
