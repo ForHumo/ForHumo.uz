@@ -54,30 +54,66 @@ export function BnProductLd(props: {
     slug: string;
     title: string;
     description: string | null;
-    image: string | null;
-    price: number;                 // so'm
+    images: string[];              // barcha rasmlar (Google birinchi 6 ni ishlatadi)
+    price: number;                 // so'm (yoki cent USD)
     currency?: "UZS" | "USD";
     availability: "InStock" | "OutOfStock";
+    condition?: "New" | "Used" | "Refurbished";
+    sku?: string | null;
+    category?: string | null;
+    shopName?: string | null;
+    shopSlug?: string | null;
+    allowInspect?: boolean;        // eskrow qaytarish siyosati signali
     ratingAvg?: number | null;
     ratingCount?: number | null;
-    shopName?: string | null;
 }) {
     const currency = props.currency ?? "UZS";
+    const condition = props.condition ?? "New";
+
+    // Offer — narx 30 kun amal qiladi (Google narx eskirmasin desa mos)
+    const priceValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        .toISOString().slice(0, 10);
+
+    const offer: Record<string, unknown> = {
+        "@type": "Offer",
+        price: props.price,
+        priceCurrency: currency,
+        priceValidUntil,
+        availability: `https://schema.org/${props.availability}`,
+        itemCondition: `https://schema.org/${condition}Condition`,
+        url: `${SITE}/p/${props.slug}`,
+    };
+    if (props.shopName) {
+        offer.seller = {
+            "@type": "Organization",
+            name: props.shopName,
+            url: props.shopSlug ? `${SITE}/d/${props.shopSlug}` : undefined,
+        };
+    }
+    // INSPECT (yetkazishda tekshirish) — Google MerchantReturnPolicy signali
+    if (props.allowInspect) {
+        offer.hasMerchantReturnPolicy = {
+            "@type": "MerchantReturnPolicy",
+            applicableCountry: "UZ",
+            returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+            merchantReturnDays: 1,   // INSPECT 24 soat
+            returnMethod: "https://schema.org/ReturnByMail",
+            returnFees: "https://schema.org/FreeReturn",
+        };
+    }
+
     const data: Record<string, unknown> = {
         "@context": "https://schema.org",
         "@type": "Product",
+        "@id": `${SITE}/p/${props.slug}#product`,
         name: props.title,
         description: props.description ?? props.title,
-        image: props.image ? [props.image] : undefined,
+        image: props.images.length ? props.images.slice(0, 6) : undefined,
         url: `${SITE}/p/${props.slug}`,
+        sku: props.sku ?? props.slug,
+        category: props.category ?? undefined,
         brand: props.shopName ? { "@type": "Brand", name: props.shopName } : undefined,
-        offers: {
-            "@type": "Offer",
-            price: props.price,
-            priceCurrency: currency,
-            availability: `https://schema.org/${props.availability}`,
-            url: `${SITE}/p/${props.slug}`,
-        },
+        offers: offer,
     };
     if (props.ratingAvg && props.ratingCount && props.ratingCount > 0) {
         data.aggregateRating = {
