@@ -564,6 +564,14 @@ export function BnProductDetail({
                                 <Share2 className="w-4 h-4" />
                                 {t("share")}
                             </SecondaryBtn>
+                            {/* WhatsApp share — deep-link, prefilled matn */}
+                            <a href={`https://wa.me/?text=${encodeURIComponent(`${p.title} — ${typeof window !== "undefined" ? window.location.href : ""}`)}`}
+                                target="_blank" rel="noopener noreferrer"
+                                aria-label="WhatsApp'ga yuborish"
+                                className="flex items-center justify-center gap-1.5 h-11 px-3 rounded-2xl text-[12.5px] font-bold transition-transform active:scale-[0.97]"
+                                style={{ background: "#25D366", color: "#fff" }}>
+                                <MessageCircle className="w-4 h-4" />
+                            </a>
                         </div>
 
                         <a
