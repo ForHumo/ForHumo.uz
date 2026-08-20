@@ -15,6 +15,7 @@ import { useShopLocationText } from "./bn-cards";
 import { LiquidGlassNavbar } from "@/components/shared/liquid-glass-navbar";
 import { BnShopStories } from "./bn-shop-stories";
 import { BnReferralHero } from "./bn-referral-hero";
+import { BnInstallCard } from "./bn-install-card";
 import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 const COLS = 5;          // chapdan o'ngga 5 ta
@@ -63,6 +64,9 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
 
             {/* ── Anonim tashrifchiga referral CTA (kirsa yashirilmaydi) ── */}
             <BnReferralHero />
+
+            {/* ── PWA "Ilovani o'rnatish" — retentsiya + iOS Push uchun ── */}
+            <BnInstallCard />
 
             {/* ── Ikkita asosiy kirish nuqtasi ── */}
             <section className="grid grid-cols-2 gap-2 sm:gap-3 mb-8 sm:mb-10">

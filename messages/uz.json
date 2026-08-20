@@ -1178,6 +1178,15 @@
       "later": "Keyinroq",
       "stat1": "Cheksiz do'st",
       "stat2": "Darhol hamyonga"
+    },
+    "install": {
+      "title": "Ilovani o'rnating",
+      "text": "Bir bosishda BN telefoningizga qo'shiladi. Ochish tez, bildirishnomalar keladi.",
+      "install": "O'rnatish",
+      "later": "Keyinroq",
+      "iosTitle": "iPhone'ga qo'shish",
+      "iosStep1": "Pastdagi \"Ulashish\"",
+      "iosStep2": "Bosh ekranga qo'shish"
     }
   }
 }

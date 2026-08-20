@@ -1178,6 +1178,15 @@
       "later": "Later",
       "stat1": "Unlimited invites",
       "stat2": "Straight to wallet"
+    },
+    "install": {
+      "title": "Install the app",
+      "text": "One tap adds BN to your phone. Faster launch, notifications enabled.",
+      "install": "Install",
+      "later": "Later",
+      "iosTitle": "Add to iPhone",
+      "iosStep1": "Tap Share below",
+      "iosStep2": "Add to Home Screen"
     }
   }
 }
