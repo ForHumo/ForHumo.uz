@@ -5,8 +5,31 @@
 // Rate limit: kuniga 3 broadcast. Har broadcast tamaddi bo'lgach counter kamayadi.
 
 import { useEffect, useState } from "react";
-import { Radio, Send, Loader2, AlertTriangle, Users, Store, ShoppingBag } from "lucide-react";
+import { Radio, Send, Loader2, AlertTriangle, Users, Store, ShoppingBag, History, Link as LinkIcon } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
+
+interface HistoryRow {
+    id: string;
+    title: string;
+    body: string;
+    url: string | null;
+    segment: string;
+    recipients: number;
+    tookMs: number;
+    createdAt: string;
+    owner: { username: string | null; name: string | null; humoId: string | null } | null;
+}
+
+function timeAgo(iso: string): string {
+    const t = Date.now() - new Date(iso).getTime();
+    const s = Math.floor(t / 1000);
+    if (s < 60) return `${s}s`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m}d`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}s`;
+    return `${Math.floor(h / 24)}k`;
+}
 
 type Segment = "all" | "sellers" | "buyers";
 
@@ -24,14 +47,23 @@ export function BnAdminBroadcast() {
     const [segments, setSegments] = useState<SegState | null>(null);
     const [remaining, setRemaining] = useState<number | null>(null);
     const [confirming, setConfirming] = useState(false);
+    const [history, setHistory] = useState<HistoryRow[] | null>(null);
 
     async function reload() {
         try {
-            const r = await fetch("/api/bn/admin/push/broadcast");
-            if (!r.ok) return;
-            const d = await r.json();
-            setSegments(d.segments);
-            setRemaining(d.rateLimit?.remaining ?? null);
+            const [rMeta, rHist] = await Promise.all([
+                fetch("/api/bn/admin/push/broadcast"),
+                fetch("/api/bn/admin/push/broadcast/history"),
+            ]);
+            if (rMeta.ok) {
+                const d = await rMeta.json();
+                setSegments(d.segments);
+                setRemaining(d.rateLimit?.remaining ?? null);
+            }
+            if (rHist.ok) {
+                const d = await rHist.json();
+                setHistory(d.history ?? []);
+            }
         } catch { /* ignore */ }
     }
     useEffect(() => { void reload(); }, []);
@@ -59,7 +91,7 @@ export function BnAdminBroadcast() {
             setMsg(`Yuborildi: ${d.recipients} foydalanuvchiga (${d.tookMs}ms).`);
             setTitle(""); setBody(""); setUrl("");
             setConfirming(false);
-            void reload();
+            void reload();   // segment + rate limit + tarix qayta yuklash
         } catch (e) {
             setMsg(`Xatolik: ${String(e)}`);
         } finally { setBusy(false); }
@@ -189,6 +221,65 @@ export function BnAdminBroadcast() {
                     }}>
                     {msg}
                 </p>
+            )}
+
+            {/* Tarix */}
+            {history !== null && (
+                <div className="mt-6">
+                    <div className="flex items-center gap-2 mb-3">
+                        <History className="w-4 h-4" style={{ color: BN.text3 }} />
+                        <h3 className="text-[13px] font-black">Tarix ({history.length})</h3>
+                    </div>
+                    {history.length === 0 ? (
+                        <p className="text-[12.5px] px-3 py-4 rounded-lg text-center"
+                            style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text3 }}>
+                            Hali hech qanday broadcast yuborilmagan.
+                        </p>
+                    ) : (
+                        <ul className="space-y-2">
+                            {history.map(h => {
+                                const who = h.owner?.name ?? h.owner?.username ?? h.owner?.humoId ?? "?";
+                                return (
+                                    <li key={h.id} className="p-3 rounded-lg"
+                                        style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-[13px] font-black leading-tight truncate">{h.title}</p>
+                                                <p className="text-[11.5px] mt-0.5 line-clamp-2" style={{ color: BN.text2 }}>
+                                                    {h.body}
+                                                </p>
+                                                {h.url && (
+                                                    <p className="flex items-center gap-1 text-[10.5px] mt-1 truncate"
+                                                        style={{ color: BN.text3 }}>
+                                                        <LinkIcon className="w-3 h-3 flex-shrink-0" />
+                                                        <span className="truncate">{h.url}</span>
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                <span className="text-[11px] font-black tabular-nums" style={{ color: BN.gold }}>
+                                                    {h.recipients}
+                                                </span>
+                                                <span className="block text-[10px]" style={{ color: BN.text3 }}>
+                                                    {timeAgo(h.createdAt)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-2 text-[10.5px]" style={{ color: BN.text3 }}>
+                                            <span className="px-1.5 py-0.5 rounded"
+                                                style={{ background: BN.surfaceUp }}>
+                                                {h.segment}
+                                            </span>
+                                            <span>{who}</span>
+                                            <span>·</span>
+                                            <span>{h.tookMs}ms</span>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+                </div>
             )}
         </div>
     );

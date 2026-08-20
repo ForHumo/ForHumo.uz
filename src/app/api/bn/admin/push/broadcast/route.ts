@@ -1,12 +1,11 @@
 // BN admin — barcha (yoki segmentli) BN foydalanuvchilariga Web Push xabari.
 // Faqat OWNER — bu kuchli marketing tools, MODERATOR ololmaydi.
-// Rate limit: kuniga 3 broadcast (spam abuse'ni oldini olish).
+// Rate limit: kuniga 3 broadcast — DB'dagi BnBroadcast count'idan hisoblanadi
+// (serverless cold start bardosh). Har yuborilgan xabar audit uchun yozib qo'yiladi.
 //
 //   POST /api/bn/admin/push/broadcast
-//   body: { title, body, url?, tag?, segment?: "all" | "sellers" | "buyers" | "waitlist" }
-//
-// Audit: har broadcast BnAdminAction sifatida yozilishi kerak edi, lekin bunday
-// model yo'q — hozircha console.log yetadi (Vercel loglariga tushadi).
+//   body: { title, body, url?, tag?, segment?: "all" | "sellers" | "buyers" }
+//   GET  /api/bn/admin/push/broadcast  — segment ko'lami + rate limit holati.
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -17,13 +16,10 @@ import { sendPushToProfile } from "@/lib/push";
 export const dynamic = "force-dynamic";
 
 const MAX_BROADCASTS_PER_DAY = 3;
-// Broadcast counter — modul-scope memory (Vercel serverless: har instance alohida,
-// lekin OWNER kam sonli — kelajakda Redis kerak bo'lsa moslashtiramiz)
-const recentBroadcasts: number[] = [];   // timestamp[]
 
-function purgeOld() {
-    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    while (recentBroadcasts.length && recentBroadcasts[0] < dayAgo) recentBroadcasts.shift();
+async function usedTodayCount(): Promise<number> {
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    return prisma.bnBroadcast.count({ where: { createdAt: { gte: dayAgo } } }).catch(() => 0);
 }
 
 export async function POST(req: Request) {
@@ -33,8 +29,8 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
 
-    purgeOld();
-    if (recentBroadcasts.length >= MAX_BROADCASTS_PER_DAY) {
+    const used = await usedTodayCount();
+    if (used >= MAX_BROADCASTS_PER_DAY) {
         return NextResponse.json({ error: "too_many_broadcasts" }, { status: 429 });
     }
 
@@ -43,8 +39,8 @@ export async function POST(req: Request) {
     const body = typeof b?.body === "string" ? b.body.trim().slice(0, 200) : "";
     const url = typeof b?.url === "string" ? b.url.trim().slice(0, 300) : undefined;
     const tag = typeof b?.tag === "string" ? b.tag.trim().slice(0, 40) : `bn-broadcast-${Date.now()}`;
-    const segment = (["all", "sellers", "buyers", "waitlist"].includes(b?.segment) ? b.segment : "all") as
-        "all" | "sellers" | "buyers" | "waitlist";
+    const segment = (["all", "sellers", "buyers"].includes(b?.segment) ? b.segment : "all") as
+        "all" | "sellers" | "buyers";
 
     if (title.length < 3 || body.length < 5) {
         return NextResponse.json({ error: "invalid_content" }, { status: 400 });
@@ -67,34 +63,36 @@ export async function POST(req: Request) {
             where: { status: "COMPLETED" }, select: { buyerId: true }, distinct: ["buyerId"],
         });
         profileIds = orders.map(o => o.buyerId);
-    } else if (segment === "waitlist") {
-        // Waitlist telefon bilan yozilgan — profileId'ni topish uchun email/username
-        // orqali qidirish qiyin. Hozircha waitlist ichidan chiquvchilar
-        // yozilgan tomonda profil yo'q — bo'sh qaytadi.
-        profileIds = [];
     }
 
     if (profileIds.length === 0) {
         return NextResponse.json({ error: "no_recipients", segment }, { status: 400 });
     }
 
-    // Rate limit ro'yxatga qo'shamiz
-    recentBroadcasts.push(Date.now());
-
-    // Push yuborish parallel — Promise.all ichida har biriga sendPushToProfile
-    // (u ichida fail-safe, xato bo'lsa jim o'tadi)
+    // Push yuborish — parallel, per-user xato butun oqimni to'xtatmaydi
     const startedAt = Date.now();
     await Promise.all(profileIds.map(id => sendPushToProfile(id, { title, body, url, tag })));
     const took = Date.now() - startedAt;
 
-    console.log(`[bn-broadcast] owner=${auth.profileId} segment=${segment} recipients=${profileIds.length} took=${took}ms`);
+    // Audit yozuvi (rate limit ham shu jadval'dan)
+    const record = await prisma.bnBroadcast.create({
+        data: {
+            ownerId: auth.profileId,
+            title, body, url: url ?? null, tag,
+            segment, recipients: profileIds.length, tookMs: took,
+        },
+        select: { id: true, createdAt: true },
+    }).catch(() => null);
+
+    console.log(`[bn-broadcast] owner=${auth.profileId} segment=${segment} recipients=${profileIds.length} took=${took}ms id=${record?.id ?? "n/a"}`);
 
     return NextResponse.json({
         ok: true,
+        id: record?.id ?? null,
         recipients: profileIds.length,
         segment,
         tookMs: took,
-        remainingToday: MAX_BROADCASTS_PER_DAY - recentBroadcasts.length,
+        remainingToday: MAX_BROADCASTS_PER_DAY - (used + 1),
     });
 }
 
@@ -104,12 +102,11 @@ export async function GET() {
     if (!(await isBnOwner(auth.profileId))) {
         return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
-    purgeOld();
-    // Segment ko'lami — UI'da preview uchun
-    const [allSubs, sellers, buyers] = await Promise.all([
+    const [allSubs, sellers, buyers, used] = await Promise.all([
         prisma.nexusPushSub.findMany({ select: { profileId: true }, distinct: ["profileId"] }),
         prisma.bnShop.findMany({ where: { status: "APPROVED" }, select: { profileId: true }, distinct: ["profileId"] }),
         prisma.bnOrder.findMany({ where: { status: "COMPLETED" }, select: { buyerId: true }, distinct: ["buyerId"] }),
+        usedTodayCount(),
     ]);
     return NextResponse.json({
         segments: {
@@ -119,8 +116,8 @@ export async function GET() {
         },
         rateLimit: {
             max: MAX_BROADCASTS_PER_DAY,
-            used: recentBroadcasts.length,
-            remaining: MAX_BROADCASTS_PER_DAY - recentBroadcasts.length,
+            used,
+            remaining: MAX_BROADCASTS_PER_DAY - used,
         },
     });
 }

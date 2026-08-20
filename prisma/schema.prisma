@@ -3024,6 +3024,26 @@ enum BnSellerWaitlistStatus {
   REJECTED      // Rad (spam, ovoz yoq, boshqa sabab)
 }
 
+// ── BN admin Web Push broadcast audit ───────────────────────────────────────
+// Har OWNER yuborgan mass push xabari yozib qo'yiladi — kim, qachon, qanchaga,
+// nima matn bilan. Rate limit ham shu jadval count'idan hisoblanadi
+// (module-scope memory'ga bog'liq emas — serverless cold start bardosh).
+model BnBroadcast {
+  id         String   @id @default(cuid())
+  ownerId    String                              // UserProfile.id — kim yubordi
+  title      String
+  body       String
+  url        String?
+  tag        String?
+  segment    String                              // "all" | "sellers" | "buyers"
+  recipients Int      @default(0)                // qancha profil'ga yuborildi
+  tookMs     Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([ownerId, createdAt])
+}
+
 // ── Zaxira usernamelar ───────────────────────────────────────────────────────
 // Foydalanuvchi olmaydigan @nomlar (tizim, brend, mashhur odam, davlat,
 // PERSONAL — yaqin odamlarga ajratilgan). VIP toifa keyin 10K+ faol
