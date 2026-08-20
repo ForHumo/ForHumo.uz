@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useNxPlayer, type NxTrack } from "./nx-player-ctx";
-import { Radio, Play, Eye, Film, Music2, Clock } from "lucide-react";
+import { Radio, Play, Eye, Film, Music2, Clock, TrendingDown } from "lucide-react";
 import { NxLiveRoom } from "./nx-live-room";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -25,6 +25,10 @@ interface HLive {
     id: string; title: string; viewers: number; category: string | null;
     author: { name: string | null; username: string | null; image: string | null } | null;
 }
+interface HBnItem {
+    slug: string; title: string; image: string | null;
+    price: number; marketAvg: number; savedPct: number; shopName: string;
+}
 
 function fmtN(n: number) {
     if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
@@ -41,13 +45,23 @@ export function NxHomeRows() {
     const [live, setLive] = useState<HLive[]>([]);
     const [videos, setVideos] = useState<HVid[]>([]);
     const [tracks, setTracks] = useState<HTrack[]>([]);
+    const [bnItems, setBnItems] = useState<HBnItem[]>([]);
     const [roomId, setRoomId] = useState<string | null>(null);
 
     useEffect(() => {
         fetch("/api/nexus/live?status=live&limit=10").then(r => r.json()).then(d => setLive(d.streams ?? [])).catch(() => { });
         fetch("/api/nexus/videos?sort=new&limit=12").then(r => r.json()).then(d => setVideos(d.videos ?? [])).catch(() => { });
         fetch("/api/nexus/tracks?kind=MUSIC&sort=new&limit=12").then(r => r.json()).then(d => setTracks(d.tracks ?? [])).catch(() => { });
+        fetch("/api/bn/cross-promo/nexus-row").then(r => r.json()).then(d => setBnItems(d.items ?? [])).catch(() => { });
     }, []);
+
+    // BN mahsuloti URL — UTM bilan (cross-promo trekiladi)
+    function bnHref(slug: string): string {
+        return `https://bozornarxida.uz/p/${slug}?utm_source=nexus&utm_medium=cross_promo&utm_campaign=home_row`;
+    }
+    function fmtSom(n: number): string {
+        return new Intl.NumberFormat("uz-UZ").format(n);
+    }
 
     function openVid(v: HVid) {
         if (v.orientation === "VERTICAL" && !v.locked) {
@@ -76,7 +90,7 @@ export function NxHomeRows() {
         playQueue(list, idx);
     }
 
-    if (!live.length && !videos.length && !tracks.length) return null;
+    if (!live.length && !videos.length && !tracks.length && !bnItems.length) return null;
 
     return (
         <div className="mt-2">
@@ -150,6 +164,41 @@ export function NxHomeRows() {
                 </Row>
             )}
 
+            {/* BN cross-promo — bozor narxidan arzon mahsulotlar */}
+            {bnItems.length > 0 && (
+                <Row title="Bozorda arzon" accent="#F5B301">
+                    {bnItems.map(p => (
+                        <a
+                            key={p.slug}
+                            href={bnHref(p.slug)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-32 flex-shrink-0 text-left group"
+                        >
+                            <div className="relative w-32 h-32 rounded-xl overflow-hidden mb-1.5"
+                                style={{ border: "1px solid rgba(245,179,1,0.28)", background: "rgba(245,179,1,0.06)" }}>
+                                {p.image
+                                    ? <img src={p.image} alt={p.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                    : <div className="w-full h-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-white/30" /></div>}
+                                <span className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black leading-none"
+                                    style={{ background: "#22C55E", color: "#0A0A0A" }}>
+                                    −{p.savedPct}%
+                                </span>
+                            </div>
+                            <p className="text-[11px] font-bold text-white line-clamp-2 leading-snug group-hover:text-[#F5B301] transition-colors">
+                                {p.title}
+                            </p>
+                            <p className="text-[11px] font-black tabular-nums mt-0.5" style={{ color: "#F5B301" }}>
+                                {fmtSom(p.price)} so&apos;m
+                            </p>
+                            <p className="text-[9px] line-through tabular-nums" style={{ color: "rgba(150,150,150,0.7)" }}>
+                                {fmtSom(p.marketAvg)}
+                            </p>
+                        </a>
+                    ))}
+                </Row>
+            )}
+
             {roomId && <NxLiveRoom streamId={roomId} onClose={() => setRoomId(null)} />}
         </div>
     );
@@ -159,7 +208,10 @@ function Row({ title, accent, children }: { title: string; accent: string; child
     return (
         <div className="mb-4">
             <div className="px-4 mb-2 flex items-center gap-2">
-                {accent === "#EF4444" ? <Radio className="w-3.5 h-3.5" style={{ color: accent }} /> : accent === "#10B981" ? <Music2 className="w-3.5 h-3.5" style={{ color: accent }} /> : <Film className="w-3.5 h-3.5" style={{ color: accent }} />}
+                {accent === "#EF4444" ? <Radio className="w-3.5 h-3.5" style={{ color: accent }} />
+                    : accent === "#10B981" ? <Music2 className="w-3.5 h-3.5" style={{ color: accent }} />
+                    : accent === "#F5B301" ? <TrendingDown className="w-3.5 h-3.5" style={{ color: accent }} />
+                    : <Film className="w-3.5 h-3.5" style={{ color: accent }} />}
                 <span className="text-sm font-black text-white">{title}</span>
             </div>
             <div className="flex gap-3 overflow-x-auto px-4 pb-1" style={{ scrollbarWidth: "none" }}>
