@@ -94,18 +94,29 @@ export function BnStoreLd(props: {
     name: string;
     description: string | null;
     logo: string | null;
+    cover?: string | null;
     address: string | null;
     city: string;
+    telephone?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    priceRange?: string | null;    // masalan "12000 — 45000 UZS"
     ratingAvg?: number | null;
     ratingCount?: number | null;
 }) {
+    // "Store" schema.org LocalBusiness'ning subclass'i — Google Local Business
+    // Rich Result'ini beradi (telephone/geo/address bilan).
+    const images = [props.cover, props.logo].filter(Boolean) as string[];
     const data: Record<string, unknown> = {
         "@context": "https://schema.org",
         "@type": "Store",
+        "@id": `${SITE}/d/${props.slug}#store`,
         name: props.name,
         description: props.description ?? undefined,
-        image: props.logo ?? undefined,
+        image: images.length ? images : undefined,
         url: `${SITE}/d/${props.slug}`,
+        telephone: props.telephone ?? undefined,
+        priceRange: props.priceRange ?? undefined,
         address: {
             "@type": "PostalAddress",
             addressLocality: props.city,
@@ -113,6 +124,13 @@ export function BnStoreLd(props: {
             addressCountry: "UZ",
         },
     };
+    if (props.latitude != null && props.longitude != null) {
+        data.geo = {
+            "@type": "GeoCoordinates",
+            latitude: props.latitude,
+            longitude: props.longitude,
+        };
+    }
     if (props.ratingAvg && props.ratingCount && props.ratingCount > 0) {
         data.aggregateRating = {
             "@type": "AggregateRating",
