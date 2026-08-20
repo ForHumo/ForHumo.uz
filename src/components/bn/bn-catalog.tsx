@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { BnLink } from "./bn-nav";
 import { SlidersHorizontal, X, Search, ChevronRight, Store, Package, Loader2 } from "lucide-react";
@@ -47,13 +48,46 @@ export function BnCatalog({
     const tCrumb = useTranslations("bn.breadcrumb");
     const tNav = useTranslations("bn.nav");
     const locale = useLocale();
-    const [sort, setSort] = useState<SortKey>(initialSort);
+    // URL sync — filter'lar refresh/share'da saqlanadi.
+    // ?market=chorsu&cheap=1&inspect=1&delivery=1&maxPrice=50000&sort=cheap
+    const sp = useSearchParams();
+    const router = useRouter();
+    const path = usePathname();
+
+    const [sort, setSort] = useState<SortKey>(
+        (["new", "cheap", "price_asc", "price_desc", "rating"].includes(sp.get("sort") ?? "")
+            ? sp.get("sort") : initialSort) as SortKey
+    );
     const [filterOpen, setFilterOpen] = useState(false);
-    const [marketSlug, setMarketSlug] = useState<string | null>(null);
-    const [onlyCheap, setOnlyCheap] = useState(initialSort === "cheap");
-    const [onlyInspect, setOnlyInspect] = useState(false);
-    const [onlyDelivery, setOnlyDelivery] = useState(false);
-    const [maxPrice, setMaxPrice] = useState<number | null>(null);
+    const [marketSlug, setMarketSlug] = useState<string | null>(sp.get("market") ?? null);
+    const [onlyCheap, setOnlyCheap] = useState(sp.get("cheap") === "1" || initialSort === "cheap");
+    const [onlyInspect, setOnlyInspect] = useState(sp.get("inspect") === "1");
+    const [onlyDelivery, setOnlyDelivery] = useState(sp.get("delivery") === "1");
+    const [maxPrice, setMaxPrice] = useState<number | null>(
+        sp.get("maxPrice") ? Number(sp.get("maxPrice")) : null
+    );
+
+    // Har filter o'zgarganda URL yangilanadi (scroll:false — sahifa tepasiga sakramaydi)
+    useEffect(() => {
+        const params = new URLSearchParams(sp.toString());
+        const setOrDel = (key: string, val: string | null | boolean | number) => {
+            if (val === null || val === false || val === "" || val === 0) params.delete(key);
+            else params.set(key, val === true ? "1" : String(val));
+        };
+        setOrDel("market", marketSlug);
+        setOrDel("cheap", onlyCheap);
+        setOrDel("inspect", onlyInspect);
+        setOrDel("delivery", onlyDelivery);
+        setOrDel("maxPrice", maxPrice);
+        setOrDel("sort", sort === "new" ? null : sort);   // "new" default — URL toza
+        const qs = params.toString();
+        const target = qs ? `${path}?${qs}` : path;
+        // Faqat o'zgargan bo'lsa push (avoid replace loop)
+        if (`${path}?${sp.toString()}` !== target && path !== target) {
+            router.replace(target, { scroll: false });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [marketSlug, onlyCheap, onlyInspect, onlyDelivery, maxPrice, sort]);
 
     // Pagination — SSR birinchi sahifani beradi, keyin "Yana yuklash" bosilsa
     // /api/bn/products/search'dan keyingi 30 ta olamiz.
