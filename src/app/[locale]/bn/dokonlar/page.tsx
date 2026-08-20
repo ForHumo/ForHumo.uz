@@ -1,37 +1,72 @@
 import type { Metadata } from "next";
-import { BnShopsRanked } from "@/components/bn/bn-sections";
+import { BnShopsWithFilter } from "@/components/bn/bn-shops-with-filter";
 import { getTopShops } from "@/lib/bn-data";
 import { BnBreadcrumbLd } from "@/components/bn/bn-jsonld";
+import { TIER_META } from "@/lib/bn-theme";
 
 export const dynamic = "force-dynamic";
 
 type Locale = "uz" | "ru" | "en";
+type Tier = "TRUSTED" | "VERIFIED" | "PREMIUM";
 
-function buildTitle(locale: Locale): string {
+function normalizeTier(raw: string | undefined): Tier | null {
+    if (!raw) return null;
+    const up = raw.toUpperCase();
+    return up === "TRUSTED" || up === "VERIFIED" || up === "PREMIUM" ? up as Tier : null;
+}
+
+function buildTitle(locale: Locale, tier: Tier | null): string {
+    if (tier) {
+        const label = TIER_META[tier].label;
+        if (locale === "ru") return `${label} магазины Ташкента · Bozor Narxida`;
+        if (locale === "en") return `${label} shops in Tashkent · Bozor Narxida`;
+        return `${label} do'konlari — Toshkent · Bozor Narxida`;
+    }
     if (locale === "ru") return "Магазины базаров Ташкента — рейтинг · Bozor Narxida";
     if (locale === "en") return "Tashkent bazaar shops — ranked · Bozor Narxida";
     return "Toshkent bozor do'konlari — reyting · Bozor Narxida";
 }
 
-function buildDescription(locale: Locale, count: number): string {
+function buildDescription(locale: Locale, count: number, tier: Tier | null): string {
+    if (tier) {
+        const label = TIER_META[tier].label;
+        if (locale === "ru") {
+            return `${count} магазинов уровня ${label} на Ташкентских базарах. Проверенные продавцы, эскроу-защита.`;
+        }
+        if (locale === "en") {
+            return `${count} ${label}-tier shops across Tashkent bazaars. Verified sellers, escrow protection.`;
+        }
+        return `Toshkent bozorlaridagi ${count} ta ${label} darajali do'kon. Tekshirilgan sotuvchilar, eskrow himoyasi.`;
+    }
     if (locale === "ru") {
-        return `${count} лучших магазинов Ташкентских базаров, отсортированных по рейтингу и отзывам. `
-            + `Проверенные продавцы, эскроу-защита, доставка или самовывоз.`;
+        return `${count} лучших магазинов Ташкентских базаров, отсортированных по рейтингу и отзывам.`;
     }
     if (locale === "en") {
-        return `Top ${count} bazaar shops across Tashkent, ranked by rating and reviews. `
-            + `Verified sellers, escrow protection, delivery or pickup.`;
+        return `Top ${count} bazaar shops across Tashkent, ranked by rating and reviews.`;
     }
-    return `Toshkent bozorlaridagi ${count} ta eng yaxshi do'kon — reyting va sharhlar bo'yicha saralangan. `
-        + `Tekshirilgan sotuvchilar, eskrow himoyasi, yetkazish yoki olib ketish.`;
+    return `Toshkent bozorlaridagi ${count} ta eng yaxshi do'kon — reyting va sharhlar bo'yicha saralangan.`;
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: Locale }> }): Promise<Metadata> {
-    const { locale } = await params;
-    const shops = await getTopShops(100).catch(() => []);
-    const title = buildTitle(locale);
-    const description = buildDescription(locale, shops.length);
-    const pageUrl = "https://bozornarxida.uz/dokonlar";
+export async function generateMetadata({
+    params, searchParams,
+}: {
+    params: Promise<{ locale: Locale }>;
+    searchParams: Promise<{ tier?: string }>;
+}): Promise<Metadata> {
+    const [{ locale }, sp, shops] = await Promise.all([
+        params, searchParams, getTopShops(100).catch(() => []),
+    ]);
+
+    const tier = normalizeTier(sp.tier);
+    const filteredCount = tier
+        ? shops.filter(s => s.tier === tier).length
+        : shops.length;
+
+    const title = buildTitle(locale, tier);
+    const description = buildDescription(locale, filteredCount, tier);
+    const pageUrl = tier
+        ? `https://bozornarxida.uz/dokonlar?tier=${tier.toLowerCase()}`
+        : "https://bozornarxida.uz/dokonlar";
 
     return {
         title: { absolute: title },
@@ -39,22 +74,19 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
         alternates: {
             canonical: pageUrl,
             languages: {
-                "uz": "https://bozornarxida.uz/uz/dokonlar",
-                "ru": "https://bozornarxida.uz/ru/dokonlar",
-                "en": "https://bozornarxida.uz/en/dokonlar",
+                "uz": pageUrl.replace("https://bozornarxida.uz/", "https://bozornarxida.uz/uz/"),
+                "ru": pageUrl.replace("https://bozornarxida.uz/", "https://bozornarxida.uz/ru/"),
+                "en": pageUrl.replace("https://bozornarxida.uz/", "https://bozornarxida.uz/en/"),
             },
         },
         openGraph: {
             type: "website",
-            title,
-            description,
-            url: pageUrl,
+            title, description, url: pageUrl,
             siteName: "Bozor Narxida",
         },
         twitter: {
             card: "summary_large_image",
-            title,
-            description,
+            title, description,
         },
     };
 }
@@ -63,11 +95,10 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
     const { locale } = await params;
     const shops = await getTopShops(100);
 
-    // ItemList — Google Rich Result (ranking) uchun ideal
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
-        name: buildTitle(locale),
+        name: buildTitle(locale, null),
         url: "https://bozornarxida.uz/dokonlar",
         inLanguage: locale,
         isPartOf: { "@type": "WebSite", name: "Bozor Narxida", url: "https://bozornarxida.uz" },
@@ -91,7 +122,7 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
                 { name: "Bosh sahifa", url: "/" },
                 { name: "Do'konlar", url: "/dokonlar" },
             ]} />
-            <BnShopsRanked shops={shops} />
+            <BnShopsWithFilter shops={shops} />
         </>
     );
 }

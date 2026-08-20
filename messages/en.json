@@ -1208,6 +1208,9 @@
       "subtitle": "{n} shops within 5 km",
       "loading": "Loading...",
       "routeAria": "Directions to {name}"
+    },
+    "shops": {
+      "allTiers": "All"
     }
   }
 }

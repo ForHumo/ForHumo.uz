@@ -1208,6 +1208,9 @@
       "subtitle": "{n} ta do'kon 5 km ichida",
       "loading": "Yuklanmoqda...",
       "routeAria": "{name} do'koniga marshrut"
+    },
+    "shops": {
+      "allTiers": "Barchasi"
     }
   }
 }
