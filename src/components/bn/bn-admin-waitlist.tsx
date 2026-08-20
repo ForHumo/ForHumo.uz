@@ -3,10 +3,10 @@
 // BN admin — sotuvchi WAITLIST paneli.
 // Jalol shu ekrandan qo'ng'iroq qilinadigan ro'yxatni ko'radi, holatni yangilaydi.
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
     ClipboardList, Loader2, Phone, MessageCircle, Check, X,
-    Clock, PhoneCall, Store, Trash2, Download, AlertTriangle,
+    Clock, PhoneCall, Store, Trash2, Download, AlertTriangle, Search,
 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 
@@ -57,6 +57,21 @@ export function BnAdminWaitlist() {
     const [urgentCount, setUrgentCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
+    const [query, setQuery] = useState("");
+
+    // Client-side qidiruv — ism, telefon, izoh, ref, kategoriya, bozor bo'yicha
+    const filteredEntries = useMemo(() => {
+        const q = query.trim().toLowerCase();
+        if (!q) return entries;
+        return entries.filter(e => {
+            const hay = [
+                e.name, e.phone,
+                e.city, e.marketName, e.category, e.note, e.ref,
+                e.contactNote,
+            ].filter(Boolean).join(" ").toLowerCase();
+            return hay.includes(q);
+        });
+    }, [entries, query]);
 
     const load = useCallback(() => {
         setLoading(true);
@@ -175,6 +190,27 @@ export function BnAdminWaitlist() {
                 </div>
             </div>
 
+            {/* Qidiruv input — entries mavjud bo'lsa ko'rinadi */}
+            {entries.length > 0 && (
+                <div className="mb-3 relative">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                        style={{ color: BN.text3 }} />
+                    <input type="search" value={query}
+                        onChange={e => setQuery(e.target.value)}
+                        placeholder="Ism, telefon, bozor, izoh bo'yicha qidirish..."
+                        className="w-full h-10 pl-9 pr-9 rounded-xl text-[13px] outline-none"
+                        style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text }} />
+                    {query && (
+                        <button onClick={() => setQuery("")}
+                            aria-label="Tozalash"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 grid place-items-center rounded"
+                            style={{ color: BN.text3 }}>
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                    )}
+                </div>
+            )}
+
             {loading ? (
                 <div className="grid place-items-center py-12">
                     <Loader2 className="w-6 h-6 animate-spin" style={{ color: BN.gold }} />
@@ -185,9 +221,26 @@ export function BnAdminWaitlist() {
                     <ClipboardList className="w-8 h-8 mx-auto mb-3" style={{ color: BN.text3 }} />
                     <p className="text-[14px] font-bold" style={{ color: BN.text2 }}>Ro&apos;yxat bo&apos;sh</p>
                 </div>
+            ) : filteredEntries.length === 0 ? (
+                <div className="p-8 text-center rounded-2xl"
+                    style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
+                    <Search className="w-8 h-8 mx-auto mb-3" style={{ color: BN.text3 }} />
+                    <p className="text-[14px] font-bold" style={{ color: BN.text2 }}>
+                        &quot;{query}&quot; bo&apos;yicha hech nima topilmadi
+                    </p>
+                    <button onClick={() => setQuery("")}
+                        className="mt-3 text-[12.5px] font-black" style={{ color: BN.gold }}>
+                        Tozalash
+                    </button>
+                </div>
             ) : (
                 <div className="space-y-2.5">
-                    {entries.map(e => (
+                    {query && (
+                        <p className="text-[11.5px] px-1" style={{ color: BN.text3 }}>
+                            {filteredEntries.length} ta topildi
+                        </p>
+                    )}
+                    {filteredEntries.map(e => (
                         <WaitlistCard
                             key={e.id}
                             e={e}
