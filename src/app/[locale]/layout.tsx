@@ -77,6 +77,16 @@ export async function generateMetadata({
             index: true,
             follow: true,
         },
+        verification: {
+            // Google Search Console: Vercel env'ga GOOGLE_SITE_VERIFICATION qo'shsangiz
+            // avtomatik <meta name="google-site-verification"> chiqadi. Yandex/Bing ham
+            // shu naqsh bilan qo'shilishi mumkin.
+            google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+            yandex: process.env.YANDEX_SITE_VERIFICATION || undefined,
+            other: process.env.BING_SITE_VERIFICATION
+                ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION }
+                : undefined,
+        },
     };
 }
 

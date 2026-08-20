@@ -143,6 +143,9 @@ VERCEL_OIDC_TOKEN         # Vercel tomonidan beriladi
 VAPID_PUBLIC_KEY          # Web Push (Nexus + BN qayta ishlatadi) — public
 VAPID_PRIVATE_KEY         # Web Push — private
 VAPID_SUBJECT             # mailto: yoki https:// (Web Push subject)
+GOOGLE_SITE_VERIFICATION  # ixtiyoriy — Google Search Console tasdiqlash tokeni
+YANDEX_SITE_VERIFICATION  # ixtiyoriy — Yandex.Webmaster tasdiqlash tokeni
+BING_SITE_VERIFICATION    # ixtiyoriy — Bing Webmaster (msvalidate.01)
 ```
 
 ## Current TODO (2026-08-02 audit'dan keyin)
