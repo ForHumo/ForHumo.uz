@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { BnLink } from "./bn-nav";
 import { Store, MapPin, Star, Globe, Package, Clock, ChevronRight, ShoppingBasket, BadgeCheck } from "lucide-react";
 import { BN, TIER_META, type ShopTier, type LocationType } from "@/lib/bn-theme";
@@ -25,6 +26,8 @@ export interface ShopCardData {
 
 export function BnShopCard({ s }: { s: ShopCardData }) {
     const tier = TIER_META[s.tier];
+    const t = useTranslations("bn.shopCard");
+    const locText = useShopLocationText();
     return (
         <BnLink
             href={`/d/${s.slug}`}
@@ -54,7 +57,7 @@ export function BnShopCard({ s }: { s: ShopCardData }) {
                             className="w-4 h-4 flex-shrink-0"
                             style={{ color: s.verifiedTier === "WHOLESALE" ? BN.gold : BN.info }}
                             strokeWidth={2.6}
-                            aria-label={s.verifiedTier === "WHOLESALE" ? "Tasdiqlangan ulgurji sotuvchi" : "Tasdiqlangan sotuvchi"}
+                            aria-label={s.verifiedTier === "WHOLESALE" ? t("verifiedWholesale") : t("verifiedRetail")}
                         />
                     )}
                     {s.tier !== "NEW" && (
@@ -69,13 +72,13 @@ export function BnShopCard({ s }: { s: ShopCardData }) {
 
                 <p className="flex items-center gap-1 text-[11.5px] truncate" style={{ color: BN.text3 }}>
                     <LocationIcon type={s.locationType} />
-                    <span className="truncate">{shopLocationText(s)}</span>
+                    <span className="truncate">{locText(s)}</span>
                 </p>
 
                 <div className="flex items-center gap-3 mt-1 text-[11px]" style={{ color: BN.text3 }}>
                     <span className="flex items-center gap-1">
                         <Package className="w-3 h-3" />
-                        {s.productCount} ta
+                        {t("productsN", { n: s.productCount })}
                     </span>
                     {s.ratingCount > 0 && (
                         <span className="flex items-center gap-1" style={{ color: BN.gold }}>
@@ -92,7 +95,27 @@ export function BnShopCard({ s }: { s: ShopCardData }) {
     );
 }
 
-export function shopLocationText(s: Pick<ShopCardData, "locationType" | "marketName" | "marketSection" | "marketShopNo" | "address" | "city">): string {
+type ShopLocInput = Pick<ShopCardData, "locationType" | "marketName" | "marketSection" | "marketShopNo" | "address" | "city">;
+
+/** Locale-aware do'kon joylashuv matni. Komponent ichida chaqirilishi kerak. */
+export function useShopLocationText() {
+    const t = useTranslations("bn.shopLoc");
+    return (s: ShopLocInput): string => {
+        if (s.locationType === "IN_MARKET") {
+            const parts = [
+                s.marketName,
+                s.marketSection,
+                s.marketShopNo ? t("shopNo", { n: s.marketShopNo }) : null,
+            ].filter(Boolean);
+            return parts.join(" · ");
+        }
+        if (s.locationType === "STANDALONE") return s.address || s.city;
+        return t("onlineShop");
+    };
+}
+
+/** Server-side fallback (UZ). Client'da useShopLocationText'ni afzal ko'ring. */
+export function shopLocationText(s: ShopLocInput): string {
     if (s.locationType === "IN_MARKET") {
         const parts = [s.marketName, s.marketSection, s.marketShopNo && `${s.marketShopNo}-do'kon`].filter(Boolean);
         return parts.join(" · ");
@@ -120,6 +143,7 @@ export interface MarketCardData {
 }
 
 export function BnMarketCard({ m, wide = false }: { m: MarketCardData; wide?: boolean }) {
+    const t = useTranslations("bn.markets");
     return (
         <BnLink
             href={`/m/${m.slug}`}
@@ -153,7 +177,7 @@ export function BnMarketCard({ m, wide = false }: { m: MarketCardData; wide?: bo
                     </span>
                     <span className="flex items-center gap-1">
                         <Store className="w-3 h-3" />
-                        {m.shopCount} do&apos;kon
+                        {t("shopN", { n: m.shopCount })}
                     </span>
                 </div>
                 {wide && (
@@ -170,8 +194,10 @@ export function BnMarketCard({ m, wide = false }: { m: MarketCardData; wide?: bo
 // ── Bo'lim sarlavhasi ───────────────────────────────────────────────────────
 
 export function BnSectionTitle({
-    title, subtitle, href, hrefLabel = "Barchasi",
+    title, subtitle, href, hrefLabel,
 }: { title: string; subtitle?: string; href?: string; hrefLabel?: string }) {
+    const t = useTranslations("bn.home");
+    const label = hrefLabel ?? t("allBtn");
     return (
         <div className="flex items-end justify-between gap-3 mb-4">
             <div className="min-w-0">
@@ -186,7 +212,7 @@ export function BnSectionTitle({
                     className="flex items-center gap-1 text-[13px] font-bold flex-shrink-0 transition-colors hover:opacity-70"
                     style={{ color: BN.gold }}
                 >
-                    {hrefLabel}
+                    {label}
                     <ChevronRight className="w-4 h-4" />
                 </BnLink>
             )}

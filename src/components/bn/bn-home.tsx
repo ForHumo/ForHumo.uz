@@ -11,7 +11,7 @@ import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnHeroSlider } from "./bn-hero-slider";
 import { BnLink, useBnBase } from "./bn-nav";
-import { shopLocationText } from "./bn-cards";
+import { useShopLocationText } from "./bn-cards";
 import { LiquidGlassNavbar } from "@/components/shared/liquid-glass-navbar";
 import { BnShopStories } from "./bn-shop-stories";
 import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
@@ -35,6 +35,7 @@ export interface BnHomeInitial {
 export function BnHome({ initial }: { initial: BnHomeInitial }) {
     const { markets, topShops, cheap, fresh, top, seasonal, forYou } = initial;
     const t = useTranslations("bn.home");
+    const locText = useShopLocationText();
 
     // ── Mahsulotlar filtri (LiquidGlassNavbar bilan) ────────────────────────
     const [filter, setFilter] = useState<FilterKey>("cheap");
@@ -150,7 +151,7 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
                                         : s.locationType === "STANDALONE"
                                             ? <MapPin className="w-3 h-3 flex-shrink-0" />
                                             : <Globe className="w-3 h-3 flex-shrink-0" />}
-                                    <span className="truncate">{shopLocationText(s)}</span>
+                                    <span className="truncate">{locText(s)}</span>
                                 </span>
                             </span>
 

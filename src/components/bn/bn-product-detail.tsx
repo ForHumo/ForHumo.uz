@@ -15,7 +15,7 @@ import {
     BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel, TIER_META,
 } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
-import { BnSectionTitle, shopLocationText } from "./bn-cards";
+import { BnSectionTitle, useShopLocationText } from "./bn-cards";
 import type { BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 interface ReviewVideo {
@@ -47,6 +47,7 @@ export function BnProductDetail({
     const tCrumb = useTranslations("bn.breadcrumb");
     const tAttr = useTranslations("bn.attr");
     const locale = useLocale();
+    const locText = useShopLocationText();
     const [imgIdx, setImgIdx] = useState(0);
     const [qty, setQty] = useState(1);
     const [fav, setFav] = useState(false);
@@ -377,7 +378,7 @@ export function BnProductDetail({
                                             : shop.locationType === "STANDALONE"
                                                 ? <MapPin className="w-3 h-3 flex-shrink-0" />
                                                 : <Globe className="w-3 h-3 flex-shrink-0" />}
-                                        <span className="truncate">{shopLocationText(shop)}</span>
+                                        <span className="truncate">{locText(shop)}</span>
                                     </span>
                                     {shop.ratingCount > 0 && (
                                         <span className="flex items-center gap-1 text-[12px] mt-1" style={{ color: BN.gold }}>

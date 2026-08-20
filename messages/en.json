@@ -684,6 +684,59 @@
             "power": "Power (W)",
             "volume": "Volume (L)",
             "weight": "Weight (kg)"
+        },
+        "catalog": {
+            "allProducts": "All products",
+            "searchResults": "Results for \"{q}\"",
+            "productsFound": "{n} products found",
+            "catalog": "Catalog",
+            "filter": "Filter",
+            "reset": "Reset",
+            "emptyTitle": "Nothing found",
+            "emptyFiltered": "Try loosening the filters.",
+            "emptyGeneric": "Try another keyword or browse categories.",
+            "resetFilters": "Clear filters",
+            "toHome": "Back to home",
+            "groupQuick": "Quick pick",
+            "quickCheap": "Below market price",
+            "quickInspect": "Inspect before buying",
+            "quickDelivery": "Delivery available",
+            "groupMarket": "Market",
+            "allMarkets": "All markets and shops",
+            "groupMaxPrice": "Max price",
+            "maxPriceUpTo": "up to {price}",
+            "viewN": "View {n} products",
+            "sortNew": "New",
+            "sortCheap": "Below market",
+            "sortPriceAsc": "Price: low to high",
+            "sortPriceDesc": "Price: high to low",
+            "sortRating": "Rating"
+        },
+        "markets": {
+            "title": "Markets",
+            "desc": "Physical markets — browse shops, hold a product and go inspect it.",
+            "emptyTitle": "No markets registered yet",
+            "emptyText": "Tashkent markets will open soon.",
+            "shopN": "{n} shops"
+        },
+        "favorites": {
+            "title": "Favorites",
+            "countUnit": "pcs",
+            "signInTitle": "Sign in to continue",
+            "signInText": "Sign in with Humo ID to save the products you like.",
+            "emptyTitle": "No favorites yet",
+            "emptyText": "Tap the heart on a product page — it will appear here.",
+            "browse": "Browse products",
+            "removeAria": "Remove from favorites"
+        },
+        "shopLoc": {
+            "onlineShop": "Online shop",
+            "shopNo": "shop #{n}"
+        },
+        "shopCard": {
+            "verifiedRetail": "Verified seller",
+            "verifiedWholesale": "Verified wholesale",
+            "productsN": "{n} items"
         }
     }
 }

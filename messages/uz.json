@@ -684,6 +684,59 @@
             "power": "Quvvat (Vt)",
             "volume": "Hajmi (L)",
             "weight": "Og'irligi (kg)"
+        },
+        "catalog": {
+            "allProducts": "Barcha mahsulotlar",
+            "searchResults": "\"{q}\" bo'yicha natijalar",
+            "productsFound": "{n} ta mahsulot topildi",
+            "catalog": "Katalog",
+            "filter": "Filtr",
+            "reset": "Tozalash",
+            "emptyTitle": "Hech narsa topilmadi",
+            "emptyFiltered": "Filtrlarni yumshatib ko'ring.",
+            "emptyGeneric": "Boshqa so'z bilan qidirib ko'ring yoki kategoriyalarni ko'rib chiqing.",
+            "resetFilters": "Filtrlarni tozalash",
+            "toHome": "Bosh sahifaga",
+            "groupQuick": "Tez tanlash",
+            "quickCheap": "Bozor narxidan arzon",
+            "quickInspect": "Ko'rib sotib olish mumkin",
+            "quickDelivery": "Yetkazib berish bor",
+            "groupMarket": "Bozor",
+            "allMarkets": "Barcha bozorlar va do'konlar",
+            "groupMaxPrice": "Eng yuqori narx",
+            "maxPriceUpTo": "{price} gacha",
+            "viewN": "{n} ta mahsulotni ko'rish",
+            "sortNew": "Yangi",
+            "sortCheap": "Bozordan arzon",
+            "sortPriceAsc": "Narx: arzondan",
+            "sortPriceDesc": "Narx: qimmatdan",
+            "sortRating": "Reyting"
+        },
+        "markets": {
+            "title": "Bozorlar",
+            "desc": "Jismoniy bozorlar — do'konlarni ko'rib, mahsulotni band qilib borib ko'rishingiz mumkin.",
+            "emptyTitle": "Hozircha bozor ro'yxatga olinmagan",
+            "emptyText": "Tez orada Toshkent bozorlari ochiladi.",
+            "shopN": "{n} do'kon"
+        },
+        "favorites": {
+            "title": "Sevimlilar",
+            "countUnit": "ta",
+            "signInTitle": "Kiring va davom eting",
+            "signInText": "Yoqqan mahsulotlarni saqlash uchun Humo ID bilan kiring.",
+            "emptyTitle": "Hali saqlangan mahsulot yo'q",
+            "emptyText": "Mahsulot sahifasida yurak belgisini bosing — bu yerda to'planadi.",
+            "browse": "Mahsulotlarni ko'rish",
+            "removeAria": "Sevimlilardan o'chirish"
+        },
+        "shopLoc": {
+            "onlineShop": "Onlayn do'kon",
+            "shopNo": "{n}-do'kon"
+        },
+        "shopCard": {
+            "verifiedRetail": "Tasdiqlangan sotuvchi",
+            "verifiedWholesale": "Tasdiqlangan ulgurji sotuvchi",
+            "productsN": "{n} ta"
         }
     }
 }

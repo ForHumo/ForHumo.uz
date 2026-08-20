@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Heart, LogIn } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
@@ -20,6 +21,8 @@ interface Props {
 export function BnFavoritesClient({ initial, unauthenticated }: Props) {
     const router = useRouter();
     const { status } = useSession();
+    const t = useTranslations("bn.favorites");
+    const tAuth = useTranslations("bn.auth");
     const [items, setItems] = useState<BnProductDTO[]>(initial);
     const notAuth = unauthenticated || status === "unauthenticated";
 
@@ -38,7 +41,7 @@ export function BnFavoritesClient({ initial, unauthenticated }: Props) {
     if (notAuth) {
         return (
             <Wrap>
-                <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">Sevimlilar</h1>
+                <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">{t("title")}</h1>
                 <div
                     className="max-w-[440px] mx-auto p-7 rounded-3xl text-center"
                     style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
@@ -49,9 +52,9 @@ export function BnFavoritesClient({ initial, unauthenticated }: Props) {
                     >
                         <Heart className="w-7 h-7" />
                     </span>
-                    <p className="text-[18px] font-black mb-2">Kiring va davom eting</p>
+                    <p className="text-[18px] font-black mb-2">{t("signInTitle")}</p>
                     <p className="text-[13.5px] leading-relaxed mb-5" style={{ color: BN.text2 }}>
-                        Yoqqan mahsulotlarni saqlash uchun Humo ID bilan kiring.
+                        {t("signInText")}
                     </p>
                     <button
                         onClick={() => signIn("google")}
@@ -59,7 +62,7 @@ export function BnFavoritesClient({ initial, unauthenticated }: Props) {
                         style={{ background: BN.gold, color: BN.onGold }}
                     >
                         <LogIn className="w-5 h-5" />
-                        Humo ID bilan kirish
+                        {tAuth("signInWithHumoID")}
                     </button>
                 </div>
             </Wrap>
@@ -69,18 +72,18 @@ export function BnFavoritesClient({ initial, unauthenticated }: Props) {
     if (items.length === 0) {
         return (
             <Wrap>
-                <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">Sevimlilar</h1>
+                <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">{t("title")}</h1>
                 <BnEmpty
                     icon={<Heart className="w-6 h-6" />}
-                    title="Hali saqlangan mahsulot yo'q"
-                    text="Mahsulot sahifasida yurak belgisini bosing — bu yerda to'planadi."
+                    title={t("emptyTitle")}
+                    text={t("emptyText")}
                     action={
                         <BnLink
                             href="/"
                             className="inline-flex h-11 px-5 items-center rounded-xl text-[14px] font-black"
                             style={{ background: BN.gold, color: BN.onGold }}
                         >
-                            Mahsulotlarni ko&apos;rish
+                            {t("browse")}
                         </BnLink>
                     }
                 />
@@ -91,7 +94,7 @@ export function BnFavoritesClient({ initial, unauthenticated }: Props) {
     return (
         <Wrap>
             <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">
-                Sevimlilar <span className="text-[15px] font-bold" style={{ color: BN.text3 }}>{items.length} ta</span>
+                {t("title")} <span className="text-[15px] font-bold" style={{ color: BN.text3 }}>{items.length} {t("countUnit")}</span>
             </h1>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 {items.map(p => (
@@ -99,7 +102,7 @@ export function BnFavoritesClient({ initial, unauthenticated }: Props) {
                         <BnProductCard p={p} compact />
                         <button
                             onClick={() => remove(p.id)}
-                            aria-label="Sevimlilardan o'chirish"
+                            aria-label={t("removeAria")}
                             className="absolute top-3 right-3 w-8 h-8 grid place-items-center rounded-full backdrop-blur-sm transition-transform active:scale-90"
                             style={{ background: BN.glass, color: BN.err }}
                         >

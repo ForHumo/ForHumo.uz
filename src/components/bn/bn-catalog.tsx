@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { BnLink } from "./bn-nav";
 import { SlidersHorizontal, X, Search, ChevronRight, Store, Package } from "lucide-react";
 import { BN, fmtPrice } from "@/lib/bn-theme";
@@ -10,12 +11,12 @@ import type { BnMarketDTO, BnProductDTO } from "@/lib/bn-data";
 
 type SortKey = "new" | "cheap" | "price_asc" | "price_desc" | "rating";
 
-const SORTS: { key: SortKey; label: string }[] = [
-    { key: "new",        label: "Yangi" },
-    { key: "cheap",      label: "Bozordan arzon" },
-    { key: "price_asc",  label: "Narx: arzondan" },
-    { key: "price_desc", label: "Narx: qimmatdan" },
-    { key: "rating",     label: "Reyting" },
+const SORT_KEYS: { key: SortKey; labelKey: string }[] = [
+    { key: "new",        labelKey: "sortNew" },
+    { key: "cheap",      labelKey: "sortCheap" },
+    { key: "price_asc",  labelKey: "sortPriceAsc" },
+    { key: "price_desc", labelKey: "sortPriceDesc" },
+    { key: "rating",     labelKey: "sortRating" },
 ];
 
 export interface BnCatalogCategoryDTO {
@@ -42,6 +43,10 @@ interface Props {
 export function BnCatalog({
     initialProducts, markets, category, activeSubSlug, query, initialSort = "new",
 }: Props) {
+    const t = useTranslations("bn.catalog");
+    const tCrumb = useTranslations("bn.breadcrumb");
+    const tNav = useTranslations("bn.nav");
+    const locale = useLocale();
     const [sort, setSort] = useState<SortKey>(initialSort);
     const [filterOpen, setFilterOpen] = useState(false);
     const [marketSlug, setMarketSlug] = useState<string | null>(null);
@@ -86,14 +91,14 @@ export function BnCatalog({
     }
 
     const title = subCategory?.name ?? category?.name
-        ?? (query ? `"${query}" bo'yicha natijalar` : "Barcha mahsulotlar");
+        ?? (query ? t("searchResults", { q: query }) : t("allProducts"));
 
     return (
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-16">
             {/* Sarlavha */}
             <div className="mb-5">
                 <nav className="flex items-center gap-1.5 text-[12px] mb-2.5 flex-wrap" style={{ color: BN.text3 }}>
-                    <BnLink href="/" className="hover:opacity-70 transition-colors">Bosh sahifa</BnLink>
+                    <BnLink href="/" className="hover:opacity-70 transition-colors">{tCrumb("home")}</BnLink>
                     <ChevronRight className="w-3 h-3" />
                     {category && subCategory ? (
                         <>
@@ -104,12 +109,12 @@ export function BnCatalog({
                             <span style={{ color: BN.text2 }}>{subCategory.name}</span>
                         </>
                     ) : (
-                        <span style={{ color: BN.text2 }}>{category?.name ?? "Katalog"}</span>
+                        <span style={{ color: BN.text2 }}>{category?.name ?? t("catalog")}</span>
                     )}
                 </nav>
                 <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight leading-tight">{title}</h1>
                 <p className="text-[13px] mt-1.5" style={{ color: BN.text3 }}>
-                    {items.length.toLocaleString("uz-UZ")} ta mahsulot topildi
+                    {t("productsFound", { n: items.length.toLocaleString(locale) })}
                 </p>
             </div>
 
@@ -142,7 +147,7 @@ export function BnCatalog({
                     }}
                 >
                     <SlidersHorizontal className="w-4 h-4" />
-                    Filtr
+                    {t("filter")}
                     {activeFilters > 0 && (
                         <span
                             className="min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full text-[10px] font-black"
@@ -155,7 +160,7 @@ export function BnCatalog({
 
                 <div className="w-px h-6 flex-shrink-0" style={{ background: BN.border }} />
 
-                {SORTS.map(s => (
+                {SORT_KEYS.map(s => (
                     <button
                         key={s.key}
                         onClick={() => { setSort(s.key); if (s.key === "cheap") setOnlyCheap(true); }}
@@ -165,7 +170,7 @@ export function BnCatalog({
                             color: sort === s.key ? BN.text : BN.text3,
                         }}
                     >
-                        {s.label}
+                        {t(s.labelKey)}
                     </button>
                 ))}
             </div>
@@ -174,12 +179,8 @@ export function BnCatalog({
             {items.length === 0 ? (
                 <BnEmpty
                     icon={<Search className="w-6 h-6" />}
-                    title="Hech narsa topilmadi"
-                    text={
-                        activeFilters
-                            ? "Filtrlarni yumshatib ko'ring."
-                            : "Boshqa so'z bilan qidirib ko'ring yoki kategoriyalarni ko'rib chiqing."
-                    }
+                    title={t("emptyTitle")}
+                    text={activeFilters ? t("emptyFiltered") : t("emptyGeneric")}
                     action={
                         activeFilters ? (
                             <button
@@ -187,7 +188,7 @@ export function BnCatalog({
                                 className="h-11 px-5 rounded-xl text-[14px] font-black"
                                 style={{ background: BN.gold, color: BN.onGold }}
                             >
-                                Filtrlarni tozalash
+                                {t("resetFilters")}
                             </button>
                         ) : (
                             <BnLink
@@ -195,7 +196,7 @@ export function BnCatalog({
                                 className="inline-flex h-11 px-5 items-center rounded-xl text-[14px] font-black"
                                 style={{ background: BN.gold, color: BN.onGold }}
                             >
-                                Bosh sahifaga
+                                {t("toHome")}
                             </BnLink>
                         )
                     }
@@ -222,7 +223,7 @@ export function BnCatalog({
                             className="sticky top-0 flex items-center justify-between h-16 px-4"
                             style={{ background: BN.surface, borderBottom: `1px solid ${BN.border}` }}
                         >
-                            <span className="font-black text-[16px]">Filtr</span>
+                            <span className="font-black text-[16px]">{t("filter")}</span>
                             <div className="flex items-center gap-2">
                                 {activeFilters > 0 && (
                                     <button
@@ -230,12 +231,12 @@ export function BnCatalog({
                                         className="text-[13px] font-bold"
                                         style={{ color: BN.gold }}
                                     >
-                                        Tozalash
+                                        {t("reset")}
                                     </button>
                                 )}
                                 <button
                                     onClick={() => setFilterOpen(false)}
-                                    aria-label="Yopish"
+                                    aria-label={tNav("close")}
                                     className="w-9 h-9 grid place-items-center rounded-lg"
                                     style={{ background: BN.surfaceUp }}
                                 >
@@ -245,20 +246,20 @@ export function BnCatalog({
                         </div>
 
                         <div className="p-4 space-y-6">
-                            <FilterGroup title="Tez tanlash">
+                            <FilterGroup title={t("groupQuick")}>
                                 <Toggle checked={onlyCheap} onChange={setOnlyCheap}
-                                    label="Bozor narxidan arzon" />
+                                    label={t("quickCheap")} />
                                 <Toggle checked={onlyInspect} onChange={setOnlyInspect}
-                                    label="Ko'rib sotib olish mumkin" />
+                                    label={t("quickInspect")} />
                                 <Toggle checked={onlyDelivery} onChange={setOnlyDelivery}
-                                    label="Yetkazib berish bor" />
+                                    label={t("quickDelivery")} />
                             </FilterGroup>
 
-                            <FilterGroup title="Bozor">
+                            <FilterGroup title={t("groupMarket")}>
                                 <Radio
                                     checked={marketSlug === null}
                                     onChange={() => setMarketSlug(null)}
-                                    label="Barcha bozorlar va do'konlar"
+                                    label={t("allMarkets")}
                                 />
                                 {markets.map(m => (
                                     <Radio
@@ -270,13 +271,13 @@ export function BnCatalog({
                                 ))}
                             </FilterGroup>
 
-                            <FilterGroup title="Eng yuqori narx">
+                            <FilterGroup title={t("groupMaxPrice")}>
                                 {[500_000, 1_000_000, 3_000_000, 10_000_000].map(v => (
                                     <Radio
                                         key={v}
                                         checked={maxPrice === v}
                                         onChange={() => setMaxPrice(maxPrice === v ? null : v)}
-                                        label={`${fmtPrice(v)} gacha`}
+                                        label={t("maxPriceUpTo", { price: fmtPrice(v) })}
                                     />
                                 ))}
                             </FilterGroup>
@@ -291,7 +292,7 @@ export function BnCatalog({
                                 className="w-full h-12 rounded-2xl text-[15px] font-black"
                                 style={{ background: BN.gold, color: BN.onGold }}
                             >
-                                {items.length} ta mahsulotni ko&apos;rish
+                                {t("viewN", { n: items.length })}
                             </button>
                         </div>
                     </div>
@@ -353,17 +354,18 @@ function Radio({ checked, onChange, label }: { checked: boolean; onChange: () =>
 
 /** Bozorlar ro'yxati sahifasi */
 export function BnMarketsList({ markets }: { markets: BnMarketDTO[] }) {
+    const t = useTranslations("bn.markets");
     return (
         <div className="mx-auto max-w-[1280px] px-4 py-6 pb-16">
-            <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-2">Bozorlar</h1>
+            <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-2">{t("title")}</h1>
             <p className="text-[13.5px] mb-6 max-w-[600px] leading-relaxed" style={{ color: BN.text2 }}>
-                Jismoniy bozorlar — do&apos;konlarni ko&apos;rib, mahsulotni band qilib borib ko&apos;rishingiz mumkin.
+                {t("desc")}
             </p>
             {markets.length === 0 ? (
                 <BnEmpty
                     icon={<Store className="w-6 h-6" />}
-                    title="Hozircha bozor ro'yxatga olinmagan"
-                    text="Tez orada Toshkent bozorlari ochiladi."
+                    title={t("emptyTitle")}
+                    text={t("emptyText")}
                 />
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -391,7 +393,7 @@ export function BnMarketsList({ markets }: { markets: BnMarketDTO[] }) {
                                 <p className="text-[12.5px] mb-2" style={{ color: BN.text3 }}>{m.district}</p>
                                 <div className="flex items-center gap-3 text-[12px]" style={{ color: BN.text2 }}>
                                     <span className="flex items-center gap-1">
-                                        <Store className="w-3.5 h-3.5" />{m.shopCount} do&apos;kon
+                                        <Store className="w-3.5 h-3.5" />{t("shopN", { n: m.shopCount })}
                                     </span>
                                     {m.workHours && (
                                         <span className="flex items-center gap-1">
