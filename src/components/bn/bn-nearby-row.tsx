@@ -7,9 +7,16 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { MapPin, ChevronRight, Store, Loader2, Navigation } from "lucide-react";
+import { MapPin, ChevronRight, Store, Loader2, Navigation, Route } from "lucide-react";
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
+
+function directionsUrl(destLat: number, destLng: number, originLat?: number, originLng?: number): string {
+    const base = "https://www.google.com/maps/dir/?api=1&destination=" + destLat + "," + destLng;
+    return originLat != null && originLng != null
+        ? base + "&origin=" + originLat + "," + originLng
+        : base;
+}
 
 interface NearbyShop {
     slug: string;
@@ -43,6 +50,7 @@ export function BnNearbyRow() {
     const t = useTranslations("bn.nearby");
     const [state, setState] = useState<"idle" | "prompt" | "loading" | "ready" | "denied" | "empty">("idle");
     const [shops, setShops] = useState<NearbyShop[]>([]);
+    const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -68,6 +76,7 @@ export function BnNearbyRow() {
 
     async function loadNearby(lat: number, lng: number) {
         setState("loading");
+        setUserLoc({ lat, lng });
         try {
             const r = await fetch(`/api/bn/nearby?lat=${lat}&lng=${lng}&radius=5&limit=12`);
             if (!r.ok) { setState("empty"); return; }
@@ -147,44 +156,52 @@ export function BnNearbyRow() {
             ) : (
                 <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1" data-no-swipe>
                     {shops.map(s => (
-                        <BnLink key={s.slug}
-                            href={`/d/${s.slug}`}
-                            className="flex-shrink-0 w-[220px] p-3 rounded-2xl flex items-center gap-2.5 transition-transform active:scale-[0.99]"
+                        <div key={s.slug}
+                            className="flex-shrink-0 w-[240px] p-3 rounded-2xl flex items-center gap-2.5 transition-transform active:scale-[0.99]"
                             style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
-                            {/* Logo */}
-                            <span className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 grid place-items-center"
-                                style={{ background: BN.surfaceUp }}>
-                                {s.logoUrl ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={s.logoUrl} alt="" loading="lazy" className="w-full h-full object-cover" />
-                                ) : (
-                                    <Store className="w-5 h-5" style={{ color: BN.text3 }} />
-                                )}
-                            </span>
-                            {/* Nom + masofa */}
-                            <span className="flex-1 min-w-0">
-                                <span className="flex items-center gap-1.5">
-                                    <span className="block text-[12.5px] font-black truncate">{s.name}</span>
-                                    {s.tier !== "NEW" && (
-                                        <span className="px-1 py-0.5 rounded text-[9px] font-black leading-none flex-shrink-0"
-                                            style={{ background: `${TIER_META[s.tier].color}1F`, color: TIER_META[s.tier].color }}>
-                                            {TIER_META[s.tier].label}
-                                        </span>
+                            {/* Do'konga o'tish — asosiy bosish */}
+                            <BnLink href={`/d/${s.slug}`}
+                                className="flex-1 min-w-0 flex items-center gap-2.5">
+                                <span className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 grid place-items-center"
+                                    style={{ background: BN.surfaceUp }}>
+                                    {s.logoUrl ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={s.logoUrl} alt="" loading="lazy" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Store className="w-5 h-5" style={{ color: BN.text3 }} />
                                     )}
                                 </span>
-                                <span className="flex items-center gap-1 text-[10.5px] mt-0.5" style={{ color: BN.text3 }}>
-                                    <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
-                                    <span className="truncate">
-                                        {s.marketName ? s.marketName : s.city}
+                                <span className="flex-1 min-w-0">
+                                    <span className="flex items-center gap-1.5">
+                                        <span className="block text-[12.5px] font-black truncate">{s.name}</span>
+                                        {s.tier !== "NEW" && (
+                                            <span className="px-1 py-0.5 rounded text-[9px] font-black leading-none flex-shrink-0"
+                                                style={{ background: `${TIER_META[s.tier].color}1F`, color: TIER_META[s.tier].color }}>
+                                                {TIER_META[s.tier].label}
+                                            </span>
+                                        )}
+                                    </span>
+                                    <span className="flex items-center gap-1 text-[10.5px] mt-0.5" style={{ color: BN.text3 }}>
+                                        <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
+                                        <span className="truncate">
+                                            {s.marketName ? s.marketName : s.city}
+                                        </span>
+                                    </span>
+                                    <span className="mt-1 inline-block text-[10.5px] font-black px-1.5 py-0.5 rounded"
+                                        style={{ background: BN.goldSoft, color: BN.gold }}>
+                                        {formatDist(s.distKm)}
                                     </span>
                                 </span>
-                                <span className="mt-1 inline-block text-[10.5px] font-black px-1.5 py-0.5 rounded"
-                                    style={{ background: BN.goldSoft, color: BN.gold }}>
-                                    {formatDist(s.distKm)}
-                                </span>
-                            </span>
-                            <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: BN.text3 }} />
-                        </BnLink>
+                            </BnLink>
+                            {/* Route — Google Maps ochish (yangi tab) */}
+                            <a href={directionsUrl(s.lat, s.lng, userLoc?.lat, userLoc?.lng)}
+                                target="_blank" rel="noopener"
+                                aria-label={t("routeAria", { name: s.name })}
+                                className="w-9 h-9 rounded-lg grid place-items-center flex-shrink-0 transition-transform active:scale-[0.9]"
+                                style={{ background: BN.gold, color: BN.onGold }}>
+                                <Route className="w-4 h-4" />
+                            </a>
+                        </div>
                     ))}
                 </div>
             )}

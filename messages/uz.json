@@ -1205,7 +1205,8 @@
       "promptCta": "Joyni topish",
       "title": "Sizga yaqin do'konlar",
       "subtitle": "{n} ta do'kon 5 km ichida",
-      "loading": "Yuklanmoqda..."
+      "loading": "Yuklanmoqda...",
+      "routeAria": "{name} do'koniga marshrut"
     }
   }
 }

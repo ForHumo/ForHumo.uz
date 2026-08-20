@@ -1205,7 +1205,8 @@
       "promptCta": "Locate me",
       "title": "Shops near you",
       "subtitle": "{n} shops within 5 km",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "routeAria": "Directions to {name}"
     }
   }
 }

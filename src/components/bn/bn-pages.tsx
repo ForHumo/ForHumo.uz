@@ -248,6 +248,15 @@ export function BnShopPage({
                 <section className="mt-10">
                     <BnSectionTitle title="Xarita" subtitle="Do'konga borish uchun" />
                     <BnMapView lat={s.lat!} lng={s.lng!} label={s.name} height={240} />
+                    <div className="mt-3 flex">
+                        <a href={`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}`}
+                            target="_blank" rel="noopener"
+                            className="inline-flex items-center gap-2 h-11 px-5 rounded-2xl text-[13.5px] font-black transition-transform active:scale-[0.97]"
+                            style={{ background: BN.gold, color: BN.onGold }}>
+                            <Navigation className="w-4 h-4" />
+                            Route ochish
+                        </a>
+                    </div>
                 </section>
             )}
 
