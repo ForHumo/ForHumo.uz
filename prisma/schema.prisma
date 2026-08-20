@@ -3037,6 +3037,7 @@ model BnBroadcast {
   tag        String?
   segment    String                              // "all" | "sellers" | "buyers"
   recipients Int      @default(0)                // qancha profil'ga yuborildi
+  clickCount Int      @default(0)                // notification click sanog'i (CTR uchun)
   tookMs     Int      @default(0)
   createdAt  DateTime @default(now())
 

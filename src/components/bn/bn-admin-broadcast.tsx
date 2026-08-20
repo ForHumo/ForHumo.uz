@@ -15,6 +15,8 @@ interface HistoryRow {
     url: string | null;
     segment: string;
     recipients: number;
+    clickCount: number;
+    ctr: number;   // % (0-100)
     tookMs: number;
     createdAt: string;
     owner: { username: string | null; name: string | null; humoId: string | null } | null;
@@ -258,7 +260,11 @@ export function BnAdminBroadcast() {
                                             </div>
                                             <div className="text-right flex-shrink-0">
                                                 <span className="text-[11px] font-black tabular-nums" style={{ color: BN.gold }}>
-                                                    {h.recipients}
+                                                    {h.clickCount}/{h.recipients}
+                                                </span>
+                                                <span className="block text-[10px] tabular-nums"
+                                                    style={{ color: h.ctr >= 10 ? BN.ok : h.ctr >= 3 ? BN.gold : BN.text3 }}>
+                                                    CTR {h.ctr}%
                                                 </span>
                                                 <span className="block text-[10px]" style={{ color: BN.text3 }}>
                                                     {timeAgo(h.createdAt)}

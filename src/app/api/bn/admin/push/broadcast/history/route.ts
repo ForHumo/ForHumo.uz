@@ -36,6 +36,8 @@ export async function GET() {
             url: r.url,
             segment: r.segment,
             recipients: r.recipients,
+            clickCount: r.clickCount,
+            ctr: r.recipients > 0 ? Math.round((r.clickCount / r.recipients) * 1000) / 10 : 0,
             tookMs: r.tookMs,
             createdAt: r.createdAt.toISOString(),
             owner: byId.get(r.ownerId) ?? null,

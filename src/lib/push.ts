@@ -22,6 +22,9 @@ export interface PushPayload {
     body: string;
     url?: string;       // bosilganda ochiladi
     tag?: string;
+    /** Ixtiyoriy tracker: notificationclick paytida shu id serverga POST qilinadi
+     *  (BN broadcast CTR uchun). sw.js `data.trackClickPath`ga jo'natadi. */
+    trackClickPath?: string;
 }
 
 // Bitta foydalanuvchining barcha qurilmalariga push yuborish.

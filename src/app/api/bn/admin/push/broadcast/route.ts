@@ -69,20 +69,32 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "no_recipients", segment }, { status: 400 });
     }
 
-    // Push yuborish — parallel, per-user xato butun oqimni to'xtatmaydi
+    // Avval audit yozuvi (broadcast id kerak — push payload'iga trackClickPath uchun)
     const startedAt = Date.now();
-    await Promise.all(profileIds.map(id => sendPushToProfile(id, { title, body, url, tag })));
-    const took = Date.now() - startedAt;
-
-    // Audit yozuvi (rate limit ham shu jadval'dan)
     const record = await prisma.bnBroadcast.create({
         data: {
             ownerId: auth.profileId,
             title, body, url: url ?? null, tag,
-            segment, recipients: profileIds.length, tookMs: took,
+            segment, recipients: profileIds.length, tookMs: 0,
         },
         select: { id: true, createdAt: true },
     }).catch(() => null);
+
+    const trackClickPath = record ? `/api/bn/track/broadcast-click/${record.id}` : undefined;
+
+    // Push yuborish — parallel, per-user xato butun oqimni to'xtatmaydi
+    await Promise.all(profileIds.map(id =>
+        sendPushToProfile(id, { title, body, url, tag, trackClickPath })
+    ));
+    const took = Date.now() - startedAt;
+
+    // tookMs'ni to'g'ri qiymat bilan yangilaymiz
+    if (record) {
+        await prisma.bnBroadcast.update({
+            where: { id: record.id },
+            data: { tookMs: took },
+        }).catch(() => { /* jim */ });
+    }
 
     console.log(`[bn-broadcast] owner=${auth.profileId} segment=${segment} recipients=${profileIds.length} took=${took}ms id=${record?.id ?? "n/a"}`);
 
