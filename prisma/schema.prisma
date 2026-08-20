@@ -2963,6 +2963,34 @@ model BnBoycottBrand {
   @@index([addedAt])
 }
 
+// ── Referral (marketing viralligi) ───────────────────────────────────────────
+// Foydalanuvchi o'z linkini ulashadi (bozornarxida.uz/r/<code>) — code = username
+// yoki humoId. Yangi tashrifchi shu linkdan kirsa attribution capture'da ?ref=code
+// saqlanadi. Signup paytida BnReferral yaratiladi (PENDING). Chaqirilgan
+// foydalanuvchi birinchi COMPLETED buyurtma qilsa — REWARDED bo'ladi va ikkisiga
+// ham For Pay hamyoniga bonus tushadi (yuboruvchiga ko'proq).
+model BnReferral {
+  id             String              @id @default(cuid())
+  inviterId      String                                          // Chaqiruvchi UserProfile.id
+  inviteeId      String              @unique                     // Chaqirilgan UserProfile.id (bir odam bir marta)
+  code           String                                          // Ishlatilgan code (audit uchun)
+  status         BnReferralStatus    @default(PENDING)
+  rewardOrderId  String?                                         // Qaysi buyurtma tetikladi
+  inviterReward  Int                 @default(0)                 // Chaqiruvchi olgan bonus (so'm)
+  inviteeReward  Int                 @default(0)                 // Chaqirilgan olgan bonus (so'm)
+  rewardedAt     DateTime?
+  createdAt      DateTime            @default(now())
+
+  @@index([inviterId, status])
+  @@index([status, createdAt])
+}
+
+enum BnReferralStatus {
+  PENDING     // Chaqirilgan hisob ochildi, lekin buyurtma yo'q
+  REWARDED    // Chaqirilgan birinchi COMPLETED buyurtmani berdi — bonus to'landi
+  CANCELLED   // Bekor (admin qo'lda yoki fraud)
+}
+
 // ── Zaxira usernamelar ───────────────────────────────────────────────────────
 // Foydalanuvchi olmaydigan @nomlar (tizim, brend, mashhur odam, davlat,
 // PERSONAL — yaqin odamlarga ajratilgan). VIP toifa keyin 10K+ faol

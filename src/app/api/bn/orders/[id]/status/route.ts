@@ -17,6 +17,7 @@ import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 import { refundOrder, settleOrder } from "@/lib/bn-settle";
 import { bnNotify } from "@/lib/bn-notify";
+import { awardReferralOnFirstCompleted } from "@/lib/bn-referral";
 
 const ALLOWED_FROM: Record<string, Set<string>> = {
     PLACED:    new Set(["CONFIRMED", "CANCELLED"]),
@@ -113,6 +114,10 @@ export async function POST(
     // Escrow harakati
     if (next === "COMPLETED") {
         const s = await settleOrder(order.id);
+        // Referral bonus (fail-safe, javobni kechiktirmasin)
+        after(async () => {
+            await awardReferralOnFirstCompleted(order.buyerId, order.id);
+        });
         return NextResponse.json({ ok: true, settled: s.ok, reason: s.reason });
     }
     if (next === "CANCELLED") {

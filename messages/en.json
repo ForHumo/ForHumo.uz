@@ -1100,6 +1100,29 @@
             "a5_2": "In the three-dot menu on the product or shop page pick 'Report' → choose a reason. The admin panel is notified immediately and AI-moderation runs automatically.",
             "q5_3": "What's required to leave a review?",
             "a5_3": "Only a buyer with a COMPLETED order can review. One review per product — editable."
+        },
+        "referral": {
+            "title": "Invite a friend",
+            "subtitle": "Your friend places their first order — both of you get a bonus.",
+            "youGet": "You get",
+            "friendGets": "Your friend gets",
+            "perFriend": "for every invited friend",
+            "firstOrder": "for their first order",
+            "yourLink": "Your link",
+            "copy": "Copy",
+            "copied": "Copied ✓",
+            "shareTelegram": "Share on Telegram",
+            "shareWhatsApp": "Share on WhatsApp",
+            "shareText": "Bozor Narxida — Tashkent's markets and shops online, below market price. Use my link and get a bonus on your first order: {url}",
+            "stats": "Statistics",
+            "statPending": "Pending",
+            "statRewarded": "Rewarded",
+            "statTotalEarned": "Total earned",
+            "noCode": "To get a referral link, pick a username in Nexus first",
+            "howItWorks": "How it works",
+            "step1": "1. Share your link on Telegram, WhatsApp or SMS",
+            "step2": "2. Your friend opens it and signs up",
+            "step3": "3. They complete their first order — the bonus lands in both wallets"
         }
     }
 }

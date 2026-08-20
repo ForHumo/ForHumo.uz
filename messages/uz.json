@@ -1100,6 +1100,29 @@
             "a5_2": "Mahsulot yoki do'kon sahifasidagi uch nuqta menyusidan 'Shikoyat qilish' → sabab tanlaysiz. Admin panel darhol xabar oladi va AI-moderatsiya avtomatik tekshiradi.",
             "q5_3": "Sharh qoldirish uchun nima kerak?",
             "a5_3": "Faqat buyurtma COMPLETED bo'lgan xaridor sharh qoldira oladi. Bir mahsulot uchun bir marta sharh — o'zgartirish mumkin."
+        },
+        "referral": {
+            "title": "Do'stni taklif qiling",
+            "subtitle": "Do'stingiz birinchi buyurtma bersa — ikkalangizga bonus.",
+            "youGet": "Siz olasiz",
+            "friendGets": "Do'stingiz oladi",
+            "perFriend": "har chaqirilgan do'st uchun",
+            "firstOrder": "birinchi buyurtmasi uchun",
+            "yourLink": "Sizning linkingiz",
+            "copy": "Nusxa olish",
+            "copied": "Nusxalandi ✓",
+            "shareTelegram": "Telegramda ulash",
+            "shareWhatsApp": "WhatsApp'da ulash",
+            "shareText": "Bozor Narxida — Toshkent bozorlari va do'konlarini onlayn ko'ring, bozor narxidan arzon toping. Mening havolam bilan kirib birinchi buyurtmangizga bonus oling: {url}",
+            "stats": "Statistika",
+            "statPending": "Kutilmoqda",
+            "statRewarded": "Bonusli",
+            "statTotalEarned": "Jami daromad",
+            "noCode": "Referral link olish uchun avval Nexus'da username tanlang",
+            "howItWorks": "Qanday ishlaydi",
+            "step1": "1. Linkingizni Telegram, WhatsApp yoki SMS orqali ulashing",
+            "step2": "2. Do'stingiz shu link orqali kirib ro'yxatdan o'tsin",
+            "step3": "3. U birinchi buyurtmani yakunlagach — ikkangizga hamyoningizga bonus tushadi"
         }
     }
 }

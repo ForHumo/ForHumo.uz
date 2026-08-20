@@ -9,7 +9,7 @@
 //
 // Tab: Umumiy / Buyurtmalar / Mahsulotlar / Do'kon / Pul
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
@@ -17,7 +17,8 @@ import {
     LayoutDashboard, Package, ShoppingBag, Store, Wallet, Plus, X,
     TrendingUp, Eye, LogIn, ArrowUpRight, Check, Loader2, Truck,
     Clock, ChevronRight, MapPin, Phone, Building2, Trash2, EyeOff,
-    Sparkles, ShieldCheck, AlertTriangle, Upload, Wand2,
+    Sparkles, ShieldCheck, AlertTriangle, Upload, Wand2, Users,
+    Send, MessageCircle,
 } from "lucide-react";
 import { BN, fmtPrice, ORDER_STATUS_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
@@ -1387,13 +1388,178 @@ function MoneyTab({ balance, orderCount }: { balance: number; orderCount: number
                 href={`https://forhumo.uz/${locale}/pay`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl text-[14px] font-bold"
+                className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl text-[14px] font-bold mb-6"
                 style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text }}
             >
                 <Wallet className="w-4 h-4" />
                 {t("payOpen")}
                 <ArrowUpRight className="w-4 h-4" />
             </a>
+
+            <BnReferralCard />
+        </div>
+    );
+}
+
+// ── REFERRAL KARTASI ─────────────────────────────────────────────────────────
+
+interface ReferralData {
+    code: string | null;
+    url: string | null;
+    pending: number;
+    rewarded: number;
+    totalEarned: number;
+    inviterBonus: number;
+    inviteeBonus: number;
+}
+
+function BnReferralCard() {
+    const t = useTranslations("bn.referral");
+    const [data, setData] = useState<ReferralData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+        fetch("/api/bn/referral")
+            .then(r => r.json())
+            .then((d: ReferralData) => setData(d))
+            .catch(() => { /* ignore */ })
+            .finally(() => setLoading(false));
+    }, []);
+
+    async function copyLink() {
+        if (!data?.url) return;
+        try {
+            await navigator.clipboard.writeText(data.url);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1800);
+        } catch { /* ignore */ }
+    }
+
+    if (loading) {
+        return (
+            <div className="p-6 rounded-2xl flex items-center justify-center"
+                style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
+                <Loader2 className="w-5 h-5 animate-spin" style={{ color: BN.text3 }} />
+            </div>
+        );
+    }
+    if (!data) return null;
+
+    const shareText = data.url ? t("shareText", { url: data.url }) : "";
+    const tgUrl = data.url
+        ? `https://t.me/share/url?url=${encodeURIComponent(data.url)}&text=${encodeURIComponent(shareText)}`
+        : "#";
+    const waUrl = data.url
+        ? `https://wa.me/?text=${encodeURIComponent(shareText)}`
+        : "#";
+
+    return (
+        <div className="p-5 sm:p-6 rounded-2xl"
+            style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}>
+            <div className="flex items-start gap-3 mb-4">
+                <span className="w-11 h-11 rounded-xl grid place-items-center flex-shrink-0"
+                    style={{ background: BN.goldSoft, color: BN.gold }}>
+                    <Users className="w-5 h-5" />
+                </span>
+                <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-black">{t("title")}</p>
+                    <p className="text-[12.5px] leading-relaxed mt-0.5" style={{ color: BN.text2 }}>
+                        {t("subtitle")}
+                    </p>
+                </div>
+            </div>
+
+            {/* Bonuslar */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+                <div className="p-3 rounded-xl" style={{ background: BN.surfaceUp }}>
+                    <p className="text-[10.5px] font-bold uppercase tracking-wider" style={{ color: BN.text3 }}>
+                        {t("youGet")}
+                    </p>
+                    <p className="text-[18px] font-black tabular-nums leading-tight mt-1" style={{ color: BN.gold }}>
+                        {fmtPrice(data.inviterBonus)}
+                    </p>
+                    <p className="text-[10.5px] mt-0.5" style={{ color: BN.text3 }}>{t("perFriend")}</p>
+                </div>
+                <div className="p-3 rounded-xl" style={{ background: BN.surfaceUp }}>
+                    <p className="text-[10.5px] font-bold uppercase tracking-wider" style={{ color: BN.text3 }}>
+                        {t("friendGets")}
+                    </p>
+                    <p className="text-[18px] font-black tabular-nums leading-tight mt-1" style={{ color: BN.info }}>
+                        {fmtPrice(data.inviteeBonus)}
+                    </p>
+                    <p className="text-[10.5px] mt-0.5" style={{ color: BN.text3 }}>{t("firstOrder")}</p>
+                </div>
+            </div>
+
+            {/* Link */}
+            {data.url ? (
+                <>
+                    <p className="text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color: BN.text3 }}>
+                        {t("yourLink")}
+                    </p>
+                    <div className="flex items-center gap-2 mb-3">
+                        <input readOnly value={data.url}
+                            className="flex-1 h-11 px-3 rounded-xl text-[13px] tabular-nums outline-none"
+                            style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
+                            onFocus={e => e.currentTarget.select()}
+                        />
+                        <button onClick={copyLink}
+                            className="h-11 px-4 rounded-xl text-[12.5px] font-black flex-shrink-0 transition-colors"
+                            style={{ background: copied ? BN.ok : BN.gold, color: BN.onGold }}>
+                            {copied ? t("copied") : t("copy")}
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                        <a href={tgUrl} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-1.5 h-11 rounded-xl text-[13px] font-bold"
+                            style={{ background: "#229ED9", color: "#fff" }}>
+                            <Send className="w-4 h-4" />
+                            {t("shareTelegram")}
+                        </a>
+                        <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-1.5 h-11 rounded-xl text-[13px] font-bold"
+                            style={{ background: "#25D366", color: "#fff" }}>
+                            <MessageCircle className="w-4 h-4" />
+                            {t("shareWhatsApp")}
+                        </a>
+                    </div>
+
+                    {/* Statistika */}
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                        <StatBox label={t("statPending")} value={String(data.pending)} />
+                        <StatBox label={t("statRewarded")} value={String(data.rewarded)} />
+                        <StatBox label={t("statTotalEarned")} value={fmtPrice(data.totalEarned)} accent />
+                    </div>
+                </>
+            ) : (
+                <div className="p-3 rounded-xl text-[12.5px] mb-4"
+                    style={{ background: BN.surfaceUp, color: BN.text2 }}>
+                    {t("noCode")}
+                </div>
+            )}
+
+            {/* Qanday ishlaydi */}
+            <div className="pt-4" style={{ borderTop: `1px solid ${BN.border}` }}>
+                <p className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: BN.text3 }}>
+                    {t("howItWorks")}
+                </p>
+                <p className="text-[12.5px] leading-relaxed mb-1" style={{ color: BN.text2 }}>{t("step1")}</p>
+                <p className="text-[12.5px] leading-relaxed mb-1" style={{ color: BN.text2 }}>{t("step2")}</p>
+                <p className="text-[12.5px] leading-relaxed" style={{ color: BN.text2 }}>{t("step3")}</p>
+            </div>
+        </div>
+    );
+}
+
+function StatBox({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+    return (
+        <div className="p-2.5 rounded-lg text-center" style={{ background: BN.surfaceUp }}>
+            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: BN.text3 }}>{label}</p>
+            <p className="text-[14px] font-black tabular-nums mt-1" style={{ color: accent ? BN.gold : BN.text }}>
+                {value}
+            </p>
         </div>
     );
 }
