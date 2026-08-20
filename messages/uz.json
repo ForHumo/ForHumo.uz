@@ -982,7 +982,8 @@
       "reorderErr": "Xatolik",
       "fulfillPickup": "Do'kondan olib ketish",
       "fulfillDelivery": "Yetkazib berish",
-      "fulfillInspect": "Ko'rib sotib olish (24 soat band)"
+      "fulfillInspect": "Ko'rib sotib olish (24 soat band)",
+      "live": "Jonli — statuslar avto-yangilanadi"
     },
     "orderStatus": {
       "PLACED": "Kutilmoqda",

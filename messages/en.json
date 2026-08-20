@@ -982,7 +982,8 @@
       "reorderErr": "Error",
       "fulfillPickup": "Pick up from the shop",
       "fulfillDelivery": "Delivery",
-      "fulfillInspect": "Inspect before buying (24h hold)"
+      "fulfillInspect": "Inspect before buying (24h hold)",
+      "live": "Live — statuses update automatically"
     },
     "orderStatus": {
       "PLACED": "Pending",

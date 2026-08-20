@@ -3,7 +3,7 @@
 // BN xaridor buyurtmalari — ro'yxat + bitta buyurtma tafsiloti.
 // Server sahifadan initial ma'lumot keladi. Cancel amali client'da.
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
@@ -168,6 +168,24 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
     const meta = ORDER_STATUS_META[order.status];
     const canCancel = order.status === "PLACED";
 
+    // Live polling: har 8 soniyada status'ni tekshiramiz. Terminal holatlarda
+    // (COMPLETED/CANCELLED) to'xtaymiz. Server statusi o'zgargan bo'lsa
+    // router.refresh() to'liq RSC qayta yuklaydi (order timestamplari yangilanadi).
+    useEffect(() => {
+        if (order.status === "COMPLETED" || order.status === "CANCELLED") return;
+        let stopped = false;
+        const timer = setInterval(async () => {
+            if (stopped) return;
+            try {
+                const r = await fetch(`/api/bn/orders/${order.id}/live`, { cache: "no-store" });
+                if (!r.ok) return;
+                const d = await r.json();
+                if (d.status !== order.status) router.refresh();
+            } catch { /* ignore */ }
+        }, 8000);
+        return () => { stopped = true; clearInterval(timer); };
+    }, [order.id, order.status, router]);
+
     async function cancel() {
         if (!confirm(t("cancelConfirm") + (order.paymentMethod === "WALLET" ? t("cancelConfirmRefund") : ""))) return;
         setBusy(true); setErr(null);
@@ -206,9 +224,17 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                     <p className="text-[12.5px] mt-1" style={{ color: BN.text3 }}>{formatDate(order.placedAt, locale)}</p>
                 </div>
                 <span
-                    className="px-3 py-1.5 rounded-lg text-[12.5px] font-black leading-none"
+                    className="px-3 py-1.5 rounded-lg text-[12.5px] font-black leading-none inline-flex items-center gap-2"
                     style={{ background: `${meta.color}1F`, color: meta.color }}
                 >
+                    {!isTerminal && (
+                        <span className="relative flex items-center justify-center w-2 h-2" title={t("live")}>
+                            <span className="absolute inset-0 rounded-full animate-ping"
+                                style={{ background: meta.color, opacity: 0.6 }} />
+                            <span className="relative w-2 h-2 rounded-full"
+                                style={{ background: meta.color }} />
+                        </span>
+                    )}
                     {tStatus(order.status)}
                 </span>
             </div>
