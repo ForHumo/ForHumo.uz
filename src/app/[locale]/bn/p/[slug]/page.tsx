@@ -138,6 +138,8 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
                 similar={data.similar}
                 others={data.others}
                 soldRecent={data.soldRecent}
+                buyersRecent={data.buyersRecent}
+                viewersRecent={data.viewersRecent}
                 reviewVideos={data.reviewVideos.map(v => ({
                     id: v.id, title: v.title, thumbUrl: v.thumbUrl, views: v.views,
                 }))}

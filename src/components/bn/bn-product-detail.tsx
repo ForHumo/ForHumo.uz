@@ -31,14 +31,18 @@ interface Props {
     similar: BnProductDTO[];
     /** Boshqa do'konlar shu mahsulotni qanday narxda sotmoqda */
     others: BnProductDTO[];
-    /** Oxirgi 7 kunda sotilgan (ijtimoiy proof) */
+    /** Oxirgi 7 kunda sotilgan (ijtimoiy proof — order-item count) */
     soldRecent?: number;
+    /** Oxirgi 7 kunda noyob xaridorlar (distinct order.buyerId) */
+    buyersRecent?: number;
+    /** Oxirgi 7 kunda noyob ko'ruvchilar (VIEW event distinct profileId) */
+    viewersRecent?: number;
     /** Xaridor sharh reels (Nexus video tag=bn-review-<productId>) */
     reviewVideos?: ReviewVideo[];
 }
 
 export function BnProductDetail({
-    product, shop, similar, others, soldRecent = 0, reviewVideos = [],
+    product, shop, similar, others, soldRecent = 0, buyersRecent = 0, viewersRecent = 0, reviewVideos = [],
 }: Props) {
     const p = product;
     const router = useRouter();
@@ -473,12 +477,25 @@ export function BnProductDetail({
                             </p>
                         )}
 
-                        {soldRecent >= 3 && (
+                        {/* Ijtimoiy proof — prioritet: buyers > sold > viewers.
+                            Buyers (noyob xaridorlar) ijtimoiy signal sifatida "N kishi sotib
+                            oldi" (item count 5 lekin buyer 1 bo'lsa aldash bo'lardi). */}
+                        {buyersRecent >= 3 ? (
+                            <p className="flex items-center gap-1.5 text-[12.5px] mb-3" style={{ color: BN.ok }}>
+                                <TrendingDown className="w-3.5 h-3.5 flex-shrink-0" style={{ transform: "scaleY(-1)" }} />
+                                <strong className="tabular-nums">{buyersRecent}</strong> {t("buyersRecent")}
+                            </p>
+                        ) : soldRecent >= 3 ? (
                             <p className="flex items-center gap-1.5 text-[12.5px] mb-3" style={{ color: BN.ok }}>
                                 <TrendingDown className="w-3.5 h-3.5 flex-shrink-0" style={{ transform: "scaleY(-1)" }} />
                                 <strong className="tabular-nums">{soldRecent}</strong> {t("soldRecent")}
                             </p>
-                        )}
+                        ) : viewersRecent >= 20 ? (
+                            <p className="flex items-center gap-1.5 text-[12.5px] mb-3" style={{ color: BN.text2 }}>
+                                <Eye className="w-3.5 h-3.5 flex-shrink-0" style={{ color: BN.gold }} />
+                                <strong className="tabular-nums">{viewersRecent}</strong> {t("viewersRecent")}
+                            </p>
+                        ) : null}
 
                         <button
                             onClick={togglePriceWatch}

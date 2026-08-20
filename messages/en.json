@@ -608,7 +608,9 @@
       "holdOkBody": "Tell the seller this code. Valid until {t}.",
       "holdCode": "Code",
       "holdAlready": "This product is already reserved.",
-      "holdError": "An error occurred"
+      "holdError": "An error occurred",
+      "buyersRecent": "people bought in the last 7 days",
+      "viewersRecent": "people viewed in the last 7 days"
     },
     "cart": {
       "title": "Cart",

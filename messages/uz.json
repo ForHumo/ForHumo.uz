@@ -608,7 +608,9 @@
       "holdOkBody": "Sotuvchiga shu kodni ayting. Muddat: {t}gacha.",
       "holdCode": "Kod",
       "holdAlready": "Bu mahsulot allaqachon band qilingan.",
-      "holdError": "Xatolik yuz berdi"
+      "holdError": "Xatolik yuz berdi",
+      "buyersRecent": "kishi so'nggi 7 kunda sotib oldi",
+      "viewersRecent": "kishi so'nggi 7 kunda ko'rdi"
     },
     "cart": {
       "title": "Savat",

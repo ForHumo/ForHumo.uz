@@ -303,17 +303,39 @@ export async function getProductBySlug(slug: string, profileId: string | null = 
         if (!canSee) return null;
     }
 
-    // Ijtimoiy proof — oxirgi 7 kunda bu mahsulot uchun BnOrder items soni
+    // Ijtimoiy proof — oxirgi 7 kunda:
+    //   soldRecent   — nechta buyurtma qismi (order-item count)
+    //   buyersRecent — nechta noyob xaridor (order.buyerId distinct)
+    //   viewersRecent — nechta noyob foydalanuvchi ko'rgan (VIEW event)
     const weekAgo = new Date(Date.now() - 7 * 86400_000);
-    const soldRecent = await prisma.bnOrderItem.count({
-        where: {
-            productId: p.id,
-            order: {
-                status: { in: ["CONFIRMED", "READY", "COMPLETED"] },
-                placedAt: { gte: weekAgo },
+    const [soldRecent, buyerRows, viewerRows] = await Promise.all([
+        prisma.bnOrderItem.count({
+            where: {
+                productId: p.id,
+                order: {
+                    status: { in: ["CONFIRMED", "READY", "COMPLETED"] },
+                    placedAt: { gte: weekAgo },
+                },
             },
-        },
-    });
+        }),
+        prisma.bnOrderItem.findMany({
+            where: {
+                productId: p.id,
+                order: {
+                    status: { in: ["CONFIRMED", "READY", "COMPLETED"] },
+                    placedAt: { gte: weekAgo },
+                },
+            },
+            select: { order: { select: { buyerId: true } } },
+        }),
+        prisma.bnUserEvent.findMany({
+            where: { productId: p.id, type: "VIEW", createdAt: { gte: weekAgo } },
+            select: { profileId: true },
+            distinct: ["profileId"],
+        }),
+    ]);
+    const buyersRecent = new Set(buyerRows.map(r => r.order?.buyerId)).size;
+    const viewersRecent = viewerRows.length;
 
     // Boshqa do'konlar shu mahsulotni qanday narxda sotmoqda — narx solishtirish
     // (title'ning boshi bir xil bo'lsa, o'sha mahsulot deb hisoblaymiz)
@@ -357,6 +379,8 @@ export async function getProductBySlug(slug: string, profileId: string | null = 
     return {
         product: toProductDTO(p),
         others:  others.map(toProductDTO),
+        buyersRecent,
+        viewersRecent,
         similar: similar.map(toProductDTO),
         soldRecent,
         reviewVideos,
