@@ -5,7 +5,7 @@
 // Rate limit: kuniga 3 broadcast. Har broadcast tamaddi bo'lgach counter kamayadi.
 
 import { useEffect, useState } from "react";
-import { Radio, Send, Loader2, AlertTriangle, Users, Store, ShoppingBag, History, Link as LinkIcon } from "lucide-react";
+import { Radio, Send, Loader2, AlertTriangle, Users, Store, ShoppingBag, History, Link as LinkIcon, Clock } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 
 interface HistoryRow {
@@ -33,10 +33,10 @@ function timeAgo(iso: string): string {
     return `${Math.floor(h / 24)}k`;
 }
 
-type Segment = "all" | "sellers" | "buyers";
+type Segment = "all" | "sellers" | "buyers" | "urgent_waitlist";
 
 interface SegState {
-    all: number; sellers: number; buyers: number;
+    all: number; sellers: number; buyers: number; urgent_waitlist: number;
 }
 
 export function BnAdminBroadcast() {
@@ -119,11 +119,17 @@ export function BnAdminBroadcast() {
             </div>
 
             {/* Segment tanlash */}
-            <div className="grid grid-cols-3 gap-2">
-                {(["all", "sellers", "buyers"] as Segment[]).map(k => {
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {(["all", "sellers", "buyers", "urgent_waitlist"] as Segment[]).map(k => {
                     const active = seg === k;
-                    const label = k === "all" ? "Hammasi" : k === "sellers" ? "Sotuvchilar" : "Xaridorlar";
-                    const Icon = k === "all" ? Users : k === "sellers" ? Store : ShoppingBag;
+                    const label = k === "all" ? "Hammasi"
+                        : k === "sellers" ? "Sotuvchilar"
+                        : k === "buyers" ? "Xaridorlar"
+                        : "Urgent waitlist";
+                    const Icon = k === "all" ? Users
+                        : k === "sellers" ? Store
+                        : k === "buyers" ? ShoppingBag
+                        : Clock;
                     const n = segments ? segments[k] : 0;
                     return (
                         <button key={k} onClick={() => setSeg(k)}

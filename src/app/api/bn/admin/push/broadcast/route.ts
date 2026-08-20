@@ -39,8 +39,8 @@ export async function POST(req: Request) {
     const body = typeof b?.body === "string" ? b.body.trim().slice(0, 200) : "";
     const url = typeof b?.url === "string" ? b.url.trim().slice(0, 300) : undefined;
     const tag = typeof b?.tag === "string" ? b.tag.trim().slice(0, 40) : `bn-broadcast-${Date.now()}`;
-    const segment = (["all", "sellers", "buyers"].includes(b?.segment) ? b.segment : "all") as
-        "all" | "sellers" | "buyers";
+    const segment = (["all", "sellers", "buyers", "urgent_waitlist"].includes(b?.segment) ? b.segment : "all") as
+        "all" | "sellers" | "buyers" | "urgent_waitlist";
 
     if (title.length < 3 || body.length < 5) {
         return NextResponse.json({ error: "invalid_content" }, { status: 400 });
@@ -63,6 +63,23 @@ export async function POST(req: Request) {
             where: { status: "COMPLETED" }, select: { buyerId: true }, distinct: ["buyerId"],
         });
         profileIds = orders.map(o => o.buyerId);
+    } else if (segment === "urgent_waitlist") {
+        // >=3 kun kutayotgan PENDING waitlist arizachilarining telefoniga bog'langan
+        // UserProfile'lari (email o'rniga telefon match). Waitlist telefon = +998XXX,
+        // UserProfile'da phone bo'lmasa mos kelmaydi — kelajakda kengaytiriladi.
+        const threeDaysAgo = new Date(Date.now() - 3 * 86400_000);
+        const waitlist = await prisma.bnSellerWaitlist.findMany({
+            where: { status: "PENDING", createdAt: { lt: threeDaysAgo } },
+            select: { phone: true },
+        });
+        const phones = [...new Set(waitlist.map(w => w.phone).filter(Boolean))];
+        if (phones.length > 0) {
+            const profs = await prisma.userProfile.findMany({
+                where: { phone: { in: phones } },
+                select: { id: true },
+            });
+            profileIds = profs.map(p => p.id);
+        }
     }
 
     if (profileIds.length === 0) {
@@ -114,17 +131,28 @@ export async function GET() {
     if (!(await isBnOwner(auth.profileId))) {
         return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
-    const [allSubs, sellers, buyers, used] = await Promise.all([
+    const threeDaysAgo = new Date(Date.now() - 3 * 86400_000);
+    const [allSubs, sellers, buyers, used, urgentWaitPhones] = await Promise.all([
         prisma.nexusPushSub.findMany({ select: { profileId: true }, distinct: ["profileId"] }),
         prisma.bnShop.findMany({ where: { status: "APPROVED" }, select: { profileId: true }, distinct: ["profileId"] }),
         prisma.bnOrder.findMany({ where: { status: "COMPLETED" }, select: { buyerId: true }, distinct: ["buyerId"] }),
         usedTodayCount(),
+        prisma.bnSellerWaitlist.findMany({
+            where: { status: "PENDING", createdAt: { lt: threeDaysAgo } },
+            select: { phone: true },
+        }),
     ]);
+    const urgentPhoneList = [...new Set(urgentWaitPhones.map(w => w.phone).filter(Boolean))];
+    const urgentProfs = urgentPhoneList.length > 0 ? await prisma.userProfile.findMany({
+        where: { phone: { in: urgentPhoneList } },
+        select: { id: true },
+    }) : [];
     return NextResponse.json({
         segments: {
             all: allSubs.length,
             sellers: sellers.length,
             buyers: buyers.length,
+            urgent_waitlist: urgentProfs.length,
         },
         rateLimit: {
             max: MAX_BROADCASTS_PER_DAY,
