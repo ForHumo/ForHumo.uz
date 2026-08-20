@@ -15,6 +15,7 @@ import { BN, fmtPrice, ORDER_STATUS_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
 import { BnBackButton } from "./bn-back-button";
+import { BnPushCard } from "./bn-push-card";
 
 export interface OrderListItem {
     id: string;
@@ -69,6 +70,7 @@ export function BnOrdersListClient({
             <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">
                 {t("title")} <span className="text-[15px] font-bold" style={{ color: BN.text3 }}>{initial.length} {t("countUnit")}</span>
             </h1>
+            <BnPushCard />
             <div className="space-y-2.5">
                 {initial.map(o => {
                     const meta = ORDER_STATUS_META[o.status];

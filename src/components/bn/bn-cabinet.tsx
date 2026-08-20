@@ -25,6 +25,7 @@ import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
 import { BnPhoneInput } from "./bn-phone-input";
 import { BnCategoryPicker } from "./bn-category-picker";
+import { BnPushCard } from "./bn-push-card";
 
 type Tab = "home" | "products" | "orders" | "shop" | "money";
 
@@ -361,6 +362,7 @@ function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetSta
     const recent = orders.slice(0, 5);
     return (
         <>
+            <BnPushCard />
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
                 <Stat icon={<ShoppingBag className="w-[18px] h-[18px]" />} label={t("statOrders")} value={stats.ordersThisMonth.toString()} hint={t("statThisMonth")} />
                 <Stat icon={<TrendingUp className="w-[18px] h-[18px]" />} label={t("statSold")} value={fmtPrice(stats.revenueThisMonth)} hint={t("statThisMonth")} />

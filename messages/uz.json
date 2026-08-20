@@ -1158,6 +1158,17 @@
             "waitlistText": "Rasmiy sotuvchi bo'lish uchun YaTT yoki MChJ kerak. Hujjatlaringiz hali tayyor bo'lmasa — ro'yxatga yoziling, MChJ ochilgan zahoti sizga qo'ng'iroq qilamiz.",
             "waitlistBtn": "Ro'yxatga yozish",
             "haveDocs": "Hujjatlarim tayyor — davom etaman"
+        },
+        "push": {
+            "promptTitle": "Bildirishnomalarni yoqing",
+            "promptText": "Buyurtma tayyorligi, narx tushishi va do'st chaqirdi bonusi haqida darhol xabar bering.",
+            "enable": "Yoqish",
+            "later": "Keyinroq",
+            "subscribedTitle": "Bildirishnomalar yoqilgan",
+            "subscribedText": "Har muhim voqea sizga darhol xabar beriladi.",
+            "disable": "O'chirish",
+            "deniedTitle": "Bildirishnomalar rad etilgan",
+            "deniedText": "Brauzer sozlamalaridan bozornarxida.uz uchun ruxsat bering va qaytadan urinib ko'ring."
         }
     }
 }

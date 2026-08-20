@@ -1158,6 +1158,17 @@
             "waitlistText": "To become an official seller you need a registered business (YaTT/LLC). If your paperwork isn't ready yet — join the list, we'll call you as soon as the LLC opens.",
             "waitlistBtn": "Join list",
             "haveDocs": "I have my documents — continue"
+        },
+        "push": {
+            "promptTitle": "Turn on notifications",
+            "promptText": "We'll ping you the moment an order is ready, a price drops, or a friend referral bonus arrives.",
+            "enable": "Enable",
+            "later": "Later",
+            "subscribedTitle": "Notifications enabled",
+            "subscribedText": "Anything important will reach you instantly.",
+            "disable": "Disable",
+            "deniedTitle": "Notifications blocked",
+            "deniedText": "Allow bozornarxida.uz in your browser settings and try again."
         }
     }
 }
