@@ -6,7 +6,7 @@ import { useSession, signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import {
     Store, Building2, User, MapPin, Globe, Check, ChevronRight, ChevronLeft,
-    ShieldCheck, LogIn, Sparkles, Info,
+    ShieldCheck, LogIn, Sparkles, Info, ClipboardList,
 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import type { BnMarketDTO } from "@/lib/bn-data";
@@ -23,7 +23,9 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
     const { status } = useSession();
     const t = useTranslations("bn.sellerReg");
     const tAuth = useTranslations("bn.auth");
+    const tBanner = useTranslations("bn.sellerBanner");
     const [step, setStep] = useState<Step>(0);
+    const [waitlistHidden, setWaitlistHidden] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [submitErr, setSubmitErr] = useState<string | null>(null);
 
@@ -125,9 +127,39 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
         <Wrap>
             <div className="max-w-[640px] mx-auto">
                 <h1 className="text-[26px] sm:text-[32px] font-black tracking-tight mb-2">{t("title")}</h1>
-                <p className="text-[13.5px] leading-relaxed mb-7" style={{ color: BN.text2 }}>
+                <p className="text-[13.5px] leading-relaxed mb-5" style={{ color: BN.text2 }}>
                     {t("subtitle")}
                 </p>
+
+                {/* MChJ tayyor emas? Waitlist banner (bir marta yashirilishi mumkin) */}
+                {!waitlistHidden && (
+                    <div className="mb-6 p-4 rounded-2xl flex items-start gap-3 flex-wrap"
+                        style={{ background: BN.goldSoft, border: `1px solid ${BN.goldEdge}` }}>
+                        <span className="w-10 h-10 rounded-xl grid place-items-center flex-shrink-0"
+                            style={{ background: BN.gold, color: BN.onGold }}>
+                            <ClipboardList className="w-5 h-5" />
+                        </span>
+                        <div className="flex-1 min-w-[240px]">
+                            <p className="text-[14px] font-black" style={{ color: BN.gold }}>{tBanner("waitlistTitle")}</p>
+                            <p className="text-[12.5px] leading-relaxed mt-0.5" style={{ color: BN.text2 }}>
+                                {tBanner("waitlistText")}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <BnLink href="/sotuvchi/waitlist"
+                                className="h-10 px-4 rounded-xl text-[13px] font-black flex items-center gap-1.5"
+                                style={{ background: BN.gold, color: BN.onGold }}>
+                                {tBanner("waitlistBtn")}
+                                <ChevronRight className="w-4 h-4" />
+                            </BnLink>
+                            <button onClick={() => setWaitlistHidden(true)}
+                                className="h-10 px-3 rounded-xl text-[12px] font-bold"
+                                style={{ background: "transparent", color: BN.text3 }}>
+                                {tBanner("haveDocs")}
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Qadamlar */}
                 <div className="flex items-center gap-1.5 mb-7">

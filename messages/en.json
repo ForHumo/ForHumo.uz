@@ -1123,6 +1123,41 @@
             "step1": "1. Share your link on Telegram, WhatsApp or SMS",
             "step2": "2. Your friend opens it and signs up",
             "step3": "3. They complete their first order — the bonus lands in both wallets"
+        },
+        "waitlist": {
+            "title": "Join the seller waitlist",
+            "subtitle": "Right now we're building the buyer audience for Bozor Narxida. As soon as the LLC opens, we'll call you — you'll be among the first sellers.",
+            "benefit1": "Free registration — no fees",
+            "benefit2": "First-seller perks: boosted promotion, free verified badge",
+            "benefit3": "Activated within 1 day once the LLC opens",
+            "nameLabel": "Full name or shop name",
+            "namePh": "e.g. Jalol Motors or Jalol Kahramonov",
+            "phoneLabel": "Phone",
+            "phoneHint": "Start with +998 — we'll call you",
+            "marketLabel": "Which market?",
+            "marketHint": "Optional — if your shop is inside a market",
+            "marketPlaceholder": "Market name or 'Street shop'",
+            "categoryLabel": "What do you sell?",
+            "categoryHint": "Optional — category or product",
+            "categoryPh": "e.g. car parts, clothing, electronics…",
+            "noteLabel": "Additional (optional)",
+            "notePh": "Question, description or note",
+            "submit": "Add me to the list",
+            "sending": "Submitting…",
+            "sentTitle": "Thanks! You're on the list",
+            "sentText": "Jalol (BN project lead) will call you soon. Once the LLC opens, the seller cabinet will activate.",
+            "sentBack": "Back to home",
+            "errInvalidName": "Name must be at least 2 characters",
+            "errInvalidPhone": "Phone must be +998 followed by 9 digits",
+            "errTooMany": "Too many requests from this number. Try again tomorrow.",
+            "errGeneric": "An error occurred. Try again.",
+            "errNet": "Connection error"
+        },
+        "sellerBanner": {
+            "waitlistTitle": "No LLC yet? Join the list",
+            "waitlistText": "To become an official seller you need a registered business (YaTT/LLC). If your paperwork isn't ready yet — join the list, we'll call you as soon as the LLC opens.",
+            "waitlistBtn": "Join list",
+            "haveDocs": "I have my documents — continue"
         }
     }
 }

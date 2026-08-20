@@ -1,0 +1,126 @@
+// BN waitlist i18n
+import fs from "node:fs";
+
+const BATCH = {
+    uz: {
+        waitlist: {
+            title: "Sotuvchi ro'yxatiga yozing",
+            subtitle: "Bozor Narxida hozir foydalanuvchilarni yig'ib borayapmiz. MChJ ochilgan zahoti sizga qo'ng'iroq qilamiz — birinchi sotuvchilardan bo'lasiz.",
+            benefit1: "Bepul ro'yxatga olish — hech qanday to'lov yo'q",
+            benefit2: "Birinchi sotuvchi imtiyozlari: kuchaytirilgan reklama, bepul verified badge",
+            benefit3: "MChJ ochilgan zahoti — 1 kunda faollashtirish",
+            nameLabel: "F.I.SH. yoki do'kon nomi",
+            namePh: "Masalan: Jalol Motors yoki Jalol Qahramonov",
+            phoneLabel: "Telefon",
+            phoneHint: "+998 bilan boshlab yozing — qo'ng'iroq qilamiz",
+            marketLabel: "Qaysi bozor?",
+            marketHint: "Ixtiyoriy — agar bozorda do'koningiz bo'lsa tanlang",
+            marketPlaceholder: "Bozor yoki 'Ko'chada do'kon'",
+            categoryLabel: "Nima sotasiz?",
+            categoryHint: "Ixtiyoriy — kategoriya yoki mahsulot nomi",
+            categoryPh: "Masalan: avto ehtiyot qism, kiyim, elektronika…",
+            noteLabel: "Qo'shimcha (ixtiyoriy)",
+            notePh: "Savol, tavsif yoki eslatma",
+            submit: "Ro'yxatga yozish",
+            sending: "Yuborilyapti…",
+            sentTitle: "Rahmat! Ro'yxatga yozildingiz",
+            sentText: "Jalol (BN loyiha rahbari) yaqinda telefoningizga qo'ng'iroq qiladi. MChJ ochilishi bilan sotuvchi kabineti faollashadi.",
+            sentBack: "Bosh sahifaga",
+            errInvalidName: "Ism/nom kamida 2 belgi bo'lishi kerak",
+            errInvalidPhone: "Telefon +998 bilan boshlab 9 ta raqam bilan yakunlansin",
+            errTooMany: "Bu telefondan ko'p ariza yuborildi. Ertaga qayta urinib ko'ring.",
+            errGeneric: "Xatolik yuz berdi. Qayta urinib ko'ring.",
+            errNet: "Ulanish xatoligi",
+        },
+        sellerBanner: {
+            waitlistTitle: "MChJ tayyor emas? Ro'yxatga yozib qo'ying",
+            waitlistText: "Rasmiy sotuvchi bo'lish uchun YaTT yoki MChJ kerak. Hujjatlaringiz hali tayyor bo'lmasa — ro'yxatga yoziling, MChJ ochilgan zahoti sizga qo'ng'iroq qilamiz.",
+            waitlistBtn: "Ro'yxatga yozish",
+            haveDocs: "Hujjatlarim tayyor — davom etaman",
+        },
+    },
+
+    ru: {
+        waitlist: {
+            title: "Записаться в список продавцов",
+            subtitle: "Пока набираем покупателей на Bozor Narxida. Как только откроется ООО — позвоним, будете среди первых продавцов.",
+            benefit1: "Бесплатная регистрация — никаких платежей",
+            benefit2: "Привилегии первых продавцов: усиленная реклама, бесплатный verified бейдж",
+            benefit3: "Активация за 1 день сразу после открытия ООО",
+            nameLabel: "Ф.И.О. или название магазина",
+            namePh: "Например: Jalol Motors или Джалол Кахрамонов",
+            phoneLabel: "Телефон",
+            phoneHint: "Начните с +998 — мы позвоним",
+            marketLabel: "На каком рынке?",
+            marketHint: "Необязательно — если у вас магазин на рынке",
+            marketPlaceholder: "Рынок или 'Магазин на улице'",
+            categoryLabel: "Что продаёте?",
+            categoryHint: "Необязательно — категория или товар",
+            categoryPh: "Например: автозапчасти, одежда, электроника…",
+            noteLabel: "Дополнительно (необязательно)",
+            notePh: "Вопрос, описание или заметка",
+            submit: "Записать меня",
+            sending: "Отправляется…",
+            sentTitle: "Спасибо! Вы в списке",
+            sentText: "Джалол (руководитель проекта BN) в ближайшее время позвонит вам. С открытием ООО кабинет продавца станет активен.",
+            sentBack: "На главную",
+            errInvalidName: "Имя/название минимум 2 символа",
+            errInvalidPhone: "Телефон в формате +998 и 9 цифр",
+            errTooMany: "С этого номера слишком много заявок. Попробуйте завтра.",
+            errGeneric: "Произошла ошибка. Попробуйте ещё раз.",
+            errNet: "Ошибка соединения",
+        },
+        sellerBanner: {
+            waitlistTitle: "Ещё нет ООО? Запишитесь в список",
+            waitlistText: "Для официального продавца нужен ИП или ООО. Если документы ещё не готовы — запишитесь, позвоним сразу после открытия ООО.",
+            waitlistBtn: "Записаться",
+            haveDocs: "У меня есть документы — продолжить",
+        },
+    },
+
+    en: {
+        waitlist: {
+            title: "Join the seller waitlist",
+            subtitle: "Right now we're building the buyer audience for Bozor Narxida. As soon as the LLC opens, we'll call you — you'll be among the first sellers.",
+            benefit1: "Free registration — no fees",
+            benefit2: "First-seller perks: boosted promotion, free verified badge",
+            benefit3: "Activated within 1 day once the LLC opens",
+            nameLabel: "Full name or shop name",
+            namePh: "e.g. Jalol Motors or Jalol Kahramonov",
+            phoneLabel: "Phone",
+            phoneHint: "Start with +998 — we'll call you",
+            marketLabel: "Which market?",
+            marketHint: "Optional — if your shop is inside a market",
+            marketPlaceholder: "Market name or 'Street shop'",
+            categoryLabel: "What do you sell?",
+            categoryHint: "Optional — category or product",
+            categoryPh: "e.g. car parts, clothing, electronics…",
+            noteLabel: "Additional (optional)",
+            notePh: "Question, description or note",
+            submit: "Add me to the list",
+            sending: "Submitting…",
+            sentTitle: "Thanks! You're on the list",
+            sentText: "Jalol (BN project lead) will call you soon. Once the LLC opens, the seller cabinet will activate.",
+            sentBack: "Back to home",
+            errInvalidName: "Name must be at least 2 characters",
+            errInvalidPhone: "Phone must be +998 followed by 9 digits",
+            errTooMany: "Too many requests from this number. Try again tomorrow.",
+            errGeneric: "An error occurred. Try again.",
+            errNet: "Connection error",
+        },
+        sellerBanner: {
+            waitlistTitle: "No LLC yet? Join the list",
+            waitlistText: "To become an official seller you need a registered business (YaTT/LLC). If your paperwork isn't ready yet — join the list, we'll call you as soon as the LLC opens.",
+            waitlistBtn: "Join list",
+            haveDocs: "I have my documents — continue",
+        },
+    },
+};
+
+for (const [lang, groups] of Object.entries(BATCH)) {
+    const path = `messages/${lang}.json`;
+    const data = JSON.parse(fs.readFileSync(path, "utf8"));
+    data.bn = { ...(data.bn ?? {}), ...groups };
+    fs.writeFileSync(path, JSON.stringify(data, null, 4) + "\n", "utf8");
+    console.log(`✓ ${path} — bn.waitlist + sellerBanner`);
+}

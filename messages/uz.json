@@ -1123,6 +1123,41 @@
             "step1": "1. Linkingizni Telegram, WhatsApp yoki SMS orqali ulashing",
             "step2": "2. Do'stingiz shu link orqali kirib ro'yxatdan o'tsin",
             "step3": "3. U birinchi buyurtmani yakunlagach — ikkangizga hamyoningizga bonus tushadi"
+        },
+        "waitlist": {
+            "title": "Sotuvchi ro'yxatiga yozing",
+            "subtitle": "Bozor Narxida hozir foydalanuvchilarni yig'ib borayapmiz. MChJ ochilgan zahoti sizga qo'ng'iroq qilamiz — birinchi sotuvchilardan bo'lasiz.",
+            "benefit1": "Bepul ro'yxatga olish — hech qanday to'lov yo'q",
+            "benefit2": "Birinchi sotuvchi imtiyozlari: kuchaytirilgan reklama, bepul verified badge",
+            "benefit3": "MChJ ochilgan zahoti — 1 kunda faollashtirish",
+            "nameLabel": "F.I.SH. yoki do'kon nomi",
+            "namePh": "Masalan: Jalol Motors yoki Jalol Qahramonov",
+            "phoneLabel": "Telefon",
+            "phoneHint": "+998 bilan boshlab yozing — qo'ng'iroq qilamiz",
+            "marketLabel": "Qaysi bozor?",
+            "marketHint": "Ixtiyoriy — agar bozorda do'koningiz bo'lsa tanlang",
+            "marketPlaceholder": "Bozor yoki 'Ko'chada do'kon'",
+            "categoryLabel": "Nima sotasiz?",
+            "categoryHint": "Ixtiyoriy — kategoriya yoki mahsulot nomi",
+            "categoryPh": "Masalan: avto ehtiyot qism, kiyim, elektronika…",
+            "noteLabel": "Qo'shimcha (ixtiyoriy)",
+            "notePh": "Savol, tavsif yoki eslatma",
+            "submit": "Ro'yxatga yozish",
+            "sending": "Yuborilyapti…",
+            "sentTitle": "Rahmat! Ro'yxatga yozildingiz",
+            "sentText": "Jalol (BN loyiha rahbari) yaqinda telefoningizga qo'ng'iroq qiladi. MChJ ochilishi bilan sotuvchi kabineti faollashadi.",
+            "sentBack": "Bosh sahifaga",
+            "errInvalidName": "Ism/nom kamida 2 belgi bo'lishi kerak",
+            "errInvalidPhone": "Telefon +998 bilan boshlab 9 ta raqam bilan yakunlansin",
+            "errTooMany": "Bu telefondan ko'p ariza yuborildi. Ertaga qayta urinib ko'ring.",
+            "errGeneric": "Xatolik yuz berdi. Qayta urinib ko'ring.",
+            "errNet": "Ulanish xatoligi"
+        },
+        "sellerBanner": {
+            "waitlistTitle": "MChJ tayyor emas? Ro'yxatga yozib qo'ying",
+            "waitlistText": "Rasmiy sotuvchi bo'lish uchun YaTT yoki MChJ kerak. Hujjatlaringiz hali tayyor bo'lmasa — ro'yxatga yoziling, MChJ ochilgan zahoti sizga qo'ng'iroq qilamiz.",
+            "waitlistBtn": "Ro'yxatga yozish",
+            "haveDocs": "Hujjatlarim tayyor — davom etaman"
         }
     }
 }

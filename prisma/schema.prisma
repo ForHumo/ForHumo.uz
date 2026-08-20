@@ -2991,6 +2991,39 @@ enum BnReferralStatus {
   CANCELLED   // Bekor (admin qo'lda yoki fraud)
 }
 
+// ── Sotuvchi WAITLIST (MChJ'siz oldindan yozdirish) ─────────────────────────
+// MChJ ochilmasdan sotuvchilarni oldindan yig'ish uchun ochiq forma (login shart emas).
+// Jalol (BN OWNER) shu ro'yxatni qo'ng'iroq qilib bozorlardan sotuvchi jamlaydi.
+// Rasmiy /sotuvchi flow (ariza + INN) MChJ ochilishidan keyin faollashadi.
+model BnSellerWaitlist {
+  id            String                   @id @default(cuid())
+  name          String                                                            // F.I.SH. yoki do'kon nomi
+  phone         String                                                            // +998 formatida
+  city          String                   @default("Toshkent")
+  marketSlug    String?                                                           // Aynan qaysi bozor
+  category      String?                                                           // Sotmoqchi bo'lgan kategoriya
+  note          String?                                                           // Qo'shimcha (tavsif, savol)
+  source        String?                                                           // Qayerdan (utm_source yoki referrer)
+  ref           String?                                                           // Referral kodi (agar bor bo'lsa)
+  status        BnSellerWaitlistStatus   @default(PENDING)
+  contactedById String?                                                           // Kim aloqaga chiqdi
+  contactedAt   DateTime?
+  contactNote   String?                                                           // Suhbat izohi
+  convertedShopId String?                                                         // Agar do'kon ochilsa
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+
+  @@index([status, createdAt])
+  @@index([phone])
+}
+
+enum BnSellerWaitlistStatus {
+  PENDING       // Yangi ariza
+  CONTACTED     // Jalol qo'ng'iroq qildi
+  CONVERTED     // Do'kon ochildi (MChJ tayyor + arizani berdi)
+  REJECTED      // Rad (spam, ovoz yoq, boshqa sabab)
+}
+
 // ── Zaxira usernamelar ───────────────────────────────────────────────────────
 // Foydalanuvchi olmaydigan @nomlar (tizim, brend, mashhur odam, davlat,
 // PERSONAL — yaqin odamlarga ajratilgan). VIP toifa keyin 10K+ faol
