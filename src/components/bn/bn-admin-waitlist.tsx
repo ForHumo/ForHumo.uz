@@ -58,6 +58,45 @@ export function BnAdminWaitlist() {
     const [loading, setLoading] = useState(true);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
     const [query, setQuery] = useState("");
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [bulkBusy, setBulkBusy] = useState(false);
+
+    function toggleOne(id: string) {
+        setSelected(prev => {
+            const n = new Set(prev);
+            if (n.has(id)) n.delete(id); else n.add(id);
+            return n;
+        });
+    }
+    function toggleAllVisible() {
+        setSelected(prev => {
+            const visibleIds = filteredEntries.map(e => e.id);
+            const allSelected = visibleIds.every(id => prev.has(id));
+            const n = new Set(prev);
+            if (allSelected) visibleIds.forEach(id => n.delete(id));
+            else visibleIds.forEach(id => n.add(id));
+            return n;
+        });
+    }
+    function clearSelection() { setSelected(new Set()); }
+
+    async function bulkStatus(nextStatus: Status) {
+        const ids = Array.from(selected);
+        if (ids.length === 0) return;
+        if (!confirm(`${ids.length} ta arizani ${nextStatus} qilib belgilaymizmi?`)) return;
+        setBulkBusy(true);
+        try {
+            const r = await fetch("/api/bn/admin/waitlist/bulk", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ ids, status: nextStatus }),
+            });
+            const d = await r.json();
+            if (!r.ok) { alert(d?.error ?? "Xatolik"); return; }
+            clearSelection();
+            load();
+        } finally { setBulkBusy(false); }
+    }
 
     // Client-side qidiruv — ism, telefon, izoh, ref, kategoriya, bozor bo'yicha
     const filteredEntries = useMemo(() => {
@@ -240,14 +279,60 @@ export function BnAdminWaitlist() {
                             {filteredEntries.length} ta topildi
                         </p>
                     )}
+                    {/* Select all row */}
+                    {filteredEntries.length > 1 && (
+                        <label className="flex items-center gap-2 px-1 pb-1 cursor-pointer">
+                            <input type="checkbox"
+                                checked={filteredEntries.every(e => selected.has(e.id))}
+                                onChange={toggleAllVisible}
+                                className="w-4 h-4 accent-[color:var(--bn-gold)] cursor-pointer" />
+                            <span className="text-[11.5px]" style={{ color: BN.text3 }}>
+                                Barcha ko&apos;rinayotganlarni tanlash ({filteredEntries.length})
+                            </span>
+                        </label>
+                    )}
                     {filteredEntries.map(e => (
                         <WaitlistCard
                             key={e.id}
                             e={e}
                             busy={busyIds.has(e.id)}
+                            selected={selected.has(e.id)}
+                            onToggleSelect={() => toggleOne(e.id)}
                             onUpdate={patch => updateEntry(e.id, patch)}
                         />
                     ))}
+                </div>
+            )}
+
+            {/* Bulk action bar — pastda sticky, selection > 0 bo'lsa */}
+            {selected.size > 0 && (
+                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-2.5 rounded-2xl shadow-2xl"
+                    style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}>
+                    <span className="text-[13px] font-black tabular-nums px-2" style={{ color: BN.gold }}>
+                        {selected.size} ta
+                    </span>
+                    <button onClick={() => bulkStatus("CONTACTED")} disabled={bulkBusy}
+                        className="h-8 px-3 rounded-lg text-[11.5px] font-black flex items-center gap-1 disabled:opacity-60"
+                        style={{ background: BN.info, color: "#fff" }}>
+                        <PhoneCall className="w-3.5 h-3.5" /> Aloqa
+                    </button>
+                    <button onClick={() => bulkStatus("CONVERTED")} disabled={bulkBusy}
+                        className="h-8 px-3 rounded-lg text-[11.5px] font-black flex items-center gap-1 disabled:opacity-60"
+                        style={{ background: BN.ok, color: "#000" }}>
+                        <Check className="w-3.5 h-3.5" /> Do&apos;kon
+                    </button>
+                    <button onClick={() => bulkStatus("REJECTED")} disabled={bulkBusy}
+                        className="h-8 px-3 rounded-lg text-[11.5px] font-black flex items-center gap-1 disabled:opacity-60"
+                        style={{ background: BN.err, color: "#fff" }}>
+                        <X className="w-3.5 h-3.5" /> Rad
+                    </button>
+                    <button onClick={clearSelection} disabled={bulkBusy}
+                        aria-label="Tozalash"
+                        className="w-8 h-8 grid place-items-center rounded-lg disabled:opacity-60"
+                        style={{ background: BN.surfaceUp, color: BN.text3 }}>
+                        <X className="w-3.5 h-3.5" />
+                    </button>
+                    {bulkBusy && <Loader2 className="w-4 h-4 animate-spin" style={{ color: BN.gold }} />}
                 </div>
             )}
         </div>
@@ -255,8 +340,13 @@ export function BnAdminWaitlist() {
 }
 
 function WaitlistCard({
-    e, busy, onUpdate,
-}: { e: WaitlistEntry; busy: boolean; onUpdate: (p: { status?: Status; contactNote?: string }) => void }) {
+    e, busy, selected, onToggleSelect, onUpdate,
+}: {
+    e: WaitlistEntry; busy: boolean;
+    selected?: boolean;
+    onToggleSelect?: () => void;
+    onUpdate: (p: { status?: Status; contactNote?: string }) => void;
+}) {
     const [noteOpen, setNoteOpen] = useState(false);
     const [note, setNote] = useState(e.contactNote ?? "");
     const phoneClean = e.phone.replace(/\s/g, "");
@@ -269,6 +359,13 @@ function WaitlistCard({
                 boxShadow: e.isUrgent ? `0 0 0 1px ${BN.err}22` : undefined,
             }}>
             <div className="flex items-start gap-3 mb-3 flex-wrap">
+                {onToggleSelect && (
+                    <input type="checkbox"
+                        checked={!!selected}
+                        onChange={onToggleSelect}
+                        aria-label={`${e.name} tanlash`}
+                        className="mt-1 w-4 h-4 accent-[color:var(--bn-gold)] cursor-pointer flex-shrink-0" />
+                )}
                 <div className="flex-1 min-w-[220px]">
                     <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-[15px] font-black">{e.name}</p>
