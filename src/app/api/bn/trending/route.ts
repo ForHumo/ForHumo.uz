@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 export const revalidate = 600;
 
+const RANGE_DAYS: Record<string, number> = { "1d": 1, "7d": 7, "30d": 30 };
+
 interface TrendingItem {
     slug: string;
     title: string;
@@ -22,8 +24,11 @@ interface TrendingItem {
     score: number;
 }
 
-export async function GET() {
-    const weekAgo = new Date(Date.now() - 7 * 86400_000);
+export async function GET(req: Request) {
+    const url = new URL(req.url);
+    const rangeParam = url.searchParams.get("range") ?? "7d";
+    const days = RANGE_DAYS[rangeParam] ?? 7;
+    const weekAgo = new Date(Date.now() - days * 86400_000);
 
     // 7 kunda VIEW event bergan productId'lar — top 50 view'li mahsulot
     const viewsGrouped = await prisma.bnUserEvent.groupBy({

@@ -1220,8 +1220,10 @@
     },
     "trending": {
       "title": "Trending now",
-      "subtitle": "Most popular products in the last 7 days",
-      "allBtn": "More"
+      "allBtn": "More",
+      "subtitle_1d": "Most popular today",
+      "subtitle_7d": "Most popular in the last 7 days",
+      "subtitle_30d": "Most popular in the last 30 days"
     }
   }
 }

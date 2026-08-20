@@ -28,20 +28,28 @@ function fmtPrice(n: number, locale: string): string {
     return locale === "ru" ? `${num} сум` : locale === "en" ? `${num} UZS` : `${num} so'm`;
 }
 
+type Range = "1d" | "7d" | "30d";
+const RANGES: Range[] = ["1d", "7d", "30d"];
+
 export function BnTrendingRow() {
     const t = useTranslations("bn.trending");
     const locale = useLocale();
     const [items, setItems] = useState<TrendingItem[] | null>(null);
+    const [range, setRange] = useState<Range>("7d");
+    const [switching, setSwitching] = useState(false);
 
     useEffect(() => {
-        fetch("/api/bn/trending")
+        if (items !== null) setSwitching(true);
+        fetch(`/api/bn/trending?range=${range}`)
             .then(r => r.ok ? r.json() : { items: [] })
             .then(d => setItems(d.items ?? []))
-            .catch(() => setItems([]));
-    }, []);
+            .catch(() => setItems([]))
+            .finally(() => setSwitching(false));
+    }, [range]);   // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Kutish holati yashirilgan (skeleton emas — home slot band bo'lmasin);
-    // bo'sh natija ham jim (mavjud emas, chaqirilmaydi).
+    // Birinchi yuklashda bo'sh bo'lsa qator ko'rsatilmaydi.
+    // Range o'zgartirilganda oldingi items ekranda qoladi (jump ko'rinmasin),
+    // yangi data kelgach almashinadi.
     if (items === null || items.length === 0) return null;
 
     return (
@@ -54,15 +62,37 @@ export function BnTrendingRow() {
                     </span>
                     <div className="min-w-0">
                         <h2 className="text-[18px] sm:text-[21px] font-black tracking-tight leading-none">{t("title")}</h2>
-                        <p className="text-[12.5px] mt-1.5" style={{ color: BN.text3 }}>{t("subtitle")}</p>
+                        <p className="text-[12.5px] mt-1.5" style={{ color: BN.text3 }}>
+                            {t(`subtitle_${range}`)}
+                        </p>
                     </div>
                 </div>
-                <BnLink href="/qidiruv?sort=new"
-                    className="flex items-center gap-1 text-[13px] font-bold flex-shrink-0 whitespace-nowrap"
-                    style={{ color: BN.gold }}>
-                    {t("allBtn")}
-                    <ChevronRight className="w-4 h-4" />
-                </BnLink>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {/* Range chip switcher */}
+                    <div className="flex items-center gap-0.5 rounded-lg p-0.5"
+                        style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
+                        {RANGES.map(r => {
+                            const active = range === r;
+                            return (
+                                <button key={r} onClick={() => setRange(r)}
+                                    disabled={switching}
+                                    className="h-6 px-2 rounded-md text-[11px] font-black transition-colors tabular-nums"
+                                    style={{
+                                        background: active ? BN.gold : "transparent",
+                                        color: active ? BN.onGold : BN.text3,
+                                    }}>
+                                    {r}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <BnLink href="/qidiruv?sort=new"
+                        className="flex items-center gap-1 text-[13px] font-bold whitespace-nowrap"
+                        style={{ color: BN.gold }}>
+                        {t("allBtn")}
+                        <ChevronRight className="w-4 h-4" />
+                    </BnLink>
+                </div>
             </div>
 
             <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1" data-no-swipe>

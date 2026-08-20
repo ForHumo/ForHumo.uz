@@ -1220,8 +1220,10 @@
     },
     "trending": {
       "title": "Hozir trendda",
-      "subtitle": "So'nggi 7 kunda eng ko'p qiziqtirgan mahsulotlar",
-      "allBtn": "Ko'proq"
+      "allBtn": "Ko'proq",
+      "subtitle_1d": "Bugungi eng qiziqarli mahsulotlar",
+      "subtitle_7d": "So'nggi 7 kunda eng ko'p qiziqtirgan",
+      "subtitle_30d": "So'nggi 30 kunda mashhur bo'lganlar"
     }
   }
 }
