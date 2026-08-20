@@ -718,7 +718,8 @@
       "desc": "Jismoniy bozorlar — do'konlarni ko'rib, mahsulotni band qilib borib ko'rishingiz mumkin.",
       "emptyTitle": "Hozircha bozor ro'yxatga olinmagan",
       "emptyText": "Tez orada Toshkent bozorlari ochiladi.",
-      "shopN": "{n} do'kon"
+      "shopN": "{n} do'kon",
+      "allTumans": "Barchasi"
     },
     "favorites": {
       "title": "Sevimlilar",

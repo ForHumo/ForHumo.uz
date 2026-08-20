@@ -718,7 +718,8 @@
       "desc": "Physical markets — browse shops, hold a product and go inspect it.",
       "emptyTitle": "No markets registered yet",
       "emptyText": "Tashkent markets will open soon.",
-      "shopN": "{n} shops"
+      "shopN": "{n} shops",
+      "allTumans": "All"
     },
     "favorites": {
       "title": "Favorites",
