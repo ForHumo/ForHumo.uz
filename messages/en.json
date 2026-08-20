@@ -711,7 +711,10 @@
       "sortCheap": "Below market",
       "sortPriceAsc": "Price: low to high",
       "sortPriceDesc": "Price: high to low",
-      "sortRating": "Rating"
+      "sortRating": "Rating",
+      "loadMore": "Load more",
+      "loading": "Loading...",
+      "endOfList": "No more products"
     },
     "markets": {
       "title": "Markets",

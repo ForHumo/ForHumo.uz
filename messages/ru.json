@@ -711,7 +711,10 @@
       "sortCheap": "Дешевле рыночных",
       "sortPriceAsc": "Цена: по возрастанию",
       "sortPriceDesc": "Цена: по убыванию",
-      "sortRating": "Рейтинг"
+      "sortRating": "Рейтинг",
+      "loadMore": "Загрузить ещё",
+      "loading": "Загрузка...",
+      "endOfList": "Больше товаров нет"
     },
     "markets": {
       "title": "Рынки",

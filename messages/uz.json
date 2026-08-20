@@ -711,7 +711,10 @@
       "sortCheap": "Bozordan arzon",
       "sortPriceAsc": "Narx: arzondan",
       "sortPriceDesc": "Narx: qimmatdan",
-      "sortRating": "Reyting"
+      "sortRating": "Reyting",
+      "loadMore": "Yana yuklash",
+      "loading": "Yuklanmoqda...",
+      "endOfList": "Boshqa mahsulot yo'q"
     },
     "markets": {
       "title": "Bozorlar",

@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { BnLink } from "./bn-nav";
-import { SlidersHorizontal, X, Search, ChevronRight, Store, Package } from "lucide-react";
+import { SlidersHorizontal, X, Search, ChevronRight, Store, Package, Loader2 } from "lucide-react";
 import { BN, fmtPrice } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnEmpty } from "./bn-cards";
@@ -55,10 +55,16 @@ export function BnCatalog({
     const [onlyDelivery, setOnlyDelivery] = useState(false);
     const [maxPrice, setMaxPrice] = useState<number | null>(null);
 
+    // Pagination — SSR birinchi sahifani beradi, keyin "Yana yuklash" bosilsa
+    // /api/bn/products/search'dan keyingi 30 ta olamiz.
+    const [extraProducts, setExtraProducts] = useState<BnProductDTO[]>([]);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(initialProducts.length >= 60);
+
     const subCategory = category?.children?.find(ch => ch.slug === activeSubSlug);
 
     const items = useMemo(() => {
-        let list = [...initialProducts];
+        let list = [...initialProducts, ...extraProducts];
         if (marketSlug) {
             const mName = markets.find(m => m.slug === marketSlug)?.name;
             list = list.filter(p => p.marketName === mName);
@@ -79,7 +85,27 @@ export function BnCatalog({
             default: break;
         }
         return list;
-    }, [initialProducts, markets, marketSlug, onlyCheap, onlyInspect, onlyDelivery, maxPrice, sort]);
+    }, [initialProducts, extraProducts, markets, marketSlug, onlyCheap, onlyInspect, onlyDelivery, maxPrice, sort]);
+
+    async function loadMore() {
+        if (loadingMore || !hasMore) return;
+        setLoadingMore(true);
+        try {
+            const params = new URLSearchParams();
+            if (query) params.set("q", query);
+            if (category?.slug) params.set("category", subCategory?.slug ?? category.slug);
+            params.set("sort", sort === "cheap" ? "cheap" : "new");
+            params.set("skip", String(initialProducts.length + extraProducts.length));
+            params.set("limit", "30");
+            const r = await fetch(`/api/bn/products/search?${params.toString()}`);
+            if (!r.ok) { setHasMore(false); return; }
+            const d = await r.json();
+            const next = (d.products ?? []) as BnProductDTO[];
+            setExtraProducts(prev => [...prev, ...next]);
+            setHasMore(!!d.hasMore);
+        } catch { setHasMore(false); }
+        finally { setLoadingMore(false); }
+    }
 
     const activeFilters =
         (marketSlug ? 1 : 0) + (onlyCheap ? 1 : 0) + (onlyInspect ? 1 : 0)
@@ -202,9 +228,26 @@ export function BnCatalog({
                     }
                 />
             ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                    {items.map(p => <BnProductCard key={p.id} p={p} compact />)}
-                </div>
+                <>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                        {items.map(p => <BnProductCard key={p.id} p={p} compact />)}
+                    </div>
+                    {/* Yana yuklash / oxiri */}
+                    {hasMore ? (
+                        <div className="flex justify-center mt-6">
+                            <button onClick={loadMore} disabled={loadingMore}
+                                className="flex items-center gap-2 h-11 px-6 rounded-2xl text-[14px] font-black transition-transform active:scale-[0.98] disabled:opacity-60"
+                                style={{ background: BN.surface, border: `1px solid ${BN.borderGold}`, color: BN.gold }}>
+                                {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
+                                {loadingMore ? t("loading") : t("loadMore")}
+                            </button>
+                        </div>
+                    ) : items.length > 0 && (
+                        <p className="text-center mt-6 text-[12.5px]" style={{ color: BN.text3 }}>
+                            {t("endOfList")}
+                        </p>
+                    )}
+                </>
             )}
 
             {/* Filtr paneli */}

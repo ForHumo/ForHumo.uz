@@ -443,11 +443,12 @@ export async function searchProducts(opts: {
     marketSlug?: string;
     sort?: "cheap" | "new" | "rating" | "seasonal";
     limit?: number;
+    skip?: number;   // pagination cursor
     profileId?: string | null;
     /** Faqat ulgurji mahsulotlar kerak (/bn/ulgurji sahifasi uchun) */
     wholesaleOnly?: boolean;
 }): Promise<BnProductDTO[]> {
-    const { q, categorySlug, marketSlug, sort = "new", limit = 60, profileId = null, wholesaleOnly = false } = opts;
+    const { q, categorySlug, marketSlug, sort = "new", limit = 60, skip = 0, profileId = null, wholesaleOnly = false } = opts;
 
     const seeWholesale = await viewerCanSeeWholesale(profileId);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -486,6 +487,7 @@ export async function searchProducts(opts: {
         where,
         include: PRODUCT_INCLUDE,
         orderBy,
+        skip,
         take: limit,
     });
     const dtos = rows.map(toProductDTO);
