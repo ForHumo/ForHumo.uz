@@ -6,6 +6,8 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getBnAuth } from "@/lib/bn-auth";
+import { grantAchievement } from "@/lib/achievements";
 
 const PHONE_RE = /^\+998\d{9}$/;
 const MAX_PER_PHONE_24H = 3;
@@ -62,6 +64,10 @@ export async function POST(req: Request) {
         },
         select: { id: true, createdAt: true },
     });
+
+    // Ariza qaldirgan foydalanuvchi kirgan bo'lsa — "Erta qadam" yutuq (fail-safe)
+    const auth = await getBnAuth().catch(() => null);
+    if (auth) await grantAchievement(auth.profileId, "bn.waitlist");
 
     return NextResponse.json({ ok: true, id: entry.id, createdAt: entry.createdAt.toISOString() });
 }

@@ -9,6 +9,7 @@ import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 import { moderateOnCreate } from "@/lib/moderation";
+import { grantAchievement } from "@/lib/achievements";
 
 export async function GET(
     _req: Request,
@@ -101,6 +102,9 @@ export async function POST(
             where: { id: product.id },
             data: { rating: agg._avg.rating ?? 0, ratingCount: agg._count._all },
         });
+
+        // Birinchi sharh yutug'i (fail-safe)
+        after(() => grantAchievement(auth.profileId, "bn.first_review"));
 
         // AI moderatsiya
         after(() => moderateOnCreate({

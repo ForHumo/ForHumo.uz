@@ -18,6 +18,7 @@ import { requireBnAuth } from "@/lib/bn-auth";
 import { refundOrder, settleOrder } from "@/lib/bn-settle";
 import { bnNotify } from "@/lib/bn-notify";
 import { awardReferralOnFirstCompleted } from "@/lib/bn-referral";
+import { grantAchievement } from "@/lib/achievements";
 
 const ALLOWED_FROM: Record<string, Set<string>> = {
     PLACED:    new Set(["CONFIRMED", "CANCELLED"]),
@@ -114,9 +115,15 @@ export async function POST(
     // Escrow harakati
     if (next === "COMPLETED") {
         const s = await settleOrder(order.id);
-        // Referral bonus (fail-safe, javobni kechiktirmasin)
+        // Referral bonus + BN yutuqlari (fail-safe, javobni kechiktirmasin)
         after(async () => {
             await awardReferralOnFirstCompleted(order.buyerId, order.id);
+            // Xaridorga birinchi buyurtma yutug'i (referral bo'lmasa ham beriladi)
+            await grantAchievement(order.buyerId, "bn.first_order");
+            // Do'kon egasiga birinchi savdo yutug'i
+            if (order.shop?.profileId) {
+                await grantAchievement(order.shop.profileId, "bn.first_sale");
+            }
         });
         return NextResponse.json({ ok: true, settled: s.ok, reason: s.reason });
     }

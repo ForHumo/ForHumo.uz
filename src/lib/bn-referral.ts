@@ -16,6 +16,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { grantAchievement } from "@/lib/achievements";
 
 export const REFERRAL_INVITER_BONUS = 10_000;
 export const REFERRAL_INVITEE_BONUS = 5_000;
@@ -138,6 +139,15 @@ export async function awardReferralOnFirstCompleted(
                 data: { status: "REWARDED", rewardOrderId: orderId, rewardedAt: new Date() },
             }),
         ]);
+
+        // Yutuqlar (fail-safe)
+        await grantAchievement(ref.inviterId, "bn.first_referral");
+        await grantAchievement(buyerId, "bn.first_order");
+        // 10 REWARDED yig'ilganda — BN elchi gold
+        const inviterCount = await prisma.bnReferral.count({
+            where: { inviterId: ref.inviterId, status: "REWARDED" },
+        });
+        if (inviterCount >= 10) await grantAchievement(ref.inviterId, "bn.referral_10");
 
         return { awarded: true };
     } catch (e) {

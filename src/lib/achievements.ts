@@ -5,7 +5,7 @@
 
 import { prisma } from "@/lib/prisma";
 
-export type AchievementCategory = "esport" | "nexus" | "market" | "pay" | "id";
+export type AchievementCategory = "esport" | "nexus" | "market" | "pay" | "id" | "bn";
 export type AchievementTier = "bronze" | "silver" | "gold" | "platinum";
 
 // Katalog — barcha mavjud yutuqlar. UI ham shu ro'yxatdan foydalanadi (yutilganlarni belgilash uchun).
@@ -49,6 +49,14 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     // Pay
     { code: "pay.first_deposit",   title: "Hamyon faol",           description: "Hamyoningiz birinchi marta to'ldi", icon: "Wallet", category: "pay", tier: "bronze" },
     { code: "pay.first_transfer",  title: "O'tkazma",              description: "Birinchi o'tkazma yuborildi", icon: "Send", category: "pay", tier: "bronze" },
+
+    // Bozor Narxida (BN)
+    { code: "bn.waitlist",         title: "Erta qadam",            description: "BN sotuvchi waitlist'iga yozildingiz", icon: "ClipboardList", category: "bn", tier: "bronze" },
+    { code: "bn.first_order",      title: "Birinchi buyurtma",     description: "BN'da birinchi buyurtma tugallandi", icon: "ShoppingBag", category: "bn", tier: "bronze" },
+    { code: "bn.first_review",     title: "Baholovchi",            description: "BN'da birinchi sharh yozildi", icon: "Star", category: "bn", tier: "bronze" },
+    { code: "bn.first_sale",       title: "BN sotuvchi",           description: "Do'koningiz BN'da birinchi savdo qildi", icon: "TrendingUp", category: "bn", tier: "silver" },
+    { code: "bn.first_referral",   title: "Do'st chaqirdi",        description: "Chaqirilgan do'stingiz birinchi buyurtma berdi", icon: "UserPlus", category: "bn", tier: "silver" },
+    { code: "bn.referral_10",      title: "BN elchi",              description: "10 ta do'st chaqirdingiz — TOP-10 leaderboard'da", icon: "Trophy", category: "bn", tier: "gold" },
 ];
 
 const CATALOG_BY_CODE = new Map(ACHIEVEMENTS.map(a => [a.code, a]));
