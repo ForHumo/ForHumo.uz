@@ -12,6 +12,17 @@ import { BN } from "@/lib/bn-theme";
 
 type Status = "PENDING" | "CONTACTED" | "CONVERTED" | "REJECTED";
 
+/** WhatsApp deep-link — prefilled greeting bilan.
+ *  wa.me formati: raqam +'siz, ?text= URL-encoded xabar. */
+function buildWaLink(phone: string, name: string): string {
+    const digits = phone.replace(/\D/g, "");
+    const firstName = (name || "").trim().split(/\s+/)[0] || "";
+    const greeting = firstName
+        ? `Assalomu alaykum, ${firstName}. Bozor Narxida'ga ariza qoldirgan edingiz — sotuvchi bo'lish bo'yicha aloqaga chiqyapmiz.`
+        : `Assalomu alaykum. Bozor Narxida'ga ariza qoldirgan edingiz — sotuvchi bo'lish bo'yicha aloqaga chiqyapmiz.`;
+    return `https://wa.me/${digits}?text=${encodeURIComponent(greeting)}`;
+}
+
 interface WaitlistEntry {
     id: string;
     name: string;
@@ -236,13 +247,15 @@ function WaitlistCard({
                 {/* Tezkor aloqa tugmalari */}
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <a href={`tel:${phoneClean}`}
-                        className="h-9 px-3 grid place-items-center rounded-lg text-[12.5px] font-bold"
+                        aria-label={`${e.name} — telefon qilish`}
+                        className="h-9 px-3 grid place-items-center rounded-lg text-[12.5px] font-bold transition-transform active:scale-[0.95]"
                         style={{ background: BN.gold, color: "#000" }}>
                         <Phone className="w-3.5 h-3.5" />
                     </a>
-                    <a href={`https://wa.me/${phoneClean.replace(/^\+/, "")}`}
+                    <a href={buildWaLink(phoneClean, e.name)}
                         target="_blank" rel="noopener noreferrer"
-                        className="h-9 px-3 grid place-items-center rounded-lg text-[12.5px] font-bold"
+                        aria-label={`${e.name} — WhatsApp`}
+                        className="h-9 px-3 grid place-items-center rounded-lg text-[12.5px] font-bold transition-transform active:scale-[0.95]"
                         style={{ background: "#25D366", color: "#fff" }}>
                         <MessageCircle className="w-3.5 h-3.5" />
                     </a>
