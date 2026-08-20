@@ -1187,6 +1187,13 @@
       "iosTitle": "iPhone'ga qo'shish",
       "iosStep1": "Pastdagi \"Ulashish\"",
       "iosStep2": "Bosh ekranga qo'shish"
+    },
+    "refBoard": {
+      "title": "TOP chaqiruvchilar",
+      "subtitle": "So'nggi",
+      "emptyText": "Hali hech kim do'st chaqirmagan. Birinchi bo'lish uchun havolangizni yuboring — 10 000 so'm bonus kutmoqda.",
+      "wantIn": "Yulduzlar orasiga qo'shilmoqchimisiz?",
+      "inviteCta": "Havolani olish"
     }
   }
 }

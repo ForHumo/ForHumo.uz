@@ -1187,6 +1187,13 @@
       "iosTitle": "Add to iPhone",
       "iosStep1": "Tap Share below",
       "iosStep2": "Add to Home Screen"
+    },
+    "refBoard": {
+      "title": "TOP inviters",
+      "subtitle": "Recent",
+      "emptyText": "No one has invited a friend yet. Be the first — share your link and earn a 10,000 UZS bonus.",
+      "wantIn": "Want to join the top?",
+      "inviteCta": "Get your link"
     }
   }
 }
