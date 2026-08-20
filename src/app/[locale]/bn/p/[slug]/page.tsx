@@ -15,10 +15,23 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const data = await getProductBySlug(slug, auth?.profileId ?? null);
     if (!data) return { title: "Mahsulot topilmadi" };
     const p = data.product;
+    const ogImage = `https://bozornarxida.uz/api/og/bn/product/${encodeURIComponent(slug)}`;
+    const description = p.description ?? `${p.title}. ${p.price.toLocaleString("uz-UZ")} so'm. ${p.shopName} do'konidan.`;
     return {
-        title: `${p.title}`,
-        description: p.description ?? `${p.title}. ${p.price.toLocaleString("uz-UZ")} so'm. ${p.shopName} do'konidan.`,
-        openGraph: p.images[0] ? { images: [p.images[0]] } : undefined,
+        title: p.title,
+        description,
+        openGraph: {
+            title: p.title,
+            description,
+            images: [{ url: ogImage, width: 1200, height: 630, alt: p.title }],
+            type: "website",
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: p.title,
+            description,
+            images: [ogImage],
+        },
     };
 }
 

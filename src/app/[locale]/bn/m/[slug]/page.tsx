@@ -9,9 +9,24 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params;
     const m = await prisma.bnMarket.findUnique({ where: { slug }, select: { name: true, address: true } });
+    const title = m?.name ?? slug.replace(/-/g, " ");
+    const description = m ? `${m.name}${m.address ? ` — ${m.address}` : ""} — do'konlar va mahsulotlar ro'yxati.` : undefined;
+    const ogImage = `https://bozornarxida.uz/api/og/bn/market/${encodeURIComponent(slug)}`;
     return {
-        title: `${m?.name ?? slug.replace(/-/g, " ")}`,
-        description: m ? `${m.name}${m.address ? ` — ${m.address}` : ""} — do'konlar va mahsulotlar ro'yxati.` : undefined,
+        title,
+        description,
+        openGraph: {
+            title,
+            description,
+            images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+            type: "website",
+        },
+        twitter: {
+            card: "summary_large_image",
+            title,
+            description,
+            images: [ogImage],
+        },
     };
 }
 
