@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
     ClipboardList, Loader2, Phone, MessageCircle, Check, X,
-    Clock, PhoneCall, Store, Trash2, Download,
+    Clock, PhoneCall, Store, Trash2, Download, AlertTriangle,
 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 
@@ -28,6 +28,8 @@ interface WaitlistEntry {
     contactedAt: string | null;
     contactedBy: { name: string | null; username: string | null } | null;
     createdAt: string;
+    daysWaiting: number;
+    isUrgent: boolean;
 }
 
 const TABS: { key: Status; label: string; icon: React.ReactNode; color: string }[] = [
@@ -41,6 +43,7 @@ export function BnAdminWaitlist() {
     const [tab, setTab] = useState<Status>("PENDING");
     const [entries, setEntries] = useState<WaitlistEntry[]>([]);
     const [stats, setStats] = useState<Record<string, number>>({});
+    const [urgentCount, setUrgentCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
 
@@ -48,7 +51,11 @@ export function BnAdminWaitlist() {
         setLoading(true);
         fetch(`/api/bn/admin/waitlist?status=${tab}`)
             .then(r => r.json())
-            .then(d => { setEntries(d.entries ?? []); setStats(d.stats ?? {}); })
+            .then(d => {
+                setEntries(d.entries ?? []);
+                setStats(d.stats ?? {});
+                setUrgentCount(d.urgentCount ?? 0);
+            })
             .catch(() => { /* ignore */ })
             .finally(() => setLoading(false));
     }, [tab]);
@@ -86,6 +93,24 @@ export function BnAdminWaitlist() {
 
     return (
         <div>
+            {/* Urgent banner — >=3 kun kutayotgan PENDING mavjud bo'lsa */}
+            {urgentCount > 0 && (
+                <div className="mb-3 p-3 rounded-xl flex items-center gap-2.5"
+                    style={{ background: `${BN.err}18`, border: `1px solid ${BN.err}55` }}>
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: BN.err }} />
+                    <p className="text-[12.5px] font-bold flex-1" style={{ color: BN.err }}>
+                        <b>{urgentCount}</b> ta ariza 3 kundan ortiq javobsiz qoldi — qo'ng'iroq qilish vaqti keldi.
+                    </p>
+                    {tab !== "PENDING" && (
+                        <button onClick={() => setTab("PENDING")}
+                            className="h-8 px-3 rounded-lg text-[11.5px] font-black"
+                            style={{ background: BN.err, color: "#fff" }}>
+                            Ko'rish
+                        </button>
+                    )}
+                </div>
+            )}
+
             {/* Tab bar + CSV eksport */}
             <div className="flex items-center gap-1.5 mb-4 flex-wrap">
                 {TABS.map(t => {
@@ -173,10 +198,24 @@ function WaitlistCard({
     const phoneClean = e.phone.replace(/\s/g, "");
 
     return (
-        <div className="p-4 rounded-2xl" style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
+        <div className="p-4 rounded-2xl relative"
+            style={{
+                background: BN.surface,
+                border: `1px solid ${e.isUrgent ? BN.err : BN.border}`,
+                boxShadow: e.isUrgent ? `0 0 0 1px ${BN.err}22` : undefined,
+            }}>
             <div className="flex items-start gap-3 mb-3 flex-wrap">
                 <div className="flex-1 min-w-[220px]">
-                    <p className="text-[15px] font-black">{e.name}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-[15px] font-black">{e.name}</p>
+                        {e.isUrgent && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black leading-none"
+                                style={{ background: `${BN.err}22`, color: BN.err }}>
+                                <AlertTriangle className="w-3 h-3" />
+                                {e.daysWaiting} kun
+                            </span>
+                        )}
+                    </div>
                     <a href={`tel:${phoneClean}`}
                         className="inline-flex items-center gap-1 mt-1 text-[13px] font-bold tabular-nums"
                         style={{ color: BN.gold }}>
@@ -185,6 +224,10 @@ function WaitlistCard({
                     </a>
                     <p className="text-[11.5px] mt-1.5" style={{ color: BN.text3 }}>
                         {new Date(e.createdAt).toLocaleString("uz-UZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        {" · "}
+                        <span style={{ color: e.daysWaiting >= 3 ? BN.err : e.daysWaiting >= 1 ? BN.gold : BN.text3 }}>
+                            {e.daysWaiting === 0 ? "bugun" : `${e.daysWaiting} kun oldin`}
+                        </span>
                         {e.source && <> · <span style={{ color: BN.text2 }}>{e.source}</span></>}
                         {e.ref && <> · ref: <span style={{ color: BN.gold }}>{e.ref}</span></>}
                     </p>
