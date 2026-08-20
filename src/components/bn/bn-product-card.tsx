@@ -33,6 +33,43 @@ export interface ProductCardData {
     isWholesale?: boolean;          // Ulgurji — B2B badge
     minWholesaleQty?: number | null;
     shopVerifiedTier?: "NONE" | "RETAIL" | "WHOLESALE";  // tasdiqlangan sotuvchi galochkasi
+    shopLat?: number | null;         // do'kon koordinatalari — nearby chip uchun
+    shopLng?: number | null;
+}
+
+// User coords sessionStorage'da (BnNearbyRow tomonidan yozilgan).
+// Chip faqat foydalanuvchi geolocation ruxsat bergan bo'lsa ko'rinadi.
+const USER_COORDS_KEY = "bn-user-coords-v1";
+interface UserCoords { lat: number; lng: number; at: number }
+
+function useUserCoords(): UserCoords | null {
+    const [coords, setCoords] = useState<UserCoords | null>(null);
+    useEffect(() => {
+        try {
+            const raw = sessionStorage.getItem(USER_COORDS_KEY);
+            if (raw) {
+                const c = JSON.parse(raw) as UserCoords;
+                if (Date.now() - c.at < 60 * 60 * 1000) setCoords(c);
+            }
+        } catch { /* ignore */ }
+    }, []);
+    return coords;
+}
+
+const R_KM = 6371;
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const toRad = (d: number) => (d * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLng / 2) ** 2;
+    return R_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function formatDist(km: number): string {
+    if (km < 1) return `${Math.round(km * 1000)} m`;
+    return `${km.toFixed(1)} km`;
 }
 
 /** Foydalanuvchi qarori bo'yicha kontekst matni:
@@ -66,6 +103,12 @@ export function BnProductCard({
     const t = useTranslations("bn.card");
     const locale = useLocale();
     const { status } = useSession();
+
+    // Masofa chip — shop coords + user coords mavjud bo'lsa
+    const userCoords = useUserCoords();
+    const distKm = userCoords && p.shopLat != null && p.shopLng != null
+        ? haversineKm(userCoords.lat, userCoords.lng, p.shopLat, p.shopLng)
+        : null;
     // MUHIM: hydration mismatch'ni oldini olish uchun boshlang'ich holat DOIM bir xil bo'lishi kerak
     // (server undefined = false, client kesh'dan olmasin). Kesh'dan qiymatni useEffect'da yuklaymiz.
     const [fav, setFav] = useState<boolean>(!!initialFavored);
@@ -187,6 +230,14 @@ export function BnProductCard({
                         style={{ background: BN.glass, color: BN.warn }}
                     >
                         {t("fewLeft", { n: p.stock })}
+                    </span>
+                )}
+
+                {/* Masofa chip — foydalanuvchi geolocation ruxsat bergan bo'lsa */}
+                {distKm != null && distKm <= 30 && (
+                    <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-md text-[10px] font-black leading-none"
+                        style={{ background: BN.gold, color: BN.onGold }}>
+                        {formatDist(distKm)}
                     </span>
                 )}
 

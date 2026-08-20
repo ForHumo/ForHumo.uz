@@ -82,6 +82,9 @@ export interface BnProductDTO {
     wholesaleTiers?: { minQty: number; price: number }[];
     /** Sotuvchi galochkasi — cron avtomatik hisoblab qo'yadi */
     shopVerifiedTier?: "NONE" | "RETAIL" | "WHOLESALE";
+    /** Do'kon koordinatalari — nearby masofa chip uchun (ixtiyoriy) */
+    shopLat?: number | null;
+    shopLng?: number | null;
 }
 
 // ── Xaritalash: DB → DTO ────────────────────────────────────────────────────
@@ -117,7 +120,7 @@ function toShopDTO(s: ShopWithMarket, ownerUsername?: string | null): BnShopDTO 
 
 type ProductWithRels = Awaited<ReturnType<typeof prisma.bnProduct.findMany>>[number]
     & {
-        shop: { slug: string; name: string; tier: string; verifiedTier?: string; market: { name: string } | null; city: string } | null;
+        shop: { slug: string; name: string; tier: string; verifiedTier?: string; market: { name: string } | null; city: string; lat?: number | null; lng?: number | null } | null;
         category: { slug: string } | null;
     };
 
@@ -152,6 +155,8 @@ function toProductDTO(p: ProductWithRels): BnProductDTO {
         minWholesaleQty: p.minWholesaleQty,
         wholesaleTiers: Array.isArray(p.wholesaleTiers) ? p.wholesaleTiers as { minQty: number; price: number }[] : [],
         shopVerifiedTier: (p.shop?.verifiedTier as "NONE" | "RETAIL" | "WHOLESALE" | undefined) ?? "NONE",
+        shopLat: p.shop?.lat ?? null,
+        shopLng: p.shop?.lng ?? null,
     };
 }
 
@@ -175,7 +180,7 @@ export async function viewerCanSeeWholesale(profileId: string | null): Promise<b
 // ── Yuklovchilar ────────────────────────────────────────────────────────────
 
 const PRODUCT_INCLUDE = {
-    shop: { select: { slug: true, name: true, tier: true, verifiedTier: true, city: true, status: true, market: { select: { name: true } } } },
+    shop: { select: { slug: true, name: true, tier: true, verifiedTier: true, city: true, status: true, lat: true, lng: true, market: { select: { name: true } } } },
     category: { select: { slug: true } },
 } as const;
 
