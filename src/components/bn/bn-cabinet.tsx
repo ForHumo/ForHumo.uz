@@ -12,6 +12,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
+import { useTranslations, useLocale } from "next-intl";
 import {
     LayoutDashboard, Package, ShoppingBag, Store, Wallet, Plus, X,
     TrendingUp, Eye, LogIn, ArrowUpRight, Check, Loader2, Truck,
@@ -26,12 +27,12 @@ import { BnCategoryPicker } from "./bn-category-picker";
 
 type Tab = "home" | "products" | "orders" | "shop" | "money";
 
-const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: "home",     label: "Umumiy",       icon: <LayoutDashboard className="w-[18px] h-[18px]" /> },
-    { key: "orders",   label: "Buyurtmalar",  icon: <ShoppingBag className="w-[18px] h-[18px]" /> },
-    { key: "products", label: "Mahsulotlar",  icon: <Package className="w-[18px] h-[18px]" /> },
-    { key: "shop",     label: "Do'kon",       icon: <Store className="w-[18px] h-[18px]" /> },
-    { key: "money",    label: "Pul",          icon: <Wallet className="w-[18px] h-[18px]" /> },
+const TAB_DEFS: { key: Tab; labelKey: string; icon: React.ReactNode }[] = [
+    { key: "home",     labelKey: "tabHome",     icon: <LayoutDashboard className="w-[18px] h-[18px]" /> },
+    { key: "orders",   labelKey: "tabOrders",   icon: <ShoppingBag className="w-[18px] h-[18px]" /> },
+    { key: "products", labelKey: "tabProducts", icon: <Package className="w-[18px] h-[18px]" /> },
+    { key: "shop",     labelKey: "tabShop",     icon: <Store className="w-[18px] h-[18px]" /> },
+    { key: "money",    labelKey: "tabMoney",    icon: <Wallet className="w-[18px] h-[18px]" /> },
 ];
 
 export interface CabinetShop {
@@ -142,6 +143,8 @@ interface Props {
 export function BnCabinet(props: Props) {
     const { shop, unauthenticated, stats, orders, products, categories, walletBalance } = props;
     const notAuth = unauthenticated;
+    const t = useTranslations("bn.cabinet");
+    const tCommon = useTranslations("bn");
     const [tab, setTab] = useState<Tab>("home");
     const [createOpen, setCreateOpen] = useState(false);
 
@@ -158,9 +161,9 @@ export function BnCabinet(props: Props) {
                     >
                         <LayoutDashboard className="w-7 h-7" />
                     </span>
-                    <h1 className="text-[20px] font-black mb-2">Kabinet</h1>
+                    <h1 className="text-[20px] font-black mb-2">{t("title")}</h1>
                     <p className="text-[13.5px] leading-relaxed mb-6" style={{ color: BN.text2 }}>
-                        Kabinetga kirish uchun Humo ID bilan tizimga kiring.
+                        {t("authText")}
                     </p>
                     <button
                         onClick={() => signIn("google")}
@@ -168,7 +171,7 @@ export function BnCabinet(props: Props) {
                         style={{ background: BN.gold, color: BN.onGold }}
                     >
                         <LogIn className="w-5 h-5" />
-                        Kirish
+                        {tCommon("auth.signIn")}
                     </button>
                 </div>
             </div>
@@ -188,17 +191,16 @@ export function BnCabinet(props: Props) {
                     >
                         <Store className="w-7 h-7" />
                     </span>
-                    <h1 className="text-[22px] font-black mb-2">Sotuvchi bo&apos;ling</h1>
+                    <h1 className="text-[22px] font-black mb-2">{t("becomeSellerTitle")}</h1>
                     <p className="text-[13.5px] leading-relaxed mb-6" style={{ color: BN.text2 }}>
-                        Do&apos;koningizni onlaynga chiqarish uchun avval ariza bering.
-                        YaTT yoki MChJ bilan, 4 qadam — 3 daqiqa.
+                        {t("becomeSellerText")}
                     </p>
                     <BnLink
                         href="/sotuvchi"
                         className="inline-flex items-center justify-center gap-2 w-full h-12 rounded-2xl text-[15px] font-black"
                         style={{ background: BN.gold, color: BN.onGold }}
                     >
-                        Ariza berish
+                        {t("applyBtn")}
                         <ArrowUpRight className="w-4 h-4" />
                     </BnLink>
                 </div>
@@ -220,20 +222,18 @@ export function BnCabinet(props: Props) {
                     >
                         <Clock className="w-7 h-7" />
                     </span>
-                    <h1 className="text-[22px] font-black mb-2">Ariza tekshirilmoqda</h1>
+                    <h1 className="text-[22px] font-black mb-2">{t("pendingTitle")}</h1>
                     <p className="text-[13.5px] leading-relaxed mb-6" style={{ color: BN.text2 }}>
-                        Do&apos;kon: <strong style={{ color: BN.text }}>{shop.name}</strong>. Odatda 1 ish
-                        kuni ichida javob beramiz. Tasdiqlangach shu sahifada mahsulot qo&apos;shishingiz
-                        mumkin bo&apos;ladi.
+                        {t("pendingText", { name: shop.name })}
                     </p>
                     <div
                         className="p-4 rounded-xl text-left"
                         style={{ background: BN.surfaceUp }}
                     >
-                        <p className="text-[12px] font-bold mb-1" style={{ color: BN.text3 }}>ARIZA MA&apos;LUMOTI</p>
+                        <p className="text-[12px] font-bold mb-1" style={{ color: BN.text3 }}>{t("appInfo")}</p>
                         <p className="text-[13.5px] font-bold">{shop.name}</p>
                         <p className="text-[12px]" style={{ color: BN.text2 }}>
-                            {shop.locationType === "IN_MARKET" && shop.marketName ? `${shop.marketName} · ${shop.marketSection ?? ""}` : shop.locationType === "STANDALONE" ? shop.address ?? shop.city : "Onlayn"}
+                            {shop.locationType === "IN_MARKET" && shop.marketName ? `${shop.marketName} · ${shop.marketSection ?? ""}` : shop.locationType === "STANDALONE" ? shop.address ?? shop.city : t("online")}
                         </p>
                         <p className="text-[12px] mt-1" style={{ color: BN.text3 }}><Phone className="w-3 h-3 inline mr-1" />{shop.phone}</p>
                     </div>
@@ -256,14 +256,14 @@ export function BnCabinet(props: Props) {
                     >
                         <AlertTriangle className="w-7 h-7" />
                     </span>
-                    <h1 className="text-[22px] font-black mb-2">Ariza rad etildi</h1>
+                    <h1 className="text-[22px] font-black mb-2">{t("rejectedTitle")}</h1>
                     {shop.rejectReason && (
                         <p className="text-[13.5px] leading-relaxed mb-4 p-3 rounded-lg text-left" style={{ color: BN.text, background: BN.errSoft }}>
-                            <strong>Sabab:</strong> {shop.rejectReason}
+                            <strong>{t("rejectReason")}:</strong> {shop.rejectReason}
                         </p>
                     )}
                     <p className="text-[13px] leading-relaxed" style={{ color: BN.text2 }}>
-                        Hujjatlarni to&apos;g&apos;rilab, admin bilan bog&apos;laning.
+                        {t("rejectedText")}
                     </p>
                 </div>
             </div>
@@ -292,7 +292,7 @@ export function BnCabinet(props: Props) {
                             {shop.verified && <ShieldCheck className="w-5 h-5" style={{ color: BN.info }} />}
                         </h1>
                         <p className="text-[13px] mt-0.5" style={{ color: BN.text3 }}>
-                            {shop.productCount} mahsulot · {shop.orderCount} buyurtma
+                            {t("shopSummary", { p: shop.productCount, o: shop.orderCount })}
                         </p>
                     </div>
                 </div>
@@ -302,32 +302,32 @@ export function BnCabinet(props: Props) {
                     style={{ background: BN.gold, color: BN.onGold }}
                 >
                     <Plus className="w-[18px] h-[18px]" />
-                    Mahsulot qo&apos;shish
+                    {t("addProduct")}
                 </button>
             </div>
 
             <div className="flex items-center gap-1.5 mb-6 overflow-x-auto pb-1">
-                {TABS.map(t => {
-                    const badge = t.key === "orders"   ? orders.filter(o => o.status === "PLACED").length
-                                : t.key === "products" ? products.filter(p => p.isActive).length
+                {TAB_DEFS.map(td => {
+                    const badge = td.key === "orders"   ? orders.filter(o => o.status === "PLACED").length
+                                : td.key === "products" ? products.filter(p => p.isActive).length
                                 : 0;
                     return (
                         <button
-                            key={t.key}
-                            onClick={() => setTab(t.key)}
+                            key={td.key}
+                            onClick={() => setTab(td.key)}
                             className="flex items-center gap-2 h-10 px-3.5 rounded-xl text-[13.5px] font-bold flex-shrink-0 transition-colors"
                             style={{
-                                background: tab === t.key ? BN.goldSoft : BN.surface,
-                                border: `1px solid ${tab === t.key ? BN.goldEdge : BN.border}`,
-                                color: tab === t.key ? BN.gold : BN.text2,
+                                background: tab === td.key ? BN.goldSoft : BN.surface,
+                                border: `1px solid ${tab === td.key ? BN.goldEdge : BN.border}`,
+                                color: tab === td.key ? BN.gold : BN.text2,
                             }}
                         >
-                            {t.icon}
-                            {t.label}
+                            {td.icon}
+                            {t(td.labelKey)}
                             {badge > 0 && (
                                 <span
                                     className="min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full text-[10px] font-black leading-none"
-                                    style={{ background: tab === t.key ? BN.gold : BN.surfaceUp, color: tab === t.key ? BN.onGold : BN.text3 }}
+                                    style={{ background: tab === td.key ? BN.gold : BN.surfaceUp, color: tab === td.key ? BN.onGold : BN.text3 }}
                                 >
                                     {badge}
                                 </span>
@@ -356,14 +356,15 @@ export function BnCabinet(props: Props) {
 // ── UMUMIY ──────────────────────────────────────────────────────────────────
 
 function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetStats; orders: CabinetOrder[] }) {
+    const t = useTranslations("bn.cabinet");
     const recent = orders.slice(0, 5);
     return (
         <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-                <Stat icon={<ShoppingBag className="w-[18px] h-[18px]" />} label="Buyurtmalar" value={stats.ordersThisMonth.toString()} hint="Bu oyda" />
-                <Stat icon={<TrendingUp className="w-[18px] h-[18px]" />} label="Sotildi" value={fmtPrice(stats.revenueThisMonth)} hint="Bu oyda" />
-                <Stat icon={<Package className="w-[18px] h-[18px]" />} label="Mahsulotlar" value={stats.productsActive.toString()} hint="Faol" />
-                <Stat icon={<Eye className="w-[18px] h-[18px]" />} label="Reyting" value={shop.rating > 0 ? shop.rating.toFixed(1) : "—"} hint={`${shop.ratingCount} baho`} />
+                <Stat icon={<ShoppingBag className="w-[18px] h-[18px]" />} label={t("statOrders")} value={stats.ordersThisMonth.toString()} hint={t("statThisMonth")} />
+                <Stat icon={<TrendingUp className="w-[18px] h-[18px]" />} label={t("statSold")} value={fmtPrice(stats.revenueThisMonth)} hint={t("statThisMonth")} />
+                <Stat icon={<Package className="w-[18px] h-[18px]" />} label={t("statProducts")} value={stats.productsActive.toString()} hint={t("statActive")} />
+                <Stat icon={<Eye className="w-[18px] h-[18px]" />} label={t("statRating")} value={shop.rating > 0 ? shop.rating.toFixed(1) : "—"} hint={t("statNRatings", { n: shop.ratingCount })} />
             </div>
 
             {shop.verifiedProgress && <VerifiedProgressCard progress={shop.verifiedProgress} />}
@@ -374,7 +375,7 @@ function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetSta
                     style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                 >
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-[15px] font-black">So&apos;nggi buyurtmalar</h2>
+                        <h2 className="text-[15px] font-black">{t("recentOrders")}</h2>
                     </div>
                     <div className="space-y-2">
                         {recent.map(o => <RecentOrderRow key={o.id} o={o} />)}
@@ -385,11 +386,11 @@ function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetSta
                     className="p-5 rounded-2xl mb-6"
                     style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                 >
-                    <h2 className="text-[15px] font-black mb-4">Boshlash</h2>
+                    <h2 className="text-[15px] font-black mb-4">{t("gettingStarted")}</h2>
                     <div className="space-y-2.5">
-                        <Todo done title="Ariza tasdiqlandi" text="Endi mahsulot qo'shishingiz mumkin" />
-                        <Todo title="Do'kon logosini yuklang" text="Xaridorlar sizni tanib olishadi" />
-                        <Todo title="Birinchi mahsulotni qo'shing" text="Do'konga hayot bering" />
+                        <Todo done title={t("todoApproved")} text={t("todoApprovedSub")} />
+                        <Todo title={t("todoLogo")} text={t("todoLogoSub")} />
+                        <Todo title={t("todoFirst")} text={t("todoFirstSub")} />
                     </div>
                 </div>
             )}
@@ -405,9 +406,9 @@ function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetSta
                     <Sparkles className="w-5 h-5" />
                 </span>
                 <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-black mb-1">Humo AI mahsulot kartasini o&apos;zi yozadi</p>
+                    <p className="text-[14px] font-black mb-1">{t("aiPromoTitle")}</p>
                     <p className="text-[12.5px] leading-relaxed" style={{ color: BN.text2 }}>
-                        FAZA 6 da: rasm yuklaysiz, AI nomi/tavsifi/narx tavsiyasini beradi.
+                        {t("aiPromoText")}
                     </p>
                 </div>
             </div>
@@ -418,27 +419,28 @@ function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetSta
 // ── TASDIQLANGANLIK PROGRESS ────────────────────────────────────────────────
 
 function VerifiedProgressCard({ progress }: { progress: VerifiedProgress }) {
+    const t = useTranslations("bn.cabinet");
     // Ustuvor darslik: agar RETAIL emas → RETAIL ni ko'rsatamiz; RETAIL bo'lsa WHOLESALE ni ko'rsatamiz
     const target = progress.tier === "NONE" ? "retail" as const : "wholesale" as const;
     const data = target === "retail" ? progress.retail : progress.wholesale;
     const uniqueBuyers = target === "wholesale" ? progress.uniqueBuyers : undefined;
 
     const rows: { label: string; ok: boolean; text: string }[] = [
-        { label: "Muvaffaqiyatli buyurtma", ok: data.orders.ok, text: `${data.orders.current} / ${data.orders.target}` },
-        { label: `Reyting (${data.rating.count} sharh)`, ok: data.rating.ok, text: `${data.rating.current.toFixed(2)} / ${data.rating.target}` },
-        { label: "Rad etilgan buyurtma", ok: data.rejection.ok, text: `${data.rejection.current}% (talab: <${data.rejection.target}%)` },
-        { label: "Faol muddat", ok: data.activeDays.ok, text: `${data.activeDays.current} / ${data.activeDays.target} kun` },
-        { label: "Ogohlantirish yo'q", ok: data.banFree.ok, text: data.banFree.ok ? "Ha" : "Bor" },
+        { label: t("vpOrdersOk"), ok: data.orders.ok, text: `${data.orders.current} / ${data.orders.target}` },
+        { label: t("vpRating", { n: data.rating.count }), ok: data.rating.ok, text: `${data.rating.current.toFixed(2)} / ${data.rating.target}` },
+        { label: t("vpRejection"), ok: data.rejection.ok, text: t("vpRejectionText", { cur: data.rejection.current, target: data.rejection.target }) },
+        { label: t("vpActiveDays"), ok: data.activeDays.ok, text: t("vpActiveDaysText", { cur: data.activeDays.current, tgt: data.activeDays.target }) },
+        { label: t("vpBanFree"), ok: data.banFree.ok, text: data.banFree.ok ? t("vpYes") : t("vpHas") },
     ];
     if (uniqueBuyers) {
-        rows.push({ label: "Unikal xaridor", ok: uniqueBuyers.ok, text: `${uniqueBuyers.current} / ${uniqueBuyers.target}` });
+        rows.push({ label: t("vpUniqueBuyers"), ok: uniqueBuyers.ok, text: `${uniqueBuyers.current} / ${uniqueBuyers.target}` });
     }
 
     const okCount = rows.filter(r => r.ok).length;
     const percent = Math.round((okCount / rows.length) * 100);
 
     const isAchieved = progress.tier !== "NONE";
-    const targetLabel = target === "retail" ? "Chakana sotuvchi galochkasi" : "Ulgurji sotuvchi galochkasi";
+    const targetLabel = target === "retail" ? t("vpRetailBadge") : t("vpWholesaleBadge");
 
     return (
         <div
@@ -454,13 +456,13 @@ function VerifiedProgressCard({ progress }: { progress: VerifiedProgress }) {
                 </span>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                        <p className="text-[14px] font-black">Tasdiqlanganlik belgisi</p>
+                        <p className="text-[14px] font-black">{t("vpTitle")}</p>
                         {progress.tier === "RETAIL" && (
                             <span
                                 className="px-2 py-0.5 rounded-md text-[10.5px] font-black leading-none"
                                 style={{ background: `${BN.info}1F`, color: BN.info }}
                             >
-                                Chakana ✓
+                                {t("vpRetail")} ✓
                             </span>
                         )}
                         {progress.tier === "WHOLESALE" && (
@@ -468,12 +470,12 @@ function VerifiedProgressCard({ progress }: { progress: VerifiedProgress }) {
                                 className="px-2 py-0.5 rounded-md text-[10.5px] font-black leading-none"
                                 style={{ background: BN.goldSoft, color: BN.gold }}
                             >
-                                Ulgurji ✓
+                                {t("vpWholesale")} ✓
                             </span>
                         )}
                     </div>
                     <p className="text-[12px]" style={{ color: BN.text2 }}>
-                        {targetLabel} — {percent}% bajardingiz. Sotib olib bo'lmaydi, faqat natijaga qarab beriladi.
+                        {t("vpProgress", { name: targetLabel, pct: percent })}
                     </p>
                 </div>
             </div>
@@ -508,11 +510,13 @@ function VerifiedProgressCard({ progress }: { progress: VerifiedProgress }) {
 // ── BUYURTMALAR ─────────────────────────────────────────────────────────────
 
 function OrdersTab({ initial }: { initial: CabinetOrder[] }) {
+    const t = useTranslations("bn.cabinet");
+    const locale = useLocale();
     const [items, setItems] = useState(initial);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
 
     async function changeStatus(id: string, next: "CONFIRMED" | "READY" | "COMPLETED" | "CANCELLED") {
-        const reason = next === "CANCELLED" ? prompt("Bekor qilish sababi:") ?? "" : undefined;
+        const reason = next === "CANCELLED" ? prompt(t("cancelReasonPrompt")) ?? "" : undefined;
         setBusyIds(s => new Set([...s, id]));
         try {
             const r = await fetch(`/api/bn/orders/${id}/status`, {
@@ -524,7 +528,7 @@ function OrdersTab({ initial }: { initial: CabinetOrder[] }) {
             if (r.ok && d?.ok) {
                 setItems(prev => prev.map(o => o.id === id ? { ...o, status: next as keyof typeof ORDER_STATUS_META } : o));
             } else {
-                alert(d?.error ?? "Xatolik");
+                alert(d?.error ?? t("statusErr"));
             }
         } finally {
             setBusyIds(s => { const n = new Set(s); n.delete(id); return n; });
@@ -535,8 +539,8 @@ function OrdersTab({ initial }: { initial: CabinetOrder[] }) {
         return (
             <BnEmpty
                 icon={<ShoppingBag className="w-6 h-6" />}
-                title="Hali buyurtma yo'q"
-                text="Xaridor buyurtma berganda shu yerda ko'rinadi va tasdiqlaysiz."
+                title={t("ordersEmptyTitle")}
+                text={t("ordersEmptyText")}
             />
         );
     }
@@ -580,7 +584,7 @@ function OrdersTab({ initial }: { initial: CabinetOrder[] }) {
                                 </div>
                                 <p className="text-[13px] font-bold line-clamp-1">{o.firstTitle}</p>
                                 <p className="text-[11.5px] mt-0.5" style={{ color: BN.text3 }}>
-                                    {o.itemCount} mahsulot · {formatDate(o.placedAt)}
+                                    {t("productsN", { n: o.itemCount })} · {formatDate(o.placedAt, locale)}
                                 </p>
                                 <p className="text-[11.5px] mt-0.5 flex items-center gap-1" style={{ color: BN.text2 }}>
                                     <Phone className="w-3 h-3" />{o.phone}
@@ -595,22 +599,22 @@ function OrdersTab({ initial }: { initial: CabinetOrder[] }) {
                         <div className="flex items-center gap-2 flex-wrap">
                             {canConfirm && (
                                 <BtnSmall onClick={() => changeStatus(o.id, "CONFIRMED")} disabled={busy}>
-                                    <Check className="w-3.5 h-3.5" /> Tasdiqlash
+                                    <Check className="w-3.5 h-3.5" /> {t("confirm")}
                                 </BtnSmall>
                             )}
                             {canReady && (
                                 <BtnSmall onClick={() => changeStatus(o.id, "READY")} disabled={busy}>
-                                    <Package className="w-3.5 h-3.5" /> Tayyor
+                                    <Package className="w-3.5 h-3.5" /> {t("ready")}
                                 </BtnSmall>
                             )}
                             {canDone && (
                                 <BtnSmall onClick={() => changeStatus(o.id, "COMPLETED")} disabled={busy} tone="ok">
-                                    {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Check className="w-3.5 h-3.5" /> Yakunlash</>}
+                                    {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Check className="w-3.5 h-3.5" /> {t("complete")}</>}
                                 </BtnSmall>
                             )}
                             {canCancel && (
                                 <BtnSmall onClick={() => changeStatus(o.id, "CANCELLED")} disabled={busy} tone="err">
-                                    <X className="w-3.5 h-3.5" /> Bekor qilish
+                                    <X className="w-3.5 h-3.5" /> {t("cancel")}
                                 </BtnSmall>
                             )}
                         </div>
@@ -645,11 +649,13 @@ function ProductsTab({
     initial, categories, createOpen, setCreateOpen,
 }: { initial: CabinetProduct[]; categories: CabinetCategory[]; createOpen: boolean; setCreateOpen: (v: boolean) => void }) {
     const router = useRouter();
+    const t = useTranslations("bn.cabinet");
+    const locale = useLocale();
     const [items, setItems] = useState(initial);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
 
     async function remove(id: string) {
-        if (!confirm("Mahsulotni o'chirishga rozimisiz? Sotuvdan olinadi.")) return;
+        if (!confirm(t("removeConfirm"))) return;
         setBusyIds(s => new Set([...s, id]));
         setItems(prev => prev.map(p => p.id === id ? { ...p, isActive: false } : p));
         try {
@@ -674,9 +680,9 @@ function ProductsTab({
         }
     }
     async function quickEdit(p: CabinetProduct) {
-        const priceStr = prompt(`Narx (so'm) — hozir: ${p.price.toLocaleString("uz-UZ")}`, String(p.price));
+        const priceStr = prompt(t("quickEditPrice", { price: p.price.toLocaleString(locale) }), String(p.price));
         if (priceStr === null) return;
-        const stockStr = prompt(`Miqdor (ombor) — hozir: ${p.stock}`, String(p.stock));
+        const stockStr = prompt(t("quickEditStock", { stock: p.stock }), String(p.stock));
         if (stockStr === null) return;
         const newPrice = Math.max(1000, Math.floor(Number(priceStr.replace(/\D/g, "")) || p.price));
         const newStock = Math.max(0, Math.floor(Number(stockStr.replace(/\D/g, "")) || 0));
@@ -701,8 +707,8 @@ function ProductsTab({
             {items.length === 0 ? (
                 <BnEmpty
                     icon={<Package className="w-6 h-6" />}
-                    title="Hali mahsulot yo'q"
-                    text="Birinchi mahsulotni qo'shing — do'koningizga hayot beradi."
+                    title={t("productsEmptyTitle")}
+                    text={t("productsEmptyText")}
                     action={
                         <button
                             onClick={() => setCreateOpen(true)}
@@ -710,7 +716,7 @@ function ProductsTab({
                             style={{ background: BN.gold, color: BN.onGold }}
                         >
                             <Plus className="w-4 h-4" />
-                            Mahsulot qo&apos;shish
+                            {t("addProduct")}
                         </button>
                     }
                 />
@@ -746,22 +752,22 @@ function ProductsTab({
                                     </BnLink>
                                     <p className="text-[14px] font-black tabular-nums mt-1">{fmtPrice(p.price)}</p>
                                     <p className="text-[11.5px]" style={{ color: BN.text3 }}>
-                                        Omborda {p.stock} · {p.sold} sotildi
+                                        {t("stockLine", { n: p.stock, s: p.sold })}
                                     </p>
                                     <div className="flex items-center gap-1.5 mt-auto pt-2">
                                         <button
                                             onClick={() => quickEdit(p)}
                                             disabled={busy}
-                                            title="Narx / miqdorni tahrir"
+                                            title={t("edit")}
                                             className="flex items-center gap-1 h-8 px-2 rounded-lg text-[11px] font-black"
                                             style={{ background: BN.goldSoft, color: BN.gold }}
                                         >
-                                            Tahrir
+                                            {t("edit")}
                                         </button>
                                         <button
                                             onClick={() => toggleActive(p.id, !p.isActive)}
                                             disabled={busy}
-                                            title={p.isActive ? "Yashirish" : "Ko'rsatish"}
+                                            title={p.isActive ? t("hide") : t("show")}
                                             className="w-8 h-8 grid place-items-center rounded-lg"
                                             style={{ background: BN.surfaceUp, color: BN.text2 }}
                                         >
@@ -770,7 +776,7 @@ function ProductsTab({
                                         <button
                                             onClick={() => remove(p.id)}
                                             disabled={busy || !p.isActive}
-                                            title="O'chirish"
+                                            title={t("remove")}
                                             className="w-8 h-8 grid place-items-center rounded-lg"
                                             style={{ background: BN.errSoft, color: BN.err }}
                                         >
@@ -810,6 +816,8 @@ interface CreatedProduct { id: string; slug: string; title: string; price: numbe
 function CreateProductModal({
     categories, onClose, onCreated,
 }: { categories: CabinetCategory[]; onClose: () => void; onCreated: (p: CreatedProduct) => void }) {
+    const t = useTranslations("bn.cabinet");
+    const tNav = useTranslations("bn.nav");
     const fileRef = useRef<HTMLInputElement>(null);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -846,9 +854,9 @@ function CreateProductModal({
             const r = await fetch("/api/bn/upload", { method: "POST", body: fd });
             const d = await r.json();
             if (r.ok && d?.url) setImages(prev => [...prev, d.url]);
-            else if (d?.error === "storage_not_configured") setErr("Rasm yuklash sozlanmagan.");
-            else setErr(d?.error ?? "Yuklash xatoligi");
-        } catch { setErr("Ulanish xatoligi"); }
+            else if (d?.error === "storage_not_configured") setErr(t("imgUploadNotConfigured"));
+            else setErr(d?.error ?? t("imgUploadErr"));
+        } catch { setErr(t("netErr")); }
         finally {
             setUploadBusy(false);
             if (fileRef.current) fileRef.current.value = "";
@@ -856,7 +864,7 @@ function CreateProductModal({
     }
 
     async function autoFill() {
-        if (images.length === 0) { setErr("Avval rasm yuklang"); return; }
+        if (images.length === 0) { setErr(t("aiFillFirst")); return; }
         setAiBusy(true); setErr(null);
         try {
             const r = await fetch("/api/bn/ai/listing", {
@@ -865,10 +873,10 @@ function CreateProductModal({
                 body: JSON.stringify({ imageUrl: images[0], categorySlug: categorySlug || undefined }),
             });
             const d = await r.json();
-            if (r.status === 503) { setErr("AI hozircha ishlamayapti"); return; }
-            if (!r.ok || !d?.result) { setErr(d?.error ?? "AI xatoligi"); return; }
+            if (r.status === 503) { setErr(t("aiUnavailable")); return; }
+            if (!r.ok || !d?.result) { setErr(d?.error ?? t("aiErr")); return; }
             const res = d.result;
-            if (res.hasProblem) { setErr(`AI ogohlantirishi: ${res.hasProblem}`); return; }
+            if (res.hasProblem) { setErr(t("aiWarn", { msg: res.hasProblem })); return; }
             if (res.title) setTitle(res.title);
             if (res.description) setDescription(res.description);
             if (res.categorySlug) setCategorySlug(res.categorySlug);
@@ -909,8 +917,8 @@ function CreateProductModal({
             });
             const d = await r.json();
             if (r.ok && d?.ok) onCreated(d.product);
-            else setErr(d?.error ?? "Xatolik");
-        } catch { setErr("Ulanish xatoligi"); }
+            else setErr(d?.error ?? t("createErr"));
+        } catch { setErr(t("netErr")); }
         finally { setBusy(false); }
     }
 
@@ -925,10 +933,10 @@ function CreateProductModal({
                     className="sticky top-0 flex items-center justify-between h-16 px-4 z-10"
                     style={{ background: BN.surface, borderBottom: `1px solid ${BN.border}` }}
                 >
-                    <span className="text-[16px] font-black">Yangi mahsulot</span>
+                    <span className="text-[16px] font-black">{t("newProduct")}</span>
                     <button
                         onClick={onClose}
-                        aria-label="Yopish"
+                        aria-label={tNav("close")}
                         className="w-9 h-9 grid place-items-center rounded-lg"
                         style={{ background: BN.surfaceUp }}
                     >
@@ -937,16 +945,16 @@ function CreateProductModal({
                 </div>
 
                 <div className="p-4 space-y-4">
-                    <FieldLabel label="Nomi *">
+                    <FieldLabel label={t("fldName")}>
                         <input
                             value={title}
                             onChange={e => setTitle(e.target.value)}
-                            placeholder="Chevrolet Nexia 3 old tormoz kolodkasi"
+                            placeholder={t("fldNamePh")}
                             className="bn-form-input"
                         />
                     </FieldLabel>
 
-                    <FieldLabel label="Kategoriya *">
+                    <FieldLabel label={t("fldCategory")}>
                         <BnCategoryPicker categories={categories} value={categorySlug} onChange={setCategorySlug} />
                         <select
                             hidden
@@ -962,19 +970,19 @@ function CreateProductModal({
                         </select>
                     </FieldLabel>
 
-                    <FieldLabel label="Tavsif">
+                    <FieldLabel label={t("fldDesc")}>
                         <textarea
                             value={description}
                             onChange={e => setDescription(e.target.value)}
                             rows={3}
                             maxLength={2000}
-                            placeholder="Original ehtiyot qism, kafolat 3 oy..."
+                            placeholder={t("fldDescPh")}
                             className="bn-form-input resize-none"
                         />
                     </FieldLabel>
 
                     <div className="grid grid-cols-3 gap-2">
-                        <FieldLabel label="Narx (so'm) *">
+                        <FieldLabel label={t("fldPrice")}>
                             <input
                                 value={price}
                                 onChange={e => setPrice(e.target.value.replace(/\D/g, ""))}
@@ -983,7 +991,7 @@ function CreateProductModal({
                                 className="bn-form-input tabular-nums"
                             />
                         </FieldLabel>
-                        <FieldLabel label="Eski narx">
+                        <FieldLabel label={t("fldOldPrice")}>
                             <input
                                 value={oldPrice}
                                 onChange={e => setOldPrice(e.target.value.replace(/\D/g, ""))}
@@ -992,7 +1000,7 @@ function CreateProductModal({
                                 className="bn-form-input tabular-nums"
                             />
                         </FieldLabel>
-                        <FieldLabel label="Bozorda o'rt.">
+                        <FieldLabel label={t("fldMarketAvg")}>
                             <input
                                 value={marketAvgPrice}
                                 onChange={e => setMarketAvgPrice(e.target.value.replace(/\D/g, ""))}
@@ -1003,7 +1011,7 @@ function CreateProductModal({
                         </FieldLabel>
                     </div>
 
-                    <FieldLabel label="Miqdor (ombor)">
+                    <FieldLabel label={t("fldStock")}>
                         <input
                             value={stock}
                             onChange={e => setStock(e.target.value.replace(/\D/g, ""))}
@@ -1013,7 +1021,7 @@ function CreateProductModal({
                         />
                     </FieldLabel>
 
-                    <FieldLabel label="Rasmlar">
+                    <FieldLabel label={t("fldImages")}>
                         <div className="flex gap-2 flex-wrap">
                             {images.map((u, i) => (
                                 <div key={u} className="relative w-20 h-20 rounded-lg overflow-hidden" style={{ background: BN.surfaceUp }}>
@@ -1021,7 +1029,7 @@ function CreateProductModal({
                                     <img src={u} alt="" className="w-full h-full object-cover" />
                                     <button
                                         onClick={() => setImages(images.filter((_, j) => j !== i))}
-                                        aria-label="O'chirish"
+                                        aria-label={t("remove")}
                                         className="absolute top-0.5 right-0.5 w-5 h-5 grid place-items-center rounded-full"
                                         style={{ background: "rgba(0,0,0,0.7)", color: "#fff" }}
                                     >
@@ -1056,7 +1064,7 @@ function CreateProductModal({
                                 className="flex items-center justify-center gap-2 w-full h-10 mt-2 rounded-xl text-[13px] font-black disabled:opacity-60"
                                 style={{ background: BN.goldSoft, border: `1px solid ${BN.goldEdge}`, color: BN.gold }}
                             >
-                                {aiBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Wand2 className="w-4 h-4" /> AI bilan to&apos;ldirish (rasmdan)</>}
+                                {aiBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Wand2 className="w-4 h-4" /> {t("aiFillBtn")}</>}
                             </button>
                         )}
                     </FieldLabel>
@@ -1065,7 +1073,7 @@ function CreateProductModal({
                     {schema.length > 0 && (
                         <div>
                             <p className="text-[11px] font-black uppercase tracking-wider mb-2.5" style={{ color: BN.text3 }}>
-                                Xarakteristikalar ({selectedCat?.name})
+                                {t("attrsTitle", { cat: selectedCat?.name ?? "" })}
                             </p>
                             <div className="space-y-3">
                                 {schema.map(a => (
@@ -1082,15 +1090,15 @@ function CreateProductModal({
 
                     <div>
                         <p className="text-[11px] font-black uppercase tracking-wider mb-2.5" style={{ color: BN.text3 }}>
-                            Olish usullari
+                            {t("fulfillTitle")}
                         </p>
                         <div className="space-y-2">
-                            <ToggleRow checked={allowPickup} onChange={setAllowPickup} icon={<Package className="w-4 h-4" />} label="Do'kondan olib ketish" />
-                            <ToggleRow checked={allowDelivery} onChange={setAllowDelivery} icon={<Truck className="w-4 h-4" />} label="Yetkazib berish" />
-                            <ToggleRow checked={allowInspect} onChange={setAllowInspect} icon={<Eye className="w-4 h-4" />} label="Ko'rib sotib olish (24 soat band)" />
-                            <ToggleRow checked={isNegotiable} onChange={setIsNegotiable} icon={<Building2 className="w-4 h-4" />} label="Narx kelishilishi mumkin" />
-                            <ToggleRow checked={isMature} onChange={setIsMature} icon={<Eye className="w-4 h-4" />} label="18+ mahsulot (ichki kiyim, kondom, sog'liq)" />
-                            <ToggleRow checked={isWholesale} onChange={setIsWholesale} icon={<Package className="w-4 h-4" />} label="Ulgurji (faqat BN do'kon egalari sotib oladi)" />
+                            <ToggleRow checked={allowPickup} onChange={setAllowPickup} icon={<Package className="w-4 h-4" />} label={t("togglePickup")} />
+                            <ToggleRow checked={allowDelivery} onChange={setAllowDelivery} icon={<Truck className="w-4 h-4" />} label={t("toggleDelivery")} />
+                            <ToggleRow checked={allowInspect} onChange={setAllowInspect} icon={<Eye className="w-4 h-4" />} label={t("toggleInspect")} />
+                            <ToggleRow checked={isNegotiable} onChange={setIsNegotiable} icon={<Building2 className="w-4 h-4" />} label={t("toggleNegotiable")} />
+                            <ToggleRow checked={isMature} onChange={setIsMature} icon={<Eye className="w-4 h-4" />} label={t("toggleMature")} />
+                            <ToggleRow checked={isWholesale} onChange={setIsWholesale} icon={<Package className="w-4 h-4" />} label={t("toggleWholesale")} />
                         </div>
                     </div>
 
@@ -1099,12 +1107,12 @@ function CreateProductModal({
                             <div className="flex items-center gap-2 mb-2.5">
                                 <ShieldCheck className="w-4 h-4" style={{ color: BN.gold }} />
                                 <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: BN.text3 }}>
-                                    Ulgurji sozlamalar
+                                    {t("wholesaleTitle")}
                                 </p>
                             </div>
 
                             <label className="block text-[12px] font-semibold mb-1.5" style={{ color: BN.text2 }}>
-                                Minimal buyurtma (dona)
+                                {t("minQtyLabel")}
                             </label>
                             <input
                                 type="number"
@@ -1116,13 +1124,13 @@ function CreateProductModal({
                                 placeholder="20"
                             />
                             <p className="text-[11px] mt-1" style={{ color: BN.text3 }}>
-                                Xaridor kamida shu miqdorda sotib olishi shart
+                                {t("minQtyHint")}
                             </p>
 
                             <div className="mt-3.5">
                                 <div className="flex items-center justify-between mb-1.5">
                                     <label className="block text-[12px] font-semibold" style={{ color: BN.text2 }}>
-                                        Narx pog'onalari (ixtiyoriy)
+                                        {t("tiersLabel")}
                                     </label>
                                     <button
                                         type="button"
@@ -1130,18 +1138,18 @@ function CreateProductModal({
                                         className="flex items-center gap-1 text-[11px] font-black"
                                         style={{ color: BN.gold }}
                                     >
-                                        <Plus className="w-3.5 h-3.5" /> Pog'ona qo'shish
+                                        <Plus className="w-3.5 h-3.5" /> {t("addTier")}
                                     </button>
                                 </div>
                                 <p className="text-[11px] mb-2" style={{ color: BN.text3 }}>
-                                    Ko'proq olsa arzonroq. Misol: 20 dona → 8000 so'm; 50 dona → 7500 so'm.
+                                    {t("tiersHint")}
                                 </p>
                                 {wholesaleTiers.map((tier, idx) => (
                                     <div key={idx} className="flex gap-2 mb-2">
                                         <input
                                             type="number"
                                             min={2}
-                                            placeholder="Miqdor"
+                                            placeholder={t("tierQtyPh")}
                                             value={tier.minQty}
                                             onChange={e => setWholesaleTiers(prev => prev.map((t, i) => i === idx ? { ...t, minQty: e.target.value } : t))}
                                             className="flex-1 h-10 rounded-lg px-3 text-[13px]"
@@ -1150,7 +1158,7 @@ function CreateProductModal({
                                         <input
                                             type="number"
                                             min={1000}
-                                            placeholder="Narx (so'm)"
+                                            placeholder={t("tierPricePh")}
                                             value={tier.price}
                                             onChange={e => setWholesaleTiers(prev => prev.map((t, i) => i === idx ? { ...t, price: e.target.value } : t))}
                                             className="flex-1 h-10 rounded-lg px-3 text-[13px]"
@@ -1161,7 +1169,7 @@ function CreateProductModal({
                                             onClick={() => setWholesaleTiers(prev => prev.filter((_, i) => i !== idx))}
                                             className="w-10 h-10 grid place-items-center rounded-lg"
                                             style={{ background: BN.errSoft, color: BN.err }}
-                                            aria-label="O'chirish"
+                                            aria-label={t("remove")}
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
@@ -1188,7 +1196,7 @@ function CreateProductModal({
                         className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl text-[15px] font-black disabled:opacity-60"
                         style={{ background: BN.gold, color: BN.onGold }}
                     >
-                        {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : "Qo'shish"}
+                        {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : t("createBtn")}
                     </button>
                 </div>
             </div>
@@ -1219,6 +1227,7 @@ function CreateProductModal({
 
 function ShopTab({ shop }: { shop: CabinetShop }) {
     const router = useRouter();
+    const t = useTranslations("bn.cabinet");
     const [name, setName] = useState(shop.name);
     const [phone, setPhone] = useState(shop.phone);
     const [description, setDescription] = useState("");
@@ -1237,7 +1246,7 @@ function ShopTab({ shop }: { shop: CabinetShop }) {
             const r = await fetch("/api/bn/upload", { method: "POST", body: fd });
             const d = await r.json();
             if (r.ok) setLogoUrl(d.url);
-            else setMsg(d?.error ?? "Yuklash xatoligi");
+            else setMsg(d?.error ?? t("imgUploadErr"));
         } finally { setBusy(false); if (fileRef.current) fileRef.current.value = ""; }
     }
 
@@ -1250,15 +1259,15 @@ function ShopTab({ shop }: { shop: CabinetShop }) {
                 body: JSON.stringify({ name, phone, description, logoUrl, workHours }),
             });
             const d = await r.json();
-            if (r.ok) { setMsg("Saqlandi"); router.refresh(); }
-            else setMsg(d?.error ?? "Xatolik");
-        } catch { setMsg("Ulanish xatoligi"); }
+            if (r.ok) { setMsg(t("saved")); router.refresh(); }
+            else setMsg(d?.error ?? t("saveErr"));
+        } catch { setMsg(t("netErr")); }
         finally { setBusy(false); }
     }
 
     return (
         <div className="space-y-4">
-            <FieldLabel label="Do'kon logosi">
+            <FieldLabel label={t("shopLogo")}>
                 <div className="flex items-center gap-3">
                     <span
                         className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 grid place-items-center"
@@ -1278,7 +1287,7 @@ function ShopTab({ shop }: { shop: CabinetShop }) {
                         className="h-11 px-4 rounded-xl text-[13px] font-bold"
                         style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}
                     >
-                        {busy ? <Loader2 className="w-4 h-4 animate-spin inline" /> : <><Upload className="w-4 h-4 inline mr-1" /> Yangi rasm</>}
+                        {busy ? <Loader2 className="w-4 h-4 animate-spin inline" /> : <><Upload className="w-4 h-4 inline mr-1" /> {t("uploadNew")}</>}
                     </button>
                     <input
                         ref={fileRef}
@@ -1290,30 +1299,30 @@ function ShopTab({ shop }: { shop: CabinetShop }) {
                 </div>
             </FieldLabel>
 
-            <FieldLabel label="Do'kon nomi">
+            <FieldLabel label={t("shopName")}>
                 <input value={name} onChange={e => setName(e.target.value)} className="bn-form-input" />
             </FieldLabel>
 
-            <FieldLabel label="Telefon">
+            <FieldLabel label={t("phone")}>
                 <BnPhoneInput value={phone} onChange={setPhone} />
             </FieldLabel>
 
-            <FieldLabel label="Ish vaqti">
+            <FieldLabel label={t("workHours")}>
                 <input
                     value={workHours}
                     onChange={e => setWorkHours(e.target.value)}
-                    placeholder="Har kuni 09:00–20:00"
+                    placeholder={t("workHoursPh")}
                     className="bn-form-input"
                 />
             </FieldLabel>
 
-            <FieldLabel label="Tavsif">
+            <FieldLabel label={t("shopDesc")}>
                 <textarea
                     value={description}
                     onChange={e => setDescription(e.target.value)}
                     rows={3}
                     maxLength={500}
-                    placeholder="Do&apos;koningiz haqida qisqacha (500 harfgacha)"
+                    placeholder={t("shopDescPh")}
                     className="bn-form-input resize-none"
                 />
             </FieldLabel>
@@ -1330,14 +1339,14 @@ function ShopTab({ shop }: { shop: CabinetShop }) {
                 className="w-full h-12 rounded-2xl text-[15px] font-black disabled:opacity-60"
                 style={{ background: BN.gold, color: BN.onGold }}
             >
-                {busy ? <Loader2 className="w-5 h-5 animate-spin inline" /> : "Saqlash"}
+                {busy ? <Loader2 className="w-5 h-5 animate-spin inline" /> : t("save")}
             </button>
 
             <div className="pt-4 space-y-2 text-[12.5px]" style={{ borderTop: `1px solid ${BN.border}`, color: BN.text3 }}>
-                <p>URL: <span className="font-bold" style={{ color: BN.text2 }}>/d/{shop.slug}</span></p>
-                <p>Joylashuv: <span className="font-bold" style={{ color: BN.text2 }}>{locLabel(shop)}</span></p>
-                <p>Reyting: <span className="font-bold" style={{ color: BN.text2 }}>{shop.rating > 0 ? `${shop.rating.toFixed(1)} (${shop.ratingCount})` : "yo'q"}</span></p>
-                <p>Daraja: <span className="font-bold" style={{ color: BN.text2 }}>{shop.tier}</span></p>
+                <p>{t("shopUrl")}: <span className="font-bold" style={{ color: BN.text2 }}>/d/{shop.slug}</span></p>
+                <p>{t("shopLoc")}: <span className="font-bold" style={{ color: BN.text2 }}>{locLabel(shop)}</span></p>
+                <p>{t("shopRating")}: <span className="font-bold" style={{ color: BN.text2 }}>{shop.rating > 0 ? `${shop.rating.toFixed(1)} (${shop.ratingCount})` : t("noRating")}</span></p>
+                <p>{t("shopTier")}: <span className="font-bold" style={{ color: BN.text2 }}>{shop.tier}</span></p>
             </div>
         </div>
     );
@@ -1358,6 +1367,8 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 // ── PUL ─────────────────────────────────────────────────────────────────────
 
 function MoneyTab({ balance, orderCount }: { balance: number; orderCount: number }) {
+    const t = useTranslations("bn.cabinet");
+    const locale = useLocale();
     return (
         <div>
             <div
@@ -1365,22 +1376,22 @@ function MoneyTab({ balance, orderCount }: { balance: number; orderCount: number
                 style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}
             >
                 <p className="text-[11.5px] font-bold uppercase tracking-wider mb-1" style={{ color: BN.text3 }}>
-                    For Pay balansingiz
+                    {t("payBalance")}
                 </p>
                 <p className="text-[32px] font-black tabular-nums leading-none">{fmtPrice(balance)}</p>
                 <p className="text-[12.5px] mt-2" style={{ color: BN.text3 }}>
-                    {orderCount} ta yakunlangan buyurtmadan tushdi (komissiya 5% ayirilgan)
+                    {t("payFromOrders", { n: orderCount, pct: 5 })}
                 </p>
             </div>
             <a
-                href="https://forhumo.uz/uz/pay"
+                href={`https://forhumo.uz/${locale}/pay`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl text-[14px] font-bold"
                 style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text }}
             >
                 <Wallet className="w-4 h-4" />
-                For Pay ochish (yechish)
+                {t("payOpen")}
                 <ArrowUpRight className="w-4 h-4" />
             </a>
         </div>
@@ -1401,6 +1412,8 @@ function FieldLabel({ label, children }: { label: string; children: React.ReactN
 function AttrInput({
     def, value, onChange,
 }: { def: AttrDef; value: string | number | boolean | undefined; onChange: (v: string | number | boolean) => void }) {
+    const t = useTranslations("bn.cabinet");
+    const unselected = t("attrUnselected");
     const label = <span className="block text-[12px] font-bold mb-1.5" style={{ color: BN.text2 }}>
         {def.label}{def.required && <span style={{ color: BN.err }}>*</span>}
         {def.unit && <span className="font-normal" style={{ color: BN.text3 }}> ({def.unit})</span>}
@@ -1430,7 +1443,7 @@ function AttrInput({
                     onChange={e => onChange(e.target.value)}
                     className="bn-form-input"
                 >
-                    <option value="">— tanlanmagan —</option>
+                    <option value="">{unselected}</option>
                     {def.options.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
             </label>
@@ -1548,12 +1561,13 @@ function RecentOrderRow({ o }: { o: CabinetOrder }) {
 }
 
 function FulfillBadge({ type }: { type: "PICKUP" | "DELIVERY" | "INSPECT" }) {
+    const t = useTranslations("bn.cabinet");
     const icon = type === "PICKUP" ? <Package className="w-3 h-3" />
                : type === "DELIVERY" ? <Truck className="w-3 h-3" />
                : <Eye className="w-3 h-3" />;
-    const label = type === "PICKUP" ? "Olib ketish"
-               : type === "DELIVERY" ? "Yetkazish"
-               : "Ko'rib olish";
+    const label = type === "PICKUP" ? t("fbPickup")
+               : type === "DELIVERY" ? t("fbDelivery")
+               : t("fbInspect");
     return (
         <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: BN.surfaceUp, color: BN.text3 }}>
             {icon}{label}
@@ -1561,6 +1575,7 @@ function FulfillBadge({ type }: { type: "PICKUP" | "DELIVERY" | "INSPECT" }) {
     );
 }
 
+/** Server-side locLabel (UZ fallback). Client'da useShopLocationText'ni afzal ko'ring. */
 function locLabel(shop: CabinetShop): string {
     if (shop.locationType === "IN_MARKET") {
         return [shop.marketName, shop.marketSection, shop.marketShopNo && `${shop.marketShopNo}-do'kon`].filter(Boolean).join(" · ");
@@ -1569,8 +1584,8 @@ function locLabel(shop: CabinetShop): string {
     return "Onlayn do'kon";
 }
 
-function formatDate(iso: string): string {
+function formatDate(iso: string, locale = "uz"): string {
     try {
-        return new Date(iso).toLocaleString("uz-UZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+        return new Date(iso).toLocaleString(locale, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
     } catch { return iso; }
 }

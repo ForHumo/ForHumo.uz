@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BnLink } from "./bn-nav";
 import { useSession, signIn } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
     Store, Building2, User, MapPin, Globe, Check, ChevronRight, ChevronLeft,
     ShieldCheck, LogIn, Sparkles, Info,
@@ -16,10 +17,12 @@ type Step = 0 | 1 | 2 | 3;
 type LegalType = "YATT" | "MCHJ";
 type LocType = "IN_MARKET" | "STANDALONE" | "ONLINE";
 
-const STEPS = ["Yuridik shakl", "Do'kon", "Joylashuv", "Bank"];
+const STEP_KEYS = ["step1", "step2", "step3", "step4"] as const;
 
 export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) {
     const { status } = useSession();
+    const t = useTranslations("bn.sellerReg");
+    const tAuth = useTranslations("bn.auth");
     const [step, setStep] = useState<Step>(0);
     const [submitting, setSubmitting] = useState(false);
     const [submitErr, setSubmitErr] = useState<string | null>(null);
@@ -71,10 +74,9 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                     >
                         <Store className="w-7 h-7" />
                     </span>
-                    <h1 className="text-[20px] font-black mb-2">Sotuvchi bo&apos;lish</h1>
+                    <h1 className="text-[20px] font-black mb-2">{t("titleGate")}</h1>
                     <p className="text-[13.5px] leading-relaxed mb-6" style={{ color: BN.text2 }}>
-                        Avval Humo ID bilan kiring. Bitta Humo ID — bitta do&apos;kon.
-                        Ro&apos;yxatdan o&apos;tish bepul, komissiya faqat sotuvdan olinadi.
+                        {t("gateText")}
                     </p>
                     <button
                         onClick={() => signIn("google")}
@@ -82,7 +84,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                         style={{ background: BN.gold, color: BN.onGold }}
                     >
                         <LogIn className="w-5 h-5" />
-                        Humo ID bilan kirish
+                        {tAuth("signInWithHumoID")}
                     </button>
                 </div>
             </Wrap>
@@ -103,17 +105,16 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                     >
                         <Check className="w-7 h-7" strokeWidth={3} />
                     </span>
-                    <h1 className="text-[20px] font-black mb-2">Ariza yuborildi</h1>
+                    <h1 className="text-[20px] font-black mb-2">{t("sentTitle")}</h1>
                     <p className="text-[13.5px] leading-relaxed mb-6" style={{ color: BN.text2 }}>
-                        Hujjatlaringiz tekshiriladi. Odatda 1 ish kuni ichida javob beramiz —
-                        tasdiqlangach do&apos;koningizga mahsulot qo&apos;shishingiz mumkin bo&apos;ladi.
+                        {t("sentText")}
                     </p>
                     <BnLink
                         href="/"
                         className="inline-flex items-center justify-center w-full h-12 rounded-2xl text-[15px] font-black"
                         style={{ background: BN.gold, color: BN.onGold }}
                     >
-                        Bosh sahifaga
+                        {t("toHome")}
                     </BnLink>
                 </div>
             </Wrap>
@@ -123,16 +124,15 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
     return (
         <Wrap>
             <div className="max-w-[640px] mx-auto">
-                <h1 className="text-[26px] sm:text-[32px] font-black tracking-tight mb-2">Sotuvchi bo&apos;lish</h1>
+                <h1 className="text-[26px] sm:text-[32px] font-black tracking-tight mb-2">{t("title")}</h1>
                 <p className="text-[13.5px] leading-relaxed mb-7" style={{ color: BN.text2 }}>
-                    Bozordagi do&apos;kon ham, ko&apos;chadagi do&apos;kon ham, faqat onlayn ham bo&apos;ladi.
-                    To&apos;rt qadam — 3 daqiqa.
+                    {t("subtitle")}
                 </p>
 
                 {/* Qadamlar */}
                 <div className="flex items-center gap-1.5 mb-7">
-                    {STEPS.map((s, i) => (
-                        <div key={s} className="flex-1 min-w-0">
+                    {STEP_KEYS.map((k, i) => (
+                        <div key={k} className="flex-1 min-w-0">
                             <div
                                 className="h-1 rounded-full mb-2 transition-colors"
                                 style={{ background: i <= step ? BN.gold : "rgba(255,255,255,0.1)" }}
@@ -141,7 +141,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                                 className="text-[11px] font-bold truncate transition-colors"
                                 style={{ color: i <= step ? BN.gold : BN.text3 }}
                             >
-                                {s}
+                                {t(k)}
                             </p>
                         </div>
                     ))}
@@ -155,27 +155,27 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                     {step === 0 && (
                         <>
                             <StepTitle
-                                title="Yuridik shaklingiz"
-                                text="BN'da faqat rasmiy sotuvchilar ishlaydi — bu xaridor ishonchi uchun."
+                                title={t("s1Title")}
+                                text={t("s1Text")}
                             />
                             <div className="grid grid-cols-2 gap-2.5 mb-5">
                                 <Choice
                                     active={legalType === "YATT"}
                                     onClick={() => setLegalType("YATT")}
                                     icon={<User className="w-5 h-5" />}
-                                    title="YaTT"
-                                    text="Yakka tartibdagi tadbirkor"
+                                    title={t("legalYatt")}
+                                    text={t("legalYattDesc")}
                                 />
                                 <Choice
                                     active={legalType === "MCHJ"}
                                     onClick={() => setLegalType("MCHJ")}
                                     icon={<Building2 className="w-5 h-5" />}
-                                    title="MChJ"
-                                    text="Mas'uliyati cheklangan jamiyat"
+                                    title={t("legalMchj")}
+                                    text={t("legalMchjDesc")}
                                 />
                             </div>
 
-                            <Field label="STIR (INN) raqami" hint="9 raqamli soliq identifikatsiya raqami">
+                            <Field label={t("innLabel")} hint={t("innHint")}>
                                 <input
                                     value={inn}
                                     onChange={e => setInn(e.target.value.replace(/\D/g, "").slice(0, 12))}
@@ -185,16 +185,16 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                                 />
                             </Field>
 
-                            <Field label={legalType === "MCHJ" ? "MChJ to'liq nomi" : "F.I.SH."}>
+                            <Field label={legalType === "MCHJ" ? t("legalNameMchj") : t("legalNameYatt")}>
                                 <input
                                     value={legalName}
                                     onChange={e => setLegalName(e.target.value)}
-                                    placeholder={legalType === "MCHJ" ? "\"Jalol Motors\" MChJ" : "Qahramonov Jalol Aziz o'g'li"}
+                                    placeholder={legalType === "MCHJ" ? t("legalNamePhMchj") : t("legalNamePhYatt")}
                                     className="bn-input"
                                 />
                             </Field>
 
-                            <Field label="Telefon" hint="Xaridorlar shu raqamga qo'ng'iroq qiladi">
+                            <Field label={t("phoneLabel")} hint={t("phoneHint")}>
                                 <BnPhoneInput value={phone} onChange={setPhone} />
                             </Field>
                         </>
@@ -204,23 +204,23 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                     {step === 1 && (
                         <>
                             <StepTitle
-                                title="Do'koningiz"
-                                text="Xaridorlar shu nom bilan sizni topadi."
+                                title={t("s2Title")}
+                                text={t("s2Text")}
                             />
-                            <Field label="Do'kon nomi">
+                            <Field label={t("shopNameLabel")}>
                                 <input
                                     value={shopName}
                                     onChange={e => setShopName(e.target.value)}
-                                    placeholder="Jalol Motors"
+                                    placeholder={t("shopNamePh")}
                                     className="bn-input"
                                 />
                             </Field>
-                            <Field label="Qisqacha tavsif" hint="Ixtiyoriy — nima sotasiz?">
+                            <Field label={t("shopDescLabel")} hint={t("shopDescHint")}>
                                 <textarea
                                     value={shopDesc}
                                     onChange={e => setShopDesc(e.target.value)}
                                     rows={3}
-                                    placeholder="Chevrolet va Daewoo avtomobillari uchun original ehtiyot qismlar"
+                                    placeholder={t("shopDescPh")}
                                     className="bn-input resize-none py-3"
                                 />
                             </Field>
@@ -231,9 +231,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                             >
                                 <Sparkles className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: BN.gold }} />
                                 <p className="text-[12.5px] leading-relaxed" style={{ color: BN.text2 }}>
-                                    Logo va mahsulot rasmlarini keyin kabinetdan yuklaysiz.
-                                    Mahsulot rasmini yuklasangiz — <strong style={{ color: BN.text }}>Humo AI</strong> nomi,
-                                    tavsifi va narx tavsiyasini o&apos;zi yozib beradi.
+                                    {t("aiHint")}
                                 </p>
                             </div>
                         </>
@@ -243,40 +241,40 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                     {step === 2 && (
                         <>
                             <StepTitle
-                                title="Do'koningiz qayerda?"
-                                text="Bu xaridorga sizni topishga yordam beradi."
+                                title={t("s3Title")}
+                                text={t("s3Text")}
                             />
                             <div className="space-y-2.5 mb-5">
                                 <ChoiceRow
                                     active={locType === "IN_MARKET"}
                                     onClick={() => setLocType("IN_MARKET")}
                                     icon={<Store className="w-5 h-5" />}
-                                    title="Bozorda"
-                                    text="Sergeli, Chorsu, Malika kabi bozor ichida"
+                                    title={t("locMarket")}
+                                    text={t("locMarketDesc")}
                                 />
                                 <ChoiceRow
                                     active={locType === "STANDALONE"}
                                     onClick={() => setLocType("STANDALONE")}
                                     icon={<MapPin className="w-5 h-5" />}
-                                    title="Alohida manzilda"
-                                    text="Ko'chadagi o'z do'koningiz"
+                                    title={t("locStreet")}
+                                    text={t("locStreetDesc")}
                                 />
                                 <ChoiceRow
                                     active={locType === "ONLINE"}
                                     onClick={() => setLocType("ONLINE")}
                                     icon={<Globe className="w-5 h-5" />}
-                                    title="Faqat onlayn"
-                                    text="Jismoniy do'kon yo'q, ombordan yetkazasiz"
+                                    title={t("locOnline")}
+                                    text={t("locOnlineDesc")}
                                 />
                             </div>
 
                             {locType === "IN_MARKET" && (
                                 <>
-                                    <Field label="Qaysi bozor?">
+                                    <Field label={t("whichMarket")}>
                                         <div className="grid grid-cols-1 gap-1.5">
                                             {markets.length === 0 && (
                                                 <p className="text-[12.5px] p-2 rounded-lg" style={{ color: BN.text3, background: BN.surfaceUp }}>
-                                                    Bozor ro&apos;yxati hozircha bo&apos;sh.
+                                                    {t("noMarkets")}
                                                 </p>
                                             )}
                                             {markets.map(m => (
@@ -304,7 +302,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
 
                                     {market && (
                                         <div className="grid grid-cols-2 gap-3">
-                                            <Field label="Qator / bo'lim">
+                                            <Field label={t("sectionLabel")}>
                                                 <div className="grid grid-cols-1 gap-1.5 max-h-[152px] overflow-y-auto">
                                                     {market.sections.map(s => (
                                                         <button
@@ -321,7 +319,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                                                     ))}
                                                 </div>
                                             </Field>
-                                            <Field label="Do'kon raqami">
+                                            <Field label={t("shopNoLabel")}>
                                                 <input
                                                     value={shopNo}
                                                     onChange={e => setShopNo(e.target.value.slice(0, 10))}
@@ -335,11 +333,11 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                             )}
 
                             {locType === "STANDALONE" && (
-                                <Field label="Do'kon manzili (xaritada)" hint="Xaridor xaritada aynan joyni ko'radi va yo'l ko'rsatiladi">
+                                <Field label={t("shopAddressLabel")} hint={t("shopAddressHint")}>
                                     <BnMapPicker
                                         value={shopLoc ? { lat: shopLoc.lat, lng: shopLoc.lng, address } : null}
                                         onChange={(v: BnLatLng) => { setShopLoc({ lat: v.lat, lng: v.lng }); setAddress(v.address); }}
-                                        placeholder="Do'koningiz turgan joyni belgilang"
+                                        placeholder={t("shopMapPh")}
                                     />
                                 </Field>
                             )}
@@ -351,8 +349,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                                 >
                                     <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: BN.text3 }} />
                                     <p className="text-[12.5px] leading-relaxed" style={{ color: BN.text2 }}>
-                                        Onlayn do&apos;konda &quot;ko&apos;rib sotib olish&quot; ishlamaydi —
-                                        xaridor borib ko&apos;ra olmaydi. Faqat yetkazib berish bo&apos;ladi.
+                                        {t("onlineNote")}
                                     </p>
                                 </div>
                             )}
@@ -363,18 +360,18 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                     {step === 3 && (
                         <>
                             <StepTitle
-                                title="Pul qayerga tushsin?"
-                                text="Sotuvdan tushgan pul For Pay hamyoningizga keladi, u yerdan bank hisobingizga yechasiz."
+                                title={t("s4Title")}
+                                text={t("s4Text")}
                             />
-                            <Field label="Bank nomi">
+                            <Field label={t("bankNameLabel")}>
                                 <input
                                     value={bankName}
                                     onChange={e => setBankName(e.target.value)}
-                                    placeholder="Xalq banki"
+                                    placeholder={t("bankNamePh")}
                                     className="bn-input"
                                 />
                             </Field>
-                            <Field label="Hisob raqami" hint="20 raqamli">
+                            <Field label={t("bankAccountLabel")} hint={t("bankAccountHint")}>
                                 <input
                                     value={bankAccount}
                                     onChange={e => setBankAccount(e.target.value.replace(/\D/g, "").slice(0, 20))}
@@ -383,7 +380,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                                     className="bn-input tabular-nums"
                                 />
                             </Field>
-                            <Field label="MFO" hint="5 raqamli bank kodi">
+                            <Field label={t("bankMfoLabel")} hint={t("bankMfoHint")}>
                                 <input
                                     value={bankMfo}
                                     onChange={e => setBankMfo(e.target.value.replace(/\D/g, "").slice(0, 5))}
@@ -399,8 +396,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                             >
                                 <ShieldCheck className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: BN.ok }} />
                                 <p className="text-[12.5px] leading-relaxed" style={{ color: BN.text2 }}>
-                                    Komissiya <strong style={{ color: BN.text }}>5%</strong> — faqat For Pay orqali
-                                    to&apos;langan buyurtmalardan. Naqd savdodan komissiya olinmaydi.
+                                    {t("commissionNote", { pct: 5 })}
                                 </p>
                             </div>
                         </>
@@ -424,7 +420,7 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                                 style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text2 }}
                             >
                                 <ChevronLeft className="w-4 h-4" />
-                                Orqaga
+                                {t("back")}
                             </button>
                         )}
                         <button
@@ -449,18 +445,18 @@ export function BnSellerRegister({ markets = [] }: { markets?: BnMarketDTO[] }) 
                                     });
                                     const d = await r.json();
                                     if (r.ok && d?.ok) { setSent(true); }
-                                    else if (d?.error === "inn_taken") setSubmitErr("Bu INN allaqachon ro'yxatdan o'tgan.");
-                                    else if (d?.error === "already_has_shop") setSubmitErr("Sizda allaqachon do'kon bor.");
-                                    else setSubmitErr(d?.error ?? "Xatolik yuz berdi");
+                                    else if (d?.error === "inn_taken") setSubmitErr(t("errInnTaken"));
+                                    else if (d?.error === "already_has_shop") setSubmitErr(t("errAlreadyShop"));
+                                    else setSubmitErr(d?.error ?? t("errGeneric"));
                                 } catch {
-                                    setSubmitErr("Ulanish xatoligi");
+                                    setSubmitErr(t("errNet"));
                                 } finally { setSubmitting(false); }
                             }}
                             disabled={!canNext || submitting}
                             className="flex items-center justify-center gap-1.5 flex-1 h-12 rounded-2xl text-[15px] font-black transition-all active:scale-[0.98] disabled:opacity-35"
                             style={{ background: BN.gold, color: BN.onGold }}
                         >
-                            {submitting ? "Yuborilyapti..." : step === 3 ? "Arizani yuborish" : "Davom etish"}
+                            {submitting ? t("sending") : step === 3 ? t("submit") : t("next")}
                             {step < 3 && !submitting && <ChevronRight className="w-4 h-4" />}
                         </button>
                     </div>
