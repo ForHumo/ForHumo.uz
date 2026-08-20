@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 import {
     ShoppingBag, Truck, Shield, Sparkles, ChevronRight, X,
 } from "lucide-react";
@@ -12,41 +13,22 @@ import { BN } from "@/lib/bn-theme";
 
 const KEY = "bn-onboarding-v1";
 
-interface Step {
+interface StepMeta {
     icon: typeof ShoppingBag;
     color: string;
-    title: string;
-    text: string;
+    titleKey: string;
+    textKey: string;
 }
 
-const STEPS: Step[] = [
-    {
-        icon: Sparkles,
-        color: "#fbbf24",
-        title: "Bozor narxida solishtiring",
-        text: "Har mahsulotning narxi Toshkent bozorlaridagi o'rtacha bilan solishtiriladi. Aynan qayerdan arzon — darhol ko'rinadi.",
-    },
-    {
-        icon: ShoppingBag,
-        color: "#60a5fa",
-        title: "Yagona savatda xarid",
-        text: "Turli do'konlardan mahsulotlarni bitta savatga qo'shing. Checkoutda ular alohida buyurtmalarga bo'linadi.",
-    },
-    {
-        icon: Truck,
-        color: "#34d399",
-        title: "Ko'rib qabul qiling",
-        text: "Yetkazishda mahsulotni 24 soat davomida tekshiring. Yoqmasa qaytaring — mablag' to'liq qaytariladi.",
-    },
-    {
-        icon: Shield,
-        color: "#a78bfa",
-        title: "Pul xavfsiz",
-        text: "To'lovingiz buyurtma yakunlanguncha eskrow'da ushlab turiladi. Sotuvchi faqat siz qabul qilgandan keyin oladi.",
-    },
+const STEP_META: StepMeta[] = [
+    { icon: Sparkles,   color: "#fbbf24", titleKey: "s1Title", textKey: "s1Text" },
+    { icon: ShoppingBag, color: "#60a5fa", titleKey: "s2Title", textKey: "s2Text" },
+    { icon: Truck,      color: "#34d399", titleKey: "s3Title", textKey: "s3Text" },
+    { icon: Shield,     color: "#a78bfa", titleKey: "s4Title", textKey: "s4Text" },
 ];
 
 export function BnOnboarding() {
+    const t = useTranslations("bn.onboarding");
     const [open, setOpen] = useState(false);
     const [step, setStep] = useState(0);
 
@@ -67,11 +49,11 @@ export function BnOnboarding() {
     };
 
     const next = () => {
-        if (step < STEPS.length - 1) setStep(s => s + 1);
+        if (step < STEP_META.length - 1) setStep(s => s + 1);
         else close();
     };
 
-    const current = STEPS[step];
+    const current = STEP_META[step];
     const Icon = current.icon;
 
     return (
@@ -97,7 +79,7 @@ export function BnOnboarding() {
                             onClick={close}
                             className="absolute top-3 right-3 w-9 h-9 rounded-full grid place-items-center z-10 transition-colors hover:bg-white/10"
                             style={{ color: BN.text3 }}
-                            aria-label="Yopish"
+                            aria-label={t("close")}
                         >
                             <X className="w-4 h-4" />
                         </button>
@@ -119,7 +101,7 @@ export function BnOnboarding() {
                                 initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
                                 className="text-[20px] font-black tracking-tight mb-2"
                             >
-                                {current.title}
+                                {t(current.titleKey)}
                             </motion.h3>
                             <motion.p
                                 key={`p-${step}`}
@@ -128,13 +110,13 @@ export function BnOnboarding() {
                                 className="text-[14px] leading-relaxed"
                                 style={{ color: BN.text2 }}
                             >
-                                {current.text}
+                                {t(current.textKey)}
                             </motion.p>
                         </div>
 
                         {/* Nuqtalar */}
                         <div className="flex items-center justify-center gap-1.5 pb-4">
-                            {STEPS.map((_, i) => (
+                            {STEP_META.map((_, i) => (
                                 <span
                                     key={i}
                                     className="rounded-full transition-all"
@@ -154,14 +136,14 @@ export function BnOnboarding() {
                                 className="flex-1 rounded-2xl py-3 text-[14px] font-semibold transition-colors hover:bg-white/5"
                                 style={{ color: BN.text3 }}
                             >
-                                O&apos;tkazish
+                                {t("skip")}
                             </button>
                             <button
                                 onClick={next}
                                 className="flex-1 rounded-2xl py-3 text-[14px] font-bold flex items-center justify-center gap-1.5 transition-transform active:scale-[0.98]"
                                 style={{ background: "#60a5fa", color: "#000" }}
                             >
-                                {step < STEPS.length - 1 ? "Keyingi" : "Boshlash"}
+                                {step < STEP_META.length - 1 ? t("next") : t("start")}
                                 <ChevronRight className="w-4 h-4" />
                             </button>
                         </div>

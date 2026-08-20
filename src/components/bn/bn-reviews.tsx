@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
+import { useTranslations, useLocale } from "next-intl";
 import { Star, User, Loader2 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 
@@ -26,6 +27,8 @@ interface Props {
 
 export function BnReviews({ kind, slug }: Props) {
     const { status } = useSession();
+    const t = useTranslations("bn.reviews");
+    const locale = useLocale();
     const [items, setItems] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -48,11 +51,11 @@ export function BnReviews({ kind, slug }: Props) {
         const d = await r.json();
         if (!r.ok) {
             if (d?.error === "no_completed_order") {
-                alert("Sharh yozish uchun avval bu " + (kind === "product" ? "mahsulotni" : "do'kondan biror mahsulot") + " sotib olib, buyurtma yakunlangan bo'lishi kerak.");
+                alert(kind === "product" ? t("errNoCompletedProduct") : t("errNoCompletedShop"));
             } else if (d?.error === "already_reviewed") {
-                alert("Siz allaqachon sharh qoldirgansiz.");
+                alert(t("errAlreadyReviewed"));
             } else {
-                alert(d?.error ?? "Xatolik");
+                alert(d?.error ?? t("errGeneric"));
             }
             return;
         }
@@ -71,7 +74,7 @@ export function BnReviews({ kind, slug }: Props) {
         <section className="mt-12">
             <div className="flex items-baseline justify-between gap-3 mb-4">
                 <h2 className="text-[19px] sm:text-[22px] font-black tracking-tight leading-none">
-                    Sharhlar <span className="text-[14px] font-bold" style={{ color: BN.text3 }}>{items.length}</span>
+                    {t("title")} <span className="text-[14px] font-bold" style={{ color: BN.text3 }}>{items.length}</span>
                 </h2>
                 {status === "authenticated" && !showForm && !alreadyReviewed && (
                     <button
@@ -79,7 +82,7 @@ export function BnReviews({ kind, slug }: Props) {
                         className="h-9 px-4 rounded-xl text-[13px] font-black"
                         style={{ background: BN.gold, color: BN.onGold }}
                     >
-                        Sharh yozish
+                        {t("write")}
                     </button>
                 )}
                 {status === "unauthenticated" && (
@@ -88,7 +91,7 @@ export function BnReviews({ kind, slug }: Props) {
                         className="h-9 px-4 rounded-xl text-[13px] font-bold"
                         style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text2 }}
                     >
-                        Kirish
+                        {t("signIn")}
                     </button>
                 )}
             </div>
@@ -102,7 +105,7 @@ export function BnReviews({ kind, slug }: Props) {
             ) : items.length === 0 ? (
                 <div className="p-6 text-center rounded-2xl" style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
                     <p className="text-[13.5px]" style={{ color: BN.text3 }}>
-                        Hali sharh yo&apos;q. Birinchi bo&apos;lib sharh qoldiring.
+                        {t("empty")}
                     </p>
                 </div>
             ) : (
@@ -127,7 +130,7 @@ export function BnReviews({ kind, slug }: Props) {
                                 </span>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[13px] font-black truncate">
-                                        {r.author?.name ?? r.author?.username ?? "Xaridor"}
+                                        {r.author?.name ?? r.author?.username ?? t("defaultAuthor")}
                                     </p>
                                     <div className="flex items-center gap-2 mt-0.5">
                                         <span className="flex items-center gap-0.5" style={{ color: BN.gold }}>
@@ -140,7 +143,7 @@ export function BnReviews({ kind, slug }: Props) {
                                             ))}
                                         </span>
                                         <span className="text-[11px]" style={{ color: BN.text3 }}>
-                                            {formatDate(r.createdAt)}
+                                            {formatDate(r.createdAt, locale)}
                                         </span>
                                     </div>
                                 </div>
@@ -175,6 +178,7 @@ export function BnReviews({ kind, slug }: Props) {
 function ReviewForm({
     onSubmit, onCancel,
 }: { onSubmit: (rating: number, text: string) => void | Promise<void>; onCancel: () => void }) {
+    const t = useTranslations("bn.reviews");
     const [rating, setRating] = useState(0);
     const [text, setText] = useState("");
     const [busy, setBusy] = useState(false);
@@ -191,13 +195,13 @@ function ReviewForm({
             className="p-4 rounded-2xl mb-4"
             style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}
         >
-            <p className="text-[13px] font-bold mb-3">Bahoyingiz</p>
+            <p className="text-[13px] font-bold mb-3">{t("formRating")}</p>
             <div className="flex items-center gap-1 mb-4">
                 {Array.from({ length: 5 }, (_, i) => (
                     <button
                         key={i}
                         onClick={() => setRating(i + 1)}
-                        aria-label={`${i + 1} yulduz`}
+                        aria-label={t("starN", { n: i + 1 })}
                         className="p-1"
                     >
                         <Star
@@ -216,7 +220,7 @@ function ReviewForm({
                 onChange={e => setText(e.target.value)}
                 rows={3}
                 maxLength={2000}
-                placeholder="Mahsulot yoki xizmat haqida qisqacha (ixtiyoriy)"
+                placeholder={t("textPh")}
                 className="w-full p-3 rounded-xl text-[13.5px] resize-none outline-none"
                 style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
             />
@@ -227,22 +231,22 @@ function ReviewForm({
                     className="flex-1 h-11 rounded-xl text-[14px] font-black disabled:opacity-60"
                     style={{ background: BN.gold, color: BN.onGold }}
                 >
-                    {busy ? <Loader2 className="w-4 h-4 animate-spin inline" /> : "Yuborish"}
+                    {busy ? <Loader2 className="w-4 h-4 animate-spin inline" /> : t("submit")}
                 </button>
                 <button
                     onClick={onCancel}
                     className="h-11 px-4 rounded-xl text-[13px] font-bold"
                     style={{ background: BN.surfaceUp, color: BN.text2 }}
                 >
-                    Bekor
+                    {t("cancel")}
                 </button>
             </div>
         </div>
     );
 }
 
-function formatDate(iso: string): string {
+function formatDate(iso: string, locale = "uz"): string {
     try {
-        return new Date(iso).toLocaleDateString("uz-UZ", { day: "2-digit", month: "short", year: "numeric" });
+        return new Date(iso).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" });
     } catch { return iso; }
 }

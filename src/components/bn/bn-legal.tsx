@@ -5,12 +5,13 @@
 // (Next 15'da 500 xato). Shu sabab `iconEl` — JSX element sifatida qabul qilinadi.
 
 import { ChevronRight, FileText, Info } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { BnLink } from "./bn-nav";
 import { BnBackButton } from "./bn-back-button";
 import { BN } from "@/lib/bn-theme";
 import type { ReactNode } from "react";
 
-export function BnLegalPage({
+export async function BnLegalPage({
     title, subtitle, updatedAt, iconEl, children,
 }: {
     title: string;
@@ -19,15 +20,17 @@ export function BnLegalPage({
     iconEl?: ReactNode;
     children: ReactNode;
 }) {
+    const t = await getTranslations("bn.legal");
+    const tCrumb = await getTranslations("bn.breadcrumb");
     const icon = iconEl ?? <FileText className="w-5 h-5" />;
     return (
         <div className="mx-auto max-w-[820px] px-4 pt-4 pb-16">
             <BnBackButton fallbackHref="/" />
 
             <nav className="flex items-center gap-1.5 text-[12px] mt-4 mb-3" style={{ color: BN.text3 }}>
-                <BnLink href="/" className="hover:opacity-70">Bosh sahifa</BnLink>
+                <BnLink href="/" className="hover:opacity-70">{tCrumb("home")}</BnLink>
                 <ChevronRight className="w-3 h-3" />
-                <span>Huquqiy</span>
+                <span>{t("crumb")}</span>
             </nav>
 
             <header className="mb-6">
@@ -47,7 +50,7 @@ export function BnLegalPage({
                 </div>
                 {updatedAt && (
                     <p className="text-[12px]" style={{ color: BN.text3 }}>
-                        <Info className="w-3 h-3 inline mr-1" /> Oxirgi yangilanish: {updatedAt}
+                        <Info className="w-3 h-3 inline mr-1" /> {t("updated")}: {updatedAt}
                     </p>
                 )}
             </header>
