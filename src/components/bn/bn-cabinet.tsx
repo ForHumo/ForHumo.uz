@@ -27,6 +27,7 @@ import { BnPhoneInput } from "./bn-phone-input";
 import { BnCategoryPicker } from "./bn-category-picker";
 import { BnPushCard } from "./bn-push-card";
 import { BnReferralLeaderboard } from "./bn-referral-leaderboard";
+import { BnAchievementsCard } from "./bn-achievements-card";
 
 type Tab = "home" | "products" | "orders" | "shop" | "money";
 
@@ -1400,6 +1401,8 @@ function MoneyTab({ balance, orderCount }: { balance: number; orderCount: number
             </a>
 
             <BnReferralCard />
+
+            <BnAchievementsCard />
 
             <BnReferralLeaderboard />
         </div>

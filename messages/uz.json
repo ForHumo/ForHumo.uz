@@ -1194,6 +1194,9 @@
       "emptyText": "Hali hech kim do'st chaqirmagan. Birinchi bo'lish uchun havolangizni yuboring — 10 000 so'm bonus kutmoqda.",
       "wantIn": "Yulduzlar orasiga qo'shilmoqchimisiz?",
       "inviteCta": "Havolani olish"
+    },
+    "ach": {
+      "title": "Yutuqlarim"
     }
   }
 }
