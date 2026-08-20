@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
     ClipboardList, Loader2, Phone, MessageCircle, Check, X,
-    Clock, PhoneCall, Store, Trash2,
+    Clock, PhoneCall, Store, Trash2, Download,
 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 
@@ -82,9 +82,11 @@ export function BnAdminWaitlist() {
         }
     }
 
+    const total = Object.values(stats).reduce((a, b) => a + b, 0);
+
     return (
         <div>
-            {/* Tab bar */}
+            {/* Tab bar + CSV eksport */}
             <div className="flex items-center gap-1.5 mb-4 flex-wrap">
                 {TABS.map(t => {
                     const active = tab === t.key;
@@ -111,6 +113,30 @@ export function BnAdminWaitlist() {
                         </button>
                     );
                 })}
+
+                {/* CSV eksport — hozirgi tab uchun + hammasi */}
+                <div className="flex items-center gap-1.5 ml-auto">
+                    <a
+                        href={`/api/bn/admin/waitlist/export?status=${tab}`}
+                        title={`${tab} — CSV yuklash (Excel'da ochiladi)`}
+                        className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-[12px] font-bold transition-transform active:scale-[0.97]"
+                        style={{ background: BN.surface, border: `1px solid ${BN.borderGold}`, color: BN.gold }}
+                    >
+                        <Download className="w-3.5 h-3.5" />
+                        CSV ({stats[tab] ?? 0})
+                    </a>
+                    {total > (stats[tab] ?? 0) && (
+                        <a
+                            href="/api/bn/admin/waitlist/export"
+                            title="Barcha statuslar birga — CSV"
+                            className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-[12px] font-bold transition-transform active:scale-[0.97]"
+                            style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text2 }}
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            Hammasi ({total})
+                        </a>
+                    )}
+                </div>
             </div>
 
             {loading ? (
