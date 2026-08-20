@@ -11,6 +11,9 @@ import { Providers } from "@/app/providers";
 import { BackgroundEffects } from "@/components/background-effects";
 import { AuthBarrier } from "@/components/auth/auth-barrier";
 import { SupportDock } from "@/components/support/support-dock";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { BnAttributionCapture } from "@/components/analytics/bn-attribution-capture";
 import "@/app/globals.css";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
@@ -128,8 +131,11 @@ export default async function LocaleLayout({
                             {!publicHost && <Footer />}
                         </AuthBarrier>
                         <SupportDock />
+                        <BnAttributionCapture />
                     </Providers>
                 </NextIntlClientProvider>
+                <Analytics />
+                <SpeedInsights />
             </body>
         </html>
     );
