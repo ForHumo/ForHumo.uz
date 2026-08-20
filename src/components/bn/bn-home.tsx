@@ -18,6 +18,7 @@ import { BnReferralHero } from "./bn-referral-hero";
 import { BnInstallCard } from "./bn-install-card";
 import { BnNearbyRow } from "./bn-nearby-row";
 import { BnTrendingRow } from "./bn-trending-row";
+import { BnReferralStatsChip } from "./bn-referral-stats-chip";
 import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 const COLS = 5;          // chapdan o'ngga 5 ta
@@ -95,6 +96,9 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
 
             {/* ── Trend mahsulotlar (7-kun view+order top) — data bo'lsa ko'rinadi ── */}
             <BnTrendingRow />
+
+            {/* ── Referral haftalik signal — >=3 kishi bonus olgan bo'lsa ── */}
+            <BnReferralStatsChip />
 
             {/* ── Siz uchun (personalizatsiya) — faqat kirganlar uchun ── */}
             {forYou && forYou.length > 0 && (

@@ -1224,6 +1224,9 @@
       "subtitle_1d": "Most popular today",
       "subtitle_7d": "Most popular in the last 7 days",
       "subtitle_30d": "Most popular in the last 30 days"
+    },
+    "refChip": {
+      "text": "This week <b>{n}</b> people earned bonuses · total {amount}"
     }
   }
 }

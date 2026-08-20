@@ -21,19 +21,30 @@ interface Row {
 }
 
 export async function GET() {
-    const grouped = await prisma.bnReferral.groupBy({
-        by: ["inviterId"],
-        where: { status: "REWARDED" },
-        _count: { _all: true },
-        _sum: { inviterReward: true },
-        orderBy: [
-            { _count: { inviterId: "desc" } },
-        ],
-        take: 10,
-    }).catch(() => []);
+    const weekAgo = new Date(Date.now() - 7 * 86400_000);
+    const [grouped, weekAgg] = await Promise.all([
+        prisma.bnReferral.groupBy({
+            by: ["inviterId"],
+            where: { status: "REWARDED" },
+            _count: { _all: true },
+            _sum: { inviterReward: true },
+            orderBy: [{ _count: { inviterId: "desc" } }],
+            take: 10,
+        }),
+        prisma.bnReferral.aggregate({
+            where: { status: "REWARDED", rewardedAt: { gte: weekAgo } },
+            _count: { _all: true },
+            _sum: { inviterReward: true, inviteeReward: true },
+        }),
+    ]).catch(() => [[], { _count: { _all: 0 }, _sum: { inviterReward: 0, inviteeReward: 0 } }] as const);
+
+    const weekStats = {
+        rewardedThisWeek: weekAgg._count?._all ?? 0,
+        totalPaidThisWeek: (weekAgg._sum?.inviterReward ?? 0) + (weekAgg._sum?.inviteeReward ?? 0),
+    };
 
     if (grouped.length === 0) {
-        return NextResponse.json({ leaderboard: [] });
+        return NextResponse.json({ leaderboard: [], weekStats });
     }
 
     const ids = grouped.map(g => g.inviterId);
@@ -57,5 +68,5 @@ export async function GET() {
         };
     });
 
-    return NextResponse.json({ leaderboard: rows });
+    return NextResponse.json({ leaderboard: rows, weekStats });
 }

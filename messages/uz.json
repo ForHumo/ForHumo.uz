@@ -1224,6 +1224,9 @@
       "subtitle_1d": "Bugungi eng qiziqarli mahsulotlar",
       "subtitle_7d": "So'nggi 7 kunda eng ko'p qiziqtirgan",
       "subtitle_30d": "So'nggi 30 kunda mashhur bo'lganlar"
+    },
+    "refChip": {
+      "text": "Bu hafta <b>{n}</b> kishi bonus oldi · jami {amount}"
     }
   }
 }
