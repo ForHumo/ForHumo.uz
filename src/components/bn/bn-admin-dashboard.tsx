@@ -12,6 +12,8 @@ import {
 import { BN } from "@/lib/bn-theme";
 import { formatMoney } from "@/lib/money";
 
+interface TrendPoint { day: string; waitlist: number; orders: number; broadcasts: number }
+
 interface Dashboard {
     waitlist: { byStatus: Record<string, number>; today: number; week: number };
     shops: { byStatus: Record<string, number> };
@@ -22,6 +24,7 @@ interface Dashboard {
     };
     referrals: { byStatus: Record<string, number>; rewardedTotal: number };
     pushSubscribers: number;
+    trend: TrendPoint[];
 }
 
 export function BnAdminDashboard() {
@@ -105,6 +108,59 @@ export function BnAdminDashboard() {
                             color={BN.gold} />
                     </div>
                 </div>
+            </div>
+
+            {/* 3-qator: 7-kunlik trend */}
+            <div className="p-4 rounded-2xl"
+                style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
+                <div className="flex items-center gap-2 mb-3">
+                    <TrendingUp className="w-4 h-4" style={{ color: BN.gold }} />
+                    <h3 className="text-[13px] font-black">7 kunlik trend</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <MiniBars title="Waitlist" data={d.trend} pick={p => p.waitlist} color={BN.gold} />
+                    <MiniBars title="Buyurtmalar" data={d.trend} pick={p => p.orders} color={BN.ok} />
+                    <MiniBars title="Broadcast" data={d.trend} pick={p => p.broadcasts} color={BN.info} />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function MiniBars({ title, data, pick, color }: {
+    title: string; data: TrendPoint[]; pick: (p: TrendPoint) => number; color: string;
+}) {
+    const values = data.map(pick);
+    const max = Math.max(1, ...values);
+    const total = values.reduce((a, b) => a + b, 0);
+    return (
+        <div>
+            <div className="flex items-baseline justify-between mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: BN.text3 }}>{title}</span>
+                <span className="text-[13px] font-black tabular-nums" style={{ color: color }}>{total}</span>
+            </div>
+            <div className="flex items-end gap-1 h-16" role="img" aria-label={`${title} 7-kunlik grafik`}>
+                {data.map((p, i) => {
+                    const v = pick(p);
+                    const h = Math.round((v / max) * 100);
+                    const isLast = i === data.length - 1;
+                    return (
+                        <div key={p.day} title={`${p.day}: ${v}`}
+                            className="flex-1 flex flex-col justify-end">
+                            <div className="w-full rounded-t transition-all"
+                                style={{
+                                    height: `${Math.max(2, h)}%`,
+                                    background: isLast ? color : `${color}66`,
+                                    minHeight: v > 0 ? "3px" : "1px",
+                                    opacity: v > 0 ? 1 : 0.25,
+                                }} />
+                        </div>
+                    );
+                })}
+            </div>
+            <div className="flex justify-between mt-1 text-[9px]" style={{ color: BN.text3 }}>
+                <span>{data[0]?.day.slice(5)}</span>
+                <span>{data[data.length - 1]?.day.slice(5)}</span>
             </div>
         </div>
     );

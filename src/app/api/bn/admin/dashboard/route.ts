@@ -26,6 +26,21 @@ export async function GET() {
     const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+    // 7 kunlik bucket'lar — hozirgi kundan orqaga: [-6, -5, ..., 0] (0 = bugun)
+    // Har bucket boshi UTC yarim tunidan. Namuna: [{day: "2026-08-14", waitlist: 3, orders: 12, broadcasts: 1}, ...]
+    const buckets: Array<{ start: Date; end: Date; label: string }> = [];
+    for (let i = 6; i >= 0; i--) {
+        const start = new Date(now);
+        start.setHours(0, 0, 0, 0);
+        start.setDate(start.getDate() - i);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 1);
+        buckets.push({
+            start, end,
+            label: start.toISOString().slice(0, 10),
+        });
+    }
+
     const [
         waitlistByStatus, shopsByStatus, ordersByStatus,
         ordersToday, ordersWeek,
@@ -54,6 +69,18 @@ export async function GET() {
         }),
         prisma.nexusPushSub.findMany({ select: { profileId: true }, distinct: ["profileId"] }),
     ]);
+
+    // Kunlik bucket count'lari — 7 * 3 = 21 kichik query, parallel
+    const trendPromises: Promise<{ day: string; waitlist: number; orders: number; broadcasts: number }>[] =
+        buckets.map(async b => {
+            const [w, o, bc] = await Promise.all([
+                prisma.bnSellerWaitlist.count({ where: { createdAt: { gte: b.start, lt: b.end } } }),
+                prisma.bnOrder.count({ where: { placedAt: { gte: b.start, lt: b.end } } }),
+                prisma.bnBroadcast.count({ where: { createdAt: { gte: b.start, lt: b.end } } }),
+            ]);
+            return { day: b.label, waitlist: w, orders: o, broadcasts: bc };
+        });
+    const trend = await Promise.all(trendPromises);
 
     const asMap = (rows: { status: string; _count: { _all: number } }[]) => {
         const m: Record<string, number> = {};
@@ -91,5 +118,6 @@ export async function GET() {
             rewardedTotal: (referralAgg._sum.inviterReward ?? 0) + (referralAgg._sum.inviteeReward ?? 0),
         },
         pushSubscribers: pushSubs.length,
+        trend,   // 7 ta {day, waitlist, orders, broadcasts}
     });
 }
