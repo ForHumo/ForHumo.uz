@@ -54,6 +54,7 @@ export function BnFooter() {
                     </FooterCol>
 
                     <FooterCol title={t("footer.help")}>
+                        <FooterLink href="/haqida">{t("footer.about")}</FooterLink>
                         <FooterLink href="/yordam">{t("footer.faq")}</FooterLink>
                         <FooterLink href="/huquqiy/foydalanish">{t("footer.terms")}</FooterLink>
                         <FooterLink href="/huquqiy/maxfiylik">{t("footer.privacy")}</FooterLink>
