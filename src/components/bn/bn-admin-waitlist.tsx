@@ -98,6 +98,19 @@ export function BnAdminWaitlist() {
         } finally { setBulkBusy(false); }
     }
 
+    function bulkWhatsapp() {
+        const rows = filteredEntries.filter(e => selected.has(e.id));
+        if (rows.length === 0) return;
+        if (rows.length > 10 && !confirm(`${rows.length} ta WhatsApp tab birdaniga ochiladi. Davom etilsinmi?`)) return;
+        // Har biriga alohida tab ochamiz. Popup blocker'ni chetlab o'tish uchun
+        // ketma-ket setTimeout ishlatamiz (brauzer bir clickda faqat 1 ta window
+        // ochishga ruxsat berishi mumkin). Bittasi ochilsa qolganlari user
+        // gesture zanjiri bilan mos keladi.
+        rows.forEach((e, i) => {
+            setTimeout(() => window.open(buildWaLink(e.phone, e.name), "_blank", "noopener"), i * 200);
+        });
+    }
+
     // Client-side qidiruv — ism, telefon, izoh, ref, kategoriya, bozor bo'yicha
     const filteredEntries = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -325,6 +338,12 @@ export function BnAdminWaitlist() {
                         className="h-8 px-3 rounded-lg text-[11.5px] font-black flex items-center gap-1 disabled:opacity-60"
                         style={{ background: BN.err, color: "#fff" }}>
                         <X className="w-3.5 h-3.5" /> Rad
+                    </button>
+                    <button onClick={bulkWhatsapp} disabled={bulkBusy}
+                        title="Har biriga alohida WhatsApp tab ochish"
+                        className="h-8 px-3 rounded-lg text-[11.5px] font-black flex items-center gap-1 disabled:opacity-60"
+                        style={{ background: "#25D366", color: "#fff" }}>
+                        <MessageCircle className="w-3.5 h-3.5" /> WA
                     </button>
                     <button onClick={clearSelection} disabled={bulkBusy}
                         aria-label="Tozalash"
