@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
     Store, MapPin, ArrowRight, ChevronRight, Star, Package,
-    TrendingDown, Sparkles, Crown, Loader2, Globe, ShoppingBasket,
+    TrendingDown, Sparkles, Crown, Loader2, Globe, ShoppingBasket, ClipboardList,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
@@ -237,16 +237,43 @@ function SellerBanner() {
 function SellerCta() {
     const { hasShop } = useBnBase();
     const t = useTranslations("bn.seller");
+    const tBanner = useTranslations("bn.sellerBanner");
+
+    if (hasShop) {
+        return (
+            <BnLink
+                href="/kabinet"
+                className="flex items-center justify-center gap-2 px-7 rounded-2xl text-[15px] font-black flex-shrink-0 transition-transform active:scale-[0.97]"
+                style={{ height: 52, background: BN.gold, color: BN.onGold }}
+            >
+                <Store className="w-5 h-5" />
+                {t("openCabinet")}
+                <ArrowRight className="w-4 h-4" />
+            </BnLink>
+        );
+    }
+
+    // MChJ ochilgunicha waitlist asosiy oqim — primary + secondary CTA
     return (
-        <BnLink
-            href={hasShop ? "/kabinet" : "/sotuvchi"}
-            className="flex items-center justify-center gap-2 px-7 rounded-2xl text-[15px] font-black flex-shrink-0 transition-transform active:scale-[0.97]"
-            style={{ height: 52, background: BN.gold, color: BN.onGold }}
-        >
-            <Store className="w-5 h-5" />
-            {hasShop ? t("openCabinet") : t("become")}
-            <ArrowRight className="w-4 h-4" />
-        </BnLink>
+        <div className="flex flex-col gap-2 flex-shrink-0 w-full md:w-auto md:min-w-[220px]">
+            <BnLink
+                href="/sotuvchi/waitlist"
+                className="flex items-center justify-center gap-2 px-6 rounded-2xl text-[15px] font-black transition-transform active:scale-[0.97]"
+                style={{ height: 52, background: BN.gold, color: BN.onGold }}
+            >
+                <ClipboardList className="w-5 h-5" />
+                {tBanner("waitlistBtn")}
+                <ArrowRight className="w-4 h-4" />
+            </BnLink>
+            <BnLink
+                href="/sotuvchi"
+                className="flex items-center justify-center gap-1.5 h-10 rounded-xl text-[12.5px] font-bold transition-colors"
+                style={{ background: "transparent", color: BN.text3 }}
+            >
+                {tBanner("haveDocs")}
+                <ChevronRight className="w-3.5 h-3.5" />
+            </BnLink>
+        </div>
     );
 }
 
