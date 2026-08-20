@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
+import { useTranslations, useLocale } from "next-intl";
 import {
     Package, LogIn, ChevronRight, Clock, Check, X, Truck, Eye,
     Wallet, Banknote, Store, MapPin, Phone, Loader2, RotateCw,
@@ -35,24 +36,27 @@ export function BnOrdersListClient({
     initial, unauthenticated,
 }: { initial: OrderListItem[]; unauthenticated: boolean }) {
     const { status } = useSession();
+    const t = useTranslations("bn.orders");
+    const tStatus = useTranslations("bn.orderStatus");
+    const locale = useLocale();
     const notAuth = unauthenticated || status === "unauthenticated";
 
     if (notAuth) return <AuthGate />;
     if (initial.length === 0) {
         return (
             <Wrap>
-                <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">Buyurtmalarim</h1>
+                <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">{t("title")}</h1>
                 <BnEmpty
                     icon={<Package className="w-6 h-6" />}
-                    title="Hali buyurtma yo'q"
-                    text="Birinchi buyurtmangizni bergach, holati shu yerda kuzatiladi."
+                    title={t("emptyTitle")}
+                    text={t("emptyText")}
                     action={
                         <BnLink
                             href="/"
                             className="inline-flex h-11 px-5 items-center rounded-xl text-[14px] font-black"
                             style={{ background: BN.gold, color: BN.onGold }}
                         >
-                            Xarid qilish
+                            {t("buy")}
                         </BnLink>
                     }
                 />
@@ -63,7 +67,7 @@ export function BnOrdersListClient({
     return (
         <Wrap>
             <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">
-                Buyurtmalarim <span className="text-[15px] font-bold" style={{ color: BN.text3 }}>{initial.length} ta</span>
+                {t("title")} <span className="text-[15px] font-bold" style={{ color: BN.text3 }}>{initial.length} {t("countUnit")}</span>
             </h1>
             <div className="space-y-2.5">
                 {initial.map(o => {
@@ -91,7 +95,7 @@ export function BnOrdersListClient({
                                         className="px-2 py-0.5 rounded-md text-[10px] font-black leading-none"
                                         style={{ background: `${meta.color}1F`, color: meta.color }}
                                     >
-                                        {meta.label}
+                                        {tStatus(o.status)}
                                     </span>
                                     <span className="text-[11px] tabular-nums" style={{ color: BN.text3 }}>#{o.code}</span>
                                 </span>
@@ -100,9 +104,9 @@ export function BnOrdersListClient({
                                 </span>
                                 <span className="flex items-center gap-2 text-[11.5px] mt-0.5" style={{ color: BN.text3 }}>
                                     <FulfillIcon type={o.fulfillType} />
-                                    <span>{o.itemCount} ta mahsulot</span>
+                                    <span>{t("productsN", { n: o.itemCount })}</span>
                                     <span>·</span>
-                                    <span>{formatDate(o.placedAt)}</span>
+                                    <span>{formatDate(o.placedAt, locale)}</span>
                                 </span>
                             </span>
 
@@ -153,29 +157,33 @@ export interface OrderDetailDTO {
 
 export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
     const router = useRouter();
+    const t = useTranslations("bn.orders");
+    const tStatus = useTranslations("bn.orderStatus");
+    const tCrumb = useTranslations("bn.breadcrumb");
+    const locale = useLocale();
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState<string | null>(null);
     const meta = ORDER_STATUS_META[order.status];
     const canCancel = order.status === "PLACED";
 
     async function cancel() {
-        if (!confirm("Buyurtmani bekor qilamizmi?" + (order.paymentMethod === "WALLET" ? " Pul hamyoningizga qaytadi." : ""))) return;
+        if (!confirm(t("cancelConfirm") + (order.paymentMethod === "WALLET" ? t("cancelConfirmRefund") : ""))) return;
         setBusy(true); setErr(null);
         try {
             const r = await fetch(`/api/bn/orders/${order.id}/cancel`, { method: "POST" });
             const d = await r.json();
-            if (!r.ok) setErr(d?.error ?? "Xatolik");
+            if (!r.ok) setErr(d?.error ?? t("cancelErr"));
             else router.refresh();
-        } catch { setErr("Ulanish xatoligi"); }
+        } catch { setErr(t("netErr")); }
         finally { setBusy(false); }
     }
 
     // Steppera holatlar
     const steps = [
-        { key: "PLACED",    label: "Berildi",    at: order.placedAt },
-        { key: "CONFIRMED", label: "Tasdiqlandi", at: order.confirmedAt },
-        { key: "READY",     label: "Tayyor",     at: order.readyAt },
-        { key: "COMPLETED", label: "Yakunlandi", at: order.completedAt },
+        { key: "PLACED",    label: t("stepPlaced"),    at: order.placedAt },
+        { key: "CONFIRMED", label: t("stepConfirmed"), at: order.confirmedAt },
+        { key: "READY",     label: t("stepReady"),     at: order.readyAt },
+        { key: "COMPLETED", label: t("stepCompleted"), at: order.completedAt },
     ];
     const order_ = ["PLACED", "CONFIRMED", "READY", "COMPLETED"] as const;
     const curIdx = order_.indexOf(order.status as typeof order_[number]);
@@ -185,21 +193,21 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
         <Wrap>
             <BnBackButton className="mb-4" fallbackHref="/buyurtmalarim" />
             <nav className="flex items-center gap-1.5 text-[12px] mb-5" style={{ color: BN.text3 }}>
-                <BnLink href="/" className="hover:opacity-70">Bosh sahifa</BnLink>
+                <BnLink href="/" className="hover:opacity-70">{tCrumb("home")}</BnLink>
                 <ChevronRight className="w-3 h-3" />
-                <BnLink href="/buyurtmalarim" className="hover:opacity-70">Buyurtmalarim</BnLink>
+                <BnLink href="/buyurtmalarim" className="hover:opacity-70">{t("title")}</BnLink>
             </nav>
 
             <div className="flex items-baseline justify-between gap-3 mb-6 flex-wrap">
                 <div className="min-w-0">
-                    <h1 className="text-[24px] font-black tracking-tight leading-tight">Buyurtma #{order.code}</h1>
-                    <p className="text-[12.5px] mt-1" style={{ color: BN.text3 }}>{formatDate(order.placedAt)}</p>
+                    <h1 className="text-[24px] font-black tracking-tight leading-tight">{t("orderNo", { code: order.code })}</h1>
+                    <p className="text-[12.5px] mt-1" style={{ color: BN.text3 }}>{formatDate(order.placedAt, locale)}</p>
                 </div>
                 <span
                     className="px-3 py-1.5 rounded-lg text-[12.5px] font-black leading-none"
                     style={{ background: `${meta.color}1F`, color: meta.color }}
                 >
-                    {meta.label}
+                    {tStatus(order.status)}
                 </span>
             </div>
 
@@ -230,7 +238,7 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                                     </span>
                                     {s.at && (
                                         <span className="text-[9.5px] mt-0.5 tabular-nums" style={{ color: BN.text3 }}>
-                                            {formatShort(s.at)}
+                                            {formatShort(s.at, locale)}
                                         </span>
                                     )}
                                 </div>
@@ -247,13 +255,13 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                 >
                     <X className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: BN.err }} />
                     <div className="min-w-0">
-                        <p className="text-[13px] font-black" style={{ color: BN.err }}>Buyurtma bekor qilindi</p>
+                        <p className="text-[13px] font-black" style={{ color: BN.err }}>{t("cancelledTitle")}</p>
                         {order.cancelReason && (
                             <p className="text-[12.5px] mt-1" style={{ color: BN.text2 }}>{order.cancelReason}</p>
                         )}
                         {order.paymentMethod === "WALLET" && (
                             <p className="text-[12px] mt-1" style={{ color: BN.text3 }}>
-                                Pul For Pay hamyoningizga qaytarildi.
+                                {t("refundedNote")}
                             </p>
                         )}
                     </div>
@@ -288,7 +296,7 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                                     href={`tel:${order.shop.phone.replace(/\s/g, "")}`}
                                     className="w-10 h-10 grid place-items-center rounded-xl"
                                     style={{ background: BN.surfaceUp, color: BN.text }}
-                                    aria-label="Qo'ng'iroq"
+                                    aria-label={t("shopCall")}
                                 >
                                     <Phone className="w-4 h-4" />
                                 </a>
@@ -298,7 +306,7 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
 
                     {/* Mahsulotlar */}
                     <Panel>
-                        <h2 className="text-[14px] font-black mb-3">Mahsulotlar</h2>
+                        <h2 className="text-[14px] font-black mb-3">{t("productsHead")}</h2>
                         <ul className="space-y-3">
                             {order.items.map(it => (
                                 <li key={it.id} className="flex gap-3">
@@ -333,7 +341,7 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
 
                     {/* Yetkazish/olish */}
                     <Panel>
-                        <h2 className="text-[14px] font-black mb-3">Olish usuli</h2>
+                        <h2 className="text-[14px] font-black mb-3">{t("fulfillHead")}</h2>
                         <div className="flex items-start gap-3">
                             <span
                                 className="w-9 h-9 rounded-lg grid place-items-center flex-shrink-0"
@@ -342,7 +350,7 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                                 <FulfillIcon type={order.fulfillType} />
                             </span>
                             <div className="min-w-0 text-[13px]">
-                                <p className="font-bold">{fulfillLabel(order.fulfillType)}</p>
+                                <p className="font-bold">{fulfillLabel(order.fulfillType, t)}</p>
                                 {order.address && (
                                     <p className="flex items-start gap-1.5 mt-1" style={{ color: BN.text2 }}>
                                         <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: BN.gold }} />
@@ -366,26 +374,26 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                 {/* O'ng — yig'indi */}
                 <aside className="lg:sticky lg:top-[132px] lg:self-start">
                     <Panel>
-                        <h2 className="text-[14px] font-black mb-4">Yig&apos;indi</h2>
+                        <h2 className="text-[14px] font-black mb-4">{t("summaryHead")}</h2>
                         <div className="space-y-2 text-[13px]">
-                            <SumRow label="Mahsulotlar" value={fmtPrice(order.subtotal)} />
-                            {order.deliveryFee > 0 && <SumRow label="Yetkazish" value={fmtPrice(order.deliveryFee)} />}
+                            <SumRow label={t("productsRow")} value={fmtPrice(order.subtotal)} />
+                            {order.deliveryFee > 0 && <SumRow label={t("deliveryRow")} value={fmtPrice(order.deliveryFee)} />}
                             <div
                                 className="flex items-baseline justify-between pt-3 mt-1"
                                 style={{ borderTop: `1px solid ${BN.border}` }}
                             >
-                                <span className="text-[14px] font-bold">Jami</span>
+                                <span className="text-[14px] font-bold">{t("total")}</span>
                                 <span className="text-[20px] font-black tabular-nums">{fmtPrice(order.total)}</span>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-2 mt-4 text-[12px]" style={{ color: BN.text3 }}>
                             {order.paymentMethod === "WALLET"
-                                ? <><Wallet className="w-3.5 h-3.5" style={{ color: BN.gold }} /> For Pay hamyondan</>
-                                : <><Banknote className="w-3.5 h-3.5" style={{ color: BN.gold }} /> Naqd (do&apos;konda)</>}
+                                ? <><Wallet className="w-3.5 h-3.5" style={{ color: BN.gold }} /> {t("payWallet")}</>
+                                : <><Banknote className="w-3.5 h-3.5" style={{ color: BN.gold }} /> {t("payCash")}</>}
                             {order.escrowHeld && (
                                 <span className="ml-auto px-1.5 py-0.5 rounded text-[10px] font-black" style={{ background: BN.okSoft, color: BN.ok }}>
-                                    ESKROW
+                                    {t("escrow")}
                                 </span>
                             )}
                         </div>
@@ -398,7 +406,7 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                                     className="flex items-center justify-center gap-2 w-full h-11 mt-5 rounded-xl text-[13.5px] font-black transition-colors disabled:opacity-60"
                                     style={{ background: BN.errSoft, color: BN.err, border: `1px solid ${BN.err}33` }}
                                 >
-                                    {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Buyurtmani bekor qilish"}
+                                    {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : t("cancelBtn")}
                                 </button>
                                 {err && <p className="text-[11.5px] mt-2 text-center" style={{ color: BN.err }}>{err}</p>}
                             </>
@@ -412,11 +420,11 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                                         const r = await fetch(`/api/bn/orders/${order.id}/reorder`, { method: "POST" });
                                         const d = await r.json();
                                         if (r.ok) {
-                                            const msg = `Savatga qo'shildi: ${d.added} ta${d.skipped ? ` (${d.skipped} tasi mavjud emas)` : ""}`;
-                                            alert(msg);
+                                            const skippedText = d.skipped ? t("reorderSkipped", { n: d.skipped }) : "";
+                                            alert(t("reorderMsg", { added: d.added, skipped: skippedText }));
                                             router.refresh();
                                         } else {
-                                            alert(d?.error ?? "Xatolik");
+                                            alert(d?.error ?? t("reorderErr"));
                                         }
                                     } finally { setBusy(false); }
                                 }}
@@ -424,7 +432,7 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                                 className="flex items-center justify-center gap-2 w-full h-11 mt-5 rounded-xl text-[13.5px] font-black transition-colors disabled:opacity-60"
                                 style={{ background: BN.gold, color: BN.onGold }}
                             >
-                                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><RotateCw className="w-4 h-4" /> Yana buyurtma</>}
+                                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><RotateCw className="w-4 h-4" /> {t("reorder")}</>}
                             </button>
                         )}
                     </Panel>
@@ -437,9 +445,11 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
 // ── Yordamchilar ────────────────────────────────────────────────────────────
 
 function AuthGate() {
+    const t = useTranslations("bn.orders");
+    const tAuth = useTranslations("bn.auth");
     return (
         <Wrap>
-            <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">Buyurtmalarim</h1>
+            <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight mb-6">{t("title")}</h1>
             <div
                 className="max-w-[440px] mx-auto p-7 rounded-3xl text-center"
                 style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
@@ -450,9 +460,9 @@ function AuthGate() {
                 >
                     <Package className="w-7 h-7" />
                 </span>
-                <p className="text-[18px] font-black mb-2">Kiring va davom eting</p>
+                <p className="text-[18px] font-black mb-2">{t("authSignInTitle")}</p>
                 <p className="text-[13.5px] leading-relaxed mb-5" style={{ color: BN.text2 }}>
-                    Buyurtmalar profilga bog&apos;lanadi.
+                    {t("authSignInText")}
                 </p>
                 <button
                     onClick={() => signIn("google")}
@@ -460,7 +470,7 @@ function AuthGate() {
                     style={{ background: BN.gold, color: BN.onGold }}
                 >
                     <LogIn className="w-5 h-5" />
-                    Humo ID bilan kirish
+                    {tAuth("signInWithHumoID")}
                 </button>
             </div>
         </Wrap>
@@ -497,23 +507,23 @@ function FulfillIcon({ type }: { type: "PICKUP" | "DELIVERY" | "INSPECT" }) {
     return <Eye className="w-3.5 h-3.5" style={{ color: BN.gold }} />;
 }
 
-function fulfillLabel(type: "PICKUP" | "DELIVERY" | "INSPECT"): string {
-    if (type === "PICKUP")   return "Do'kondan olib ketish";
-    if (type === "DELIVERY") return "Yetkazib berish";
-    return "Ko'rib sotib olish (24 soat band)";
+function fulfillLabel(type: "PICKUP" | "DELIVERY" | "INSPECT", t: (k: string) => string): string {
+    if (type === "PICKUP")   return t("fulfillPickup");
+    if (type === "DELIVERY") return t("fulfillDelivery");
+    return t("fulfillInspect");
 }
 
-function formatDate(iso: string): string {
+function formatDate(iso: string, locale = "uz"): string {
     try {
         const d = new Date(iso);
-        return d.toLocaleString("uz-UZ", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+        return d.toLocaleString(locale, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
     } catch { return iso; }
 }
 
-function formatShort(iso: string): string {
+function formatShort(iso: string, locale = "uz"): string {
     try {
         const d = new Date(iso);
-        return d.toLocaleString("uz-UZ", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+        return d.toLocaleString(locale, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
     } catch { return iso; }
 }
 

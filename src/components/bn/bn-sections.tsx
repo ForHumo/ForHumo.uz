@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
+import { useTranslations, useLocale } from "next-intl";
 import {
     Car, Smartphone, Shirt, Sofa, Hammer, ShoppingBasket, Baby, Dumbbell,
     Sparkles, Wrench, Store, MapPin, Globe, Star, Package, ChevronRight,
@@ -448,15 +449,18 @@ export function BnProfilePage() {
 // ── Oddiy sahifalar ─────────────────────────────────────────────────────────
 
 export function BnNotificationsPage() {
+    const t = useTranslations("bn.notif");
     return (
         <Wrap>
-            <PageHead title="Bildirishnomalar" />
+            <PageHead title={t("title")} />
             <BnNotificationsClient />
         </Wrap>
     );
 }
 
 function BnNotificationsClient() {
+    const t = useTranslations("bn.notif");
+    const locale = useLocale();
     const [items, setItems] = useState<Array<{
         id: string; type: string; title: string; body: string | null;
         link: string | null; read: boolean; createdAt: string;
@@ -489,8 +493,8 @@ function BnNotificationsClient() {
         return (
             <BnEmpty
                 icon={<Bell className="w-6 h-6" />}
-                title="Yangi bildirishnoma yo'q"
-                text="Buyurtma holati o'zgarganda va narx tushganda shu yerda xabar beramiz."
+                title={t("emptyTitle")}
+                text={t("emptyText")}
             />
         );
     }
@@ -499,13 +503,13 @@ function BnNotificationsClient() {
         <div>
             {unread > 0 && (
                 <div className="flex items-center justify-between mb-3">
-                    <span className="text-[12px]" style={{ color: BN.text3 }}>{unread} yangi</span>
+                    <span className="text-[12px]" style={{ color: BN.text3 }}>{t("unreadN", { n: unread })}</span>
                     <button
                         onClick={markAllRead}
                         className="text-[12px] font-black"
                         style={{ color: BN.gold }}
                     >
-                        Hammasini o&apos;qildi
+                        {t("markAll")}
                     </button>
                 </div>
             )}
@@ -525,12 +529,12 @@ function BnNotificationsClient() {
                                 <p className="text-[13.5px] font-black" style={{ color: BN.text }}>{n.title}</p>
                                 {n.body && <p className="text-[12.5px] mt-0.5" style={{ color: BN.text2 }}>{n.body}</p>}
                                 <p className="text-[10.5px] mt-1.5" style={{ color: BN.text3 }}>
-                                    {new Date(n.createdAt).toLocaleString("uz-UZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                    {new Date(n.createdAt).toLocaleString(locale, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                                 </p>
                             </div>
                             {n.link && (
                                 <BnLink href={n.link} className="text-[11.5px] font-black flex-shrink-0" style={{ color: BN.gold }}>
-                                    Ko&apos;rish →
+                                    {t("view")}
                                 </BnLink>
                             )}
                         </div>
@@ -542,20 +546,21 @@ function BnNotificationsClient() {
 }
 
 export function BnLocationPage() {
+    const t = useTranslations("bn.pages");
     return (
         <Wrap>
-            <PageHead title="Mening joylashuvim" subtitle="Yaqin do'konlar va yetkazish narxi shunga qarab hisoblanadi" />
+            <PageHead title={t("locationTitle")} subtitle={t("locationSub")} />
             <BnEmpty
                 icon={<Navigation className="w-6 h-6" />}
-                title="Joylashuv belgilanmagan"
-                text="Manzilingizni kiritsangiz, eng yaqin do'konlarni birinchi ko'rsatamiz."
+                title={t("locationEmptyTitle")}
+                text={t("locationEmptyText")}
                 action={
                     <button
                         className="inline-flex items-center gap-2 h-11 px-5 rounded-xl text-[14px] font-black"
                         style={{ background: BN.gold, color: BN.onGold }}
                     >
                         <Navigation className="w-4 h-4" />
-                        Joylashuvni aniqlash
+                        {t("detectLocation")}
                     </button>
                 }
             />
@@ -564,26 +569,28 @@ export function BnLocationPage() {
 }
 
 export function BnPickupPage() {
+    const t = useTranslations("bn.pages");
     return (
         <Wrap>
-            <PageHead title="Topshirish punktlari" subtitle="Buyurtmani shu punktlardan olib ketishingiz mumkin" />
+            <PageHead title={t("pickupTitle")} subtitle={t("pickupSub")} />
             <BnEmpty
                 icon={<Package className="w-6 h-6" />}
-                title="Punktlar tayyorlanmoqda"
-                text="Toshkent bo'ylab topshirish punktlari tarmog'i ochilmoqda."
+                title={t("pickupEmptyTitle")}
+                text={t("pickupEmptyText")}
             />
         </Wrap>
     );
 }
 
 export function BnSettingsPage() {
+    const t = useTranslations("bn.pages");
     return (
         <Wrap>
-            <PageHead title="Sozlamalar" />
+            <PageHead title={t("settingsTitle")} />
             <BnEmpty
                 icon={<Settings className="w-6 h-6" />}
-                title="Sozlamalar"
-                text="Til va rejimni yuqoridagi paneldan o'zgartirishingiz mumkin."
+                title={t("settingsTitle")}
+                text={t("settingsSub")}
             />
         </Wrap>
     );
