@@ -127,6 +127,18 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         }
     }
 
+    // Forwarded manba profillari — username + image bilan enrich qilish
+    // (client tomonida "Yuborilgan xabar" kartochkasi profilga link berishi uchun)
+    const fwdIds = messages.map(m => m.forwardedFromId).filter((x): x is string => !!x);
+    const fwdMap = new Map<string, { username: string | null; image: string | null }>();
+    if (fwdIds.length) {
+        const fwdProfiles = await prisma.userProfile.findMany({
+            where: { id: { in: [...new Set(fwdIds)] } },
+            select: { id: true, username: true, image: true },
+        });
+        for (const p of fwdProfiles) fwdMap.set(p.id, { username: p.username, image: p.image });
+    }
+
     // Peer'ning oxirgi o'qigan vaqti (mening xabarlarim uchun 2 ptichka hisoblash)
     const peerReadAt = conv.user1Id === me.id ? conv.user2ReadAt : conv.user1ReadAt;
 
@@ -182,6 +194,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                     : [],
                 forwardedFromId: m.forwardedFromId,
                 forwardedFromName: m.forwardedFromName,
+                forwardedFromUsername: m.forwardedFromId ? (fwdMap.get(m.forwardedFromId)?.username ?? null) : null,
+                forwardedFromImage: m.forwardedFromId ? (fwdMap.get(m.forwardedFromId)?.image ?? null) : null,
                 deliveredAt: m.deliveredAt,
                 deletedForEveryoneAt: m.deletedForEveryoneAt,
                 buttons: m.buttons,

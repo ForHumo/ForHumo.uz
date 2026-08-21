@@ -318,6 +318,37 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
     const [staged, setStaged] = useState<StagedFile | null>(null);
     const [keywords, setKeywords] = useState("");
     const fileRef = useRef<HTMLInputElement>(null);
+    // Transfer state
+    const [transferUsername, setTransferUsername] = useState("");
+    const [transferring, setTransferring] = useState(false);
+    const [transferMsg, setTransferMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+    async function transferPack() {
+        if (!pack || !transferUsername.trim()) return;
+        if (!confirm(`"${pack.name}" pack egaligini @${transferUsername.trim().replace(/^@+/, "")} ga o'tkazasizmi? Bu amalni bekor qilib bo'lmaydi.`)) return;
+        setTransferring(true); setTransferMsg(null);
+        try {
+            const r = await fetch(`/api/humo/packs/${slug}/transfer`, {
+                method: "POST", headers: { "content-type": "application/json" },
+                body: JSON.stringify({ username: transferUsername.trim() }),
+            });
+            const d = await r.json();
+            if (!r.ok) {
+                const msg = d?.error === "user_not_found" ? "Foydalanuvchi topilmadi"
+                    : d?.error === "self_transfer" ? "O'zingizga o'tkazib bo'lmaydi"
+                    : d?.error === "invalid_username" ? "Username noto'g'ri"
+                    : d?.error === "forbidden" ? "Faqat ega o'tkaza oladi"
+                    : "Xatolik";
+                setTransferMsg({ ok: false, text: msg });
+                return;
+            }
+            setTransferMsg({ ok: true, text: `Pack @${d.newOwner.username} ga o'tkazildi` });
+            setTransferUsername("");
+            setTimeout(() => onClose(), 1500);
+        } catch {
+            setTransferMsg({ ok: false, text: "Tarmoq xatosi" });
+        } finally { setTransferring(false); }
+    }
 
     const load = useCallback(async () => {
         const r = await fetch(`/api/humo/packs/${slug}`);
@@ -564,6 +595,47 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
                             )}
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Transfer bo'limi — faqat egaga ko'rinadi */}
+            {pack.isOwner && (
+                <div className="mt-5 pt-4 rounded-xl p-4"
+                    style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.25)" }}>
+                    <p className="text-[11.5px] font-black uppercase tracking-wider mb-1" style={{ color: "#F59E0B" }}>
+                        Egalikni o&apos;tkazish
+                    </p>
+                    <p className="text-[11px] mb-3" style={{ color: NX.text3 }}>
+                        Boshqa foydalanuvchining <b>username</b>ini kiriting — pack va uning barcha
+                        item&apos;lari usha hisobga o&apos;tadi. Nom saqlanib qoladi va boshqa hech kim
+                        undan foydalana olmaydi. Bu amalni bekor qilib bo&apos;lmaydi.
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <div className="flex-1 flex items-center gap-1 rounded-lg h-9 px-2"
+                            style={{ background: "rgba(5,8,24,0.60)", border: `1px solid ${NX.borderSoft}` }}>
+                            <span className="text-[13px] font-black" style={{ color: NX.text3 }}>@</span>
+                            <input type="text"
+                                value={transferUsername}
+                                onChange={e => setTransferUsername(e.target.value.replace(/^@+/, ""))}
+                                placeholder="yangi_egasi"
+                                disabled={transferring}
+                                className="flex-1 bg-transparent text-[13px] outline-none"
+                                style={{ color: NX.text, caretColor: "#F59E0B" }} />
+                        </div>
+                        <button onClick={transferPack}
+                            disabled={transferring || !transferUsername.trim()}
+                            className="h-9 px-3 rounded-lg text-[12px] font-black flex items-center gap-1.5 disabled:opacity-40"
+                            style={{ background: "linear-gradient(135deg,#F59E0B,#EA580C)", color: "#fff" }}>
+                            {transferring ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                            O&apos;tkazish
+                        </button>
+                    </div>
+                    {transferMsg && (
+                        <p className="text-[11.5px] font-bold mt-2"
+                            style={{ color: transferMsg.ok ? NX.accent : "#ff6b6b" }}>
+                            {transferMsg.text}
+                        </p>
+                    )}
                 </div>
             )}
         </Modal>

@@ -89,6 +89,8 @@ interface Msg {
     mediaMime?: string | null;
     forwardedFromId?: string | null;
     forwardedFromName?: string | null;
+    forwardedFromUsername?: string | null;   // link uchun
+    forwardedFromImage?: string | null;       // avatar
     deliveredAt?: string | null;
     senderId?: string;
     deletedForEveryoneAt?: string | null;
@@ -878,8 +880,7 @@ export function NxSocialDesktop() {
         // Xabar tartibida (yuqoridan pastga)
         for (const src of items) {
             const body: Record<string, unknown> = {};
-            const prefix = "↪ Yuborilgan xabar\n";
-            body.text = src.text ? prefix + src.text : prefix;
+            body.text = src.text ?? "";
             if (src.mediaUrl && src.mediaType && ["image", "video", "audio", "file", "video-circle"].includes(src.mediaType)) {
                 body.mediaUrl = src.mediaUrl;
                 body.mediaType = src.mediaType;
@@ -887,6 +888,14 @@ export function NxSocialDesktop() {
                 if (typeof src.mediaSize === "number") body.mediaSize = src.mediaSize;
                 if (typeof src.durationMs === "number") body.durationMs = src.durationMs;
             }
+            // Forward metadata — asl yozuvchi ID + nom (matn prefiksi o'rniga)
+            const su = session?.user as { profileId?: string | null; name?: string | null } | undefined;
+            const origName = src.forwardedFromName
+                ?? (src.mine ? (su?.name ?? null) : (peer?.name ?? peer?.username ?? null));
+            const origId = src.forwardedFromId
+                ?? (src.mine ? (su?.profileId ?? null) : (peer?.id ?? null));
+            if (origId) body.forwardedFromId = origId;
+            if (origName) body.forwardedFromName = origName;
             await fetch(`/api/nexus/messages/${targetConvId}`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body),
@@ -3363,13 +3372,43 @@ export function NxSocialDesktop() {
                                             borderBottomLeftRadius:  (m.mediaType === "sticker" || m.mediaType === "video-circle") ? 0 : (m.mine ? 16 : (groupWithNext ? 4 : 6)),
                                             borderBottomRightRadius: (m.mediaType === "sticker" || m.mediaType === "video-circle") ? 0 : (m.mine ? (groupWithNext ? 4 : 6) : 16),
                                         }}>
-                                        {m.forwardedFromName && (
-                                            <div className="flex items-center gap-1 mb-1.5 text-[10px] opacity-70"
-                                                style={{ color: m.mine ? "rgba(255,255,255,0.85)" : "rgba(180,192,224,0.85)" }}>
-                                                <Forward className="w-3 h-3" />
-                                                <span>Yuborildi: <strong>{m.forwardedFromName}</strong></span>
-                                            </div>
-                                        )}
+                                        {m.forwardedFromName && (() => {
+                                            const uname = m.forwardedFromUsername;
+                                            const canLink = !!uname;
+                                            const Tag: 'a' | 'div' = canLink ? 'a' : 'div';
+                                            return (
+                                                <Tag
+                                                    {...(canLink ? { href: `/nexus/u/${uname}` } : {})}
+                                                    onClick={canLink ? (e: React.MouseEvent) => { e.stopPropagation(); } : undefined}
+                                                    className={`flex items-center gap-2 mb-2 pl-2 pr-2 py-1.5 rounded-md text-xs transition ${canLink ? "hover:brightness-125 active:scale-[0.98]" : ""}`}
+                                                    style={{
+                                                        background: m.mine ? "rgba(0,0,0,0.20)" : "rgba(0,206,200,0.10)",
+                                                        borderLeft: `3px solid ${m.mine ? "#fff" : "#00CEC8"}`,
+                                                        textDecoration: "none",
+                                                        cursor: canLink ? "pointer" : "default",
+                                                    }}>
+                                                    {m.forwardedFromImage ? (
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                                        <img src={m.forwardedFromImage} alt="" className="w-6 h-6 rounded-md object-cover flex-shrink-0" />
+                                                    ) : (
+                                                        <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+                                                            style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgba(0,206,200,0.20)" }}>
+                                                            <Forward className="w-3 h-3" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
+                                                        </div>
+                                                    )}
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-[10px] font-black uppercase tracking-wider"
+                                                            style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "#00CEC8" }}>
+                                                            Yuborilgan xabar
+                                                        </p>
+                                                        <p className="text-[11.5px] font-bold truncate"
+                                                            style={{ color: m.mine ? "#fff" : "rgba(220,232,255,0.95)" }}>
+                                                            {m.forwardedFromName}{uname ? ` · @${uname}` : ""}
+                                                        </p>
+                                                    </div>
+                                                </Tag>
+                                            );
+                                        })()}
                                         {m.replyTo && (
                                             <button type="button"
                                                 onClick={(e) => { e.stopPropagation(); if (m.replyTo) jumpToMessage(m.replyTo.id); }}
@@ -3512,14 +3551,21 @@ export function NxSocialDesktop() {
                                                     {/* OpenStreetMap embed — Telegram uslubidagi xarita preview */}
                                                     <a href={`https://www.google.com/maps?q=${m.locLat},${m.locLng}`}
                                                         target="_blank" rel="noopener noreferrer"
-                                                        className="block relative"
+                                                        className="block relative overflow-hidden"
                                                         style={{ height: 180, textDecoration: "none" }}>
                                                         <iframe src={mapUrl}
                                                             loading="lazy"
-                                                            className="w-full h-full pointer-events-none"
-                                                            style={{ border: 0 }}
+                                                            className="pointer-events-none"
+                                                            style={{
+                                                                border: 0,
+                                                                position: "absolute",
+                                                                top: -34,   // OSM yuqori zoom tugmalari va reklama'ni yashirish
+                                                                left: 0, right: 0,
+                                                                width: "100%",
+                                                                height: "calc(100% + 68px)",   // pastdan ham qirqamiz (donatelar/kredit)
+                                                            }}
                                                             title="Xarita" />
-                                                        {/* Marker overlay — iframe pin ba'zan ko'rinmaydi, o'zimizniki qo'yamiz */}
+                                                        {/* Katta MapPin marker markazda */}
                                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                                             <div className="relative -translate-y-2">
                                                                 <MapPin className="w-10 h-10" fill={active ? "#00CEC8" : "#EF4444"} strokeWidth={2}
@@ -3530,7 +3576,16 @@ export function NxSocialDesktop() {
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        {/* Click overlay — pointer-events kerak */}
+                                                        {/* Yuqori-o'ngda Nexus attribution — OSM logotipi o'rniga */}
+                                                        <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md pointer-events-none"
+                                                            style={{ background: "rgba(11,18,40,0.75)", border: "1px solid rgba(0,206,200,0.30)", backdropFilter: "blur(4px)" }}>
+                                                            <span className="text-[8px] font-black tracking-wider" style={{
+                                                                background: "linear-gradient(135deg,#00CEC8,#2B3EE8)",
+                                                                WebkitBackgroundClip: "text",
+                                                                WebkitTextFillColor: "transparent",
+                                                            }}>NEXUS MAP</span>
+                                                        </div>
+                                                        {/* Click overlay — iframe pointer-events yopildi, klik butun kartochkaga */}
                                                         <div className="absolute inset-0" style={{ cursor: "pointer" }} />
                                                     </a>
                                                     <a href={`https://www.google.com/maps?q=${m.locLat},${m.locLng}`}
@@ -4510,9 +4565,8 @@ export function NxSocialDesktop() {
                     </div>
 
                     <div className="p-4 space-y-1">
-                        {peer?.humoId && (
-                            <InfoRow label="Humo ID" value={peer.humoId} />
-                        )}
+                        {/* Humo ID xavfsizlik uchun ko'rsatilmaydi — birovni hisobini
+                            hack qilish osonlashmasligi uchun (foydalanuvchi qat'iy talabi) */}
                         {peer?.bio && (
                             <InfoRow label="Bio" value={peer.bio} />
                         )}
@@ -6531,8 +6585,14 @@ function EmojiPicker({ onPick, onPickMedia, onClose }: {
         return () => clearTimeout(t);
     }, [q, mainTab]);
 
-    const pickMedia = (kind: "GIF" | "STICKER", it: MediaItem) => {
-        onPickMedia?.({ kind, mediaUrl: it.mediaUrl, thumbUrl: it.thumbUrl, width: it.width ?? 0, height: it.height ?? 0 });
+    const pickMedia = (pack: MediaPack, it: MediaItem) => {
+        onPickMedia?.({ kind: pack.kind, mediaUrl: it.mediaUrl, thumbUrl: it.thumbUrl, width: it.width ?? 0, height: it.height ?? 0 });
+        // Avto-subscribe: agar pack o'ziniki bo'lmasa va hali obuna bo'lmagan bo'lsa —
+        // avtomatik "Mening pack'larimga" qo'shamiz (Telegram uslub)
+        const alreadyIn = packs.owned.some(p => p.id === pack.id) || packs.subscribed.some(p => p.id === pack.id);
+        if (!alreadyIn) {
+            void fetch(`/api/humo/packs/${pack.slug}/subscribe`, { method: "POST" });
+        }
     };
 
     const allPacks = q.trim() ? searchPacks : [...packs.owned, ...packs.subscribed];
@@ -6561,28 +6621,7 @@ function EmojiPicker({ onPick, onPickMedia, onClose }: {
 
             {/* Body */}
             {mainTab === "emoji" ? (
-                <>
-                    {/* Category bar */}
-                    <div className="flex gap-1 p-2 overflow-x-auto nx-hide-scrollbar" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
-                        {EMOJI_CATEGORIES.map((c, i) => (
-                            <button key={c.name} onClick={() => setCat(i)}
-                                className="px-2.5 py-1 rounded-lg text-[11px] font-bold flex-shrink-0 transition"
-                                style={cat === i
-                                    ? { background: "rgba(0,206,200,0.18)", color: "#00CEC8" }
-                                    : { color: "rgba(140,160,210,0.70)" }}>
-                                {c.name}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="p-2 max-h-[280px] overflow-y-auto nx-scrollbar grid grid-cols-8 gap-1">
-                        {EMOJI_CATEGORIES[cat].emojis.map(e => (
-                            <button key={e} onClick={() => onPick(e)} title={e}
-                                className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/[0.06] active:scale-90 transition-transform">
-                                <Emoji char={e} size={24} />
-                            </button>
-                        ))}
-                    </div>
-                </>
+                <NxEmojiGrid onPick={onPick} activeCat={cat} setActiveCat={setCat} />
             ) : (
                 <>
                     {/* Search + boshqarish havolasi */}
@@ -6629,7 +6668,7 @@ function EmojiPicker({ onPick, onPickMedia, onClose }: {
                                         </div>
                                         <div className={mainTab === "sticker" ? "grid grid-cols-5 gap-1" : "grid grid-cols-3 gap-1"}>
                                             {(pack.items ?? []).slice(0, mainTab === "sticker" ? 15 : 9).map(it => (
-                                                <button key={it.id} onClick={() => pickMedia(pack.kind, it)}
+                                                <button key={it.id} onClick={() => pickMedia(pack, it)}
                                                     className="aspect-square rounded-md overflow-hidden active:scale-90 transition-transform"
                                                     style={{ background: "rgba(43,62,232,0.08)" }}>
                                                     {pack.kind === "GIF" ? (
@@ -6664,6 +6703,89 @@ function IconBtn({ icon: Icon, title, onClick }: { icon: React.ElementType; titl
             style={{ background: "rgba(43,62,232,0.10)" }}>
             <Icon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
         </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxEmojiGrid — barcha emojilarni bir grid'da ko'rsatadi (Telegram uslub).
+// - Yuqorida 2 qatorli grid-cols-4 kategoriya tugmalari (chapga chiqmaydi)
+// - Pastga scroll qilinganda faol kategoriya tugmasi avto-o'zgaradi (IntersectionObserver)
+// - Tugma bosilsa o'sha bo'limga scroll'lanadi (smooth)
+// ─────────────────────────────────────────────────────────────────────────────
+function NxEmojiGrid({ onPick, activeCat, setActiveCat }: {
+    onPick: (emoji: string) => void;
+    activeCat: number;
+    setActiveCat: (i: number) => void;
+}) {
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const sectionRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+    // Kategoriya tugmasi bosilganda usha bo'limga scroll
+    const jumpTo = (i: number) => {
+        setActiveCat(i);
+        const el = sectionRefs.current[i];
+        if (el && scrollRef.current) {
+            scrollRef.current.scrollTo({ top: el.offsetTop - 4, behavior: "smooth" });
+        }
+    };
+
+    // Scroll'da faol kategoriyani aniqlash
+    useEffect(() => {
+        const container = scrollRef.current;
+        if (!container) return;
+        const onScroll = () => {
+            const y = container.scrollTop + 12;
+            let idx = 0;
+            for (let i = 0; i < sectionRefs.current.length; i++) {
+                const el = sectionRefs.current[i];
+                if (el && el.offsetTop <= y) idx = i;
+            }
+            setActiveCat(idx);
+        };
+        container.addEventListener("scroll", onScroll, { passive: true });
+        return () => container.removeEventListener("scroll", onScroll);
+    }, [setActiveCat]);
+
+    return (
+        <>
+            {/* Kategoriya tugmalari — 2 qatorli grid-cols-4 (hech qanday horizontal scroll shart emas) */}
+            <div className="p-2 grid grid-cols-4 gap-1" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                {EMOJI_CATEGORIES.map((c, i) => (
+                    <button key={c.name} onClick={() => jumpTo(i)}
+                        title={c.name}
+                        className="py-1 rounded-md text-[10.5px] font-bold truncate transition"
+                        style={activeCat === i
+                            ? { background: "rgba(0,206,200,0.20)", color: "#00CEC8", border: "1px solid rgba(0,206,200,0.30)" }
+                            : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,220,0.75)", border: "1px solid transparent" }}>
+                        {c.name}
+                    </button>
+                ))}
+            </div>
+            {/* Barcha emojilar — bitta scrollable grid, bo'limlar sarlavha bilan ajratilgan */}
+            <div ref={scrollRef} className="p-2 max-h-[320px] overflow-y-auto nx-scrollbar">
+                {EMOJI_CATEGORIES.map((c, i) => (
+                    <div key={c.name}
+                        ref={(el) => { sectionRefs.current[i] = el; }}
+                        className={i > 0 ? "mt-3" : ""}>
+                        <p className="px-1 pb-1 text-[9.5px] font-black uppercase tracking-wider sticky top-0 z-[1] py-0.5"
+                            style={{
+                                color: "rgba(140,160,210,0.65)",
+                                background: "linear-gradient(180deg, rgba(11,18,40,0.98) 60%, rgba(11,18,40,0.0))",
+                            }}>
+                            {c.name}
+                        </p>
+                        <div className="grid grid-cols-8 gap-1">
+                            {c.emojis.map(e => (
+                                <button key={c.name + ":" + e} onClick={() => onPick(e)} title={e}
+                                    className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/[0.06] active:scale-90 transition-transform">
+                                    <Emoji char={e} size={24} />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </>
     );
 }
 
