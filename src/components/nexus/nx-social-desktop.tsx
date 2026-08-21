@@ -176,6 +176,17 @@ export function NxSocialDesktop() {
     // Cursor pagination — hasMore = yuqorida eski xabarlar bor-yo'qligi; loadingOlder = load-more davom etmoqda
     const [hasMore, setHasMore] = useState(false);
     const loadingOlderRef = useRef(false);
+    // Nexus-styled confirm/alert modallari (native confirm/alert o'rniga — brand'ni buzmaslik uchun)
+    const [confirmDlg, setConfirmDlg] = useState<{
+        title?: string; message: string; confirmText?: string; cancelText?: string;
+        variant?: "default" | "danger"; resolve: (ok: boolean) => void;
+    } | null>(null);
+    const [alertDlg, setAlertDlg] = useState<{ title?: string; message: string; resolve: () => void } | null>(null);
+    const askConfirm = useCallback((opts: {
+        title?: string; message: string; confirmText?: string; cancelText?: string; variant?: "default" | "danger";
+    }): Promise<boolean> => new Promise((resolve) => setConfirmDlg({ ...opts, resolve })), []);
+    const showAlert = useCallback((message: string, title?: string): Promise<void> =>
+        new Promise((resolve) => setAlertDlg({ message, title, resolve })), []);
     const [peerReadAt, setPeerReadAt] = useState<string | null>(null);
     const [peer, setPeer] = useState<PeerInfo | null>(null);
     // Tanlangan suhbat obyekti (isSelf, muted, pinned, arxiv holatlarini olish uchun)
@@ -596,7 +607,7 @@ export function NxSocialDesktop() {
         if (pushState === "subscribed") {
             setPushState(await unsubscribePush());
         } else if (pushState === "denied") {
-            alert("Bildirishnomalar bloklangan. Brauzer sozlamalaridan ruxsat berishingiz kerak.");
+            showAlert("Bildirishnomalar bloklangan. Brauzer sozlamalaridan ruxsat berishingiz kerak.");
         } else {
             setPushState(await subscribePush());
         }
@@ -879,8 +890,8 @@ export function NxSocialDesktop() {
     async function bulkDelete() {
         if (!selectedId || selectedIds.size === 0) return;
         const mineIds = messages.filter(m => selectedIds.has(m.id) && m.mine).map(m => m.id);
-        if (mineIds.length === 0) { alert("Faqat o'z xabaringizni o'chirasiz"); return; }
-        if (!confirm(`${mineIds.length} ta xabar o'chirilsinmi?`)) return;
+        if (mineIds.length === 0) { showAlert("Faqat o'z xabaringizni o'chirasiz"); return; }
+        if (!(await askConfirm({ message: `${mineIds.length} ta xabar o'chirilsinmi?`, variant: "danger", confirmText: "O'chirish" }))) return;
         await Promise.all(mineIds.map(id =>
             fetch(`/api/nexus/messages/${selectedId}?messageId=${id}`, { method: "DELETE" })
                 .catch(() => null)
@@ -925,13 +936,13 @@ export function NxSocialDesktop() {
 
     async function deleteMessage(messageId: string) {
         if (!selectedId) return;
-        if (!confirm("Xabarni o'chirilsinmi?")) return;
+        if (!(await askConfirm({ message: "Xabarni o'chirilsinmi?", variant: "danger", confirmText: "O'chirish" }))) return;
         const r = await fetch(`/api/nexus/messages/${selectedId}?messageId=${messageId}`, { method: "DELETE" });
         if (r.ok) {
             setMessages(m => m.filter(x => x.id !== messageId));
             loadConvs();
         } else {
-            alert("O'chirib bo'lmadi");
+            showAlert("O'chirib bo'lmadi");
         }
     }
 
@@ -966,7 +977,7 @@ export function NxSocialDesktop() {
                 const d = await r.json();
                 setTranslated(prev => ({ ...prev, [messageId]: d.translated }));
             } else {
-                alert("Tarjima qilib bo'lmadi");
+                showAlert("Tarjima qilib bo'lmadi");
             }
         } finally {
             setTranslating(prev => { const n = { ...prev }; delete n[messageId]; return n; });
@@ -1155,7 +1166,7 @@ export function NxSocialDesktop() {
     const [speakingId, setSpeakingId] = useState<string | null>(null);
     function speakMessage(messageId: string, text: string) {
         if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-            alert("Sizning brauzeringiz ovozli eshittirishni qo'llab-quvvatlamaydi");
+            showAlert("Sizning brauzeringiz ovozli eshittirishni qo'llab-quvvatlamaydi");
             return;
         }
         // Agar shu xabar o'qilayotgan bo'lsa — to'xtatish
@@ -1200,7 +1211,7 @@ export function NxSocialDesktop() {
             ));
         } else {
             const d = await r.json().catch(() => ({}));
-            alert(d?.error ?? "Bajarib bo'lmadi");
+            showAlert(d?.error ?? "Bajarib bo'lmadi");
         }
     }
 
@@ -1268,7 +1279,7 @@ export function NxSocialDesktop() {
                 loadConvs();
             } else {
                 const d = await r.json().catch(() => ({}));
-                alert(d?.error ?? "Yuborib bo'lmadi");
+                showAlert(d?.error ?? "Yuborib bo'lmadi");
             }
         } finally {
             setForwarding(false);
@@ -1307,7 +1318,7 @@ export function NxSocialDesktop() {
             });
             if (r.ok) {
                 const d = await r.json().catch(() => ({}));
-                alert(action === "block"
+                showAlert(action === "block"
                     ? (d.blocked ? "Foydalanuvchi bloklandi" : "Blokdan chiqarildi")
                     : (d.muted ? "Ovozsizlantirildi" : "Ovoz qaytarildi")
                 );
@@ -1369,7 +1380,7 @@ export function NxSocialDesktop() {
             setVideoRecording(true);
             beginVideoSegment(stream);
         } catch (e) {
-            alert(e instanceof Error ? e.message : "Kameraga ruxsat berilmadi");
+            showAlert(e instanceof Error ? e.message : "Kameraga ruxsat berilmadi");
             videoHoldRef.current = false;
         }
     }
@@ -1501,7 +1512,7 @@ export function NxSocialDesktop() {
                 setRecSeconds(Math.floor((Date.now() - recStartRef.current) / 1000));
             }, 200);
         } catch (e) {
-            alert(e instanceof Error ? e.message : "Mikrofonga ruxsat berilmadi");
+            showAlert(e instanceof Error ? e.message : "Mikrofonga ruxsat berilmadi");
         }
     }
     function stopVoice(cancel = false) {
@@ -1563,7 +1574,7 @@ export function NxSocialDesktop() {
                 loadConvs();
             }
         } catch (e) {
-            alert("Yuklab bo'lmadi: " + (e instanceof Error ? e.message : "xato"));
+            showAlert("Yuklab bo'lmadi: " + (e instanceof Error ? e.message : "xato"));
         } finally { setUploading(false); setUploadInfo(null); }
     }
     const [uploadInfo, setUploadInfo] = useState<{ name: string; size: number; progress: number } | null>(null);
@@ -1592,7 +1603,7 @@ export function NxSocialDesktop() {
                 loadConvs();
             }
         } catch {
-            alert("Joylashuvni olib bo'lmadi");
+            showAlert("Joylashuvni olib bo'lmadi");
         } finally { setLocBusy(false); setLocationPickerOpen(false); }
     }
 
@@ -1642,7 +1653,7 @@ export function NxSocialDesktop() {
     // Jonli joylashuvni to'xtatish (o'z xabari)
     async function stopLiveLocation(messageId: string) {
         if (!selectedId) return;
-        if (!confirm("Jonli joylashuvni to'xtatasizmi?")) return;
+        if (!(await askConfirm({ message: "Jonli joylashuvni to'xtatasizmi?", confirmText: "To'xtatish" }))) return;
         const r = await fetch(`/api/nexus/messages/${selectedId}/live-location?messageId=${messageId}`, { method: "DELETE" });
         if (r.ok) {
             const iv = liveLocationTimersRef.current.get(messageId);
@@ -1961,7 +1972,7 @@ export function NxSocialDesktop() {
             ], { duration: 1400, iterations: 1 });
         } else {
             // Xabar joriy 100'da yo'q — thread'ni qayta yuklab, keyin izlab topamiz
-            alert("Bu xabar hozirgi ko'rinishda emas — biroz yuqoriga aylantirib ko'ring");
+            showAlert("Bu xabar hozirgi ko'rinishda emas — biroz yuqoriga aylantirib ko'ring");
         }
     }
 
@@ -1978,7 +1989,7 @@ export function NxSocialDesktop() {
         if (targetMsg) {
             setTimeout(() => jumpToMessage(targetMsg.id), 100);
         } else {
-            alert("Bu kunda xabar yo'q");
+            showAlert("Bu kunda xabar yo'q");
         }
     }
 
@@ -2020,7 +2031,7 @@ export function NxSocialDesktop() {
     // Jadvalga qo'yish (kelajakdagi vaqt) — undo-send bypass qilinadi
     async function scheduleSend() {
         if (!selectedId || !input.trim()) return;
-        if (!scheduleDateTime) { alert("Sana/vaqtni tanlang"); return; }
+        if (!scheduleDateTime) { showAlert("Sana/vaqtni tanlang"); return; }
         const iso = new Date(scheduleDateTime).toISOString();
         const text = input.trim();
         const replyToIdSnap = replyTo?.id ?? null;
@@ -2040,17 +2051,17 @@ export function NxSocialDesktop() {
                 loadConvs();
             } else {
                 const d = await r.json().catch(() => ({}));
-                alert(d?.error ?? "Jadvalga qo'yib bo'lmadi");
+                showAlert(d?.error ?? "Jadvalga qo'yib bo'lmadi");
             }
         } catch {
-            alert("Xato — qayta urinib ko'ring");
+            showAlert("Xato — qayta urinib ko'ring");
         }
     }
 
     // Jadvalga qo'yilgan xabarni bekor qilish (o'chirish)
     async function cancelScheduled(m: Msg) {
         if (!selectedId) return;
-        if (!confirm("Jadvalga qo'yilgan xabarni bekor qilasizmi?")) return;
+        if (!(await askConfirm({ message: "Jadvalga qo'yilgan xabarni bekor qilasizmi?", variant: "danger", confirmText: "Bekor qilish" }))) return;
         const r = await fetch(`/api/nexus/messages/${selectedId}?messageId=${m.id}`, { method: "DELETE" });
         if (r.ok) setMessages(prev => prev.filter(x => x.id !== m.id));
     }
@@ -3214,7 +3225,7 @@ export function NxSocialDesktop() {
                                         })()}
                                         <button onClick={async () => {
                                             if (!selectedId) return;
-                                            if (!confirm("Chatni tozalasizmi? Sizga xabarlar ko'rinmaydi (u kishida qoladi)")) return;
+                                            if (!(await askConfirm({ message: "Chatni tozalasizmi? Sizga xabarlar ko'rinmaydi (u kishida qoladi)", variant: "danger", confirmText: "Tozalash" }))) return;
                                             const r = await fetch(`/api/nexus/messages/${selectedId}/clear`, { method: "POST" });
                                             if (r.ok) { setMessages([]); loadConvs(); setMoreOpen(false); }
                                         }}
@@ -3589,7 +3600,7 @@ export function NxSocialDesktop() {
                                                     style={{ color: m.mine ? "#fff" : "#00CEC8" }}>
                                                     {m.replyTo.mine ? "Siz" : (m.replyTo.senderName ?? "Foydalanuvchi")}
                                                 </p>
-                                                <p className="opacity-80 line-clamp-2">{m.replyTo.text || "(media)"}</p>
+                                                <p className="opacity-80 line-clamp-3 whitespace-pre-wrap break-words">{m.replyTo.text || "(media)"}</p>
                                             </button>
                                         )}
                                         {m.mediaType === "agent" && m.agentPayload && (
@@ -4023,7 +4034,7 @@ export function NxSocialDesktop() {
                                                             type="button"
                                                             onClick={async () => {
                                                                 if (!selectedId) return;
-                                                                if (!confirm(`${new Intl.NumberFormat("uz-UZ").format(m.invoice!.amount)} ${m.invoice!.currency === "USD" ? "$" : "so'm"} to'lansinmi?`)) return;
+                                                                if (!(await askConfirm({ message: `${new Intl.NumberFormat("uz-UZ").format(m.invoice!.amount)} ${m.invoice!.currency === "USD" ? "$" : "so'm"} to'lansinmi?`, confirmText: "To'lash" }))) return;
                                                                 const r = await fetch(`/api/nexus/messages/${selectedId}/pay-invoice`, {
                                                                     method: "POST", headers: { "Content-Type": "application/json" },
                                                                     body: JSON.stringify({ messageId: m.id }),
@@ -4033,7 +4044,7 @@ export function NxSocialDesktop() {
                                                                     setMessages(prev => prev.map(x => x.id === m.id
                                                                         ? { ...x, invoicePaidAt: new Date().toISOString() } : x));
                                                                 } else {
-                                                                    alert(d?.error ?? "To'lov muvaffaqiyatsiz");
+                                                                    showAlert(d?.error ?? "To'lov muvaffaqiyatsiz");
                                                                 }
                                                             }}
                                                             className="px-3 py-1.5 rounded-lg text-xs font-black text-white transition hover:brightness-110 active:scale-95"
@@ -4278,7 +4289,7 @@ export function NxSocialDesktop() {
                                     <p className="text-[11px] font-bold" style={{ color: "#00CEC8" }}>
                                         Javob: {replyTo.mine ? "o'zingizga" : "@" + (peer?.username ?? "foydalanuvchi")}
                                     </p>
-                                    <p className="text-xs truncate" style={{ color: "rgba(220,230,255,0.80)" }}>
+                                    <p className="text-xs line-clamp-2 whitespace-pre-wrap break-words" style={{ color: "rgba(220,230,255,0.80)" }}>
                                         {replyTo.text || "(media xabar)"}
                                     </p>
                                 </div>
@@ -5497,6 +5508,61 @@ export function NxSocialDesktop() {
                     </div>
                 </div>
             )}
+
+            {/* Nexus-styled Confirm modal (native confirm() o'rniga) */}
+            {confirmDlg && (
+                <div className="fixed inset-0 z-[240]" onClick={() => { confirmDlg.resolve(false); setConfirmDlg(null); }}>
+                    <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[420px] rounded-2xl overflow-hidden"
+                        style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                        onClick={e => e.stopPropagation()}>
+                        <div className="p-5">
+                            {confirmDlg.title && (
+                                <h3 className="text-sm font-black mb-2" style={{ color: "rgba(230,238,255,0.98)" }}>{confirmDlg.title}</h3>
+                            )}
+                            <p className="text-[13.5px] leading-relaxed" style={{ color: "rgba(220,230,255,0.90)" }}>{confirmDlg.message}</p>
+                        </div>
+                        <div className="p-3 flex gap-2 justify-end" style={{ borderTop: "1px solid rgba(43,62,232,0.20)", background: "rgba(3,5,15,0.40)" }}>
+                            <button onClick={() => { confirmDlg.resolve(false); setConfirmDlg(null); }}
+                                className="px-4 py-2 rounded-lg text-xs font-bold transition hover:brightness-125 active:scale-95"
+                                style={{ background: "rgba(43,62,232,0.10)", color: "rgba(200,215,245,0.85)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                {confirmDlg.cancelText ?? "Bekor qilish"}
+                            </button>
+                            <button onClick={() => { confirmDlg.resolve(true); setConfirmDlg(null); }}
+                                className="px-4 py-2 rounded-lg text-xs font-black transition hover:brightness-110 active:scale-95"
+                                style={confirmDlg.variant === "danger"
+                                    ? { background: "linear-gradient(135deg,#EF4444,#DC2626)", color: "white", boxShadow: "0 4px 16px rgba(239,68,68,0.35)" }
+                                    : { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white", boxShadow: "0 4px 16px rgba(43,62,232,0.35)" }}>
+                                {confirmDlg.confirmText ?? "Tasdiqlash"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Nexus-styled Alert modal (native showAlert() o'rniga) */}
+            {alertDlg && (
+                <div className="fixed inset-0 z-[240]" onClick={() => { alertDlg.resolve(); setAlertDlg(null); }}>
+                    <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[400px] rounded-2xl overflow-hidden"
+                        style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                        onClick={e => e.stopPropagation()}>
+                        <div className="p-5">
+                            {alertDlg.title && (
+                                <h3 className="text-sm font-black mb-2" style={{ color: "rgba(230,238,255,0.98)" }}>{alertDlg.title}</h3>
+                            )}
+                            <p className="text-[13.5px] leading-relaxed" style={{ color: "rgba(220,230,255,0.90)" }}>{alertDlg.message}</p>
+                        </div>
+                        <div className="p-3 flex justify-end" style={{ borderTop: "1px solid rgba(43,62,232,0.20)", background: "rgba(3,5,15,0.40)" }}>
+                            <button onClick={() => { alertDlg.resolve(); setAlertDlg(null); }}
+                                className="px-5 py-2 rounded-lg text-xs font-black transition hover:brightness-110 active:scale-95"
+                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white", boxShadow: "0 4px 16px rgba(43,62,232,0.35)" }}>
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -6656,7 +6722,14 @@ function highlightText(text: string, query: string): React.ReactNode {
     const parts = text.split(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"));
     return parts.map((part, i) =>
         part.toLowerCase() === q.toLowerCase()
-            ? <mark key={i} style={{ background: "rgba(255,220,0,0.35)", color: "inherit", padding: "0 2px", borderRadius: 3 }}>{part}</mark>
+            ? <mark key={i} style={{
+                background: "linear-gradient(180deg, rgba(0,206,200,0.35), rgba(43,62,232,0.35))",
+                color: "#fff",
+                padding: "0 3px",
+                borderRadius: 4,
+                fontWeight: 900,
+                boxShadow: "0 0 0 1px rgba(0,206,200,0.55)",
+            }}>{part}</mark>
             : <span key={i}>{part}</span>
     );
 }
@@ -7752,7 +7825,7 @@ function NxAudioCard({ src, name, sizeBytes, mine }: {
                         style={{ color: mine ? "rgba(255,255,255,0.70)" : "rgba(160,180,220,0.75)" }}>
                         <span>{fmt(currentTime)}</span>
                         <span>·</span>
-                        <span>{fmt(duration)}</span>
+                        <span>{duration > 0 ? fmt(duration) : <span className="opacity-60 animate-pulse">•••</span>}</span>
                         {sizeBytes && <><span>·</span><span>{fmtBytes(sizeBytes)}</span></>}
                     </div>
                 </div>

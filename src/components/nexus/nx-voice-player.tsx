@@ -220,7 +220,14 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
                     })}
                 </div>
                 <p className="text-[10px] mt-0.5 tabular-nums" style={{ color: mine ? "rgba(255,255,255,0.75)" : "rgba(140,160,210,0.85)" }}>
-                    {fmtTime(playing || current > 0 ? current : duration)}
+                    {(() => {
+                        // Metadata hali yuklanmagan — "0:00" o'rniga jonli "•••" (yuklanmoqda)
+                        const shown = playing || current > 0 ? current : duration;
+                        if (!shown || !isFinite(shown) || shown < 0.05) {
+                            return <span className="opacity-60 animate-pulse">•••</span>;
+                        }
+                        return fmtTime(shown);
+                    })()}
                 </p>
             </div>
             {/* Speed tanlash — playback tezligini o'zgartirish (1x/1.5x/2x) */}

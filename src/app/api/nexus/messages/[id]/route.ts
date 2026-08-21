@@ -137,7 +137,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         for (const o of originals) {
             replyMap.set(o.id, {
                 id: o.id,
-                text: (o.text ?? "").slice(0, 120),
+                text: (o.text ?? "").slice(0, 240),
                 senderName: senderMap.get(o.senderId) ?? null,
                 mine: o.senderId === me.id,
             });
