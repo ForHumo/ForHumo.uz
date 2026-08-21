@@ -1416,12 +1416,17 @@ model NexusMessage {
   // Struktura: { ephemeralPub, iv, ciphertext, v, senderKeyId }
   // Bo'lsa: text = "" (yoki placeholder), moderatsiya, tarjima, TTS, qidiruv ishlamaydi.
   e2ePayload Json?
+  // Album (Telegram uslub) — birga yuborilgan bir necha rasm/video guruhlash.
+  // Bir xil albumId'ga ega ketma-ket xabarlar UI'da bitta grid bubble sifatida ko'rinadi.
+  // Yuborish: /api/nexus/messages/[id]/album ↔ N ta xabar bitta albumId bilan yaratiladi.
+  albumId    String?
   createdAt      DateTime          @default(now())
   @@index([conversationId, createdAt])
   @@index([conversationId, pinnedAt])
   @@index([expiresAt])
   @@index([scheduledFor])
   @@index([broadcastListId])
+  @@index([albumId])
 }
 
 // Kontakt sinxronizatsiya (WhatsApp/Telegram uslub) — foydalanuvchining telefondagi

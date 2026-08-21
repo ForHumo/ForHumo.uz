@@ -221,6 +221,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 forwardedChannelHandle: m.forwardedChannelHandle,
                 deliveredAt: m.deliveredAt,
                 deletedForEveryoneAt: m.deletedForEveryoneAt,
+                albumId: m.albumId,
                 buttons: m.buttons,
                 invoice: m.invoice,
                 invoicePaidAt: m.invoicePaidAt,

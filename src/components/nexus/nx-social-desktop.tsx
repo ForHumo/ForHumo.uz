@@ -104,6 +104,8 @@ interface Msg {
     e2ePayload?: { ephemeralPub: string; iv: string; ciphertext: string; v: number } | null;
     // Client tomon in-memory deshifrlangan matn (UI'da text o'rniga ko'rsatiladi)
     e2eDecrypted?: string | null;
+    // Album (Telegram uslub) — bir xil albumId'ga ega xabarlar birga grid render bo'ladi
+    albumId?: string | null;
     // Optimistic UI: xabar yuborilyapti (POST hali javob bermagan)
     _pending?: boolean;
     // Optimistic UI: yuborishda xato yuz berdi (retry mumkin)
@@ -1607,6 +1609,64 @@ export function NxSocialDesktop() {
         try { recorderRef.current?.stop(); } catch { /* ignore */ }
         recStreamRef.current?.getTracks().forEach(t => t.stop());
     }, []);
+
+    // uploadAlbum — 2-10 rasm/video birga: har birini upload qilib, keyin /album API'ga POST.
+    // Optimistic: temp album'ni ekranga qo'shamiz.
+    async function uploadAlbum(files: File[]) {
+        if (!selectedId || uploading) return;
+        const allowed = files.filter(f => f.type.startsWith("image/") || f.type.startsWith("video/")).slice(0, 10);
+        if (allowed.length < 2) return;
+        setUploading(true);
+        setUploadInfo({ name: `${allowed.length} ta media`, size: allowed.reduce((s, f) => s + f.size, 0), progress: 0 });
+        try {
+            const { upload } = await import("@vercel/blob/client");
+            // Har birini parallel upload
+            let doneCount = 0;
+            const items = await Promise.all(allowed.map(async (file) => {
+                let f = file;
+                if (watermarkOn && f.type.startsWith("image/")) {
+                    try {
+                        const wmText = `@${session?.user?.email?.split("@")[0] ?? "user"} · ForHumo.uz`;
+                        f = await addWatermarkToImage(f, wmText);
+                    } catch {}
+                }
+                const safeName = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+                const blob = await upload(`nx-dm/${selectedId}/${Date.now()}-${safeName}`, f, {
+                    access: "public",
+                    handleUploadUrl: "/api/market/upload/client-token",
+                });
+                doneCount++;
+                setUploadInfo(prev => prev ? { ...prev, progress: Math.round((doneCount / allowed.length) * 100) } : prev);
+                return {
+                    mediaUrl: blob.url,
+                    mediaType: f.type.startsWith("video/") ? "video" : "image",
+                    mediaMime: f.type,
+                    mediaName: f.name,
+                    mediaSize: f.size,
+                };
+            }));
+            const replyToIdSnap = replyTo?.id ?? null;
+            const r = await fetch(`/api/nexus/messages/${selectedId}/album`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    items, text: "", ...(replyToIdSnap ? { replyToId: replyToIdSnap } : {}),
+                }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                if (d.messages) {
+                    setMessages(m => [...m, ...d.messages.map((x: Msg) => ({ ...x, mine: true, reactions: [] }))]);
+                }
+                if (replyToIdSnap) setReplyTo(null);
+                loadConvs();
+            } else {
+                const d = await r.json().catch(() => ({}));
+                showAlert(d?.error ?? "Albom yuborilmadi");
+            }
+        } catch (e) {
+            showAlert("Yuklab bo'lmadi: " + (e instanceof Error ? e.message : "xato"));
+        } finally { setUploading(false); setUploadInfo(null); }
+    }
 
     async function uploadFile(file: File, overrideKind?: "image" | "video" | "audio" | "file" | "video-circle") {
         if (!selectedId || uploading) return;
@@ -3533,6 +3593,19 @@ export function NxSocialDesktop() {
                                 return list.map((m, i) => {
                                     const prev = i > 0 ? list[i - 1] : null;
                                     const next = i < list.length - 1 ? list[i + 1] : null;
+                                    // Album (Telegram uslub): bir xil albumId'ga ega ketma-ket xabarlar
+                                    // birga grid bubble sifatida ko'rinadi. Continuation'lar skip.
+                                    if (m.albumId && prev?.albumId === m.albumId && prev.mine === m.mine) return null;
+                                    const albumItems: Msg[] = m.albumId ? (() => {
+                                        const items: Msg[] = [];
+                                        for (let j = i; j < list.length; j++) {
+                                            const it = list[j];
+                                            if (it.albumId === m.albumId && it.mine === m.mine) items.push(it);
+                                            else break;
+                                        }
+                                        return items;
+                                    })() : [];
+                                    const isAlbum = albumItems.length > 1;
                                     const showDate = !prev || !isSameDay(prev.createdAt, m.createdAt);
                                     const dateLabel = showDate ? formatDateSeparator(m.createdAt) : null;
                                     // Xabar guruhlash: bir muallif + 5 daqiqa ichida
@@ -3793,15 +3866,25 @@ export function NxSocialDesktop() {
                                                 )}
                                             </div>
                                         )}
-                                        {m.mediaType === "image" && m.mediaUrl && (() => {
-                                            const idx = galleryImages.findIndex(x => x.id === m.id);
-                                            return (
-                                                <NxMediaImage src={m.mediaUrl}
-                                                    onOpen={() => { if (idx >= 0) setGalleryIdx(idx); }} />
-                                            );
-                                        })()}
-                                        {m.mediaType === "video" && m.mediaUrl && (
-                                            <NxMediaVideo src={m.mediaUrl} durationMs={m.durationMs} />
+                                        {isAlbum ? (
+                                            <NxAlbumGrid items={albumItems}
+                                                onOpenImage={(imgId) => {
+                                                    const idx = galleryImages.findIndex(x => x.id === imgId);
+                                                    if (idx >= 0) setGalleryIdx(idx);
+                                                }} />
+                                        ) : (
+                                            <>
+                                                {m.mediaType === "image" && m.mediaUrl && (() => {
+                                                    const idx = galleryImages.findIndex(x => x.id === m.id);
+                                                    return (
+                                                        <NxMediaImage src={m.mediaUrl}
+                                                            onOpen={() => { if (idx >= 0) setGalleryIdx(idx); }} />
+                                                    );
+                                                })()}
+                                                {m.mediaType === "video" && m.mediaUrl && (
+                                                    <NxMediaVideo src={m.mediaUrl} durationMs={m.durationMs} />
+                                                )}
+                                            </>
                                         )}
                                         {m.mediaType === "gif" && m.mediaUrl && (
                                             <NxMediaGif src={m.mediaUrl} />
@@ -4483,18 +4566,26 @@ export function NxSocialDesktop() {
                         {/* Composer — Telegram uslubi */}
                         <div className="p-3 flex items-end gap-2 flex-shrink-0 relative"
                             style={{ borderTop: (replyTo || editingId) ? "none" : "1px solid rgba(43,62,232,0.14)", background: "rgba(8,12,32,0.55)" }}>
-                            <input ref={fileInputRef} type="file"
+                            <input ref={fileInputRef} type="file" multiple
                                 accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip,.txt"
                                 onChange={e => {
-                                    const f = e.target.files?.[0];
-                                    if (f) {
-                                        // Attach orqali audio yuborilsa "file" sifatida ko'rsatiladi
-                                        // (voice message emas — u alohida hold-mic bilan yoziladi)
-                                        const kind = f.type.startsWith("image/") ? "image"
-                                            : f.type.startsWith("video/") ? "video"
-                                            : f.type.startsWith("audio/") ? "file"
-                                            : "file";
-                                        uploadFile(f, kind);
+                                    const files = Array.from(e.target.files ?? []);
+                                    if (files.length === 0) { e.target.value = ""; return; }
+                                    // Album: 2+ ta rasm/video birga tanlanganda /album API'ga POST
+                                    const mediaFiles = files.filter(f =>
+                                        f.type.startsWith("image/") || f.type.startsWith("video/")
+                                    );
+                                    if (mediaFiles.length >= 2 && mediaFiles.length === files.length) {
+                                        void uploadAlbum(mediaFiles);
+                                    } else {
+                                        // Aralash yoki bitta — har birini alohida yuboramiz
+                                        for (const f of files) {
+                                            const kind = f.type.startsWith("image/") ? "image"
+                                                : f.type.startsWith("video/") ? "video"
+                                                : f.type.startsWith("audio/") ? "file"
+                                                : "file";
+                                            void uploadFile(f, kind);
+                                        }
                                     }
                                     e.target.value = "";
                                 }}
@@ -7535,6 +7626,64 @@ function NxCirclePlayer({ src, durationMs }: { src: string; durationMs?: number 
                         transition: "width 0.15s linear",
                     }} />
             </div>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxAlbumGrid — Telegram-uslub media album grid (2-10 rasm/video).
+// Layout: 2→ikki ustun, 3→1 chap + 2 ustun o'ng, 4→2x2, 5→1 tepa + 4 grid, 6+→3 ustun grid.
+// Har element bosilsa gallery lightbox ochadi. Video'da Play icon overlay.
+// ─────────────────────────────────────────────────────────────────────────────
+function NxAlbumGrid({ items, onOpenImage }: { items: Msg[]; onOpenImage: (msgId: string) => void }) {
+    const n = items.length;
+    const maxShow = Math.min(n, 10);
+    const shown = items.slice(0, maxShow);
+    // Layout — Telegram-uslub responsive grid
+    const layout = (() => {
+        if (n === 2) return "grid-cols-2";
+        if (n === 3) return "grid-cols-2";
+        if (n === 4) return "grid-cols-2";
+        return "grid-cols-3";
+    })();
+
+    return (
+        <div className={`mb-1 grid gap-0.5 ${layout} rounded-2xl overflow-hidden`}
+            style={{ width: 340, border: "1px solid rgba(43,62,232,0.28)", boxShadow: "0 4px 20px rgba(43,62,232,0.14)" }}>
+            {shown.map((it, i) => {
+                // 3-rasm layout: 1-si baland, 2-3 kichik ustunda — grid uchun span
+                const isVideo = it.mediaType === "video";
+                const spanClass = n === 3 && i === 0 ? "row-span-2" : "";
+                return (
+                    <button key={it.id} type="button"
+                        onClick={() => !isVideo && onOpenImage(it.id)}
+                        className={`relative overflow-hidden ${spanClass} group active:scale-[0.98] transition-transform`}
+                        style={{ background: "rgba(11,18,40,0.55)", aspectRatio: n === 3 && i === 0 ? "1 / 2" : "1 / 1" }}>
+                        {isVideo ? (
+                            <>
+                                <video src={it.mediaUrl ?? ""} muted autoPlay loop playsInline
+                                    className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/10 transition">
+                                    <div className="w-11 h-11 rounded-full flex items-center justify-center"
+                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 16px rgba(0,0,0,0.55)" }}>
+                                        <Play className="w-5 h-5 text-white ml-0.5" fill="currentColor" />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={it.mediaUrl ?? ""} alt="" draggable={false}
+                                className="w-full h-full object-cover" />
+                        )}
+                        {/* +N overlay: agar 10dan ko'p bo'lsa oxirgi elementda +N ko'rsatiladi */}
+                        {i === maxShow - 1 && n > maxShow && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/55">
+                                <span className="text-2xl font-black text-white">+{n - maxShow}</span>
+                            </div>
+                        )}
+                    </button>
+                );
+            })}
         </div>
     );
 }
