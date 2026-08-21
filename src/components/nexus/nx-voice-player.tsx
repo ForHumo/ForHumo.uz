@@ -97,6 +97,12 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
     }, []);
 
     function ensureAnalyser() {
+        // MUHIM: createMediaElementSource audio'ni Web Audio'ga bog'laydi va shundan keyin
+        // audio faqat AudioContext.destination orqali eshittiriladi. Agar ctx suspend bo'lsa
+        // yoki cross-origin CORS bo'lmasa — HECH QANDAY ovoz chiqmaydi. Shuning uchun:
+        //  1) crossOrigin="anonymous" bilan CORS talab qilamiz (Vercel Blob ruxsat beradi)
+        //  2) resume()'ni play()'dan avval kutamiz
+        //  3) Muvaffaqiyatsiz bo'lsa native audio o'z-o'zidan eshittiriladi (analyser'siz)
         const a = audioRef.current;
         if (!a || analyserRef.current) return;
         try {
@@ -110,7 +116,11 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
             analyser.connect(ctx.destination);
             audioCtxRef.current = ctx;
             analyserRef.current = analyser;
-        } catch { /* ba'zi brauzerlar cross-origin audio bilan cheklaydi */ }
+        } catch {
+            // CORS yoki boshqa xato — analyser'siz native audio ishlaydi
+            audioCtxRef.current = null;
+            analyserRef.current = null;
+        }
     }
     function stopAnalyserLoop() {
         if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
@@ -122,7 +132,6 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
         const buf = new Uint8Array(analyser.frequencyBinCount);
         const loop = () => {
             analyser.getByteFrequencyData(buf);
-            // O'rtacha level 0..255 → 0..1
             let sum = 0;
             for (let i = 0; i < buf.length; i++) sum += buf[i];
             const avg = sum / (buf.length * 255);
@@ -131,15 +140,21 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
         };
         loop();
     }
-    function toggle() {
+    async function toggle() {
         const a = audioRef.current;
         if (!a) return;
-        if (playing) { a.pause(); setPlaying(false); stopAnalyserLoop(); }
-        else {
-            ensureAnalyser();
-            audioCtxRef.current?.resume().catch(() => {});
-            a.play().then(() => { setPlaying(true); startAnalyserLoop(); }).catch(() => {});
+        if (playing) { a.pause(); setPlaying(false); stopAnalyserLoop(); return; }
+        ensureAnalyser();
+        // AudioContext suspend bo'lsa AVVAL resume — aks holda ovoz chiqmaydi
+        const ctx = audioCtxRef.current;
+        if (ctx && ctx.state === "suspended") {
+            try { await ctx.resume(); } catch { /* ignore */ }
         }
+        try {
+            await a.play();
+            setPlaying(true);
+            startAnalyserLoop();
+        } catch { /* autoplay bloklangan yoki src xato */ }
     }
     // Cleanup: komponent unmount'da AudioContext yopish
     useEffect(() => () => {
@@ -241,7 +256,8 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
                     }
                 </button>
             )}
-            <audio ref={audioRef} src={src} preload="metadata" className="hidden" />
+            {/* crossOrigin=anonymous — Web Audio createMediaElementSource CORS'siz xato bermasin */}
+            <audio ref={audioRef} src={src} preload="metadata" crossOrigin="anonymous" className="hidden" />
         </div>
         {transcript && (
             <div className="pl-2 pr-1 pt-1 text-xs italic"

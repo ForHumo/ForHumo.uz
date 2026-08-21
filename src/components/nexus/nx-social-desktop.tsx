@@ -1327,6 +1327,8 @@ export function NxSocialDesktop() {
     const videoHoldRef = useRef<boolean>(false); // barmoq hali bosilib turibdimi
     const videoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const videoPreviewRef = useRef<HTMLVideoElement | null>(null);
+    // Katta markazlashgan preview (video xabar yozish paytida)
+    const videoBigPreviewRef = useRef<HTMLVideoElement | null>(null);
     const [videoRecording, setVideoRecording] = useState(false);
     const [videoSeconds, setVideoSeconds] = useState(0);
 
@@ -1431,11 +1433,14 @@ export function NxSocialDesktop() {
         else stopVoice(cancel);
     }
 
-    // Video stream preview element'ga ulash
+    // Video stream preview element'ga ulash (kichik + katta ikkalasi ham)
     useEffect(() => {
-        if (videoRecording && videoPreviewRef.current && videoStreamRef.current) {
-            videoPreviewRef.current.srcObject = videoStreamRef.current;
-            videoPreviewRef.current.play().catch(() => { /* autoplay-block */ });
+        if (!videoRecording || !videoStreamRef.current) return;
+        for (const el of [videoPreviewRef.current, videoBigPreviewRef.current]) {
+            if (el) {
+                el.srcObject = videoStreamRef.current;
+                el.play().catch(() => { /* autoplay-block */ });
+            }
         }
     }, [videoRecording]);
 
@@ -3945,6 +3950,42 @@ export function NxSocialDesktop() {
                             </div>
                         )}
 
+                        {/* Video xabar yozish — o'rtada katta preview (foydalanuvchi o'zini ko'rsin) */}
+                        {videoRecording && (
+                            <div className="absolute inset-0 z-[65] flex items-center justify-center pointer-events-none"
+                                style={{ background: "rgba(3,5,15,0.75)", backdropFilter: "blur(8px)" }}>
+                                <div className="relative pointer-events-auto"
+                                    style={{
+                                        width: 360, height: 360,
+                                        borderRadius: 24,
+                                        overflow: "hidden",
+                                        border: "2px solid rgba(239,68,68,0.55)",
+                                        boxShadow: "0 24px 60px rgba(0,0,0,0.75), 0 0 60px rgba(239,68,68,0.25)",
+                                    }}>
+                                    <video ref={videoBigPreviewRef} muted playsInline autoPlay
+                                        className="w-full h-full object-cover bg-black" />
+                                    {/* Recording indicator + vaqt */}
+                                    <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full"
+                                        style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(239,68,68,0.45)", backdropFilter: "blur(6px)" }}>
+                                        <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#EF4444" }} />
+                                        <span className="text-[12px] font-black tabular-nums text-white">
+                                            {`${String(Math.floor(videoSeconds / 60)).padStart(2, "0")}:${String(videoSeconds % 60).padStart(2, "0")} / 1:00`}
+                                        </span>
+                                    </div>
+                                    {/* Progress bar pastda */}
+                                    <div className="absolute left-0 right-0 bottom-0 h-1"
+                                        style={{ background: "rgba(255,255,255,0.20)" }}>
+                                        <div className="h-full transition-all"
+                                            style={{ width: `${Math.min(100, (videoSeconds / 60) * 100)}%`, background: "linear-gradient(90deg,#EF4444,#F97316)" }} />
+                                    </div>
+                                    {/* Yordamchi matn — kompozitor'dagi tugmalar chalg'itmasligi uchun */}
+                                    <div className="absolute inset-x-0 bottom-6 text-center text-[10.5px] font-black pointer-events-none"
+                                        style={{ color: "rgba(255,255,255,0.85)" }}>
+                                        Pastdan yuborish yoki bekor qilish
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         {/* Edit banner (composer ustida) — Telegram uslub */}
                         {editingId && (() => {
                             const original = messages.find(m => m.id === editingId);
@@ -4059,8 +4100,7 @@ export function NxSocialDesktop() {
                                                 style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", minWidth: 260 }}>
                                                 <div className="grid grid-cols-3 gap-1">
                                                     <AttachMenuItem icon={Paperclip} label="Fayl" onClick={() => { setAttachOpen(false); fileInputRef.current?.click(); }} />
-                                                    <AttachMenuItem icon={FileIcon} label="GIF" onClick={() => { setAttachOpen(false); setGifPickerOpen(true); }} />
-                                                    <AttachMenuItem icon={Sticker} label="Sticker" onClick={() => { setAttachOpen(false); setStickerPickerOpen(true); }} />
+                                                    {/* GIF va Sticker olib tashlandi — emoji picker'ning 3-tabli qismida (Emoji/Sticker/GIF) mavjud */}
                                                     <AttachMenuItem icon={MapPin} label="Joylashuv" onClick={() => { setAttachOpen(false); setLocationPickerOpen(true); }} />
                                                     <AttachMenuItem icon={BarChart2} label="So'rovnoma" onClick={() => { setAttachOpen(false); setPollOpen(true); }} />
                                                     <AttachMenuItem icon={Wallet} label="Pul" onClick={() => { setAttachOpen(false); setTransferOpen(true); }} accent />
@@ -4299,8 +4339,8 @@ export function NxSocialDesktop() {
                                             onPointerLeave={() => holdActiveRef.current && handleHoldEnd(true)}
                                             onPointerCancel={() => handleHoldEnd(true)}
                                             title={composerMode === "voice"
-                                                ? "Ovozli xabar (bosib turing) — tap: video ko'chirish"
-                                                : "Dumaloq video (bosib turing) — tap: ovozga ko'chirish"}
+                                                ? "Ovozli xabar (bosib turing) — tap: video xabarga o'tish"
+                                                : "Video xabar (bosib turing) — tap: ovozli xabarga o'tish"}
                                             className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition active:scale-95 select-none"
                                             style={{ background: "rgba(43,62,232,0.08)", touchAction: "none" }}
                                         >
@@ -5814,22 +5854,32 @@ function MediaDetailPanel({ type, messages, onBack, onOpenImage }: {
                         ))}
                     </div>
                 ) : (type === "video" || type === "video-circle") ? (
-                    <div className="grid grid-cols-2 gap-2">
+                    // Video/Video xabar — Nexus stylida (native controls o'rniga bizni pleyer)
+                    <div className={type === "video-circle" ? "grid grid-cols-2 gap-2" : "space-y-2"}>
                         {items.map(m => m.mediaUrl && (
-                            <div key={m.id} className="aspect-square overflow-hidden bg-black relative"
-                                style={{ borderRadius: type === "video-circle" ? "44%" : 8 }}>
-                                <video src={m.mediaUrl} controls playsInline className="w-full h-full object-cover" />
+                            <div key={m.id} className={type === "video-circle" ? "" : ""}>
+                                {type === "video-circle"
+                                    ? <NxCirclePlayer src={m.mediaUrl} durationMs={m.durationMs} />
+                                    : <NxMediaVideo src={m.mediaUrl} durationMs={m.durationMs} />}
+                                <p className="text-[10px] mt-1 px-1" style={{ color: "rgba(140,160,210,0.55)" }}>
+                                    {m.mine ? "Siz" : "U kishi"} · {new Date(m.createdAt).toLocaleDateString("uz-UZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                </p>
                             </div>
                         ))}
                     </div>
                 ) : (type === "audio") ? (
+                    // Ovozli xabar — Nexus NxVoicePlayer (waveform + tezlik + transkript)
                     <div className="space-y-2">
                         {items.map(m => m.mediaUrl && (
-                            <div key={m.id} className="p-2 rounded-lg" style={{ background: "rgba(43,62,232,0.08)" }}>
-                                <p className="text-[10px] mb-1" style={{ color: "rgba(140,160,210,0.65)" }}>
+                            <div key={m.id} className="p-2.5 rounded-xl"
+                                style={{
+                                    background: "rgba(43,62,232,0.10)",
+                                    border: "1px solid rgba(43,62,232,0.20)",
+                                }}>
+                                <p className="text-[10px] mb-1.5 font-bold" style={{ color: m.mine ? "#00CEC8" : "rgba(200,215,245,0.70)" }}>
                                     {m.mine ? "Siz" : "U kishi"} · {new Date(m.createdAt).toLocaleDateString("uz-UZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                                 </p>
-                                <audio src={m.mediaUrl} controls className="w-full h-8" />
+                                <NxVoicePlayer src={m.mediaUrl} mine={false} seed={m.id} initialDurationMs={m.durationMs} />
                             </div>
                         ))}
                     </div>
