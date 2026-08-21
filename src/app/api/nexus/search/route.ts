@@ -10,7 +10,9 @@ function fmtDur(s: number) { const m = Math.floor(s / 60), sec = Math.floor(s % 
 // GET /api/nexus/search?q=X — foydalanuvchi / post / hashtag / video / audio / jonli qidirish
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
-    const q = (searchParams.get("q") || "").trim();
+    const rawQ = (searchParams.get("q") || "").trim();
+    // Prefiks tozalash: "@sevara" → "sevara", "#tag" → "tag" (username/hashtag DB'da @/# yo'q)
+    const q = rawQ.replace(/^[@#]+/, "").trim();
     if (!q) return NextResponse.json({ users: [], posts: [], tags: [], videos: [], tracks: [], lives: [] });
 
     // Sessiya egasi (isFollowing uchun)

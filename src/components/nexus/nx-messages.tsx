@@ -1516,7 +1516,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             <div className="fixed inset-0 z-[60]" style={{ background: "rgba(5,8,24,0.70)", backdropFilter: "blur(8px)" }} onClick={close} />
 
             <div className="fixed z-[60] flex flex-col overflow-hidden
-                           inset-x-0 bottom-0 h-[85vh] rounded-t-3xl
+                           inset-x-0 bottom-[72px] h-[calc(88vh-40px)] rounded-t-3xl
                            md:inset-y-auto md:top-16 md:right-4 md:bottom-auto md:inset-x-auto md:w-[420px] md:h-auto md:max-h-[calc(100vh-80px)] md:rounded-2xl
                            lg:top-1/2 lg:left-1/2 lg:right-auto lg:-translate-x-1/2 lg:-translate-y-1/2
                            lg:w-[min(1100px,95vw)] lg:h-[min(85vh,820px)] lg:max-h-none lg:rounded-3xl

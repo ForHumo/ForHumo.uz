@@ -2967,13 +2967,14 @@ export function NxSocialDesktop() {
                                     </p>
                                 </div>
                             </button>
-                            {/* Phone + Video header'da (self-chat va agent'lardan tashqari) */}
-                            {!selectedConv?.isSelf && !peer?.isAgent && peer?.id && (
+                            {/* Phone + Video header'da (self-chat'dan tashqari — agentga ham ko'rinadi:
+                                agent chaqiruvni qabul qilmaydi lekin tugma ko'rinishi kutilgan Telegram UX'ga mos) */}
+                            {!selectedConv?.isSelf && (
                                 <>
                                     <IconBtn icon={Phone} title="Ovozli chaqiruv"
-                                        onClick={() => peer.id && startCall(peer.id, "AUDIO")} />
+                                        onClick={() => peer?.id && startCall(peer.id, "AUDIO")} />
                                     <IconBtn icon={Video} title="Video chaqiruv"
-                                        onClick={() => peer.id && startCall(peer.id, "VIDEO")} />
+                                        onClick={() => peer?.id && startCall(peer.id, "VIDEO")} />
                                 </>
                             )}
                             <IconBtn
@@ -3225,7 +3226,7 @@ export function NxSocialDesktop() {
                                         e.preventDefault();
                                         setMsgMenuFor(msgMenuFor === m.id ? null : m.id);
                                     }}
-                                    className={`group flex items-center gap-1 flex-row-reverse ${m.mine ? "justify-start" : "justify-end"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
+                                    className={`group flex items-center gap-1 ${m.mine ? "justify-end" : "justify-start"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
                                     style={{
                                         ...(selectedIds.has(m.id) ? { background: "rgba(0,206,200,0.10)" } : {}),
                                         // Guruh ichida yuqori marginni kamaytiramiz (bir-biriga yaqin)
@@ -3422,25 +3423,61 @@ export function NxSocialDesktop() {
                                         {m.mediaType === "video-circle" && m.mediaUrl && (
                                             <NxCirclePlayer src={m.mediaUrl} durationMs={m.durationMs} />
                                         )}
-                                        {m.mediaType === "file" && m.mediaUrl && (
-                                            <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer" download={m.mediaName ?? true}
-                                                className="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 min-w-[240px]"
-                                                style={{ background: m.mine ? "rgba(255,255,255,0.12)" : "rgba(0,206,200,0.10)", textDecoration: "none" }}>
-                                                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                                                    style={{ background: m.mine ? "rgba(255,255,255,0.18)" : "rgba(0,206,200,0.20)" }}>
-                                                    <FileIcon className="w-5 h-5" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-xs font-bold truncate" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
-                                                        {m.mediaName || "Fayl"}
-                                                    </p>
-                                                    <p className="text-[10px] opacity-70">
-                                                        {typeof m.mediaSize === "number" ? formatBytes(m.mediaSize) : ""}
-                                                    </p>
-                                                </div>
-                                                <Download className="w-4 h-4 flex-shrink-0 opacity-70" />
-                                            </a>
-                                        )}
+                                        {m.mediaType === "file" && m.mediaUrl && (() => {
+                                            // Audio faylni chatda eshittirish uchun inline pleyer + nom + yuklab olish
+                                            const isAudio = !!m.mediaMime?.startsWith("audio/")
+                                                || /\.(mp3|wav|ogg|m4a|aac|flac|opus)$/i.test(m.mediaName ?? m.mediaUrl);
+                                            if (isAudio) {
+                                                return (
+                                                    <div className="mb-1 rounded-lg overflow-hidden min-w-[260px] max-w-[320px]"
+                                                        style={{ background: m.mine ? "rgba(255,255,255,0.12)" : "rgba(0,206,200,0.10)" }}>
+                                                        <div className="flex items-center gap-3 px-3 pt-2.5 pb-1.5">
+                                                            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                                                                style={{ background: m.mine ? "rgba(255,255,255,0.18)" : "rgba(0,206,200,0.20)" }}>
+                                                                <Volume2 className="w-4 h-4" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-xs font-bold truncate" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                                    {m.mediaName || "Audio"}
+                                                                </p>
+                                                                <p className="text-[10px] opacity-70">
+                                                                    {typeof m.mediaSize === "number" ? formatBytes(m.mediaSize) : ""}
+                                                                </p>
+                                                            </div>
+                                                            <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer" download={m.mediaName ?? true}
+                                                                title="Yuklab olish"
+                                                                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                                                                style={{ background: "rgba(0,0,0,0.20)" }}>
+                                                                <Download className="w-3.5 h-3.5" style={{ color: m.mine ? "#fff" : "rgba(200,215,245,0.85)" }} />
+                                                            </a>
+                                                        </div>
+                                                        <audio controls preload="metadata" src={m.mediaUrl}
+                                                            className="w-full h-9 px-2 pb-2"
+                                                            style={{ filter: "invert(1) hue-rotate(180deg) contrast(0.95)" }} />
+                                                    </div>
+                                                );
+                                            }
+                                            // Oddiy fayl — yuklab olish kartochkasi
+                                            return (
+                                                <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer" download={m.mediaName ?? true}
+                                                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 min-w-[240px]"
+                                                    style={{ background: m.mine ? "rgba(255,255,255,0.12)" : "rgba(0,206,200,0.10)", textDecoration: "none" }}>
+                                                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                                                        style={{ background: m.mine ? "rgba(255,255,255,0.18)" : "rgba(0,206,200,0.20)" }}>
+                                                        <FileIcon className="w-5 h-5" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-xs font-bold truncate" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
+                                                            {m.mediaName || "Fayl"}
+                                                        </p>
+                                                        <p className="text-[10px] opacity-70">
+                                                            {typeof m.mediaSize === "number" ? formatBytes(m.mediaSize) : ""}
+                                                        </p>
+                                                    </div>
+                                                    <Download className="w-4 h-4 flex-shrink-0 opacity-70" />
+                                                </a>
+                                            );
+                                        })()}
                                         {m.mediaType === "poll" && m.pollQuestion && m.pollOptions && (
                                             <div className="mb-1 rounded-lg overflow-hidden p-3"
                                                 style={{ background: m.mine ? "rgba(255,255,255,0.10)" : "rgba(0,206,200,0.08)" }}>
@@ -5461,10 +5498,11 @@ function MediaGallery({
 }
 
 function ConvAvatar({ other, online, isSelf }: { other: { name: string | null; username: string | null; image: string | null } | null; online?: boolean; isSelf?: boolean }) {
+    // For Humo qoida: avatarlar doim rounded-square (rounded-2xl) — sirt o'tkir emas, yumshoq radius
     if (isSelf) {
         return (
             <div className="relative flex-shrink-0">
-                <div className="w-11 h-11 rounded-full flex items-center justify-center"
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
                     style={{ background: "linear-gradient(135deg,#F59E0B,#EA580C)" }}>
                     <Bookmark className="w-5 h-5 text-white" fill="#fff" />
                 </div>
@@ -5473,7 +5511,7 @@ function ConvAvatar({ other, online, isSelf }: { other: { name: string | null; u
     }
     return (
         <div className="relative flex-shrink-0">
-            <div className="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center"
+            <div className="w-11 h-11 rounded-2xl overflow-hidden flex items-center justify-center"
                 style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
                 {other?.image ? (
                     <Image src={other.image} alt="" width={44} height={44} className="w-full h-full object-cover" />
