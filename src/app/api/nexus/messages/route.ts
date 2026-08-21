@@ -8,15 +8,18 @@ import { isBlockedBetween } from "@/lib/nexus-block";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 
 // GET /api/nexus/messages — mening suhbatlarim
-//   ?archived=1  — faqat arxivlanganlar (default: faqat arxivlanmaganlar)
+//   ?archived=1  — faqat arxivlanganlar
+//   ?hidden=1    — faqat yashirin (vaqtinchalik o'chirilgan) chatlar
+//   default      — arxivlanmagan va yashirilmaganlar
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) return NextResponse.json({ conversations: [], totalUnread: 0, archivedCount: 0 });
+    if (!session?.user?.email) return NextResponse.json({ conversations: [], totalUnread: 0, archivedCount: 0, hiddenCount: 0 });
     const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
-    if (!me) return NextResponse.json({ conversations: [], totalUnread: 0, archivedCount: 0 });
+    if (!me) return NextResponse.json({ conversations: [], totalUnread: 0, archivedCount: 0, hiddenCount: 0 });
 
     const url = new URL(req.url);
     const wantArchived = url.searchParams.get("archived") === "1";
+    const wantHidden = url.searchParams.get("hidden") === "1";
 
     // Har foydalanuvchi uchun 'Saqlangan xabarlar' self-chat avto-yaratiladi (Telegram uslub)
     await prisma.nexusConversation.upsert({
@@ -32,10 +35,17 @@ export async function GET(req: Request) {
     const archivedCount = convs.filter(c =>
         c.user1Id === me.id ? !!c.archivedByUser1 : !!c.archivedByUser2
     ).length;
-    // Arxiv filtri (menga nisbatan)
+    const hiddenCount = convs.filter(c =>
+        c.user1Id === me.id ? !!c.hiddenByUser1 : !!c.hiddenByUser2
+    ).length;
+    // Filtr: yashirin/arxiv (menga nisbatan)
     const filtered = convs.filter(c => {
-        const arch = c.user1Id === me.id ? !!c.archivedByUser1 : !!c.archivedByUser2;
-        return wantArchived ? arch : !arch;
+        const isU1 = c.user1Id === me.id;
+        const arch = isU1 ? !!c.archivedByUser1 : !!c.archivedByUser2;
+        const hidden = isU1 ? !!c.hiddenByUser1 : !!c.hiddenByUser2;
+        if (wantHidden) return hidden;
+        if (wantArchived) return arch && !hidden;   // yashirin arxivda ham chiqmaydi
+        return !arch && !hidden;
     });
     // Sort: 1) self-chat (Saqlangan) doim tepada, 2) pinlangan, 3) sana
     filtered.sort((a, b) => {
@@ -88,7 +98,7 @@ export async function GET(req: Request) {
         };
     });
 
-    return NextResponse.json({ conversations, totalUnread, archivedCount });
+    return NextResponse.json({ conversations, totalUnread, archivedCount, hiddenCount });
 }
 
 // POST /api/nexus/messages — suhbatni topish/yaratish ({username|profileId})

@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker, Film, ExternalLink } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker, Film, ExternalLink, EyeOff, Eye, AlertTriangle } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxGroupCreateModal } from "./nx-group-create-modal";
@@ -372,9 +372,9 @@ export function NxSocialDesktop() {
     const [agentsUnlimited, setAgentsUnlimited] = useState(false);
     const [loadingAgents, setLoadingAgents] = useState(false);
     const [agentCreateOpen, setAgentCreateOpen] = useState(false);
-    // Agents tabini ochganda yuklaymiz
+    // Agents tabini ochganda yoki "All" bo'lsa yuklaymiz (All'da ham ko'rinishi kerak)
     useEffect(() => {
-        if (listTab !== "agents") return;
+        if (listTab !== "agents" && listTab !== "all") return;
         setLoadingAgents(true);
         fetch("/api/nexus/agents", { cache: "no-store" })
             .then(r => r.ok ? r.json() : { items: [], max: null, unlimited: false })
@@ -415,6 +415,11 @@ export function NxSocialDesktop() {
     const [msgMenuFor, setMsgMenuFor] = useState<string | null>(null);
     // Chat list per-item 3-dot menyu
     const [convMenuFor, setConvMenuFor] = useState<string | null>(null);
+    // Chatni o'chirish modal — 3 varinat: o'zim uchun / ikkala tomon / vaqtinchalik yashirish
+    const [deleteChatFor, setDeleteChatFor] = useState<string | null>(null);
+    // Yashirin (vaqtinchalik o'chirilgan) chatlar bo'limi ochilganmi
+    const [showHidden, setShowHidden] = useState(false);
+    const [hiddenCount, setHiddenCount] = useState(0);
     // "Yangi suhbat" — Telegram uslub PenSquare tugma + user search dropdown
     const [newDmOpen, setNewDmOpen] = useState(false);
     const [newDmQuery, setNewDmQuery] = useState("");
@@ -1622,15 +1627,24 @@ export function NxSocialDesktop() {
         return () => window.removeEventListener("mousedown", onClick);
     }, [attachOpen]);
 
-    // Group/Channel listni yuklash
+    // Group/Channel listni yuklash — "all" tab'da ikkalasi ham yuklanadi (birlashtirilgan)
     useEffect(() => {
-        if (listTab !== "groups" && listTab !== "channels") return;
-        const type = listTab === "groups" ? "GROUP" : "CHANNEL";
+        if (listTab !== "groups" && listTab !== "channels" && listTab !== "all") return;
         setLoadingChannels(true);
-        fetch(`/api/nexus/channels?scope=mine&type=${type}`)
-            .then(r => r.ok ? r.json() : { channels: [] })
-            .then(d => setChannels(d.channels ?? []))
-            .finally(() => setLoadingChannels(false));
+        if (listTab === "all") {
+            Promise.all([
+                fetch(`/api/nexus/channels?scope=mine&type=GROUP`).then(r => r.ok ? r.json() : { channels: [] }),
+                fetch(`/api/nexus/channels?scope=mine&type=CHANNEL`).then(r => r.ok ? r.json() : { channels: [] }),
+            ])
+                .then(([g, c]) => setChannels([...(g.channels ?? []), ...(c.channels ?? [])]))
+                .finally(() => setLoadingChannels(false));
+        } else {
+            const type = listTab === "groups" ? "GROUP" : "CHANNEL";
+            fetch(`/api/nexus/channels?scope=mine&type=${type}`)
+                .then(r => r.ok ? r.json() : { channels: [] })
+                .then(d => setChannels(d.channels ?? []))
+                .finally(() => setLoadingChannels(false));
+        }
     }, [listTab, channelsBump]);
 
     // Tab o'zgarganda tanlangan chat/channel'ni tozalash
@@ -1646,15 +1660,18 @@ export function NxSocialDesktop() {
     // Suhbatlar ro'yxati
     const loadConvs = useCallback(async () => {
         try {
-            const url = showArchived ? "/api/nexus/messages?archived=1" : "/api/nexus/messages";
+            const url = showHidden
+                ? "/api/nexus/messages?hidden=1"
+                : showArchived ? "/api/nexus/messages?archived=1" : "/api/nexus/messages";
             const r = await fetch(url, { cache: "no-store" });
             if (r.ok) {
                 const d = await r.json();
                 setConvs(d.conversations ?? []);
                 setArchivedCount(d.archivedCount ?? 0);
+                setHiddenCount(d.hiddenCount ?? 0);
             }
         } finally { setLoadingConvs(false); }
-    }, [showArchived]);
+    }, [showArchived, showHidden]);
     useEffect(() => { loadConvs(); loadConvsRef.current = loadConvs; }, [loadConvs]);
 
     // Real-time push yoqilgan bo'lsa 6s polling — long fallback 30s
@@ -2194,6 +2211,21 @@ export function NxSocialDesktop() {
                                             </span>
                                         </button>
                                     )}
+                                    {/* Yashirin chatlar (vaqtinchalik o'chirilganlar) — tekshiruv rejimidan chiqish */}
+                                    <button
+                                        onClick={() => { setShowHidden(v => !v); setShowArchived(false); setSidebarSettingsOpen(false); setSelectedId(null); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-t"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        {showHidden
+                                            ? <Eye className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                            : <EyeOff className="w-4 h-4" style={{ color: hiddenCount > 0 ? "#F59E0B" : "rgba(160,176,224,0.85)" }} />
+                                        }
+                                        <span className="flex-1">{showHidden ? "Oddiy ro'yxatga qaytish" : "Yashirin chatlar"}</span>
+                                        {hiddenCount > 0 && !showHidden && (
+                                            <span className="min-w-[18px] h-4 px-1 rounded-full text-[9px] font-black flex items-center justify-center"
+                                                style={{ background: "#F59E0B", color: "#0B1228" }}>{hiddenCount}</span>
+                                        )}
+                                    </button>
                                     <button onClick={() => { setShortcutsHelpOpen(true); setSidebarSettingsOpen(false); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-t"
                                         style={{ borderColor: "rgba(43,62,232,0.15)" }}>
@@ -2344,7 +2376,7 @@ export function NxSocialDesktop() {
                 )}
 
                 {/* Arxiv toggle — faqat DM-list tab'lari uchun */}
-                {isDmListTab && (archivedCount > 0 || showArchived) && (
+                {isDmListTab && !showHidden && (archivedCount > 0 || showArchived) && (
                     <button onClick={() => { setShowArchived(v => !v); setSelectedId(null); }}
                         className="w-full flex items-center gap-2.5 px-3 py-2.5 border-b transition hover:bg-white/[0.04]"
                         style={{
@@ -2367,6 +2399,28 @@ export function NxSocialDesktop() {
                                 {archivedCount}
                             </span>
                         )}
+                    </button>
+                )}
+                {/* Yashirin chatlar banner — showHidden = true bo'lganda ko'rinadi */}
+                {showHidden && (
+                    <button onClick={() => { setShowHidden(false); setSelectedId(null); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 border-b transition hover:bg-white/[0.04]"
+                        style={{
+                            borderColor: "rgba(245,158,11,0.30)",
+                            background: "rgba(245,158,11,0.08)",
+                        }}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ background: "rgba(245,158,11,0.20)" }}>
+                            <EyeOff className="w-4 h-4" style={{ color: "#F59E0B" }} />
+                        </div>
+                        <div className="flex-1 text-left">
+                            <p className="text-xs font-bold" style={{ color: "#F59E0B" }}>
+                                Yashirin chatlar
+                            </p>
+                            <p className="text-[10px]" style={{ color: "rgba(245,158,11,0.75)" }}>
+                                ← Oddiy ro&apos;yxatga qaytish
+                            </p>
+                        </div>
                     </button>
                 )}
                 <div className="flex-1 overflow-y-auto nx-scrollbar">
@@ -2474,7 +2528,7 @@ export function NxSocialDesktop() {
                         <div className="flex justify-center py-10">
                             <Loader2 className="w-5 h-5 animate-spin text-white/30" />
                         </div>
-                    ) : filteredConvs.length === 0 ? (
+                    ) : filteredConvs.length === 0 && !(listTab === "all" && (agents.length > 0 || channels.length > 0)) ? (
                         <div className="text-center py-10 text-xs" style={{ color: "rgba(140,160,210,0.60)" }}>
                             Suhbatlar yo&apos;q
                         </div>
@@ -2571,8 +2625,9 @@ export function NxSocialDesktop() {
                                     </div>
                                 </div>
                             </button>
-                            {/* Hover'da bitta 3-dot menyu — barcha amallar shu yerda */}
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition" data-conv-menu>
+                            {/* Hover'da bitta 3-dot menyu — barcha amallar shu yerda.
+                                Menu ochilganda opacity-100 ushlanadi (aks holda hover chiqishi bilan yopiladi) */}
+                            <div className={`absolute right-2 top-1/2 -translate-y-1/2 transition ${convMenuFor === c.conversationId ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`} data-conv-menu>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setConvMenuFor(convMenuFor === c.conversationId ? null : c.conversationId); }}
                                     title="Amallar"
@@ -2621,26 +2676,115 @@ export function NxSocialDesktop() {
                                             }}
                                         />
                                         <div className="h-px" style={{ background: "rgba(43,62,232,0.14)" }} />
-                                        {/* Chatni tozalash — o'zim uchun (peer'da qoladi). Ma'lumot POST /clear */}
-                                        <button
-                                            onClick={async () => {
-                                                setConvMenuFor(null);
-                                                if (!confirm("Chatni o'chirasizmi? Sizda barcha xabarlar yashiriladi (u kishida qoladi).")) return;
-                                                const r = await fetch(`/api/nexus/messages/${c.conversationId}/clear`, { method: "POST" });
-                                                if (r.ok) {
-                                                    if (selectedIdRef.current === c.conversationId) setMessages([]);
-                                                    loadConvs();
-                                                }
-                                            }}
-                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-red-500/10 text-left transition"
-                                            style={{ color: "#EF4444" }}>
-                                            <Trash2 className="w-4 h-4" /> Chatni o&apos;chirish
-                                        </button>
+                                        {showHidden ? (
+                                            /* Yashirin rejimda: qaytarish (unhide) — DELETE /hide */
+                                            <button
+                                                onClick={async () => {
+                                                    setConvMenuFor(null);
+                                                    const r = await fetch(`/api/nexus/messages/${c.conversationId}/hide`, { method: "DELETE" });
+                                                    if (r.ok) loadConvs();
+                                                }}
+                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-white/[0.05] text-left transition"
+                                                style={{ color: "#00CEC8" }}>
+                                                <Eye className="w-4 h-4" /> Qaytarish (yashirindan)
+                                            </button>
+                                        ) : (
+                                            /* Oddiy rejimda: 3-varinatli o'chirish modali */
+                                            <button
+                                                onClick={() => { setConvMenuFor(null); setDeleteChatFor(c.conversationId); }}
+                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-red-500/10 text-left transition"
+                                                style={{ color: "#EF4444" }}>
+                                                <Trash2 className="w-4 h-4" /> Chatni o&apos;chirish
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
                         </div>
                     ))}
+                    {/* "All" tab uchun qo'shimcha: Agentlar + Kanallar/Guruhlar
+                        (DMlardan keyin ketma-ket ko'rinadi — hamma joydan foydalanuvchi topadi) */}
+                    {listTab === "all" && (
+                        <>
+                            {agents.length > 0 && (
+                                <>
+                                    <div className="px-3 pt-3 pb-1 flex items-center gap-2 border-t"
+                                         style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                                        <BotIcon className="w-3 h-3" style={{ color: "rgba(0,206,200,0.75)" }} />
+                                        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                            Agentlar
+                                        </p>
+                                        <span className="ml-auto text-[10px] tabular-nums" style={{ color: "rgba(140,160,210,0.45)" }}>{agents.length}</span>
+                                    </div>
+                                    {agents.map(a => (
+                                        <button key={`ag-${a.id}`}
+                                            onClick={() => a.username && openNewConversation({ name: a.name, username: a.username, image: a.image, verified: false, isMe: false })}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors border-b hover:bg-white/[0.04]"
+                                            style={{ borderColor: "rgba(43,62,232,0.06)" }}>
+                                            <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center relative"
+                                                style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                                {a.image
+                                                    ? <img src={a.image} alt="" className="w-full h-full object-cover" />
+                                                    : <BotIcon className="w-4 h-4" style={{ color: "#00CEC8" }} />}
+                                                {a.isSystem && (
+                                                    <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center"
+                                                          style={{ background: "#00CEC8" }}>
+                                                        <Shield className="w-2 h-2" style={{ color: "#0B1228" }} />
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-1">
+                                                    <p className="text-sm font-bold text-white truncate">{a.name ?? a.username}</p>
+                                                    {a.isSystem && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                                </div>
+                                                <p className="text-[11px] truncate" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                                    @{a.username}{a.module && a.module !== "CUSTOM" && a.module !== "MAIN" ? ` · ${a.module.toLowerCase()}` : ""}
+                                                </p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </>
+                            )}
+                            {channels.length > 0 && (
+                                <>
+                                    <div className="px-3 pt-3 pb-1 flex items-center gap-2 border-t"
+                                         style={{ borderColor: "rgba(43,62,232,0.14)" }}>
+                                        <Hash className="w-3 h-3" style={{ color: "rgba(0,206,200,0.75)" }} />
+                                        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                            Kanal &amp; Guruh
+                                        </p>
+                                        <span className="ml-auto text-[10px] tabular-nums" style={{ color: "rgba(140,160,210,0.45)" }}>{channels.length}</span>
+                                    </div>
+                                    {channels.map(c => (
+                                        <button key={`ch-${c.id}`}
+                                            onClick={() => setSelectedChannel(c.id)}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors border-b hover:bg-white/[0.04]"
+                                            style={{
+                                                borderColor: "rgba(43,62,232,0.06)",
+                                                background: selectedChannel === c.id ? "rgba(43,62,232,0.18)" : "transparent",
+                                            }}>
+                                            <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center"
+                                                style={{ background: "rgba(43,62,232,0.15)" }}>
+                                                {c.avatarUrl
+                                                    ? <img src={c.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                                    : (c.type === "CHANNEL" ? <Megaphone className="w-4 h-4 text-white/50" /> : <Users className="w-4 h-4 text-white/50" />)}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-1">
+                                                    <p className="text-sm font-bold text-white truncate">{c.name}</p>
+                                                    {c.isSystem && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                                </div>
+                                                <p className="text-[11px] truncate" style={{ color: "rgba(140,160,210,0.70)" }}>
+                                                    {c.type === "CHANNEL" ? "Kanal" : "Guruh"}{c.handle ? ` · @${c.handle}` : ""} · {c.memberCount} a&apos;zo
+                                                </p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </>
+                            )}
+                        </>
+                    )}
                     {/* Global message search results — filter uzunligi 2+ va natija bor bo'lsa */}
                     {isDmListTab && filter.trim().length >= 2 && (
                         <div className="border-t" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
@@ -3076,7 +3220,12 @@ export function NxSocialDesktop() {
                                         </div>
                                     )}
                                     {/* Hover amallar (Telegram uslub) — faqat 3 ta: Reaksiya, Javob, 3-dot */}
-                                    <div className={`transition flex gap-1 flex-shrink-0 relative ${selectMode ? "hidden" : "opacity-0 group-hover:opacity-100"}`}>
+                                    <div className={`transition flex gap-1 flex-shrink-0 relative ${
+                                        selectMode ? "hidden"
+                                        : (msgMenuFor === m.id || reactPickerFor === m.id || translatePickerFor === m.id)
+                                            ? "opacity-100"
+                                            : "opacity-0 group-hover:opacity-100"
+                                    }`}>
                                         <button onClick={() => setReactPickerFor(m.id === reactPickerFor ? null : m.id)} title="Reaksiya"
                                             className="w-7 h-7 rounded-md flex items-center justify-center"
                                             style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
@@ -4839,6 +4988,29 @@ export function NxSocialDesktop() {
                     }}
                 />
             )}
+            {/* Chatni o'chirish modal (3 varinat: o'zim/ikkala/vaqtinchalik) */}
+            {deleteChatFor && (() => {
+                const c = convs.find(x => x.conversationId === deleteChatFor);
+                if (!c) { setDeleteChatFor(null); return null; }
+                return (
+                    <DeleteChatModal
+                        convId={deleteChatFor}
+                        convName={c.other?.name ?? c.other?.username ?? "Foydalanuvchi"}
+                        isSelf={!!c.isSelf}
+                        onClose={() => setDeleteChatFor(null)}
+                        onDone={(action) => {
+                            if (selectedIdRef.current === deleteChatFor && (action === "mine" || action === "both")) {
+                                setMessages([]);
+                            }
+                            if (action === "hide") {
+                                // Yashirin bo'lgani uchun tanlangan bo'lsa yopamiz
+                                if (selectedIdRef.current === deleteChatFor) setSelectedId(null);
+                            }
+                            loadConvs();
+                        }}
+                    />
+                );
+            })()}
             {/* Sana picker modal (sana separator bosilsa) */}
             {datePickerOpen && (
                 <DatePickerModal
@@ -6125,6 +6297,131 @@ function IconBtn({ icon: Icon, title, onClick }: { icon: React.ElementType; titl
             className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0"
             style={{ background: "rgba(43,62,232,0.10)" }}>
             <Icon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+        </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DeleteChatModal — 3-variantli chatni o'chirish oynasi.
+// Nexus rangida styled, native confirm() o'rniga (aks holda brauzer prompt'i chiqadi).
+//   1. O'zim uchun butunlay o'chirish  →  POST /clear
+//   2. Ikkala tomon uchun o'chirish     →  POST /clear-both
+//   3. Vaqtinchalik yashirish           →  POST /hide  (keyin qaytarish mumkin)
+// ─────────────────────────────────────────────────────────────────────────────
+function DeleteChatModal({ convId, convName, isSelf, onClose, onDone }: {
+    convId: string;
+    convName: string;
+    isSelf: boolean;
+    onClose: () => void;
+    onDone: (action: "mine" | "both" | "hide") => void;
+}) {
+    const [busy, setBusy] = useState<null | "mine" | "both" | "hide">(null);
+    const [err, setErr] = useState<string | null>(null);
+
+    const act = async (kind: "mine" | "both" | "hide") => {
+        setBusy(kind); setErr(null);
+        const endpoint = kind === "mine" ? "/clear" : kind === "both" ? "/clear-both" : "/hide";
+        try {
+            const r = await fetch(`/api/nexus/messages/${convId}${endpoint}`, { method: "POST" });
+            if (!r.ok) {
+                const d = await r.json().catch(() => ({}));
+                setErr(d?.error ?? "Xato — qayta urinib ko'ring");
+                setBusy(null);
+                return;
+            }
+            onDone(kind);
+            onClose();
+        } catch {
+            setErr("Tarmoq xatosi");
+            setBusy(null);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[220]" onClick={busy ? undefined : onClose}>
+            <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[440px] rounded-2xl overflow-hidden"
+                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="p-4 flex items-center gap-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)" }}>
+                        <Trash2 className="w-5 h-5" style={{ color: "#EF4444" }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-black" style={{ color: "rgba(230,238,255,0.98)" }}>Chatni o&apos;chirish</h3>
+                        <p className="text-[11.5px] truncate mt-0.5" style={{ color: "rgba(160,180,220,0.75)" }}>
+                            {isSelf ? "Saqlangan xabarlar" : convName}
+                        </p>
+                    </div>
+                    {!busy && (
+                        <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center transition"
+                            style={{ background: "rgba(43,62,232,0.10)" }}>
+                            <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                        </button>
+                    )}
+                </div>
+
+                {/* Options */}
+                <div className="p-2.5 space-y-2">
+                    <DcOption icon={Trash2} title="O'zim uchun butunlay o'chirish"
+                        desc={isSelf ? "Saqlangan xabarlar tozalanadi." : "Sizga xabarlar ko'rinmaydi. U kishida qoladi."}
+                        danger busy={busy === "mine"} disabled={!!busy}
+                        onClick={() => act("mine")} />
+                    {!isSelf && (
+                        <DcOption icon={AlertTriangle} title="Ikkala tomon uchun o'chirish"
+                            desc="Chat sizda ham, unda ham butunlay tozalanadi. Bu amalni bekor qilib bo'lmaydi."
+                            danger warning busy={busy === "both"} disabled={!!busy}
+                            onClick={() => act("both")} />
+                    )}
+                    <DcOption icon={EyeOff} title="Vaqtinchalik yashirish"
+                        desc={`Chat ro'yxatdan g'oyib bo'ladi lekin xabarlar saqlanadi. "Yashirin chatlar" bo'limidan qaytarish mumkin.`}
+                        busy={busy === "hide"} disabled={!!busy}
+                        onClick={() => act("hide")} />
+                </div>
+
+                {err && (
+                    <div className="mx-3 mb-3 p-2 rounded-lg text-[11.5px]"
+                        style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.30)", color: "#FCA5A5" }}>
+                        {err}
+                    </div>
+                )}
+
+                {/* Footer */}
+                <div className="p-3 flex justify-end" style={{ borderTop: "1px solid rgba(43,62,232,0.20)" }}>
+                    <button onClick={onClose} disabled={!!busy}
+                        className="h-9 px-4 rounded-lg text-[12px] font-black transition disabled:opacity-40"
+                        style={{ background: "rgba(43,62,232,0.10)", color: "rgba(200,215,245,0.85)" }}>
+                        Bekor qilish
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function DcOption({ icon: Icon, title, desc, danger, warning, busy, disabled, onClick }: {
+    icon: React.ElementType; title: string; desc: string;
+    danger?: boolean; warning?: boolean; busy?: boolean; disabled?: boolean;
+    onClick: () => void;
+}) {
+    const accent = warning ? "#F59E0B" : danger ? "#EF4444" : "#00CEC8";
+    const bg = warning ? "rgba(245,158,11,0.10)" : danger ? "rgba(239,68,68,0.08)" : "rgba(0,206,200,0.08)";
+    const bd = warning ? "rgba(245,158,11,0.30)" : danger ? "rgba(239,68,68,0.25)" : "rgba(0,206,200,0.25)";
+    return (
+        <button onClick={onClick} disabled={disabled}
+            className="w-full flex items-start gap-3 p-3 rounded-xl text-left transition disabled:opacity-50 hover:brightness-110"
+            style={{ background: bg, border: `1px solid ${bd}` }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: "rgba(11,18,40,0.55)" }}>
+                {busy ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: accent }} />
+                    : <Icon className="w-4 h-4" style={{ color: accent }} />}
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className="text-[12.5px] font-black" style={{ color: "rgba(230,238,255,0.96)" }}>{title}</p>
+                <p className="text-[11px] mt-0.5" style={{ color: "rgba(160,180,220,0.75)" }}>{desc}</p>
+            </div>
         </button>
     );
 }

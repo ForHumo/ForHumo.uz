@@ -1305,6 +1305,11 @@ model NexusConversation {
   // Tozalash: shu vaqtdan oldingi xabarlar shu foydalanuvchiga ko'rsatilmaydi
   clearedBeforeUser1 DateTime?
   clearedBeforeUser2 DateTime?
+  // Vaqtinchalik yashirish (tekshiruv rejimi) — chat butunlay ro'yxatdan ketadi lekin
+  // xabarlar saqlanadi. "Yashirin chatlar" bo'limidan qaytariladi. Har foydalanuvchi
+  // uchun alohida — bir tomon yashirsa, boshqa tomonda ko'rinaveradi.
+  hiddenByUser1   DateTime?
+  hiddenByUser2   DateTime?
   // Auto-delete (WhatsApp uslub) — chatdagi barcha xabarlar shu sekunddan keyin
   // avtomatik o'chiriladi (kunlik cron). 0 = o'chirilgan. Har ikkala foydalanuvchi
   // uchun umumiy (chat-wide) sozlama.
