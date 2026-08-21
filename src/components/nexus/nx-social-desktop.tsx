@@ -157,6 +157,29 @@ export function NxSocialDesktop() {
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastTypingSentRef = useRef<number>(0);
 
+    // Deep link handler — /nexus?dm=<username>&msg=<messageId>
+    // Sahifa yuklanishida bir marta ishlaydi. DM ochiladi, keyin msg'ga scroll (yuklangandan keyin).
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const params = new URLSearchParams(window.location.search);
+        const dm = params.get("dm");
+        const msg = params.get("msg");
+        if (!dm) return;
+        // URL'ni tozalash (foydalanuvchi refresh qilmasin)
+        params.delete("dm"); params.delete("msg");
+        const qs = params.toString();
+        window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : ""));
+        if (msg) { pendingJumpMsgIdRef.current = msg; jumpAttemptsRef.current = 0; }
+        // Suhbatga o'tish — POST /messages username bilan
+        fetch("/api/nexus/messages", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: dm }),
+        }).then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.conversationId) setSelectedId(d.conversationId); })
+            .catch(() => {});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Mening profileId (typing event ichida ishlatiladi)
     useEffect(() => {
         if (!session?.user?.email) return;
@@ -176,6 +199,14 @@ export function NxSocialDesktop() {
     // Cursor pagination — hasMore = yuqorida eski xabarlar bor-yo'qligi; loadingOlder = load-more davom etmoqda
     const [hasMore, setHasMore] = useState(false);
     const loadingOlderRef = useRef(false);
+    // Reaction hover popup — Telegram uslub (hover'da 250ms delay bilan ochiladi)
+    const reactHoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Pinlangan xabarlar banneri — ko'p pin bo'lsa, click cycle bo'yicha o'tadi
+    const [pinnedIndex, setPinnedIndex] = useState(0);
+    const [pinnedListOpen, setPinnedListOpen] = useState(false);
+    // Deep link — ochiladigan xabar ID (URL'dan ?msg= parametr'idan olinadi)
+    const pendingJumpMsgIdRef = useRef<string | null>(null);
+    const jumpAttemptsRef = useRef(0);
     // Nexus-styled confirm/alert modallari (native confirm/alert o'rniga — brand'ni buzmaslik uchun)
     const [confirmDlg, setConfirmDlg] = useState<{
         title?: string; message: string; confirmText?: string; cancelText?: string;
@@ -948,6 +979,21 @@ export function NxSocialDesktop() {
 
     function copyMessage(text: string) {
         void copyToClipboard(text);
+    }
+    // Xabar permalink URL — foydalanuvchi ulashishi mumkin.
+    // Format: {origin}/nexus?dm=<peerUsername>&msg=<messageId>
+    // Boshqa qurilmada ochilganda: shell DM'ni ochadi, msg'ga scroll qiladi (auto-load older gacha).
+    async function copyMessageLink(messageId: string) {
+        const uname = peer?.username;
+        if (!uname) { showAlert("Bu suhbat uchun havola yaratib bo'lmadi"); return; }
+        const url = `${window.location.origin}/${locale}/nexus?dm=${encodeURIComponent(uname)}&msg=${encodeURIComponent(messageId)}`;
+        try {
+            await navigator.clipboard.writeText(url);
+            showAlert("Havola nusxalandi", "Ulashish");
+        } catch {
+            void copyToClipboard(url);
+            showAlert("Havola nusxalandi", "Ulashish");
+        }
     }
 
     async function saveEdit() {
@@ -1931,6 +1977,34 @@ export function NxSocialDesktop() {
         const appendedNew = lastId !== null && lastId !== prevLastId && messages.length >= prevCount;
         prevLastIdRef.current = lastId;
         prevMsgCountRef.current = messages.length;
+
+        // Deep link — pendingJumpMsgId topilsa unga scroll (avvalgi appended check'idan oldin)
+        const pendingId = pendingJumpMsgIdRef.current;
+        if (pendingId && messages.some(m => m.id === pendingId)) {
+            pendingJumpMsgIdRef.current = null;
+            jumpAttemptsRef.current = 0;
+            requestAnimationFrame(() => {
+                const el = document.querySelector<HTMLElement>(`[data-msg-id="${pendingId}"]`);
+                el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                el?.animate([
+                    { background: "rgba(0,206,200,0.25)" }, { background: "transparent" },
+                ], { duration: 1600, iterations: 1 });
+            });
+            return;
+        }
+        // Deep link — topilmadi, 3 marta yuqoriga load-older (eskiroq xabarlarni yuklaymiz)
+        if (pendingId && hasMore && jumpAttemptsRef.current < 3) {
+            jumpAttemptsRef.current += 1;
+            loadOlder();
+            return;
+        }
+        // Deep link — topilmadi va load-more bo'lmasa, foydalanuvchini xabardor qilamiz
+        if (pendingId && !hasMore) {
+            pendingJumpMsgIdRef.current = null;
+            showAlert("Bu xabar allaqachon o'chirilgan yoki mavjud emas");
+            return;
+        }
+
         if (!container || !appendedNew) return;
         const delta = Math.max(0, messages.length - prevCount);
         const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
@@ -1940,7 +2014,8 @@ export function NxSocialDesktop() {
             // Yangi xabarlar bor, foydalanuvchi yuqoriga qaragan — hisoblagich ko'paytir
             setUnreadInView(n => n + delta);
         }
-    }, [messages]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [messages, hasMore]);
 
     // Suhbat almashinsa: scroll pastga, hisoblagich nolga
     useEffect(() => {
@@ -3328,36 +3403,56 @@ export function NxSocialDesktop() {
                             </div>
                         )}
 
-                        {/* Pinlangan xabarlar banneri */}
+                        {/* Pinlangan xabarlar banneri — Telegram uslub. Ko'p pin bo'lsa, click cycle qiladi. */}
                         {(() => {
                             const pinned = messages.filter(m => m.pinnedAt)
                                 .sort((a, b) => new Date(b.pinnedAt!).getTime() - new Date(a.pinnedAt!).getTime());
                             if (pinned.length === 0) return null;
-                            const top = pinned[0];
+                            const idx = pinnedIndex % pinned.length;
+                            const cur = pinned[idx];
+                            const total = pinned.length;
+                            const jumpTo = (msg: Msg) => {
+                                const el = document.querySelector<HTMLElement>(`[data-msg-id="${msg.id}"]`);
+                                el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                                el?.animate([
+                                    { background: "rgba(0,206,200,0.20)" }, { background: "transparent" },
+                                ], { duration: 1400, iterations: 1 });
+                            };
                             return (
-                                <button
-                                    onClick={() => {
-                                        const el = document.querySelector<HTMLElement>(`[data-msg-id="${top.id}"]`);
-                                        el?.scrollIntoView({ behavior: "smooth", block: "center" });
-                                        el?.animate([
-                                            { background: "rgba(0,206,200,0.15)" }, { background: "transparent" },
-                                        ], { duration: 1400, iterations: 1 });
-                                    }}
-                                    className="w-full flex items-center gap-2.5 px-4 py-2 border-b transition hover:bg-white/[0.02] text-left"
-                                    style={{ borderColor: "rgba(43,62,232,0.20)" }}>
-                                    <Pin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />
-                                    <div className="min-w-0 flex-1">
+                                <div className="w-full flex items-center gap-2 px-3 py-2 border-b"
+                                    style={{ borderColor: "rgba(43,62,232,0.25)", background: "rgba(11,18,40,0.75)" }}>
+                                    {/* Chap: Pin + accent bar */}
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        <div className="w-1 h-8 rounded-full" style={{ background: "linear-gradient(180deg,#00CEC8,#2B3EE8)" }} />
+                                        <Pin className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                    </div>
+                                    {/* O'rta: matn + counter */}
+                                    <button
+                                        onClick={() => { jumpTo(cur); if (total > 1) setPinnedIndex(i => (i + 1) % total); }}
+                                        title={total > 1 ? "Keyingi pin'ga o'tish" : "Xabarga o'tish"}
+                                        className="flex-1 min-w-0 text-left transition hover:brightness-125">
                                         <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#00CEC8" }}>
-                                            Pinlangan xabar {pinned.length > 1 && `(${pinned.length})`}
+                                            Pinlangan xabar {total > 1 && <span className="opacity-70 normal-case">· {idx + 1}/{total}</span>}
                                         </p>
                                         <p className="text-xs truncate" style={{ color: "rgba(220,230,255,0.85)" }}>
-                                            {top.text || (top.mediaType ? `[${top.mediaType}]` : "(media)")}
+                                            {cur.text || (cur.mediaType ? `[${cur.mediaType}]` : "(media)")}
                                         </p>
-                                    </div>
-                                    <PinOff onClick={(e) => { e.stopPropagation(); toggleMessagePin(top); }}
-                                        className="w-3.5 h-3.5 flex-shrink-0 opacity-60 hover:opacity-100 cursor-pointer"
-                                        style={{ color: "rgba(160,176,224,0.85)" }} />
-                                </button>
+                                    </button>
+                                    {/* O'ng: barcha pinlarni ko'rsatish (agar >1) + pindan olish (agar mening) */}
+                                    {total > 1 && (
+                                        <button onClick={() => setPinnedListOpen(true)} title="Barcha pinlar"
+                                            className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-white/[0.08]"
+                                            style={{ background: "rgba(43,62,232,0.10)" }}>
+                                            <MoreVertical className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        </button>
+                                    )}
+                                    {cur.mine && (
+                                        <button onClick={() => toggleMessagePin(cur)} title="Pindan olish"
+                                            className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-white/[0.08]">
+                                            <PinOff className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        </button>
+                                    )}
+                                </div>
                             );
                         })()}
 
@@ -3455,11 +3550,32 @@ export function NxSocialDesktop() {
                                             ? "opacity-100"
                                             : "opacity-0 group-hover:opacity-100"
                                     }`}>
-                                        <button onClick={() => setReactPickerFor(m.id === reactPickerFor ? null : m.id)} title="Reaksiya"
-                                            className="w-7 h-7 rounded-md flex items-center justify-center"
-                                            style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                            <Smile className="w-3 h-3" style={{ color: "rgba(160,176,224,0.85)" }} />
-                                        </button>
+                                        <div className="relative"
+                                            onMouseEnter={() => {
+                                                if (reactHoverTimerRef.current) clearTimeout(reactHoverTimerRef.current);
+                                                reactHoverTimerRef.current = setTimeout(() => setReactPickerFor(m.id), 200);
+                                            }}
+                                            onMouseLeave={() => {
+                                                if (reactHoverTimerRef.current) clearTimeout(reactHoverTimerRef.current);
+                                                reactHoverTimerRef.current = setTimeout(() => setReactPickerFor(prev => prev === m.id ? null : prev), 250);
+                                            }}>
+                                            <button onClick={() => setReactPickerFor(m.id === reactPickerFor ? null : m.id)} title="Reaksiya"
+                                                className="w-7 h-7 rounded-md flex items-center justify-center"
+                                                style={{ background: reactPickerFor === m.id ? "rgba(0,206,200,0.18)" : "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                                <Smile className="w-3 h-3" style={{ color: reactPickerFor === m.id ? "#00CEC8" : "rgba(160,176,224,0.85)" }} />
+                                            </button>
+                                            {reactPickerFor === m.id && (
+                                                <div className="absolute top-full mt-1 left-0 z-40 flex gap-1 p-1.5 rounded-xl"
+                                                    style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", backdropFilter: "blur(12px)" }}>
+                                                    {["❤️","👍","😂","😮","😢","🔥","🙏","👏"].map(e => (
+                                                        <button key={e} onClick={() => { toggleReaction(m.id, e); setReactPickerFor(null); }}
+                                                            className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/[0.10] active:scale-90 transition-transform hover:scale-125">
+                                                            <Emoji char={e} size={22} />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                         <button onClick={() => setReplyTo(m)} title="Javob berish"
                                             className="w-7 h-7 rounded-md flex items-center justify-center"
                                             style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.25)" }}>
@@ -3495,6 +3611,9 @@ export function NxSocialDesktop() {
                                                         <MsgMenuItem icon={Copy} label="Nusxa olish"
                                                             onClick={() => { copyMessage(m.text); setMsgMenuFor(null); }} />
                                                     )}
+                                                    <MsgMenuItem icon={ExternalLink} label="Havolani nusxalash"
+                                                        onClick={() => { copyMessageLink(m.id); setMsgMenuFor(null); }} />
+
                                                     {m.text && (
                                                         <MsgMenuItem
                                                             icon={Languages}
@@ -3539,17 +3658,6 @@ export function NxSocialDesktop() {
                                                 </div>
                                             )}
                                         </div>
-                                        {reactPickerFor === m.id && (
-                                            <div className="absolute top-full mt-1 z-30 flex gap-1 p-1.5 rounded-lg"
-                                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)" }}>
-                                                {["❤️","👍","😂","😮","😢","🔥","🙏","👏"].map(e => (
-                                                    <button key={e} onClick={() => toggleReaction(m.id, e)}
-                                                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/[0.08] active:scale-90 transition-transform">
-                                                        <Emoji char={e} size={22} />
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
                                     </div>
                                     <div className={`max-w-[70%] ${(m.mediaType === "sticker" || m.mediaType === "video-circle") ? "p-0" : "px-3.5 py-2"} text-sm whitespace-pre-wrap break-words`}
                                         style={{
@@ -5532,6 +5640,60 @@ export function NxSocialDesktop() {
                                     </div>
                                 ))
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Barcha pinlangan xabarlar modali */}
+            {pinnedListOpen && (
+                <div className="fixed inset-0 z-[220]" onClick={() => setPinnedListOpen(false)}>
+                    <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[520px] max-h-[70vh] rounded-2xl overflow-hidden flex flex-col"
+                        style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                        onClick={e => e.stopPropagation()}>
+                        <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                <Pin className="w-4 h-4 text-white" />
+                            </div>
+                            <h3 className="text-sm font-black flex-1" style={{ color: "rgba(230,238,255,0.98)" }}>Pinlangan xabarlar</h3>
+                            <button onClick={() => setPinnedListOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center"
+                                style={{ background: "rgba(43,62,232,0.10)" }}>
+                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto nx-scrollbar">
+                            {messages.filter(m => m.pinnedAt)
+                                .sort((a, b) => new Date(b.pinnedAt!).getTime() - new Date(a.pinnedAt!).getTime())
+                                .map((m, i) => (
+                                    <button key={m.id}
+                                        onClick={() => {
+                                            setPinnedListOpen(false);
+                                            setTimeout(() => {
+                                                const el = document.querySelector<HTMLElement>(`[data-msg-id="${m.id}"]`);
+                                                el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                                                el?.animate([{ background: "rgba(0,206,200,0.20)" }, { background: "transparent" }], { duration: 1400 });
+                                            }, 100);
+                                        }}
+                                        className="w-full flex items-start gap-3 px-4 py-3 border-b hover:bg-white/[0.03] text-left transition"
+                                        style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                                        <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: "linear-gradient(180deg,#00CEC8,#2B3EE8)" }} />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#00CEC8" }}>
+                                                #{i + 1} · {m.mine ? "Siz" : (peer?.name ?? peer?.username ?? "Peer")} · {new Date(m.pinnedAt!).toLocaleDateString("uz-UZ")}
+                                            </p>
+                                            <p className="text-sm line-clamp-2" style={{ color: "rgba(220,230,255,0.90)" }}>
+                                                {m.text || (m.mediaType ? `[${m.mediaType}]` : "(media)")}
+                                            </p>
+                                        </div>
+                                        {m.mine && (
+                                            <span onClick={(e) => { e.stopPropagation(); toggleMessagePin(m); }}
+                                                className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-white/[0.08] cursor-pointer">
+                                                <PinOff className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                            </span>
+                                        )}
+                                    </button>
+                                ))}
                         </div>
                     </div>
                 </div>
