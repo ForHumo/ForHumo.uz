@@ -160,6 +160,10 @@ model UserProfile {
   // Kim mening profil rasmimni ko'radi (chat, feed vaqti):
   //   "all" — hamma (default), "contacts" — kontaktlar, "none" — hech kim
   privacyProfilePhoto String @default("all")
+  // Push bildirishnomasida ko'rinish rejimi:
+  //   "full" — yuboruvchi ismi + xabar preview (default), "name" — faqat ism ("Yangi xabar"),
+  //   "hidden" — hech qanday ma'lumot ("For Humo · Yangi xabar")
+  privacyPushPreview String @default("full")
   loginEvents   LoginEvent[]
   supportTickets SupportTicket[]
   marketWorker    MarketWorker? @relation("MarketWorkerProfile")
@@ -1314,6 +1318,13 @@ model NexusConversation {
   // avtomatik o'chiriladi (kunlik cron). 0 = o'chirilgan. Har ikkala foydalanuvchi
   // uchun umumiy (chat-wide) sozlama.
   autoDeleteAfterSeconds Int @default(0)
+  // Draft — foydalanuvchining kompozitorda yozgan matni. Server tomonida saqlanadi
+  // (cross-device sync). Har foydalanuvchi alohida (user1/user2).
+  // Composer 500ms debounce bilan avtomatik saqlaydi; xabar yuborilgach tozalanadi.
+  draftUser1      String?   @db.VarChar(2000)
+  draftUser2      String?   @db.VarChar(2000)
+  draftUser1At    DateTime?
+  draftUser2At    DateTime?
   createdAt       DateTime  @default(now())
   messages        NexusMessage[]
   @@unique([user1Id, user2Id])

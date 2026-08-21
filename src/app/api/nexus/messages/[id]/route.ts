@@ -579,14 +579,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             const recipientId = otherId(conv, me.id);
             const isRecipientMuted = conv.user1Id === recipientId ? !!conv.mutedByUser1 : !!conv.mutedByUser2;
             if (isRecipientMuted) return;
-            const sender = await prisma.userProfile.findUnique({
+            // Qabul qiluvchining push preview privacy sozlamasi:
+            //   full   → yuboruvchi ismi + matn preview (default)
+            //   name   → faqat yuboruvchi ismi ("Yangi xabar")
+            //   hidden → hech qanday ma'lumot ("For Humo · Yangi xabar")
+            const recipient = await prisma.userProfile.findUnique({
+                where: { id: recipientId }, select: { privacyPushPreview: true },
+            });
+            const mode = (recipient?.privacyPushPreview ?? "full") as "full" | "name" | "hidden";
+            const sender = mode === "hidden" ? null : await prisma.userProfile.findUnique({
                 where: { id: me.id }, select: { name: true, username: true },
             });
             const senderName = sender?.name ?? sender?.username ?? "Foydalanuvchi";
             const preview = clean || (msg.mediaType ? `[${msg.mediaType}]` : "Yangi xabar");
+            let title: string, body: string;
+            if (mode === "hidden") { title = "For Humo"; body = "Yangi xabar"; }
+            else if (mode === "name") { title = senderName; body = "Yangi xabar"; }
+            else { title = senderName; body = preview.slice(0, 120); }
             await sendPushToProfile(recipientId, {
-                title: senderName,
-                body: preview.slice(0, 120),
+                title,
+                body,
                 url: sender?.username ? `/nexus?dm=${sender.username}` : "/nexus",
                 tag: `dm-${id}`,
             });

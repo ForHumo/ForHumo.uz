@@ -306,8 +306,18 @@ const PRIVACY_LABELS: Record<PrivacyValue, string> = {
     none: "Hech kim",
 };
 
+type PushPreviewValue = "full" | "name" | "hidden";
+const PUSH_PREVIEW_LABELS: Record<PushPreviewValue, string> = {
+    full: "To'liq",
+    name: "Faqat ism",
+    hidden: "Yashirin",
+};
+
 function PrivacyPanel() {
-    const [state, setState] = useState<{ privacyDm: PrivacyValue; privacyLastSeen: PrivacyValue; privacyProfilePhoto: PrivacyValue } | null>(null);
+    const [state, setState] = useState<{
+        privacyDm: PrivacyValue; privacyLastSeen: PrivacyValue;
+        privacyProfilePhoto: PrivacyValue; privacyPushPreview: PushPreviewValue;
+    } | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState<string | null>(null);
 
@@ -317,6 +327,7 @@ function PrivacyPanel() {
                 privacyDm: (d.privacyDm ?? "all") as PrivacyValue,
                 privacyLastSeen: (d.privacyLastSeen ?? "all") as PrivacyValue,
                 privacyProfilePhoto: (d.privacyProfilePhoto ?? "all") as PrivacyValue,
+                privacyPushPreview: (d.privacyPushPreview ?? "full") as PushPreviewValue,
             }); })
             .finally(() => setLoading(false));
     }, []);
@@ -332,6 +343,19 @@ function PrivacyPanel() {
                 body: JSON.stringify({ [key]: value }),
             });
             if (!r.ok) setState(s => s ? { ...s, [key]: prev } : s);
+        } finally { setSaving(null); }
+    }
+    async function updatePush(value: PushPreviewValue) {
+        if (!state) return;
+        setSaving("privacyPushPreview");
+        const prev = state.privacyPushPreview;
+        setState(s => s ? { ...s, privacyPushPreview: value } : s);
+        try {
+            const r = await fetch("/api/user/privacy", {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ privacyPushPreview: value }),
+            });
+            if (!r.ok) setState(s => s ? { ...s, privacyPushPreview: prev } : s);
         } finally { setSaving(null); }
     }
 
@@ -366,6 +390,42 @@ function PrivacyPanel() {
                     onChange={v => update("privacyProfilePhoto", v)}
                     saving={saving === "privacyProfilePhoto"}
                 />
+            </SettingsGroup>
+
+            <SettingsGroup title="Bildirishnoma">
+                <div className="px-3 py-2.5" style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ background: "rgba(43,62,232,0.15)" }}>
+                            <Bell className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-white">Push ko'rinishi</p>
+                            <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                Xabar kelganda telefonda nima ko'rinadi
+                            </p>
+                        </div>
+                        {saving === "privacyPushPreview" && <Loader2 className="w-3.5 h-3.5 animate-spin text-white/40" />}
+                    </div>
+                    <div className="flex gap-1 pl-11">
+                        {(["full", "name", "hidden"] as PushPreviewValue[]).map(opt => (
+                            <button key={opt} type="button" onClick={() => updatePush(opt)}
+                                disabled={saving === "privacyPushPreview"}
+                                className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition disabled:opacity-50"
+                                style={state.privacyPushPreview === opt ? {
+                                    background: "rgba(0,206,200,0.15)",
+                                    color: "#00CEC8",
+                                    border: "1px solid rgba(0,206,200,0.40)",
+                                } : {
+                                    background: "rgba(43,62,232,0.06)",
+                                    color: "rgba(140,160,210,0.85)",
+                                    border: "1px solid rgba(43,62,232,0.20)",
+                                }}>
+                                {PUSH_PREVIEW_LABELS[opt]}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </SettingsGroup>
 
             <SettingsGroup title="Xavfsizlik">

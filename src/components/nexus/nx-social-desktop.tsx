@@ -1756,30 +1756,47 @@ export function NxSocialDesktop() {
         } finally { loadConvs(); }
     }, [loadConvs]);
 
-    // Draft avto-saqlash — localStorage'da (per-chat)
+    // Draft avto-saqlash — server'da (cross-device sync) + localStorage (offline cache)
     const draftKey = (convId: string) => `nexus:dm:draft:${convId}`;
     // Suhbat almashinuvida: joriyni saqlash + yangisidan qayta tiklash
     const prevSelectedRef = useRef<string | null>(null);
     useEffect(() => {
-        // Oldingi chatning draft'ini yozib qo'yish
+        // Oldingi chatning draft'ini local'ga yozib qo'yish (server debounce alohida)
         const prev = prevSelectedRef.current;
         if (prev && prev !== selectedId) {
             try {
                 if (input.trim()) localStorage.setItem(draftKey(prev), input);
                 else localStorage.removeItem(draftKey(prev));
             } catch {}
+            // Server'ga darhol final saqlash (chat almashuvida)
+            fetch(`/api/nexus/messages/${prev}/draft`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: input.trim() }),
+            }).catch(() => {});
         }
-        // Yangi tanlangan chatning draft'ini olish
+        // Yangi tanlangan chatning draft'ini olish — avval local cache, keyin server bilan sinxronlash
         if (selectedId && selectedId !== prev) {
             try {
                 const d = localStorage.getItem(draftKey(selectedId));
                 setInput(d ?? "");
             } catch { setInput(""); }
+            fetch(`/api/nexus/messages/${selectedId}/draft`, { cache: "no-store" })
+                .then(r => r.ok ? r.json() : null)
+                .then(d => {
+                    if (!d) return;
+                    // Server versiyasi yangiroq bo'lsa, uni ustuvor deb hisoblaymiz
+                    const serverText = String(d.draft ?? "");
+                    if (serverText && selectedId === prevSelectedRef.current) {
+                        setInput(serverText);
+                        try { localStorage.setItem(draftKey(selectedId), serverText); } catch {}
+                    }
+                })
+                .catch(() => {});
         }
         prevSelectedRef.current = selectedId;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedId]);
-    // Har o'zgarishda avto-saqlash (debounce 400ms)
+    // Har o'zgarishda avto-saqlash — local (400ms) + server (900ms debounce, spam kamroq)
     useEffect(() => {
         if (!selectedId) return;
         const t = setTimeout(() => {
@@ -1788,6 +1805,17 @@ export function NxSocialDesktop() {
                 else localStorage.removeItem(draftKey(selectedId));
             } catch {}
         }, 400);
+        return () => clearTimeout(t);
+    }, [input, selectedId]);
+    // Server draft sync — kamroq tez-tez (900ms), bandwidth tejaydi
+    useEffect(() => {
+        if (!selectedId) return;
+        const t = setTimeout(() => {
+            fetch(`/api/nexus/messages/${selectedId}/draft`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: input.trim() }),
+            }).catch(() => {});
+        }, 900);
         return () => clearTimeout(t);
     }, [input, selectedId]);
 
