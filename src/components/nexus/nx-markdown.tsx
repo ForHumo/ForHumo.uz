@@ -4,6 +4,12 @@
 // Barcha URL/text escape qilinadi, faqat tekshirilgan http(s) linklar aylanadi.
 
 import React from "react";
+import { EmojiText } from "@/lib/twemoji";
+
+// Matn parchasini emoji bilan render qilish (system emoji o'rniga Twemoji SVG)
+function textWithEmoji(s: string, key: string, size = 18): React.ReactNode {
+    return <EmojiText key={key} text={s} size={size} />;
+}
 
 const URL_RE = /^https?:\/\/[^\s<>"']+$/i;
 
@@ -21,7 +27,7 @@ function parseInline(text: string, key: string): React.ReactNode[] {
     let m: RegExpExecArray | null;
     let i = 0;
     while ((m = re.exec(text)) !== null) {
-        if (m.index > last) nodes.push(text.slice(last, m.index));
+        if (m.index > last) nodes.push(textWithEmoji(text.slice(last, m.index), `${key}-t${i}`));
         const tok = m[0];
         const k = `${key}-i${i++}`;
         if (tok.startsWith("`")) {
@@ -32,11 +38,11 @@ function parseInline(text: string, key: string): React.ReactNode[] {
                 </code>
             );
         } else if (tok.startsWith("**")) {
-            nodes.push(<strong key={k}>{tok.slice(2, -2)}</strong>);
+            nodes.push(<strong key={k}>{textWithEmoji(tok.slice(2, -2), `${k}-e`)}</strong>);
         } else if (tok.startsWith("*")) {
-            nodes.push(<em key={k}>{tok.slice(1, -1)}</em>);
+            nodes.push(<em key={k}>{textWithEmoji(tok.slice(1, -1), `${k}-e`)}</em>);
         } else if (tok.startsWith("~~")) {
-            nodes.push(<s key={k}>{tok.slice(2, -2)}</s>);
+            nodes.push(<s key={k}>{textWithEmoji(tok.slice(2, -2), `${k}-e`)}</s>);
         } else if (tok.startsWith("[")) {
             const linkMatch = tok.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
             if (linkMatch) {
@@ -46,20 +52,19 @@ function parseInline(text: string, key: string): React.ReactNode[] {
                     nodes.push(
                         <a key={k} href={url} target="_blank" rel="noopener noreferrer"
                             className="underline hover:opacity-80" style={{ color: "#00CEC8" }}>
-                            {label}
+                            {textWithEmoji(label, `${k}-e`)}
                         </a>
                     );
                 } else {
-                    // Xavfli URL — matn sifatida
-                    nodes.push(tok);
+                    nodes.push(textWithEmoji(tok, `${k}-e`));
                 }
             } else {
-                nodes.push(tok);
+                nodes.push(textWithEmoji(tok, `${k}-e`));
             }
         }
         last = m.index + tok.length;
     }
-    if (last < text.length) nodes.push(text.slice(last));
+    if (last < text.length) nodes.push(textWithEmoji(text.slice(last), `${key}-tend`));
     return nodes;
 }
 

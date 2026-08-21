@@ -45,3 +45,26 @@ export function Emoji({ char, size = 16, className }: { char: string; size?: num
         },
     });
 }
+
+// Emoji-picking regex — Extended_Pictographic (u belgisi) + ZWJ ketma-ketliklari.
+// \p{Extended_Pictographic} — barcha emoji; keyin ixtiyoriy tone modifier + ZWJ + emoji.
+// Bu regex 99% zamonaviy emojilarni to'g'ri ushlaydi (family, professional, flags).
+const EMOJI_REGEX = /(?:\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic}|\p{Emoji_Modifier})*)+/gu;
+
+// Matnni bo'lib, emojilarni Twemoji SVG bilan almashtiradi. String qismlarni saqlaydi.
+// Xabar body'sida ishlatish: <EmojiText text={m.text} size={18} />
+export function EmojiText({ text, size = 18, className }: { text: string | null | undefined; size?: number; className?: string }) {
+    if (!text) return null;
+    const parts: (string | React.ReactElement)[] = [];
+    let last = 0;
+    let m: RegExpExecArray | null;
+    EMOJI_REGEX.lastIndex = 0;
+    let key = 0;
+    while ((m = EMOJI_REGEX.exec(text)) !== null) {
+        if (m.index > last) parts.push(text.slice(last, m.index));
+        parts.push(React.createElement(Emoji, { key: `e${key++}`, char: m[0], size, className }));
+        last = m.index + m[0].length;
+    }
+    if (last < text.length) parts.push(text.slice(last));
+    return React.createElement(React.Fragment, null, ...parts);
+}

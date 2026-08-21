@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker, Film, ExternalLink } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxGroupCreateModal } from "./nx-group-create-modal";
@@ -2074,16 +2074,16 @@ export function NxSocialDesktop() {
     return (
         <div className="flex w-full h-full min-h-0 pb-[88px]" style={{ background: "#050818" }}>
             {/* ── COL 1: Chat list ─────────────────────────────────────── */}
-            <div className="w-[320px] flex-shrink-0 flex flex-col border-r"
+            <div className="w-[380px] flex-shrink-0 flex flex-col border-r"
                 style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.55)" }}>
-                {/* Tab bar (6 majburiy tab: All/Unread/Private/Groups/Channels/Agents) — horizontal scroll */}
+                {/* Tab bar (6 majburiy tab: All/Unread/DM/Groups/Channels/Agents) — 6-ustunli grid, swipe kerak emas */}
                 <div className="p-2 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <div className="flex items-center gap-1 overflow-x-auto nx-hide-scrollbar">
+                    <div className="grid grid-cols-6 gap-1">
                     {(() => {
                         // Tab bo'yicha o'qilmagan hisoblash (muted chatlar sanamaydi)
                         const unreadDMs = convs.filter(c => c.unread && !c.muted && !c.isSelf).length;
-                        // 320px sidebar'ga 6 ta tab sig'ishi uchun qisqa label + icon
+                        // 380px sidebar → 6 tab teng bo'linadi, hech qanday scroll shart emas (desktop-friendly)
                         return ([
                             { id: "all" as const,      icon: Inbox,         label: "All",     badge: unreadDMs },
                             { id: "unread" as const,   icon: BellOff,       label: "Yangi",   badge: unreadDMs },
@@ -2095,7 +2095,7 @@ export function NxSocialDesktop() {
                             <button key={t.id}
                                 onClick={() => setListTab(t.id)}
                                 title={t.label}
-                                className="flex-shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-full text-[10px] font-bold transition whitespace-nowrap relative"
+                                className="flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl text-[10px] font-bold transition relative"
                                 style={listTab === t.id ? {
                                     background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
                                     color: "#fff",
@@ -2104,12 +2104,13 @@ export function NxSocialDesktop() {
                                     color: "rgba(140,160,210,0.80)",
                                     border: "1px solid rgba(43,62,232,0.15)",
                                 }}>
-                                <t.icon className="w-3 h-3" /> {t.label}
+                                <t.icon className="w-3.5 h-3.5" />
+                                <span className="leading-none">{t.label}</span>
                                 {t.badge > 0 && (
-                                    <span className="ml-0.5 min-w-[14px] h-3.5 px-1 rounded-full text-[8px] font-black flex items-center justify-center"
+                                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black flex items-center justify-center"
                                         style={{
-                                            background: listTab === t.id ? "rgba(255,255,255,0.30)" : "#00CEC8",
-                                            color: listTab === t.id ? "#fff" : "#0B1228",
+                                            background: listTab === t.id ? "#fff" : "#00CEC8",
+                                            color: listTab === t.id ? "#2B3EE8" : "#0B1228",
                                         }}>
                                         {t.badge > 99 ? "99+" : t.badge}
                                     </span>
@@ -2619,6 +2620,22 @@ export function NxSocialDesktop() {
                                                 }
                                             }}
                                         />
+                                        <div className="h-px" style={{ background: "rgba(43,62,232,0.14)" }} />
+                                        {/* Chatni tozalash — o'zim uchun (peer'da qoladi). Ma'lumot POST /clear */}
+                                        <button
+                                            onClick={async () => {
+                                                setConvMenuFor(null);
+                                                if (!confirm("Chatni o'chirasizmi? Sizda barcha xabarlar yashiriladi (u kishida qoladi).")) return;
+                                                const r = await fetch(`/api/nexus/messages/${c.conversationId}/clear`, { method: "POST" });
+                                                if (r.ok) {
+                                                    if (selectedIdRef.current === c.conversationId) setMessages([]);
+                                                    loadConvs();
+                                                }
+                                            }}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-red-500/10 text-left transition"
+                                            style={{ color: "#EF4444" }}>
+                                            <Trash2 className="w-4 h-4" /> Chatni o&apos;chirish
+                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -4103,10 +4120,32 @@ export function NxSocialDesktop() {
                                 </>
                             )}
 
-                            {/* Emoji picker (composer ustidagi popover) */}
+                            {/* Emoji picker (composer ustidagi popover) — 3 tabli: Emoji/Sticker/GIF */}
                             {emojiOpen && (
                                 <EmojiPicker
                                     onPick={(emoji) => { setInput(prev => prev + emoji); }}
+                                    onPickMedia={async (m) => {
+                                        setEmojiOpen(false);
+                                        if (!selectedId) return;
+                                        try {
+                                            const r = await fetch(`/api/nexus/messages/${selectedId}`, {
+                                                method: "POST", headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({
+                                                    text: "",
+                                                    mediaUrl: m.mediaUrl,
+                                                    mediaType: m.kind === "GIF" ? "gif" : "sticker",
+                                                    mediaMime: m.kind === "GIF"
+                                                        ? "video/mp4"
+                                                        : (m.mediaUrl.endsWith(".png") ? "image/png" : "image/webp"),
+                                                }),
+                                            });
+                                            if (r.ok) {
+                                                const d = await r.json();
+                                                setMessages(mm => [...mm, d.message]);
+                                                loadConvs();
+                                            }
+                                        } catch { /* ignore */ }
+                                    }}
                                     onClose={() => setEmojiOpen(false)}
                                 />
                             )}
@@ -5896,42 +5935,186 @@ const EMOJI_CATEGORIES: Array<{ name: string; emojis: string[] }> = [
     { name: "Boshqa",  emojis: ["🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🛻","🚚","🚛","🚜","🏍️","🛵","🚲","🛴","🛺","✈️","🛫","🛬","🛩️","🚁","🛸","🚀","🛰️","🚢","⛵","🛶","🚤"] },
 ];
 
-function EmojiPicker({ onPick, onClose }: { onPick: (emoji: string) => void; onClose: () => void }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// EmojiPicker (unified) — Telegram uslubidagi 3-tabli picker: Emoji / Sticker / GIF.
+// Fon Nexus rangida (rgba(11,18,40,0.98) + gradient accent).
+// Emoji tab: kategoriya paneli + Twemoji SVG grid.
+// Sticker/GIF tab: foydalanuvchining pack'lari (owned + subscribed) + qidiruv.
+// ─────────────────────────────────────────────────────────────────────────────
+interface MediaItem { id: string; mediaUrl: string; thumbUrl: string | null; width?: number; height?: number; keywords?: string[]; }
+interface MediaPack { id: string; slug: string; name: string; kind: "GIF" | "STICKER"; items?: MediaItem[]; owner?: { username: string | null } | null; }
+interface PickedMedia { kind: "GIF" | "STICKER"; mediaUrl: string; thumbUrl: string | null; width: number; height: number; }
+
+function EmojiPicker({ onPick, onPickMedia, onClose }: {
+    onPick: (emoji: string) => void;
+    onPickMedia?: (m: PickedMedia) => void;
+    onClose: () => void;
+}) {
+    const [mainTab, setMainTab] = useState<"emoji" | "sticker" | "gif">("emoji");
     const [cat, setCat] = useState(0);
+    const [packs, setPacks] = useState<{ owned: MediaPack[]; subscribed: MediaPack[] }>({ owned: [], subscribed: [] });
+    const [searchPacks, setSearchPacks] = useState<MediaPack[]>([]);
+    const [q, setQ] = useState("");
+    const [loading, setLoading] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); }
         setTimeout(() => document.addEventListener("mousedown", h), 0);
         return () => document.removeEventListener("mousedown", h);
     }, [onClose]);
+
+    // Pack'larni yuklash — tab o'zgarganda
+    useEffect(() => {
+        if (mainTab === "emoji") return;
+        const kind = mainTab === "sticker" ? "STICKER" : "GIF";
+        setLoading(true);
+        setQ("");
+        fetch(`/api/humo/user/packs?kind=${kind}`)
+            .then(r => r.ok ? r.json() : { owned: [], subscribed: [] })
+            .then(d => setPacks({ owned: d.owned ?? [], subscribed: d.subscribed ?? [] }))
+            .catch(() => setPacks({ owned: [], subscribed: [] }))
+            .finally(() => setLoading(false));
+    }, [mainTab]);
+
+    // Qidiruv — 250ms debounce
+    useEffect(() => {
+        if (mainTab === "emoji") return;
+        const query = q.trim();
+        if (query.length < 1) { setSearchPacks([]); return; }
+        const kind = mainTab === "sticker" ? "STICKER" : "GIF";
+        setLoading(true);
+        const t = setTimeout(async () => {
+            try {
+                const r = await fetch(`/api/humo/packs/search?kind=${kind}&q=${encodeURIComponent(query)}&limit=20`);
+                if (r.ok) { const d = await r.json(); setSearchPacks(d.packs ?? []); }
+            } finally { setLoading(false); }
+        }, 250);
+        return () => clearTimeout(t);
+    }, [q, mainTab]);
+
+    const pickMedia = (kind: "GIF" | "STICKER", it: MediaItem) => {
+        onPickMedia?.({ kind, mediaUrl: it.mediaUrl, thumbUrl: it.thumbUrl, width: it.width ?? 0, height: it.height ?? 0 });
+    };
+
+    const allPacks = q.trim() ? searchPacks : [...packs.owned, ...packs.subscribed];
+    const kindKey = mainTab === "sticker" ? "sticker" : "gif";
+
     return (
         <div ref={ref}
-            className="absolute bottom-full right-2 mb-2 w-[340px] rounded-2xl overflow-hidden z-40"
+            className="absolute bottom-full right-2 mb-2 w-[360px] rounded-2xl overflow-hidden z-40 flex flex-col"
             style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
-            <div className="flex gap-1 p-2 border-b overflow-x-auto scrollbar-hide"
-                style={{ borderColor: "rgba(43,62,232,0.14)" }}>
-                {EMOJI_CATEGORIES.map((c, i) => (
-                    <button key={c.name}
-                        onClick={() => setCat(i)}
-                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold flex-shrink-0"
-                        style={cat === i
-                            ? { background: "rgba(43,62,232,0.25)", color: "#fff" }
-                            : { color: "rgba(140,160,210,0.70)" }
-                        }>
-                        {c.name}
+            {/* Top: 3 asosiy tab (Emoji / Sticker / GIF) — Telegram uslubi */}
+            <div className="flex items-center gap-1 p-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.16)" }}>
+                {([
+                    { id: "emoji" as const, label: "Emoji", icon: Smile },
+                    { id: "sticker" as const, label: "Sticker", icon: Sticker },
+                    { id: "gif" as const, label: "GIF", icon: Film },
+                ]).map(t => (
+                    <button key={t.id} onClick={() => setMainTab(t.id)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11.5px] font-black transition"
+                        style={mainTab === t.id
+                            ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }
+                            : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,220,0.80)" }}>
+                        <t.icon className="w-3.5 h-3.5" /> {t.label}
                     </button>
                 ))}
             </div>
-            <div className="p-2 max-h-[280px] overflow-y-auto nx-scrollbar grid grid-cols-8 gap-1">
-                {EMOJI_CATEGORIES[cat].emojis.map(e => (
-                    <button key={e}
-                        onClick={() => { onPick(e); /* pickerni ochiq qoldiramiz — bir necha marta tanlash mumkin */ }}
-                        title={e}
-                        className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/[0.06] active:scale-90 transition-transform">
-                        <Emoji char={e} size={24} />
-                    </button>
-                ))}
-            </div>
+
+            {/* Body */}
+            {mainTab === "emoji" ? (
+                <>
+                    {/* Category bar */}
+                    <div className="flex gap-1 p-2 overflow-x-auto nx-hide-scrollbar" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                        {EMOJI_CATEGORIES.map((c, i) => (
+                            <button key={c.name} onClick={() => setCat(i)}
+                                className="px-2.5 py-1 rounded-lg text-[11px] font-bold flex-shrink-0 transition"
+                                style={cat === i
+                                    ? { background: "rgba(0,206,200,0.18)", color: "#00CEC8" }
+                                    : { color: "rgba(140,160,210,0.70)" }}>
+                                {c.name}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="p-2 max-h-[280px] overflow-y-auto nx-scrollbar grid grid-cols-8 gap-1">
+                        {EMOJI_CATEGORIES[cat].emojis.map(e => (
+                            <button key={e} onClick={() => onPick(e)} title={e}
+                                className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/[0.06] active:scale-90 transition-transform">
+                                <Emoji char={e} size={24} />
+                            </button>
+                        ))}
+                    </div>
+                </>
+            ) : (
+                <>
+                    {/* Search + boshqarish havolasi */}
+                    <div className="p-2 flex items-center gap-2 relative" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                        <div className="flex-1 relative">
+                            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "rgba(140,160,210,0.55)" }} />
+                            <input type="search" value={q} onChange={e => setQ(e.target.value)}
+                                placeholder={mainTab === "sticker" ? "Sticker qidirish..." : "GIF qidirish..."}
+                                className="w-full h-8 pl-8 pr-2 rounded-lg text-[11.5px] outline-none"
+                                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.16)", color: "rgba(230,238,255,0.96)", caretColor: "#00CEC8" }} />
+                        </div>
+                        <a href={`/nexus/agent/${kindKey}`} target="_blank" rel="noopener"
+                            title="Pack yaratish/boshqarish"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg flex-shrink-0"
+                            style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.25)" }}>
+                            <ExternalLink className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                        </a>
+                    </div>
+                    {/* Pack ro'yxati */}
+                    <div className="p-2 max-h-[300px] overflow-y-auto nx-scrollbar">
+                        {loading ? (
+                            <div className="flex justify-center py-8"><Loader2 className="w-4 h-4 animate-spin" style={{ color: "#00CEC8" }} /></div>
+                        ) : allPacks.length === 0 ? (
+                            <div className="py-8 text-center">
+                                <p className="text-[11.5px] mb-3" style={{ color: "rgba(200,215,245,0.75)" }}>
+                                    {q.trim() ? `"${q}" bo'yicha topilmadi` : `Hali ${mainTab === "sticker" ? "sticker" : "GIF"} pack yo'q`}
+                                </p>
+                                <a href={`/nexus/agent/${kindKey}`} target="_blank" rel="noopener"
+                                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11px] font-black text-white"
+                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    <Plus className="w-3 h-3" /> Yaratish
+                                </a>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {allPacks.map(pack => (
+                                    <div key={pack.id}>
+                                        <div className="flex items-center gap-1.5 mb-1.5 px-1">
+                                            <p className="text-[10.5px] font-black truncate" style={{ color: "rgba(230,238,255,0.90)" }}>{pack.name}</p>
+                                            {pack.owner?.username && (
+                                                <span className="text-[9.5px] truncate" style={{ color: "rgba(140,160,210,0.55)" }}>@{pack.owner.username}</span>
+                                            )}
+                                            <span className="ml-auto text-[9.5px] tabular-nums" style={{ color: "rgba(140,160,210,0.55)" }}>{pack.items?.length ?? 0}</span>
+                                        </div>
+                                        <div className={mainTab === "sticker" ? "grid grid-cols-5 gap-1" : "grid grid-cols-3 gap-1"}>
+                                            {(pack.items ?? []).slice(0, mainTab === "sticker" ? 15 : 9).map(it => (
+                                                <button key={it.id} onClick={() => pickMedia(pack.kind, it)}
+                                                    className="aspect-square rounded-md overflow-hidden active:scale-90 transition-transform"
+                                                    style={{ background: "rgba(43,62,232,0.08)" }}>
+                                                    {pack.kind === "GIF" ? (
+                                                        it.thumbUrl ? (
+                                                            // eslint-disable-next-line @next/next/no-img-element
+                                                            <img src={it.thumbUrl} alt="" loading="lazy" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <video src={it.mediaUrl} muted playsInline preload="metadata" className="w-full h-full object-cover" />
+                                                        )
+                                                    ) : (
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                                        <img src={it.mediaUrl} alt="" loading="lazy" className="w-full h-full object-contain" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
         </div>
     );
 }
