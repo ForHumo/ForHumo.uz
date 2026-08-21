@@ -3342,20 +3342,20 @@ export function NxSocialDesktop() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className={`max-w-[70%] ${m.mediaType === "sticker" ? "p-0" : "px-3.5 py-2"} text-sm whitespace-pre-wrap break-words`}
+                                    <div className={`max-w-[70%] ${(m.mediaType === "sticker" || m.mediaType === "video-circle") ? "p-0" : "px-3.5 py-2"} text-sm whitespace-pre-wrap break-words`}
                                         style={{
-                                            // Sticker uchun bubble transparent va border yo'q (Telegram uslub)
-                                            ...(m.mediaType === "sticker"
+                                            // Sticker va video-circle uchun bubble transparent (Telegram uslub — doiraviy video xabar)
+                                            ...((m.mediaType === "sticker" || m.mediaType === "video-circle")
                                                 ? { background: "transparent", color: m.mine ? "#fff" : "rgba(220,230,255,0.92)" }
                                                 : m.mine
                                                     ? { background: "linear-gradient(135deg,#2B3EE8,#1a6fcc)", color: "#fff" }
                                                     : { background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.92)" }
                                             ),
-                                            // Guruhlash: yuqori/pastki burchak radius'i mos ravishda yumshoq (sticker uchun ta'siri yo'q)
-                                            borderTopLeftRadius:  m.mediaType === "sticker" ? 0 : (m.mine ? 16 : (groupWithPrev ? 4 : 16)),
-                                            borderTopRightRadius: m.mediaType === "sticker" ? 0 : (m.mine ? (groupWithPrev ? 4 : 16) : 16),
-                                            borderBottomLeftRadius:  m.mediaType === "sticker" ? 0 : (m.mine ? 16 : (groupWithNext ? 4 : 6)),
-                                            borderBottomRightRadius: m.mediaType === "sticker" ? 0 : (m.mine ? (groupWithNext ? 4 : 6) : 16),
+                                            // Guruhlash: yuqori/pastki burchak radius'i mos ravishda yumshoq (sticker/circle uchun ta'siri yo'q)
+                                            borderTopLeftRadius:  (m.mediaType === "sticker" || m.mediaType === "video-circle") ? 0 : (m.mine ? 16 : (groupWithPrev ? 4 : 16)),
+                                            borderTopRightRadius: (m.mediaType === "sticker" || m.mediaType === "video-circle") ? 0 : (m.mine ? (groupWithPrev ? 4 : 16) : 16),
+                                            borderBottomLeftRadius:  (m.mediaType === "sticker" || m.mediaType === "video-circle") ? 0 : (m.mine ? 16 : (groupWithNext ? 4 : 6)),
+                                            borderBottomRightRadius: (m.mediaType === "sticker" || m.mediaType === "video-circle") ? 0 : (m.mine ? (groupWithNext ? 4 : 6) : 16),
                                         }}>
                                         {m.forwardedFromName && (
                                             <div className="flex items-center gap-1 mb-1.5 text-[10px] opacity-70"
@@ -3420,19 +3420,7 @@ export function NxSocialDesktop() {
                                             </div>
                                         )}
                                         {m.mediaType === "video-circle" && m.mediaUrl && (
-                                            <div className="mb-1 overflow-hidden bg-black relative"
-                                                style={{
-                                                    width: 240, height: 240,
-                                                    borderRadius: "44%",
-                                                    border: "1px solid rgba(0,206,200,0.30)",
-                                                }}>
-                                                <video src={m.mediaUrl} controls playsInline
-                                                    className="w-full h-full object-cover" />
-                                                <span className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
-                                                    style={{ background: "rgba(0,206,200,0.20)", color: "#00CEC8" }}>
-                                                    <Camera className="w-2.5 h-2.5" /> Video xabar
-                                                </span>
-                                            </div>
+                                            <NxCirclePlayer src={m.mediaUrl} durationMs={m.durationMs} />
                                         )}
                                         {m.mediaType === "file" && m.mediaUrl && (
                                             <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer" download={m.mediaName ?? true}
@@ -6318,6 +6306,91 @@ function IconBtn({ icon: Icon, title, onClick }: { icon: React.ElementType; titl
             style={{ background: "rgba(43,62,232,0.10)" }}>
             <Icon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
         </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxCirclePlayer — Telegram uslubidagi doiraviy video xabar (кружочек / video note).
+// - Perfectly round (border-radius 50%), border yo'q
+// - Autoplay muted + loop + playsInline (Telegram default)
+// - Bosilsa ovoz yoqiladi/o'chadi (mute toggle)
+// - Yuqori-chapda: davomiylik + speaker ikonasi (0:02 🔊)
+// - Atrofida progress halqa (SVG stroke — konstruktiv efekt)
+// - Fon shaffof (bubble sticker uslubi — hech qanday bubble borderi kerak emas)
+// ─────────────────────────────────────────────────────────────────────────────
+function NxCirclePlayer({ src, durationMs }: { src: string; durationMs?: number | null }) {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [muted, setMuted] = useState(true);
+    const [progress, setProgress] = useState(0);  // 0..1
+    const [duration, setDuration] = useState((durationMs ?? 0) / 1000);
+    const SIZE = 220;
+    const STROKE = 3;
+    const R = (SIZE - STROKE) / 2;
+    const C = 2 * Math.PI * R;
+
+    useEffect(() => {
+        const v = videoRef.current;
+        if (!v) return;
+        const onTime = () => {
+            if (!v.duration || !isFinite(v.duration)) return;
+            setProgress(v.currentTime / v.duration);
+            setDuration(v.duration);
+        };
+        const onMeta = () => { if (isFinite(v.duration)) setDuration(v.duration); };
+        v.addEventListener("timeupdate", onTime);
+        v.addEventListener("loadedmetadata", onMeta);
+        // Autoplay attempt (browser may block if not muted)
+        v.play().catch(() => { /* muted autoplay policy */ });
+        return () => { v.removeEventListener("timeupdate", onTime); v.removeEventListener("loadedmetadata", onMeta); };
+    }, [src]);
+
+    const fmtDur = (s: number) => {
+        if (!isFinite(s) || s < 0) s = 0;
+        const m = Math.floor(s / 60);
+        const sec = Math.floor(s % 60);
+        return `${m}:${sec.toString().padStart(2, "0")}`;
+    };
+
+    return (
+        <div className="mb-1 relative select-none" style={{ width: SIZE, height: SIZE }}>
+            {/* Video — doiraviy clip */}
+            <div className="absolute inset-0 overflow-hidden bg-black"
+                style={{ borderRadius: "50%", cursor: "pointer" }}
+                onClick={() => {
+                    setMuted(m => {
+                        if (videoRef.current) videoRef.current.muted = !m;
+                        return !m;
+                    });
+                }}>
+                <video ref={videoRef} src={src}
+                    autoPlay muted={muted} loop playsInline
+                    className="w-full h-full object-cover" />
+            </div>
+
+            {/* Progress halqa (SVG) — Telegram uslubidagi tashqi aylana */}
+            <svg width={SIZE} height={SIZE} className="absolute inset-0 pointer-events-none" style={{ transform: "rotate(-90deg)" }}>
+                {/* Fon halqa (yumshoq) */}
+                <circle cx={SIZE / 2} cy={SIZE / 2} r={R}
+                    fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth={STROKE} />
+                {/* Progress halqa */}
+                <circle cx={SIZE / 2} cy={SIZE / 2} r={R}
+                    fill="none" stroke="#00CEC8" strokeWidth={STROKE}
+                    strokeLinecap="round"
+                    strokeDasharray={C}
+                    strokeDashoffset={C * (1 - progress)}
+                    style={{ transition: "stroke-dashoffset 0.15s linear", filter: "drop-shadow(0 0 3px rgba(0,206,200,0.55))" }} />
+            </svg>
+
+            {/* Yuqori-chapda: davomiylik + speaker ikonasi (Telegram uslub) */}
+            <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black tabular-nums pointer-events-none"
+                style={{ background: "rgba(0,0,0,0.55)", color: "#fff", backdropFilter: "blur(4px)" }}>
+                {muted
+                    ? <VolumeX className="w-3 h-3" style={{ color: "rgba(255,255,255,0.85)" }} />
+                    : <Volume2 className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                }
+                <span>{fmtDur(duration - (videoRef.current?.currentTime ?? 0))}</span>
+            </div>
+        </div>
     );
 }
 
