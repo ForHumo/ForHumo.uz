@@ -19,6 +19,7 @@ import { BnInstallCard } from "./bn-install-card";
 import { BnNearbyRow } from "./bn-nearby-row";
 import { BnTrendingRow } from "./bn-trending-row";
 import { BnReferralStatsChip } from "./bn-referral-stats-chip";
+import { BnNewShopsChip } from "./bn-new-shops-chip";
 import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
 const COLS = 5;          // chapdan o'ngga 5 ta
@@ -99,6 +100,9 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
 
             {/* ── Referral haftalik signal — >=3 kishi bonus olgan bo'lsa ── */}
             <BnReferralStatsChip />
+
+            {/* ── Yangi ochilgan do'konlar — supply-side social proof ── */}
+            <BnNewShopsChip />
 
             {/* ── Siz uchun (personalizatsiya) — faqat kirganlar uchun ── */}
             {forYou && forYou.length > 0 && (

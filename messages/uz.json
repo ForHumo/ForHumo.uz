@@ -1227,6 +1227,9 @@
     },
     "refChip": {
       "text": "Bu hafta <b>{n}</b> kishi bonus oldi · jami {amount}"
+    },
+    "newShops": {
+      "text": "Bu hafta <b>{n} ta</b> yangi do'kon qo'shildi — ko'rish"
     }
   }
 }
