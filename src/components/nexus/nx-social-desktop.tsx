@@ -210,6 +210,32 @@ export function NxSocialDesktop() {
     const [sendMenuOpen, setSendMenuOpen] = useState(false);
     // Silent flag — flushPending'ga uzatiladi (bir marta ishlaydi)
     const nextSilentRef = useRef(false);
+    // Smart reply (AI) — Gemini'dan 3 ta tez javob taklif. Peer'ning oxirgi xabari matni'ga qarab.
+    const [smartReplies, setSmartReplies] = useState<string[]>([]);
+    const [smartRepliesForMsgId, setSmartRepliesForMsgId] = useState<string | null>(null);
+    const [smartRepliesLoading, setSmartRepliesLoading] = useState(false);
+    const [smartRepliesDismissed, setSmartRepliesDismissed] = useState(false);
+    // Oxirgi xabar peer'niki + matn bo'lsa smart reply olib kel
+    useEffect(() => {
+        if (!selectedId || messages.length === 0) { setSmartReplies([]); setSmartRepliesForMsgId(null); return; }
+        const last = messages[messages.length - 1];
+        if (last.mine || !last.text || !last.text.trim()) { setSmartReplies([]); setSmartRepliesForMsgId(null); setSmartRepliesDismissed(false); return; }
+        // Shu xabar uchun allaqachon olingan bo'lsa qayta so'ramaymiz
+        if (smartRepliesForMsgId === last.id) return;
+        setSmartRepliesForMsgId(last.id);
+        setSmartRepliesDismissed(false);
+        setSmartRepliesLoading(true);
+        setSmartReplies([]);
+        const controller = new AbortController();
+        fetch(`/api/nexus/messages/${selectedId}/smart-reply?ctx=${last.id}`, { cache: "no-store", signal: controller.signal })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => setSmartReplies(Array.isArray(d?.replies) ? d.replies.slice(0, 3) : []))
+            .catch(() => {})
+            .finally(() => setSmartRepliesLoading(false));
+        return () => controller.abort();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [messages, selectedId]);
+
     // Chat-scoped yulduzchali (bookmark) xabarlar view modal (global bookmarksOpen'dan alohida)
     const [chatBookmarksOpen, setChatBookmarksOpen] = useState(false);
     type ChatBookmarkItem = { id: string; text: string; mine: boolean; createdAt: string;
@@ -4559,6 +4585,41 @@ export function NxSocialDesktop() {
                                     className="w-7 h-7 rounded-md flex items-center justify-center"
                                     style={{ background: "rgba(43,62,232,0.10)" }}>
                                     <X className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Smart reply chip'lar — Gemini'dan 3 ta tez javob (peer xabari bo'lganda) */}
+                        {!smartRepliesDismissed && !editingId && !replyTo && !recording && !videoRecording && (smartReplies.length > 0 || smartRepliesLoading) && (
+                            <div className="px-3 py-2 flex items-center gap-1.5 flex-shrink-0 overflow-x-auto nx-scrollbar"
+                                style={{ borderTop: "1px solid rgba(43,62,232,0.14)", background: "rgba(11,18,40,0.55)" }}>
+                                <Sparkles className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                {smartRepliesLoading ? (
+                                    <span className="text-[11px] font-bold" style={{ color: "rgba(160,180,220,0.65)" }}>
+                                        AI javob taklif tayyorlayapti...
+                                    </span>
+                                ) : (
+                                    smartReplies.map((reply, i) => (
+                                        <button key={i}
+                                            onClick={() => {
+                                                setInput(reply);
+                                                setSmartRepliesDismissed(true);
+                                                // Kichik pauza berib avto-yubormaymiz — user tahrirlashi mumkin
+                                            }}
+                                            title="Bosing → matnga qo'yiladi (Enter yuboradi)"
+                                            className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition hover:brightness-125 active:scale-95"
+                                            style={{
+                                                background: "linear-gradient(135deg, rgba(43,62,232,0.20), rgba(0,206,200,0.20))",
+                                                color: "#fff",
+                                                border: "1px solid rgba(0,206,200,0.35)",
+                                            }}>
+                                            {reply}
+                                        </button>
+                                    ))
+                                )}
+                                <button onClick={() => setSmartRepliesDismissed(true)} title="Yashirish"
+                                    className="ml-auto flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/[0.08]">
+                                    <X className="w-3 h-3" style={{ color: "rgba(160,176,224,0.70)" }} />
                                 </button>
                             </div>
                         )}
