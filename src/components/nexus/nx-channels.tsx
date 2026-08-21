@@ -577,17 +577,21 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         if (!forwardMsg) return;
         setForwarding(true);
         try {
-            const prefix = `↪ Kanaldan (${ch?.name ?? ""})\n`;
-            const text = forwardMsg.text ? prefix + forwardMsg.text : prefix;
             const media = forwardMsg.media?.[0] ?? null;
-            const body: Record<string, unknown> = { text };
-            // Kanal media[] birinchi elementini DM mediaUrl sifatida
+            // Endi text prefix o'rniga proper metadata bilan yuboriladi
+            const body: Record<string, unknown> = { text: forwardMsg.text ?? "" };
             if (media) {
                 body.mediaUrl = media;
                 body.mediaType = /\.(png|jpe?g|gif|webp)$/i.test(media) ? "image"
                     : /\.(mp4|webm|mov)$/i.test(media) ? "video"
                     : /\.(mp3|webm|m4a|wav|ogg)$/i.test(media) ? "audio"
                     : "file";
+            }
+            // Kanal/guruh metadata — client kartochkani chiroyli chiqaradi + link
+            if (ch) {
+                body.forwardedChannelId = ch.id;
+                body.forwardedChannelName = ch.name;
+                if (ch.handle) body.forwardedChannelHandle = ch.handle;
             }
             const r = await fetch(`/api/nexus/messages/${convId}`, {
                 method: "POST", headers: { "Content-Type": "application/json" },

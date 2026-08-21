@@ -1370,8 +1370,13 @@ model NexusMessage {
   scheduledFor      DateTime?
   edits             NexusMessageEdit[]
   // Forward (yuborilgan) — asl yozuvchining profil ID'si (relation bez FK — profil o'chib ketsa xabar qoladi)
-  forwardedFromId   String?
-  forwardedFromName String?                                       // asl yozuvchining ismi/username (snapshot)
+  forwardedFromId       String?
+  forwardedFromName     String?                                    // asl yozuvchining ismi/username (snapshot)
+  // Kanal/guruh'dan yuborilgan bo'lsa — kanal metadatasi (Telegram uslub)
+  // forwardedFromId null bo'lsa va bu maydonlar to'la bo'lsa → "Kanaldan yuborilgan"
+  forwardedChannelId     String?
+  forwardedChannelName   String?
+  forwardedChannelHandle String?                                   // @handle — link uchun
   // Yetkazildi — client Pusher orqali qabul qilganini serverga bildirgan vaqt.
   // NULL = hali yetmagan (offline/no push). Not-null = qurilma qabul qildi.
   deliveredAt       DateTime?

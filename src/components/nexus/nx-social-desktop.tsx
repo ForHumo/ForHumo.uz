@@ -91,6 +91,10 @@ interface Msg {
     forwardedFromName?: string | null;
     forwardedFromUsername?: string | null;   // link uchun
     forwardedFromImage?: string | null;       // avatar
+    // Kanal/guruh'dan yuborilgan bo'lsa
+    forwardedChannelId?: string | null;
+    forwardedChannelName?: string | null;
+    forwardedChannelHandle?: string | null;
     deliveredAt?: string | null;
     senderId?: string;
     deletedForEveryoneAt?: string | null;
@@ -3372,13 +3376,25 @@ export function NxSocialDesktop() {
                                             borderBottomLeftRadius:  (m.mediaType === "sticker" || m.mediaType === "video-circle") ? 0 : (m.mine ? 16 : (groupWithNext ? 4 : 6)),
                                             borderBottomRightRadius: (m.mediaType === "sticker" || m.mediaType === "video-circle") ? 0 : (m.mine ? (groupWithNext ? 4 : 6) : 16),
                                         }}>
-                                        {m.forwardedFromName && (() => {
+                                        {(m.forwardedFromName || m.forwardedChannelName) && (() => {
+                                            // Kanal/guruh vs foydalanuvchi — ikkita variant
+                                            const isChannel = !!m.forwardedChannelName;
+                                            const chHandle = m.forwardedChannelHandle;
                                             const uname = m.forwardedFromUsername;
-                                            const canLink = !!uname;
+                                            const href = isChannel
+                                                ? (chHandle ? `/nexus/c/${chHandle}` : null)
+                                                : (uname ? `/nexus/u/${uname}` : null);
+                                            const label = isChannel ? "Kanaldan yuborildi" : "Yuborilgan xabar";
+                                            const name = isChannel ? m.forwardedChannelName : m.forwardedFromName;
+                                            const sub = isChannel
+                                                ? (chHandle ? `@${chHandle}` : "kanal")
+                                                : (uname ? `@${uname}` : "");
+                                            const IconEl = isChannel ? Hash : Forward;
+                                            const canLink = !!href;
                                             const Tag: 'a' | 'div' = canLink ? 'a' : 'div';
                                             return (
                                                 <Tag
-                                                    {...(canLink ? { href: `/nexus/u/${uname}` } : {})}
+                                                    {...(canLink ? { href } : {})}
                                                     onClick={canLink ? (e: React.MouseEvent) => { e.stopPropagation(); } : undefined}
                                                     className={`flex items-center gap-2 mb-2 pl-2 pr-2 py-1.5 rounded-md text-xs transition ${canLink ? "hover:brightness-125 active:scale-[0.98]" : ""}`}
                                                     style={{
@@ -3387,23 +3403,23 @@ export function NxSocialDesktop() {
                                                         textDecoration: "none",
                                                         cursor: canLink ? "pointer" : "default",
                                                     }}>
-                                                    {m.forwardedFromImage ? (
+                                                    {!isChannel && m.forwardedFromImage ? (
                                                         // eslint-disable-next-line @next/next/no-img-element
                                                         <img src={m.forwardedFromImage} alt="" className="w-6 h-6 rounded-md object-cover flex-shrink-0" />
                                                     ) : (
                                                         <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
                                                             style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgba(0,206,200,0.20)" }}>
-                                                            <Forward className="w-3 h-3" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
+                                                            <IconEl className="w-3 h-3" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
                                                         </div>
                                                     )}
                                                     <div className="min-w-0 flex-1">
                                                         <p className="text-[10px] font-black uppercase tracking-wider"
                                                             style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "#00CEC8" }}>
-                                                            Yuborilgan xabar
+                                                            {label}
                                                         </p>
                                                         <p className="text-[11.5px] font-bold truncate"
                                                             style={{ color: m.mine ? "#fff" : "rgba(220,232,255,0.95)" }}>
-                                                            {m.forwardedFromName}{uname ? ` · @${uname}` : ""}
+                                                            {name}{sub ? ` · ${sub}` : ""}
                                                         </p>
                                                     </div>
                                                 </Tag>
@@ -3583,7 +3599,7 @@ export function NxSocialDesktop() {
                                                                 background: "linear-gradient(135deg,#00CEC8,#2B3EE8)",
                                                                 WebkitBackgroundClip: "text",
                                                                 WebkitTextFillColor: "transparent",
-                                                            }}>NEXUS MAP</span>
+                                                            }}>HUMO MAP</span>
                                                         </div>
                                                         {/* Click overlay — iframe pointer-events yopildi, klik butun kartochkaga */}
                                                         <div className="absolute inset-0" style={{ cursor: "pointer" }} />

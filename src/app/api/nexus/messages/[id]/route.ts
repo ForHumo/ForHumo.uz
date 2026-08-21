@@ -196,6 +196,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 forwardedFromName: m.forwardedFromName,
                 forwardedFromUsername: m.forwardedFromId ? (fwdMap.get(m.forwardedFromId)?.username ?? null) : null,
                 forwardedFromImage: m.forwardedFromId ? (fwdMap.get(m.forwardedFromId)?.image ?? null) : null,
+                forwardedChannelId: m.forwardedChannelId,
+                forwardedChannelName: m.forwardedChannelName,
+                forwardedChannelHandle: m.forwardedChannelHandle,
                 deliveredAt: m.deliveredAt,
                 deletedForEveryoneAt: m.deletedForEveryoneAt,
                 buttons: m.buttons,
@@ -291,6 +294,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         scheduledFor?: string;                                 // ISO vaqt — jadvalga qo'yish
         forwardedFromId?: string;                              // Forward: asl yozuvchi profil ID
         forwardedFromName?: string;                            // Forward: asl yozuvchi ismi/username (snapshot)
+        forwardedChannelId?: string;                           // Kanal'dan yuborilgan bo'lsa
+        forwardedChannelName?: string;
+        forwardedChannelHandle?: string;                       // @handle link uchun
         viewOnce?: boolean;                                    // View-once: 1 martalik xabar
         // End-to-end shifrlash payload — bo'lsa server plaintext ko'rmaydi;
         // moderatsiya/tarjima/qidiruv o'tkazib yuboriladi
@@ -350,6 +356,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const forwardedFromName = typeof body.forwardedFromName === "string"
         ? body.forwardedFromName.trim().slice(0, 80) || null
         : null;
+    // Forward: kanal/guruh metadatasi
+    const forwardedChannelId = typeof body.forwardedChannelId === "string" ? body.forwardedChannelId : null;
+    const forwardedChannelName = typeof body.forwardedChannelName === "string"
+        ? body.forwardedChannelName.trim().slice(0, 80) || null : null;
+    const forwardedChannelHandle = typeof body.forwardedChannelHandle === "string"
+        ? body.forwardedChannelHandle.trim().slice(0, 40) || null : null;
 
     const msg = await prisma.nexusMessage.create({
         data: {
@@ -363,6 +375,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             scheduledFor,
             forwardedFromId,
             forwardedFromName,
+            forwardedChannelId,
+            forwardedChannelName,
+            forwardedChannelHandle,
             // View-once — faqat media (image/video/audio) uchun mazmunli;
             // matn xabari view-once emas.
             viewOnce: !!body.viewOnce && !!body.mediaUrl,
