@@ -8,6 +8,7 @@ import {
     Bookmark, History, Users, PlusSquare,
     Wallet, ShoppingBag, Fingerprint,
     Settings, HelpCircle, LogOut,
+    Film, Sparkles,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import type { NxTab } from "./nx-dock";
@@ -111,6 +112,12 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
                         <SidebarItem icon={Users} label="Obunalarim" onClick={() => { onClose(); setSubsOpen(true); }} />
                         <SidebarItem icon={Radio} label="Jonli efir boshlash" onClick={() => { onClose(); setGoLiveOpen(true); }} />
                         <SidebarItem icon={PlusSquare} label="Story yaratish" onClick={() => { onClose(); setStoryCreateOpen(true); }} />
+                    </SidebarSection>
+
+                    {/* Agentlar — GIF va Sticker pack'lar boshqaruvi */}
+                    <SidebarSection title="Agentlar">
+                        <SidebarLink icon={Film} label="@GIF — GIF pack'larim" href="/nexus/agent/gif" onClose={onClose} />
+                        <SidebarLink icon={Sparkles} label="@Sticker — Sticker pack'larim" href="/nexus/agent/sticker" onClose={onClose} />
                     </SidebarSection>
 
                     {/* Boshqa For Humo modullari */}

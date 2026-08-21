@@ -74,7 +74,7 @@ export function NxHumoMediaManager({ kind }: { kind: Kind }) {
     const KindIcon = kind === "GIF" ? Film : Sparkles;
 
     return (
-        <div className="min-h-screen bg-neutral-950 text-white">
+        <div className="absolute inset-0 overflow-y-auto bg-neutral-950 text-white">
             {/* Sarlavha */}
             <header className="sticky top-0 z-10 backdrop-blur-md bg-neutral-950/85 border-b border-white/10">
                 <div className="max-w-[880px] mx-auto flex items-center gap-3 px-4 h-14">
