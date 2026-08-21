@@ -204,6 +204,26 @@ export function NxSocialDesktop() {
     // Pinlangan xabarlar banneri — ko'p pin bo'lsa, click cycle bo'yicha o'tadi
     const [pinnedIndex, setPinnedIndex] = useState(0);
     const [pinnedListOpen, setPinnedListOpen] = useState(false);
+    // Send tugmasi dropdown — silent send / schedule kabi qo'shimcha rejimlar (o'ng-click)
+    const [sendMenuOpen, setSendMenuOpen] = useState(false);
+    // Silent flag — flushPending'ga uzatiladi (bir marta ishlaydi)
+    const nextSilentRef = useRef(false);
+    // Chat-scoped yulduzchali (bookmark) xabarlar view modal (global bookmarksOpen'dan alohida)
+    const [chatBookmarksOpen, setChatBookmarksOpen] = useState(false);
+    type ChatBookmarkItem = { id: string; text: string; mine: boolean; createdAt: string;
+        mediaType: string | null; mediaUrl: string | null; mediaName: string | null;
+        note: string | null; bookmarkedAt: string };
+    const [chatBookmarksList, setChatBookmarksList] = useState<ChatBookmarkItem[] | null>(null);
+    const [chatBookmarksLoading, setChatBookmarksLoading] = useState(false);
+    useEffect(() => {
+        if (!chatBookmarksOpen || !selectedId) return;
+        setChatBookmarksLoading(true);
+        setChatBookmarksList(null);
+        fetch(`/api/nexus/messages/${selectedId}/bookmark`, { cache: "no-store" })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => setChatBookmarksList(d?.items ?? []))
+            .finally(() => setChatBookmarksLoading(false));
+    }, [chatBookmarksOpen, selectedId]);
     // Deep link — ochiladigan xabar ID (URL'dan ?msg= parametr'idan olinadi)
     const pendingJumpMsgIdRef = useRef<string | null>(null);
     const jumpAttemptsRef = useRef(0);
@@ -616,7 +636,7 @@ export function NxSocialDesktop() {
     // URL preview: URL → { title, image, description, siteName } (yoki null = topilmadi)
     const [linkPreview, setLinkPreview] = useState<Record<string, { title: string | null; image: string | null; description: string | null; siteName: string | null; url: string } | null>>({});
     // Undo-send: 5 sekundlik grace period
-    const [pendingSend, setPendingSend] = useState<{ text: string; replyToId: string | null; convId: string; ttl: number | null } | null>(null);
+    const [pendingSend, setPendingSend] = useState<{ text: string; replyToId: string | null; convId: string; ttl: number | null; silent?: boolean } | null>(null);
     const [undoTick, setUndoTick] = useState(5);
     const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const undoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -977,7 +997,20 @@ export function NxSocialDesktop() {
         }
     }
 
-    function copyMessage(text: string) {
+    // Copy — plain + HTML (formatted) rich clipboard. Markdown belgilarini HTML tag'ga aylantirib
+    // clipboard'ga ikkala variantda yozadi. Yopishtirilganda formatga qarab plain yoki rich chiqadi.
+    async function copyMessage(text: string) {
+        try {
+            const html = markdownToHtml(text);
+            if (navigator.clipboard && "ClipboardItem" in window) {
+                const item = new ClipboardItem({
+                    "text/plain": new Blob([text], { type: "text/plain" }),
+                    "text/html": new Blob([html], { type: "text/html" }),
+                });
+                await navigator.clipboard.write([item]);
+                return;
+            }
+        } catch { /* fallback */ }
         void copyToClipboard(text);
     }
     // Xabar permalink URL — foydalanuvchi ulashishi mumkin.
@@ -2174,15 +2207,22 @@ export function NxSocialDesktop() {
         if (!selectedId || !input.trim() || sending || pendingSend) return;
         const text = input.trim();
         const replyToIdSnap = replyTo?.id ?? null;
+        const silent = nextSilentRef.current;
+        nextSilentRef.current = false;
         setInput("");
         try { localStorage.removeItem(draftKey(selectedId)); } catch {}
         setReplyTo(null);
-        setPendingSend({ text, replyToId: replyToIdSnap, convId: selectedId, ttl: nextTtl });
+        setPendingSend({ text, replyToId: replyToIdSnap, convId: selectedId, ttl: nextTtl, silent });
         setUndoTick(5);
         // Har sekundda hisoblagichni yangilash
         undoIntervalRef.current = setInterval(() => setUndoTick(t => Math.max(0, t - 1)), 1000);
         // 5s'dan keyin yuborish
         undoTimerRef.current = setTimeout(() => flushPending(), 5000);
+    }
+    // Silent send — bildirishnoma yubormasdan
+    function sendSilent() {
+        nextSilentRef.current = true;
+        send();
     }
     async function flushPending() {
         const p = pendingSend;
@@ -2213,6 +2253,7 @@ export function NxSocialDesktop() {
             const body: Record<string, unknown> = {};
             if (p.replyToId) body.replyToId = p.replyToId;
             if (p.ttl) body.selfDestructSeconds = p.ttl;
+            if (p.silent) body.silent = true;
             // E2E: agar ikkala tomonda kalit bor bo'lsa — matnni shifrlab yuboramiz
             let localMirror: string | null = null;   // UI'da darhol ko'rsatish uchun
             if (canE2e && p.text) {
@@ -3251,6 +3292,8 @@ export function NxSocialDesktop() {
                                         onClick={() => peer?.id && startCall(peer.id, "VIDEO")} />
                                 </>
                             )}
+                            <IconBtn icon={BookmarkCheck} title="Yulduzchali xabarlar"
+                                onClick={() => setChatBookmarksOpen(true)} />
                             <IconBtn
                                 icon={searchOpen ? X : Search}
                                 title={searchOpen ? "Qidiruvni yopish" : "Suhbatda qidirish"}
@@ -4734,11 +4777,26 @@ export function NxSocialDesktop() {
                                             </button>
                                         </>
                                     ) : input.trim() ? (
-                                        <button onClick={send} disabled={sending}
-                                            className="w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-40"
-                                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
-                                            {sending ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Send className="w-4 h-4 text-white" />}
-                                        </button>
+                                        <div className="relative">
+                                            <button onClick={send}
+                                                onContextMenu={(e) => { e.preventDefault(); setSendMenuOpen(o => !o); }}
+                                                disabled={sending}
+                                                title="Yuborish (Enter) — o'ng bosish: bildirishnoma yubormasdan"
+                                                className="w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-40"
+                                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                                {sending ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Send className="w-4 h-4 text-white" />}
+                                            </button>
+                                            {sendMenuOpen && (
+                                                <div className="absolute bottom-full mb-2 right-0 z-40 rounded-xl overflow-hidden min-w-[220px]"
+                                                    style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}
+                                                    onMouseLeave={() => setSendMenuOpen(false)}>
+                                                    <MsgMenuItem icon={BellOff} label="Ovozsiz yuborish"
+                                                        onClick={() => { setSendMenuOpen(false); sendSilent(); }} />
+                                                    <MsgMenuItem icon={Clock} label="Jadvalga qo'yish"
+                                                        onClick={() => { setSendMenuOpen(false); setScheduleOpen(true); }} />
+                                                </div>
+                                            )}
+                                        </div>
                                     ) : (
                                         // Telegram uslubi: tap → mode swap (Mic <-> Camera), hold → yozib olish
                                         <button
@@ -5638,6 +5696,88 @@ export function NxSocialDesktop() {
                                             {item.previousText || "(Bo'sh matn)"}
                                         </div>
                                     </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Chat-scoped yulduzchali (bookmark) xabarlar modali */}
+            {chatBookmarksOpen && (
+                <div className="fixed inset-0 z-[220]" onClick={() => setChatBookmarksOpen(false)}>
+                    <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[560px] max-h-[75vh] rounded-2xl overflow-hidden flex flex-col"
+                        style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                        onClick={e => e.stopPropagation()}>
+                        <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#F59E0B,#EF4444)" }}>
+                                <BookmarkCheck className="w-4 h-4 text-white" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-sm font-black" style={{ color: "rgba(230,238,255,0.98)" }}>Yulduzchali xabarlar</h3>
+                                <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                    {peer?.name ?? peer?.username ?? "Suhbat"}
+                                </p>
+                            </div>
+                            <button onClick={() => setChatBookmarksOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center"
+                                style={{ background: "rgba(43,62,232,0.10)" }}>
+                                <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto nx-scrollbar">
+                            {chatBookmarksLoading ? (
+                                <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-white/30" /></div>
+                            ) : !chatBookmarksList || chatBookmarksList.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                                    <BookmarkCheck className="w-10 h-10 mb-3" style={{ color: "rgba(160,176,224,0.35)" }} />
+                                    <p className="text-sm font-bold mb-1" style={{ color: "rgba(230,238,255,0.85)" }}>Hali yulduzchali xabar yo&apos;q</p>
+                                    <p className="text-xs" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                        Xabar ustiga to&apos;g&apos;ridan-to&apos;g&apos;ri &quot;Saqlash&quot; tugmasini bosing
+                                    </p>
+                                </div>
+                            ) : (
+                                chatBookmarksList.map((b) => (
+                                    <button key={b.id}
+                                        onClick={() => {
+                                            setChatBookmarksOpen(false);
+                                            setTimeout(() => {
+                                                const el = document.querySelector<HTMLElement>(`[data-msg-id="${b.id}"]`);
+                                                if (el) {
+                                                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                                                    el.animate([{ background: "rgba(245,158,11,0.20)" }, { background: "transparent" }], { duration: 1400 });
+                                                } else {
+                                                    pendingJumpMsgIdRef.current = b.id;
+                                                    jumpAttemptsRef.current = 0;
+                                                    loadOlder();
+                                                }
+                                            }, 100);
+                                        }}
+                                        className="w-full flex items-start gap-3 px-4 py-3 border-b hover:bg-white/[0.03] text-left transition"
+                                        style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                                        <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: "linear-gradient(180deg,#F59E0B,#EF4444)" }} />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#F59E0B" }}>
+                                                {b.mine ? "Siz" : (peer?.name ?? peer?.username ?? "Peer")} · {new Date(b.createdAt).toLocaleDateString("uz-UZ")}
+                                            </p>
+                                            <p className="text-sm line-clamp-2" style={{ color: "rgba(220,230,255,0.90)" }}>
+                                                {b.text || (b.mediaType ? `[${b.mediaType}]${b.mediaName ? ` — ${b.mediaName}` : ""}` : "(media)")}
+                                            </p>
+                                            {b.note && (
+                                                <p className="text-[11px] mt-1 italic" style={{ color: "rgba(160,180,220,0.75)" }}>
+                                                    &ldquo;{b.note}&rdquo;
+                                                </p>
+                                            )}
+                                        </div>
+                                        <span onClick={async (e) => {
+                                            e.stopPropagation();
+                                            await fetch(`/api/nexus/messages/${selectedId}/bookmark?messageId=${b.id}`, { method: "DELETE" });
+                                            setChatBookmarksList(prev => prev ? prev.filter(x => x.id !== b.id) : prev);
+                                            setMessages(prev => prev.map(m => m.id === b.id ? { ...m, bookmarked: false } : m));
+                                        }} className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 hover:bg-white/[0.08] cursor-pointer">
+                                            <X className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        </span>
+                                    </button>
                                 ))
                             )}
                         </div>
@@ -6906,6 +7046,34 @@ function formatBytes(bytes: number): string {
 }
 
 // Matn ichida qidiruv so'zini <mark> bilan belgilash
+// Oddiy markdown → HTML (copy formatted uchun): bold **text**, italic _text_,
+// code `code`, link [text](url) va URL avto. Xavfsizlik uchun avval escape qilinadi.
+function markdownToHtml(text: string): string {
+    const escape = (s: string) => s
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    // Kod bloklarini avval qo'riqlash uchun placeholder
+    const codeBlocks: string[] = [];
+    let src = text.replace(/```([\s\S]+?)```/g, (_, code) => {
+        codeBlocks.push(`<pre style="background:#0b1228;color:#e6eeff;padding:8px;border-radius:6px;overflow:auto;">${escape(code)}</pre>`);
+        return ` ${codeBlocks.length - 1} `;
+    });
+    src = escape(src);
+    // Inline: **bold**, *italic*, `code`
+    src = src.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+    src = src.replace(/(^|[\s(])_([^_\n]+)_(?=[\s.,;:!?)]|$)/g, "$1<em>$2</em>");
+    src = src.replace(/`([^`\n]+)`/g, '<code style="background:rgba(0,206,200,0.15);padding:1px 4px;border-radius:3px;">$1</code>');
+    // Link [text](url)
+    src = src.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" style="color:#00CEC8;text-decoration:underline;">$1</a>');
+    // URL avto (agar hali link'ga o'ralmagan bo'lsa)
+    src = src.replace(/(^|[\s(])(https?:\/\/[^\s<]+)/g, '$1<a href="$2" style="color:#00CEC8;text-decoration:underline;">$2</a>');
+    // Qator uzilishlari <br>
+    src = src.replace(/\n/g, "<br>");
+    // Kod bloklarini qaytarish
+    src = src.replace(/ (\d+) /g, (_, i) => codeBlocks[parseInt(i, 10)] ?? "");
+    return `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0b1228;">${src}</div>`;
+}
+
 function highlightText(text: string, query: string): React.ReactNode {
     const q = query.trim();
     if (!q) return text;

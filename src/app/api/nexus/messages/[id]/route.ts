@@ -319,6 +319,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         forwardedChannelName?: string;
         forwardedChannelHandle?: string;                       // @handle link uchun
         viewOnce?: boolean;                                    // View-once: 1 martalik xabar
+        silent?: boolean;                                      // Silent send — bildirishnoma yubormaydi
         // End-to-end shifrlash payload — bo'lsa server plaintext ko'rmaydi;
         // moderatsiya/tarjima/qidiruv o'tkazib yuboriladi
         e2ePayload?: { ephemeralPub: string; iv: string; ciphertext: string; v: number; senderKeyId?: string };
@@ -574,7 +575,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     // WebPush bildirishnoma — jadvalli bo'lmasa va mute qilinmagan bo'lsa
-    if (!scheduledFor && pushAvailable()) {
+    if (!scheduledFor && !body.silent && pushAvailable()) {
         after(async () => {
             const recipientId = otherId(conv, me.id);
             const isRecipientMuted = conv.user1Id === recipientId ? !!conv.mutedByUser1 : !!conv.mutedByUser2;
