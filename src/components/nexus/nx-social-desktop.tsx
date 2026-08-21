@@ -5,7 +5,7 @@
 // O'ng: peer haqida ma'lumot (info paneli).
 // Mobile'da bu komponent ishlatilmaydi — SocialView eski tabsni ko'rsatadi.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker, Film, ExternalLink, EyeOff, Eye, AlertTriangle, Play, Pause, RotateCw, ZoomIn, ZoomOut, Maximize2, Minimize2 } from "lucide-react";
@@ -715,7 +715,7 @@ export function NxSocialDesktop() {
 
     // Klaviatura yorliqlari uchun ref'lar (composer va chat-list qidiruvga fokus qo'yish)
     const filterInputRef = useRef<HTMLInputElement | null>(null);
-    const composerInputRef = useRef<HTMLInputElement | null>(null);
+    const composerInputRef = useRef<HTMLTextAreaElement | null>(null);
     const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
     // NOTE: useEffect'i return oldida (barcha state e'lonlaridan keyin) — TDZ oldini olish uchun
 
@@ -3569,7 +3569,7 @@ export function NxSocialDesktop() {
                                             </div>
                                         )}
                                         {/* E2E: e2ePayload bo'lsa deshifrlangan matn ko'rsatiladi; hali deshifrlanmagan bo'lsa placeholder */}
-                                        {m.e2ePayload && editingId !== m.id && (
+                                        {m.e2ePayload && (
                                             <div className="flex items-start gap-1.5">
                                                 <Lock className="w-3 h-3 mt-1 flex-shrink-0" style={{ color: "#00CEC8" }} />
                                                 <div className="flex-1 min-w-0">
@@ -3579,7 +3579,7 @@ export function NxSocialDesktop() {
                                                 </div>
                                             </div>
                                         )}
-                                        {m.text && !m.e2ePayload && editingId !== m.id && (
+                                        {m.text && !m.e2ePayload && (
                                             <div>
                                                 {searchOpen && searchQuery.trim()
                                                     ? highlightText(m.text, searchQuery)
@@ -3642,20 +3642,12 @@ export function NxSocialDesktop() {
                                                 </a>
                                             );
                                         })()}
+                                        {/* Tahrirlash endi inline emas — composer'da (Telegram uslub, edit banner bilan) */}
                                         {editingId === m.id && (
-                                            <div className="flex flex-col gap-1.5">
-                                                <textarea value={editingText} onChange={e => setEditingText(e.target.value)}
-                                                    rows={2} autoFocus
-                                                    className="bg-black/30 rounded p-1.5 text-sm focus:outline-none resize-none"
-                                                    style={{ color: "#fff", border: "1px solid rgba(255,255,255,0.20)" }} />
-                                                <div className="flex gap-1.5 justify-end">
-                                                    <button onClick={() => setEditingId(null)}
-                                                        className="text-[11px] font-bold px-2 py-1 rounded"
-                                                        style={{ background: "rgba(0,0,0,0.30)", color: "#fff" }}>Bekor</button>
-                                                    <button onClick={saveEdit}
-                                                        className="text-[11px] font-bold px-2 py-1 rounded"
-                                                        style={{ background: "rgba(0,206,200,0.30)", color: "#fff" }}>Saqlash</button>
-                                                </div>
+                                            <div className="flex items-center gap-1.5 text-[10.5px] font-bold mt-1"
+                                                style={{ color: "rgba(0,206,200,0.85)" }}>
+                                                <Edit3 className="w-3 h-3" />
+                                                <span>Composer'da tahrirlanmoqda...</span>
                                             </div>
                                         )}
                                         {m.reactions && m.reactions.length > 0 && (
@@ -3953,6 +3945,28 @@ export function NxSocialDesktop() {
                             </div>
                         )}
 
+                        {/* Edit banner (composer ustida) — Telegram uslub */}
+                        {editingId && (() => {
+                            const original = messages.find(m => m.id === editingId);
+                            const originalText = original?.text ?? "";
+                            return (
+                                <div className="px-3 py-2 flex items-center gap-2 flex-shrink-0"
+                                    style={{ borderTop: "1px solid rgba(43,62,232,0.14)", background: "rgba(0,206,200,0.06)" }}>
+                                    <Edit3 className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                    <div className="flex-1 min-w-0 pl-2 border-l-2" style={{ borderColor: "#00CEC8" }}>
+                                        <p className="text-[11px] font-bold" style={{ color: "#00CEC8" }}>Tahrirlash</p>
+                                        <p className="text-xs truncate" style={{ color: "rgba(220,230,255,0.80)" }}>
+                                            {originalText || "(bo'sh)"}
+                                        </p>
+                                    </div>
+                                    <button onClick={() => { setEditingId(null); setEditingText(""); }} title="Bekor (Esc)"
+                                        className="w-7 h-7 rounded-md flex items-center justify-center"
+                                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                                        <X className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                    </button>
+                                </div>
+                            );
+                        })()}
                         {/* Reply preview (composer ustida) */}
                         {replyTo && (
                             <div className="px-3 py-2 flex items-center gap-2 flex-shrink-0"
@@ -3975,8 +3989,8 @@ export function NxSocialDesktop() {
                         )}
 
                         {/* Composer — Telegram uslubi */}
-                        <div className="p-3 flex items-center gap-2 flex-shrink-0 relative"
-                            style={{ borderTop: replyTo ? "none" : "1px solid rgba(43,62,232,0.14)", background: "rgba(8,12,32,0.55)" }}>
+                        <div className="p-3 flex items-end gap-2 flex-shrink-0 relative"
+                            style={{ borderTop: (replyTo || editingId) ? "none" : "1px solid rgba(43,62,232,0.14)", background: "rgba(8,12,32,0.55)" }}>
                             <input ref={fileInputRef} type="file"
                                 accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip,.txt"
                                 onChange={e => {
@@ -4207,19 +4221,17 @@ export function NxSocialDesktop() {
                                             </div>
                                         );
                                     })()}
-                                    <input
+                                    <NxComposerTextarea
                                         ref={composerInputRef}
-                                        value={input}
-                                        onChange={e => {
-                                            const v = e.target.value;
+                                        value={editingId ? editingText : input}
+                                        onChange={v => {
+                                            if (editingId) { setEditingText(v); return; }
                                             setInput(v);
-                                            // Typing signal — 2 sekundda bir marta
                                             const now = Date.now();
                                             if (peer?.id && myProfileId && now - lastTypingSentRef.current > 2000) {
                                                 sendTyping(peer.id, myProfileId, myName);
                                                 lastTypingSentRef.current = now;
                                             }
-                                            // Bot commands autocomplete — "/" bilan boshlansa
                                             if (peer?.isAgent && agentCommands.length > 0 && /^\/[a-z0-9_]*$/i.test(v)) {
                                                 setCmdPopoverOpen(true);
                                                 setCmdFilter(v.slice(1).toLowerCase());
@@ -4227,39 +4239,53 @@ export function NxSocialDesktop() {
                                                 setCmdPopoverOpen(false);
                                             }
                                         }}
-                                        onKeyDown={e => {
-                                            // Emoji shortcode popover navigatsiyasi
+                                        onSubmit={() => { if (editingId) void saveEdit(); else send(); }}
+                                        onKeyExtra={(e) => {
                                             if (emojiCode !== null && emojiCodeSuggestions.length > 0) {
-                                                if (e.key === "ArrowDown") { e.preventDefault(); setEmojiCodeIdx(i => (i + 1) % emojiCodeSuggestions.length); return; }
-                                                if (e.key === "ArrowUp") { e.preventDefault(); setEmojiCodeIdx(i => (i - 1 + emojiCodeSuggestions.length) % emojiCodeSuggestions.length); return; }
+                                                if (e.key === "ArrowDown") { e.preventDefault(); setEmojiCodeIdx(i => (i + 1) % emojiCodeSuggestions.length); return true; }
+                                                if (e.key === "ArrowUp") { e.preventDefault(); setEmojiCodeIdx(i => (i - 1 + emojiCodeSuggestions.length) % emojiCodeSuggestions.length); return true; }
                                                 if (e.key === "Enter" || e.key === "Tab") {
                                                     e.preventDefault();
                                                     const pick = emojiCodeSuggestions[emojiCodeIdx];
                                                     if (pick) insertEmojiShortcode(pick.emoji);
-                                                    return;
+                                                    return true;
                                                 }
-                                                if (e.key === "Escape") { e.preventDefault(); setEmojiCode(null); return; }
+                                                if (e.key === "Escape") { e.preventDefault(); setEmojiCode(null); return true; }
                                             }
-                                            // Mention popover navigatsiyasi
                                             if (mentionQuery !== null && mentionSuggestions.length > 0) {
-                                                if (e.key === "ArrowDown") { e.preventDefault(); setMentionIdx(i => (i + 1) % mentionSuggestions.length); return; }
-                                                if (e.key === "ArrowUp") { e.preventDefault(); setMentionIdx(i => (i - 1 + mentionSuggestions.length) % mentionSuggestions.length); return; }
+                                                if (e.key === "ArrowDown") { e.preventDefault(); setMentionIdx(i => (i + 1) % mentionSuggestions.length); return true; }
+                                                if (e.key === "ArrowUp") { e.preventDefault(); setMentionIdx(i => (i - 1 + mentionSuggestions.length) % mentionSuggestions.length); return true; }
                                                 if (e.key === "Enter" || e.key === "Tab") {
                                                     e.preventDefault();
                                                     const pick = mentionSuggestions[mentionIdx];
                                                     if (pick) insertMention(pick.username);
-                                                    return;
+                                                    return true;
                                                 }
-                                                if (e.key === "Escape") { e.preventDefault(); setMentionQuery(null); return; }
+                                                if (e.key === "Escape") { e.preventDefault(); setMentionQuery(null); return true; }
                                             }
-                                            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+                                            if (editingId && e.key === "Escape") { e.preventDefault(); setEditingId(null); setEditingText(""); return true; }
+                                            return false;
                                         }}
-                                        placeholder="Xabar yozing..."
-                                        className="flex-1 min-w-0 h-10 px-4 rounded-xl bg-transparent text-white text-sm focus:outline-none"
-                                        style={{ border: "1px solid rgba(43,62,232,0.20)" }}
+                                        placeholder={editingId ? "Tahrirlash..." : "Xabar yozing..."}
                                     />
                                     <ComposerBtn icon={Smile} title="Emoji" onClick={() => setEmojiOpen(v => !v)} accent={emojiOpen} />
-                                    {input.trim() ? (
+                                    {editingId ? (
+                                        // Tahrirlash rejimi: ✓ Saqlash / ✕ Bekor
+                                        <>
+                                            <button onClick={() => { setEditingId(null); setEditingText(""); }}
+                                                title="Bekor (Esc)"
+                                                className="w-10 h-10 rounded-xl flex items-center justify-center transition"
+                                                style={{ background: "rgba(239,68,68,0.14)", border: "1px solid rgba(239,68,68,0.30)" }}>
+                                                <X className="w-4 h-4" style={{ color: "#EF4444" }} />
+                                            </button>
+                                            <button onClick={saveEdit} disabled={!editingText.trim()}
+                                                title="Saqlash (Enter)"
+                                                className="w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-40"
+                                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                                <Check className="w-4 h-4 text-white" />
+                                            </button>
+                                        </>
+                                    ) : input.trim() ? (
                                         <button onClick={send} disabled={sending}
                                             className="w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-40"
                                             style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
@@ -6530,6 +6556,65 @@ function IconBtn({ icon: Icon, title, onClick }: { icon: React.ElementType; titl
         </button>
     );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxComposerTextarea — auto-grow multiline textarea (Telegram uslub).
+// - Rows=1 boshlanadi, matn uzunligiga qarab scroll'siz o'sadi 200px'gacha
+// - 200px'dan keyin ichki scroll (matn yo'qotilmaydi, boshi ham ko'rinadi)
+// - Enter → onSubmit, Shift+Enter → yangi qator
+// - onKeyExtra callback bo'lsa (mention/emoji navigation), true qaytarsa Enter'ni yutadi
+// - forwardRef bilan tashqi ref (fokus, selection uchun)
+// ─────────────────────────────────────────────────────────────────────────────
+interface NxComposerTextareaProps {
+    value: string;
+    onChange: (v: string) => void;
+    onSubmit: () => void;
+    onKeyExtra?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => boolean;   // true = event yutildi
+    placeholder?: string;
+}
+const NxComposerTextarea = React.forwardRef<HTMLTextAreaElement, NxComposerTextareaProps>(
+    function NxComposerTextarea({ value, onChange, onSubmit, onKeyExtra, placeholder }, ref) {
+        const innerRef = useRef<HTMLTextAreaElement | null>(null);
+        // Kompozit ref — parent'ga ham, ichki auto-grow uchun ham kerak
+        const setRef = (el: HTMLTextAreaElement | null) => {
+            innerRef.current = el;
+            if (typeof ref === "function") ref(el);
+            else if (ref) (ref as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
+        };
+        // Auto-grow: value o'zgarsa balandlikni qayta hisoblash
+        useEffect(() => {
+            const el = innerRef.current;
+            if (!el) return;
+            el.style.height = "auto";
+            const MAX = 200;
+            el.style.height = Math.min(MAX, el.scrollHeight) + "px";
+            el.style.overflowY = el.scrollHeight > MAX ? "auto" : "hidden";
+        }, [value]);
+
+        return (
+            <textarea ref={setRef}
+                value={value}
+                onChange={e => onChange(e.target.value)}
+                onKeyDown={e => {
+                    if (onKeyExtra && onKeyExtra(e)) return;
+                    if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        onSubmit();
+                    }
+                }}
+                placeholder={placeholder}
+                rows={1}
+                className="nx-scrollbar flex-1 min-w-0 px-4 py-2.5 rounded-xl bg-transparent text-white text-sm focus:outline-none resize-none"
+                style={{
+                    border: "1px solid rgba(43,62,232,0.20)",
+                    minHeight: 40,
+                    maxHeight: 200,
+                    lineHeight: "20px",
+                }}
+            />
+        );
+    }
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxCirclePlayer — Telegram uslubidagi doiraviy video xabar (кружочек / video note).
