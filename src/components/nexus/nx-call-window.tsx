@@ -137,6 +137,11 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     const remoteAudioRef = useRef<HTMLAudioElement>(null);
     const localStreamRef = useRef<MediaStream | null>(null);
     const audioSenderRef = useRef<RTCRtpSender | null>(null);
+    // Ekran ulashish audio mixer (mikrofon + tizim ovoz)
+    const screenAudioStreamRef = useRef<MediaStream | null>(null);
+    const audioMixCtxRef = useRef<AudioContext | null>(null);
+    const audioMixDestRef = useRef<MediaStreamAudioDestinationNode | null>(null);
+    const originalMicTrackRef = useRef<MediaStreamTrack | null>(null);
     const videoSenderRef = useRef<RTCRtpSender | null>(null);
     const remoteStreamRef = useRef<MediaStream | null>(null);
     const sinceRef = useRef<string>(new Date(Date.now() - 60_000).toISOString());
@@ -169,6 +174,13 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         cameraRawTrackRef.current = null;
         try { levelAudioCtxRef.current?.close(); } catch { }
         levelAudioCtxRef.current = null;
+        // Screen audio mixer cleanup
+        try { audioMixCtxRef.current?.close(); } catch { }
+        audioMixCtxRef.current = null;
+        audioMixDestRef.current = null;
+        try { screenAudioStreamRef.current?.getTracks().forEach(t => t.stop()); } catch { }
+        screenAudioStreamRef.current = null;
+        originalMicTrackRef.current = null;
         remoteStreamRef.current = null;
         try { if (recorderRef.current?.state === "recording") recorderRef.current.stop(); } catch { }
         recorderRef.current = null;
@@ -513,6 +525,9 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
 
     const disableVideo = useCallback(async () => {
         if (videoBusy || videoSource === "none") return;
+        // Agar ekran ulashuvi tugatilayotgan bo'lsa — audio mixer'ni ham tozalaymiz
+        // (mikrofon asl trekiga qaytariladi)
+        const wasScreen = videoSource === "screen";
         setVideoBusy(true);
         try {
             await applyVideoTrack(null, "none");
@@ -520,8 +535,10 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
             bgPipelineRef.current = null;
             try { cameraRawTrackRef.current?.stop(); } catch { }
             cameraRawTrackRef.current = null;
+            if (wasScreen) { try { await stopAudioMix(); } catch { /* ignore */ } }
         }
         finally { setVideoBusy(false); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [videoBusy, videoSource, applyVideoTrack]);
 
     const toggleCamera = useCallback(() => {
@@ -536,6 +553,55 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
         await enableCamera(next);
     }, [videoBusy, videoSource, facing, enableCamera]);
 
+    // WebAudio mixer: mikrofon + ekran audio → bitta chiqish treki.
+    // Peer bir vaqtda o'zingizni ham, ekrandagi ovozni ham eshitadi (Meet/Zoom uslub).
+    async function startAudioMix(screenAudio: MediaStreamTrack) {
+        const sender = audioSenderRef.current;
+        if (!sender || !sender.track) return;
+        // Asl mikrofon trekini saqlaymiz (screen tugagach qaytarish uchun)
+        originalMicTrackRef.current = sender.track;
+
+        const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        const ctx = new AC();
+        audioMixCtxRef.current = ctx;
+        // Mikrofon manbai — pipeline'dan chiqqan track (yoki asl mic)
+        const micStream = new MediaStream([sender.track]);
+        const micNode = ctx.createMediaStreamSource(micStream);
+        // Ekran audio manbai
+        const scrStream = new MediaStream([screenAudio]);
+        const scrNode = ctx.createMediaStreamSource(scrStream);
+        // Gain'lar (kelajakda alohida boshqarish uchun)
+        const micGain = ctx.createGain(); micGain.gain.value = 1.0;
+        const scrGain = ctx.createGain(); scrGain.gain.value = 1.0;
+        micNode.connect(micGain);
+        scrNode.connect(scrGain);
+        // Mixed output → MediaStreamDestination
+        const dest = ctx.createMediaStreamDestination();
+        micGain.connect(dest);
+        scrGain.connect(dest);
+        audioMixDestRef.current = dest;
+
+        const [mixedTrack] = dest.stream.getAudioTracks();
+        if (mixedTrack) {
+            await sender.replaceTrack(mixedTrack);
+        }
+    }
+    async function stopAudioMix() {
+        const sender = audioSenderRef.current;
+        // Asl mikrofon trekini qaytaramiz
+        if (sender && originalMicTrackRef.current) {
+            try { await sender.replaceTrack(originalMicTrackRef.current); } catch { /* ignore */ }
+        }
+        originalMicTrackRef.current = null;
+        // AudioContext yopish
+        try { await audioMixCtxRef.current?.close(); } catch { /* ignore */ }
+        audioMixCtxRef.current = null;
+        audioMixDestRef.current = null;
+        // Ekran audio treklarini to'xtatish
+        try { screenAudioStreamRef.current?.getTracks().forEach(t => t.stop()); } catch { /* ignore */ }
+        screenAudioStreamRef.current = null;
+    }
+
     // Ekran ulashish (faqat kompyuter brauzerlari) — tizim ovoz + kursor bilan
     const enableScreen = useCallback(async () => {
         if (screenBusy || !canScreen) return;
@@ -548,24 +614,30 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                     displaySurface: "monitor",        // default: butun ekran
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } as any,
-                audio: true,                          // tizim ovoz (Chrome/Edge)
+                // audio: tizim ovoz (Chrome/Edge). Foydalanuvchi "Ovozni ham ulashish"
+                // katakchasini belgilaganda track keladi. echoCancellation=false —
+                // media pleyer/musiqa toza chiqishi uchun.
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false,
+                    sampleRate: 48000,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } as any,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
             const [t] = s.getVideoTracks();
             if (!t) throw new Error("Ekran oqim topilmadi");
+            const audioTrack = s.getAudioTracks()[0] ?? null;
+            // Ekran tugatilsa audio ham to'xtaydi
             t.onended = () => { disableVideo(); };
-            // Ovoz treki mavjud bo'lsa peer'ga qo'shamiz (aks holda faqat video)
-            const [audioTrack] = s.getAudioTracks();
+            if (audioTrack) audioTrack.onended = () => { /* screen video onended o'zi disable qiladi */ };
+
+            // Ekran audio bo'lsa WebAudio mixer bilan mikrofon + ekran ovozini birlashtiramiz
+            // Endi peer sizni ham, ekrandagi ovozni ham bir vaqtda eshitadi (Meet/Zoom uslub)
             if (audioTrack && pcRef.current) {
-                const audioSender = pcRef.current.getSenders().find(x => x.track?.kind === "audio");
-                if (audioSender) {
-                    // Mavjud mikrofon audio'ni saqlab qolib, ekran audio'sini mixlash oson emas.
-                    // Buning uchun WebAudio kerak — hozircha faqat mikrofon qoladi.
-                    // Ekran audio treki e'tibordan chetda qoladi (kelajakda mixer).
-                    try { audioTrack.stop(); } catch {}
-                } else {
-                    pcRef.current.addTrack(audioTrack, s);
-                }
+                screenAudioStreamRef.current = s;
+                try { await startAudioMix(audioTrack); } catch { /* mixer fail → faqat video ulashiladi */ }
             }
             await applyVideoTrack(t, "screen");
         } catch (e) {
