@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker, Film, ExternalLink, EyeOff, Eye, AlertTriangle, Play, Pause } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker, Film, ExternalLink, EyeOff, Eye, AlertTriangle, Play, Pause, RotateCw, ZoomIn, ZoomOut, Maximize2, Minimize2 } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxGroupCreateModal } from "./nx-group-create-modal";
@@ -5427,46 +5427,133 @@ function MediaGallery({
     onClose: () => void;
 }) {
     const [idx, setIdx] = useState(startIndex);
+    const [zoom, setZoom] = useState(1);         // 1 | 1.5 | 2 | 3
+    const [rotate, setRotate] = useState(0);     // deg
+    const [copied, setCopied] = useState(false);
+
     useEffect(() => {
         const h = (e: KeyboardEvent) => {
             if (e.key === "Escape") onClose();
-            if (e.key === "ArrowLeft") setIdx(i => Math.max(0, i - 1));
-            if (e.key === "ArrowRight") setIdx(i => Math.min(images.length - 1, i + 1));
+            if (e.key === "ArrowLeft") { setIdx(i => Math.max(0, i - 1)); setZoom(1); setRotate(0); }
+            if (e.key === "ArrowRight") { setIdx(i => Math.min(images.length - 1, i + 1)); setZoom(1); setRotate(0); }
         };
         window.addEventListener("keydown", h);
         return () => window.removeEventListener("keydown", h);
     }, [images.length, onClose]);
+
     const cur = images[idx];
     if (!cur?.mediaUrl) return null;
+
+    const download = async () => {
+        try {
+            const r = await fetch(cur.mediaUrl!);
+            const blob = await r.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `image-${idx + 1}.${(blob.type.split("/")[1] || "jpg").split(";")[0]}`;
+            document.body.appendChild(a); a.click(); a.remove();
+            URL.revokeObjectURL(url);
+        } catch { /* ignore */ }
+    };
+    const share = async () => {
+        try {
+            if (navigator.share) {
+                await navigator.share({ url: cur.mediaUrl! });
+            } else {
+                await navigator.clipboard.writeText(cur.mediaUrl!);
+                setCopied(true); setTimeout(() => setCopied(false), 1600);
+            }
+        } catch { /* ignore */ }
+    };
+    const copyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(cur.mediaUrl!);
+            setCopied(true); setTimeout(() => setCopied(false), 1600);
+        } catch { /* ignore */ }
+    };
+    const zoomIn = () => setZoom(z => Math.min(4, +(z + 0.5).toFixed(1)));
+    const zoomOut = () => setZoom(z => Math.max(1, +(z - 0.5).toFixed(1)));
+    const rotateCw = () => setRotate(r => (r + 90) % 360);
+
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center"
-            style={{ background: "rgba(0,0,0,0.92)" }} onClick={onClose}>
-            <button onClick={e => { e.stopPropagation(); onClose(); }}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.10)" }}>
-                <X className="w-5 h-5 text-white" />
-            </button>
-            <div className="absolute top-4 left-4 text-xs text-white/70">
-                {idx + 1} / {images.length}
+            style={{ background: "rgba(3,5,15,0.94)" }} onClick={onClose}>
+
+            {/* Toolbar — yuqorida, Nexus stylida */}
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-1.5 rounded-2xl"
+                onClick={e => e.stopPropagation()}
+                style={{
+                    background: "rgba(11,18,40,0.85)",
+                    border: "1px solid rgba(43,62,232,0.30)",
+                    backdropFilter: "blur(10px)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.60)",
+                }}>
+                <span className="px-2 text-[11px] font-black tabular-nums" style={{ color: "rgba(200,215,245,0.85)" }}>
+                    {idx + 1} / {images.length}
+                </span>
+                <div className="w-px h-5" style={{ background: "rgba(43,62,232,0.30)" }} />
+                <ToolBtn icon={Download}  title="Yuklab olish" onClick={download} />
+                <ToolBtn icon={Forward}   title={copied ? "Nusxa olindi!" : "Ulashish"} onClick={share} accent={copied} />
+                <ToolBtn icon={Copy}      title="Havolani nusxa olish" onClick={copyLink} />
+                <ToolBtn icon={RotateCw}  title={`Aylantirish (90°) — hozir ${rotate}°`} onClick={rotateCw} />
+                <ToolBtn icon={ZoomOut}   title="Kichraytirish" onClick={zoomOut} disabled={zoom <= 1} />
+                <ToolBtn icon={ZoomIn}    title={`Kattalashtirish (${zoom.toFixed(1)}x)`} onClick={zoomIn} disabled={zoom >= 4} />
+                <div className="w-px h-5" style={{ background: "rgba(43,62,232,0.30)" }} />
+                <ToolBtn icon={X} title="Yopish" onClick={onClose} danger />
             </div>
+
+            {/* Chap/o'ng navigatsiya */}
             {idx > 0 && (
-                <button onClick={e => { e.stopPropagation(); setIdx(i => i - 1); }}
-                    className="absolute left-4 w-10 h-10 rounded-full flex items-center justify-center"
-                    style={{ background: "rgba(255,255,255,0.10)" }}>
+                <button onClick={e => { e.stopPropagation(); setIdx(i => i - 1); setZoom(1); setRotate(0); }}
+                    className="absolute left-4 w-11 h-11 rounded-full flex items-center justify-center transition hover:brightness-125"
+                    style={{
+                        background: "rgba(11,18,40,0.85)",
+                        border: "1px solid rgba(43,62,232,0.30)",
+                        backdropFilter: "blur(6px)",
+                    }}>
                     <ChevronLeft className="w-5 h-5 text-white" />
                 </button>
             )}
             {idx < images.length - 1 && (
-                <button onClick={e => { e.stopPropagation(); setIdx(i => i + 1); }}
-                    className="absolute right-4 w-10 h-10 rounded-full flex items-center justify-center"
-                    style={{ background: "rgba(255,255,255,0.10)" }}>
+                <button onClick={e => { e.stopPropagation(); setIdx(i => i + 1); setZoom(1); setRotate(0); }}
+                    className="absolute right-4 w-11 h-11 rounded-full flex items-center justify-center transition hover:brightness-125"
+                    style={{
+                        background: "rgba(11,18,40,0.85)",
+                        border: "1px solid rgba(43,62,232,0.30)",
+                        backdropFilter: "blur(6px)",
+                    }}>
                     <ChevronRight className="w-5 h-5 text-white" />
                 </button>
             )}
+
+            {/* Rasm — zoom + rotate transformlari bilan */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={cur.mediaUrl} alt=""
-                className="max-w-[92vw] max-h-[92vh] object-contain rounded-lg"
-                onClick={e => e.stopPropagation()} />
+                className="max-w-[92vw] max-h-[92vh] object-contain rounded-lg select-none"
+                draggable={false}
+                onClick={e => e.stopPropagation()}
+                style={{
+                    transform: `scale(${zoom}) rotate(${rotate}deg)`,
+                    transition: "transform 0.20s ease",
+                    cursor: zoom > 1 ? "zoom-out" : "zoom-in",
+                }}
+                onDoubleClick={(e) => { e.stopPropagation(); if (zoom > 1) setZoom(1); else setZoom(2); }} />
         </div>
+    );
+}
+
+// Lightbox toolbar tugma
+function ToolBtn({ icon: Icon, title, onClick, accent, danger, disabled }: {
+    icon: React.ElementType; title: string; onClick: () => void;
+    accent?: boolean; danger?: boolean; disabled?: boolean;
+}) {
+    const color = danger ? "#EF4444" : accent ? "#00CEC8" : "rgba(220,232,255,0.90)";
+    return (
+        <button onClick={onClick} disabled={disabled} title={title}
+            className="w-9 h-9 rounded-lg flex items-center justify-center transition disabled:opacity-40 hover:bg-white/[0.08]">
+            <Icon className="w-4 h-4" style={{ color }} />
+        </button>
     );
 }
 
@@ -6335,9 +6422,7 @@ function NxCirclePlayer({ src, durationMs }: { src: string; durationMs?: number 
     const [progress, setProgress] = useState(0);  // 0..1
     const [duration, setDuration] = useState((durationMs ?? 0) / 1000);
     const SIZE = 220;
-    const STROKE = 3;
-    const R = (SIZE - STROKE) / 2;
-    const C = 2 * Math.PI * R;
+    const RADIUS = 24; // rounded-square (kvadrat, qiyali burchaklar)
 
     useEffect(() => {
         const v = videoRef.current;
@@ -6350,7 +6435,6 @@ function NxCirclePlayer({ src, durationMs }: { src: string; durationMs?: number 
         const onMeta = () => { if (isFinite(v.duration)) setDuration(v.duration); };
         v.addEventListener("timeupdate", onTime);
         v.addEventListener("loadedmetadata", onMeta);
-        // Autoplay attempt (browser may block if not muted)
         v.play().catch(() => { /* muted autoplay policy */ });
         return () => { v.removeEventListener("timeupdate", onTime); v.removeEventListener("loadedmetadata", onMeta); };
     }, [src]);
@@ -6363,34 +6447,23 @@ function NxCirclePlayer({ src, durationMs }: { src: string; durationMs?: number 
     };
 
     return (
-        <div className="mb-1 relative select-none" style={{ width: SIZE, height: SIZE }}>
-            {/* Video — doiraviy clip */}
-            <div className="absolute inset-0 overflow-hidden bg-black"
-                style={{ borderRadius: "50%", cursor: "pointer" }}
-                onClick={() => {
-                    setMuted(m => {
-                        if (videoRef.current) videoRef.current.muted = !m;
-                        return !m;
-                    });
-                }}>
-                <video ref={videoRef} src={src}
-                    autoPlay muted={muted} loop playsInline
-                    className="w-full h-full object-cover" />
-            </div>
-
-            {/* Progress halqa (SVG) — Telegram uslubidagi tashqi aylana */}
-            <svg width={SIZE} height={SIZE} className="absolute inset-0 pointer-events-none" style={{ transform: "rotate(-90deg)" }}>
-                {/* Fon halqa (yumshoq) */}
-                <circle cx={SIZE / 2} cy={SIZE / 2} r={R}
-                    fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth={STROKE} />
-                {/* Progress halqa */}
-                <circle cx={SIZE / 2} cy={SIZE / 2} r={R}
-                    fill="none" stroke="#00CEC8" strokeWidth={STROKE}
-                    strokeLinecap="round"
-                    strokeDasharray={C}
-                    strokeDashoffset={C * (1 - progress)}
-                    style={{ transition: "stroke-dashoffset 0.15s linear", filter: "drop-shadow(0 0 3px rgba(0,206,200,0.55))" }} />
-            </svg>
+        <div className="mb-1 relative select-none overflow-hidden bg-black"
+            style={{
+                width: SIZE, height: SIZE,
+                borderRadius: RADIUS,
+                cursor: "pointer",
+                border: "1px solid rgba(0,206,200,0.30)",
+                boxShadow: "0 4px 20px rgba(0,206,200,0.15)",
+            }}
+            onClick={() => {
+                setMuted(m => {
+                    if (videoRef.current) videoRef.current.muted = !m;
+                    return !m;
+                });
+            }}>
+            <video ref={videoRef} src={src}
+                autoPlay muted={muted} loop playsInline
+                className="w-full h-full object-cover" />
 
             {/* Yuqori-chapda: davomiylik + speaker ikonasi (Telegram uslub) */}
             <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black tabular-nums pointer-events-none"
@@ -6400,6 +6473,18 @@ function NxCirclePlayer({ src, durationMs }: { src: string; durationMs?: number 
                     : <Volume2 className="w-3 h-3" style={{ color: "#00CEC8" }} />
                 }
                 <span>{fmtDur(duration - (videoRef.current?.currentTime ?? 0))}</span>
+            </div>
+
+            {/* Pastda progress bar (SVG halqa o'rniga — kvadrat shakl uchun mos) */}
+            <div className="absolute left-2 right-2 bottom-2 h-1 rounded-full overflow-hidden pointer-events-none"
+                style={{ background: "rgba(255,255,255,0.20)" }}>
+                <div className="h-full rounded-full"
+                    style={{
+                        width: `${progress * 100}%`,
+                        background: "linear-gradient(90deg,#00CEC8,#2B3EE8)",
+                        boxShadow: "0 0 6px rgba(0,206,200,0.60)",
+                        transition: "width 0.15s linear",
+                    }} />
             </div>
         </div>
     );
@@ -6463,46 +6548,100 @@ function NxMediaImage({ src, onOpen }: { src: string; onOpen?: () => void }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | null }) {
     const videoRef = useRef<HTMLVideoElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const [started, setStarted] = useState(false);
+    const [playing, setPlaying] = useState(false);
+    const [muted, setMuted] = useState(false);
     const [duration, setDuration] = useState((durationMs ?? 0) / 1000);
+    const [current, setCurrent] = useState(0);
+    const [showControls, setShowControls] = useState(true);
+    const [fullscreen, setFullscreen] = useState(false);
+    const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         const v = videoRef.current;
         if (!v) return;
         const onMeta = () => { if (isFinite(v.duration)) setDuration(v.duration); };
+        const onTime = () => setCurrent(v.currentTime);
+        const onPlay = () => setPlaying(true);
+        const onPause = () => setPlaying(false);
         v.addEventListener("loadedmetadata", onMeta);
-        return () => v.removeEventListener("loadedmetadata", onMeta);
+        v.addEventListener("timeupdate", onTime);
+        v.addEventListener("play", onPlay);
+        v.addEventListener("pause", onPause);
+        return () => {
+            v.removeEventListener("loadedmetadata", onMeta);
+            v.removeEventListener("timeupdate", onTime);
+            v.removeEventListener("play", onPlay);
+            v.removeEventListener("pause", onPause);
+        };
     }, []);
 
-    const fmtDur = (s: number) => {
-        if (!isFinite(s) || s <= 0) return "";
+    useEffect(() => {
+        const onFs = () => setFullscreen(document.fullscreenElement === containerRef.current);
+        document.addEventListener("fullscreenchange", onFs);
+        return () => document.removeEventListener("fullscreenchange", onFs);
+    }, []);
+
+    // Controls auto-hide (playing paytida 2s harakat yo'q bo'lsa yashiradi)
+    const bumpControls = () => {
+        setShowControls(true);
+        if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+        if (playing) hideTimerRef.current = setTimeout(() => setShowControls(false), 2000);
+    };
+    useEffect(() => { bumpControls(); return () => { if (hideTimerRef.current) clearTimeout(hideTimerRef.current); }; }, [playing]);
+
+    const fmt = (s: number) => {
+        if (!isFinite(s) || s < 0) s = 0;
         const m = Math.floor(s / 60), sec = Math.floor(s % 60);
         return `${m}:${sec.toString().padStart(2, "0")}`;
     };
-    const durLabel = fmtDur(duration);
+    const toggle = () => {
+        const v = videoRef.current; if (!v) return;
+        if (v.paused) void v.play(); else v.pause();
+    };
+    const seek = (frac: number) => {
+        const v = videoRef.current; if (!v || !isFinite(v.duration)) return;
+        v.currentTime = v.duration * Math.max(0, Math.min(1, frac));
+    };
+    const toggleMute = () => {
+        const v = videoRef.current; if (!v) return;
+        v.muted = !v.muted;
+        setMuted(v.muted);
+    };
+    const toggleFullscreen = () => {
+        if (!containerRef.current) return;
+        if (document.fullscreenElement) void document.exitFullscreen();
+        else void containerRef.current.requestFullscreen();
+    };
+
+    const progress = duration > 0 ? current / duration : 0;
 
     return (
-        <div className="relative mb-1 rounded-2xl overflow-hidden inline-block"
+        <div ref={containerRef}
+            className="relative mb-1 rounded-2xl overflow-hidden inline-block group"
+            onMouseMove={bumpControls}
+            onMouseLeave={() => { if (playing) setShowControls(false); }}
             style={{
                 border: "1px solid rgba(43,62,232,0.30)",
                 boxShadow: "0 4px 20px rgba(0,206,200,0.12), inset 0 0 60px rgba(43,62,232,0.05)",
                 background: "linear-gradient(135deg, rgba(43,62,232,0.10), rgba(0,206,200,0.06))",
             }}>
             <video ref={videoRef} src={src}
-                controls={started}
                 playsInline
                 preload="metadata"
                 onPlay={() => setStarted(true)}
-                className="max-w-full max-h-80 block bg-black"
+                onClick={() => started && toggle()}
+                className="max-w-full max-h-80 block bg-black cursor-pointer"
                 style={{ borderRadius: "calc(1rem - 1px)" }} />
 
-            {/* Katta Play overlay — faqat boshlanmasdan oldin */}
-            {!started && (
+            {/* Katta Play overlay — boshlanmasdan oldin YOKI pause bo'lsa */}
+            {(!started || !playing) && (
                 <button type="button"
                     onClick={() => { videoRef.current?.play(); }}
-                    className="absolute inset-0 flex items-center justify-center group"
-                    style={{ background: "linear-gradient(135deg, rgba(5,8,24,0.35), rgba(5,8,24,0.15))" }}>
-                    <div className="w-16 h-16 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 group-active:scale-95"
+                    className="absolute inset-0 flex items-center justify-center transition"
+                    style={{ background: started ? "rgba(5,8,24,0.20)" : "linear-gradient(135deg, rgba(5,8,24,0.35), rgba(5,8,24,0.15))" }}>
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
                         style={{
                             background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
                             boxShadow: "0 8px 32px rgba(0,206,200,0.45), 0 0 60px rgba(43,62,232,0.30)",
@@ -6512,7 +6651,7 @@ function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | 
                 </button>
             )}
 
-            {/* Yuqori-chapda VIDEO badge — brend ta'kidlash */}
+            {/* Yuqori-chapda VIDEO badge — faqat boshlanmasdan oldin */}
             {!started && (
                 <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full pointer-events-none"
                     style={{
@@ -6524,17 +6663,67 @@ function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | 
                     <span className="text-[9px] font-black tracking-wider" style={{ color: "#00CEC8" }}>VIDEO</span>
                 </div>
             )}
-
-            {/* Yuqori-o'ngda davomiylik — Telegram uslub */}
-            {!started && durLabel && (
+            {!started && duration > 0 && (
                 <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-black tabular-nums pointer-events-none"
-                    style={{
-                        background: "rgba(11,18,40,0.75)",
-                        border: "1px solid rgba(43,62,232,0.30)",
-                        color: "#fff",
-                        backdropFilter: "blur(6px)",
-                    }}>
-                    {durLabel}
+                    style={{ background: "rgba(11,18,40,0.75)", border: "1px solid rgba(43,62,232,0.30)", color: "#fff", backdropFilter: "blur(6px)" }}>
+                    {fmt(duration)}
+                </div>
+            )}
+
+            {/* Custom controls bar — pastda, Nexus stylida (o'rnida native o'rnida) */}
+            {started && (
+                <div className={`absolute left-0 right-0 bottom-0 px-3 pt-8 pb-2 transition-opacity duration-200 ${showControls ? "opacity-100" : "opacity-0"}`}
+                    style={{ background: "linear-gradient(to top, rgba(5,8,24,0.85), rgba(5,8,24,0))" }}>
+                    {/* Progress bar */}
+                    <div className="h-1.5 rounded-full mb-2 cursor-pointer relative"
+                        style={{ background: "rgba(255,255,255,0.20)" }}
+                        onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            seek((e.clientX - rect.left) / rect.width);
+                        }}>
+                        <div className="h-full rounded-full"
+                            style={{
+                                width: `${progress * 100}%`,
+                                background: "linear-gradient(90deg,#00CEC8,#2B3EE8)",
+                                boxShadow: "0 0 8px rgba(0,206,200,0.70)",
+                            }} />
+                        {/* Draggable handle */}
+                        <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full transition-transform hover:scale-125"
+                            style={{
+                                left: `calc(${progress * 100}% - 6px)`,
+                                background: "#fff",
+                                boxShadow: "0 0 8px rgba(0,206,200,0.90)",
+                            }} />
+                    </div>
+                    {/* Bottom row: play + time + mute + fullscreen */}
+                    <div className="flex items-center gap-2">
+                        <button onClick={toggle}
+                            className="w-7 h-7 rounded-md flex items-center justify-center transition"
+                            style={{ background: "rgba(0,206,200,0.20)" }}>
+                            {playing
+                                ? <Pause className="w-3.5 h-3.5 text-white" fill="#fff" />
+                                : <Play className="w-3.5 h-3.5 text-white translate-x-0.5" fill="#fff" />}
+                        </button>
+                        <span className="text-[10px] font-black tabular-nums text-white">
+                            {fmt(current)} / {fmt(duration)}
+                        </span>
+                        <div className="flex-1" />
+                        <button onClick={toggleMute}
+                            className="w-7 h-7 rounded-md flex items-center justify-center transition"
+                            style={{ background: "rgba(11,18,40,0.55)" }}>
+                            {muted
+                                ? <VolumeX className="w-3.5 h-3.5 text-white" />
+                                : <Volume2 className="w-3.5 h-3.5 text-white" />}
+                        </button>
+                        <button onClick={toggleFullscreen}
+                            title={fullscreen ? "Chiqish" : "To'liq ekran"}
+                            className="w-7 h-7 rounded-md flex items-center justify-center transition"
+                            style={{ background: "rgba(11,18,40,0.55)" }}>
+                            {fullscreen
+                                ? <Minimize2 className="w-3.5 h-3.5 text-white" />
+                                : <Maximize2 className="w-3.5 h-3.5 text-white" />}
+                        </button>
+                    </div>
                 </div>
             )}
         </div>
