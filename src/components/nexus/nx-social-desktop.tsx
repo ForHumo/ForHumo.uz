@@ -36,7 +36,15 @@ import { formatLastSeen } from "@/lib/last-seen";
 import { isLocked, isUnlockedNow, lockNow } from "@/lib/chat-lock";
 import { NxChatLockModal } from "./nx-chat-lock-modal";
 import { useSession } from "next-auth/react";
+import { useLocale } from "next-intl";
 import { formatMoney } from "@/lib/money";
+
+// Tab labels per locale (uz/ru/en). Sidebar tab bar'da ishlatiladi.
+const TAB_LABELS: Record<string, Record<string, string>> = {
+    uz: { all: "Barchasi", unread: "O'qilmagan", private: "Shaxsiy", groups: "Guruh", channels: "Kanal", agents: "Agent" },
+    ru: { all: "Все",      unread: "Непроч.",    private: "Личные",  groups: "Группа", channels: "Канал", agents: "Агент" },
+    en: { all: "All",      unread: "Unread",     private: "Private", groups: "Group",  channels: "Channel", agents: "Agent" },
+};
 
 interface Conv {
     conversationId: string;
@@ -124,6 +132,7 @@ export function NxSocialDesktop() {
     const { startCall } = useNxPlayer();
     const { onTyping, sendTyping, isOnline } = usePresence();
     const { data: session } = useSession();
+    const locale = useLocale();
     const [myProfileId, setMyProfileId] = useState<string | null>(null);
     const [myName, setMyName] = useState<string | null>(null);
     const [peerTyping, setPeerTyping] = useState(false);
@@ -2100,14 +2109,16 @@ export function NxSocialDesktop() {
                     {(() => {
                         // Tab bo'yicha o'qilmagan hisoblash (muted chatlar sanamaydi)
                         const unreadDMs = convs.filter(c => c.unread && !c.muted && !c.isSelf).length;
+                        // Locale'ga qarab tarjima (uz default). RU "Непрочитанные" juda uzun bo'lgani uchun qisqartirilgan.
+                        const L = TAB_LABELS[locale] ?? TAB_LABELS.uz;
                         // 380px sidebar → 6 tab teng bo'linadi, hech qanday scroll shart emas (desktop-friendly)
                         return ([
-                            { id: "all" as const,      icon: Inbox,         label: "All",     badge: unreadDMs },
-                            { id: "unread" as const,   icon: BellOff,       label: "Yangi",   badge: unreadDMs },
-                            { id: "private" as const,  icon: MessageSquare, label: "DM",      badge: unreadDMs },
-                            { id: "groups" as const,   icon: Users,         label: "Guruh",   badge: 0 },
-                            { id: "channels" as const, icon: Hash,          label: "Kanal",   badge: 0 },
-                            { id: "agents" as const,   icon: BotIcon,       label: "Agent",   badge: 0 },
+                            { id: "all" as const,      icon: Inbox,         label: L.all,       badge: unreadDMs },
+                            { id: "unread" as const,   icon: BellOff,       label: L.unread,    badge: unreadDMs },
+                            { id: "private" as const,  icon: MessageSquare, label: L.private,   badge: unreadDMs },
+                            { id: "groups" as const,   icon: Users,         label: L.groups,    badge: 0 },
+                            { id: "channels" as const, icon: Hash,          label: L.channels,  badge: 0 },
+                            { id: "agents" as const,   icon: BotIcon,       label: L.agents,    badge: 0 },
                         ]).map(t => (
                             <button key={t.id}
                                 onClick={() => setListTab(t.id)}
@@ -2533,7 +2544,8 @@ export function NxSocialDesktop() {
                             Suhbatlar yo&apos;q
                         </div>
                     ) : filteredConvs.map(c => (
-                        <div key={c.conversationId} className="group relative">
+                        <div key={c.conversationId} className="group relative"
+                            style={convMenuFor === c.conversationId ? { zIndex: 50 } : undefined}>
                             <button
                                 onClick={() => {
                                     // Chat lock — qulflangan bo'lsa avval unlock so'raymiz
@@ -2637,6 +2649,8 @@ export function NxSocialDesktop() {
                                 </button>
                                 {convMenuFor === c.conversationId && (
                                     <div className="absolute right-0 top-full mt-1 z-40 rounded-xl overflow-hidden min-w-[180px]"
+                                        onClick={e => e.stopPropagation()}
+                                        onMouseDown={e => e.stopPropagation()}
                                         style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)" }}>
                                         <MsgMenuItem
                                             icon={c.pinned ? PinOff : Pin}
@@ -3162,6 +3176,12 @@ export function NxSocialDesktop() {
                                 <div className="flex justify-center py-10">
                                     <Loader2 className="w-5 h-5 animate-spin text-white/30" />
                                 </div>
+                            ) : messages.length === 0 && !loadingMsgs ? (
+                                <NxEmptyChat
+                                    peerName={peer?.name ?? peer?.username ?? "Foydalanuvchi"}
+                                    isSelf={!!selectedConv?.isSelf}
+                                    onQuick={(txt) => { setInput(txt); }}
+                                />
                             ) : (() => {
                                 const list = searchOpen && searchQuery.trim()
                                     ? messages.filter(m => (m.text ?? "").toLowerCase().includes(searchQuery.toLowerCase()))
@@ -6298,6 +6318,101 @@ function IconBtn({ icon: Icon, title, onClick }: { icon: React.ElementType; titl
             style={{ background: "rgba(43,62,232,0.10)" }}>
             <Icon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
         </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxEmptyChat — yangi ochilgan / bo'sh chat uchun "boshlanish" ekrani.
+// Telegram'ning "здесь пока ничего нет + orange character"дан butunlay farqli:
+// katta shaffof gradient halqa, ismning birinchi harfi + peer nomi + 4 ta
+// "conversation starter" kartochkasi (bosilsa composer'ga matn tushadi).
+// Rasm/animatsiya YO'Q — pastki dizayn language + o'zimizni brand ranglari (Nexus teal/blue).
+// ─────────────────────────────────────────────────────────────────────────────
+function NxEmptyChat({ peerName, isSelf, onQuick }: {
+    peerName: string;
+    isSelf: boolean;
+    onQuick: (text: string) => void;
+}) {
+    // Vaqt bo'yicha salom (Toshkent vaqti bo'yicha soddaroq: 5–12 tong, 12–18 kunduz, 18–22 kech, 22–5 tun)
+    const hh = new Date().getHours();
+    const greet = hh < 5 ? "Salom" : hh < 12 ? "Xayrli tong" : hh < 18 ? "Xayrli kun" : hh < 22 ? "Xayrli kech" : "Salom";
+    const initial = (peerName?.[0] ?? "•").toUpperCase();
+
+    // Kontekstli boshlash variantlari — universal, hech kimni no'noqroq holatga solmaydigan
+    const starters = isSelf
+        ? [
+            "📌 Eslatma: bugun bajarish kerak",
+            "🔖 Foydali link saqladim",
+            "💡 Kelasi hafta uchun g'oya",
+            "✅ Yakunlangan ishlar ro'yhati",
+        ]
+        : [
+            `${greet}! 👋`,
+            `Salom, qanday yordam bera olaman?`,
+            `Bir daqiqangiz bormi?`,
+            `Yaxshi kunlar tilayman 🌤️`,
+        ];
+
+    return (
+        <div className="flex-1 flex flex-col items-center justify-center py-8 px-4 select-none">
+            {/* Katta shaffof gradient halqa — o'rtada ismning birinchi harfi */}
+            <div className="relative mb-5">
+                <div className="w-24 h-24 rounded-full flex items-center justify-center relative"
+                    style={{
+                        background: "linear-gradient(135deg, rgba(43,62,232,0.18), rgba(0,206,200,0.18))",
+                        border: "2px solid rgba(43,62,232,0.35)",
+                        boxShadow: "0 0 60px rgba(0,206,200,0.20), inset 0 0 30px rgba(43,62,232,0.15)",
+                    }}>
+                    {isSelf ? (
+                        <Bookmark className="w-9 h-9" style={{ color: "#00CEC8" }} fill="rgba(0,206,200,0.20)" />
+                    ) : (
+                        <span className="text-4xl font-black" style={{
+                            background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                            backgroundClip: "text",
+                        }}>{initial}</span>
+                    )}
+                </div>
+                {/* Orbital dot — tirikligini bildiruvchi kichik detal */}
+                <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse"
+                    style={{ background: "#00CEC8", boxShadow: "0 0 10px rgba(0,206,200,0.90)" }} />
+            </div>
+
+            {/* Sarlavha */}
+            <h3 className="text-base font-black text-center mb-1.5"
+                style={{ color: "rgba(230,238,255,0.98)" }}>
+                {isSelf ? "Saqlangan xabarlar" : `${peerName} bilan yangi suhbat`}
+            </h3>
+            <p className="text-[12px] text-center max-w-[280px] mb-6"
+                style={{ color: "rgba(160,180,220,0.75)" }}>
+                {isSelf
+                    ? "Bu yerga faqat siz kirasiz. Muhim matn, link va rasm saqlash uchun ideal."
+                    : "Hozircha xabar yo'q. Bittasini yozib boshlang — quyidagi variantlarni ham tanlashingiz mumkin."}
+            </p>
+
+            {/* 4 ta boshlash kartochkasi — bosilsa composer'ga tushadi */}
+            <div className="grid grid-cols-2 gap-2 w-full max-w-[340px]">
+                {starters.map((s, i) => (
+                    <button key={i} onClick={() => onQuick(s)}
+                        className="text-left p-2.5 rounded-xl transition hover:brightness-125 active:scale-[0.98]"
+                        style={{
+                            background: "rgba(11,18,40,0.75)",
+                            border: "1px solid rgba(43,62,232,0.28)",
+                        }}>
+                        <p className="text-[11.5px] font-bold line-clamp-2"
+                            style={{ color: "rgba(220,232,255,0.90)" }}>{s}</p>
+                    </button>
+                ))}
+            </div>
+
+            {/* Nozik yordamchi matn (Telegram'nikidan farqli — biz maslahat beramiz) */}
+            <p className="mt-6 text-[10.5px] text-center flex items-center gap-1.5"
+                style={{ color: "rgba(140,160,210,0.55)" }}>
+                <Sparkles className="w-3 h-3" style={{ color: "rgba(0,206,200,0.60)" }} />
+                Kartochkani bosing yoki pastdan o&apos;zingizni yozing
+            </p>
+        </div>
     );
 }
 
