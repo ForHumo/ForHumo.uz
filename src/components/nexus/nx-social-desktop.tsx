@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker, Film, ExternalLink, EyeOff, Eye, AlertTriangle } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker, Film, ExternalLink, EyeOff, Eye, AlertTriangle, Play, Pause } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxGroupCreateModal } from "./nx-group-create-modal";
@@ -3226,7 +3226,7 @@ export function NxSocialDesktop() {
                                         e.preventDefault();
                                         setMsgMenuFor(msgMenuFor === m.id ? null : m.id);
                                     }}
-                                    className={`group flex items-center gap-1 ${m.mine ? "justify-end" : "justify-start"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
+                                    className={`group flex items-center gap-1 ${m.mine ? "flex-row justify-end" : "flex-row-reverse justify-end"} ${selectMode ? "cursor-pointer" : ""} ${selectedIds.has(m.id) ? "rounded-lg py-1" : ""}`}
                                     style={{
                                         ...(selectedIds.has(m.id) ? { background: "rgba(0,206,200,0.10)" } : {}),
                                         // Guruh ichida yuqori marginni kamaytiramiz (bir-biriga yaqin)
@@ -3424,37 +3424,16 @@ export function NxSocialDesktop() {
                                             <NxCirclePlayer src={m.mediaUrl} durationMs={m.durationMs} />
                                         )}
                                         {m.mediaType === "file" && m.mediaUrl && (() => {
-                                            // Audio faylni chatda eshittirish uchun inline pleyer + nom + yuklab olish
                                             const isAudio = !!m.mediaMime?.startsWith("audio/")
                                                 || /\.(mp3|wav|ogg|m4a|aac|flac|opus)$/i.test(m.mediaName ?? m.mediaUrl);
                                             if (isAudio) {
                                                 return (
-                                                    <div className="mb-1 rounded-lg overflow-hidden min-w-[260px] max-w-[320px]"
-                                                        style={{ background: m.mine ? "rgba(255,255,255,0.12)" : "rgba(0,206,200,0.10)" }}>
-                                                        <div className="flex items-center gap-3 px-3 pt-2.5 pb-1.5">
-                                                            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                                                                style={{ background: m.mine ? "rgba(255,255,255,0.18)" : "rgba(0,206,200,0.20)" }}>
-                                                                <Volume2 className="w-4 h-4" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
-                                                            </div>
-                                                            <div className="min-w-0 flex-1">
-                                                                <p className="text-xs font-bold truncate" style={{ color: m.mine ? "#fff" : "rgba(220,230,255,0.95)" }}>
-                                                                    {m.mediaName || "Audio"}
-                                                                </p>
-                                                                <p className="text-[10px] opacity-70">
-                                                                    {typeof m.mediaSize === "number" ? formatBytes(m.mediaSize) : ""}
-                                                                </p>
-                                                            </div>
-                                                            <a href={m.mediaUrl} target="_blank" rel="noopener noreferrer" download={m.mediaName ?? true}
-                                                                title="Yuklab olish"
-                                                                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                                                                style={{ background: "rgba(0,0,0,0.20)" }}>
-                                                                <Download className="w-3.5 h-3.5" style={{ color: m.mine ? "#fff" : "rgba(200,215,245,0.85)" }} />
-                                                            </a>
-                                                        </div>
-                                                        <audio controls preload="metadata" src={m.mediaUrl}
-                                                            className="w-full h-9 px-2 pb-2"
-                                                            style={{ filter: "invert(1) hue-rotate(180deg) contrast(0.95)" }} />
-                                                    </div>
+                                                    <NxAudioCard
+                                                        src={m.mediaUrl}
+                                                        name={m.mediaName ?? "Audio"}
+                                                        sizeBytes={typeof m.mediaSize === "number" ? m.mediaSize : null}
+                                                        mine={!!m.mine}
+                                                    />
                                                 );
                                             }
                                             // Oddiy fayl — yuklab olish kartochkasi
@@ -6428,6 +6407,188 @@ function NxCirclePlayer({ src, durationMs }: { src: string; durationMs?: number 
                 }
                 <span>{fmtDur(duration - (videoRef.current?.currentTime ?? 0))}</span>
             </div>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxAudioCard — Nexus brendlangan audio fayl pleyeri (mp3/wav/ogg/m4a/aac/flac/opus).
+// Klassik <audio controls>'dan farqli: gradient fon, katta play/pause tugma,
+// deterministik waveform panjaralari (seed = src URL), Nexus rangi bilan sinxron
+// progress fill, tezlik toggle (1x/1.5x/2x), download tugma.
+// Fon: Nexus panel + border-glow, hover'da yorugroq.
+// ─────────────────────────────────────────────────────────────────────────────
+function NxAudioCard({ src, name, sizeBytes, mine }: {
+    src: string;
+    name: string;
+    sizeBytes: number | null;
+    mine: boolean;
+}) {
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const [playing, setPlaying] = useState(false);
+    const [progress, setProgress] = useState(0);   // 0..1
+    const [duration, setDuration] = useState(0);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [speed, setSpeed] = useState<1 | 1.5 | 2>(1);
+    const barCount = 40;
+
+    // Deterministik "waveform" — src URL'dan hash, har bar balandligi 30-100%
+    const bars = (() => {
+        let h = 0;
+        for (let i = 0; i < src.length; i++) h = (h * 31 + src.charCodeAt(i)) & 0xffffffff;
+        const arr: number[] = [];
+        for (let i = 0; i < barCount; i++) {
+            h = (h * 1103515245 + 12345) & 0x7fffffff;
+            arr.push(30 + (h % 71));   // 30-100
+        }
+        return arr;
+    })();
+
+    useEffect(() => {
+        const a = audioRef.current;
+        if (!a) return;
+        const onTime = () => {
+            if (!a.duration || !isFinite(a.duration)) return;
+            setProgress(a.currentTime / a.duration);
+            setCurrentTime(a.currentTime);
+            setDuration(a.duration);
+        };
+        const onMeta = () => { if (isFinite(a.duration)) setDuration(a.duration); };
+        const onPlay = () => setPlaying(true);
+        const onPause = () => setPlaying(false);
+        const onEnded = () => { setPlaying(false); setProgress(0); setCurrentTime(0); };
+        a.addEventListener("timeupdate", onTime);
+        a.addEventListener("loadedmetadata", onMeta);
+        a.addEventListener("play", onPlay);
+        a.addEventListener("pause", onPause);
+        a.addEventListener("ended", onEnded);
+        return () => {
+            a.removeEventListener("timeupdate", onTime);
+            a.removeEventListener("loadedmetadata", onMeta);
+            a.removeEventListener("play", onPlay);
+            a.removeEventListener("pause", onPause);
+            a.removeEventListener("ended", onEnded);
+        };
+    }, [src]);
+
+    useEffect(() => { if (audioRef.current) audioRef.current.playbackRate = speed; }, [speed]);
+
+    const toggle = () => {
+        const a = audioRef.current;
+        if (!a) return;
+        if (a.paused) void a.play(); else a.pause();
+    };
+    const seekTo = (frac: number) => {
+        const a = audioRef.current;
+        if (!a || !a.duration || !isFinite(a.duration)) return;
+        a.currentTime = a.duration * Math.max(0, Math.min(1, frac));
+    };
+    const nextSpeed = () => setSpeed(s => s === 1 ? 1.5 : s === 1.5 ? 2 : 1);
+
+    const fmt = (s: number) => {
+        if (!isFinite(s) || s < 0) s = 0;
+        const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+        return `${m}:${sec.toString().padStart(2, "0")}`;
+    };
+    const fmtBytes = (b: number) => {
+        if (b < 1024) return b + " B";
+        if (b < 1024 * 1024) return (b / 1024).toFixed(0) + " KB";
+        return (b / 1024 / 1024).toFixed(1) + " MB";
+    };
+
+    return (
+        <div className="mb-1 rounded-2xl overflow-hidden relative"
+            style={{
+                minWidth: 320,
+                maxWidth: 380,
+                background: mine
+                    ? "linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04))"
+                    : "linear-gradient(135deg, rgba(43,62,232,0.14), rgba(0,206,200,0.08))",
+                border: `1px solid ${mine ? "rgba(255,255,255,0.20)" : "rgba(0,206,200,0.28)"}`,
+                boxShadow: mine ? "none" : "0 4px 16px rgba(0,206,200,0.10), inset 0 0 40px rgba(43,62,232,0.06)",
+            }}>
+            {/* Glow orbital — dekorativ, Nexus brend belgisi */}
+            <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(0,206,200,0.20), transparent 70%)" }} />
+
+            {/* Row 1: Play + Waveform */}
+            <div className="flex items-center gap-3 px-3 pt-3">
+                {/* Big Play/Pause tugma — Nexus gradient */}
+                <button onClick={toggle}
+                    className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
+                    style={{
+                        background: playing
+                            ? "linear-gradient(135deg,#00CEC8,#2B3EE8)"
+                            : "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                        boxShadow: "0 4px 12px rgba(0,206,200,0.35), 0 0 24px rgba(43,62,232,0.20)",
+                    }}>
+                    {playing
+                        ? <Pause className="w-5 h-5 text-white" fill="#fff" />
+                        : <Play className="w-5 h-5 text-white translate-x-0.5" fill="#fff" />}
+                </button>
+
+                {/* Waveform — 40 ta bar, progress bilan Nexus gradient bilan to'ldiriladi */}
+                <div className="flex-1 h-10 flex items-center gap-[2px] cursor-pointer"
+                    onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        seekTo((e.clientX - rect.left) / rect.width);
+                    }}>
+                    {bars.map((h, i) => {
+                        const barFrac = (i + 0.5) / barCount;
+                        const filled = barFrac <= progress;
+                        return (
+                            <div key={i} className="flex-1 rounded-full transition-colors"
+                                style={{
+                                    height: `${h}%`,
+                                    minWidth: 2,
+                                    background: filled
+                                        ? "linear-gradient(180deg,#00CEC8,#2B3EE8)"
+                                        : (mine ? "rgba(255,255,255,0.30)" : "rgba(140,160,210,0.35)"),
+                                }} />
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Row 2: Filename, size, time, speed, download */}
+            <div className="flex items-center gap-2 px-3 pt-2 pb-3">
+                <div className="min-w-0 flex-1">
+                    <p className="text-[12px] font-black truncate" style={{ color: mine ? "#fff" : "rgba(230,238,255,0.96)" }}>
+                        {name}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[10px] tabular-nums"
+                        style={{ color: mine ? "rgba(255,255,255,0.70)" : "rgba(160,180,220,0.75)" }}>
+                        <span>{fmt(currentTime)}</span>
+                        <span>·</span>
+                        <span>{fmt(duration)}</span>
+                        {sizeBytes && <><span>·</span><span>{fmtBytes(sizeBytes)}</span></>}
+                    </div>
+                </div>
+
+                {/* Tezlik toggle — 1x / 1.5x / 2x */}
+                <button onClick={nextSpeed}
+                    className="h-6 min-w-[30px] px-1.5 rounded-md text-[10px] font-black flex-shrink-0"
+                    style={{
+                        background: mine ? "rgba(255,255,255,0.15)" : "rgba(0,206,200,0.14)",
+                        color: mine ? "#fff" : "#00CEC8",
+                        border: `1px solid ${mine ? "rgba(255,255,255,0.20)" : "rgba(0,206,200,0.30)"}`,
+                    }}>
+                    {speed}x
+                </button>
+
+                {/* Yuklab olish */}
+                <a href={src} target="_blank" rel="noopener noreferrer" download={name}
+                    title="Yuklab olish"
+                    className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
+                    style={{
+                        background: mine ? "rgba(255,255,255,0.15)" : "rgba(43,62,232,0.14)",
+                        border: `1px solid ${mine ? "rgba(255,255,255,0.20)" : "rgba(43,62,232,0.28)"}`,
+                    }}>
+                    <Download className="w-3.5 h-3.5" style={{ color: mine ? "#fff" : "rgba(200,215,245,0.85)" }} />
+                </a>
+            </div>
+
+            <audio ref={audioRef} src={src} preload="metadata" className="hidden" />
         </div>
     );
 }
