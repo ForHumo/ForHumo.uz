@@ -3049,6 +3049,74 @@ model BnBroadcast {
 // Foydalanuvchi olmaydigan @nomlar (tizim, brend, mashhur odam, davlat,
 // PERSONAL — yaqin odamlarga ajratilgan). VIP toifa keyin 10K+ faol
 // foydalanuvchi bo'lganda sotiladi (hozircha bepul band ko'rsatiladi).
+// ── Humo Media Packs (GIF & Sticker) ────────────────────────────────────────
+// Telegram uslubidagi foydalanuvchi tomonidan yaratiladigan GIF va Sticker
+// to'plamlar. Har foydalanuvchi o'z pack'ini yaratadi, boshqalar "qo'shadi"
+// va istalgan chat'da (hozircha Nexus DM) ishlatadi.
+//
+// Video → MP4 sifatida saqlanadi (real GIF konvertatsiya emas — MP4 loop
+// aynan GIF ko'rinishi, 100x kichik + sifat yaxshi. Telegram/Twitter uslubi).
+// Sticker → PNG/WebP transparent 512x512.
+//
+// AI moderatsiya har item upload'da (mavjud moderateContent) — 18+ bloklanadi.
+
+model HumoMediaPack {
+  id           String          @id @default(cuid())
+  ownerId      String                                    // yaratuvchi UserProfile.id
+  kind         HumoMediaKind
+  name         String                                    // "Mushuklar", "Reactions"
+  slug         String          @unique                   // "mushuklar-abc123"
+  coverUrl     String?                                   // birinchi item avto-cover
+  isPublic     Boolean         @default(true)            // qidiruv/subscription uchun ochiqmi
+  addedCount   Int             @default(0)               // qancha kishi subscribe qilgan
+  usesCount    Int             @default(0)               // qancha marta yuborilgan
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  items         HumoMediaItem[]
+  subscriptions HumoMediaSubscription[]
+
+  @@index([ownerId, kind])
+  @@index([kind, addedCount])
+  @@index([kind, createdAt])
+}
+
+model HumoMediaItem {
+  id         String        @id @default(cuid())
+  packId     String
+  pack       HumoMediaPack @relation(fields: [packId], references: [id], onDelete: Cascade)
+  mediaUrl   String                                       // Vercel Blob URL (.mp4 for GIF, .png for Sticker)
+  thumbUrl   String?                                      // GIF static frame (birinchi kadr)
+  width      Int
+  height     Int
+  bytes      Int
+  keywords   String[]      @default([])                   // qidiruv — GIF free-text, Sticker emojis
+  hidden     Boolean       @default(false)                // AI moderatsiya BLOCK bo'lsa
+  order      Int           @default(0)                    // qo'lda tartib
+  createdAt  DateTime      @default(now())
+
+  @@index([packId, order])
+  @@index([packId, hidden])
+}
+
+// Foydalanuvchi qaysi pack'larni "o'z kutubxonasiga" qo'shgan (Telegram-uslub)
+model HumoMediaSubscription {
+  id         String        @id @default(cuid())
+  profileId  String
+  packId     String
+  pack       HumoMediaPack @relation(fields: [packId], references: [id], onDelete: Cascade)
+  addedAt    DateTime      @default(now())
+  order      Int           @default(0)                    // qo'lda tartib
+
+  @@unique([profileId, packId])
+  @@index([profileId, order])
+}
+
+enum HumoMediaKind {
+  GIF
+  STICKER
+}
+
 model ReservedUsername {
   id           String   @id @default(cuid())
   username     String   @unique                       // lowercase canonical
