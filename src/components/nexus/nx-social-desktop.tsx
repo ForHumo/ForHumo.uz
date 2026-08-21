@@ -5427,15 +5427,30 @@ function MediaGallery({
     onClose: () => void;
 }) {
     const [idx, setIdx] = useState(startIndex);
-    const [zoom, setZoom] = useState(1);         // 1 | 1.5 | 2 | 3
+    const [zoom, setZoom] = useState(1);         // 0.5..8
     const [rotate, setRotate] = useState(0);     // deg
-    const [copied, setCopied] = useState(false);
+    const [pan, setPan] = useState({ x: 0, y: 0 });   // pikselda
+    const [dragging, setDragging] = useState(false);
+    const dragStartRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
+    const [toast, setToast] = useState<string | null>(null);
 
+    const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 1600); };
+    const resetView = () => { setZoom(1); setRotate(0); setPan({ x: 0, y: 0 }); };
+
+    // Rasm almashsa yoki oyna yopilsa view'ni tiklash
+    useEffect(() => { resetView(); }, [idx]);
+
+    // Keyboard shortcuts
     useEffect(() => {
         const h = (e: KeyboardEvent) => {
             if (e.key === "Escape") onClose();
-            if (e.key === "ArrowLeft") { setIdx(i => Math.max(0, i - 1)); setZoom(1); setRotate(0); }
-            if (e.key === "ArrowRight") { setIdx(i => Math.min(images.length - 1, i + 1)); setZoom(1); setRotate(0); }
+            else if (e.key === "ArrowLeft") setIdx(i => Math.max(0, i - 1));
+            else if (e.key === "ArrowRight") setIdx(i => Math.min(images.length - 1, i + 1));
+            else if (e.key === "+" || e.key === "=") setZoom(z => Math.min(8, +(z + 0.25).toFixed(2)));
+            else if (e.key === "-" || e.key === "_") setZoom(z => Math.max(0.5, +(z - 0.25).toFixed(2)));
+            else if (e.key === "0") resetView();
+            else if (e.key === "r") setRotate(r => (r + 90) % 360);
+            else if (e.key === "1") setZoom(1);
         };
         window.addEventListener("keydown", h);
         return () => window.removeEventListener("keydown", h);
@@ -5454,7 +5469,8 @@ function MediaGallery({
             a.download = `image-${idx + 1}.${(blob.type.split("/")[1] || "jpg").split(";")[0]}`;
             document.body.appendChild(a); a.click(); a.remove();
             URL.revokeObjectURL(url);
-        } catch { /* ignore */ }
+            showToast("Yuklab olindi");
+        } catch { showToast("Xato"); }
     };
     const share = async () => {
         try {
@@ -5462,25 +5478,90 @@ function MediaGallery({
                 await navigator.share({ url: cur.mediaUrl! });
             } else {
                 await navigator.clipboard.writeText(cur.mediaUrl!);
-                setCopied(true); setTimeout(() => setCopied(false), 1600);
+                showToast("Havola nusxa olindi");
             }
         } catch { /* ignore */ }
     };
-    const copyLink = async () => {
+    // Rasmni HAQIQIY buffer sifatida clipboard'ga yozish (URL emas — image bytes)
+    const copyImage = async () => {
         try {
-            await navigator.clipboard.writeText(cur.mediaUrl!);
-            setCopied(true); setTimeout(() => setCopied(false), 1600);
-        } catch { /* ignore */ }
+            const r = await fetch(cur.mediaUrl!);
+            let blob = await r.blob();
+            // Ba'zi brauzerlarda faqat image/png qo'llanadi — canvas orqali PNG'ga o'tkazamiz
+            if (blob.type !== "image/png") {
+                const img = new window.Image();
+                img.crossOrigin = "anonymous";
+                img.src = cur.mediaUrl!;
+                await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(); });
+                const canvas = document.createElement("canvas");
+                canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) throw new Error("no ctx");
+                ctx.drawImage(img, 0, 0);
+                blob = await new Promise<Blob>((res, rej) =>
+                    canvas.toBlob(b => b ? res(b) : rej(new Error("no blob")), "image/png"));
+            }
+            await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+            showToast("Rasm nusxa olindi");
+        } catch {
+            // Fallback — URL nusxa
+            try { await navigator.clipboard.writeText(cur.mediaUrl!); showToast("Havola nusxa olindi"); }
+            catch { showToast("Xato"); }
+        }
     };
-    const zoomIn = () => setZoom(z => Math.min(4, +(z + 0.5).toFixed(1)));
-    const zoomOut = () => setZoom(z => Math.max(1, +(z - 0.5).toFixed(1)));
+
+    const zoomStep = 0.25;
+    const zoomIn = () => setZoom(z => Math.min(8, +(z + zoomStep).toFixed(2)));
+    const zoomOut = () => {
+        setZoom(z => {
+            const nz = Math.max(0.5, +(z - zoomStep).toFixed(2));
+            if (nz <= 1) setPan({ x: 0, y: 0 });
+            return nz;
+        });
+    };
+    const fitScreen = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
+    const actualSize = () => { setZoom(1); setPan({ x: 0, y: 0 }); showToast("100%"); };
     const rotateCw = () => setRotate(r => (r + 90) % 360);
+
+    // Wheel bilan zoom (Ctrl bosilgan bo'lmasa ham — Telegram uslub)
+    const onWheel = (e: React.WheelEvent) => {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? zoomStep : -zoomStep;
+        setZoom(z => {
+            const nz = Math.max(0.5, Math.min(8, +(z + delta).toFixed(2)));
+            if (nz <= 1) setPan({ x: 0, y: 0 });
+            return nz;
+        });
+    };
+
+    // Mouse drag — pan (faqat zoom > 1 bo'lsa)
+    const onMouseDown = (e: React.MouseEvent) => {
+        if (zoom <= 1) return;
+        e.preventDefault();
+        setDragging(true);
+        dragStartRef.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
+    };
+    useEffect(() => {
+        if (!dragging) return;
+        const onMove = (e: MouseEvent) => {
+            if (!dragStartRef.current) return;
+            const dx = e.clientX - dragStartRef.current.x;
+            const dy = e.clientY - dragStartRef.current.y;
+            setPan({ x: dragStartRef.current.panX + dx, y: dragStartRef.current.panY + dy });
+        };
+        const onUp = () => { setDragging(false); dragStartRef.current = null; };
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+        return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+    }, [dragging]);
 
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center"
-            style={{ background: "rgba(3,5,15,0.94)" }} onClick={onClose}>
+            style={{ background: "rgba(3,5,15,0.94)" }}
+            onClick={onClose}
+            onWheel={onWheel}>
 
-            {/* Toolbar — yuqorida, Nexus stylida */}
+            {/* Toolbar — yuqorida (Nexus stylida) */}
             <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-1.5 rounded-2xl"
                 onClick={e => e.stopPropagation()}
                 style={{
@@ -5493,52 +5574,95 @@ function MediaGallery({
                     {idx + 1} / {images.length}
                 </span>
                 <div className="w-px h-5" style={{ background: "rgba(43,62,232,0.30)" }} />
-                <ToolBtn icon={Download}  title="Yuklab olish" onClick={download} />
-                <ToolBtn icon={Forward}   title={copied ? "Nusxa olindi!" : "Ulashish"} onClick={share} accent={copied} />
-                <ToolBtn icon={Copy}      title="Havolani nusxa olish" onClick={copyLink} />
-                <ToolBtn icon={RotateCw}  title={`Aylantirish (90°) — hozir ${rotate}°`} onClick={rotateCw} />
-                <ToolBtn icon={ZoomOut}   title="Kichraytirish" onClick={zoomOut} disabled={zoom <= 1} />
-                <ToolBtn icon={ZoomIn}    title={`Kattalashtirish (${zoom.toFixed(1)}x)`} onClick={zoomIn} disabled={zoom >= 4} />
+                <ToolBtn icon={Download} title="Yuklab olish" onClick={download} />
+                <ToolBtn icon={Forward}  title="Ulashish" onClick={share} />
+                <ToolBtn icon={Copy}     title="Rasmni nusxa olish" onClick={copyImage} />
+                <ToolBtn icon={RotateCw} title={`Aylantirish (R) — ${rotate}°`} onClick={rotateCw} />
                 <div className="w-px h-5" style={{ background: "rgba(43,62,232,0.30)" }} />
-                <ToolBtn icon={X} title="Yopish" onClick={onClose} danger />
+                <ToolBtn icon={ZoomOut}  title="Kichraytirish (−)" onClick={zoomOut} disabled={zoom <= 0.5} />
+                <button onClick={fitScreen}
+                    title="1:1 asl o'lchamga qaytish"
+                    className="h-9 min-w-[52px] px-2 rounded-lg text-[10.5px] font-black tabular-nums transition hover:bg-white/[0.08]"
+                    style={{ color: zoom !== 1 ? "#00CEC8" : "rgba(220,232,255,0.90)" }}>
+                    {Math.round(zoom * 100)}%
+                </button>
+                <ToolBtn icon={ZoomIn}   title="Kattalashtirish (+)" onClick={zoomIn} disabled={zoom >= 8} />
+                <ToolBtn icon={Maximize2} title="Ekranga to'ldirish" onClick={actualSize} />
+                <div className="w-px h-5" style={{ background: "rgba(43,62,232,0.30)" }} />
+                <ToolBtn icon={X} title="Yopish (Esc)" onClick={onClose} danger />
             </div>
+
+            {/* Toast (succsess feedback) */}
+            {toast && (
+                <div className="absolute top-16 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg text-[11px] font-black text-white pointer-events-none z-[210]"
+                    style={{
+                        background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                        boxShadow: "0 4px 20px rgba(0,206,200,0.45)",
+                    }}>
+                    {toast}
+                </div>
+            )}
 
             {/* Chap/o'ng navigatsiya */}
             {idx > 0 && (
-                <button onClick={e => { e.stopPropagation(); setIdx(i => i - 1); setZoom(1); setRotate(0); }}
-                    className="absolute left-4 w-11 h-11 rounded-full flex items-center justify-center transition hover:brightness-125"
-                    style={{
-                        background: "rgba(11,18,40,0.85)",
-                        border: "1px solid rgba(43,62,232,0.30)",
-                        backdropFilter: "blur(6px)",
-                    }}>
+                <button onClick={e => { e.stopPropagation(); setIdx(i => i - 1); }}
+                    className="absolute left-4 w-11 h-11 rounded-full flex items-center justify-center transition hover:brightness-125 z-[201]"
+                    style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.30)", backdropFilter: "blur(6px)" }}>
                     <ChevronLeft className="w-5 h-5 text-white" />
                 </button>
             )}
             {idx < images.length - 1 && (
-                <button onClick={e => { e.stopPropagation(); setIdx(i => i + 1); setZoom(1); setRotate(0); }}
-                    className="absolute right-4 w-11 h-11 rounded-full flex items-center justify-center transition hover:brightness-125"
-                    style={{
-                        background: "rgba(11,18,40,0.85)",
-                        border: "1px solid rgba(43,62,232,0.30)",
-                        backdropFilter: "blur(6px)",
-                    }}>
+                <button onClick={e => { e.stopPropagation(); setIdx(i => i + 1); }}
+                    className="absolute right-4 w-11 h-11 rounded-full flex items-center justify-center transition hover:brightness-125 z-[201]"
+                    style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.30)", backdropFilter: "blur(6px)" }}>
                     <ChevronRight className="w-5 h-5 text-white" />
                 </button>
             )}
 
-            {/* Rasm — zoom + rotate transformlari bilan */}
+            {/* Rasm — zoom + rotate + pan transformlari bilan */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={cur.mediaUrl} alt=""
-                className="max-w-[92vw] max-h-[92vh] object-contain rounded-lg select-none"
+                className="max-w-[92vw] max-h-[86vh] object-contain rounded-lg select-none"
                 draggable={false}
                 onClick={e => e.stopPropagation()}
+                onMouseDown={onMouseDown}
                 style={{
-                    transform: `scale(${zoom}) rotate(${rotate}deg)`,
-                    transition: "transform 0.20s ease",
-                    cursor: zoom > 1 ? "zoom-out" : "zoom-in",
+                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotate}deg)`,
+                    transition: dragging ? "none" : "transform 0.20s ease",
+                    cursor: zoom > 1 ? (dragging ? "grabbing" : "grab") : "zoom-in",
                 }}
-                onDoubleClick={(e) => { e.stopPropagation(); if (zoom > 1) setZoom(1); else setZoom(2); }} />
+                onDoubleClick={(e) => { e.stopPropagation(); if (zoom > 1) fitScreen(); else setZoom(2); }} />
+
+            {/* Pastda thumbnail strip — multi-rasmda */}
+            {images.length > 1 && (
+                <div className="absolute left-1/2 bottom-3 -translate-x-1/2 flex items-center gap-1.5 max-w-[92vw] overflow-x-auto px-3 py-2 rounded-2xl nx-hide-scrollbar"
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                        background: "rgba(11,18,40,0.85)",
+                        border: "1px solid rgba(43,62,232,0.30)",
+                        backdropFilter: "blur(10px)",
+                        boxShadow: "0 8px 32px rgba(0,0,0,0.60)",
+                    }}>
+                    {images.map((im, i) => im.mediaUrl ? (
+                        <button key={i} onClick={() => setIdx(i)}
+                            className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 transition"
+                            style={{
+                                border: `2px solid ${i === idx ? "#00CEC8" : "rgba(43,62,232,0.20)"}`,
+                                boxShadow: i === idx ? "0 0 12px rgba(0,206,200,0.55)" : undefined,
+                                opacity: i === idx ? 1 : 0.55,
+                            }}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={im.mediaUrl} alt="" className="w-full h-full object-cover" />
+                        </button>
+                    ) : null)}
+                </div>
+            )}
+
+            {/* Klaviatura yordami — pastki-chap */}
+            <div className="absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 rounded-lg text-[9.5px] font-black pointer-events-none"
+                style={{ background: "rgba(11,18,40,0.65)", color: "rgba(160,180,220,0.65)", border: "1px solid rgba(43,62,232,0.20)", backdropFilter: "blur(6px)" }}>
+                ← → · +/− · R · 0 · Esc
+            </div>
         </div>
     );
 }
@@ -6552,10 +6676,18 @@ function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | 
     const [started, setStarted] = useState(false);
     const [playing, setPlaying] = useState(false);
     const [muted, setMuted] = useState(false);
+    const [volume, setVolume] = useState(1);          // 0..1
+    const [showVol, setShowVol] = useState(false);
     const [duration, setDuration] = useState((durationMs ?? 0) / 1000);
     const [current, setCurrent] = useState(0);
+    const [buffered, setBuffered] = useState(0);       // 0..1 (yuklab olingan qism)
+    const [waiting, setWaiting] = useState(false);
     const [showControls, setShowControls] = useState(true);
     const [fullscreen, setFullscreen] = useState(false);
+    const [pip, setPip] = useState(false);
+    const [speed, setSpeed] = useState<0.5 | 1 | 1.25 | 1.5 | 2>(1);
+    const [speedOpen, setSpeedOpen] = useState(false);
+    const [hoverSeek, setHoverSeek] = useState<{ x: number; time: number } | null>(null);
     const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
@@ -6565,15 +6697,33 @@ function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | 
         const onTime = () => setCurrent(v.currentTime);
         const onPlay = () => setPlaying(true);
         const onPause = () => setPlaying(false);
+        const onWaiting = () => setWaiting(true);
+        const onPlaying = () => setWaiting(false);
+        const onProgress = () => {
+            if (!v.duration || !isFinite(v.duration) || v.buffered.length === 0) return;
+            setBuffered(v.buffered.end(v.buffered.length - 1) / v.duration);
+        };
+        const onEnterPip = () => setPip(true);
+        const onLeavePip = () => setPip(false);
         v.addEventListener("loadedmetadata", onMeta);
         v.addEventListener("timeupdate", onTime);
         v.addEventListener("play", onPlay);
         v.addEventListener("pause", onPause);
+        v.addEventListener("waiting", onWaiting);
+        v.addEventListener("playing", onPlaying);
+        v.addEventListener("progress", onProgress);
+        v.addEventListener("enterpictureinpicture", onEnterPip);
+        v.addEventListener("leavepictureinpicture", onLeavePip);
         return () => {
             v.removeEventListener("loadedmetadata", onMeta);
             v.removeEventListener("timeupdate", onTime);
             v.removeEventListener("play", onPlay);
             v.removeEventListener("pause", onPause);
+            v.removeEventListener("waiting", onWaiting);
+            v.removeEventListener("playing", onPlaying);
+            v.removeEventListener("progress", onProgress);
+            v.removeEventListener("enterpictureinpicture", onEnterPip);
+            v.removeEventListener("leavepictureinpicture", onLeavePip);
         };
     }, []);
 
@@ -6583,13 +6733,37 @@ function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | 
         return () => document.removeEventListener("fullscreenchange", onFs);
     }, []);
 
-    // Controls auto-hide (playing paytida 2s harakat yo'q bo'lsa yashiradi)
+    useEffect(() => { if (videoRef.current) videoRef.current.playbackRate = speed; }, [speed]);
+    useEffect(() => { if (videoRef.current) videoRef.current.volume = volume; }, [volume]);
+
+    // Controls auto-hide
     const bumpControls = () => {
         setShowControls(true);
         if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-        if (playing) hideTimerRef.current = setTimeout(() => setShowControls(false), 2000);
+        if (playing && !speedOpen && !showVol) hideTimerRef.current = setTimeout(() => setShowControls(false), 2500);
     };
-    useEffect(() => { bumpControls(); return () => { if (hideTimerRef.current) clearTimeout(hideTimerRef.current); }; }, [playing]);
+    useEffect(() => { bumpControls(); return () => { if (hideTimerRef.current) clearTimeout(hideTimerRef.current); }; }, [playing, speedOpen, showVol]);
+
+    // Keyboard shortcuts (video fokusda yoki fullscreen'da)
+    useEffect(() => {
+        const isActive = () => fullscreen || (containerRef.current && containerRef.current.contains(document.activeElement));
+        const h = (e: KeyboardEvent) => {
+            if (!fullscreen) return;   // faqat fullscreen'da global tinglaymiz (aks holda inputlarga xalaqit)
+            const v = videoRef.current; if (!v) return;
+            if (e.key === " " || e.key === "k") { e.preventDefault(); if (v.paused) void v.play(); else v.pause(); }
+            else if (e.key === "ArrowLeft") { e.preventDefault(); v.currentTime = Math.max(0, v.currentTime - 5); }
+            else if (e.key === "ArrowRight") { e.preventDefault(); v.currentTime = Math.min(v.duration || 0, v.currentTime + 5); }
+            else if (e.key === "j") { v.currentTime = Math.max(0, v.currentTime - 10); }
+            else if (e.key === "l") { v.currentTime = Math.min(v.duration || 0, v.currentTime + 10); }
+            else if (e.key === "m") { v.muted = !v.muted; setMuted(v.muted); }
+            else if (e.key === "f") { toggleFullscreen(); }
+            else if (e.key === "ArrowUp") { e.preventDefault(); const nv = Math.min(1, volume + 0.1); v.volume = nv; setVolume(nv); v.muted = false; setMuted(false); }
+            else if (e.key === "ArrowDown") { e.preventDefault(); const nv = Math.max(0, volume - 0.1); v.volume = nv; setVolume(nv); }
+            void isActive;
+        };
+        window.addEventListener("keydown", h);
+        return () => window.removeEventListener("keydown", h);
+    }, [fullscreen, volume]);
 
     const fmt = (s: number) => {
         if (!isFinite(s) || s < 0) s = 0;
@@ -6604,6 +6778,10 @@ function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | 
         const v = videoRef.current; if (!v || !isFinite(v.duration)) return;
         v.currentTime = v.duration * Math.max(0, Math.min(1, frac));
     };
+    const skip = (delta: number) => {
+        const v = videoRef.current; if (!v) return;
+        v.currentTime = Math.max(0, Math.min(v.duration || 0, v.currentTime + delta));
+    };
     const toggleMute = () => {
         const v = videoRef.current; if (!v) return;
         v.muted = !v.muted;
@@ -6614,14 +6792,21 @@ function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | 
         if (document.fullscreenElement) void document.exitFullscreen();
         else void containerRef.current.requestFullscreen();
     };
+    const togglePip = async () => {
+        const v = videoRef.current; if (!v) return;
+        try {
+            if (document.pictureInPictureElement === v) await document.exitPictureInPicture();
+            else await v.requestPictureInPicture();
+        } catch { /* PiP not supported */ }
+    };
 
     const progress = duration > 0 ? current / duration : 0;
 
     return (
-        <div ref={containerRef}
-            className="relative mb-1 rounded-2xl overflow-hidden inline-block group"
+        <div ref={containerRef} tabIndex={-1}
+            className="relative mb-1 rounded-2xl overflow-hidden inline-block group focus:outline-none"
             onMouseMove={bumpControls}
-            onMouseLeave={() => { if (playing) setShowControls(false); }}
+            onMouseLeave={() => { if (playing && !speedOpen && !showVol) setShowControls(false); }}
             style={{
                 border: "1px solid rgba(43,62,232,0.30)",
                 boxShadow: "0 4px 20px rgba(0,206,200,0.12), inset 0 0 60px rgba(43,62,232,0.05)",
@@ -6632,11 +6817,19 @@ function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | 
                 preload="metadata"
                 onPlay={() => setStarted(true)}
                 onClick={() => started && toggle()}
+                onDoubleClick={toggleFullscreen}
                 className="max-w-full max-h-80 block bg-black cursor-pointer"
                 style={{ borderRadius: "calc(1rem - 1px)" }} />
 
+            {/* Loading spinner — buffering paytida */}
+            {waiting && started && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <Loader2 className="w-10 h-10 animate-spin" style={{ color: "#00CEC8", filter: "drop-shadow(0 0 12px rgba(0,206,200,0.75))" }} />
+                </div>
+            )}
+
             {/* Katta Play overlay — boshlanmasdan oldin YOKI pause bo'lsa */}
-            {(!started || !playing) && (
+            {(!started || !playing) && !waiting && (
                 <button type="button"
                     onClick={() => { videoRef.current?.play(); }}
                     className="absolute inset-0 flex items-center justify-center transition"
@@ -6651,14 +6844,10 @@ function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | 
                 </button>
             )}
 
-            {/* Yuqori-chapda VIDEO badge — faqat boshlanmasdan oldin */}
+            {/* Boshlanmasdan oldin: VIDEO badge + davomiylik */}
             {!started && (
                 <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full pointer-events-none"
-                    style={{
-                        background: "rgba(11,18,40,0.75)",
-                        border: "1px solid rgba(0,206,200,0.30)",
-                        backdropFilter: "blur(6px)",
-                    }}>
+                    style={{ background: "rgba(11,18,40,0.75)", border: "1px solid rgba(0,206,200,0.30)", backdropFilter: "blur(6px)" }}>
                     <Film className="w-2.5 h-2.5" style={{ color: "#00CEC8" }} />
                     <span className="text-[9px] font-black tracking-wider" style={{ color: "#00CEC8" }}>VIDEO</span>
                 </div>
@@ -6670,53 +6859,120 @@ function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | 
                 </div>
             )}
 
-            {/* Custom controls bar — pastda, Nexus stylida (o'rnida native o'rnida) */}
+            {/* Custom controls bar — pastda */}
             {started && (
-                <div className={`absolute left-0 right-0 bottom-0 px-3 pt-8 pb-2 transition-opacity duration-200 ${showControls ? "opacity-100" : "opacity-0"}`}
-                    style={{ background: "linear-gradient(to top, rgba(5,8,24,0.85), rgba(5,8,24,0))" }}>
-                    {/* Progress bar */}
-                    <div className="h-1.5 rounded-full mb-2 cursor-pointer relative"
+                <div className={`absolute left-0 right-0 bottom-0 px-3 pt-10 pb-2 transition-opacity duration-200 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+                    style={{ background: "linear-gradient(to top, rgba(5,8,24,0.90), rgba(5,8,24,0))" }}
+                    onClick={e => e.stopPropagation()}>
+                    {/* Progress bar (buffered + played) */}
+                    <div className="h-1.5 rounded-full mb-2 cursor-pointer relative group/bar"
                         style={{ background: "rgba(255,255,255,0.20)" }}
                         onClick={(e) => {
                             const rect = e.currentTarget.getBoundingClientRect();
                             seek((e.clientX - rect.left) / rect.width);
-                        }}>
-                        <div className="h-full rounded-full"
-                            style={{
-                                width: `${progress * 100}%`,
-                                background: "linear-gradient(90deg,#00CEC8,#2B3EE8)",
-                                boxShadow: "0 0 8px rgba(0,206,200,0.70)",
-                            }} />
-                        {/* Draggable handle */}
-                        <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full transition-transform hover:scale-125"
-                            style={{
-                                left: `calc(${progress * 100}% - 6px)`,
-                                background: "#fff",
-                                boxShadow: "0 0 8px rgba(0,206,200,0.90)",
-                            }} />
+                        }}
+                        onMouseMove={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const frac = (e.clientX - rect.left) / rect.width;
+                            setHoverSeek({ x: e.clientX - rect.left, time: duration * frac });
+                        }}
+                        onMouseLeave={() => setHoverSeek(null)}>
+                        {/* Buffered fill */}
+                        <div className="absolute inset-y-0 left-0 rounded-full"
+                            style={{ width: `${buffered * 100}%`, background: "rgba(255,255,255,0.30)" }} />
+                        {/* Played fill */}
+                        <div className="absolute inset-y-0 left-0 rounded-full"
+                            style={{ width: `${progress * 100}%`, background: "linear-gradient(90deg,#00CEC8,#2B3EE8)", boxShadow: "0 0 8px rgba(0,206,200,0.70)" }} />
+                        {/* Hover time tooltip */}
+                        {hoverSeek && (
+                            <div className="absolute -top-6 px-1.5 py-0.5 rounded text-[10px] font-black tabular-nums text-white pointer-events-none -translate-x-1/2"
+                                style={{ left: hoverSeek.x, background: "rgba(11,18,40,0.95)", border: "1px solid rgba(0,206,200,0.35)" }}>
+                                {fmt(hoverSeek.time)}
+                            </div>
+                        )}
+                        {/* Handle */}
+                        <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full transition-transform group-hover/bar:scale-125"
+                            style={{ left: `calc(${progress * 100}% - 6px)`, background: "#fff", boxShadow: "0 0 8px rgba(0,206,200,0.90)" }} />
                     </div>
-                    {/* Bottom row: play + time + mute + fullscreen */}
-                    <div className="flex items-center gap-2">
+
+                    {/* Bottom row: skip -10 · play · skip +10 · time · volume · speed · pip · fullscreen */}
+                    <div className="flex items-center gap-1.5">
+                        <button onClick={() => skip(-10)} title="10s orqaga (J)"
+                            className="w-7 h-7 rounded-md flex items-center justify-center transition hover:bg-white/[0.08]">
+                            <ChevronLeft className="w-3.5 h-3.5 text-white" />
+                            <span className="text-[8px] font-black text-white -ml-0.5">10</span>
+                        </button>
                         <button onClick={toggle}
-                            className="w-7 h-7 rounded-md flex items-center justify-center transition"
+                            className="w-8 h-8 rounded-md flex items-center justify-center transition"
                             style={{ background: "rgba(0,206,200,0.20)" }}>
                             {playing
-                                ? <Pause className="w-3.5 h-3.5 text-white" fill="#fff" />
-                                : <Play className="w-3.5 h-3.5 text-white translate-x-0.5" fill="#fff" />}
+                                ? <Pause className="w-4 h-4 text-white" fill="#fff" />
+                                : <Play className="w-4 h-4 text-white translate-x-0.5" fill="#fff" />}
                         </button>
-                        <span className="text-[10px] font-black tabular-nums text-white">
+                        <button onClick={() => skip(10)} title="10s oldinga (L)"
+                            className="w-7 h-7 rounded-md flex items-center justify-center transition hover:bg-white/[0.08]">
+                            <span className="text-[8px] font-black text-white -mr-0.5">10</span>
+                            <ChevronRight className="w-3.5 h-3.5 text-white" />
+                        </button>
+                        <span className="ml-1 text-[10px] font-black tabular-nums text-white">
                             {fmt(current)} / {fmt(duration)}
                         </span>
                         <div className="flex-1" />
-                        <button onClick={toggleMute}
+
+                        {/* Volume — hover'da slider chiqadi */}
+                        <div className="relative flex items-center"
+                            onMouseEnter={() => setShowVol(true)}
+                            onMouseLeave={() => setShowVol(false)}>
+                            <button onClick={toggleMute}
+                                className="w-7 h-7 rounded-md flex items-center justify-center transition"
+                                style={{ background: "rgba(11,18,40,0.55)" }}>
+                                {muted || volume === 0
+                                    ? <VolumeX className="w-3.5 h-3.5 text-white" />
+                                    : <Volume2 className="w-3.5 h-3.5 text-white" />}
+                            </button>
+                            {showVol && (
+                                <div className="ml-1 h-1 w-16 rounded-full cursor-pointer relative"
+                                    style={{ background: "rgba(255,255,255,0.25)" }}
+                                    onClick={(e) => {
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        const nv = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                                        setVolume(nv);
+                                        if (videoRef.current) { videoRef.current.volume = nv; videoRef.current.muted = false; }
+                                        setMuted(false);
+                                    }}>
+                                    <div className="h-full rounded-full"
+                                        style={{ width: `${(muted ? 0 : volume) * 100}%`, background: "linear-gradient(90deg,#00CEC8,#2B3EE8)" }} />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Speed — dropdown */}
+                        <div className="relative">
+                            <button onClick={() => setSpeedOpen(o => !o)}
+                                className="h-7 min-w-[34px] px-1.5 rounded-md text-[10px] font-black text-white flex-shrink-0"
+                                style={{ background: speedOpen ? "rgba(0,206,200,0.25)" : "rgba(11,18,40,0.55)" }}>
+                                {speed}x
+                            </button>
+                            {speedOpen && (
+                                <div className="absolute bottom-full right-0 mb-1 rounded-lg overflow-hidden"
+                                    style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.60)" }}>
+                                    {([0.5, 1, 1.25, 1.5, 2] as const).map(s => (
+                                        <button key={s} onClick={() => { setSpeed(s); setSpeedOpen(false); }}
+                                            className="w-full text-left px-3 py-1.5 text-[11px] font-black text-white hover:bg-white/[0.08]"
+                                            style={s === speed ? { background: "rgba(0,206,200,0.20)", color: "#00CEC8" } : undefined}>
+                                            {s}x{s === 1 ? " · oddiy" : ""}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <button onClick={togglePip} title="Kartochka rejim (PiP)"
                             className="w-7 h-7 rounded-md flex items-center justify-center transition"
-                            style={{ background: "rgba(11,18,40,0.55)" }}>
-                            {muted
-                                ? <VolumeX className="w-3.5 h-3.5 text-white" />
-                                : <Volume2 className="w-3.5 h-3.5 text-white" />}
+                            style={{ background: pip ? "rgba(0,206,200,0.25)" : "rgba(11,18,40,0.55)" }}>
+                            <MessageSquare className="w-3.5 h-3.5 text-white -scale-x-100" />
                         </button>
-                        <button onClick={toggleFullscreen}
-                            title={fullscreen ? "Chiqish" : "To'liq ekran"}
+                        <button onClick={toggleFullscreen} title={fullscreen ? "Chiqish (F)" : "To'liq ekran (F)"}
                             className="w-7 h-7 rounded-md flex items-center justify-center transition"
                             style={{ background: "rgba(11,18,40,0.55)" }}>
                             {fullscreen
