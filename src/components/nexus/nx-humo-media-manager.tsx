@@ -1,16 +1,15 @@
 "use client";
 
-// Nexus GIF / Sticker "Agent" boshqaruv sahifasi.
-// Foydalanuvchi o'z pack'larini yaratadi, item yuklaydi, o'chirib boshqaradi;
-// obuna bo'lgan pack'larini ham ko'radi.
-// /nexus/agent/gif va /nexus/agent/sticker sahifalari — bir komponent, kind prop.
+// Nexus GIF / Sticker "Agent" boshqaruv sahifasi. Nexus palette
+// (rgba(11,18,40,...) fon, rgba(43,62,232,...) accent + #00CEC8) —
+// Nexus shell bilan bir xil vizual tili.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { upload as blobUpload } from "@vercel/blob/client";
 import {
-    Loader2, Plus, X, Trash2, Upload, Package, Sparkles, Search,
-    UserPlus, UserCheck, ArrowLeft, Image as ImageIcon, Film,
+    Loader2, Plus, X, Trash2, Upload, Package, Sparkles,
+    UserPlus, UserCheck, ArrowLeft, Image as ImageIcon, Film, Send,
 } from "lucide-react";
 
 type Kind = "GIF" | "STICKER";
@@ -37,7 +36,7 @@ interface Pack {
     _count?: { items: number };
     isOwner?: boolean;
     isSubscribed?: boolean;
-    subscribed?: boolean;     // detail endpoint'da shu nom bilan qaytadi
+    subscribed?: boolean;
     owner?: { username: string | null; humoId: string | null; name: string | null; image: string | null } | null;
 }
 
@@ -45,9 +44,24 @@ const ACCEPT: Record<Kind, string> = {
     GIF: "video/mp4,video/webm,video/quicktime",
     STICKER: "image/png,image/webp",
 };
-
 const GIF_MAX_BYTES = 8 * 1024 * 1024;
 const STICKER_MAX_BYTES = 1 * 1024 * 1024;
+
+// Nexus tema (nx-sidebar/nx-messages bilan bir xil)
+const NX = {
+    bg: "#050818",
+    panel: "rgba(11,18,40,0.85)",
+    panelStrong: "rgba(11,18,40,0.98)",
+    border: "rgba(43,62,232,0.28)",
+    borderSoft: "rgba(43,62,232,0.16)",
+    accent: "#00CEC8",
+    accentBg: "rgba(0,206,200,0.14)",
+    blueBg: "rgba(43,62,232,0.10)",
+    text: "rgba(230,238,255,0.96)",
+    text2: "rgba(200,215,245,0.75)",
+    text3: "rgba(150,170,220,0.55)",
+    gradient: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+};
 
 export function NxHumoMediaManager({ kind }: { kind: Kind }) {
     const router = useRouter();
@@ -74,44 +88,51 @@ export function NxHumoMediaManager({ kind }: { kind: Kind }) {
     const KindIcon = kind === "GIF" ? Film : Sparkles;
 
     return (
-        <div className="absolute inset-0 overflow-y-auto bg-neutral-950 text-white">
-            {/* Sarlavha */}
-            <header className="sticky top-0 z-10 backdrop-blur-md bg-neutral-950/85 border-b border-white/10">
+        <div className="absolute inset-0 overflow-y-auto" style={{ background: NX.bg, color: NX.text }}>
+            {/* Fon nurlari — Nexus stili */}
+            <div className="pointer-events-none fixed inset-0" style={{
+                background: "radial-gradient(ellipse 60% 60% at 20% 10%, rgba(43,62,232,0.15) 0%, transparent 60%), "
+                    + "radial-gradient(ellipse 60% 60% at 80% 90%, rgba(0,206,200,0.10) 0%, transparent 60%)"
+            }} />
+
+            <header className="sticky top-0 z-10 backdrop-blur-md" style={{
+                background: "rgba(5,8,24,0.85)",
+                borderBottom: `1px solid ${NX.border}`,
+            }}>
                 <div className="max-w-[880px] mx-auto flex items-center gap-3 px-4 h-14">
                     <button onClick={() => router.back()}
                         aria-label="Orqaga"
-                        className="w-8 h-8 grid place-items-center rounded-lg hover:bg-white/5">
+                        className="w-8 h-8 grid place-items-center rounded-lg transition-colors"
+                        style={{ background: NX.blueBg }}>
                         <ArrowLeft className="w-4 h-4" />
                     </button>
-                    <div className="w-8 h-8 rounded-lg grid place-items-center bg-white/10">
-                        <KindIcon className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-lg grid place-items-center" style={{ background: NX.gradient }}>
+                        <KindIcon className="w-4 h-4 text-white" />
                     </div>
                     <h1 className="text-[15px] font-black flex-1">@{kind.toLowerCase()} — {kindLabel} Agent</h1>
                     <button onClick={() => setCreateOpen(true)}
-                        className="h-8 px-3 rounded-lg text-[12.5px] font-black flex items-center gap-1.5 bg-white text-neutral-950">
+                        className="h-8 px-3 rounded-lg text-[12.5px] font-black flex items-center gap-1.5 text-white"
+                        style={{ background: NX.gradient }}>
                         <Plus className="w-3.5 h-3.5" /> Pack
                     </button>
                 </div>
             </header>
 
-            <div className="max-w-[880px] mx-auto px-4 py-6">
-                {/* Yordam */}
-                <div className="mb-6 p-4 rounded-2xl border border-white/10 bg-white/5">
-                    <p className="text-[13px] leading-relaxed text-white/70">
+            <div className="relative max-w-[880px] mx-auto px-4 py-6">
+                <div className="mb-6 p-4 rounded-2xl" style={{ background: NX.panel, border: `1px solid ${NX.border}` }}>
+                    <p className="text-[13px] leading-relaxed" style={{ color: NX.text2 }}>
                         Pack yaratib, o'z {kindLabel.toLowerCase()}'laringizni yuklang.
-                        {" "}Har {kindLabel.toLowerCase()} chatlarda qidiruv orqali topiladi
-                        (nom, kalit so'zlar yoki muallif @username bo'yicha). 18+ kontent
-                        avtomatik AI moderatsiya orqali bloklanadi.
+                        Har {kindLabel.toLowerCase()} chatlarda qidiruv orqali topiladi
+                        (nom, kalit so'zlar yoki @username bo'yicha). 18+ kontent AI moderatsiya bilan bloklanadi.
                     </p>
                 </div>
 
                 {loading ? (
                     <div className="grid place-items-center py-16">
-                        <Loader2 className="w-6 h-6 animate-spin text-white/50" />
+                        <Loader2 className="w-6 h-6 animate-spin" style={{ color: NX.accent }} />
                     </div>
                 ) : (
                     <>
-                        {/* O'z pack'larim */}
                         <SectionHeader icon={<Package className="w-4 h-4" />} label={`Mening ${kindLabel.toLowerCase()} pack'larim`} count={owned.length} />
                         {owned.length === 0 ? (
                             <EmptyState label="Hali pack yaratmagansiz" cta="Yangi pack" onCta={() => setCreateOpen(true)} />
@@ -121,7 +142,6 @@ export function NxHumoMediaManager({ kind }: { kind: Kind }) {
                             </div>
                         )}
 
-                        {/* Obuna bo'lganlarim */}
                         <SectionHeader icon={<UserCheck className="w-4 h-4" />} label="Qo'shilgan pack'lar" count={subs.length} />
                         {subs.length === 0 ? (
                             <EmptyState label="Hech qanday pack qo'shilmagan" hint="Chatda pack qidirib, 'Qo'shish' bosing" />
@@ -157,21 +177,23 @@ export function NxHumoMediaManager({ kind }: { kind: Kind }) {
 function SectionHeader({ icon, label, count }: { icon: React.ReactNode; label: string; count: number }) {
     return (
         <div className="flex items-center gap-2 mb-3">
-            <span className="text-white/60">{icon}</span>
-            <h2 className="text-[13px] font-black uppercase tracking-wider text-white/70">{label}</h2>
-            <span className="text-[11px] tabular-nums text-white/40">{count}</span>
+            <span style={{ color: NX.accent }}>{icon}</span>
+            <h2 className="text-[13px] font-black uppercase tracking-wider" style={{ color: NX.text2 }}>{label}</h2>
+            <span className="text-[11px] tabular-nums" style={{ color: NX.text3 }}>{count}</span>
         </div>
     );
 }
 
 function EmptyState({ label, cta, onCta, hint }: { label: string; cta?: string; onCta?: () => void; hint?: string }) {
     return (
-        <div className="mb-8 p-6 rounded-2xl border border-white/10 border-dashed text-center">
-            <p className="text-[13px] text-white/60">{label}</p>
-            {hint && <p className="text-[11.5px] text-white/40 mt-1">{hint}</p>}
+        <div className="mb-8 p-6 rounded-2xl text-center"
+            style={{ background: NX.panel, border: `1px dashed ${NX.border}` }}>
+            <p className="text-[13px]" style={{ color: NX.text2 }}>{label}</p>
+            {hint && <p className="text-[11.5px] mt-1" style={{ color: NX.text3 }}>{hint}</p>}
             {cta && onCta && (
                 <button onClick={onCta}
-                    className="mt-3 h-9 px-4 rounded-lg text-[12.5px] font-black bg-white text-neutral-950 inline-flex items-center gap-1.5">
+                    className="mt-3 h-9 px-4 rounded-lg text-[12.5px] font-black inline-flex items-center gap-1.5 text-white"
+                    style={{ background: NX.gradient }}>
                     <Plus className="w-3.5 h-3.5" /> {cta}
                 </button>
             )}
@@ -184,19 +206,20 @@ function PackCard({ pack, onOpen }: { pack: Pack; onOpen: () => void }) {
     const showCover = pack.coverUrl && items.length === 0;
     return (
         <button onClick={onOpen}
-            className="text-left rounded-2xl overflow-hidden border border-white/10 bg-white/5 hover:bg-white/10 transition-colors active:scale-[0.99]">
-            <div className="aspect-square grid grid-cols-2 gap-0.5 p-0.5 bg-neutral-900">
+            className="text-left rounded-2xl overflow-hidden transition-colors active:scale-[0.99]"
+            style={{ background: NX.panel, border: `1px solid ${NX.border}` }}>
+            <div className="aspect-square grid grid-cols-2 gap-0.5 p-0.5" style={{ background: "rgba(5,8,24,0.6)" }}>
                 {showCover ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={pack.coverUrl!} alt="" className="col-span-2 row-span-2 w-full h-full object-cover" />
                 ) : items.length === 0 ? (
-                    <div className="col-span-2 row-span-2 grid place-items-center text-white/30">
+                    <div className="col-span-2 row-span-2 grid place-items-center" style={{ color: NX.text3 }}>
                         <ImageIcon className="w-8 h-8" />
                     </div>
                 ) : (
                     <>
                         {items.map(it => (
-                            <div key={it.id} className="relative aspect-square bg-neutral-800 overflow-hidden">
+                            <div key={it.id} className="relative aspect-square overflow-hidden" style={{ background: "rgba(11,18,40,0.6)" }}>
                                 {pack.kind === "GIF" ? (
                                     it.thumbUrl ? (
                                         // eslint-disable-next-line @next/next/no-img-element
@@ -215,10 +238,10 @@ function PackCard({ pack, onOpen }: { pack: Pack; onOpen: () => void }) {
                 )}
             </div>
             <div className="p-3">
-                <p className="text-[13px] font-black truncate">{pack.name}</p>
-                <p className="text-[11px] text-white/50 mt-0.5 flex items-center gap-1.5">
+                <p className="text-[13px] font-black truncate" style={{ color: NX.text }}>{pack.name}</p>
+                <p className="text-[11px] mt-0.5 flex items-center gap-1.5" style={{ color: NX.text3 }}>
                     <span>{pack._count?.items ?? 0} ta</span>
-                    {pack.addedCount > 0 && <><span>·</span><span>{pack.addedCount} qo'shdi</span></>}
+                    {pack.addedCount > 0 && <><span>·</span><span>{pack.addedCount} qo&apos;shdi</span></>}
                 </p>
             </div>
         </button>
@@ -248,22 +271,26 @@ function CreatePackModal({ kind, onClose, onCreated }: { kind: Kind; onClose: ()
 
     return (
         <Modal onClose={onClose}>
-            <h2 className="text-[16px] font-black mb-4">Yangi {kind === "GIF" ? "GIF" : "Sticker"} pack</h2>
+            <h2 className="text-[16px] font-black mb-4" style={{ color: NX.text }}>
+                Yangi {kind === "GIF" ? "GIF" : "Sticker"} pack
+            </h2>
             <label className="block mb-4">
-                <span className="text-[11.5px] font-bold text-white/60">Pack nomi</span>
+                <span className="text-[11.5px] font-bold" style={{ color: NX.text2 }}>Pack nomi</span>
                 <input type="text" value={name}
                     onChange={e => setName(e.target.value)}
-                    maxLength={60}
-                    autoFocus
+                    maxLength={60} autoFocus
+                    onKeyDown={e => { if (e.key === "Enter" && name.trim().length >= 2 && !busy) void submit(); }}
                     placeholder="Masalan: Mushuklar"
-                    className="w-full mt-1 h-10 px-3 rounded-lg text-[13px] font-bold bg-white/5 border border-white/10 outline-none focus:border-white/30" />
+                    className="w-full mt-1 h-10 px-3 rounded-lg text-[13px] font-bold outline-none"
+                    style={{ background: NX.blueBg, border: `1px solid ${NX.borderSoft}`, color: NX.text, caretColor: NX.accent }} />
             </label>
-            {err && <p className="text-[12px] text-red-400 mb-3">{err}</p>}
+            {err && <p className="text-[12px] mb-3" style={{ color: "#ff6b6b" }}>{err}</p>}
             <div className="flex items-center justify-end gap-2">
                 <button onClick={onClose} disabled={busy}
-                    className="h-9 px-3 rounded-lg text-[12.5px] font-bold text-white/60">Bekor</button>
+                    className="h-9 px-3 rounded-lg text-[12.5px] font-bold" style={{ color: NX.text2 }}>Bekor</button>
                 <button onClick={submit} disabled={busy || name.trim().length < 2}
-                    className="h-9 px-4 rounded-lg text-[12.5px] font-black flex items-center gap-1.5 bg-white text-neutral-950 disabled:opacity-40">
+                    className="h-9 px-4 rounded-lg text-[12.5px] font-black flex items-center gap-1.5 text-white disabled:opacity-40"
+                    style={{ background: NX.gradient }}>
                     {busy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     Yaratish
                 </button>
@@ -272,11 +299,24 @@ function CreatePackModal({ kind, onClose, onCreated }: { kind: Kind; onClose: ()
     );
 }
 
+// ── Item upload — file tanlanadi, keyin keywords modal chiqadi ──────────────
+
+interface StagedFile {
+    file: File;
+    previewUrl: string;
+    width: number;
+    height: number;
+    thumbBlob: Blob | null;   // GIF uchun
+    isVideo: boolean;
+}
+
 function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void }) {
     const [pack, setPack] = useState<Pack | null>(null);
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [uploadErr, setUploadErr] = useState<string | null>(null);
+    const [staged, setStaged] = useState<StagedFile | null>(null);
+    const [keywords, setKeywords] = useState("");
     const fileRef = useRef<HTMLInputElement>(null);
 
     const load = useCallback(async () => {
@@ -288,77 +328,76 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
     }, [slug]);
     useEffect(() => { void load(); }, [load]);
 
-    async function uploadFile(file: File) {
+    async function pickedFile(file: File) {
         if (!pack) return;
         setUploadErr(null);
-        setUploading(true);
-        setProgress(0);
+        const max = pack.kind === "GIF" ? GIF_MAX_BYTES : STICKER_MAX_BYTES;
+        if (file.size > max) {
+            setUploadErr(`Fayl juda katta (max ${(max / 1024 / 1024).toFixed(0)} MB)`);
+            return;
+        }
         try {
-            const max = pack.kind === "GIF" ? GIF_MAX_BYTES : STICKER_MAX_BYTES;
-            if (file.size > max) {
-                setUploadErr(`Fayl juda katta (max ${(max / 1024 / 1024).toFixed(0)} MB)`);
-                return;
+            const isVideo = pack.kind === "GIF";
+            if (isVideo) {
+                const meta = await videoMetadataAndThumb(file);
+                setStaged({ file, previewUrl: URL.createObjectURL(file), width: meta.width, height: meta.height, thumbBlob: meta.thumbBlob, isVideo: true });
+            } else {
+                const dim = await imageDimensions(file);
+                setStaged({ file, previewUrl: URL.createObjectURL(file), width: dim.w, height: dim.h, thumbBlob: null, isVideo: false });
             }
+        } catch { setUploadErr("Fayl o'qib bo'lmadi"); }
+    }
 
-            // 1) Media faylni Vercel Blob'ga to'g'ridan yuklaymiz
-            const mediaBlob = await blobUpload(`humo-media/${slug}/${Date.now()}-${file.name}`, file, {
+    async function submitStaged() {
+        if (!pack || !staged) return;
+        const kwList = keywords.split(/[,\n]/).map(s => s.trim()).filter(Boolean).slice(0, 20);
+        if (pack.kind === "STICKER" && kwList.length === 0) {
+            setUploadErr("Sticker uchun kamida 1 kalit so'z majburiy");
+            return;
+        }
+        setUploading(true); setUploadErr(null); setProgress(0);
+        try {
+            // 1) Media upload
+            const mediaBlob = await blobUpload(`humo-media/${slug}/${Date.now()}-${staged.file.name}`, staged.file, {
                 access: "public",
                 handleUploadUrl: "/api/market/upload/client-token",
                 onUploadProgress: (p) => setProgress(Math.round(p.percentage)),
             });
 
-            // 2) Metadata + thumbnail
-            let width = 0, height = 0, thumbUrl: string | null = null;
-            if (pack.kind === "STICKER") {
-                const dim = await imageDimensions(file);
-                width = dim.w; height = dim.h;
-            } else {
-                const meta = await videoMetadataAndThumb(file);
-                width = meta.width; height = meta.height;
-                if (meta.thumbBlob) {
-                    const thumbUp = await blobUpload(`humo-media/${slug}/thumb-${Date.now()}.webp`,
-                        meta.thumbBlob, {
-                            access: "public",
-                            handleUploadUrl: "/api/market/upload/client-token",
-                        });
-                    thumbUrl = thumbUp.url;
-                }
+            // 2) Thumbnail (GIF uchun)
+            let thumbUrl: string | null = null;
+            if (staged.thumbBlob) {
+                const thumbUp = await blobUpload(`humo-media/${slug}/thumb-${Date.now()}.webp`, staged.thumbBlob, {
+                    access: "public",
+                    handleUploadUrl: "/api/market/upload/client-token",
+                });
+                thumbUrl = thumbUp.url;
             }
 
-            // 3) Keywords — foydalanuvchidan so'raymiz
-            const kwRaw = window.prompt(
-                pack.kind === "STICKER"
-                    ? "Kalit so'zlar (majburiy) — emoji va so'zlar, vergul bilan ajrating.\nMasalan: kulish, 🎉, hurrah"
-                    : "Kalit so'zlar (topilishi uchun) — vergul bilan ajrating.\nMasalan: qiziq, kulgi, meme",
-                ""
-            );
-            const keywords = (kwRaw ?? "")
-                .split(",")
-                .map(s => s.trim())
-                .filter(Boolean)
-                .slice(0, 20);
-
-            if (pack.kind === "STICKER" && keywords.length === 0) {
-                setUploadErr("Sticker uchun kamida 1 kalit so'z majburiy");
-                return;
-            }
-
-            // 4) Item metadata endpoint'ga
+            // 3) Metadata
             const r = await fetch(`/api/humo/packs/${slug}/items`, {
                 method: "POST",
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify({
-                    mediaUrl: mediaBlob.url,
-                    thumbUrl,
-                    width, height, bytes: file.size, keywords,
+                    mediaUrl: mediaBlob.url, thumbUrl,
+                    width: staged.width, height: staged.height,
+                    bytes: staged.file.size, keywords: kwList,
                 }),
             });
             const d = await r.json();
             if (!r.ok) { setUploadErr(d?.error ?? "Xatolik"); return; }
 
+            // Reset
+            URL.revokeObjectURL(staged.previewUrl);
+            setStaged(null); setKeywords("");
             void load();
         } catch (e) { setUploadErr(String(e)); }
         finally { setUploading(false); setProgress(0); }
+    }
+
+    function cancelStaged() {
+        if (staged) URL.revokeObjectURL(staged.previewUrl);
+        setStaged(null); setKeywords(""); setUploadErr(null);
     }
 
     async function deleteItem(id: string) {
@@ -366,14 +405,12 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
         await fetch(`/api/humo/packs/${slug}/items/${id}`, { method: "DELETE" });
         void load();
     }
-
     async function deletePack() {
         if (!pack) return;
         if (!confirm(`"${pack.name}" pack va uning barcha ${pack.items?.length ?? 0} item'i o'chirilsinmi?`)) return;
         await fetch(`/api/humo/packs/${slug}`, { method: "DELETE" });
         onClose();
     }
-
     async function subscribe() {
         await fetch(`/api/humo/packs/${slug}/subscribe`, { method: "POST" });
         void load();
@@ -386,7 +423,7 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
     if (!pack) {
         return (
             <Modal onClose={onClose}>
-                <div className="grid place-items-center py-8"><Loader2 className="w-5 h-5 animate-spin" /></div>
+                <div className="grid place-items-center py-8"><Loader2 className="w-5 h-5 animate-spin" style={{ color: NX.accent }} /></div>
             </Modal>
         );
     }
@@ -395,58 +432,120 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
         <Modal onClose={onClose} wide>
             <div className="flex items-center gap-3 mb-4">
                 <div className="flex-1 min-w-0">
-                    <h2 className="text-[16px] font-black truncate">{pack.name}</h2>
-                    <p className="text-[11.5px] text-white/50 mt-0.5">
+                    <h2 className="text-[16px] font-black truncate" style={{ color: NX.text }}>{pack.name}</h2>
+                    <p className="text-[11.5px] mt-0.5" style={{ color: NX.text3 }}>
                         {pack.owner?.username ? `@${pack.owner.username}` : pack.owner?.name ?? ""}
-                        {" · "}{pack.items?.length ?? 0} ta · {pack.addedCount} qo'shdi
+                        {" · "}{pack.items?.length ?? 0} ta · {pack.addedCount} qo&apos;shdi
                     </p>
                 </div>
                 {pack.isOwner ? (
                     <button onClick={deletePack}
-                        className="h-8 px-3 rounded-lg text-[11.5px] font-bold flex items-center gap-1.5 bg-red-500/20 text-red-300">
-                        <Trash2 className="w-3.5 h-3.5" /> Pack o'chirish
+                        className="h-8 px-3 rounded-lg text-[11.5px] font-bold flex items-center gap-1.5"
+                        style={{ background: "rgba(255,90,90,0.14)", color: "#ff9c9c", border: "1px solid rgba(255,90,90,0.24)" }}>
+                        <Trash2 className="w-3.5 h-3.5" /> Pack o&apos;chirish
                     </button>
                 ) : pack.subscribed ? (
                     <button onClick={unsubscribe}
-                        className="h-8 px-3 rounded-lg text-[11.5px] font-bold flex items-center gap-1.5 bg-white/10 text-white/70">
-                        <UserCheck className="w-3.5 h-3.5" /> Qo'shildi
+                        className="h-8 px-3 rounded-lg text-[11.5px] font-bold flex items-center gap-1.5"
+                        style={{ background: NX.blueBg, color: NX.text2 }}>
+                        <UserCheck className="w-3.5 h-3.5" /> Qo&apos;shildi
                     </button>
                 ) : (
                     <button onClick={subscribe}
-                        className="h-8 px-3 rounded-lg text-[11.5px] font-black flex items-center gap-1.5 bg-white text-neutral-950">
-                        <UserPlus className="w-3.5 h-3.5" /> Qo'shish
+                        className="h-8 px-3 rounded-lg text-[11.5px] font-black flex items-center gap-1.5 text-white"
+                        style={{ background: NX.gradient }}>
+                        <UserPlus className="w-3.5 h-3.5" /> Qo&apos;shish
                     </button>
                 )}
             </div>
 
-            {pack.isOwner && (
+            {pack.isOwner && !staged && (
                 <>
                     <input ref={fileRef} type="file"
                         accept={ACCEPT[pack.kind]}
-                        onChange={e => { const f = e.target.files?.[0]; if (f) void uploadFile(f); e.target.value = ""; }}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) void pickedFile(f); e.target.value = ""; }}
                         className="hidden" />
                     <button onClick={() => fileRef.current?.click()} disabled={uploading}
-                        className="w-full mb-4 h-11 rounded-xl border border-white/20 border-dashed text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-white/5 disabled:opacity-50">
-                        {uploading ? <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Yuklanmoqda {progress > 0 && `${progress}%`}
-                        </> : <>
-                            <Upload className="w-4 h-4" />
-                            {pack.kind === "GIF" ? "Video yuklash (mp4, max 8 MB)" : "Rasm yuklash (png/webp 512×512, max 1 MB)"}
-                        </>}
+                        className="w-full mb-4 h-11 rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
+                        style={{ border: `1px dashed ${NX.border}`, color: NX.text2, background: NX.blueBg }}>
+                        <Upload className="w-4 h-4" />
+                        {pack.kind === "GIF" ? "Video yuklash (mp4, max 8 MB)" : "Rasm yuklash (png/webp, max 1 MB)"}
                     </button>
-                    {uploadErr && <p className="text-[12px] text-red-400 mb-3">{uploadErr}</p>}
+                    {uploadErr && <p className="text-[12px] mb-3" style={{ color: "#ff6b6b" }}>{uploadErr}</p>}
                 </>
             )}
 
+            {/* Keywords panel — fayl tanlangan bo'lsa */}
+            {pack.isOwner && staged && (
+                <div className="mb-4 p-3 rounded-xl" style={{ background: NX.blueBg, border: `1px solid ${NX.borderSoft}` }}>
+                    <div className="flex items-start gap-3 mb-3">
+                        <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "rgba(5,8,24,0.5)" }}>
+                            {staged.isVideo ? (
+                                <video src={staged.previewUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                            ) : (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={staged.previewUrl} alt="" className="w-full h-full object-contain" />
+                            )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-black truncate" style={{ color: NX.text }}>{staged.file.name}</p>
+                            <p className="text-[11px]" style={{ color: NX.text3 }}>
+                                {staged.width}×{staged.height} · {(staged.file.size / 1024).toFixed(0)} KB
+                            </p>
+                        </div>
+                        <button onClick={cancelStaged} disabled={uploading}
+                            aria-label="Bekor"
+                            className="w-7 h-7 grid place-items-center rounded-lg" style={{ color: NX.text3 }}>
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                    <label className="block">
+                        <span className="text-[11.5px] font-bold" style={{ color: NX.text2 }}>
+                            Kalit so&apos;zlar {pack.kind === "STICKER" && <span style={{ color: NX.accent }}>(majburiy)</span>}
+                        </span>
+                        <input type="text" value={keywords}
+                            onChange={e => setKeywords(e.target.value)}
+                            placeholder={pack.kind === "STICKER"
+                                ? "kulish, 🎉, hurrah — vergul bilan ajrating"
+                                : "qiziq, kulgi, meme — vergul bilan"}
+                            autoFocus
+                            onKeyDown={e => { if (e.key === "Enter" && !uploading) void submitStaged(); }}
+                            className="w-full mt-1 h-10 px-3 rounded-lg text-[13px] outline-none"
+                            style={{ background: "rgba(5,8,24,0.6)", border: `1px solid ${NX.borderSoft}`, color: NX.text, caretColor: NX.accent }} />
+                    </label>
+                    {uploadErr && <p className="text-[12px] mt-2" style={{ color: "#ff6b6b" }}>{uploadErr}</p>}
+                    <div className="flex items-center justify-end gap-2 mt-3">
+                        <button onClick={cancelStaged} disabled={uploading}
+                            className="h-9 px-3 rounded-lg text-[12.5px] font-bold" style={{ color: NX.text2 }}>Bekor</button>
+                        <button onClick={submitStaged} disabled={uploading || (pack.kind === "STICKER" && keywords.trim().length === 0)}
+                            className="h-9 px-4 rounded-lg text-[12.5px] font-black flex items-center gap-1.5 text-white disabled:opacity-40"
+                            style={{ background: NX.gradient }}>
+                            {uploading ? (
+                                <>
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    Yuklanmoqda {progress}%
+                                </>
+                            ) : (
+                                <>
+                                    <Send className="w-3.5 h-3.5" />
+                                    Qo&apos;shish
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {(pack.items?.length ?? 0) === 0 ? (
-                <div className="p-8 rounded-xl border border-white/10 text-center text-[12.5px] text-white/50">
-                    Hali item yo'q
+                <div className="p-8 rounded-xl text-center text-[12.5px]"
+                    style={{ background: NX.panel, border: `1px solid ${NX.border}`, color: NX.text3 }}>
+                    Hali item yo&apos;q
                 </div>
             ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[60vh] overflow-y-auto">
                     {pack.items!.map(it => (
-                        <div key={it.id} className="relative aspect-square rounded-lg overflow-hidden bg-neutral-900 group">
+                        <div key={it.id} className="relative aspect-square rounded-lg overflow-hidden group"
+                            style={{ background: "rgba(5,8,24,0.6)" }}>
                             {pack.kind === "GIF" ? (
                                 <video src={it.mediaUrl} autoPlay muted loop playsInline
                                     className="w-full h-full object-cover" />
@@ -458,7 +557,8 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
                             {pack.isOwner && (
                                 <button onClick={() => deleteItem(it.id)}
                                     aria-label="O'chirish"
-                                    className="absolute top-1 right-1 w-6 h-6 grid place-items-center rounded-md bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    className="absolute top-1 right-1 w-6 h-6 grid place-items-center rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                    style={{ background: "rgba(5,8,24,0.85)", color: "#fff" }}>
                                     <X className="w-3 h-3" />
                                 </button>
                             )}
@@ -475,10 +575,12 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
 function Modal({ children, onClose, wide }: { children: React.ReactNode; onClose: () => void; wide?: boolean }) {
     return (
         <div className="fixed inset-0 z-[200] grid place-items-center p-4">
-            <div className="absolute inset-0 bg-black/70" onClick={onClose} />
-            <div className={`relative w-full ${wide ? "max-w-[720px]" : "max-w-[420px]"} max-h-[90vh] overflow-y-auto p-5 rounded-2xl bg-neutral-900 border border-white/10`}>
+            <div className="absolute inset-0" style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)" }} onClick={onClose} />
+            <div className={`relative w-full ${wide ? "max-w-[720px]" : "max-w-[420px]"} max-h-[90vh] overflow-y-auto p-5 rounded-2xl`}
+                style={{ background: NX.panelStrong, border: `1px solid ${NX.border}`, boxShadow: "0 12px 48px rgba(0,0,0,0.6)" }}>
                 <button onClick={onClose} aria-label="Yopish"
-                    className="absolute top-3 right-3 w-8 h-8 grid place-items-center rounded-lg hover:bg-white/10">
+                    className="absolute top-3 right-3 w-8 h-8 grid place-items-center rounded-lg"
+                    style={{ color: NX.text2, background: NX.blueBg }}>
                     <X className="w-4 h-4" />
                 </button>
                 {children}
@@ -503,7 +605,6 @@ async function videoMetadataAndThumb(file: File): Promise<{ width: number; heigh
     video.muted = true;
     video.playsInline = true;
     await new Promise<void>(res => video.addEventListener("loadeddata", () => res(), { once: true }));
-    // First frame'ga skip
     try { video.currentTime = 0.1; await new Promise<void>(res => video.addEventListener("seeked", () => res(), { once: true })); } catch { /* ignore */ }
 
     const canvas = document.createElement("canvas");

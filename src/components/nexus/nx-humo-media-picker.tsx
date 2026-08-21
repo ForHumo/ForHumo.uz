@@ -8,6 +8,20 @@
 import { useCallback, useEffect, useState } from "react";
 import { X, Search, Loader2, UserPlus, ExternalLink, Package } from "lucide-react";
 
+// Nexus tema — nx-messages, nx-sidebar bilan bir xil
+const NX = {
+    panelStrong: "rgba(11,18,40,0.98)",
+    border: "rgba(43,62,232,0.30)",
+    borderSoft: "rgba(43,62,232,0.16)",
+    accent: "#00CEC8",
+    blueBg: "rgba(43,62,232,0.10)",
+    blueBgActive: "rgba(43,62,232,0.20)",
+    text: "rgba(230,238,255,0.96)",
+    text2: "rgba(200,215,245,0.75)",
+    text3: "rgba(150,170,220,0.55)",
+    gradient: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+};
+
 type Kind = "GIF" | "STICKER";
 
 interface Item {
@@ -110,46 +124,54 @@ export function NxHumoMediaPicker({ kind, onSelect, onClose }: Props) {
 
     return (
         <div className="fixed inset-0 z-[200]">
-            <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-            <div className="absolute inset-x-0 bottom-0 sm:inset-x-auto sm:right-4 sm:bottom-16 sm:w-[420px] max-h-[80vh] flex flex-col rounded-t-2xl sm:rounded-2xl overflow-hidden bg-neutral-900 border border-white/10">
+            <div className="absolute inset-0" style={{ background: "rgba(5,8,24,0.65)", backdropFilter: "blur(6px)" }} onClick={onClose} />
+            <div className="absolute inset-x-0 bottom-0 sm:inset-x-auto sm:right-4 sm:bottom-16 sm:w-[420px] max-h-[80vh] flex flex-col rounded-t-2xl sm:rounded-2xl overflow-hidden"
+                style={{ background: NX.panelStrong, border: `1px solid ${NX.border}`, boxShadow: "0 12px 48px rgba(0,0,0,0.65)" }}>
                 {/* Header */}
-                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-white/10">
+                <div className="flex items-center gap-2 px-3 py-2.5" style={{ borderBottom: `1px solid ${NX.borderSoft}` }}>
                     <button onClick={() => setTab("mine")}
                         className="h-8 px-3 rounded-lg text-[12px] font-black transition-colors"
-                        style={{ background: tab === "mine" ? "#fff" : "transparent", color: tab === "mine" ? "#111" : "#aaa" }}>
+                        style={{
+                            background: tab === "mine" ? NX.gradient : "transparent",
+                            color: tab === "mine" ? "#fff" : NX.text2,
+                        }}>
                         Meniki
                     </button>
                     <button onClick={() => setTab("search")}
                         className="h-8 px-3 rounded-lg text-[12px] font-black transition-colors"
-                        style={{ background: tab === "search" ? "#fff" : "transparent", color: tab === "search" ? "#111" : "#aaa" }}>
+                        style={{
+                            background: tab === "search" ? NX.gradient : "transparent",
+                            color: tab === "search" ? "#fff" : NX.text2,
+                        }}>
                         Qidiruv
                     </button>
                     <a href={`/nexus/agent/${kind.toLowerCase()}`} target="_blank" rel="noopener"
-                        className="ml-auto h-8 px-2.5 rounded-lg text-[11px] font-bold flex items-center gap-1 text-white/60 hover:bg-white/5">
+                        className="ml-auto h-8 px-2.5 rounded-lg text-[11px] font-bold flex items-center gap-1"
+                        style={{ color: NX.text3 }}>
                         <ExternalLink className="w-3 h-3" /> Boshqarish
                     </a>
                     <button onClick={onClose} aria-label="Yopish"
-                        className="w-8 h-8 grid place-items-center rounded-lg hover:bg-white/10">
+                        className="w-8 h-8 grid place-items-center rounded-lg"
+                        style={{ color: NX.text2, background: NX.blueBg }}>
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
-                {/* Search input — faqat qidiruv tabida */}
                 {tab === "search" && (
-                    <div className="px-3 py-2 border-b border-white/10 relative">
-                        <Search className="w-4 h-4 absolute left-6 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+                    <div className="px-3 py-2 relative" style={{ borderBottom: `1px solid ${NX.borderSoft}` }}>
+                        <Search className="w-4 h-4 absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: NX.text3 }} />
                         <input type="search" value={q} onChange={e => setQ(e.target.value)}
                             placeholder={`${kindLabel} qidirish (nom, @username, kalit)...`}
                             autoFocus
-                            className="w-full h-9 pl-9 pr-3 rounded-lg text-[12.5px] bg-white/5 border border-white/10 outline-none focus:border-white/30 text-white" />
+                            className="w-full h-9 pl-9 pr-3 rounded-lg text-[12.5px] outline-none"
+                            style={{ background: NX.blueBg, border: `1px solid ${NX.borderSoft}`, color: NX.text, caretColor: NX.accent }} />
                     </div>
                 )}
 
-                {/* Kontent */}
                 <div className="flex-1 overflow-y-auto p-3">
                     {loading ? (
                         <div className="grid place-items-center py-10">
-                            <Loader2 className="w-5 h-5 animate-spin text-white/40" />
+                            <Loader2 className="w-5 h-5 animate-spin" style={{ color: NX.accent }} />
                         </div>
                     ) : tab === "mine" ? (
                         allMine.length === 0 ? (
@@ -163,7 +185,7 @@ export function NxHumoMediaPicker({ kind, onSelect, onClose }: Props) {
                         )
                     ) : (
                         searchPacks.length === 0 ? (
-                            <p className="text-center text-[12.5px] text-white/50 py-8">
+                            <p className="text-center text-[12.5px] py-8" style={{ color: NX.text3 }}>
                                 {q ? `"${q}" bo'yicha topilmadi` : "Trending pack'lar hozircha yo'q"}
                             </p>
                         ) : (
@@ -187,15 +209,16 @@ function PackRow({ pack, onPick, onSubscribe }: {
     return (
         <div>
             <div className="flex items-center gap-2 mb-2">
-                <Package className="w-3 h-3 text-white/40 flex-shrink-0" />
-                <p className="text-[11.5px] font-black text-white/80 truncate">{pack.name}</p>
+                <Package className="w-3 h-3 flex-shrink-0" style={{ color: NX.text3 }} />
+                <p className="text-[11.5px] font-black truncate" style={{ color: NX.text }}>{pack.name}</p>
                 {pack.owner?.username && (
-                    <span className="text-[10px] text-white/40 truncate">@{pack.owner.username}</span>
+                    <span className="text-[10px] truncate" style={{ color: NX.text3 }}>@{pack.owner.username}</span>
                 )}
-                <span className="ml-auto text-[10px] text-white/40 tabular-nums">{items.length}</span>
+                <span className="ml-auto text-[10px] tabular-nums" style={{ color: NX.text3 }}>{items.length}</span>
                 {onSubscribe && (
                     <button onClick={onSubscribe}
-                        className="h-6 px-2 rounded-md text-[10px] font-black flex items-center gap-1 bg-white text-neutral-950">
+                        className="h-6 px-2 rounded-md text-[10px] font-black flex items-center gap-1 text-white"
+                        style={{ background: NX.gradient }}>
                         <UserPlus className="w-2.5 h-2.5" /> Qo&apos;sh
                     </button>
                 )}
@@ -204,7 +227,8 @@ function PackRow({ pack, onPick, onSubscribe }: {
                 {items.slice(0, 20).map(it => (
                     <button key={it.id} onClick={() => onPick(it)}
                         aria-label={it.keywords?.join(", ") ?? "item"}
-                        className="aspect-square rounded-md overflow-hidden bg-neutral-800 hover:bg-neutral-700 transition-colors active:scale-95">
+                        className="aspect-square rounded-md overflow-hidden transition-colors active:scale-95"
+                        style={{ background: NX.blueBg }}>
                         {pack.kind === "GIF" ? (
                             it.thumbUrl ? (
                                 // eslint-disable-next-line @next/next/no-img-element
@@ -228,13 +252,14 @@ function EmptyMine({ kind }: { kind: Kind }) {
     const label = kind === "GIF" ? "GIF" : "Sticker";
     return (
         <div className="py-8 text-center">
-            <p className="text-[12.5px] text-white/60">
+            <p className="text-[12.5px]" style={{ color: NX.text2 }}>
                 Hali {label.toLowerCase()} pack yaratmagansiz.
             </p>
             <a href={`/nexus/agent/${kind.toLowerCase()}`} target="_blank" rel="noopener"
-                className="inline-flex items-center gap-1.5 mt-3 h-9 px-4 rounded-lg text-[12px] font-black bg-white text-neutral-950">
+                className="inline-flex items-center gap-1.5 mt-3 h-9 px-4 rounded-lg text-[12px] font-black text-white"
+                style={{ background: NX.gradient }}>
                 <ExternalLink className="w-3.5 h-3.5" />
-                Agent'ga o&apos;tish
+                Agent&apos;ga o&apos;tish
             </a>
         </div>
     );
