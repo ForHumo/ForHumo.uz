@@ -139,7 +139,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const oid = otherId(conv, me.id);
     const p = await prisma.userProfile.findUnique({
         where: { id: oid },
-        select: { name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true, statusEmoji: true, statusText: true, statusExpiresAt: true, lastSeenAt: true, privacyLastSeen: true, privacyProfilePhoto: true },
+        select: { id: true, name: true, username: true, image: true, humoId: true, bio: true, verified: true, verifiedCategory: true, statusEmoji: true, statusText: true, statusExpiresAt: true, lastSeenAt: true, privacyLastSeen: true, privacyProfilePhoto: true },
     });
     // Muddati o'tgan statusni yashirish
     const statusActive = p?.statusExpiresAt ? new Date(p.statusExpiresAt) > new Date() : true;
@@ -195,8 +195,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             const canSeeLastSeen = await checkPrivacy(me.id, oid, p.privacyLastSeen as "all" | "contacts" | "none");
             const canSeePhoto = await checkPrivacy(me.id, oid, p.privacyProfilePhoto as "all" | "contacts" | "none");
             return {
+                id: p.id,
                 name: p.name, username: p.username,
                 image: canSeePhoto ? p.image : null,
+                humoId: p.humoId,
+                bio: p.bio,
                 verified: isVerifiedProfile(p),
                 verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null,
                 statusEmoji: statusActive ? p.statusEmoji : null,
