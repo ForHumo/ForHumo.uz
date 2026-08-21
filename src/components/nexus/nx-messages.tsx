@@ -16,8 +16,7 @@ import { NxPollCreate } from "./nx-poll-create";
 import { NxVoicePlayer } from "./nx-voice-player";
 import { NxMarkdown } from "./nx-markdown";
 import { Emoji } from "@/lib/twemoji";
-import { NxGifPicker } from "./nx-gif-picker";
-import { NxStickerPicker } from "./nx-sticker-picker";
+import { NxHumoMediaPicker } from "./nx-humo-media-picker";
 import { Sticker } from "lucide-react";
 
 interface Other { id?: string; name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
@@ -1236,11 +1235,12 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             {/* AI moderation ban modali */}
             <NxBanModal ban={ban} onClose={() => setBan(null)} />
 
-            {/* GIF picker (Giphy) */}
+            {/* Humo Media picker — GIF (user-generated video/mp4) */}
             {gifPickerOpen && (
-                <NxGifPicker
+                <NxHumoMediaPicker
+                    kind="GIF"
                     onClose={() => setGifPickerOpen(false)}
-                    onPick={async (g) => {
+                    onSelect={async (m) => {
                         setGifPickerOpen(false);
                         if (!selected) return;
                         try {
@@ -1248,34 +1248,35 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                 method: "POST", headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({
                                     text: "",
-                                    mediaUrl: g.url,
+                                    mediaUrl: m.mediaUrl,
                                     mediaType: "gif",
-                                    mediaMime: g.url.endsWith(".mp4") ? "video/mp4" : "image/gif",
+                                    mediaMime: m.mediaUrl.endsWith(".mp4") || m.mediaUrl.includes(".mp4") ? "video/mp4" : "image/gif",
                                 }),
                             });
                             if (r.ok) {
                                 const d = await r.json();
-                                setMessages(m => [...m, d.message]);
+                                setMessages(mm => [...mm, d.message]);
                             }
                         } catch { /* ignore */ }
                     }}
                 />
             )}
-            {/* Sticker picker */}
+            {/* Humo Media picker — Sticker (user-generated png/webp) */}
             {stickerPickerOpen && (
-                <NxStickerPicker
+                <NxHumoMediaPicker
+                    kind="STICKER"
                     onClose={() => setStickerPickerOpen(false)}
-                    onPick={async (url, emoji) => {
+                    onSelect={async (m) => {
                         setStickerPickerOpen(false);
                         if (!selected) return;
                         try {
                             const r = await fetch(`/api/nexus/messages/${selected.conversationId}`, {
                                 method: "POST", headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({
-                                    text: emoji,
-                                    mediaUrl: url,
+                                    text: "",
+                                    mediaUrl: m.mediaUrl,
                                     mediaType: "sticker",
-                                    mediaMime: "image/svg+xml",
+                                    mediaMime: m.mediaUrl.endsWith(".png") ? "image/png" : "image/webp",
                                 }),
                             });
                             if (r.ok) {

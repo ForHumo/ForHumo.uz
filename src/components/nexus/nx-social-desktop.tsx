@@ -16,8 +16,7 @@ import { isFounderProfile } from "@/lib/founders";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { NxStatusModal, statusIconForKey, statusColorForKey } from "./nx-status-modal";
 import { Emoji } from "@/lib/twemoji";
-import { NxGifPicker } from "./nx-gif-picker";
-import { NxStickerPicker } from "./nx-sticker-picker";
+import { NxHumoMediaPicker } from "./nx-humo-media-picker";
 import { useTabBadge } from "@/lib/tab-badge";
 import { NxInlinePopover } from "./nx-inline-popover";
 import { NxE2eBanner } from "./nx-e2e-banner";
@@ -4747,37 +4746,39 @@ export function NxSocialDesktop() {
                     }}
                 />
             )}
-            {/* Sticker picker */}
+            {/* Humo Media picker — Sticker (user-generated) */}
             {stickerPickerOpen && (
-                <NxStickerPicker
+                <NxHumoMediaPicker
+                    kind="STICKER"
                     onClose={() => setStickerPickerOpen(false)}
-                    onPick={async (url, emoji) => {
+                    onSelect={async (m) => {
                         setStickerPickerOpen(false);
                         if (!selectedId) return;
                         try {
                             const r = await fetch(`/api/nexus/messages/${selectedId}`, {
                                 method: "POST", headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({
-                                    text: emoji,
-                                    mediaUrl: url,
+                                    text: "",
+                                    mediaUrl: m.mediaUrl,
                                     mediaType: "sticker",
-                                    mediaMime: "image/svg+xml",
+                                    mediaMime: m.mediaUrl.endsWith(".png") ? "image/png" : "image/webp",
                                 }),
                             });
                             if (r.ok) {
                                 const d = await r.json();
-                                setMessages(m => [...m, d.message]);
+                                setMessages(mm => [...mm, d.message]);
                                 loadConvs();
                             }
                         } catch { /* ignore */ }
                     }}
                 />
             )}
-            {/* GIF picker (Giphy) */}
+            {/* Humo Media picker — GIF (user-generated video) */}
             {gifPickerOpen && (
-                <NxGifPicker
+                <NxHumoMediaPicker
+                    kind="GIF"
                     onClose={() => setGifPickerOpen(false)}
-                    onPick={async (g) => {
+                    onSelect={async (m) => {
                         setGifPickerOpen(false);
                         if (!selectedId) return;
                         try {
@@ -4785,14 +4786,14 @@ export function NxSocialDesktop() {
                                 method: "POST", headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({
                                     text: "",
-                                    mediaUrl: g.url,
+                                    mediaUrl: m.mediaUrl,
                                     mediaType: "gif",
-                                    mediaMime: g.url.endsWith(".mp4") ? "video/mp4" : "image/gif",
+                                    mediaMime: m.mediaUrl.endsWith(".mp4") || m.mediaUrl.includes(".mp4") ? "video/mp4" : "image/gif",
                                 }),
                             });
                             if (r.ok) {
                                 const d = await r.json();
-                                setMessages(m => [...m, d.message]);
+                                setMessages(mm => [...mm, d.message]);
                                 loadConvs();
                             }
                         } catch { /* ignore */ }
