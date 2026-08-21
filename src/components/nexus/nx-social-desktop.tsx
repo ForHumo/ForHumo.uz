@@ -3395,21 +3395,15 @@ export function NxSocialDesktop() {
                                         {m.mediaType === "image" && m.mediaUrl && (() => {
                                             const idx = galleryImages.findIndex(x => x.id === m.id);
                                             return (
-                                                <button type="button"
-                                                    onClick={(e) => { e.stopPropagation(); if (idx >= 0) setGalleryIdx(idx); }}
-                                                    className="block mb-1 rounded-md overflow-hidden active:scale-[0.98] transition-transform">
-                                                    <img src={m.mediaUrl} alt="" className="max-w-full max-h-80 cursor-zoom-in" />
-                                                </button>
+                                                <NxMediaImage src={m.mediaUrl}
+                                                    onOpen={() => { if (idx >= 0) setGalleryIdx(idx); }} />
                                             );
                                         })()}
                                         {m.mediaType === "video" && m.mediaUrl && (
-                                            <video src={m.mediaUrl} controls playsInline className="max-w-full max-h-80 rounded-md mb-1" />
+                                            <NxMediaVideo src={m.mediaUrl} durationMs={m.durationMs} />
                                         )}
                                         {m.mediaType === "gif" && m.mediaUrl && (
-                                            m.mediaUrl.endsWith(".mp4")
-                                                ? <video src={m.mediaUrl} autoPlay loop muted playsInline
-                                                    className="max-w-full max-h-64 rounded-md mb-1" />
-                                                : <img src={m.mediaUrl} alt="GIF" className="max-w-full max-h-64 rounded-md mb-1" />
+                                            <NxMediaGif src={m.mediaUrl} />
                                         )}
                                         {m.mediaType === "sticker" && m.mediaUrl && (
                                             <img src={m.mediaUrl} alt={m.text ?? "sticker"} draggable={false}
@@ -6406,6 +6400,183 @@ function NxCirclePlayer({ src, durationMs }: { src: string; durationMs?: number 
                     : <Volume2 className="w-3 h-3" style={{ color: "#00CEC8" }} />
                 }
                 <span>{fmtDur(duration - (videoRef.current?.currentTime ?? 0))}</span>
+            </div>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxMediaImage — Nexus brendlangan rasm ko'rinishi (DM + kelajakda feed uchun).
+// - Rounded-2xl + Nexus gradient border (soft glow atrofida)
+// - Yuklanish paytida skeleton (Nexus rangida shimmer)
+// - Hover'da soft lift + border yorug'roq
+// - Yuqori-o'ng burchakda dekorativ "N" chevron (brend belgi)
+// - Bosilsa gallery lightbox ochadi (onOpen callback)
+// ─────────────────────────────────────────────────────────────────────────────
+function NxMediaImage({ src, onOpen }: { src: string; onOpen?: () => void }) {
+    const [loaded, setLoaded] = useState(false);
+    return (
+        <button type="button" onClick={onOpen}
+            className="relative block mb-1 rounded-2xl overflow-hidden group active:scale-[0.98] transition-transform"
+            style={{
+                border: "1px solid rgba(43,62,232,0.28)",
+                boxShadow: "0 4px 20px rgba(43,62,232,0.12), inset 0 0 40px rgba(0,206,200,0.04)",
+                background: "linear-gradient(135deg, rgba(43,62,232,0.06), rgba(0,206,200,0.04))",
+            }}>
+            {/* Loading skeleton — shimmer */}
+            {!loaded && (
+                <div className="w-[280px] h-[200px] relative overflow-hidden"
+                    style={{ background: "rgba(11,18,40,0.55)" }}>
+                    <div className="absolute inset-0 animate-pulse"
+                        style={{ background: "linear-gradient(90deg, transparent, rgba(0,206,200,0.08), transparent)", backgroundSize: "200% 100%" }} />
+                </div>
+            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={src} alt="" onLoad={() => setLoaded(true)}
+                className={`max-w-full max-h-80 block transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0 absolute"}`}
+                style={{ display: loaded ? "block" : undefined }} />
+
+            {/* Brend chevron — yuqori-o'ng, hover'da yorug'roq */}
+            <div className="absolute top-2 right-2 w-5 h-5 rounded-md flex items-center justify-center opacity-70 group-hover:opacity-100 transition"
+                style={{
+                    background: "rgba(11,18,40,0.65)",
+                    border: "1px solid rgba(0,206,200,0.30)",
+                    backdropFilter: "blur(6px)",
+                }}>
+                <span className="text-[9px] font-black" style={{
+                    background: "linear-gradient(135deg,#00CEC8,#2B3EE8)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                }}>N</span>
+            </div>
+        </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxMediaVideo — Nexus brendlangan video pleyer.
+// - Poster/first-frame ko'rsatiladi, katta gradient Play tugma markazda
+// - Bosilganda native controls yoqiladi (playing = true)
+// - Yuqori-chapda "VIDEO" badge (Nexus rangi)
+// - Yuqori-o'ngda davomiylik (agar bor bo'lsa) — pill format
+// - Rounded-2xl + Nexus gradient border + glow
+// ─────────────────────────────────────────────────────────────────────────────
+function NxMediaVideo({ src, durationMs }: { src: string; durationMs?: number | null }) {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [started, setStarted] = useState(false);
+    const [duration, setDuration] = useState((durationMs ?? 0) / 1000);
+
+    useEffect(() => {
+        const v = videoRef.current;
+        if (!v) return;
+        const onMeta = () => { if (isFinite(v.duration)) setDuration(v.duration); };
+        v.addEventListener("loadedmetadata", onMeta);
+        return () => v.removeEventListener("loadedmetadata", onMeta);
+    }, []);
+
+    const fmtDur = (s: number) => {
+        if (!isFinite(s) || s <= 0) return "";
+        const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+        return `${m}:${sec.toString().padStart(2, "0")}`;
+    };
+    const durLabel = fmtDur(duration);
+
+    return (
+        <div className="relative mb-1 rounded-2xl overflow-hidden inline-block"
+            style={{
+                border: "1px solid rgba(43,62,232,0.30)",
+                boxShadow: "0 4px 20px rgba(0,206,200,0.12), inset 0 0 60px rgba(43,62,232,0.05)",
+                background: "linear-gradient(135deg, rgba(43,62,232,0.10), rgba(0,206,200,0.06))",
+            }}>
+            <video ref={videoRef} src={src}
+                controls={started}
+                playsInline
+                preload="metadata"
+                onPlay={() => setStarted(true)}
+                className="max-w-full max-h-80 block bg-black"
+                style={{ borderRadius: "calc(1rem - 1px)" }} />
+
+            {/* Katta Play overlay — faqat boshlanmasdan oldin */}
+            {!started && (
+                <button type="button"
+                    onClick={() => { videoRef.current?.play(); }}
+                    className="absolute inset-0 flex items-center justify-center group"
+                    style={{ background: "linear-gradient(135deg, rgba(5,8,24,0.35), rgba(5,8,24,0.15))" }}>
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 group-active:scale-95"
+                        style={{
+                            background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                            boxShadow: "0 8px 32px rgba(0,206,200,0.45), 0 0 60px rgba(43,62,232,0.30)",
+                        }}>
+                        <Play className="w-7 h-7 text-white translate-x-0.5" fill="#fff" />
+                    </div>
+                </button>
+            )}
+
+            {/* Yuqori-chapda VIDEO badge — brend ta'kidlash */}
+            {!started && (
+                <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full pointer-events-none"
+                    style={{
+                        background: "rgba(11,18,40,0.75)",
+                        border: "1px solid rgba(0,206,200,0.30)",
+                        backdropFilter: "blur(6px)",
+                    }}>
+                    <Film className="w-2.5 h-2.5" style={{ color: "#00CEC8" }} />
+                    <span className="text-[9px] font-black tracking-wider" style={{ color: "#00CEC8" }}>VIDEO</span>
+                </div>
+            )}
+
+            {/* Yuqori-o'ngda davomiylik — Telegram uslub */}
+            {!started && durLabel && (
+                <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-black tabular-nums pointer-events-none"
+                    style={{
+                        background: "rgba(11,18,40,0.75)",
+                        border: "1px solid rgba(43,62,232,0.30)",
+                        color: "#fff",
+                        backdropFilter: "blur(6px)",
+                    }}>
+                    {durLabel}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxMediaGif — GIF ko'rinishi (mp4 avtoplayning avtomatik loop bilan).
+// - Rounded-2xl + Nexus gradient border
+// - Yuqori-chapda "GIF" badge (Nexus rangi)
+// - Hover'da soft lift
+// ─────────────────────────────────────────────────────────────────────────────
+function NxMediaGif({ src }: { src: string }) {
+    const isMp4 = src.endsWith(".mp4") || src.includes(".mp4?");
+    return (
+        <div className="relative mb-1 rounded-2xl overflow-hidden inline-block"
+            style={{
+                border: "1px solid rgba(43,62,232,0.28)",
+                boxShadow: "0 4px 16px rgba(0,206,200,0.10)",
+                background: "rgba(11,18,40,0.55)",
+            }}>
+            {isMp4 ? (
+                <video src={src} autoPlay loop muted playsInline
+                    className="max-w-full max-h-64 block"
+                    style={{ borderRadius: "calc(1rem - 1px)" }} />
+            ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={src} alt="GIF" className="max-w-full max-h-64 block"
+                    style={{ borderRadius: "calc(1rem - 1px)" }} />
+            )}
+            {/* GIF badge — Nexus rangi, brend belgi */}
+            <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md pointer-events-none"
+                style={{
+                    background: "rgba(11,18,40,0.85)",
+                    border: "1px solid rgba(0,206,200,0.30)",
+                    backdropFilter: "blur(4px)",
+                }}>
+                <span className="text-[9px] font-black tracking-wider" style={{
+                    background: "linear-gradient(135deg,#00CEC8,#2B3EE8)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                }}>GIF</span>
             </div>
         </div>
     );
