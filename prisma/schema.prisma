@@ -79,6 +79,13 @@ model UserProfile {
   subPrice      Int      @default(0) @map("subPriceZij")
   subCurrency   Currency @default(UZS)
 
+  // Rasmiy For Humo agent'lari (@id, @ai, @nexus, @esport, @market, @pay,
+  // @bn, @support, @forhumo) — foydalanuvchi profil emas, tizim identity.
+  // isOfficialAgent=true bo'lsa kanal/guruh nomi shu username bilan mavjud;
+  // managerId — bu agent'ni boshqaruvchi profil (CEO va uning delegatlari).
+  isOfficialAgent   Boolean   @default(false)
+  managerId         String?                     // UserProfile.id — nazoratchi
+
   // Tasdiqlangan (ko'k belgi) — founderlardan tashqari, ariza orqali
   verified          Boolean   @default(false)
   verifiedAt        DateTime?

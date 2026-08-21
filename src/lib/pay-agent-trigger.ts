@@ -43,7 +43,7 @@ export async function triggerPayAgentDM(ev: PayEvent): Promise<void> {
         }
 
         await sendAgentDM({
-            agentUsername: "pay_agent",
+            agentUsername: "pay",
             toProfileId: ev.profileId,
             kind: "pay-tx",
             payload: {

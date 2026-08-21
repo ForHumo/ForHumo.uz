@@ -8,6 +8,7 @@
 import { prisma } from "@/lib/prisma";
 import { OFFICIAL_AGENTS } from "@/lib/nexus-agent";
 import { FOUNDER_HUMO_IDS } from "@/lib/founders";
+import { CEO_HUMO_ID } from "@/lib/humo-agents";
 
 let cachedOnce = false;
 
@@ -15,17 +16,22 @@ export async function ensureSystemAgents(): Promise<void> {
     // Bir marta har server instance uchun (poll da yana ochilmasin)
     if (cachedOnce) return;
 
-    // Founder profileId'ni topamiz (ownerId uchun; tizim agentlarining texnik egasi)
-    const founder = await prisma.userProfile.findFirst({
+    // CEO — rasmiy agent'lar manageri (@forhumo, UZ0000001).
+    // Fallback: birinchi founder (agar CEO hisobi hali yo'q bo'lsa).
+    const ceo = await prisma.userProfile.findFirst({
+        where: { humoId: CEO_HUMO_ID },
+        select: { id: true },
+    });
+    const founder = ceo ?? await prisma.userProfile.findFirst({
         where: { humoId: { in: FOUNDER_HUMO_IDS } },
         select: { id: true },
         orderBy: { createdAt: "asc" },
     });
     if (!founder) {
-        // Founder hali yo'q — hech kim login qilmagan bo'lishi mumkin. Keyingi safar
-        // urinamiz (cachedOnce=false qoladi).
+        // Hech kim login qilmagan — keyingi safar
         return;
     }
+    const managerId = ceo?.id ?? founder.id;
 
     for (const spec of OFFICIAL_AGENTS) {
         try {
@@ -45,6 +51,10 @@ export async function ensureSystemAgents(): Promise<void> {
                         name: spec.name,
                         image: spec.image,
                         bio: `${spec.name} — For Humo rasmiy agenti.`,
+                        isOfficialAgent: true,
+                        verified: true,
+                        // @forhumo — CEO'ning o'zi (manager=null); qolganlar CEO nazorati
+                        managerId: spec.username === "forhumo" ? null : managerId,
                     },
                 });
             } else {
@@ -60,6 +70,9 @@ export async function ensureSystemAgents(): Promise<void> {
                         humoId,
                         onboardingDone: true,
                         bio: `${spec.name} — For Humo rasmiy agenti.`,
+                        isOfficialAgent: true,
+                        verified: true,
+                        managerId: spec.username === "forhumo" ? null : managerId,
                     },
                 });
                 profileId = created.id;

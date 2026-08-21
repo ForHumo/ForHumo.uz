@@ -35,7 +35,7 @@ export async function triggerSupportAgentDM(p: Params): Promise<void> {
         }
 
         await sendAgentDM({
-            agentUsername: "support_agent",
+            agentUsername: "support",
             toProfileId: ticket.profileId,
             kind: "support-status",
             payload: {

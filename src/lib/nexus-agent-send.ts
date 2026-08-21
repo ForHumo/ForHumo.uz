@@ -28,7 +28,7 @@ export interface AgentPayload {
  * javoblar strukturaviy (rating, media, matn) sifatida qayta ishlanadi.
  */
 export async function sendAgentDM(input: {
-    agentUsername: string;         // "market_agent" (@ belgisisiz)
+    agentUsername: string;         // "market" (@ belgisisiz)
     toProfileId: string;
     payload: AgentPayload;
     kind?: string;                  // agentKind

@@ -34,7 +34,7 @@ export async function triggerMarketReviewRequest(orderId: string): Promise<void>
             if (existing) continue;
 
             await sendAgentDM({
-                agentUsername: "market_agent",
+                agentUsername: "market",
                 toProfileId: order.profileId,
                 kind: "product-review",
                 payload: {
