@@ -23,7 +23,8 @@ async function meAndConv(email: string, id: string) {
 }
 
 // GET /api/nexus/messages/[id] — xabarlar + o'qildi belgilash
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+// Cursor pagination: ?limit=50&before=<ISO createdAt> — eski xabarlarni load more uchun
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await params;
@@ -32,38 +33,54 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (!conv) return NextResponse.json({ error: "Suhbat topilmadi" }, { status: 404 });
     if (conv.user1Id !== me.id && conv.user2Id !== me.id) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
 
-    // Rasmiy agent bilan birinchi ochilishda avto-welcome xabar yuboriladi
-    const otherProfileId = otherId(conv, me.id);
-    await seedAgentWelcomeIfNeeded(id, me.id, otherProfileId);
+    const url = new URL(req.url);
+    const limitParam = parseInt(url.searchParams.get("limit") || "50", 10);
+    const limit = Math.min(Math.max(isNaN(limitParam) ? 50 : limitParam, 1), 100);
+    const beforeStr = url.searchParams.get("before");
+    const beforeDate = beforeStr ? new Date(beforeStr) : null;
+    const isPagination = !!(beforeDate && !isNaN(beforeDate.getTime()));
 
-    // Eng yangi 100 xabar (desc) — keyin klient uchun xronologik tartibga (asc) qaytaramiz.
-    // Avval asc edi → 100+ xabarli suhbatda eng yangilari ko'rinmay qolardi.
+    // Rasmiy agent bilan birinchi ochilishda avto-welcome xabar yuboriladi
+    // (faqat initial load'da — pagination'da emas)
+    if (!isPagination) {
+        const otherProfileId = otherId(conv, me.id);
+        await seedAgentWelcomeIfNeeded(id, me.id, otherProfileId);
+    }
+
+    // Cursor pagination: eng yangi `limit` xabar (desc) — reverse'dan keyin klient asc oladi.
+    // `before` berilsa — undan oldingi (eskiroq) xabarlar. `hasMore` — yuqorida yana bor-yo'qligini bildiradi.
     // Self-destruct: muddati o'tgan xabarlarni chiqarmaymiz.
     // Jadvalga qo'yilgan xabarlar faqat jo'natuvchining o'ziga ko'rinadi (draft-like).
     // Tozalangan (clearedBeforeUserN) suhbatlar shu vaqtdan oldingi xabarlarni yashiradi.
     const now = new Date();
     const clearedBefore = conv.user1Id === me.id ? conv.clearedBeforeUser1 : conv.clearedBeforeUser2;
-    const recent = await prisma.nexusMessage.findMany({
+    const recentPlus1 = await prisma.nexusMessage.findMany({
         where: {
             conversationId: id,
             OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
             AND: [
                 { OR: [{ scheduledFor: null }, { scheduledFor: { lte: now } }, { senderId: me.id }] },
                 ...(clearedBefore ? [{ createdAt: { gt: clearedBefore } }] : []),
+                ...(isPagination ? [{ createdAt: { lt: beforeDate! } }] : []),
             ],
         },
-        orderBy: { createdAt: "desc" }, take: 100,
+        orderBy: { createdAt: "desc" }, take: limit + 1,
     });
+    const hasMore = recentPlus1.length > limit;
+    const recent = hasMore ? recentPlus1.slice(0, limit) : recentPlus1;
     const messages = recent.reverse();
     // Fon rejimda: allaqachon muddati o'tgan xabarlarni tozalash (fire-and-forget)
-    prisma.nexusMessage.deleteMany({
-        where: { conversationId: id, expiresAt: { lte: now } },
-    }).catch(() => {});
-    // Muddati kelgan jadvalli xabarlarni "faollashtirish" — cron kelgunga qadar
-    prisma.nexusMessage.updateMany({
-        where: { conversationId: id, scheduledFor: { lte: now, not: null } },
-        data: { scheduledFor: null },
-    }).catch(() => {});
+    // Faqat initial load'da — pagination'da har safar takroriy chaqirmaymiz
+    if (!isPagination) {
+        prisma.nexusMessage.deleteMany({
+            where: { conversationId: id, expiresAt: { lte: now } },
+        }).catch(() => {});
+        // Muddati kelgan jadvalli xabarlarni "faollashtirish" — cron kelgunga qadar
+        prisma.nexusMessage.updateMany({
+            where: { conversationId: id, scheduledFor: { lte: now, not: null } },
+            data: { scheduledFor: null },
+        }).catch(() => {});
+    }
 
     // Poll xabarlar uchun ovoz statistikasini yig'ish
     const pollMsgIds = messages.filter(m => m.mediaType === "poll").map(m => m.id);
@@ -142,14 +159,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     // Peer'ning oxirgi o'qigan vaqti (mening xabarlarim uchun 2 ptichka hisoblash)
     const peerReadAt = conv.user1Id === me.id ? conv.user2ReadAt : conv.user1ReadAt;
 
-    // o'qildi (menikini — yangilash)
-    await prisma.nexusConversation.update({
-        where: { id },
-        data: conv.user1Id === me.id ? { user1ReadAt: new Date() } : { user2ReadAt: new Date() },
-    });
+    // o'qildi (menikini — yangilash). Faqat initial load'da; pagination'da yangilamaymiz.
+    if (!isPagination) {
+        await prisma.nexusConversation.update({
+            where: { id },
+            data: conv.user1Id === me.id ? { user1ReadAt: new Date() } : { user2ReadAt: new Date() },
+        });
+    }
 
+    // `other` profil ma'lumoti faqat initial load'da kerak (pagination'da o'zgarmaydi)
     const oid = otherId(conv, me.id);
-    const p = await prisma.userProfile.findUnique({
+    const p = isPagination ? null : await prisma.userProfile.findUnique({
         where: { id: oid },
         select: { id: true, name: true, username: true, image: true, humoId: true, bio: true, verified: true, verifiedCategory: true, statusEmoji: true, statusText: true, statusExpiresAt: true, lastSeenAt: true, privacyLastSeen: true, privacyProfilePhoto: true },
     });
@@ -207,6 +227,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
                 e2ePayload: m.e2ePayload,
             };
         }),
+        hasMore,
         other: p ? await (async () => {
             const { checkPrivacy } = await import("@/lib/privacy");
             const canSeeLastSeen = await checkPrivacy(me.id, oid, p.privacyLastSeen as "all" | "contacts" | "none");

@@ -104,6 +104,15 @@ interface Msg {
     e2ePayload?: { ephemeralPub: string; iv: string; ciphertext: string; v: number } | null;
     // Client tomon in-memory deshifrlangan matn (UI'da text o'rniga ko'rsatiladi)
     e2eDecrypted?: string | null;
+    // Optimistic UI: xabar yuborilyapti (POST hali javob bermagan)
+    _pending?: boolean;
+    // Optimistic UI: yuborishda xato yuz berdi (retry mumkin)
+    _failed?: boolean;
+    // Optimistic UI: temp klient ID (POST muvaffaqiyatida real ID bilan almashtiriladi)
+    _tempId?: string;
+    // Retry payload — failed bo'lsa qayta yuborish uchun
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    _retryPayload?: any;
 }
 
 interface PeerInfo {
@@ -164,6 +173,9 @@ export function NxSocialDesktop() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [messages, setMessages] = useState<Msg[]>([]);
     const [loadingMsgs, setLoadingMsgs] = useState(false);
+    // Cursor pagination — hasMore = yuqorida eski xabarlar bor-yo'qligi; loadingOlder = load-more davom etmoqda
+    const [hasMore, setHasMore] = useState(false);
+    const loadingOlderRef = useRef(false);
     const [peerReadAt, setPeerReadAt] = useState<string | null>(null);
     const [peer, setPeer] = useState<PeerInfo | null>(null);
     // Tanlangan suhbat obyekti (isSelf, muted, pinned, arxiv holatlarini olish uchun)
@@ -1768,14 +1780,33 @@ export function NxSocialDesktop() {
         return () => clearTimeout(t);
     }, [input, selectedId]);
 
-    // Tanlangan suhbat xabarlari
-    const loadMsgs = useCallback(async (convId: string) => {
-        setLoadingMsgs(true);
+    // Tanlangan suhbat xabarlari — initial load 50 ta, hasMore yoqilsa yuqoriga scroll'da eski yuklanadi
+    // isPoll=true: mavjud eski (paginate qilingan) xabarlarni saqlab, faqat eng yangi 50'ni yangilaydi
+    const loadMsgs = useCallback(async (convId: string, isPoll = false) => {
+        if (!isPoll) setLoadingMsgs(true);
         try {
-            const r = await fetch(`/api/nexus/messages/${convId}`, { cache: "no-store" });
+            const r = await fetch(`/api/nexus/messages/${convId}?limit=50`, { cache: "no-store" });
             if (r.ok) {
                 const d = await r.json();
-                setMessages(d.messages ?? []);
+                const fetched: Msg[] = d.messages ?? [];
+                if (isPoll) {
+                    // Polling: eski (foydalanuvchi paginate qilib olgan) xabarlarni saqlaymiz,
+                    // eng yangi 50 qismi bilan almashtiramiz. Optimistic (temp) xabarlarni ham
+                    // saqlaymiz — ular POST javob'idan keyingina real bilan almashtiriladi.
+                    setMessages(prev => {
+                        if (fetched.length === 0) return prev;
+                        const fetchedIds = new Set(fetched.map(m => m.id));
+                        const oldestFetchedMs = new Date(fetched[0].createdAt).getTime();
+                        const older = prev.filter(m =>
+                            !fetchedIds.has(m.id) && new Date(m.createdAt).getTime() < oldestFetchedMs
+                        );
+                        const pending = prev.filter(m => m._tempId && !fetchedIds.has(m.id));
+                        return [...older, ...fetched, ...pending];
+                    });
+                } else {
+                    setMessages(fetched);
+                    setHasMore(!!d.hasMore);
+                }
                 setPeerReadAt(d.peerReadAt ?? null);
                 if (d.other) {
                     setPeer({
@@ -1790,7 +1821,7 @@ export function NxSocialDesktop() {
                     });
                 }
                 // Undelivered xabarlarni deliver qilish (o'qish PATCH mavjud, delivered alohida)
-                const undelivered = (d.messages ?? []).filter((m: Msg) => !m.mine && !m.deliveredAt).map((m: Msg) => m.id);
+                const undelivered = fetched.filter((m: Msg) => !m.mine && !m.deliveredAt).map((m: Msg) => m.id);
                 if (undelivered.length > 0) {
                     fetch("/api/nexus/messages/deliver", {
                         method: "POST",
@@ -1799,26 +1830,70 @@ export function NxSocialDesktop() {
                     }).catch(() => {});
                 }
             }
-        } finally { setLoadingMsgs(false); }
+        } finally { if (!isPoll) setLoadingMsgs(false); }
     }, []);
+
+    // Load older — scroll yuqoriga yaqinlashsa chaqiriladi. Scroll pozitsiyasini asrab qoladi.
+    const loadOlder = useCallback(async () => {
+        if (loadingOlderRef.current || !hasMore || !selectedId) return;
+        const oldest = messages[0];
+        if (!oldest) return;
+        loadingOlderRef.current = true;
+        const container = msgsContainerRef.current;
+        const prevScrollHeight = container?.scrollHeight ?? 0;
+        const prevScrollTop = container?.scrollTop ?? 0;
+        try {
+            const r = await fetch(
+                `/api/nexus/messages/${selectedId}?limit=50&before=${encodeURIComponent(String(oldest.createdAt))}`,
+                { cache: "no-store" }
+            );
+            if (r.ok) {
+                const d = await r.json();
+                const older: Msg[] = d.messages ?? [];
+                if (older.length > 0) {
+                    setMessages(prev => {
+                        const seen = new Set(prev.map(m => m.id));
+                        const merged = older.filter(m => !seen.has(m.id));
+                        return [...merged, ...prev];
+                    });
+                    setHasMore(!!d.hasMore);
+                    // Scroll pozitsiyasini asrab qolish: DOM yangilangach — yangi kontentni kompensatsiya qil
+                    requestAnimationFrame(() => {
+                        const c = msgsContainerRef.current;
+                        if (c) c.scrollTop = prevScrollTop + (c.scrollHeight - prevScrollHeight);
+                    });
+                } else {
+                    setHasMore(false);
+                }
+            }
+        } finally {
+            loadingOlderRef.current = false;
+        }
+    }, [hasMore, selectedId, messages]);
     useEffect(() => {
-        if (!selectedId) { setMessages([]); setPeer(null); return; }
-        loadMsgs(selectedId);
+        if (!selectedId) { setMessages([]); setPeer(null); setHasMore(false); return; }
+        loadMsgs(selectedId, false);
         // Pusher real-time bo'lsa 20s fallback (edit/delete uchun),
         // aks holda 4s polling (Pusher yo'q brauzerlar uchun).
         const interval = myProfileId ? 20_000 : 4_000;
-        const t = setInterval(() => loadMsgs(selectedId), interval);
+        const t = setInterval(() => loadMsgs(selectedId, true), interval);
         return () => clearInterval(t);
     }, [selectedId, loadMsgs, myProfileId]);
 
-    // Yangi xabar kelganda: pastga yaqin bo'lsa scroll, aks holda hisoblagichga qo'sh
+    // Yangi xabar kelganda: pastga yaqin bo'lsa scroll, aks holda hisoblagichga qo'sh.
+    // Muhim: agar oxirgi xabar ID'si o'zgarmagan bo'lsa — bu pagination (yuqoriga prepend), scroll'ni yoki hisoblagichni tegmaymiz.
+    const prevLastIdRef = useRef<string | null>(null);
     const prevMsgCountRef = useRef(0);
     useEffect(() => {
         const container = msgsContainerRef.current;
+        const prevLastId = prevLastIdRef.current;
         const prevCount = prevMsgCountRef.current;
-        const delta = messages.length - prevCount;
+        const lastId = messages.length > 0 ? messages[messages.length - 1].id : null;
+        const appendedNew = lastId !== null && lastId !== prevLastId && messages.length >= prevCount;
+        prevLastIdRef.current = lastId;
         prevMsgCountRef.current = messages.length;
-        if (!container) return;
+        if (!container || !appendedNew) return;
+        const delta = Math.max(0, messages.length - prevCount);
         const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
         if (nearBottom) {
             bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1835,7 +1910,8 @@ export function NxSocialDesktop() {
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "auto" }), 50);
     }, [selectedId]);
 
-    // Scroll pozitsiyasini kuzatish — pastdan uzoq bo'lsa "scroll down" tugmasini ko'rsat
+    // Scroll pozitsiyasini kuzatish — pastdan uzoq bo'lsa "scroll down" tugmasini ko'rsat.
+    // Yuqoriga 200px'gacha yaqinlashsa eski xabarlarni (pagination) yuklaymiz.
     useEffect(() => {
         const container = msgsContainerRef.current;
         if (!container) return;
@@ -1844,10 +1920,13 @@ export function NxSocialDesktop() {
             const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
             setShowScrollDown(!nearBottom);
             if (nearBottom) setUnreadInView(0);
+            if (container.scrollTop < 200 && hasMore && !loadingOlderRef.current) {
+                loadOlder();
+            }
         }
         container.addEventListener("scroll", onScroll, { passive: true });
         return () => container.removeEventListener("scroll", onScroll);
-    }, [selectedId]);
+    }, [selectedId, hasMore, loadOlder]);
 
     function scrollToBottom() {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1999,12 +2078,28 @@ export function NxSocialDesktop() {
         if (!p) return;
         setSending(true);
         setNextTtl(null);
+
+        // Optimistic UI: xabarni darhol ekranga qo'shamiz (POST natijasini kutmasdan)
+        const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const canE2e = !!(peerE2eKey && myE2eIdentity);
+        const optimistic: Msg = {
+            id: tempId,
+            _tempId: tempId,
+            _pending: true,
+            text: p.text,
+            mine: true,
+            createdAt: new Date().toISOString(),
+            replyTo: p.replyToId ? { id: p.replyToId, text: "", senderName: null, mine: false } : null,
+            expiresAt: p.ttl ? new Date(Date.now() + p.ttl * 1000).toISOString() : null,
+            reactions: [],
+        };
+        if (p.convId === selectedId) setMessages(m => [...m, optimistic]);
+
         try {
             const body: Record<string, unknown> = {};
             if (p.replyToId) body.replyToId = p.replyToId;
             if (p.ttl) body.selfDestructSeconds = p.ttl;
             // E2E: agar ikkala tomonda kalit bor bo'lsa — matnni shifrlab yuboramiz
-            const canE2e = !!(peerE2eKey && myE2eIdentity);
             let localMirror: string | null = null;   // UI'da darhol ko'rsatish uchun
             if (canE2e && p.text) {
                 try {
@@ -2025,10 +2120,57 @@ export function NxSocialDesktop() {
                 const d = await r.json();
                 // E2E xabar bo'lsa — client tomon ko'rsatish uchun deshifrlangan variantni qo'shamiz
                 const msgOut = localMirror ? { ...d.message, e2eDecrypted: localMirror } : d.message;
-                if (p.convId === selectedId) setMessages(m => [...m, msgOut]);
+                // Temp xabarni real bilan almashtirish
+                if (p.convId === selectedId) {
+                    setMessages(m => m.map(x => x._tempId === tempId ? { ...msgOut, _tempId: undefined, _pending: false } : x));
+                }
                 loadConvs();
+            } else {
+                // Yuborish muvaffaqiyatsiz — xabarni failed sifatida belgilaymiz (retry uchun)
+                if (p.convId === selectedId) {
+                    setMessages(m => m.map(x => x._tempId === tempId
+                        ? { ...x, _pending: false, _failed: true, _retryPayload: { text: p.text, replyToId: p.replyToId, ttl: p.ttl, convId: p.convId } }
+                        : x));
+                }
+            }
+        } catch {
+            if (p.convId === selectedId) {
+                setMessages(m => m.map(x => x._tempId === tempId
+                    ? { ...x, _pending: false, _failed: true, _retryPayload: { text: p.text, replyToId: p.replyToId, ttl: p.ttl, convId: p.convId } }
+                    : x));
             }
         } finally { setSending(false); }
+    }
+
+    // Failed xabarni qayta yuborish
+    async function retrySend(m: Msg) {
+        if (!m._tempId || !m._retryPayload) return;
+        const p = m._retryPayload as { text: string; replyToId: string | null; ttl: number | null; convId: string };
+        setMessages(prev => prev.map(x => x._tempId === m._tempId ? { ...x, _pending: true, _failed: false } : x));
+        try {
+            const body: Record<string, unknown> = { text: p.text };
+            if (p.replyToId) body.replyToId = p.replyToId;
+            if (p.ttl) body.selfDestructSeconds = p.ttl;
+            const r = await fetch(`/api/nexus/messages/${p.convId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                if (p.convId === selectedId) {
+                    setMessages(prev => prev.map(x => x._tempId === m._tempId ? { ...d.message, _tempId: undefined, _pending: false } : x));
+                }
+                loadConvs();
+            } else {
+                setMessages(prev => prev.map(x => x._tempId === m._tempId ? { ...x, _pending: false, _failed: true } : x));
+            }
+        } catch {
+            setMessages(prev => prev.map(x => x._tempId === m._tempId ? { ...x, _pending: false, _failed: true } : x));
+        }
+    }
+
+    // Optimistic (temp) xabarni o'chirish — foydalanuvchi failed'ni bekor qilishi mumkin
+    function removeOptimistic(tempId: string) {
+        setMessages(prev => prev.filter(x => x._tempId !== tempId));
     }
     function cancelPending() {
         if (undoIntervalRef.current) { clearInterval(undoIntervalRef.current); undoIntervalRef.current = null; }
@@ -3191,6 +3333,12 @@ export function NxSocialDesktop() {
 
                         {/* Messages */}
                         <div ref={msgsContainerRef} className="flex-1 overflow-y-auto nx-scrollbar p-4 space-y-2 relative">
+                            {/* Pagination load-more ko'rsatkichi (yuqoriga scroll qilinganda avtomatik yuklanadi) */}
+                            {hasMore && messages.length > 0 && (
+                                <div className="flex justify-center py-2">
+                                    <Loader2 className="w-4 h-4 animate-spin text-white/30" />
+                                </div>
+                            )}
                             {loadingMsgs && messages.length === 0 ? (
                                 <div className="flex justify-center py-10">
                                     <Loader2 className="w-5 h-5 animate-spin text-white/30" />
@@ -3249,6 +3397,9 @@ export function NxSocialDesktop() {
                                         ...(selectedIds.has(m.id) ? { background: "rgba(0,206,200,0.10)" } : {}),
                                         // Guruh ichida yuqori marginni kamaytiramiz (bir-biriga yaqin)
                                         marginTop: groupWithPrev ? -6 : undefined,
+                                        // Optimistic UI: pending — biroz shaffof; failed — qizil orqa
+                                        opacity: m._pending ? 0.65 : 1,
+                                        transition: "opacity 180ms",
                                     }}>
                                     {selectMode && (
                                         <div className="flex-shrink-0 flex items-center justify-center w-6 h-6">
@@ -3815,6 +3966,16 @@ export function NxSocialDesktop() {
                                             </span>
                                             {m.mine && (
                                                 (() => {
+                                                    // Optimistic UI: yuborilmoqda / yuborishda xato
+                                                    if (m._pending) return <Clock className="w-3 h-3 opacity-60 animate-pulse" strokeWidth={2.5} />;
+                                                    if (m._failed) return (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); retrySend(m); }}
+                                                            title="Yuborilmadi — qayta urinish"
+                                                            className="hover:brightness-125 active:scale-95 transition">
+                                                            <AlertTriangle className="w-3 h-3" style={{ color: "#EF4444" }} strokeWidth={2.5} />
+                                                        </button>
+                                                    );
                                                     // 3 holat WhatsApp uslubida:
                                                     //   ✓ (kulrang)  — server qabul qildi (yuborildi)
                                                     //   ✓✓ (kulrang) — qurilma yetkazdi (deliveredAt)
