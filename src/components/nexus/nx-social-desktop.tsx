@@ -558,6 +558,24 @@ export function NxSocialDesktop() {
     // Contact card picker — kontaktni boshqa suhbatga yuborish
     const [contactPickerOpen, setContactPickerOpen] = useState(false);
     const [contactPickerQuery, setContactPickerQuery] = useState("");
+    // Auto-translate — per-chat toggle (localStorage). "uz"|"ru"|"en"|null
+    type AutoTr = "uz" | "ru" | "en" | null;
+    const [autoTranslate, setAutoTranslate] = useState<AutoTr>(null);
+    const autoTrKey = (convId: string) => `nexus:dm:autotranslate:${convId}`;
+    useEffect(() => {
+        if (!selectedId) { setAutoTranslate(null); return; }
+        try {
+            const v = localStorage.getItem(autoTrKey(selectedId)) as AutoTr;
+            setAutoTranslate(v && ["uz", "ru", "en"].includes(v) ? v : null);
+        } catch { setAutoTranslate(null); }
+    }, [selectedId]);
+    function setAutoTranslateFor(convId: string, target: AutoTr) {
+        setAutoTranslate(target);
+        try {
+            if (target) localStorage.setItem(autoTrKey(convId), target);
+            else localStorage.removeItem(autoTrKey(convId));
+        } catch {}
+    }
     async function sendContact(c: Conv) {
         if (!selectedId || !c.other) return;
         const payload = {
@@ -1145,6 +1163,36 @@ export function NxSocialDesktop() {
             setEditingText("");
         }
     }
+
+    // Auto-translate — peer xabarlariga (matn bo'lgan) avtomatik tarjima chaqiradi.
+    // Har xabar bir marta tarjima qilinadi (translated map'da bor bo'lsa skip).
+    // Rate-limit: bir vaqtda 3 tarjima parallel (Gemini rate saqlash uchun).
+    const autoTrInflightRef = useRef<Set<string>>(new Set());
+    useEffect(() => {
+        if (!autoTranslate || messages.length === 0) return;
+        const target = autoTranslate;
+        const pending = messages.filter(m =>
+            !m.mine && m.text && m.text.trim().length > 0
+            && !m.e2ePayload  // E2E xabarlarni Gemini'ga bermaymiz
+            && !translated[m.id] && !autoTrInflightRef.current.has(m.id)
+        );
+        if (pending.length === 0) return;
+        // Bir vaqtda 3 tarjima
+        const batch = pending.slice(0, 3);
+        for (const m of batch) {
+            autoTrInflightRef.current.add(m.id);
+            fetch("/api/ai/translate", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: m.text, target }),
+            })
+                .then(r => r.ok ? r.json() : null)
+                .then(d => {
+                    if (d?.translated) setTranslated(prev => ({ ...prev, [m.id]: d.translated }));
+                })
+                .catch(() => {})
+                .finally(() => autoTrInflightRef.current.delete(m.id));
+        }
+    }, [messages, autoTranslate, translated]);
 
     async function translateMessage(messageId: string, text: string, target: "uz" | "ru" | "en" = "uz") {
         setTranslatePickerFor(null);
@@ -3642,6 +3690,39 @@ export function NxSocialDesktop() {
                                             <span className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded" style={{ background: "rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.85)" }}>?</span>
                                             Yorliqlar (Ctrl+/)
                                         </button>
+                                        {/* Auto-translate submenu (AI) — 3 til + o'chirish */}
+                                        {selectedId && !peer?.isAgent && (
+                                            <div className="border-b" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                                <div className="px-3 pt-2.5 pb-1 flex items-center gap-1.5">
+                                                    <Languages className="w-3.5 h-3.5" style={{ color: autoTranslate ? "#00CEC8" : "rgba(160,176,224,0.80)" }} />
+                                                    <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(160,176,224,0.85)" }}>
+                                                        Auto-tarjima {autoTranslate && <span style={{ color: "#00CEC8" }}>· AKTIV ({autoTranslate.toUpperCase()})</span>}
+                                                    </span>
+                                                </div>
+                                                <div className="flex gap-1 px-3 pb-2">
+                                                    {(["uz", "ru", "en"] as const).map(lg => (
+                                                        <button key={lg}
+                                                            onClick={() => setAutoTranslateFor(selectedId, autoTranslate === lg ? null : lg)}
+                                                            className="flex-1 py-1 rounded-md text-[10px] font-black uppercase transition"
+                                                            style={autoTranslate === lg ? {
+                                                                background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white",
+                                                            } : {
+                                                                background: "rgba(43,62,232,0.10)", color: "rgba(200,215,245,0.75)",
+                                                                border: "1px solid rgba(43,62,232,0.20)",
+                                                            }}>
+                                                            {lg}
+                                                        </button>
+                                                    ))}
+                                                    {autoTranslate && (
+                                                        <button onClick={() => setAutoTranslateFor(selectedId, null)}
+                                                            className="w-7 flex items-center justify-center rounded-md hover:bg-white/[0.08]"
+                                                            style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                                                            <X className="w-3 h-3" style={{ color: "#EF4444" }} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                         <button onClick={() => exportChat("html")}
                                             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
                                             <Download className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> HTML eksport
