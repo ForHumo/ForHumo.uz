@@ -13,7 +13,7 @@ import { subscribeUserChannel } from "@/lib/pusher-client";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean; isSystem?: boolean }
-interface ChDetail { id: string; type: ChType; name: string; handle: string | null; description: string | null; avatarUrl: string | null; isPrivate: boolean; memberCount: number; isOwner: boolean; isMember: boolean; role: string | null; canPost: boolean; allowComments?: boolean }
+interface ChDetail { id: string; type: ChType; name: string; handle: string | null; description: string | null; avatarUrl: string | null; isPrivate: boolean; memberCount: number; isOwner: boolean; isMember: boolean; role: string | null; canPost: boolean; allowComments?: boolean; slowModeSeconds?: number }
 interface ChMsg {
     id: string; text: string | null; media: string[]; createdAt: string; mine: boolean;
     author: { name: string | null; username: string | null; image: string | null; verified: boolean } | null;
@@ -36,6 +36,23 @@ interface ChComment {
     editedAt?: string | null;
     mine: boolean;
     author: { name: string | null; username: string | null; image: string | null; verified: boolean } | null;
+}
+
+// Slow mode variantlari (Telegram uslub)
+const SLOW_MODE_OPTIONS: Array<{ seconds: number; label: string }> = [
+    { seconds: 0, label: "Off" },
+    { seconds: 10, label: "10s" },
+    { seconds: 30, label: "30s" },
+    { seconds: 60, label: "1m" },
+    { seconds: 300, label: "5m" },
+    { seconds: 900, label: "15m" },
+    { seconds: 1800, label: "30m" },
+    { seconds: 3600, label: "1h" },
+];
+function formatSlowMode(sec: number): string {
+    if (sec < 60) return `${sec} sek`;
+    if (sec < 3600) return `${Math.round(sec / 60)} daq`;
+    return `${Math.round(sec / 3600)} soat`;
 }
 
 function avatarFor(c: { name: string; avatarUrl?: string | null }) {
@@ -776,6 +793,47 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         <Users className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
                                         <span className="flex-1">A&apos;zolar</span>
                                     </button>
+                                )}
+                                {/* Slow mode picker — faqat guruh owner/admin uchun */}
+                                {(ch.isOwner || ch.role === "ADMIN") && ch.type === "GROUP" && (
+                                    <div className="px-3 py-2.5 border-b" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Clock className="w-4 h-4" style={{ color: (ch.slowModeSeconds ?? 0) > 0 ? "#00CEC8" : "rgba(160,176,224,0.80)" }} />
+                                            <span className="text-xs font-black flex-1" style={{ color: "rgba(230,238,255,0.90)" }}>
+                                                Slow mode {(ch.slowModeSeconds ?? 0) > 0 && (
+                                                    <span className="text-[10px] font-bold ml-1" style={{ color: "#00CEC8" }}>
+                                                        · {formatSlowMode(ch.slowModeSeconds ?? 0)}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-4 gap-1">
+                                            {SLOW_MODE_OPTIONS.map(opt => {
+                                                const active = (ch.slowModeSeconds ?? 0) === opt.seconds;
+                                                return (
+                                                    <button key={opt.seconds}
+                                                        onClick={async () => {
+                                                            const r = await fetch(`/api/nexus/channels/${id}`, {
+                                                                method: "PATCH", headers: { "Content-Type": "application/json" },
+                                                                body: JSON.stringify({ slowModeSeconds: opt.seconds }),
+                                                            });
+                                                            if (r.ok) {
+                                                                setCh(prev => prev ? { ...prev, slowModeSeconds: opt.seconds } : prev);
+                                                            }
+                                                        }}
+                                                        className="py-1 rounded text-[10px] font-bold transition"
+                                                        style={active ? {
+                                                            background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white",
+                                                        } : {
+                                                            background: "rgba(43,62,232,0.08)", color: "rgba(200,215,245,0.80)",
+                                                            border: "1px solid rgba(43,62,232,0.20)",
+                                                        }}>
+                                                        {opt.label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 )}
                                 <button onClick={() => { leaveOrDelete(); setChMoreOpen(false); }}
                                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-red-500/10 text-left"
