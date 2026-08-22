@@ -162,6 +162,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 reactions: reactionMap.get(m.id)
                     ? [...reactionMap.get(m.id)!.entries()].map(([e, s]) => ({ emoji: e, count: s.count, mine: s.mine }))
                     : [],
+                viewCount: m.viewCount,
             };
         }),
     });

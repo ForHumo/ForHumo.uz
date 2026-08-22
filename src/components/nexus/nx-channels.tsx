@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward, Bookmark, BookmarkCheck, Search, Volume2, VolumeX, Languages, Copy, History, Clock, MoreVertical, LogOut,
+    Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward, Bookmark, BookmarkCheck, Search, Volume2, VolumeX, Languages, Copy, History, Clock, MoreVertical, LogOut, Eye,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { NxPollCreate } from "./nx-poll-create";
@@ -26,6 +26,7 @@ interface ChMsg {
     replyToId?: string | null;
     bookmarked?: boolean;
     commentCount?: number;
+    viewCount?: number;
 }
 interface ChComment {
     id: string;
@@ -296,6 +297,46 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         fetch(`/api/nexus/channels/${id}`).then(r => r.json()).then(d => { if (d.channel) setCh(d.channel); }).finally(() => setLoading(false));
     }, [id]);
     useEffect(() => { loadDetail(); }, [loadDetail]);
+
+    // Post views — IntersectionObserver bilan ko'rinuvchi xabarlarni server'ga bildirish.
+    // Har xabar bir marta hisoblanadi (server unique constraint bilan dedup).
+    // Batch: har 5s'da yig'ilgan yangi ko'rilgan ID'lar bir POST bilan yuboriladi.
+    const seenViewsRef = useRef<Set<string>>(new Set());
+    const pendingViewsRef = useRef<Set<string>>(new Set());
+    useEffect(() => {
+        if (!ch?.isMember || msgs.length === 0) return;
+        const observer = new IntersectionObserver((entries) => {
+            for (const e of entries) {
+                if (!e.isIntersecting) continue;
+                const mid = e.target.getAttribute("data-ch-msg-id");
+                if (!mid || seenViewsRef.current.has(mid)) continue;
+                // O'z xabarim uchun view hisoblanmaydi (mine bo'lsa)
+                const m = msgs.find(x => x.id === mid);
+                if (!m || m.mine) { seenViewsRef.current.add(mid); continue; }
+                seenViewsRef.current.add(mid);
+                pendingViewsRef.current.add(mid);
+            }
+        }, { root: null, threshold: 0.5 });
+        // Barcha msg elementlarini kuzatish
+        const els = document.querySelectorAll<HTMLElement>("[data-ch-msg-id]");
+        els.forEach(el => observer.observe(el));
+        // Har 5s'da yig'ilgan view'larni batch POST
+        const flush = setInterval(async () => {
+            if (pendingViewsRef.current.size === 0) return;
+            const ids = [...pendingViewsRef.current];
+            pendingViewsRef.current.clear();
+            const [first, ...rest] = ids;
+            try {
+                await fetch(`/api/nexus/channels/${id}/messages/${first}/view`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ messageIds: rest }),
+                });
+                // Optimistic: viewCount UI'da bump
+                setMsgs(prev => prev.map(m => ids.includes(m.id) ? { ...m, viewCount: (m.viewCount ?? 0) + 1 } : m));
+            } catch {}
+        }, 5000);
+        return () => { observer.disconnect(); clearInterval(flush); };
+    }, [ch?.isMember, msgs, id]);
 
     // Xabar polling (a'zo bo'lsa) — Pusher bo'lsa 20s fallback, aks holda 4s
     useEffect(() => {
@@ -1046,6 +1087,15 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     )}
                                     <div className="flex items-center gap-1 mt-0.5 justify-end">
                                         {m.pinnedAt && <Pin className="w-2.5 h-2.5" style={{ color: "#00CEC8" }} />}
+                                        {/* Ko'rish soni (Telegram uslub) — 0'dan katta bo'lsa ko'rsatamiz */}
+                                        {typeof m.viewCount === "number" && m.viewCount > 0 && (
+                                            <span className="flex items-center gap-0.5 text-[9px] tabular-nums"
+                                                style={{ color: "rgba(100,120,170,0.75)" }}
+                                                title={`${m.viewCount} ta ko'rilgan`}>
+                                                <Eye className="w-2.5 h-2.5" />
+                                                {m.viewCount >= 1000 ? `${(m.viewCount / 1000).toFixed(1)}K` : m.viewCount}
+                                            </span>
+                                        )}
                                         <p className="text-[9px]" style={{ color: "rgba(100,120,170,0.6)" }}>{timeAgo(m.createdAt)}</p>
                                     </div>
                                 </div>

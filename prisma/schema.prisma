@@ -1967,9 +1967,24 @@ model NexusChannelMessage {
   reactions     NexusChannelMessageReaction[]
   bookmarks     NexusChannelMessageBookmark[]
   edits         NexusChannelMessageEdit[]
+  // Ko'rilgan (Telegram uslub) — noyob foydalanuvchilar soni. NexusChannelMessageView'dan
+  // atomik yangilanadi (unique constraint bilan dedup).
+  viewCount     Int      @default(0)
+  views         NexusChannelMessageView[]
   createdAt DateTime @default(now())
   @@index([channelId, createdAt])
   @@index([channelId, pinnedAt])
+}
+
+// Ko'rish yozuvi — bir xil profil bir xil xabarga faqat 1 marta hisoblanadi (unique).
+model NexusChannelMessageView {
+  id        String              @id @default(cuid())
+  messageId String
+  message   NexusChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  profileId String
+  viewedAt  DateTime            @default(now())
+  @@unique([messageId, profileId])
+  @@index([messageId])
 }
 
 model NexusChannelMessageEdit {
