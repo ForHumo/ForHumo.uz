@@ -1236,10 +1236,12 @@
     "brand": "Belis",
     "tagline": "Siz uchun, mehr bilan…",
     "nav": {
-      "home": "Bosh sahifa",
+      "home": "Asosiy",
       "catalog": "Katalog",
-      "collections": "Kolleksiyalar",
+      "aiAssistant": "Humo AI",
+      "saved": "Saqlangan",
       "cart": "Savat",
+      "collections": "Kolleksiyalar",
       "account": "Kabinet",
       "about": "Haqida"
     },

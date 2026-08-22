@@ -1238,8 +1238,10 @@
     "nav": {
       "home": "Главная",
       "catalog": "Каталог",
-      "collections": "Коллекции",
+      "aiAssistant": "Humo AI",
+      "saved": "Избранное",
       "cart": "Корзина",
+      "collections": "Коллекции",
       "account": "Кабинет",
       "about": "О нас"
     },

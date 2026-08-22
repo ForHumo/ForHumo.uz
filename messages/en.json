@@ -1238,8 +1238,10 @@
     "nav": {
       "home": "Home",
       "catalog": "Catalog",
-      "collections": "Collections",
+      "aiAssistant": "Humo AI",
+      "saved": "Saved",
       "cart": "Cart",
+      "collections": "Collections",
       "account": "Account",
       "about": "About"
     },
