@@ -19,6 +19,7 @@ import { Emoji } from "@/lib/twemoji";
 import { NxHumoMediaPicker } from "./nx-humo-media-picker";
 import { useTabBadge } from "@/lib/tab-badge";
 import { NxInlinePopover } from "./nx-inline-popover";
+import { NxImageEditor } from "./nx-image-editor";
 import { NxE2eBanner } from "./nx-e2e-banner";
 import { encryptForRecipient, decryptFromSender } from "@/lib/e2e-crypto";
 import { getMyIdentity } from "@/lib/e2e-storage";
@@ -552,6 +553,8 @@ export function NxSocialDesktop() {
     const [transferInitial, setTransferInitial] = useState<{ amount?: string; note?: string } | null>(null);
     // Slash command autocomplete popover ochiq
     const [slashOpen, setSlashOpen] = useState(false);
+    // Image editor — tanlangan rasm yuborishdan oldin crop/rotate uchun
+    const [pendingImageEdit, setPendingImageEdit] = useState<File | null>(null);
     const [emojiOpen, setEmojiOpen] = useState(false);
     const [circleOpen, setCircleOpen] = useState(false);
     const [pollOpen, setPollOpen] = useState(false);
@@ -4874,8 +4877,11 @@ export function NxSocialDesktop() {
                                     );
                                     if (mediaFiles.length >= 2 && mediaFiles.length === files.length) {
                                         void uploadAlbum(mediaFiles);
+                                    } else if (files.length === 1 && files[0].type.startsWith("image/")) {
+                                        // Bitta rasm — editor ochamiz (crop/rotate)
+                                        setPendingImageEdit(files[0]);
                                     } else {
-                                        // Aralash yoki bitta — har birini alohida yuboramiz
+                                        // Aralash yoki bitta non-image — har birini alohida yuboramiz
                                         for (const f of files) {
                                             const kind = f.type.startsWith("image/") ? "image"
                                                 : f.type.startsWith("video/") ? "video"
@@ -5237,6 +5243,18 @@ export function NxSocialDesktop() {
                                 />
                             )}
                         </div>
+
+                        {/* Image editor — rasm yuborishdan oldin crop/rotate */}
+                        {pendingImageEdit && (
+                            <NxImageEditor
+                                file={pendingImageEdit}
+                                onCancel={() => setPendingImageEdit(null)}
+                                onConfirm={(edited) => {
+                                    setPendingImageEdit(null);
+                                    void uploadFile(edited, "image");
+                                }}
+                            />
+                        )}
 
                         {/* Transfer modali — /pay slash command orqali initial amount berilishi mumkin */}
                         {transferOpen && (
