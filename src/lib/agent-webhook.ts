@@ -115,7 +115,8 @@ export type AgentWebhookEvent =
     | "message.unpinned"    // pindan olindi
     | "callback.query"      // inline tugma bosildi
     | "invoice.paid"        // invoice to'landi
-    | "inline.query";       // @bot query composer'da — agent natijalar qaytaradi
+    | "inline.query"        // @bot query composer'da — agent natijalar qaytaradi
+    | "webhook.ping";       // egasi test qildi (test payload — agent OK/status javob berishi kutiladi)
 
 export interface AgentWebhookPayload {
     event: AgentWebhookEvent;

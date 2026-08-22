@@ -527,6 +527,7 @@ export function NxSocialDesktop() {
     const [agentsUnlimited, setAgentsUnlimited] = useState(false);
     const [loadingAgents, setLoadingAgents] = useState(false);
     const [agentCreateOpen, setAgentCreateOpen] = useState(false);
+    const [agentDiscoverOpen, setAgentDiscoverOpen] = useState(false);
     // Agents tabini ochganda yoki "All" bo'lsa yuklaymiz (All'da ham ko'rinishi kerak)
     useEffect(() => {
         if (listTab !== "agents" && listTab !== "all") return;
@@ -2835,13 +2836,22 @@ export function NxSocialDesktop() {
                         </>
                     )}
                     {listTab === "agents" && (
-                        <button
-                            onClick={() => setAgentCreateOpen(true)}
-                            title="Yangi agent"
-                            className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
-                            style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
-                            <Plus className="w-4 h-4" style={{ color: "#00CEC8" }} />
-                        </button>
+                        <>
+                            <button
+                                onClick={() => setAgentDiscoverOpen(true)}
+                                title="Agentlar kashfiyoti"
+                                className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
+                                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                <Search className="w-4 h-4" style={{ color: "rgba(200,215,245,0.85)" }} />
+                            </button>
+                            <button
+                                onClick={() => setAgentCreateOpen(true)}
+                                title="Yangi agent"
+                                className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
+                                style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                <Plus className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                            </button>
+                        </>
                     )}
                     {(() => {
                         const su = session?.user as { username?: string | null; humoId?: string | null } | undefined;
@@ -5272,13 +5282,23 @@ export function NxSocialDesktop() {
                                         const filtered = agentCommands.filter(c => c.cmd.startsWith(cmdFilter));
                                         if (filtered.length === 0) return null;
                                         return (
-                                            <div className="absolute bottom-full mb-2 left-3 z-40 rounded-xl overflow-hidden max-h-64 overflow-y-auto"
+                                            <div className="absolute bottom-full mb-2 left-3 z-40 rounded-xl overflow-hidden max-h-72 overflow-y-auto"
                                                 style={{
                                                     background: "rgba(11,18,40,0.98)",
                                                     border: "1px solid rgba(43,62,232,0.35)",
                                                     boxShadow: "0 12px 32px rgba(0,0,0,0.60)",
-                                                    minWidth: 280,
+                                                    minWidth: 320,
                                                 }}>
+                                                <div className="px-3 py-2 flex items-center gap-1.5 border-b"
+                                                    style={{ borderColor: "rgba(43,62,232,0.20)", background: "rgba(43,62,232,0.08)" }}>
+                                                    <BotIcon className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                                    <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "#00CEC8" }}>
+                                                        {peer?.name ?? peer?.username ?? "AGENT"} · BUYRUQLAR
+                                                    </span>
+                                                    <span className="ml-auto text-[9px]" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                        {filtered.length}
+                                                    </span>
+                                                </div>
                                                 {filtered.map((c, i) => (
                                                     <button
                                                         key={c.cmd}
@@ -5295,7 +5315,7 @@ export function NxSocialDesktop() {
                                                         <span className="text-xs font-mono font-bold flex-shrink-0" style={{ color: "#00CEC8" }}>
                                                             /{c.cmd}
                                                         </span>
-                                                        <span className="text-xs text-white/70 truncate">{c.description}</span>
+                                                        <span className="text-xs text-white/70 flex-1 min-w-0">{c.description}</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -6122,6 +6142,28 @@ export function NxSocialDesktop() {
                     onClose={() => setDiscoverOpen(null)}
                     onJoined={() => setChannelsBump(n => n + 1)}
                     onSelect={(id) => { setSelectedChannel(id); setDiscoverOpen(null); }}
+                />
+            )}
+            {/* Agent kashfiyoti — barcha agentlar */}
+            {agentDiscoverOpen && (
+                <NxAgentDiscoverModal
+                    onClose={() => setAgentDiscoverOpen(false)}
+                    onSelect={async (username) => {
+                        setAgentDiscoverOpen(false);
+                        // DM'ni ochish yoki yaratish
+                        try {
+                            const r = await fetch("/api/nexus/messages", {
+                                method: "POST", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ username }),
+                            });
+                            if (r.ok) {
+                                const d = await r.json();
+                                setListTab("all");   // DM tab'iga o'tish
+                                setSelectedId(d.conversationId);
+                                loadConvs();
+                            }
+                        } catch {}
+                    }}
                 />
             )}
             {/* Yangi kanal yaratish modali (public/handle bilan) */}
@@ -9447,6 +9489,128 @@ function NxDiscoverModal({ type, onClose, onJoined, onSelect }: {
                             )}
                         </div>
                     ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxAgentDiscoverModal — barcha mavjud agentlar (system + custom).
+// Bosgichda DM ochiladi. Har karta: avatar (bot rangida) + name + @username + module + bio.
+// ─────────────────────────────────────────────────────────────────────────────
+type DiscAgent = {
+    id: string; profileId: string; username: string | null; name: string | null;
+    image: string | null; humoId: string | null; bio: string | null;
+    module: string; isSystem: boolean;
+    commands?: unknown;
+};
+function NxAgentDiscoverModal({ onClose, onSelect }: {
+    onClose: () => void;
+    onSelect: (username: string) => void;
+}) {
+    const [items, setItems] = useState<DiscAgent[] | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [query, setQuery] = useState("");
+    useEffect(() => {
+        setLoading(true);
+        fetch(`/api/nexus/agents?scope=discover`, { cache: "no-store" })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => setItems(d?.items ?? []))
+            .finally(() => setLoading(false));
+    }, []);
+    const filtered = query.trim()
+        ? (items ?? []).filter(x => {
+            const q = query.toLowerCase();
+            return (x.name ?? "").toLowerCase().includes(q)
+                || (x.username ?? "").toLowerCase().includes(q)
+                || (x.bio ?? "").toLowerCase().includes(q)
+                || x.module.toLowerCase().includes(q);
+        })
+        : (items ?? []);
+    return (
+        <div className="fixed inset-0 z-[220]" onClick={onClose}>
+            <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[560px] max-h-[80vh] rounded-2xl overflow-hidden flex flex-col"
+                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                onClick={e => e.stopPropagation()}>
+                <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        <BotIcon className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-sm font-black" style={{ color: "rgba(230,238,255,0.98)" }}>Agentlar kashfiyoti</h3>
+                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>Mavjud avtomatlashtirilgan yordamchilar</p>
+                    </div>
+                    <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                    </button>
+                </div>
+                <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.60)" }} />
+                        <input type="text" value={query}
+                            onChange={e => setQuery(e.target.value)}
+                            placeholder="Nom, @username yoki modul..."
+                            className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-transparent focus:outline-none"
+                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(230,238,255,0.90)" }} />
+                    </div>
+                </div>
+                <div className="flex-1 overflow-y-auto nx-scrollbar">
+                    {loading ? (
+                        <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-white/30" /></div>
+                    ) : filtered.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                            <BotIcon className="w-10 h-10 mb-3" style={{ color: "rgba(160,176,224,0.35)" }} />
+                            <p className="text-sm font-bold" style={{ color: "rgba(230,238,255,0.85)" }}>Agent topilmadi</p>
+                        </div>
+                    ) : filtered.map(a => {
+                        const cmdCount = Array.isArray(a.commands) ? (a.commands as unknown[]).length : 0;
+                        return (
+                            <button key={a.id}
+                                onClick={() => { if (a.username) onSelect(a.username); }}
+                                className="w-full flex items-start gap-3 px-4 py-3 border-b hover:bg-white/[0.03] text-left transition"
+                                style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                                <div className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0"
+                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    {a.image ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={a.image} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <BotIcon className="w-5 h-5 text-white" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                        <p className="text-sm font-black truncate" style={{ color: "rgba(230,238,255,0.95)" }}>
+                                            {a.name ?? a.username}
+                                        </p>
+                                        {a.isSystem && (
+                                            <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                        )}
+                                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded"
+                                            style={{ background: "rgba(0,206,200,0.15)", color: "#00CEC8" }}>{a.module}</span>
+                                    </div>
+                                    <p className="text-[11px] mt-0.5" style={{ color: "rgba(160,180,220,0.75)" }}>@{a.username}</p>
+                                    {a.bio && (
+                                        <p className="text-[11px] mt-1 line-clamp-2" style={{ color: "rgba(200,215,245,0.85)" }}>{a.bio}</p>
+                                    )}
+                                    {cmdCount > 0 && (
+                                        <p className="text-[10px] mt-1" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                            {cmdCount} ta buyruq
+                                        </p>
+                                    )}
+                                </div>
+                                <span className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black transition"
+                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white", boxShadow: "0 2px 8px rgba(43,62,232,0.35)" }}>
+                                    Ochish
+                                </span>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
         </div>

@@ -422,6 +422,8 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             if (r.ok) loadDetail();
         } finally { setJoinBusy(false); }
     }
+    // Silent post — bir marta ishlaydi (send'dan keyin nolga tushadi)
+    const nextSilentRef = useRef(false);
     async function send() {
         if (!input.trim() || busy) return;
         setBusy(true);
@@ -429,14 +431,20 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         try { localStorage.removeItem(CH_DRAFT_PREFIX + id); } catch {}
         const replyToIdSnap = replyTo?.id ?? null;
         setReplyTo(null);
+        const silent = nextSilentRef.current; nextSilentRef.current = false;
         try {
             const r = await fetch(`/api/nexus/channels/${id}/messages`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text, ...(replyToIdSnap ? { replyToId: replyToIdSnap } : {}) }),
+                body: JSON.stringify({
+                    text,
+                    ...(replyToIdSnap ? { replyToId: replyToIdSnap } : {}),
+                    ...(silent ? { silent: true } : {}),
+                }),
             });
             if (r.ok) { const d = await r.json(); setMsgs(prev => [...prev, d.message].slice(-200)); lastTs.current = d.message.createdAt; }
         } finally { setBusy(false); }
     }
+    function sendSilent() { nextSilentRef.current = true; send(); }
     async function leaveOrDelete() {
         if (ch?.isOwner) {
             if (!confirm("Kanalni o'chirasizmi?")) return;
@@ -1306,7 +1314,11 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                             <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
                                 placeholder={ch.type === "CHANNEL" ? "E'lon yozing..." : "Xabar yozing..."} className="flex-1 h-10 rounded-xl px-3 text-sm text-white outline-none"
                                 style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.2)", caretColor: "#00CEC8" }} />
-                            <button onClick={send} disabled={busy || !input.trim()} className="w-10 h-10 flex items-center justify-center rounded-xl text-white disabled:opacity-40" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            <button onClick={send}
+                                onContextMenu={(e) => { e.preventDefault(); sendSilent(); }}
+                                disabled={busy || !input.trim()}
+                                title="Yuborish (o'ng bosish: ovozsiz)"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl text-white disabled:opacity-40" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
                                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                             </button>
                         </div>

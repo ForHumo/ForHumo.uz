@@ -230,11 +230,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     const body = await req.json();
-    const { text, media, pollQuestion, pollOptions, pollExpiresAt, pollMulti, replyToId, scheduledFor } = body as {
+    const { text, media, pollQuestion, pollOptions, pollExpiresAt, pollMulti, replyToId, scheduledFor, silent } = body as {
         text?: string; media?: unknown;
         pollQuestion?: string; pollOptions?: string[]; pollExpiresAt?: string; pollMulti?: boolean;
         replyToId?: string;
         scheduledFor?: string;   // ISO string — kelajakdagi vaqt (30s..30d oralig'ida)
+        silent?: boolean;        // Silent post — a'zolarga push yubormaydi
     };
     const cleanText = typeof text === "string" ? text.trim().slice(0, 4000) : "";
     const cleanMedia: string[] = filterMediaUrls(media, 9);
@@ -304,7 +305,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     // Push notif — barcha a'zolarga (senderdan tashqari), 500 tagacha.
     // Jadvalga qo'yilgan post'lar hali chiqarilmagan — push yubormaymiz (cron faollashtirsa keyin).
-    if (!scheduledDate && pushAvailable()) {
+    // Silent post — a'zolar bildirishnomasiz oladi (Pusher haqiqiy vaqt hali bor).
+    if (!scheduledDate && !silent && pushAvailable()) {
         after(async () => {
             const members = await prisma.nexusChannelMember.findMany({
                 where: { channelId: id, profileId: { not: me.id } },

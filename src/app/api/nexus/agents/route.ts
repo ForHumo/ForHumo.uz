@@ -30,12 +30,35 @@ function isUnlimited(p: { username: string | null; humoId: string | null }): boo
     return isFounderProfile(p);
 }
 
-export async function GET() {
+export async function GET(req: Request) {
     const owner = await me();
     if (!owner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // Rasmiy tizim agentlari mavjudligini ta'minlaymiz (avto-seed).
     await ensureSystemAgents();
+
+    const { searchParams } = new URL(req.url);
+    const scope = searchParams.get("scope") || "mine";
+
+    if (scope === "discover") {
+        // Discovery: barcha agentlar (tizim birinchi + eng yangi 50 custom).
+        // O'zim yaratganlarni skip qilamiz (ular "mine"da bor).
+        const items = await prisma.nexusAgent.findMany({
+            where: { OR: [{ isSystem: true }, { AND: [{ ownerId: { not: owner.id } }, { isSystem: false }] }] },
+            orderBy: [{ isSystem: "desc" }, { createdAt: "desc" }],
+            take: 60,
+            include: { profile: { select: { username: true, name: true, image: true, humoId: true, bio: true } } },
+        });
+        return NextResponse.json({
+            items: items.map(a => ({
+                id: a.id, profileId: a.profileId,
+                username: a.profile.username, name: a.profile.name, image: a.profile.image,
+                humoId: a.profile.humoId, bio: a.profile.bio,
+                module: a.module, isSystem: a.isSystem,
+                commands: a.commands,
+            })),
+        });
+    }
 
     // Har foydalanuvchida ko'rinadi: 1) o'zining custom agentlari, 2) hamma tizim agentlari
     const agents = await prisma.nexusAgent.findMany({
