@@ -1971,9 +1971,13 @@ model NexusChannelMessage {
   // atomik yangilanadi (unique constraint bilan dedup).
   viewCount     Int      @default(0)
   views         NexusChannelMessageView[]
+  // Jadvalga qo'yilgan xabar (Telegram uslub) — bu vaqtga qadar kanal xabarlarida
+  // ko'rinmaydi (faqat yozuvchi ko'radi, draft-like). Kunlik cron faollashtiradi.
+  scheduledFor  DateTime?
   createdAt DateTime @default(now())
   @@index([channelId, createdAt])
   @@index([channelId, pinnedAt])
+  @@index([scheduledFor])
 }
 
 // Ko'rish yozuvi — bir xil profil bir xil xabarga faqat 1 marta hisoblanadi (unique).

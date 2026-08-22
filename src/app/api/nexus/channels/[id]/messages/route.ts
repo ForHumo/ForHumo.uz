@@ -36,14 +36,34 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const blockedIds = await getBlockedIds(me.id);
     // Inkremental polling (since bor) → asc. Birinchi yuklash (since yo'q) → eng yangi 100 (desc),
     // so'ng xronologik tartibga qaytaramiz. Aks holda 100+ xabarli kanalda yangilar ko'rinmay qolardi.
+    // Jadvalga qo'yilgan xabarlar: ?scheduled=1 → faqat yozuvchi'ning kelajakdagi post'lari.
+    // Aks holda: o'tib ketgan yoki jadvalsiz xabarlar (yozuvchi o'zi ko'rishi mumkin bo'lgan kelajakdagilarni ham).
+    const scheduledOnly = searchParams.get("scheduled") === "1";
+    const now = new Date();
     const rows = await prisma.nexusChannelMessage.findMany({
         where: {
             channelId: id, hidden: false,
             ...(blockedIds.size > 0 ? { senderId: { notIn: [...blockedIds] } } : {}),
             ...(since ? { createdAt: { gt: new Date(since) } } : {}),
+            ...(scheduledOnly
+                ? { senderId: me.id, scheduledFor: { gt: now } }
+                : {
+                    OR: [
+                        { scheduledFor: null },
+                        { scheduledFor: { lte: now } },
+                        { senderId: me.id },
+                    ],
+                }),
         },
         orderBy: { createdAt: since ? "asc" : "desc" }, take: 100,
     });
+    // Fon rejimda: muddati kelgan jadvallarni faollashtirish (createdAt yangilanmaydi)
+    if (!scheduledOnly) {
+        prisma.nexusChannelMessage.updateMany({
+            where: { channelId: id, scheduledFor: { lte: now, not: null } },
+            data: { scheduledFor: null },
+        }).catch(() => {});
+    }
     const msgs = since ? rows : rows.reverse();
     const ids = [...new Set(msgs.map(m => m.senderId))];
     const profs = ids.length ? await prisma.userProfile.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true } }) : [];
@@ -163,6 +183,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                     ? [...reactionMap.get(m.id)!.entries()].map(([e, s]) => ({ emoji: e, count: s.count, mine: s.mine }))
                     : [],
                 viewCount: m.viewCount,
+                scheduledFor: m.scheduledFor,
             };
         }),
     });
@@ -209,10 +230,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     const body = await req.json();
-    const { text, media, pollQuestion, pollOptions, pollExpiresAt, pollMulti, replyToId } = body as {
+    const { text, media, pollQuestion, pollOptions, pollExpiresAt, pollMulti, replyToId, scheduledFor } = body as {
         text?: string; media?: unknown;
         pollQuestion?: string; pollOptions?: string[]; pollExpiresAt?: string; pollMulti?: boolean;
         replyToId?: string;
+        scheduledFor?: string;   // ISO string — kelajakdagi vaqt (30s..30d oralig'ida)
     };
     const cleanText = typeof text === "string" ? text.trim().slice(0, 4000) : "";
     const cleanMedia: string[] = filterMediaUrls(media, 9);
@@ -246,6 +268,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         && (member.role === "OWNER" || member.role === "ADMIN")
         && !!member.isAnonymous;
 
+    // Jadvalga qo'yish — faqat kelajakdagi vaqt (30s..30d). Faqat kanal/guruh yozuvchilari uchun.
+    let scheduledDate: Date | null = null;
+    if (typeof scheduledFor === "string" && scheduledFor) {
+        const t = new Date(scheduledFor);
+        const nowMs = Date.now();
+        if (!isNaN(t.getTime()) && t.getTime() > nowMs + 30_000 && t.getTime() < nowMs + 30 * 86400 * 1000) {
+            scheduledDate = t;
+        } else {
+            return NextResponse.json({ error: "Jadval vaqti kamida 30 sekunddan keyin va 30 kundan oldin bo'lishi kerak" }, { status: 400 });
+        }
+    }
+
     const msg = await prisma.nexusChannelMessage.create({
         data: {
             channelId: id, senderId: me.id, text: cleanText || null, media: cleanMedia,
@@ -255,6 +289,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             pollOptions: isPoll ? pollOptions!.map(o => String(o).trim().slice(0, 100)).filter(Boolean).slice(0, 10) : [],
             pollExpiresAt: isPoll && pollExpiresAt ? new Date(pollExpiresAt) : null,
             pollMulti: isPoll ? !!pollMulti : false,
+            scheduledFor: scheduledDate,
         },
     });
     if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "CHANNEL_MESSAGE", targetId: msg.id, text: cleanText, kind: "kanal xabari", authorId: me.id }));
@@ -267,8 +302,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         }).catch(() => {}));
     }
 
-    // Push notif — barcha a'zolarga (senderdan tashqari), 500 tagacha
-    if (pushAvailable()) {
+    // Push notif — barcha a'zolarga (senderdan tashqari), 500 tagacha.
+    // Jadvalga qo'yilgan post'lar hali chiqarilmagan — push yubormaymiz (cron faollashtirsa keyin).
+    if (!scheduledDate && pushAvailable()) {
         after(async () => {
             const members = await prisma.nexusChannelMember.findMany({
                 where: { channelId: id, profileId: { not: me.id } },
@@ -325,36 +361,39 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         replyTo: replyToOut,
         reactions: [],
     };
-    after(async () => {
-        const members = await prisma.nexusChannelMember.findMany({
-            where: { channelId: id },
-            select: { profileId: true }, take: 500,
+    // Jadvalga qo'yilgan post — hozir hech kim ko'rmaydi, Pusher yubormaymiz.
+    if (!scheduledDate) {
+        after(async () => {
+            const members = await prisma.nexusChannelMember.findMany({
+                where: { channelId: id },
+                select: { profileId: true }, take: 500,
+            });
+            // Blok: sender bilan blok bo'lgan a'zolarga Pusher yubormaymiz (ular xabarni ko'rmaydi)
+            const blockedPairs = await prisma.nexusBlock.findMany({
+                where: {
+                    OR: [
+                        { blockerId: me.id, blockedId: { in: members.map(m => m.profileId) } },
+                        { blockedId: me.id, blockerId: { in: members.map(m => m.profileId) } },
+                    ],
+                },
+                select: { blockerId: true, blockedId: true },
+            });
+            const blockedOfSender = new Set<string>();
+            for (const b of blockedPairs) {
+                blockedOfSender.add(b.blockerId === me.id ? b.blockedId : b.blockerId);
+            }
+            await Promise.all(members
+                .filter(m => !blockedOfSender.has(m.profileId))
+                .map(m =>
+                    pusherTrigger(userChannel(m.profileId), "nx:msg:new", {
+                        channelId: id,
+                        message: { ...outMsg, mine: m.profileId === me.id },
+                    })
+                ));
         });
-        // Blok: sender bilan blok bo'lgan a'zolarga Pusher yubormaymiz (ular xabarni ko'rmaydi)
-        const blockedPairs = await prisma.nexusBlock.findMany({
-            where: {
-                OR: [
-                    { blockerId: me.id, blockedId: { in: members.map(m => m.profileId) } },
-                    { blockedId: me.id, blockerId: { in: members.map(m => m.profileId) } },
-                ],
-            },
-            select: { blockerId: true, blockedId: true },
-        });
-        const blockedOfSender = new Set<string>();
-        for (const b of blockedPairs) {
-            blockedOfSender.add(b.blockerId === me.id ? b.blockedId : b.blockerId);
-        }
-        await Promise.all(members
-            .filter(m => !blockedOfSender.has(m.profileId))
-            .map(m =>
-                pusherTrigger(userChannel(m.profileId), "nx:msg:new", {
-                    channelId: id,
-                    message: { ...outMsg, mine: m.profileId === me.id },
-                })
-            ));
-    });
+    }
 
     return NextResponse.json({
-        message: { ...outMsg, mine: true },
+        message: { ...outMsg, mine: true, scheduledFor: scheduledDate },
     });
 }
