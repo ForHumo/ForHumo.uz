@@ -1231,5 +1231,90 @@
     "newShops": {
       "text": "<b>{n}</b> new shops opened this week — explore"
     }
+  },
+  "belis": {
+    "brand": "Belis",
+    "tagline": "For you, with love…",
+    "nav": {
+      "home": "Home",
+      "catalog": "Catalog",
+      "collections": "Collections",
+      "cart": "Cart",
+      "account": "Account",
+      "about": "About"
+    },
+    "hero": {
+      "title": "Belis",
+      "subtitle": "Exquisite gift boxes and dowry sets",
+      "cta": "Browse catalog",
+      "ctaBot": "Open in Telegram"
+    },
+    "sections": {
+      "featured": "Featured",
+      "newArrivals": "New arrivals",
+      "collections": "Collections",
+      "categories": "Categories"
+    },
+    "product": {
+      "price": "Price",
+      "outOfStock": "Out of stock",
+      "addToCart": "Add to cart",
+      "buyNow": "Buy now",
+      "description": "Description",
+      "reviews": "Reviews",
+      "share": "Share",
+      "favorite": "Favorite"
+    },
+    "cart": {
+      "title": "Cart",
+      "empty": "Your cart is empty",
+      "emptyCta": "Browse catalog",
+      "subtotal": "Subtotal",
+      "delivery": "Delivery",
+      "total": "Total",
+      "checkout": "Checkout",
+      "remove": "Remove"
+    },
+    "checkout": {
+      "title": "Order",
+      "contactInfo": "Contact info",
+      "name": "Name",
+      "phone": "Phone",
+      "address": "Address",
+      "note": "Note (optional)",
+      "delivery": {
+        "title": "Delivery method",
+        "yandex": "Yandex Delivery — within Tashkent",
+        "bts": "BTS Express — to regions",
+        "pickup": "Pickup — at Belis"
+      },
+      "payment": {
+        "title": "Payment",
+        "card": "Card transfer",
+        "cash": "Cash (at Belis)"
+      },
+      "submit": "Confirm order",
+      "processing": "Sending..."
+    },
+    "order": {
+      "status": {
+        "NEW": "New",
+        "ACCEPTED": "Accepted",
+        "PREPARING": "Preparing",
+        "SHIPPING": "Shipping",
+        "DELIVERED": "Delivered",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "about": {
+      "title": "About Belis",
+      "location": "Our location",
+      "contacts": "Contacts",
+      "faq": "FAQ"
+    },
+    "footer": {
+      "copyright": "© Belis · part of For Humo",
+      "madeWith": "For you, with love"
+    }
   }
 }

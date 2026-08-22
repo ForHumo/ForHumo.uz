@@ -1231,5 +1231,90 @@
     "newShops": {
       "text": "Bu hafta <b>{n} ta</b> yangi do'kon qo'shildi — ko'rish"
     }
+  },
+  "belis": {
+    "brand": "Belis",
+    "tagline": "Siz uchun, mehr bilan…",
+    "nav": {
+      "home": "Bosh sahifa",
+      "catalog": "Katalog",
+      "collections": "Kolleksiyalar",
+      "cart": "Savat",
+      "account": "Kabinet",
+      "about": "Haqida"
+    },
+    "hero": {
+      "title": "Belis",
+      "subtitle": "Nafis sarpo qutilari va sovg'a to'plamlari",
+      "cta": "Katalogni ko'rish",
+      "ctaBot": "Telegram botda ochish"
+    },
+    "sections": {
+      "featured": "Tanlangan mahsulotlar",
+      "newArrivals": "Yangi to'plamlar",
+      "collections": "Kolleksiyalar",
+      "categories": "Kategoriyalar"
+    },
+    "product": {
+      "price": "Narx",
+      "outOfStock": "Sotuvda yo'q",
+      "addToCart": "Savatga qo'shish",
+      "buyNow": "Sotib olish",
+      "description": "Tavsif",
+      "reviews": "Sharhlar",
+      "share": "Ulashish",
+      "favorite": "Sevimlilar"
+    },
+    "cart": {
+      "title": "Savat",
+      "empty": "Savatingiz bo'sh",
+      "emptyCta": "Katalogni ko'rish",
+      "subtotal": "Oraliq summa",
+      "delivery": "Yetkazish",
+      "total": "Jami",
+      "checkout": "Buyurtma berish",
+      "remove": "O'chirish"
+    },
+    "checkout": {
+      "title": "Buyurtma",
+      "contactInfo": "Aloqa ma'lumotlari",
+      "name": "Ism",
+      "phone": "Telefon",
+      "address": "Manzil",
+      "note": "Izoh (ixtiyoriy)",
+      "delivery": {
+        "title": "Yetkazish usuli",
+        "yandex": "Yandex Delivery — Toshkent bo'yicha",
+        "bts": "BTS Express — Viloyatlar uchun",
+        "pickup": "O'zi olib ketish — Belis manzilida"
+      },
+      "payment": {
+        "title": "To'lov usuli",
+        "card": "Karta o'tkazma",
+        "cash": "Naqd (Belis'ga kelib)"
+      },
+      "submit": "Buyurtmani tasdiqlash",
+      "processing": "Yuborilmoqda..."
+    },
+    "order": {
+      "status": {
+        "NEW": "Yangi",
+        "ACCEPTED": "Qabul qilindi",
+        "PREPARING": "Tayyorlanmoqda",
+        "SHIPPING": "Yo'lda",
+        "DELIVERED": "Yetkazildi",
+        "CANCELLED": "Bekor qilingan"
+      }
+    },
+    "about": {
+      "title": "Belis haqida",
+      "location": "Manzilimiz",
+      "contacts": "Aloqa",
+      "faq": "Ko'p so'raladigan savollar"
+    },
+    "footer": {
+      "copyright": "© Belis · For Humo tarkibida",
+      "madeWith": "Siz uchun, mehr bilan"
+    }
   }
 }

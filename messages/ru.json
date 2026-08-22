@@ -1231,5 +1231,90 @@
     "newShops": {
       "text": "На этой неделе добавилось <b>{n}</b> новых магазинов — смотреть"
     }
+  },
+  "belis": {
+    "brand": "Belis",
+    "tagline": "Для вас, с любовью…",
+    "nav": {
+      "home": "Главная",
+      "catalog": "Каталог",
+      "collections": "Коллекции",
+      "cart": "Корзина",
+      "account": "Кабинет",
+      "about": "О нас"
+    },
+    "hero": {
+      "title": "Belis",
+      "subtitle": "Изысканные подарочные наборы и приданое",
+      "cta": "Смотреть каталог",
+      "ctaBot": "Открыть в Telegram"
+    },
+    "sections": {
+      "featured": "Избранное",
+      "newArrivals": "Новинки",
+      "collections": "Коллекции",
+      "categories": "Категории"
+    },
+    "product": {
+      "price": "Цена",
+      "outOfStock": "Нет в наличии",
+      "addToCart": "В корзину",
+      "buyNow": "Купить",
+      "description": "Описание",
+      "reviews": "Отзывы",
+      "share": "Поделиться",
+      "favorite": "В избранное"
+    },
+    "cart": {
+      "title": "Корзина",
+      "empty": "Ваша корзина пуста",
+      "emptyCta": "Смотреть каталог",
+      "subtotal": "Промежуточный итог",
+      "delivery": "Доставка",
+      "total": "Итого",
+      "checkout": "Оформить заказ",
+      "remove": "Удалить"
+    },
+    "checkout": {
+      "title": "Заказ",
+      "contactInfo": "Контактные данные",
+      "name": "Имя",
+      "phone": "Телефон",
+      "address": "Адрес",
+      "note": "Комментарий (необязательно)",
+      "delivery": {
+        "title": "Способ доставки",
+        "yandex": "Yandex Delivery — по Ташкенту",
+        "bts": "BTS Express — по регионам",
+        "pickup": "Самовывоз — в Belis"
+      },
+      "payment": {
+        "title": "Способ оплаты",
+        "card": "Перевод на карту",
+        "cash": "Наличные (в Belis)"
+      },
+      "submit": "Подтвердить заказ",
+      "processing": "Отправка..."
+    },
+    "order": {
+      "status": {
+        "NEW": "Новый",
+        "ACCEPTED": "Принят",
+        "PREPARING": "Готовится",
+        "SHIPPING": "В пути",
+        "DELIVERED": "Доставлен",
+        "CANCELLED": "Отменён"
+      }
+    },
+    "about": {
+      "title": "О Belis",
+      "location": "Наш адрес",
+      "contacts": "Контакты",
+      "faq": "Частые вопросы"
+    },
+    "footer": {
+      "copyright": "© Belis · часть For Humo",
+      "madeWith": "Для вас, с любовью"
+    }
   }
 }
