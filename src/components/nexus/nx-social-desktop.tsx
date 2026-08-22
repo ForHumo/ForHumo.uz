@@ -528,6 +528,10 @@ export function NxSocialDesktop() {
     const [uploading, setUploading] = useState(false);
     const [locBusy, setLocBusy] = useState(false);
     const [transferOpen, setTransferOpen] = useState(false);
+    // /pay slash command orqali ochilganda prefilled miqdor
+    const [transferInitial, setTransferInitial] = useState<{ amount?: string; note?: string } | null>(null);
+    // Slash command autocomplete popover ochiq
+    const [slashOpen, setSlashOpen] = useState(false);
     const [emojiOpen, setEmojiOpen] = useState(false);
     const [circleOpen, setCircleOpen] = useState(false);
     const [pollOpen, setPollOpen] = useState(false);
@@ -2305,9 +2309,72 @@ export function NxSocialDesktop() {
         if (r.ok) setMessages(prev => prev.filter(x => x.id !== m.id));
     }
 
+    // Slash commands (ForHumo-native): /pay, /silent, /schedule, /help.
+    // Send'ga qadar tekshiriladi va tegishli oqim ochiladi. Peer agent bo'lsa
+    // uning /commands avtomatik `commands` API'sidan keladi (bu bilan aralashmasin).
+    type SlashCmd = { cmd: string; usage: string; description: string; icon: React.ElementType };
+    const SLASH_COMMANDS: SlashCmd[] = [
+        { cmd: "pay", usage: "/pay <miqdor>", description: "Tez pul o'tkazma (For Pay)", icon: Wallet },
+        { cmd: "silent", usage: "/silent <matn>", description: "Bildirishnoma yubormasdan", icon: BellOff },
+        { cmd: "schedule", usage: "/schedule <matn>", description: "Jadval oynasini ochish", icon: Clock },
+        { cmd: "help", usage: "/help", description: "Barcha slash buyruqlari", icon: FileText },
+    ];
+    // Slash autocomplete: input `/` bilan boshlansa va peer agent EMAS bo'lsa
+    const slashMatch = (!peer?.isAgent && input.startsWith("/") && !input.includes(" "))
+        ? input.slice(1).toLowerCase() : null;
+    const slashFiltered = slashMatch !== null
+        ? SLASH_COMMANDS.filter(c => c.cmd.startsWith(slashMatch))
+        : [];
+    useEffect(() => {
+        setSlashOpen(slashMatch !== null && slashFiltered.length > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [input, peer?.isAgent]);
+
+    // Slash command'ni ijro etadi. Rost slash bo'lsa true, oddiy matn bo'lsa false.
+    function handleSlashCommand(text: string): boolean {
+        if (!text.startsWith("/") || peer?.isAgent) return false;
+        const spaceIdx = text.indexOf(" ");
+        const cmd = (spaceIdx === -1 ? text.slice(1) : text.slice(1, spaceIdx)).toLowerCase();
+        const rest = spaceIdx === -1 ? "" : text.slice(spaceIdx + 1).trim();
+        if (cmd === "pay") {
+            // /pay 50000 [izoh...] — miqdorni ajratib olib transfer modal'ni ochamiz
+            const m = rest.match(/^([\d.,]+)\s*(.*)$/);
+            if (!m) { showAlert("Format: /pay <miqdor> [izoh]", "Slash buyrug'i"); return true; }
+            const amountStr = m[1].replace(/,/g, "");
+            const note = (m[2] ?? "").trim();
+            setInput("");
+            setTransferInitial({ amount: amountStr, note: note || undefined });
+            setTransferOpen(true);
+            return true;
+        }
+        if (cmd === "silent") {
+            // /silent <matn> — silent xabar
+            if (!rest) { showAlert("Format: /silent <matn>"); return true; }
+            setInput(rest);
+            nextSilentRef.current = true;
+            // Send'ni darrov chaqiramiz — setInput asinxron, shuning uchun 1 tick kutamiz
+            setTimeout(() => { setInput(rest); send(); }, 0);
+            return true;
+        }
+        if (cmd === "schedule") {
+            if (rest) setInput(rest); else setInput("");
+            setScheduleOpen(true);
+            return true;
+        }
+        if (cmd === "help") {
+            const list = SLASH_COMMANDS.map(c => `${c.usage} — ${c.description}`).join("\n");
+            setInput("");
+            showAlert(list, "Slash buyruqlari");
+            return true;
+        }
+        return false;
+    }
+
     // Bosishga 5s'lik "undo" bufferini boshlaydi. Aslida POST 5s'dan keyin ketadi.
     function send() {
         if (!selectedId || !input.trim() || sending || pendingSend) return;
+        // Slash intercept — /pay, /silent, /schedule, /help
+        if (handleSlashCommand(input.trim())) return;
         const text = input.trim();
         const replyToIdSnap = replyTo?.id ?? null;
         const silent = nextSilentRef.current;
@@ -4666,6 +4733,31 @@ export function NxSocialDesktop() {
                             </div>
                         )}
 
+                        {/* Slash command autocomplete — input `/` bilan boshlansa */}
+                        {slashOpen && slashFiltered.length > 0 && !peer?.isAgent && (
+                            <div className="mx-3 mb-1 rounded-xl overflow-hidden flex-shrink-0"
+                                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(0,206,200,0.35)", boxShadow: "0 8px 24px rgba(0,0,0,0.55)" }}>
+                                {slashFiltered.map(c => {
+                                    const Icon = c.icon;
+                                    return (
+                                        <button key={c.cmd}
+                                            onClick={() => { setInput(`/${c.cmd} `); setSlashOpen(false); }}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-white/[0.05] border-b transition"
+                                            style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                                            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                                <Icon className="w-4 h-4 text-white" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-black" style={{ color: "rgba(230,238,255,0.95)" }}>{c.usage}</p>
+                                                <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>{c.description}</p>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+
                         {/* Smart reply chip'lar — Gemini'dan 3 ta tez javob (peer xabari bo'lganda) */}
                         {!smartRepliesDismissed && !editingId && !replyTo && !recording && !videoRecording && (smartReplies.length > 0 || smartRepliesLoading) && (
                             <div className="px-3 py-2 flex items-center gap-1.5 flex-shrink-0 overflow-x-auto nx-scrollbar"
@@ -5079,13 +5171,18 @@ export function NxSocialDesktop() {
                             )}
                         </div>
 
-                        {/* Transfer modali */}
+                        {/* Transfer modali — /pay slash command orqali initial amount berilishi mumkin */}
                         {transferOpen && (
                             <TransferSheet
                                 convId={selectedId}
                                 peerUsername={peer?.username ?? undefined}
-                                onClose={() => setTransferOpen(false)}
-                                onSent={msg => { setMessages(m => [...m, msg]); loadConvs(); setTransferOpen(false); }}
+                                initialAmount={transferInitial?.amount}
+                                initialNote={transferInitial?.note}
+                                onClose={() => { setTransferOpen(false); setTransferInitial(null); }}
+                                onSent={msg => {
+                                    setMessages(m => [...m, msg]); loadConvs();
+                                    setTransferOpen(false); setTransferInitial(null);
+                                }}
                             />
                         )}
 
@@ -7142,15 +7239,17 @@ function AttachMenuItem({ icon: Icon, label, onClick, accent }: {
 
 // Pul yuborish yon paneli — nx-messages.tsx dagi modal bilan bir xil endpoint
 function TransferSheet({
-    convId, peerUsername, onClose, onSent,
+    convId, peerUsername, onClose, onSent, initialAmount, initialNote,
 }: {
     convId: string | null;
     peerUsername?: string;
     onClose: () => void;
     onSent: (msg: Msg) => void;
+    initialAmount?: string;
+    initialNote?: string;
 }) {
-    const [amount, setAmount] = useState("");
-    const [note, setNote] = useState("");
+    const [amount, setAmount] = useState(initialAmount ?? "");
+    const [note, setNote] = useState(initialNote ?? "");
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState<string | null>(null);
 
