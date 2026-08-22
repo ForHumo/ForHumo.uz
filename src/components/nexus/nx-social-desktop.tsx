@@ -784,6 +784,8 @@ export function NxSocialDesktop() {
     const [scheduleDateTime, setScheduleDateTime] = useState<string>("");
     // Yangi kanal/guruh yaratish modali
     const [createChannelOpen, setCreateChannelOpen] = useState<"CHANNEL" | "GROUP" | null>(null);
+    // Discovery modali (mashhur ochiq kanal/guruhlar)
+    const [discoverOpen, setDiscoverOpen] = useState<"CHANNEL" | "GROUP" | null>(null);
     // Push notif state
     const [pushState, setPushState] = useState<PushState>("unsupported");
     useEffect(() => {
@@ -2815,13 +2817,22 @@ export function NxSocialDesktop() {
                     <div className="flex items-center gap-1 mt-2">
                     <div className="flex-1" />
                     {(listTab === "groups" || listTab === "channels") && (
-                        <button
-                            onClick={() => setCreateChannelOpen(listTab === "groups" ? "GROUP" : "CHANNEL")}
-                            title={`Yangi ${listTab === "groups" ? "guruh" : "kanal"}`}
-                            className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
-                            style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
-                            <Plus className="w-4 h-4" style={{ color: "#00CEC8" }} />
-                        </button>
+                        <>
+                            <button
+                                onClick={() => setDiscoverOpen(listTab === "groups" ? "GROUP" : "CHANNEL")}
+                                title={`${listTab === "groups" ? "Guruhlar" : "Kanallar"} kashfiyoti`}
+                                className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
+                                style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                <Search className="w-4 h-4" style={{ color: "rgba(200,215,245,0.85)" }} />
+                            </button>
+                            <button
+                                onClick={() => setCreateChannelOpen(listTab === "groups" ? "GROUP" : "CHANNEL")}
+                                title={`Yangi ${listTab === "groups" ? "guruh" : "kanal"}`}
+                                className="w-9 flex-shrink-0 flex items-center justify-center rounded-lg transition"
+                                style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                <Plus className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                            </button>
+                        </>
                     )}
                     {listTab === "agents" && (
                         <button
@@ -6104,6 +6115,15 @@ export function NxSocialDesktop() {
                     onSaved={(e, t) => setMyStatus({ emoji: e, text: t })}
                 />
             )}
+            {/* Discovery modali — mashhur ochiq kanal/guruhlar */}
+            {discoverOpen && (
+                <NxDiscoverModal
+                    type={discoverOpen}
+                    onClose={() => setDiscoverOpen(null)}
+                    onJoined={() => setChannelsBump(n => n + 1)}
+                    onSelect={(id) => { setSelectedChannel(id); setDiscoverOpen(null); }}
+                />
+            )}
             {/* Yangi kanal yaratish modali (public/handle bilan) */}
             {createChannelOpen === "CHANNEL" && (
                 <NxChannelCreateModal
@@ -9296,6 +9316,137 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved }: {
                             </>
                         )}
                     </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxDiscoverModal — mashhur ochiq kanal/guruhlar (scope=discover).
+// Kartochkalar: avatar + name + @handle + memberCount + description + "Qo'shilish" tugma.
+// ─────────────────────────────────────────────────────────────────────────────
+type DiscItem = {
+    id: string; type: "CHANNEL" | "GROUP"; name: string; handle: string | null;
+    description: string | null; avatarUrl: string | null; memberCount: number; isMember: boolean;
+};
+function NxDiscoverModal({ type, onClose, onJoined, onSelect }: {
+    type: "CHANNEL" | "GROUP";
+    onClose: () => void;
+    onJoined: () => void;
+    onSelect: (id: string) => void;
+}) {
+    const [items, setItems] = useState<DiscItem[] | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [joining, setJoining] = useState<string | null>(null);
+    const [query, setQuery] = useState("");
+    useEffect(() => {
+        setLoading(true);
+        fetch(`/api/nexus/channels?scope=discover&type=${type}`, { cache: "no-store" })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => setItems(d?.channels ?? []))
+            .finally(() => setLoading(false));
+    }, [type]);
+    async function join(item: DiscItem) {
+        setJoining(item.id);
+        try {
+            const r = await fetch(`/api/nexus/channels/${item.id}/join`, { method: "POST" });
+            if (r.ok) {
+                setItems(prev => prev ? prev.map(x => x.id === item.id ? { ...x, isMember: true, memberCount: x.memberCount + 1 } : x) : prev);
+                onJoined();
+            }
+        } finally { setJoining(null); }
+    }
+    const filtered = query.trim()
+        ? (items ?? []).filter(x => {
+            const q = query.toLowerCase();
+            return x.name.toLowerCase().includes(q)
+                || (x.handle ?? "").toLowerCase().includes(q)
+                || (x.description ?? "").toLowerCase().includes(q);
+        })
+        : (items ?? []);
+    const label = type === "CHANNEL" ? "Kanallar" : "Guruhlar";
+    return (
+        <div className="fixed inset-0 z-[220]" onClick={onClose}>
+            <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[560px] max-h-[80vh] rounded-2xl overflow-hidden flex flex-col"
+                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                onClick={e => e.stopPropagation()}>
+                <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        {type === "CHANNEL" ? <Megaphone className="w-4 h-4 text-white" /> : <Users className="w-4 h-4 text-white" />}
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-sm font-black" style={{ color: "rgba(230,238,255,0.98)" }}>{label} kashfiyoti</h3>
+                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>Mashhur ochiq {label.toLowerCase()}</p>
+                    </div>
+                    <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                    </button>
+                </div>
+                <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.60)" }} />
+                        <input type="text" value={query}
+                            onChange={e => setQuery(e.target.value)}
+                            placeholder="Nom yoki @handle..."
+                            className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-transparent focus:outline-none"
+                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(230,238,255,0.90)" }} />
+                    </div>
+                </div>
+                <div className="flex-1 overflow-y-auto nx-scrollbar">
+                    {loading ? (
+                        <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-white/30" /></div>
+                    ) : filtered.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                            {type === "CHANNEL" ? <Megaphone className="w-10 h-10 mb-3" style={{ color: "rgba(160,176,224,0.35)" }} /> : <Users className="w-10 h-10 mb-3" style={{ color: "rgba(160,176,224,0.35)" }} />}
+                            <p className="text-sm font-bold" style={{ color: "rgba(230,238,255,0.85)" }}>
+                                {query.trim() ? "Hech narsa topilmadi" : "Ochiq " + label.toLowerCase() + " yo'q"}
+                            </p>
+                        </div>
+                    ) : filtered.map(item => (
+                        <div key={item.id}
+                            className="flex items-start gap-3 px-4 py-3 border-b hover:bg-white/[0.03] transition"
+                            style={{ borderColor: "rgba(43,62,232,0.10)" }}>
+                            <button onClick={() => onSelect(item.id)}
+                                className="w-11 h-11 rounded-2xl overflow-hidden flex-shrink-0 hover:brightness-110"
+                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                {item.avatarUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={item.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-white font-black">
+                                        {item.name.slice(0, 1).toUpperCase()}
+                                    </div>
+                                )}
+                            </button>
+                            <button onClick={() => onSelect(item.id)}
+                                className="flex-1 min-w-0 text-left">
+                                <div className="flex items-center gap-1.5">
+                                    <p className="text-sm font-black truncate" style={{ color: "rgba(230,238,255,0.95)" }}>{item.name}</p>
+                                    {item.handle && (
+                                        <span className="text-[10px] font-bold" style={{ color: "rgba(160,180,220,0.75)" }}>@{item.handle}</span>
+                                    )}
+                                </div>
+                                <p className="text-[11px] mt-0.5 truncate" style={{ color: "rgba(160,180,220,0.70)" }}>
+                                    {item.memberCount} a&apos;zo{item.description ? ` · ${item.description}` : ""}
+                                </p>
+                            </button>
+                            {item.isMember ? (
+                                <span className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-bold"
+                                    style={{ background: "rgba(0,206,200,0.15)", color: "#00CEC8", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                    A&apos;zo
+                                </span>
+                            ) : (
+                                <button onClick={() => join(item)} disabled={joining === item.id}
+                                    className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black transition hover:brightness-110 disabled:opacity-50"
+                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white", boxShadow: "0 2px 8px rgba(43,62,232,0.35)" }}>
+                                    {joining === item.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Qo'shilish"}
+                                </button>
+                            )}
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
