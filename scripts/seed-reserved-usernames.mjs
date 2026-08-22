@@ -26,7 +26,7 @@ const SYSTEM = [
     "settings", "profile", "id", "edit", "delete", "create", "new",
     "notifications", "messages", "chat", "chats", "search", "explore",
     "home", "feed", "trending", "top", "latest",
-    "bn", "bozornarxida", "sweet", "sevinch", "sevinch_sweets",
+    "bn", "bozornarxida", "sweet", "sevinch_sweets", "belis", "belisuz",
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ const VIP_50 = [
 const PERSONAL = [
     "ziyo", "ziyovutdin", "zulfiya", "qahramon", "qaxramon", "mamura",
     "jamshid", "dilshod", "iroda", "javlon", "kamoliddin", "kamol",
-    "dildora", "ozoda", "jasur", "feruza", "abdulla", "sevinch",
+    "dildora", "ozoda", "jasur", "feruza", "abdulla",
     "abdumannop", "shahriyor", "shaxriyor", "shahzoda", "shaxzoda",
     "aziz", "jalol", "shahnoza", "ramon", "abu", "abduazim",
     "maftuna", "nodira", "diyora", "abdulvohid", "nodir", "laziza",
