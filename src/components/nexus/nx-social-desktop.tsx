@@ -558,6 +558,22 @@ export function NxSocialDesktop() {
     // Contact card picker — kontaktni boshqa suhbatga yuborish
     const [contactPickerOpen, setContactPickerOpen] = useState(false);
     const [contactPickerQuery, setContactPickerQuery] = useState("");
+    // Voice auto-transkript — per-chat toggle (localStorage). Peer ovozli xabarlar avto matnga o'giriladi.
+    const [autoVoice, setAutoVoice] = useState<boolean>(false);
+    const autoVoiceKey = (convId: string) => `nexus:dm:autovoice:${convId}`;
+    useEffect(() => {
+        if (!selectedId) { setAutoVoice(false); return; }
+        try { setAutoVoice(localStorage.getItem(autoVoiceKey(selectedId)) === "1"); }
+        catch { setAutoVoice(false); }
+    }, [selectedId]);
+    function setAutoVoiceFor(convId: string, on: boolean) {
+        setAutoVoice(on);
+        try {
+            if (on) localStorage.setItem(autoVoiceKey(convId), "1");
+            else localStorage.removeItem(autoVoiceKey(convId));
+        } catch {}
+    }
+
     // Auto-translate — per-chat toggle (localStorage). "uz"|"ru"|"en"|null
     type AutoTr = "uz" | "ru" | "en" | null;
     const [autoTranslate, setAutoTranslate] = useState<AutoTr>(null);
@@ -3690,6 +3706,18 @@ export function NxSocialDesktop() {
                                             <span className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded" style={{ background: "rgba(43,62,232,0.20)", color: "rgba(220,230,255,0.85)" }}>?</span>
                                             Yorliqlar (Ctrl+/)
                                         </button>
+                                        {/* Voice auto-transkript toggle (AI) — peer ovoz xabarlar avto matnga */}
+                                        {selectedId && !peer?.isAgent && (
+                                            <button
+                                                onClick={() => setAutoVoiceFor(selectedId, !autoVoice)}
+                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-white/[0.05] text-left"
+                                                style={{ color: autoVoice ? "#00CEC8" : "rgba(220,230,255,0.85)" }}>
+                                                <Mic className="w-4 h-4" style={{ color: autoVoice ? "#00CEC8" : "rgba(160,176,224,0.80)" }} />
+                                                Ovoz avto-transkript
+                                                {autoVoice && <span className="ml-auto text-[9px] font-black px-1.5 py-0.5 rounded"
+                                                    style={{ background: "rgba(0,206,200,0.18)", color: "#00CEC8" }}>AKTIV</span>}
+                                            </button>
+                                        )}
                                         {/* Auto-translate submenu (AI) — 3 til + o'chirish */}
                                         {selectedId && !peer?.isAgent && (
                                             <div className="border-b" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
@@ -4290,7 +4318,7 @@ export function NxSocialDesktop() {
                                         )}
                                         {m.mediaType === "audio" && m.mediaUrl && (
                                             <div className="mb-1">
-                                                <NxVoicePlayer src={m.mediaUrl} mine={m.mine} seed={m.id} initialDurationMs={m.durationMs} enableTranscribe />
+                                                <NxVoicePlayer src={m.mediaUrl} mine={m.mine} seed={m.id} initialDurationMs={m.durationMs} enableTranscribe autoTranscribe={autoVoice && !m.mine} />
                                             </div>
                                         )}
                                         {m.mediaType === "video-circle" && m.mediaUrl && (

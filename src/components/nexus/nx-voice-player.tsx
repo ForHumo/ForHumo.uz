@@ -13,6 +13,7 @@ interface Props {
     seed?: string;
     initialDurationMs?: number | null;
     enableTranscribe?: boolean;                                 // AI transkripsiya tugmasini ko'rsatish
+    autoTranscribe?: boolean;                                   // Mount'da avto-transkript (peer voice + chat setting)
 }
 
 // Deterministik pseudo-random (0..1) — URL'dan seed
@@ -44,7 +45,7 @@ const BAR_COUNT = 32;
 // Voice speed tanlash (Telegram/WhatsApp/podkast uslub)
 const SPEEDS = [1, 1.5, 2] as const;
 
-export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTranscribe }: Props) {
+export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTranscribe, autoTranscribe }: Props) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [playing, setPlaying] = useState(false);
     const [duration, setDuration] = useState<number>(initialDurationMs ? initialDurationMs / 1000 : 0);
@@ -77,6 +78,27 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
             }
         } finally { setTranscribing(false); }
     }
+
+    // Auto-transkript — chat sozlamasi bilan yoqilgan bo'lsa mount'da avtomatik chaqiriladi.
+    // Faqat 1 marta (transcript'ni allaqachon olgan bo'lsa qayta so'ramaymiz).
+    const autoRanRef = useRef(false);
+    useEffect(() => {
+        if (!autoTranscribe || autoRanRef.current || transcript) return;
+        autoRanRef.current = true;
+        (async () => {
+            setTranscribing(true);
+            try {
+                const r = await fetch("/api/ai/transcribe", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ audioUrl: src }),
+                });
+                if (r.ok) {
+                    const d = await r.json();
+                    if (d?.text) setTranscript(d.text);
+                }
+            } catch {} finally { setTranscribing(false); }
+        })();
+    }, [autoTranscribe, src, transcript]);
 
     useEffect(() => {
         const a = audioRef.current;
