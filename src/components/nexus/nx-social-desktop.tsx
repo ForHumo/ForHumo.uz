@@ -8,7 +8,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker, Film, ExternalLink, EyeOff, Eye, AlertTriangle, Play, Pause, RotateCw, ZoomIn, ZoomOut, Maximize2, Minimize2 } from "lucide-react";
+import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker, Film, ExternalLink, EyeOff, Eye, AlertTriangle, Play, Pause, RotateCw, ZoomIn, ZoomOut, Maximize2, Minimize2, UserCircle } from "lucide-react";
 import { NxChannelRoom } from "./nx-channels";
 import { NxChannelCreateModal } from "./nx-channel-create-modal";
 import { NxGroupCreateModal } from "./nx-group-create-modal";
@@ -6464,6 +6464,7 @@ export function NxSocialDesktop() {
                     convs={convs}
                     onClose={() => setFoldersModalOpen(false)}
                     onSaved={() => loadFolders()}
+                    askConfirmFn={askConfirm}
                 />
             )}
 
@@ -9153,25 +9154,44 @@ const FOLDER_COLOR_HEX: Record<string, string> = {
     violet: "#8B5CF6", pink: "#EC4899",
 };
 
-function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved }: {
+// Chat types (Telegram uslub) — includeTypes va excludeTypes chiplarida
+const FOLDER_CHAT_TYPES: Array<{ key: string; label: string; icon: React.ElementType; color: string; scope: "include" | "exclude" }> = [
+    { key: "private", label: "Kontaktlar", icon: UserCircle, color: "#2B3EE8", scope: "include" },
+    { key: "noncontacts", label: "Kontakt emas", icon: Users, color: "#F59E0B", scope: "include" },
+    { key: "group", label: "Guruhlar", icon: Users, color: "#10B981", scope: "include" },
+    { key: "channel", label: "Kanallar", icon: Megaphone, color: "#F97316", scope: "include" },
+    { key: "bot", label: "Botlar", icon: BotIcon, color: "#EC4899", scope: "include" },
+];
+// Papkalar uchun tavsiya emojilar (30+ — Telegram folder icon o'rniga)
+const FOLDER_SUGGESTED_EMOJIS = [
+    "📁","💼","🏠","👥","📢","🤖","⭐","❤️","🔥","🎯",
+    "📚","🎮","⚽","🎵","🎨","✈️","🍔","☕","💰","📊",
+    "🎓","🏆","💡","🔔","🎬","📷","🌍","🚀","🛒","🎁",
+    "💎","🏥","🐾","🌿",
+];
+
+function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askConfirmFn }: {
     folders: ModFolder[];
     convs: Conv[];
     onClose: () => void;
     onSaved: () => void;
+    askConfirmFn: (opts: { title?: string; message: string; variant?: "default" | "danger"; confirmText?: string }) => Promise<boolean>;
 }) {
     const [folders, setFolders] = useState<ModFolder[]>(initialFolders);
     const [selectedId, setSelectedId] = useState<string | null>(folders[0]?.id ?? null);
     const [savingBusy, setSavingBusy] = useState(false);
-    const [chatFilter, setChatFilter] = useState("");
+    // Chat picker sub-modal: null / "include" / "exclude"
+    const [chatPickerFor, setChatPickerFor] = useState<"include" | "exclude" | null>(null);
+    // Emoji picker sub-modal
+    const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
     const selected = folders.find(f => f.id === selectedId) ?? null;
 
     async function createFolder() {
-        const name = "Yangi papka";
         setSavingBusy(true);
         try {
             const r = await fetch("/api/nexus/folders", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, color: "teal", includeUnread: false }),
+                body: JSON.stringify({ name: "Yangi papka", color: "teal", includeUnread: false }),
             });
             if (r.ok) {
                 const d = await r.json();
@@ -9183,7 +9203,6 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved }: {
     }
     async function updateFolder(patch: Partial<ModFolder>) {
         if (!selected) return;
-        // Optimistic — UI'da darrov yangilanadi
         setFolders(prev => prev.map(f => f.id === selected.id ? { ...f, ...patch } as ModFolder : f));
         try {
             await fetch("/api/nexus/folders", {
@@ -9194,7 +9213,11 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved }: {
         } catch {}
     }
     async function removeFolder(id: string) {
-        if (!confirm("Papkani o'chirilsinmi?")) return;
+        const ok = await askConfirmFn({
+            message: "Papkani o'chirilsinmi? Papkadagi chatlar o'chmaydi, faqat papka olib tashlanadi.",
+            variant: "danger", confirmText: "O'chirish",
+        });
+        if (!ok) return;
         setSavingBusy(true);
         try {
             await fetch(`/api/nexus/folders?id=${id}`, { method: "DELETE" });
@@ -9203,191 +9226,413 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved }: {
             onSaved();
         } finally { setSavingBusy(false); }
     }
-    function toggleChatInFolder(convId: string) {
-        if (!selected) return;
-        const has = selected.includeChatIds.includes(convId);
-        const next = has
-            ? selected.includeChatIds.filter(x => x !== convId)
-            : [...selected.includeChatIds, convId];
-        updateFolder({ includeChatIds: next });
-    }
 
-    const filteredChats = chatFilter.trim()
-        ? convs.filter(c => {
-            const q = chatFilter.toLowerCase();
-            return (c.other?.name ?? "").toLowerCase().includes(q)
-                || (c.other?.username ?? "").toLowerCase().includes(q);
-        })
-        : convs;
+    const activeColor = selected?.color ?? "teal";
+    const activeColorHex = FOLDER_COLOR_HEX[activeColor] ?? "#00CEC8";
 
     return (
         <div className="fixed inset-0 z-[220]" onClick={onClose}>
             <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[820px] h-[80vh] rounded-2xl overflow-hidden flex flex-col"
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[860px] h-[86vh] rounded-2xl overflow-hidden flex flex-col"
                 style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
                 onClick={e => e.stopPropagation()}>
                 {/* Header */}
-                <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                <div className="p-4 flex items-center gap-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
                         <FileText className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex-1">
                         <h3 className="text-sm font-black" style={{ color: "rgba(230,238,255,0.98)" }}>Chat papkalari</h3>
-                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>Suhbatlarni kategoriyalarga ajrating</p>
+                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>
+                            Suhbatlarni tartiblash — Telegram uslub {folders.length > 0 && `· ${folders.length}/20`}
+                        </p>
                     </div>
                     <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.10)" }}>
                         <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                     </button>
                 </div>
-                {/* Body */}
+                {/* Body — 2 ustun */}
                 <div className="flex-1 flex min-h-0">
                     {/* Chap: papkalar ro'yhati */}
-                    <div className="w-[240px] flex-shrink-0 flex flex-col border-r overflow-y-auto nx-scrollbar"
-                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                    <div className="w-[260px] flex-shrink-0 flex flex-col border-r overflow-y-auto nx-scrollbar"
+                        style={{ borderColor: "rgba(43,62,232,0.15)", background: "rgba(8,12,32,0.35)" }}>
                         <button onClick={createFolder} disabled={savingBusy || folders.length >= 20}
-                            className="m-2 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition hover:brightness-125 disabled:opacity-50"
-                            style={{ background: "rgba(0,206,200,0.12)", color: "#00CEC8", border: "1px solid rgba(0,206,200,0.30)" }}>
+                            className="m-2 flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-black transition hover:brightness-125 disabled:opacity-50"
+                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white", boxShadow: "0 4px 12px rgba(43,62,232,0.35)" }}>
                             <Plus className="w-3.5 h-3.5" /> Yangi papka
                         </button>
                         {folders.length === 0 && (
-                            <p className="text-[11px] text-center px-4 py-3" style={{ color: "rgba(140,160,210,0.55)" }}>
-                                Papkalar hali yo&apos;q
+                            <p className="text-[11px] text-center px-4 py-6" style={{ color: "rgba(140,160,210,0.55)" }}>
+                                Papka yarating va suhbatlarni tartiblang
                             </p>
                         )}
-                        {folders.map(f => (
-                            <button key={f.id}
-                                onClick={() => setSelectedId(f.id)}
-                                className="flex items-center gap-2 px-3 py-2 text-left border-b hover:bg-white/[0.04] transition"
-                                style={{
-                                    borderColor: "rgba(43,62,232,0.10)",
-                                    background: selectedId === f.id ? "rgba(0,206,200,0.10)" : undefined,
-                                }}>
-                                {f.emoji && <span className="text-base">{f.emoji}</span>}
-                                {!f.emoji && f.color && (
-                                    <div className="w-3 h-3 rounded-full flex-shrink-0"
-                                        style={{ background: FOLDER_COLOR_HEX[f.color] ?? "#00CEC8" }} />
-                                )}
-                                <span className="flex-1 text-xs font-bold truncate" style={{ color: "rgba(230,238,255,0.90)" }}>
-                                    {f.name}
-                                </span>
-                                <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.60)" }}>
-                                    {f.includeChatIds.length}
-                                </span>
-                            </button>
-                        ))}
+                        {folders.map(f => {
+                            const isSelected = selectedId === f.id;
+                            const cHex = FOLDER_COLOR_HEX[f.color ?? "teal"] ?? "#00CEC8";
+                            return (
+                                <button key={f.id}
+                                    onClick={() => setSelectedId(f.id)}
+                                    className="flex items-center gap-2.5 px-3 py-2.5 text-left border-b hover:bg-white/[0.04] transition"
+                                    style={{
+                                        borderColor: "rgba(43,62,232,0.10)",
+                                        background: isSelected ? "rgba(0,206,200,0.12)" : undefined,
+                                        borderLeft: isSelected ? `3px solid ${cHex}` : "3px solid transparent",
+                                    }}>
+                                    <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                                        style={{ background: cHex + "30", border: `1px solid ${cHex}55` }}>
+                                        <span className="text-base">{f.emoji ?? "📁"}</span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-black truncate" style={{ color: isSelected ? "rgba(230,238,255,0.98)" : "rgba(220,230,255,0.85)" }}>
+                                            {f.name}
+                                        </p>
+                                        <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                            {f.includeChatIds.length} chat{f.includeUnread ? " · o'qilmagan" : ""}
+                                        </p>
+                                    </div>
+                                </button>
+                            );
+                        })}
                     </div>
-                    {/* O'ng: tanlangan papka detallari */}
-                    <div className="flex-1 flex flex-col min-w-0">
+                    {/* O'ng: tanlangan papka detallari (Telegram uslub) */}
+                    <div className="flex-1 flex flex-col min-w-0 overflow-y-auto nx-scrollbar">
                         {!selected ? (
-                            <div className="flex-1 flex items-center justify-center px-6 text-center">
-                                <p className="text-sm" style={{ color: "rgba(140,160,210,0.65)" }}>
-                                    Papka yarating yoki chap tomondan tanlang
+                            <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-3">
+                                <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                                    style={{ background: "rgba(43,62,232,0.15)" }}>
+                                    <FileText className="w-8 h-8" style={{ color: "rgba(160,176,224,0.55)" }} />
+                                </div>
+                                <p className="text-sm font-bold" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                    Papka yarating yoki mavjudini tanlang
                                 </p>
                             </div>
                         ) : (
                             <>
-                                <div className="p-4 space-y-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.15)" }}>
-                                    {/* Nom */}
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: "rgba(140,160,210,0.75)" }}>Nom</label>
+                                {/* Avatar + nom (Telegram-like top section) */}
+                                <div className="p-5 flex items-center gap-4"
+                                    style={{ borderBottom: "1px solid rgba(43,62,232,0.15)" }}>
+                                    <button onClick={() => setEmojiPickerOpen(true)}
+                                        title="Ikonani o'zgartirish"
+                                        className="relative w-16 h-16 rounded-2xl flex items-center justify-center transition hover:brightness-110 active:scale-95 flex-shrink-0"
+                                        style={{ background: activeColorHex + "30", border: `1px solid ${activeColorHex}55` }}>
+                                        <span className="text-3xl">{selected.emoji ?? "📁"}</span>
+                                        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
+                                            style={{ background: activeColorHex, border: "2px solid rgba(11,18,40,0.98)" }}>
+                                            <Edit3 className="w-2.5 h-2.5 text-white" />
+                                        </div>
+                                    </button>
+                                    <div className="flex-1 min-w-0">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider block mb-0.5" style={{ color: "rgba(140,160,210,0.75)" }}>Papka nomi</label>
                                         <input type="text" value={selected.name}
                                             onChange={e => updateFolder({ name: e.target.value.slice(0, 40) })}
-                                            maxLength={40}
-                                            className="w-full px-3 py-2 rounded-lg text-sm bg-transparent focus:outline-none"
-                                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.25)", color: "rgba(230,238,255,0.95)" }} />
+                                            maxLength={40} placeholder="Nomi..."
+                                            className="w-full bg-transparent focus:outline-none text-lg font-black"
+                                            style={{ color: "rgba(230,238,255,0.98)", borderBottom: `1px solid ${activeColorHex}55` }} />
                                     </div>
-                                    {/* Emoji + Ranglar */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: "rgba(140,160,210,0.75)" }}>Emoji (ixtiyoriy)</label>
-                                            <input type="text" value={selected.emoji ?? ""}
-                                                onChange={e => updateFolder({ emoji: e.target.value.slice(0, 4) || null })}
-                                                placeholder="🏠"
-                                                maxLength={4}
-                                                className="w-full px-3 py-2 rounded-lg text-base text-center bg-transparent focus:outline-none"
-                                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.25)", color: "rgba(230,238,255,0.95)" }} />
+                                </div>
+
+                                {/* Tanlangan chatlar */}
+                                <div className="p-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                                    <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                        Tanlangan chatlar
+                                    </p>
+                                    <button onClick={() => setChatPickerFor("include")}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition hover:brightness-125"
+                                        style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.30)", color: "#00CEC8" }}>
+                                        <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                                            style={{ background: "rgba(0,206,200,0.20)" }}>
+                                            <Plus className="w-4 h-4" />
                                         </div>
-                                        <div>
-                                            <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: "rgba(140,160,210,0.75)" }}>Rang</label>
-                                            <div className="flex gap-1 flex-wrap">
-                                                {FOLDER_COLORS.map(c => (
-                                                    <button key={c} onClick={() => updateFolder({ color: c })}
-                                                        className="w-6 h-6 rounded-full transition hover:scale-110"
-                                                        style={{
-                                                            background: FOLDER_COLOR_HEX[c],
-                                                            border: selected.color === c ? "2px solid white" : "2px solid transparent",
-                                                        }} />
-                                                ))}
+                                        <span className="flex-1 text-left">Chatlarni qo&apos;shish</span>
+                                        {(selected.includeChatIds.length > 0 || selected.includeTypes.length > 0) && (
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(0,206,200,0.20)" }}>
+                                                {selected.includeChatIds.length + selected.includeTypes.length}
+                                            </span>
+                                        )}
+                                    </button>
+                                    <p className="text-[10px] mt-2" style={{ color: "rgba(140,160,210,0.55)" }}>
+                                        Ushbu papkada ko&apos;rsatiladigan chatlarni yoki chat turlarini tanlang
+                                    </p>
+                                </div>
+
+                                {/* Chiqarilgan chatlar (excluded) */}
+                                <div className="p-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                                    <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                        Chiqarilgan chatlar
+                                    </p>
+                                    <button onClick={() => setChatPickerFor("exclude")}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition hover:brightness-125"
+                                        style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#EF4444" }}>
+                                        <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                                            style={{ background: "rgba(239,68,68,0.15)" }}>
+                                            <X className="w-4 h-4" />
+                                        </div>
+                                        <span className="flex-1 text-left">Chatlarni chiqarish</span>
+                                        {selected.excludeChatIds.length > 0 && (
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(239,68,68,0.20)" }}>
+                                                {selected.excludeChatIds.length}
+                                            </span>
+                                        )}
+                                    </button>
+                                    <p className="text-[10px] mt-2" style={{ color: "rgba(140,160,210,0.55)" }}>
+                                        Ushbu papkada ko&apos;rsatilmaydigan chatlarni tanlang
+                                    </p>
+                                </div>
+
+                                {/* Unread toggle */}
+                                <div className="p-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <div className="relative">
+                                            <input type="checkbox" checked={selected.includeUnread}
+                                                onChange={e => updateFolder({ includeUnread: e.target.checked })}
+                                                className="sr-only" />
+                                            <div className="w-10 h-6 rounded-full transition"
+                                                style={{ background: selected.includeUnread ? activeColorHex : "rgba(43,62,232,0.20)" }}>
+                                                <div className="absolute w-5 h-5 bg-white rounded-full top-0.5 transition"
+                                                    style={{ left: selected.includeUnread ? "18px" : "2px" }} />
                                             </div>
                                         </div>
-                                    </div>
-                                    {/* Unread toggle */}
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" checked={selected.includeUnread}
-                                            onChange={e => updateFolder({ includeUnread: e.target.checked })}
-                                            className="w-4 h-4" />
-                                        <span className="text-xs font-bold" style={{ color: "rgba(220,230,255,0.90)" }}>
-                                            Faqat o&apos;qilmagan xabarli chatlarni ko&apos;rsatish
-                                        </span>
+                                        <div className="flex-1">
+                                            <p className="text-xs font-bold" style={{ color: "rgba(220,230,255,0.90)" }}>
+                                                Faqat o&apos;qilmagan xabarli chatlar
+                                            </p>
+                                            <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                Papkada faqat o&apos;qilmagan xabari bor chatlar ko&apos;rinadi
+                                            </p>
+                                        </div>
                                     </label>
-                                    {/* O'chirish */}
+                                </div>
+
+                                {/* Ranglar */}
+                                <div className="p-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                            Papka rangi
+                                        </p>
+                                        <button onClick={() => updateFolder({ color: null })}
+                                            className="text-[10px] font-bold transition hover:opacity-100"
+                                            style={{ color: !selected.color ? "#00CEC8" : "rgba(160,180,220,0.60)" }}>
+                                            Tagsiz
+                                        </button>
+                                    </div>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {FOLDER_COLORS.map(c => (
+                                            <button key={c} onClick={() => updateFolder({ color: c })}
+                                                className="w-9 h-9 rounded-full transition hover:scale-110 flex items-center justify-center"
+                                                style={{
+                                                    background: FOLDER_COLOR_HEX[c],
+                                                    boxShadow: selected.color === c
+                                                        ? `0 0 0 2px rgba(11,18,40,0.98), 0 0 0 4px ${FOLDER_COLOR_HEX[c]}`
+                                                        : "none",
+                                                }}>
+                                                {selected.color === c && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Danger: O'chirish */}
+                                <div className="p-4">
                                     <button onClick={() => removeFolder(selected.id)} disabled={savingBusy}
-                                        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition hover:brightness-125 disabled:opacity-50"
+                                        className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-black transition hover:brightness-125 disabled:opacity-50"
                                         style={{ background: "rgba(239,68,68,0.10)", color: "#EF4444", border: "1px solid rgba(239,68,68,0.30)" }}>
                                         <Trash2 className="w-3.5 h-3.5" /> Papkani o&apos;chirish
                                     </button>
                                 </div>
-                                {/* Chats picker */}
-                                <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
-                                    <div className="relative">
-                                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.60)" }} />
-                                        <input type="text" value={chatFilter}
-                                            onChange={e => setChatFilter(e.target.value)}
-                                            placeholder="Chat qidirish..."
-                                            className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-transparent focus:outline-none"
-                                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(230,238,255,0.90)" }} />
-                                    </div>
-                                </div>
-                                <div className="flex-1 overflow-y-auto nx-scrollbar">
-                                    {filteredChats.length === 0 && (
-                                        <p className="text-[11px] text-center px-4 py-4" style={{ color: "rgba(140,160,210,0.55)" }}>
-                                            Chat topilmadi
-                                        </p>
-                                    )}
-                                    {filteredChats.map(c => {
-                                        const inFolder = selected.includeChatIds.includes(c.conversationId);
-                                        return (
-                                            <button key={c.conversationId}
-                                                onClick={() => toggleChatInFolder(c.conversationId)}
-                                                className="w-full flex items-center gap-2 px-3 py-2 border-b hover:bg-white/[0.03] text-left transition"
-                                                style={{ borderColor: "rgba(43,62,232,0.08)" }}>
-                                                <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden"
-                                                    style={{ background: "rgba(43,62,232,0.20)" }}>
-                                                    {c.other?.image ? (
-                                                        // eslint-disable-next-line @next/next/no-img-element
-                                                        <img src={c.other.image} alt="" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-xs font-black text-white/70">
-                                                            {(c.other?.name ?? c.other?.username ?? "?").slice(0, 1).toUpperCase()}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <span className="flex-1 text-xs font-bold truncate" style={{ color: "rgba(220,230,255,0.90)" }}>
-                                                    {c.other?.name ?? c.other?.username ?? "Foydalanuvchi"}
-                                                </span>
-                                                {inFolder ? (
-                                                    <CheckSquare className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />
-                                                ) : (
-                                                    <Square className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(160,176,224,0.40)" }} />
-                                                )}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
                             </>
                         )}
                     </div>
+                </div>
+            </div>
+
+            {/* Emoji picker sub-modal */}
+            {emojiPickerOpen && selected && (
+                <div className="fixed inset-0 z-[230] flex items-center justify-center p-4"
+                    onClick={() => setEmojiPickerOpen(false)}>
+                    <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.55)" }} />
+                    <div className="relative w-full max-w-[360px] rounded-2xl overflow-hidden"
+                        style={{ background: "rgba(11,18,40,0.99)", border: "1px solid rgba(43,62,232,0.40)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                        onClick={e => e.stopPropagation()}>
+                        <div className="p-4 flex items-center gap-2" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                            <p className="text-sm font-black flex-1" style={{ color: "rgba(230,238,255,0.98)" }}>Ikonani tanlang</p>
+                            <button onClick={() => setEmojiPickerOpen(false)} className="w-7 h-7 rounded-lg flex items-center justify-center"
+                                style={{ background: "rgba(43,62,232,0.10)" }}>
+                                <X className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.85)" }} />
+                            </button>
+                        </div>
+                        <div className="p-3 grid grid-cols-7 gap-1 max-h-[320px] overflow-y-auto nx-scrollbar">
+                            {FOLDER_SUGGESTED_EMOJIS.map(e => (
+                                <button key={e}
+                                    onClick={() => { updateFolder({ emoji: e }); setEmojiPickerOpen(false); }}
+                                    className="w-10 h-10 rounded-lg flex items-center justify-center text-xl transition hover:brightness-125 hover:scale-110"
+                                    style={{ background: selected.emoji === e ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.06)" }}>
+                                    {e}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Chat picker sub-modal (include yoki exclude) */}
+            {chatPickerFor && selected && (
+                <NxFolderChatPicker
+                    mode={chatPickerFor}
+                    folder={selected}
+                    convs={convs}
+                    onClose={() => setChatPickerFor(null)}
+                    onSave={(includeChatIds, excludeChatIds, includeTypes) => {
+                        updateFolder({ includeChatIds, excludeChatIds, includeTypes });
+                        setChatPickerFor(null);
+                    }}
+                />
+            )}
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxFolderChatPicker — Telegram uslub: chat types (yuqorida) + individual chatlar ro'yhati.
+// Foydalanuvchi types + specific chats tanlaydi va "Saqlash" bilan yopiladi.
+// ─────────────────────────────────────────────────────────────────────────────
+function NxFolderChatPicker({ mode, folder, convs, onClose, onSave }: {
+    mode: "include" | "exclude";
+    folder: ModFolder;
+    convs: Conv[];
+    onClose: () => void;
+    onSave: (includeChatIds: string[], excludeChatIds: string[], includeTypes: string[]) => void;
+}) {
+    const isInclude = mode === "include";
+    const [pickedChats, setPickedChats] = useState<Set<string>>(
+        new Set(isInclude ? folder.includeChatIds : folder.excludeChatIds)
+    );
+    const [pickedTypes, setPickedTypes] = useState<Set<string>>(new Set(isInclude ? folder.includeTypes : []));
+    const [query, setQuery] = useState("");
+    const filtered = query.trim()
+        ? convs.filter(c => {
+            const q = query.toLowerCase();
+            return (c.other?.name ?? "").toLowerCase().includes(q)
+                || (c.other?.username ?? "").toLowerCase().includes(q);
+        })
+        : convs;
+    function togglePicked(id: string, set: Set<string>, setter: (s: Set<string>) => void) {
+        const next = new Set(set);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        setter(next);
+    }
+    function save() {
+        if (isInclude) {
+            onSave([...pickedChats], folder.excludeChatIds, [...pickedTypes]);
+        } else {
+            onSave(folder.includeChatIds, [...pickedChats], folder.includeTypes);
+        }
+    }
+    const total = pickedChats.size + pickedTypes.size;
+    return (
+        <div className="fixed inset-0 z-[230] flex items-center justify-center p-4" onClick={onClose}>
+            <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.55)" }} />
+            <div className="relative w-full max-w-[420px] max-h-[85vh] rounded-2xl overflow-hidden flex flex-col"
+                style={{ background: "rgba(11,18,40,0.99)", border: "1px solid rgba(43,62,232,0.40)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                onClick={e => e.stopPropagation()}>
+                <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                    <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                    </button>
+                    <div className="flex-1">
+                        <p className="text-sm font-black" style={{ color: "rgba(230,238,255,0.98)" }}>
+                            {isInclude ? "Papkaga chatlar" : "Papkadan chiqarilgan chatlar"}
+                        </p>
+                        <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>{total} / 100</p>
+                    </div>
+                    <button onClick={save} disabled={total === 0}
+                        className="px-3 py-1.5 rounded-lg text-xs font-black transition hover:brightness-110 disabled:opacity-40"
+                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white" }}>
+                        Saqlash
+                    </button>
+                </div>
+                <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.60)" }} />
+                        <input type="text" value={query}
+                            onChange={e => setQuery(e.target.value)}
+                            placeholder="Qidiruv..."
+                            className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-transparent focus:outline-none"
+                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(230,238,255,0.90)" }} />
+                    </div>
+                </div>
+                <div className="flex-1 overflow-y-auto nx-scrollbar">
+                    {/* Chat types — faqat include rejimida */}
+                    {isInclude && (
+                        <>
+                            <p className="text-[10px] font-black uppercase tracking-wider px-4 pt-3 pb-1" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                Chat turlari
+                            </p>
+                            {FOLDER_CHAT_TYPES.map(t => {
+                                const Icon = t.icon;
+                                const checked = pickedTypes.has(t.key);
+                                return (
+                                    <button key={t.key}
+                                        onClick={() => togglePicked(t.key, pickedTypes, setPickedTypes)}
+                                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/[0.03] transition"
+                                        style={{ borderBottom: "1px solid rgba(43,62,232,0.05)" }}>
+                                        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                                            style={{ background: t.color + "20", border: `1px solid ${t.color}40` }}>
+                                            <Icon className="w-4 h-4" style={{ color: t.color }} />
+                                        </div>
+                                        <span className="flex-1 text-xs font-bold text-left" style={{ color: "rgba(220,230,255,0.95)" }}>{t.label}</span>
+                                        {checked
+                                            ? <CheckSquare className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                            : <Square className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(160,176,224,0.35)" }} />}
+                                    </button>
+                                );
+                            })}
+                        </>
+                    )}
+                    {/* Individual chatlar */}
+                    <p className="text-[10px] font-black uppercase tracking-wider px-4 pt-3 pb-1" style={{ color: "rgba(140,160,210,0.75)" }}>
+                        Chatlar
+                    </p>
+                    {filtered.length === 0 && (
+                        <p className="text-[11px] text-center px-4 py-4" style={{ color: "rgba(140,160,210,0.55)" }}>
+                            Chat topilmadi
+                        </p>
+                    )}
+                    {filtered.map(c => {
+                        const checked = pickedChats.has(c.conversationId);
+                        return (
+                            <button key={c.conversationId}
+                                onClick={() => togglePicked(c.conversationId, pickedChats, setPickedChats)}
+                                className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/[0.03] transition"
+                                style={{ borderBottom: "1px solid rgba(43,62,232,0.05)" }}>
+                                <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden"
+                                    style={{ background: "rgba(43,62,232,0.20)" }}>
+                                    {c.other?.image ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={c.other.image} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-xs font-black text-white/70">
+                                            {(c.other?.name ?? c.other?.username ?? "?").slice(0, 1).toUpperCase()}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0 text-left">
+                                    <p className="text-xs font-bold truncate" style={{ color: "rgba(220,230,255,0.95)" }}>
+                                        {c.other?.name ?? c.other?.username ?? "Foydalanuvchi"}
+                                    </p>
+                                    {c.other?.username && (
+                                        <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                            @{c.other.username}
+                                        </p>
+                                    )}
+                                </div>
+                                {checked
+                                    ? <CheckSquare className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                    : <Square className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(160,176,224,0.35)" }} />}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
         </div>
