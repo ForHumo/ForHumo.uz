@@ -247,7 +247,52 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             };
         })() : null,
         peerReadAt,
+        streak: isPagination ? undefined : await computeStreak(id, me.id, otherId(conv, me.id)),
     });
+}
+
+// Chat streak (Snap/TikTok uslub) — ikkalasi ham xabar yuborgan ketma-ket kunlar soni.
+// Bugundan orqaga qarab, har kun ham menda ham peerda kamida 1 xabar bo'lsa oshadi.
+// Bugun kimdir yozmagan bo'lsa streak buzilmagan (ertagacha vaqt bor), lekin
+// ko'rsatiladigan raqam kechagi streak bo'ladi. Kecha ham bo'sh bo'lsa 0.
+async function computeStreak(convId: string, myId: string, peerId: string): Promise<{ days: number; activeToday: boolean }> {
+    // Oxirgi 400 kun yetadi (juda uzun streak kam)
+    const since = new Date(Date.now() - 400 * 24 * 3600 * 1000);
+    const msgs = await prisma.nexusMessage.findMany({
+        where: {
+            conversationId: convId,
+            createdAt: { gte: since },
+            deletedForEveryoneAt: null,
+            senderId: { in: [myId, peerId] },
+            scheduledFor: null,
+        },
+        select: { senderId: true, createdAt: true },
+    });
+    if (msgs.length === 0) return { days: 0, activeToday: false };
+    // YYYY-MM-DD (UTC) → { mine, peer }
+    const daysMap = new Map<string, { mine: boolean; peer: boolean }>();
+    for (const m of msgs) {
+        const key = m.createdAt.toISOString().slice(0, 10);
+        const cur = daysMap.get(key) ?? { mine: false, peer: false };
+        if (m.senderId === myId) cur.mine = true; else cur.peer = true;
+        daysMap.set(key, cur);
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 10);
+    const todayEntry = daysMap.get(today);
+    const activeToday = !!(todayEntry && todayEntry.mine && todayEntry.peer);
+    // Streak boshi: bugun mutual bo'lsa bugundan; aks holda kechadan (agar mutual bo'lsa).
+    let cursor = activeToday ? today : yesterday;
+    let days = 0;
+    while (true) {
+        const e = daysMap.get(cursor);
+        if (!e || !e.mine || !e.peer) break;
+        days++;
+        const d = new Date(cursor + "T00:00:00Z");
+        d.setUTCDate(d.getUTCDate() - 1);
+        cursor = d.toISOString().slice(0, 10);
+    }
+    return { days, activeToday };
 }
 
 // POST /api/nexus/messages/[id] — xabar yuborish

@@ -210,6 +210,26 @@ export function NxSocialDesktop() {
     const [sendMenuOpen, setSendMenuOpen] = useState(false);
     // Silent flag — flushPending'ga uzatiladi (bir marta ishlaydi)
     const nextSilentRef = useRef(false);
+    // Chat streak (Snap/TikTok uslub) — ikkalasi ham yozgan ketma-ket kunlar
+    const [chatStreak, setChatStreak] = useState<{ days: number; activeToday: boolean } | null>(null);
+    // Milestone banner — 3/7/30/100/365 kun'ga yetganda bir marta ko'rsatiladi (session ichida)
+    const [streakMilestone, setStreakMilestone] = useState<number | null>(null);
+    const streakSeenRef = useRef<Set<string>>(new Set());
+    useEffect(() => {
+        if (!chatStreak || !selectedId) return;
+        const milestones = [3, 7, 30, 100, 365];
+        for (const m of milestones) {
+            if (chatStreak.days === m) {
+                const key = `${selectedId}-${m}`;
+                if (streakSeenRef.current.has(key)) continue;
+                streakSeenRef.current.add(key);
+                setStreakMilestone(m);
+                setTimeout(() => setStreakMilestone(null), 4500);
+                break;
+            }
+        }
+    }, [chatStreak, selectedId]);
+
     // Chat Folders (Telegram uslub) — foydalanuvchi yaratgan papkalar bo'yicha filtrlash
     type Folder = {
         id: string; name: string; emoji: string | null; color: string | null;
@@ -2045,6 +2065,9 @@ export function NxSocialDesktop() {
                         lastSeenAt: d.other.lastSeenAt ?? null,
                     });
                 }
+                if (d.streak) {
+                    setChatStreak({ days: d.streak.days ?? 0, activeToday: !!d.streak.activeToday });
+                }
                 // Undelivered xabarlarni deliver qilish (o'qish PATCH mavjud, delivered alohida)
                 const undelivered = fetched.filter((m: Msg) => !m.mine && !m.deliveredAt).map((m: Msg) => m.id);
                 if (undelivered.length > 0) {
@@ -3485,6 +3508,24 @@ export function NxSocialDesktop() {
                                             <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md"
                                                 style={{ background: "rgba(0,206,200,0.18)", color: "#00CEC8" }}>AGENT</span>
                                         )}
+                                        {/* Chat streak — kunlik yozishuv silsilasi (3+ kun) */}
+                                        {!selectedConv?.isSelf && chatStreak && chatStreak.days >= 3 && (
+                                            <span
+                                                title={`${chatStreak.days} kunlik streak${chatStreak.activeToday ? " (bugun aktiv)" : " — bugun yozish kerak!"}`}
+                                                className="flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-md"
+                                                style={{
+                                                    background: chatStreak.activeToday
+                                                        ? "linear-gradient(135deg, rgba(249,115,22,0.20), rgba(239,68,68,0.20))"
+                                                        : "rgba(43,62,232,0.10)",
+                                                    color: chatStreak.activeToday ? "#F97316" : "rgba(160,176,224,0.85)",
+                                                    border: chatStreak.activeToday
+                                                        ? "1px solid rgba(249,115,22,0.40)"
+                                                        : "1px solid rgba(43,62,232,0.25)",
+                                                }}>
+                                                <Flame className="w-2.5 h-2.5" fill={chatStreak.activeToday ? "currentColor" : "none"} />
+                                                {chatStreak.days}
+                                            </span>
+                                        )}
                                     </div>
                                     <p className="text-[11px] flex items-center gap-1" style={{ color: peerTyping ? "#00CEC8" : "rgba(140,160,210,0.70)" }}>
                                         {selectedConv?.isSelf
@@ -3673,6 +3714,32 @@ export function NxSocialDesktop() {
                                         Hech narsa topilmadi
                                     </p>
                                 )}
+                            </div>
+                        )}
+
+                        {/* Chat streak milestone banner — 3/7/30/100/365 kun'ga yetganda bir marta */}
+                        {streakMilestone && (
+                            <div className="w-full px-4 py-3 flex items-center gap-3 flex-shrink-0 animate-pulse"
+                                style={{
+                                    background: "linear-gradient(135deg, rgba(249,115,22,0.25), rgba(239,68,68,0.20), rgba(0,206,200,0.15))",
+                                    borderBottom: "1px solid rgba(249,115,22,0.35)",
+                                }}>
+                                <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+                                    style={{ background: "linear-gradient(135deg,#F97316,#EF4444)", boxShadow: "0 4px 16px rgba(249,115,22,0.45)" }}>
+                                    <Flame className="w-5 h-5 text-white" fill="currentColor" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-black" style={{ color: "#F97316" }}>
+                                        {streakMilestone} kunlik streak!
+                                    </p>
+                                    <p className="text-[11px]" style={{ color: "rgba(220,230,255,0.85)" }}>
+                                        {peer?.name ?? peer?.username ?? "Do'st"} bilan {streakMilestone} kun to&apos;xtovsiz yozyapsiz — davom eting!
+                                    </p>
+                                </div>
+                                <button onClick={() => setStreakMilestone(null)} className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
+                                    style={{ background: "rgba(11,18,40,0.35)" }}>
+                                    <X className="w-3.5 h-3.5" style={{ color: "rgba(220,230,255,0.85)" }} />
+                                </button>
                             </div>
                         )}
 
