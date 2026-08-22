@@ -373,7 +373,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const text = String(body.text ?? "").trim();
     const isLocation = body.mediaType === "location" && typeof body.locLat === "number" && typeof body.locLng === "number";
     const isPoll = body.mediaType === "poll" && !!body.pollQuestion?.trim() && Array.isArray(body.pollOptions) && body.pollOptions.length >= 2 && body.pollOptions.length <= 10;
-    const hasMedia = (!!body.mediaUrl && !!body.mediaType) || isLocation || isPoll;
+    // Contact card — text = JSON string {name, username, humoId?, image?} (mediaUrl talab qilinmaydi)
+    const isContact = body.mediaType === "contact" && !!text;
+    const hasMedia = (!!body.mediaUrl && !!body.mediaType) || isLocation || isPoll || isContact;
     // E2E payload validatsiya
     const e2e = body.e2ePayload;
     const isE2e = !!(e2e && typeof e2e.ephemeralPub === "string" && typeof e2e.iv === "string" && typeof e2e.ciphertext === "string" && e2e.v === 1);
@@ -388,7 +390,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const clean = text.slice(0, 2000);
 
     // Media turini tekshirish (faqat ruxsat etilgan qiymatlar)
-    const VALID_TYPES = ["image", "video", "audio", "file", "video-circle", "location", "poll"];
+    const VALID_TYPES = ["image", "video", "audio", "file", "video-circle", "location", "poll", "contact", "gif", "sticker"];
     if (body.mediaType && !VALID_TYPES.includes(body.mediaType)) {
         return NextResponse.json({ error: "Noto'g'ri media turi" }, { status: 400 });
     }

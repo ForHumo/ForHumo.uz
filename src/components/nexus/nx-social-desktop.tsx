@@ -555,6 +555,36 @@ export function NxSocialDesktop() {
     const [slashOpen, setSlashOpen] = useState(false);
     // Image editor — tanlangan rasm yuborishdan oldin crop/rotate uchun
     const [pendingImageEdit, setPendingImageEdit] = useState<File | null>(null);
+    // Contact card picker — kontaktni boshqa suhbatga yuborish
+    const [contactPickerOpen, setContactPickerOpen] = useState(false);
+    const [contactPickerQuery, setContactPickerQuery] = useState("");
+    async function sendContact(c: Conv) {
+        if (!selectedId || !c.other) return;
+        const payload = {
+            name: c.other.name,
+            username: c.other.username,
+            image: c.other.image,
+        };
+        setContactPickerOpen(false);
+        setContactPickerQuery("");
+        try {
+            const r = await fetch(`/api/nexus/messages/${selectedId}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text: JSON.stringify(payload),
+                    mediaType: "contact",
+                }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setMessages(m => [...m, d.message]);
+                loadConvs();
+            } else {
+                const d = await r.json().catch(() => ({}));
+                showAlert(d?.error ?? "Kontaktni yuborib bo'lmadi");
+            }
+        } catch { showAlert("Tarmoq xatosi"); }
+    }
     const [emojiOpen, setEmojiOpen] = useState(false);
     const [circleOpen, setCircleOpen] = useState(false);
     const [pollOpen, setPollOpen] = useState(false);
@@ -4106,6 +4136,50 @@ export function NxSocialDesktop() {
                                                 )}
                                             </div>
                                         )}
+                                        {/* Contact card — mediaType="contact" bo'lganda ismli kartochka */}
+                                        {m.mediaType === "contact" && (() => {
+                                            let c: { name?: string | null; username?: string | null; image?: string | null } = {};
+                                            try { c = JSON.parse(m.text || "{}"); } catch {}
+                                            const displayName = c.name ?? c.username ?? "Kontakt";
+                                            const href = c.username ? `/${locale}/nexus/u/${c.username}` : null;
+                                            const card = (
+                                                <div className="mb-1 rounded-2xl overflow-hidden flex items-center gap-2.5 p-2.5"
+                                                    style={{
+                                                        background: m.mine ? "rgba(0,0,0,0.20)" : "rgba(43,62,232,0.10)",
+                                                        border: `1px solid ${m.mine ? "rgba(255,255,255,0.15)" : "rgba(43,62,232,0.30)"}`,
+                                                        minWidth: 220,
+                                                    }}>
+                                                    <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0"
+                                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                                        {c.image ? (
+                                                            // eslint-disable-next-line @next/next/no-img-element
+                                                            <img src={c.image} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-sm font-black text-white">
+                                                                {displayName.slice(0, 1).toUpperCase()}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-black truncate" style={{ color: m.mine ? "#fff" : "rgba(230,238,255,0.95)" }}>
+                                                            {displayName}
+                                                        </p>
+                                                        {c.username && (
+                                                            <p className="text-[11px] truncate" style={{ color: m.mine ? "rgba(255,255,255,0.75)" : "rgba(160,180,220,0.85)" }}>
+                                                                @{c.username}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: m.mine ? "rgba(255,255,255,0.60)" : "#00CEC8" }} />
+                                                </div>
+                                            );
+                                            return href ? (
+                                                <a href={href} onClick={e => e.stopPropagation()}
+                                                    className="block hover:brightness-125 transition">
+                                                    {card}
+                                                </a>
+                                            ) : card;
+                                        })()}
                                         {isAlbum ? (
                                             <NxAlbumGrid items={albumItems}
                                                 onOpenImage={(imgId) => {
@@ -4945,6 +5019,7 @@ export function NxSocialDesktop() {
                                                 style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 12px 32px rgba(0,0,0,0.60)", minWidth: 260 }}>
                                                 <div className="grid grid-cols-3 gap-1">
                                                     <AttachMenuItem icon={Paperclip} label="Fayl" onClick={() => { setAttachOpen(false); fileInputRef.current?.click(); }} />
+                                                    <AttachMenuItem icon={Users} label="Kontakt" onClick={() => { setAttachOpen(false); setContactPickerOpen(true); }} />
                                                     {/* GIF va Sticker olib tashlandi — emoji picker'ning 3-tabli qismida (Emoji/Sticker/GIF) mavjud */}
                                                     <AttachMenuItem icon={MapPin} label="Joylashuv" onClick={() => { setAttachOpen(false); setLocationPickerOpen(true); }} />
                                                     <AttachMenuItem icon={BarChart2} label="So'rovnoma" onClick={() => { setAttachOpen(false); setPollOpen(true); }} />
@@ -5243,6 +5318,73 @@ export function NxSocialDesktop() {
                                 />
                             )}
                         </div>
+
+                        {/* Contact picker — DM contacts ro'yhati'dan kontakt tanlab yuborish */}
+                        {contactPickerOpen && (
+                            <div className="fixed inset-0 z-[220]" onClick={() => { setContactPickerOpen(false); setContactPickerQuery(""); }}>
+                                <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
+                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[440px] max-h-[75vh] rounded-2xl overflow-hidden flex flex-col"
+                                    style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                                    onClick={e => e.stopPropagation()}>
+                                    <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                                        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                            <Users className="w-4 h-4 text-white" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-sm font-black" style={{ color: "rgba(230,238,255,0.98)" }}>Kontaktni ulashish</h3>
+                                            <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>Ro&apos;yhatdan tanlang</p>
+                                        </div>
+                                        <button onClick={() => { setContactPickerOpen(false); setContactPickerQuery(""); }} className="w-8 h-8 rounded-lg flex items-center justify-center"
+                                            style={{ background: "rgba(43,62,232,0.10)" }}>
+                                            <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                                        </button>
+                                    </div>
+                                    <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                                        <div className="relative">
+                                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.60)" }} />
+                                            <input type="text" value={contactPickerQuery}
+                                                onChange={e => setContactPickerQuery(e.target.value)}
+                                                placeholder="Ism yoki @username..."
+                                                autoFocus
+                                                className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-transparent focus:outline-none"
+                                                style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(230,238,255,0.90)" }} />
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto nx-scrollbar">
+                                        {(() => {
+                                            const q = contactPickerQuery.trim().toLowerCase();
+                                            const list = convs
+                                                .filter(c => !c.isSelf && c.other && c.conversationId !== selectedId)
+                                                .filter(c => !q || (c.other?.name ?? "").toLowerCase().includes(q)
+                                                    || (c.other?.username ?? "").toLowerCase().includes(q));
+                                            if (list.length === 0) {
+                                                return <p className="text-[11px] text-center px-4 py-6" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                                    Ushbu suhbat uchun kontakt topilmadi
+                                                </p>;
+                                            }
+                                            return list.map(c => (
+                                                <button key={c.conversationId}
+                                                    onClick={() => sendContact(c)}
+                                                    className="w-full flex items-center gap-3 px-4 py-2.5 border-b hover:bg-white/[0.04] text-left transition"
+                                                    style={{ borderColor: "rgba(43,62,232,0.08)" }}>
+                                                    <ConvAvatar other={c.other} isSelf={false} />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-bold truncate" style={{ color: "rgba(230,238,255,0.95)" }}>
+                                                            {c.other?.name ?? c.other?.username ?? "Foydalanuvchi"}
+                                                        </p>
+                                                        {c.other?.username && (
+                                                            <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                                                @{c.other.username}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </button>
+                                            ));
+                                        })()}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Image editor — rasm yuborishdan oldin crop/rotate */}
                         {pendingImageEdit && (
