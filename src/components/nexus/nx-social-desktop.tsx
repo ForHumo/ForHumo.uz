@@ -210,6 +210,23 @@ export function NxSocialDesktop() {
     const [sendMenuOpen, setSendMenuOpen] = useState(false);
     // Silent flag — flushPending'ga uzatiladi (bir marta ishlaydi)
     const nextSilentRef = useRef(false);
+    // Chat Folders (Telegram uslub) — foydalanuvchi yaratgan papkalar bo'yicha filtrlash
+    type Folder = {
+        id: string; name: string; emoji: string | null; color: string | null;
+        includeTypes: string[]; includeUnread: boolean;
+        includeChatIds: string[]; excludeChatIds: string[]; sort: number;
+    };
+    const [folders, setFolders] = useState<Folder[]>([]);
+    const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+    const [foldersModalOpen, setFoldersModalOpen] = useState(false);
+    async function loadFolders() {
+        try {
+            const r = await fetch("/api/nexus/folders", { cache: "no-store" });
+            if (r.ok) { const d = await r.json(); setFolders(d.folders ?? []); }
+        } catch {}
+    }
+    useEffect(() => { loadFolders(); }, []);
+
     // Smart reply (AI) — Gemini'dan 3 ta tez javob taklif. Peer'ning oxirgi xabari matni'ga qarab.
     const [smartReplies, setSmartReplies] = useState<string[]>([]);
     const [smartRepliesForMsgId, setSmartRepliesForMsgId] = useState<string | null>(null);
@@ -2489,14 +2506,36 @@ export function NxSocialDesktop() {
     ]);
 
     const baseConvs = listTab === "unread" ? convs.filter(c => c.unread) : convs;
+    // Folder filter — tanlangan papka bo'yicha suhbatlarni cheklaydi (DM tab'lari uchun)
+    const folderFiltered = (() => {
+        if (!selectedFolderId || !isDmListTab) return baseConvs;
+        const folder = folders.find(f => f.id === selectedFolderId);
+        if (!folder) return baseConvs;
+        return baseConvs.filter(c => {
+            // Exclude ro'yhati — chat chiqib ketadi
+            if (folder.excludeChatIds.includes(c.conversationId)) return false;
+            // Include: agar folder unread-only bo'lsa va bu chat o'qilgan bo'lsa, o'tkazamiz
+            if (folder.includeUnread && !c.unread) {
+                // includeChatIds ichida bo'lsa baribir ko'rsatamiz (aniq manual qo'shilgan)
+                if (!folder.includeChatIds.includes(c.conversationId)) return false;
+            }
+            // Agar hech qanday filter yo'q va chat manual ro'yxatda yo'q bo'lsa — o'tkazamiz
+            // (bu holda folder empty bo'ladi — foydalanuvchi hali biror chatni qo'shmagan)
+            const hasFilters = folder.includeUnread || folder.includeChatIds.length > 0;
+            if (!hasFilters) return false;
+            // includeChatIds bo'sh bo'lsa — hamma o'qilmagan qamraladi (includeUnread bilan)
+            if (folder.includeChatIds.length === 0) return true;
+            return folder.includeChatIds.includes(c.conversationId);
+        });
+    })();
     const filteredConvs = filter.trim()
-        ? baseConvs.filter(c => {
+        ? folderFiltered.filter(c => {
             const q = filter.toLowerCase();
             return (c.other?.name ?? "").toLowerCase().includes(q)
                 || (c.other?.username ?? "").toLowerCase().includes(q)
                 || (c.lastMessageText ?? "").toLowerCase().includes(q);
         })
-        : baseConvs;
+        : folderFiltered;
 
     return (
         <div className="flex w-full h-full min-h-0 pb-[88px]" style={{ background: "#050818" }}>
@@ -2548,6 +2587,44 @@ export function NxSocialDesktop() {
                         ));
                     })()}
                     </div>
+                    {/* Folder chip'lar — Telegram uslub. Faqat DM tab'larida ko'rinadi. */}
+                    {isDmListTab && (folders.length > 0 || true) && (
+                        <div className="mt-2 flex items-center gap-1 overflow-x-auto nx-scrollbar pb-1">
+                            <button
+                                onClick={() => setSelectedFolderId(null)}
+                                className="flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold transition"
+                                style={selectedFolderId === null ? {
+                                    background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff",
+                                    boxShadow: "0 2px 8px rgba(43,62,232,0.35)",
+                                } : {
+                                    background: "rgba(43,62,232,0.10)", color: "rgba(200,215,245,0.75)",
+                                    border: "1px solid rgba(43,62,232,0.20)",
+                                }}>
+                                Barchasi
+                            </button>
+                            {folders.map(f => (
+                                <button key={f.id}
+                                    onClick={() => setSelectedFolderId(f.id)}
+                                    className="flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition"
+                                    style={selectedFolderId === f.id ? {
+                                        background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff",
+                                        boxShadow: "0 2px 8px rgba(43,62,232,0.35)",
+                                    } : {
+                                        background: "rgba(43,62,232,0.10)", color: "rgba(200,215,245,0.75)",
+                                        border: "1px solid rgba(43,62,232,0.20)",
+                                    }}>
+                                    {f.emoji && <span className="mr-1">{f.emoji}</span>}
+                                    {f.name}
+                                </button>
+                            ))}
+                            <button onClick={() => setFoldersModalOpen(true)}
+                                title="Papkalarni tahrirlash"
+                                className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition hover:brightness-125"
+                                style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                <Plus className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                            </button>
+                        </div>
+                    )}
                     <div className="flex items-center gap-1 mt-2">
                     <div className="flex-1" />
                     {(listTab === "groups" || listTab === "channels") && (
@@ -5855,6 +5932,16 @@ export function NxSocialDesktop() {
                 </div>
             )}
 
+            {/* Chat Folders (Papkalar) — yaratish/tahrirlash/o'chirish */}
+            {foldersModalOpen && (
+                <NxFoldersModal
+                    folders={folders}
+                    convs={convs}
+                    onClose={() => setFoldersModalOpen(false)}
+                    onSaved={() => loadFolders()}
+                />
+            )}
+
             {/* Chat-scoped yulduzchali (bookmark) xabarlar modali */}
             {chatBookmarksOpen && (
                 <div className="fixed inset-0 z-[220]" onClick={() => setChatBookmarksOpen(false)}>
@@ -8517,6 +8604,265 @@ function NxEmptyChat({ peerName, isSelf, onQuick }: {
                 <Sparkles className="w-3 h-3" style={{ color: "rgba(0,206,200,0.60)" }} />
                 Kartochkani bosing yoki pastdan o&apos;zingizni yozing
             </p>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxFoldersModal — Chat Folders (Telegram uslub) yaratish/tahrirlash/o'chirish.
+// - Chap ustunda mavjud papkalar (avval "Yangi papka" tugmasi + ro'yhat)
+// - O'ng ustunda tanlangan papka detallari (nom, emoji, rang, unread toggle, chats)
+// - Chats: cheklangan ro'yhat + qidiruv. Foydalanuvchi bosib qo'shadi/olib tashlaydi.
+// ─────────────────────────────────────────────────────────────────────────────
+type ModFolder = {
+    id: string; name: string; emoji: string | null; color: string | null;
+    includeTypes: string[]; includeUnread: boolean;
+    includeChatIds: string[]; excludeChatIds: string[]; sort: number;
+};
+const FOLDER_COLORS = ["red", "orange", "yellow", "green", "teal", "blue", "violet", "pink"] as const;
+const FOLDER_COLOR_HEX: Record<string, string> = {
+    red: "#EF4444", orange: "#F97316", yellow: "#F59E0B",
+    green: "#10B981", teal: "#00CEC8", blue: "#2B3EE8",
+    violet: "#8B5CF6", pink: "#EC4899",
+};
+
+function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved }: {
+    folders: ModFolder[];
+    convs: Conv[];
+    onClose: () => void;
+    onSaved: () => void;
+}) {
+    const [folders, setFolders] = useState<ModFolder[]>(initialFolders);
+    const [selectedId, setSelectedId] = useState<string | null>(folders[0]?.id ?? null);
+    const [savingBusy, setSavingBusy] = useState(false);
+    const [chatFilter, setChatFilter] = useState("");
+    const selected = folders.find(f => f.id === selectedId) ?? null;
+
+    async function createFolder() {
+        const name = "Yangi papka";
+        setSavingBusy(true);
+        try {
+            const r = await fetch("/api/nexus/folders", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, color: "teal", includeUnread: false }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setFolders(prev => [...prev, d.folder]);
+                setSelectedId(d.folder.id);
+                onSaved();
+            }
+        } finally { setSavingBusy(false); }
+    }
+    async function updateFolder(patch: Partial<ModFolder>) {
+        if (!selected) return;
+        // Optimistic — UI'da darrov yangilanadi
+        setFolders(prev => prev.map(f => f.id === selected.id ? { ...f, ...patch } as ModFolder : f));
+        try {
+            await fetch("/api/nexus/folders", {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: selected.id, ...patch }),
+            });
+            onSaved();
+        } catch {}
+    }
+    async function removeFolder(id: string) {
+        if (!confirm("Papkani o'chirilsinmi?")) return;
+        setSavingBusy(true);
+        try {
+            await fetch(`/api/nexus/folders?id=${id}`, { method: "DELETE" });
+            setFolders(prev => prev.filter(f => f.id !== id));
+            if (selectedId === id) setSelectedId(folders.find(f => f.id !== id)?.id ?? null);
+            onSaved();
+        } finally { setSavingBusy(false); }
+    }
+    function toggleChatInFolder(convId: string) {
+        if (!selected) return;
+        const has = selected.includeChatIds.includes(convId);
+        const next = has
+            ? selected.includeChatIds.filter(x => x !== convId)
+            : [...selected.includeChatIds, convId];
+        updateFolder({ includeChatIds: next });
+    }
+
+    const filteredChats = chatFilter.trim()
+        ? convs.filter(c => {
+            const q = chatFilter.toLowerCase();
+            return (c.other?.name ?? "").toLowerCase().includes(q)
+                || (c.other?.username ?? "").toLowerCase().includes(q);
+        })
+        : convs;
+
+    return (
+        <div className="fixed inset-0 z-[220]" onClick={onClose}>
+            <div className="absolute inset-0" style={{ background: "rgba(3,5,15,0.72)", backdropFilter: "blur(8px)" }} />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[820px] h-[80vh] rounded-2xl overflow-hidden flex flex-col"
+                style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.35)", boxShadow: "0 24px 64px rgba(0,0,0,0.75)" }}
+                onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="p-4 flex items-center gap-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.20)" }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        <FileText className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-sm font-black" style={{ color: "rgba(230,238,255,0.98)" }}>Chat papkalari</h3>
+                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.75)" }}>Suhbatlarni kategoriyalarga ajrating</p>
+                    </div>
+                    <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        <X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
+                    </button>
+                </div>
+                {/* Body */}
+                <div className="flex-1 flex min-h-0">
+                    {/* Chap: papkalar ro'yhati */}
+                    <div className="w-[240px] flex-shrink-0 flex flex-col border-r overflow-y-auto nx-scrollbar"
+                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                        <button onClick={createFolder} disabled={savingBusy || folders.length >= 20}
+                            className="m-2 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition hover:brightness-125 disabled:opacity-50"
+                            style={{ background: "rgba(0,206,200,0.12)", color: "#00CEC8", border: "1px solid rgba(0,206,200,0.30)" }}>
+                            <Plus className="w-3.5 h-3.5" /> Yangi papka
+                        </button>
+                        {folders.length === 0 && (
+                            <p className="text-[11px] text-center px-4 py-3" style={{ color: "rgba(140,160,210,0.55)" }}>
+                                Papkalar hali yo&apos;q
+                            </p>
+                        )}
+                        {folders.map(f => (
+                            <button key={f.id}
+                                onClick={() => setSelectedId(f.id)}
+                                className="flex items-center gap-2 px-3 py-2 text-left border-b hover:bg-white/[0.04] transition"
+                                style={{
+                                    borderColor: "rgba(43,62,232,0.10)",
+                                    background: selectedId === f.id ? "rgba(0,206,200,0.10)" : undefined,
+                                }}>
+                                {f.emoji && <span className="text-base">{f.emoji}</span>}
+                                {!f.emoji && f.color && (
+                                    <div className="w-3 h-3 rounded-full flex-shrink-0"
+                                        style={{ background: FOLDER_COLOR_HEX[f.color] ?? "#00CEC8" }} />
+                                )}
+                                <span className="flex-1 text-xs font-bold truncate" style={{ color: "rgba(230,238,255,0.90)" }}>
+                                    {f.name}
+                                </span>
+                                <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                    {f.includeChatIds.length}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                    {/* O'ng: tanlangan papka detallari */}
+                    <div className="flex-1 flex flex-col min-w-0">
+                        {!selected ? (
+                            <div className="flex-1 flex items-center justify-center px-6 text-center">
+                                <p className="text-sm" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                    Papka yarating yoki chap tomondan tanlang
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="p-4 space-y-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.15)" }}>
+                                    {/* Nom */}
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: "rgba(140,160,210,0.75)" }}>Nom</label>
+                                        <input type="text" value={selected.name}
+                                            onChange={e => updateFolder({ name: e.target.value.slice(0, 40) })}
+                                            maxLength={40}
+                                            className="w-full px-3 py-2 rounded-lg text-sm bg-transparent focus:outline-none"
+                                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.25)", color: "rgba(230,238,255,0.95)" }} />
+                                    </div>
+                                    {/* Emoji + Ranglar */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: "rgba(140,160,210,0.75)" }}>Emoji (ixtiyoriy)</label>
+                                            <input type="text" value={selected.emoji ?? ""}
+                                                onChange={e => updateFolder({ emoji: e.target.value.slice(0, 4) || null })}
+                                                placeholder="🏠"
+                                                maxLength={4}
+                                                className="w-full px-3 py-2 rounded-lg text-base text-center bg-transparent focus:outline-none"
+                                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.25)", color: "rgba(230,238,255,0.95)" }} />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: "rgba(140,160,210,0.75)" }}>Rang</label>
+                                            <div className="flex gap-1 flex-wrap">
+                                                {FOLDER_COLORS.map(c => (
+                                                    <button key={c} onClick={() => updateFolder({ color: c })}
+                                                        className="w-6 h-6 rounded-full transition hover:scale-110"
+                                                        style={{
+                                                            background: FOLDER_COLOR_HEX[c],
+                                                            border: selected.color === c ? "2px solid white" : "2px solid transparent",
+                                                        }} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* Unread toggle */}
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" checked={selected.includeUnread}
+                                            onChange={e => updateFolder({ includeUnread: e.target.checked })}
+                                            className="w-4 h-4" />
+                                        <span className="text-xs font-bold" style={{ color: "rgba(220,230,255,0.90)" }}>
+                                            Faqat o&apos;qilmagan xabarli chatlarni ko&apos;rsatish
+                                        </span>
+                                    </label>
+                                    {/* O'chirish */}
+                                    <button onClick={() => removeFolder(selected.id)} disabled={savingBusy}
+                                        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition hover:brightness-125 disabled:opacity-50"
+                                        style={{ background: "rgba(239,68,68,0.10)", color: "#EF4444", border: "1px solid rgba(239,68,68,0.30)" }}>
+                                        <Trash2 className="w-3.5 h-3.5" /> Papkani o&apos;chirish
+                                    </button>
+                                </div>
+                                {/* Chats picker */}
+                                <div className="p-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.10)" }}>
+                                    <div className="relative">
+                                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.60)" }} />
+                                        <input type="text" value={chatFilter}
+                                            onChange={e => setChatFilter(e.target.value)}
+                                            placeholder="Chat qidirish..."
+                                            className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-transparent focus:outline-none"
+                                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(230,238,255,0.90)" }} />
+                                    </div>
+                                </div>
+                                <div className="flex-1 overflow-y-auto nx-scrollbar">
+                                    {filteredChats.length === 0 && (
+                                        <p className="text-[11px] text-center px-4 py-4" style={{ color: "rgba(140,160,210,0.55)" }}>
+                                            Chat topilmadi
+                                        </p>
+                                    )}
+                                    {filteredChats.map(c => {
+                                        const inFolder = selected.includeChatIds.includes(c.conversationId);
+                                        return (
+                                            <button key={c.conversationId}
+                                                onClick={() => toggleChatInFolder(c.conversationId)}
+                                                className="w-full flex items-center gap-2 px-3 py-2 border-b hover:bg-white/[0.03] text-left transition"
+                                                style={{ borderColor: "rgba(43,62,232,0.08)" }}>
+                                                <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden"
+                                                    style={{ background: "rgba(43,62,232,0.20)" }}>
+                                                    {c.other?.image ? (
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                                        <img src={c.other.image} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-xs font-black text-white/70">
+                                                            {(c.other?.name ?? c.other?.username ?? "?").slice(0, 1).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <span className="flex-1 text-xs font-bold truncate" style={{ color: "rgba(220,230,255,0.90)" }}>
+                                                    {c.other?.name ?? c.other?.username ?? "Foydalanuvchi"}
+                                                </span>
+                                                {inFolder ? (
+                                                    <CheckSquare className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                                ) : (
+                                                    <Square className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(160,176,224,0.40)" }} />
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
