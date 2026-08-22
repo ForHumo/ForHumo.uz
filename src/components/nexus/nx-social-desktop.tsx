@@ -4191,51 +4191,81 @@ export function NxSocialDesktop() {
                                             borderBottomRightRadius: (m.mediaType === "sticker" || m.mediaType === "video-circle") ? 0 : (m.mine ? (groupWithNext ? 4 : 6) : 16),
                                         }}>
                                         {(m.forwardedFromName || m.forwardedChannelName) && (() => {
-                                            // Kanal/guruh vs foydalanuvchi — ikkita variant
+                                            // Kanal/guruh vs foydalanuvchi — ikkita variant, Telegram uslub polish
                                             const isChannel = !!m.forwardedChannelName;
                                             const chHandle = m.forwardedChannelHandle;
                                             const uname = m.forwardedFromUsername;
                                             const href = isChannel
-                                                ? (chHandle ? `/nexus/c/${chHandle}` : null)
-                                                : (uname ? `/nexus/u/${uname}` : null);
-                                            const label = isChannel ? "Kanaldan yuborildi" : "Yuborilgan xabar";
-                                            const name = isChannel ? m.forwardedChannelName : m.forwardedFromName;
-                                            const sub = isChannel
-                                                ? (chHandle ? `@${chHandle}` : "kanal")
-                                                : (uname ? `@${uname}` : "");
-                                            const IconEl = isChannel ? Hash : Forward;
+                                                ? (chHandle ? `/${locale}/nexus/c/${chHandle}` : null)
+                                                : (uname ? `/${locale}/nexus/u/${uname}` : null);
+                                            const label = isChannel ? "Kanaldan yuborildi" : "Foydalanuvchidan yuborildi";
+                                            const name = isChannel
+                                                ? (m.forwardedChannelName || "Kanal")
+                                                : (m.forwardedFromName || (uname ? `@${uname}` : "Foydalanuvchi"));
+                                            // Handle faqat name'da bo'lmagan taqdirda ko'rsatiladi (dublikat oldini olish)
+                                            const handleText = isChannel
+                                                ? (chHandle ? `@${chHandle}` : null)
+                                                : (uname && m.forwardedFromName ? `@${uname}` : null);
+                                            const handle = handleText;
+                                            const IconEl = isChannel ? Megaphone : Forward;
+                                            const image = isChannel ? null : m.forwardedFromImage;
                                             const canLink = !!href;
+                                            // Ranglar: mine — beloviy, peer — teal accent
+                                            const accentColor = m.mine ? "#ffffff" : "#00CEC8";
+                                            const cardBg = m.mine ? "rgba(0,0,0,0.24)" : "rgba(0,206,200,0.10)";
+                                            const cardBorder = m.mine ? "rgba(255,255,255,0.22)" : "rgba(0,206,200,0.30)";
                                             const Tag: 'a' | 'div' = canLink ? 'a' : 'div';
                                             return (
                                                 <Tag
-                                                    {...(canLink ? { href } : {})}
+                                                    {...(canLink ? { href, target: "_self" as const } : {})}
                                                     onClick={canLink ? (e: React.MouseEvent) => { e.stopPropagation(); } : undefined}
-                                                    className={`flex items-center gap-2 mb-2 pl-2 pr-2 py-1.5 rounded-md text-xs transition ${canLink ? "hover:brightness-125 active:scale-[0.98]" : ""}`}
+                                                    title={canLink ? `${name} sahifasini ochish` : undefined}
+                                                    className={`flex items-center gap-2.5 mb-2 pl-2 pr-2.5 py-2 rounded-lg text-xs transition ${canLink ? "hover:brightness-125 active:scale-[0.98]" : ""} block`}
                                                     style={{
-                                                        background: m.mine ? "rgba(0,0,0,0.20)" : "rgba(0,206,200,0.10)",
-                                                        borderLeft: `3px solid ${m.mine ? "#fff" : "#00CEC8"}`,
+                                                        background: cardBg,
+                                                        border: `1px solid ${cardBorder}`,
+                                                        borderLeft: `3px solid ${accentColor}`,
                                                         textDecoration: "none",
                                                         cursor: canLink ? "pointer" : "default",
                                                     }}>
-                                                    {!isChannel && m.forwardedFromImage ? (
+                                                    {/* Left: avatar yoki icon */}
+                                                    {image ? (
                                                         // eslint-disable-next-line @next/next/no-img-element
-                                                        <img src={m.forwardedFromImage} alt="" className="w-6 h-6 rounded-md object-cover flex-shrink-0" />
+                                                        <img src={image} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                                                            style={{ border: `1px solid ${accentColor}` }} />
                                                     ) : (
-                                                        <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
-                                                            style={{ background: m.mine ? "rgba(255,255,255,0.15)" : "rgba(0,206,200,0.20)" }}>
-                                                            <IconEl className="w-3 h-3" style={{ color: m.mine ? "#fff" : "#00CEC8" }} />
+                                                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                                                            style={{ background: m.mine
+                                                                ? "rgba(255,255,255,0.14)"
+                                                                : "linear-gradient(135deg, rgba(43,62,232,0.30), rgba(0,206,200,0.30))",
+                                                                border: `1px solid ${accentColor}` }}>
+                                                            <IconEl className="w-3.5 h-3.5" style={{ color: accentColor }} />
                                                         </div>
                                                     )}
+                                                    {/* Middle: label + name + handle */}
                                                     <div className="min-w-0 flex-1">
-                                                        <p className="text-[10px] font-black uppercase tracking-wider"
-                                                            style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "#00CEC8" }}>
-                                                            {label}
+                                                        <div className="flex items-center gap-1">
+                                                            <Forward className="w-2.5 h-2.5 flex-shrink-0" style={{ color: accentColor, opacity: 0.75 }} />
+                                                            <p className="text-[9px] font-black uppercase tracking-wider truncate"
+                                                                style={{ color: m.mine ? "rgba(255,255,255,0.70)" : "#00CEC8" }}>
+                                                                {label}
+                                                            </p>
+                                                        </div>
+                                                        <p className="text-[12px] font-black truncate mt-0.5"
+                                                            style={{ color: m.mine ? "#fff" : "rgba(230,240,255,0.98)" }}>
+                                                            {name}
                                                         </p>
-                                                        <p className="text-[11.5px] font-bold truncate"
-                                                            style={{ color: m.mine ? "#fff" : "rgba(220,232,255,0.95)" }}>
-                                                            {name}{sub ? ` · ${sub}` : ""}
-                                                        </p>
+                                                        {handle && (
+                                                            <p className="text-[10px] truncate leading-tight"
+                                                                style={{ color: m.mine ? "rgba(255,255,255,0.60)" : "rgba(160,180,220,0.75)" }}>
+                                                                {handle}
+                                                            </p>
+                                                        )}
                                                     </div>
+                                                    {/* Right: chevron (agar link bo'lsa) */}
+                                                    {canLink && (
+                                                        <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: accentColor, opacity: 0.6 }} />
+                                                    )}
                                                 </Tag>
                                             );
                                         })()}
