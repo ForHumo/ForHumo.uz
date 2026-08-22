@@ -73,6 +73,22 @@ export async function POST(req: Request) {
             return NextResponse.json({ ok: true });
         }
 
+        // /myid — foydalanuvchining chat ID sini qaytaradi (admin sozlash uchun)
+        if (text === "/myid" || text === "/id") {
+            const html = [
+                `<b>Sizning ma'lumotlaringiz:</b>`,
+                ``,
+                `👤 <code>${from.first_name ?? ""}${from.last_name ? " " + from.last_name : ""}</code>`,
+                from.username ? `📛 @${from.username}` : "",
+                `🆔 Chat ID: <code>${chatId}</code>`,
+                `🔢 User ID: <code>${from.id}</code>`,
+                ``,
+                `<i>Chat ID admin uchun.env sozlashda ishlatiladi.</i>`,
+            ].filter(Boolean).join("\n");
+            await belisBotSend(chatId, html);
+            return NextResponse.json({ ok: true });
+        }
+
         if (text === "/aloqa" || text === "/contacts") {
             const html = [
                 `<b>Aloqa</b>`,
