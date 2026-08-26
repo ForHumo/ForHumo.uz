@@ -10,6 +10,8 @@ const intlMiddleware = createMiddleware(routing);
 const DOMAIN_PREFIXES: Record<string, string> = {
     "bozornarxida.uz": "/bn",
     "www.bozornarxida.uz": "/bn",
+    "belis.uz": "/belis",
+    "www.belis.uz": "/belis",
     // Kelajakda user rejasi bo'yicha (barcha bir deploy'dan):
     // "humoai.uz": "/ai",
     // "nexus.uz": "/nexus",
