@@ -10,6 +10,11 @@ import { NxMarkdown } from "./nx-markdown";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { Emoji } from "@/lib/twemoji";
 import { subscribeUserChannel } from "@/lib/pusher-client";
+import { NxGroupMembersModal } from "./nx-group-members-modal";
+import { NxGroupSettingsModal } from "./nx-group-settings-modal";
+import { NxGroupMediaTab } from "./nx-group-media-tab";
+import { NxGroupMuteButton } from "./nx-group-mute-menu";
+import { Image as ImageIcon, Settings as SettingsIcon } from "lucide-react";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean; isSystem?: boolean }
@@ -270,6 +275,8 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         } finally { setSendingComment(false); }
     }
     const [membersOpen, setMembersOpen] = useState(false);
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [mediaOpen, setMediaOpen] = useState(false);
     const [pollOpen, setPollOpen] = useState(false);
 
     async function sendPoll(poll: { question: string; options: string[]; expiresAt: string | null; multi: boolean }) {
@@ -748,6 +755,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                     <p className="text-sm font-black text-white truncate">{ch.name}</p>
                     <p className="text-[11px]" style={{ color: "rgba(120,140,185,0.8)" }}>{ch.type === "CHANNEL" ? "Kanal" : "Guruh"} · {ch.memberCount} a&apos;zo</p>
                 </div>
+                {ch.isMember && <NxGroupMuteButton channelId={id} />}
                 {ch.isMember && (
                     <button onClick={() => { setSearchOpen(v => !v); setSearchQuery(""); }}
                         className="w-8 h-8 rounded-xl flex items-center justify-center"
@@ -794,12 +802,28 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         )}
                                     </button>
                                 )}
-                                {ch.isOwner && (
-                                    <button onClick={() => { setMembersOpen(true); setChMoreOpen(false); }}
+                                {/* A'zolar — barcha a'zoga ko'rinadi (Telegram/WA uslub) */}
+                                <button onClick={() => { setMembersOpen(true); setChMoreOpen(false); }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                    style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                    <Users className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                    <span className="flex-1">A&apos;zolar</span>
+                                    <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>{ch.memberCount}</span>
+                                </button>
+                                {/* Media/fayl/havolalar */}
+                                <button onClick={() => { setMediaOpen(true); setChMoreOpen(false); }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                    style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                    <ImageIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                    <span className="flex-1">Ulashilgan kontent</span>
+                                </button>
+                                {/* Sozlamalar — OWNER va ADMIN */}
+                                {(ch.isOwner || ch.role === "ADMIN") && (
+                                    <button onClick={() => { setSettingsOpen(true); setChMoreOpen(false); }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
                                         style={{ borderColor: "rgba(43,62,232,0.15)" }}>
-                                        <Users className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
-                                        <span className="flex-1">A&apos;zolar</span>
+                                        <SettingsIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <span className="flex-1">Sozlamalar</span>
                                     </button>
                                 )}
                                 {/* Slow mode picker — faqat guruh owner/admin uchun */}
@@ -857,7 +881,10 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                 )}
             </div>
 
-            {membersOpen && <ChannelMembers id={id} onClose={() => setMembersOpen(false)} />}
+            <NxGroupMembersModal open={membersOpen} channelId={id} onClose={() => setMembersOpen(false)} />
+            <NxGroupSettingsModal open={settingsOpen} channelId={id} onClose={() => setSettingsOpen(false)}
+                onUpdated={loadDetail} onDeleted={onBack} />
+            <NxGroupMediaTab open={mediaOpen} channelId={id} onClose={() => setMediaOpen(false)} />
 
             {/* Qidiruv paneli */}
             {searchOpen && ch.isMember && (
