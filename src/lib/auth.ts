@@ -51,8 +51,18 @@ export const authOptions: NextAuthOptions = {
                             data:  { level: 1 },
                         });
                     }
+                    // Qurilma va IP ma'lumotini yozib qo'yamiz — audit + xavfsizlik uchun
+                    let ip: string | null = null;
+                    let userAgent: string | null = null;
+                    try {
+                        const h = await headers();
+                        // Vercel/proxy'da x-forwarded-for ko'p IP bo'lishi mumkin — birinchisi asosiy
+                        const xff = h.get("x-forwarded-for");
+                        ip = xff ? xff.split(",")[0].trim() : (h.get("x-real-ip") ?? null);
+                        userAgent = h.get("user-agent") ?? null;
+                    } catch { /* header yo'q — noop */ }
                     await prisma.loginEvent.create({
-                        data: { profileId: profile.id },
+                        data: { profileId: profile.id, ip, userAgent },
                     });
                     const events = await prisma.loginEvent.findMany({
                         where: { profileId: profile.id },
