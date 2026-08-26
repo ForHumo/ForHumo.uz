@@ -1887,6 +1887,12 @@ model NexusChannel {
   //         addMembers: false, pinMessages: false, changeInfo: false }
   // NULL = default (hammasi ochiq). Owner/admin har doim to'liq huquqli.
   defaultPermissions Json?
+  // Auto-delete: guruh xabarlari shu sekunddan keyin avtomatik o'chadi (kunlik cron).
+  // 0 = o'chirilgan. Owner sozlaydi.
+  autoDeleteAfterSeconds Int @default(0)
+  // Restrict forwarding (Telegram uslubi) — TRUE bo'lsa xabarlarni boshqa suhbatga
+  // forward qilib bo'lmaydi (anti-leak).
+  restrictForwarding Boolean @default(false)
   createdAt   DateTime @default(now())
   members     NexusChannelMember[]
   messages    NexusChannelMessage[]
@@ -1932,6 +1938,9 @@ model NexusChannelMember {
   // TRUE bo'lsa: yozgan xabarlarda sender ismi o'rniga guruh nomi ko'rinadi,
   // avatar o'rniga guruh avatari. Real senderId serverda saqlanadi (moderatsiya uchun).
   isAnonymous Boolean @default(false)
+  // Per-user mute (WhatsApp/Telegram uslub) — bu foydalanuvchi shu guruh/kanal uchun
+  // push xabarnomani cho'zib qo'ygan vaqti. NULL = xabarnoma yoqilgan.
+  mutedUntil DateTime?
   @@unique([channelId, profileId])
   @@index([profileId])
 }
@@ -1974,10 +1983,33 @@ model NexusChannelMessage {
   // Jadvalga qo'yilgan xabar (Telegram uslub) — bu vaqtga qadar kanal xabarlarida
   // ko'rinmaydi (faqat yozuvchi ko'radi, draft-like). Kunlik cron faollashtiradi.
   scheduledFor  DateTime?
+  // Rich media (voice/video-circle/location/contact) — DM bilan bir xil naqsh.
+  // media[] massivi asosiy media, mediaType metadata.
+  mediaType    String?                                    // "image" | "video" | "audio" | "file" | "video-circle" | "location" | "contact"
+  mediaMime    String?
+  mediaName    String?
+  mediaSize    Int?
+  durationMs   Int?                                       // audio/video davomiyligi
+  // Location (mediaType="location")
+  locLat       Float?
+  locLng       Float?
+  locUpdatedAt DateTime?
+  locExpiresAt DateTime?                                  // NULL=static, else jonli
+  // Contact card (mediaType="contact")
+  contactName     String?
+  contactPhone    String?
+  contactUsername String?                                 // @username agar Humo foydalanuvchi
+  // Delete for everyone (60 daq oynada) — hamma uchun o'chirilgan
+  deletedForEveryoneAt DateTime?
+  // View once (WhatsApp uslubi) — 1 martalik
+  viewOnce  Boolean  @default(false)
+  // @mentions — profileId lari (push xabarnoma uchun)
+  mentions  String[] @default([])
   createdAt DateTime @default(now())
   @@index([channelId, createdAt])
   @@index([channelId, pinnedAt])
   @@index([scheduledFor])
+  @@index([channelId, mediaType])
 }
 
 // Ko'rish yozuvi — bir xil profil bir xil xabarga faqat 1 marta hisoblanadi (unique).

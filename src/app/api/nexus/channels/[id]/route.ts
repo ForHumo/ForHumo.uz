@@ -32,7 +32,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             rules: channel.rules,
             coverUrl: channel.coverUrl,
             allowComments: channel.allowComments,
+            autoDeleteAfterSeconds: channel.autoDeleteAfterSeconds,
+            restrictForwarding: channel.restrictForwarding,
             createdAt: channel.createdAt,
+            myMutedUntil: membership?.mutedUntil ?? null,
         },
     });
 }
@@ -49,12 +52,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!m || (m.role !== "OWNER" && m.role !== "ADMIN")) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
 
     const body = await req.json();
-    const { name, description, avatarUrl, coverUrl, rules, slowModeSeconds, defaultPermissions, allowComments } = body as {
+    const { name, description, avatarUrl, coverUrl, rules, slowModeSeconds, defaultPermissions, allowComments,
+        autoDeleteAfterSeconds, restrictForwarding } = body as {
         name?: string; description?: string; avatarUrl?: string;
         coverUrl?: string; rules?: string;
         slowModeSeconds?: number;
         defaultPermissions?: Record<string, boolean>;
         allowComments?: boolean;
+        autoDeleteAfterSeconds?: number;
+        restrictForwarding?: boolean;
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = {};
@@ -76,6 +82,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             if (typeof defaultPermissions[k] === "boolean") cleaned[k] = defaultPermissions[k];
         }
         data.defaultPermissions = cleaned;
+    }
+    // Auto-delete: 0..30 kun (sekundlarda), 0 = o'chirilgan
+    if (typeof autoDeleteAfterSeconds === "number") {
+        data.autoDeleteAfterSeconds = Math.max(0, Math.min(30 * 86400, Math.floor(autoDeleteAfterSeconds)));
+    }
+    // Restrict forwarding — faqat owner sozlaydi
+    if (typeof restrictForwarding === "boolean" && m.role === "OWNER") {
+        data.restrictForwarding = restrictForwarding;
     }
     const updated = await prisma.nexusChannel.update({ where: { id }, data });
     return NextResponse.json({

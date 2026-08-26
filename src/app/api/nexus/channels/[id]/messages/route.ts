@@ -167,12 +167,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             const publicAuthor = anon && !mine && !isOwner
                 ? { name: channel.name, username: null, image: channel.avatarUrl, verified: false, verifiedCategory: null }
                 : (p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null);
+            // Delete-for-everyone → tombstone
+            const isDeleted = !!m.deletedForEveryoneAt;
             return {
-                id: m.id, text: m.text, media: m.media, createdAt: m.createdAt, mine,
+                id: m.id,
+                text: isDeleted ? null : m.text,
+                media: isDeleted ? [] : m.media,
+                createdAt: m.createdAt, mine,
                 anonymous: anon,
                 author: publicAuthor,
-                pollQuestion: m.pollQuestion, pollOptions: m.pollOptions, pollExpiresAt: m.pollExpiresAt, pollMulti: m.pollMulti,
-                pollVoteCounts: pv?.counts ?? null, pollMyVotes: pv?.myVotes ?? null, pollTotal: pv?.total ?? null,
+                pollQuestion: isDeleted ? null : m.pollQuestion,
+                pollOptions: isDeleted ? [] : m.pollOptions,
+                pollExpiresAt: isDeleted ? null : m.pollExpiresAt,
+                pollMulti: isDeleted ? false : m.pollMulti,
+                pollVoteCounts: isDeleted ? null : (pv?.counts ?? null),
+                pollMyVotes: isDeleted ? null : (pv?.myVotes ?? null),
+                pollTotal: isDeleted ? null : (pv?.total ?? null),
                 pinnedAt: m.pinnedAt,
                 editedAt: m.editedAt,
                 commentCount: commentCounts.get(m.id) ?? 0,
@@ -184,6 +194,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                     : [],
                 viewCount: m.viewCount,
                 scheduledFor: m.scheduledFor,
+                // Rich media
+                mediaType: isDeleted ? null : m.mediaType,
+                mediaMime: isDeleted ? null : m.mediaMime,
+                mediaName: isDeleted ? null : m.mediaName,
+                mediaSize: isDeleted ? null : m.mediaSize,
+                durationMs: isDeleted ? null : m.durationMs,
+                locLat: isDeleted ? null : m.locLat,
+                locLng: isDeleted ? null : m.locLng,
+                locExpiresAt: isDeleted ? null : m.locExpiresAt,
+                contactName: isDeleted ? null : m.contactName,
+                contactPhone: isDeleted ? null : m.contactPhone,
+                contactUsername: isDeleted ? null : m.contactUsername,
+                viewOnce: m.viewOnce,
+                mentions: m.mentions,
+                deletedForEveryone: isDeleted,
+                deletedForEveryoneAt: m.deletedForEveryoneAt,
             };
         }),
     });
@@ -230,17 +256,56 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     const body = await req.json();
-    const { text, media, pollQuestion, pollOptions, pollExpiresAt, pollMulti, replyToId, scheduledFor, silent } = body as {
+    const {
+        text, media, pollQuestion, pollOptions, pollExpiresAt, pollMulti, replyToId, scheduledFor, silent,
+        // Rich media (voice/video-circle/location/contact) — DM parity
+        mediaType, mediaMime, mediaName, mediaSize, durationMs,
+        locLat, locLng, locExpiresAt,
+        contactName, contactPhone, contactUsername,
+        viewOnce,
+    } = body as {
         text?: string; media?: unknown;
         pollQuestion?: string; pollOptions?: string[]; pollExpiresAt?: string; pollMulti?: boolean;
         replyToId?: string;
-        scheduledFor?: string;   // ISO string — kelajakdagi vaqt (30s..30d oralig'ida)
-        silent?: boolean;        // Silent post — a'zolarga push yubormaydi
+        scheduledFor?: string;
+        silent?: boolean;
+        mediaType?: string;
+        mediaMime?: string;
+        mediaName?: string;
+        mediaSize?: number;
+        durationMs?: number;
+        locLat?: number;
+        locLng?: number;
+        locExpiresAt?: string;
+        contactName?: string;
+        contactPhone?: string;
+        contactUsername?: string;
+        viewOnce?: boolean;
     };
     const cleanText = typeof text === "string" ? text.trim().slice(0, 4000) : "";
     const cleanMedia: string[] = filterMediaUrls(media, 9);
     const isPoll = !!pollQuestion?.trim() && Array.isArray(pollOptions) && pollOptions.length >= 2 && pollOptions.length <= 10;
-    if (!cleanText && !cleanMedia.length && !isPoll) return NextResponse.json({ error: "Bo'sh bo'lmasin" }, { status: 400 });
+    // Rich media validation
+    const allowedMediaTypes = ["image", "video", "audio", "file", "video-circle", "location", "contact"] as const;
+    const cleanMediaType = typeof mediaType === "string" && (allowedMediaTypes as readonly string[]).includes(mediaType) ? mediaType : null;
+    const isLocation = cleanMediaType === "location" && typeof locLat === "number" && typeof locLng === "number";
+    const isContact = cleanMediaType === "contact" && typeof contactName === "string" && typeof contactPhone === "string";
+    if (!cleanText && !cleanMedia.length && !isPoll && !isLocation && !isContact) {
+        return NextResponse.json({ error: "Bo'sh bo'lmasin" }, { status: 400 });
+    }
+    // @mentions — parse @username from text, resolve to profileId
+    let mentionsList: string[] = [];
+    if (cleanText) {
+        const mentionUsernames = Array.from(cleanText.matchAll(/@([a-z0-9_]{3,32})/gi)).map(m => m[1].toLowerCase());
+        const uniq = Array.from(new Set(mentionUsernames)).slice(0, 20);
+        if (uniq.length > 0) {
+            const profiles = await prisma.userProfile.findMany({
+                where: { username: { in: uniq } },
+                select: { id: true },
+            });
+            mentionsList = profiles.map(p => p.id);
+        }
+    }
 
     // Fine-grained ruxsat: media va link cheklovi (guruh uchun)
     if (channel.type === "GROUP") {
@@ -291,6 +356,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             pollExpiresAt: isPoll && pollExpiresAt ? new Date(pollExpiresAt) : null,
             pollMulti: isPoll ? !!pollMulti : false,
             scheduledFor: scheduledDate,
+            // Rich media
+            mediaType: cleanMediaType,
+            mediaMime: typeof mediaMime === "string" ? mediaMime.slice(0, 100) : null,
+            mediaName: typeof mediaName === "string" ? mediaName.slice(0, 200) : null,
+            mediaSize: typeof mediaSize === "number" && mediaSize > 0 ? Math.floor(mediaSize) : null,
+            durationMs: typeof durationMs === "number" && durationMs > 0 ? Math.floor(durationMs) : null,
+            locLat: isLocation ? locLat : null,
+            locLng: isLocation ? locLng : null,
+            locExpiresAt: isLocation && typeof locExpiresAt === "string" ? new Date(locExpiresAt) : null,
+            locUpdatedAt: isLocation ? new Date() : null,
+            contactName: isContact ? contactName!.slice(0, 100) : null,
+            contactPhone: isContact ? contactPhone!.slice(0, 40) : null,
+            contactUsername: isContact && typeof contactUsername === "string" ? contactUsername.slice(0, 40) : null,
+            viewOnce: !!viewOnce,
+            mentions: mentionsList,
         },
     });
     if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "CHANNEL_MESSAGE", targetId: msg.id, text: cleanText, kind: "kanal xabari", authorId: me.id }));
@@ -310,19 +390,34 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         after(async () => {
             const members = await prisma.nexusChannelMember.findMany({
                 where: { channelId: id, profileId: { not: me.id } },
-                select: { profileId: true }, take: 500,
+                select: { profileId: true, mutedUntil: true }, take: 500,
             });
             if (members.length === 0) return;
             const senderName = me.name ?? me.username ?? "Foydalanuvchi";
             const chLabel = channel.name;
-            const preview = cleanText || (cleanMedia.length ? "[media]" : isPoll ? "[so'rovnoma]" : "Yangi xabar");
+            const previewBase = isLocation ? "[joylashuv]"
+                : isContact ? `[kontakt: ${contactName}]`
+                : cleanMediaType === "audio" ? "[ovoz]"
+                : cleanMediaType === "video-circle" ? "[video]"
+                : cleanText || (cleanMedia.length ? "[media]" : isPoll ? "[so'rovnoma]" : "Yangi xabar");
             const url = channel.handle ? `/nexus?channel=${channel.handle}` : "/nexus";
-            await Promise.all(members.map(m => sendPushToProfile(m.profileId, {
-                title: `${chLabel} · ${senderName}`,
-                body: preview.slice(0, 120),
-                url,
-                tag: `ch-${id}`,
-            }).catch(() => {})));
+            const now = Date.now();
+            const mentionsSet = new Set(mentionsList);
+            await Promise.all(members.map(m => {
+                // Muted a'zolarga push yubormaymiz (mention'lar bundan mustasno — muhim)
+                const isMuted = m.mutedUntil && m.mutedUntil.getTime() > now;
+                const isMentioned = mentionsSet.has(m.profileId);
+                if (isMuted && !isMentioned) return Promise.resolve();
+                const title = isMentioned
+                    ? `${chLabel} · ${senderName} sizni tildi`
+                    : `${chLabel} · ${senderName}`;
+                return sendPushToProfile(m.profileId, {
+                    title,
+                    body: previewBase.slice(0, 120),
+                    url,
+                    tag: `ch-${id}`,
+                }).catch(() => {});
+            }));
         });
     }
 
