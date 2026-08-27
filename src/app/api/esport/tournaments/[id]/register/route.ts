@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canManageTeam } from "@/lib/esport-block";
 import { getMyProfile } from "@/lib/esport";
+import { syncEsTournamentChannel } from "@/lib/esport-nexus-tournament";
 
 // POST /api/esport/tournaments/[id]/register — jamoani ro'yxatdan o'tkazish { teamId }
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -65,5 +67,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     } catch {
         return NextResponse.json({ error: "Jamoa allaqachon ro'yxatda" }, { status: 409 });
     }
+    // Nexus turnir chat'ga yangi jamoa a'zolarini sinxron qo'shish
+    after(() => syncEsTournamentChannel(id));
     return NextResponse.json({ ok: true });
 }

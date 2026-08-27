@@ -77,6 +77,20 @@ export async function generateBracket(tournamentId: string): Promise<{ ok: boole
 
     // 3) Bye'larni avto-o'tkazish
     await autoAdvanceByes(tournamentId);
+
+    // 4) Nexus: turnir chat'ga "boshlandi" e'lon + har match uchun chat yaratish
+    try {
+        const { announceTournamentStart } = await import("./esport-nexus-match");
+        await announceTournamentStart(tournamentId);
+        const { syncEsMatchChannel } = await import("./esport-nexus-match");
+        const matches = await prisma.esMatch.findMany({
+            where: { tournamentId, teamAId: { not: null }, teamBId: { not: null } },
+            select: { id: true },
+        });
+        for (const m of matches) {
+            await syncEsMatchChannel(m.id);
+        }
+    } catch { /* fail-safe */ }
     return { ok: true };
 }
 

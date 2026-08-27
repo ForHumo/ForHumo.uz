@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getEsportAdmin } from "@/lib/esport";
 import { recordTournamentResult } from "@/lib/esport-bracket";
 import { postToEsTeamChannel } from "@/lib/esport-post-to-team";
+import { postToTournamentChannel, syncEsTournamentChannel } from "@/lib/esport-nexus-tournament";
 
 // PATCH /api/esport/admin/tournaments/[id]/match — natija { matchId, scoreA, scoreB }
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -61,6 +62,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         await postToEsTeamChannel(winnerTeamId, winMsg, { pin: isFinal });
         await postToEsTeamChannel(loserTeamId, loseMsg);
+
+        // Turnir chat'ga umumiy natija
+        const tourMsg = isFinal
+            ? `**FINAL YAKUNI**\n${teamW.tag} ${a}—${b} ${teamL.tag}\n\n**CHEMPION: ${teamW.name}**`
+            : `**${roundLabel}**\n${teamW.tag} ${a}—${b} ${teamL.tag}\n\nG'olib: ${teamW.name}`;
+        await postToTournamentChannel(id, tourMsg);
     });
 
     return NextResponse.json({ ok: true, winnerId: r.winnerId });

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getEsportAdmin } from "@/lib/esport";
+import { syncEsTournamentChannel } from "@/lib/esport-nexus-tournament";
 
 // GET /api/esport/admin/tournaments?gameId= — turnirlar
 export async function GET(req: Request) {
@@ -36,5 +38,7 @@ export async function POST(req: Request) {
             endsAt: b.endsAt ? new Date(b.endsAt) : null,
         },
     });
+    // Nexus turnir chat auto-create (jamoalar keyingi bosqichda qo'shiladi)
+    after(() => syncEsTournamentChannel(t.id));
     return NextResponse.json({ ok: true, tournament: t });
 }

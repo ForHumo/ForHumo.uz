@@ -1985,6 +1985,10 @@ model NexusChannel {
   // esTeamId != null → EsTeam a'zolari bilan sinxron; systemOwned=true bo'lsa
   // owner yo'q, sozlamalar/a'zolar tashqi manba orqali boshqariladi.
   esTeamId    String?  @unique
+  // Turnir chat (Humo eSport turnirlariga bog'langan) — avto post + a'zolar sync.
+  esTournamentId String? @unique
+  // Match chat (individual bracket o'yini) — 2 jamoa a'zolari + arxiv oxirida.
+  esMatchId      String? @unique
   systemOwned Boolean @default(false)
   // Kanal post signature (Telegram Channel uslubi) — postlar ostida "by @admin" chiqarish.
   // TRUE = ko'rinadi, FALSE = anonim (owner/admin ismisiz, faqat kanal). GROUP'da ta'siri yo'q.
