@@ -40,6 +40,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             systemOwned: channel.systemOwned,
             signaturesEnabled: channel.signaturesEnabled,
             allowedReactions: channel.allowedReactions,
+            discussionGroupId: channel.discussionGroupId,
+            sponsoredEnabled: channel.sponsoredEnabled,
             createdAt: channel.createdAt,
             myMutedUntil: membership?.mutedUntil ?? null,
         },
@@ -60,7 +62,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const body = await req.json();
     const { name, description, avatarUrl, coverUrl, rules, slowModeSeconds, defaultPermissions, allowComments,
         autoDeleteAfterSeconds, restrictForwarding, aiModerator, autoTranslate,
-        signaturesEnabled, allowedReactions } = body as {
+        signaturesEnabled, allowedReactions, discussionGroupId, sponsoredEnabled } = body as {
         name?: string; description?: string; avatarUrl?: string;
         coverUrl?: string; rules?: string;
         slowModeSeconds?: number;
@@ -72,6 +74,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         autoTranslate?: boolean;
         signaturesEnabled?: boolean;
         allowedReactions?: string[];
+        discussionGroupId?: string | null;
+        sponsoredEnabled?: boolean;
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = {};
@@ -118,6 +122,28 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             .filter(e => typeof e === "string" && e.length > 0 && e.length <= 8)
             .slice(0, 16);
         data.allowedReactions = cleaned;
+    }
+    // Discussion group (Telegram Channel Discussion uslubi) — kanal xabarlariga
+    // bog'langan guruh. NULL = uzish. Faqat owner sozlaydi, guruh ega bo'lishi kerak.
+    if (discussionGroupId !== undefined && m.role === "OWNER") {
+        if (discussionGroupId === null || discussionGroupId === "") {
+            data.discussionGroupId = null;
+        } else {
+            const grp = await prisma.nexusChannel.findUnique({
+                where: { id: discussionGroupId },
+                select: { id: true, type: true, ownerId: true },
+            });
+            if (!grp || grp.type !== "GROUP") {
+                return NextResponse.json({ error: "Guruh topilmadi yoki GROUP tipida emas" }, { status: 400 });
+            }
+            if (grp.ownerId !== me.id) {
+                return NextResponse.json({ error: "Muhokama guruhi sizga tegishli bo'lishi kerak" }, { status: 403 });
+            }
+            data.discussionGroupId = discussionGroupId;
+        }
+    }
+    if (typeof sponsoredEnabled === "boolean" && m.role === "OWNER") {
+        data.sponsoredEnabled = sponsoredEnabled;
     }
     const updated = await prisma.nexusChannel.update({ where: { id }, data });
     return NextResponse.json({

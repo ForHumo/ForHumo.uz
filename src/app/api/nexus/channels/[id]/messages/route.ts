@@ -225,6 +225,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 editedAt: m.editedAt,
                 editCount: editCounts.get(m.id) ?? 0,
                 signaturePosted: m.signaturePosted,
+                sponsored: m.sponsored,
+                sponsoredUrl: m.sponsoredUrl,
                 commentCount: commentCounts.get(m.id) ?? 0,
                 replyToId: m.replyToId,
                 replyTo: m.replyToId ? (replyMap.get(m.replyToId) ?? null) : null,
@@ -304,7 +306,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         mediaType, mediaMime, mediaName, mediaSize, durationMs,
         locLat, locLng, locExpiresAt,
         contactName, contactPhone, contactUsername,
-        viewOnce,
+        viewOnce, sponsored, sponsoredUrl,
     } = body as {
         text?: string; media?: unknown;
         pollQuestion?: string; pollOptions?: string[]; pollExpiresAt?: string; pollMulti?: boolean;
@@ -324,6 +326,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         contactUsername?: string;
         viewOnce?: boolean;
         topicId?: string;
+        sponsored?: boolean;
+        sponsoredUrl?: string;
     };
     const cleanText = typeof text === "string" ? text.trim().slice(0, 4000) : "";
     const cleanMedia: string[] = filterMediaUrls(media, 9);
@@ -416,6 +420,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             mentions: mentionsList,
             topicId: typeof body.topicId === "string" ? body.topicId : null,
             signaturePosted: channel.type === "CHANNEL" ? channel.signaturesEnabled : true,
+            sponsored: channel.type === "CHANNEL" && channel.sponsoredEnabled
+                && (member.role === "OWNER") && !!sponsored,
+            sponsoredUrl: channel.sponsoredEnabled && sponsored && typeof sponsoredUrl === "string"
+                ? sponsoredUrl.slice(0, 500) : null,
         },
     });
     if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "CHANNEL_MESSAGE", targetId: msg.id, text: cleanText, kind: "kanal xabari", authorId: me.id }));

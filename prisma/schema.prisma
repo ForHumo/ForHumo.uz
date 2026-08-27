@@ -1914,6 +1914,13 @@ model NexusChannel {
   // Kanal ruxsat etilgan reaksiyalar to'plami (Telegram Channel uslubi).
   // Bo'sh = default 8 ta emoji. Faqat CHANNEL uchun mazmunli.
   allowedReactions String[] @default([])
+  // Discussion linki (Telegram Channel Discussion Group uslubi).
+  // Kanal xabarlariga izoh yozish uchun bog'langan guruh ID'si.
+  // Kanal a'zolari "Muhokama" tugmasi orqali guruhga o'tishi mumkin.
+  discussionGroupId String?
+  // Sponsored slot (kelajak monetizatsiya) — TRUE bo'lsa kanal owner reklama qabul qiladi.
+  // Sponsored postlar alohida `sponsored` flagi bilan yuboriladi.
+  sponsoredEnabled Boolean @default(false)
   createdAt   DateTime @default(now())
   members     NexusChannelMember[]
   messages    NexusChannelMessage[]
@@ -2142,6 +2149,11 @@ model NexusChannelMessage {
   // Signature snapshot (kanal posti yuborilgan vaqtdagi signaturesEnabled qiymati).
   // TRUE = post ostida sender ismi ko'rinadi, FALSE = anonim ("by <kanal>").
   signaturePosted Boolean @default(true)
+  // Sponsored post (kelajak monetizatsiya) — TRUE bo'lsa reklama badge chiqadi.
+  // Faqat sponsoredEnabled=true kanallarda ruxsat.
+  sponsored Boolean @default(false)
+  // Reklama chegara (URL — yakuniy manzil, agar sponsored bo'lsa).
+  sponsoredUrl String?
   createdAt DateTime @default(now())
   @@index([channelId, createdAt])
   @@index([channelId, pinnedAt])

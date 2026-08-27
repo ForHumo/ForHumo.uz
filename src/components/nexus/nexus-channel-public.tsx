@@ -73,6 +73,30 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
     const [joining, setJoining] = useState(false);
     const [copied, setCopied] = useState(false);
     const [showRules, setShowRules] = useState(false);
+    const [scrollY, setScrollY] = useState(0);
+
+    // Cover parallax — sahifa scroll bo'yicha cover rasmi orqada suriladi.
+    // Reduced-motion tekshiruvi bilan a11y.
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduce) return;
+        const scroller = document.querySelector<HTMLDivElement>(".nexus-ch-public-scroll");
+        if (!scroller) return;
+        let raf = 0;
+        const onScroll = () => {
+            if (raf) return;
+            raf = requestAnimationFrame(() => {
+                setScrollY(scroller.scrollTop);
+                raf = 0;
+            });
+        };
+        scroller.addEventListener("scroll", onScroll, { passive: true });
+        return () => {
+            scroller.removeEventListener("scroll", onScroll);
+            if (raf) cancelAnimationFrame(raf);
+        };
+    }, [loading]);
 
     useEffect(() => {
         setLoading(true);
@@ -175,8 +199,13 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
     const isFounder = owner?.username && FOUNDER_USERNAMES.has(owner.username.toLowerCase());
     const isVerified = isFounder || channel.isSystem;
 
+    // Parallax translation — scroll ning yarim tezligida cover pastga suriladi.
+    // Maks 60px surilish (juda balandga ketmasin).
+    const parallaxY = Math.min(60, scrollY * 0.4);
+    const parallaxScale = 1 + Math.min(0.15, scrollY / 800);
+
     return (
-        <div className="fixed inset-0 z-[100] overflow-y-auto" style={{ background: "#050818" }}>
+        <div className="fixed inset-0 z-[100] overflow-y-auto nexus-ch-public-scroll" style={{ background: "#050818" }}>
             <div className="max-w-2xl mx-auto pb-16">
                 {/* Back link */}
                 <div className="px-4 pt-6 pb-2">
@@ -186,13 +215,18 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                     </Link>
                 </div>
 
-                {/* Cover */}
+                {/* Cover with parallax */}
                 <div className="relative mx-4 mt-3 rounded-3xl overflow-hidden"
                     style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.20)" }}>
-                    <div className="relative w-full h-40 md:h-56"
-                        style={channel.coverUrl
-                            ? { backgroundImage: `url(${channel.coverUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
-                            : { background: "linear-gradient(135deg, #2B3EE8 0%, #00CEC8 100%)" }}>
+                    <div className="relative w-full h-40 md:h-56 overflow-hidden">
+                        <div className="absolute inset-0 will-change-transform"
+                            style={{
+                                transform: `translate3d(0, ${parallaxY}px, 0) scale(${parallaxScale})`,
+                                transition: "transform 0.05s linear",
+                                ...(channel.coverUrl
+                                    ? { backgroundImage: `url(${channel.coverUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
+                                    : { background: "linear-gradient(135deg, #2B3EE8 0%, #00CEC8 100%)" }),
+                            }} />
                         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(5,8,24,0) 0%, rgba(5,8,24,0.85) 100%)" }} />
                     </div>
 

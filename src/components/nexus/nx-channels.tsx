@@ -35,13 +35,14 @@ import { NxChannelScheduledModal } from "./nx-channel-scheduled-modal";
 import { NxChannelReactorsModal } from "./nx-channel-reactors-modal";
 import { NxChannelViewersModal } from "./nx-channel-viewers-modal";
 import { NxChannelShareModal } from "./nx-channel-share-modal";
+import { NxChannelFullscreenComposer } from "./nx-channel-fullscreen-composer";
 import { NxLinkPreview } from "./nx-link-preview";
 import { Wallet as WalletIcon, Download as DownloadIcon, QrCode as QrCodeIcon } from "lucide-react";
-import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon, Sparkles as SparklesIcon, Sticker as StickerIcon, EyeOff, Hash as HashIcon, Bot as BotIcon, Radio as RadioIcon, Share2 as Share2Icon, CalendarClock as CalendarClockIcon } from "lucide-react";
+import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon, Sparkles as SparklesIcon, Sticker as StickerIcon, EyeOff, Hash as HashIcon, Bot as BotIcon, Radio as RadioIcon, Share2 as Share2Icon, CalendarClock as CalendarClockIcon, MessageSquare } from "lucide-react";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean; isSystem?: boolean }
-interface ChDetail { id: string; type: ChType; name: string; handle: string | null; description: string | null; avatarUrl: string | null; isPrivate: boolean; memberCount: number; isOwner: boolean; isMember: boolean; role: string | null; canPost: boolean; allowComments?: boolean; slowModeSeconds?: number; signaturesEnabled?: boolean; allowedReactions?: string[]; systemOwned?: boolean; esTeamId?: string | null }
+interface ChDetail { id: string; type: ChType; name: string; handle: string | null; description: string | null; avatarUrl: string | null; isPrivate: boolean; memberCount: number; isOwner: boolean; isMember: boolean; role: string | null; canPost: boolean; allowComments?: boolean; slowModeSeconds?: number; signaturesEnabled?: boolean; allowedReactions?: string[]; systemOwned?: boolean; esTeamId?: string | null; discussionGroupId?: string | null; sponsoredEnabled?: boolean }
 interface ChMsg {
     viewOnceOpened?: boolean;
     id: string; text: string | null; media: string[]; createdAt: string; mine: boolean;
@@ -52,6 +53,8 @@ interface ChMsg {
     editedAt?: string | null;
     editCount?: number;
     signaturePosted?: boolean;
+    sponsored?: boolean;
+    sponsoredUrl?: string | null;
     reactions?: Array<{ emoji: string; count: number; mine: boolean }>;
     replyTo?: { id: string; text: string | null; senderName: string | null } | null;
     replyToId?: string | null;
@@ -343,6 +346,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [reactorsFor, setReactorsFor] = useState<string | null>(null);
     const [viewersFor, setViewersFor] = useState<string | null>(null);
     const [shareModalOpen, setShareModalOpen] = useState(false);
+    const [fullComposerOpen, setFullComposerOpen] = useState(false);
     const [pollVotersFor, setPollVotersFor] = useState<string | null>(null);
     const [slashQuery, setSlashQuery] = useState<string | null>(null);
 
@@ -1144,6 +1148,16 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         <span className="flex-1">Rejadagi postlar</span>
                                     </button>
                                 )}
+                                {/* Muhokamaga o'tish (Discussion) — kanalda bog'langan guruh bor bo'lsa hamma uchun */}
+                                {ch.type === "CHANNEL" && ch.discussionGroupId && (
+                                    <a href={`/nexus?channel=${encodeURIComponent(ch.discussionGroupId)}`}
+                                        onClick={() => setChMoreOpen(false)}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <MessageSquare className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                        <span className="flex-1">Muhokamaga o&apos;tish</span>
+                                    </a>
+                                )}
                                 {/* Kanal ulash — hamma uchun (agar handle bor bo'lsa) */}
                                 {ch.handle && (
                                     <button onClick={() => { setShareModalOpen(true); setChMoreOpen(false); }}
@@ -1349,6 +1363,18 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                     onClose={() => setShareModalOpen(false)}
                 />
             )}
+            {ch && (
+                <NxChannelFullscreenComposer
+                    open={fullComposerOpen}
+                    channelId={id}
+                    channelName={ch.name}
+                    channelType={ch.type}
+                    sponsoredEnabled={!!ch.sponsoredEnabled}
+                    isOwner={!!ch.isOwner}
+                    onClose={() => setFullComposerOpen(false)}
+                    onSent={() => loadDetail()}
+                />
+            )}
             {pollVotersFor && (
                 <NxGroupPollVoters open={!!pollVotersFor} channelId={id} messageId={pollVotersFor}
                     onClose={() => setPollVotersFor(null)} />
@@ -1495,6 +1521,19 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                         contactName={m.contactName} contactPhone={m.contactPhone}
                                                         contactUsername={m.contactUsername}
                                                     />
+                                                </div>
+                                            )}
+                                            {m.sponsored && (
+                                                <div className="mb-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest"
+                                                    style={{ background: "rgba(245,179,1,0.14)", color: "#F5B301", border: "1px solid rgba(245,179,1,0.30)" }}>
+                                                    <RadioIcon className="w-2.5 h-2.5" /> Sponsored
+                                                    {m.sponsoredUrl && (
+                                                        <a href={m.sponsoredUrl} target="_blank" rel="noopener noreferrer sponsored"
+                                                            onClick={e => e.stopPropagation()}
+                                                            className="ml-1 hover:underline">
+                                                            havola
+                                                        </a>
+                                                    )}
                                                 </div>
                                             )}
                                             {m.text && editingId !== m.id && (
@@ -1892,6 +1931,12 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                 className="w-10 h-10 flex items-center justify-center rounded-xl text-white flex-shrink-0"
                                 style={{ background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.25)" }}>
                                 <BarChart2 className="w-4 h-4" />
+                            </button>
+                            {/* Full-screen composer — uzun post uchun (kanal CHANNEL uchun ustuvor) */}
+                            <button onClick={() => setFullComposerOpen(true)} title="Katta editor (Markdown)"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl text-white flex-shrink-0"
+                                style={{ background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                <Edit3 className="w-4 h-4" />
                             </button>
                             <div className="flex-1 relative">
                                 {mentionQuery && ch.type === "GROUP" && (

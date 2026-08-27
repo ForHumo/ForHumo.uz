@@ -19,6 +19,8 @@ type ChannelData = {
     allowComments: boolean;
     signaturesEnabled: boolean;
     allowedReactions: string[];
+    discussionGroupId: string | null;
+    sponsoredEnabled: boolean;
     isOwner: boolean;
     role: "OWNER" | "ADMIN" | "MEMBER" | null;
     defaultPermissions: Record<string, boolean> | null;
@@ -98,6 +100,8 @@ export function NxGroupSettingsModal({
                     defaultPermissions: data.defaultPermissions,
                     signaturesEnabled: data.signaturesEnabled,
                     allowedReactions: data.allowedReactions,
+                    discussionGroupId: data.discussionGroupId,
+                    sponsoredEnabled: data.sponsoredEnabled,
                 }),
             });
             if (r.ok) {
@@ -351,6 +355,30 @@ export function NxGroupSettingsModal({
                                     onChange={v => setData({ ...data, allowedReactions: v })}
                                 />
                             )}
+                            {/* Discussion guruh linki — CHANNEL owner */}
+                            {isOwner && data.type === "CHANNEL" && (
+                                <DiscussionGroupPicker
+                                    value={data.discussionGroupId}
+                                    onChange={v => setData({ ...data, discussionGroupId: v })}
+                                />
+                            )}
+                            {/* Sponsored toggle — CHANNEL owner */}
+                            {isOwner && data.type === "CHANNEL" && (
+                                <label className="flex items-center gap-3 rounded-xl px-3 py-3"
+                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(245,179,1,0.20)" }}>
+                                    <input type="checkbox" checked={data.sponsoredEnabled}
+                                        onChange={e => setData({ ...data, sponsoredEnabled: e.target.checked })} />
+                                    <div className="flex-1">
+                                        <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                                            <Sparkles className="w-3.5 h-3.5" style={{ color: "#F5B301" }} />
+                                            Sponsored postlar
+                                        </p>
+                                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                            Reklama slotlari — post yozayotganda &quot;Sponsored&quot; belgisi + URL qo&apos;shish mumkin
+                                        </p>
+                                    </div>
+                                </label>
+                            )}
                             {/* Auto-translate — faqat owner */}
                             {isOwner && data.type === "GROUP" && (
                                 <label className="flex items-center gap-3 rounded-xl px-3 py-3"
@@ -417,6 +445,53 @@ export function NxGroupSettingsModal({
                 )}
             </div>
         </>
+    );
+}
+
+// Muhokama guruhini tanlash — owner o'z GROUP'laridan birini kanalga bog'laydi.
+// NULL = uzish. Faqat CHANNEL uchun mazmunli.
+function DiscussionGroupPicker({
+    value, onChange,
+}: {
+    value: string | null;
+    onChange: (v: string | null) => void;
+}) {
+    const [groups, setGroups] = useState<Array<{ id: string; name: string }>>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        setLoading(true);
+        fetch(`/api/nexus/channels?scope=mine&type=GROUP`)
+            .then(r => r.ok ? r.json() : { channels: [] })
+            .then(d => setGroups((d.channels ?? []).filter((c: { isOwner?: boolean }) => c.isOwner)))
+            .finally(() => setLoading(false));
+    }, []);
+
+    return (
+        <div className="rounded-xl px-3 py-3"
+            style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+            <p className="text-sm font-bold text-white flex items-center gap-1.5 mb-1">
+                <MessageSquare className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                Muhokama guruhi
+            </p>
+            <p className="text-[11px] mb-2" style={{ color: "rgba(140,160,210,0.7)" }}>
+                Kanal xabarlariga izoh yozish uchun bog'langan guruh. A&apos;zolar &quot;Muhokamaga o&apos;tish&quot; tugmasi bilan boradi.
+            </p>
+            <select disabled={loading} value={value ?? ""}
+                onChange={e => onChange(e.target.value || null)}
+                className="w-full h-10 rounded-lg px-3 text-xs focus:outline-none"
+                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }}>
+                <option value="">— Yo&apos;q (uzish) —</option>
+                {groups.map(g => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+            </select>
+            {groups.length === 0 && !loading && (
+                <p className="text-[10px] mt-1.5" style={{ color: "rgba(140,160,210,0.6)" }}>
+                    Bog&apos;lash uchun avval o&apos;zingizga tegishli GROUP tipida kanal yarating.
+                </p>
+            )}
+        </div>
     );
 }
 
