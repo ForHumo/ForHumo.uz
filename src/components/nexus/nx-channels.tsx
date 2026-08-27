@@ -31,8 +31,9 @@ import { NxGroupPollVoters } from "./nx-group-poll-voters";
 import { NxBotCommandAutocomplete } from "./nx-bot-command-autocomplete";
 import { NxFinancialCopilot } from "./nx-financial-copilot";
 import { NxChannelBroadcastModal } from "./nx-channel-broadcast-modal";
+import { NxChannelScheduledModal } from "./nx-channel-scheduled-modal";
 import { Wallet as WalletIcon, Download as DownloadIcon } from "lucide-react";
-import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon, Sparkles as SparklesIcon, Sticker as StickerIcon, EyeOff, Hash as HashIcon, Bot as BotIcon, Radio as RadioIcon, Share2 as Share2Icon } from "lucide-react";
+import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon, Sparkles as SparklesIcon, Sticker as StickerIcon, EyeOff, Hash as HashIcon, Bot as BotIcon, Radio as RadioIcon, Share2 as Share2Icon, CalendarClock as CalendarClockIcon } from "lucide-react";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean; isSystem?: boolean }
@@ -328,6 +329,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [copilotOpen, setCopilotOpen] = useState(false);
     const [bansOpen, setBansOpen] = useState(false);
     const [broadcastOpen, setBroadcastOpen] = useState(false);
+    const [scheduledOpen, setScheduledOpen] = useState(false);
     const [pollVotersFor, setPollVotersFor] = useState<string | null>(null);
     const [slashQuery, setSlashQuery] = useState<string | null>(null);
 
@@ -1114,6 +1116,15 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>3/kun</span>
                                     </button>
                                 )}
+                                {/* Scheduled draft box — OWNER/ADMIN */}
+                                {(ch.isOwner || ch.role === "ADMIN") && (
+                                    <button onClick={() => { setScheduledOpen(true); setChMoreOpen(false); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <CalendarClockIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <span className="flex-1">Rejadagi postlar</span>
+                                    </button>
+                                )}
                                 {/* Export — faqat OWNER */}
                                 {ch.isOwner && (
                                     <a href={`/api/nexus/channels/${id}/export?format=json`}
@@ -1268,6 +1279,11 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                     onSent={() => { loadDetail(); }}
                 />
             )}
+            <NxChannelScheduledModal
+                open={scheduledOpen}
+                channelId={id}
+                onClose={() => setScheduledOpen(false)}
+            />
             {pollVotersFor && (
                 <NxGroupPollVoters open={!!pollVotersFor} channelId={id} messageId={pollVotersFor}
                     onClose={() => setPollVotersFor(null)} />
