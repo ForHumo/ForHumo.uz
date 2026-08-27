@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
+import { logChannelAudit } from "@/lib/nexus-channel-audit";
 
 // GET /api/nexus/channels/[id]/members — a'zolar ro'yxati (a'zolar ko'radi)
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -50,6 +51,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!target || target.role === "OWNER") return NextResponse.json({ error: "Noto'g'ri a'zo" }, { status: 400 });
 
     await prisma.nexusChannelMember.update({ where: { id: target.id }, data: { role: newRole } });
+    await logChannelAudit({
+        channelId: id, actorId: me.id,
+        action: newRole === "ADMIN" ? "promote" : "demote",
+        targetId: profileId,
+    });
     return NextResponse.json({ ok: true, profileId, role: newRole });
 }
 
@@ -78,5 +84,6 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     await prisma.nexusChannel.update({
         where: { id }, data: { memberCount: { decrement: 1 } },
     });
+    await logChannelAudit({ channelId: id, actorId: me.id, action: "kick", targetId: profileId });
     return NextResponse.json({ ok: true });
 }

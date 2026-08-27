@@ -12,6 +12,7 @@
         { "path": "/api/cron/bn-interest-rebuild",   "schedule": "0 9 * * *" },
         { "path": "/api/cron/bn-verified-recompute", "schedule": "0 10 * * *" },
         { "path": "/api/cron/dm-schedule-flush", "schedule": "0 2 * * *" },
-        { "path": "/api/cron/dm-auto-delete",    "schedule": "0 1 * * *" }
+        { "path": "/api/cron/dm-auto-delete",    "schedule": "0 1 * * *" },
+        { "path": "/api/cron/channel-auto-delete", "schedule": "0 0 * * *" }
     ]
 }

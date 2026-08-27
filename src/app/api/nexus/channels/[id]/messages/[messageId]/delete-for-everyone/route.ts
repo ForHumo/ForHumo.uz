@@ -9,8 +9,6 @@ import { prisma } from "@/lib/prisma";
 import { after } from "next/server";
 import { pusherTrigger, userChannel } from "@/lib/pusher-server";
 
-const DELETE_WINDOW_MS = 60 * 60 * 1000; // 60 daq
-
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string; messageId: string }> }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -24,10 +22,17 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     if (!msg || msg.channelId !== id) return NextResponse.json({ error: "not_found" }, { status: 404 });
     if (msg.deletedForEveryoneAt) return NextResponse.json({ ok: true, alreadyDeleted: true });
 
-    // Faqat o'z xabari + 60 daqiqa oynasida
-    if (msg.senderId !== me.id) return NextResponse.json({ error: "Faqat o'z xabaringizni o'chirasiz" }, { status: 403 });
-    const age = Date.now() - msg.createdAt.getTime();
-    if (age > DELETE_WINDOW_MS) return NextResponse.json({ error: "60 daqiqa muddat o'tdi" }, { status: 400 });
+    // Owner/admin ham hamma uchun o'chira oladi (moderatsiya). Aks holda faqat o'z xabari.
+    if (msg.senderId !== me.id) {
+        const member = await prisma.nexusChannelMember.findUnique({
+            where: { channelId_profileId: { channelId: id, profileId: me.id } },
+            select: { role: true },
+        });
+        if (!member || (member.role !== "OWNER" && member.role !== "ADMIN")) {
+            return NextResponse.json({ error: "Faqat o'z xabaringizni o'chirasiz" }, { status: 403 });
+        }
+    }
+    // Vaqt cheklovi olib tashlandi — istalgan vaqt o'chiriladi
 
     const now = new Date();
     await prisma.nexusChannelMessage.update({

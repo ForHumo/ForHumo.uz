@@ -432,6 +432,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         ? body.forwardedChannelName.trim().slice(0, 80) || null : null;
     const forwardedChannelHandle = typeof body.forwardedChannelHandle === "string"
         ? body.forwardedChannelHandle.trim().slice(0, 40) || null : null;
+    // Restrict forwarding — agar manba guruh/kanal restrictForwarding=true bo'lsa, forward taqiq
+    if (forwardedChannelId) {
+        const src = await prisma.nexusChannel.findUnique({
+            where: { id: forwardedChannelId },
+            select: { restrictForwarding: true },
+        });
+        if (src?.restrictForwarding) {
+            return NextResponse.json({ error: "Manba guruhi forward'ni taqiq qilgan" }, { status: 403 });
+        }
+    }
 
     const msg = await prisma.nexusMessage.create({
         data: {

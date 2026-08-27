@@ -32,7 +32,22 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         return NextResponse.json({ ok: true, isMember: false });
     }
 
-    if (channel.isPrivate) return NextResponse.json({ error: "Yopiq kanalga taklif kerak" }, { status: 403 });
+    // Ban tekshiruvi
+    const banned = await prisma.nexusChannelBan.findUnique({
+        where: { channelId_profileId: { channelId: id, profileId: me.id } },
+        select: { reason: true },
+    });
+    if (banned) return NextResponse.json({ error: "Siz bu guruh/kanaldan bloklangansiz" }, { status: 403 });
+
+    if (channel.isPrivate) {
+        // Yopiq guruh — kirish so'rovi yaratamiz (Telegram uslub)
+        await prisma.nexusChannelJoinRequest.upsert({
+            where: { channelId_profileId: { channelId: id, profileId: me.id } },
+            create: { channelId: id, profileId: me.id, status: "PENDING" },
+            update: { status: "PENDING", decidedAt: null, decidedById: null },
+        });
+        return NextResponse.json({ ok: true, joinRequested: true });
+    }
     await prisma.$transaction([
         prisma.nexusChannelMember.create({ data: { channelId: id, profileId: me.id, role: "MEMBER" } }),
         prisma.nexusChannel.update({ where: { id }, data: { memberCount: { increment: 1 } } }),

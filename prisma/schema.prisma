@@ -1897,6 +1897,9 @@ model NexusChannel {
   members     NexusChannelMember[]
   messages    NexusChannelMessage[]
   invites     NexusChannelInvite[]
+  bans        NexusChannelBan[]
+  joinRequests NexusChannelJoinRequest[]
+  audits      NexusChannelAudit[]
   @@index([type, isPrivate, createdAt])
 }
 
@@ -1949,6 +1952,55 @@ enum NexusChannelRole {
   OWNER
   ADMIN
   MEMBER
+}
+
+// Ban — guruh/kanaldan doimiy chetlashtirilgan profil.
+// Kick faqat chiqaradi; Ban qayta kirishga to'sqinlik qiladi.
+model NexusChannelBan {
+  id         String       @id @default(cuid())
+  channelId  String
+  channel    NexusChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  profileId  String                                 // ban qilingan foydalanuvchi
+  bannedById String                                 // kim ban qilgan (owner/admin)
+  reason     String?      @db.VarChar(500)
+  createdAt  DateTime     @default(now())
+  @@unique([channelId, profileId])
+  @@index([profileId])
+}
+
+// Kirish so'rovi — private guruhga qo'shilish uchun (Telegram uslub).
+// Owner/admin approve → NexusChannelMember yaratiladi; reject → so'rov o'chiriladi.
+model NexusChannelJoinRequest {
+  id         String       @id @default(cuid())
+  channelId  String
+  channel    NexusChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  profileId  String
+  message    String?      @db.VarChar(300)          // ixtiyoriy izoh
+  status     NexusJoinRequestStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+  decidedAt  DateTime?
+  decidedById String?
+  @@unique([channelId, profileId])
+  @@index([channelId, status])
+}
+
+enum NexusJoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Admin audit log — kim qachon nima qilgan (Telegram admin log naqshi).
+model NexusChannelAudit {
+  id         String       @id @default(cuid())
+  channelId  String
+  channel    NexusChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  actorId    String                                 // amal qilgan admin/owner
+  targetId   String?                                // ta'sirlangan profil (agar bor bo'lsa)
+  action     String                                 // "kick"|"ban"|"unban"|"promote"|"demote"|"pin"|"unpin"|"delete-msg"|"change-info"|"approve-join"|"reject-join"|"slow-mode"|"auto-delete"|"restrict-fwd"
+  detail     String?      @db.VarChar(500)          // qo'shimcha izoh (JSON yoki matn)
+  createdAt  DateTime     @default(now())
+  @@index([channelId, createdAt])
 }
 
 model NexusChannelMessage {

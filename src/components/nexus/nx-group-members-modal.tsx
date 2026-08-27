@@ -4,7 +4,7 @@
 // Boshqa a'zolar faqat ro'yxatni ko'radi.
 
 import { useEffect, useState } from "react";
-import { X, Crown, Shield, UserX, UserCheck, Loader2, BadgeCheck } from "lucide-react";
+import { X, Crown, Shield, UserX, UserCheck, Loader2, BadgeCheck, ShieldOff } from "lucide-react";
 
 type Member = {
     profileId: string;
@@ -61,6 +61,19 @@ export function NxGroupMembersModal({
         setBusy(profileId);
         try {
             const r = await fetch(`/api/nexus/channels/${channelId}/members?profileId=${profileId}`, { method: "DELETE" });
+            if (r.ok) setMembers(prev => prev.filter(m => m.profileId !== profileId));
+        } finally { setBusy(null); }
+    };
+
+    const ban = async (profileId: string) => {
+        const reason = prompt("Ban sababi (ixtiyoriy):") ?? "";
+        if (!confirm("A'zoni doimiy bloklaysizmi? U guruhga qayta kirolmaydi.")) return;
+        setBusy(profileId);
+        try {
+            const r = await fetch(`/api/nexus/channels/${channelId}/bans`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ profileId, reason: reason || undefined }),
+            });
             if (r.ok) setMembers(prev => prev.filter(m => m.profileId !== profileId));
         } finally { setBusy(null); }
     };
@@ -159,8 +172,15 @@ export function NxGroupMembersModal({
                                             onClick={() => kick(m.profileId)}
                                             title="Chiqarish"
                                             className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"
+                                            style={{ background: "rgba(255,140,80,0.1)", border: "1px solid rgba(255,140,80,0.3)" }}>
+                                            <UserX className="w-4 h-4" style={{ color: "#FF8E5B" }} />
+                                        </button>
+                                        <button disabled={busy === m.profileId}
+                                            onClick={() => ban(m.profileId)}
+                                            title="Bloklash (doimiy)"
+                                            className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"
                                             style={{ background: "rgba(255,80,90,0.1)", border: "1px solid rgba(255,80,90,0.3)" }}>
-                                            <UserX className="w-4 h-4" style={{ color: "#FF505A" }} />
+                                            <ShieldOff className="w-4 h-4" style={{ color: "#FF505A" }} />
                                         </button>
                                     </div>
                                 )}

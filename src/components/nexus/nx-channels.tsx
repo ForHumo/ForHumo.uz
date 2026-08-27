@@ -17,7 +17,10 @@ import { NxGroupMuteButton } from "./nx-group-mute-menu";
 import { NxChannelRichAttach, type ChannelAttachPayload } from "./nx-channel-rich-attach";
 import { NxChannelRichMsg } from "./nx-channel-rich-msg";
 import { NxMentionAutocomplete } from "./nx-mention-autocomplete";
-import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon } from "lucide-react";
+import { NxGroupJoinRequestsModal } from "./nx-group-join-requests";
+import { NxGroupPinnedList } from "./nx-group-pinned-list";
+import { NxGroupAuditLog } from "./nx-group-audit-log";
+import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon } from "lucide-react";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean; isSystem?: boolean }
@@ -297,6 +300,13 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [mediaOpen, setMediaOpen] = useState(false);
     const [pollOpen, setPollOpen] = useState(false);
+    const [joinRequestsOpen, setJoinRequestsOpen] = useState(false);
+    const [pinnedListOpen, setPinnedListOpen] = useState(false);
+    const [auditOpen, setAuditOpen] = useState(false);
+    const [pendingJoinCount, setPendingJoinCount] = useState(0);
+    // Typing indicator (per-channel)
+    const [typingUsers, setTypingUsers] = useState<Map<string, { name: string; expiresAt: number }>>(new Map());
+    const typingSentAtRef = useRef<number>(0);
 
     async function sendPoll(poll: { question: string; options: string[]; expiresAt: string | null; multi: boolean }) {
         const r = await fetch(`/api/nexus/channels/${id}/messages`, {
@@ -436,8 +446,56 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             lastTs.current = msg.createdAt;
         };
         pusherCh.bind("nx:msg:new", onMsgNew);
-        return () => { pusherCh.unbind("nx:msg:new", onMsgNew); };
+        // Typing indicator listener
+        const onTyping = (data: { channelId?: string; profileId?: string; name?: string }) => {
+            if (data?.channelId !== id || !data?.profileId || data.profileId === myProfileId) return;
+            setTypingUsers(prev => {
+                const next = new Map(prev);
+                next.set(data.profileId!, { name: data.name || "Kimdir", expiresAt: Date.now() + 5000 });
+                return next;
+            });
+        };
+        pusherCh.bind("nx:ch:typing", onTyping);
+        // Delete-for-everyone listener
+        const onDeleted = (data: { channelId?: string; messageId?: string }) => {
+            if (data?.channelId !== id || !data?.messageId) return;
+            setMsgs(prev => prev.map(m => m.id === data.messageId
+                ? { ...m, text: null, media: [], mediaType: null, deletedForEveryone: true } : m));
+        };
+        pusherCh.bind("nx:msg:deleted-for-everyone", onDeleted);
+        return () => {
+            pusherCh.unbind("nx:msg:new", onMsgNew);
+            pusherCh.unbind("nx:ch:typing", onTyping);
+            pusherCh.unbind("nx:msg:deleted-for-everyone", onDeleted);
+        };
     }, [ch?.isMember, id, myProfileId]);
+
+    // Typing users — expiresAt bo'yicha tozalash
+    useEffect(() => {
+        if (typingUsers.size === 0) return;
+        const iv = setInterval(() => {
+            setTypingUsers(prev => {
+                const now = Date.now();
+                const next = new Map<string, { name: string; expiresAt: number }>();
+                for (const [k, v] of prev) if (v.expiresAt > now) next.set(k, v);
+                return next.size === prev.size ? prev : next;
+            });
+        }, 1000);
+        return () => clearInterval(iv);
+    }, [typingUsers.size]);
+
+    // Pending join requests (OWNER/ADMIN) — 30s'da poll
+    useEffect(() => {
+        if (!ch?.isPrivate || !(ch.isOwner || ch.role === "ADMIN")) return;
+        let stop = false;
+        const load = () => fetch(`/api/nexus/channels/${id}/join-requests`)
+            .then(r => r.ok ? r.json() : { pendingCount: 0 })
+            .then(d => { if (!stop) setPendingJoinCount(d.pendingCount ?? 0); })
+            .catch(() => {});
+        load();
+        const iv = setInterval(load, 30_000);
+        return () => { stop = true; clearInterval(iv); };
+    }, [id, ch?.isPrivate, ch?.isOwner, ch?.role]);
 
     useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
@@ -512,6 +570,14 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         // Oxirgi @xxx ni topamiz (bo'shliq bilan oldida)
         const m = v.match(/(?:^|\s)@([a-z0-9_]{0,32})$/i);
         setMentionQuery(m ? "@" + m[1] : null);
+        // Typing signal — 3 soniyada bir marta yuborish (throttled)
+        if (v.trim().length > 0 && ch?.type === "GROUP") {
+            const now = Date.now();
+            if (now - typingSentAtRef.current > 3000) {
+                typingSentAtRef.current = now;
+                fetch(`/api/nexus/channels/${id}/typing`, { method: "POST" }).catch(() => {});
+            }
+        }
     }
     function pickMention(username: string) {
         const v = input.replace(/(?:^|\s)@([a-z0-9_]{0,32})$/i, (m) => {
@@ -887,6 +953,35 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     <ImageIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
                                     <span className="flex-1">Ulashilgan kontent</span>
                                 </button>
+                                {/* Pinlangan xabarlar */}
+                                <button onClick={() => { setPinnedListOpen(true); setChMoreOpen(false); }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                    style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                    <PinIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                    <span className="flex-1">Pinlangan xabarlar</span>
+                                </button>
+                                {/* Kirish so'rovlari — OWNER/ADMIN, yopiq guruh */}
+                                {ch.isPrivate && (ch.isOwner || ch.role === "ADMIN") && (
+                                    <button onClick={() => { setJoinRequestsOpen(true); setChMoreOpen(false); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <UserPlusIcon className="w-4 h-4" style={{ color: pendingJoinCount > 0 ? "#00CEC8" : "rgba(160,176,224,0.80)" }} />
+                                        <span className="flex-1">Kirish so&apos;rovlari</span>
+                                        {pendingJoinCount > 0 && (
+                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                                style={{ background: "rgba(0,206,200,0.15)", color: "#00CEC8" }}>{pendingJoinCount}</span>
+                                        )}
+                                    </button>
+                                )}
+                                {/* Admin jurnali */}
+                                {(ch.isOwner || ch.role === "ADMIN") && (
+                                    <button onClick={() => { setAuditOpen(true); setChMoreOpen(false); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <ScrollTextIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <span className="flex-1">Admin jurnali</span>
+                                    </button>
+                                )}
                                 {/* Sozlamalar — OWNER va ADMIN */}
                                 {(ch.isOwner || ch.role === "ADMIN") && (
                                     <button onClick={() => { setSettingsOpen(true); setChMoreOpen(false); }}
@@ -955,6 +1050,13 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             <NxGroupSettingsModal open={settingsOpen} channelId={id} onClose={() => setSettingsOpen(false)}
                 onUpdated={loadDetail} onDeleted={onBack} />
             <NxGroupMediaTab open={mediaOpen} channelId={id} onClose={() => setMediaOpen(false)} />
+            <NxGroupJoinRequestsModal open={joinRequestsOpen} channelId={id}
+                onClose={() => setJoinRequestsOpen(false)}
+                onChange={() => setPendingJoinCount(c => Math.max(0, c - 1))} />
+            <NxGroupPinnedList open={pinnedListOpen} channelId={id}
+                onClose={() => setPinnedListOpen(false)}
+                onJump={jumpToChMsg} />
+            <NxGroupAuditLog open={auditOpen} channelId={id} onClose={() => setAuditOpen(false)} />
 
             {/* Qidiruv paneli */}
             {searchOpen && ch.isMember && (
@@ -1355,7 +1457,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                         }
                                                     </button>
                                                 )}
-                                                {m.mine && !m.deletedForEveryone && (Date.now() - new Date(m.createdAt).getTime()) < 60 * 60 * 1000 && (
+                                                {(m.mine || canManage) && !m.deletedForEveryone && (
                                                     <button onClick={() => { deleteForEveryone(m.id); setChMsgMenuFor(null); }}
                                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-red-500/10 text-left"
                                                         style={{ color: "#EF4444" }}>
@@ -1405,6 +1507,20 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                         ))}
                         <div ref={bottomRef} />
                     </div>
+                    {/* Typing indicator */}
+                    {typingUsers.size > 0 && (
+                        <div className="mx-3 mt-1 px-3 py-1 text-[11px] italic flex items-center gap-1.5"
+                            style={{ color: "rgba(0,206,200,0.85)" }}>
+                            <span className="inline-flex gap-0.5">
+                                <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: "#00CEC8" }} />
+                                <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: "#00CEC8", animationDelay: "150ms" }} />
+                                <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: "#00CEC8", animationDelay: "300ms" }} />
+                            </span>
+                            {typingUsers.size === 1
+                                ? `${[...typingUsers.values()][0].name} yozmoqda...`
+                                : `${typingUsers.size} kishi yozmoqda...`}
+                        </div>
+                    )}
                     {/* Reply preview (composer ustida) */}
                     {replyTo && (
                         <div className="mx-3 mt-2 px-3 py-2 rounded-xl flex items-center gap-2"
