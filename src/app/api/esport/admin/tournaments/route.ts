@@ -3,6 +3,7 @@ import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getEsportAdmin } from "@/lib/esport";
 import { syncEsTournamentChannel } from "@/lib/esport-nexus-tournament";
+import { pinTournamentBanner } from "@/lib/esport-nexus-match";
 
 // GET /api/esport/admin/tournaments?gameId= — turnirlar
 export async function GET(req: Request) {
@@ -38,7 +39,10 @@ export async function POST(req: Request) {
             endsAt: b.endsAt ? new Date(b.endsAt) : null,
         },
     });
-    // Nexus turnir chat auto-create (jamoalar keyingi bosqichda qo'shiladi)
-    after(() => syncEsTournamentChannel(t.id));
+    // Nexus turnir chat auto-create + info banner pin
+    after(async () => {
+        await syncEsTournamentChannel(t.id);
+        await pinTournamentBanner(t.id);
+    });
     return NextResponse.json({ ok: true, tournament: t });
 }
