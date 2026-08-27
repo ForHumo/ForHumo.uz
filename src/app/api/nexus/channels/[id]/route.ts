@@ -34,6 +34,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             allowComments: channel.allowComments,
             autoDeleteAfterSeconds: channel.autoDeleteAfterSeconds,
             restrictForwarding: channel.restrictForwarding,
+            aiModerator: channel.aiModerator,
+            autoTranslate: channel.autoTranslate,
             createdAt: channel.createdAt,
             myMutedUntil: membership?.mutedUntil ?? null,
         },
@@ -53,7 +55,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const body = await req.json();
     const { name, description, avatarUrl, coverUrl, rules, slowModeSeconds, defaultPermissions, allowComments,
-        autoDeleteAfterSeconds, restrictForwarding } = body as {
+        autoDeleteAfterSeconds, restrictForwarding, aiModerator, autoTranslate } = body as {
         name?: string; description?: string; avatarUrl?: string;
         coverUrl?: string; rules?: string;
         slowModeSeconds?: number;
@@ -61,6 +63,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         allowComments?: boolean;
         autoDeleteAfterSeconds?: number;
         restrictForwarding?: boolean;
+        aiModerator?: boolean;
+        autoTranslate?: boolean;
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = {};
@@ -90,6 +94,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     // Restrict forwarding — faqat owner sozlaydi
     if (typeof restrictForwarding === "boolean" && m.role === "OWNER") {
         data.restrictForwarding = restrictForwarding;
+    }
+    if (typeof aiModerator === "boolean" && m.role === "OWNER") {
+        data.aiModerator = aiModerator;
+    }
+    if (typeof autoTranslate === "boolean" && m.role === "OWNER") {
+        data.autoTranslate = autoTranslate;
     }
     const updated = await prisma.nexusChannel.update({ where: { id }, data });
     return NextResponse.json({

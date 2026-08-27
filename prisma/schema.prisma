@@ -1646,6 +1646,9 @@ model NexusGroupCall {
   roomName     String                       @unique  // LiveKit room name (chaqiruv id + prefix)
   title        String?                                // ixtiyoriy nom
   hostId       String                                 // UserProfile.id — yaratuvchi
+  // Guruh voice chat (Telegram uslub) — bog'langan bo'lsa, guruhda banner ko'rinadi.
+  // NULL = standalone chaqiruv (DM). Non-null = guruh voice chat.
+  channelId    String?
   status       NexusGroupCallStatus         @default(ACTIVE)
   createdAt    DateTime                     @default(now())
   endedAt      DateTime?
@@ -1893,6 +1896,12 @@ model NexusChannel {
   // Restrict forwarding (Telegram uslubi) — TRUE bo'lsa xabarlarni boshqa suhbatga
   // forward qilib bo'lmaydi (anti-leak).
   restrictForwarding Boolean @default(false)
+  // AI moderator — TRUE bo'lsa har yangi xabar Gemini bilan tekshiriladi.
+  // Toksik/nafrat topilsa avto-yashiriladi va admin jurnaliga yoziladi.
+  aiModerator Boolean @default(false)
+  // Auto-translate — a'zoning tili guruhdan farq qilsa Gemini avto-tarjima qiladi.
+  // Client tomon per-message "Tarjima" tugma bilan qo'lda ham ishlatiladi.
+  autoTranslate Boolean @default(false)
   createdAt   DateTime @default(now())
   members     NexusChannelMember[]
   messages    NexusChannelMessage[]
@@ -2062,6 +2071,17 @@ model NexusChannelMessage {
   @@index([channelId, pinnedAt])
   @@index([scheduledFor])
   @@index([channelId, mediaType])
+}
+
+// View-once — bir xil profil bir xil xabarni faqat 1 marta ko'radi.
+// Server GET javobida ochilgan a'zolarga media/text=null qaytariladi.
+model NexusChannelMessageViewOnceOpen {
+  id        String              @id @default(cuid())
+  messageId String
+  profileId String
+  openedAt  DateTime            @default(now())
+  @@unique([messageId, profileId])
+  @@index([messageId])
 }
 
 // Ko'rish yozuvi — bir xil profil bir xil xabarga faqat 1 marta hisoblanadi (unique).

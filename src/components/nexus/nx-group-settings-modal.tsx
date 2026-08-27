@@ -4,7 +4,7 @@
 // Ismi, tavsif, avatar/cover, qoidalar, ruxsatlar, slow mode, auto-delete, restrict forward.
 
 import { useEffect, useState } from "react";
-import { X, Loader2, Save, Trash2, Clock, ShieldOff, Users, MessageSquare, Image, Link as LinkIcon, Pin, Info } from "lucide-react";
+import { X, Loader2, Save, Trash2, Clock, ShieldOff, Users, MessageSquare, Image, Link as LinkIcon, Pin, Info, Sparkles, Languages } from "lucide-react";
 
 type ChannelData = {
     id: string; name: string; description: string | null; handle: string | null;
@@ -13,6 +13,8 @@ type ChannelData = {
     slowModeSeconds: number;
     autoDeleteAfterSeconds: number;
     restrictForwarding: boolean;
+    aiModerator: boolean;
+    autoTranslate: boolean;
     allowComments: boolean;
     isOwner: boolean;
     role: "OWNER" | "ADMIN" | "MEMBER" | null;
@@ -86,6 +88,8 @@ export function NxGroupSettingsModal({
                     slowModeSeconds: data.slowModeSeconds,
                     autoDeleteAfterSeconds: data.autoDeleteAfterSeconds,
                     restrictForwarding: data.restrictForwarding,
+                    aiModerator: data.aiModerator,
+                    autoTranslate: data.autoTranslate,
                     defaultPermissions: data.defaultPermissions,
                 }),
             });
@@ -219,6 +223,40 @@ export function NxGroupSettingsModal({
                                         </p>
                                         <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
                                             A&apos;zolar xabarlarni boshqa suhbatga jo&apos;nata olmaydi
+                                        </p>
+                                    </div>
+                                </label>
+                            )}
+                            {/* AI moderator — faqat owner */}
+                            {isOwner && (
+                                <label className="flex items-center gap-3 rounded-xl px-3 py-3"
+                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    <input type="checkbox" checked={data.aiModerator}
+                                        onChange={e => setData({ ...data, aiModerator: e.target.checked })} />
+                                    <div className="flex-1">
+                                        <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                                            <Sparkles className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                            AI moderator
+                                        </p>
+                                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                            Toksik/nafrat xabarlar avto-yashiriladi (Gemini AI)
+                                        </p>
+                                    </div>
+                                </label>
+                            )}
+                            {/* Auto-translate — faqat owner */}
+                            {isOwner && data.type === "GROUP" && (
+                                <label className="flex items-center gap-3 rounded-xl px-3 py-3"
+                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    <input type="checkbox" checked={data.autoTranslate}
+                                        onChange={e => setData({ ...data, autoTranslate: e.target.checked })} />
+                                    <div className="flex-1">
+                                        <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                                            <Languages className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                            Avto-tarjima
+                                        </p>
+                                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                            A&apos;zolar &quot;Tarjima&quot; tugmasi bilan istalgan xabarni o&apos;z tiliga aylantirishi mumkin
                                         </p>
                                     </div>
                                 </label>

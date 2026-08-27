@@ -116,6 +116,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     });
     const bookmarkedSet = new Set(myBookmarks.map(b => b.messageId));
 
+    // View-once ochilgan xabarlarim
+    const viewOnceIds = msgs.filter(m => m.viewOnce).map(m => m.id);
+    const openedViewOnce = viewOnceIds.length ? await prisma.nexusChannelMessageViewOnceOpen.findMany({
+        where: { messageId: { in: viewOnceIds }, profileId: me.id },
+        select: { messageId: true },
+    }) : [];
+    const openedSet = new Set(openedViewOnce.map(o => o.messageId));
+
     // Reaksiyalarni yig'ish
     const allReactions = await prisma.nexusChannelMessageReaction.findMany({
         where: { messageId: { in: msgs.map(m => m.id) } },
@@ -169,10 +177,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 : (p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null);
             // Delete-for-everyone → tombstone
             const isDeleted = !!m.deletedForEveryoneAt;
+            // View-once — ochilgan bo'lsa yoki o'z xabari emas + ochilmagan → tombstone/blur
+            const isViewOnce = m.viewOnce;
+            const viewOnceOpened = openedSet.has(m.id);
+            const viewOnceHide = isViewOnce && !mine && viewOnceOpened;
             return {
                 id: m.id,
-                text: isDeleted ? null : m.text,
-                media: isDeleted ? [] : m.media,
+                text: isDeleted || viewOnceHide ? null : m.text,
+                media: isDeleted || viewOnceHide ? [] : m.media,
                 createdAt: m.createdAt, mine,
                 anonymous: anon,
                 author: publicAuthor,
@@ -207,6 +219,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 contactPhone: isDeleted ? null : m.contactPhone,
                 contactUsername: isDeleted ? null : m.contactUsername,
                 viewOnce: m.viewOnce,
+                viewOnceOpened: viewOnceOpened,
                 mentions: m.mentions,
                 deletedForEveryone: isDeleted,
                 deletedForEveryoneAt: m.deletedForEveryoneAt,

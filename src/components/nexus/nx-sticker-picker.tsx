@@ -1,126 +1,68 @@
 "use client";
 
-// Sticker picker MVP — Twemoji SVG'larni katta stickerlar sifatida ko'rsatadi.
-// Kelajakda haqiqiy sticker paketlar (animatsion WEBP) bilan almashtiriladi.
-// Foydalanuvchi tanlagan sticker mediaType='sticker' bilan yuboriladi.
+// Katta stiker picker — Twemoji asosli.
+// 128px stiker sifatida ko'rsatiladi (text emoji o'rniga).
 
 import { useState } from "react";
-import { X, Search } from "lucide-react";
-import { twemojiUrl } from "@/lib/twemoji";
+import { X, Sticker } from "lucide-react";
+import { Emoji } from "@/lib/twemoji";
 
-// 6 ta kategoriya, har biri ~10 sticker (jami ~60)
-const STICKER_PACKS: Array<{ key: string; label: string; stickers: string[] }> = [
-    {
-        key: "faces",
-        label: "Yuzlar",
-        stickers: ["😀","😂","🥰","😍","🤩","😎","🤔","😴","😭","😱","🥺","😇","🙃","😜","🤗","🤯","🥳","😏","😅","🙄"],
-    },
-    {
-        key: "hearts",
-        label: "Sevgi",
-        stickers: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟"],
-    },
-    {
-        key: "gestures",
-        label: "Imo-ishoralar",
-        stickers: ["👍","👎","👌","✌️","🤞","🤟","🤘","👋","🙌","👏","🙏","💪","🫡","🤝","👊","✊","🤙","☝️"],
-    },
-    {
-        key: "celebration",
-        label: "Bayram",
-        stickers: ["🎉","🎊","🎂","🎁","🎈","🎇","🎆","✨","🎀","🏆","🥇","🥈","🥉","🏅","🎖️","💐","🌹","🌸"],
-    },
-    {
-        key: "food",
-        label: "Ovqat",
-        stickers: ["🍕","🍔","🍟","🌭","🥗","🍜","🍣","🍱","🍰","🎂","🍩","🍪","🍫","🍿","☕","🍵","🥤","🍺"],
-    },
-    {
-        key: "nature",
-        label: "Tabiat",
-        stickers: ["🌞","🌙","⭐","🌈","🔥","💧","⚡","☁️","☔","❄️","🌊","🌍","🌸","🌻","🌳","🌴","🍀","🌷"],
-    },
+const STICKER_SETS: Array<{ id: string; label: string; items: string[] }> = [
+    { id: "faces", label: "Yuzlar", items: ["😀","😂","🥰","😍","😊","🤣","😎","😭","😘","🥺","😅","🤗","😴","🤔","😉","😳","🥳","😇","🙃","😌","😔","😤","😡","🤯","🤩","😱","🤪","😜","🤤","😷"] },
+    { id: "hands",  label: "Qo'llar", items: ["👋","🤚","✋","👌","🤌","🤏","🤞","🤟","🤘","🤙","👈","👉","👆","👇","👍","👎","👊","✊","🤛","🤜","👏","🙌","🙏","💪","🫶","👐"] },
+    { id: "heart",  label: "Yurak",  items: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","❤️‍🔥"] },
+    { id: "fun",    label: "Kayfiyat",items: ["🎉","🎊","🎁","🎂","🎈","🎆","🎇","✨","⭐","🌟","💫","🔥","💯","💥","💦","💤","🌈","☀️","🌙","⚡","💎","🏆","🥇","🎯"] },
+    { id: "life",   label: "Hayot",  items: ["🌸","🌺","🌷","🌹","🌻","💐","🌱","🌲","🌳","🍀","☕","🍕","🍔","🍦","🍰","🍎","🍓","🍉","🥑","🥕","🍇","🍒","🍑","🍩"] },
+    { id: "anim",   label: "Hayvon", items: ["🐶","🐱","🐰","🦊","🐻","🐼","🐯","🦁","🐨","🐮","🐷","🐸","🐵","🙈","🐔","🐣","🦄","🐝","🐢","🐬","🦋","🐟","🦉","🐺"] },
 ];
 
-// Sticker mediaUrl — Twemoji CDN SVG (2x kattaligida yaxshi ko'rinadi)
-function stickerUrl(emoji: string): string {
-    return twemojiUrl(emoji);
-}
-
-interface Props {
+export function NxStickerPicker({
+    open, onPick, onClose,
+}: {
+    open: boolean;
+    onPick: (emoji: string) => void;
     onClose: () => void;
-    onPick: (url: string, emoji: string) => void;
-}
-
-export function NxStickerPicker({ onClose, onPick }: Props) {
-    const [activePack, setActivePack] = useState<string>(STICKER_PACKS[0].key);
-    const [query, setQuery] = useState("");
-    const q = query.trim().toLowerCase();
-    const all = q ? STICKER_PACKS.flatMap(p => p.stickers) : STICKER_PACKS.find(p => p.key === activePack)?.stickers ?? [];
+}) {
+    const [tab, setTab] = useState("faces");
+    if (!open) return null;
+    const current = STICKER_SETS.find(s => s.id === tab)!;
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
-            style={{ background: "rgba(3,7,25,0.75)", backdropFilter: "blur(6px)" }}
-            onClick={onClose}>
-            <div onClick={e => e.stopPropagation()}
-                className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "70vh" }}>
-                {/* Header — search */}
-                <div className="p-3 flex items-center gap-2 border-b"
-                    style={{ borderColor: "rgba(43,62,232,0.20)" }}>
-                    <div className="flex-1 flex items-center gap-2 rounded-lg px-3"
-                        style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.20)" }}>
-                        <Search className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.55)" }} />
-                        <input autoFocus value={query} onChange={e => setQuery(e.target.value)}
-                            placeholder="Sticker qidirish..."
-                            className="flex-1 h-9 bg-transparent text-white text-sm focus:outline-none" />
-                    </div>
-                    <button onClick={onClose}
-                        className="w-9 h-9 flex items-center justify-center rounded-lg"
-                        style={{ background: "rgba(43,62,232,0.10)" }}>
+        <>
+            <div className="fixed inset-0 z-[400] bg-black/60" onClick={onClose} />
+            <div className="fixed inset-x-4 bottom-20 md:inset-x-auto md:right-4 md:bottom-24 max-w-md mx-auto md:mx-0 md:w-96 z-[401] rounded-2xl overflow-hidden"
+                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}
+                onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between px-4 py-3"
+                    style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
+                    <h3 className="text-sm font-black text-white flex items-center gap-2">
+                        <Sticker className="w-4 h-4" style={{ color: "#00CEC8" }} /> Stikerlar
+                    </h3>
+                    <button onClick={onClose} className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/5">
                         <X className="w-4 h-4 text-white" />
                     </button>
                 </div>
-
-                {/* Pack tabs */}
-                {!q && (
-                    <div className="px-2 py-1.5 border-b flex gap-1 overflow-x-auto nx-hide-scrollbar"
-                        style={{ borderColor: "rgba(43,62,232,0.14)" }}>
-                        {STICKER_PACKS.map(p => (
-                            <button key={p.key} onClick={() => setActivePack(p.key)}
-                                className="flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-bold transition"
-                                style={activePack === p.key ? {
-                                    background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff",
-                                } : {
-                                    background: "rgba(43,62,232,0.06)", color: "rgba(140,160,210,0.80)",
-                                    border: "1px solid rgba(43,62,232,0.15)",
-                                }}>
-                                {p.label}
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                {/* Sticker grid */}
-                <div className="flex-1 overflow-y-auto nx-scrollbar p-3">
-                    <div className="grid grid-cols-5 gap-2">
-                        {all.map((e, i) => (
-                            <button key={`${e}-${i}`}
-                                onClick={() => onPick(stickerUrl(e), e)}
-                                className="aspect-square rounded-lg flex items-center justify-center hover:bg-white/[0.05] active:scale-90 transition-transform">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={stickerUrl(e)} alt={e} draggable={false} loading="lazy"
-                                    className="w-12 h-12" />
-                            </button>
-                        ))}
-                    </div>
+                <div className="grid grid-cols-4 gap-2 p-3 max-h-[280px] overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+                    {current.items.map(s => (
+                        <button key={s} onClick={() => onPick(s)}
+                            className="aspect-square flex items-center justify-center rounded-xl hover:bg-white/5 transition active:scale-90">
+                            <Emoji char={s} size={48} />
+                        </button>
+                    ))}
                 </div>
-
-                <div className="p-2 border-t text-center text-[10px]"
-                    style={{ borderColor: "rgba(43,62,232,0.14)", color: "rgba(140,160,210,0.55)" }}>
-                    Static sticker set — kelajakda animatsion sticker paketlari ham qo&apos;shiladi
+                <div className="flex gap-1 px-2 py-2 overflow-x-auto"
+                    style={{ borderTop: "1px solid rgba(43,62,232,0.14)", scrollbarWidth: "none" }}>
+                    {STICKER_SETS.map(s => (
+                        <button key={s.id} onClick={() => setTab(s.id)}
+                            className="flex-shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold whitespace-nowrap"
+                            style={tab === s.id
+                                ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8" }
+                                : { background: "transparent", color: "rgba(140,160,210,0.8)" }}>
+                            {s.label}
+                        </button>
+                    ))}
                 </div>
             </div>
-        </div>
+        </>
     );
 }

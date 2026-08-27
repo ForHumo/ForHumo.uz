@@ -20,12 +20,16 @@ import { NxMentionAutocomplete } from "./nx-mention-autocomplete";
 import { NxGroupJoinRequestsModal } from "./nx-group-join-requests";
 import { NxGroupPinnedList } from "./nx-group-pinned-list";
 import { NxGroupAuditLog } from "./nx-group-audit-log";
-import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon } from "lucide-react";
+import { NxGroupSummarize } from "./nx-group-summarize";
+import { NxGroupVoicePill } from "./nx-group-voice-pill";
+import { NxStickerPicker } from "./nx-sticker-picker";
+import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon, Sparkles as SparklesIcon, Sticker as StickerIcon, EyeOff } from "lucide-react";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean; isSystem?: boolean }
 interface ChDetail { id: string; type: ChType; name: string; handle: string | null; description: string | null; avatarUrl: string | null; isPrivate: boolean; memberCount: number; isOwner: boolean; isMember: boolean; role: string | null; canPost: boolean; allowComments?: boolean; slowModeSeconds?: number }
 interface ChMsg {
+    viewOnceOpened?: boolean;
     id: string; text: string | null; media: string[]; createdAt: string; mine: boolean;
     author: { name: string | null; username: string | null; image: string | null; verified: boolean } | null;
     pollQuestion?: string | null; pollOptions?: string[]; pollExpiresAt?: string | null; pollMulti?: boolean;
@@ -304,6 +308,8 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [pinnedListOpen, setPinnedListOpen] = useState(false);
     const [auditOpen, setAuditOpen] = useState(false);
     const [pendingJoinCount, setPendingJoinCount] = useState(0);
+    const [summarizeOpen, setSummarizeOpen] = useState(false);
+    const [stickerOpen, setStickerOpen] = useState(false);
     // Typing indicator (per-channel)
     const [typingUsers, setTypingUsers] = useState<Map<string, { name: string; expiresAt: number }>>(new Map());
     const typingSentAtRef = useRef<number>(0);
@@ -891,6 +897,14 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                     <p className="text-sm font-black text-white truncate">{ch.name}</p>
                     <p className="text-[11px]" style={{ color: "rgba(120,140,185,0.8)" }}>{ch.type === "CHANNEL" ? "Kanal" : "Guruh"} · {ch.memberCount} a&apos;zo</p>
                 </div>
+                {ch.isMember && (
+                    <button onClick={() => setSummarizeOpen(true)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center"
+                        style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.25)" }}
+                        title="AI xulosa">
+                        <SparklesIcon className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                    </button>
+                )}
                 {ch.isMember && <NxGroupMuteButton channelId={id} />}
                 {ch.isMember && (
                     <button onClick={() => { setSearchOpen(v => !v); setSearchQuery(""); }}
@@ -1046,6 +1060,13 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                 )}
             </div>
 
+            {/* Voice chat pill — faol chat bor bo'lsa yoki OWNER/ADMIN uchun Boshlash */}
+            {ch.type === "GROUP" && ch.isMember && (
+                <NxGroupVoicePill channelId={id}
+                    canStart={!!(ch.isOwner || ch.role === "ADMIN")}
+                    canEnd={!!(ch.isOwner || ch.role === "ADMIN")} />
+            )}
+
             <NxGroupMembersModal open={membersOpen} channelId={id} onClose={() => setMembersOpen(false)} />
             <NxGroupSettingsModal open={settingsOpen} channelId={id} onClose={() => setSettingsOpen(false)}
                 onUpdated={loadDetail} onDeleted={onBack} />
@@ -1057,6 +1078,14 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                 onClose={() => setPinnedListOpen(false)}
                 onJump={jumpToChMsg} />
             <NxGroupAuditLog open={auditOpen} channelId={id} onClose={() => setAuditOpen(false)} />
+            <NxGroupSummarize open={summarizeOpen} channelId={id} onClose={() => setSummarizeOpen(false)} />
+            <NxStickerPicker open={stickerOpen} onClose={() => setStickerOpen(false)}
+                onPick={(emoji) => {
+                    setStickerOpen(false);
+                    // Stiker = katta emoji xabar. Matn "sticker:emoji" holida yuboriladi
+                    // — client rendering'da faqat 1 emoji bo'lsa 64px ko'rsatiladi.
+                    setInput(prev => prev + emoji);
+                }} />
 
             {/* Qidiruv paneli */}
             {searchOpen && ch.isMember && (
@@ -1176,6 +1205,19 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     )}
                                     {m.deletedForEveryone ? (
                                         <p className="text-sm italic" style={{ color: "rgba(140,160,210,0.7)" }}>Bu xabar o&apos;chirilgan</p>
+                                    ) : m.viewOnce && !m.mine && m.viewOnceOpened ? (
+                                        <p className="text-sm italic flex items-center gap-1.5" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                            <EyeOff className="w-3.5 h-3.5" /> Bir marta ko&apos;rilgan (yopiq)
+                                        </p>
+                                    ) : m.viewOnce && !m.mine && !m.viewOnceOpened ? (
+                                        <button onClick={async () => {
+                                            await fetch(`/api/nexus/channels/${id}/messages/${m.id}/view-once-open`, { method: "POST" });
+                                            setMsgs(prev => prev.map(x => x.id === m.id ? { ...x, viewOnceOpened: true } : x));
+                                        }}
+                                            className="text-sm flex items-center gap-1.5 px-3 py-2 rounded-xl"
+                                            style={{ background: "rgba(255,193,7,0.10)", border: "1px dashed rgba(255,193,7,0.35)", color: "#FFC107" }}>
+                                            <EyeOff className="w-3.5 h-3.5" /> Bir martalik xabar — bosib ko&apos;ring
+                                        </button>
                                     ) : (
                                         <>
                                             {m.mediaType && ["audio","video-circle","location","contact"].includes(m.mediaType) && (
@@ -1543,6 +1585,11 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                     {ch.canPost ? (
                         <div className="flex gap-2 px-3 py-3 mx-1 relative" style={{ borderTop: "1px solid rgba(43,62,232,0.12)" }}>
                             <NxChannelRichAttach onAttach={sendRich} disabled={busy} />
+                            <button onClick={() => setStickerOpen(true)} title="Stiker"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl text-white flex-shrink-0"
+                                style={{ background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                <StickerIcon className="w-4 h-4" />
+                            </button>
                             <button onClick={() => setPollOpen(true)} title="So'rovnoma"
                                 className="w-10 h-10 flex items-center justify-center rounded-xl text-white flex-shrink-0"
                                 style={{ background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.25)" }}>
