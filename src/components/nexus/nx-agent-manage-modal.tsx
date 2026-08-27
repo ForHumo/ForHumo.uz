@@ -7,9 +7,21 @@ import { useEffect, useState } from "react";
 import {
     X, Bot, Loader2, Save, Trash2, RotateCw, Zap, Copy, Check, Plus,
     BarChart2, Settings as SettingsIcon, Terminal, Info as InfoIcon, AlertTriangle,
+    History, Tag,
 } from "lucide-react";
 
-type Tab = "info" | "settings" | "commands" | "stats";
+type Tab = "info" | "settings" | "commands" | "stats" | "logs";
+
+type LogItem = {
+    id: string;
+    event: string;
+    ok: boolean;
+    statusCode: number | null;
+    elapsedMs: number;
+    error: string | null;
+    preview: string | null;
+    createdAt: string;
+};
 
 type Cmd = { cmd: string; description: string };
 
@@ -18,6 +30,8 @@ type AgentDetail = {
     image: string | null; humoId: string;
     webhookUrl: string | null;
     commands: Cmd[];
+    tags: string[];
+    rateLimitPerMinute: number;
 };
 
 type StatsData = {
@@ -50,8 +64,15 @@ export function NxAgentManageModal({
     const [image, setImage] = useState("");
     const [webhookUrl, setWebhookUrl] = useState("");
     const [commands, setCommands] = useState<Cmd[]>([]);
+    const [tags, setTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState("");
+    const [rateLimit, setRateLimit] = useState(60);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+
+    // Logs
+    const [logs, setLogs] = useState<LogItem[]>([]);
+    const [logsLoading, setLogsLoading] = useState(false);
 
     // Webhook test
     const [pinging, setPinging] = useState(false);
@@ -78,17 +99,23 @@ export function NxAgentManageModal({
                 const found = (d.items ?? []).find((a: { id: string }) => a.id === agentId);
                 if (found) {
                     const cmds: Cmd[] = Array.isArray(found.commands) ? found.commands : [];
+                    const t: string[] = Array.isArray(found.tags) ? found.tags : [];
+                    const rl = typeof found.rateLimitPerMinute === "number" ? found.rateLimitPerMinute : 60;
                     setDetail({
                         id: found.id, profileId: found.profileId,
                         username: found.username, name: found.name,
                         image: found.image, humoId: found.humoId,
                         webhookUrl: found.webhookUrl,
                         commands: cmds,
+                        tags: t,
+                        rateLimitPerMinute: rl,
                     });
                     setName(found.name ?? "");
                     setImage(found.image ?? "");
                     setWebhookUrl(found.webhookUrl ?? "");
                     setCommands(cmds);
+                    setTags(t);
+                    setRateLimit(rl || 60);
                 }
             })
             .finally(() => setLoading(false));
@@ -101,6 +128,27 @@ export function NxAgentManageModal({
             .then(d => { if (d) setStats(d); });
     }, [open, tab, agentId]);
 
+    useEffect(() => {
+        if (!open || tab !== "logs") return;
+        setLogsLoading(true);
+        fetch(`/api/nexus/agents/${agentId}/logs`)
+            .then(r => r.ok ? r.json() : { items: [] })
+            .then(d => setLogs(d.items ?? []))
+            .finally(() => setLogsLoading(false));
+    }, [open, tab, agentId]);
+
+    function addTag() {
+        const t = tagInput.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+        if (!t || t.length < 2 || t.length > 24) return;
+        if (tags.includes(t)) return;
+        if (tags.length >= 5) return;
+        setTags([...tags, t]);
+        setTagInput("");
+    }
+    function removeTag(t: string) {
+        setTags(tags.filter(x => x !== t));
+    }
+
     async function save() {
         setSaving(true);
         setSaved(false);
@@ -112,12 +160,14 @@ export function NxAgentManageModal({
                     image: image.trim(),
                     webhookUrl: webhookUrl.trim(),
                     commands: commands.filter(c => c.cmd && c.description),
+                    tags,
+                    rateLimitPerMinute: rateLimit,
                 }),
             });
             if (r.ok) {
                 setSaved(true);
                 setTimeout(() => setSaved(false), 2000);
-                if (detail) setDetail({ ...detail, name, image, webhookUrl, commands });
+                if (detail) setDetail({ ...detail, name, image, webhookUrl, commands, tags, rateLimitPerMinute: rateLimit });
             }
         } finally { setSaving(false); }
     }
@@ -217,6 +267,7 @@ export function NxAgentManageModal({
                             <TabBtn active={tab === "settings"} onClick={() => setTab("settings")} icon={<SettingsIcon className="w-3.5 h-3.5" />} label="Sozlash" />
                             <TabBtn active={tab === "commands"} onClick={() => setTab("commands")} icon={<Terminal className="w-3.5 h-3.5" />} label="Buyruqlar" />
                             <TabBtn active={tab === "stats"} onClick={() => setTab("stats")} icon={<BarChart2 className="w-3.5 h-3.5" />} label="Statistika" />
+                            <TabBtn active={tab === "logs"} onClick={() => setTab("logs")} icon={<History className="w-3.5 h-3.5" />} label="Loglar" />
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-5 space-y-4" style={{ scrollbarWidth: "none" }}>
@@ -363,6 +414,58 @@ export function NxAgentManageModal({
                                             HMAC signed POST. Body: message.new event.
                                         </p>
                                     </div>
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block flex items-center gap-1"
+                                            style={{ color: "rgba(160,176,224,0.7)" }}>
+                                            <Tag className="w-3 h-3" /> Kategoriya taglar ({tags.length}/5)
+                                        </label>
+                                        <div className="flex flex-wrap gap-1.5 mb-2">
+                                            {tags.map(t => (
+                                                <span key={t} className="inline-flex items-center gap-1 h-7 px-2 rounded-full text-[10px] font-bold"
+                                                    style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>
+                                                    #{t}
+                                                    <button onClick={() => removeTag(t)} className="ml-0.5">
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                        <div className="flex gap-1.5">
+                                            <input value={tagInput}
+                                                onChange={e => setTagInput(e.target.value.slice(0, 24))}
+                                                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
+                                                placeholder="oyin, utility, narx..."
+                                                className="flex-1 h-10 rounded-lg px-3 text-xs focus:outline-none"
+                                                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }}
+                                                disabled={tags.length >= 5}
+                                            />
+                                            <button onClick={addTag} disabled={tags.length >= 5 || !tagInput.trim()}
+                                                className="h-10 px-3 rounded-lg text-xs font-black disabled:opacity-50"
+                                                style={{ background: "rgba(0,206,200,0.20)", color: "white" }}>
+                                                <Plus className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                        <p className="text-[10px] mt-1" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                            2-24 belgi, a-z, 0-9, _, -. Discovery'da bosiladigan bo&apos;ladi.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block"
+                                            style={{ color: "rgba(160,176,224,0.7)" }}>
+                                            Rate limit (daqiqada)
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                            <input type="number" min={1} max={600} value={rateLimit || 60}
+                                                onChange={e => setRateLimit(Math.max(1, Math.min(600, parseInt(e.target.value) || 60)))}
+                                                className="w-24 h-10 rounded-lg px-3 text-sm text-center focus:outline-none"
+                                                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }}
+                                            />
+                                            <span className="text-xs" style={{ color: "rgba(160,176,224,0.85)" }}>so&apos;rov / daqiqa</span>
+                                        </div>
+                                        <p className="text-[10px] mt-1" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                            Default: 60. Bu chegaradan oshsa webhook chaqirilmaydi (spam blok).
+                                        </p>
+                                    </div>
                                     <button onClick={save} disabled={saving}
                                         className="w-full h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                                         style={{ background: "linear-gradient(135deg, #2B3EE8, #00CEC8)", color: "white" }}>
@@ -432,6 +535,65 @@ export function NxAgentManageModal({
                                         {saved ? "Saqlandi" : "Buyruqlarni saqlash"}
                                     </button>
                                 </>
+                            )}
+
+                            {tab === "logs" && (
+                                logsLoading ? (
+                                    <div className="flex justify-center py-8">
+                                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#2B3EE8" }} />
+                                    </div>
+                                ) : logs.length === 0 ? (
+                                    <div className="p-8 rounded-2xl text-center"
+                                        style={{ background: "rgba(11,18,40,0.55)", border: "1px dashed rgba(43,62,232,0.20)" }}>
+                                        <History className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "#00CEC8" }} />
+                                        <p className="text-sm" style={{ color: "rgba(160,176,224,0.75)" }}>
+                                            Hali chaqiruv yo&apos;q
+                                        </p>
+                                        <p className="text-[10px] mt-1" style={{ color: "rgba(140,160,210,0.6)" }}>
+                                            So&apos;nggi 100 webhook chaqiruv shu yerda ko&apos;rinadi
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1.5">
+                                        <p className="text-[10px] uppercase tracking-widest mb-2"
+                                            style={{ color: "rgba(160,176,224,0.7)" }}>
+                                            So&apos;nggi {logs.length} chaqiruv
+                                        </p>
+                                        {logs.map(l => (
+                                            <div key={l.id} className="p-3 rounded-xl"
+                                                style={{ background: "rgba(11,18,40,0.55)", border: `1px solid ${l.ok ? "rgba(0,206,200,0.20)" : "rgba(239,68,68,0.20)"}` }}>
+                                                <div className="flex items-center gap-1.5 mb-1">
+                                                    <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded"
+                                                        style={l.ok
+                                                            ? { background: "rgba(0,206,200,0.14)", color: "#00CEC8" }
+                                                            : { background: "rgba(239,68,68,0.14)", color: "#EF4444" }}>
+                                                        {l.ok ? "OK" : "FAIL"}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold" style={{ color: "rgba(200,214,247,0.9)" }}>
+                                                        {l.event}
+                                                    </span>
+                                                    <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                                        {l.elapsedMs}ms
+                                                    </span>
+                                                    <div className="flex-1" />
+                                                    <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                                        {new Date(l.createdAt).toLocaleString("uz-UZ", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" })}
+                                                    </span>
+                                                </div>
+                                                {l.preview && (
+                                                    <p className="text-[11px] truncate" style={{ color: "rgba(180,195,235,0.85)" }}>
+                                                        {l.preview}
+                                                    </p>
+                                                )}
+                                                {l.error && (
+                                                    <p className="text-[10px] mt-0.5 font-mono" style={{ color: "#EF4444" }}>
+                                                        {l.error}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )
                             )}
 
                             {tab === "stats" && (

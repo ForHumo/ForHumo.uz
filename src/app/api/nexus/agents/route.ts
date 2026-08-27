@@ -56,6 +56,7 @@ export async function GET(req: Request) {
                 humoId: a.profile.humoId, bio: a.profile.bio,
                 module: a.module, isSystem: a.isSystem,
                 commands: a.commands,
+                tags: a.tags,
             })),
         });
     }
@@ -81,6 +82,8 @@ export async function GET(req: Request) {
             isSystem: a.isSystem,
             webhookUrl: a.webhookUrl,
             commands: a.commands,
+            tags: a.tags,
+            rateLimitPerMinute: a.rateLimitPerMinute,
             createdAt: a.createdAt.toISOString(),
         })),
     });

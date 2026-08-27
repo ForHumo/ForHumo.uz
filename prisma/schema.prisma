@@ -251,8 +251,31 @@ model NexusAgent {
   //   Chat composer'da "/" bosilsa autocomplete ko'rsatiladi.
   commands     Json?
   isSystem     Boolean      @default(false)                                    // rasmiy agent (bir marta seed qilingan)
+  // Kategoriya taglar (kelajak discover uchun): masalan ["oyin", "utility", "narx"]
+  // Foydalanuvchi maks 5 ta tag qo'shadi. Har biri 2-24 belgi, a-z0-9_-.
+  tags         String[]     @default([])
+  // Per-agent rate-limit — daqiqada maks so'rov (0 = default 60/min).
+  // Faqat webhook chaqiruvlariga tegishli. Owner o'zgartira oladi.
+  rateLimitPerMinute Int    @default(0)
   createdAt    DateTime     @default(now())
+  logs         NexusAgentLog[]
   @@index([ownerId])
+  @@index([tags])
+}
+
+// Bot webhook logs — so'nggi 100 chaqiruv audit (owner ko'radi).
+model NexusAgentLog {
+  id         String     @id @default(cuid())
+  agentId    String
+  agent      NexusAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  event      String                              // "message.new" | "webhook.ping" | "inline.query"
+  ok         Boolean                             // webhook success?
+  statusCode Int?                                // HTTP status kod
+  elapsedMs  Int                                 // response vaqti
+  error      String?    @db.VarChar(500)         // xato matni (agar bor bo'lsa)
+  preview    String?    @db.VarChar(200)         // request matn preview
+  createdAt  DateTime   @default(now())
+  @@index([agentId, createdAt])
 }
 
 // Humo Market — Owner tomonidan taklif qilingan worker'lar.

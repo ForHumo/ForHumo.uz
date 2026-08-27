@@ -564,14 +564,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             const recipientId = otherId(conv, me.id);
             const agent = await prisma.nexusAgent.findUnique({
                 where: { profileId: recipientId },
-                select: { profileId: true, webhookUrl: true, apiKey: true },
+                select: { id: true, profileId: true, webhookUrl: true, apiKey: true, rateLimitPerMinute: true },
             });
             if (!agent || !agent.webhookUrl || !agent.apiKey) return;
+
+            // Per-agent rate-limit — spam prevention (log-asosli hisob)
+            const { agentRateLimited, logAgentCall } = await import("@/lib/agent-log");
+            if (await agentRateLimited(agent.id, agent.rateLimitPerMinute)) {
+                await logAgentCall({
+                    agentId: agent.id, event: "message.new",
+                    ok: false, elapsedMs: 0, error: "rate_limited",
+                    preview: (msg.text ?? "").slice(0, 100),
+                });
+                return;
+            }
 
             const senderProfile = await prisma.userProfile.findUnique({
                 where: { id: me.id }, select: { username: true, name: true },
             });
 
+            const startedAt = Date.now();
             const reply = await sendToAgentWebhook(agent, {
                 event: "message.created",
                 chatId: id,
@@ -586,7 +598,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                 mediaType: msg.mediaType,
                 timestamp: Math.floor(Date.now() / 1000),
             });
-            if (!reply) return;
+            if (!reply) {
+                await logAgentCall({
+                    agentId: agent.id, event: "message.new",
+                    ok: false, elapsedMs: Date.now() - startedAt, error: "no_reply",
+                    preview: (msg.text ?? "").slice(0, 100),
+                });
+                return;
+            }
+            await logAgentCall({
+                agentId: agent.id, event: "message.new",
+                ok: true, elapsedMs: Date.now() - startedAt,
+                preview: (reply.text ?? "").slice(0, 100),
+            });
 
             // Agent javobi — o'sha suhbatga yangi xabar
             const agentMsg = await prisma.nexusMessage.create({

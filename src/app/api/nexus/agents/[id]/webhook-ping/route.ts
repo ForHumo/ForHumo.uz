@@ -7,6 +7,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendToAgentWebhook } from "@/lib/agent-webhook";
+import { logAgentCall } from "@/lib/agent-log";
+import { after } from "next/server";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
@@ -43,15 +45,16 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         );
         const elapsedMs = Date.now() - startedAt;
         if (!reply) {
+            after(() => logAgentCall({ agentId: id, event: "webhook.ping", ok: false, elapsedMs, error: "no_reply", preview: "ping" }));
             return NextResponse.json({ ok: false, elapsedMs, error: "Webhook javob bermadi yoki xato qaytardi" });
         }
         const replyPreview = reply.text ? String(reply.text).slice(0, 200) : (reply.mediaUrl ? `[${reply.mediaType ?? "media"}]` : "OK");
+        after(() => logAgentCall({ agentId: id, event: "webhook.ping", ok: true, elapsedMs, preview: replyPreview }));
         return NextResponse.json({ ok: true, elapsedMs, replyPreview });
     } catch (e) {
-        return NextResponse.json({
-            ok: false,
-            elapsedMs: Date.now() - startedAt,
-            error: e instanceof Error ? e.message : "Ping muvaffaqiyatsiz",
-        });
+        const elapsedMs = Date.now() - startedAt;
+        const errMsg = e instanceof Error ? e.message : "Ping muvaffaqiyatsiz";
+        after(() => logAgentCall({ agentId: id, event: "webhook.ping", ok: false, elapsedMs, error: errMsg, preview: "ping" }));
+        return NextResponse.json({ ok: false, elapsedMs, error: errMsg });
     }
 }

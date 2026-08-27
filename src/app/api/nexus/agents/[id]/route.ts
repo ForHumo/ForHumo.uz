@@ -42,6 +42,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const webhookUrl = typeof body?.webhookUrl === "string" ? body.webhookUrl.trim().slice(0, 500) : undefined;
     const name = typeof body?.name === "string" ? body.name.trim().slice(0, 50) : undefined;
     const image = typeof body?.image === "string" ? body.image.trim().slice(0, 500) : undefined;
+    const rateLimitPerMinute = typeof body?.rateLimitPerMinute === "number"
+        ? Math.max(0, Math.min(600, Math.floor(body.rateLimitPerMinute)))
+        : undefined;
+    // Tags — massiv, har biri 2-24 belgi, a-z0-9_-. Maks 5 ta.
+    let tags: string[] | undefined;
+    if (Array.isArray(body?.tags)) {
+        const cleaned = (body.tags as unknown[])
+            .filter((t): t is string => typeof t === "string")
+            .map(t => t.trim().toLowerCase().replace(/[^a-z0-9_-]/g, ""))
+            .filter(t => t.length >= 2 && t.length <= 24)
+            .slice(0, 5);
+        tags = Array.from(new Set(cleaned));
+    }
 
     // Commands — [{cmd, description}] massiv. Har biri cmd 1-32 belgi (a-z, 0-9, _),
     // description 1-256 belgi. Maks 32 command.
@@ -65,6 +78,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const agentData: any = {};
     if (webhookUrl !== undefined) agentData.webhookUrl = webhookUrl || null;
     if (commands !== undefined) agentData.commands = commands;
+    if (tags !== undefined) agentData.tags = tags;
+    if (rateLimitPerMinute !== undefined) agentData.rateLimitPerMinute = rateLimitPerMinute;
     if (Object.keys(agentData).length > 0) {
         await prisma.nexusAgent.update({ where: { id }, data: agentData });
     }
