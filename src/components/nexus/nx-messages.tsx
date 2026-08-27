@@ -48,6 +48,8 @@ interface SUser { name: string | null; username: string | null; image: string | 
 
 // Xabar matnini clipboard'ga nusxa olish
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
+import { NxAgentButtons, type AgentButton } from "./nx-agent-buttons";
+import { NxAgentInlineMode } from "./nx-agent-inline-mode";
 function copyText(text: string) { void copyToClipboard(text); }
 // TTS eshittirish
 function speakText(text: string) {
@@ -121,6 +123,16 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     const [selected, setSelected] = useState<{ conversationId: string; other: Other | null } | null>(null);
     const [messages, setMessages] = useState<Msg[]>([]);
     const [input, setInput] = useState("");
+    const [inlineMode, setInlineMode] = useState<{ bot: string; query: string } | null>(null);
+
+    // "@bot_agent query" ni parse qiladi (inline mode).
+    function parseInlineFromInput(v: string): { bot: string; query: string } | null {
+        const m = v.match(/^@([a-z0-9_]{4,32})\s+(.*)$/i);
+        if (!m) return null;
+        const bot = m[1].toLowerCase();
+        if (!bot.endsWith("_agent")) return null;
+        return { bot, query: m[2] };
+    }
     // Mobile action sheet — long-press yoki chap ustunga tap bilan tanlangan xabar
     const [actionMsg, setActionMsg] = useState<Msg | null>(null);
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -740,6 +752,10 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                         <div className="flex items-center gap-1">
                             <span className="text-sm font-bold text-white truncate">{selected.other?.name || selected.other?.username || "Foydalanuvchi"}</span>
                             {selected.other?.verified && <NxVerifiedBadge category={selected.other?.verifiedCategory} size={14} />}
+                            {selected.other?.username?.toLowerCase().endsWith("_agent") && (
+                                <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0"
+                                    style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>BOT</span>
+                            )}
                         </div>
                         {peerTyping ? (
                             <p className="text-[10px] font-bold" style={{ color: "#00CEC8" }}>yozmoqda...</p>
@@ -1036,6 +1052,15 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                         {m.editedAt && <span className="ml-1.5 text-[10px] opacity-50 italic">(tahrirlangan)</span>}
                                     </div>
                                 )}
+                                {/* Inline tugmalar (agent xabari uchun) */}
+                                {Array.isArray((m as unknown as { buttons?: AgentButton[][] }).buttons)
+                                    && ((m as unknown as { buttons?: AgentButton[][] }).buttons?.length ?? 0) > 0 && (
+                                    <NxAgentButtons
+                                        buttons={(m as unknown as { buttons: AgentButton[][] }).buttons}
+                                        messageId={m.id}
+                                        mine={m.mine}
+                                    />
+                                )}
                                 <div className={`flex items-center gap-1 px-1 ${m.mine ? "justify-end" : "justify-start"}`}>
                                     {m.text && (
                                         <>
@@ -1188,18 +1213,47 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                 </div>
                             )}
                         </div>
-                        <input value={input} onChange={e => {
-                                setInput(e.target.value);
-                                const now = Date.now();
-                                if (selected?.other?.id && myProfileId && now - lastTypingSentRef.current > 2000) {
-                                    sendTyping(selected.other.id, myProfileId, myName);
-                                    lastTypingSentRef.current = now;
-                                }
-                            }} onKeyDown={e => e.key === "Enter" && send()}
-                            placeholder={uploading ? `Yuklanmoqda ${uploadPct}%...` : "Xabar yozing..."}
-                            maxLength={2000} disabled={uploading}
-                            className="flex-1 h-10 rounded-xl px-3.5 text-sm text-white outline-none disabled:opacity-60"
-                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "#00CEC8" }} />
+                        <div className="flex-1 relative">
+                            {inlineMode && (
+                                <NxAgentInlineMode
+                                    bot={inlineMode.bot}
+                                    query={inlineMode.query}
+                                    convId={selected?.conversationId ?? null}
+                                    onPick={(result) => {
+                                        // Natijani DM'ga xabar sifatida yuboramiz
+                                        setInput("");
+                                        setInlineMode(null);
+                                        if (!selected?.conversationId) return;
+                                        fetch(`/api/nexus/messages/${selected.conversationId}`, {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({
+                                                text: result.message.text ?? "",
+                                                mediaUrl: result.message.mediaUrl ?? null,
+                                                mediaType: result.message.mediaType ?? null,
+                                                mediaMime: result.message.mediaMime ?? null,
+                                                mediaName: result.message.mediaName ?? null,
+                                            }),
+                                        }).catch(() => {});
+                                    }}
+                                    onClose={() => setInlineMode(null)}
+                                />
+                            )}
+                            <input value={input} onChange={e => {
+                                    const v = e.target.value;
+                                    setInput(v);
+                                    setInlineMode(parseInlineFromInput(v));
+                                    const now = Date.now();
+                                    if (selected?.other?.id && myProfileId && now - lastTypingSentRef.current > 2000) {
+                                        sendTyping(selected.other.id, myProfileId, myName);
+                                        lastTypingSentRef.current = now;
+                                    }
+                                }} onKeyDown={e => { if (e.key === "Enter" && !inlineMode) send(); if (e.key === "Escape") setInlineMode(null); }}
+                                placeholder={uploading ? `Yuklanmoqda ${uploadPct}%...` : "Xabar yozing... (@bot_agent so'rov — inline)"}
+                                maxLength={2000} disabled={uploading}
+                                className="w-full h-10 rounded-xl px-3.5 text-sm text-white outline-none disabled:opacity-60"
+                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "#00CEC8" }} />
+                        </div>
                         {/* Matn bo'sh bo'lsa: dumaloq video + mic; aks holda jo'natish */}
                         {input.trim() ? (
                             <button onClick={send} disabled={sending}
