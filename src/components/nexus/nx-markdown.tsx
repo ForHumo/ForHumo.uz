@@ -4,12 +4,67 @@
 // Barcha URL/text escape qilinadi, faqat tekshirilgan http(s) linklar aylanadi.
 
 import React from "react";
+import Link from "next/link";
 import { EmojiText } from "@/lib/twemoji";
 
-// Matn parchasini emoji bilan render qilish (system emoji o'rniga Twemoji SVG)
-function textWithEmoji(s: string, key: string, size = 18): React.ReactNode {
-    return <EmojiText key={key} text={s} size={size} />;
+// @username mention'larni ko'k rangda ko'rsatib profilga link qiladi
+function withMentions(node: React.ReactNode, keyBase: string): React.ReactNode {
+    if (typeof node !== "string") return node;
+    const parts: React.ReactNode[] = [];
+    const re = /@([a-z0-9_]{3,32})/gi;
+    let last = 0;
+    let m: RegExpExecArray | null;
+    let i = 0;
+    while ((m = re.exec(node)) !== null) {
+        if (m.index > last) parts.push(node.slice(last, m.index));
+        const un = m[1];
+        parts.push(
+            <Link key={`${keyBase}-m${i++}`}
+                href={`/nexus/u/${un}`}
+                onClick={e => e.stopPropagation()}
+                className="font-bold hover:underline"
+                style={{ color: "#00CEC8" }}>
+                @{un}
+            </Link>
+        );
+        last = m.index + m[0].length;
+    }
+    if (parts.length === 0) return node;
+    if (last < node.length) parts.push(node.slice(last));
+    return <>{parts}</>;
 }
+
+// Matn parchasini emoji + mention bilan render qilish
+function textWithEmoji(s: string, key: string, size = 18): React.ReactNode {
+    // Avval mention'larni ajratamiz, keyin qolgan qismlarga emoji parse
+    const re = /@([a-z0-9_]{3,32})/gi;
+    const parts: React.ReactNode[] = [];
+    let last = 0;
+    let m: RegExpExecArray | null;
+    let i = 0;
+    while ((m = re.exec(s)) !== null) {
+        if (m.index > last) {
+            const chunk = s.slice(last, m.index);
+            parts.push(<EmojiText key={`${key}-e${i}`} text={chunk} size={size} />);
+        }
+        const un = m[1];
+        parts.push(
+            <Link key={`${key}-m${i++}`}
+                href={`/nexus/u/${un}`}
+                onClick={e => e.stopPropagation()}
+                className="font-bold hover:underline"
+                style={{ color: "#00CEC8" }}>
+                @{un}
+            </Link>
+        );
+        last = m.index + m[0].length;
+    }
+    if (parts.length === 0) return <EmojiText key={key} text={s} size={size} />;
+    if (last < s.length) parts.push(<EmojiText key={`${key}-e-end`} text={s.slice(last)} size={size} />);
+    return <React.Fragment key={key}>{parts}</React.Fragment>;
+}
+// withMentions helper (fallback holatlarda) — kelajakda kerak bo'lsa
+void withMentions;
 
 const URL_RE = /^https?:\/\/[^\s<>"']+$/i;
 

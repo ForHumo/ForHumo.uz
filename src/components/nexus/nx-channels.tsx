@@ -26,8 +26,11 @@ import { NxStickerPicker } from "./nx-sticker-picker";
 import { NxGroupStoriesBar } from "./nx-group-stories";
 import { NxGroupTopicsModal } from "./nx-group-topics";
 import { NxGroupBotsModal } from "./nx-group-bots-modal";
+import { NxGroupBansModal } from "./nx-group-bans-modal";
+import { NxGroupPollVoters } from "./nx-group-poll-voters";
+import { NxBotCommandAutocomplete } from "./nx-bot-command-autocomplete";
 import { NxFinancialCopilot } from "./nx-financial-copilot";
-import { Wallet as WalletIcon } from "lucide-react";
+import { Wallet as WalletIcon, Download as DownloadIcon } from "lucide-react";
 import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon, Sparkles as SparklesIcon, Sticker as StickerIcon, EyeOff, Hash as HashIcon, Bot as BotIcon } from "lucide-react";
 
 type ChType = "CHANNEL" | "GROUP";
@@ -320,6 +323,9 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [currentTopicId, setCurrentTopicId] = useState<string | null>(null);
     const [currentTopicName, setCurrentTopicName] = useState<string | null>(null);
     const [copilotOpen, setCopilotOpen] = useState(false);
+    const [bansOpen, setBansOpen] = useState(false);
+    const [pollVotersFor, setPollVotersFor] = useState<string | null>(null);
+    const [slashQuery, setSlashQuery] = useState<string | null>(null);
     // Typing indicator (per-channel)
     const [typingUsers, setTypingUsers] = useState<Map<string, { name: string; expiresAt: number }>>(new Map());
     const typingSentAtRef = useRef<number>(0);
@@ -587,6 +593,9 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         // Oxirgi @xxx ni topamiz (bo'shliq bilan oldida)
         const m = v.match(/(?:^|\s)@([a-z0-9_]{0,32})$/i);
         setMentionQuery(m ? "@" + m[1] : null);
+        // Slash command — matn boshida `/xxx`
+        const s = v.match(/^\/([a-z0-9_]{0,32})$/i);
+        setSlashQuery(s ? "/" + s[1] : null);
         // Typing signal — 3 soniyada bir marta yuborish (throttled)
         if (v.trim().length > 0 && ch?.type === "GROUP") {
             const now = Date.now();
@@ -1061,6 +1070,26 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         <span className="flex-1">Botlar</span>
                                     </button>
                                 )}
+                                {/* Banlar — OWNER/ADMIN */}
+                                {(ch.isOwner || ch.role === "ADMIN") && (
+                                    <button onClick={() => { setBansOpen(true); setChMoreOpen(false); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <ShieldOff className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <span className="flex-1">Bloklanganlar</span>
+                                    </button>
+                                )}
+                                {/* Export — faqat OWNER */}
+                                {ch.isOwner && (
+                                    <a href={`/api/nexus/channels/${id}/export?format=json`}
+                                        onClick={() => setChMoreOpen(false)}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <DownloadIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <span className="flex-1">Xabarlarni eksport</span>
+                                        <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>JSON</span>
+                                    </a>
+                                )}
                                 {/* Admin jurnali */}
                                 {(ch.isOwner || ch.role === "ADMIN") && (
                                     <button onClick={() => { setAuditOpen(true); setChMoreOpen(false); }}
@@ -1194,6 +1223,11 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             <NxFinancialCopilot open={copilotOpen} contextType="channel" contextId={id}
                 onClose={() => setCopilotOpen(false)}
                 onSendPublic={(text) => { setInput(text); }} />
+            <NxGroupBansModal open={bansOpen} channelId={id} onClose={() => setBansOpen(false)} />
+            {pollVotersFor && (
+                <NxGroupPollVoters open={!!pollVotersFor} channelId={id} messageId={pollVotersFor}
+                    onClose={() => setPollVotersFor(null)} />
+            )}
 
             {/* Qidiruv paneli */}
             {searchOpen && ch.isMember && (
@@ -1396,6 +1430,14 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                             {m.pollMulti ? "Bir necha variant" : "Bitta variant"} · {total} ovoz{expired && " · Yakunlangan"}
                                                         </p>
                                                     </div>
+                                                    {total > 0 && (
+                                                        <button onClick={() => setPollVotersFor(m.id)}
+                                                            title="Ovoz beruvchilar"
+                                                            className="text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0"
+                                                            style={{ background: "rgba(0,206,200,0.10)", color: "#00CEC8", border: "1px solid rgba(0,206,200,0.25)" }}>
+                                                            Ko&apos;rish
+                                                        </button>
+                                                    )}
                                                 </div>
                                                 {m.pollOptions.map((opt, i) => {
                                                     const cnt = counts[i] ?? 0;
@@ -1708,10 +1750,15 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                     <NxMentionAutocomplete channelId={id} query={mentionQuery}
                                         onPick={pickMention} onClose={() => setMentionQuery(null)} />
                                 )}
+                                {slashQuery && ch.type === "GROUP" && (
+                                    <NxBotCommandAutocomplete channelId={id} query={slashQuery}
+                                        onPick={(cmd) => { setInput(cmd + " "); setSlashQuery(null); inputRef.current?.focus(); }}
+                                        onClose={() => setSlashQuery(null)} />
+                                )}
                                 <input ref={inputRef} value={input}
                                     onChange={e => onInputChange(e.target.value)}
-                                    onKeyDown={e => { if (e.key === "Enter" && !mentionQuery) send(); if (e.key === "Escape") setMentionQuery(null); }}
-                                    placeholder={ch.type === "CHANNEL" ? "E'lon yozing..." : "Xabar yozing... (@ bilan a'zoni tildan)"}
+                                    onKeyDown={e => { if (e.key === "Enter" && !mentionQuery && !slashQuery) send(); if (e.key === "Escape") { setMentionQuery(null); setSlashQuery(null); } }}
+                                    placeholder={ch.type === "CHANNEL" ? "E'lon yozing..." : "Xabar yozing... (@ bilan a'zo, / bilan bot)"}
                                     className="w-full h-10 rounded-xl px-3 text-sm text-white outline-none"
                                     style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.2)", caretColor: "#00CEC8" }} />
                             </div>
