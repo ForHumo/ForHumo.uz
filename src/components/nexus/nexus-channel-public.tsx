@@ -88,6 +88,32 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
             .finally(() => setLoading(false));
     }, [handle]);
 
+    // Deep-link `?auto=1` — sessiya bor va a'zo emas bo'lsa avto-join.
+    // Anonim bo'lsa signIn boradi (callbackUrl bilan qaytadi).
+    useEffect(() => {
+        if (loading || !data) return;
+        if (typeof window === "undefined") return;
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("auto") !== "1") return;
+        if (data.isMember) {
+            window.location.href = `/nexus?channel=${encodeURIComponent(handle)}`;
+            return;
+        }
+        if (data.channel.isPrivate) return;
+        if (status === "unauthenticated") {
+            signIn("google", { callbackUrl: window.location.href });
+            return;
+        }
+        if (status === "authenticated") {
+            // avto-join
+            fetch(`/api/nexus/channels/${data.channel.id}/join`, { method: "POST" })
+                .then(r => {
+                    if (r.ok) window.location.href = `/nexus?channel=${encodeURIComponent(handle)}`;
+                })
+                .catch(() => {});
+        }
+    }, [loading, data, status, handle]);
+
     async function handleJoin() {
         if (!data) return;
         if (status !== "authenticated") {

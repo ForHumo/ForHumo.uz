@@ -1,113 +1,124 @@
-// URL link preview — OG (Open Graph) va Twitter Card meta'larni tortib olish.
-//   GET /api/nexus/link-preview?url=https://...
-// Fetch cache (Vercel edge) 1 soatga saqlaydi.
+// GET /api/nexus/link-preview?url=... — OG metadata olish
+// Sessiyali foydalanuvchi uchun (Nexus'da xabar preview kartochkasi).
+// Cache: 24 soat.
+// Server-side fetch: SSRF himoyasi — faqat http/https, xususiy IP'lar bloklangan.
 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-// Faqat html/text bo'lgan javoblarni parse qilamiz — juda katta bo'lmasin
-const MAX_BYTES = 512 * 1024; // 512KB
+const MAX_HTML_BYTES = 512 * 1024; // 512KB
+const FETCH_TIMEOUT_MS = 4500;
 
-function pickMeta(html: string, prop: string): string | null {
-    const patterns = [
-        new RegExp(`<meta[^>]+property=["']${prop}["'][^>]+content=["']([^"']+)["']`, "i"),
-        new RegExp(`<meta[^>]+name=["']${prop}["'][^>]+content=["']([^"']+)["']`, "i"),
-        new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${prop}["']`, "i"),
-        new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+name=["']${prop}["']`, "i"),
-    ];
-    for (const p of patterns) {
-        const m = html.match(p);
-        if (m?.[1]) return decodeEntities(m[1]);
+function isPrivateHost(host: string): boolean {
+    const h = host.toLowerCase();
+    if (h === "localhost" || h.endsWith(".localhost")) return true;
+    // IPv4 xususiy va loopback
+    const m = h.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+    if (m) {
+        const [a, b] = [parseInt(m[1], 10), parseInt(m[2], 10)];
+        if (a === 10) return true;
+        if (a === 127) return true;
+        if (a === 0) return true;
+        if (a === 169 && b === 254) return true;
+        if (a === 172 && b >= 16 && b <= 31) return true;
+        if (a === 192 && b === 168) return true;
     }
-    return null;
+    // IPv6 loopback/link-local rudimentar tekshirish
+    if (h === "::1" || h.startsWith("fe80::") || h.startsWith("fc") || h.startsWith("fd")) return true;
+    return false;
 }
 
-function decodeEntities(s: string): string {
-    return s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x27;/g, "'");
-}
-
-function normalizeUrl(base: string, maybe: string | null): string | null {
-    if (!maybe) return null;
-    try { return new URL(maybe, base).toString(); }
-    catch { return null; }
+function extractMeta(html: string, url: URL): {
+    title: string | null;
+    description: string | null;
+    image: string | null;
+    site: string | null;
+} {
+    // Faqat <head> qismi
+    const head = html.slice(0, MAX_HTML_BYTES);
+    function pick(prop: string): string | null {
+        // og:xxx yoki name="xxx"
+        const re = new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]*content=["']([^"']+)["']`, "i");
+        const m = head.match(re);
+        if (m) return m[1];
+        // reverse order (content oldin, property keyin)
+        const re2 = new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]*(?:property|name)=["']${prop}["']`, "i");
+        const m2 = head.match(re2);
+        return m2 ? m2[1] : null;
+    }
+    const ogTitle = pick("og:title") ?? pick("twitter:title");
+    const titleTag = head.match(/<title[^>]*>([^<]{1,200})<\/title>/i);
+    const title = ogTitle ?? (titleTag ? titleTag[1] : null);
+    const description = pick("og:description") ?? pick("twitter:description") ?? pick("description");
+    let image = pick("og:image") ?? pick("twitter:image");
+    if (image && !/^https?:\/\//i.test(image)) {
+        try { image = new URL(image, url).toString(); } catch { image = null; }
+    }
+    const siteName = pick("og:site_name") ?? url.hostname.replace(/^www\./, "");
+    return {
+        title: title?.trim().slice(0, 200) ?? null,
+        description: description?.trim().slice(0, 400) ?? null,
+        image: image?.slice(0, 800) ?? null,
+        site: siteName?.slice(0, 100) ?? null,
+    };
 }
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const u = new URL(req.url);
-    const target = u.searchParams.get("url");
-    if (!target) return NextResponse.json({ error: "url kerak" }, { status: 400 });
+    const rawUrl = new URL(req.url).searchParams.get("url");
+    if (!rawUrl) return NextResponse.json({ error: "url kerak" }, { status: 400 });
 
-    let parsed: URL;
-    try { parsed = new URL(target); }
-    catch { return NextResponse.json({ error: "noto'g'ri URL" }, { status: 400 }); }
-
-    // Faqat http(s), va SSRF himoyasi — lokal manzillarni bloklash
-    if (!["http:", "https:"].includes(parsed.protocol)) {
-        return NextResponse.json({ error: "faqat http/https" }, { status: 400 });
-    }
-    const host = parsed.hostname.toLowerCase();
-    if (host === "localhost" || host === "0.0.0.0" || host.startsWith("127.") || host.startsWith("10.")
-        || host.startsWith("192.168.") || host.endsWith(".local") || host.endsWith(".internal")
-        || host.includes(":")) {
-        return NextResponse.json({ error: "lokal manzil taqiqlangan" }, { status: 400 });
-    }
-
+    let target: URL;
     try {
-        const res = await fetch(parsed.toString(), {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (compatible; ForHumoPreview/1.0)",
-                "Accept": "text/html,application/xhtml+xml",
-            },
+        target = new URL(rawUrl);
+    } catch {
+        return NextResponse.json({ error: "URL noto'g'ri" }, { status: 400 });
+    }
+    if (target.protocol !== "http:" && target.protocol !== "https:") {
+        return NextResponse.json({ error: "Faqat http/https" }, { status: 400 });
+    }
+    if (isPrivateHost(target.hostname)) {
+        return NextResponse.json({ error: "Xususiy manzil" }, { status: 400 });
+    }
+
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+    try {
+        const res = await fetch(target.toString(), {
+            signal: ctrl.signal,
             redirect: "follow",
-            signal: AbortSignal.timeout(6000),
-            next: { revalidate: 3600 }, // 1 soat cache
+            headers: { "User-Agent": "HumoNexusPreview/1.0 (+https://forhumo.uz)" },
         });
-        if (!res.ok) return NextResponse.json({ error: `status ${res.status}` }, { status: 502 });
-        const ct = res.headers.get("content-type") || "";
-        if (!ct.includes("text/html") && !ct.includes("text/plain") && !ct.includes("application/xhtml")) {
-            return NextResponse.json({ ok: true, url: parsed.toString(), title: null, image: null, description: null, siteName: null });
-        }
-        // Streaming o'qish, MAX_BYTES gacha
+        clearTimeout(timer);
+        const ct = res.headers.get("content-type") ?? "";
+        if (!ct.includes("html")) return NextResponse.json({ error: "HTML emas" }, { status: 400 });
+
         const reader = res.body?.getReader();
-        if (!reader) return NextResponse.json({ error: "no body" }, { status: 502 });
+        if (!reader) return NextResponse.json({ error: "body yo'q" }, { status: 400 });
         const chunks: Uint8Array[] = [];
         let total = 0;
-        while (total < MAX_BYTES) {
+        while (total < MAX_HTML_BYTES) {
             const { done, value } = await reader.read();
             if (done) break;
             chunks.push(value);
             total += value.length;
         }
         try { await reader.cancel(); } catch {}
-        const buf = new Uint8Array(total);
-        let off = 0;
-        for (const c of chunks) { buf.set(c, off); off += c.length; }
-        const html = new TextDecoder("utf-8", { fatal: false }).decode(buf);
-
-        const title = pickMeta(html, "og:title")
-            || pickMeta(html, "twitter:title")
-            || (html.match(/<title[^>]*>([\s\S]{1,200}?)<\/title>/i)?.[1]?.trim() ?? null);
-        const image = normalizeUrl(parsed.toString(),
-            pickMeta(html, "og:image") || pickMeta(html, "twitter:image"));
-        const description = pickMeta(html, "og:description")
-            || pickMeta(html, "twitter:description")
-            || pickMeta(html, "description");
-        const siteName = pickMeta(html, "og:site_name") || parsed.hostname;
-
+        const buf = Buffer.concat(chunks);
+        const html = buf.toString("utf-8");
+        const meta = extractMeta(html, target);
         return NextResponse.json({
-            ok: true,
-            url: parsed.toString(),
-            title: title ? decodeEntities(title).slice(0, 200) : null,
-            image,
-            description: description ? decodeEntities(description).slice(0, 300) : null,
-            siteName: siteName ? decodeEntities(siteName).slice(0, 80) : null,
+            url: target.toString(),
+            ...meta,
+        }, {
+            headers: { "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800" },
         });
-    } catch (e) {
-        return NextResponse.json({ error: e instanceof Error ? e.message : "fetch_failed" }, { status: 502 });
+    } catch {
+        return NextResponse.json({ error: "Fetch xato" }, { status: 500 });
+    } finally {
+        clearTimeout(timer);
     }
 }

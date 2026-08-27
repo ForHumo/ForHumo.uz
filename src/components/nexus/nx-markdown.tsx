@@ -34,10 +34,10 @@ function withMentions(node: React.ReactNode, keyBase: string): React.ReactNode {
     return <>{parts}</>;
 }
 
-// Matn parchasini emoji + mention bilan render qilish
+// Matn parchasini emoji + mention + hashtag bilan render qilish
 function textWithEmoji(s: string, key: string, size = 18): React.ReactNode {
-    // Avval mention'larni ajratamiz, keyin qolgan qismlarga emoji parse
-    const re = /@([a-z0-9_]{3,32})/gi;
+    // @username YOKI #hashtag'ni topamiz. Order matters — bir necha match iterativ.
+    const re = /(@[a-z0-9_]{3,32})|(#[a-z0-9_]{2,32})/gi;
     const parts: React.ReactNode[] = [];
     let last = 0;
     let m: RegExpExecArray | null;
@@ -47,16 +47,30 @@ function textWithEmoji(s: string, key: string, size = 18): React.ReactNode {
             const chunk = s.slice(last, m.index);
             parts.push(<EmojiText key={`${key}-e${i}`} text={chunk} size={size} />);
         }
-        const un = m[1];
-        parts.push(
-            <Link key={`${key}-m${i++}`}
-                href={`/nexus/u/${un}`}
-                onClick={e => e.stopPropagation()}
-                className="font-bold hover:underline"
-                style={{ color: "#00CEC8" }}>
-                @{un}
-            </Link>
-        );
+        const token = m[0];
+        if (token.startsWith("@")) {
+            const un = token.slice(1);
+            parts.push(
+                <Link key={`${key}-m${i++}`}
+                    href={`/nexus/u/${un}`}
+                    onClick={e => e.stopPropagation()}
+                    className="font-bold hover:underline"
+                    style={{ color: "#00CEC8" }}>
+                    @{un}
+                </Link>
+            );
+        } else {
+            const tag = token.slice(1);
+            parts.push(
+                <Link key={`${key}-h${i++}`}
+                    href={`/nexus/tag/${tag.toLowerCase()}`}
+                    onClick={e => e.stopPropagation()}
+                    className="font-bold hover:underline"
+                    style={{ color: "#00CEC8" }}>
+                    #{tag}
+                </Link>
+            );
+        }
         last = m.index + m[0].length;
     }
     if (parts.length === 0) return <EmojiText key={key} text={s} size={size} />;

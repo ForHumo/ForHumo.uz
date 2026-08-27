@@ -32,12 +32,16 @@ import { NxBotCommandAutocomplete } from "./nx-bot-command-autocomplete";
 import { NxFinancialCopilot } from "./nx-financial-copilot";
 import { NxChannelBroadcastModal } from "./nx-channel-broadcast-modal";
 import { NxChannelScheduledModal } from "./nx-channel-scheduled-modal";
-import { Wallet as WalletIcon, Download as DownloadIcon } from "lucide-react";
+import { NxChannelReactorsModal } from "./nx-channel-reactors-modal";
+import { NxChannelViewersModal } from "./nx-channel-viewers-modal";
+import { NxChannelShareModal } from "./nx-channel-share-modal";
+import { NxLinkPreview } from "./nx-link-preview";
+import { Wallet as WalletIcon, Download as DownloadIcon, QrCode as QrCodeIcon } from "lucide-react";
 import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon, Sparkles as SparklesIcon, Sticker as StickerIcon, EyeOff, Hash as HashIcon, Bot as BotIcon, Radio as RadioIcon, Share2 as Share2Icon, CalendarClock as CalendarClockIcon } from "lucide-react";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean; isSystem?: boolean }
-interface ChDetail { id: string; type: ChType; name: string; handle: string | null; description: string | null; avatarUrl: string | null; isPrivate: boolean; memberCount: number; isOwner: boolean; isMember: boolean; role: string | null; canPost: boolean; allowComments?: boolean; slowModeSeconds?: number; signaturesEnabled?: boolean; allowedReactions?: string[] }
+interface ChDetail { id: string; type: ChType; name: string; handle: string | null; description: string | null; avatarUrl: string | null; isPrivate: boolean; memberCount: number; isOwner: boolean; isMember: boolean; role: string | null; canPost: boolean; allowComments?: boolean; slowModeSeconds?: number; signaturesEnabled?: boolean; allowedReactions?: string[]; systemOwned?: boolean; esTeamId?: string | null }
 interface ChMsg {
     viewOnceOpened?: boolean;
     id: string; text: string | null; media: string[]; createdAt: string; mine: boolean;
@@ -100,6 +104,12 @@ function formatSlowMode(sec: number): string {
 
 function avatarFor(c: { name: string; avatarUrl?: string | null }) {
     return c.avatarUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${encodeURIComponent(c.name)}`;
+}
+// Verified kanal — For Humo tizim kanali yoki esport jamoa kanali (systemOwned).
+// Handle-siz xususiy chat verified emas.
+function isVerifiedChannel(ch: { handle?: string | null; systemOwned?: boolean; esTeamId?: string | null } | null | undefined): boolean {
+    if (!ch) return false;
+    return !!ch.systemOwned || !!ch.esTeamId;
 }
 function timeAgo(d: string) {
     const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -330,6 +340,9 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [bansOpen, setBansOpen] = useState(false);
     const [broadcastOpen, setBroadcastOpen] = useState(false);
     const [scheduledOpen, setScheduledOpen] = useState(false);
+    const [reactorsFor, setReactorsFor] = useState<string | null>(null);
+    const [viewersFor, setViewersFor] = useState<string | null>(null);
+    const [shareModalOpen, setShareModalOpen] = useState(false);
     const [pollVotersFor, setPollVotersFor] = useState<string | null>(null);
     const [slashQuery, setSlashQuery] = useState<string | null>(null);
 
@@ -978,7 +991,13 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                 <button onClick={onBack} className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(43,62,232,0.12)" }}><ArrowLeft className="w-4 h-4 text-white" /></button>
                 <img src={avatarFor(ch)} alt="" className="w-9 h-9 rounded-xl object-cover bg-white flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-black text-white truncate">{ch.name}</p>
+                    <p className="text-sm font-black text-white truncate flex items-center gap-1">
+                        <span className="truncate">{ch.name}</span>
+                        {isVerifiedChannel(ch) && (
+                            <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0"
+                                style={{ color: "#00CEC8" }} fill="#00CEC8" stroke="#050818" />
+                        )}
+                    </p>
                     <p className="text-[11px]" style={{ color: "rgba(120,140,185,0.8)" }}>{ch.type === "CHANNEL" ? "Kanal" : "Guruh"} · {ch.memberCount} a&apos;zo</p>
                 </div>
                 {ch.isMember && (
@@ -1124,6 +1143,28 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         <CalendarClockIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
                                         <span className="flex-1">Rejadagi postlar</span>
                                     </button>
+                                )}
+                                {/* Kanal ulash — hamma uchun (agar handle bor bo'lsa) */}
+                                {ch.handle && (
+                                    <button onClick={() => { setShareModalOpen(true); setChMoreOpen(false); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <QrCodeIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <span className="flex-1">Kanal ulash</span>
+                                        <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>QR</span>
+                                    </button>
+                                )}
+                                {/* RSS feed — hamma uchun (agar handle va public bo'lsa) */}
+                                {ch.handle && !ch.isPrivate && (
+                                    <a href={`/api/nexus/ch/${encodeURIComponent(ch.handle)}/rss`}
+                                        target="_blank" rel="noopener noreferrer"
+                                        onClick={() => setChMoreOpen(false)}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <RadioIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <span className="flex-1">RSS feed</span>
+                                        <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>XML</span>
+                                    </a>
                                 )}
                                 {/* Export — faqat OWNER */}
                                 {ch.isOwner && (
@@ -1284,6 +1325,30 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                 channelId={id}
                 onClose={() => setScheduledOpen(false)}
             />
+            {reactorsFor && (
+                <NxChannelReactorsModal
+                    open={!!reactorsFor}
+                    channelId={id}
+                    messageId={reactorsFor}
+                    onClose={() => setReactorsFor(null)}
+                />
+            )}
+            {viewersFor && (
+                <NxChannelViewersModal
+                    open={!!viewersFor}
+                    channelId={id}
+                    messageId={viewersFor}
+                    onClose={() => setViewersFor(null)}
+                />
+            )}
+            {ch && (
+                <NxChannelShareModal
+                    open={shareModalOpen}
+                    handle={ch.handle}
+                    channelName={ch.name}
+                    onClose={() => setShareModalOpen(false)}
+                />
+            )}
             {pollVotersFor && (
                 <NxGroupPollVoters open={!!pollVotersFor} channelId={id} messageId={pollVotersFor}
                     onClose={() => setPollVotersFor(null)} />
@@ -1435,6 +1500,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                             {m.text && editingId !== m.id && (
                                                 <div className="text-sm whitespace-pre-wrap" style={{ color: "rgba(210,220,245,0.95)" }}>
                                                     <NxMarkdown text={m.text} />
+                                                    <NxLinkPreview text={m.text} />
                                                     {m.editedAt && (
                                                         <button
                                                             type="button"
@@ -1680,6 +1746,20 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                     <button onClick={() => { sharePostLink(m.id); setChMsgMenuFor(null); }}
                                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
                                                         <Share2Icon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Havolani ulashish
+                                                    </button>
+                                                )}
+                                                {/* Reaksiya berganlar — owner/admin */}
+                                                {(ch?.isOwner || ch?.role === "ADMIN") && m.reactions && m.reactions.length > 0 && (
+                                                    <button onClick={() => { setReactorsFor(m.id); setChMsgMenuFor(null); }}
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                                        <Smile className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Reaksiya berganlar
+                                                    </button>
+                                                )}
+                                                {/* Ko'ruvchilar — owner/admin */}
+                                                {(ch?.isOwner || ch?.role === "ADMIN") && (m.viewCount ?? 0) > 0 && (
+                                                    <button onClick={() => { setViewersFor(m.id); setChMsgMenuFor(null); }}
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                                        <Eye className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Ko&apos;ruvchilar
                                                     </button>
                                                 )}
                                                 {m.text && (

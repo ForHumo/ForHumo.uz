@@ -16,10 +16,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const { id } = await params;
     const url = new URL(req.url);
-    const q = (url.searchParams.get("q") ?? "").trim();
+    const qRaw = (url.searchParams.get("q") ?? "").trim();
+    const tag = (url.searchParams.get("tag") ?? "").trim().replace(/^#/, "").toLowerCase();
+    // Agar `q` `#tag` bilan boshlansa, avto-hashtag rejimga o'tkazamiz
+    const q = qRaw.startsWith("#") ? qRaw.slice(1).trim() : qRaw;
+    const effectiveTag = tag || (qRaw.startsWith("#") ? qRaw.slice(1).trim().toLowerCase() : "");
     const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(url.searchParams.get("limit") ?? String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT));
     const topicParam = url.searchParams.get("topic"); // "general" | <topicId> | null
-    if (q.length < 2) return NextResponse.json({ results: [], total: 0 });
+    if (!effectiveTag && q.length < 2) return NextResponse.json({ results: [], total: 0 });
 
     const me = await prisma.userProfile.findUnique({
         where: { email: session.user.email }, select: { id: true },
@@ -42,11 +46,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const blockedIds = await getBlockedIds(me.id);
     const topicFilter = topicParam === "general" ? { topicId: null }
         : topicParam ? { topicId: topicParam } : {};
+    // Hashtag qidiruvi — matn ichida `#<tag>` bo'lsagina moslash (word-boundary yaqin).
+    // Case-insensitive contains yetarli (Prisma text search'siz).
+    const textFilter = effectiveTag
+        ? { text: { contains: `#${effectiveTag}`, mode: "insensitive" as const } }
+        : { text: { contains: q, mode: "insensitive" as const } };
     const where = {
         channelId: id,
         hidden: false,
         deletedForEveryoneAt: null,
-        text: { contains: q, mode: "insensitive" as const },
+        ...textFilter,
         ...topicFilter,
         ...(blockedIds.size > 0 ? { senderId: { notIn: [...blockedIds] } } : {}),
     };
