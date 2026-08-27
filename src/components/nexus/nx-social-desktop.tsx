@@ -36,6 +36,7 @@ import { subscribeUserChannel } from "@/lib/pusher-client";
 import { formatLastSeen } from "@/lib/last-seen";
 import { isLocked, isUnlockedNow, lockNow } from "@/lib/chat-lock";
 import { NxChatLockModal } from "./nx-chat-lock-modal";
+import { NxFinancialCopilot } from "./nx-financial-copilot";
 import { useSession } from "next-auth/react";
 import { useLocale } from "next-intl";
 import { formatMoney } from "@/lib/money";
@@ -3684,6 +3685,11 @@ export function NxSocialDesktop() {
                             <IconBtn icon={BookmarkCheck} title="Yulduzchali xabarlar"
                                 onClick={() => setChatBookmarksOpen(true)} />
                             <IconBtn
+                                icon={Wallet}
+                                title="Financial Copilot — AI moliyaviy tavsiya"
+                                onClick={() => setCopilotOpen(true)}
+                            />
+                            <IconBtn
                                 icon={searchOpen ? X : Search}
                                 title={searchOpen ? "Qidiruvni yopish" : "Suhbatda qidirish"}
                                 onClick={() => { setSearchOpen(v => !v); setSearchQuery(""); }}
@@ -6342,6 +6348,15 @@ export function NxSocialDesktop() {
                             // Lock olib tashlandi
                         }
                     }}
+                />
+            )}
+            {selectedId && !selectedChannel && (
+                <NxFinancialCopilot
+                    open={copilotOpen}
+                    contextType="dm"
+                    contextId={selectedId}
+                    onClose={() => setCopilotOpen(false)}
+                    onSendPublic={(text) => setInput(text)}
                 />
             )}
             {reactionUsers && (

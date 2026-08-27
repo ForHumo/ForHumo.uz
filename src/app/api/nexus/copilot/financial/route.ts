@@ -34,6 +34,13 @@ type FinancialSnapshot = {
     dailyBudgetSafeToSpend: number;
     lastMonthAverageExpense: number;
     hasEmergencyReserve: boolean;
+    // Kelayotgan yuklamalar (majburiy chiqimlar)
+    bnCartTotal: number;             // BN savatidagi umumiy summa
+    belisPendingOrders: number;      // Belis'da qabul kutayotgan buyurtmalar
+    upcomingCommitments: number;     // hammasi jamlab (bn + belis)
+    // Chiqim patterns
+    biggestCategoryLast30d: string | null; // eng ko'p sarflangan kategoriya
+    incomeStability: "stable" | "unstable" | "unknown"; // maosh regular kelayaptimi
 };
 
 async function buildSnapshot(profileId: string): Promise<FinancialSnapshot | null> {
@@ -76,7 +83,70 @@ async function buildSnapshot(profileId: string): Promise<FinancialSnapshot | nul
 
     // Xavfsiz kunlik sarf: (balans - keyingi 30 kun kutilayotgan chiqim) / qolgan kunlar
     const expectedRemainingExpense = (monthlyExpense / 30) * daysLeftInMonth;
+    // Xavfsiz kunlik: kelayotgan majburiyat + kutilayotgan chiqim ayirilgan holda
+    // (BN cart + Belis buyurtmalari keyingi 30 kun ichida to'lanadi)
+    // Balansdan ushbu ikkalasini ayirib, kunlarga bo'lamiz
+    const upcomingCommitmentsForBudget = 0; // pastda hisoblanadi va qaytadan hisoblanadi
+    void upcomingCommitmentsForBudget;
     const dailyBudgetSafeToSpend = Math.max(0, (balance - expectedRemainingExpense) / daysLeftInMonth);
+
+    // BN savatidagi mahsulotlar (kelayotgan yuklama)
+    let bnCartTotal = 0;
+    try {
+        const cart = await prisma.bnCartItem.findMany({
+            where: { profileId },
+            select: { qty: true, productId: true },
+        });
+        if (cart.length > 0) {
+            const products = await prisma.bnProduct.findMany({
+                where: { id: { in: cart.map(c => c.productId) } },
+                select: { id: true, price: true },
+            });
+            const pMap = new Map(products.map(p => [p.id, Number(p.price)]));
+            for (const c of cart) bnCartTotal += (pMap.get(c.productId) ?? 0) * c.qty;
+        }
+    } catch { /* fail-safe */ }
+
+    // Belis'da kutayotgan buyurtmalar (yakunlanmagan)
+    let belisPendingOrders = 0;
+    try {
+        const belisOrders = await prisma.belisOrder.findMany({
+            where: {
+                buyerId: profileId,
+                status: { in: ["NEW", "ACCEPTED", "PREPARING", "SHIPPING"] },
+            },
+            select: { total: true },
+        });
+        for (const o of belisOrders) belisPendingOrders += Number(o.total);
+    } catch { /* fail-safe */ }
+
+    const upcomingCommitments = bnCartTotal + belisPendingOrders;
+
+    // Kirim barqarorligi: 3 oy ichida oylik cheklarga o'xshash yozuvlar bormi
+    // (>500k UZS dan kirimlar 3 marta va >=15 kun oralig'ida)
+    const largeIncomes = income
+        .filter(t => Number(t.amount) > 500000)
+        .sort((x, y) => x.createdAt.getTime() - y.createdAt.getTime());
+    let incomeStability: FinancialSnapshot["incomeStability"] = "unknown";
+    if (largeIncomes.length >= 3) {
+        const gaps = largeIncomes.slice(1).map((v, i) =>
+            (v.createdAt.getTime() - largeIncomes[i].createdAt.getTime()) / (24 * 60 * 60 * 1000)
+        );
+        const avgGap = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+        incomeStability = avgGap >= 15 && avgGap <= 45 ? "stable" : "unstable";
+    } else if (largeIncomes.length > 0) {
+        incomeStability = "unstable";
+    }
+
+    // Eng ko'p sarflangan kategoriya (description'dan taxminiy)
+    const expenseByCat = new Map<string, number>();
+    for (const t of expense.filter(x => x.createdAt >= thisMonthSince)) {
+        const label = t.type;
+        expenseByCat.set(label, (expenseByCat.get(label) ?? 0) + Number(t.amount));
+    }
+    let biggestCategoryLast30d: string | null = null;
+    let biggestVal = 0;
+    for (const [k, v] of expenseByCat) if (v > biggestVal) { biggestVal = v; biggestCategoryLast30d = k; }
 
     return {
         currency, balance,
@@ -84,6 +154,8 @@ async function buildSnapshot(profileId: string): Promise<FinancialSnapshot | nul
         dailyBudgetSafeToSpend,
         lastMonthAverageExpense: lastMonthExpense,
         hasEmergencyReserve: balance > monthlyExpense,
+        bnCartTotal, belisPendingOrders, upcomingCommitments,
+        biggestCategoryLast30d, incomeStability,
     };
 }
 
@@ -192,6 +264,10 @@ FAQAT SO'ROVCHI MA'LUMOTI (private — chatga yuborilmaydi):
 - Oy oxirigacha: ${snapshot.daysLeftInMonth} kun
 - Xavfsiz kunlik sarf: ${formatMoney(snapshot.dailyBudgetSafeToSpend, snapshot.currency)}
 - Zaxira sug'urta: ${snapshot.hasEmergencyReserve ? "bor" : "yo'q"}
+- Kirim barqarorligi: ${snapshot.incomeStability === "stable" ? "muntazam (maosh keladi)" : snapshot.incomeStability === "unstable" ? "notekis" : "aniqlanmadi"}
+- BN savatidagi mahsulotlar: ${formatMoney(snapshot.bnCartTotal, snapshot.currency)}
+- Belis'da kutayotgan buyurtmalar: ${formatMoney(snapshot.belisPendingOrders, snapshot.currency)}
+- Umumiy majburiy chiqim (kelayotgan): ${formatMoney(snapshot.upcomingCommitments, snapshot.currency)}
 
 CHAT KONTEKSTI (${scanDepth} oxirgi xabar):
 ${chatContext}

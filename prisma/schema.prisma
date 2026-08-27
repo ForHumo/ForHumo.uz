@@ -12,6 +12,7 @@ datasource db {
 enum AccountType {
   GOOGLE   // To'liq Humo ID — Google bilan (For Humo loyihalari)
   SWEET    // Sweet ID — hamkor (Sevinch Sweets), Telegram bilan; ma'lumotni Humo ID saqlaydi
+  SYSTEM   // Tizim profillari (Humo eSport, Belis, BN — avto-postlar uchun). Login qilinmaydi.
 }
 
 enum AuthProvider {

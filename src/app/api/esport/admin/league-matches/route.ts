@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getEsportAdmin } from "@/lib/esport";
 import { applyElo } from "@/lib/esport-elo";
+import { postToEsTeamChannel } from "@/lib/esport-post-to-team";
 
 const WIN_POINTS = 3;
 
@@ -83,5 +85,19 @@ export async function PATCH(req: Request) {
         ops.push(prisma.esRoster.update({ where: { id: rosterL.id }, data: { rating: newB, peakRating: Math.max(rosterL.peakRating, newB), lowRating: Math.min(rosterL.lowRating, newB) } }));
     }
     await prisma.$transaction(ops);
+
+    // Humo eSport nomidan ikkala jamoa chatiga o'yin natijasi + Elo o'zgarishi
+    after(async () => {
+        const [teamW, teamL] = await Promise.all([
+            prisma.esTeam.findUnique({ where: { id: winnerId }, select: { name: true, tag: true } }),
+            prisma.esTeam.findUnique({ where: { id: loserId }, select: { name: true, tag: true } }),
+        ]);
+        if (!teamW || !teamL) return;
+        const winMsg = `**League o'yin natijasi**\n\n🏆 **${teamW.tag}** ${a}:${b} ${teamL.tag}\n\n${teamW.name} g'olib chiqdi (+${WIN_POINTS} ochko). ${rosterW && rosterL ? "Elo yangilandi." : ""}${proofUrl ? "\n\nDalil: " + proofUrl : ""}`;
+        const loseMsg = `**League o'yin natijasi**\n\n${teamW.tag} ${a}:${b} **${teamL.tag}**\n\n${teamW.name} g'olib chiqdi. Keyingi safar omad tilaymiz!${proofUrl ? "\n\nDalil: " + proofUrl : ""}`;
+        await postToEsTeamChannel(winnerId, winMsg);
+        await postToEsTeamChannel(loserId, loseMsg);
+    });
+
     return NextResponse.json({ ok: true, winnerId });
 }

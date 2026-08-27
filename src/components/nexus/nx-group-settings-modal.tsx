@@ -19,6 +19,8 @@ type ChannelData = {
     isOwner: boolean;
     role: "OWNER" | "ADMIN" | "MEMBER" | null;
     defaultPermissions: Record<string, boolean> | null;
+    esTeamId?: string | null;
+    systemOwned?: boolean;
 };
 
 const AUTO_DELETE_OPTIONS = [
@@ -142,6 +144,23 @@ export function NxGroupSettingsModal({
                 ) : (
                     <>
                         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5" style={{ scrollbarWidth: "none" }}>
+                            {/* System-owned banner (eSport Team) */}
+                            {data.systemOwned && data.esTeamId && (
+                                <a href={`/esport/teams/${data.esTeamId}`} target="_blank" rel="noopener"
+                                    className="flex items-center gap-3 p-3 rounded-2xl block"
+                                    style={{ background: "linear-gradient(90deg,rgba(43,62,232,0.15),rgba(0,206,200,0.15))", border: "1px solid rgba(0,206,200,0.35)" }}>
+                                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                                        style={{ background: "rgba(0,206,200,0.15)" }}>
+                                        <Info className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-white">Humo eSport tomonidan boshqariladi</p>
+                                        <p className="text-[11px]" style={{ color: "rgba(180,195,235,0.85)" }}>
+                                            A&apos;zolar jamoa tarkibiga qarab avto-sinxron. Jamoa sahifasini ochish →
+                                        </p>
+                                    </div>
+                                </a>
+                            )}
                             {/* Nom */}
                             <div>
                                 <label className="block text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.7)" }}>

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getEsportAdmin } from "@/lib/esport";
 import { recordTournamentResult } from "@/lib/esport-bracket";
+import { postToEsTeamChannel } from "@/lib/esport-post-to-team";
 
 // PATCH /api/esport/admin/tournaments/[id]/match — natija { matchId, scoreA, scoreB }
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -26,5 +28,40 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (finalM?.status === "DONE") {
         await prisma.esTournament.update({ where: { id }, data: { status: "ENDED" } });
     }
+
+    // Humo eSport nomidan g'olib/mag'lub jamoalarga xabar (bracket ma'lumoti bilan)
+    after(async () => {
+        const [match, tournament] = await Promise.all([
+            prisma.esMatch.findUnique({
+                where: { id: matchId },
+                select: { teamAId: true, teamBId: true, round: true, bracket: true, tournamentId: true },
+            }),
+            prisma.esTournament.findUnique({ where: { id }, select: { name: true } }),
+        ]);
+        if (!match || !match.teamAId || !match.teamBId || !tournament || !r.winnerId) return;
+
+        const winnerTeamId = r.winnerId;
+        const loserTeamId = winnerTeamId === match.teamAId ? match.teamBId : match.teamAId;
+        const [teamW, teamL] = await Promise.all([
+            prisma.esTeam.findUnique({ where: { id: winnerTeamId }, select: { name: true, tag: true } }),
+            prisma.esTeam.findUnique({ where: { id: loserTeamId }, select: { name: true, tag: true } }),
+        ]);
+        if (!teamW || !teamL) return;
+
+        const isFinal = finalM?.status === "DONE" && match.bracket === "MAIN";
+        const roundLabel = isFinal ? "FINAL" : `Bosqich ${match.round}`;
+
+        const winMsg = isFinal
+            ? `🏆 **CHAMPIONS!**\n\n**${teamW.tag}** ${a}:${b} ${teamL.tag}\n\n${tournament.name} turniri **${teamW.name}** tomonidan yutildi! Tabriklaymiz! 🎉`
+            : `**Turnir o'yin natijasi**\n\n🏆 **${teamW.tag}** ${a}:${b} ${teamL.tag}\n\n${tournament.name} — ${roundLabel}\n\n${teamW.name} keyingi bosqichga o'tdi.${proofUrl ? "\n\nDalil: " + proofUrl : ""}`;
+
+        const loseMsg = isFinal
+            ? `**Final natijasi**\n\n${teamW.tag} ${a}:${b} **${teamL.tag}**\n\n${tournament.name} finalida ${teamW.name} g'olib bo'ldi. Kumush medal — ${teamL.name}! Keyingi turnirlarda omad tilaymiz.`
+            : `**Turnir o'yin natijasi**\n\n${teamW.tag} ${a}:${b} **${teamL.tag}**\n\n${tournament.name} — ${roundLabel}\n\nAfsuski chetlashtirildingiz. Elo va tajriba oldingizga qoladi.${proofUrl ? "\n\nDalil: " + proofUrl : ""}`;
+
+        await postToEsTeamChannel(winnerTeamId, winMsg, { pin: isFinal });
+        await postToEsTeamChannel(loserTeamId, loseMsg);
+    });
+
     return NextResponse.json({ ok: true, winnerId: r.winnerId });
 }

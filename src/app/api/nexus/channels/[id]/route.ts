@@ -36,6 +36,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             restrictForwarding: channel.restrictForwarding,
             aiModerator: channel.aiModerator,
             autoTranslate: channel.autoTranslate,
+            esTeamId: channel.esTeamId,
+            systemOwned: channel.systemOwned,
             createdAt: channel.createdAt,
             myMutedUntil: membership?.mutedUntil ?? null,
         },
