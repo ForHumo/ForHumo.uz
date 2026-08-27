@@ -4,7 +4,7 @@
 // Boshqa a'zolar faqat ro'yxatni ko'radi.
 
 import { useEffect, useState } from "react";
-import { X, Crown, Shield, UserX, UserCheck, Loader2, BadgeCheck, ShieldOff } from "lucide-react";
+import { X, Crown, Shield, UserX, UserCheck, Loader2, BadgeCheck, ShieldOff, EyeOff } from "lucide-react";
 
 type Member = {
     profileId: string;
@@ -13,7 +13,20 @@ type Member = {
     username: string | null;
     image: string | null;
     verified: boolean;
+    isAnonymous?: boolean;
+    online?: boolean;
+    lastSeenAt?: string | null;
 };
+
+function timeAgo(iso: string | null | undefined): string {
+    if (!iso) return "kirmagan";
+    const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (s < 60) return "hozir";
+    if (s < 3600) return `${Math.floor(s / 60)} daq oldin`;
+    if (s < 86400) return `${Math.floor(s / 3600)} soat oldin`;
+    if (s < 86400 * 7) return `${Math.floor(s / 86400)} kun oldin`;
+    return "uzoq";
+}
 
 export function NxGroupMembersModal({
     open, channelId, onClose,
@@ -24,6 +37,8 @@ export function NxGroupMembersModal({
 }) {
     const [members, setMembers] = useState<Member[]>([]);
     const [canManage, setCanManage] = useState(false);
+    const [canPromote, setCanPromote] = useState(false);
+    const [myId, setMyId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [q, setQ] = useState("");
     const [busy, setBusy] = useState<string | null>(null);
@@ -31,11 +46,15 @@ export function NxGroupMembersModal({
     useEffect(() => {
         if (!open) return;
         setLoading(true);
-        fetch(`/api/nexus/channels/${channelId}/members`)
-            .then(r => r.ok ? r.json() : { members: [], canManage: false })
-            .then(d => {
+        Promise.all([
+            fetch(`/api/nexus/channels/${channelId}/members`).then(r => r.ok ? r.json() : { members: [], canManage: false, canPromote: false }),
+            fetch(`/api/user/profile`).then(r => r.ok ? r.json() : null).catch(() => null),
+        ])
+            .then(([d, prof]) => {
                 setMembers(d.members ?? []);
                 setCanManage(!!d.canManage);
+                setCanPromote(!!d.canPromote);
+                if (prof?.profile?.id) setMyId(prof.profile.id);
             })
             .finally(() => setLoading(false));
     }, [open, channelId]);
@@ -75,6 +94,22 @@ export function NxGroupMembersModal({
                 body: JSON.stringify({ profileId, reason: reason || undefined }),
             });
             if (r.ok) setMembers(prev => prev.filter(m => m.profileId !== profileId));
+        } finally { setBusy(null); }
+    };
+
+    const toggleAnonymous = async () => {
+        // Faqat o'zim uchun (ADMIN bo'lsam)
+        const my = members.find(m => m.profileId === myId);
+        if (!my || my.role !== "ADMIN") return;
+        setBusy(myId);
+        try {
+            const r = await fetch(`/api/nexus/channels/${channelId}/members`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ profileId: myId, isAnonymous: !my.isAnonymous }),
+            });
+            if (r.ok) {
+                setMembers(prev => prev.map(m => m.profileId === myId ? { ...m, isAnonymous: !m.isAnonymous } : m));
+            }
         } finally { setBusy(null); }
     };
 
@@ -123,14 +158,23 @@ export function NxGroupMembersModal({
                             <div key={m.profileId}
                                 className="flex items-center gap-3 rounded-2xl px-3 py-2.5 mb-1"
                                 style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
-                                <img src={m.image ?? "/logos/forhumo.png"} alt=""
-                                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                                    style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
+                                <div className="relative flex-shrink-0">
+                                    <img src={m.image ?? "/logos/forhumo.png"} alt=""
+                                        className="w-10 h-10 rounded-full object-cover"
+                                        style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
+                                    {m.online && (
+                                        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full"
+                                            style={{ background: "#22C55E", border: "2px solid rgba(8,12,32,0.99)" }} />
+                                    )}
+                                </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
                                         <p className="text-sm font-bold text-white truncate">
                                             {m.name ?? m.username ?? "Foydalanuvchi"}
                                         </p>
+                                        {m.isAnonymous && (
+                                            <EyeOff className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(140,160,210,0.7)" }} />
+                                        )}
                                         {m.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
                                         {m.role === "OWNER" && (
                                             <span className="text-[9px] font-black px-1.5 py-0.5 rounded"
@@ -145,13 +189,26 @@ export function NxGroupMembersModal({
                                             </span>
                                         )}
                                     </div>
-                                    {m.username && (
-                                        <p className="text-[11px]" style={{ color: "rgba(120,140,185,0.7)" }}>@{m.username}</p>
-                                    )}
+                                    <p className="text-[11px]" style={{ color: "rgba(120,140,185,0.7)" }}>
+                                        {m.username ? `@${m.username}` : ""}
+                                        {m.username && (m.online || m.lastSeenAt) ? " · " : ""}
+                                        {m.online ? <span style={{ color: "#22C55E" }}>online</span> : timeAgo(m.lastSeenAt)}
+                                    </p>
                                 </div>
+                                {/* Anonymous toggle — o'z ADMIN a'zoligi uchun */}
+                                {myId === m.profileId && m.role === "ADMIN" && (
+                                    <button onClick={toggleAnonymous} disabled={busy === m.profileId}
+                                        title={m.isAnonymous ? "Anonim rejim yoqilgan" : "Anonim rejim"}
+                                        className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"
+                                        style={m.isAnonymous
+                                            ? { background: "rgba(255,193,7,0.15)", border: "1px solid rgba(255,193,7,0.35)" }
+                                            : { background: "rgba(140,160,210,0.10)" }}>
+                                        <EyeOff className="w-4 h-4" style={{ color: m.isAnonymous ? "#FFC107" : "rgba(140,160,210,0.7)" }} />
+                                    </button>
+                                )}
                                 {canManage && m.role !== "OWNER" && (
                                     <div className="flex gap-1">
-                                        {m.role === "MEMBER" ? (
+                                        {canPromote && (m.role === "MEMBER" ? (
                                             <button disabled={busy === m.profileId}
                                                 onClick={() => setRole(m.profileId, "ADMIN")}
                                                 title="Admin qilish"
@@ -167,7 +224,7 @@ export function NxGroupMembersModal({
                                                 style={{ background: "rgba(140,160,210,0.1)", border: "1px solid rgba(140,160,210,0.3)" }}>
                                                 <Shield className="w-4 h-4" style={{ color: "rgba(140,160,210,0.9)" }} />
                                             </button>
-                                        )}
+                                        ))}
                                         <button disabled={busy === m.profileId}
                                             onClick={() => kick(m.profileId)}
                                             title="Chiqarish"

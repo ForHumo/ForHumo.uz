@@ -4,7 +4,7 @@
 // Ismi, tavsif, avatar/cover, qoidalar, ruxsatlar, slow mode, auto-delete, restrict forward.
 
 import { useEffect, useState } from "react";
-import { X, Loader2, Save, Trash2, Clock, ShieldOff, Users, MessageSquare, Image, Link as LinkIcon, Pin, Info, Sparkles, Languages } from "lucide-react";
+import { X, Loader2, Save, Trash2, Clock, ShieldOff, Users, MessageSquare, Image as ImageIcon, Link as LinkIcon, Pin, Info, Sparkles, Languages, Camera, Upload } from "lucide-react";
 
 type ChannelData = {
     id: string; name: string; description: string | null; handle: string | null;
@@ -42,7 +42,7 @@ const SLOW_MODE_OPTIONS = [
 
 const PERM_LABELS: Array<{ key: string; label: string; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }> }> = [
     { key: "sendMessages", label: "Xabar yuborish", icon: MessageSquare },
-    { key: "sendMedia", label: "Media yuborish", icon: Image },
+    { key: "sendMedia", label: "Media yuborish", icon: ImageIcon },
     { key: "sendLinks", label: "Havola yuborish", icon: LinkIcon },
     { key: "addMembers", label: "A'zo qo'shish", icon: Users },
     { key: "pinMessages", label: "Pin qilish", icon: Pin },
@@ -161,6 +161,65 @@ export function NxGroupSettingsModal({
                                     </div>
                                 </a>
                             )}
+                            {/* Cover + Avatar upload — OWNER/ADMIN */}
+                            {canEdit && !data.systemOwned && (
+                                <div className="relative">
+                                    {/* Cover */}
+                                    <label className="block relative rounded-2xl overflow-hidden cursor-pointer h-24"
+                                        style={{ background: data.coverUrl
+                                            ? `url(${data.coverUrl}) center/cover`
+                                            : "linear-gradient(135deg,rgba(43,62,232,0.35),rgba(0,206,200,0.35))" }}>
+                                        <input type="file" accept="image/*" className="hidden"
+                                            onChange={async (e) => {
+                                                const f = e.target.files?.[0]; if (!f) return;
+                                                try {
+                                                    const { upload } = await import("@vercel/blob/client");
+                                                    const res = await upload(`nexus/ch/cover-${Date.now()}-${f.name}`, f, {
+                                                        access: "public",
+                                                        handleUploadUrl: "/api/market/upload/client-token",
+                                                    });
+                                                    setData({ ...data, coverUrl: res.url });
+                                                    // Serverda darhol saqlash
+                                                    await fetch(`/api/nexus/channels/${channelId}`, {
+                                                        method: "PATCH", headers: { "Content-Type": "application/json" },
+                                                        body: JSON.stringify({ coverUrl: res.url }),
+                                                    });
+                                                    onUpdated?.();
+                                                } catch { alert("Yuklab bo'lmadi"); }
+                                            }} />
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition">
+                                            <Upload className="w-6 h-6 text-white" />
+                                        </div>
+                                    </label>
+                                    {/* Avatar (cover ustida) */}
+                                    <label className="absolute left-3 -bottom-6 w-14 h-14 rounded-full cursor-pointer overflow-hidden"
+                                        style={{ background: data.avatarUrl ? `url(${data.avatarUrl}) center/cover` : "rgba(43,62,232,0.35)",
+                                                 border: "3px solid rgba(8,12,32,0.99)" }}>
+                                        <input type="file" accept="image/*" className="hidden"
+                                            onChange={async (e) => {
+                                                const f = e.target.files?.[0]; if (!f) return;
+                                                try {
+                                                    const { upload } = await import("@vercel/blob/client");
+                                                    const res = await upload(`nexus/ch/avatar-${Date.now()}-${f.name}`, f, {
+                                                        access: "public",
+                                                        handleUploadUrl: "/api/market/upload/client-token",
+                                                    });
+                                                    setData({ ...data, avatarUrl: res.url });
+                                                    await fetch(`/api/nexus/channels/${channelId}`, {
+                                                        method: "PATCH", headers: { "Content-Type": "application/json" },
+                                                        body: JSON.stringify({ avatarUrl: res.url }),
+                                                    });
+                                                    onUpdated?.();
+                                                } catch { alert("Yuklab bo'lmadi"); }
+                                            }} />
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition">
+                                            <Camera className="w-4 h-4 text-white" />
+                                        </div>
+                                    </label>
+                                </div>
+                            )}
+                            {canEdit && !data.systemOwned && <div className="h-6" />}
+
                             {/* Nom */}
                             <div>
                                 <label className="block text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.7)" }}>

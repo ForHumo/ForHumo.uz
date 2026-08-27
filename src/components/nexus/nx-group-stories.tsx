@@ -3,7 +3,7 @@
 // Guruh stories — chat header ostida gorizontal qator. Bosilsa viewer ochiladi.
 
 import { useEffect, useState, useRef } from "react";
-import { X, Loader2, Camera, Upload, Play } from "lucide-react";
+import { X, Loader2, Camera, Upload, Play, Eye, Trash2 } from "lucide-react";
 
 type Story = {
     id: string; mediaUrl: string; mediaType: string; caption: string | null;
@@ -106,10 +106,41 @@ function NxGroupStoryViewer({
 }) {
     const [idx, setIdx] = useState(startIdx);
     const [progress, setProgress] = useState(0);
+    const [viewersOpen, setViewersOpen] = useState(false);
+    const [viewers, setViewers] = useState<Array<{ profileId: string; viewedAt: string; profile: { name: string | null; username: string | null; image: string | null } | null }>>([]);
+    const [viewersLoading, setViewersLoading] = useState(false);
+    const [myProfileId, setMyProfileId] = useState<string | null>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const IMAGE_DURATION = 5000;
 
     const current = stories[idx];
+
+    useEffect(() => {
+        fetch("/api/user/profile").then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.profile?.id) setMyProfileId(d.profile.id); })
+            .catch(() => {});
+    }, []);
+
+    const isMine = current && myProfileId && current.author?.id === myProfileId;
+
+    async function loadViewers() {
+        if (!current) return;
+        setViewersLoading(true);
+        try {
+            const r = await fetch(`/api/nexus/channels/${channelId}/stories/${current.id}/viewers`);
+            if (r.ok) {
+                const d = await r.json();
+                setViewers(d.viewers ?? []);
+            }
+        } finally { setViewersLoading(false); }
+    }
+
+    async function deleteStory() {
+        if (!current) return;
+        if (!confirm("Hikoyani o'chirasizmi?")) return;
+        await fetch(`/api/nexus/channels/${channelId}/stories/${current.id}`, { method: "DELETE" });
+        onClose();
+    }
 
     useEffect(() => {
         if (!current) return;
@@ -151,6 +182,22 @@ function NxGroupStoryViewer({
             <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 text-white">
                 <img src={current.author?.image ?? "/logos/forhumo.png"} alt="" className="w-7 h-7 rounded-full object-cover" />
                 <p className="text-sm font-bold flex-1 truncate">{current.author?.name ?? current.author?.username}</p>
+                {isMine && (
+                    <>
+                        <button onClick={(e) => { e.stopPropagation(); setViewersOpen(true); loadViewers(); }}
+                            title="Kim ko'rgan"
+                            className="w-8 h-8 rounded-full flex items-center justify-center"
+                            style={{ background: "rgba(255,255,255,0.15)" }}>
+                            <Eye className="w-4 h-4 text-white" />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); deleteStory(); }}
+                            title="O'chirish"
+                            className="w-8 h-8 rounded-full flex items-center justify-center"
+                            style={{ background: "rgba(255,80,90,0.20)" }}>
+                            <Trash2 className="w-4 h-4" style={{ color: "#FF505A" }} />
+                        </button>
+                    </>
+                )}
                 <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                     style={{ background: "rgba(255,255,255,0.15)" }}>
                     <X className="w-4 h-4 text-white" />
@@ -174,6 +221,40 @@ function NxGroupStoryViewer({
                 <div className="flex-shrink-0 px-4 py-3 text-center text-sm text-white"
                     style={{ background: "linear-gradient(0deg,rgba(0,0,0,0.7),transparent)" }}>
                     {current.caption}
+                </div>
+            )}
+            {/* Viewers modal — muallif ko'radi */}
+            {viewersOpen && (
+                <div className="absolute inset-0 z-10 bg-black/80 flex flex-col" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-between px-4 py-3">
+                        <p className="text-sm font-black text-white flex items-center gap-2">
+                            <Eye className="w-4 h-4" /> {viewers.length} ta ko&apos;rildi
+                        </p>
+                        <button onClick={() => setViewersOpen(false)}
+                            className="w-8 h-8 rounded-full flex items-center justify-center"
+                            style={{ background: "rgba(255,255,255,0.15)" }}>
+                            <X className="w-4 h-4 text-white" />
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto px-3 pb-3">
+                        {viewersLoading ? (
+                            <div className="flex justify-center py-10">
+                                <Loader2 className="w-6 h-6 animate-spin text-white" />
+                            </div>
+                        ) : viewers.length === 0 ? (
+                            <p className="py-10 text-center text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>Hech kim ko&apos;rmagan</p>
+                        ) : viewers.map(v => (
+                            <div key={v.profileId} className="flex items-center gap-3 py-2">
+                                <img src={v.profile?.image ?? "/logos/forhumo.png"} alt=""
+                                    className="w-9 h-9 rounded-full object-cover"
+                                    style={{ border: "1px solid rgba(255,255,255,0.15)" }} />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-white truncate">{v.profile?.name ?? v.profile?.username ?? "?"}</p>
+                                    {v.profile?.username && <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.5)" }}>@{v.profile.username}</p>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

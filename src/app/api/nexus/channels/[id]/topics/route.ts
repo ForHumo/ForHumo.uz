@@ -29,17 +29,24 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     });
     if (!member) return NextResponse.json({ topics: [] });
 
-    const topics = await prisma.nexusChannelTopic.findMany({
-        where: { channelId: id }, orderBy: { createdAt: "asc" },
+    const rawTopics = await prisma.nexusChannelTopic.findMany({
+        where: { channelId: id },
     });
     // Har mavzuda oxirgi xabar vaqti + soni
     const stats = await prisma.nexusChannelMessage.groupBy({
         by: ["topicId"],
-        where: { channelId: id, hidden: false, deletedForEveryoneAt: null, topicId: { in: topics.map(t => t.id) } },
+        where: { channelId: id, hidden: false, deletedForEveryoneAt: null, topicId: { in: rawTopics.map(t => t.id) } },
         _count: { _all: true },
         _max: { createdAt: true },
     });
     const statsMap = new Map(stats.map(s => [s.topicId, { count: s._count._all, lastAt: s._max.createdAt }]));
+
+    // Sortlash: oxirgi xabar vaqti bo'yicha desc, xabar yo'q bo'lsa createdAt desc
+    const topics = rawTopics.sort((a, b) => {
+        const aLast = statsMap.get(a.id)?.lastAt?.getTime() ?? a.createdAt.getTime();
+        const bLast = statsMap.get(b.id)?.lastAt?.getTime() ?? b.createdAt.getTime();
+        return bLast - aLast;
+    });
 
     return NextResponse.json({
         topics: topics.map(t => ({

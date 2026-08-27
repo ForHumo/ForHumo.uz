@@ -770,9 +770,11 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         return () => clearTimeout(t);
     }, [input, id]);
 
-    // Forward — kanal xabarni DM'ga jo'natish
+    // Forward — kanal xabarni DM yoki boshqa guruh/kanalga jo'natish
     const [forwardMsg, setForwardMsg] = useState<ChMsg | null>(null);
     const [dmList, setDmList] = useState<Array<{ conversationId: string; other: { name: string | null; username: string | null; image: string | null } | null }>>([]);
+    const [channelList, setChannelList] = useState<Array<{ id: string; name: string; avatarUrl: string | null; type: string }>>([]);
+    const [forwardTab, setForwardTab] = useState<"dm" | "channels">("dm");
     const [forwarding, setForwarding] = useState(false);
     // Tahrirlash tarixi modali
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -798,7 +800,42 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         fetch("/api/nexus/messages").then(r => r.ok ? r.json() : null)
             .then(d => { if (d?.conversations) setDmList(d.conversations); })
             .catch(() => {});
-    }, [forwardMsg]);
+        // Mening guruh + kanallarim
+        fetch("/api/nexus/channels?scope=mine").then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.channels) setChannelList(d.channels.filter((c: { id: string }) => c.id !== id)); })
+            .catch(() => {});
+    }, [forwardMsg, id]);
+    async function forwardToChannel(targetChannelId: string) {
+        if (!forwardMsg) return;
+        setForwarding(true);
+        try {
+            const media = forwardMsg.media?.[0] ?? null;
+            const body: Record<string, unknown> = {
+                text: forwardMsg.text ?? "",
+                ...(media ? { media: [media] } : {}),
+                ...(forwardMsg.mediaType ? {
+                    mediaType: forwardMsg.mediaType,
+                    mediaMime: forwardMsg.mediaMime,
+                    mediaName: forwardMsg.mediaName,
+                    durationMs: forwardMsg.durationMs,
+                    locLat: forwardMsg.locLat,
+                    locLng: forwardMsg.locLng,
+                    contactName: forwardMsg.contactName,
+                    contactPhone: forwardMsg.contactPhone,
+                    contactUsername: forwardMsg.contactUsername,
+                } : {}),
+            };
+            const r = await fetch(`/api/nexus/channels/${targetChannelId}/messages`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            if (r.ok) setForwardMsg(null);
+            else {
+                const d = await r.json().catch(() => ({}));
+                alert(d?.error ?? "Yuborib bo'lmadi");
+            }
+        } finally { setForwarding(false); }
+    }
     async function forwardToDm(convId: string) {
         if (!forwardMsg) return;
         setForwarding(true);
@@ -1809,8 +1846,39 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                         <div className="p-3 border-b text-xs italic line-clamp-2" style={{ borderColor: "rgba(43,62,232,0.20)", color: "rgba(160,176,224,0.75)" }}>
                             {forwardMsg.text || (forwardMsg.media?.length ? "[media]" : "(bo'sh)")}
                         </div>
+                        {/* Tabs — DM / Guruh */}
+                        <div className="flex gap-1 px-3 py-2 border-b" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                            <button onClick={() => setForwardTab("dm")}
+                                className="flex-1 py-2 rounded-xl text-xs font-bold"
+                                style={forwardTab === "dm"
+                                    ? { background: "rgba(43,62,232,0.18)", color: "#fff" }
+                                    : { background: "rgba(11,18,40,0.5)", color: "rgba(140,160,210,0.8)" }}>
+                                Shaxsiy suhbat
+                            </button>
+                            <button onClick={() => setForwardTab("channels")}
+                                className="flex-1 py-2 rounded-xl text-xs font-bold"
+                                style={forwardTab === "channels"
+                                    ? { background: "rgba(43,62,232,0.18)", color: "#fff" }
+                                    : { background: "rgba(11,18,40,0.5)", color: "rgba(140,160,210,0.8)" }}>
+                                Guruh/kanal
+                            </button>
+                        </div>
                         <div className="flex-1 overflow-y-auto p-2">
-                            {dmList.length === 0 ? (
+                            {forwardTab === "channels" ? (
+                                channelList.length === 0 ? (
+                                    <p className="text-xs text-center py-6" style={{ color: "rgba(140,160,210,0.60)" }}>Guruh/kanal topilmadi</p>
+                                ) : channelList.map(c => (
+                                    <button key={c.id} onClick={() => forwardToChannel(c.id)}
+                                        disabled={forwarding}
+                                        className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/[0.04] transition disabled:opacity-40 text-left">
+                                        <img src={c.avatarUrl ?? "/logos/forhumo.png"} alt="" className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-bold truncate" style={{ color: "rgba(220,230,255,0.95)" }}>{c.name}</p>
+                                            <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>{c.type === "GROUP" ? "Guruh" : "Kanal"}</p>
+                                        </div>
+                                    </button>
+                                ))
+                            ) : dmList.length === 0 ? (
                                 <p className="text-xs text-center py-6" style={{ color: "rgba(140,160,210,0.60)" }}>DM suhbat topilmadi</p>
                             ) : (
                                 dmList.map(c => (

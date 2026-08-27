@@ -4,7 +4,7 @@
 // Plus tugmasi bosilsa 4 opsiya ochiladi.
 
 import { useEffect, useRef, useState } from "react";
-import { Paperclip, Mic, Video, MapPin, User, X, Loader2, Square } from "lucide-react";
+import { Paperclip, Mic, Video, MapPin, User, X, Loader2, Square, EyeOff } from "lucide-react";
 
 export type ChannelAttachPayload = {
     mediaType: "audio" | "video-circle" | "location" | "contact";
@@ -18,6 +18,7 @@ export type ChannelAttachPayload = {
     contactName?: string;
     contactPhone?: string;
     contactUsername?: string;
+    viewOnce?: boolean;
 };
 
 export function NxChannelRichAttach({
@@ -30,6 +31,7 @@ export function NxChannelRichAttach({
     const [recording, setRecording] = useState<null | "voice" | "video">(null);
     const [busy, setBusy] = useState(false);
     const [contactOpen, setContactOpen] = useState(false);
+    const [viewOnceMode, setViewOnceMode] = useState(false);
     const [contactName, setContactName] = useState("");
     const [contactPhone, setContactPhone] = useState("");
     const [contactUsername, setContactUsername] = useState("");
@@ -134,7 +136,9 @@ export function NxChannelRichAttach({
                             mediaMime: rec.mimeType || (kind === "voice" ? "audio/webm" : "video/webm"),
                             mediaSize: blob.size,
                             durationMs: duration,
+                            viewOnce: viewOnceMode,
                         });
+                        setViewOnceMode(false);
                     }
                 } finally { setBusy(false); resolve(); }
             };
@@ -213,6 +217,13 @@ export function NxChannelRichAttach({
                         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-white">
                         <User className="w-4 h-4" style={{ color: "#00CEC8" }} />
                         Kontakt
+                    </button>
+                    <div style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }} />
+                    <button onClick={() => setViewOnceMode(v => !v)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm"
+                        style={{ color: viewOnceMode ? "#FFC107" : "white" }}>
+                        <EyeOff className="w-4 h-4" style={{ color: viewOnceMode ? "#FFC107" : "#00CEC8" }} />
+                        Bir marta ko&apos;rish {viewOnceMode ? "· yoqilgan" : ""}
                     </button>
                 </div>
             )}

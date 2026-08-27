@@ -18,6 +18,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const url = new URL(req.url);
     const q = (url.searchParams.get("q") ?? "").trim();
     const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(url.searchParams.get("limit") ?? String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT));
+    const topicParam = url.searchParams.get("topic"); // "general" | <topicId> | null
     if (q.length < 2) return NextResponse.json({ results: [], total: 0 });
 
     const me = await prisma.userProfile.findUnique({
@@ -39,10 +40,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     // Blok: bloklangan foydalanuvchilar xabarlari qidiruv natijasidan ham chiqmasin
     const blockedIds = await getBlockedIds(me.id);
+    const topicFilter = topicParam === "general" ? { topicId: null }
+        : topicParam ? { topicId: topicParam } : {};
     const where = {
         channelId: id,
         hidden: false,
+        deletedForEveryoneAt: null,
         text: { contains: q, mode: "insensitive" as const },
+        ...topicFilter,
         ...(blockedIds.size > 0 ? { senderId: { notIn: [...blockedIds] } } : {}),
     };
     const [rows, total] = await Promise.all([

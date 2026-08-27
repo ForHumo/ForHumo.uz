@@ -99,7 +99,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     if (replyIds.length) {
         const originals = await prisma.nexusChannelMessage.findMany({
             where: { id: { in: [...new Set(replyIds)] } },
-            select: { id: true, text: true, senderId: true, media: true },
+            select: { id: true, text: true, senderId: true, media: true, mediaType: true, pollQuestion: true, contactName: true },
         });
         const senderIds = [...new Set(originals.map(o => o.senderId))];
         const senders = await prisma.userProfile.findMany({
@@ -107,9 +107,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         });
         const senderMap = new Map(senders.map(s => [s.id, s.name ?? s.username ?? ""]));
         for (const o of originals) {
+            // Media turini aniq nom bilan ko'rsatish (voice/location/contact/poll)
+            const typeLabel = o.mediaType === "audio" ? "Ovoz xabar"
+                : o.mediaType === "video-circle" ? "Video xabar"
+                : o.mediaType === "location" ? "Joylashuv"
+                : o.mediaType === "contact" ? `Kontakt: ${o.contactName ?? ""}`
+                : o.pollQuestion ? `So'rovnoma: ${o.pollQuestion.slice(0, 40)}`
+                : o.media?.length ? "Media"
+                : null;
             replyMap.set(o.id, {
                 id: o.id,
-                text: o.text ? o.text.slice(0, 120) : (o.media?.length ? "[media]" : null),
+                text: o.text ? o.text.slice(0, 120) : typeLabel,
                 senderName: senderMap.get(o.senderId) ?? null,
             });
         }

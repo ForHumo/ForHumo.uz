@@ -74,12 +74,16 @@ export function NxGroupVoicePill({
                         <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.85)" }}>{active.title}</p>
                     )}
                 </div>
-                <a href={`/nexus/group-call?room=${active.roomName}`}
-                    target="_blank" rel="noopener"
+                <button onClick={() => {
+                    // NxGroupCall (nexus-shell'da mount) `?join=<id>` param bilan avto-ochiladi
+                    const url = new URL(window.location.href);
+                    url.searchParams.set("join", active.id);
+                    window.location.href = url.toString();
+                }}
                     className="px-3 py-1.5 rounded-lg text-xs font-bold text-white flex items-center gap-1"
                     style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
                     <Phone className="w-3.5 h-3.5" /> Qo&apos;shilish
-                </a>
+                </button>
                 {canEnd && (
                     <button onClick={end} disabled={busy}
                         title="Tugatish"
