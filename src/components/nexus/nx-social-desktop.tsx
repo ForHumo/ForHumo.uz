@@ -248,31 +248,31 @@ export function NxSocialDesktop() {
     }
     useEffect(() => { loadFolders(); }, []);
 
-    // Smart reply (AI) — Gemini'dan 3 ta tez javob taklif. Peer'ning oxirgi xabari matni'ga qarab.
+    // Smart reply (AI) — foydalanuvchi TUGMA bosganda ishga tushadi (cost tejash).
+    // Auto-trigger olib tashlandi — har chatga kirganda bekorga Gemini so'rov yubormaydi.
     const [smartReplies, setSmartReplies] = useState<string[]>([]);
     const [smartRepliesForMsgId, setSmartRepliesForMsgId] = useState<string | null>(null);
     const [smartRepliesLoading, setSmartRepliesLoading] = useState(false);
     const [smartRepliesDismissed, setSmartRepliesDismissed] = useState(false);
-    // Oxirgi xabar peer'niki + matn bo'lsa smart reply olib kel
-    useEffect(() => {
-        if (!selectedId || messages.length === 0) { setSmartReplies([]); setSmartRepliesForMsgId(null); return; }
+    // Financial Copilot modal (chuqur AI tavsiya — hamyon, kirim, chiqim analiz)
+    const [copilotOpen, setCopilotOpen] = useState(false);
+    // Tugma bosilganda smart-reply chaqiruvchi funksiya
+    async function requestSmartReplies() {
+        if (!selectedId || messages.length === 0) return;
         const last = messages[messages.length - 1];
-        if (last.mine || !last.text || !last.text.trim()) { setSmartReplies([]); setSmartRepliesForMsgId(null); setSmartRepliesDismissed(false); return; }
-        // Shu xabar uchun allaqachon olingan bo'lsa qayta so'ramaymiz
-        if (smartRepliesForMsgId === last.id) return;
+        if (last.mine || !last.text || !last.text.trim()) return;
+        if (smartRepliesForMsgId === last.id && smartReplies.length > 0) return;
         setSmartRepliesForMsgId(last.id);
         setSmartRepliesDismissed(false);
         setSmartRepliesLoading(true);
         setSmartReplies([]);
-        const controller = new AbortController();
-        fetch(`/api/nexus/messages/${selectedId}/smart-reply?ctx=${last.id}`, { cache: "no-store", signal: controller.signal })
-            .then(r => r.ok ? r.json() : null)
-            .then(d => setSmartReplies(Array.isArray(d?.replies) ? d.replies.slice(0, 3) : []))
-            .catch(() => {})
-            .finally(() => setSmartRepliesLoading(false));
-        return () => controller.abort();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [messages, selectedId]);
+        try {
+            const r = await fetch(`/api/nexus/messages/${selectedId}/smart-reply?ctx=${last.id}`, { cache: "no-store" });
+            const d = r.ok ? await r.json() : null;
+            setSmartReplies(Array.isArray(d?.replies) ? d.replies.slice(0, 3) : []);
+        } catch { /* silent */ }
+        finally { setSmartRepliesLoading(false); }
+    }
 
     // Chat-scoped yulduzchali (bookmark) xabarlar view modal (global bookmarksOpen'dan alohida)
     const [chatBookmarksOpen, setChatBookmarksOpen] = useState(false);

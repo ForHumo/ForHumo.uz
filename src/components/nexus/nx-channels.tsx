@@ -26,6 +26,8 @@ import { NxStickerPicker } from "./nx-sticker-picker";
 import { NxGroupStoriesBar } from "./nx-group-stories";
 import { NxGroupTopicsModal } from "./nx-group-topics";
 import { NxGroupBotsModal } from "./nx-group-bots-modal";
+import { NxFinancialCopilot } from "./nx-financial-copilot";
+import { Wallet as WalletIcon } from "lucide-react";
 import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon, Sparkles as SparklesIcon, Sticker as StickerIcon, EyeOff, Hash as HashIcon, Bot as BotIcon } from "lucide-react";
 
 type ChType = "CHANNEL" | "GROUP";
@@ -317,6 +319,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [botsOpen, setBotsOpen] = useState(false);
     const [currentTopicId, setCurrentTopicId] = useState<string | null>(null);
     const [currentTopicName, setCurrentTopicName] = useState<string | null>(null);
+    const [copilotOpen, setCopilotOpen] = useState(false);
     // Typing indicator (per-channel)
     const [typingUsers, setTypingUsers] = useState<Map<string, { name: string; expiresAt: number }>>(new Map());
     const typingSentAtRef = useRef<number>(0);
@@ -913,6 +916,14 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                         <SparklesIcon className="w-4 h-4" style={{ color: "#00CEC8" }} />
                     </button>
                 )}
+                {ch.isMember && (
+                    <button onClick={() => setCopilotOpen(true)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center"
+                        style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.25)" }}
+                        title="Financial Copilot — moliyaviy tavsiya">
+                        <WalletIcon className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                    </button>
+                )}
                 {ch.isMember && <NxGroupMuteButton channelId={id} />}
                 {ch.isMember && (
                     <button onClick={() => { setSearchOpen(v => !v); setSearchQuery(""); }}
@@ -1143,6 +1154,9 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                 }}
                 onClose={() => setTopicsOpen(false)} />
             <NxGroupBotsModal open={botsOpen} channelId={id} onClose={() => setBotsOpen(false)} />
+            <NxFinancialCopilot open={copilotOpen} contextType="channel" contextId={id}
+                onClose={() => setCopilotOpen(false)}
+                onSendPublic={(text) => { setInput(text); }} />
 
             {/* Qidiruv paneli */}
             {searchOpen && ch.isMember && (

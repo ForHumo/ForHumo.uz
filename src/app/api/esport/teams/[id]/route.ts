@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile, fullName, purgeTeam } from "@/lib/esport";
 import { isValidMediaUrl } from "@/lib/media-url";
 import { isTeamLockedAny } from "@/lib/esport-lock";
 import { canManageTeam } from "@/lib/esport-block";
+import { syncEsTeamChannel } from "@/lib/esport-nexus-sync";
 
 // GET /api/esport/teams/[id] — jamoa tafsiloti (tarkiblar + a'zolar)
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -96,6 +98,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     await prisma.esTeam.update({ where: { id }, data });
+    after(() => syncEsTeamChannel(id));
     return NextResponse.json({ ok: true });
 }
 

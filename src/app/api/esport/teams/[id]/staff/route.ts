@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canManageTeam } from "@/lib/esport-block";
 import { getMyProfile, fullName } from "@/lib/esport";
 import { esNotify } from "@/lib/esport-notify";
+import { syncEsTeamChannel } from "@/lib/esport-nexus-sync";
 
 const ROLES = ["VICE_OWNER", "COACH", "CAPTAIN", "STAFF"];
 const SINGLE = ["VICE_OWNER", "COACH", "CAPTAIN"]; // jamoada bittadan
@@ -55,6 +57,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         update: { role, title },
     });
     await esNotify(target.id, { type: "TEAM_ROLE", title: "Jamoa lavozimi", body: "Sizga jamoaда lavozim berildi", href: `/esport/teams/${id}` });
+    after(() => syncEsTeamChannel(id));
     return NextResponse.json({ ok: true });
 }
 
@@ -69,5 +72,6 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const profileId = String(b.profileId || "");
     if (!profileId) return NextResponse.json({ error: "profileId kerak" }, { status: 400 });
     await prisma.esTeamStaff.deleteMany({ where: { teamId: id, profileId } });
+    after(() => syncEsTeamChannel(id));
     return NextResponse.json({ ok: true });
 }

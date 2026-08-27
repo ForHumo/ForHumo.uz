@@ -1902,6 +1902,11 @@ model NexusChannel {
   // Auto-translate — a'zoning tili guruhdan farq qilsa Gemini avto-tarjima qiladi.
   // Client tomon per-message "Tarjima" tugma bilan qo'lda ham ishlatiladi.
   autoTranslate Boolean @default(false)
+  // Tashqi manba bog'lanishi — guruh avtomatik boshqa modulga sinxronlanadi.
+  // esTeamId != null → EsTeam a'zolari bilan sinxron; systemOwned=true bo'lsa
+  // owner yo'q, sozlamalar/a'zolar tashqi manba orqali boshqariladi.
+  esTeamId    String?  @unique
+  systemOwned Boolean @default(false)
   createdAt   DateTime @default(now())
   members     NexusChannelMember[]
   messages    NexusChannelMessage[]

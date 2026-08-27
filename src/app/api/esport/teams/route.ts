@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMyProfile, userHasTeam } from "@/lib/esport";
 import { addAthleteToTeam } from "@/lib/esport-roster";
 import { isProfileBlocked } from "@/lib/esport-block";
+import { syncEsTeamChannel } from "@/lib/esport-nexus-sync";
 
 // GET /api/esport/teams — mening jamoalarim (egasi + a'zo bo'lganlarim)
 export async function GET() {
@@ -73,6 +75,9 @@ export async function POST(req: Request) {
             if (!exists) await prisma.esStanding.create({ data: { seasonId: s.id, divisionId: lowest.id, teamId: team.id } });
         }
     } catch { /* kiritish xatosi jamoa yaratishni buzmasin */ }
+
+    // Nexus guruh avto-yaratish (jamoa a'zolari uchun chat)
+    after(() => syncEsTeamChannel(team.id));
 
     return NextResponse.json({ ok: true, team: { id: team.id, name: team.name, tag: team.tag } });
 }

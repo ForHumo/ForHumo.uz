@@ -60,6 +60,11 @@ export async function purgeTeam(teamId: string) {
     });
     await prisma.esStanding.deleteMany({ where: { teamId } });
     await prisma.esContract.updateMany({ where: { teamId, status: "ACTIVE" }, data: { status: "TERMINATED" } });
+    // Nexus guruh ham o'chiriladi
+    try {
+        const { deleteEsTeamChannel } = await import("@/lib/esport-nexus-sync");
+        await deleteEsTeamChannel(teamId);
+    } catch { /* fail-safe */ }
     await prisma.esTeam.delete({ where: { id: teamId } });
 }
 

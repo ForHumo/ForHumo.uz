@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { isTeamLockedForGame } from "@/lib/esport-lock";
 import { isBlocked } from "@/lib/esport-block";
+import { syncEsTeamChannel } from "@/lib/esport-nexus-sync";
 
 export type AddResult = "ok" | "already_in_team" | "no_athlete" | "roster_full" | "locked" | "blocked" | "error";
 
@@ -49,6 +50,8 @@ export async function addAthleteToTeam(athleteId: string, teamId: string): Promi
         await prisma.esRosterMember.create({
             data: { rosterId: roster.id, athleteId, role: count === 0 ? "CAPTAIN" : "STARTER" },
         });
+        // Nexus guruh sinxron
+        void syncEsTeamChannel(teamId);
         return "ok";
     } catch {
         return "error";
