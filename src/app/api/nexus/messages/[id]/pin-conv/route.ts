@@ -26,6 +26,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     const isUser1 = conv.user1Id === me.id;
+
+    // DM-13: Pinned chats max 5 (Telegram limit) — faqat pin=true holatida tekshiruv
+    if (pin) {
+        const already = await prisma.nexusConversation.count({
+            where: isUser1
+                ? { user1Id: me.id, pinnedByUser1: { not: null } }
+                : { user2Id: me.id, pinnedByUser2: { not: null } },
+        });
+        // Agar shu chat allaqachon pin'da bo'lsa, count'ga kirmaydi (noop update)
+        const isAlreadyPinned = isUser1 ? !!conv.pinnedByUser1 : !!conv.pinnedByUser2;
+        if (already >= 5 && !isAlreadyPinned) {
+            return NextResponse.json({
+                error: "Maks 5 ta chatni pinga qo'yish mumkin. Boshqasini olib tashlang.",
+                code: "PIN_LIMIT",
+            }, { status: 400 });
+        }
+    }
+
     await prisma.nexusConversation.update({
         where: { id },
         data: isUser1

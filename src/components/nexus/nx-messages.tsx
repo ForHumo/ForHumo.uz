@@ -51,7 +51,8 @@ import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { NxAgentButtons, type AgentButton } from "./nx-agent-buttons";
 import { NxAgentInlineMode } from "./nx-agent-inline-mode";
 import { NxDmSettingsModal } from "./nx-dm-settings-modal";
-import { Settings2, Timer } from "lucide-react";
+import { NxDmMarkdownToolbar } from "./nx-dm-markdown-toolbar";
+import { Settings2, Timer, Bold as BoldIcon } from "lucide-react";
 
 function formatAutoDeleteBadge(sec: number): string {
     if (sec < 3600) return `${Math.floor(sec / 60)}m`;
@@ -133,6 +134,11 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     const [input, setInput] = useState("");
     const [inlineMode, setInlineMode] = useState<{ bot: string; query: string } | null>(null);
     const [dmSettingsOpen, setDmSettingsOpen] = useState(false);
+    const [mdToolbarOpen, setMdToolbarOpen] = useState(false);
+    // Peer label (nickname/wallpaper) — settings modal orqali o'zgartiriladi
+    const [peerLabel, setPeerLabel] = useState<{ nickname: string | null; wallpaper: string | null; color: string | null }>(
+        { nickname: null, wallpaper: null, color: null }
+    );
     // Multi-select mode (DM-16) — selectedIds soni > 0 bo'lsa bulk toolbar chiqadi
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const inSelectMode = selectedIds.size > 0;
@@ -167,6 +173,16 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
         }
         clearSelection();
     }
+
+    // Peer o'zgarganda label yuklash (nickname/wallpaper/color)
+    useEffect(() => {
+        const peerId = selected?.other?.id;
+        if (!peerId) { setPeerLabel({ nickname: null, wallpaper: null, color: null }); return; }
+        fetch(`/api/nexus/peer-label/${peerId}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (d) setPeerLabel({ nickname: d.nickname ?? null, wallpaper: d.wallpaper ?? null, color: d.color ?? null }); })
+            .catch(() => {});
+    }, [selected?.other?.id]);
 
     // "@bot_agent query" ni parse qiladi (inline mode).
     function parseInlineFromInput(v: string): { bot: string; query: string } | null {
@@ -336,6 +352,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
 
     // Fayl attach — rasm/video/audio/fayl
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const composerInputRef = useRef<HTMLInputElement | null>(null);
     const [uploading, setUploading] = useState(false);
     const [uploadPct, setUploadPct] = useState(0);
 
@@ -793,7 +810,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                     </div>
                     <div className="min-w-0">
                         <div className="flex items-center gap-1">
-                            <span className="text-sm font-bold text-white truncate">{selected.other?.name || selected.other?.username || "Foydalanuvchi"}</span>
+                            <span className="text-sm font-bold text-white truncate">{peerLabel.nickname || selected.other?.name || selected.other?.username || "Foydalanuvchi"}</span>
                             {selected.other?.verified && <NxVerifiedBadge category={selected.other?.verifiedCategory} size={14} />}
                             {selected.other?.username?.toLowerCase().endsWith("_agent") && (
                                 <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0"
@@ -869,7 +886,11 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2 min-h-0" style={{ scrollbarWidth: "none" }}>
+            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2 min-h-0"
+                style={{
+                    scrollbarWidth: "none",
+                    ...(peerLabel.wallpaper ? { background: peerLabel.wallpaper } : {}),
+                }}>
                 {messages.length === 0 && (
                     <p className="text-center text-xs py-8" style={{ color: "rgba(120,140,185,0.6)" }}>Suhbat boshlang</p>
                 )}
@@ -1300,7 +1321,16 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                     onClose={() => setInlineMode(null)}
                                 />
                             )}
-                            <input value={input} onChange={e => {
+                            {mdToolbarOpen && (
+                                <div className="absolute bottom-full mb-2 left-0">
+                                    <NxDmMarkdownToolbar
+                                        inputRef={composerInputRef}
+                                        onChange={setInput}
+                                        onClose={() => setMdToolbarOpen(false)}
+                                    />
+                                </div>
+                            )}
+                            <input ref={composerInputRef} value={input} onChange={e => {
                                     const v = e.target.value;
                                     setInput(v);
                                     setInlineMode(parseInlineFromInput(v));
@@ -1312,8 +1342,13 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                 }} onKeyDown={e => { if (e.key === "Enter" && !inlineMode) send(); if (e.key === "Escape") setInlineMode(null); }}
                                 placeholder={uploading ? `Yuklanmoqda ${uploadPct}%...` : "Xabar yozing... (@bot_agent so'rov — inline)"}
                                 maxLength={2000} disabled={uploading}
-                                className="w-full h-10 rounded-xl px-3.5 text-sm text-white outline-none disabled:opacity-60"
+                                className="w-full h-10 rounded-xl px-3.5 pr-9 text-sm text-white outline-none disabled:opacity-60"
                                 style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "#00CEC8" }} />
+                            <button onClick={() => setMdToolbarOpen(v => !v)} title="Formatlash"
+                                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center"
+                                style={{ background: mdToolbarOpen ? "rgba(0,206,200,0.20)" : "transparent" }}>
+                                <BoldIcon className="w-3.5 h-3.5" style={{ color: mdToolbarOpen ? "#00CEC8" : "rgba(160,176,224,0.65)" }} />
+                            </button>
                         </div>
                         {/* Matn bo'sh bo'lsa: dumaloq video + mic; aks holda jo'natish */}
                         {input.trim() ? (
@@ -1661,7 +1696,16 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                     autoDeleteSeconds={(selected as { autoDeleteAfterSeconds?: number }).autoDeleteAfterSeconds ?? 0}
                     mutedUntil={(selected as { mutedUntil?: string | null }).mutedUntil ?? null}
                     onClose={() => setDmSettingsOpen(false)}
-                    onUpdated={() => loadConvs()}
+                    onUpdated={() => {
+                        loadConvs();
+                        // Peer label ni qayta yuklash (nickname/wallpaper o'zgargan bo'lishi mumkin)
+                        if (selected?.other?.id) {
+                            fetch(`/api/nexus/peer-label/${selected.other.id}`)
+                                .then(r => r.ok ? r.json() : null)
+                                .then(d => { if (d) setPeerLabel({ nickname: d.nickname ?? null, wallpaper: d.wallpaper ?? null, color: d.color ?? null }); })
+                                .catch(() => {});
+                        }
+                    }}
                 />
             )}
 

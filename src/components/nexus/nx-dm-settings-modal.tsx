@@ -7,8 +7,9 @@
 import { useEffect, useState } from "react";
 import {
     X, Loader2, User as UserIcon, Timer, BellOff, Bell, Trash2,
-    Archive, EyeOff, Save, Check, Palette,
+    Archive, EyeOff, Save, Check, Palette, Image as ImageIcon, Phone,
 } from "lucide-react";
+import { NxDmCallHistoryModal } from "./nx-dm-call-history-modal";
 
 type PeerLabel = { nickname: string | null; color: string | null; wallpaper: string | null };
 
@@ -23,6 +24,18 @@ const COLOR_PRESETS = [
     { key: "teal",   label: "Turkuaz",  hex: "#00CEC8" },
     { key: "pink",   label: "Pushti",   hex: "#EC4899" },
     { key: "gray",   label: "Kulrang",  hex: "#94A3B8" },
+];
+
+// Wallpaper preset ranglari — CSS gradient stringlar
+const WALLPAPER_PRESETS: Array<{ key: string; label: string; value: string }> = [
+    { key: "default", label: "Standart", value: "" },
+    { key: "midnight", label: "Yarim tun", value: "linear-gradient(135deg,#0a0e28,#1a2170)" },
+    { key: "ocean",    label: "Okean",    value: "linear-gradient(135deg,#0c4a6e,#0369a1)" },
+    { key: "forest",   label: "O'rmon",   value: "linear-gradient(135deg,#14532d,#166534)" },
+    { key: "sunset",   label: "Botish",   value: "linear-gradient(135deg,#7c2d12,#c2410c)" },
+    { key: "rose",     label: "Atirgul",  value: "linear-gradient(135deg,#831843,#be185d)" },
+    { key: "space",    label: "Kosmos",   value: "linear-gradient(135deg,#1e1b4b,#5b21b6)" },
+    { key: "gold",     label: "Oltin",    value: "linear-gradient(135deg,#78350f,#ca8a04)" },
 ];
 
 const AUTO_DELETE_OPTIONS = [
@@ -58,9 +71,11 @@ export function NxDmSettingsModal({
     const [label, setLabel] = useState<PeerLabel>({ nickname: null, color: null, wallpaper: null });
     const [nickname, setNickname] = useState("");
     const [color, setColor] = useState<string | null>(null);
+    const [wallpaper, setWallpaper] = useState<string | null>(null);
     const [autoDelete, setAutoDelete] = useState(0);
     const [busy, setBusy] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [callsOpen, setCallsOpen] = useState(false);
 
     useEffect(() => {
         if (!open) return;
@@ -72,6 +87,7 @@ export function NxDmSettingsModal({
                     setLabel(d);
                     setNickname(d.nickname ?? "");
                     setColor(d.color ?? null);
+                    setWallpaper(d.wallpaper ?? null);
                 }
             });
     }, [open, peerId, autoDeleteSeconds]);
@@ -84,6 +100,7 @@ export function NxDmSettingsModal({
                 body: JSON.stringify({
                     nickname: nickname.trim() || null,
                     color,
+                    wallpaper,
                 }),
             });
             if (r.ok) {
@@ -206,6 +223,34 @@ export function NxDmSettingsModal({
                                 </div>
                             </div>
 
+                            {/* Wallpaper (DM-10) */}
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block flex items-center gap-1"
+                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    <ImageIcon className="w-3 h-3" /> Chat foni
+                                </label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {WALLPAPER_PRESETS.map(w => (
+                                        <button key={w.key} onClick={() => setWallpaper(w.value || null)}
+                                            title={w.label}
+                                            className="h-14 rounded-lg relative overflow-hidden"
+                                            style={{
+                                                background: w.value || "rgba(11,18,40,0.60)",
+                                                border: (wallpaper ?? "") === w.value
+                                                    ? "2px solid white"
+                                                    : "1px solid rgba(43,62,232,0.20)",
+                                            }}>
+                                            {(wallpaper ?? "") === w.value && (
+                                                <Check className="w-4 h-4 mx-auto text-white drop-shadow-md" />
+                                            )}
+                                            <span className="absolute bottom-0.5 left-0 right-0 text-[9px] font-bold text-white opacity-80 truncate px-1">
+                                                {w.label}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             <button onClick={saveLabel} disabled={busy}
                                 className="w-full h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                                 style={{ background: "linear-gradient(135deg, #2B3EE8, #00CEC8)", color: "white" }}>
@@ -215,11 +260,11 @@ export function NxDmSettingsModal({
                                 {saved ? "Saqlandi" : "Saqlash"}
                             </button>
 
-                            {(label.nickname || label.color) && (
-                                <button onClick={() => { setNickname(""); setColor(null); saveLabel(); }}
+                            {(label.nickname || label.color || label.wallpaper) && (
+                                <button onClick={() => { setNickname(""); setColor(null); setWallpaper(null); saveLabel(); }}
                                     className="w-full h-10 rounded-xl text-xs font-bold"
                                     style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.30)", color: "#EF4444" }}>
-                                    Nickname va rangni tozalash
+                                    Barcha shaxsiy sozlamalarni tozalash
                                 </button>
                             )}
                         </>
@@ -299,11 +344,20 @@ export function NxDmSettingsModal({
                                         Yashirin chatlar
                                     </span>
                                 </button>
+                                <button onClick={() => setCallsOpen(true)}
+                                    className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
+                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                    <span className="flex items-center gap-2">
+                                        <Phone className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                        Chaqiruvlar tarixi
+                                    </span>
+                                </button>
                             </div>
                         </>
                     )}
                 </div>
             </div>
+            <NxDmCallHistoryModal open={callsOpen} peerId={peerId} peerName={peerName} onClose={() => setCallsOpen(false)} />
         </>
     );
 }
