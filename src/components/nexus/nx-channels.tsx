@@ -14,7 +14,10 @@ import { NxGroupMembersModal } from "./nx-group-members-modal";
 import { NxGroupSettingsModal } from "./nx-group-settings-modal";
 import { NxGroupMediaTab } from "./nx-group-media-tab";
 import { NxGroupMuteButton } from "./nx-group-mute-menu";
-import { Image as ImageIcon, Settings as SettingsIcon } from "lucide-react";
+import { NxChannelRichAttach, type ChannelAttachPayload } from "./nx-channel-rich-attach";
+import { NxChannelRichMsg } from "./nx-channel-rich-msg";
+import { NxMentionAutocomplete } from "./nx-mention-autocomplete";
+import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon } from "lucide-react";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean; isSystem?: boolean }
@@ -32,6 +35,22 @@ interface ChMsg {
     bookmarked?: boolean;
     commentCount?: number;
     viewCount?: number;
+    // Rich media
+    mediaType?: string | null;
+    mediaMime?: string | null;
+    mediaName?: string | null;
+    mediaSize?: number | null;
+    durationMs?: number | null;
+    locLat?: number | null;
+    locLng?: number | null;
+    locExpiresAt?: string | null;
+    contactName?: string | null;
+    contactPhone?: string | null;
+    contactUsername?: string | null;
+    viewOnce?: boolean;
+    mentions?: string[];
+    deletedForEveryone?: boolean;
+    deletedForEveryoneAt?: string | null;
 }
 interface ChComment {
     id: string;
@@ -452,6 +471,57 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         } finally { setBusy(false); }
     }
     function sendSilent() { nextSilentRef.current = true; send(); }
+
+    // Rich media (voice/video-circle/location/contact) — attach menyudan keladi
+    async function sendRich(p: ChannelAttachPayload) {
+        const body: Record<string, unknown> = { ...p };
+        if (p.mediaUrl) body.media = [p.mediaUrl];
+        const r = await fetch(`/api/nexus/channels/${id}/messages`, {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+        });
+        if (r.ok) {
+            const d = await r.json();
+            setMsgs(prev => [...prev, d.message].slice(-200));
+            lastTs.current = d.message.createdAt;
+        } else {
+            const e = await r.json().catch(() => ({}));
+            alert(e.error || "Xato");
+        }
+    }
+
+    // Delete for everyone (60 daq oynada)
+    async function deleteForEveryone(msgId: string) {
+        if (!confirm("Xabarni hamma uchun o'chirasizmi?")) return;
+        const r = await fetch(`/api/nexus/channels/${id}/messages/${msgId}/delete-for-everyone`, { method: "POST" });
+        if (r.ok) {
+            setMsgs(prev => prev.map(m => m.id === msgId
+                ? { ...m, text: null, media: [], mediaType: null, deletedForEveryone: true }
+                : m
+            ));
+        } else {
+            const e = await r.json().catch(() => ({}));
+            alert(e.error || "O'chirib bo'lmadi");
+        }
+    }
+
+    // @mention autocomplete state
+    const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+    const inputRef = useRef<HTMLInputElement | null>(null);
+    function onInputChange(v: string) {
+        setInput(v);
+        // Oxirgi @xxx ni topamiz (bo'shliq bilan oldida)
+        const m = v.match(/(?:^|\s)@([a-z0-9_]{0,32})$/i);
+        setMentionQuery(m ? "@" + m[1] : null);
+    }
+    function pickMention(username: string) {
+        const v = input.replace(/(?:^|\s)@([a-z0-9_]{0,32})$/i, (m) => {
+            const pre = m.startsWith(" ") ? " " : "";
+            return `${pre}@${username} `;
+        });
+        setInput(v);
+        setMentionQuery(null);
+        inputRef.current?.focus();
+    }
     async function leaveOrDelete() {
         if (ch?.isOwner) {
             if (!confirm("Kanalni o'chirasizmi?")) return;
@@ -1002,21 +1072,37 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                             </p>
                                         </button>
                                     )}
-                                    {m.text && editingId !== m.id && (
-                                        <div className="text-sm whitespace-pre-wrap" style={{ color: "rgba(210,220,245,0.95)" }}>
-                                            <NxMarkdown text={m.text} />
-                                            {m.editedAt && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openHistory(m.id)}
-                                                    className="ml-1.5 text-[10px] opacity-60 hover:opacity-100 hover:underline italic cursor-pointer inline-flex items-center gap-0.5 transition"
-                                                    style={{ color: "#00CEC8" }}
-                                                    title="Tahrirlash tarixini ko'rish"
-                                                >
-                                                    (tahrirlangan)
-                                                </button>
+                                    {m.deletedForEveryone ? (
+                                        <p className="text-sm italic" style={{ color: "rgba(140,160,210,0.7)" }}>Bu xabar o&apos;chirilgan</p>
+                                    ) : (
+                                        <>
+                                            {m.mediaType && ["audio","video-circle","location","contact"].includes(m.mediaType) && (
+                                                <div className="mb-1">
+                                                    <NxChannelRichMsg
+                                                        mediaType={m.mediaType} media={m.media}
+                                                        durationMs={m.durationMs} locLat={m.locLat} locLng={m.locLng}
+                                                        contactName={m.contactName} contactPhone={m.contactPhone}
+                                                        contactUsername={m.contactUsername}
+                                                    />
+                                                </div>
                                             )}
-                                        </div>
+                                            {m.text && editingId !== m.id && (
+                                                <div className="text-sm whitespace-pre-wrap" style={{ color: "rgba(210,220,245,0.95)" }}>
+                                                    <NxMarkdown text={m.text} />
+                                                    {m.editedAt && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openHistory(m.id)}
+                                                            className="ml-1.5 text-[10px] opacity-60 hover:opacity-100 hover:underline italic cursor-pointer inline-flex items-center gap-0.5 transition"
+                                                            style={{ color: "#00CEC8" }}
+                                                            title="Tahrirlash tarixini ko'rish"
+                                                        >
+                                                            (tahrirlangan)
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                     {translated[m.id] && (
                                         <div className="mt-1.5 pl-2 py-1 rounded text-xs italic"
@@ -1269,11 +1355,18 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                         }
                                                     </button>
                                                 )}
+                                                {m.mine && !m.deletedForEveryone && (Date.now() - new Date(m.createdAt).getTime()) < 60 * 60 * 1000 && (
+                                                    <button onClick={() => { deleteForEveryone(m.id); setChMsgMenuFor(null); }}
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-red-500/10 text-left"
+                                                        style={{ color: "#EF4444" }}>
+                                                        <TrashIcon className="w-4 h-4" /> Hamma uchun o&apos;chirish
+                                                    </button>
+                                                )}
                                                 {(m.mine || canManage) && (
                                                     <button onClick={() => { deleteMsg(m); setChMsgMenuFor(null); }}
                                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-red-500/10 text-left"
                                                         style={{ color: "#EF4444" }}>
-                                                        <Trash2 className="w-4 h-4" /> O&apos;chirish
+                                                        <Trash2 className="w-4 h-4" /> O&apos;chirish (o&apos;zim uchun)
                                                     </button>
                                                 )}
                                             </div>
@@ -1332,15 +1425,25 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                         </div>
                     )}
                     {ch.canPost ? (
-                        <div className="flex gap-2 px-3 py-3 mx-1" style={{ borderTop: "1px solid rgba(43,62,232,0.12)" }}>
+                        <div className="flex gap-2 px-3 py-3 mx-1 relative" style={{ borderTop: "1px solid rgba(43,62,232,0.12)" }}>
+                            <NxChannelRichAttach onAttach={sendRich} disabled={busy} />
                             <button onClick={() => setPollOpen(true)} title="So'rovnoma"
                                 className="w-10 h-10 flex items-center justify-center rounded-xl text-white flex-shrink-0"
                                 style={{ background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.25)" }}>
                                 <BarChart2 className="w-4 h-4" />
                             </button>
-                            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
-                                placeholder={ch.type === "CHANNEL" ? "E'lon yozing..." : "Xabar yozing..."} className="flex-1 h-10 rounded-xl px-3 text-sm text-white outline-none"
-                                style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.2)", caretColor: "#00CEC8" }} />
+                            <div className="flex-1 relative">
+                                {mentionQuery && ch.type === "GROUP" && (
+                                    <NxMentionAutocomplete channelId={id} query={mentionQuery}
+                                        onPick={pickMention} onClose={() => setMentionQuery(null)} />
+                                )}
+                                <input ref={inputRef} value={input}
+                                    onChange={e => onInputChange(e.target.value)}
+                                    onKeyDown={e => { if (e.key === "Enter" && !mentionQuery) send(); if (e.key === "Escape") setMentionQuery(null); }}
+                                    placeholder={ch.type === "CHANNEL" ? "E'lon yozing..." : "Xabar yozing... (@ bilan a'zoni tildan)"}
+                                    className="w-full h-10 rounded-xl px-3 text-sm text-white outline-none"
+                                    style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.2)", caretColor: "#00CEC8" }} />
+                            </div>
                             <button onClick={send}
                                 onContextMenu={(e) => { e.preventDefault(); sendSilent(); }}
                                 disabled={busy || !input.trim()}
