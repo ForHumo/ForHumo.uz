@@ -32,6 +32,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     });
     if (!msg || msg.channelId !== id) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
+    // Ruxsat etilgan reaksiyalar to'plami (CHANNEL uchun). Bo'sh = hammasi ochiq.
+    const channel = await prisma.nexusChannel.findUnique({
+        where: { id }, select: { type: true, allowedReactions: true },
+    });
+    if (channel?.type === "CHANNEL" && channel.allowedReactions.length > 0
+        && !channel.allowedReactions.includes(emoji)) {
+        return NextResponse.json({ error: "Bu reaksiya kanalda ruxsat etilmagan" }, { status: 400 });
+    }
+
     // Toggle
     const existing = await prisma.nexusChannelMessageReaction.findUnique({
         where: { messageId_profileId_emoji: { messageId, profileId: me.id, emoji } },

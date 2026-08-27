@@ -2,9 +2,10 @@
 
 // Guruh sozlamalari modali (OWNER/ADMIN).
 // Ismi, tavsif, avatar/cover, qoidalar, ruxsatlar, slow mode, auto-delete, restrict forward.
+// Kanal uchun: post signature toggle, ruxsat etilgan reaksiyalar to'plami.
 
 import { useEffect, useState } from "react";
-import { X, Loader2, Save, Trash2, Clock, ShieldOff, Users, MessageSquare, Image as ImageIcon, Link as LinkIcon, Pin, Info, Sparkles, Languages, Camera, Upload } from "lucide-react";
+import { X, Loader2, Save, Trash2, Clock, ShieldOff, Users, MessageSquare, Image as ImageIcon, Link as LinkIcon, Pin, Info, Sparkles, Languages, Camera, Upload, Signature as SignatureIcon, Smile } from "lucide-react";
 
 type ChannelData = {
     id: string; name: string; description: string | null; handle: string | null;
@@ -16,6 +17,8 @@ type ChannelData = {
     aiModerator: boolean;
     autoTranslate: boolean;
     allowComments: boolean;
+    signaturesEnabled: boolean;
+    allowedReactions: string[];
     isOwner: boolean;
     role: "OWNER" | "ADMIN" | "MEMBER" | null;
     defaultPermissions: Record<string, boolean> | null;
@@ -93,6 +96,8 @@ export function NxGroupSettingsModal({
                     aiModerator: data.aiModerator,
                     autoTranslate: data.autoTranslate,
                     defaultPermissions: data.defaultPermissions,
+                    signaturesEnabled: data.signaturesEnabled,
+                    allowedReactions: data.allowedReactions,
                 }),
             });
             if (r.ok) {
@@ -322,6 +327,30 @@ export function NxGroupSettingsModal({
                                     </div>
                                 </label>
                             )}
+                            {/* Post signature — faqat owner + CHANNEL */}
+                            {isOwner && data.type === "CHANNEL" && (
+                                <label className="flex items-center gap-3 rounded-xl px-3 py-3"
+                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    <input type="checkbox" checked={data.signaturesEnabled}
+                                        onChange={e => setData({ ...data, signaturesEnabled: e.target.checked })} />
+                                    <div className="flex-1">
+                                        <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                                            <SignatureIcon className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                            Post imzosi
+                                        </p>
+                                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
+                                            Post ostida yozgan admin nomi ko&apos;rinadi. O&apos;chirilsa faqat kanal nomi.
+                                        </p>
+                                    </div>
+                                </label>
+                            )}
+                            {/* Ruxsat etilgan reaksiyalar — CHANNEL owner */}
+                            {isOwner && data.type === "CHANNEL" && (
+                                <AllowedReactionsEditor
+                                    value={data.allowedReactions}
+                                    onChange={v => setData({ ...data, allowedReactions: v })}
+                                />
+                            )}
                             {/* Auto-translate — faqat owner */}
                             {isOwner && data.type === "GROUP" && (
                                 <label className="flex items-center gap-3 rounded-xl px-3 py-3"
@@ -388,5 +417,61 @@ export function NxGroupSettingsModal({
                 )}
             </div>
         </>
+    );
+}
+
+// Ruxsat etilgan reaksiyalar tanlovi (owner). Default 8 ta, boshqacha to'plam ham mumkin.
+const DEFAULT_REACTION_POOL = ["❤️","🔥","👍","👎","😂","😮","😢","👏","🎉","💯","🙏","😍","🤔","👀","🚀","✨"];
+
+function AllowedReactionsEditor({
+    value, onChange,
+}: {
+    value: string[];
+    onChange: (v: string[]) => void;
+}) {
+    const set = new Set(value);
+    const active = value.length > 0;
+
+    function toggle(emoji: string) {
+        const s = new Set(value);
+        if (s.has(emoji)) s.delete(emoji);
+        else s.add(emoji);
+        onChange(Array.from(s));
+    }
+
+    return (
+        <div className="rounded-xl px-3 py-3"
+            style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+            <div className="flex items-center gap-2 mb-2">
+                <Smile className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                <p className="text-sm font-bold text-white flex-1">Ruxsat etilgan reaksiyalar</p>
+                {active && (
+                    <button type="button" onClick={() => onChange([])}
+                        className="text-[10px] font-bold hover:underline"
+                        style={{ color: "rgba(160,176,224,0.85)" }}>
+                        Standart
+                    </button>
+                )}
+            </div>
+            <p className="text-[11px] mb-2" style={{ color: "rgba(140,160,210,0.7)" }}>
+                {active
+                    ? `Tanlangan: ${value.length}. Kanal a'zolari faqat shu emojilarni qo'ya oladi.`
+                    : "Standart — barcha emojilar ruxsat etilgan"}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+                {DEFAULT_REACTION_POOL.map(e => {
+                    const on = set.has(e);
+                    return (
+                        <button key={e} type="button" onClick={() => toggle(e)}
+                            className="w-9 h-9 rounded-lg flex items-center justify-center text-xl transition"
+                            style={on
+                                ? { background: "rgba(0,206,200,0.20)", border: "1px solid #00CEC8" }
+                                : { background: "rgba(11,18,40,0.30)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                            {e}
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
     );
 }

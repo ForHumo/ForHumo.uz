@@ -1908,6 +1908,12 @@ model NexusChannel {
   // owner yo'q, sozlamalar/a'zolar tashqi manba orqali boshqariladi.
   esTeamId    String?  @unique
   systemOwned Boolean @default(false)
+  // Kanal post signature (Telegram Channel uslubi) — postlar ostida "by @admin" chiqarish.
+  // TRUE = ko'rinadi, FALSE = anonim (owner/admin ismisiz, faqat kanal). GROUP'da ta'siri yo'q.
+  signaturesEnabled Boolean @default(true)
+  // Kanal ruxsat etilgan reaksiyalar to'plami (Telegram Channel uslubi).
+  // Bo'sh = default 8 ta emoji. Faqat CHANNEL uchun mazmunli.
+  allowedReactions String[] @default([])
   createdAt   DateTime @default(now())
   members     NexusChannelMember[]
   messages    NexusChannelMessage[]
@@ -2133,6 +2139,9 @@ model NexusChannelMessage {
   mentions  String[] @default([])
   // Topic (Telegram Forums) — NULL = umumiy chat, else topic ID.
   topicId   String?
+  // Signature snapshot (kanal posti yuborilgan vaqtdagi signaturesEnabled qiymati).
+  // TRUE = post ostida sender ismi ko'rinadi, FALSE = anonim ("by <kanal>").
+  signaturePosted Boolean @default(true)
   createdAt DateTime @default(now())
   @@index([channelId, createdAt])
   @@index([channelId, pinnedAt])

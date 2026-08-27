@@ -38,6 +38,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             autoTranslate: channel.autoTranslate,
             esTeamId: channel.esTeamId,
             systemOwned: channel.systemOwned,
+            signaturesEnabled: channel.signaturesEnabled,
+            allowedReactions: channel.allowedReactions,
             createdAt: channel.createdAt,
             myMutedUntil: membership?.mutedUntil ?? null,
         },
@@ -57,7 +59,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const body = await req.json();
     const { name, description, avatarUrl, coverUrl, rules, slowModeSeconds, defaultPermissions, allowComments,
-        autoDeleteAfterSeconds, restrictForwarding, aiModerator, autoTranslate } = body as {
+        autoDeleteAfterSeconds, restrictForwarding, aiModerator, autoTranslate,
+        signaturesEnabled, allowedReactions } = body as {
         name?: string; description?: string; avatarUrl?: string;
         coverUrl?: string; rules?: string;
         slowModeSeconds?: number;
@@ -67,6 +70,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         restrictForwarding?: boolean;
         aiModerator?: boolean;
         autoTranslate?: boolean;
+        signaturesEnabled?: boolean;
+        allowedReactions?: string[];
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = {};
@@ -102,6 +107,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
     if (typeof autoTranslate === "boolean" && m.role === "OWNER") {
         data.autoTranslate = autoTranslate;
+    }
+    // Post signature (faqat CHANNEL uchun mazmunli, owner sozlaydi)
+    if (typeof signaturesEnabled === "boolean" && m.role === "OWNER") {
+        data.signaturesEnabled = signaturesEnabled;
+    }
+    // Ruxsat etilgan reaksiyalar to'plami (owner)
+    if (Array.isArray(allowedReactions) && m.role === "OWNER") {
+        const cleaned = allowedReactions
+            .filter(e => typeof e === "string" && e.length > 0 && e.length <= 8)
+            .slice(0, 16);
+        data.allowedReactions = cleaned;
     }
     const updated = await prisma.nexusChannel.update({ where: { id }, data });
     return NextResponse.json({

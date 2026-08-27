@@ -30,12 +30,13 @@ import { NxGroupBansModal } from "./nx-group-bans-modal";
 import { NxGroupPollVoters } from "./nx-group-poll-voters";
 import { NxBotCommandAutocomplete } from "./nx-bot-command-autocomplete";
 import { NxFinancialCopilot } from "./nx-financial-copilot";
+import { NxChannelBroadcastModal } from "./nx-channel-broadcast-modal";
 import { Wallet as WalletIcon, Download as DownloadIcon } from "lucide-react";
-import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon, Sparkles as SparklesIcon, Sticker as StickerIcon, EyeOff, Hash as HashIcon, Bot as BotIcon } from "lucide-react";
+import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon, Sparkles as SparklesIcon, Sticker as StickerIcon, EyeOff, Hash as HashIcon, Bot as BotIcon, Radio as RadioIcon, Share2 as Share2Icon } from "lucide-react";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean; isSystem?: boolean }
-interface ChDetail { id: string; type: ChType; name: string; handle: string | null; description: string | null; avatarUrl: string | null; isPrivate: boolean; memberCount: number; isOwner: boolean; isMember: boolean; role: string | null; canPost: boolean; allowComments?: boolean; slowModeSeconds?: number }
+interface ChDetail { id: string; type: ChType; name: string; handle: string | null; description: string | null; avatarUrl: string | null; isPrivate: boolean; memberCount: number; isOwner: boolean; isMember: boolean; role: string | null; canPost: boolean; allowComments?: boolean; slowModeSeconds?: number; signaturesEnabled?: boolean; allowedReactions?: string[] }
 interface ChMsg {
     viewOnceOpened?: boolean;
     id: string; text: string | null; media: string[]; createdAt: string; mine: boolean;
@@ -44,6 +45,8 @@ interface ChMsg {
     pollVoteCounts?: number[] | null; pollMyVotes?: number[] | null; pollTotal?: number | null;
     pinnedAt?: string | null;
     editedAt?: string | null;
+    editCount?: number;
+    signaturePosted?: boolean;
     reactions?: Array<{ emoji: string; count: number; mine: boolean }>;
     replyTo?: { id: string; text: string | null; senderName: string | null } | null;
     replyToId?: string | null;
@@ -324,8 +327,30 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [currentTopicName, setCurrentTopicName] = useState<string | null>(null);
     const [copilotOpen, setCopilotOpen] = useState(false);
     const [bansOpen, setBansOpen] = useState(false);
+    const [broadcastOpen, setBroadcastOpen] = useState(false);
     const [pollVotersFor, setPollVotersFor] = useState<string | null>(null);
     const [slashQuery, setSlashQuery] = useState<string | null>(null);
+
+    // Per-post share (Telegram uslubi) — clipboard'ga permalink URL nusxa oladi.
+    async function sharePostLink(msgId: string) {
+        if (!ch?.handle) {
+            alert("Faqat public @handle kanallarida share ishlaydi");
+            return;
+        }
+        const url = `${window.location.origin}/nexus/ch/${encodeURIComponent(ch.handle)}/msg/${encodeURIComponent(msgId)}`;
+        try {
+            if (navigator.share) {
+                await navigator.share({ title: ch.name, url });
+                return;
+            }
+        } catch { /* user cancelled */ }
+        try {
+            await navigator.clipboard.writeText(url);
+            alert("Havola nusxa olindi");
+        } catch {
+            prompt("Havola:", url);
+        }
+    }
     // Typing indicator (per-channel)
     const [typingUsers, setTypingUsers] = useState<Map<string, { name: string; expiresAt: number }>>(new Map());
     const typingSentAtRef = useRef<number>(0);
@@ -1079,6 +1104,16 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         <span className="flex-1">Bloklanganlar</span>
                                     </button>
                                 )}
+                                {/* Broadcast — faqat OWNER + CHANNEL */}
+                                {ch.isOwner && ch.type === "CHANNEL" && (
+                                    <button onClick={() => { setBroadcastOpen(true); setChMoreOpen(false); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <RadioIcon className="w-4 h-4" style={{ color: "#F5B301" }} />
+                                        <span className="flex-1">Muhim e&apos;lon</span>
+                                        <span className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>3/kun</span>
+                                    </button>
+                                )}
                                 {/* Export — faqat OWNER */}
                                 {ch.isOwner && (
                                     <a href={`/api/nexus/channels/${id}/export?format=json`}
@@ -1224,6 +1259,15 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                 onClose={() => setCopilotOpen(false)}
                 onSendPublic={(text) => { setInput(text); }} />
             <NxGroupBansModal open={bansOpen} channelId={id} onClose={() => setBansOpen(false)} />
+            {ch && (
+                <NxChannelBroadcastModal
+                    open={broadcastOpen}
+                    channelId={id}
+                    channelName={ch.name}
+                    onClose={() => setBroadcastOpen(false)}
+                    onSent={() => { loadDetail(); }}
+                />
+            )}
             {pollVotersFor && (
                 <NxGroupPollVoters open={!!pollVotersFor} channelId={id} messageId={pollVotersFor}
                     onClose={() => setPollVotersFor(null)} />
@@ -1383,7 +1427,9 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                             style={{ color: "#00CEC8" }}
                                                             title="Tahrirlash tarixini ko'rish"
                                                         >
-                                                            (tahrirlangan)
+                                                            {m.editCount && m.editCount > 1
+                                                                ? `(tahrirlangan · ${m.editCount})`
+                                                                : "(tahrirlangan)"}
                                                         </button>
                                                     )}
                                                 </div>
@@ -1612,6 +1658,12 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                     <button onClick={() => { copyMsg(m.text!); setChMsgMenuFor(null); }}
                                                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
                                                         <Copy className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Nusxa olish
+                                                    </button>
+                                                )}
+                                                {ch?.handle && (
+                                                    <button onClick={() => { sharePostLink(m.id); setChMsgMenuFor(null); }}
+                                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left">
+                                                        <Share2Icon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} /> Havolani ulashish
                                                     </button>
                                                 )}
                                                 {m.text && (

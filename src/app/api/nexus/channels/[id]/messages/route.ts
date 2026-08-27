@@ -156,6 +156,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     // o'qildi belgilash
     if (member) after(() => prisma.nexusChannelMember.update({ where: { id: member.id }, data: { lastReadAt: new Date() } }).catch(() => { }));
 
+    // Har xabar uchun edit soni (tahrirlash tarixi)
+    const editedIds = msgs.filter(m => m.editedAt).map(m => m.id);
+    const editCounts = new Map<string, number>();
+    if (editedIds.length > 0) {
+        const grouped = await prisma.nexusChannelMessageEdit.groupBy({
+            by: ["messageId"], where: { messageId: { in: editedIds } }, _count: { _all: true },
+        });
+        for (const g of grouped) editCounts.set(g.messageId, g._count._all);
+    }
+
     // Kanal komment: har top-level xabar uchun izoh (reply) soni
     // Faqat channel.allowComments && kanal xabari uchun (guruh emas) mazmunli.
     const commentCounts = new Map<string, number>();
@@ -186,7 +196,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             const anon = m.anonymous;
             // Owner har doim real author'ni ko'radi (moderatsiya uchun);
             // boshqa a'zolar anonim bo'lsa faqat guruh nomi.
-            const publicAuthor = anon && !mine && !isOwner
+            // Kanal (CHANNEL) uchun signaturePosted=false bo'lsa ham author o'rniga kanal ko'rsatiladi.
+            const channelPosted = channel.type === "CHANNEL" && !m.signaturePosted;
+            const publicAuthor = (anon && !mine && !isOwner) || (channelPosted && !isOwner)
                 ? { name: channel.name, username: null, image: channel.avatarUrl, verified: false, verifiedCategory: null }
                 : (p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null);
             // Delete-for-everyone → tombstone
@@ -211,6 +223,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 pollTotal: isDeleted ? null : (pv?.total ?? null),
                 pinnedAt: m.pinnedAt,
                 editedAt: m.editedAt,
+                editCount: editCounts.get(m.id) ?? 0,
+                signaturePosted: m.signaturePosted,
                 commentCount: commentCounts.get(m.id) ?? 0,
                 replyToId: m.replyToId,
                 replyTo: m.replyToId ? (replyMap.get(m.replyToId) ?? null) : null,
@@ -401,6 +415,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             viewOnce: !!viewOnce,
             mentions: mentionsList,
             topicId: typeof body.topicId === "string" ? body.topicId : null,
+            signaturePosted: channel.type === "CHANNEL" ? channel.signaturesEnabled : true,
         },
     });
     if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "CHANNEL_MESSAGE", targetId: msg.id, text: cleanText, kind: "kanal xabari", authorId: me.id }));
