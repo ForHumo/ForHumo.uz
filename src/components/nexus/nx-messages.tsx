@@ -50,6 +50,14 @@ interface SUser { name: string | null; username: string | null; image: string | 
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { NxAgentButtons, type AgentButton } from "./nx-agent-buttons";
 import { NxAgentInlineMode } from "./nx-agent-inline-mode";
+import { NxDmSettingsModal } from "./nx-dm-settings-modal";
+import { Settings2, Timer } from "lucide-react";
+
+function formatAutoDeleteBadge(sec: number): string {
+    if (sec < 3600) return `${Math.floor(sec / 60)}m`;
+    if (sec < 86400) return `${Math.floor(sec / 3600)}h`;
+    return `${Math.floor(sec / 86400)}d`;
+}
 function copyText(text: string) { void copyToClipboard(text); }
 // TTS eshittirish
 function speakText(text: string) {
@@ -124,6 +132,41 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
     const [messages, setMessages] = useState<Msg[]>([]);
     const [input, setInput] = useState("");
     const [inlineMode, setInlineMode] = useState<{ bot: string; query: string } | null>(null);
+    const [dmSettingsOpen, setDmSettingsOpen] = useState(false);
+    // Multi-select mode (DM-16) — selectedIds soni > 0 bo'lsa bulk toolbar chiqadi
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const inSelectMode = selectedIds.size > 0;
+
+    function toggleSelect(id: string) {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    }
+    function clearSelection() { setSelectedIds(new Set()); }
+
+    async function bulkDelete() {
+        if (selectedIds.size === 0) return;
+        if (!confirm(`${selectedIds.size} ta xabarni menda o'chirishni tasdiqlaysizmi?`)) return;
+        const ids = Array.from(selectedIds);
+        await Promise.all(ids.map(id =>
+            fetch(`/api/nexus/messages/${id}`, { method: "DELETE" }).catch(() => {})
+        ));
+        clearSelection();
+    }
+
+    function bulkCopy() {
+        const texts: string[] = [];
+        for (const id of selectedIds) {
+            const m = messages.find(x => x.id === id);
+            if (m && m.text) texts.push(m.text);
+        }
+        if (texts.length > 0) {
+            copyToClipboard(texts.join("\n"));
+        }
+        clearSelection();
+    }
 
     // "@bot_agent query" ni parse qiladi (inline mode).
     function parseInlineFromInput(v: string): { bot: string; query: string } | null {
@@ -756,6 +799,16 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                                 <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0"
                                     style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>BOT</span>
                             )}
+                            {/* Auto-delete timer badge (DM-19) */}
+                            {(selected as { autoDeleteAfterSeconds?: number })?.autoDeleteAfterSeconds
+                                && ((selected as { autoDeleteAfterSeconds?: number }).autoDeleteAfterSeconds ?? 0) > 0 && (
+                                <span title="Avto-o'chirish yoqilgan"
+                                    className="inline-flex items-center gap-0.5 text-[9px] font-black px-1 py-0.5 rounded flex-shrink-0"
+                                    style={{ background: "rgba(245,179,1,0.14)", color: "#F5B301" }}>
+                                    <Timer className="w-2.5 h-2.5" />
+                                    {formatAutoDeleteBadge((selected as { autoDeleteAfterSeconds?: number }).autoDeleteAfterSeconds ?? 0)}
+                                </span>
+                            )}
                         </div>
                         {peerTyping ? (
                             <p className="text-[10px] font-bold" style={{ color: "#00CEC8" }}>yozmoqda...</p>
@@ -764,6 +817,14 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                         ) : null}
                     </div>
                 </Link>
+                {/* DM Settings tugma (DM-1) — hamma sozlamalarni bir joyda */}
+                {selected.other?.id && (
+                    <button onClick={() => setDmSettingsOpen(true)} title="Sozlamalar"
+                        className="w-8 h-8 flex items-center justify-center rounded-xl"
+                        style={{ background: "rgba(43,62,232,0.10)" }}>
+                        <Settings2 className="w-4 h-4 text-white" />
+                    </button>
+                )}
                 {/* Chaqiruvlar + profil — hammasi 3-dot More menyusi ichida (Telegram uslub) */}
                 {selected.other?.id && (
                     <div className="relative" ref={headerMoreRef}>
@@ -1589,6 +1650,43 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                     {rightPanel}
                 </div>
             </div>
+
+            {/* DM Settings modal (DM-1 + DM-5 + DM-19) */}
+            {selected?.other?.id && (
+                <NxDmSettingsModal
+                    open={dmSettingsOpen}
+                    conversationId={selected.conversationId}
+                    peerId={selected.other.id}
+                    peerName={selected.other.name || selected.other.username || "Foydalanuvchi"}
+                    autoDeleteSeconds={(selected as { autoDeleteAfterSeconds?: number }).autoDeleteAfterSeconds ?? 0}
+                    mutedUntil={(selected as { mutedUntil?: string | null }).mutedUntil ?? null}
+                    onClose={() => setDmSettingsOpen(false)}
+                    onUpdated={() => loadConvs()}
+                />
+            )}
+
+            {/* Multi-select bulk toolbar (DM-16) */}
+            {inSelectMode && (
+                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[350] flex items-center gap-1 px-3 py-2 rounded-full"
+                    style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+                    <button onClick={clearSelection}
+                        className="w-8 h-8 flex items-center justify-center rounded-full"
+                        style={{ background: "rgba(43,62,232,0.20)" }}>
+                        <X className="w-4 h-4 text-white" />
+                    </button>
+                    <span className="px-2 text-xs font-black text-white">{selectedIds.size} tanlangan</span>
+                    <button onClick={bulkCopy} title="Nusxa olish"
+                        className="w-8 h-8 flex items-center justify-center rounded-full"
+                        style={{ background: "rgba(43,62,232,0.20)" }}>
+                        <Copy className="w-4 h-4 text-white" />
+                    </button>
+                    <button onClick={bulkDelete} title="O'chirish"
+                        className="w-8 h-8 flex items-center justify-center rounded-full"
+                        style={{ background: "rgba(239,68,68,0.20)" }}>
+                        <Trash2 className="w-4 h-4" style={{ color: "#EF4444" }} />
+                    </button>
+                </div>
+            )}
         </>
     );
 }

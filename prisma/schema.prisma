@@ -1453,6 +1453,22 @@ model NexusMessage {
   @@index([albumId])
 }
 
+// Peer nickname/label (Telegram uslub) — owner uchun peer'ning maxfiy nomi.
+// Faqat owner'ga ko'rinadi. Chat ro'yxatida, header'da, mention'da real ism o'rniga
+// nickname chiqadi. Peer o'zi bilmaydi.
+model NexusPeerLabel {
+  id         String   @id @default(cuid())
+  ownerId    String                              // kimning label'i (UserProfile.id)
+  peerId     String                              // kimga label qo'yilgan
+  nickname   String?  @db.VarChar(40)            // Maxfiy nom (masalan "Mama", "Ish")
+  color      String?  @db.VarChar(20)            // rang tag: "red"|"orange"|"green"|"blue"|"purple"
+  wallpaper  String?  @db.VarChar(500)           // rang preset yoki rasm URL (per-conv theme)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@unique([ownerId, peerId])
+  @@index([ownerId])
+}
+
 // Kontakt sinxronizatsiya (WhatsApp/Telegram uslub) — foydalanuvchining telefondagi
 // kontaktlaridan qay biri ForHumo'da borligini topish uchun.
 //
