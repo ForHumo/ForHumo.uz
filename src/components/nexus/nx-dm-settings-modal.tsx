@@ -8,8 +8,12 @@ import { useEffect, useState } from "react";
 import {
     X, Loader2, User as UserIcon, Timer, BellOff, Bell, Trash2,
     Archive, EyeOff, Save, Check, Palette, Image as ImageIcon, Phone,
+    Lock, Users, ShieldCheck,
 } from "lucide-react";
 import { NxDmCallHistoryModal } from "./nx-dm-call-history-modal";
+import { NxDmChatLockSetup } from "./nx-dm-chat-lock-setup";
+import { NxDmBroadcastModal } from "./nx-dm-broadcast-modal";
+import { NxDmE2eVerifyModal } from "./nx-dm-e2e-verify-modal";
 
 type PeerLabel = { nickname: string | null; color: string | null; wallpaper: string | null };
 
@@ -76,6 +80,9 @@ export function NxDmSettingsModal({
     const [busy, setBusy] = useState(false);
     const [saved, setSaved] = useState(false);
     const [callsOpen, setCallsOpen] = useState(false);
+    const [chatLockOpen, setChatLockOpen] = useState(false);
+    const [broadcastOpen, setBroadcastOpen] = useState(false);
+    const [e2eOpen, setE2eOpen] = useState(false);
 
     useEffect(() => {
         if (!open) return;
@@ -352,12 +359,47 @@ export function NxDmSettingsModal({
                                         Chaqiruvlar tarixi
                                     </span>
                                 </button>
+                                <button onClick={() => setE2eOpen(true)}
+                                    className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
+                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                    <span className="flex items-center gap-2">
+                                        <ShieldCheck className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                        E2E kalitni tekshirish
+                                    </span>
+                                </button>
+                            </div>
+
+                            {/* Global sozlamalar (peer'ga bog'liq emas) */}
+                            <div className="pt-4 space-y-2" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
+                                <p className="text-[10px] font-black uppercase tracking-widest px-1"
+                                    style={{ color: "rgba(160,176,224,0.7)" }}>
+                                    Umumiy DM sozlamalari
+                                </p>
+                                <button onClick={() => setChatLockOpen(true)}
+                                    className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
+                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                    <span className="flex items-center gap-2">
+                                        <Lock className="w-4 h-4" style={{ color: "#F5B301" }} />
+                                        Yopiq chatlar (PIN)
+                                    </span>
+                                </button>
+                                <button onClick={() => setBroadcastOpen(true)}
+                                    className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
+                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                    <span className="flex items-center gap-2">
+                                        <Users className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                        Broadcast ro&apos;yxatlar
+                                    </span>
+                                </button>
                             </div>
                         </>
                     )}
                 </div>
             </div>
             <NxDmCallHistoryModal open={callsOpen} peerId={peerId} peerName={peerName} onClose={() => setCallsOpen(false)} />
+            <NxDmChatLockSetup open={chatLockOpen} onClose={() => setChatLockOpen(false)} />
+            <NxDmBroadcastModal open={broadcastOpen} onClose={() => setBroadcastOpen(false)} />
+            <NxDmE2eVerifyModal open={e2eOpen} peerId={peerId} peerName={peerName} onClose={() => setE2eOpen(false)} />
         </>
     );
 }

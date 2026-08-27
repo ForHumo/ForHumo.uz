@@ -1453,6 +1453,45 @@ model NexusMessage {
   @@index([albumId])
 }
 
+// DM Chat Lock (PIN) — foydalanuvchi ba'zi chatlarni PIN kod bilan yashiradi.
+// Chat "Yopilgan" bo'lsa ro'yxatda ko'rinmaydi; foydalanuvchi PIN kiritsa vaqtincha ochiladi.
+// pinHash: sha256(pin + ownerId) — server hech qachon raw PIN ni bilmaydi.
+model NexusChatLock {
+  id             String   @id @default(cuid())
+  ownerId        String   @unique                    // per-user global PIN (butun locked chatlar uchun)
+  pinHash        String                              // sha256 hex
+  hintText       String?  @db.VarChar(80)            // ixtiyoriy eslatma matni
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  @@index([ownerId])
+}
+
+// Locked chats — qaysi peerLabels'da lock qo'yilgan.
+// Locked bo'lsa (per-owner) — chat ro'yxatida yashirilgan, faqat PIN bilan ochiladi.
+// PeerLabel'ga isLocked flag qo'shish o'rniga ayrim jadval — kelajakda ohorada
+// per-conv lockedUntil'ni ham saqlash uchun.
+model NexusLockedChat {
+  id         String   @id @default(cuid())
+  ownerId    String                                  // kim yashirgan
+  peerId     String                                  // qaysi peer bilan chatni
+  createdAt  DateTime @default(now())
+  @@unique([ownerId, peerId])
+  @@index([ownerId])
+}
+
+// View-once screenshot ogohlantirish — qabul qiluvchi view-once xabar ochilgan
+// paytda screenshot olishga urinsa (client tomon detect qilinsa) yoziladi.
+// Yuboruvchiga notif chiqadi.
+model NexusScreenshotAlert {
+  id         String   @id @default(cuid())
+  messageId  String                                  // NexusMessage.id
+  viewerId   String                                  // ko'rgan foydalanuvchi
+  senderId   String                                  // yuboruvchi (notif kimga)
+  detectedAt DateTime @default(now())
+  @@index([senderId, detectedAt])
+  @@index([messageId])
+}
+
 // Peer nickname/label (Telegram uslub) — owner uchun peer'ning maxfiy nomi.
 // Faqat owner'ga ko'rinadi. Chat ro'yxatida, header'da, mention'da real ism o'rniga
 // nickname chiqadi. Peer o'zi bilmaydi.
