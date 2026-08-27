@@ -130,6 +130,10 @@ export function NexusProfile({ username }: { username: string }) {
                         <div className="flex items-center gap-1.5">
                             <span className="text-sm font-black text-white truncate">{displayName}</span>
                             {p?.verified && <NxVerifiedBadge category={(p as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={14} />}
+                            {p?.username?.toLowerCase().endsWith("_agent") && (
+                                <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0"
+                                    style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>BOT</span>
+                            )}
                         </div>
                         {!loading && data && <span className="text-[10px]" style={{ color: "rgba(120,140,185,0.7)" }}>{fzNum(data.stats.posts)} post</span>}
                     </div>
@@ -236,6 +240,10 @@ export function NexusProfile({ username }: { username: string }) {
                                 <div className="flex items-center gap-1.5">
                                     <h1 className="text-xl font-black text-white">{displayName}</h1>
                                     {data.profile.verified && <NxVerifiedBadge category={(data.profile as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={20} />}
+                                    {data.profile.username?.toLowerCase().endsWith("_agent") && (
+                                        <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded"
+                                            style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>BOT</span>
+                                    )}
                                 </div>
                                 {data.profile.username && <p className="text-sm font-mono" style={{ color: "#00CEC8" }}>@{data.profile.username}</p>}
                                 {data.profile.bio && <p className="text-sm mt-2 leading-relaxed" style={{ color: "rgba(180,195,235,0.8)" }}>{data.profile.bio}</p>}

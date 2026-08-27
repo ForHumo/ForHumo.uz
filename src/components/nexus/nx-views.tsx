@@ -23,6 +23,10 @@ import { NxChatList } from "./nx-chat-list";
 import { NxChannels } from "./nx-channels";
 import { NexusFollowList } from "./nexus-follow-list";
 import { NxOnboarding } from "./nx-onboarding";
+import { NxAgentCreateModal } from "./nx-agent-create-modal";
+import { NxAgentManageModal } from "./nx-agent-manage-modal";
+import { NxAgentShareModal } from "./nx-agent-share-modal";
+import { Search, MessageSquare, Share2, Wrench } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Umumiy yordamchi komponentlar
@@ -261,49 +265,210 @@ function FolderView({ folder }: { folder: UserFolder | null }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Agents tab — foydalanuvchining agentlari + yaratish tugmasi
+// Agents tab — Mening / Kashfiyot + search + module filter + kartochkalar
 // ─────────────────────────────────────────────────────────────────────────────
+type AgentItem = {
+    id: string;
+    profileId: string;
+    username: string | null;
+    name: string | null;
+    image: string | null;
+    humoId?: string | null;
+    module: string;
+    isSystem?: boolean;
+    webhookUrl?: string | null;
+    isMine?: boolean;
+};
+
+const MODULE_LABELS: Record<string, string> = {
+    MAIN: "Bosh", ID: "ID", AI: "AI", NEXUS: "Nexus", ESPORT: "eSport",
+    MARKET: "Market", PAY: "Pay", BN: "BN", SUPPORT: "Yordam", CUSTOM: "Custom",
+};
+
 function AgentsTab() {
-    const [agents, setAgents] = useState<Array<{ id: string; username: string | null; name: string | null; image: string | null; module: string }>>([]);
+    const [scope, setScope] = useState<"mine" | "discover">("mine");
+    const [items, setItems] = useState<AgentItem[]>([]);
     const [loading, setLoading] = useState(true);
-    useEffect(() => {
-        fetch("/api/nexus/agents").then(r => r.ok ? r.json() : { items: [] })
-            .then(d => setAgents(d.items ?? []))
+    const [search, setSearch] = useState("");
+    const [moduleFilter, setModuleFilter] = useState<string | null>(null);
+    const [createOpen, setCreateOpen] = useState(false);
+    const [manageId, setManageId] = useState<string | null>(null);
+    const [shareAgent, setShareAgent] = useState<{ username: string; name: string } | null>(null);
+    const { openDM } = useNxPlayer();
+
+    const load = useCallback(() => {
+        setLoading(true);
+        const url = scope === "discover"
+            ? "/api/nexus/agents?scope=discover"
+            : "/api/nexus/agents";
+        fetch(url).then(r => r.ok ? r.json() : { items: [] })
+            .then(d => setItems(d.items ?? []))
             .finally(() => setLoading(false));
-    }, []);
+    }, [scope]);
+
+    useEffect(() => { load(); }, [load]);
+
+    // Filter — search + module
+    const filtered = items.filter(a => {
+        if (moduleFilter && a.module !== moduleFilter) return false;
+        if (search.trim()) {
+            const q = search.toLowerCase();
+            if (!(a.username ?? "").toLowerCase().includes(q)
+                && !(a.name ?? "").toLowerCase().includes(q)) return false;
+        }
+        return true;
+    });
+
+    // Available modules — items ichidan
+    const modules = Array.from(new Set(items.map(a => a.module))).sort();
+
     return (
         <div className="mx-4 space-y-3">
-            <a href="/create" target="_blank" rel="noopener noreferrer"
-                className="block p-4 rounded-2xl text-center active:scale-[0.98] transition"
-                style={{ background: "linear-gradient(135deg,rgba(43,62,232,0.25),rgba(0,206,200,0.15))", border: "1px solid rgba(43,62,232,0.30)" }}>
-                <Bot className="w-6 h-6 mx-auto mb-2" style={{ color: "#00CEC8" }} />
-                <p className="text-sm font-black text-white">Yangi agent yaratish</p>
-                <p className="text-[11px] mt-1" style={{ color: "rgba(160,176,224,0.75)" }}>
-                    @create orqali o&apos;z agentingiz (@...agent)
-                </p>
-            </a>
+            {/* Tabs */}
+            <div className="flex gap-1">
+                {(["mine", "discover"] as const).map(s => (
+                    <button key={s} onClick={() => setScope(s)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold transition"
+                        style={scope === s
+                            ? { background: "rgba(43,62,232,0.18)", color: "#fff" }
+                            : { background: "rgba(11,18,40,0.5)", color: "rgba(140,160,210,0.8)" }}>
+                        {s === "mine" ? "Mening" : "Kashfiyot"}
+                    </button>
+                ))}
+                <div className="flex-1" />
+                <button onClick={() => setCreateOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black text-white"
+                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                    <Plus className="w-3.5 h-3.5" /> Bot
+                </button>
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "rgba(140,160,210,0.6)" }} />
+                <input value={search} onChange={e => setSearch(e.target.value)}
+                    placeholder="Bot qidirish..."
+                    className="w-full h-10 rounded-xl pl-9 pr-3 text-sm focus:outline-none"
+                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.20)", color: "white" }}
+                />
+            </div>
+
+            {/* Module filter chips */}
+            {modules.length > 1 && (
+                <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                    <button onClick={() => setModuleFilter(null)}
+                        className="px-3 h-7 rounded-full text-[10px] font-black flex-shrink-0"
+                        style={!moduleFilter
+                            ? { background: "rgba(0,206,200,0.20)", color: "white", border: "1px solid #00CEC8" }
+                            : { background: "rgba(11,18,40,0.55)", color: "rgba(160,176,224,0.85)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                        Barchasi
+                    </button>
+                    {modules.map(m => (
+                        <button key={m} onClick={() => setModuleFilter(m === moduleFilter ? null : m)}
+                            className="px-3 h-7 rounded-full text-[10px] font-black flex-shrink-0"
+                            style={moduleFilter === m
+                                ? { background: "rgba(0,206,200,0.20)", color: "white", border: "1px solid #00CEC8" }
+                                : { background: "rgba(11,18,40,0.55)", color: "rgba(160,176,224,0.85)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                            {MODULE_LABELS[m] ?? m}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {/* List */}
             {loading ? (
                 <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-white/30" /></div>
-            ) : agents.length === 0 ? (
-                <p className="text-center py-8 text-xs" style={{ color: "rgba(140,160,210,0.60)" }}>
-                    Hali agentlaringiz yo&apos;q
-                </p>
-            ) : agents.map(a => (
-                <a key={a.id} href={`/nexus/u/${a.username}`}
-                    className="flex items-center gap-3 p-3 rounded-2xl"
-                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.18)" }}>
-                    <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0"
-                        style={{ background: "rgba(43,62,232,0.15)" }}>
-                        {a.image ? <img src={a.image} alt="" className="w-full h-full object-cover" /> : <Bot className="w-5 h-5 text-white/50" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{a.name}</p>
-                        <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.70)" }}>
-                            @{a.username} • {a.module}
-                        </p>
-                    </div>
-                </a>
+            ) : filtered.length === 0 ? (
+                <div className="p-8 rounded-2xl text-center"
+                    style={{ background: "rgba(11,18,40,0.55)", border: "1px dashed rgba(43,62,232,0.20)" }}>
+                    <Bot className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "#00CEC8" }} />
+                    <p className="text-sm" style={{ color: "rgba(160,176,224,0.75)" }}>
+                        {scope === "mine" ? "Sizda bot yo'q" : "Bot topilmadi"}
+                    </p>
+                    {scope === "mine" && (
+                        <button onClick={() => setCreateOpen(true)}
+                            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black text-white"
+                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            <Plus className="w-3.5 h-3.5" /> Birinchi bot yaratish
+                        </button>
+                    )}
+                </div>
+            ) : filtered.map(a => (
+                <AgentCard key={a.id} agent={a}
+                    onDM={() => a.username && openDM(a.username)}
+                    onShare={() => a.username && a.name && setShareAgent({ username: a.username, name: a.name })}
+                    onManage={() => setManageId(a.id)}
+                    isMine={scope === "mine" && !a.isSystem} />
             ))}
+
+            {/* Modallar */}
+            <NxAgentCreateModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={load} />
+            {manageId && (
+                <NxAgentManageModal open={!!manageId} agentId={manageId}
+                    onClose={() => setManageId(null)}
+                    onDeleted={load} />
+            )}
+            {shareAgent && (
+                <NxAgentShareModal open={!!shareAgent}
+                    username={shareAgent.username} name={shareAgent.name}
+                    onClose={() => setShareAgent(null)} />
+            )}
+        </div>
+    );
+}
+
+function AgentCard({
+    agent, onDM, onShare, onManage, isMine,
+}: {
+    agent: AgentItem;
+    onDM: () => void;
+    onShare: () => void;
+    onManage: () => void;
+    isMine: boolean;
+}) {
+    return (
+        <div className="p-3 rounded-2xl"
+            style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.18)" }}>
+            <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0"
+                    style={{ background: "rgba(43,62,232,0.15)" }}>
+                    {agent.image ? <img src={agent.image} alt="" className="w-full h-full object-cover" /> : <Bot className="w-5 h-5 text-white/50" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-bold text-white truncate">{agent.name}</p>
+                        <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0"
+                            style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>
+                            BOT
+                        </span>
+                        {agent.isSystem && (
+                            <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} fill="#00CEC8" stroke="#050818" />
+                        )}
+                    </div>
+                    <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.70)" }}>
+                        @{agent.username} · {MODULE_LABELS[agent.module] ?? agent.module}
+                    </p>
+                </div>
+            </div>
+            <div className="flex gap-1.5">
+                <button onClick={onDM}
+                    className="flex-1 h-8 rounded-lg text-[11px] font-black flex items-center justify-center gap-1.5"
+                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white" }}>
+                    <MessageSquare className="w-3 h-3" /> DM
+                </button>
+                <button onClick={onShare} title="Ulash"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ background: "rgba(43,62,232,0.15)", color: "white" }}>
+                    <Share2 className="w-3 h-3" />
+                </button>
+                {isMine && (
+                    <button onClick={onManage} title="Boshqarish"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ background: "rgba(245,179,1,0.14)", color: "#F5B301" }}>
+                        <Wrench className="w-3 h-3" />
+                    </button>
+                )}
+            </div>
         </div>
     );
 }
