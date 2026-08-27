@@ -40,9 +40,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     // Aks holda: o'tib ketgan yoki jadvalsiz xabarlar (yozuvchi o'zi ko'rishi mumkin bo'lgan kelajakdagilarni ham).
     const scheduledOnly = searchParams.get("scheduled") === "1";
     const now = new Date();
+    // Topic filter — ?topic=general (null), ?topic=<id>, yoki param yo'q = barcha
+    const topicParam = searchParams.get("topic");
+    const topicFilter = topicParam === "general" ? { topicId: null }
+        : topicParam ? { topicId: topicParam }
+        : {};
     const rows = await prisma.nexusChannelMessage.findMany({
         where: {
             channelId: id, hidden: false,
+            ...topicFilter,
             ...(blockedIds.size > 0 ? { senderId: { notIn: [...blockedIds] } } : {}),
             ...(since ? { createdAt: { gt: new Date(since) } } : {}),
             ...(scheduledOnly
@@ -221,6 +227,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 viewOnce: m.viewOnce,
                 viewOnceOpened: viewOnceOpened,
                 mentions: m.mentions,
+                topicId: m.topicId,
                 deletedForEveryone: isDeleted,
                 deletedForEveryoneAt: m.deletedForEveryoneAt,
             };
@@ -294,6 +301,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         contactPhone?: string;
         contactUsername?: string;
         viewOnce?: boolean;
+        topicId?: string;
     };
     const cleanText = typeof text === "string" ? text.trim().slice(0, 4000) : "";
     const cleanMedia: string[] = filterMediaUrls(media, 9);
@@ -384,9 +392,59 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             contactUsername: isContact && typeof contactUsername === "string" ? contactUsername.slice(0, 40) : null,
             viewOnce: !!viewOnce,
             mentions: mentionsList,
+            topicId: typeof body.topicId === "string" ? body.topicId : null,
         },
     });
     if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "CHANNEL_MESSAGE", targetId: msg.id, text: cleanText, kind: "kanal xabari", authorId: me.id }));
+
+    // Bot dispatch — guruh botlariga jo'natish (autoListen yoki /command)
+    if (channel.type === "GROUP" && cleanText && me.id) {
+        const isCommand = cleanText.startsWith("/");
+        after(async () => {
+            try {
+                const { sendToAgentWebhook } = await import("@/lib/agent-webhook");
+                const bots = await prisma.nexusChannelBot.findMany({
+                    where: { channelId: id },
+                });
+                if (bots.length === 0) return;
+                const targetBots = bots.filter(b => b.autoListen || isCommand);
+                if (targetBots.length === 0) return;
+                const agents = await prisma.nexusAgent.findMany({
+                    where: { id: { in: targetBots.map(b => b.agentId) } },
+                    select: { id: true, profileId: true, webhookUrl: true, apiKey: true },
+                });
+                for (const agent of agents) {
+                    if (!agent.webhookUrl || !agent.apiKey) continue;
+                    try {
+                        const reply = await sendToAgentWebhook(
+                            { webhookUrl: agent.webhookUrl, apiKey: agent.apiKey },
+                            {
+                                event: "message.new",
+                                conversationId: `channel:${id}`,
+                                fromProfileId: me.id,
+                                text: cleanText,
+                            } as never,
+                        );
+                        if (reply?.text) {
+                            await prisma.nexusChannelMessage.create({
+                                data: {
+                                    channelId: id, senderId: agent.profileId,
+                                    text: reply.text,
+                                    media: reply.mediaUrl ? [reply.mediaUrl] : [],
+                                    mediaType: reply.mediaType ?? null,
+                                    mediaMime: reply.mediaMime ?? null,
+                                    mediaName: reply.mediaName ?? null,
+                                    replyToId: msg.id,
+                                    topicId: msg.topicId,
+                                    mentions: [],
+                                },
+                            });
+                        }
+                    } catch { /* silent */ }
+                }
+            } catch { /* fail-safe */ }
+        });
+    }
 
     // Slow mode uchun member.lastMsgAt yangilash
     if (channel.type === "GROUP" && channel.slowModeSeconds > 0) {

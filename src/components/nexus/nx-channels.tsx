@@ -23,7 +23,10 @@ import { NxGroupAuditLog } from "./nx-group-audit-log";
 import { NxGroupSummarize } from "./nx-group-summarize";
 import { NxGroupVoicePill } from "./nx-group-voice-pill";
 import { NxStickerPicker } from "./nx-sticker-picker";
-import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon, Sparkles as SparklesIcon, Sticker as StickerIcon, EyeOff } from "lucide-react";
+import { NxGroupStoriesBar } from "./nx-group-stories";
+import { NxGroupTopicsModal } from "./nx-group-topics";
+import { NxGroupBotsModal } from "./nx-group-bots-modal";
+import { Image as ImageIcon, Settings as SettingsIcon, Trash2 as TrashIcon, UserPlus as UserPlusIcon, ScrollText as ScrollTextIcon, Pin as PinIcon, Sparkles as SparklesIcon, Sticker as StickerIcon, EyeOff, Hash as HashIcon, Bot as BotIcon } from "lucide-react";
 
 type ChType = "CHANNEL" | "GROUP";
 interface ChItem { id: string; type: ChType; name: string; handle: string | null; description?: string | null; avatarUrl: string | null; memberCount: number; role?: string; isMember: boolean; isSystem?: boolean }
@@ -310,6 +313,10 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const [pendingJoinCount, setPendingJoinCount] = useState(0);
     const [summarizeOpen, setSummarizeOpen] = useState(false);
     const [stickerOpen, setStickerOpen] = useState(false);
+    const [topicsOpen, setTopicsOpen] = useState(false);
+    const [botsOpen, setBotsOpen] = useState(false);
+    const [currentTopicId, setCurrentTopicId] = useState<string | null>(null);
+    const [currentTopicName, setCurrentTopicName] = useState<string | null>(null);
     // Typing indicator (per-channel)
     const [typingUsers, setTypingUsers] = useState<Map<string, { name: string; expiresAt: number }>>(new Map());
     const typingSentAtRef = useRef<number>(0);
@@ -529,6 +536,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                     text,
                     ...(replyToIdSnap ? { replyToId: replyToIdSnap } : {}),
                     ...(silent ? { silent: true } : {}),
+                    ...(currentTopicId ? { topicId: currentTopicId } : {}),
                 }),
             });
             if (r.ok) { const d = await r.json(); setMsgs(prev => [...prev, d.message].slice(-200)); lastTs.current = d.message.createdAt; }
@@ -987,6 +995,24 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                         )}
                                     </button>
                                 )}
+                                {/* Mavzular — GROUP */}
+                                {ch.type === "GROUP" && (
+                                    <button onClick={() => { setTopicsOpen(true); setChMoreOpen(false); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <HashIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <span className="flex-1">Mavzular</span>
+                                    </button>
+                                )}
+                                {/* Botlar — OWNER/ADMIN */}
+                                {ch.type === "GROUP" && (ch.isOwner || ch.role === "ADMIN") && (
+                                    <button onClick={() => { setBotsOpen(true); setChMoreOpen(false); }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-white hover:bg-white/[0.05] text-left border-b"
+                                        style={{ borderColor: "rgba(43,62,232,0.15)" }}>
+                                        <BotIcon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
+                                        <span className="flex-1">Botlar</span>
+                                    </button>
+                                )}
                                 {/* Admin jurnali */}
                                 {(ch.isOwner || ch.role === "ADMIN") && (
                                     <button onClick={() => { setAuditOpen(true); setChMoreOpen(false); }}
@@ -1066,6 +1092,22 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                     canStart={!!(ch.isOwner || ch.role === "ADMIN")}
                     canEnd={!!(ch.isOwner || ch.role === "ADMIN")} />
             )}
+            {/* Guruh stories bar */}
+            {ch.type === "GROUP" && (
+                <NxGroupStoriesBar channelId={id} isMember={ch.isMember} />
+            )}
+            {/* Joriy mavzu chip */}
+            {ch.type === "GROUP" && currentTopicId && (
+                <div className="mx-2 mb-2 flex items-center gap-2 px-3 py-1.5 rounded-xl"
+                    style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)" }}>
+                    <HashIcon className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                    <span className="text-xs font-bold text-white flex-1 truncate">{currentTopicName}</span>
+                    <button onClick={() => { setCurrentTopicId(null); setCurrentTopicName(null); }}
+                        className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/10">
+                        <X className="w-3 h-3" style={{ color: "rgba(140,160,210,0.85)" }} />
+                    </button>
+                </div>
+            )}
 
             <NxGroupMembersModal open={membersOpen} channelId={id} onClose={() => setMembersOpen(false)} />
             <NxGroupSettingsModal open={settingsOpen} channelId={id} onClose={() => setSettingsOpen(false)}
@@ -1082,10 +1124,25 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             <NxStickerPicker open={stickerOpen} onClose={() => setStickerOpen(false)}
                 onPick={(emoji) => {
                     setStickerOpen(false);
-                    // Stiker = katta emoji xabar. Matn "sticker:emoji" holida yuboriladi
-                    // — client rendering'da faqat 1 emoji bo'lsa 64px ko'rsatiladi.
                     setInput(prev => prev + emoji);
                 }} />
+            <NxGroupTopicsModal open={topicsOpen} channelId={id}
+                canManage={!!(ch.isOwner || ch.role === "ADMIN")}
+                currentTopicId={currentTopicId}
+                onSelect={(tid) => {
+                    setCurrentTopicId(tid);
+                    // Nom uchun API'dan fetch qilamiz keyingi loadda; oddiy taxminiy nom
+                    if (!tid) setCurrentTopicName(null);
+                    else {
+                        // API dan aniq nomni olish
+                        fetch(`/api/nexus/channels/${id}/topics`).then(r => r.json()).then(d => {
+                            const t = (d.topics ?? []).find((x: { id: string; name: string; icon: string | null }) => x.id === tid);
+                            if (t) setCurrentTopicName(`${t.icon ?? "#"} ${t.name}`);
+                        }).catch(() => {});
+                    }
+                }}
+                onClose={() => setTopicsOpen(false)} />
+            <NxGroupBotsModal open={botsOpen} channelId={id} onClose={() => setBotsOpen(false)} />
 
             {/* Qidiruv paneli */}
             {searchOpen && ch.isMember && (

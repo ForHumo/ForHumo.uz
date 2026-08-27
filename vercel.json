@@ -13,6 +13,7 @@
         { "path": "/api/cron/bn-verified-recompute", "schedule": "0 10 * * *" },
         { "path": "/api/cron/dm-schedule-flush", "schedule": "0 2 * * *" },
         { "path": "/api/cron/dm-auto-delete",    "schedule": "0 1 * * *" },
-        { "path": "/api/cron/channel-auto-delete", "schedule": "0 0 * * *" }
+        { "path": "/api/cron/channel-auto-delete", "schedule": "0 0 * * *" },
+        { "path": "/api/cron/channel-stories-cleanup", "schedule": "0 11 * * *" }
     ]
 }

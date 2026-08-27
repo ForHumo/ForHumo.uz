@@ -1909,6 +1909,9 @@ model NexusChannel {
   bans        NexusChannelBan[]
   joinRequests NexusChannelJoinRequest[]
   audits      NexusChannelAudit[]
+  stories     NexusChannelStory[]
+  topics      NexusChannelTopic[]
+  bots        NexusChannelBot[]
   @@index([type, isPrivate, createdAt])
 }
 
@@ -1999,6 +2002,62 @@ enum NexusJoinRequestStatus {
   REJECTED
 }
 
+// Guruh stories (Telegram 2024 uslub) — 24 soatlik jonli hikoya.
+model NexusChannelStory {
+  id         String       @id @default(cuid())
+  channelId  String
+  channel    NexusChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  authorId   String                                 // yaratuvchi (a'zo)
+  mediaUrl   String                                 // rasm/video URL (Blob)
+  mediaType  String                                 // "image" | "video"
+  caption    String?      @db.VarChar(500)
+  expiresAt  DateTime                               // yaratilgan + 24h
+  createdAt  DateTime     @default(now())
+  views      NexusChannelStoryView[]
+  @@index([channelId, expiresAt])
+}
+
+model NexusChannelStoryView {
+  id        String              @id @default(cuid())
+  storyId   String
+  story     NexusChannelStory   @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  profileId String
+  viewedAt  DateTime            @default(now())
+  @@unique([storyId, profileId])
+  @@index([storyId])
+}
+
+// Topics/Forums (Telegram uslub) — bitta guruh ichida bir necha mavzu.
+// NexusChannelMessage.topicId (optional) — mavzuga tegishli xabarlar.
+// NULL = umumiy chat (General).
+model NexusChannelTopic {
+  id          String       @id @default(cuid())
+  channelId   String
+  channel     NexusChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  name        String       @db.VarChar(80)
+  icon        String?                                // emoji yoki lucide nomi
+  closed      Boolean      @default(false)           // faqat admin yozadi
+  createdById String
+  createdAt   DateTime     @default(now())
+  @@index([channelId])
+}
+
+// Guruh boti (agents kengaytmasi) — bot guruhga a'zo qilinganda.
+// Guruhda /slash buyruq bilan ishlaydi yoki har xabarda tinglaydi.
+model NexusChannelBot {
+  id         String       @id @default(cuid())
+  channelId  String
+  channel    NexusChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  agentId    String                                 // NexusAgent.id
+  addedById  String                                 // qo'shgan foydalanuvchi
+  // Auto-listen: TRUE bo'lsa bot HAR xabarni oladi (moderator uchun).
+  // FALSE = faqat /command yoki @mention orqali chaqiriladi.
+  autoListen Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+  @@unique([channelId, agentId])
+  @@index([channelId])
+}
+
 // Admin audit log — kim qachon nima qilgan (Telegram admin log naqshi).
 model NexusChannelAudit {
   id         String       @id @default(cuid())
@@ -2066,11 +2125,14 @@ model NexusChannelMessage {
   viewOnce  Boolean  @default(false)
   // @mentions — profileId lari (push xabarnoma uchun)
   mentions  String[] @default([])
+  // Topic (Telegram Forums) — NULL = umumiy chat, else topic ID.
+  topicId   String?
   createdAt DateTime @default(now())
   @@index([channelId, createdAt])
   @@index([channelId, pinnedAt])
   @@index([scheduledFor])
   @@index([channelId, mediaType])
+  @@index([channelId, topicId])
 }
 
 // View-once — bir xil profil bir xil xabarni faqat 1 marta ko'radi.
