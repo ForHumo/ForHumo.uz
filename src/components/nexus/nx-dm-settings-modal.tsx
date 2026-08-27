@@ -14,6 +14,8 @@ import { NxDmCallHistoryModal } from "./nx-dm-call-history-modal";
 import { NxDmChatLockSetup } from "./nx-dm-chat-lock-setup";
 import { NxDmBroadcastModal } from "./nx-dm-broadcast-modal";
 import { NxDmE2eVerifyModal } from "./nx-dm-e2e-verify-modal";
+import { NxDmE2eSetupModal } from "./nx-dm-e2e-setup-modal";
+import { KeyRound } from "lucide-react";
 
 type PeerLabel = { nickname: string | null; color: string | null; wallpaper: string | null };
 
@@ -60,12 +62,13 @@ const MUTE_OPTIONS = [
 ];
 
 export function NxDmSettingsModal({
-    open, conversationId, peerId, peerName, autoDeleteSeconds, mutedUntil, onClose, onUpdated,
+    open, conversationId, peerId, peerName, myProfileId, autoDeleteSeconds, mutedUntil, onClose, onUpdated,
 }: {
     open: boolean;
     conversationId: string;
     peerId: string;
     peerName: string;
+    myProfileId: string | null;
     autoDeleteSeconds: number;
     mutedUntil: string | null;
     onClose: () => void;
@@ -83,6 +86,7 @@ export function NxDmSettingsModal({
     const [chatLockOpen, setChatLockOpen] = useState(false);
     const [broadcastOpen, setBroadcastOpen] = useState(false);
     const [e2eOpen, setE2eOpen] = useState(false);
+    const [e2eSetupOpen, setE2eSetupOpen] = useState(false);
 
     useEffect(() => {
         if (!open) return;
@@ -391,6 +395,14 @@ export function NxDmSettingsModal({
                                         Broadcast ro&apos;yxatlar
                                     </span>
                                 </button>
+                                <button onClick={() => setE2eSetupOpen(true)}
+                                    className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
+                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(220,230,250,0.92)" }}>
+                                    <span className="flex items-center gap-2">
+                                        <KeyRound className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                        E2E kalitlarim
+                                    </span>
+                                </button>
                             </div>
                         </>
                     )}
@@ -400,6 +412,9 @@ export function NxDmSettingsModal({
             <NxDmChatLockSetup open={chatLockOpen} onClose={() => setChatLockOpen(false)} />
             <NxDmBroadcastModal open={broadcastOpen} onClose={() => setBroadcastOpen(false)} />
             <NxDmE2eVerifyModal open={e2eOpen} peerId={peerId} peerName={peerName} onClose={() => setE2eOpen(false)} />
+            {myProfileId && (
+                <NxDmE2eSetupModal open={e2eSetupOpen} profileId={myProfileId} onClose={() => setE2eSetupOpen(false)} />
+            )}
         </>
     );
 }

@@ -1693,6 +1693,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                     conversationId={selected.conversationId}
                     peerId={selected.other.id}
                     peerName={selected.other.name || selected.other.username || "Foydalanuvchi"}
+                    myProfileId={myProfileId}
                     autoDeleteSeconds={(selected as { autoDeleteAfterSeconds?: number }).autoDeleteAfterSeconds ?? 0}
                     mutedUntil={(selected as { mutedUntil?: string | null }).mutedUntil ?? null}
                     onClose={() => setDmSettingsOpen(false)}
