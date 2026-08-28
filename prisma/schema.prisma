@@ -1092,14 +1092,33 @@ model NexusPost {
   editedAt        DateTime?                // tahrirlangan bo'lsa
   createdAt       DateTime @default(now())
 
+  // Pullik post — bir marta sotib olish orqali ochiladi
+  price           Int      @default(0)                      // 0 = bepul, >0 = pullik (egasi valyutasida)
+  priceCurrency   Currency @default(UZS)
+  subsFree        Boolean  @default(false)                  // true = pullik obunachi (kuzatuvchi) bepul ko'radi; qolganlar sotib oladi
+
   likes     NexusLike[]
   comments  NexusComment[]
   saves     NexusSave[]
   pollVotes NexusPollVote[]
+  purchases NexusPostPurchase[]
 
   @@index([profileId])
   @@index([createdAt])
   @@index([bnProductId])
+}
+
+model NexusPostPurchase {
+  id         String   @id @default(cuid())
+  postId     String
+  buyerId    String                                // sotib oluvchi UserProfile.id
+  price      Int
+  currency   Currency @default(UZS)
+  createdAt  DateTime @default(now())
+  post       NexusPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, buyerId])
+  @@index([buyerId])
 }
 
 enum NexusPostPrivacy {

@@ -4,13 +4,13 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { upload } from "@vercel/blob/client";
 import { Link } from "@/i18n/routing";
-import { formatMoney } from "@/lib/money";
+import { formatMoney, type Currency } from "@/lib/money";
 import { NxText } from "./nx-rich-text";
 import {
     Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
     BadgeCheck, Image as ImgIcon, Loader2, Trash2, Send, X, Flag,
     MapPin, Lock, Users, BarChart2, CheckCircle2, Star, Pencil,
-    ArrowUp, RefreshCw, Compass, UserPlus, Sparkles, Clock,
+    ArrowUp, RefreshCw, Compass, UserPlus, Sparkles, Clock, Coins,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import { Maximize2 } from "lucide-react";
@@ -28,6 +28,7 @@ interface Post {
     editedAt?: string | null;
     author: Author | null; likes: number; comments: number;
     liked: boolean; saved: boolean; isMine: boolean;
+    price?: number; priceCurrency?: "UZS" | "USD"; subsFree?: boolean; locked?: boolean;
 }
 const isVid = (u: string) => /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(u);
 function timeAgo(d: string) {
@@ -196,6 +197,19 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
     async function deletePost(id: string) {
         setPosts(prev => prev.filter(p => p.id !== id));
         await fetch(`/api/nexus/posts/${id}`, { method: "DELETE" }).catch(() => {});
+    }
+
+    // Pullik post sotib olish — muvaffaqiyatda serverdan qayta yuklaymiz
+    async function buyPost(p: Post): Promise<{ ok: boolean; error?: string }> {
+        try {
+            const r = await fetch(`/api/nexus/posts/${p.id}/purchase`, { method: "POST" });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) return { ok: false, error: d.error || "Xarid amalga oshmadi" };
+            // Postning to'liq shaklini qayta yuklaymiz
+            const dr = await fetch(`/api/nexus/posts/${p.id}`).then(x => x.json()).catch(() => null);
+            if (dr?.post) setPosts(prev => prev.map(x => x.id === p.id ? { ...dr.post, liked: x.liked, saved: x.saved } : x));
+            return { ok: true };
+        } catch { return { ok: false, error: "Tarmoq xatosi" }; }
     }
 
     // So'rovnomada ovoz berish — optimistik
@@ -380,6 +394,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                             onShare={() => openShareSheet((p.text ?? "Humo Nexus posti").slice(0, 60), `${typeof window !== "undefined" ? window.location.origin : "https://forhumo.uz"}/nexus/p/${p.id}`)}
                             onBump={() => patch(p.id, x => ({ ...x, comments: x.comments + 1 }))}
                             onVote={idx => votePoll(p, idx)}
+                            onBuy={() => buyPost(p)}
                         />
                     ))}
                     {hasMore && (
@@ -397,10 +412,20 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
 // ─────────────────────────────────────────────────────────────────────────────
 // PostCard
 // ─────────────────────────────────────────────────────────────────────────────
-function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }: {
+function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote, onBuy }: {
     post: Post; onLike: () => void; onSave: () => void; onDelete: () => void; onShare: () => void; onBump: () => void;
     onVote: (idx: number) => void;
+    onBuy: () => Promise<{ ok: boolean; error?: string }>;
 }) {
+    const [buying, setBuying] = useState(false);
+    const [buyErr, setBuyErr] = useState<string | null>(null);
+    async function handleBuy() {
+        if (buying) return;
+        setBuying(true); setBuyErr(null);
+        const r = await onBuy();
+        if (!r.ok) setBuyErr(r.error || "Xarid amalga oshmadi");
+        setBuying(false);
+    }
     const [menuOpen, setMenuOpen] = useState(false);
     const [following, setFollowing] = useState(false);
     const [showComments, setShowComments] = useState(false);
@@ -546,6 +571,29 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
                     </div>
                 </div>
             </div>
+
+            {/* Paywall — pullik post uchun */}
+            {p.locked && (
+                <div className="mx-4 mb-3 p-4 rounded-2xl text-center"
+                    style={{ background: "linear-gradient(135deg,rgba(245,179,1,0.10),rgba(139,92,246,0.10))",
+                        border: "1px solid rgba(245,179,1,0.35)" }}>
+                    <div className="w-12 h-12 mx-auto mb-2 rounded-2xl flex items-center justify-center"
+                        style={{ background: "linear-gradient(135deg,#F5B301,#F97316)" }}>
+                        <Lock className="w-6 h-6 text-white" />
+                    </div>
+                    <p className="text-sm font-black text-white mb-1">Pullik post</p>
+                    <p className="text-[11px] mb-3" style={{ color: "rgba(200,180,140,0.85)" }}>
+                        {p.subsFree ? "Pullik obunachi kuzatuvchilarga bepul. Boshqalar sotib olib ko'radi." : "Sotib olgach cheksiz ko'rasiz — mablag' avtorga o'tadi."}
+                    </p>
+                    <button onClick={handleBuy} disabled={buying}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black text-white active:scale-95 disabled:opacity-50"
+                        style={{ background: "linear-gradient(135deg,#F5B301,#F97316)" }}>
+                        {buying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Coins className="w-4 h-4" />}
+                        Sotib olish — {formatMoney(p.price || 0, (p.priceCurrency ?? "UZS") as Currency)}
+                    </button>
+                    {buyErr && <p className="text-[10px] mt-2 font-bold text-red-400">{buyErr}</p>}
+                </div>
+            )}
 
             {/* Matn */}
             {editing ? (

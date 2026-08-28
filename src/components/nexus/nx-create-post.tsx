@@ -69,6 +69,8 @@ export function NxCreatePost() {
     const [published, setPublished] = useState(false);
     const [err, setErr] = useState<string | null>(null);
     const [canSub, setCanSub] = useState(false);    // pullik obuna yoqilgan ijodkormanmi
+    const [price, setPrice] = useState<number>(0);     // 0 = bepul; >0 = pullik
+    const [subsFree, setSubsFree] = useState(false);   // true = pullik obunachi kuzatuvchi bepul ko'radi
     const [aiBusy, setAiBusy] = useState<null | "caption" | "tags" | "translate">(null);
     const fileRef = useRef<HTMLInputElement>(null);
 
@@ -99,7 +101,7 @@ export function NxCreatePost() {
 
     function reset() {
         setText(""); setPostType("text"); setPrivacy("PUBLIC");
-        setPollOptions(["", ""]); setPollHours(24); setGeo(null);
+        setPollOptions(["", ""]); setPollHours(24); setGeo(null); setPrice(0); setSubsFree(false);
         setMedia([]); setTags([]); setErr(null); setUploading(false);
         setPublishing(false); setPublished(false);
     }
@@ -176,6 +178,8 @@ export function NxCreatePost() {
                     location: geo?.name || null,
                     locationLat: geo?.lat ?? null,
                     locationLng: geo?.lng ?? null,
+                    price: price > 0 ? Math.floor(price) : 0,
+                    subsFree: price > 0 && subsFree,
                     pollOptions: postType === "poll" ? pollOptions.map(o => o.trim()).filter(Boolean) : [],
                     pollDurationHours: pollHours,
                 }),
@@ -398,8 +402,51 @@ export function NxCreatePost() {
                     )}
 
                     {/* Joylashuv — HAR DOIM kartada tanlanadi (qo'lda kirish yo'q) */}
-                    <div className="mb-2">
+                    <div className="mb-2 flex items-center gap-2">
                         <NxLocationPicker value={geo} onChange={setGeo} />
+                    </div>
+
+                    {/* Pullik post — bir marta sotib olish */}
+                    <div className="mb-2 rounded-2xl p-3" style={{ background: "rgba(245,179,1,0.06)", border: "1px solid rgba(245,179,1,0.22)" }}>
+                        <div className="flex items-center gap-2 mb-2">
+                            <Star className="w-3.5 h-3.5" style={{ color: "#F5B301" }} />
+                            <span className="text-xs font-black text-white">Pullik post</span>
+                            <span className="text-[10px] ml-auto" style={{ color: "rgba(200,180,140,0.75)" }}>
+                                {price > 0 ? `${price.toLocaleString("uz-UZ")} so'm` : "Bepul"}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <input type="number" min={0} max={100_000_000} step={1000}
+                                value={price || ""}
+                                onChange={e => setPrice(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+                                placeholder="Narx (0 = bepul)"
+                                className="flex-1 h-9 px-3 rounded-xl text-sm text-white outline-none"
+                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(245,179,1,0.25)", caretColor: "#F5B301" }} />
+                            <div className="flex gap-1">
+                                {[0, 5000, 10000, 25000].map(v => (
+                                    <button key={v} type="button" onClick={() => setPrice(v)}
+                                        className="px-2 py-1 rounded-lg text-[10px] font-black transition active:scale-95"
+                                        style={price === v
+                                            ? { background: "linear-gradient(135deg,#F5B301,#F97316)", color: "#fff" }
+                                            : { background: "rgba(245,179,1,0.08)", border: "1px solid rgba(245,179,1,0.22)", color: "rgba(200,180,140,0.85)" }}>
+                                        {v === 0 ? "Bepul" : `${(v/1000)}k`}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        {price > 0 && (
+                            <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg" style={{ background: "rgba(0,206,200,0.05)", border: "1px solid rgba(0,206,200,0.14)" }}>
+                                <input type="checkbox" checked={subsFree} onChange={e => setSubsFree(e.target.checked)} className="w-3.5 h-3.5" />
+                                <span className="text-[11px]" style={{ color: "rgba(150,220,215,0.90)" }}>
+                                    Pullik obunachi kuzatuvchilarga <b>bepul</b> ko&apos;rsatish (qolganlar sotib oladi)
+                                </span>
+                            </label>
+                        )}
+                        {price > 0 && (
+                            <p className="text-[10px] mt-1.5" style={{ color: "rgba(200,180,140,0.65)" }}>
+                                Har xaridor bir marta sotib oladi — keyin cheksiz ko&apos;radi. Pul For Pay hamyoningizga o&apos;tadi.
+                            </p>
+                        )}
                     </div>
 
                     {err && <p className="text-xs text-red-400 font-bold px-1 mt-2">{err}</p>}

@@ -12,6 +12,7 @@ import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { getActiveSubscribedCreatorIds } from "@/lib/nexus-sub";
 import { notifyMentions } from "@/lib/nexus-mention";
 import { filterMediaUrls } from "@/lib/media-url";
+import { currencyForCountry } from "@/lib/money";
 import { buildInterestProfile, scorePost } from "@/lib/nexus-rank";
 import { embedPost, semanticPostScores } from "@/lib/nexus-embed";
 import { grantAchievement } from "@/lib/achievements";
@@ -141,19 +142,44 @@ export async function GET(req: Request) {
         }
     }
 
+    // Pullik postlar uchun paywall — xarid qilinganmi tekshiramiz
+    const paidIds = posts.filter(p => p.price > 0 && p.profileId !== myId).map(p => p.id);
+    let purchasedSet = new Set<string>();
+    if (myId && paidIds.length) {
+        const rows = await prisma.nexusPostPurchase.findMany({
+            where: { buyerId: myId, postId: { in: paidIds } }, select: { postId: true },
+        });
+        purchasedSet = new Set(rows.map(r => r.postId));
+    }
+    // Subscription (subsFree) — men avtorga pullik obunachimi
+    let subscribedAuthorSet = new Set<string>();
+    if (myId) {
+        const subs = await getActiveSubscribedCreatorIds(myId);
+        subscribedAuthorSet = new Set(subs);
+    }
+
     const enriched = posts.map(p => {
         const a = pMap[p.profileId];
+        const isMine = p.profileId === myId;
+        const paid = p.price > 0;
+        const bought = purchasedSet.has(p.id);
+        const subFree = p.subsFree && subscribedAuthorSet.has(p.profileId);
+        const locked = paid && !isMine && !bought && !subFree;
         return {
-            id: p.id, text: p.text, media: p.media, hashtags: p.hashtags,
+            id: p.id,
+            text: locked ? null : p.text,
+            media: locked ? [] : p.media,
+            hashtags: p.hashtags,
             shareCount: p.shareCount, createdAt: p.createdAt, editedAt: p.editedAt,
-            privacy: p.privacy, location: p.location,
-            pollOptions: p.pollOptions, pollEndsAt: p.pollEndsAt,
-            pollVotes: p.pollOptions.length ? p.pollOptions.map((_, i) => voteCounts[p.id]?.[i] ?? 0) : [],
+            privacy: p.privacy, location: p.location, locationLat: p.locationLat, locationLng: p.locationLng,
+            price: p.price, priceCurrency: p.priceCurrency, subsFree: p.subsFree, locked,
+            pollOptions: locked ? [] : p.pollOptions, pollEndsAt: p.pollEndsAt,
+            pollVotes: !locked && p.pollOptions.length ? p.pollOptions.map((_, i) => voteCounts[p.id]?.[i] ?? 0) : [],
             myVote: p.id in myVotes ? myVotes[p.id] : null,
             author: a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a), verifiedCategory: isVerifiedProfile(a) ? (a.verifiedCategory || null) : null } : null,
             likes: p._count.likes, comments: p._count.comments,
             liked: likedIds.includes(p.id), saved: savedIds.includes(p.id),
-            isMine: p.profileId === myId,
+            isMine,
         };
     });
 
@@ -170,7 +196,7 @@ export async function POST(req: Request) {
     const banned = await banGuard(profile.id); if (banned) return banned;
     if (await nexusRateLimited(profile.id, "post")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
-    const { text, media, privacy, location, locationLat, locationLng, pollOptions, pollDurationHours } = await req.json();
+    const { text, media, privacy, location, locationLat, locationLng, pollOptions, pollDurationHours, price, subsFree } = await req.json();
     const mediaArr: string[] = filterMediaUrls(media, 10);
     const clean = typeof text === "string" ? text.trim().slice(0, 5000) : "";
 
@@ -200,6 +226,9 @@ export async function POST(req: Request) {
             location: typeof location === "string" && location.trim() ? location.trim().slice(0, 200) : null,
             locationLat: typeof locationLat === "number" && Number.isFinite(locationLat) ? locationLat : null,
             locationLng: typeof locationLng === "number" && Number.isFinite(locationLng) ? locationLng : null,
+            price: Number.isFinite(Number(price)) && Number(price) > 0 ? Math.min(Math.floor(Number(price)), 100_000_000) : 0,
+            priceCurrency: currencyForCountry(profile.country),
+            subsFree: subsFree === true,
             pollOptions: hasPoll ? cleanPoll : [],
             pollEndsAt: hasPoll ? new Date(Date.now() + hours * 3600_000) : null,
         },
@@ -222,7 +251,8 @@ export async function POST(req: Request) {
         post: {
             id: post.id, text: post.text, media: post.media, hashtags: post.hashtags,
             shareCount: 0, createdAt: post.createdAt,
-            privacy: post.privacy, location: post.location,
+            privacy: post.privacy, location: post.location, locationLat: post.locationLat, locationLng: post.locationLng,
+            price: post.price, priceCurrency: post.priceCurrency, subsFree: post.subsFree, locked: false,
             pollOptions: post.pollOptions, pollEndsAt: post.pollEndsAt,
             pollVotes: post.pollOptions.map(() => 0), myVote: null,
             author: { name: profile.name, username: profile.username, image: profile.image, verified: isVerifiedProfile(profile), verifiedCategory: isVerifiedProfile(profile) ? (profile.verifiedCategory || null) : null },
