@@ -6,6 +6,7 @@ import { useNxPlayer, type NxTrack } from "./nx-player-ctx";
 import {
     Search, X, Hash, BadgeCheck, Loader2,
     UserPlus, UserCheck, MessageCircle, Heart, Play, Eye, Music2, Radio, Lock,
+    Clock, Trash2,
 } from "lucide-react";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
@@ -18,7 +19,31 @@ interface STrack { id: string; title: string; artist: string | null; coverUrl: s
 interface SLive { id: string; title: string; status: string; author: SAuthor | null }
 
 type SResults = { users: SUser[]; posts: SPost[]; tags: STag[]; videos: SVideo[]; tracks: STrack[]; lives: SLive[] };
+type SFilter = "all" | "people" | "posts" | "tags" | "videos" | "tracks" | "lives";
 const EMPTY_RESULTS: SResults = { users: [], posts: [], tags: [], videos: [], tracks: [], lives: [] };
+
+// LocalStorage helpers — search history (10 tagacha)
+const HKEY = "nx-search-history-v1";
+function getHistory(): string[] {
+    if (typeof window === "undefined") return [];
+    try { return (JSON.parse(localStorage.getItem(HKEY) || "[]") as string[]).filter(x => typeof x === "string").slice(0, 10); }
+    catch { return []; }
+}
+function saveHistory(q: string) {
+    if (typeof window === "undefined" || !q.trim()) return;
+    try {
+        const arr = getHistory().filter(x => x.toLowerCase() !== q.toLowerCase());
+        arr.unshift(q.trim());
+        localStorage.setItem(HKEY, JSON.stringify(arr.slice(0, 10)));
+    } catch { /* jim */ }
+}
+function clearHistory() { try { localStorage.removeItem(HKEY); } catch { /* jim */ } }
+function removeHistory(q: string) {
+    try {
+        const arr = getHistory().filter(x => x !== q);
+        localStorage.setItem(HKEY, JSON.stringify(arr));
+    } catch { /* jim */ }
+}
 function fmtN(n: number) {
     if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
     if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
@@ -37,17 +62,31 @@ export function NxSearch() {
     const [loading, setLoading] = useState(false);
     const [followBusy, setFollowBusy] = useState<string | null>(null);
     const [followed, setFollowed] = useState<Set<string>>(new Set());
+    const [filter, setFilter] = useState<SFilter>("all");
+    const [history, setHistory] = useState<string[]>([]);
+    const savedRef = useRef<string>("");
     const inputRef = useRef<HTMLInputElement>(null);
 
-    /* Ochilganda: fokus + discover yuklash; yopilganda tozalash */
+    /* Ochilganda: fokus + discover yuklash + history; yopilganda tozalash */
     useEffect(() => {
         if (searchOpen) {
             setTimeout(() => inputRef.current?.focus(), 100);
+            setHistory(getHistory());
             fetch("/api/nexus/discover").then(r => r.json()).then(setDiscover).catch(() => { });
         } else {
-            setQuery(""); setResults(EMPTY_RESULTS);
+            setQuery(""); setResults(EMPTY_RESULTS); setFilter("all");
         }
     }, [searchOpen]);
+
+    /* Debounce natijalari yozib bo'lgach — history'ga saqla (1s sukunatdan keyin) */
+    useEffect(() => {
+        const q = query.trim();
+        if (!q || q === savedRef.current) return;
+        const t = setTimeout(() => {
+            saveHistory(q); setHistory(getHistory()); savedRef.current = q;
+        }, 1200);
+        return () => clearTimeout(t);
+    }, [query]);
 
     /* Escape */
     useEffect(() => {
@@ -176,11 +215,58 @@ export function NxSearch() {
                         style={{ background: "rgba(43,62,232,0.12)", color: "rgba(160,176,224,0.80)" }}>Bekor</button>
                 </div>
 
+                {/* Filter tabs — faqat natija chiqganda */}
+                {hasQuery && hasAny && (
+                    <div className="flex gap-1.5 overflow-x-auto px-4 py-2" style={{ borderBottom: "1px solid rgba(43,62,232,0.08)", scrollbarWidth: "none" }}>
+                        {([
+                            { id: "all",    label: "Barchasi", n: (results.users.length + results.tags.length + results.posts.length + results.videos.length + results.tracks.length + results.lives.length) },
+                            { id: "people", label: "Odamlar",  n: results.users.length },
+                            { id: "tags",   label: "Hashtag",  n: results.tags.length },
+                            { id: "posts",  label: "Postlar",  n: results.posts.length },
+                            { id: "videos", label: "Video",    n: results.videos.length },
+                            { id: "tracks", label: "Musiqa",   n: results.tracks.length },
+                            { id: "lives",  label: "Jonli",    n: results.lives.length },
+                        ] as { id: SFilter; label: string; n: number }[]).filter(t => t.n > 0 || t.id === "all").map(t => (
+                            <button key={t.id} onClick={() => setFilter(t.id)}
+                                className="flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all active:scale-95"
+                                style={filter === t.id
+                                    ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }
+                                    : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(160,180,230,0.85)" }}>
+                                {t.label}<span className="ml-1 opacity-70">{t.n}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {/* Kontent */}
                 <div className="flex-1 overflow-y-auto px-2 py-3" style={{ scrollbarWidth: "none" }}>
                     {!hasQuery ? (
                         /* ── Kashf (bo'sh holat) ── */
                         <>
+                            {history.length > 0 && (
+                                <Section label="So'nggi qidiruvlar">
+                                    <div className="flex flex-col">
+                                        {history.map(h => (
+                                            <div key={h} className="flex items-center gap-3 px-2 py-2 rounded-xl group">
+                                                <button onClick={() => setQuery(h)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                                                    <Clock className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(80,100,150,0.60)" }} />
+                                                    <span className="text-sm text-white truncate">{h}</span>
+                                                </button>
+                                                <button onClick={() => { removeHistory(h); setHistory(getHistory()); }}
+                                                    className="opacity-40 hover:opacity-90 transition-opacity"
+                                                    title="O'chirish">
+                                                    <X className="w-3.5 h-3.5" style={{ color: "rgba(160,176,224,0.75)" }} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <button onClick={() => { clearHistory(); setHistory([]); }}
+                                            className="mt-1 mx-2 py-1.5 rounded-lg text-[10px] font-black flex items-center justify-center gap-1"
+                                            style={{ background: "rgba(239,68,68,0.08)", color: "#EF4444" }}>
+                                            <Trash2 className="w-3 h-3" /> Tarixni tozalash
+                                        </button>
+                                    </div>
+                                </Section>
+                            )}
                             {discover.trendingTags.length > 0 && (
                                 <Section label="Trenddagi hashtaglar">
                                     <div className="flex flex-wrap gap-2 px-2">
@@ -213,12 +299,12 @@ export function NxSearch() {
                             <p className="text-xs mt-1" style={{ color: "rgba(100,120,170,0.50)" }}>&ldquo;{query}&rdquo; bo&apos;yicha hech narsa yo&apos;q</p>
                         </div>
                     ) : (
-                        /* ── Natijalar ── */
+                        /* ── Natijalar (filter bo'yicha) ── */
                         <>
-                            {results.users.length > 0 && (
+                            {(filter === "all" || filter === "people") && results.users.length > 0 && (
                                 <Section label="Odamlar">{results.users.map((u, i) => <UserRow key={i} u={u} />)}</Section>
                             )}
-                            {results.tags.length > 0 && (
+                            {(filter === "all" || filter === "tags") && results.tags.length > 0 && (
                                 <Section label="Hashtaglar">
                                     {results.tags.map(t => (
                                         <Link key={t.tag} href={`/nexus/tag/${t.tag}`} onClick={close}
@@ -234,7 +320,7 @@ export function NxSearch() {
                                     ))}
                                 </Section>
                             )}
-                            {results.posts.length > 0 && (
+                            {(filter === "all" || filter === "posts") && results.posts.length > 0 && (
                                 <Section label="Postlar">
                                     {results.posts.map(p => (
                                         <Link key={p.id} href={p.author?.username ? `/nexus/u/${p.author.username}` : "/nexus"} onClick={close}
@@ -255,7 +341,7 @@ export function NxSearch() {
                                     ))}
                                 </Section>
                             )}
-                            {results.videos.length > 0 && (
+                            {(filter === "all" || filter === "videos") && results.videos.length > 0 && (
                                 <Section label="Videolar">
                                     {results.videos.map(v => (
                                         <button key={v.id} onClick={() => playVideo(v)} className="w-full flex items-center gap-3 px-2 py-2 rounded-xl text-left active:scale-[0.99] transition">
@@ -275,7 +361,7 @@ export function NxSearch() {
                                     ))}
                                 </Section>
                             )}
-                            {results.tracks.length > 0 && (
+                            {(filter === "all" || filter === "tracks") && results.tracks.length > 0 && (
                                 <Section label="Audio">
                                     {results.tracks.map(t => (
                                         <button key={t.id} onClick={() => listenTrack(t)} className="w-full flex items-center gap-3 px-2 py-2 rounded-xl text-left active:scale-[0.99] transition">
@@ -292,7 +378,7 @@ export function NxSearch() {
                                     ))}
                                 </Section>
                             )}
-                            {results.lives.length > 0 && (
+                            {(filter === "all" || filter === "lives") && results.lives.length > 0 && (
                                 <Section label="Jonli efirlar">
                                     {results.lives.map(s => (
                                         <Link key={s.id} href={`/nexus/live/${s.id}`} onClick={close} className="flex items-center gap-3 px-2 py-2 rounded-xl">
