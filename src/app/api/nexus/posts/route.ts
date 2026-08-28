@@ -170,7 +170,7 @@ export async function POST(req: Request) {
     const banned = await banGuard(profile.id); if (banned) return banned;
     if (await nexusRateLimited(profile.id, "post")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
-    const { text, media, privacy, location, pollOptions, pollDurationHours } = await req.json();
+    const { text, media, privacy, location, locationLat, locationLng, pollOptions, pollDurationHours } = await req.json();
     const mediaArr: string[] = filterMediaUrls(media, 10);
     const clean = typeof text === "string" ? text.trim().slice(0, 5000) : "";
 
@@ -197,7 +197,9 @@ export async function POST(req: Request) {
             media: mediaArr,
             hashtags: extractHashtags(clean),
             privacy: priv,
-            location: typeof location === "string" && location.trim() ? location.trim().slice(0, 120) : null,
+            location: typeof location === "string" && location.trim() ? location.trim().slice(0, 200) : null,
+            locationLat: typeof locationLat === "number" && Number.isFinite(locationLat) ? locationLat : null,
+            locationLng: typeof locationLng === "number" && Number.isFinite(locationLng) ? locationLng : null,
             pollOptions: hasPoll ? cleanPoll : [],
             pollEndsAt: hasPoll ? new Date(Date.now() + hours * 3600_000) : null,
         },

@@ -1082,7 +1082,9 @@ model NexusPost {
   hashtags        String[] @default([])
   bnProductId     String?                         // ixtiyoriy — BN mahsuloti (shoppable, BN Media integratsiya)
   privacy         NexusPostPrivacy @default(PUBLIC)  // PUBLIC / FOLLOWERS (obunachilar) / PRIVATE (faqat men)
-  location        String?                         // ixtiyoriy joylashuv matni
+  location        String?                         // ixtiyoriy joylashuv nomi (xaritadan tanlangan)
+  locationLat     Float?                          // xarita koordinatasi (foydalanuvchi qoidasi: HAR DOIM kartada)
+  locationLng     Float?
   pollOptions     String[] @default([])           // bo'sh = so'rovnoma yo'q (2-4 variant)
   pollEndsAt      DateTime?                       // so'rovnoma tugash vaqti
   shareCount      Int      @default(0)

@@ -18,6 +18,7 @@ function AiBtn({ busy, onClick, label }: { busy: boolean; onClick: () => void; l
     );
 }
 import { useNxPlayer } from "./nx-player-ctx";
+import { NxLocationPicker, type NxGeoValue } from "./nx-location-picker";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxCreatePost — REAL: postlar DB'ga yoziladi, media blob'ga yuklanadi,
@@ -59,7 +60,7 @@ export function NxCreatePost() {
     const [showPrivacy, setShowPrivacy] = useState(false);
     const [pollOptions, setPollOptions] = useState(["", ""]);
     const [pollHours, setPollHours] = useState(24);
-    const [location, setLocation] = useState("");
+    const [geo, setGeo] = useState<NxGeoValue | null>(null);
     const [media, setMedia] = useState<string[]>([]);
     const [uploading, setUploading] = useState(false);
     const [trendTags, setTrendTags] = useState<string[]>([]);
@@ -98,7 +99,7 @@ export function NxCreatePost() {
 
     function reset() {
         setText(""); setPostType("text"); setPrivacy("PUBLIC");
-        setPollOptions(["", ""]); setPollHours(24); setLocation("");
+        setPollOptions(["", ""]); setPollHours(24); setGeo(null);
         setMedia([]); setTags([]); setErr(null); setUploading(false);
         setPublishing(false); setPublished(false);
     }
@@ -172,7 +173,9 @@ export function NxCreatePost() {
                     text: finalText,
                     media,
                     privacy,
-                    location: location.trim() || null,
+                    location: geo?.name || null,
+                    locationLat: geo?.lat ?? null,
+                    locationLng: geo?.lng ?? null,
                     pollOptions: postType === "poll" ? pollOptions.map(o => o.trim()).filter(Boolean) : [],
                     pollDurationHours: pollHours,
                 }),
@@ -394,18 +397,9 @@ export function NxCreatePost() {
                         </div>
                     )}
 
-                    {/* Joylashuv */}
+                    {/* Joylashuv — HAR DOIM kartada tanlanadi (qo'lda kirish yo'q) */}
                     <div className="mb-2">
-                        <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
-                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.16)" }}>
-                            <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "rgba(43,62,232,0.60)" }} />
-                            <input
-                                value={location}
-                                onChange={e => setLocation(e.target.value.slice(0, 120))}
-                                placeholder="Joylashuv qo'shish..."
-                                className="flex-1 bg-transparent text-xs text-white placeholder:text-[rgba(80,100,150,0.60)] outline-none"
-                            />
-                        </div>
+                        <NxLocationPicker value={geo} onChange={setGeo} />
                     </div>
 
                     {err && <p className="text-xs text-red-400 font-bold px-1 mt-2">{err}</p>}
