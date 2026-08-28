@@ -58,6 +58,8 @@ export async function GET(req: Request) {
     const scope = searchParams.get("scope") || "all";
     const author = searchParams.get("author") || "";
     const limit = Math.min(Number(searchParams.get("limit") ?? 24), 60);
+    const offset = Math.max(0, Number(searchParams.get("offset") ?? 0));
+    const genre = (searchParams.get("genre") || "").trim();
 
     const session = await getServerSession(authOptions);
     let meId: string | null = null;
@@ -73,6 +75,7 @@ export async function GET(req: Request) {
         { title: { contains: q, mode: "insensitive" } },
         { artist: { contains: q, mode: "insensitive" } },
     ];
+    if (genre) where.genre = { equals: genre, mode: "insensitive" };
     if (author) {
         const a = await prisma.userProfile.findUnique({ where: { username: author }, select: { id: true } });
         where.profileId = a?.id ?? "__none__";
@@ -86,7 +89,7 @@ export async function GET(req: Request) {
     const tracks = await prisma.nexusTrack.findMany({
         where,
         orderBy: sort === "top" ? [{ plays: "desc" }, { createdAt: "desc" }] : { createdAt: "desc" },
-        take: limit,
+        take: limit, skip: offset,
         include: { _count: { select: { likes: true } } },
     });
 
@@ -104,7 +107,21 @@ export async function GET(req: Request) {
         likedIds = new Set(likes.map(l => l.trackId));
     }
 
+    // Genre facets — barcha genrelar (bo'sh emas) va count (birinchi 500 trekdan)
+    const genreSample = await prisma.nexusTrack.findMany({
+        where: { hidden: false, kind, genre: { not: null } },
+        select: { genre: true }, take: 500,
+    });
+    const genreCounts = new Map<string, number>();
+    for (const g of genreSample) {
+        const gv = (g.genre || "").trim();
+        if (gv) genreCounts.set(gv, (genreCounts.get(gv) || 0) + 1);
+    }
+    const genres = [...genreCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12).map(([name, count]) => ({ name, count }));
+
     return NextResponse.json({
+        hasMore: tracks.length === limit,
+        genres,
         tracks: tracks.map(t => {
             const p = pMap[t.profileId];
             return {

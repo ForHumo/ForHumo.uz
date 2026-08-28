@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useNxPlayer, type NxTrack } from "./nx-player-ctx";
+import { Link } from "@/i18n/routing";
 import {
     Film, Music2, Mic2, BookOpen, Headphones, Plus, Play, Loader2,
-    Heart, Eye, BadgeCheck, Clock,
+    Heart, Eye, Clock, Search, Shuffle, X, Tag,
 } from "lucide-react";
 import { NxTrackCreate } from "./nx-track-create";
 import { formatMoney } from "@/lib/money";
@@ -66,6 +67,11 @@ export function MediaView() {
     const [kino, setKino] = useState<KinoVid[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploadOpen, setUploadOpen] = useState(false);
+    const [query, setQuery] = useState("");
+    const [genre, setGenre] = useState<string>("");
+    const [genres, setGenres] = useState<{ name: string; count: number }[]>([]);
+    const [searchResults, setSearchResults] = useState<Track[] | null>(null);
+    const [searching, setSearching] = useState(false);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -75,19 +81,45 @@ export function MediaView() {
                 setKino(d.videos ?? []);
             } else if (sub in TAB_KIND) {
                 const kind = TAB_KIND[sub];
+                const gp = genre ? `&genre=${encodeURIComponent(genre)}` : "";
                 const [top, fresh, liked] = await Promise.all([
-                    fetch(`/api/nexus/tracks?kind=${kind}&sort=top&limit=20`).then(r => r.json()),
-                    fetch(`/api/nexus/tracks?kind=${kind}&sort=new&limit=20`).then(r => r.json()),
-                    fetch(`/api/nexus/tracks?kind=${kind}&scope=liked&limit=20`).then(r => r.json()).catch(() => ({ tracks: [] })),
+                    fetch(`/api/nexus/tracks?kind=${kind}&sort=top&limit=20${gp}`).then(r => r.json()),
+                    fetch(`/api/nexus/tracks?kind=${kind}&sort=new&limit=20${gp}`).then(r => r.json()),
+                    fetch(`/api/nexus/tracks?kind=${kind}&scope=liked&limit=20${gp}`).then(r => r.json()).catch(() => ({ tracks: [] })),
                 ]);
                 setTopTracks(top.tracks ?? []);
                 setNewTracks(fresh.tracks ?? []);
                 setLikedTracks(liked.tracks ?? []);
+                setGenres(top.genres ?? []);
             }
         } finally { setLoading(false); }
-    }, [sub]);
+    }, [sub, genre]);
 
     useEffect(() => { load(); }, [load]);
+
+    // Debounced search (audio tab)
+    useEffect(() => {
+        const q = query.trim();
+        if (!q || !(sub in TAB_KIND)) { setSearchResults(null); return; }
+        setSearching(true);
+        const t = setTimeout(async () => {
+            try {
+                const kind = TAB_KIND[sub];
+                const d = await fetch(`/api/nexus/tracks?kind=${kind}&q=${encodeURIComponent(q)}&sort=top&limit=40`).then(r => r.json());
+                setSearchResults(d.tracks ?? []);
+            } finally { setSearching(false); }
+        }, 300);
+        return () => clearTimeout(t);
+    }, [query, sub]);
+
+    // Tab o'zgarganda qidiruvni tozalash
+    useEffect(() => { setQuery(""); setSearchResults(null); setGenre(""); }, [sub]);
+
+    function playShuffled(list: Track[]) {
+        if (list.length === 0) return;
+        const shuffled = [...list].sort(() => Math.random() - 0.5);
+        playQueue(shuffled.map(toNx), 0);
+    }
 
     function playFrom(list: Track[], idx: number) {
         playQueue(list.map(toNx), idx);
@@ -125,27 +157,87 @@ export function MediaView() {
                 ))}
             </div>
 
-            {/* Audio tablar uchun yuklash CTA */}
+            {/* Audio tablar uchun qidiruv + yuklash CTA + shuffle */}
             {audioTab && (
-                <div className="mx-4 mb-3">
-                    <button onClick={() => setUploadOpen(true)}
-                        className="w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-150 active:scale-[0.99]"
-                        style={{ background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.25)" }}>
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
-                            <Plus className="w-5 h-5 text-white" />
+                <>
+                    <div className="mx-4 mb-3 flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgba(16,185,129,0.55)" }} />
+                            <input value={query} onChange={e => setQuery(e.target.value)}
+                                placeholder={sub === "music" ? "Trek/ijrochi qidiring..." : sub === "podcast" ? "Podkast qidiring..." : "Audiokitob qidiring..."}
+                                className="w-full h-10 rounded-xl pl-10 pr-9 text-sm text-white outline-none"
+                                style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.22)", caretColor: "#10B981" }} />
+                            {query && (
+                                <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <X className="w-3.5 h-3.5" style={{ color: "rgba(160,180,180,0.7)" }} />
+                                </button>
+                            )}
                         </div>
-                        <div className="flex-1 text-left">
-                            <p className="text-sm font-black text-white">Trek yuklash</p>
-                            <p className="text-[10px]" style={{ color: "rgba(80,180,140,0.80)" }}>
-                                {sub === "music" ? "Musiqangizni" : sub === "podcast" ? "Podkastingizni" : "Audiokitobingizni"} butun Nexus tinglasin
-                            </p>
+                        <button onClick={() => playShuffled(topTracks.length ? topTracks : newTracks)}
+                            disabled={topTracks.length === 0 && newTracks.length === 0}
+                            title="Aralashtirib boshlash"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40 active:scale-95"
+                            style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
+                            <Shuffle className="w-4 h-4 text-white" />
+                        </button>
+                    </div>
+
+                    {/* Genre chips */}
+                    {genres.length > 0 && !query && (
+                        <div className="mx-4 mb-3 flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+                            <button onClick={() => setGenre("")}
+                                className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black transition active:scale-95"
+                                style={genre === ""
+                                    ? { background: "linear-gradient(135deg,#10B981,#0D9488)", color: "#fff" }
+                                    : { background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.22)", color: "rgba(160,200,180,0.85)" }}>
+                                Barchasi
+                            </button>
+                            {genres.map(g => (
+                                <button key={g.name} onClick={() => setGenre(g === undefined || genre === g.name ? "" : g.name)}
+                                    className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black transition active:scale-95"
+                                    style={genre === g.name
+                                        ? { background: "linear-gradient(135deg,#10B981,#0D9488)", color: "#fff" }
+                                        : { background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.22)", color: "rgba(160,200,180,0.85)" }}>
+                                    <Tag className="w-2.5 h-2.5" />{g.name}
+                                    <span className="opacity-70">{g.count}</span>
+                                </button>
+                            ))}
                         </div>
-                    </button>
-                </div>
+                    )}
+
+                    <div className="mx-4 mb-3">
+                        <button onClick={() => setUploadOpen(true)}
+                            className="w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-150 active:scale-[0.99]"
+                            style={{ background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.25)" }}>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
+                                <Plus className="w-5 h-5 text-white" />
+                            </div>
+                            <div className="flex-1 text-left">
+                                <p className="text-sm font-black text-white">Trek yuklash</p>
+                                <p className="text-[10px]" style={{ color: "rgba(80,180,140,0.80)" }}>
+                                    {sub === "music" ? "Musiqangizni" : sub === "podcast" ? "Podkastingizni" : "Audiokitobingizni"} butun Nexus tinglasin
+                                </p>
+                            </div>
+                        </button>
+                    </div>
+                </>
             )}
 
-            {loading ? (
-                <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+            {/* Qidiruv natijalari (audio tab + query bor) */}
+            {audioTab && (query.trim() || searching) ? (
+                searching && !searchResults ? (
+                    <SkelRow />
+                ) : searchResults && searchResults.length === 0 ? (
+                    <EmptyState icon={Search} title="Natija topilmadi" hint={`"${query}" bo'yicha hech narsa yo'q`} />
+                ) : searchResults ? (
+                    <TrackRow title={`"${query}" bo'yicha natijalar`} accent="#00CEC8"
+                        items={searchResults} onPlay={i => playFrom(searchResults, i)} onLike={toggleLike} />
+                ) : null
+            ) : loading ? (
+                <>
+                    <SkelRow />
+                    <SkelRow />
+                </>
             ) : sub === "cinema" ? (
                 kino.length === 0 ? (
                     <EmptyState icon={Film} title="Hali kino yo'q" hint="Video bo'limida 'Kino' kategoriyasida yuklangan videolar shu yerda chiqadi" />
@@ -236,10 +328,16 @@ function TrackRow({ title, accent, items, onPlay, onLike, empty, hideIfEmpty }: 
                             </div>
                             <p className="text-xs font-bold text-white truncate">{t.title}</p>
                             <p className="text-[10px] truncate flex items-center gap-1" style={{ color: "rgba(120,150,135,0.85)" }}>
-                                <span className="truncate inline-flex items-center gap-0.5">
-                                    {t.artist || t.uploader?.name || t.uploader?.username || "Noma'lum"}
-                                    {t.uploader?.verified && <NxVerifiedBadge category={t.uploader?.verifiedCategory} size={10} />}
-                                </span>
+                                {t.uploader?.username ? (
+                                    <Link href={`/nexus/u/${t.uploader.username}`}
+                                        className="truncate inline-flex items-center gap-0.5 hover:text-white transition-colors"
+                                        onClick={e => e.stopPropagation()}>
+                                        {t.artist || t.uploader.name || t.uploader.username}
+                                        {t.uploader.verified && <NxVerifiedBadge category={t.uploader.verifiedCategory} size={10} />}
+                                    </Link>
+                                ) : (
+                                    <span className="truncate">{t.artist || "Noma'lum"}</span>
+                                )}
                                 <span>·</span>
                                 <span className="flex-shrink-0">{fmtN(t.plays)} tinglash</span>
                             </p>
@@ -247,6 +345,27 @@ function TrackRow({ title, accent, items, onPlay, onLike, empty, hideIfEmpty }: 
                     ))}
                 </div>
             )}
+        </div>
+    );
+}
+
+// Skeleton qator (M-2)
+function SkelRow() {
+    return (
+        <div className="mb-6">
+            <div className="px-4 mb-3 flex items-center gap-2">
+                <div className="w-1 h-4 rounded-full" style={{ background: "rgba(16,185,129,0.30)" }} />
+                <div className="h-3 w-24 rounded animate-pulse" style={{ background: "rgba(16,185,129,0.15)" }} />
+            </div>
+            <div className="flex gap-3 overflow-x-auto px-4 pb-1" style={{ scrollbarWidth: "none" }}>
+                {[0,1,2,3,4,5].map(i => (
+                    <div key={i} className="w-36 flex-shrink-0 animate-pulse">
+                        <div className="w-36 h-36 rounded-2xl mb-2" style={{ background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.15)" }} />
+                        <div className="h-2.5 rounded mb-1" style={{ background: "rgba(16,185,129,0.15)", width: "80%" }} />
+                        <div className="h-2 rounded" style={{ background: "rgba(16,185,129,0.10)", width: "60%" }} />
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
