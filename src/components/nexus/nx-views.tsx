@@ -16,6 +16,8 @@ import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxStories } from "./nx-stories";
 import { NxHomeRows } from "./nx-home-rows";
+import { NxTopWritersRow } from "./nx-top-writers-row";
+import { NxAdBanner } from "./nx-ad-banner";
 import { NxTrendingBanner } from "./nx-trending-banner";
 import { NxFolderModal } from "./nx-folder-modal";
 import { NxSocialDesktop } from "./nx-social-desktop";
@@ -77,11 +79,22 @@ export function FeedView() {
             <NxStories />
             {/* Yangi foydalanuvchi uchun 5 qadam checklist (bajarilsa avtomatik yashadi) */}
             <NxOnboarding />
-            {/* Recommendation'da: trending banner + kontent qatorlari */}
-            {feedTab === "foryou" && <NxTrendingBanner />}
-            {feedTab === "foryou" && <NxHomeRows />}
+            {/* Yangi tartib (foydalanuvchi so'rovi bo'yicha):
+                1. Bu haftaning yulduzlari (TOP 50)
+                2. Katta AD banner
+                3. Kinolar → Musiqalar → G.Video → V.Video → G.Stream → V.Stream
+                   → Podkast → Audiokitob → Kitoblar → Kanallar (DM'dagi)
+                4. Ijtimoiy feed (post lentasi)
+                5. Kimni kuzatishga arziydi (eng oxirida — TrendingBanner) */}
+            {feedTab === "foryou" && <>
+                <NxTopWritersRow />
+                <NxAdBanner />
+                <NxHomeRows />
+            </>}
             {/* Real postlar lentasi (composer bilan) — tabga qarab filtrlanadi */}
             <NxSocialFeed controlledTab={feedTab} hideTabBar />
+            {/* Kimni kuzatishga arziydi — eng pastda */}
+            {feedTab === "foryou" && <NxTrendingBanner />}
         </ViewShell>
     );
 }

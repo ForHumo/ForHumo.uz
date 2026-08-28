@@ -11,17 +11,23 @@ export async function GET() {
     const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true, subPrice: true, country: true, autoRepostToOwnChannel: true } });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
-    const [subscribers, subIncome, ownChannel] = await prisma.$transaction([
+    const [subscribers, subIncome, ownChannels] = await prisma.$transaction([
         prisma.nexusSubscription.count({ where: { creatorId: me.id, expiresAt: { gt: new Date() } } }),
         prisma.nexusSubscription.aggregate({ where: { creatorId: me.id, expiresAt: { gt: new Date() } }, _sum: { price: true } }),
-        prisma.nexusChannel.findFirst({ where: { ownerId: me.id, type: "CHANNEL", systemOwned: false }, select: { id: true } }),
+        prisma.nexusChannel.findMany({
+            where: { ownerId: me.id, type: "CHANNEL", systemOwned: false, hidden: false },
+            select: { id: true, name: true, handle: true, avatarUrl: true, memberCount: true },
+            orderBy: { createdAt: "asc" },
+            take: 20,
+        }),
     ]);
     return NextResponse.json({
         subPrice: me.subPrice,
         currency: currencyForCountry(me.country),
         activeSubscribers: subscribers,
         monthlyIncome: subIncome._sum.price ?? 0,
-        hasChannel: !!ownChannel,
+        hasChannel: ownChannels.length > 0,
+        channels: ownChannels,
         autoRepost: me.autoRepostToOwnChannel,
     });
 }

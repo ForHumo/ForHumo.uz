@@ -197,7 +197,7 @@ export async function POST(req: Request) {
     const banned = await banGuard(profile.id); if (banned) return banned;
     if (await nexusRateLimited(profile.id, "post")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
-    const { text, media, privacy, location, locationLat, locationLng, pollOptions, pollDurationHours, price, subsFree, crossToChannel } = await req.json();
+    const { text, media, privacy, location, locationLat, locationLng, pollOptions, pollDurationHours, price, subsFree, crossToChannel, crossChannelId } = await req.json();
     const mediaArr: string[] = filterMediaUrls(media, 10);
     const clean = typeof text === "string" ? text.trim().slice(0, 5000) : "";
 
@@ -258,6 +258,7 @@ export async function POST(req: Request) {
             title, thumb: mediaArr[0] || null,
             description: clean.length > 80 ? clean.slice(80, 500) : null,
             media: mediaArr.slice(0, 4),
+            channelId: typeof crossChannelId === "string" ? crossChannelId : null,
         });
     });
 

@@ -33,7 +33,8 @@ export function NxTrendingBanner() {
             setTrends((d.trendingTags ?? []).slice(0, 3));
             setSugs((d.suggestedUsers ?? []).slice(0, 6));
         }).catch(() => { });
-        fetch("/api/nexus/top-writer").then(r => r.json()).then(d => setWriter(d.writer ?? null)).catch(() => { });
+        // "Bu haftaning yulduzlari" alohida NxTopWritersRow'da (TOP 50) — bu yerda writer yo'q
+        setWriter(null);
     }, []);
 
     async function toggleFollow(username: string) {

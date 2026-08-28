@@ -72,7 +72,9 @@ export function NxCreatePost() {
     const [price, setPrice] = useState<number>(0);     // 0 = bepul; >0 = pullik
     const [subsFree, setSubsFree] = useState(false);   // true = pullik obunachi kuzatuvchi bepul ko'radi
     const [crossToChannel, setCrossToChannel] = useState(false);  // kanalga ham joylash
-    const [hasChannel, setHasChannel] = useState(false);          // kanal mavjudmi
+    const [channels, setChannels] = useState<{ id: string; name: string; handle: string | null; avatarUrl: string | null; memberCount: number }[]>([]);
+    const [crossChannelId, setCrossChannelId] = useState<string>("");
+    const hasChannel = channels.length > 0;
     const [aiBusy, setAiBusy] = useState<null | "caption" | "tags" | "translate">(null);
     const fileRef = useRef<HTMLInputElement>(null);
 
@@ -94,8 +96,10 @@ export function NxCreatePost() {
         if (!createPostOpen) return;
         fetch("/api/nexus/creator").then(r => r.json()).then(d => {
             setCanSub((d.subPrice ?? 0) > 0);
-            setHasChannel(!!d.hasChannel);
-            if (d.autoRepost === true) setCrossToChannel(true);
+            const list = Array.isArray(d.channels) ? d.channels : [];
+            setChannels(list);
+            if (list[0]?.id) setCrossChannelId(list[0].id);
+            if (d.autoRepost === true && list.length > 0) setCrossToChannel(true);
         }).catch(() => { });
     }, [createPostOpen]);
 
@@ -107,7 +111,7 @@ export function NxCreatePost() {
 
     function reset() {
         setText(""); setPostType("text"); setPrivacy("PUBLIC");
-        setPollOptions(["", ""]); setPollHours(24); setGeo(null); setPrice(0); setSubsFree(false); setCrossToChannel(false);
+        setPollOptions(["", ""]); setPollHours(24); setGeo(null); setPrice(0); setSubsFree(false); setCrossToChannel(false); setCrossChannelId("");
         setMedia([]); setTags([]); setErr(null); setUploading(false);
         setPublishing(false); setPublished(false);
     }
@@ -187,6 +191,7 @@ export function NxCreatePost() {
                     price: price > 0 ? Math.floor(price) : 0,
                     subsFree: price > 0 && subsFree,
                     crossToChannel: hasChannel ? crossToChannel : false,
+                    crossChannelId: hasChannel && crossToChannel ? crossChannelId : null,
                     pollOptions: postType === "poll" ? pollOptions.map(o => o.trim()).filter(Boolean) : [],
                     pollDurationHours: pollHours,
                 }),
@@ -456,19 +461,49 @@ export function NxCreatePost() {
                         )}
                     </div>
 
-                    {/* Kanalga ham joylash (agar kanal bor bo'lsa) */}
+                    {/* Kanalga ham joylash — kanal(lar) mavjud bo'lsa */}
                     {hasChannel && (
-                        <label className="mb-2 flex items-center gap-2 cursor-pointer p-3 rounded-2xl transition"
-                            style={{ background: crossToChannel ? "rgba(0,206,200,0.10)" : "rgba(43,62,232,0.06)",
-                                border: `1px solid ${crossToChannel ? "rgba(0,206,200,0.35)" : "rgba(43,62,232,0.20)"}` }}>
-                            <input type="checkbox" checked={crossToChannel} onChange={e => setCrossToChannel(e.target.checked)} className="w-4 h-4" />
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs font-black text-white">Kanalga ham joylash</p>
-                                <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>
-                                    Post o&apos;z kanalingizga xabar sifatida ham yuboriladi
-                                </p>
-                            </div>
-                        </label>
+                        <div className="mb-2 rounded-2xl overflow-hidden"
+                            style={{ background: crossToChannel ? "rgba(0,206,200,0.08)" : "rgba(43,62,232,0.06)",
+                                border: `1px solid ${crossToChannel ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.20)"}` }}>
+                            <label className="flex items-center gap-2 cursor-pointer p-3">
+                                <input type="checkbox" checked={crossToChannel} onChange={e => setCrossToChannel(e.target.checked)} className="w-4 h-4" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-black text-white">Kanalga ham joylash</p>
+                                    <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                        Post o&apos;z kanalingizga xabar sifatida ham yuboriladi
+                                    </p>
+                                </div>
+                            </label>
+                            {crossToChannel && channels.length > 1 && (
+                                <div className="px-3 pb-3 flex flex-col gap-1.5" style={{ borderTop: "1px solid rgba(0,206,200,0.15)" }}>
+                                    <p className="text-[9px] font-black uppercase tracking-wide mt-2" style={{ color: "rgba(0,206,200,0.75)" }}>Qaysi kanalga?</p>
+                                    <div className="flex flex-col gap-1 max-h-40 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+                                        {channels.map(c => (
+                                            <button key={c.id} type="button" onClick={() => setCrossChannelId(c.id)}
+                                                className="flex items-center gap-2 p-2 rounded-lg text-left transition active:scale-[0.99]"
+                                                style={crossChannelId === c.id
+                                                    ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.40)" }
+                                                    : { background: "rgba(43,62,232,0.05)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                                {c.avatarUrl
+                                                    ? <img src={c.avatarUrl} alt="" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
+                                                    : <div className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] font-black text-white"
+                                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>{c.name[0]?.toUpperCase() ?? "K"}</div>}
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[11px] font-bold text-white truncate">{c.name}</p>
+                                                    <p className="text-[9px]" style={{ color: "rgba(140,160,210,0.65)" }}>
+                                                        {c.handle ? `@${c.handle} · ` : ""}{c.memberCount} a&apos;zo
+                                                    </p>
+                                                </div>
+                                                {crossChannelId === c.id && <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#00CEC8" }}>
+                                                    <span className="text-white text-[10px] font-black">✓</span>
+                                                </div>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     )}
 
                     {err && <p className="text-xs text-red-400 font-bold px-1 mt-2">{err}</p>}

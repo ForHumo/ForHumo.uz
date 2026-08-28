@@ -23,11 +23,21 @@ interface Args {
     thumb?: string | null;      // linkedThumb (cover image)
     description?: string | null;
     media?: string[];           // asosiy postda bo'lgan media (rasm/video)
+    channelId?: string | null;  // agar berilgan bo'lsa aynan shu kanalga (owner tekshiriladi)
 }
 
 export async function crossPostToOwnChannel(a: Args): Promise<{ channelId: string | null; messageId: string | null }> {
     try {
-        const channelId = await findOwnedChannel(a.authorId);
+        // Agar aniq kanal berilgan bo'lsa — egaligini tekshiramiz
+        let channelId: string | null = null;
+        if (a.channelId) {
+            const owned = await prisma.nexusChannel.findFirst({
+                where: { id: a.channelId, ownerId: a.authorId, type: "CHANNEL", systemOwned: false, hidden: false },
+                select: { id: true },
+            });
+            channelId = owned?.id ?? null;
+        }
+        if (!channelId) channelId = await findOwnedChannel(a.authorId);
         if (!channelId) return { channelId: null, messageId: null };
 
         // Matn tuzish: nom + tavsif
