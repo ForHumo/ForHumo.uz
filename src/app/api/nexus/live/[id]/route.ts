@@ -43,6 +43,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             viewers, peakViewers: stream.peakViewers, likes: stream.likes,
             recordingUrl: stream.recordingUrl, recordingDurationSec: stream.recordingDurationSec,
             sceneLayout: stream.sceneLayout,
+            raidToUsername: stream.raidToUsername,
+            watermarkUrl: stream.watermarkUrl,
             isMine: stream.profileId === meId,
             author: author ? { name: author.name, username: author.username, image: author.image, verified: isVerifiedProfile(author) } : null,
         },
@@ -58,7 +60,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const { id } = await params;
     const body = await req.json();
-    const { action, recordingUrl, recordingDurationSec, description, thumbUrl } = body;
+    const { action, recordingUrl, recordingDurationSec, description, thumbUrl, raidToUsername, watermarkUrl } = body;
     const stream = await prisma.nexusLiveStream.findFirst({ where: { id, profileId: me.id } });
     if (!stream) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
 
@@ -89,18 +91,28 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         return NextResponse.json({ stream: updated });
     }
     if (action === "end" && stream.status !== "ENDED") {
+        // Batch T — Raid target validation (efir tugagach viewerlar u yerga o'tadi)
+        let raidTarget: string | null = null;
+        if (typeof raidToUsername === "string" && raidToUsername.trim()) {
+            const raw = raidToUsername.trim().replace(/^@/, "").toLowerCase();
+            if (raw && raw !== stream.profileId) {
+                const target = await prisma.userProfile.findUnique({ where: { username: raw }, select: { id: true } });
+                if (target && target.id !== me.id) raidTarget = raw;
+            }
+        }
         const updated = await prisma.nexusLiveStream.update({
             where: { id }, data: {
                 status: "ENDED", endedAt: new Date(),
                 ...(typeof recordingUrl === "string" && recordingUrl ? { recordingUrl } : {}),
                 ...(Number.isFinite(recordingDurationSec) ? { recordingDurationSec: Math.max(0, Math.round(Number(recordingDurationSec))) } : {}),
+                ...(raidTarget ? { raidToUsername: raidTarget } : {}),
             },
         });
         // LiveKit xonasini tozalash (fail-safe)
         deleteLiveKitRoom(`live_${id}`).catch(() => { });
         return NextResponse.json({ stream: updated });
     }
-    // Meta yangilash — tavsif/thumb/recording alohida ("update")
+    // Meta yangilash — tavsif/thumb/recording/watermark alohida ("update")
     if (action === "update") {
         const updated = await prisma.nexusLiveStream.update({
             where: { id },
@@ -109,6 +121,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 ...(typeof thumbUrl === "string" ? { thumbUrl: thumbUrl || null } : {}),
                 ...(typeof recordingUrl === "string" ? { recordingUrl: recordingUrl || null } : {}),
                 ...(Number.isFinite(recordingDurationSec) ? { recordingDurationSec: Math.max(0, Math.round(Number(recordingDurationSec))) } : {}),
+                ...(typeof watermarkUrl === "string" ? { watermarkUrl: watermarkUrl || null } : {}),
             },
         });
         return NextResponse.json({ stream: updated });

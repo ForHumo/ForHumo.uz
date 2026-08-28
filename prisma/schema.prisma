@@ -1928,10 +1928,15 @@ model NexusLiveStream {
   followersOnly  Boolean  @default(false)             // faqat kuzatuvchilar chat yozadi
   // Batch R — Ban words filter
   bannedWords    String[] @default([])                // taqiqlangan so'zlar (lowercased)
+  // Batch T — Raid: efir tugagach viewerlarni yo'naltirish
+  raidToUsername String?                              // /nexus/u/<username> ga raid
+  // Batch W — Custom watermark (VOD canvas'da chizilaki)
+  watermarkUrl   String?                              // logo URL (Vercel Blob)
 
   createdAt   DateTime         @default(now())
   messages    NexusLiveMessage[]
   reminders   NexusLiveReminder[]
+  clips       NexusLiveClip[]
   @@index([status, createdAt])
   @@index([profileId, createdAt])
 }
@@ -1945,6 +1950,23 @@ model NexusLiveReminder {
   createdAt  DateTime @default(now())
   notified   Boolean  @default(false)                 // push yuborilganmi
   @@unique([streamId, profileId])
+  @@index([profileId, createdAt])
+}
+
+// Batch I — VOD qirqim (highlight/clip) — timestamp-based (fayl emas, aqlli reference)
+model NexusLiveClip {
+  id         String   @id @default(cuid())
+  streamId   String
+  stream     NexusLiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  profileId  String                                    // qirqim yaratuvchisi (streamer yoki viewer)
+  title      String
+  startSec   Int                                       // VOD ichidagi boshlanish (sec)
+  endSec     Int                                       // tugash — max 60 sek
+  plays      Int      @default(0)
+  likes      Int      @default(0)
+  hidden     Boolean  @default(false)                  // moderatsiya
+  createdAt  DateTime @default(now())
+  @@index([streamId, createdAt])
   @@index([profileId, createdAt])
 }
 

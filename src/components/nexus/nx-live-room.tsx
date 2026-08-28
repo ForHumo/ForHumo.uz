@@ -9,6 +9,7 @@ import {
     Camera, EyeOff, Move,
     Heart, Flame, Laugh, ThumbsUp, PartyPopper, Sparkles, Zap, Smile, UserPlus, UserCheck,
     BarChart3, Trash2, MoreVertical, Plus,
+    Scissors, Rocket, Image as ImageIcon, Megaphone,
 } from "lucide-react";
 import { Room, RoomEvent, Track, VideoQuality, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant, type RemoteVideoTrack } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
@@ -23,6 +24,7 @@ interface RoomStream {
     viewers: number; peakViewers: number; likes: number; isMine: boolean;
     author: LAuthor | null;
     description?: string | null; recordingUrl?: string | null; recordingDurationSec?: number | null;
+    raidToUsername?: string | null; watermarkUrl?: string | null;
 }
 interface ChatMsg { id: string; text: string; tipAmount?: number; createdAt: string; profileId?: string; author: LAuthor | null }
 
@@ -152,6 +154,26 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     }
     const [analytics, setAnalytics] = useState<Analytics | null>(null);
 
+    // Batch I — Clips
+    interface Clip { id: string; title: string; startSec: number; endSec: number; plays: number; likes: number; createdAt: string; author: LAuthor | null; }
+    const [clips, setClips] = useState<Clip[]>([]);
+    const [clipComposerOpen, setClipComposerOpen] = useState(false);
+    const [clipStart, setClipStart] = useState(0);
+    const [clipEnd, setClipEnd] = useState(30);
+    const [clipTitle, setClipTitle] = useState("");
+    const [clipBusy, setClipBusy] = useState(false);
+    // Batch T — Raid
+    const [raidComposerOpen, setRaidComposerOpen] = useState(false);
+    const [raidUsername, setRaidUsername] = useState("");
+    const [raidCountdown, setRaidCountdown] = useState<number | null>(null);
+    // Batch U — TTS tips (viewer-side, opt-in)
+    const [ttsEnabled, setTtsEnabled] = useState(false);
+    useEffect(() => {
+        try { setTtsEnabled(localStorage.getItem("nx-tts-tips") === "1"); } catch { /* jim */ }
+    }, []);
+    // Batch W — Watermark upload (streamer)
+    const [watermarkBusy, setWatermarkBusy] = useState(false);
+
     useEffect(() => { setMounted(true); }, []);
 
     // Tafsilot — ochilishda + har 15s (status o'zgarishini ushlash uchun)
@@ -277,11 +299,40 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
             const next = tipQueueRef.current.shift();
             if (next) {
                 setTipAlert(next);
+                // Batch U — TTS (agar yoqilgan bo'lsa)
+                if (ttsEnabled && typeof window !== "undefined" && "speechSynthesis" in window) {
+                    try {
+                        const name = next.author?.name || next.author?.username || "Foydalanuvchi";
+                        const text = `${name} ${formatMoney(next.amount, currency)} yubordi${next.text ? ". " + next.text : ""}`;
+                        const u = new SpeechSynthesisUtterance(text);
+                        u.lang = "uz-UZ"; u.rate = 1.05; u.volume = 0.8;
+                        window.speechSynthesis.speak(u);
+                    } catch { /* jim */ }
+                }
                 setTimeout(() => setTipAlert(null), 6000);
             }
         }, 400);
         return () => clearInterval(iv);
-    }, [tipAlert]);
+    }, [tipAlert, ttsEnabled, currency]);
+
+    // Batch I — Clips fetch (ENDED holatida)
+    useEffect(() => {
+        if (stream?.status !== "ENDED" || !stream?.recordingUrl) return;
+        fetch(`/api/nexus/live/${streamId}/clip`).then(r => r.json()).then(d => setClips(d.clips || [])).catch(() => { });
+    }, [stream?.status, stream?.recordingUrl, streamId]);
+
+    // Batch T — Raid: ENDED holatida raidToUsername bo'lsa 10s countdown va navigate
+    useEffect(() => {
+        if (stream?.status !== "ENDED" || !stream?.raidToUsername || stream?.isMine) return;
+        setRaidCountdown(10);
+        const iv = setInterval(() => setRaidCountdown(c => (c === null ? null : c - 1)), 1000);
+        return () => clearInterval(iv);
+    }, [stream?.status, stream?.raidToUsername, stream?.isMine]);
+    useEffect(() => {
+        if (raidCountdown !== null && raidCountdown <= 0 && stream?.raidToUsername) {
+            window.location.href = `/nexus/u/${stream.raidToUsername}`;
+        }
+    }, [raidCountdown, stream?.raidToUsername]);
 
     // Batch E — Follow state (kirgan tomoshabin muallif'ni kuzatadimi?)
     useEffect(() => {
@@ -421,6 +472,72 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: tickerDraft }),
             });
             if (r.ok) { setTicker(tickerDraft || null); setTickerEditOpen(false); }
+        } catch { /* ignore */ }
+    }
+
+    // Batch I — Clip create
+    async function createClip() {
+        if (clipBusy || !clipTitle.trim()) return;
+        setClipBusy(true);
+        try {
+            const r = await fetch(`/api/nexus/live/${streamId}/clip`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: clipTitle.trim(), startSec: Math.floor(clipStart), endSec: Math.floor(clipEnd) }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setClips(prev => [{ ...d.clip, author: null }, ...prev]);
+                setClipComposerOpen(false); setClipTitle("");
+            }
+        } finally { setClipBusy(false); }
+    }
+
+    // Batch T — End with raid
+    async function endWithRaid() {
+        if (!raidUsername.trim()) return;
+        try {
+            await fetch(`/api/nexus/live/${streamId}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "end", raidToUsername: raidUsername.trim().replace(/^@/, "") }),
+            });
+            setRaidComposerOpen(false);
+            loadDetail();
+        } catch { /* ignore */ }
+    }
+
+    // Batch U — TTS toggle (localStorage persist)
+    function toggleTts() {
+        setTtsEnabled(prev => {
+            const nx = !prev;
+            try { localStorage.setItem("nx-tts-tips", nx ? "1" : "0"); } catch { /* jim */ }
+            return nx;
+        });
+    }
+
+    // Batch W — Watermark upload (streamer)
+    async function uploadWatermark(file: File) {
+        if (watermarkBusy) return;
+        setWatermarkBusy(true);
+        try {
+            const { upload } = await import("@vercel/blob/client");
+            const key = `nexus/live/${streamId}-wm-${Date.now()}.${file.type.includes("png") ? "png" : file.type.includes("svg") ? "svg" : "jpg"}`;
+            const up = await upload(key, file, { access: "public", handleUploadUrl: "/api/market/upload/client-token" });
+            await fetch(`/api/nexus/live/${streamId}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "update", watermarkUrl: up.url }),
+            });
+            loadDetail();
+        } catch { /* ignore */ }
+        finally { setWatermarkBusy(false); }
+    }
+
+    async function removeWatermark() {
+        try {
+            await fetch(`/api/nexus/live/${streamId}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "update", watermarkUrl: "" }),
+            });
+            loadDetail();
         } catch { /* ignore */ }
     }
 
@@ -987,6 +1104,23 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         <X className="w-5 h-5 text-white" />
                     </button>
                     <div className="flex-1" />
+                    {/* Batch I — Clip tugma (VOD holatida) */}
+                    {stream?.status === "ENDED" && stream?.recordingUrl && (
+                        <button onClick={() => { setClipStart(Math.floor(vodCur)); setClipEnd(Math.min(vodDur, Math.floor(vodCur) + 30)); setClipComposerOpen(true); }} title="Qirqim yaratish"
+                            className="h-10 px-3 flex items-center gap-1.5 rounded-full active:scale-95 transition"
+                            style={{ background: "rgba(139,92,246,0.30)", backdropFilter: "blur(8px)", border: "1px solid rgba(139,92,246,0.55)" }}>
+                            <Scissors className="w-3.5 h-3.5 text-white" />
+                            <span className="text-[10px] font-black text-white">Qirqim</span>
+                        </button>
+                    )}
+                    {/* Batch U — TTS toggle (viewer, non-mine) */}
+                    {isLive && !stream?.isMine && (
+                        <button onClick={toggleTts} title={ttsEnabled ? "Tips o'qilishi yoqilgan" : "Tips'ni ovozli eshiting"}
+                            className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition"
+                            style={{ background: ttsEnabled ? "rgba(245,158,11,0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                            <Megaphone className="w-4 h-4 text-white" />
+                        </button>
+                    )}
                     {/* Quality selector — faqat video oqim bor bo'lganda */}
                     {((isLive && hasRemoteVideo) || (stream?.status === "ENDED" && stream?.recordingUrl)) && (
                         <div className="relative">
@@ -1234,11 +1368,18 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             </p>
                         )}
                         {stream.isMine && isLive && (
-                            <button onClick={() => setEndConfirmOpen(true)} disabled={ending}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white disabled:opacity-60"
-                                style={{ background: "rgba(239,68,68,0.85)" }}>
-                                {ending ? <Loader2 className="w-4 h-4 animate-spin" /> : <StopCircle className="w-4 h-4" />} Efirni tugatish
-                            </button>
+                            <div className="flex gap-2">
+                                <button onClick={() => setRaidComposerOpen(true)}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black text-white"
+                                    style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
+                                    <Rocket className="w-3.5 h-3.5" />Raid
+                                </button>
+                                <button onClick={() => setEndConfirmOpen(true)} disabled={ending}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white disabled:opacity-60"
+                                    style={{ background: "rgba(239,68,68,0.85)" }}>
+                                    {ending ? <Loader2 className="w-4 h-4 animate-spin" /> : <StopCircle className="w-4 h-4" />} Tugatish
+                                </button>
+                            </div>
                         )}
                     </div>
                 )}
@@ -1532,6 +1673,112 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 </>
             )}
 
+            {/* Batch I — Clip composer modal */}
+            {clipComposerOpen && (
+                <>
+                    <div className="fixed inset-0 z-[9998]" style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)" }} onClick={() => setClipComposerOpen(false)} />
+                    <div className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-md p-6 rounded-3xl animate-in fade-in zoom-in-95 duration-200"
+                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(139,92,246,0.45)", boxShadow: "0 24px 80px rgba(139,92,246,0.35)" }}>
+                        <div className="flex items-center gap-2 mb-4">
+                            <Scissors className="w-5 h-5" style={{ color: "#8B5CF6" }} />
+                            <h3 className="text-base font-black text-white">Qirqim yaratish</h3>
+                            <button onClick={() => setClipComposerOpen(false)} className="ml-auto w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,0.05)" }}>
+                                <X className="w-4 h-4 text-white/70" />
+                            </button>
+                        </div>
+                        <input value={clipTitle} onChange={e => setClipTitle(e.target.value.slice(0, 100))}
+                            placeholder="Sarlavha..." className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none mb-3"
+                            style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.30)", caretColor: "#EC4899" }} />
+                        <div className="mb-3 p-3 rounded-xl" style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.20)" }}>
+                            <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] font-black" style={{ color: "#C4B5FD" }}>Boshlanish</span>
+                                <span className="text-[10px] font-black tabular-nums text-white">{fmtT(clipStart)}</span>
+                            </div>
+                            <input type="range" min={0} max={Math.max(0, vodDur - 3)} step={1} value={clipStart}
+                                onChange={e => { const v = parseInt(e.target.value); setClipStart(v); if (clipEnd - v > 60) setClipEnd(v + 60); if (clipEnd <= v) setClipEnd(Math.min(vodDur, v + 30)); }}
+                                className="w-full accent-[#8B5CF6]" />
+                            <div className="flex items-center justify-between mt-2 mb-1">
+                                <span className="text-[10px] font-black" style={{ color: "#EC4899" }}>Tugash · davomiylik {clipEnd - clipStart}s</span>
+                                <span className="text-[10px] font-black tabular-nums text-white">{fmtT(clipEnd)}</span>
+                            </div>
+                            <input type="range" min={clipStart + 3} max={Math.min(vodDur, clipStart + 60)} step={1} value={clipEnd}
+                                onChange={e => setClipEnd(parseInt(e.target.value))}
+                                className="w-full accent-[#EC4899]" />
+                        </div>
+                        <button onClick={createClip} disabled={clipBusy || !clipTitle.trim() || clipEnd - clipStart < 3}
+                            className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-50"
+                            style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", boxShadow: "0 4px 20px rgba(139,92,246,0.35)" }}>
+                            {clipBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Scissors className="w-4 h-4" />Saqlash</>}
+                        </button>
+                    </div>
+                </>
+            )}
+
+            {/* Batch T — Raid composer (streamer LIVE'da) */}
+            {raidComposerOpen && (
+                <>
+                    <div className="fixed inset-0 z-[9998]" style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)" }} onClick={() => setRaidComposerOpen(false)} />
+                    <div className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-md p-6 rounded-3xl animate-in fade-in zoom-in-95 duration-200"
+                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(249,115,22,0.45)", boxShadow: "0 24px 80px rgba(249,115,22,0.35)" }}>
+                        <div className="flex items-center gap-2 mb-4">
+                            <Rocket className="w-5 h-5" style={{ color: "#F97316" }} />
+                            <h3 className="text-base font-black text-white">Raid bilan tugatish</h3>
+                            <button onClick={() => setRaidComposerOpen(false)} className="ml-auto w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,0.05)" }}>
+                                <X className="w-4 h-4 text-white/70" />
+                            </button>
+                        </div>
+                        <p className="text-[10px] mb-3" style={{ color: "rgba(255,200,150,0.75)" }}>Tomoshabinlar 10 sek kutib boshqa streamer profiliga o&apos;tadi</p>
+                        <div className="relative mb-4">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 text-sm">@</span>
+                            <input value={raidUsername} onChange={e => setRaidUsername(e.target.value.replace(/[^a-z0-9_]/gi, "").toLowerCase().slice(0, 30))}
+                                placeholder="username" className="w-full pl-8 pr-4 py-3 rounded-xl text-sm text-white outline-none"
+                                style={{ background: "rgba(249,115,22,0.10)", border: "1px solid rgba(249,115,22,0.30)", caretColor: "#F97316" }}
+                                autoFocus />
+                        </div>
+                        <button onClick={endWithRaid} disabled={!raidUsername.trim()}
+                            className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-50"
+                            style={{ background: "linear-gradient(135deg,#EF4444,#F97316)", boxShadow: "0 4px 20px rgba(249,115,22,0.35)" }}>
+                            <Rocket className="w-4 h-4" />Efirni tugatib raid boshlash
+                        </button>
+                    </div>
+                </>
+            )}
+
+            {/* Batch T — Raid countdown overlay (viewer) */}
+            {raidCountdown !== null && raidCountdown > 0 && stream?.raidToUsername && (
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[9997] px-5 py-3 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300"
+                    style={{ background: "linear-gradient(135deg, rgba(239,68,68,0.95), rgba(249,115,22,0.95))", boxShadow: "0 12px 40px rgba(249,115,22,0.55)" }}>
+                    <Rocket className="w-6 h-6 text-white" />
+                    <div className="flex flex-col">
+                        <span className="text-[11px] font-black text-white/95">RAID</span>
+                        <span className="text-sm font-black text-white">@{stream.raidToUsername} — {raidCountdown}s</span>
+                    </div>
+                    <button onClick={() => setRaidCountdown(null)} className="w-7 h-7 flex items-center justify-center rounded-full" style={{ background: "rgba(0,0,0,0.35)" }}>
+                        <X className="w-3.5 h-3.5 text-white" />
+                    </button>
+                </div>
+            )}
+
+            {/* Batch I — Clips list (VOD'da) */}
+            {stream?.status === "ENDED" && stream?.recordingUrl && clips.length > 0 && (
+                <div className="fixed bottom-6 right-6 z-15 max-w-[280px] p-3 rounded-2xl animate-in fade-in slide-in-from-right-2 duration-300"
+                    style={{ background: "rgba(8,12,32,0.92)", border: "1px solid rgba(139,92,246,0.35)", boxShadow: "0 12px 40px rgba(139,92,246,0.25)", backdropFilter: "blur(10px)" }}>
+                    <div className="flex items-center gap-2 mb-2">
+                        <Scissors className="w-3.5 h-3.5" style={{ color: "#8B5CF6" }} />
+                        <span className="text-xs font-black text-white">Qirqimlar · {clips.length}</span>
+                    </div>
+                    <div className="space-y-1 max-h-40 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+                        {clips.slice(0, 6).map(c => (
+                            <a key={c.id} href={`/nexus/live/${streamId}?clip=${c.id}`}
+                                className="block px-2 py-1.5 rounded-lg hover:bg-white/5 transition">
+                                <p className="text-[11px] font-bold text-white truncate">{c.title}</p>
+                                <p className="text-[9px]" style={{ color: "rgba(200,180,230,0.65)" }}>{fmtT(c.startSec)} — {fmtT(c.endSec)} · {c.plays} ko&apos;rish</p>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Batch S — Chapter marker modal (streamer) */}
             {chapterEditOpen && (
                 <>
@@ -1624,6 +1871,34 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                     Saqlash
                                 </button>
                             </div>
+                        </div>
+
+                        {/* Batch W — Watermark upload */}
+                        <div className="mb-3 p-3 rounded-xl" style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.20)" }}>
+                            <div className="flex items-center gap-2 mb-2">
+                                <ImageIcon className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                <p className="text-xs font-black text-white">Logo / Watermark</p>
+                            </div>
+                            <p className="text-[10px] mb-2" style={{ color: "rgba(160,220,215,0.65)" }}>Yozuv canvas'ga o&apos;ng-yuqori burchakda 12% kenglik bilan chiziladi</p>
+                            {stream?.watermarkUrl ? (
+                                <div className="flex items-center gap-2">
+                                    <img src={stream.watermarkUrl} alt="wm" className="w-12 h-12 rounded-lg object-contain bg-black/50" />
+                                    <button onClick={removeWatermark}
+                                        className="flex-1 px-3 py-2 rounded-lg text-[10px] font-black text-white"
+                                        style={{ background: "rgba(239,68,68,0.20)", border: "1px solid rgba(239,68,68,0.40)" }}>
+                                        <Trash2 className="w-3 h-3 inline mr-1" />O&apos;chirish
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="block cursor-pointer">
+                                    <input type="file" accept="image/png,image/jpeg,image/svg+xml" className="hidden"
+                                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadWatermark(f); }} />
+                                    <div className="py-2 rounded-lg text-center text-[10px] font-black text-white"
+                                        style={{ background: "rgba(0,206,200,0.15)", border: "1px dashed rgba(0,206,200,0.40)" }}>
+                                        {watermarkBusy ? <Loader2 className="w-3 h-3 inline animate-spin" /> : <><Plus className="w-3 h-3 inline mr-1" />Rasm yuklash (PNG/JPG/SVG)</>}
+                                    </div>
+                                </label>
+                            )}
                         </div>
 
                         <p className="text-[10px] text-center" style={{ color: "rgba(150,150,180,0.55)" }}>

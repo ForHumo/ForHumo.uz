@@ -17,6 +17,7 @@ export interface StudioOverlay {
     title?: string;
     subtitle?: string;
     logo?: HTMLImageElement | null;               // overlay logo (ixtiyoriy)
+    watermark?: HTMLImageElement | null;          // Batch W — pastki-o'ng burchakda logo
 }
 
 export interface StudioPip {
@@ -182,6 +183,21 @@ export function createStudio(initial: {
                     transitionStart = 0;
                     prevLayout = null;
                 }
+            }
+
+            // Batch W — Watermark (pastki-o'ng, 12% ekran kengligi)
+            if (overlay.watermark && overlay.watermark.complete && overlay.watermark.naturalWidth > 0) {
+                const wm = overlay.watermark;
+                const targetW = W * 0.12;
+                const scale = targetW / wm.naturalWidth;
+                const wmW = targetW;
+                const wmH = wm.naturalHeight * scale;
+                ctx.save();
+                ctx.globalAlpha = 0.85;
+                ctx.shadowColor = "rgba(0,0,0,0.5)";
+                ctx.shadowBlur = 8;
+                ctx.drawImage(wm, W - wmW - 24, 24, wmW, wmH);
+                ctx.restore();
             }
 
             // Live badge (pastki chap)
