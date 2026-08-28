@@ -76,6 +76,16 @@ export function LiveView() {
 
     useEffect(() => { setReminders(getReminders()); }, []);
 
+    // Swipe navigation — NxLiveRoom "nexus:open-live" event dispatch qiladi
+    useEffect(() => {
+        const h = (e: Event) => {
+            const id = (e as CustomEvent).detail?.streamId as string | undefined;
+            if (id) setRoomId(id);
+        };
+        window.addEventListener("nexus:open-live", h);
+        return () => window.removeEventListener("nexus:open-live", h);
+    }, []);
+
     async function performDelete(id: string) {
         setDeleteBusy(true);
         try {

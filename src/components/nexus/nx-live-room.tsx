@@ -5,9 +5,9 @@ import { createPortal } from "react-dom";
 import {
     X, Radio, Eye, Send, Loader2, StopCircle, Clock, CalendarClock, Gift,
     Volume2, VolumeX, Volume1, Play, Pause, Maximize2, Minimize2,
-    MessageSquare, MessageSquareOff, Share2, MoreVertical,
+    MessageSquare, MessageSquareOff, Share2, Settings, Check, ChevronLeft, ChevronRight,
 } from "lucide-react";
-import { Room, RoomEvent, Track, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant } from "livekit-client";
+import { Room, RoomEvent, Track, VideoQuality, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant, type RemoteVideoTrack } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 import { NxConfirm } from "./nx-confirm";
@@ -65,6 +65,26 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [shareToast, setShareToast] = useState(false);
     const controlsTimerRef = useRef<number | null>(null);
     const stageRef = useRef<HTMLDivElement>(null);
+
+    // Quality selector
+    type QLevel = "auto" | "1080" | "720" | "480" | "240";
+    const [quality, setQuality] = useState<QLevel>("auto");
+    const [qualityOpen, setQualityOpen] = useState(false);
+    const remoteVideoTrackRef = useRef<RemoteVideoTrack | null>(null);
+    const remoteVideoPubRef = useRef<RemoteTrackPublication | null>(null);
+    const [availableRes, setAvailableRes] = useState<{ w: number; h: number } | null>(null);
+
+    // Swipe navigation
+    const [swipeStart, setSwipeStart] = useState<{ x: number; y: number; t: number } | null>(null);
+    const [nextStreamId, setNextStreamId] = useState<string | null>(null);
+    const [prevStreamId, setPrevStreamId] = useState<string | null>(null);
+    const [swipeHint, setSwipeHint] = useState<"left" | "right" | null>(null);
+
+    // VOD (recording) progress
+    const [vodCur, setVodCur] = useState(0);
+    const [vodDur, setVodDur] = useState(0);
+    const [vodSpeed, setVodSpeed] = useState(1);
+    const [speedMenuOpen, setSpeedMenuOpen] = useState(false);
 
     useEffect(() => { setMounted(true); }, []);
 
@@ -132,10 +152,20 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 if (cancelled || !tk?.token || !tk?.url) return;
                 const room = new Room({ adaptiveStream: true, dynacast: true });
 
-                const onTrackSubscribed = (track: RemoteTrack, _pub: RemoteTrackPublication, _p: RemoteParticipant) => {
+                const onTrackSubscribed = (track: RemoteTrack, pub: RemoteTrackPublication, _p: RemoteParticipant) => {
                     if (track.kind === Track.Kind.Video && videoElRef.current) {
                         track.attach(videoElRef.current);
                         setHasRemoteVideo(true);
+                        remoteVideoTrackRef.current = track as RemoteVideoTrack;
+                        remoteVideoPubRef.current = pub;
+                        const el = videoElRef.current;
+                        const applyRes = () => {
+                            const w = el.videoWidth, h = el.videoHeight;
+                            if (w && h) setAvailableRes({ w, h });
+                        };
+                        el.addEventListener("loadedmetadata", applyRes);
+                        el.addEventListener("resize", applyRes);
+                        applyRes();
                     } else if (track.kind === Track.Kind.Audio && audioElRef.current) {
                         track.attach(audioElRef.current);
                     }
@@ -146,6 +176,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     if (track.kind === Track.Kind.Video && videoElRef.current) {
                         track.detach(videoElRef.current);
                         setHasRemoteVideo(false);
+                        remoteVideoTrackRef.current = null;
                     } else if (track.kind === Track.Kind.Audio && audioElRef.current) {
                         track.detach(audioElRef.current);
                     }
@@ -264,6 +295,95 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fullscreen]);
 
+    // ── Quality apply — LiveKit simulcast layer (RemoteTrackPublication'da) ──
+    useEffect(() => {
+        const pub = remoteVideoPubRef.current;
+        if (!pub) return;
+        const map: Record<QLevel, VideoQuality> = {
+            auto: VideoQuality.HIGH, "1080": VideoQuality.HIGH, "720": VideoQuality.HIGH, "480": VideoQuality.MEDIUM, "240": VideoQuality.LOW,
+        };
+        try { pub.setVideoQuality(map[quality]); } catch { /* ignore */ }
+    }, [quality]);
+
+    // ── Keyingi/oldingi jonli efirni yuklash (swipe nav uchun) ──
+    useEffect(() => {
+        if (stream?.status !== "LIVE") { setNextStreamId(null); setPrevStreamId(null); return; }
+        let cancelled = false;
+        fetch(`/api/nexus/live?status=live&limit=40`)
+            .then(r => r.json())
+            .then(d => {
+                if (cancelled) return;
+                const list: { id: string }[] = d.streams ?? [];
+                const idx = list.findIndex(s => s.id === streamId);
+                if (idx === -1) return;
+                setPrevStreamId(idx > 0 ? list[idx - 1].id : null);
+                setNextStreamId(idx < list.length - 1 ? list[idx + 1].id : null);
+            })
+            .catch(() => { });
+        return () => { cancelled = true; };
+    }, [streamId, stream?.status]);
+
+    function swipeStartHandler(e: React.TouchEvent) {
+        const t = e.touches[0];
+        setSwipeStart({ x: t.clientX, y: t.clientY, t: Date.now() });
+    }
+    function swipeMoveHandler(e: React.TouchEvent) {
+        if (!swipeStart) return;
+        const t = e.touches[0];
+        const dx = t.clientX - swipeStart.x;
+        const dy = t.clientY - swipeStart.y;
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            setSwipeHint(dx < 0 ? "left" : "right");
+        } else setSwipeHint(null);
+    }
+    function swipeEndHandler(e: React.TouchEvent) {
+        if (!swipeStart) return;
+        const t = e.changedTouches[0];
+        const dx = t.clientX - swipeStart.x;
+        const dy = t.clientY - swipeStart.y;
+        const dt = Date.now() - swipeStart.t;
+        setSwipeStart(null); setSwipeHint(null);
+        if (dt > 800) return;
+        if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+        // Chap swipe → next, o'ng swipe → prev
+        const target = dx < 0 ? nextStreamId : prevStreamId;
+        if (target) navToStream(target);
+    }
+    function navToStream(id: string) {
+        // Room-scoped state'ni tozalash — parent onClose+re-open bilan
+        // clean qilish o'rniga bu yerda o'zimiz ham qila olamiz.
+        // NxLiveRoom streamId prop bo'yicha useEffect'lar avto yangilanadi.
+        // Lekin subscribed video track'ni ham qayta boshlash uchun stream'ni reset qilamiz.
+        onClose();
+        // Kichik delay bilan yangi room ochish uchun window event
+        setTimeout(() => window.dispatchEvent(new CustomEvent("nexus:open-live", { detail: { streamId: id } })), 60);
+    }
+
+    // ── VOD (recording) — <video> holatidan progress ushlash ──
+    useEffect(() => {
+        const v = videoElRef.current;
+        if (!v || stream?.status !== "ENDED" || !stream?.recordingUrl) return;
+        const onTime = () => setVodCur(v.currentTime);
+        const onMeta = () => { setVodDur(v.duration || 0); };
+        v.addEventListener("timeupdate", onTime);
+        v.addEventListener("loadedmetadata", onMeta);
+        return () => { v.removeEventListener("timeupdate", onTime); v.removeEventListener("loadedmetadata", onMeta); };
+    }, [stream?.status, stream?.recordingUrl]);
+    useEffect(() => {
+        const v = videoElRef.current;
+        if (v) v.playbackRate = vodSpeed;
+    }, [vodSpeed]);
+
+    function seekTo(sec: number) {
+        const v = videoElRef.current;
+        if (v && stream?.status === "ENDED") { v.currentTime = Math.max(0, Math.min(vodDur, sec)); }
+    }
+    function fmtT(s: number) {
+        if (!isFinite(s)) return "0:00";
+        const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+        return `${m}:${String(sec).padStart(2, "0")}`;
+    }
+
     async function share() {
         const url = `${location.origin}/nexus/live/${streamId}`;
         try {
@@ -282,13 +402,30 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
 
             {/* ── Sahna (video maydoni) ── */}
             <div ref={stageRef}
-                onMouseMove={pokeControls} onTouchStart={pokeControls}
-                className="flex-1 bg-black flex items-center justify-center min-h-0 relative group/stage">
-                {/* LiveKit remote video (LIVE bo'lganda ko'rinadi) */}
-                <video ref={videoElRef} autoPlay playsInline
+                onMouseMove={pokeControls}
+                onTouchStart={e => { pokeControls(); swipeStartHandler(e); }}
+                onTouchMove={swipeMoveHandler}
+                onTouchEnd={swipeEndHandler}
+                className="flex-1 bg-black flex items-center justify-center min-h-0 relative group/stage select-none">
+                {/* Yagona video element — LIVE'da LiveKit attach, ENDED'da recording src */}
+                <video ref={videoElRef}
+                    autoPlay playsInline
+                    src={stream?.status === "ENDED" && stream?.recordingUrl ? stream.recordingUrl : undefined}
+                    onClick={() => { if (stream?.status === "ENDED") setPaused(p => !p); }}
                     className="absolute inset-0 w-full h-full object-contain"
-                    style={{ display: isLive && hasRemoteVideo ? "block" : "none" }} />
+                    style={{ display: (isLive && hasRemoteVideo) || (stream?.status === "ENDED" && !!stream?.recordingUrl) ? "block" : "none" }} />
                 <audio ref={audioElRef} autoPlay />
+
+                {/* Swipe hint arrows */}
+                {swipeHint && (
+                    <div className={`pointer-events-none absolute inset-y-0 ${swipeHint === "left" ? "right-6" : "left-6"} flex items-center z-20 animate-in fade-in duration-150`}>
+                        <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)" }}>
+                            {swipeHint === "left"
+                                ? (nextStreamId ? <ChevronRight className="w-8 h-8 text-white" /> : <X className="w-6 h-6 text-white/50" />)
+                                : (prevStreamId ? <ChevronLeft className="w-8 h-8 text-white" /> : <X className="w-6 h-6 text-white/50" />)}
+                        </div>
+                    </div>
+                )}
 
                 {/* Yuqori control bar — X yopish, chat toggle, share */}
                 <div className={`absolute top-0 left-0 right-0 z-30 flex items-center gap-2 p-3 transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
@@ -299,6 +436,61 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         <X className="w-5 h-5 text-white" />
                     </button>
                     <div className="flex-1" />
+                    {/* Quality selector — faqat video oqim bor bo'lganda */}
+                    {((isLive && hasRemoteVideo) || (stream?.status === "ENDED" && stream?.recordingUrl)) && (
+                        <div className="relative">
+                            <button onClick={() => { setQualityOpen(o => !o); setSpeedMenuOpen(false); }} title="Sifat"
+                                className="h-10 px-3 flex items-center gap-1.5 rounded-full active:scale-95 transition"
+                                style={{ background: qualityOpen ? "rgba(0,206,200,0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                                <Settings className="w-3.5 h-3.5 text-white" />
+                                <span className="text-[10px] font-black text-white">
+                                    {isLive
+                                        ? (quality === "auto" ? "Avto" : quality === "1080" ? "1080p" : quality === "720" ? "720p" : quality === "480" ? "480p" : "240p")
+                                        : (availableRes?.h ? `${availableRes.h}p` : "Original")}
+                                </span>
+                            </button>
+                            {qualityOpen && (
+                                <div className="absolute top-full right-0 mt-2 min-w-[220px] rounded-2xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+                                    style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(0,206,200,0.30)", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
+                                    {stream?.status === "ENDED" ? (
+                                        <>
+                                            <div className="px-4 pt-3 pb-1.5 text-[10px] font-black uppercase" style={{ color: "rgba(0,206,200,0.85)" }}>Tezlik</div>
+                                            {[0.5, 0.75, 1, 1.25, 1.5, 2].map(sp => (
+                                                <button key={sp} onClick={() => { setVodSpeed(sp); setQualityOpen(false); }}
+                                                    className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold text-white transition"
+                                                    style={{ background: vodSpeed === sp ? "rgba(0,206,200,0.12)" : "transparent" }}>
+                                                    <span>{sp === 1 ? "Oddiy" : `${sp}x`}</span>
+                                                    {vodSpeed === sp && <Check className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
+                                                </button>
+                                            ))}
+                                            <div className="px-4 py-2 text-[9px] text-center" style={{ color: "rgba(150,170,210,0.55)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                                                Yozuv sifati — {availableRes?.h ? `${availableRes.h}p` : "asl"}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="px-4 pt-3 pb-1.5 text-[10px] font-black uppercase" style={{ color: "rgba(0,206,200,0.85)" }}>Video sifati</div>
+                                            {([
+                                                { v: "auto", l: "Avto", hint: "tarmoqqa moslashadi" },
+                                                { v: "1080", l: "1080p", hint: "Full HD" },
+                                                { v: "720", l: "720p", hint: "HD" },
+                                                { v: "480", l: "480p", hint: "O'rtacha" },
+                                                { v: "240", l: "240p", hint: "Sekin tarmoq" },
+                                            ] as { v: QLevel; l: string; hint: string }[]).map(o => (
+                                                <button key={o.v} onClick={() => { setQuality(o.v); setQualityOpen(false); }}
+                                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-white transition"
+                                                    style={{ background: quality === o.v ? "rgba(0,206,200,0.12)" : "transparent" }}>
+                                                    <span className="w-14">{o.l}</span>
+                                                    <span className="flex-1 text-left text-[10px]" style={{ color: "rgba(150,170,210,0.7)" }}>{o.hint}</span>
+                                                    {quality === o.v && <Check className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
+                                                </button>
+                                            ))}
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                     <button onClick={share} title="Ulashish"
                         className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition"
                         style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
@@ -316,27 +508,52 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     </button>
                 </div>
 
-                {/* Pastki control bar — pause/volume */}
-                {(isLive && hasRemoteVideo) && (
-                    <div className={`absolute bottom-0 left-0 right-0 z-30 flex items-center gap-3 px-4 py-3 transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-                        style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 100%)" }}>
-                        <button onClick={() => setPaused(p => !p)} title={paused ? "Davom (Space)" : "Pauza (Space)"}
-                            className="w-11 h-11 flex items-center justify-center rounded-full active:scale-95 transition"
-                            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
-                            {paused ? <Play className="w-5 h-5 text-white fill-white" /> : <Pause className="w-5 h-5 text-white fill-white" />}
-                        </button>
-                        <button onClick={() => setMuted(m => !m)} title={muted ? "Ovozni yoqish (M)" : "Ovozni o'chirish (M)"}
-                            className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition"
-                            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
-                            <VolIcon className="w-4 h-4 text-white" />
-                        </button>
-                        <input type="range" min={0} max={1} step={0.01} value={muted ? 0 : volume}
-                            onChange={e => { setVolume(parseFloat(e.target.value)); setMuted(false); }}
-                            className="w-24 md:w-32 accent-[#F97316]" />
-                        <div className="flex-1" />
-                        <span className="hidden md:inline text-[10px] font-black px-2 py-1 rounded-md" style={{ color: "rgba(255,255,255,0.75)", background: "rgba(0,0,0,0.4)" }}>
-                            Space · M · F · C
-                        </span>
+                {/* Pastki control bar — pause/volume/progress */}
+                {((isLive && hasRemoteVideo) || (stream?.status === "ENDED" && stream?.recordingUrl)) && (
+                    <div className={`absolute bottom-0 left-0 right-0 z-30 transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+                        style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 100%)" }}>
+                        {/* Progress bar — faqat VOD */}
+                        {stream?.status === "ENDED" && vodDur > 0 && (
+                            <div className="px-4 pt-3 pb-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black text-white/85 tabular-nums w-10 text-right">{fmtT(vodCur)}</span>
+                                    <input type="range" min={0} max={vodDur} step={0.1} value={vodCur}
+                                        onChange={e => seekTo(parseFloat(e.target.value))}
+                                        className="flex-1 accent-[#F97316] h-1"
+                                        style={{ height: 4 }} />
+                                    <span className="text-[10px] font-black text-white/85 tabular-nums w-10">{fmtT(vodDur)}</span>
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-3 px-4 pb-3 pt-1">
+                            <button onClick={() => setPaused(p => !p)} title={paused ? "Davom (Space)" : "Pauza (Space)"}
+                                className="w-11 h-11 flex items-center justify-center rounded-full active:scale-95 transition"
+                                style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                                {paused ? <Play className="w-5 h-5 text-white fill-white" /> : <Pause className="w-5 h-5 text-white fill-white" />}
+                            </button>
+                            <button onClick={() => setMuted(m => !m)} title={muted ? "Ovozni yoqish (M)" : "Ovozni o'chirish (M)"}
+                                className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition"
+                                style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                                <VolIcon className="w-4 h-4 text-white" />
+                            </button>
+                            <input type="range" min={0} max={1} step={0.01} value={muted ? 0 : volume}
+                                onChange={e => { setVolume(parseFloat(e.target.value)); setMuted(false); }}
+                                className="w-24 md:w-32 accent-[#F97316]" />
+                            {isLive && (
+                                <span className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-black text-white" style={{ background: "#EF4444" }}>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />LIVE
+                                </span>
+                            )}
+                            {stream?.status === "ENDED" && vodSpeed !== 1 && (
+                                <span className="px-2 py-1 rounded-md text-[10px] font-black text-white" style={{ background: "rgba(0,206,200,0.30)" }}>
+                                    {vodSpeed}x
+                                </span>
+                            )}
+                            <div className="flex-1" />
+                            <span className="hidden md:inline text-[10px] font-black px-2 py-1 rounded-md" style={{ color: "rgba(255,255,255,0.75)", background: "rgba(0,0,0,0.4)" }}>
+                                Space · M · F · C
+                            </span>
+                        </div>
                     </div>
                 )}
 
@@ -364,14 +581,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 {stream.scheduledAt && <p className="text-xs" style={{ color: "rgba(150,170,210,0.75)" }}>Rejada: {new Date(stream.scheduledAt).toLocaleString("uz-UZ")}</p>}
                             </div>
                         ) : stream.status === "ENDED" ? (
-                            stream.recordingUrl ? (
-                                <div className="w-full">
-                                    <video src={stream.recordingUrl} controls playsInline className="w-full max-h-[70vh] bg-black rounded-xl" />
-                                    <p className="text-[10px] mt-2 text-center" style={{ color: "rgba(150,170,210,0.65)" }}>
-                                        Yozib olingan efir · {stream.recordingDurationSec ? `${Math.floor(stream.recordingDurationSec / 60)}:${String(stream.recordingDurationSec % 60).padStart(2, "0")}` : ""}
-                                    </p>
-                                </div>
-                            ) : (
+                            stream.recordingUrl ? null : (
                                 <div className="flex flex-col items-center gap-1">
                                     <p className="text-sm font-black text-white">Efir tugadi</p>
                                     <p className="text-xs flex items-center gap-2" style={{ color: "rgba(150,170,210,0.75)" }}>
