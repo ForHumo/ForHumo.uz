@@ -1922,9 +1922,29 @@ model NexusLiveStream {
   recordingUrl String?                                // Vercel Blob VOD (webm/mp4)
   recordingDurationSec Int?                           // yozuv uzunligi
 
+  // Batch M — Chat moderation (real)
+  bannedUserIds  String[] @default([])                // bloklangan foydalanuvchi profileId'lari
+  slowSeconds    Int      @default(0)                 // slow mode (0 = o'chiq)
+  followersOnly  Boolean  @default(false)             // faqat kuzatuvchilar chat yozadi
+  // Batch R — Ban words filter
+  bannedWords    String[] @default([])                // taqiqlangan so'zlar (lowercased)
+
   createdAt   DateTime         @default(now())
   messages    NexusLiveMessage[]
+  reminders   NexusLiveReminder[]
   @@index([status, createdAt])
+  @@index([profileId, createdAt])
+}
+
+// Batch N — Rejalashtirilgan efir eslatmasi + push
+model NexusLiveReminder {
+  id         String   @id @default(cuid())
+  streamId   String
+  stream     NexusLiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  profileId  String
+  createdAt  DateTime @default(now())
+  notified   Boolean  @default(false)                 // push yuborilganmi
+  @@unique([streamId, profileId])
   @@index([profileId, createdAt])
 }
 

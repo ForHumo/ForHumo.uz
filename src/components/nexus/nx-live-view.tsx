@@ -12,8 +12,9 @@ import { NxVerifiedBadge } from "./nx-verified-badge";
 import { Play, Trash2 } from "lucide-react";
 import { NxConfirm } from "./nx-confirm";
 
-// LocalStorage — rejadagi efirlar uchun eslatma (client-side)
-const REM_KEY = "nx-live-reminders-v1";
+// Batch N — Reminder tizimi server-side (localStorage'dan push'ga migratsiya qilindi)
+// Yordamchi cache: sessiya davomida takrorlangan GET'lardan qochish uchun
+const REM_KEY = "nx-live-reminders-v2";
 function getReminders(): Set<string> {
     if (typeof window === "undefined") return new Set();
     try { return new Set(JSON.parse(localStorage.getItem(REM_KEY) || "[]") as string[]); }
@@ -124,13 +125,36 @@ export function LiveView() {
         } finally { setLoadingMore(false); }
     }
 
-    function toggleReminder(id: string) {
+    async function toggleReminder(id: string) {
+        // Optimistic UI
+        const wasSet = reminders.has(id);
         setReminders(prev => {
             const nx = new Set(prev);
-            if (nx.has(id)) nx.delete(id); else nx.add(id);
+            if (wasSet) nx.delete(id); else nx.add(id);
             saveReminders(nx);
             return nx;
         });
+        // Batch N — Serverga yuborish (push subscribe)
+        try {
+            const r = await fetch(`/api/nexus/live/${id}/remind`, { method: "POST" });
+            if (!r.ok) throw new Error();
+            const d = await r.json();
+            // Backend haqiqiy holatga sinxronlash
+            setReminders(prev => {
+                const nx = new Set(prev);
+                if (d.subscribed) nx.add(id); else nx.delete(id);
+                saveReminders(nx);
+                return nx;
+            });
+        } catch {
+            // Xato bo'lsa qaytarish
+            setReminders(prev => {
+                const nx = new Set(prev);
+                if (wasSet) nx.add(id); else nx.delete(id);
+                saveReminders(nx);
+                return nx;
+            });
+        }
     }
 
     // Query o'zgarganida debounce

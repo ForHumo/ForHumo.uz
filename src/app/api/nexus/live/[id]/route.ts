@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isVerifiedProfile } from "@/lib/nexus";
 import { deleteLiveKitRoom } from "@/lib/livekit";
+import { after } from "next/server";
+import { sendPushToProfile } from "@/lib/push";
 
 const VIEWER_WINDOW_MS = 30_000;
 
@@ -63,6 +65,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (action === "start" && stream.status === "UPCOMING") {
         const updated = await prisma.nexusLiveStream.update({
             where: { id }, data: { status: "LIVE", startedAt: new Date() },
+        });
+        // Batch N — Reminder subscribers'ga push yuborish (bir marta, notified=true)
+        after(async () => {
+            const reminders = await prisma.nexusLiveReminder.findMany({
+                where: { streamId: id, notified: false },
+                select: { id: true, profileId: true },
+                take: 1000,
+            });
+            if (!reminders.length) return;
+            const author = await prisma.userProfile.findUnique({ where: { id: stream.profileId }, select: { name: true, username: true } });
+            const title = `${author?.name || author?.username || "Streamer"} jonli efirni boshladi`;
+            await Promise.all(reminders.map(r =>
+                sendPushToProfile(r.profileId, {
+                    title, body: updated.title,
+                    url: `/nexus/live/${id}`, tag: `nx-live-${id}`,
+                }).catch(() => null)
+            ));
+            await prisma.nexusLiveReminder.updateMany({
+                where: { id: { in: reminders.map(r => r.id) } }, data: { notified: true },
+            });
         });
         return NextResponse.json({ stream: updated });
     }

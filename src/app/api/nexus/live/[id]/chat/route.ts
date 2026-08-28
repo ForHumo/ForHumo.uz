@@ -47,11 +47,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     // __nx_poll:JSON     — poll boshlash (Batch G, streamer)
     // __nx_vote:JSON     — poll ovoz (Batch G)
     // __nx_ticker:<text> — scroll marquee (Batch K, streamer)
-    const REACT = "__nx_react:", POLL = "__nx_poll:", VOTE = "__nx_vote:", TICKER = "__nx_ticker:";
+    const REACT = "__nx_react:", POLL = "__nx_poll:", VOTE = "__nx_vote:", TICKER = "__nx_ticker:", CHAPTER = "__nx_chapter:";
     const regular: typeof msgs = [];
     const reactions: { id: string; icon: string; at: string; profileId: string }[] = [];
     const pollCandidates: { id: string; at: string; payload: unknown }[] = [];
     const voteCandidates: { id: string; profileId: string; at: string; pollId: string; idx: number }[] = [];
+    const chapters: { id: string; sec: number; label: string }[] = [];
     let tickerText: string | null = null;
     let tickerAt: number = 0;
     for (const m of msgs) {
@@ -66,9 +67,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 if (v.pollId && typeof v.idx === "number") voteCandidates.push({ id: m.id, profileId: m.profileId, at: m.createdAt.toISOString(), pollId: v.pollId, idx: v.idx });
             } catch { /* skip */ }
         } else if (m.text.startsWith(TICKER)) {
-            // Oxirgi ticker'ni saqlaymiz (bo'sh bo'lsa — o'chirilgan)
             const t = m.text.slice(TICKER.length).trim();
             if (m.createdAt.getTime() > tickerAt) { tickerText = t; tickerAt = m.createdAt.getTime(); }
+        } else if (m.text.startsWith(CHAPTER)) {
+            const rest = m.text.slice(CHAPTER.length);
+            const colon = rest.indexOf(":");
+            if (colon > 0) {
+                const sec = parseInt(rest.slice(0, colon), 10);
+                const label = rest.slice(colon + 1);
+                if (Number.isFinite(sec) && label) chapters.push({ id: m.id, sec, label });
+            }
         } else {
             regular.push(m);
         }
@@ -79,6 +87,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             const p = pMap[m.profileId];
             return {
                 id: m.id, text: m.text, tipAmount: m.tipAmount, createdAt: m.createdAt,
+                profileId: m.profileId,
                 author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null,
             };
         }),
@@ -86,6 +95,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         polls: pollCandidates,
         votes: voteCandidates,
         ticker: tickerText,
+        chapters,
     });
 }
 
@@ -100,7 +110,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
     const { id } = await params;
-    const stream = await prisma.nexusLiveStream.findUnique({ where: { id }, select: { status: true, profileId: true } });
+    const stream = await prisma.nexusLiveStream.findUnique({
+        where: { id },
+        select: { status: true, profileId: true, bannedUserIds: true, slowSeconds: true, followersOnly: true, bannedWords: true },
+    });
     if (!stream) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
     if (stream.status === "ENDED") return NextResponse.json({ error: "Efir tugagan" }, { status: 400 });
 
@@ -112,7 +125,36 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const banned = await banGuard(me.id); if (banned) return banned;
     if (await nexusRateLimited(me.id, "liveChat")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
+    // Batch M — Stream-level ban check (streamer o'zi mustasno)
+    if (stream.profileId !== me.id && (stream.bannedUserIds || []).includes(me.id)) {
+        return NextResponse.json({ error: "Siz bu efirdan bloklangansiz" }, { status: 403 });
+    }
+    // Batch M — Followers-only mode
+    if (stream.profileId !== me.id && stream.followersOnly) {
+        const follows = await prisma.nexusFollow.findUnique({
+            where: { followerId_followingId: { followerId: me.id, followingId: stream.profileId } },
+            select: { id: true },
+        });
+        if (!follows) return NextResponse.json({ error: "Bu chat faqat kuzatuvchilar uchun" }, { status: 403 });
+    }
+    // Batch M — Slow mode (oxirgi xabaridan slowSeconds o'tganmi?)
+    if (stream.profileId !== me.id && stream.slowSeconds > 0) {
+        const since = new Date(Date.now() - stream.slowSeconds * 1000);
+        const recent = await prisma.nexusLiveMessage.findFirst({
+            where: { streamId: id, profileId: me.id, createdAt: { gt: since } },
+            select: { id: true },
+        });
+        if (recent) return NextResponse.json({ error: `Slow mode — ${stream.slowSeconds} sek kuting` }, { status: 429 });
+    }
+
     const cleanText = String(text || "").trim().slice(0, 500);
+
+    // Batch R — Ban words filter (system msg'lar tashqari)
+    if (cleanText && !cleanText.startsWith("__nx_") && (stream.bannedWords || []).length > 0) {
+        const lower = cleanText.toLowerCase();
+        const hit = stream.bannedWords.find(w => lower.includes(w));
+        if (hit) return NextResponse.json({ error: "Xabarda taqiqlangan so'z bor" }, { status: 400 });
+    }
 
     // ── Super Chat: efir egasiga Zij tip + ajratilgan xabar ──
     if (isSuperChat) {

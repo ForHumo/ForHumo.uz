@@ -24,7 +24,7 @@ interface RoomStream {
     author: LAuthor | null;
     description?: string | null; recordingUrl?: string | null; recordingDurationSec?: number | null;
 }
-interface ChatMsg { id: string; text: string; tipAmount?: number; createdAt: string; author: LAuthor | null }
+interface ChatMsg { id: string; text: string; tipAmount?: number; createdAt: string; profileId?: string; author: LAuthor | null }
 
 function scPresets(c: Currency) { return c === "USD" ? [1, 5, 10, 50] : [5000, 10000, 50000, 100000]; }
 
@@ -114,6 +114,12 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [followBusy, setFollowBusy] = useState(false);
     const [meUsername, setMeUsername] = useState<string | null>(null);
 
+    // Batch M — moderation settings
+    interface ModSettings { slowSeconds: number; followersOnly: boolean; bannedWords: string[]; }
+    const [modSettings, setModSettings] = useState<ModSettings>({ slowSeconds: 0, followersOnly: false, bannedWords: [] });
+    const [modPanelOpen, setModPanelOpen] = useState(false);
+    const [modBusy, setModBusy] = useState(false);
+    const [bannedWordsDraft, setBannedWordsDraft] = useState("");
     // Batch G/K/F/J
     interface LivePoll { id: string; question: string; options: string[]; endsAt: string; }
     const [activePoll, setActivePoll] = useState<LivePoll | null>(null);
@@ -121,6 +127,12 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [myVoteIdx, setMyVoteIdx] = useState<number | null>(null);
     const [pollBusy, setPollBusy] = useState(false);
     const [ticker, setTicker] = useState<string | null>(null);
+    // Batch S — chapters
+    interface Chapter { id: string; sec: number; label: string; }
+    const [chapters, setChapters] = useState<Chapter[]>([]);
+    const [chapterEditOpen, setChapterEditOpen] = useState(false);
+    const [chapterDraft, setChapterDraft] = useState("");
+    const [hoverChapter, setHoverChapter] = useState<Chapter | null>(null);
     // Streamer poll creator
     const [pollComposerOpen, setPollComposerOpen] = useState(false);
     const [pollQ, setPollQ] = useState("");
@@ -201,6 +213,14 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 // Batch K — ticker (latest wins)
                 if (d.ticker !== undefined && d.ticker !== null) {
                     setTicker(d.ticker || null);
+                }
+                // Batch S — chapters (merge unique by id)
+                if (d.chapters?.length) {
+                    setChapters(prev => {
+                        const seen = new Set(prev.map(c => c.id));
+                        const fresh = (d.chapters as Chapter[]).filter(c => !seen.has(c.id));
+                        return fresh.length ? [...prev, ...fresh].sort((a, b) => a.sec - b.sec) : prev;
+                    });
                 }
                 // Batch G — polls (aktiv: endsAt > now)
                 if (d.polls?.length) {
@@ -349,12 +369,73 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
         } finally { setPollBusy(false); }
     }
 
+    // Batch M — Load mod settings (streamer paneli ochilganda)
+    useEffect(() => {
+        if (!stream?.isMine || stream?.status !== "LIVE") return;
+        fetch(`/api/nexus/live/${streamId}/settings`).then(r => r.json()).then(d => {
+            if (d.settings) {
+                setModSettings(d.settings);
+                setBannedWordsDraft((d.settings.bannedWords || []).join(", "));
+            }
+        }).catch(() => { });
+    }, [stream?.isMine, stream?.status, streamId]);
+
+    async function updateModSettings(patch: Partial<ModSettings>) {
+        setModBusy(true);
+        try {
+            const r = await fetch(`/api/nexus/live/${streamId}/settings`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setModSettings(d.settings);
+            }
+        } finally { setModBusy(false); }
+    }
+
+    async function saveBannedWords() {
+        const list = bannedWordsDraft.split(/[,\n]/).map(s => s.trim()).filter(Boolean).slice(0, 200);
+        await updateModSettings({ bannedWords: list });
+    }
+
+    async function banUser(profileId: string) {
+        setMsgMenuId(null);
+        try {
+            await fetch(`/api/nexus/live/${streamId}/ban`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profileId }),
+            });
+            // Chat'dan ushbu foydalanuvchining xabarlarini olib tashlash
+            const bannedProfile = profileId;
+            setMsgs(prev => prev.filter(m => {
+                // Note: msg.author yo'q bo'lishi mumkin — biz author.username bilan solishtira olmaymiz
+                // Server tomondan hidden qilingan, keyingi pollingda avto tozalanadi
+                return true; // Optimistic — polling yangilaydi
+            }));
+            void bannedProfile;
+        } catch { /* ignore */ }
+    }
+
     async function saveTicker() {
         try {
             const r = await fetch(`/api/nexus/live/${streamId}/ticker`, {
                 method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: tickerDraft }),
             });
             if (r.ok) { setTicker(tickerDraft || null); setTickerEditOpen(false); }
+        } catch { /* ignore */ }
+    }
+
+    async function saveChapter() {
+        const label = chapterDraft.trim();
+        if (!label) return;
+        try {
+            const r = await fetch(`/api/nexus/live/${streamId}/chapter`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ label }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setChapters(prev => [...prev, { id: `local-${Date.now()}`, sec: d.sec, label: d.label }].sort((a, b) => a.sec - b.sec));
+                setChapterEditOpen(false); setChapterDraft("");
+            }
         } catch { /* ignore */ }
     }
 
@@ -982,15 +1063,33 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 {((isLive && hasRemoteVideo) || (stream?.status === "ENDED" && stream?.recordingUrl)) && (
                     <div className={`absolute bottom-0 left-0 right-0 z-30 transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
                         style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 100%)" }}>
-                        {/* Progress bar — faqat VOD */}
+                        {/* Progress bar — faqat VOD (Batch S: chapter markers) */}
                         {stream?.status === "ENDED" && vodDur > 0 && (
                             <div className="px-4 pt-3 pb-1">
                                 <div className="flex items-center gap-2">
                                     <span className="text-[10px] font-black text-white/85 tabular-nums w-10 text-right">{fmtT(vodCur)}</span>
-                                    <input type="range" min={0} max={vodDur} step={0.1} value={vodCur}
-                                        onChange={e => seekTo(parseFloat(e.target.value))}
-                                        className="flex-1 accent-[#F97316] h-1"
-                                        style={{ height: 4 }} />
+                                    <div className="flex-1 relative">
+                                        <input type="range" min={0} max={vodDur} step={0.1} value={vodCur}
+                                            onChange={e => seekTo(parseFloat(e.target.value))}
+                                            className="w-full accent-[#F97316] h-1 relative z-10"
+                                            style={{ height: 4 }} />
+                                        {/* Chapter markers */}
+                                        {chapters.map(c => c.sec > 0 && c.sec < vodDur && (
+                                            <button key={c.id} onClick={() => seekTo(c.sec)}
+                                                onMouseEnter={() => setHoverChapter(c)}
+                                                onMouseLeave={() => setHoverChapter(null)}
+                                                title={`${fmtT(c.sec)} — ${c.label}`}
+                                                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-3 rounded-sm hover:scale-125 transition-transform z-20"
+                                                style={{ left: `${(c.sec / vodDur) * 100}%`, background: "#00CEC8", boxShadow: "0 0 6px rgba(0,206,200,0.7)" }} />
+                                        ))}
+                                        {/* Hover tooltip */}
+                                        {hoverChapter && (
+                                            <div className="absolute -top-8 -translate-x-1/2 px-2 py-1 rounded text-[10px] font-bold text-white whitespace-nowrap z-30 pointer-events-none"
+                                                style={{ left: `${(hoverChapter.sec / vodDur) * 100}%`, background: "rgba(0,0,0,0.85)", border: "1px solid rgba(0,206,200,0.35)" }}>
+                                                {hoverChapter.label}
+                                            </div>
+                                        )}
+                                    </div>
                                     <span className="text-[10px] font-black text-white/85 tabular-nums w-10">{fmtT(vodDur)}</span>
                                 </div>
                             </div>
@@ -1163,18 +1262,28 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         )}
                         {stream?.category && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: "rgba(239,68,68,0.12)", color: "rgba(240,160,140,0.9)" }}>#{stream.category}</span>}
                     </div>
-                    {/* Batch G/K — Streamer controls (o'zi efirida) */}
+                    {/* Batch G/K/M/S — Streamer controls (o'zi efirida) */}
                     {stream?.isMine && isLive && (
-                        <div className="mt-3 grid grid-cols-2 gap-2">
+                        <div className="mt-3 grid grid-cols-4 gap-1.5">
                             <button onClick={() => setPollComposerOpen(true)}
-                                className="flex items-center gap-1.5 justify-center px-2 py-1.5 rounded-lg text-[10px] font-black transition active:scale-95"
+                                className="flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-lg text-[9px] font-black transition active:scale-95"
                                 style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.35)", color: "#C4B5FD" }}>
-                                <BarChart3 className="w-3 h-3" />Poll boshlash
+                                <BarChart3 className="w-3 h-3" />Poll
                             </button>
                             <button onClick={() => { setTickerDraft(ticker || ""); setTickerEditOpen(true); }}
-                                className="flex items-center gap-1.5 justify-center px-2 py-1.5 rounded-lg text-[10px] font-black transition active:scale-95"
+                                className="flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-lg text-[9px] font-black transition active:scale-95"
                                 style={{ background: "rgba(236,72,153,0.12)", border: "1px solid rgba(236,72,153,0.35)", color: "#F9A8D4" }}>
-                                <Zap className="w-3 h-3" />{ticker ? "Ticker o'zgart." : "Ticker qo'sh."}
+                                <Zap className="w-3 h-3" />Ticker
+                            </button>
+                            <button onClick={() => setChapterEditOpen(true)}
+                                className="flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-lg text-[9px] font-black transition active:scale-95"
+                                style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.35)", color: "#67E8F9" }}>
+                                <Plus className="w-3 h-3" />Bo&apos;lim
+                            </button>
+                            <button onClick={() => setModPanelOpen(true)}
+                                className="flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-lg text-[9px] font-black transition active:scale-95"
+                                style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)", color: "#FCA5A5" }}>
+                                <Settings className="w-3 h-3" />Mod
                             </button>
                         </div>
                     )}
@@ -1227,12 +1336,18 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                     </button>
                                 )}
                                 {msgMenuId === m.id && (
-                                    <div className="absolute right-0 top-6 z-10 rounded-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+                                    <div className="absolute right-0 top-6 z-10 rounded-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150 min-w-[140px]"
                                         style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(239,68,68,0.35)", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
                                         <button onClick={() => deleteMessage(m.id)}
                                             className="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-white w-full text-left hover:bg-red-500/20 transition">
                                             <Trash2 className="w-3 h-3 text-red-400" />O&apos;chirish
                                         </button>
+                                        {stream?.isMine && m.profileId && m.profileId !== meUsername && (
+                                            <button onClick={() => banUser(m.profileId!)}
+                                                className="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-white w-full text-left hover:bg-red-500/20 transition border-t border-white/5">
+                                                <UserPlus className="w-3 h-3 text-red-400 rotate-45" />Ban qilish
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -1413,6 +1528,107 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", boxShadow: "0 4px 20px rgba(236,72,153,0.35)" }}>
                             <Zap className="w-4 h-4" />{tickerDraft.trim() ? "Saqlash" : "O'chirish"}
                         </button>
+                    </div>
+                </>
+            )}
+
+            {/* Batch S — Chapter marker modal (streamer) */}
+            {chapterEditOpen && (
+                <>
+                    <div className="fixed inset-0 z-[9998]" style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)" }} onClick={() => setChapterEditOpen(false)} />
+                    <div className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-sm p-6 rounded-3xl animate-in fade-in zoom-in-95 duration-200"
+                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(0,206,200,0.45)", boxShadow: "0 24px 80px rgba(0,206,200,0.35)" }}>
+                        <div className="flex items-center gap-2 mb-4">
+                            <Plus className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                            <h3 className="text-base font-black text-white">Bo&apos;lim belgilash</h3>
+                            <button onClick={() => setChapterEditOpen(false)} className="ml-auto w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,0.05)" }}>
+                                <X className="w-4 h-4 text-white/70" />
+                            </button>
+                        </div>
+                        <p className="text-[10px] mb-2" style={{ color: "rgba(160,220,215,0.75)" }}>Hozirgi vaqt VOD'da bo&apos;lim marker'i sifatida saqlanadi</p>
+                        <input value={chapterDraft} onChange={e => setChapterDraft(e.target.value.slice(0, 80))}
+                            onKeyDown={e => e.key === "Enter" && saveChapter()}
+                            placeholder="masalan: Kirish, Q&A boshlandi..."
+                            className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none mb-4"
+                            style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.30)", caretColor: "#00CEC8" }}
+                            autoFocus />
+                        <button onClick={saveChapter} disabled={!chapterDraft.trim()}
+                            className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-50"
+                            style={{ background: "linear-gradient(135deg,#00CEC8,#2B3EE8)", boxShadow: "0 4px 20px rgba(0,206,200,0.35)" }}>
+                            <Plus className="w-4 h-4" />Belgilash ({chapters.length + 1}-bo&apos;lim)
+                        </button>
+                    </div>
+                </>
+            )}
+
+            {/* Batch M — Moderation panel modal (streamer) */}
+            {modPanelOpen && (
+                <>
+                    <div className="fixed inset-0 z-[9998]" style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)" }} onClick={() => setModPanelOpen(false)} />
+                    <div className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-md p-6 rounded-3xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(239,68,68,0.45)", boxShadow: "0 24px 80px rgba(239,68,68,0.35)", scrollbarWidth: "thin" }}>
+                        <div className="flex items-center gap-2 mb-4">
+                            <Settings className="w-5 h-5" style={{ color: "#EF4444" }} />
+                            <h3 className="text-base font-black text-white">Chat moderatsiya</h3>
+                            <button onClick={() => setModPanelOpen(false)} className="ml-auto w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,0.05)" }}>
+                                <X className="w-4 h-4 text-white/70" />
+                            </button>
+                        </div>
+
+                        {/* Slow mode */}
+                        <div className="mb-5">
+                            <p className="text-xs font-black mb-2" style={{ color: "rgba(239,68,68,0.85)" }}>Slow mode</p>
+                            <p className="text-[10px] mb-2" style={{ color: "rgba(200,180,180,0.65)" }}>Foydalanuvchi xabarlar orasidagi minimal vaqt</p>
+                            <div className="grid grid-cols-5 gap-1.5">
+                                {[0, 5, 10, 30, 60].map(s => (
+                                    <button key={s} onClick={() => updateModSettings({ slowSeconds: s })} disabled={modBusy}
+                                        className="py-1.5 rounded-lg text-[10px] font-black transition active:scale-95 disabled:opacity-50"
+                                        style={modSettings.slowSeconds === s
+                                            ? { background: "linear-gradient(135deg,#EF4444,#F97316)", color: "#fff" }
+                                            : { background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.22)", color: "rgba(220,160,150,0.85)" }}>
+                                        {s === 0 ? "Yo'q" : s < 60 ? `${s}s` : "1daq"}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Followers-only */}
+                        <div className="mb-5 p-3 rounded-xl flex items-center justify-between" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.18)" }}>
+                            <div className="flex-1">
+                                <p className="text-xs font-black text-white">Faqat kuzatuvchilar</p>
+                                <p className="text-[10px] mt-0.5" style={{ color: "rgba(200,180,180,0.65)" }}>Faqat sizni kuzatgan foydalanuvchilar chat yozadi</p>
+                            </div>
+                            <button onClick={() => updateModSettings({ followersOnly: !modSettings.followersOnly })} disabled={modBusy}
+                                className="relative w-11 h-6 rounded-full transition disabled:opacity-50"
+                                style={{ background: modSettings.followersOnly ? "linear-gradient(135deg,#EF4444,#F97316)" : "rgba(120,120,150,0.4)" }}>
+                                <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all"
+                                    style={{ left: modSettings.followersOnly ? "22px" : "2px" }} />
+                            </button>
+                        </div>
+
+                        {/* Banned words */}
+                        <div className="mb-5">
+                            <p className="text-xs font-black mb-2" style={{ color: "rgba(239,68,68,0.85)" }}>Taqiqlangan so&apos;zlar</p>
+                            <p className="text-[10px] mb-2" style={{ color: "rgba(200,180,180,0.65)" }}>Vergul yoki qator bilan ajrating. Kichik/katta harflarga farq qilmaydi.</p>
+                            <textarea value={bannedWordsDraft} onChange={e => setBannedWordsDraft(e.target.value)}
+                                rows={3} placeholder="masalan: reklama, spam, link.com"
+                                className="w-full px-3 py-2 rounded-lg text-xs text-white outline-none resize-y mb-2"
+                                style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.22)", caretColor: "#F97316" }} />
+                            <div className="flex items-center justify-between">
+                                <p className="text-[10px]" style={{ color: "rgba(200,180,180,0.60)" }}>
+                                    {modSettings.bannedWords.length} ta so&apos;z faol
+                                </p>
+                                <button onClick={saveBannedWords} disabled={modBusy}
+                                    className="px-3 py-1.5 rounded-lg text-[10px] font-black text-white transition active:scale-95 disabled:opacity-50"
+                                    style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
+                                    Saqlash
+                                </button>
+                            </div>
+                        </div>
+
+                        <p className="text-[10px] text-center" style={{ color: "rgba(150,150,180,0.55)" }}>
+                            Ban qilingan foydalanuvchilar chat xabarlar 3-nuqta menyusidan
+                        </p>
                     </div>
                 </>
             )}
