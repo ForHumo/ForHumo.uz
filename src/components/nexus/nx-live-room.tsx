@@ -7,6 +7,7 @@ import {
     Volume2, VolumeX, Volume1, Play, Pause, Maximize2, Minimize2,
     MessageSquare, MessageSquareOff, Share2, Settings, Check, ChevronLeft, ChevronRight,
     Camera, EyeOff, Move,
+    Heart, Flame, Laugh, ThumbsUp, PartyPopper, Sparkles, Zap, Smile, UserPlus, UserCheck,
 } from "lucide-react";
 import { Room, RoomEvent, Track, VideoQuality, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant, type RemoteVideoTrack } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
@@ -97,6 +98,21 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [vodSpeed, setVodSpeed] = useState(1);
     const [speedMenuOpen, setSpeedMenuOpen] = useState(false);
 
+    // Batch E — Engagement suite
+    type ReactionIcon = "heart" | "fire" | "laugh" | "thumbs" | "party" | "sparkle" | "wow";
+    interface FloatingReaction { key: string; icon: ReactionIcon; x: number; delay: number; }
+    interface TipAlert { key: string; author: LAuthor | null; amount: number; text?: string; }
+    const [floating, setFloating] = useState<FloatingReaction[]>([]);
+    const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
+    const [reactionBusy, setReactionBusy] = useState(false);
+    const [tipAlert, setTipAlert] = useState<TipAlert | null>(null);
+    const tipQueueRef = useRef<TipAlert[]>([]);
+    const seenReactionsRef = useRef<Set<string>>(new Set());
+    const seenTipsRef = useRef<Set<string>>(new Set());
+    const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
+    const [followBusy, setFollowBusy] = useState(false);
+    const [meUsername, setMeUsername] = useState<string | null>(null);
+
     useEffect(() => { setMounted(true); }, []);
 
     // Tafsilot — ochilishda + har 15s (status o'zgarishini ushlash uchun)
@@ -137,19 +153,103 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
             try {
                 const qs = lastTsRef.current ? `?since=${encodeURIComponent(lastTsRef.current)}` : "";
                 const d = await fetch(`/api/nexus/live/${streamId}/chat${qs}`).then(r => r.json());
-                if (stop || !d.messages?.length) return;
-                setMsgs(prev => {
-                    const seen = new Set(prev.map((m: ChatMsg) => m.id));
-                    const fresh = d.messages.filter((m: ChatMsg) => !seen.has(m.id));
-                    return fresh.length ? [...prev, ...fresh].slice(-200) : prev;
-                });
-                lastTsRef.current = d.messages[d.messages.length - 1].createdAt;
+                if (stop) return;
+                let latest: string | null = null;
+                if (d.messages?.length) {
+                    setMsgs(prev => {
+                        const seen = new Set(prev.map((m: ChatMsg) => m.id));
+                        const fresh = d.messages.filter((m: ChatMsg) => !seen.has(m.id));
+                        return fresh.length ? [...prev, ...fresh].slice(-200) : prev;
+                    });
+                    latest = d.messages[d.messages.length - 1].createdAt;
+
+                    // Batch E — Tip alertlar navbatga qo'shish (yangilar)
+                    for (const m of d.messages as ChatMsg[]) {
+                        if ((m.tipAmount ?? 0) > 0 && !seenTipsRef.current.has(m.id)) {
+                            seenTipsRef.current.add(m.id);
+                            tipQueueRef.current.push({ key: m.id, author: m.author, amount: m.tipAmount!, text: m.text });
+                        }
+                    }
+                }
+                // Batch E — floating reactions
+                if (d.reactions?.length) {
+                    const now = Date.now();
+                    for (const r of d.reactions as { id: string; icon: ReactionIcon; at: string }[]) {
+                        if (seenReactionsRef.current.has(r.id)) continue;
+                        seenReactionsRef.current.add(r.id);
+                        // Faqat oxirgi 6 sekunddagilarni ko'rsatamiz (eski poll'da qolganlarga ko'rinmasin)
+                        if (now - new Date(r.at).getTime() > 6_000) continue;
+                        const key = `${r.id}-${Math.random()}`;
+                        const x = Math.random() * 60 + 20;
+                        setFloating(prev => [...prev, { key, icon: r.icon, x, delay: 0 }].slice(-40));
+                        // 3.5s dan keyin o'chirish
+                        setTimeout(() => setFloating(prev => prev.filter(f => f.key !== key)), 3600);
+                    }
+                    if (latest) latest = d.reactions[d.reactions.length - 1].at;
+                }
+                if (latest) lastTsRef.current = latest;
             } catch { /* tarmoq */ }
         };
         poll();
         const iv = setInterval(poll, 3_500);
         return () => { stop = true; clearInterval(iv); };
     }, [stream, streamId]);
+
+    // Batch E — Tip alert queue processor (bittalab, 6s ko'rsatib)
+    useEffect(() => {
+        if (tipAlert) return;
+        const iv = setInterval(() => {
+            const next = tipQueueRef.current.shift();
+            if (next) {
+                setTipAlert(next);
+                setTimeout(() => setTipAlert(null), 6000);
+            }
+        }, 400);
+        return () => clearInterval(iv);
+    }, [tipAlert]);
+
+    // Batch E — Follow state (kirgan tomoshabin muallif'ni kuzatadimi?)
+    useEffect(() => {
+        if (!stream?.author?.username) return;
+        fetch(`/api/nexus/profile?username=${encodeURIComponent(stream.author.username)}`)
+            .then(r => r.json())
+            .then(d => {
+                setIsFollowing(!!d.isFollowing);
+                if (d.isMe) setMeUsername(d.username);
+            })
+            .catch(() => { });
+    }, [stream?.author?.username]);
+
+    async function toggleFollow() {
+        if (!stream?.author?.username || followBusy || isFollowing === null) return;
+        setFollowBusy(true);
+        try {
+            // /api/nexus/follow — yagona toggle endpoint (POST)
+            const r = await fetch(`/api/nexus/follow`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: stream.author.username }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setIsFollowing(!!d.following);
+            }
+        } finally { setFollowBusy(false); }
+    }
+
+    async function sendReaction(icon: ReactionIcon) {
+        if (reactionBusy || !isLive) return;
+        setReactionBusy(true);
+        // Optimistic — o'zim ko'raman
+        const key = `me-${Date.now()}-${Math.random()}`;
+        setFloating(prev => [...prev, { key, icon, x: Math.random() * 60 + 20, delay: 0 }].slice(-40));
+        setTimeout(() => setFloating(prev => prev.filter(f => f.key !== key)), 3600);
+        try {
+            await fetch(`/api/nexus/live/${streamId}/react`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ icon }),
+            });
+        } finally { setReactionBusy(false); }
+    }
 
     useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
@@ -514,6 +614,85 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     </button>
                 )}
 
+                {/* Batch E — Keyframes (inline) */}
+                <style>{`
+                    @keyframes nxFloatUp {
+                        0% { opacity: 0; transform: translateY(0) scale(0.5) rotate(0deg); }
+                        12% { opacity: 1; transform: translateY(-40px) scale(1.1) rotate(-8deg); }
+                        50% { opacity: 1; transform: translateY(-220px) scale(1) rotate(8deg); }
+                        100% { opacity: 0; transform: translateY(-460px) scale(1.15) rotate(-4deg); }
+                    }
+                    @keyframes nxTipSlide {
+                        0% { opacity: 0; transform: translateY(-120%); }
+                        8% { opacity: 1; transform: translateY(0); }
+                        90% { opacity: 1; transform: translateY(0); }
+                        100% { opacity: 0; transform: translateY(-120%); }
+                    }
+                    @keyframes nxConfetti {
+                        0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+                        100% { opacity: 0; transform: translateY(80px) rotate(720deg); }
+                    }
+                `}</style>
+
+                {/* Floating reactions overlay (Batch E) */}
+                {isLive && floating.length > 0 && (
+                    <div className="pointer-events-none absolute inset-0 z-25 overflow-hidden">
+                        {floating.map(f => {
+                            const Icon = f.icon === "heart" ? Heart : f.icon === "fire" ? Flame : f.icon === "laugh" ? Laugh : f.icon === "thumbs" ? ThumbsUp : f.icon === "party" ? PartyPopper : f.icon === "sparkle" ? Sparkles : Zap;
+                            const color = f.icon === "heart" ? "#EF4444" : f.icon === "fire" ? "#F97316" : f.icon === "laugh" ? "#F59E0B" : f.icon === "thumbs" ? "#00CEC8" : f.icon === "party" ? "#8B5CF6" : f.icon === "sparkle" ? "#EC4899" : "#F59E0B";
+                            return (
+                                <div key={f.key}
+                                    className="absolute bottom-24"
+                                    style={{
+                                        right: `${f.x}%`,
+                                        animation: "nxFloatUp 3.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards",
+                                        filter: `drop-shadow(0 4px 12px ${color}66)`,
+                                    }}>
+                                    <Icon className="w-9 h-9" style={{ color, fill: color }} />
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* Tip alert banner (Batch E) */}
+                {tipAlert && (
+                    <div className="pointer-events-none absolute top-16 left-1/2 -translate-x-1/2 z-30 w-[92%] max-w-md"
+                        style={{ animation: "nxTipSlide 6s ease-in-out forwards" }}>
+                        <div className="rounded-2xl overflow-hidden relative"
+                            style={{
+                                background: "linear-gradient(135deg, #F59E0B 0%, #EF4444 50%, #EC4899 100%)",
+                                boxShadow: "0 20px 60px rgba(245,158,11,0.55), 0 0 40px rgba(239,68,68,0.35)",
+                            }}>
+                            {/* Confetti particles */}
+                            {Array.from({ length: 12 }).map((_, i) => (
+                                <div key={i} className="absolute w-1.5 h-3 rounded-sm"
+                                    style={{
+                                        left: `${(i * 8.5) + 4}%`,
+                                        top: "0px",
+                                        background: i % 3 === 0 ? "#FFF" : i % 3 === 1 ? "#00CEC8" : "#8B5CF6",
+                                        animation: `nxConfetti ${1.6 + (i % 3) * 0.4}s ${(i * 0.1).toFixed(1)}s ease-out infinite`,
+                                    }} />
+                            ))}
+                            <div className="px-4 py-3 flex items-center gap-3 relative">
+                                <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.20)", backdropFilter: "blur(10px)" }}>
+                                    <Gift className="w-6 h-6 text-white fill-white" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-black text-white/90 flex items-center gap-1">
+                                        {tipAlert.author?.name || tipAlert.author?.username || "Foydalanuvchi"}
+                                        {tipAlert.author?.verified && <NxVerifiedBadge category={tipAlert.author.verifiedCategory} size={12} />}
+                                    </p>
+                                    <p className="text-lg font-black text-white leading-tight tracking-tight">
+                                        {formatMoney(tipAlert.amount, currency)} sovg&apos;a
+                                    </p>
+                                    {tipAlert.text && <p className="text-[11px] text-white/95 truncate mt-0.5">{tipAlert.text}</p>}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Swipe hint arrows */}
                 {swipeHint && (
                     <div className={`pointer-events-none absolute inset-y-0 ${swipeHint === "left" ? "right-6" : "left-6"} flex items-center z-20 animate-in fade-in duration-150`}>
@@ -725,6 +904,16 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         )}
                         {stream?.category && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: "rgba(239,68,68,0.12)", color: "rgba(240,160,140,0.9)" }}>#{stream.category}</span>}
                     </div>
+                    {/* Batch E — Follow button (o'zim emas + auth mavjud) */}
+                    {stream && !stream.isMine && isFollowing !== null && meUsername !== stream.author?.username && (
+                        <button onClick={toggleFollow} disabled={followBusy}
+                            className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition active:scale-95 disabled:opacity-60"
+                            style={isFollowing
+                                ? { background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.35)", color: "#00CEC8" }
+                                : { background: "linear-gradient(135deg,#EF4444,#F97316)", color: "#fff", boxShadow: "0 4px 16px rgba(239,68,68,0.30)" }}>
+                            {isFollowing ? <><UserCheck className="w-3.5 h-3.5" />Kuzatilyapti</> : <><UserPlus className="w-3.5 h-3.5" />Kuzatish</>}
+                        </button>
+                    )}
                 </div>
 
                 {/* Chat */}
@@ -779,6 +968,26 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 ))}
                             </div>
                         )}
+                        {/* Batch E — Reactions picker (chat input tepasida) */}
+                        {isLive && reactionPickerOpen && (
+                            <div className="flex items-center gap-1.5 mb-2 p-2 rounded-xl animate-in fade-in slide-in-from-bottom-1 duration-200" style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.30)" }}>
+                                {([
+                                    { i: "heart" as const, I: Heart, c: "#EF4444" },
+                                    { i: "fire" as const, I: Flame, c: "#F97316" },
+                                    { i: "laugh" as const, I: Laugh, c: "#F59E0B" },
+                                    { i: "thumbs" as const, I: ThumbsUp, c: "#00CEC8" },
+                                    { i: "party" as const, I: PartyPopper, c: "#8B5CF6" },
+                                    { i: "sparkle" as const, I: Sparkles, c: "#EC4899" },
+                                    { i: "wow" as const, I: Zap, c: "#F59E0B" },
+                                ]).map(r => (
+                                    <button key={r.i} onClick={() => sendReaction(r.i)} disabled={reactionBusy}
+                                        className="w-9 h-9 flex items-center justify-center rounded-xl active:scale-90 transition-transform disabled:opacity-40 hover:scale-110"
+                                        style={{ background: `${r.c}15`, border: `1px solid ${r.c}45` }}>
+                                        <r.I className="w-4 h-4" style={{ color: r.c, fill: r.c }} />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                         {chatError && <p className="text-[11px] font-bold mb-2" style={{ color: "#EF4444" }}>{chatError}</p>}
                         <div className="flex gap-2">
                             {!stream.isMine && (
@@ -788,6 +997,16 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                         ? { background: "linear-gradient(135deg,#F59E0B,#EF4444)" }
                                         : { background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)" }}>
                                     <Gift className="w-4 h-4" style={{ color: scOpen ? "#fff" : "#F59E0B" }} />
+                                </button>
+                            )}
+                            {/* Batch E — Reactions toggle */}
+                            {isLive && (
+                                <button onClick={() => setReactionPickerOpen(o => !o)} title="Reaksiya"
+                                    className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition"
+                                    style={reactionPickerOpen
+                                        ? { background: "linear-gradient(135deg,#8B5CF6,#EC4899)" }
+                                        : { background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.30)" }}>
+                                    <Smile className="w-4 h-4" style={{ color: reactionPickerOpen ? "#fff" : "#8B5CF6" }} />
                                 </button>
                             )}
                             <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}

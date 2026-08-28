@@ -42,14 +42,28 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         : [];
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 
+    // Reactions (Batch E) — text "__nx_react:<icon>" prefiksli xabarlar
+    // messages'dan ajratamiz, reactions arrayga chiqaramiz
+    const REACTION_PREFIX = "__nx_react:";
+    const regular: typeof msgs = [];
+    const reactions: { id: string; icon: string; at: string; profileId: string }[] = [];
+    for (const m of msgs) {
+        if (m.text.startsWith(REACTION_PREFIX) && m.tipAmount === 0) {
+            reactions.push({ id: m.id, icon: m.text.slice(REACTION_PREFIX.length).slice(0, 20), at: m.createdAt.toISOString(), profileId: m.profileId });
+        } else {
+            regular.push(m);
+        }
+    }
+
     return NextResponse.json({
-        messages: msgs.map(m => {
+        messages: regular.map(m => {
             const p = pMap[m.profileId];
             return {
                 id: m.id, text: m.text, tipAmount: m.tipAmount, createdAt: m.createdAt,
                 author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null,
             };
         }),
+        reactions,
     });
 }
 
