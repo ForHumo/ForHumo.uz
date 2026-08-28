@@ -182,6 +182,38 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             data: { streamId: id, profileId: me.id, text: cleanText, tipAmount: tip },
         });
         after(() => nexusNotify({ recipientId: stream.profileId, actorId: me.id, type: "TIP", liveId: id, amount: received ?? null }));
+        // Batch AE — Auto-highlight moments (tip spike detection)
+        // Agar oxirgi 60s ichida >= 3 ta tip kelgan bo'lsa, avto-chapter yaratamiz
+        after(async () => {
+            const streamData = await prisma.nexusLiveStream.findUnique({
+                where: { id }, select: { startedAt: true, status: true },
+            });
+            if (!streamData?.startedAt || streamData.status !== "LIVE") return;
+            const sinceMs = 60_000;
+            const since = new Date(Date.now() - sinceMs);
+            const tipCount = await prisma.nexusLiveMessage.count({
+                where: { streamId: id, tipAmount: { gt: 0 }, createdAt: { gte: since } },
+            });
+            // 3+ tip in last 60s + no recent auto-chapter (oxirgi 3 daq ichida)
+            if (tipCount >= 3) {
+                const recent3min = new Date(Date.now() - 180_000);
+                const existing = await prisma.nexusLiveMessage.findFirst({
+                    where: {
+                        streamId: id,
+                        text: { startsWith: "__nx_chapter:" },
+                        createdAt: { gte: recent3min },
+                        profileId: stream.profileId, // faqat streamer-generated auto
+                    },
+                    select: { id: true },
+                });
+                if (!existing) {
+                    const sec = Math.max(0, Math.floor((Date.now() - streamData.startedAt.getTime()) / 1000));
+                    await prisma.nexusLiveMessage.create({
+                        data: { streamId: id, profileId: stream.profileId, text: `__nx_chapter:${sec}:🔥 Auto-highlight (${tipCount} tips)` },
+                    }).catch(() => null);
+                }
+            }
+        });
         // Super Chat matni ham moderatsiya
         if (cleanText) after(() => moderateOnCreate({ module: "NEXUS", targetType: "LIVE_MESSAGE", targetId: sc.id, text: cleanText, kind: "jonli efir Super Chat", authorId: me.id }));
 

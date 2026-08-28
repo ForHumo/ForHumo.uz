@@ -32,7 +32,7 @@ import {
     Heart, Flame, Laugh, ThumbsUp, PartyPopper, Sparkles, Zap, Smile, UserPlus, UserCheck,
     BarChart3, Trash2, MoreVertical, Plus,
     Scissors, Rocket, Image as ImageIcon, Megaphone, Captions, Languages, Target, Terminal,
-    Users, UserMinus, Info,
+    Users, UserMinus, Info, LayoutList, Music,
 } from "lucide-react";
 import { Room, RoomEvent, Track, VideoQuality, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant, type RemoteVideoTrack } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
@@ -49,6 +49,7 @@ interface RoomStream {
     description?: string | null; recordingUrl?: string | null; recordingDurationSec?: number | null;
     raidToUsername?: string | null; watermarkUrl?: string | null;
     donationGoal?: number | null; donationGoalLabel?: string | null; totalTips?: number;
+    soundAlertUrl?: string | null;
 }
 interface ChatMsg { id: string; text: string; tipAmount?: number; createdAt: string; profileId?: string; author: LAuthor | null }
 
@@ -205,6 +206,19 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [guestBusy, setGuestBusy] = useState(false);
     // Batch AB — Clip likes (client-side toggle)
     const [clipLikes, setClipLikes] = useState<Record<string, boolean>>({});
+    // Batch AM — Streamer panels
+    interface StreamerPanel { id: string; kind: string; title: string; content: string; imageUrl?: string | null; linkUrl?: string | null; order: number; }
+    const [panels, setPanels] = useState<StreamerPanel[]>([]);
+    const [panelsOpen, setPanelsOpen] = useState(false);
+    // Batch AI — Custom emotes
+    interface Emote { id: string; name: string; imageUrl: string; }
+    const [emotes, setEmotes] = useState<Emote[]>([]);
+    const [emotePickerOpen, setEmotePickerOpen] = useState(false);
+    const [emoteAdmin, setEmoteAdmin] = useState(false);
+    const [emoteName, setEmoteName] = useState("");
+    const [emoteBusy, setEmoteBusy] = useState(false);
+    // Batch AL — Sound alert (viewer side plays)
+    const soundAlertRef = useRef<HTMLAudioElement | null>(null);
     // Batch V — Live captions
     const [captionOn, setCaptionOn] = useState(false);        // viewer: display
     const [captionStreamerOn, setCaptionStreamerOn] = useState(false); // streamer: SpeechRecognition
@@ -501,6 +515,92 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
             }
         }).catch(() => { });
     }, [stream?.isMine, stream?.status, streamId]);
+
+    // Batch AM/AI — Panels + emotes (streamer profil'i asosida)
+    useEffect(() => {
+        if (!stream?.author?.username) return;
+        const u = stream.author.username;
+        fetch(`/api/nexus/panels?username=${u}`).then(r => r.json()).then(d => setPanels(d.panels || [])).catch(() => { });
+        fetch(`/api/nexus/emotes?username=${u}`).then(r => r.json()).then(d => setEmotes(d.emotes || [])).catch(() => { });
+    }, [stream?.author?.username]);
+
+    // Batch AL — Sound alert: tip alert paydo bo'lganda audio ijro etadi
+    useEffect(() => {
+        if (!tipAlert || !stream?.soundAlertUrl) return;
+        try {
+            if (!soundAlertRef.current) soundAlertRef.current = new Audio(stream.soundAlertUrl);
+            soundAlertRef.current.currentTime = 0;
+            soundAlertRef.current.volume = 0.7;
+            soundAlertRef.current.play().catch(() => { });
+        } catch { /* jim */ }
+    }, [tipAlert, stream?.soundAlertUrl]);
+
+    // Emote CRUD
+    async function uploadEmote(file: File) {
+        if (!emoteName || emoteBusy) return;
+        setEmoteBusy(true);
+        try {
+            const { upload } = await import("@vercel/blob/client");
+            const key = `nexus/emotes/${streamId}-${emoteName}-${Date.now()}.${file.type.includes("png") ? "png" : "jpg"}`;
+            const up = await upload(key, file, { access: "public", handleUploadUrl: "/api/market/upload/client-token" });
+            const r = await fetch(`/api/nexus/emotes`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: emoteName, imageUrl: up.url }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setEmotes(prev => [...prev, d.emote]);
+                setEmoteName("");
+            }
+        } finally { setEmoteBusy(false); }
+    }
+    async function deleteEmote(id: string) {
+        try {
+            await fetch(`/api/nexus/emotes?id=${id}`, { method: "DELETE" });
+            setEmotes(prev => prev.filter(e => e.id !== id));
+        } catch { /* ignore */ }
+    }
+    async function uploadSoundAlert(file: File) {
+        try {
+            const { upload } = await import("@vercel/blob/client");
+            const ext = file.type.includes("mp3") ? "mp3" : file.type.includes("wav") ? "wav" : "audio";
+            const key = `nexus/live/${streamId}-alert-${Date.now()}.${ext}`;
+            const up = await upload(key, file, { access: "public", handleUploadUrl: "/api/market/upload/client-token" });
+            await fetch(`/api/nexus/live/${streamId}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "update", soundAlertUrl: up.url }),
+            });
+            loadDetail();
+        } catch { /* ignore */ }
+    }
+    async function removeSoundAlert() {
+        try {
+            await fetch(`/api/nexus/live/${streamId}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "update", soundAlertUrl: "" }),
+            });
+            loadDetail();
+        } catch { /* ignore */ }
+    }
+
+    // Batch AI — Emote inline replace (:name: → <img>)
+    function renderChatText(text: string): React.ReactNode {
+        if (!emotes.length || !text) return text;
+        const parts: React.ReactNode[] = [];
+        let lastIdx = 0;
+        const rx = /:([a-z0-9_]{2,20}):/g;
+        let match;
+        while ((match = rx.exec(text)) !== null) {
+            const em = emotes.find(e => e.name === match![1]);
+            if (em) {
+                if (match.index > lastIdx) parts.push(text.slice(lastIdx, match.index));
+                parts.push(<img key={`${match.index}-${em.id}`} src={em.imageUrl} alt={em.name} className="inline-block w-5 h-5 align-middle" />);
+                lastIdx = match.index + match[0].length;
+            }
+        }
+        if (lastIdx < text.length) parts.push(text.slice(lastIdx));
+        return parts.length > 0 ? parts : text;
+    }
 
     // Batch H — Co-host list polling (LIVE'da har 15s)
     useEffect(() => {
@@ -1362,6 +1462,14 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             <Megaphone className="w-4 h-4 text-white" />
                         </button>
                     )}
+                    {/* Batch AM — Panels button (bio/socials/schedule) */}
+                    {panels.length > 0 && (
+                        <button onClick={() => setPanelsOpen(o => !o)} title="Streamer haqida"
+                            className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition"
+                            style={{ background: panelsOpen ? "rgba(139,92,246,0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                            <LayoutList className="w-4 h-4 text-white" />
+                        </button>
+                    )}
                     {/* Batch V — Captions display toggle (viewer) */}
                     {isLive && (
                         <button onClick={() => setCaptionOn(o => !o)} title={captionOn ? "Subtitrlarni yashirish" : "Subtitrlarni ko'rsatish"}
@@ -1751,7 +1859,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                             {m.author?.name || m.author?.username || "Foydalanuvchi"}
                                             {m.author?.verified && <NxVerifiedBadge category={(m.author as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
                                         </span>
-                                        <span style={{ color: "rgba(210,220,245,0.9)" }}>{m.text}</span>
+                                        <span style={{ color: "rgba(210,220,245,0.9)" }}>{renderChatText(m.text)}</span>
                                     </p>
                                     {/* Batch X — Tarjima */}
                                     {translateOn && translations[m.id] && (
@@ -1828,6 +1936,20 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 ))}
                             </div>
                         )}
+                        {/* Batch AI — Emote picker */}
+                        {emotePickerOpen && emotes.length > 0 && (
+                            <div className="mb-2 p-2 rounded-xl flex flex-wrap gap-1.5 animate-in fade-in slide-in-from-bottom-1 duration-200 max-h-[120px] overflow-y-auto"
+                                style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.25)" }}>
+                                {emotes.map(em => (
+                                    <button key={em.id} onClick={() => { setInput(prev => prev + `:${em.name}:`); setEmotePickerOpen(false); }}
+                                        title={`:${em.name}:`}
+                                        className="w-9 h-9 flex items-center justify-center rounded-lg hover:scale-110 active:scale-95 transition"
+                                        style={{ background: "rgba(245,158,11,0.10)" }}>
+                                        <img src={em.imageUrl} alt={em.name} className="w-7 h-7 object-contain" />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                         {chatError && <p className="text-[11px] font-bold mb-2" style={{ color: "#EF4444" }}>{chatError}</p>}
                         {/* Batch FF — Slash commands hint (input / bilan boshlanganda) */}
                         {input.startsWith("/") && input.length >= 1 && (
@@ -1855,6 +1977,16 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                         ? { background: "linear-gradient(135deg,#8B5CF6,#EC4899)" }
                                         : { background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.30)" }}>
                                     <Smile className="w-4 h-4" style={{ color: reactionPickerOpen ? "#fff" : "#8B5CF6" }} />
+                                </button>
+                            )}
+                            {/* Batch AI — Emote picker */}
+                            {emotes.length > 0 && (
+                                <button onClick={() => setEmotePickerOpen(o => !o)} title="Emote"
+                                    className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition"
+                                    style={emotePickerOpen
+                                        ? { background: "linear-gradient(135deg,#F59E0B,#F97316)" }
+                                        : { background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.30)" }}>
+                                    <span className="text-sm font-black" style={{ color: emotePickerOpen ? "#fff" : "#F59E0B" }}>:D</span>
                                 </button>
                             )}
                             <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
@@ -1970,6 +2102,46 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", boxShadow: "0 4px 20px rgba(236,72,153,0.35)" }}>
                             <Zap className="w-4 h-4" />{tickerDraft.trim() ? "Saqlash" : "O'chirish"}
                         </button>
+                    </div>
+                </>
+            )}
+
+            {/* Batch AM — Streamer panels drawer */}
+            {panelsOpen && (
+                <>
+                    <div className="fixed inset-0 z-[9998]" style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)" }} onClick={() => setPanelsOpen(false)} />
+                    <div className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-md p-6 rounded-3xl animate-in fade-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto"
+                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(139,92,246,0.45)", boxShadow: "0 24px 80px rgba(139,92,246,0.35)", scrollbarWidth: "thin" }}>
+                        <div className="flex items-center gap-2 mb-4">
+                            <LayoutList className="w-5 h-5" style={{ color: "#8B5CF6" }} />
+                            <h3 className="text-base font-black text-white">Streamer haqida</h3>
+                            <button onClick={() => setPanelsOpen(false)} className="ml-auto w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,0.05)" }}>
+                                <X className="w-4 h-4 text-white/70" />
+                            </button>
+                        </div>
+                        <div className="space-y-3">
+                            {panels.map(p => (
+                                <div key={p.id} className="p-3 rounded-xl" style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.20)" }}>
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        {p.kind === "BIO" ? <Info className="w-3.5 h-3.5" style={{ color: "#8B5CF6" }} />
+                                            : p.kind === "SOCIALS" ? <Languages className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                            : p.kind === "SPONSOR" ? <Target className="w-3.5 h-3.5" style={{ color: "#F59E0B" }} />
+                                            : p.kind === "SCHEDULE" ? <Clock className="w-3.5 h-3.5" style={{ color: "#EC4899" }} />
+                                            : <Sparkles className="w-3.5 h-3.5" style={{ color: "#8B5CF6" }} />}
+                                        <p className="text-xs font-black text-white">{p.title}</p>
+                                    </div>
+                                    {p.imageUrl && (
+                                        <img src={p.imageUrl} alt="" className="w-full rounded-lg mb-2 object-cover" style={{ maxHeight: 160 }} />
+                                    )}
+                                    <p className="text-[11px] leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(200,180,230,0.85)" }}>{p.content}</p>
+                                    {p.linkUrl && (
+                                        <a href={p.linkUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-[10px] font-black hover:underline" style={{ color: "#00CEC8" }}>
+                                            Ochish →
+                                        </a>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </>
             )}
@@ -2260,6 +2432,77 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                     </button>
                                 ) : null}
                             </div>
+                        </div>
+
+                        {/* Batch AL — Sound alert (tip audio) */}
+                        <div className="mb-3 p-3 rounded-xl" style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.20)" }}>
+                            <div className="flex items-center gap-2 mb-2">
+                                <Music className="w-3.5 h-3.5" style={{ color: "#8B5CF6" }} />
+                                <p className="text-xs font-black text-white">Tip audio alerti</p>
+                            </div>
+                            <p className="text-[10px] mb-2" style={{ color: "rgba(200,180,230,0.65)" }}>Sovg&apos;a kelganda ovoz effekti (mp3/wav)</p>
+                            {stream?.soundAlertUrl ? (
+                                <div className="flex items-center gap-2">
+                                    <audio src={stream.soundAlertUrl} controls className="flex-1 h-8" style={{ maxWidth: "100%" }} />
+                                    <button onClick={removeSoundAlert} className="px-3 py-2 rounded-lg text-[10px] font-black text-white flex-shrink-0"
+                                        style={{ background: "rgba(239,68,68,0.20)", border: "1px solid rgba(239,68,68,0.40)" }}>
+                                        <Trash2 className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="block cursor-pointer">
+                                    <input type="file" accept="audio/mp3,audio/wav,audio/mpeg" className="hidden"
+                                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadSoundAlert(f); }} />
+                                    <div className="py-2 rounded-lg text-center text-[10px] font-black text-white"
+                                        style={{ background: "rgba(139,92,246,0.15)", border: "1px dashed rgba(139,92,246,0.40)" }}>
+                                        <Plus className="w-3 h-3 inline mr-1" />Audio yuklash
+                                    </div>
+                                </label>
+                            )}
+                        </div>
+
+                        {/* Batch AI — Emote admin */}
+                        <div className="mb-3 p-3 rounded-xl" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.20)" }}>
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-black" style={{ color: "#F59E0B" }}>:D</span>
+                                    <p className="text-xs font-black text-white">Custom emotelar · {emotes.length}</p>
+                                </div>
+                                <button onClick={() => setEmoteAdmin(o => !o)}
+                                    className="text-[10px] font-black px-2 py-1 rounded-md"
+                                    style={{ background: "rgba(245,158,11,0.20)", color: "#F59E0B" }}>
+                                    {emoteAdmin ? "Yopish" : "Boshqarish"}
+                                </button>
+                            </div>
+                            {emoteAdmin && (
+                                <>
+                                    <div className="flex gap-1.5 mb-2">
+                                        <input value={emoteName} onChange={e => setEmoteName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20))}
+                                            placeholder="haha"
+                                            className="flex-1 px-2 py-1.5 rounded-lg text-xs text-white outline-none"
+                                            style={{ background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.30)" }} />
+                                        <label className={`px-3 py-1.5 rounded-lg text-[10px] font-black text-white ${!emoteName || emoteBusy ? "opacity-50 pointer-events-none" : "cursor-pointer"}`}
+                                            style={{ background: "linear-gradient(135deg,#F59E0B,#F97316)" }}>
+                                            <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="hidden"
+                                                onChange={e => { const f = e.target.files?.[0]; if (f) uploadEmote(f); }} />
+                                            {emoteBusy ? <Loader2 className="w-3 h-3 inline animate-spin" /> : "Yuklash"}
+                                        </label>
+                                    </div>
+                                    <p className="text-[9px] mb-2" style={{ color: "rgba(245,220,180,0.55)" }}>Chat'da :{emoteName || "nom"}: bilan ishlatiladi</p>
+                                    <div className="grid grid-cols-6 gap-1">
+                                        {emotes.map(em => (
+                                            <div key={em.id} className="relative group aspect-square rounded-md flex items-center justify-center" style={{ background: "rgba(245,158,11,0.06)" }}>
+                                                <img src={em.imageUrl} alt={em.name} className="w-7 h-7 object-contain" />
+                                                <button onClick={() => deleteEmote(em.id)}
+                                                    className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100"
+                                                    style={{ background: "#EF4444" }}>
+                                                    <X className="w-2.5 h-2.5 text-white" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                         {/* Batch W — Watermark upload */}

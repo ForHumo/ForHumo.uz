@@ -1935,6 +1935,8 @@ model NexusLiveStream {
   // Batch AA — Donation goal
   donationGoal      Int?                              // target summa (streamer valyutasida)
   donationGoalLabel String?                           // "Yangi mikrofon", "Studio jihoz" etc.
+  // Batch AL — Custom sound alert (tip received)
+  soundAlertUrl     String?                           // audio URL (Vercel Blob, mp3/wav)
 
   createdAt   DateTime         @default(now())
   messages    NexusLiveMessage[]
@@ -2004,6 +2006,33 @@ enum NexusLiveGuestStatus {
   APPROVED
   LEFT
   KICKED
+}
+
+// Batch AM — Streamer paneli (bio/socials/sponsors/schedule/custom)
+// Per-streamer (efirlar orasida qoladi)
+model NexusLivePanel {
+  id         String   @id @default(cuid())
+  profileId  String                                    // egasi
+  kind       String   @default("CUSTOM")               // BIO/SOCIALS/SCHEDULE/SPONSOR/CUSTOM
+  title      String
+  content    String   @db.Text                         // markdown (500 char)
+  imageUrl   String?                                   // ixtiyoriy rasm
+  linkUrl    String?                                   // ixtiyoriy link
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  @@index([profileId, order])
+}
+
+// Batch AI — Custom emotes (streamer o'z chat'i uchun rasm emotelar)
+model NexusLiveEmote {
+  id         String   @id @default(cuid())
+  profileId  String                                    // egasi (streamer)
+  name       String                                    // :haha:, :hitme: etc.
+  imageUrl   String                                    // Vercel Blob (100x100 PNG)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  @@unique([profileId, name])
+  @@index([profileId, order])
 }
 
 enum NexusLiveStatus {

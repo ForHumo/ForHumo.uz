@@ -55,6 +55,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             sceneLayout: stream.sceneLayout,
             raidToUsername: stream.raidToUsername,
             watermarkUrl: stream.watermarkUrl,
+            soundAlertUrl: stream.soundAlertUrl,
             donationGoal: stream.donationGoal, donationGoalLabel: stream.donationGoalLabel, totalTips,
             isMine: stream.profileId === meId,
             author: author ? { name: author.name, username: author.username, image: author.image, verified: isVerifiedProfile(author) } : null,
@@ -71,7 +72,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const { id } = await params;
     const body = await req.json();
-    const { action, recordingUrl, recordingDurationSec, description, thumbUrl, raidToUsername, watermarkUrl } = body;
+    const { action, recordingUrl, recordingDurationSec, description, thumbUrl, raidToUsername, watermarkUrl, soundAlertUrl } = body;
     const stream = await prisma.nexusLiveStream.findFirst({ where: { id, profileId: me.id } });
     if (!stream) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
 
@@ -133,6 +134,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 ...(typeof recordingUrl === "string" ? { recordingUrl: recordingUrl || null } : {}),
                 ...(Number.isFinite(recordingDurationSec) ? { recordingDurationSec: Math.max(0, Math.round(Number(recordingDurationSec))) } : {}),
                 ...(typeof watermarkUrl === "string" ? { watermarkUrl: watermarkUrl || null } : {}),
+                ...(typeof soundAlertUrl === "string" ? { soundAlertUrl: soundAlertUrl || null } : {}),
             },
         });
         return NextResponse.json({ stream: updated });
