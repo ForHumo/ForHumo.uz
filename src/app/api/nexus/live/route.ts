@@ -9,6 +9,7 @@ import { moderateOnCreate } from "@/lib/moderation";
 import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { after } from "next/server";
 import { grantAchievement } from "@/lib/achievements";
+import { crossPostToOwnChannel, shouldAutoCrosspost } from "@/lib/nexus-crosspost";
 
 // Onlayn ko'ruvchi — oxirgi 30 soniyada heartbeat yuborganlar
 const VIEWER_WINDOW_MS = 30_000;
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
     const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
-    const { title, category, privacy, scheduledAt } = await req.json();
+    const { title, category, privacy, scheduledAt, crossToChannel } = await req.json();
     if (!title?.trim()) return NextResponse.json({ error: "Sarlavha kerak" }, { status: 400 });
     if (await nexusRateLimited(me.id, "live")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
@@ -130,6 +131,18 @@ export async function POST(req: Request) {
         after(() => nexusNotifyFollowers({ actorId: me.id, type: "LIVE", liveId: stream.id }));
     }
     after(() => { grantAchievement(me.id, "nexus.first_live"); });
+
+    // Cross-post — LIVE bo'lsa kanalda "Efir boshlandi" xabari (Play tugmali)
+    after(async () => {
+        if (isUpcoming || stream.privacy !== "PUBLIC") return;
+        const shouldSend = crossToChannel === true || (crossToChannel !== false && await shouldAutoCrosspost(me.id));
+        if (!shouldSend) return;
+        await crossPostToOwnChannel({
+            authorId: me.id, type: "live", id: stream.id,
+            title: stream.title, thumb: null,
+            description: stream.category ? `Kategoriya: ${stream.category}` : null,
+        });
+    });
 
     return NextResponse.json({ stream });
 }

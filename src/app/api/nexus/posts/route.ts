@@ -13,6 +13,7 @@ import { getActiveSubscribedCreatorIds } from "@/lib/nexus-sub";
 import { notifyMentions } from "@/lib/nexus-mention";
 import { filterMediaUrls } from "@/lib/media-url";
 import { currencyForCountry } from "@/lib/money";
+import { crossPostToOwnChannel, shouldAutoCrosspost } from "@/lib/nexus-crosspost";
 import { buildInterestProfile, scorePost } from "@/lib/nexus-rank";
 import { embedPost, semanticPostScores } from "@/lib/nexus-embed";
 import { grantAchievement } from "@/lib/achievements";
@@ -196,7 +197,7 @@ export async function POST(req: Request) {
     const banned = await banGuard(profile.id); if (banned) return banned;
     if (await nexusRateLimited(profile.id, "post")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
-    const { text, media, privacy, location, locationLat, locationLng, pollOptions, pollDurationHours, price, subsFree } = await req.json();
+    const { text, media, privacy, location, locationLat, locationLng, pollOptions, pollDurationHours, price, subsFree, crossToChannel } = await req.json();
     const mediaArr: string[] = filterMediaUrls(media, 10);
     const clean = typeof text === "string" ? text.trim().slice(0, 5000) : "";
 
@@ -246,6 +247,19 @@ export async function POST(req: Request) {
     after(() => embedPost(post.id, post.text ?? "", post.hashtags));
     // Yutuq (birinchi post)
     after(() => { grantAchievement(profile.id, "nexus.first_post"); });
+
+    // Cross-post: agar tanlangan bo'lsa yoki auto-repost yoqilgan bo'lsa, egaligidagi kanalga xabar
+    after(async () => {
+        const shouldSend = crossToChannel === true || (crossToChannel !== false && await shouldAutoCrosspost(profile.id));
+        if (!shouldSend) return;
+        const title = (clean.split("\n")[0] || "Yangi post").slice(0, 80);
+        await crossPostToOwnChannel({
+            authorId: profile.id, type: "post", id: post.id,
+            title, thumb: mediaArr[0] || null,
+            description: clean.length > 80 ? clean.slice(80, 500) : null,
+            media: mediaArr.slice(0, 4),
+        });
+    });
 
     return NextResponse.json({
         post: {

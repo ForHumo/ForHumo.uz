@@ -47,6 +47,7 @@ export function NxGoLive() {
     const [title, setTitle] = useState("");
     const [category, setCategory] = useState("");
     const [privacy, setPrivacy] = useState<Privacy>("PUBLIC");
+    const [crossToChannel, setCrossToChannel] = useState(true);   // efir kanalda ham
     const [micOn, setMicOn] = useState(true);
     const [camOn, setCamOn] = useState(true);
     const [camErr, setCamErr] = useState(false);
@@ -185,7 +186,7 @@ export function NxGoLive() {
         try {
             const r = await fetch("/api/nexus/live", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, category, privacy }),
+                body: JSON.stringify({ title, category, privacy, crossToChannel }),
             });
             const d = await r.json().catch(() => ({}));
             if (!r.ok || !d.stream) { setErr(d.error || "Efir boshlanmadi"); return; }

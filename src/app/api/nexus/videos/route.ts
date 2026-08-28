@@ -12,6 +12,7 @@ import { currencyForCountry } from "@/lib/money";
 import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { isValidMediaUrl, filterMediaUrls } from "@/lib/media-url";
 import { grantAchievement } from "@/lib/achievements";
+import { crossPostToOwnChannel, shouldAutoCrosspost } from "@/lib/nexus-crosspost";
 
 // POST /api/nexus/videos — yangi video
 export async function POST(req: Request) {
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const {
         title, description, videoUrl, thumbUrl, durationSec, category,
-        orientation, width, height, tags, descImages, isMature, price, prevVideoId,
+        orientation, width, height, tags, descImages, isMature, price, prevVideoId, crossToChannel,
     } = body;
     if (!isValidMediaUrl(videoUrl)) return NextResponse.json({ error: "Video kerak" }, { status: 400 });
     if (!title?.trim()) return NextResponse.json({ error: "Sarlavha kerak" }, { status: 400 });
@@ -81,6 +82,17 @@ export async function POST(req: Request) {
         authorId: profile.id,
     }));
     after(() => { grantAchievement(profile.id, "nexus.first_video"); });
+
+    // Cross-post — kanalda video kartochkasi (thumb + Play + tavsif)
+    after(async () => {
+        const shouldSend = crossToChannel === true || (crossToChannel !== false && await shouldAutoCrosspost(profile.id));
+        if (!shouldSend) return;
+        await crossPostToOwnChannel({
+            authorId: profile.id, type: "video", id: video.id,
+            title: video.title, thumb: video.thumbUrl,
+            description: video.description ? video.description.slice(0, 400) : null,
+        });
+    });
 
     return NextResponse.json({ video });
 }

@@ -80,6 +80,10 @@ model UserProfile {
   subPrice      Int      @default(0) @map("subPriceZij")
   subCurrency   Currency @default(UZS)
 
+  // "Har safar ovoraga tushmaysiz" — ijodkor bir marta yoqib qo'ysa,
+  // barcha post/video/live/track avtomatik o'z kanaliga xabar sifatida ketadi.
+  autoRepostToOwnChannel Boolean @default(false)
+
   // Rasmiy For Humo agent'lari (@id, @ai, @nexus, @esport, @market, @pay,
   // @bn, @support, @forhumo) — foydalanuvchi profil emas, tizim identity.
   // isOfficialAgent=true bo'lsa kanal/guruh nomi shu username bilan mavjud;
@@ -2243,6 +2247,12 @@ model NexusChannelMessage {
   contactUsername String?                                 // @username agar Humo foydalanuvchi
   // Delete for everyone (60 daq oynada) — hamma uchun o'chirilgan
   deletedForEveryoneAt DateTime?
+  // Ijodkorning boshqa formatlariga havola (post/video/live/track) — cross-post
+  // Rendering paytida play tugma + link avtomatik ko'rinadi.
+  linkedType  String?   // "post" | "video" | "live" | "track"
+  linkedId    String?
+  linkedTitle String?
+  linkedThumb String?
   // View once (WhatsApp uslubi) — 1 martalik
   viewOnce  Boolean  @default(false)
   // @mentions — profileId lari (push xabarnoma uchun)

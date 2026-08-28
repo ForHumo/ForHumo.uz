@@ -71,6 +71,8 @@ export function NxCreatePost() {
     const [canSub, setCanSub] = useState(false);    // pullik obuna yoqilgan ijodkormanmi
     const [price, setPrice] = useState<number>(0);     // 0 = bepul; >0 = pullik
     const [subsFree, setSubsFree] = useState(false);   // true = pullik obunachi kuzatuvchi bepul ko'radi
+    const [crossToChannel, setCrossToChannel] = useState(false);  // kanalga ham joylash
+    const [hasChannel, setHasChannel] = useState(false);          // kanal mavjudmi
     const [aiBusy, setAiBusy] = useState<null | "caption" | "tags" | "translate">(null);
     const fileRef = useRef<HTMLInputElement>(null);
 
@@ -87,10 +89,14 @@ export function NxCreatePost() {
             .catch(() => { });
     }, [createPostOpen, trendTags.length]);
 
-    // Pullik obuna variantini faqat obunasi yoqilgan ijodkorga ko'rsatish
+    // Pullik obuna variantini faqat obunasi yoqilgan ijodkorga ko'rsatish + kanal borligi
     useEffect(() => {
         if (!createPostOpen) return;
-        fetch("/api/nexus/creator").then(r => r.json()).then(d => setCanSub((d.subPrice ?? 0) > 0)).catch(() => { });
+        fetch("/api/nexus/creator").then(r => r.json()).then(d => {
+            setCanSub((d.subPrice ?? 0) > 0);
+            setHasChannel(!!d.hasChannel);
+            if (d.autoRepost === true) setCrossToChannel(true);
+        }).catch(() => { });
     }, [createPostOpen]);
 
     if (!createPostOpen) return null;
@@ -101,7 +107,7 @@ export function NxCreatePost() {
 
     function reset() {
         setText(""); setPostType("text"); setPrivacy("PUBLIC");
-        setPollOptions(["", ""]); setPollHours(24); setGeo(null); setPrice(0); setSubsFree(false);
+        setPollOptions(["", ""]); setPollHours(24); setGeo(null); setPrice(0); setSubsFree(false); setCrossToChannel(false);
         setMedia([]); setTags([]); setErr(null); setUploading(false);
         setPublishing(false); setPublished(false);
     }
@@ -180,6 +186,7 @@ export function NxCreatePost() {
                     locationLng: geo?.lng ?? null,
                     price: price > 0 ? Math.floor(price) : 0,
                     subsFree: price > 0 && subsFree,
+                    crossToChannel: hasChannel ? crossToChannel : false,
                     pollOptions: postType === "poll" ? pollOptions.map(o => o.trim()).filter(Boolean) : [],
                     pollDurationHours: pollHours,
                 }),
@@ -448,6 +455,21 @@ export function NxCreatePost() {
                             </p>
                         )}
                     </div>
+
+                    {/* Kanalga ham joylash (agar kanal bor bo'lsa) */}
+                    {hasChannel && (
+                        <label className="mb-2 flex items-center gap-2 cursor-pointer p-3 rounded-2xl transition"
+                            style={{ background: crossToChannel ? "rgba(0,206,200,0.10)" : "rgba(43,62,232,0.06)",
+                                border: `1px solid ${crossToChannel ? "rgba(0,206,200,0.35)" : "rgba(43,62,232,0.20)"}` }}>
+                            <input type="checkbox" checked={crossToChannel} onChange={e => setCrossToChannel(e.target.checked)} className="w-4 h-4" />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-black text-white">Kanalga ham joylash</p>
+                                <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>
+                                    Post o&apos;z kanalingizga xabar sifatida ham yuboriladi
+                                </p>
+                            </div>
+                        </label>
+                    )}
 
                     {err && <p className="text-xs text-red-400 font-bold px-1 mt-2">{err}</p>}
                 </div>

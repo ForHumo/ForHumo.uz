@@ -10,6 +10,7 @@ import { getHiddenAuthorIds } from "@/lib/nexus-block";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { banGuard } from "@/lib/moderation-guard";
 import { isValidMediaUrl } from "@/lib/media-url";
+import { crossPostToOwnChannel, shouldAutoCrosspost } from "@/lib/nexus-crosspost";
 
 // POST /api/nexus/tracks — yangi trek (musiqa/podkast/audiokitob)
 export async function POST(req: Request) {
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
     const banned = await banGuard(profile.id); if (banned) return banned;
     if (await nexusRateLimited(profile.id, "track")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
-    const { title, artist, audioUrl, coverUrl, durationSec, kind, genre } = await req.json();
+    const { title, artist, audioUrl, coverUrl, durationSec, kind, genre, crossToChannel } = await req.json();
     if (!isValidMediaUrl(audioUrl)) return NextResponse.json({ error: "Audio kerak" }, { status: 400 });
     if (!title?.trim()) return NextResponse.json({ error: "Sarlavha kerak" }, { status: 400 });
 
@@ -44,6 +45,17 @@ export async function POST(req: Request) {
         text: `${track.title}\n${track.artist || ""}`, imageUrl: track.coverUrl, kind: "post",
         authorId: profile.id,
     }));
+
+    // Cross-post — kanalda trek kartochkasi (cover + Play + ijrochi)
+    after(async () => {
+        const shouldSend = crossToChannel === true || (crossToChannel !== false && await shouldAutoCrosspost(profile.id));
+        if (!shouldSend) return;
+        await crossPostToOwnChannel({
+            authorId: profile.id, type: "track", id: track.id,
+            title: track.title, thumb: track.coverUrl,
+            description: track.artist ? `Ijrochi: ${track.artist}` : null,
+        });
+    });
 
     return NextResponse.json({ track });
 }

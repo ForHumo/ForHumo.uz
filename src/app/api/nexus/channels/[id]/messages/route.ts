@@ -254,6 +254,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 topicId: m.topicId,
                 deletedForEveryone: isDeleted,
                 deletedForEveryoneAt: m.deletedForEveryoneAt,
+                linkedType: isDeleted ? null : m.linkedType,
+                linkedId: isDeleted ? null : m.linkedId,
+                linkedTitle: isDeleted ? null : m.linkedTitle,
+                linkedThumb: isDeleted ? null : m.linkedThumb,
             };
         }),
     });
