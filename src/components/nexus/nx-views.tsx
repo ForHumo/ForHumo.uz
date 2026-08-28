@@ -16,6 +16,7 @@ import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxStories } from "./nx-stories";
 import { NxHomeRows } from "./nx-home-rows";
+import { NxTrendingBanner } from "./nx-trending-banner";
 import { NxFolderModal } from "./nx-folder-modal";
 import { NxSocialDesktop } from "./nx-social-desktop";
 import { NxSocialFeed } from "./nx-social-feed";
@@ -75,7 +76,8 @@ export function FeedView() {
             <NxStories />
             {/* Yangi foydalanuvchi uchun 5 qadam checklist (bajarilsa avtomatik yashadi) */}
             <NxOnboarding />
-            {/* Recommendation'da: kontent qatorlari (jonli/video/musiqa) — boshqa tab'larda yashiriladi */}
+            {/* Recommendation'da: trending banner + kontent qatorlari */}
+            {feedTab === "foryou" && <NxTrendingBanner />}
             {feedTab === "foryou" && <NxHomeRows />}
             {/* Real postlar lentasi (composer bilan) — tabga qarab filtrlanadi */}
             <NxSocialFeed controlledTab={feedTab} hideTabBar />

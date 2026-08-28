@@ -41,7 +41,7 @@ function avatarOf(a: { username?: string | null; name?: string | null; image?: s
 }
 
 export function NxHomeRows() {
-    const { openVideo, openShorts, playQueue } = useNxPlayer();
+    const { openVideo, openShorts, playQueue, track: nowPlaying, isPlaying } = useNxPlayer();
     const [live, setLive] = useState<HLive[]>([]);
     const [videos, setVideos] = useState<HVid[]>([]);
     const [tracks, setTracks] = useState<HTrack[]>([]);
@@ -53,6 +53,16 @@ export function NxHomeRows() {
         fetch("/api/nexus/videos?sort=new&limit=12").then(r => r.json()).then(d => setVideos(d.videos ?? [])).catch(() => { });
         fetch("/api/nexus/tracks?kind=MUSIC&sort=new&limit=12").then(r => r.json()).then(d => setTracks(d.tracks ?? [])).catch(() => { });
         fetch("/api/bn/cross-promo/nexus-row").then(r => r.json()).then(d => setBnItems(d.items ?? [])).catch(() => { });
+    }, []);
+
+    // ── Live real-time refresh (H-6) — 30s polling, tab yashirinsa to'xtaydi ──
+    useEffect(() => {
+        const tick = () => {
+            if (document.hidden) return;
+            fetch("/api/nexus/live?status=live&limit=10").then(r => r.json()).then(d => setLive(d.streams ?? [])).catch(() => { });
+        };
+        const iv = setInterval(tick, 30_000);
+        return () => clearInterval(iv);
     }, []);
 
     // BN mahsuloti URL — UTM bilan (cross-promo trekiladi)
@@ -143,24 +153,43 @@ export function NxHomeRows() {
             {/* Yangi treklar */}
             {tracks.length > 0 && (
                 <Row title="Yangi musiqa" accent="#10B981">
-                    {tracks.map((t, i) => (
+                    {tracks.map((t, i) => {
+                        const isCurrent = nowPlaying?.id === t.id;
+                        return (
                         <button key={t.id} onClick={() => playTrackAt(i)} className="w-28 flex-shrink-0 text-left group">
-                            <div className="relative w-28 h-28 rounded-xl overflow-hidden mb-1.5" style={{ border: "1px solid rgba(16,185,129,0.20)", background: "rgba(16,185,129,0.06)" }}>
+                            <div className="relative w-28 h-28 rounded-xl overflow-hidden mb-1.5"
+                                style={{ border: isCurrent ? "1.5px solid rgba(16,185,129,0.85)" : "1px solid rgba(16,185,129,0.20)",
+                                    background: "rgba(16,185,129,0.06)",
+                                    boxShadow: isCurrent ? "0 0 16px rgba(16,185,129,0.45)" : undefined }}>
                                 <img src={t.coverUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${encodeURIComponent(t.id)}`} alt={t.title}
                                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(5,8,24,0.40)" }}>
-                                    <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
-                                        <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                                {isCurrent ? (
+                                    <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(5,8,24,0.55)" }}>
+                                        <NxSoundBars playing={isPlaying} />
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(5,8,24,0.40)" }}>
+                                        <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
+                                            <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                                        </div>
+                                    </div>
+                                )}
+                                {isCurrent && (
+                                    <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-black text-white leading-none"
+                                        style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
+                                        {isPlaying ? "CHALINMOQDA" : "PAUZA"}
+                                    </span>
+                                )}
                                 <span className="absolute bottom-1.5 right-1.5 px-1 py-0.5 rounded text-[8px] font-bold text-white flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.8)" }}>
                                     <Clock className="w-2 h-2" />{fmtDur(t.durationSec)}
                                 </span>
                             </div>
-                            <p className="text-[11px] font-bold text-white truncate group-hover:text-[#10B981] transition-colors">{t.title}</p>
+                            <p className="text-[11px] font-bold truncate transition-colors"
+                                style={{ color: isCurrent ? "#10B981" : "#fff" }}>{t.title}</p>
                             <p className="text-[9px] truncate" style={{ color: "rgba(120,150,135,0.8)" }}>{t.artist || t.uploader?.name || ""}</p>
                         </button>
-                    ))}
+                        );
+                    })}
                 </Row>
             )}
 
@@ -200,6 +229,22 @@ export function NxHomeRows() {
             )}
 
             {roomId && <NxLiveRoom streamId={roomId} onClose={() => setRoomId(null)} />}
+        </div>
+    );
+}
+
+// Now-playing sound-bar animatsiya (3 vertikal bar)
+function NxSoundBars({ playing }: { playing: boolean }) {
+    return (
+        <div className="flex items-end gap-0.5" style={{ height: 22 }}>
+            {[0, 1, 2].map(i => (
+                <span key={i} className="w-1 rounded-sm" style={{
+                    background: "#10B981",
+                    height: playing ? undefined : 8,
+                    animation: playing ? `nxbar 900ms ${i * 120}ms ease-in-out infinite` : "none",
+                }} />
+            ))}
+            <style>{`@keyframes nxbar { 0%,100% { height: 6px } 50% { height: 22px } }`}</style>
         </div>
     );
 }
