@@ -27,7 +27,8 @@ import { NxOnboarding } from "./nx-onboarding";
 import { NxAgentCreateModal } from "./nx-agent-create-modal";
 import { NxAgentManageModal } from "./nx-agent-manage-modal";
 import { NxAgentShareModal } from "./nx-agent-share-modal";
-import { Search, MessageSquare, Share2, Wrench } from "lucide-react";
+import { Search, MessageSquare, Share2, Wrench, QrCode } from "lucide-react";
+import { NxProfileAchievements, NxProfileActivity, NxProfileQrModal } from "./nx-profile-extras";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Umumiy yordamchi komponentlar
@@ -504,6 +505,7 @@ export function ProfileView() {
     const [balance,     setBalance]     = useState<number | null>(null);
     const [balanceCurrency, setBalanceCurrency] = useState<"UZS" | "USD">("UZS");
     const [followList,  setFollowList]  = useState<"followers" | "following" | null>(null);
+    const [qrOpen,      setQrOpen]      = useState(false);
 
     /* Real profil ma'lumotlarini yuklash */
     const fetchProfile = useCallback(async () => {
@@ -643,12 +645,20 @@ export function ProfileView() {
                             Go Live
                         </button>
                         {profile?.username && (
-                            <Link href={`/nexus/u/${profile.username}`}
-                                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity duration-150 hover:opacity-85 active:scale-95"
-                                style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
-                                <ExternalLink className="w-3.5 h-3.5" />
-                                Ommaviy profil
-                            </Link>
+                            <>
+                                <Link href={`/nexus/u/${profile.username}`}
+                                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity duration-150 hover:opacity-85 active:scale-95"
+                                    style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                    Ommaviy profil
+                                </Link>
+                                <button onClick={() => setQrOpen(true)}
+                                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity duration-150 hover:opacity-85 active:scale-95"
+                                    style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                                    <QrCode className="w-3.5 h-3.5" />
+                                    QR ulashish
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>
@@ -731,6 +741,12 @@ export function ProfileView() {
                     );
                 })}
             </div>
+
+            {/* ── Yutuqlar (cross-modul) ────────────────────────────────── */}
+            <NxProfileAchievements />
+
+            {/* ── So'nggi faoliyat (post/video/musiqa) ───────────────────── */}
+            <NxProfileActivity />
 
             {/* ── Ko'rish tarixi ────────────────────────────────────────── */}
             {watchHistory.length > 0 && (
@@ -922,6 +938,9 @@ export function ProfileView() {
             {followList && profile?.username && (
                 <NexusFollowList username={profile.username} type={followList} onClose={() => setFollowList(null)} />
             )}
+
+            {/* QR ulashish modali */}
+            <NxProfileQrModal username={profile?.username ?? null} open={qrOpen} onClose={() => setQrOpen(false)} />
         </ViewShell>
     );
 }

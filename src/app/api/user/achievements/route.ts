@@ -1,37 +1,43 @@
+// GET /api/user/achievements — barcha modul yutuqlari (Nexus/Market/BN/ID/Pay/eSport)
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ACHIEVEMENTS, getUserAchievements } from "@/lib/achievements";
+import { ACHIEVEMENTS } from "@/lib/achievements";
 
-// GET /api/user/achievements?username=...
-// - username yo'q → o'z yutuqlari
-// - username bilan → ommaviy ko'rish
-export async function GET(req: Request) {
-    const url = new URL(req.url);
-    const username = url.searchParams.get("username");
+export const dynamic = "force-dynamic";
 
-    let profileId: string | null = null;
-    if (username) {
-        const p = await prisma.userProfile.findUnique({ where: { username }, select: { id: true } });
-        if (!p) return NextResponse.json({ error: "Foydalanuvchi topilmadi" }, { status: 404 });
-        profileId = p.id;
-    } else {
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
-        if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
-        profileId = me.id;
-    }
+export async function GET() {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return NextResponse.json({ items: [], earnedCount: 0, totalCount: 0 });
+    const me = await prisma.userProfile.findUnique({ where: { email: session.user.email }, select: { id: true } });
+    if (!me) return NextResponse.json({ items: [], earnedCount: 0, totalCount: 0 });
 
-    const earned = await getUserAchievements(profileId);
-    const earnedCodes = new Set(earned.map(a => a.code));
+    const earned = await prisma.userAchievement.findMany({
+        where: { profileId: me.id },
+        select: { code: true, earnedAt: true },
+    }).catch(() => []);
+    const earnedByCode = new Map(earned.map(e => [e.code, e.earnedAt]));
+    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+    // Kategoriya bo'yicha guruhlangan
+    const items = ACHIEVEMENTS.map(a => {
+        const earnedAt = earnedByCode.get(a.code);
+        return {
+            code: a.code,
+            title: a.title,
+            description: a.description,
+            icon: a.icon,
+            category: a.category,
+            tier: a.tier,
+            earnedAt: earnedAt ? earnedAt.toISOString() : null,
+            isNew: earnedAt ? earnedAt.getTime() > dayAgo : false,
+        };
+    });
 
     return NextResponse.json({
-        earned: earned.map(a => ({
-            code: a.code, title: a.title, icon: a.icon,
-            category: a.category, tier: a.tier, earnedAt: a.earnedAt,
-        })),
-        catalog: ACHIEVEMENTS.map(a => ({ ...a, unlocked: earnedCodes.has(a.code) })),
+        items,
+        earnedCount: earned.length,
+        totalCount: ACHIEVEMENTS.length,
     });
 }
