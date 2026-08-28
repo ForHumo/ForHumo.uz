@@ -2463,8 +2463,9 @@ model NexusTrack {
   instrumentalUrl String?                         // vokalsiz backing track (professional karaoke)
   lyricsSource    String?                         // xom LRC yoki plain matn (kelajakda tahrirlash uchun)
 
-  likes       NexusTrackLike[]
-  lyricsLines NexusTrackLyricLine[]
+  likes        NexusTrackLike[]
+  lyricsLines  NexusTrackLyricLine[]
+  performances NexusKaraokePerformance[] @relation("KaraokeTrack")
 
   @@index([kind, createdAt])
   @@index([kind, plays])
@@ -2483,6 +2484,42 @@ model NexusTrackLyricLine {
 
   @@index([trackId, order])
   @@index([trackId, timeMs])
+}
+
+// Karaoke performance — foydalanuvchi mikrofondan yozib olgan variant
+// Trek instrumentali ustidan overlayda ijodchi kuylagan audio + ball
+model NexusKaraokePerformance {
+  id          String   @id @default(cuid())
+  trackId     String                                       // qaysi trek uchun
+  profileId   String                                       // ijrochi (yozib olgan)
+  audioUrl    String                                       // Vercel Blob — vokal record (webm/mp3)
+  durationSec Int      @default(0)
+  score       Int      @default(0)                         // 0-100 (recording coverage + energy)
+  caption     String?                                       // ixtiyoriy izoh
+  duetOfId    String?                                       // agar duet — asosiy performance ID
+  plays       Int      @default(0)                         // tinglash soni
+  hidden      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  track       NexusTrack @relation("KaraokeTrack", fields: [trackId], references: [id], onDelete: Cascade)
+  duetOf      NexusKaraokePerformance?  @relation("KaraokeDuet", fields: [duetOfId], references: [id], onDelete: SetNull)
+  duets       NexusKaraokePerformance[] @relation("KaraokeDuet")
+  likes       NexusKaraokePerformanceLike[]
+
+  @@index([trackId, score])
+  @@index([profileId, createdAt])
+  @@index([createdAt])
+}
+
+model NexusKaraokePerformanceLike {
+  id             String   @id @default(cuid())
+  performanceId  String
+  profileId      String
+  createdAt      DateTime @default(now())
+  performance    NexusKaraokePerformance @relation(fields: [performanceId], references: [id], onDelete: Cascade)
+
+  @@unique([performanceId, profileId])
+  @@index([profileId])
 }
 
 enum NexusTrackKind {

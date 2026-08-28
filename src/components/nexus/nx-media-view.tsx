@@ -8,6 +8,7 @@ import {
     Heart, Eye, Clock, Search, Shuffle, X, Tag,
 } from "lucide-react";
 import { NxKaraokePlayer } from "./nx-karaoke-player";
+import { KaraokePerformancesFeed } from "./nx-karaoke-performances";
 import { NxTrackCreate } from "./nx-track-create";
 import { formatMoney } from "@/lib/money";
 import { NxVerifiedBadge } from "./nx-verified-badge";
@@ -275,6 +276,7 @@ export function MediaView() {
                 <EmptyState icon={BookOpen} title="E-kitoblar — tez kunda" hint="Bu bo'lim keyingi bosqichda quriladi" />
             ) : (
                 <>
+                    {sub === "music" && <KaraokePerformancesFeed scope="trending" />}
                     <TrackRow title={sub === "music" ? "Top treklar" : sub === "podcast" ? "Mashhur podkastlar" : "Mashhur audiokitoblar"}
                         accent="#10B981" items={topTracks} onPlay={i => playFrom(topTracks, i)} onLike={toggleLike} onKaraoke={setKaraokeTrack}
                         empty="Hali trek yo'q — birinchi bo'lib yuklang!" />

@@ -7,8 +7,10 @@
 // - Klip video bo'lsa fon sifatida chiqadi
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { X, Play, Pause, Volume2, VolumeX, Mic2, Music2, SkipBack, SkipForward } from "lucide-react";
+import { upload } from "@vercel/blob/client";
+import { X, Play, Pause, Volume2, VolumeX, Mic2, Music2, SkipBack, SkipForward, Circle, Square, Loader2, Send, Sparkles } from "lucide-react";
 import { activeLyricIndex, type LrcLine } from "@/lib/nexus-lrc";
+import { startKaraokeRecorder, type RecorderHandle } from "@/lib/nexus-karaoke-recorder";
 
 interface Props {
     open: boolean;
@@ -39,6 +41,16 @@ export function NxKaraokePlayer(p: Props) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const lyricsRef = useRef<HTMLDivElement>(null);
 
+    // Recording state
+    const [recorder, setRecorder] = useState<RecorderHandle | null>(null);
+    const [recording, setRecording] = useState(false);
+    const [recError, setRecError] = useState<string | null>(null);
+    const [micLevel, setMicLevel] = useState(0);
+    const [pendingResult, setPendingResult] = useState<{ blob: Blob; durationMs: number; score: number } | null>(null);
+    const [caption, setCaption] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+
     // Lyrics + karaoke ma'lumotlarini yuklash
     useEffect(() => {
         if (!p.open) return;
@@ -65,6 +77,62 @@ export function NxKaraokePlayer(p: Props) {
         if (wasPlaying) a.play().catch(() => { });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [audioSrc]);
+
+    async function startRecording() {
+        setRecError(null);
+        try {
+            const r = await startKaraokeRecorder();
+            r.onEnergy(v => setMicLevel(v));
+            setRecorder(r);
+            setRecording(true);
+            if (payload?.instrumentalUrl) setUseInstrumental(true);
+            const a = audioRef.current;
+            if (a) { a.currentTime = 0; a.play().catch(() => { }); setPlaying(true); }
+        } catch (e) {
+            setRecError((e as Error).message || "Mikrofonga ruxsat kerak");
+        }
+    }
+    async function stopRecording() {
+        if (!recorder) return;
+        setRecording(false);
+        const res = await recorder.stop();
+        setRecorder(null);
+        setMicLevel(0);
+        const a = audioRef.current; if (a) { a.pause(); setPlaying(false); }
+        setPendingResult({ blob: res.blob, durationMs: res.durationMs, score: res.score });
+    }
+    async function submitPerformance() {
+        if (!pendingResult || submitting) return;
+        setSubmitting(true); setRecError(null);
+        try {
+            const ext = pendingResult.blob.type.includes("webm") ? "webm"
+                : pendingResult.blob.type.includes("ogg") ? "ogg"
+                : pendingResult.blob.type.includes("mp4") ? "m4a" : "webm";
+            const file = new File([pendingResult.blob], `karaoke-${Date.now()}.${ext}`, { type: pendingResult.blob.type || "audio/webm" });
+            const uploaded = await upload(`nexus/karaoke/${Date.now()}.${ext}`, file, {
+                access: "public", handleUploadUrl: "/api/market/upload/client-token",
+            });
+            const r = await fetch("/api/nexus/karaoke/performances", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    trackId: p.trackId,
+                    audioUrl: uploaded.url,
+                    durationSec: Math.round(pendingResult.durationMs / 1000),
+                    score: pendingResult.score,
+                    caption: caption.trim() || null,
+                }),
+            });
+            if (r.ok) {
+                setSubmitted(true);
+                setTimeout(() => { setPendingResult(null); setCaption(""); setSubmitted(false); }, 1800);
+            } else {
+                const d = await r.json().catch(() => ({}));
+                setRecError(d.error || "Yuborishda xatolik");
+            }
+        } catch (e) {
+            setRecError((e as Error).message || "Yuklashda xatolik");
+        } finally { setSubmitting(false); }
+    }
 
     // Play/pause tugma
     const toggle = useCallback(() => {
@@ -272,6 +340,107 @@ export function NxKaraokePlayer(p: Props) {
                     </div>
                 </div>
             </div>
+
+            {/* Recording status pill (yozib olish paytida yuqorida) */}
+            {recording && (
+                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-4 py-2 rounded-full"
+                    style={{ background: "rgba(239,68,68,0.90)", backdropFilter: "blur(8px)", boxShadow: "0 8px 24px rgba(239,68,68,0.55)" }}>
+                    <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                    <span className="text-xs font-black text-white uppercase tracking-widest">Yozib olinyapti</span>
+                    <div className="w-16 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.30)" }}>
+                        <div className="h-full bg-white transition-all" style={{ width: `${Math.round(micLevel * 100)}%` }} />
+                    </div>
+                </div>
+            )}
+
+            {/* Katta Record tugma — control panelning eng chapida */}
+            <button onClick={recording ? stopRecording : startRecording}
+                title={recording ? "To'xtatish" : "Karaoke yozib olishni boshlash"}
+                className="absolute left-4 bottom-4 z-20 w-14 h-14 rounded-full flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+                style={{
+                    background: recording ? "linear-gradient(135deg,#EF4444,#DC2626)" : "linear-gradient(135deg,rgba(139,92,246,0.20),rgba(236,72,153,0.20))",
+                    border: recording ? "2px solid #fff" : "2px solid rgba(236,72,153,0.55)",
+                    boxShadow: recording ? "0 8px 24px rgba(239,68,68,0.65)" : "0 4px 16px rgba(139,92,246,0.35)",
+                }}>
+                {recording ? <Square className="w-6 h-6 text-white fill-white" /> : <Circle className="w-6 h-6" style={{ color: "#EC4899", fill: "#EC4899" }} />}
+            </button>
+
+            {/* Result modal — yozib olingandan keyin */}
+            {pendingResult && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center p-4" style={{ background: "rgba(5,8,24,0.90)", backdropFilter: "blur(12px)" }}>
+                    <div className="w-full max-w-md rounded-3xl p-6 flex flex-col gap-4"
+                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(139,92,246,0.35)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}>
+                        {submitted ? (
+                            <div className="flex flex-col items-center gap-3 py-6">
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
+                                    <Sparkles className="w-8 h-8 text-white" />
+                                </div>
+                                <h3 className="text-lg font-black text-white">Ulashildi!</h3>
+                                <p className="text-xs text-center" style={{ color: "rgba(180,150,220,0.80)" }}>
+                                    Sizning karaoke ijrongiz endi Musiqa bo&apos;limida ko&apos;rinadi
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="text-center">
+                                    <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "#EC4899" }}>Sizning ijrongiz</p>
+                                    <h3 className="text-lg font-black text-white">{p.title}</h3>
+                                </div>
+
+                                {/* Score */}
+                                <div className="flex items-center justify-center gap-4 py-4 rounded-2xl"
+                                    style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.10),rgba(236,72,153,0.10))",
+                                        border: "1px solid rgba(236,72,153,0.30)" }}>
+                                    <div className="text-center">
+                                        <p className="text-4xl font-black" style={{
+                                            background: pendingResult.score >= 80 ? "linear-gradient(135deg,#F5B301,#F97316)"
+                                                : pendingResult.score >= 60 ? "linear-gradient(135deg,#00CEC8,#10B981)"
+                                                : "linear-gradient(135deg,#8B5CF6,#EC4899)",
+                                            WebkitBackgroundClip: "text",
+                                            WebkitTextFillColor: "transparent",
+                                        }}>{pendingResult.score}</p>
+                                        <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: "rgba(180,150,220,0.75)" }}>Ball</p>
+                                    </div>
+                                    <div className="text-center border-l pl-4" style={{ borderColor: "rgba(236,72,153,0.25)" }}>
+                                        <p className="text-lg font-black text-white">{Math.round(pendingResult.durationMs / 1000)}s</p>
+                                        <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: "rgba(180,150,220,0.75)" }}>Uzunlik</p>
+                                    </div>
+                                </div>
+
+                                {/* Preview player */}
+                                <audio src={URL.createObjectURL(pendingResult.blob)} controls className="w-full" />
+
+                                {/* Caption */}
+                                <input value={caption} onChange={e => setCaption(e.target.value.slice(0, 300))}
+                                    placeholder="Qanday tuyuldi? (ixtiyoriy izoh)"
+                                    className="w-full h-11 px-3 rounded-xl text-sm text-white outline-none"
+                                    style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.25)", caretColor: "#EC4899" }} />
+
+                                {recError && <p className="text-xs text-red-400 font-bold text-center">{recError}</p>}
+
+                                <div className="flex gap-2">
+                                    <button onClick={() => { setPendingResult(null); setCaption(""); setRecError(null); }} disabled={submitting}
+                                        className="flex-1 h-11 rounded-xl text-sm font-black disabled:opacity-50"
+                                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)", color: "rgba(160,180,230,0.85)" }}>
+                                        Bekor
+                                    </button>
+                                    <button onClick={submitPerformance} disabled={submitting}
+                                        className="flex-1 h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-1.5 disabled:opacity-50"
+                                        style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", boxShadow: "0 8px 24px rgba(236,72,153,0.45)" }}>
+                                        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4" />Ulashish</>}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+            {recError && !pendingResult && (
+                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 px-3 py-1.5 rounded-lg text-[11px] font-bold text-red-400"
+                    style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)" }}>
+                    {recError}
+                </div>
+            )}
 
             {/* Audio element (yashirin) */}
             <audio ref={audioRef} src={audioSrc} preload="auto" autoPlay onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
