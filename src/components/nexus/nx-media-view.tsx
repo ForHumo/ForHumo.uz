@@ -7,6 +7,7 @@ import {
     Film, Music2, Mic2, BookOpen, Headphones, Plus, Play, Loader2,
     Heart, Eye, Clock, Search, Shuffle, X, Tag,
 } from "lucide-react";
+import { NxKaraokePlayer } from "./nx-karaoke-player";
 import { NxTrackCreate } from "./nx-track-create";
 import { formatMoney } from "@/lib/money";
 import { NxVerifiedBadge } from "./nx-verified-badge";
@@ -20,6 +21,7 @@ interface Track {
     id: string; title: string; artist: string | null; audioUrl: string; coverUrl: string | null;
     durationSec: number; kind: string; genre: string | null; plays: number;
     likeCount: number; isLiked: boolean; isMine: boolean; createdAt: string;
+    hasKaraoke?: boolean; videoUrl?: string | null; videoOrientation?: string | null;
     uploader: { name: string | null; username: string | null; verified: boolean; verifiedCategory?: string | null } | null;
 }
 interface KinoVid {
@@ -72,6 +74,7 @@ export function MediaView() {
     const [genres, setGenres] = useState<{ name: string; count: number }[]>([]);
     const [searchResults, setSearchResults] = useState<Track[] | null>(null);
     const [searching, setSearching] = useState(false);
+    const [karaokeTrack, setKaraokeTrack] = useState<Track | null>(null);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -231,7 +234,7 @@ export function MediaView() {
                     <EmptyState icon={Search} title="Natija topilmadi" hint={`"${query}" bo'yicha hech narsa yo'q`} />
                 ) : searchResults ? (
                     <TrackRow title={`"${query}" bo'yicha natijalar`} accent="#00CEC8"
-                        items={searchResults} onPlay={i => playFrom(searchResults, i)} onLike={toggleLike} />
+                        items={searchResults} onPlay={i => playFrom(searchResults, i)} onLike={toggleLike} onKaraoke={setKaraokeTrack} />
                 ) : null
             ) : loading ? (
                 <>
@@ -273,23 +276,35 @@ export function MediaView() {
             ) : (
                 <>
                     <TrackRow title={sub === "music" ? "Top treklar" : sub === "podcast" ? "Mashhur podkastlar" : "Mashhur audiokitoblar"}
-                        accent="#10B981" items={topTracks} onPlay={i => playFrom(topTracks, i)} onLike={toggleLike}
+                        accent="#10B981" items={topTracks} onPlay={i => playFrom(topTracks, i)} onLike={toggleLike} onKaraoke={setKaraokeTrack}
                         empty="Hali trek yo'q — birinchi bo'lib yuklang!" />
-                    <TrackRow title="Yangi qo'shilgan" accent="#00CEC8" items={newTracks} onPlay={i => playFrom(newTracks, i)} onLike={toggleLike} hideIfEmpty />
-                    <TrackRow title="Sevimlilarim" accent="#EF4444" items={likedTracks} onPlay={i => playFrom(likedTracks, i)} onLike={toggleLike} hideIfEmpty />
+                    <TrackRow title="Yangi qo'shilgan" accent="#00CEC8" items={newTracks} onPlay={i => playFrom(newTracks, i)} onLike={toggleLike} onKaraoke={setKaraokeTrack} hideIfEmpty />
+                    <TrackRow title="Sevimlilarim" accent="#EF4444" items={likedTracks} onPlay={i => playFrom(likedTracks, i)} onLike={toggleLike} onKaraoke={setKaraokeTrack} hideIfEmpty />
                 </>
             )}
 
             <NxTrackCreate open={uploadOpen} onClose={() => setUploadOpen(false)} onCreated={load}
                 defaultKind={TAB_KIND[sub] ?? "MUSIC"} />
+            {karaokeTrack && (
+                <NxKaraokePlayer
+                    open={true}
+                    onClose={() => setKaraokeTrack(null)}
+                    trackId={karaokeTrack.id}
+                    title={karaokeTrack.title}
+                    artist={karaokeTrack.artist ?? karaokeTrack.uploader?.name ?? karaokeTrack.uploader?.username ?? null}
+                    cover={karaokeTrack.coverUrl}
+                    audioUrl={karaokeTrack.audioUrl}
+                />
+            )}
         </div>
     );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-function TrackRow({ title, accent, items, onPlay, onLike, empty, hideIfEmpty }: {
+function TrackRow({ title, accent, items, onPlay, onLike, onKaraoke, empty, hideIfEmpty }: {
     title: string; accent: string; items: Track[];
     onPlay: (idx: number) => void; onLike: (t: Track) => void;
+    onKaraoke?: (t: Track) => void;
     empty?: string; hideIfEmpty?: boolean;
 }) {
     if (!items.length && hideIfEmpty) return null;
@@ -322,6 +337,15 @@ function TrackRow({ title, accent, items, onPlay, onLike, empty, hideIfEmpty }: 
                                     style={{ background: "rgba(5,8,24,0.70)", backdropFilter: "blur(6px)" }}>
                                     <Heart className="w-3.5 h-3.5" style={{ color: t.isLiked ? "#EF4444" : "#fff", fill: t.isLiked ? "#EF4444" : "none" }} />
                                 </button>
+                                {/* Karaoke tugma — faqat hasKaraoke bo'lsa */}
+                                {t.hasKaraoke && onKaraoke && (
+                                    <button onClick={e => { e.stopPropagation(); onKaraoke(t); }}
+                                        title="Karaoke"
+                                        className="absolute top-2 left-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black text-white uppercase"
+                                        style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", boxShadow: "0 4px 12px rgba(139,92,246,0.45)" }}>
+                                        <Mic2 className="w-2.5 h-2.5" /> KARAOKE
+                                    </button>
+                                )}
                                 <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold text-white flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.80)" }}>
                                     <Clock className="w-2.5 h-2.5" />{fmtDur(t.durationSec)}
                                 </span>
