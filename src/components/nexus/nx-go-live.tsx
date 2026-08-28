@@ -102,7 +102,7 @@ export function NxGoLive() {
     const lastTsRef = useRef<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const roomRef = useRef<Room | null>(null);
-    const publishedTracksRef = useRef<{ video?: LocalVideoTrack; audio?: LocalAudioTrack }>({});
+    const publishedTracksRef = useRef<{ cam?: LocalVideoTrack; scr?: LocalVideoTrack; audio?: LocalAudioTrack }>({});
     // Modal yopilganda cleanup uchun eng oxirgi qiymatlarni ushlash
     const streamIdRef = useRef<string | null>(null);
     const stageRef = useRef<Stage>("setup");
@@ -138,11 +138,11 @@ export function NxGoLive() {
 
     useEffect(() => {
         mediaRef.current?.getAudioTracks().forEach(t => { t.enabled = micOn; });
-        publishedTracksRef.current.audio?.mediaStreamTrack && (publishedTracksRef.current.audio.mediaStreamTrack.enabled = micOn);
+        if (publishedTracksRef.current.audio?.mediaStreamTrack) publishedTracksRef.current.audio.mediaStreamTrack.enabled = micOn;
     }, [micOn]);
     useEffect(() => {
         mediaRef.current?.getVideoTracks().forEach(t => { t.enabled = camOn; });
-        publishedTracksRef.current.video?.mediaStreamTrack && (publishedTracksRef.current.video.mediaStreamTrack.enabled = camOn);
+        if (publishedTracksRef.current.cam?.mediaStreamTrack) publishedTracksRef.current.cam.mediaStreamTrack.enabled = camOn;
     }, [camOn]);
 
     // ── Reset (yopilganda) — jonli efir aktiv bo'lsa DB'da ham tugatiladi ──
@@ -258,30 +258,21 @@ export function NxGoLive() {
                 recordStartRef.current = Date.now();
             } catch { /* recording xato bo'lsa ham efir boradi */ }
 
-            // LiveKit token
+            // LiveKit token — kamera va ekran alohida track'lar bilan (Batch A: dual-track)
             const tk = await fetch(`/api/nexus/live/${newId}/token`).then(x => x.json()).catch(() => null);
             if (tk?.token && tk?.url) {
                 try {
                     const room = new Room({ adaptiveStream: true, dynacast: true });
                     await room.connect(tk.url, tk.token);
                     roomRef.current = room;
-                    // Composite video track — canvas.captureStream'dan
-                    const videoTrack = studio.stream.getVideoTracks()[0];
                     const audioTrack = mediaRef.current?.getAudioTracks()[0];
-                    if (videoTrack) {
-                        const lv = new LocalVideoTrack(videoTrack);
-                        await room.localParticipant.publishTrack(lv, {
-                            source: Track.Source.Camera,
-                            simulcast: true,
-                            videoEncoding: { maxBitrate: 4_500_000, maxFramerate: 30, priority: "high" },
-                        });
-                        publishedTracksRef.current.video = lv;
-                    }
                     if (audioTrack) {
                         const la = new LocalAudioTrack(audioTrack);
                         await room.localParticipant.publishTrack(la, { source: Track.Source.Microphone });
                         publishedTracksRef.current.audio = la;
                     }
+                    // Kamera va ekran layout bo'yicha alohida publish qilinadi (syncPublishedTracks)
+                    await syncPublishedTracks();
                 } catch (e) {
                     console.warn("[NxGoLive] LiveKit publish xato:", e);
                 }
@@ -299,6 +290,62 @@ export function NxGoLive() {
         } catch { setErr("Tarmoq xatosi"); }
         finally { setStarting(false); }
     }
+
+    // ── Dual-track LiveKit sync (Batch A) ──
+    // Layout va screenOn asosida kamera+ekran alohida track'lar publish/unpublish qilinadi.
+    // Tomoshabin viewer o'zi tartiblashi (PiP pozitsiya, hidesa) uchun composite EMAS.
+    const syncPublishedTracks = useCallback(async () => {
+        const room = roomRef.current;
+        if (!room) return;
+        const lp = room.localParticipant;
+        const refs = publishedTracksRef.current;
+        // Kim kerak?
+        const wantCam = (layout === "solo" || layout === "podcast" || layout === "pip") && !!mediaRef.current;
+        const wantScr = (layout === "pip" || layout === "screen") && !!screenRef.current;
+
+        // Kamera
+        if (wantCam && !refs.cam && mediaRef.current) {
+            const t = mediaRef.current.getVideoTracks()[0];
+            if (t) {
+                try {
+                    const lv = new LocalVideoTrack(t);
+                    await lp.publishTrack(lv, {
+                        source: Track.Source.Camera,
+                        simulcast: true,
+                        videoEncoding: { maxBitrate: 2_500_000, maxFramerate: 30, priority: "high" },
+                    });
+                    refs.cam = lv;
+                } catch { /* ignore */ }
+            }
+        } else if (!wantCam && refs.cam) {
+            try { await lp.unpublishTrack(refs.cam.mediaStreamTrack, true); } catch { /* ignore */ }
+            refs.cam = undefined;
+        }
+
+        // Screen share
+        if (wantScr && !refs.scr && screenRef.current) {
+            const t = screenRef.current.getVideoTracks()[0];
+            if (t) {
+                try {
+                    const lv = new LocalVideoTrack(t);
+                    await lp.publishTrack(lv, {
+                        source: Track.Source.ScreenShare,
+                        simulcast: true,
+                        videoEncoding: { maxBitrate: 4_500_000, maxFramerate: 30, priority: "high" },
+                    });
+                    refs.scr = lv;
+                } catch { /* ignore */ }
+            }
+        } else if (!wantScr && refs.scr) {
+            try { await lp.unpublishTrack(refs.scr.mediaStreamTrack, true); } catch { /* ignore */ }
+            refs.scr = undefined;
+        }
+    }, [layout]);
+
+    // Layout yoki screenOn o'zgarganda track'larni qayta sinxronlash
+    useEffect(() => {
+        if (stage === "live") { syncPublishedTracks().catch(() => { }); }
+    }, [layout, screenOn, stage, syncPublishedTracks]);
 
     // Screen share toggle
     async function toggleScreen() {
@@ -327,7 +374,7 @@ export function NxGoLive() {
     async function disconnectLiveKit() {
         try { await roomRef.current?.disconnect(); } catch { /* ignore */ }
         roomRef.current = null;
-        publishedTracksRef.current = {};
+        publishedTracksRef.current = { cam: undefined, scr: undefined, audio: undefined };
     }
 
     async function endLive() {

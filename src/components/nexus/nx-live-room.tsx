@@ -6,6 +6,7 @@ import {
     X, Radio, Eye, Send, Loader2, StopCircle, Clock, CalendarClock, Gift,
     Volume2, VolumeX, Volume1, Play, Pause, Maximize2, Minimize2,
     MessageSquare, MessageSquareOff, Share2, Settings, Check, ChevronLeft, ChevronRight,
+    Camera, EyeOff, Move,
 } from "lucide-react";
 import { Room, RoomEvent, Track, VideoQuality, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant, type RemoteVideoTrack } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
@@ -49,10 +50,20 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [currency, setCurrency] = useState<Currency>("UZS");
     const lastTsRef = useRef<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
-    const videoElRef = useRef<HTMLVideoElement>(null);
+    const videoElRef = useRef<HTMLVideoElement>(null);       // Asosiy — screen (yoki solo camera)
+    const camPipElRef = useRef<HTMLVideoElement>(null);      // PiP — kamera
     const audioElRef = useRef<HTMLAudioElement>(null);
     const roomRef = useRef<Room | null>(null);
     const [hasRemoteVideo, setHasRemoteVideo] = useState(false);
+    const [hasScreen, setHasScreen] = useState(false);
+    const [hasCamera, setHasCamera] = useState(false);
+    // Viewer PiP tartibi (Batch A + D: viewer o'zi joylashtiradi)
+    type PipCorner = "br" | "bl" | "tr" | "tl";
+    type PipSize = "sm" | "md" | "lg";
+    const [pipVisible, setPipVisible] = useState(true);
+    const [pipCorner, setPipCorner] = useState<PipCorner>("br");
+    const [pipSize, setPipSize] = useState<PipSize>("md");
+    const [pipDrag, setPipDrag] = useState<{ x: number; y: number; corner: PipCorner } | null>(null);
     // Player controls
     const [volume, setVolume] = useState(1);         // 0..1
     const [muted, setMuted] = useState(false);
@@ -152,30 +163,49 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 if (cancelled || !tk?.token || !tk?.url) return;
                 const room = new Room({ adaptiveStream: true, dynacast: true });
 
+                // Batch A: Screen va Camera alohida track'lar sifatida keladi.
+                // Screen → asosiy videoElRef, Camera → camPipElRef (agar screen ham bor bo'lsa) yoki asosiy (solo).
+                const attachVideoTo = (track: RemoteTrack, el: HTMLVideoElement | null, pub: RemoteTrackPublication) => {
+                    if (!el) return;
+                    track.attach(el);
+                    remoteVideoTrackRef.current = track as RemoteVideoTrack;
+                    remoteVideoPubRef.current = pub;
+                    const applyRes = () => {
+                        const w = el.videoWidth, h = el.videoHeight;
+                        if (w && h) setAvailableRes({ w, h });
+                    };
+                    el.addEventListener("loadedmetadata", applyRes);
+                    el.addEventListener("resize", applyRes);
+                    applyRes();
+                };
                 const onTrackSubscribed = (track: RemoteTrack, pub: RemoteTrackPublication, _p: RemoteParticipant) => {
-                    if (track.kind === Track.Kind.Video && videoElRef.current) {
-                        track.attach(videoElRef.current);
+                    if (track.kind === Track.Kind.Video) {
                         setHasRemoteVideo(true);
-                        remoteVideoTrackRef.current = track as RemoteVideoTrack;
-                        remoteVideoPubRef.current = pub;
-                        const el = videoElRef.current;
-                        const applyRes = () => {
-                            const w = el.videoWidth, h = el.videoHeight;
-                            if (w && h) setAvailableRes({ w, h });
-                        };
-                        el.addEventListener("loadedmetadata", applyRes);
-                        el.addEventListener("resize", applyRes);
-                        applyRes();
+                        if (pub.source === Track.Source.ScreenShare) {
+                            attachVideoTo(track, videoElRef.current, pub);
+                            setHasScreen(true);
+                        } else {
+                            // Camera — agar screen ham keladigan bo'lsa PiP element'ga,
+                            // aks holda main element'ga
+                            const hasScr = !!videoElRef.current?.srcObject;
+                            if (hasScr) attachVideoTo(track, camPipElRef.current, pub);
+                            else attachVideoTo(track, videoElRef.current, pub);
+                            setHasCamera(true);
+                        }
                     } else if (track.kind === Track.Kind.Audio && audioElRef.current) {
                         track.attach(audioElRef.current);
                     }
                 };
-                const onTrackUnsubscribed = (track: RemoteTrack) => {
-                    // React boshqaradigan element'ni DOM'dan olib tashlamaymiz —
-                    // faqat track detach; element ref keyingi subscribe uchun mavjud qoladi.
-                    if (track.kind === Track.Kind.Video && videoElRef.current) {
-                        track.detach(videoElRef.current);
-                        setHasRemoteVideo(false);
+                const onTrackUnsubscribed = (track: RemoteTrack, pub: RemoteTrackPublication) => {
+                    if (track.kind === Track.Kind.Video) {
+                        if (pub.source === Track.Source.ScreenShare) {
+                            if (videoElRef.current) track.detach(videoElRef.current);
+                            setHasScreen(false);
+                        } else {
+                            if (camPipElRef.current) track.detach(camPipElRef.current);
+                            if (videoElRef.current) track.detach(videoElRef.current);
+                            setHasCamera(false);
+                        }
                         remoteVideoTrackRef.current = null;
                     } else if (track.kind === Track.Kind.Audio && audioElRef.current) {
                         track.detach(audioElRef.current);
@@ -203,6 +233,8 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
             try { roomRef.current?.disconnect(); } catch { /* ignore */ }
             roomRef.current = null;
             setHasRemoteVideo(false);
+            setHasScreen(false);
+            setHasCamera(false);
         };
     }, [stream?.status, streamId]);
 
@@ -286,6 +318,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
             else if (e.key === "m" || e.key === "M") { setMuted(m => !m); pokeControls(); }
             else if (e.key === "f" || e.key === "F") { toggleFullscreen(); }
             else if (e.key === "c" || e.key === "C") { setChatOpen(o => !o); }
+            else if (e.key === "v" || e.key === "V") { setPipVisible(v => !v); pokeControls(); }
             else if (e.key === "Escape" && !fullscreen) { onClose(); }
             else if (e.key === "ArrowUp") { setVolume(v => Math.min(1, v + 0.05)); pokeControls(); }
             else if (e.key === "ArrowDown") { setVolume(v => Math.max(0, v - 0.05)); pokeControls(); }
@@ -407,7 +440,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 onTouchMove={swipeMoveHandler}
                 onTouchEnd={swipeEndHandler}
                 className="flex-1 bg-black flex items-center justify-center min-h-0 relative group/stage select-none">
-                {/* Yagona video element — LIVE'da LiveKit attach, ENDED'da recording src */}
+                {/* Asosiy video (Screen — pip mode, yoki Solo camera) */}
                 <video ref={videoElRef}
                     autoPlay playsInline
                     src={stream?.status === "ENDED" && stream?.recordingUrl ? stream.recordingUrl : undefined}
@@ -415,6 +448,71 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     className="absolute inset-0 w-full h-full object-contain"
                     style={{ display: (isLive && hasRemoteVideo) || (stream?.status === "ENDED" && !!stream?.recordingUrl) ? "block" : "none" }} />
                 <audio ref={audioElRef} autoPlay />
+
+                {/* PiP kamera — faqat screen + camera bo'lganda, viewer o'zi joylashtiradi */}
+                {isLive && hasScreen && hasCamera && pipVisible && (
+                    <div
+                        onPointerDown={e => {
+                            const target = e.currentTarget as HTMLElement;
+                            target.setPointerCapture(e.pointerId);
+                            setPipDrag({ x: e.clientX, y: e.clientY, corner: pipCorner });
+                        }}
+                        onPointerMove={e => {
+                            if (!pipDrag) return;
+                            const dx = e.clientX - pipDrag.x;
+                            const dy = e.clientY - pipDrag.y;
+                            if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
+                            // Snap to nearest corner based on final pointer position within stage
+                            const stage = stageRef.current;
+                            if (!stage) return;
+                            const rect = stage.getBoundingClientRect();
+                            const relX = e.clientX - rect.left, relY = e.clientY - rect.top;
+                            const nx = relX < rect.width / 2 ? "l" : "r";
+                            const ny = relY < rect.height / 2 ? "t" : "b";
+                            setPipCorner((ny + nx) as PipCorner);
+                        }}
+                        onPointerUp={() => setPipDrag(null)}
+                        onDoubleClick={() => setPipSize(s => s === "sm" ? "md" : s === "md" ? "lg" : "sm")}
+                        className={`absolute z-20 rounded-xl overflow-hidden cursor-move transition-all duration-200 animate-in fade-in ${
+                            pipCorner === "br" ? "bottom-20 right-4" :
+                            pipCorner === "bl" ? "bottom-20 left-4" :
+                            pipCorner === "tr" ? "top-20 right-4" :
+                            "top-20 left-4"
+                        } ${pipSize === "sm" ? "w-32 h-20" : pipSize === "md" ? "w-48 h-28" : "w-64 h-40"}`}
+                        style={{
+                            border: "2px solid rgba(255,255,255,0.35)",
+                            boxShadow: "0 12px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,206,200,0.25)",
+                            background: "#000",
+                            touchAction: "none",
+                        }}
+                        title="Sudrab joylashtiring · 2× bosing — o'lcham"
+                    >
+                        <video ref={camPipElRef} autoPlay playsInline muted
+                            className="w-full h-full object-cover pointer-events-none" />
+                        {/* PiP mini controls (hover'da) */}
+                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover/stage:opacity-100 transition-opacity">
+                            <button onClick={e => { e.stopPropagation(); setPipVisible(false); }}
+                                className="w-6 h-6 flex items-center justify-center rounded-md"
+                                style={{ background: "rgba(0,0,0,0.75)" }} title="Yashirish (V)">
+                                <EyeOff className="w-3 h-3 text-white" />
+                            </button>
+                        </div>
+                        <div className="absolute bottom-1 left-1 opacity-0 group-hover/stage:opacity-100 transition-opacity flex items-center gap-1 px-1.5 py-0.5 rounded-md" style={{ background: "rgba(0,0,0,0.75)" }}>
+                            <Move className="w-2.5 h-2.5 text-white/70" />
+                            <span className="text-[8px] font-black text-white/85">SUDRAB</span>
+                        </div>
+                    </div>
+                )}
+
+                {/* PiP yashirilgan bo'lsa — qayta ko'rsatish tugmasi */}
+                {isLive && hasScreen && hasCamera && !pipVisible && (
+                    <button onClick={() => setPipVisible(true)}
+                        className="absolute bottom-20 right-4 z-20 h-10 px-3 flex items-center gap-1.5 rounded-full active:scale-95 transition"
+                        style={{ background: "rgba(0,206,200,0.30)", backdropFilter: "blur(8px)", border: "1px solid rgba(0,206,200,0.55)" }}>
+                        <Camera className="w-3.5 h-3.5 text-white" />
+                        <span className="text-[10px] font-black text-white">Kamerani ko&apos;rsat</span>
+                    </button>
+                )}
 
                 {/* Swipe hint arrows */}
                 {swipeHint && (
@@ -551,7 +649,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             )}
                             <div className="flex-1" />
                             <span className="hidden md:inline text-[10px] font-black px-2 py-1 rounded-md" style={{ color: "rgba(255,255,255,0.75)", background: "rgba(0,0,0,0.4)" }}>
-                                Space · M · F · C
+                                Space · M · F · C{hasScreen && hasCamera ? " · V" : ""}
                             </span>
                         </div>
                     </div>
