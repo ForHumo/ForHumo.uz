@@ -10,6 +10,7 @@ import {
     Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
     BadgeCheck, Image as ImgIcon, Loader2, Trash2, Send, X, Flag,
     MapPin, Lock, Users, BarChart2, CheckCircle2, Star, Pencil,
+    ArrowUp, RefreshCw, Compass, UserPlus, Sparkles,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxVerifiedBadge } from "./nx-verified-badge";
@@ -67,6 +68,17 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
     const [sending, setSending] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
 
+    // ── Yangi postlar bildirishi (H-3) ──
+    const [newCount, setNewCount] = useState(0);
+    const [refreshing, setRefreshing] = useState(false);
+    const topPostIdRef = useRef<string | null>(null);
+
+    // ── Pull-to-refresh (H-2) ──
+    const pullYRef = useRef<number>(0);
+    const [pullOffset, setPullOffset] = useState(0);
+    const [pullActive, setPullActive] = useState(false);
+    const scrollerRef = useRef<HTMLDivElement>(null);
+
     const loadFirst = useCallback(async () => {
         setLoading(true);
         if (postId) {
@@ -84,10 +96,57 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
         const data = await fetch(url).then(r => r.json());
         const list: Post[] = data.posts ?? [];
         setPosts(list); setOffset(list.length); setHasMore(data.hasMore ?? false);
+        topPostIdRef.current = list[0]?.id ?? null;
+        setNewCount(0);
         setLoading(false);
     }, [tab, authorUsername, tag, postId]);
 
     useEffect(() => { loadFirst(); }, [loadFirst]);
+
+    // ── Yangi post pollingi (H-3) — faqat umumiy feed ──
+    useEffect(() => {
+        if (profileMode) return;
+        const iv = setInterval(async () => {
+            try {
+                const url = `/api/nexus/posts?tab=${tab}&limit=5&offset=0`;
+                const d = await fetch(url).then(r => r.json());
+                const list: Post[] = d.posts ?? [];
+                const topId = topPostIdRef.current;
+                if (!topId) { topPostIdRef.current = list[0]?.id ?? null; return; }
+                let count = 0;
+                for (const p of list) { if (p.id === topId) break; count++; }
+                if (count > 0) setNewCount(prev => Math.max(prev, count));
+            } catch { /* jim */ }
+        }, 25_000);
+        return () => clearInterval(iv);
+    }, [tab, profileMode]);
+
+    async function refreshTop() {
+        setRefreshing(true);
+        await loadFirst();
+        setRefreshing(false);
+        if (scrollerRef.current) scrollerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    // ── Pull-to-refresh handlers (H-2) ──
+    const onTouchStart = useCallback((e: React.TouchEvent) => {
+        const el = scrollerRef.current;
+        if (!el || el.scrollTop > 0 || profileMode) return;
+        pullYRef.current = e.touches[0].clientY;
+        setPullActive(true);
+    }, [profileMode]);
+    const onTouchMove = useCallback((e: React.TouchEvent) => {
+        if (!pullActive) return;
+        const dy = e.touches[0].clientY - pullYRef.current;
+        if (dy > 0) setPullOffset(Math.min(80, dy * 0.5));
+    }, [pullActive]);
+    const onTouchEnd = useCallback(() => {
+        if (!pullActive) return;
+        setPullActive(false);
+        if (pullOffset > 55) refreshTop();
+        setPullOffset(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pullActive, pullOffset]);
 
     async function loadMore() {
         setLoadingMore(true);
@@ -143,7 +202,10 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
     useEffect(() => {
         const h = (e: Event) => {
             const post = (e as CustomEvent).detail as Post | undefined;
-            if (post && !profileMode) setPosts(prev => [post, ...prev]);
+            if (post && !profileMode) {
+                setPosts(prev => [post, ...prev]);
+                topPostIdRef.current = post.id;
+            }
         };
         window.addEventListener("nexus:post-created", h);
         return () => window.removeEventListener("nexus:post-created", h);
@@ -172,16 +234,51 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                 body: JSON.stringify({ text: postText, media }),
             });
             const d = await res.json();
-            if (res.ok) { setPosts(prev => [d.post, ...prev]); setPostText(""); setMedia([]); }
+            if (res.ok) {
+                setPosts(prev => [d.post, ...prev]);
+                topPostIdRef.current = d.post?.id ?? topPostIdRef.current;
+                setPostText(""); setMedia([]);
+            }
         } finally { setSending(false); }
     }
 
     return (
-        <div className="max-w-2xl mx-auto">
+        <div
+            ref={scrollerRef}
+            className="max-w-2xl mx-auto"
+            onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+            style={{ transform: pullOffset > 0 ? `translate3d(0,${pullOffset}px,0)` : undefined, transition: pullActive ? "none" : "transform 200ms ease-out" }}
+        >
+            {/* Pull-to-refresh indicator (H-2) */}
+            {(pullOffset > 0 || refreshing) && (
+                <div className="absolute left-0 right-0 flex justify-center pointer-events-none" style={{ top: -50, height: 50 }}>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+                        style={{ background: "rgba(8,14,32,0.90)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                        <RefreshCw className={`w-3.5 h-3.5 ${refreshing || pullOffset > 55 ? "animate-spin" : ""}`}
+                            style={{ color: "#00CEC8", transform: !refreshing && pullOffset <= 55 ? `rotate(${pullOffset * 4}deg)` : undefined }} />
+                        <span className="text-[10px] font-black" style={{ color: "rgba(200,215,245,0.90)" }}>
+                            {refreshing ? "Yangilanmoqda..." : pullOffset > 55 ? "Qo'yib yuboring" : "Pastga torting"}
+                        </span>
+                    </div>
+                </div>
+            )}
+
+            {/* NEW POSTS ↑ chip (H-3) */}
+            {!profileMode && newCount > 0 && (
+                <div className="sticky top-2 z-30 flex justify-center pointer-events-none">
+                    <button onClick={refreshTop}
+                        className="pointer-events-auto flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[11px] font-black text-white nx-pop shadow-lg active:scale-95"
+                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 6px 20px rgba(43,62,232,0.45)" }}>
+                        <ArrowUp className="w-3.5 h-3.5" />
+                        {newCount === 1 ? "1 yangi post" : `${newCount}+ yangi post`}
+                    </button>
+                </div>
+            )}
+
             {/* ── Tab (faqat umumiy feed va tashqi controlled emas) ── */}
             {!profileMode && !hideTabBar && (
-            <div className="flex gap-0 mx-4 mt-4 mb-3 rounded-2xl overflow-hidden"
-                style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.18)" }}>
+            <div className="sticky top-0 z-20 flex gap-0 mx-4 mt-4 mb-3 rounded-2xl overflow-hidden backdrop-blur-md"
+                style={{ background: "rgba(8,14,32,0.85)", border: "1px solid rgba(43,62,232,0.18)" }}>
                 {(["foryou", "following", "explore"] as const).map(t => (
                     <button key={t} onClick={() => setTab(t)}
                         className="flex-1 py-2.5 text-xs font-black transition-all duration-200"
@@ -240,16 +337,11 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
 
             {/* ── Postlar ── */}
             {loading ? (
-                <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: "#2B3EE8" }} /></div>
-            ) : posts.length === 0 ? (
-                <div className="text-center py-16 px-4">
-                    <p className="text-sm font-bold text-white/70 mb-1">{profileMode ? "Hali post yo'q" : tab === "following" ? "Obunalaringizdan post yo'q" : "Hali post yo'q"}</p>
-                    {!profileMode && (
-                        <p className="text-xs" style={{ color: "rgba(80,100,150,0.75)" }}>
-                            {tab === "following" ? "Odamlarni kuzating yoki Kashfiyotga o'ting" : "Birinchi bo'lib post ulashing!"}
-                        </p>
-                    )}
+                <div className="flex flex-col gap-3 px-4 pb-4">
+                    {[0,1,2].map(i => <PostSkeleton key={i} />)}
                 </div>
+            ) : posts.length === 0 ? (
+                <EmptyState tab={tab} profileMode={profileMode} />
             ) : (
                 <div className="flex flex-col gap-3 px-4 pb-4">
                     {posts.map(p => (
@@ -651,6 +743,98 @@ function ActionBtn({ icon: Icon, count, onClick }: { icon: React.ElementType; co
             <Icon ref={iconRef as React.Ref<SVGSVGElement>} className="w-4 h-4 flex-shrink-0" />
             {formatCount(count)}
         </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Skeleton kartochka (H-4)
+// ─────────────────────────────────────────────────────────────────────────────
+function PostSkeleton() {
+    return (
+        <div className="rounded-2xl overflow-hidden animate-pulse"
+            style={{ background: "rgba(8,14,32,0.60)", border: "1px solid rgba(43,62,232,0.12)" }}>
+            <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+                <div className="w-10 h-10 rounded-2xl" style={{ background: "rgba(43,62,232,0.15)" }} />
+                <div className="flex-1 space-y-1.5">
+                    <div className="h-2.5 rounded" style={{ background: "rgba(43,62,232,0.15)", width: "40%" }} />
+                    <div className="h-2 rounded" style={{ background: "rgba(43,62,232,0.10)", width: "25%" }} />
+                </div>
+            </div>
+            <div className="px-4 pb-3 space-y-2">
+                <div className="h-3 rounded" style={{ background: "rgba(43,62,232,0.12)" }} />
+                <div className="h-3 rounded" style={{ background: "rgba(43,62,232,0.12)", width: "80%" }} />
+                <div className="h-3 rounded" style={{ background: "rgba(43,62,232,0.12)", width: "60%" }} />
+            </div>
+            <div className="mx-4 mb-3 h-40 rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }} />
+            <div className="flex items-center gap-3 px-4 pb-3 pt-1">
+                <div className="h-7 w-14 rounded-lg" style={{ background: "rgba(43,62,232,0.10)" }} />
+                <div className="h-7 w-14 rounded-lg" style={{ background: "rgba(43,62,232,0.10)" }} />
+                <div className="h-7 w-14 rounded-lg" style={{ background: "rgba(43,62,232,0.10)" }} />
+            </div>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bo'sh holat (H-5) — tab'ga qarab boshqa xabar
+// ─────────────────────────────────────────────────────────────────────────────
+function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explore"; profileMode: boolean }) {
+    if (profileMode) {
+        return (
+            <div className="text-center py-16 px-4">
+                <div className="w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center"
+                    style={{ background: "rgba(43,62,232,0.10)" }}>
+                    <MessageCircle className="w-6 h-6" style={{ color: "rgba(140,160,210,0.75)" }} />
+                </div>
+                <p className="text-sm font-black text-white/85 mb-1">Hali post yo&apos;q</p>
+                <p className="text-xs" style={{ color: "rgba(80,100,150,0.75)" }}>Bu foydalanuvchi hali post ulashmagan.</p>
+            </div>
+        );
+    }
+    if (tab === "following") {
+        return (
+            <div className="text-center py-14 px-6">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+                    style={{ background: "linear-gradient(135deg,rgba(43,62,232,0.15),rgba(0,206,200,0.15))", border: "1px solid rgba(43,62,232,0.25)" }}>
+                    <UserPlus className="w-7 h-7" style={{ color: "#00CEC8" }} />
+                </div>
+                <p className="text-base font-black text-white mb-2">Obunalar bo&apos;sh</p>
+                <p className="text-xs mb-4" style={{ color: "rgba(140,160,210,0.85)" }}>
+                    Kuzatgan odamlaringizdan hali post yo&apos;q. Qiziqarli mualliflarni Kashfiyot tabidan toping.
+                </p>
+                <a href="#" onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent("nexus:open-explore")); }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-white active:scale-95"
+                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                    <Compass className="w-3.5 h-3.5" /> Kashfiyotga o&apos;tish
+                </a>
+            </div>
+        );
+    }
+    if (tab === "explore") {
+        return (
+            <div className="text-center py-14 px-6">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+                    style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.15),rgba(0,206,200,0.15))", border: "1px solid rgba(139,92,246,0.25)" }}>
+                    <Compass className="w-7 h-7" style={{ color: "#8B5CF6" }} />
+                </div>
+                <p className="text-base font-black text-white mb-2">Trending hali bo&apos;sh</p>
+                <p className="text-xs" style={{ color: "rgba(140,160,210,0.85)" }}>
+                    Bugun trending postlar hali to&apos;planmagan. Birinchi bo&apos;lib mavzu boshlang!
+                </p>
+            </div>
+        );
+    }
+    return (
+        <div className="text-center py-14 px-6">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+                style={{ background: "linear-gradient(135deg,rgba(43,62,232,0.15),rgba(0,206,200,0.15))", border: "1px solid rgba(43,62,232,0.25)" }}>
+                <Sparkles className="w-7 h-7" style={{ color: "#00CEC8" }} />
+            </div>
+            <p className="text-base font-black text-white mb-2">Feed bo&apos;sh</p>
+            <p className="text-xs" style={{ color: "rgba(140,160,210,0.85)" }}>
+                Birinchi bo&apos;lib post ulashing yoki qiziqarli odamlarni kuzata boshlang.
+            </p>
+        </div>
     );
 }
 
