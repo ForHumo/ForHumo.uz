@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Eye, ThumbsUp, Share2, Loader2, Send, BadgeCheck,
     MessageSquare, UserPlus, UserCheck, Play, Trash2, Lock, Coins,
-    ChevronLeft, ChevronRight,
+    ChevronLeft, ChevronRight, Gauge, PlayCircle,
 } from "lucide-react";
 import { formatMoney } from "@/lib/money";
 
@@ -52,8 +52,38 @@ export function NxVideoPlayer() {
     const [cBusy, setCBusy] = useState(false);
     const [buying, setBuying] = useState(false);
     const [buyErr, setBuyErr] = useState<string | null>(null);
+    const [speed, setSpeed] = useState<number>(1);
+    const [speedOpen, setSpeedOpen] = useState(false);
+    const [autoplay, setAutoplay] = useState<boolean>(() => {
+        if (typeof window === "undefined") return true;
+        try { return localStorage.getItem("nx-video-autoplay") !== "0"; } catch { return true; }
+    });
+    const videoRef = useRef<HTMLVideoElement>(null);
 
     const vid = video?.id ?? null;
+
+    // Persist autoplay toggle
+    useEffect(() => {
+        try { localStorage.setItem("nx-video-autoplay", autoplay ? "1" : "0"); } catch { /* jim */ }
+    }, [autoplay]);
+
+    // Apply playback rate whenever it changes (or video reloads)
+    useEffect(() => {
+        if (videoRef.current) videoRef.current.playbackRate = speed;
+    }, [speed, data?.videoUrl]);
+
+    // Video tugagach — autoplay bo'lsa keyingi recommended'ni ochish
+    function handleEnded() {
+        if (!autoplay) return;
+        const nx = rec[0];
+        if (!nx) return;
+        openVideo({
+            id: nx.id, title: nx.title, image: nx.thumbUrl || "",
+            author: nx.author?.name || nx.author?.username || "Foydalanuvchi",
+            avatar: nx.author?.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(nx.author?.username || "u")}`,
+            views: fmtViews(nx.views), duration: fmtDur(nx.durationSec),
+        });
+    }
 
     const loadDetail = useCallback(() => {
         if (!vid) return;
@@ -154,8 +184,41 @@ export function NxVideoPlayer() {
                         </div>
                     </div>
                 ) : data?.videoUrl ? (
-                    <video key={data.id} src={data.videoUrl} poster={data.thumbUrl || undefined} controls autoPlay playsInline
-                        className="w-full h-full max-h-screen object-contain" />
+                    <div className="relative w-full h-full flex items-center justify-center">
+                        <video ref={videoRef} key={data.id} src={data.videoUrl} poster={data.thumbUrl || undefined} controls autoPlay playsInline
+                            onEnded={handleEnded}
+                            className="w-full h-full max-h-screen object-contain" />
+                        {/* Playback speed + autoplay toggle (V-4, V-5) */}
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5 z-20">
+                            <div className="relative">
+                                <button onClick={() => setSpeedOpen(o => !o)}
+                                    className="flex items-center gap-1 h-8 px-2.5 rounded-lg text-[11px] font-black text-white"
+                                    style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                                    <Gauge className="w-3 h-3" />{speed === 1 ? "1x" : `${speed}x`}
+                                </button>
+                                {speedOpen && (
+                                    <div className="absolute top-9 left-0 z-30 rounded-lg overflow-hidden"
+                                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(43,62,232,0.25)", boxShadow: "0 8px 24px rgba(0,0,0,0.6)" }}>
+                                        {[0.5, 0.75, 1, 1.25, 1.5, 2].map(s => (
+                                            <button key={s} onClick={() => { setSpeed(s); setSpeedOpen(false); }}
+                                                className="block w-full px-4 py-1.5 text-[11px] font-bold text-left whitespace-nowrap"
+                                                style={{ color: s === speed ? "#00CEC8" : "#fff",
+                                                    background: s === speed ? "rgba(0,206,200,0.10)" : "transparent" }}>
+                                                {s}x{s === speed ? " ✓" : ""}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <button onClick={() => setAutoplay(a => !a)} title={autoplay ? "Avto-o'ynatish yoqilgan" : "Avto-o'ynatish o'chirilgan"}
+                                className="flex items-center gap-1 h-8 px-2.5 rounded-lg text-[11px] font-black text-white"
+                                style={{ background: autoplay ? "rgba(0,206,200,0.20)" : "rgba(5,8,24,0.75)",
+                                    backdropFilter: "blur(8px)",
+                                    border: `1px solid ${autoplay ? "rgba(0,206,200,0.45)" : "rgba(43,62,232,0.30)"}` }}>
+                                <PlayCircle className="w-3 h-3" />Auto
+                            </button>
+                        </div>
+                    </div>
                 ) : loading ? (
                     <Loader2 className="w-10 h-10 animate-spin text-white/60" />
                 ) : video.image ? (

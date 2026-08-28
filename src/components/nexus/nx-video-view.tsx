@@ -53,6 +53,8 @@ function fmtViews(n: number) {
 function fmtDur(s: number) { const m = Math.floor(s / 60), sec = Math.floor(s % 60); return `${m}:${String(sec).padStart(2, "0")}`; }
 function avatarOf(a: VAuthor | null) { return a?.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(a?.username || a?.name || "u")}`; }
 
+const PAGE = 30;
+
 export function VideoView() {
     const { openVideo, openShorts } = useNxPlayer();
     const [section, setSection] = useState<SectionId>("all");
@@ -61,10 +63,25 @@ export function VideoView() {
     const [lib, setLib] = useState<Library | null>(null);
     const [libErr, setLibErr] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(false);
     const [query, setQuery] = useState("");
     const [sort, setSort] = useState<"trend" | "new">("trend");
     const [cat, setCat] = useState("");
     const [uploadOpen, setUploadOpen] = useState(false);
+
+    function buildParams(offset: number) {
+        const params = new URLSearchParams({ limit: String(PAGE), offset: String(offset), sort });
+        if (query.trim()) params.set("q", query.trim());
+        if (section === "kino") params.set("category", "kino");
+        else if (section === "musiqa") params.set("category", "musiqa");
+        else if (cat) params.set("category", cat);
+        if (section === "gvideo") params.set("orientation", "HORIZONTAL");
+        if (section === "vvideo") params.set("orientation", "VERTICAL");
+        if (section === "free") params.set("free", "1");
+        if (section === "subs") params.set("scope", "following");
+        return params;
+    }
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -73,21 +90,28 @@ export function VideoView() {
                 const r = await fetch("/api/nexus/videos/library");
                 if (r.ok) { setLib(await r.json()); setLibErr(false); }
                 else { setLib(null); setLibErr(true); }
+                setHasMore(false);
                 return;
             }
-            const params = new URLSearchParams({ limit: "60", sort });
-            if (query.trim()) params.set("q", query.trim());
-            if (section === "kino") params.set("category", "kino");
-            else if (section === "musiqa") params.set("category", "musiqa");
-            else if (cat) params.set("category", cat);
-            if (section === "gvideo") params.set("orientation", "HORIZONTAL");
-            if (section === "vvideo") params.set("orientation", "VERTICAL");
-            if (section === "free") params.set("free", "1");
-            if (section === "subs") params.set("scope", "following");
+            const params = buildParams(0);
             const d = await fetch(`/api/nexus/videos?${params.toString()}`).then(r => r.json());
             setVideos(d.videos ?? []);
+            setHasMore(!!d.hasMore);
         } finally { setLoading(false); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [section, query, sort, cat]);
+
+    async function loadMore() {
+        if (loadingMore || !hasMore) return;
+        setLoadingMore(true);
+        try {
+            const params = buildParams(videos.length);
+            const d = await fetch(`/api/nexus/videos?${params.toString()}`).then(r => r.json());
+            const list: Vid[] = d.videos ?? [];
+            setVideos(prev => [...prev, ...list]);
+            setHasMore(!!d.hasMore);
+        } finally { setLoadingMore(false); }
+    }
 
     useEffect(() => { const t = setTimeout(load, query ? 300 : 0); return () => clearTimeout(t); }, [load, query]);
     useEffect(() => {
@@ -214,20 +238,41 @@ export function VideoView() {
 
                     {/* Grid */}
                     {loading ? (
-                        <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                        section === "vvideo" ? (
+                            <div className="px-4 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                                {Array.from({ length: 12 }).map((_, i) => <VSkeleton key={i} />)}
+                            </div>
+                        ) : (
+                            <div className="px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {Array.from({ length: 6 }).map((_, i) => <HSkeleton key={i} />)}
+                            </div>
+                        )
                     ) : videos.length === 0 ? (
                         <EmptyState icon={Film}
                             title={query ? "Video topilmadi" : section === "subs" ? "Obunalaringizda video yo'q" : "Hali video yo'q"}
                             hint={section === "subs" ? "Kanallarga obuna bo'ling — videolari shu yerda chiqadi" : undefined}
                             action={!query && section === "all" ? <button onClick={() => setUploadOpen(true)} className="mt-1 px-4 py-2 rounded-xl text-xs font-black text-white" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>Birinchi videoni yuklang</button> : undefined} />
-                    ) : section === "vvideo" ? (
-                        <div className="px-4 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-                            {videos.map(v => <VCard key={v.id} v={v} onOpen={() => openItem(v, videos)} onSave={() => toggleSave(v)} />)}
-                        </div>
                     ) : (
-                        <div className="px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {videos.map(v => <HCard key={v.id} v={v} onOpen={() => openItem(v, videos)} onSave={() => toggleSave(v)} />)}
-                        </div>
+                        <>
+                            {section === "vvideo" ? (
+                                <div className="px-4 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                                    {videos.map(v => <VCard key={v.id} v={v} onOpen={() => openItem(v, videos)} onSave={() => toggleSave(v)} />)}
+                                </div>
+                            ) : (
+                                <div className="px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {videos.map(v => <HCard key={v.id} v={v} onOpen={() => openItem(v, videos)} onSave={() => toggleSave(v)} />)}
+                                </div>
+                            )}
+                            {hasMore && (
+                                <div className="flex justify-center mt-6 px-4">
+                                    <button onClick={loadMore} disabled={loadingMore}
+                                        className="px-6 py-2.5 rounded-xl text-xs font-black text-white active:scale-95 transition disabled:opacity-50"
+                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 16px rgba(43,62,232,0.35)" }}>
+                                        {loadingMore ? <><Loader2 className="w-3.5 h-3.5 animate-spin inline mr-1.5" />Yuklanmoqda</> : "Ko'proq video"}
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )}
                 </>
             )}
@@ -340,6 +385,27 @@ function LibRow({ icon: Icon, title, items, onOpen, onSave, empty, action }: {
                 </div>
             )}
         </div>
+    );
+}
+
+// Skeleton kartochkalar (V-2)
+function HSkeleton() {
+    return (
+        <div className="animate-pulse">
+            <div className="aspect-video rounded-xl mb-2" style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.12)" }} />
+            <div className="flex gap-2.5">
+                <div className="w-8 h-8 rounded-full flex-shrink-0" style={{ background: "rgba(43,62,232,0.15)" }} />
+                <div className="flex-1 space-y-1.5">
+                    <div className="h-2.5 rounded" style={{ background: "rgba(43,62,232,0.15)" }} />
+                    <div className="h-2 rounded" style={{ background: "rgba(43,62,232,0.10)", width: "50%" }} />
+                </div>
+            </div>
+        </div>
+    );
+}
+function VSkeleton() {
+    return (
+        <div className="animate-pulse aspect-[9/16] rounded-2xl" style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.15)" }} />
     );
 }
 

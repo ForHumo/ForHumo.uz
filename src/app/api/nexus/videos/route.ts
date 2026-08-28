@@ -173,5 +173,5 @@ export async function GET(req: Request) {
         };
     });
 
-    return NextResponse.json({ videos: out });
+    return NextResponse.json({ videos: out, hasMore: videos.length === limit });
 }
