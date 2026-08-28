@@ -32,9 +32,9 @@ import {
     Heart, Flame, Laugh, ThumbsUp, PartyPopper, Sparkles, Zap, Smile, UserPlus, UserCheck,
     BarChart3, Trash2, MoreVertical, Plus,
     Scissors, Rocket, Image as ImageIcon, Megaphone, Captions, Languages, Target, Terminal,
-    Users, UserMinus, Info, LayoutList, Music,
+    Users, UserMinus, Info, LayoutList, Music, Wifi, WifiOff, Save,
 } from "lucide-react";
-import { Room, RoomEvent, Track, VideoQuality, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant, type RemoteVideoTrack } from "livekit-client";
+import { Room, RoomEvent, Track, VideoQuality, ConnectionQuality, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant, type RemoteVideoTrack } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 import { NxConfirm } from "./nx-confirm";
@@ -219,6 +219,13 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [emoteBusy, setEmoteBusy] = useState(false);
     // Batch AL — Sound alert (viewer side plays)
     const soundAlertRef = useRef<HTMLAudioElement | null>(null);
+    // Batch AO — Stream health (viewer)
+    // 0..3: 0=lost, 1=poor, 2=good, 3=excellent
+    const [healthLevel, setHealthLevel] = useState<0 | 1 | 2 | 3>(3);
+    // Batch AK — Poll templates
+    interface PollTemplate { id: string; question: string; options: string[]; durationSec: number; usedCount: number; }
+    const [pollTemplates, setPollTemplates] = useState<PollTemplate[]>([]);
+    const [templatesOpen, setTemplatesOpen] = useState(false);
     // Batch V — Live captions
     const [captionOn, setCaptionOn] = useState(false);        // viewer: display
     const [captionStreamerOn, setCaptionStreamerOn] = useState(false); // streamer: SpeechRecognition
@@ -534,6 +541,44 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
             soundAlertRef.current.play().catch(() => { });
         } catch { /* jim */ }
     }, [tipAlert, stream?.soundAlertUrl]);
+
+    // Batch AK — Poll templates
+    useEffect(() => {
+        if (!stream?.isMine) return;
+        fetch(`/api/nexus/poll-templates`).then(r => r.json()).then(d => setPollTemplates(d.templates || [])).catch(() => { });
+    }, [stream?.isMine]);
+
+    async function saveCurrentAsTemplate() {
+        const opts = pollOpts.map(o => o.trim()).filter(Boolean);
+        if (!pollQ.trim() || opts.length < 2) return;
+        try {
+            const r = await fetch(`/api/nexus/poll-templates`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ question: pollQ.trim(), options: opts, durationSec: pollDur }),
+            });
+            if (r.ok) {
+                const d = await r.json();
+                setPollTemplates(prev => [d.template, ...prev]);
+            }
+        } catch { /* ignore */ }
+    }
+    function loadTemplate(t: PollTemplate) {
+        setPollQ(t.question);
+        setPollOpts(t.options.length >= 2 ? t.options : [...t.options, ""]);
+        setPollDur(t.durationSec);
+        setTemplatesOpen(false);
+        // Usage count increment
+        fetch(`/api/nexus/poll-templates`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: t.id }),
+        }).catch(() => { });
+    }
+    async function deleteTemplate(id: string) {
+        try {
+            await fetch(`/api/nexus/poll-templates?id=${id}`, { method: "DELETE" });
+            setPollTemplates(prev => prev.filter(t => t.id !== id));
+        } catch { /* ignore */ }
+    }
 
     // Emote CRUD
     async function uploadEmote(file: File) {
@@ -929,6 +974,20 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
 
                 room.on(RoomEvent.TrackSubscribed, onTrackSubscribed);
                 room.on(RoomEvent.TrackUnsubscribed, onTrackUnsubscribed);
+                // Batch AO — Stream health (ConnectionQuality)
+                room.on(RoomEvent.ConnectionQualityChanged, (quality, participant) => {
+                    // Faqat streamer'ning ulanish sifati
+                    if (participant?.identity && !stream?.isMine) {
+                        const map: Record<string, 0 | 1 | 2 | 3> = {
+                            [ConnectionQuality.Excellent]: 3,
+                            [ConnectionQuality.Good]: 2,
+                            [ConnectionQuality.Poor]: 1,
+                            [ConnectionQuality.Lost]: 0,
+                            [ConnectionQuality.Unknown]: 2,
+                        };
+                        setHealthLevel(map[quality] ?? 2);
+                    }
+                });
                 await room.connect(tk.url, tk.token);
                 if (cancelled) { room.disconnect(); return; }
                 roomRef.current = room;
@@ -1461,6 +1520,26 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             style={{ background: ttsEnabled ? "rgba(245,158,11,0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
                             <Megaphone className="w-4 h-4 text-white" />
                         </button>
+                    )}
+                    {/* Batch AO — Stream health indicator (viewer, LIVE) */}
+                    {isLive && hasRemoteVideo && !stream?.isMine && (
+                        <div title={healthLevel === 3 ? "A'lo" : healthLevel === 2 ? "Yaxshi" : healthLevel === 1 ? "Sekin" : "Uzilgan"}
+                            className="h-10 px-2.5 flex items-center gap-1 rounded-full transition"
+                            style={{
+                                background: "rgba(0,0,0,0.55)",
+                                backdropFilter: "blur(8px)",
+                                border: `1px solid ${healthLevel === 3 ? "rgba(16,185,129,0.55)" : healthLevel === 2 ? "rgba(59,130,246,0.55)" : healthLevel === 1 ? "rgba(245,158,11,0.55)" : "rgba(239,68,68,0.55)"}`,
+                            }}>
+                            {healthLevel === 0 ? <WifiOff className="w-3.5 h-3.5 text-red-400" /> : <Wifi className="w-3.5 h-3.5" style={{ color: healthLevel === 3 ? "#10B981" : healthLevel === 2 ? "#3B82F6" : "#F59E0B" }} />}
+                            <div className="flex items-end gap-0.5">
+                                {[1, 2, 3].map(bar => (
+                                    <div key={bar} className="w-0.5 rounded-full transition-all" style={{
+                                        height: `${bar * 3 + 3}px`,
+                                        background: healthLevel >= bar ? (healthLevel === 3 ? "#10B981" : healthLevel === 2 ? "#3B82F6" : "#F59E0B") : "rgba(255,255,255,0.15)",
+                                    }} />
+                                ))}
+                            </div>
+                        </div>
                     )}
                     {/* Batch AM — Panels button (bio/socials/schedule) */}
                     {panels.length > 0 && (
@@ -2030,6 +2109,33 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 <X className="w-4 h-4 text-white/70" />
                             </button>
                         </div>
+                        {/* Batch AK — Templates */}
+                        {pollTemplates.length > 0 && (
+                            <div className="mb-3">
+                                <button onClick={() => setTemplatesOpen(o => !o)}
+                                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] font-black transition"
+                                    style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.25)", color: "#C4B5FD" }}>
+                                    <span>Shablonlar · {pollTemplates.length}</span>
+                                    <span>{templatesOpen ? "▲" : "▼"}</span>
+                                </button>
+                                {templatesOpen && (
+                                    <div className="mt-1.5 space-y-1 max-h-32 overflow-y-auto">
+                                        {pollTemplates.map(t => (
+                                            <div key={t.id} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg group" style={{ background: "rgba(139,92,246,0.06)" }}>
+                                                <button onClick={() => loadTemplate(t)} className="flex-1 text-left min-w-0">
+                                                    <p className="text-[11px] font-bold text-white truncate">{t.question}</p>
+                                                    <p className="text-[9px]" style={{ color: "rgba(200,180,230,0.65)" }}>{t.options.length} variant · {t.durationSec}s · {t.usedCount}× ishlatilgan</p>
+                                                </button>
+                                                <button onClick={() => deleteTemplate(t.id)} className="w-5 h-5 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition"
+                                                    style={{ background: "rgba(239,68,68,0.20)" }}>
+                                                    <X className="w-3 h-3 text-red-400" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         <input value={pollQ} onChange={e => setPollQ(e.target.value.slice(0, 200))} placeholder="Savolingiz..."
                             className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none mb-3"
                             style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.30)", caretColor: "#EC4899" }} />
@@ -2070,11 +2176,19 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 </button>
                             ))}
                         </div>
-                        <button onClick={createPoll} disabled={pollBusy || !pollQ.trim() || pollOpts.filter(o => o.trim()).length < 2}
-                            className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-50"
-                            style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", boxShadow: "0 4px 20px rgba(139,92,246,0.35)" }}>
-                            {pollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><BarChart3 className="w-4 h-4" />Poll boshlash</>}
-                        </button>
+                        <div className="flex gap-2">
+                            <button onClick={saveCurrentAsTemplate} disabled={!pollQ.trim() || pollOpts.filter(o => o.trim()).length < 2 || pollTemplates.length >= 20}
+                                title="Shablon sifatida saqlash"
+                                className="w-11 h-11 flex items-center justify-center rounded-xl disabled:opacity-40"
+                                style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.35)" }}>
+                                <Save className="w-4 h-4" style={{ color: "#C4B5FD" }} />
+                            </button>
+                            <button onClick={createPoll} disabled={pollBusy || !pollQ.trim() || pollOpts.filter(o => o.trim()).length < 2}
+                                className="flex-1 h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-50"
+                                style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", boxShadow: "0 4px 20px rgba(139,92,246,0.35)" }}>
+                                {pollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><BarChart3 className="w-4 h-4" />Poll boshlash</>}
+                            </button>
+                        </div>
                     </div>
                 </>
             )}

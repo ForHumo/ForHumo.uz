@@ -2023,6 +2023,34 @@ model NexusLivePanel {
   @@index([profileId, order])
 }
 
+// Batch AF — Recurring stream schedule (streamer haftalik/one-time rejasi)
+model NexusLiveSchedule {
+  id         String   @id @default(cuid())
+  profileId  String                                    // egasi
+  kind       String   @default("RECURRING")            // RECURRING | ONETIME
+  dayOfWeek  Int?                                      // 0-6 (yakshanba=0), faqat RECURRING uchun
+  dateISO    String?                                   // "2026-08-30" ONETIME uchun
+  hour       Int                                       // 0-23
+  minute     Int                                       // 0-59
+  title      String
+  category   String?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  @@index([profileId, active])
+}
+
+// Batch AK — Poll templates (streamer qayta ishlatishi uchun)
+model NexusLivePollTemplate {
+  id            String   @id @default(cuid())
+  profileId     String
+  question      String
+  options       String[]
+  durationSec   Int      @default(60)
+  usedCount     Int      @default(0)
+  createdAt     DateTime @default(now())
+  @@index([profileId, createdAt])
+}
+
 // Batch AI — Custom emotes (streamer o'z chat'i uchun rasm emotelar)
 model NexusLiveEmote {
   id         String   @id @default(cuid())
