@@ -10,10 +10,9 @@ import {
     Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
     BadgeCheck, Image as ImgIcon, Loader2, Trash2, Send, X, Flag,
     MapPin, Lock, Users, BarChart2, CheckCircle2, Star, Pencil,
-    ArrowUp, RefreshCw, Compass, UserPlus, Sparkles, Clock, Coins,
+    ArrowUp, RefreshCw, Compass, UserPlus, Sparkles, Clock, Coins, Play, Maximize2,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
-import { Maximize2 } from "lucide-react";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -685,8 +684,7 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote, 
                             {shownMedia.map((url, i) => (
                                 <div key={i} className={`relative rounded-xl overflow-hidden bg-black ${n > 1 ? cellCls(i) : ""}`}>
                                     {isVid(url) ? (
-                                        <video src={url} controls playsInline preload="metadata"
-                                            className={n === 1 ? "w-full max-h-[420px] object-cover cursor-pointer" : "w-full h-full object-cover"} />
+                                        <NxFeedVideo src={url} single={n === 1} />
                                     ) : (
                                         <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
                                             className="block active:scale-[0.99] transition-transform w-full h-full">
@@ -881,6 +879,78 @@ function ActionBtn({ icon: Icon, count, onClick }: { icon: React.ElementType; co
             <Icon ref={iconRef as React.Ref<SVGSVGElement>} className="w-4 h-4 flex-shrink-0" />
             {formatCount(count)}
         </button>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NxFeedVideo — feed'da custom video (native controls o'rniga o'z dizayn)
+// Poster kadr + katta gradient Play tugma; bosilganda video controls'i faollashadi.
+// ─────────────────────────────────────────────────────────────────────────────
+function NxFeedVideo({ src, single }: { src: string; single: boolean }) {
+    const [started, setStarted] = useState(false);
+    const [hoverPlay, setHoverPlay] = useState(false);
+    const vRef = useRef<HTMLVideoElement>(null);
+
+    async function start() {
+        setStarted(true);
+        try {
+            await new Promise(r => setTimeout(r, 20));
+            await vRef.current?.play();
+        } catch { /* autoplay blocked — foydalanuvchi controls'dan tugmani bosadi */ }
+    }
+
+    const containerCls = single
+        ? "relative w-full max-h-[520px] bg-black cursor-pointer group"
+        : "relative w-full h-full bg-black cursor-pointer group";
+
+    if (started) {
+        return (
+            <video
+                ref={vRef}
+                src={src}
+                controls
+                playsInline
+                autoPlay
+                className={single ? "w-full max-h-[520px] object-contain bg-black" : "w-full h-full object-cover"}
+            />
+        );
+    }
+
+    return (
+        <div className={containerCls}
+            onClick={e => { e.stopPropagation(); start(); }}
+            onMouseEnter={() => setHoverPlay(true)}
+            onMouseLeave={() => setHoverPlay(false)}
+        >
+            {/* Preload poster kadr */}
+            <video
+                src={src + "#t=0.5"}
+                preload="metadata"
+                muted
+                playsInline
+                className={single ? "w-full max-h-[520px] object-contain bg-black" : "w-full h-full object-cover"}
+            />
+            {/* Overlay gradient */}
+            <div className="absolute inset-0 pointer-events-none"
+                style={{ background: "linear-gradient(180deg, rgba(5,8,24,0.10) 0%, rgba(5,8,24,0.45) 100%)" }} />
+            {/* Katta Play tugma */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="rounded-full flex items-center justify-center transition-all duration-200"
+                    style={{
+                        width: hoverPlay ? 76 : 68,
+                        height: hoverPlay ? 76 : 68,
+                        background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                        boxShadow: "0 12px 40px rgba(43,62,232,0.55)",
+                    }}>
+                    <Play className="w-8 h-8 text-white fill-white ml-1" />
+                </div>
+            </div>
+            {/* Video badge */}
+            <span className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-white uppercase"
+                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                <Play className="w-2.5 h-2.5 fill-white" />Video
+            </span>
+        </div>
     );
 }
 
