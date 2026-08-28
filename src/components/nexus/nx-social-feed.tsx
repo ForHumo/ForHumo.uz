@@ -13,6 +13,7 @@ import {
     ArrowUp, RefreshCw, Compass, UserPlus, Sparkles, Clock,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
+import { Maximize2 } from "lucide-react";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -50,7 +51,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
     hideTabBar?: boolean;
 } = {}) {
     const profileMode = !!authorUsername || !!tag || !!postId;
-    const { openShareSheet } = useNxPlayer();
+    const { openShareSheet, setCreatePostOpen } = useNxPlayer();
     const { data: session } = useSession();
     const PAGE = 15;
 
@@ -348,6 +349,11 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                             {aiBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                             {aiBusy ? "..." : "AI mavzu"}
                         </button>
+                        <button onClick={() => setCreatePostOpen(true)} disabled={sending} title="So'rovnoma, joylashuv, maxfiylik"
+                            className="h-8 w-8 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-50"
+                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(160,180,230,0.85)" }}>
+                            <Maximize2 className="w-3.5 h-3.5" />
+                        </button>
                     </div>
                     <button onClick={submitPost} disabled={sending || uploading || (!postText.trim() && !media.length)}
                         className="px-4 py-1.5 rounded-xl text-xs font-black text-white transition-all duration-150 active:scale-95 disabled:opacity-40"
@@ -439,6 +445,27 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
     // Reading time chip (H-20) — 200+ char postlarda
     const wordCount = shownText ? shownText.trim().split(/\s+/).filter(Boolean).length : 0;
     const readMin = wordCount >= 60 ? Math.max(1, Math.round(wordCount / 200)) : 0;
+
+    // Uzun matn "Ko'proq"/"Kamroq" (P-4)
+    const TRUNCATE_AT = 400;
+    const [expanded, setExpanded] = useState(false);
+    const isLong = !!shownText && shownText.length > TRUNCATE_AT;
+    const previewText = isLong && !expanded
+        ? shownText!.slice(0, TRUNCATE_AT).trimEnd() + "..."
+        : shownText;
+
+    // Double-tap like (P-2) — media ustida
+    const lastTapRef = useRef<number>(0);
+    const [heartPulse, setHeartPulse] = useState(false);
+    function onMediaTap() {
+        const now = Date.now();
+        if (now - lastTapRef.current < 300) {
+            if (!p.liked) onLike();
+            setHeartPulse(true);
+            setTimeout(() => setHeartPulse(false), 700);
+        }
+        lastTapRef.current = now;
+    }
 
     return (
         <div className="rounded-2xl overflow-hidden transition-all duration-200 hover:scale-[1.005] hover:shadow-xl"
@@ -541,7 +568,14 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
                             <Clock className="w-2.5 h-2.5" />{readMin} daq o&apos;qish
                         </div>
                     )}
-                    <NxText text={shownText} className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(200,215,245,0.90)" }} />
+                    <NxText text={previewText ?? ""} className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(200,215,245,0.90)" }} />
+                    {isLong && (
+                        <button onClick={() => setExpanded(v => !v)}
+                            className="mt-1 text-xs font-black active:scale-95 transition"
+                            style={{ color: "#00CEC8" }}>
+                            {expanded ? "Kamroq" : "Ko'proq"}
+                        </button>
+                    )}
                     {edited && <span className="text-[10px] ml-1" style={{ color: "rgba(80,100,150,0.7)" }}>(tahrirlangan)</span>}
                     {p.hashtags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
@@ -590,25 +624,47 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
                 );
             })()}
 
-            {/* Media (Nexus feed rasm/video kartochka — DM bilan bir xil dizayn) */}
-            {p.media.length > 0 && (
-                <div className={`mx-4 mb-3 grid gap-1.5 ${p.media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
-                    {p.media.map((url, i) => (
-                        <div key={i} className="relative rounded-xl overflow-hidden bg-black">
-                            {isVid(url) ? (
-                                <video src={url} controls playsInline preload="metadata"
-                                    className="w-full max-h-[420px] object-cover cursor-pointer" />
-                            ) : (
-                                <a href={url} target="_blank" rel="noopener noreferrer"
-                                    className="block active:scale-[0.99] transition-transform">
-                                    <img src={url} alt="" loading="lazy"
-                                        className="w-full max-h-[420px] object-cover cursor-zoom-in" />
-                                </a>
-                            )}
+            {/* Media (P-3 grid): 1=full, 2=2col, 3=1big+2, 4=2x2, 5+=first + grid + counter */}
+            {p.media.length > 0 && (() => {
+                const n = p.media.length;
+                const wrapCls = n === 1 ? "grid-cols-1" : n === 3 ? "grid-cols-3 grid-rows-2" : "grid-cols-2";
+                const cellCls = (i: number) => n === 3 && i === 0 ? "col-span-2 row-span-2 aspect-square" : "aspect-square";
+                const shownMedia = p.media.slice(0, 4);
+                const remaining = n - 4;
+                return (
+                    <div className="relative mx-4 mb-3" onClick={onMediaTap}>
+                        <div className={`grid gap-1.5 ${wrapCls}`}>
+                            {shownMedia.map((url, i) => (
+                                <div key={i} className={`relative rounded-xl overflow-hidden bg-black ${n > 1 ? cellCls(i) : ""}`}>
+                                    {isVid(url) ? (
+                                        <video src={url} controls playsInline preload="metadata"
+                                            className={n === 1 ? "w-full max-h-[420px] object-cover cursor-pointer" : "w-full h-full object-cover"} />
+                                    ) : (
+                                        <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                                            className="block active:scale-[0.99] transition-transform w-full h-full">
+                                            <img src={url} alt="" loading="lazy"
+                                                className={n === 1 ? "w-full max-h-[420px] object-cover cursor-zoom-in" : "w-full h-full object-cover cursor-zoom-in"} />
+                                        </a>
+                                    )}
+                                    {i === 3 && remaining > 0 && (
+                                        <div className="absolute inset-0 flex items-center justify-center rounded-xl pointer-events-none"
+                                            style={{ background: "rgba(5,8,24,0.65)" }}>
+                                            <span className="text-2xl font-black text-white">+{remaining}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-            )}
+                        {/* Double-tap heart pulse */}
+                        {heartPulse && (
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <Heart className="w-24 h-24 nx-heart-pop" style={{ color: "#EF4444", fill: "#EF4444",
+                                    filter: "drop-shadow(0 4px 24px rgba(239,68,68,0.65))" }} />
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
 
             {/* Harakatlar */}
             <div className="flex items-center gap-1 px-4 pb-3 pt-1" style={{ borderTop: "1px solid rgba(43,62,232,0.08)" }}>
