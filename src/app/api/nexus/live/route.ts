@@ -80,6 +80,8 @@ export async function GET(req: Request) {
             scheduledAt: s.scheduledAt, startedAt: s.startedAt, endedAt: s.endedAt,
             viewers: viewerCounts[s.id] ?? 0, peakViewers: s.peakViewers, likes: s.likes,
             createdAt: s.createdAt,
+            recordingUrl: s.recordingUrl, recordingDurationSec: s.recordingDurationSec,
+            isMine: s.profileId === meId,
             author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null,
         };
     });

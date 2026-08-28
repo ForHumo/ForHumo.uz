@@ -4,9 +4,12 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
     X, Radio, Mic, MicOff, Camera, CameraOff, Eye, Loader2,
     Send, Globe, Users, Lock, StopCircle, BadgeCheck, Clock, MessageSquare,
+    Monitor, MonitorOff, Layout, User, Sparkles,
 } from "lucide-react";
 import { Room, LocalVideoTrack, LocalAudioTrack, Track } from "livekit-client";
+import { upload } from "@vercel/blob/client";
 import { useNxPlayer } from "./nx-player-ctx";
+import { createStudio, startStudioRecorder, type Studio, type StudioRecorder, type SceneLayout } from "@/lib/nexus-live-studio";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxGoLive — REAL streamer studiyasi:
@@ -30,12 +33,23 @@ const PRIVACY_OPTS: { value: Privacy; label: string; icon: React.ElementType }[]
 ];
 
 const CATS = [
-    { id: "", label: "Boshqa" },
-    { id: "gaming", label: "Gaming" },
+    { id: "", label: "Umumiy" },
+    { id: "suhbat", label: "Suhbat" },
     { id: "musiqa", label: "Musiqa" },
-    { id: "dasturlash", label: "Dasturlash" },
-    { id: "sport", label: "Sport" },
     { id: "talim", label: "Ta'lim" },
+    { id: "kulinariya", label: "Oshxona" },
+    { id: "sport", label: "Sport" },
+    { id: "shou", label: "Shou" },
+    { id: "podkast", label: "Podkast" },
+    { id: "gaming", label: "Gaming" },
+    { id: "dasturlash", label: "Dasturlash" },
+];
+
+const LAYOUTS: { id: SceneLayout; label: string; icon: React.ElementType }[] = [
+    { id: "solo",    label: "Solo",     icon: User },
+    { id: "podcast", label: "Podkast",  icon: MessageSquare },
+    { id: "pip",     label: "PiP",      icon: Layout },
+    { id: "screen",  label: "Ekran",    icon: Monitor },
 ];
 
 function avatarOf(a: LAuthor | null) { return a?.image || `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(a?.username || a?.name || "u")}`; }
@@ -62,6 +76,15 @@ export function NxGoLive() {
     const [chatIn, setChatIn] = useState("");
     const [chatBusy, setChatBusy] = useState(false);
     const [endingBusy, setEndingBusy] = useState(false);
+    const [description, setDescription] = useState("");
+    const [layout, setLayout] = useState<SceneLayout>("solo");
+    const [screenOn, setScreenOn] = useState(false);
+    const [recordingReady, setRecordingReady] = useState(false);   // recording tugagach show
+    const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
+    const screenRef = useRef<MediaStream | null>(null);
+    const studioRef = useRef<Studio | null>(null);
+    const recorderRef = useRef<StudioRecorder | null>(null);
+    const recordStartRef = useRef<number>(0);
 
     const mediaRef = useRef<MediaStream | null>(null);
     const videoElRef = useRef<HTMLVideoElement>(null);
@@ -190,17 +213,35 @@ export function NxGoLive() {
             });
             const d = await r.json().catch(() => ({}));
             if (!r.ok || !d.stream) { setErr(d.error || "Efir boshlanmadi"); return; }
-
-            // LiveKit token — video oqimini tomoshabinlarga uzatish uchun
             const newId: string = d.stream.id;
+
+            // Studio composer — camera + screen composite
+            const studio = createStudio({
+                layout,
+                sources: { camera: mediaRef.current ?? null, screen: screenRef.current ?? null },
+                overlay: { title, subtitle: category ? CATS.find(c => c.id === category)?.label : undefined },
+            });
+            studioRef.current = studio;
+
+            // Recording — composite video + audio (mikrofon)
+            const audioOnly = mediaRef.current
+                ? new MediaStream(mediaRef.current.getAudioTracks())
+                : null;
+            try {
+                recorderRef.current = startStudioRecorder(studio.stream, audioOnly);
+                recordStartRef.current = Date.now();
+            } catch { /* recording xato bo'lsa ham efir boradi */ }
+
+            // LiveKit token
             const tk = await fetch(`/api/nexus/live/${newId}/token`).then(x => x.json()).catch(() => null);
-            if (tk?.token && tk?.url && mediaRef.current) {
+            if (tk?.token && tk?.url) {
                 try {
                     const room = new Room({ adaptiveStream: true, dynacast: true });
                     await room.connect(tk.url, tk.token);
                     roomRef.current = room;
-                    const videoTrack = mediaRef.current.getVideoTracks()[0];
-                    const audioTrack = mediaRef.current.getAudioTracks()[0];
+                    // Composite video track — canvas.captureStream'dan
+                    const videoTrack = studio.stream.getVideoTracks()[0];
+                    const audioTrack = mediaRef.current?.getAudioTracks()[0];
                     if (videoTrack) {
                         const lv = new LocalVideoTrack(videoTrack);
                         await room.localParticipant.publishTrack(lv, { source: Track.Source.Camera });
@@ -213,13 +254,52 @@ export function NxGoLive() {
                     }
                 } catch (e) {
                     console.warn("[NxGoLive] LiveKit publish xato:", e);
-                    // Video transport ishlamasa ham efir DB'da qoladi (chat + heartbeat baribir real)
                 }
+            }
+
+            // Description agar bor bo'lsa — meta update
+            if (description.trim()) {
+                fetch(`/api/nexus/live/${newId}`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "update", description }),
+                }).catch(() => { });
             }
 
             setStreamId(newId); setStage("live"); setDuration(0);
         } catch { setErr("Tarmoq xatosi"); }
         finally { setStarting(false); }
+    }
+
+    // Layout o'zgarganda studio ham yangilanadi
+    useEffect(() => {
+        studioRef.current?.setLayout(layout);
+    }, [layout]);
+    useEffect(() => {
+        studioRef.current?.setOverlay({ title, subtitle: category ? CATS.find(c => c.id === category)?.label : undefined });
+    }, [title, category]);
+
+    // Screen share toggle
+    async function toggleScreen() {
+        if (screenOn) {
+            screenRef.current?.getTracks().forEach(t => t.stop());
+            screenRef.current = null;
+            setScreenOn(false);
+            studioRef.current?.setSources({ camera: mediaRef.current ?? null, screen: null });
+            return;
+        }
+        try {
+            const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+            screenRef.current = s;
+            setScreenOn(true);
+            studioRef.current?.setSources({ camera: mediaRef.current ?? null, screen: s });
+            // Foydalanuvchi ekran ulashishni to'xtatsa
+            const track = s.getVideoTracks()[0];
+            if (track) track.onended = () => {
+                screenRef.current = null;
+                setScreenOn(false);
+                studioRef.current?.setSources({ camera: mediaRef.current ?? null, screen: null });
+            };
+        } catch { /* rad etildi */ }
     }
 
     async function disconnectLiveKit() {
@@ -233,9 +313,39 @@ export function NxGoLive() {
         setEndingBusy(true);
         try {
             await disconnectLiveKit();
+
+            // Recording tugatish + Vercel Blob'ga yuklash
+            let uploadedRecUrl: string | null = null;
+            let recDur = 0;
+            const rec = recorderRef.current;
+            if (rec) {
+                try {
+                    const blob = await rec.stop();
+                    recDur = Math.round((Date.now() - recordStartRef.current) / 1000);
+                    if (blob.size > 0 && recDur > 3) {
+                        const ext = blob.type.includes("mp4") ? "mp4" : "webm";
+                        const file = new File([blob], `live-${streamId}.${ext}`, { type: blob.type || "video/webm" });
+                        try {
+                            const up = await upload(`nexus/live/${streamId}.${ext}`, file, {
+                                access: "public", handleUploadUrl: "/api/market/upload/client-token",
+                            });
+                            uploadedRecUrl = up.url;
+                        } catch { /* upload xato — recording yo'q */ }
+                    }
+                } catch { /* recorder stop xato */ }
+                recorderRef.current = null;
+            }
+            studioRef.current?.stop();
+            studioRef.current = null;
+
             await fetch(`/api/nexus/live/${streamId}`, {
-                method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "end" }),
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "end",
+                    ...(uploadedRecUrl ? { recordingUrl: uploadedRecUrl, recordingDurationSec: recDur } : {}),
+                }),
             });
+            if (uploadedRecUrl) { setRecordingUrl(uploadedRecUrl); setRecordingReady(true); }
             const d = await fetch(`/api/nexus/live/${streamId}`).then(r => r.json()).catch(() => null);
             if (d?.stream) setPeak(d.stream.peakViewers);
             setStage("ended");
@@ -328,6 +438,47 @@ export function NxGoLive() {
                         </div>
 
                         <div>
+                            <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>Tavsif (ixtiyoriy)</p>
+                            <textarea value={description} onChange={e => setDescription(e.target.value.slice(0, 2000))} rows={2}
+                                placeholder="Efir haqida bir necha jumla..."
+                                className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none resize-y"
+                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#F97316" }} />
+                        </div>
+
+                        {/* Scene layout — Solo/Podkast/PiP/Ekran */}
+                        <div>
+                            <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>
+                                <Sparkles className="w-3 h-3 inline mr-1" />Sahna sxemasi
+                            </p>
+                            <div className="grid grid-cols-4 gap-1.5">
+                                {LAYOUTS.map(l => (
+                                    <button key={l.id} onClick={() => setLayout(l.id)}
+                                        className="flex flex-col items-center gap-1 py-2 rounded-lg text-[10px] font-black transition active:scale-95"
+                                        style={layout === l.id
+                                            ? { background: "linear-gradient(135deg,#EF4444,#F97316)", color: "#fff" }
+                                            : { background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.18)", color: "rgba(220,160,150,0.80)" }}>
+                                        <l.icon className="w-4 h-4" />{l.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="text-[9px] mt-1.5 px-1" style={{ color: "rgba(140,160,210,0.60)" }}>
+                                Solo — faqat kamera • Podkast — markazda kvadrat • PiP — ekran+kamera burchakda • Ekran — faqat ekran ulash
+                            </p>
+                        </div>
+
+                        {/* Screen share — LIVE'dan oldin ham yoqish mumkin */}
+                        {(layout === "pip" || layout === "screen") && (
+                            <button onClick={toggleScreen}
+                                className="w-full flex items-center gap-2 justify-center py-2.5 rounded-xl text-xs font-black transition active:scale-95"
+                                style={screenOn
+                                    ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.40)", color: "#00CEC8" }
+                                    : { background: "rgba(239,68,68,0.06)", border: "1px dashed rgba(239,68,68,0.30)", color: "rgba(220,160,150,0.85)" }}>
+                                {screenOn ? <><Monitor className="w-3.5 h-3.5" />Ekran ulashilyapti — bekor qilish</>
+                                          : <><Monitor className="w-3.5 h-3.5" />Ekranni ulash</>}
+                            </button>
+                        )}
+
+                        <div>
                             <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "rgba(140,160,210,0.80)" }}>Kategoriya</p>
                             <div className="flex flex-wrap gap-1.5">
                                 {CATS.map(c => (
@@ -377,6 +528,28 @@ export function NxGoLive() {
             <div className="fixed inset-0 z-[55] flex flex-col md:flex-row" style={{ background: "rgba(5,8,24,0.98)" }}>
                 <div className="flex-1 flex items-center justify-center p-4 min-h-0">
                     <div className="w-full max-w-3xl">{cameraBlock}
+                        {/* Studio panel — live paytida layout va screen share almashtirish */}
+                        <div className="mt-3 mb-2 grid grid-cols-4 gap-1.5">
+                            {LAYOUTS.map(l => (
+                                <button key={l.id} onClick={() => setLayout(l.id)}
+                                    className="flex flex-col items-center gap-1 py-1.5 rounded-lg text-[10px] font-black transition active:scale-95"
+                                    style={layout === l.id
+                                        ? { background: "linear-gradient(135deg,#EF4444,#F97316)", color: "#fff" }
+                                        : { background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.18)", color: "rgba(220,160,150,0.85)" }}>
+                                    <l.icon className="w-3.5 h-3.5" />{l.label}
+                                </button>
+                            ))}
+                        </div>
+                        {(layout === "pip" || layout === "screen") && (
+                            <button onClick={toggleScreen}
+                                className="w-full mb-2 flex items-center gap-2 justify-center py-2 rounded-xl text-xs font-black transition active:scale-95"
+                                style={screenOn
+                                    ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.40)", color: "#00CEC8" }
+                                    : { background: "rgba(43,62,232,0.06)", border: "1px dashed rgba(43,62,232,0.30)", color: "rgba(160,180,230,0.85)" }}>
+                                {screenOn ? <><MonitorOff className="w-3.5 h-3.5" />Ekranni to&apos;xtatish</>
+                                          : <><Monitor className="w-3.5 h-3.5" />Ekranni ulash</>}
+                            </button>
+                        )}
                         <div className="flex items-center justify-between mt-3">
                             <p className="text-sm font-black text-white truncate pr-3">{title}</p>
                             <button onClick={endLive} disabled={endingBusy}
@@ -452,6 +625,15 @@ export function NxGoLive() {
                         </div>
                     ))}
                 </div>
+                {recordingReady && recordingUrl && (
+                    <div className="mb-4 p-3 rounded-xl" style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.30)" }}>
+                        <p className="text-[11px] font-black mb-1" style={{ color: "#00CEC8" }}>Yozuv tayyor</p>
+                        <p className="text-[10px] mb-2" style={{ color: "rgba(160,220,215,0.85)" }}>
+                            Efir Nexus'da endi qayta ko&apos;rish mumkin
+                        </p>
+                        <video src={recordingUrl} controls playsInline className="w-full rounded-lg bg-black" style={{ maxHeight: 160 }} />
+                    </div>
+                )}
                 <button onClick={close} className="w-full h-11 rounded-xl text-sm font-black text-white" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
                     Yopish
                 </button>

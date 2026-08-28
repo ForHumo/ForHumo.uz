@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { NxLiveRoom } from "./nx-live-room";
 import { NxVerifiedBadge } from "./nx-verified-badge";
+import { Play, Trash2 } from "lucide-react";
 
 // LocalStorage — rejadagi efirlar uchun eslatma (client-side)
 const REM_KEY = "nx-live-reminders-v1";
@@ -27,6 +28,7 @@ export interface LiveStream {
     scheduledAt: string | null; startedAt: string | null; endedAt: string | null;
     viewers: number; peakViewers: number; likes: number; createdAt: string;
     author: LAuthor | null;
+    recordingUrl?: string | null; recordingDurationSec?: number | null; isMine?: boolean;
 }
 
 const CATS = [
@@ -231,14 +233,34 @@ export function LiveView() {
                         </Section>
                     )}
 
-                    {/* Tugagan */}
+                    {/* Tugagan — VOD ko'rish + o'z egasi o'chira oladi */}
                     {ended.length > 0 && (
                         <Section title="Yaqinda tugagan" accent="#8B5CF6">
                             <div className="px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {ended.map(s => (
-                                    <StreamCard key={s.id} s={s} onOpen={() => setRoomId(s.id)} dim
-                                        badge={<span className="px-2 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "rgba(100,110,140,0.85)" }}>TUGADI</span>}
-                                        meta={<><Eye className="w-3 h-3" />{fmtViewers(s.peakViewers)} eng yuqori · {fmtStreamDur(s.startedAt, s.endedAt)}</>} />
+                                    <StreamCard key={s.id} s={s}
+                                        onOpen={() => s.recordingUrl ? setRoomId(s.id) : setRoomId(s.id)}
+                                        dim={!s.recordingUrl}
+                                        badge={
+                                            s.recordingUrl
+                                                ? <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "linear-gradient(135deg,#8B5CF6,#6366F1)" }}>
+                                                    <Play className="w-2.5 h-2.5 fill-current" />YOZUV
+                                                  </span>
+                                                : <span className="px-2 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "rgba(100,110,140,0.85)" }}>TUGADI</span>
+                                        }
+                                        meta={<><Eye className="w-3 h-3" />{fmtViewers(s.peakViewers)} eng yuqori · {fmtStreamDur(s.startedAt, s.endedAt)}</>}
+                                        corner={s.isMine ? (
+                                            <button onClick={async e => {
+                                                e.stopPropagation();
+                                                if (!confirm("Bu efirni butunlay o'chirasizmi? Bu amalni orqaga qaytarib bo'lmaydi.")) return;
+                                                const r = await fetch(`/api/nexus/live/${s.id}`, { method: "DELETE" });
+                                                if (r.ok) load(true);
+                                            }} title="O'chirish"
+                                                className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-lg"
+                                                style={{ background: "rgba(239,68,68,0.85)", backdropFilter: "blur(6px)" }}>
+                                                <Trash2 className="w-3.5 h-3.5 text-white" />
+                                            </button>
+                                        ) : null} />
                                 ))}
                             </div>
                         </Section>

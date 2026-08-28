@@ -34,10 +34,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     return NextResponse.json({
         stream: {
-            id: stream.id, title: stream.title, category: stream.category,
+            id: stream.id, title: stream.title, description: stream.description, thumbUrl: stream.thumbUrl,
+            category: stream.category,
             privacy: stream.privacy, status: stream.status,
             scheduledAt: stream.scheduledAt, startedAt: stream.startedAt, endedAt: stream.endedAt,
             viewers, peakViewers: stream.peakViewers, likes: stream.likes,
+            recordingUrl: stream.recordingUrl, recordingDurationSec: stream.recordingDurationSec,
+            sceneLayout: stream.sceneLayout,
             isMine: stream.profileId === meId,
             author: author ? { name: author.name, username: author.username, image: author.image, verified: isVerifiedProfile(author) } : null,
         },
@@ -52,7 +55,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
     const { id } = await params;
-    const { action } = await req.json();
+    const body = await req.json();
+    const { action, recordingUrl, recordingDurationSec, description, thumbUrl } = body;
     const stream = await prisma.nexusLiveStream.findFirst({ where: { id, profileId: me.id } });
     if (!stream) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
 
@@ -64,10 +68,27 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
     if (action === "end" && stream.status !== "ENDED") {
         const updated = await prisma.nexusLiveStream.update({
-            where: { id }, data: { status: "ENDED", endedAt: new Date() },
+            where: { id }, data: {
+                status: "ENDED", endedAt: new Date(),
+                ...(typeof recordingUrl === "string" && recordingUrl ? { recordingUrl } : {}),
+                ...(Number.isFinite(recordingDurationSec) ? { recordingDurationSec: Math.max(0, Math.round(Number(recordingDurationSec))) } : {}),
+            },
         });
         // LiveKit xonasini tozalash (fail-safe)
         deleteLiveKitRoom(`live_${id}`).catch(() => { });
+        return NextResponse.json({ stream: updated });
+    }
+    // Meta yangilash — tavsif/thumb/recording alohida ("update")
+    if (action === "update") {
+        const updated = await prisma.nexusLiveStream.update({
+            where: { id },
+            data: {
+                ...(typeof description === "string" ? { description: description.slice(0, 2000) || null } : {}),
+                ...(typeof thumbUrl === "string" ? { thumbUrl: thumbUrl || null } : {}),
+                ...(typeof recordingUrl === "string" ? { recordingUrl: recordingUrl || null } : {}),
+                ...(Number.isFinite(recordingDurationSec) ? { recordingDurationSec: Math.max(0, Math.round(Number(recordingDurationSec))) } : {}),
+            },
+        });
         return NextResponse.json({ stream: updated });
     }
     return NextResponse.json({ error: "Noto'g'ri amal" }, { status: 400 });

@@ -15,6 +15,7 @@ interface RoomStream {
     scheduledAt: string | null; startedAt: string | null; endedAt: string | null;
     viewers: number; peakViewers: number; likes: number; isMine: boolean;
     author: LAuthor | null;
+    description?: string | null; recordingUrl?: string | null; recordingDurationSec?: number | null;
 }
 interface ChatMsg { id: string; text: string; tipAmount?: number; createdAt: string; author: LAuthor | null }
 
@@ -231,15 +232,25 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 {stream.scheduledAt && <p className="text-xs" style={{ color: "rgba(150,170,210,0.75)" }}>Rejada: {new Date(stream.scheduledAt).toLocaleString("uz-UZ")}</p>}
                             </div>
                         ) : stream.status === "ENDED" ? (
-                            <div className="flex flex-col items-center gap-1">
-                                <p className="text-sm font-black text-white">Efir tugadi</p>
-                                <p className="text-xs flex items-center gap-2" style={{ color: "rgba(150,170,210,0.75)" }}>
-                                    <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{fmtViewers(stream.peakViewers)} eng yuqori</span>
-                                    {stream.startedAt && stream.endedAt && (
-                                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{Math.max(1, Math.round((new Date(stream.endedAt).getTime() - new Date(stream.startedAt).getTime()) / 60000))} daqiqa</span>
-                                    )}
-                                </p>
-                            </div>
+                            stream.recordingUrl ? (
+                                <div className="w-full">
+                                    <video src={stream.recordingUrl} controls playsInline className="w-full max-h-[70vh] bg-black rounded-xl" />
+                                    <p className="text-[10px] mt-2 text-center" style={{ color: "rgba(150,170,210,0.65)" }}>
+                                        Yozib olingan efir · {stream.recordingDurationSec ? `${Math.floor(stream.recordingDurationSec / 60)}:${String(stream.recordingDurationSec % 60).padStart(2, "0")}` : ""}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center gap-1">
+                                    <p className="text-sm font-black text-white">Efir tugadi</p>
+                                    <p className="text-xs flex items-center gap-2" style={{ color: "rgba(150,170,210,0.75)" }}>
+                                        <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{fmtViewers(stream.peakViewers)} eng yuqori</span>
+                                        {stream.startedAt && stream.endedAt && (
+                                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{Math.max(1, Math.round((new Date(stream.endedAt).getTime() - new Date(stream.startedAt).getTime()) / 60000))} daqiqa</span>
+                                        )}
+                                    </p>
+                                    <p className="text-[10px] mt-1" style={{ color: "rgba(150,170,210,0.55)" }}>Yozuv mavjud emas</p>
+                                </div>
+                            )
                         ) : (
                             <p className="text-xs max-w-xs leading-relaxed" style={{ color: "rgba(150,170,210,0.7)" }}>
                                 Video oqimini kutmoqda...
