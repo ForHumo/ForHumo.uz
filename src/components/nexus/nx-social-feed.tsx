@@ -10,7 +10,7 @@ import {
     Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
     BadgeCheck, Image as ImgIcon, Loader2, Trash2, Send, X, Flag,
     MapPin, Lock, Users, BarChart2, CheckCircle2, Star, Pencil,
-    ArrowUp, RefreshCw, Compass, UserPlus, Sparkles,
+    ArrowUp, RefreshCw, Compass, UserPlus, Sparkles, Clock,
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxVerifiedBadge } from "./nx-verified-badge";
@@ -66,7 +66,23 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
     const [media, setMedia] = useState<string[]>([]);
     const [uploading, setUploading] = useState(false);
     const [sending, setSending] = useState(false);
+    const [aiBusy, setAiBusy] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
+
+    async function aiSuggest() {
+        if (aiBusy) return;
+        setAiBusy(true);
+        try {
+            const res = await fetch("/api/nexus/ai/suggest-post", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hint: postText.trim().slice(0, 200) }),
+            });
+            if (res.ok) {
+                const d = await res.json();
+                if (d.text) setPostText(d.text);
+            }
+        } catch { /* jim */ } finally { setAiBusy(false); }
+    }
 
     // ── Yangi postlar bildirishi (H-3) ──
     const [newCount, setNewCount] = useState(0);
@@ -325,6 +341,13 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                             {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#00CEC8" }} /> : <ImgIcon className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.60)" }} />}
                         </button>
                         <input ref={fileRef} type="file" accept="image/*,video/*" multiple onChange={e => pickFiles(e.target.files)} className="hidden" />
+                        <button onClick={aiSuggest} disabled={aiBusy || sending} title="AI'dan mavzu"
+                            className="h-8 px-2.5 flex items-center gap-1 rounded-xl text-[10px] font-black transition-all duration-150 active:scale-95 disabled:opacity-50"
+                            style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.18),rgba(0,206,200,0.18))",
+                                border: "1px solid rgba(139,92,246,0.35)", color: "#C4B5FD" }}>
+                            {aiBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                            {aiBusy ? "..." : "AI mavzu"}
+                        </button>
                     </div>
                     <button onClick={submitPost} disabled={sending || uploading || (!postText.trim() && !media.length)}
                         className="px-4 py-1.5 rounded-xl text-xs font-black text-white transition-all duration-150 active:scale-95 disabled:opacity-40"
@@ -413,8 +436,13 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
         }).catch(() => {});
     }
 
+    // Reading time chip (H-20) — 200+ char postlarda
+    const wordCount = shownText ? shownText.trim().split(/\s+/).filter(Boolean).length : 0;
+    const readMin = wordCount >= 60 ? Math.max(1, Math.round(wordCount / 200)) : 0;
+
     return (
-        <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.18)" }}>
+        <div className="rounded-2xl overflow-hidden transition-all duration-200 hover:scale-[1.005] hover:shadow-xl"
+            style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.18)" }}>
             {/* Header */}
             <div className="flex items-center gap-3 px-4 pt-4 pb-3">
                 {p.author?.username ? (
@@ -507,6 +535,12 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote }
                 </div>
             ) : shownText && (
                 <div className="px-4 pb-3">
+                    {readMin > 0 && (
+                        <div className="mb-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide"
+                            style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.25)", color: "#C4B5FD" }}>
+                            <Clock className="w-2.5 h-2.5" />{readMin} daq o&apos;qish
+                        </div>
+                    )}
                     <NxText text={shownText} className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "rgba(200,215,245,0.90)" }} />
                     {edited && <span className="text-[10px] ml-1" style={{ color: "rgba(80,100,150,0.7)" }}>(tahrirlangan)</span>}
                     {p.hashtags.length > 0 && (

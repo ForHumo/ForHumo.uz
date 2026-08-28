@@ -2,13 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
-import { Hash, Flame, TrendingUp, UserPlus, Check } from "lucide-react";
+import { Hash, Flame, TrendingUp, UserPlus, Check, Crown, Heart, MessageCircle } from "lucide-react";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
 interface Trend { tag: string; count: number }
 interface Sug {
     name: string | null; username: string | null; image: string | null;
     verified: boolean; verifiedCategory?: string | null;
+}
+interface Writer {
+    name: string | null; username: string | null; image: string | null;
+    verified: boolean; verifiedCategory?: string | null;
+    posts: number; likes: number; comments: number;
 }
 
 function avatarOf(a: { username?: string | null; name?: string | null; image?: string | null }) {
@@ -19,6 +24,7 @@ function avatarOf(a: { username?: string | null; name?: string | null; image?: s
 export function NxTrendingBanner() {
     const [trends, setTrends] = useState<Trend[]>([]);
     const [sugs, setSugs] = useState<Sug[]>([]);
+    const [writer, setWriter] = useState<Writer | null>(null);
     const [following, setFollowing] = useState<Set<string>>(new Set());
     const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
@@ -27,6 +33,7 @@ export function NxTrendingBanner() {
             setTrends((d.trendingTags ?? []).slice(0, 3));
             setSugs((d.suggestedUsers ?? []).slice(0, 6));
         }).catch(() => { });
+        fetch("/api/nexus/top-writer").then(r => r.json()).then(d => setWriter(d.writer ?? null)).catch(() => { });
     }, []);
 
     async function toggleFollow(username: string) {
@@ -46,10 +53,44 @@ export function NxTrendingBanner() {
     }
 
     const visibleSugs = sugs.filter(s => s.username && !dismissed.has(s.username));
-    if (trends.length === 0 && visibleSugs.length === 0) return null;
+    if (trends.length === 0 && visibleSugs.length === 0 && !writer) return null;
 
     return (
         <div className="mt-2 mb-2 flex flex-col gap-3">
+            {/* H-19: Bu haftaning eng aktiv muallifi */}
+            {writer && writer.username && (
+                <Link href={`/nexus/u/${writer.username}`}
+                    className="mx-4 rounded-2xl overflow-hidden active:scale-[0.99] transition-transform block"
+                    style={{ background: "linear-gradient(135deg, rgba(245,179,1,0.14), rgba(245,158,11,0.10))",
+                        border: "1px solid rgba(245,179,1,0.35)" }}>
+                    <div className="flex items-center gap-3 px-4 py-3">
+                        <div className="relative flex-shrink-0">
+                            <div className="w-12 h-12 rounded-2xl overflow-hidden" style={{ border: "2px solid rgba(245,179,1,0.55)" }}>
+                                <img src={avatarOf(writer)} alt="" className="w-full h-full object-cover bg-white" />
+                            </div>
+                            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
+                                style={{ background: "linear-gradient(135deg,#F5B301,#F97316)", border: "2px solid #050818" }}>
+                                <Crown className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                            </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: "#F5B301" }}>Bu haftaning yulduzi</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="text-sm font-black text-white truncate">{writer.name ?? writer.username}</span>
+                                {writer.verified && <NxVerifiedBadge category={writer.verifiedCategory} size={13} />}
+                            </div>
+                            <div className="flex items-center gap-3 text-[10px] mt-0.5" style={{ color: "rgba(200,180,140,0.85)" }}>
+                                <span className="flex items-center gap-0.5"><Heart className="w-3 h-3" style={{ color: "#EF4444" }} />{writer.likes}</span>
+                                <span className="flex items-center gap-0.5"><MessageCircle className="w-3 h-3" style={{ color: "#00CEC8" }} />{writer.comments}</span>
+                                <span>{writer.posts} post</span>
+                            </div>
+                        </div>
+                    </div>
+                </Link>
+            )}
+
             {/* H-13: Trending banner */}
             {trends.length > 0 && (
                 <div className="mx-4 rounded-2xl overflow-hidden"
