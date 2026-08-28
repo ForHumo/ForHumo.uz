@@ -16,6 +16,7 @@ import { NxGroupMediaTab } from "./nx-group-media-tab";
 import { NxGroupMuteButton } from "./nx-group-mute-menu";
 import { NxChannelRichAttach, type ChannelAttachPayload } from "./nx-channel-rich-attach";
 import { NxChannelRichMsg } from "./nx-channel-rich-msg";
+import { LinkedContentCard } from "./nx-linked-content-card";
 import { NxMentionAutocomplete } from "./nx-mention-autocomplete";
 import { NxGroupJoinRequestsModal } from "./nx-group-join-requests";
 import { NxGroupPinnedList } from "./nx-group-pinned-list";
@@ -77,6 +78,11 @@ interface ChMsg {
     mentions?: string[];
     deletedForEveryone?: boolean;
     deletedForEveryoneAt?: string | null;
+    // Cross-post link (post/video/live/track) — Play tugmali karta
+    linkedType?: string | null;
+    linkedId?: string | null;
+    linkedTitle?: string | null;
+    linkedThumb?: string | null;
 }
 interface ChComment {
     id: string;
@@ -1535,6 +1541,14 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                         </a>
                                                     )}
                                                 </div>
+                                            )}
+                                            {m.linkedType && m.linkedId && (
+                                                <LinkedContentCard
+                                                    type={m.linkedType}
+                                                    id={m.linkedId}
+                                                    title={m.linkedTitle || m.text || ""}
+                                                    thumb={m.linkedThumb}
+                                                />
                                             )}
                                             {m.text && editingId !== m.id && (
                                                 <div className="text-sm whitespace-pre-wrap" style={{ color: "rgba(210,220,245,0.95)" }}>

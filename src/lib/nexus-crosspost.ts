@@ -36,17 +36,14 @@ export async function crossPostToOwnChannel(a: Args): Promise<{ channelId: strin
         if (a.description) parts.push(a.description.slice(0, 500));
         const text = parts.join("\n\n").slice(0, 2000);
 
-        // Thumb bor va media bo'sh bo'lsa — mavjud kanal renderer'i ko'rsata olishi uchun
-        // media[0]'ga thumbnail'ni ham qo'shamiz.
-        const mediaOut = (a.media && a.media.length > 0)
-            ? a.media
-            : (a.thumb ? [a.thumb] : []);
+        // Kanal xabarida media[] bo'sh qoldiriladi — linked block o'zi thumb ko'rsatadi.
+        // (Original post media'lari duplikatga aylanmasin; renderer LinkedContentCard bilan ishlaydi.)
         const msg = await prisma.nexusChannelMessage.create({
             data: {
                 channelId,
                 senderId: a.authorId,
                 text: text || null,
-                media: mediaOut,
+                media: [],
                 linkedType: a.type,
                 linkedId: a.id,
                 linkedTitle: a.title.slice(0, 200),
