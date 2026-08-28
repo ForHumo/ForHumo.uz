@@ -42,14 +42,33 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         : [];
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 
-    // Reactions (Batch E) — text "__nx_react:<icon>" prefiksli xabarlar
-    // messages'dan ajratamiz, reactions arrayga chiqaramiz
-    const REACTION_PREFIX = "__nx_react:";
+    // System xabarlar (Batch E/G/K)
+    // __nx_react:<icon>  — floating reaction (Batch E)
+    // __nx_poll:JSON     — poll boshlash (Batch G, streamer)
+    // __nx_vote:JSON     — poll ovoz (Batch G)
+    // __nx_ticker:<text> — scroll marquee (Batch K, streamer)
+    const REACT = "__nx_react:", POLL = "__nx_poll:", VOTE = "__nx_vote:", TICKER = "__nx_ticker:";
     const regular: typeof msgs = [];
     const reactions: { id: string; icon: string; at: string; profileId: string }[] = [];
+    const pollCandidates: { id: string; at: string; payload: unknown }[] = [];
+    const voteCandidates: { id: string; profileId: string; at: string; pollId: string; idx: number }[] = [];
+    let tickerText: string | null = null;
+    let tickerAt: number = 0;
     for (const m of msgs) {
-        if (m.text.startsWith(REACTION_PREFIX) && m.tipAmount === 0) {
-            reactions.push({ id: m.id, icon: m.text.slice(REACTION_PREFIX.length).slice(0, 20), at: m.createdAt.toISOString(), profileId: m.profileId });
+        if (m.text.startsWith(REACT) && m.tipAmount === 0) {
+            reactions.push({ id: m.id, icon: m.text.slice(REACT.length).slice(0, 20), at: m.createdAt.toISOString(), profileId: m.profileId });
+        } else if (m.text.startsWith(POLL)) {
+            try { pollCandidates.push({ id: m.id, at: m.createdAt.toISOString(), payload: JSON.parse(m.text.slice(POLL.length)) }); }
+            catch { /* skip */ }
+        } else if (m.text.startsWith(VOTE)) {
+            try {
+                const v = JSON.parse(m.text.slice(VOTE.length));
+                if (v.pollId && typeof v.idx === "number") voteCandidates.push({ id: m.id, profileId: m.profileId, at: m.createdAt.toISOString(), pollId: v.pollId, idx: v.idx });
+            } catch { /* skip */ }
+        } else if (m.text.startsWith(TICKER)) {
+            // Oxirgi ticker'ni saqlaymiz (bo'sh bo'lsa — o'chirilgan)
+            const t = m.text.slice(TICKER.length).trim();
+            if (m.createdAt.getTime() > tickerAt) { tickerText = t; tickerAt = m.createdAt.getTime(); }
         } else {
             regular.push(m);
         }
@@ -64,6 +83,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             };
         }),
         reactions,
+        polls: pollCandidates,
+        votes: voteCandidates,
+        ticker: tickerText,
     });
 }
 

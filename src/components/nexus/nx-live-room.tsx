@@ -8,6 +8,7 @@ import {
     MessageSquare, MessageSquareOff, Share2, Settings, Check, ChevronLeft, ChevronRight,
     Camera, EyeOff, Move,
     Heart, Flame, Laugh, ThumbsUp, PartyPopper, Sparkles, Zap, Smile, UserPlus, UserCheck,
+    BarChart3, Trash2, MoreVertical, Plus,
 } from "lucide-react";
 import { Room, RoomEvent, Track, VideoQuality, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant, type RemoteVideoTrack } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
@@ -113,6 +114,32 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [followBusy, setFollowBusy] = useState(false);
     const [meUsername, setMeUsername] = useState<string | null>(null);
 
+    // Batch G/K/F/J
+    interface LivePoll { id: string; question: string; options: string[]; endsAt: string; }
+    const [activePoll, setActivePoll] = useState<LivePoll | null>(null);
+    const [pollVotes, setPollVotes] = useState<Record<string, number[]>>({}); // pollId → [count per idx]
+    const [myVoteIdx, setMyVoteIdx] = useState<number | null>(null);
+    const [pollBusy, setPollBusy] = useState(false);
+    const [ticker, setTicker] = useState<string | null>(null);
+    // Streamer poll creator
+    const [pollComposerOpen, setPollComposerOpen] = useState(false);
+    const [pollQ, setPollQ] = useState("");
+    const [pollOpts, setPollOpts] = useState<string[]>(["", ""]);
+    const [pollDur, setPollDur] = useState(60);
+    // Streamer ticker composer
+    const [tickerEditOpen, setTickerEditOpen] = useState(false);
+    const [tickerDraft, setTickerDraft] = useState("");
+    // Chat msg menu
+    const [msgMenuId, setMsgMenuId] = useState<string | null>(null);
+    // Analytics (ENDED)
+    interface Analytics {
+        totals: { peakViewers: number; uniqueViewers: number; avgWatchSec: number; chatMessages: number; reactions: number; polls: number; tipCount: number; totalTips: number; };
+        topChatters: { author: LAuthor | null; count: number }[];
+        topTippers: { author: LAuthor | null; amount: number }[];
+        stream: { durationSec: number };
+    }
+    const [analytics, setAnalytics] = useState<Analytics | null>(null);
+
     useEffect(() => { setMounted(true); }, []);
 
     // Tafsilot — ochilishda + har 15s (status o'zgarishini ushlash uchun)
@@ -170,6 +197,34 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             tipQueueRef.current.push({ key: m.id, author: m.author, amount: m.tipAmount!, text: m.text });
                         }
                     }
+                }
+                // Batch K — ticker (latest wins)
+                if (d.ticker !== undefined && d.ticker !== null) {
+                    setTicker(d.ticker || null);
+                }
+                // Batch G — polls (aktiv: endsAt > now)
+                if (d.polls?.length) {
+                    const now = Date.now();
+                    for (const p of d.polls as { id: string; payload: LivePoll }[]) {
+                        if (new Date(p.payload.endsAt).getTime() > now) {
+                            setActivePoll(prev => prev?.id === p.payload.id ? prev : p.payload);
+                        }
+                    }
+                }
+                // Batch G — votes aggregate
+                if (d.votes?.length) {
+                    setPollVotes(prev => {
+                        const next = { ...prev };
+                        for (const v of d.votes as { id: string; pollId: string; idx: number; profileId: string }[]) {
+                            const arr = next[v.pollId] ?? [];
+                            while (arr.length <= v.idx) arr.push(0);
+                            arr[v.idx] = (arr[v.idx] || 0) + 1;
+                            next[v.pollId] = arr;
+                        }
+                        return next;
+                    });
+                    // O'z ovozimni belgilash
+                    // (Backend duplicate check qiladi — birinchi marta yozilganidan boshqasi bloklanadi)
                 }
                 // Batch E — floating reactions
                 if (d.reactions?.length) {
@@ -236,6 +291,82 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
             }
         } finally { setFollowBusy(false); }
     }
+
+    // Batch G — poll aktiv muddati tugasa avto-yashirish (natijalar 8s ko'rsatiladi)
+    useEffect(() => {
+        if (!activePoll) return;
+        const remaining = new Date(activePoll.endsAt).getTime() - Date.now();
+        if (remaining <= 0) {
+            const t = setTimeout(() => { setActivePoll(null); setMyVoteIdx(null); }, 8000);
+            return () => clearTimeout(t);
+        }
+        const t = setTimeout(() => setActivePoll(prev => prev), remaining + 100);
+        return () => clearTimeout(t);
+    }, [activePoll]);
+
+    // Batch J — ENDED bo'lsa analytics yuklash (streamer uchun)
+    useEffect(() => {
+        if (stream?.status !== "ENDED" || !stream?.isMine) return;
+        fetch(`/api/nexus/live/${streamId}/analytics`)
+            .then(r => r.json())
+            .then(d => setAnalytics(d))
+            .catch(() => { });
+    }, [stream?.status, stream?.isMine, streamId]);
+
+    async function voteForOption(idx: number) {
+        if (!activePoll || myVoteIdx !== null || pollBusy) return;
+        setPollBusy(true);
+        setMyVoteIdx(idx); // optimistic
+        // Optimistic votes ++
+        setPollVotes(prev => {
+            const arr = [...(prev[activePoll.id] ?? [])];
+            while (arr.length <= idx) arr.push(0);
+            arr[idx] = (arr[idx] || 0) + 1;
+            return { ...prev, [activePoll.id]: arr };
+        });
+        try {
+            const r = await fetch(`/api/nexus/live/${streamId}/poll/vote`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pollId: activePoll.id, optionIdx: idx }),
+            });
+            if (!r.ok) setMyVoteIdx(null);
+        } catch { setMyVoteIdx(null); }
+        finally { setPollBusy(false); }
+    }
+
+    async function createPoll() {
+        const opts = pollOpts.map(o => o.trim()).filter(Boolean);
+        if (!pollQ.trim() || opts.length < 2) return;
+        setPollBusy(true);
+        try {
+            const r = await fetch(`/api/nexus/live/${streamId}/poll`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ question: pollQ.trim(), options: opts, durationSec: pollDur }),
+            });
+            if (r.ok) {
+                setPollComposerOpen(false); setPollQ(""); setPollOpts(["", ""]);
+            }
+        } finally { setPollBusy(false); }
+    }
+
+    async function saveTicker() {
+        try {
+            const r = await fetch(`/api/nexus/live/${streamId}/ticker`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: tickerDraft }),
+            });
+            if (r.ok) { setTicker(tickerDraft || null); setTickerEditOpen(false); }
+        } catch { /* ignore */ }
+    }
+
+    async function deleteMessage(msgId: string) {
+        setMsgMenuId(null);
+        try {
+            const r = await fetch(`/api/nexus/live/${streamId}/message/${msgId}`, { method: "DELETE" });
+            if (r.ok) setMsgs(prev => prev.filter(m => m.id !== msgId));
+        } catch { /* ignore */ }
+    }
+
+    function fmtSec(s: number) { const m = Math.floor(s / 60); return m > 0 ? `${m}d ${s % 60}s` : `${s}s`; }
 
     async function sendReaction(icon: ReactionIcon) {
         if (reactionBusy || !isLive) return;
@@ -632,7 +763,69 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         0% { opacity: 1; transform: translateY(0) rotate(0deg); }
                         100% { opacity: 0; transform: translateY(80px) rotate(720deg); }
                     }
+                    @keyframes nxMarquee {
+                        0% { transform: translateX(100%); }
+                        100% { transform: translateX(-100%); }
+                    }
                 `}</style>
+
+                {/* Batch K — Ticker overlay (pastda scrolling matn) */}
+                {isLive && ticker && (
+                    <div className="pointer-events-none absolute bottom-24 left-0 right-0 z-25 py-2 overflow-hidden"
+                        style={{ background: "linear-gradient(90deg, rgba(139,92,246,0.30) 0%, rgba(236,72,153,0.30) 100%)", backdropFilter: "blur(8px)", borderTop: "1px solid rgba(139,92,246,0.35)", borderBottom: "1px solid rgba(236,72,153,0.35)" }}>
+                        <div className="whitespace-nowrap text-sm font-black text-white flex items-center gap-4"
+                            style={{ animation: "nxMarquee 22s linear infinite", willChange: "transform" }}>
+                            <span className="inline-block px-4">✦ {ticker}</span>
+                            <span className="inline-block px-4 opacity-70">✦ {ticker}</span>
+                            <span className="inline-block px-4 opacity-40">✦ {ticker}</span>
+                        </div>
+                    </div>
+                )}
+
+                {/* Batch G — Poll overlay (yuqori-o'ng, 320px) */}
+                {isLive && activePoll && (() => {
+                    const votes = pollVotes[activePoll.id] ?? [];
+                    const total = votes.reduce((a, b) => a + b, 0);
+                    const now = Date.now();
+                    const ended = new Date(activePoll.endsAt).getTime() <= now;
+                    const remSec = Math.max(0, Math.floor((new Date(activePoll.endsAt).getTime() - now) / 1000));
+                    return (
+                        <div className="absolute top-16 right-4 z-25 w-[320px] max-w-[calc(100vw-32px)] p-4 rounded-2xl animate-in fade-in slide-in-from-right-2 duration-300"
+                            style={{ background: "rgba(5,8,24,0.92)", border: "1px solid rgba(139,92,246,0.55)", boxShadow: "0 12px 40px rgba(139,92,246,0.35)", backdropFilter: "blur(12px)" }}>
+                            <div className="flex items-center gap-2 mb-2">
+                                <BarChart3 className="w-4 h-4" style={{ color: "#EC4899" }} />
+                                <span className="text-[10px] font-black uppercase" style={{ color: "#EC4899" }}>{ended ? "Yakunlandi" : "Poll ochiq"}</span>
+                                {!ended && <span className="ml-auto text-[11px] font-black text-white/85 tabular-nums">{remSec}s</span>}
+                            </div>
+                            <p className="text-sm font-black text-white mb-3 leading-snug">{activePoll.question}</p>
+                            <div className="space-y-1.5">
+                                {activePoll.options.map((opt, i) => {
+                                    const count = votes[i] ?? 0;
+                                    const pct = total > 0 ? Math.round(count / total * 100) : 0;
+                                    const chosen = myVoteIdx === i;
+                                    const showResults = myVoteIdx !== null || ended;
+                                    return (
+                                        <button key={i} onClick={() => voteForOption(i)} disabled={myVoteIdx !== null || ended || pollBusy}
+                                            className="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-white relative overflow-hidden transition disabled:cursor-default active:scale-[0.98]"
+                                            style={{ background: chosen ? "rgba(236,72,153,0.20)" : "rgba(139,92,246,0.10)", border: `1px solid ${chosen ? "#EC4899" : "rgba(139,92,246,0.30)"}` }}>
+                                            {showResults && (
+                                                <div className="absolute inset-y-0 left-0 transition-all duration-500"
+                                                    style={{ width: `${pct}%`, background: chosen ? "linear-gradient(90deg,rgba(139,92,246,0.35),rgba(236,72,153,0.35))" : "rgba(139,92,246,0.20)" }} />
+                                            )}
+                                            <span className="relative flex items-center justify-between gap-2">
+                                                <span className="flex-1 truncate">{opt}</span>
+                                                {showResults && <span className="text-[10px] tabular-nums font-black text-white/85">{pct}% · {count}</span>}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <p className="text-[10px] mt-2 text-center" style={{ color: "rgba(200,180,230,0.65)" }}>
+                                {total} ovoz{myVoteIdx === null && !ended ? " · variantni tanlang" : ""}
+                            </p>
+                        </div>
+                    );
+                })()}
 
                 {/* Floating reactions overlay (Batch E) */}
                 {isLive && floating.length > 0 && (
@@ -858,7 +1051,73 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 {stream.scheduledAt && <p className="text-xs" style={{ color: "rgba(150,170,210,0.75)" }}>Rejada: {new Date(stream.scheduledAt).toLocaleString("uz-UZ")}</p>}
                             </div>
                         ) : stream.status === "ENDED" ? (
-                            stream.recordingUrl ? null : (
+                            stream.recordingUrl ? (
+                                analytics && stream.isMine ? (
+                                    <div className="absolute top-16 left-4 max-w-sm z-15 p-4 rounded-2xl animate-in fade-in slide-in-from-left-2 duration-300"
+                                        style={{ background: "rgba(8,12,32,0.92)", border: "1px solid rgba(0,206,200,0.35)", boxShadow: "0 12px 40px rgba(0,206,200,0.25)", backdropFilter: "blur(10px)" }}>
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <BarChart3 className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                            <span className="text-sm font-black text-white">Efir statistikasi</span>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 mb-3">
+                                            {[
+                                                { l: "Eng yuqori", v: analytics.totals.peakViewers, c: "#EF4444" },
+                                                { l: "Unikal", v: analytics.totals.uniqueViewers, c: "#00CEC8" },
+                                                { l: "O'rt tomosha", v: fmtSec(analytics.totals.avgWatchSec), c: "#8B5CF6" },
+                                                { l: "Xabar", v: analytics.totals.chatMessages, c: "#F97316" },
+                                                { l: "Reaction", v: analytics.totals.reactions, c: "#EC4899" },
+                                                { l: "Poll", v: analytics.totals.polls, c: "#10B981" },
+                                            ].map(s => (
+                                                <div key={s.l} className="p-2 rounded-lg" style={{ background: "rgba(5,8,24,0.65)", border: `1px solid ${s.c}30` }}>
+                                                    <p className="text-sm font-black text-white tabular-nums">{s.v}</p>
+                                                    <p className="text-[9px] mt-0.5" style={{ color: "rgba(150,170,210,0.65)" }}>{s.l}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {analytics.totals.totalTips > 0 && (
+                                            <div className="p-3 rounded-lg mb-3" style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(239,68,68,0.12))", border: "1px solid rgba(245,158,11,0.35)" }}>
+                                                <div className="flex items-center gap-2">
+                                                    <Gift className="w-4 h-4" style={{ color: "#F59E0B" }} />
+                                                    <div className="flex-1">
+                                                        <p className="text-xs font-black text-white">{formatMoney(analytics.totals.totalTips, currency)}</p>
+                                                        <p className="text-[9px]" style={{ color: "rgba(245,225,190,0.75)" }}>{analytics.totals.tipCount} ta sovg&apos;a</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {analytics.topChatters.length > 0 && (
+                                            <div className="mb-2">
+                                                <p className="text-[10px] font-black uppercase mb-1.5" style={{ color: "rgba(0,206,200,0.85)" }}>Top chatterlar</p>
+                                                <div className="space-y-1">
+                                                    {analytics.topChatters.slice(0, 3).map((c, i) => (
+                                                        <div key={i} className="flex items-center gap-2 px-2 py-1 rounded" style={{ background: "rgba(0,206,200,0.06)" }}>
+                                                            <span className="text-[9px] font-black w-4" style={{ color: "#00CEC8" }}>{i + 1}</span>
+                                                            <img src={avatarOf(c.author)} alt="" className="w-5 h-5 rounded-full object-cover bg-white" />
+                                                            <span className="flex-1 text-[11px] font-bold text-white truncate">{c.author?.name || c.author?.username || "..."}</span>
+                                                            <span className="text-[10px] tabular-nums font-black text-white/85">{c.count}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {analytics.topTippers.length > 0 && (
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase mb-1.5" style={{ color: "rgba(245,158,11,0.85)" }}>Top tipperlar</p>
+                                                <div className="space-y-1">
+                                                    {analytics.topTippers.slice(0, 3).map((t, i) => (
+                                                        <div key={i} className="flex items-center gap-2 px-2 py-1 rounded" style={{ background: "rgba(245,158,11,0.06)" }}>
+                                                            <span className="text-[9px] font-black w-4" style={{ color: "#F59E0B" }}>{i + 1}</span>
+                                                            <img src={avatarOf(t.author)} alt="" className="w-5 h-5 rounded-full object-cover bg-white" />
+                                                            <span className="flex-1 text-[11px] font-bold text-white truncate">{t.author?.name || t.author?.username || "..."}</span>
+                                                            <span className="text-[10px] tabular-nums font-black text-white/85">{formatMoney(t.amount, currency)}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : null
+                            ) : (
                                 <div className="flex flex-col items-center gap-1">
                                     <p className="text-sm font-black text-white">Efir tugadi</p>
                                     <p className="text-xs flex items-center gap-2" style={{ color: "rgba(150,170,210,0.75)" }}>
@@ -904,6 +1163,21 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         )}
                         {stream?.category && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: "rgba(239,68,68,0.12)", color: "rgba(240,160,140,0.9)" }}>#{stream.category}</span>}
                     </div>
+                    {/* Batch G/K — Streamer controls (o'zi efirida) */}
+                    {stream?.isMine && isLive && (
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                            <button onClick={() => setPollComposerOpen(true)}
+                                className="flex items-center gap-1.5 justify-center px-2 py-1.5 rounded-lg text-[10px] font-black transition active:scale-95"
+                                style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.35)", color: "#C4B5FD" }}>
+                                <BarChart3 className="w-3 h-3" />Poll boshlash
+                            </button>
+                            <button onClick={() => { setTickerDraft(ticker || ""); setTickerEditOpen(true); }}
+                                className="flex items-center gap-1.5 justify-center px-2 py-1.5 rounded-lg text-[10px] font-black transition active:scale-95"
+                                style={{ background: "rgba(236,72,153,0.12)", border: "1px solid rgba(236,72,153,0.35)", color: "#F9A8D4" }}>
+                                <Zap className="w-3 h-3" />{ticker ? "Ticker o'zgart." : "Ticker qo'sh."}
+                            </button>
+                        </div>
+                    )}
                     {/* Batch E — Follow button (o'zim emas + auth mavjud) */}
                     {stream && !stream.isMine && isFollowing !== null && meUsername !== stream.author?.username && (
                         <button onClick={toggleFollow} disabled={followBusy}
@@ -935,15 +1209,32 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 {m.text && <p className="px-2.5 py-1.5 text-xs leading-relaxed" style={{ background: "rgba(245,158,11,0.10)", color: "rgba(245,225,190,0.95)" }}>{m.text}</p>}
                             </div>
                         ) : (
-                            <div key={m.id} className="flex gap-2 py-1.5">
+                            <div key={m.id} className="flex gap-2 py-1.5 group/msg relative">
                                 <img src={avatarOf(m.author)} alt="" className="w-6 h-6 rounded-lg object-cover bg-white flex-shrink-0" />
-                                <p className="text-xs leading-relaxed min-w-0">
+                                <p className="text-xs leading-relaxed min-w-0 flex-1">
                                     <span className="font-black mr-1.5 inline-flex items-center gap-0.5" style={{ color: "rgba(240,160,140,0.95)" }}>
                                         {m.author?.name || m.author?.username || "Foydalanuvchi"}
                                         {m.author?.verified && <NxVerifiedBadge category={(m.author as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
                                     </span>
                                     <span style={{ color: "rgba(210,220,245,0.9)" }}>{m.text}</span>
                                 </p>
+                                {/* Batch F — Delete menu (streamer, xabar egasi) */}
+                                {(stream?.isMine || m.author?.username === meUsername) && (
+                                    <button onClick={() => setMsgMenuId(o => o === m.id ? null : m.id)}
+                                        className="opacity-0 group-hover/msg:opacity-100 w-6 h-6 flex items-center justify-center rounded-md transition"
+                                        style={{ background: "rgba(255,255,255,0.05)" }}>
+                                        <MoreVertical className="w-3 h-3 text-white/60" />
+                                    </button>
+                                )}
+                                {msgMenuId === m.id && (
+                                    <div className="absolute right-0 top-6 z-10 rounded-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+                                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(239,68,68,0.35)", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+                                        <button onClick={() => deleteMessage(m.id)}
+                                            className="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-white w-full text-left hover:bg-red-500/20 transition">
+                                            <Trash2 className="w-3 h-3 text-red-400" />O&apos;chirish
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )
                     ))}
@@ -1036,6 +1327,95 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 confirmText="Tugatish" tone="danger" busy={ending}
                 onCancel={() => !ending && setEndConfirmOpen(false)}
                 onConfirm={endStream} />
+
+            {/* Batch G — Poll composer modal (streamer) */}
+            {pollComposerOpen && (
+                <>
+                    <div className="fixed inset-0 z-[9998]" style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)" }} onClick={() => setPollComposerOpen(false)} />
+                    <div className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-md p-6 rounded-3xl animate-in fade-in zoom-in-95 duration-200"
+                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(139,92,246,0.45)", boxShadow: "0 24px 80px rgba(139,92,246,0.35)" }}>
+                        <div className="flex items-center gap-2 mb-4">
+                            <BarChart3 className="w-5 h-5" style={{ color: "#EC4899" }} />
+                            <h3 className="text-base font-black text-white">Yangi poll</h3>
+                            <button onClick={() => setPollComposerOpen(false)} className="ml-auto w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,0.05)" }}>
+                                <X className="w-4 h-4 text-white/70" />
+                            </button>
+                        </div>
+                        <input value={pollQ} onChange={e => setPollQ(e.target.value.slice(0, 200))} placeholder="Savolingiz..."
+                            className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none mb-3"
+                            style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.30)", caretColor: "#EC4899" }} />
+                        <p className="text-[10px] font-bold mb-1.5 px-1" style={{ color: "rgba(200,180,230,0.75)" }}>Variantlar (2-4)</p>
+                        <div className="space-y-2 mb-3">
+                            {pollOpts.map((o, i) => (
+                                <div key={i} className="flex gap-2">
+                                    <input value={o} onChange={e => { const n = [...pollOpts]; n[i] = e.target.value.slice(0, 80); setPollOpts(n); }}
+                                        placeholder={`Variant ${i + 1}`}
+                                        className="flex-1 px-3 py-2 rounded-lg text-xs text-white outline-none"
+                                        style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.25)" }} />
+                                    {pollOpts.length > 2 && (
+                                        <button onClick={() => setPollOpts(pollOpts.filter((_, j) => j !== i))}
+                                            className="w-8 h-8 flex items-center justify-center rounded-lg"
+                                            style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.30)" }}>
+                                            <X className="w-3 h-3 text-red-400" />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                            {pollOpts.length < 4 && (
+                                <button onClick={() => setPollOpts([...pollOpts, ""])}
+                                    className="w-full flex items-center gap-1.5 justify-center py-2 rounded-lg text-[10px] font-black transition active:scale-95"
+                                    style={{ background: "rgba(139,92,246,0.06)", border: "1px dashed rgba(139,92,246,0.30)", color: "rgba(200,180,230,0.85)" }}>
+                                    <Plus className="w-3 h-3" />Variant qo&apos;shish
+                                </button>
+                            )}
+                        </div>
+                        <p className="text-[10px] font-bold mb-1.5 px-1" style={{ color: "rgba(200,180,230,0.75)" }}>Muddat</p>
+                        <div className="grid grid-cols-4 gap-1.5 mb-4">
+                            {[30, 60, 120, 300].map(s => (
+                                <button key={s} onClick={() => setPollDur(s)}
+                                    className="py-1.5 rounded-lg text-[10px] font-black transition active:scale-95"
+                                    style={pollDur === s
+                                        ? { background: "linear-gradient(135deg,#8B5CF6,#EC4899)", color: "#fff" }
+                                        : { background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.25)", color: "rgba(200,180,230,0.85)" }}>
+                                    {s < 60 ? `${s}s` : `${s / 60} daq`}
+                                </button>
+                            ))}
+                        </div>
+                        <button onClick={createPoll} disabled={pollBusy || !pollQ.trim() || pollOpts.filter(o => o.trim()).length < 2}
+                            className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-50"
+                            style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", boxShadow: "0 4px 20px rgba(139,92,246,0.35)" }}>
+                            {pollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><BarChart3 className="w-4 h-4" />Poll boshlash</>}
+                        </button>
+                    </div>
+                </>
+            )}
+
+            {/* Batch K — Ticker composer */}
+            {tickerEditOpen && (
+                <>
+                    <div className="fixed inset-0 z-[9998]" style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)" }} onClick={() => setTickerEditOpen(false)} />
+                    <div className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-md p-6 rounded-3xl animate-in fade-in zoom-in-95 duration-200"
+                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(236,72,153,0.45)", boxShadow: "0 24px 80px rgba(236,72,153,0.35)" }}>
+                        <div className="flex items-center gap-2 mb-4">
+                            <Zap className="w-5 h-5" style={{ color: "#EC4899" }} />
+                            <h3 className="text-base font-black text-white">Ticker (scroll matn)</h3>
+                            <button onClick={() => setTickerEditOpen(false)} className="ml-auto w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,0.05)" }}>
+                                <X className="w-4 h-4 text-white/70" />
+                            </button>
+                        </div>
+                        <textarea value={tickerDraft} onChange={e => setTickerDraft(e.target.value.slice(0, 200))} rows={2}
+                            placeholder="Efirdagi barchaga ko'ringan matn... (bo'sh — o'chirish)"
+                            className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none resize-none mb-2"
+                            style={{ background: "rgba(236,72,153,0.10)", border: "1px solid rgba(236,72,153,0.30)", caretColor: "#EC4899" }} />
+                        <p className="text-[10px] mb-4" style={{ color: "rgba(200,180,230,0.60)" }}>{tickerDraft.length}/200 · Pastda scroll bo&apos;lib chiqadi</p>
+                        <button onClick={saveTicker}
+                            className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2"
+                            style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", boxShadow: "0 4px 20px rgba(236,72,153,0.35)" }}>
+                            <Zap className="w-4 h-4" />{tickerDraft.trim() ? "Saqlash" : "O'chirish"}
+                        </button>
+                    </div>
+                </>
+            )}
 
             {/* Share toast */}
             {shareToast && (
