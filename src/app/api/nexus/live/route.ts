@@ -21,6 +21,8 @@ export async function GET(req: Request) {
     const category = searchParams.get("category") || "";
     const author = searchParams.get("author") || "";
     const limit = Math.min(Number(searchParams.get("limit") ?? 20), 40);
+    const offset = Math.max(0, Number(searchParams.get("offset") ?? 0));
+    const q = (searchParams.get("q") || "").trim();
 
     // Muallif berilsa — uning ochiq efirlari (har qanday status, eng yangidan)
     let authorId: string | null = null;
@@ -36,14 +38,19 @@ export async function GET(req: Request) {
     const hiddenIds = (await getHiddenAuthorIds(meId)).filter(x => x !== meId);
     const notHidden = hiddenIds.length ? { profileId: { notIn: hiddenIds } } : {};
 
+    const qFilter = q
+        ? { OR: [{ title: { contains: q, mode: "insensitive" as const } }, { category: { contains: q, mode: "insensitive" as const } }] }
+        : {};
     const streams = await prisma.nexusLiveStream.findMany({
         where: authorId
             ? { profileId: authorId, privacy: "PUBLIC", hidden: false }
-            : { status, privacy: "PUBLIC", hidden: false, ...(category ? { category } : {}), ...notHidden },
+            : { status, privacy: "PUBLIC", hidden: false, ...(category ? { category } : {}), ...notHidden, ...qFilter },
         orderBy: authorId
             ? { createdAt: "desc" }
-            : status === "UPCOMING" ? { scheduledAt: "asc" } : { createdAt: "desc" },
-        take: limit,
+            : status === "UPCOMING" ? { scheduledAt: "asc" }
+              : status === "LIVE" ? [{ peakViewers: "desc" }, { createdAt: "desc" }]
+              : { createdAt: "desc" },
+        take: limit, skip: offset,
     });
 
     // Mualliflar
@@ -76,7 +83,7 @@ export async function GET(req: Request) {
         };
     });
 
-    return NextResponse.json({ streams: out });
+    return NextResponse.json({ streams: out, hasMore: streams.length === limit });
 }
 
 // POST /api/nexus/live — efir yaratish (darhol LIVE yoki rejalashtirilgan UPCOMING)
