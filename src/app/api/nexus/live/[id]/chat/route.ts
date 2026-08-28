@@ -47,7 +47,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     // __nx_poll:JSON     — poll boshlash (Batch G, streamer)
     // __nx_vote:JSON     — poll ovoz (Batch G)
     // __nx_ticker:<text> — scroll marquee (Batch K, streamer)
-    const REACT = "__nx_react:", POLL = "__nx_poll:", VOTE = "__nx_vote:", TICKER = "__nx_ticker:", CHAPTER = "__nx_chapter:", CAPTION = "__nx_caption:";
+    const REACT = "__nx_react:", POLL = "__nx_poll:", VOTE = "__nx_vote:", TICKER = "__nx_ticker:", CHAPTER = "__nx_chapter:", CAPTION = "__nx_caption:", SYSTEM = "__nx_system:";
     const regular: typeof msgs = [];
     const reactions: { id: string; icon: string; at: string; profileId: string }[] = [];
     const pollCandidates: { id: string; at: string; payload: unknown }[] = [];
@@ -82,6 +82,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             // Batch V — Live captions (5s window)
             const text = m.text.slice(CAPTION.length).trim();
             if (text) captions.push({ id: m.id, text, at: m.createdAt.toISOString() });
+        } else if (m.text.startsWith(SYSTEM)) {
+            // Batch H — System notification (guest joined, guest left, etc.)
+            regular.push({ ...m, text: m.text }); // qoldiramiz — client "__nx_system:" bilan ajratadi
         } else {
             regular.push(m);
         }

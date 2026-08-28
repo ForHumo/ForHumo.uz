@@ -32,6 +32,7 @@ import {
     Heart, Flame, Laugh, ThumbsUp, PartyPopper, Sparkles, Zap, Smile, UserPlus, UserCheck,
     BarChart3, Trash2, MoreVertical, Plus,
     Scissors, Rocket, Image as ImageIcon, Megaphone, Captions, Languages, Target, Terminal,
+    Users, UserMinus, Info,
 } from "lucide-react";
 import { Room, RoomEvent, Track, VideoQuality, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant, type RemoteVideoTrack } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
@@ -197,6 +198,13 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     }, []);
     // Batch W — Watermark upload (streamer)
     const [watermarkBusy, setWatermarkBusy] = useState(false);
+    // Batch H — Co-host (guests)
+    interface LiveGuest { profileId: string; joined: boolean; author: LAuthor | null; invitedAt: string; }
+    const [guests, setGuests] = useState<LiveGuest[]>([]);
+    const [guestInvite, setGuestInvite] = useState("");
+    const [guestBusy, setGuestBusy] = useState(false);
+    // Batch AB — Clip likes (client-side toggle)
+    const [clipLikes, setClipLikes] = useState<Record<string, boolean>>({});
     // Batch V — Live captions
     const [captionOn, setCaptionOn] = useState(false);        // viewer: display
     const [captionStreamerOn, setCaptionStreamerOn] = useState(false); // streamer: SpeechRecognition
@@ -493,6 +501,51 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
             }
         }).catch(() => { });
     }, [stream?.isMine, stream?.status, streamId]);
+
+    // Batch H — Co-host list polling (LIVE'da har 15s)
+    useEffect(() => {
+        if (stream?.status !== "LIVE") return;
+        let stopped = false;
+        const load = () => fetch(`/api/nexus/live/${streamId}/guest`).then(r => r.json())
+            .then(d => { if (!stopped && d.guests) setGuests(d.guests); }).catch(() => { });
+        load();
+        const iv = setInterval(load, 15_000);
+        return () => { stopped = true; clearInterval(iv); };
+    }, [stream?.status, streamId]);
+
+    async function inviteGuest() {
+        const uname = guestInvite.trim().replace(/^@/, "");
+        if (!uname || guestBusy) return;
+        setGuestBusy(true);
+        try {
+            const r = await fetch(`/api/nexus/live/${streamId}/guest`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: uname }),
+            });
+            if (r.ok) { setGuestInvite(""); fetch(`/api/nexus/live/${streamId}/guest`).then(r2 => r2.json()).then(d => d.guests && setGuests(d.guests)); }
+        } finally { setGuestBusy(false); }
+    }
+    async function kickGuest(profileId: string) {
+        try {
+            await fetch(`/api/nexus/live/${streamId}/guest`, {
+                method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profileId }),
+            });
+            setGuests(prev => prev.filter(g => g.profileId !== profileId));
+        } catch { /* ignore */ }
+    }
+
+    // Batch AB — Clip like
+    async function likeClip(clipId: string) {
+        const wasLiked = !!clipLikes[clipId];
+        setClipLikes(prev => ({ ...prev, [clipId]: !wasLiked }));
+        setClips(prev => prev.map(c => c.id === clipId ? { ...c, likes: (c.likes || 0) + (wasLiked ? -1 : 1) } : c));
+        try {
+            const r = await fetch(`/api/nexus/live/clip/${clipId}/like`, { method: "POST" });
+            if (!r.ok) {
+                setClipLikes(prev => ({ ...prev, [clipId]: wasLiked }));
+                setClips(prev => prev.map(c => c.id === clipId ? { ...c, likes: (c.likes || 0) + (wasLiked ? 1 : -1) } : c));
+            }
+        } catch { /* ignore */ }
+    }
 
     // Batch V — Streamer Speech Recognition (captionStreamerOn)
     useEffect(() => {
@@ -1622,6 +1675,11 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 <Eye className="w-3.5 h-3.5" />{fmtViewers(viewers)}
                             </span>
                         )}
+                        {isLive && guests.length > 0 && (
+                            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)" }}>
+                                <Users className="w-3 h-3" />+{guests.length}
+                            </span>
+                        )}
                         {stream?.category && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: "rgba(239,68,68,0.12)", color: "rgba(240,160,140,0.9)" }}>#{stream.category}</span>}
                     </div>
                     {/* Batch G/K/M/S — Streamer controls (o'zi efirida) */}
@@ -1668,7 +1726,12 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     ) : msgs.length === 0 ? (
                         <p className="text-xs text-center py-6" style={{ color: "rgba(120,140,185,0.6)" }}>Birinchi xabarni yozing</p>
                     ) : msgs.map(m => (
-                        (m.tipAmount ?? 0) > 0 ? (
+                        m.text.startsWith("__nx_system:") ? (
+                            <div key={m.id} className="my-1.5 px-3 py-1.5 rounded-lg flex items-center gap-2" style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)" }}>
+                                <Info className="w-3 h-3 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                <span className="text-[11px] font-bold" style={{ color: "rgba(160,220,215,0.9)" }}>{m.text.slice("__nx_system:".length)}</span>
+                            </div>
+                        ) : (m.tipAmount ?? 0) > 0 ? (
                             <div key={m.id} className="my-1.5 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(245,158,11,0.45)", boxShadow: "0 2px 12px rgba(245,158,11,0.2)" }}>
                                 <div className="flex items-center justify-between px-2.5 py-1.5" style={{ background: "linear-gradient(135deg,#F59E0B,#EF4444)" }}>
                                     <span className="inline-flex items-center gap-1 text-[11px] font-black text-white">
@@ -2007,11 +2070,18 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     </div>
                     <div className="space-y-1 max-h-40 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
                         {clips.slice(0, 6).map(c => (
-                            <a key={c.id} href={`/nexus/live/${streamId}?clip=${c.id}`}
-                                className="block px-2 py-1.5 rounded-lg hover:bg-white/5 transition">
-                                <p className="text-[11px] font-bold text-white truncate">{c.title}</p>
-                                <p className="text-[9px]" style={{ color: "rgba(200,180,230,0.65)" }}>{fmtT(c.startSec)} — {fmtT(c.endSec)} · {c.plays} ko&apos;rish</p>
-                            </a>
+                            <div key={c.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/5 transition group">
+                                <a href={`/nexus/live/${streamId}?clip=${c.id}`} className="flex-1 min-w-0">
+                                    <p className="text-[11px] font-bold text-white truncate">{c.title}</p>
+                                    <p className="text-[9px]" style={{ color: "rgba(200,180,230,0.65)" }}>{fmtT(c.startSec)} — {fmtT(c.endSec)} · {c.plays} ko&apos;rish</p>
+                                </a>
+                                <button onClick={() => likeClip(c.id)}
+                                    className="flex items-center gap-0.5 px-1.5 py-1 rounded-md transition active:scale-95"
+                                    style={{ background: clipLikes[c.id] ? "rgba(239,68,68,0.20)" : "rgba(255,255,255,0.05)" }}>
+                                    <Heart className={`w-3 h-3 ${clipLikes[c.id] ? "text-red-400 fill-red-400" : "text-white/60"}`} />
+                                    <span className="text-[9px] tabular-nums font-black" style={{ color: clipLikes[c.id] ? "#F87171" : "rgba(255,255,255,0.7)" }}>{c.likes || 0}</span>
+                                </button>
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -2109,6 +2179,41 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                     Saqlash
                                 </button>
                             </div>
+                        </div>
+
+                        {/* Batch H — Co-host management */}
+                        <div className="mb-3 p-3 rounded-xl" style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.20)" }}>
+                            <p className="text-xs font-black mb-2 flex items-center gap-1.5" style={{ color: "rgba(196,181,253,0.85)" }}>
+                                <Users className="w-3.5 h-3.5" />Co-hostlar · {guests.length}
+                            </p>
+                            <div className="flex gap-1.5 mb-2">
+                                <div className="relative flex-1">
+                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-white/50 text-sm">@</span>
+                                    <input value={guestInvite} onChange={e => setGuestInvite(e.target.value.replace(/[^a-z0-9_]/gi, "").toLowerCase().slice(0, 30))}
+                                        placeholder="username"
+                                        className="w-full pl-6 pr-2 py-2 rounded-lg text-xs text-white outline-none"
+                                        style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.30)" }} />
+                                </div>
+                                <button onClick={inviteGuest} disabled={!guestInvite.trim() || guestBusy}
+                                    className="px-3 py-2 rounded-lg text-[10px] font-black text-white disabled:opacity-50"
+                                    style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)" }}>
+                                    {guestBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : "Taklif"}
+                                </button>
+                            </div>
+                            {guests.length > 0 && (
+                                <div className="space-y-1">
+                                    {guests.map(g => (
+                                        <div key={g.profileId} className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ background: "rgba(139,92,246,0.05)" }}>
+                                            <img src={avatarOf(g.author)} alt="" className="w-5 h-5 rounded-full object-cover bg-white" />
+                                            <span className="flex-1 text-[11px] font-bold text-white truncate">{g.author?.name || g.author?.username || "..."}</span>
+                                            <span className="text-[9px] font-black" style={{ color: g.joined ? "#10B981" : "rgba(200,180,230,0.55)" }}>{g.joined ? "● JOINED" : "kutilyapti"}</span>
+                                            <button onClick={() => kickGuest(g.profileId)} className="w-6 h-6 flex items-center justify-center rounded-md" style={{ background: "rgba(239,68,68,0.15)" }}>
+                                                <UserMinus className="w-3 h-3 text-red-400" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Batch V — Live captions (Speech Recognition) */}

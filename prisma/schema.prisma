@@ -1940,6 +1940,7 @@ model NexusLiveStream {
   messages    NexusLiveMessage[]
   reminders   NexusLiveReminder[]
   clips       NexusLiveClip[]
+  guests      NexusLiveGuest[]
   @@index([status, createdAt])
   @@index([profileId, createdAt])
 }
@@ -1969,8 +1970,40 @@ model NexusLiveClip {
   likes      Int      @default(0)
   hidden     Boolean  @default(false)                  // moderatsiya
   createdAt  DateTime @default(now())
+  likesList  NexusLiveClipLike[]
   @@index([streamId, createdAt])
   @@index([profileId, createdAt])
+}
+
+// Batch AB — Clip likes (dublikatsiz)
+model NexusLiveClipLike {
+  id         String   @id @default(cuid())
+  clipId     String
+  clip       NexusLiveClip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  profileId  String
+  createdAt  DateTime @default(now())
+  @@unique([clipId, profileId])
+  @@index([profileId, createdAt])
+}
+
+// Batch H — Multi-guest co-host (2+ streamer)
+model NexusLiveGuest {
+  id             String   @id @default(cuid())
+  streamId       String
+  stream         NexusLiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  guestProfileId String                                  // guest streamer profileId
+  status         NexusLiveGuestStatus @default(APPROVED) // APPROVED = publish qila oladi
+  invitedAt      DateTime @default(now())
+  joinedAt       DateTime?                               // birinchi marta LiveKit'ga ulanganda
+  leftAt         DateTime?                               // chiqib ketganda
+  @@unique([streamId, guestProfileId])
+  @@index([streamId, status])
+}
+
+enum NexusLiveGuestStatus {
+  APPROVED
+  LEFT
+  KICKED
 }
 
 enum NexusLiveStatus {

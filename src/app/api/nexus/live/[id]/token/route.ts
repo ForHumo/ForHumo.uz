@@ -23,7 +23,24 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (!stream) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
     if (stream.hidden && stream.profileId !== me.id) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
 
-    const isPublisher = stream.profileId === me.id;
+    // Batch H — Guest ham publisher bo'la oladi (APPROVED status)
+    let isGuest = false;
+    if (stream.profileId !== me.id) {
+        const guest = await prisma.nexusLiveGuest.findUnique({
+            where: { streamId_guestProfileId: { streamId: id, guestProfileId: me.id } },
+            select: { status: true },
+        });
+        if (guest && guest.status === "APPROVED") isGuest = true;
+    }
+    const isPublisher = stream.profileId === me.id || isGuest;
+
+    // Guest'ning joinedAt ni yangilash (birinchi marta ulanganda)
+    if (isGuest) {
+        prisma.nexusLiveGuest.updateMany({
+            where: { streamId: id, guestProfileId: me.id, joinedAt: null },
+            data: { joinedAt: new Date() },
+        }).catch(() => { });
+    }
 
     // Maxfiylik: PRIVATE efir faqat ega uchun. FRIENDS efirni faqat egasi va uni kuzatuvchilar ko'radi.
     if (!isPublisher) {
