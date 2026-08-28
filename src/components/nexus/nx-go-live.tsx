@@ -1,15 +1,18 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
     X, Radio, Mic, MicOff, Camera, CameraOff, Eye, Loader2,
-    Send, Globe, Users, Lock, StopCircle, BadgeCheck, Clock, MessageSquare,
-    Monitor, MonitorOff, Layout, User, Sparkles,
+    Send, Globe, Users, Lock, StopCircle, Clock, MessageSquare,
+    Monitor, MonitorOff, Layout, User, Sparkles, Gift,
 } from "lucide-react";
 import { Room, LocalVideoTrack, LocalAudioTrack, Track } from "livekit-client";
 import { upload } from "@vercel/blob/client";
 import { useNxPlayer } from "./nx-player-ctx";
 import { createStudio, startStudioRecorder, type Studio, type StudioRecorder, type SceneLayout } from "@/lib/nexus-live-studio";
+import { formatMoney, type Currency } from "@/lib/money";
+import { NxVerifiedBadge } from "./nx-verified-badge";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NxGoLive — REAL streamer studiyasi:
@@ -23,8 +26,8 @@ import { createStudio, startStudioRecorder, type Studio, type StudioRecorder, ty
 type Stage = "setup" | "live" | "ended";
 type Privacy = "PUBLIC" | "FRIENDS" | "PRIVATE";
 
-interface LAuthor { name: string | null; username: string | null; image: string | null; verified: boolean }
-interface ChatMsg { id: string; text: string; createdAt: string; author: LAuthor | null }
+interface LAuthor { name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
+interface ChatMsg { id: string; text: string; tipAmount?: number; createdAt: string; author: LAuthor | null }
 
 const PRIVACY_OPTS: { value: Privacy; label: string; icon: React.ElementType }[] = [
     { value: "PUBLIC", label: "Hammaga ochiq", icon: Globe },
@@ -81,6 +84,14 @@ export function NxGoLive() {
     const [screenOn, setScreenOn] = useState(false);
     const [recordingReady, setRecordingReady] = useState(false);   // recording tugagach show
     const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
+    const [currency, setCurrency] = useState<Currency>("UZS");
+    const [totalTips, setTotalTips] = useState(0);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
+    useEffect(() => {
+        if (!goLiveOpen) return;
+        fetch("/api/pay/wallet").then(r => r.json()).then(d => setCurrency(d.currency === "USD" ? "USD" : "UZS")).catch(() => {});
+    }, [goLiveOpen]);
     const screenRef = useRef<MediaStream | null>(null);
     const studioRef = useRef<Studio | null>(null);
     const recorderRef = useRef<StudioRecorder | null>(null);
@@ -102,7 +113,10 @@ export function NxGoLive() {
     useEffect(() => {
         if (!goLiveOpen) return;
         let cancelled = false;
-        navigator.mediaDevices?.getUserMedia({ video: true, audio: true })
+        navigator.mediaDevices?.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30, max: 60 } },
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        })
             .then(ms => {
                 if (cancelled) { ms.getTracks().forEach(t => t.stop()); return; }
                 mediaRef.current = ms;
@@ -182,6 +196,10 @@ export function NxGoLive() {
                 setMsgs(prev => {
                     const seen = new Set(prev.map((m: ChatMsg) => m.id));
                     const fresh = d.messages.filter((m: ChatMsg) => !seen.has(m.id));
+                    if (fresh.length) {
+                        const tipSum = fresh.reduce((a: number, m: ChatMsg) => a + (m.tipAmount ?? 0), 0);
+                        if (tipSum > 0) setTotalTips(t => t + tipSum);
+                    }
                     return fresh.length ? [...prev, ...fresh].slice(-200) : prev;
                 });
                 lastTsRef.current = d.messages[d.messages.length - 1].createdAt;
@@ -204,7 +222,7 @@ export function NxGoLive() {
 
     const close = useCallback(() => setGoLiveOpen(false), [setGoLiveOpen]);
 
-    if (!goLiveOpen) return null;
+    if (!goLiveOpen || !mounted) return null;
 
     const fmtDuration = (s: number) => {
         const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
@@ -252,7 +270,11 @@ export function NxGoLive() {
                     const audioTrack = mediaRef.current?.getAudioTracks()[0];
                     if (videoTrack) {
                         const lv = new LocalVideoTrack(videoTrack);
-                        await room.localParticipant.publishTrack(lv, { source: Track.Source.Camera });
+                        await room.localParticipant.publishTrack(lv, {
+                            source: Track.Source.Camera,
+                            simulcast: true,
+                            videoEncoding: { maxBitrate: 4_500_000, maxFramerate: 30, priority: "high" },
+                        });
                         publishedTracksRef.current.video = lv;
                     }
                     if (audioTrack) {
@@ -409,7 +431,7 @@ export function NxGoLive() {
 
     /* ── SETUP ── */
     if (stage === "setup") {
-        return (
+        return createPortal(
             <>
                 <div className="fixed inset-0 z-[200]" style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(8px)" }} onClick={close} />
                 <div className="fixed inset-x-0 bottom-0 z-[200] flex flex-col rounded-t-3xl overflow-hidden md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[440px] md:rounded-3xl"
@@ -518,13 +540,14 @@ export function NxGoLive() {
                         </button>
                     </div>
                 </div>
-            </>
+            </>,
+            document.body,
         );
     }
 
     /* ── LIVE — studio ── */
     if (stage === "live") {
-        return (
+        return createPortal(
             <div className="fixed inset-0 z-[200] flex flex-col md:flex-row" style={{ background: "rgba(5,8,24,0.98)" }}>
                 <div className="flex-1 flex items-center justify-center p-4 min-h-0">
                     <div className="w-full max-w-3xl">{cameraBlock}
@@ -566,22 +589,43 @@ export function NxGoLive() {
                     <div className="px-4 py-3 flex-shrink-0 flex items-center gap-2" style={{ borderBottom: "1px solid rgba(239,68,68,0.10)" }}>
                         <MessageSquare className="w-4 h-4" style={{ color: "#F97316" }} />
                         <span className="text-sm font-black text-white">Jonli chat</span>
+                        {totalTips > 0 && (
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black text-white" style={{ background: "linear-gradient(135deg,#F59E0B,#EF4444)", boxShadow: "0 2px 8px rgba(245,158,11,0.35)" }}>
+                                <Gift className="w-3 h-3" />{formatMoney(totalTips, currency)}
+                            </span>
+                        )}
                         <span className="ml-auto flex items-center gap-1 text-[11px] font-black" style={{ color: "#F97316" }}><Eye className="w-3.5 h-3.5" />{viewers}</span>
                     </div>
                     <div className="flex-1 overflow-y-auto px-4 py-2 min-h-0" style={{ scrollbarWidth: "none" }}>
                         {msgs.length === 0 ? (
                             <p className="text-xs text-center py-6" style={{ color: "rgba(120,140,185,0.6)" }}>Tomoshabinlar xabarlari shu yerda chiqadi</p>
                         ) : msgs.map(m => (
-                            <div key={m.id} className="flex gap-2 py-1.5">
-                                <img src={avatarOf(m.author)} alt="" className="w-6 h-6 rounded-lg object-cover bg-white flex-shrink-0" />
-                                <p className="text-xs leading-relaxed min-w-0">
-                                    <span className="font-black mr-1.5 inline-flex items-center gap-0.5" style={{ color: "rgba(240,160,140,0.95)" }}>
-                                        {m.author?.name || m.author?.username || "Foydalanuvchi"}
-                                        {m.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
-                                    </span>
-                                    <span style={{ color: "rgba(210,220,245,0.9)" }}>{m.text}</span>
-                                </p>
-                            </div>
+                            (m.tipAmount ?? 0) > 0 ? (
+                                <div key={m.id} className="my-1.5 rounded-xl overflow-hidden animate-in fade-in slide-in-from-right-2 duration-300"
+                                    style={{ border: "1px solid rgba(245,158,11,0.55)", boxShadow: "0 4px 20px rgba(245,158,11,0.35), 0 0 20px rgba(245,158,11,0.15)" }}>
+                                    <div className="flex items-center justify-between px-2.5 py-2" style={{ background: "linear-gradient(135deg,#F59E0B,#EF4444)" }}>
+                                        <span className="inline-flex items-center gap-1 text-[11px] font-black text-white">
+                                            <Gift className="w-3.5 h-3.5" />
+                                            <img src={avatarOf(m.author)} alt="" className="w-5 h-5 rounded-full object-cover bg-white ring-1 ring-white/40 -ml-0.5" />
+                                            {m.author?.name || m.author?.username || "Foydalanuvchi"}
+                                            {m.author?.verified && <NxVerifiedBadge category={m.author.verifiedCategory} size={12} />}
+                                        </span>
+                                        <span className="text-xs font-black text-white">{formatMoney(m.tipAmount ?? 0, currency)}</span>
+                                    </div>
+                                    {m.text && <p className="px-2.5 py-1.5 text-xs leading-relaxed" style={{ background: "rgba(245,158,11,0.10)", color: "rgba(245,225,190,0.95)" }}>{m.text}</p>}
+                                </div>
+                            ) : (
+                                <div key={m.id} className="flex gap-2 py-1.5">
+                                    <img src={avatarOf(m.author)} alt="" className="w-6 h-6 rounded-lg object-cover bg-white flex-shrink-0" />
+                                    <p className="text-xs leading-relaxed min-w-0">
+                                        <span className="font-black mr-1.5 inline-flex items-center gap-0.5" style={{ color: "rgba(240,160,140,0.95)" }}>
+                                            {m.author?.name || m.author?.username || "Foydalanuvchi"}
+                                            {m.author?.verified && <NxVerifiedBadge category={m.author.verifiedCategory} size={12} />}
+                                        </span>
+                                        <span style={{ color: "rgba(210,220,245,0.9)" }}>{m.text}</span>
+                                    </p>
+                                </div>
+                            )
                         ))}
                         <div ref={bottomRef} />
                     </div>
@@ -596,12 +640,13 @@ export function NxGoLive() {
                         </button>
                     </div>
                 </div>
-            </div>
+            </div>,
+            document.body,
         );
     }
 
     /* ── ENDED — statistika ── */
-    return (
+    return createPortal(
         <>
             <div className="fixed inset-0 z-[200]" style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(8px)" }} onClick={close} />
             <div className="fixed z-[200] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-sm p-7 rounded-3xl text-center"
@@ -638,6 +683,7 @@ export function NxGoLive() {
                     Yopish
                 </button>
             </div>
-        </>
+        </>,
+        document.body,
     );
 }

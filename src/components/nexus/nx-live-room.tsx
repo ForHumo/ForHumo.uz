@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
-    X, Radio, Eye, Send, Loader2, BadgeCheck, StopCircle, Clock, CalendarClock, Gift,
+    X, Radio, Eye, Send, Loader2, StopCircle, Clock, CalendarClock, Gift,
+    Volume2, VolumeX, Volume1, Play, Pause, Maximize2, Minimize2,
+    MessageSquare, MessageSquareOff, Share2, MoreVertical,
 } from "lucide-react";
 import { Room, RoomEvent, Track, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
 import { NxVerifiedBadge } from "./nx-verified-badge";
+import { NxConfirm } from "./nx-confirm";
 
 interface LAuthor { name: string | null; username: string | null; image: string | null; verified: boolean; verifiedCategory?: string | null }
 interface RoomStream {
@@ -49,6 +53,20 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const audioElRef = useRef<HTMLAudioElement>(null);
     const roomRef = useRef<Room | null>(null);
     const [hasRemoteVideo, setHasRemoteVideo] = useState(false);
+    // Player controls
+    const [volume, setVolume] = useState(1);         // 0..1
+    const [muted, setMuted] = useState(false);
+    const [paused, setPaused] = useState(false);
+    const [fullscreen, setFullscreen] = useState(false);
+    const [chatOpen, setChatOpen] = useState(true);
+    const [controlsVisible, setControlsVisible] = useState(true);
+    const [endConfirmOpen, setEndConfirmOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    const [shareToast, setShareToast] = useState(false);
+    const controlsTimerRef = useRef<number | null>(null);
+    const stageRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => { setMounted(true); }, []);
 
     // Tafsilot — ochilishda + har 15s (status o'zgarishini ushlash uchun)
     const loadDetail = useCallback(() => {
@@ -188,25 +206,139 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "end" }),
             });
             loadDetail();
+            setEndConfirmOpen(false);
         } finally { setEnding(false); }
     }
 
-    const isLive = stream?.status === "LIVE";
+    // ── Player controls: volume/muted/paused ──
+    useEffect(() => {
+        const v = videoElRef.current; const a = audioElRef.current;
+        if (v) { v.volume = volume; v.muted = muted; }
+        if (a) { a.volume = volume; a.muted = muted; }
+    }, [volume, muted]);
+    useEffect(() => {
+        const v = videoElRef.current; const a = audioElRef.current;
+        if (paused) { v?.pause(); a?.pause(); }
+        else { v?.play().catch(() => {}); a?.play().catch(() => {}); }
+    }, [paused]);
 
-    return (
-        <div className="fixed inset-0 z-[200] flex flex-col md:flex-row" style={{ background: "rgba(5,8,24,0.98)" }}>
-            <button onClick={onClose} className="absolute top-3 right-3 z-30 w-10 h-10 flex items-center justify-center rounded-full"
-                style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)" }}>
-                <X className="w-5 h-5 text-white" />
-            </button>
+    // Fullscreen event
+    useEffect(() => {
+        const h = () => setFullscreen(!!document.fullscreenElement);
+        document.addEventListener("fullscreenchange", h);
+        return () => document.removeEventListener("fullscreenchange", h);
+    }, []);
+
+    async function toggleFullscreen() {
+        try {
+            if (document.fullscreenElement) await document.exitFullscreen();
+            else await stageRef.current?.requestFullscreen();
+        } catch { /* ruxsat yo'q */ }
+    }
+
+    // Auto-hide controls in fullscreen
+    function pokeControls() {
+        setControlsVisible(true);
+        if (controlsTimerRef.current) window.clearTimeout(controlsTimerRef.current);
+        if (fullscreen || !chatOpen) {
+            controlsTimerRef.current = window.setTimeout(() => setControlsVisible(false), 2800);
+        }
+    }
+    useEffect(() => { pokeControls(); }, [fullscreen, chatOpen]);
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const h = (e: KeyboardEvent) => {
+            const t = e.target as HTMLElement | null;
+            if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+            if (e.key === " ") { e.preventDefault(); setPaused(p => !p); pokeControls(); }
+            else if (e.key === "m" || e.key === "M") { setMuted(m => !m); pokeControls(); }
+            else if (e.key === "f" || e.key === "F") { toggleFullscreen(); }
+            else if (e.key === "c" || e.key === "C") { setChatOpen(o => !o); }
+            else if (e.key === "Escape" && !fullscreen) { onClose(); }
+            else if (e.key === "ArrowUp") { setVolume(v => Math.min(1, v + 0.05)); pokeControls(); }
+            else if (e.key === "ArrowDown") { setVolume(v => Math.max(0, v - 0.05)); pokeControls(); }
+        };
+        window.addEventListener("keydown", h);
+        return () => window.removeEventListener("keydown", h);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fullscreen]);
+
+    async function share() {
+        const url = `${location.origin}/nexus/live/${streamId}`;
+        try {
+            if (navigator.share) await navigator.share({ title: stream?.title || "Jonli efir", url });
+            else { await navigator.clipboard.writeText(url); setShareToast(true); setTimeout(() => setShareToast(false), 2000); }
+        } catch { /* rad etildi */ }
+    }
+
+    const isLive = stream?.status === "LIVE";
+    const VolIcon = muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
+
+    if (!mounted) return null;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex flex-col md:flex-row" style={{ background: "rgba(5,8,24,0.98)" }}>
 
             {/* ── Sahna (video maydoni) ── */}
-            <div className="flex-1 bg-black flex items-center justify-center min-h-0 relative">
+            <div ref={stageRef}
+                onMouseMove={pokeControls} onTouchStart={pokeControls}
+                className="flex-1 bg-black flex items-center justify-center min-h-0 relative group/stage">
                 {/* LiveKit remote video (LIVE bo'lganda ko'rinadi) */}
                 <video ref={videoElRef} autoPlay playsInline
                     className="absolute inset-0 w-full h-full object-contain"
                     style={{ display: isLive && hasRemoteVideo ? "block" : "none" }} />
                 <audio ref={audioElRef} autoPlay />
+
+                {/* Yuqori control bar — X yopish, chat toggle, share */}
+                <div className={`absolute top-0 left-0 right-0 z-30 flex items-center gap-2 p-3 transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+                    style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 100%)" }}>
+                    <button onClick={onClose} title="Yopish (Esc)"
+                        className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition"
+                        style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                        <X className="w-5 h-5 text-white" />
+                    </button>
+                    <div className="flex-1" />
+                    <button onClick={share} title="Ulashish"
+                        className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition"
+                        style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                        <Share2 className="w-4 h-4 text-white" />
+                    </button>
+                    <button onClick={() => setChatOpen(o => !o)} title={chatOpen ? "Chatni yashirish (C)" : "Chatni ochish (C)"}
+                        className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition hidden md:flex"
+                        style={{ background: chatOpen ? "rgba(0,206,200,0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                        {chatOpen ? <MessageSquare className="w-4 h-4 text-white" /> : <MessageSquareOff className="w-4 h-4 text-white" />}
+                    </button>
+                    <button onClick={toggleFullscreen} title={fullscreen ? "Chiqish (F)" : "To'liq ekran (F)"}
+                        className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition"
+                        style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                        {fullscreen ? <Minimize2 className="w-4 h-4 text-white" /> : <Maximize2 className="w-4 h-4 text-white" />}
+                    </button>
+                </div>
+
+                {/* Pastki control bar — pause/volume */}
+                {(isLive && hasRemoteVideo) && (
+                    <div className={`absolute bottom-0 left-0 right-0 z-30 flex items-center gap-3 px-4 py-3 transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+                        style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 100%)" }}>
+                        <button onClick={() => setPaused(p => !p)} title={paused ? "Davom (Space)" : "Pauza (Space)"}
+                            className="w-11 h-11 flex items-center justify-center rounded-full active:scale-95 transition"
+                            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                            {paused ? <Play className="w-5 h-5 text-white fill-white" /> : <Pause className="w-5 h-5 text-white fill-white" />}
+                        </button>
+                        <button onClick={() => setMuted(m => !m)} title={muted ? "Ovozni yoqish (M)" : "Ovozni o'chirish (M)"}
+                            className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition"
+                            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                            <VolIcon className="w-4 h-4 text-white" />
+                        </button>
+                        <input type="range" min={0} max={1} step={0.01} value={muted ? 0 : volume}
+                            onChange={e => { setVolume(parseFloat(e.target.value)); setMuted(false); }}
+                            className="w-24 md:w-32 accent-[#F97316]" />
+                        <div className="flex-1" />
+                        <span className="hidden md:inline text-[10px] font-black px-2 py-1 rounded-md" style={{ color: "rgba(255,255,255,0.75)", background: "rgba(0,0,0,0.4)" }}>
+                            Space · M · F · C
+                        </span>
+                    </div>
+                )}
 
                 {loading ? (
                     <Loader2 className="w-10 h-10 animate-spin text-white/60" />
@@ -257,7 +389,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             </p>
                         )}
                         {stream.isMine && isLive && (
-                            <button onClick={endStream} disabled={ending}
+                            <button onClick={() => setEndConfirmOpen(true)} disabled={ending}
                                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white disabled:opacity-60"
                                 style={{ background: "rgba(239,68,68,0.85)" }}>
                                 {ending ? <Loader2 className="w-4 h-4 animate-spin" /> : <StopCircle className="w-4 h-4" />} Efirni tugatish
@@ -268,6 +400,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
             </div>
 
             {/* ── Ma'lumot + chat ── */}
+            {chatOpen && (
             <div className="md:w-96 flex flex-col flex-shrink-0 min-h-0" style={{ background: "rgba(8,12,32,0.98)", borderLeft: "1px solid rgba(239,68,68,0.15)", maxHeight: "100vh", height: "55vh" }}>
                 <div className="px-4 pt-4 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(239,68,68,0.10)" }}>
                     <h3 className="text-sm font-black text-white leading-snug mb-1.5 pr-8">{stream?.title ?? "..."}</h3>
@@ -368,6 +501,23 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     </div>
                 )}
             </div>
-        </div>
+            )}
+
+            {/* Efirni tugatish tasdiqlash */}
+            <NxConfirm open={endConfirmOpen} title="Efirni tugatishmi?"
+                message="Efir tugatilgach yozuv Nexus platformasida qoladi, ammo qayta boshlash mumkin emas."
+                confirmText="Tugatish" tone="danger" busy={ending}
+                onCancel={() => !ending && setEndConfirmOpen(false)}
+                onConfirm={endStream} />
+
+            {/* Share toast */}
+            {shareToast && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[10000] px-4 py-2.5 rounded-xl text-xs font-black text-white animate-in fade-in slide-in-from-bottom-2"
+                    style={{ background: "linear-gradient(135deg,#00CEC8,#2B3EE8)", boxShadow: "0 8px 24px rgba(0,206,200,0.35)" }}>
+                    Havola nusxalandi
+                </div>
+            )}
+        </div>,
+        document.body,
     );
 }

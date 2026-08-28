@@ -10,6 +10,7 @@ import {
 import { NxLiveRoom } from "./nx-live-room";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 import { Play, Trash2 } from "lucide-react";
+import { NxConfirm } from "./nx-confirm";
 
 // LocalStorage — rejadagi efirlar uchun eslatma (client-side)
 const REM_KEY = "nx-live-reminders-v1";
@@ -70,8 +71,21 @@ export function LiveView() {
     const [liveHasMore, setLiveHasMore] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [reminders, setReminders] = useState<Set<string>>(new Set());
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [deleteBusy, setDeleteBusy] = useState(false);
 
     useEffect(() => { setReminders(getReminders()); }, []);
+
+    async function performDelete(id: string) {
+        setDeleteBusy(true);
+        try {
+            const r = await fetch(`/api/nexus/live/${id}`, { method: "DELETE" });
+            if (r.ok) await load(true);
+        } finally {
+            setDeleteBusy(false);
+            setDeleteId(null);
+        }
+    }
 
     const load = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
@@ -253,12 +267,10 @@ export function LiveView() {
                                             <button type="button"
                                                 onMouseDown={e => e.stopPropagation()}
                                                 onPointerDown={e => e.stopPropagation()}
-                                                onClick={async e => {
+                                                onClick={e => {
                                                     e.stopPropagation();
                                                     e.preventDefault();
-                                                    if (!confirm("Bu efirni butunlay o'chirasizmi? Bu amalni orqaga qaytarib bo'lmaydi.")) return;
-                                                    const r = await fetch(`/api/nexus/live/${s.id}`, { method: "DELETE" });
-                                                    if (r.ok) load(true);
+                                                    setDeleteId(s.id);
                                                 }} title="O'chirish"
                                                 className="absolute top-2 right-2 z-10 w-8 h-8 flex items-center justify-center rounded-lg"
                                                 style={{ background: "rgba(239,68,68,0.85)", backdropFilter: "blur(6px)" }}>
@@ -274,6 +286,19 @@ export function LiveView() {
 
             {/* Tomoshabin xonasi */}
             {roomId && <NxLiveRoom streamId={roomId} onClose={() => { setRoomId(null); load(true); }} />}
+
+            {/* O'chirish tasdiqlash */}
+            <NxConfirm
+                open={!!deleteId}
+                title="Efirni o'chirish"
+                message="Bu efir Nexus platformasidan butunlay olib tashlanadi. Chat, ko'ruvchilar va yozuv — hammasi o'chadi. Bu amalni orqaga qaytarib bo'lmaydi."
+                confirmText="O'chirish"
+                cancelText="Bekor qilish"
+                tone="danger"
+                busy={deleteBusy}
+                onCancel={() => !deleteBusy && setDeleteId(null)}
+                onConfirm={() => deleteId && performDelete(deleteId)}
+            />
         </div>
     );
 }

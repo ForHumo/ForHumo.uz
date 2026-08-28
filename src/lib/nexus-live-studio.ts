@@ -26,7 +26,7 @@ export interface Studio {
 
 const W = 1280;
 const H = 720;
-const FPS = 25;
+const FPS = 30;
 
 export function createStudio(initial: {
     layout?: SceneLayout;
@@ -214,7 +214,7 @@ export function startStudioRecorder(compositeVideo: MediaStream, audio: MediaStr
     if (audio) tracks.push(...audio.getAudioTracks());
     const combined = new MediaStream(tracks);
     const mime = pickMime();
-    const rec = new MediaRecorder(combined, mime ? { mimeType: mime, videoBitsPerSecond: 2_500_000 } : { videoBitsPerSecond: 2_500_000 });
+    const rec = new MediaRecorder(combined, mime ? { mimeType: mime, videoBitsPerSecond: 4_500_000, audioBitsPerSecond: 128_000 } : { videoBitsPerSecond: 4_500_000, audioBitsPerSecond: 128_000 });
     const chunks: Blob[] = [];
     rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
     rec.start(2000);
