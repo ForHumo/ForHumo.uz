@@ -6,6 +6,7 @@ import { after } from "next/server";
 import { nexusNotify } from "@/lib/nexus-notify";
 import { isBlockedBetween } from "@/lib/nexus-block";
 import { grantAchievement } from "@/lib/achievements";
+import { sendPushToProfile } from "@/lib/push";
 
 // POST /api/nexus/follow — follow toggle ({ username } yoki { profileId })
 export async function POST(req: Request) {
@@ -32,7 +33,19 @@ export async function POST(req: Request) {
         // Idempotent — bir vaqtda ikki marta bosilsa unique buzilmasin (faqat birinchi marta bildirishnoma)
         let created = false;
         try { await prisma.nexusFollow.create({ data: { followerId: me.id, followingId: targetId } }); created = true; } catch { /* allaqachon kuzatadi */ }
-        if (created) after(() => nexusNotify({ recipientId: targetId, actorId: me.id, type: "FOLLOW" }));
+        if (created) {
+            after(() => nexusNotify({ recipientId: targetId, actorId: me.id, type: "FOLLOW" }));
+            // Batch DD — Web Push (yangi kuzatuvchi)
+            after(async () => {
+                const actor = await prisma.userProfile.findUnique({ where: { id: me.id }, select: { name: true, username: true } });
+                await sendPushToProfile(targetId, {
+                    title: "Yangi kuzatuvchi",
+                    body: `${actor?.name || actor?.username || "Foydalanuvchi"} sizni kuzata boshladi`,
+                    url: actor?.username ? `/nexus/u/${actor.username}` : "/nexus",
+                    tag: `nx-follow-${me.id}`,
+                }).catch(() => null);
+            });
+        }
     }
 
     const followerCount = await prisma.nexusFollow.count({ where: { followingId: targetId } });

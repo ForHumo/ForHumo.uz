@@ -1,5 +1,27 @@
 "use client";
 
+// Batch V — Web Speech Recognition tipi (non-standard, browser prefix)
+type SpeechRecognitionResult = { isFinal: boolean; 0: { transcript: string } };
+type SpeechRecognitionEvent = { resultIndex: number; results: { length: number; [i: number]: SpeechRecognitionResult } };
+interface SpeechRecognition {
+    lang: string;
+    continuous: boolean;
+    interimResults: boolean;
+    start: () => void;
+    stop: () => void;
+    abort: () => void;
+    onresult: ((e: SpeechRecognitionEvent) => void) | null;
+    onerror: ((e: unknown) => void) | null;
+    onend: (() => void) | null;
+}
+type SpeechRecognitionCtor = new () => SpeechRecognition;
+declare global {
+    interface Window {
+        SpeechRecognition?: SpeechRecognitionCtor;
+        webkitSpeechRecognition?: SpeechRecognitionCtor;
+    }
+}
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -9,7 +31,7 @@ import {
     Camera, EyeOff, Move,
     Heart, Flame, Laugh, ThumbsUp, PartyPopper, Sparkles, Zap, Smile, UserPlus, UserCheck,
     BarChart3, Trash2, MoreVertical, Plus,
-    Scissors, Rocket, Image as ImageIcon, Megaphone,
+    Scissors, Rocket, Image as ImageIcon, Megaphone, Captions, Languages, Target, Terminal,
 } from "lucide-react";
 import { Room, RoomEvent, Track, VideoQuality, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant, type RemoteVideoTrack } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
@@ -25,6 +47,7 @@ interface RoomStream {
     author: LAuthor | null;
     description?: string | null; recordingUrl?: string | null; recordingDurationSec?: number | null;
     raidToUsername?: string | null; watermarkUrl?: string | null;
+    donationGoal?: number | null; donationGoalLabel?: string | null; totalTips?: number;
 }
 interface ChatMsg { id: string; text: string; tipAmount?: number; createdAt: string; profileId?: string; author: LAuthor | null }
 
@@ -117,8 +140,9 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [meUsername, setMeUsername] = useState<string | null>(null);
 
     // Batch M — moderation settings
-    interface ModSettings { slowSeconds: number; followersOnly: boolean; bannedWords: string[]; }
-    const [modSettings, setModSettings] = useState<ModSettings>({ slowSeconds: 0, followersOnly: false, bannedWords: [] });
+    interface ModSettings { slowSeconds: number; followersOnly: boolean; bannedWords: string[]; donationGoal?: number | null; donationGoalLabel?: string | null; }
+    const [modSettings, setModSettings] = useState<ModSettings>({ slowSeconds: 0, followersOnly: false, bannedWords: [], donationGoal: null, donationGoalLabel: null });
+    const [goalDraft, setGoalDraft] = useState({ amount: "", label: "" });
     const [modPanelOpen, setModPanelOpen] = useState(false);
     const [modBusy, setModBusy] = useState(false);
     const [bannedWordsDraft, setBannedWordsDraft] = useState("");
@@ -173,6 +197,27 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     }, []);
     // Batch W — Watermark upload (streamer)
     const [watermarkBusy, setWatermarkBusy] = useState(false);
+    // Batch V — Live captions
+    const [captionOn, setCaptionOn] = useState(false);        // viewer: display
+    const [captionStreamerOn, setCaptionStreamerOn] = useState(false); // streamer: SpeechRecognition
+    const [currentCaption, setCurrentCaption] = useState<string | null>(null);
+    const captionTimerRef = useRef<number | null>(null);
+    const recognitionRef = useRef<SpeechRecognition | null>(null);
+    const lastSentCaptionRef = useRef<{ text: string; at: number }>({ text: "", at: 0 });
+    const seenCaptionIdsRef = useRef<Set<string>>(new Set());
+    // Batch X — Chat auto-translate
+    const [translateOn, setTranslateOn] = useState(false);
+    const [translateLang, setTranslateLang] = useState<"uz" | "ru" | "en" | "tr" | "ar" | "es" | "fr">("uz");
+    const [translations, setTranslations] = useState<Record<string, string>>({});
+    const translateBusyRef = useRef<Set<string>>(new Set());
+    useEffect(() => {
+        try {
+            setTranslateOn(localStorage.getItem("nx-translate") === "1");
+            const l = localStorage.getItem("nx-translate-lang");
+            if (l) setTranslateLang(l as typeof translateLang);
+        } catch { /* jim */ }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => { setMounted(true); }, []);
 
@@ -235,6 +280,20 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 // Batch K — ticker (latest wins)
                 if (d.ticker !== undefined && d.ticker !== null) {
                     setTicker(d.ticker || null);
+                }
+                // Batch V — captions (5s window)
+                if (d.captions?.length) {
+                    const now = Date.now();
+                    for (const c of d.captions as { id: string; text: string; at: string }[]) {
+                        if (seenCaptionIdsRef.current.has(c.id)) continue;
+                        seenCaptionIdsRef.current.add(c.id);
+                        if (now - new Date(c.at).getTime() > 5000) continue;
+                        if (captionOn) {
+                            setCurrentCaption(c.text);
+                            if (captionTimerRef.current) window.clearTimeout(captionTimerRef.current);
+                            captionTimerRef.current = window.setTimeout(() => setCurrentCaption(null), 5000);
+                        }
+                    }
                 }
                 // Batch S — chapters (merge unique by id)
                 if (d.chapters?.length) {
@@ -427,9 +486,83 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
             if (d.settings) {
                 setModSettings(d.settings);
                 setBannedWordsDraft((d.settings.bannedWords || []).join(", "));
+                setGoalDraft({
+                    amount: d.settings.donationGoal ? String(d.settings.donationGoal) : "",
+                    label: d.settings.donationGoalLabel || "",
+                });
             }
         }).catch(() => { });
     }, [stream?.isMine, stream?.status, streamId]);
+
+    // Batch V — Streamer Speech Recognition (captionStreamerOn)
+    useEffect(() => {
+        if (!stream?.isMine || stream?.status !== "LIVE") return;
+        if (!captionStreamerOn) {
+            try { recognitionRef.current?.abort(); } catch { /* jim */ }
+            recognitionRef.current = null;
+            return;
+        }
+        const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Ctor) { setCaptionStreamerOn(false); return; }
+        let stopped = false;
+        const rec = new Ctor();
+        rec.lang = "uz-UZ";
+        rec.continuous = true;
+        rec.interimResults = false;
+        rec.onresult = (e: SpeechRecognitionEvent) => {
+            let final = "";
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+                const r = e.results[i];
+                if (r.isFinal) final += r[0].transcript + " ";
+            }
+            final = final.trim();
+            if (!final) return;
+            const now = Date.now();
+            if (final === lastSentCaptionRef.current.text && now - lastSentCaptionRef.current.at < 3000) return;
+            lastSentCaptionRef.current = { text: final, at: now };
+            fetch(`/api/nexus/live/${streamId}/caption`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: final }),
+            }).catch(() => { });
+        };
+        rec.onerror = () => { /* jim */ };
+        rec.onend = () => { if (!stopped && captionStreamerOn) { try { rec.start(); } catch { /* jim */ } } };
+        try { rec.start(); recognitionRef.current = rec; } catch { setCaptionStreamerOn(false); }
+        return () => { stopped = true; try { rec.abort(); } catch { /* jim */ } };
+    }, [captionStreamerOn, stream?.isMine, stream?.status, streamId]);
+
+    // Batch X — Auto-translate yangi chat msg'lar
+    useEffect(() => {
+        if (!translateOn) return;
+        // Yangi msg'lar uchun trigger
+        for (const m of msgs) {
+            const key = m.id;
+            if (translations[key] || translateBusyRef.current.has(key)) continue;
+            const t = (m.text || "").trim();
+            if (!t || t.length < 3 || t.startsWith("__nx_")) continue;
+            translateBusyRef.current.add(key);
+            fetch(`/api/nexus/translate`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: t, targetLang: translateLang }),
+            }).then(r => r.json()).then(d => {
+                if (d.translated && d.translated !== t) {
+                    setTranslations(prev => ({ ...prev, [key]: d.translated }));
+                }
+            }).catch(() => { }).finally(() => translateBusyRef.current.delete(key));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [msgs, translateOn, translateLang]);
+
+    function toggleTranslate() {
+        setTranslateOn(prev => {
+            const nx = !prev;
+            try { localStorage.setItem("nx-translate", nx ? "1" : "0"); } catch { /* jim */ }
+            return nx;
+        });
+    }
+    function changeTranslateLang(l: typeof translateLang) {
+        setTranslateLang(l);
+        try { localStorage.setItem("nx-translate-lang", l); } catch { /* jim */ }
+    }
 
     async function updateModSettings(patch: Partial<ModSettings>) {
         setModBusy(true);
@@ -667,11 +800,34 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
         };
     }, [stream?.status, streamId]);
 
+    // Batch FF — Slash commands parser
+    function expandSlashCommand(raw: string): string {
+        const t = raw.trim();
+        if (!t.startsWith("/")) return t;
+        const [cmd, ...rest] = t.slice(1).split(/\s+/);
+        const arg = rest.join(" ");
+        switch (cmd.toLowerCase()) {
+            case "me": return arg ? `* ${arg}` : t;
+            case "shrug": return "¯\\_(ツ)_/¯";
+            case "roll": {
+                const max = Math.max(2, Math.min(1000, parseInt(arg) || 6));
+                return `🎲 ${1 + Math.floor(Math.random() * max)}/${max}`;
+            }
+            case "flip": return Math.random() < 0.5 ? "🪙 Yeg'ir" : "🪙 O'ng";
+            case "8ball": {
+                const answers = ["Ha", "Yo'q", "Balki", "Aniq ha", "Aniq yo'q", "Keyinroq so'rang", "Aynan shunday", "Shubhali"];
+                return `🎱 ${answers[Math.floor(Math.random() * answers.length)]}${arg ? " — " + arg : ""}`;
+            }
+            case "clear": return t; // faqat display effect
+            default: return t;
+        }
+    }
+
     async function send() {
         const isSC = scAmount > 0;
         if ((!input.trim() && !isSC) || busy) return;
         setBusy(true); setChatError(null);
-        const text = input.trim();
+        const text = expandSlashCommand(input.trim());
         try {
             const r = await fetch(`/api/nexus/live/${streamId}/chat`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
@@ -1084,6 +1240,38 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     </div>
                 )}
 
+                {/* Batch V — Live captions overlay (viewer, pastda video ustida) */}
+                {isLive && captionOn && currentCaption && (
+                    <div className="pointer-events-none absolute left-1/2 bottom-32 -translate-x-1/2 z-25 max-w-[90%] px-4 py-2 rounded-lg animate-in fade-in duration-200"
+                        style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                        <p className="text-sm md:text-base font-bold text-white text-center leading-snug">{currentCaption}</p>
+                    </div>
+                )}
+
+                {/* Batch AA — Donation goal progress bar (yuqori-chap, X ostida) */}
+                {isLive && stream?.donationGoal && stream.donationGoal > 0 && (
+                    <div className="absolute top-16 left-4 z-15 max-w-[240px] p-3 rounded-xl animate-in fade-in slide-in-from-left-2 duration-300"
+                        style={{ background: "rgba(8,12,32,0.85)", border: "1px solid rgba(245,158,11,0.45)", boxShadow: "0 8px 24px rgba(245,158,11,0.25)", backdropFilter: "blur(10px)" }}>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                            <Target className="w-3.5 h-3.5" style={{ color: "#F59E0B" }} />
+                            <p className="text-[10px] font-black text-white truncate flex-1">{stream.donationGoalLabel || "Maqsad"}</p>
+                        </div>
+                        <div className="h-2 rounded-full overflow-hidden mb-1" style={{ background: "rgba(245,158,11,0.15)" }}>
+                            <div className="h-full transition-all duration-500 rounded-full"
+                                style={{
+                                    width: `${Math.min(100, ((stream.totalTips || 0) / stream.donationGoal) * 100)}%`,
+                                    background: "linear-gradient(90deg,#F59E0B,#EF4444,#EC4899)",
+                                    boxShadow: "0 0 12px rgba(245,158,11,0.65)",
+                                }} />
+                        </div>
+                        <p className="text-[9px] tabular-nums text-center" style={{ color: "rgba(255,220,180,0.85)" }}>
+                            {formatMoney(stream.totalTips || 0, currency)} / {formatMoney(stream.donationGoal, currency)}
+                            {" · "}
+                            <span className="font-black" style={{ color: "#F59E0B" }}>{Math.floor(((stream.totalTips || 0) / stream.donationGoal) * 100)}%</span>
+                        </p>
+                    </div>
+                )}
+
                 {/* Swipe hint arrows */}
                 {swipeHint && (
                     <div className={`pointer-events-none absolute inset-y-0 ${swipeHint === "left" ? "right-6" : "left-6"} flex items-center z-20 animate-in fade-in duration-150`}>
@@ -1120,6 +1308,39 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             style={{ background: ttsEnabled ? "rgba(245,158,11,0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
                             <Megaphone className="w-4 h-4 text-white" />
                         </button>
+                    )}
+                    {/* Batch V — Captions display toggle (viewer) */}
+                    {isLive && (
+                        <button onClick={() => setCaptionOn(o => !o)} title={captionOn ? "Subtitrlarni yashirish" : "Subtitrlarni ko'rsatish"}
+                            className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition"
+                            style={{ background: captionOn ? "rgba(0,206,200,0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                            <Captions className="w-4 h-4 text-white" />
+                        </button>
+                    )}
+                    {/* Batch X — Translate toggle (viewer chat) */}
+                    {(isLive || stream?.status === "ENDED") && (
+                        <div className="relative">
+                            <button onClick={toggleTranslate} title={translateOn ? `Tarjima yoqilgan (${translateLang.toUpperCase()})` : "Chat'ni tarjima qilish"}
+                                className="h-10 px-3 flex items-center gap-1.5 rounded-full active:scale-95 transition"
+                                style={{ background: translateOn ? "rgba(59,130,246,0.35)" : "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                                <Languages className="w-4 h-4 text-white" />
+                                {translateOn && <span className="text-[10px] font-black text-white">{translateLang.toUpperCase()}</span>}
+                            </button>
+                            {translateOn && (
+                                <div className="absolute top-full right-0 mt-2 rounded-xl p-1 flex gap-0.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
+                                    style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(59,130,246,0.35)" }}>
+                                    {(["uz", "ru", "en", "tr", "ar"] as const).map(l => (
+                                        <button key={l} onClick={() => changeTranslateLang(l)}
+                                            className="px-2 py-1 rounded-md text-[10px] font-black transition"
+                                            style={translateLang === l
+                                                ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }
+                                                : { color: "rgba(180,190,220,0.85)" }}>
+                                            {l.toUpperCase()}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     )}
                     {/* Quality selector — faqat video oqim bor bo'lganda */}
                     {((isLive && hasRemoteVideo) || (stream?.status === "ENDED" && stream?.recordingUrl)) && (
@@ -1461,13 +1682,22 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                         ) : (
                             <div key={m.id} className="flex gap-2 py-1.5 group/msg relative">
                                 <img src={avatarOf(m.author)} alt="" className="w-6 h-6 rounded-lg object-cover bg-white flex-shrink-0" />
-                                <p className="text-xs leading-relaxed min-w-0 flex-1">
-                                    <span className="font-black mr-1.5 inline-flex items-center gap-0.5" style={{ color: "rgba(240,160,140,0.95)" }}>
-                                        {m.author?.name || m.author?.username || "Foydalanuvchi"}
-                                        {m.author?.verified && <NxVerifiedBadge category={(m.author as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
-                                    </span>
-                                    <span style={{ color: "rgba(210,220,245,0.9)" }}>{m.text}</span>
-                                </p>
+                                <div className="text-xs leading-relaxed min-w-0 flex-1">
+                                    <p>
+                                        <span className="font-black mr-1.5 inline-flex items-center gap-0.5" style={{ color: "rgba(240,160,140,0.95)" }}>
+                                            {m.author?.name || m.author?.username || "Foydalanuvchi"}
+                                            {m.author?.verified && <NxVerifiedBadge category={(m.author as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
+                                        </span>
+                                        <span style={{ color: "rgba(210,220,245,0.9)" }}>{m.text}</span>
+                                    </p>
+                                    {/* Batch X — Tarjima */}
+                                    {translateOn && translations[m.id] && (
+                                        <p className="mt-0.5 flex items-start gap-1 text-[11px] italic" style={{ color: "rgba(147,197,253,0.85)" }}>
+                                            <Languages className="w-2.5 h-2.5 flex-shrink-0 mt-1" style={{ color: "rgba(59,130,246,0.7)" }} />
+                                            <span>{translations[m.id]}</span>
+                                        </p>
+                                    )}
+                                </div>
                                 {/* Batch F — Delete menu (streamer, xabar egasi) */}
                                 {(stream?.isMine || m.author?.username === meUsername) && (
                                     <button onClick={() => setMsgMenuId(o => o === m.id ? null : m.id)}
@@ -1536,6 +1766,14 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             </div>
                         )}
                         {chatError && <p className="text-[11px] font-bold mb-2" style={{ color: "#EF4444" }}>{chatError}</p>}
+                        {/* Batch FF — Slash commands hint (input / bilan boshlanganda) */}
+                        {input.startsWith("/") && input.length >= 1 && (
+                            <div className="mb-2 p-2 rounded-lg text-[10px] font-bold flex items-center gap-1.5 flex-wrap"
+                                style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.20)", color: "rgba(160,220,215,0.85)" }}>
+                                <Terminal className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                <span>/me · /roll [N] · /flip · /8ball [savol] · /shrug</span>
+                            </div>
+                        )}
                         <div className="flex gap-2">
                             {!stream.isMine && (
                                 <button onClick={() => { setScOpen(o => !o); if (scOpen) setScAmount(0); }} title="Super Chat"
@@ -1870,6 +2108,52 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                     style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
                                     Saqlash
                                 </button>
+                            </div>
+                        </div>
+
+                        {/* Batch V — Live captions (Speech Recognition) */}
+                        <div className="mb-3 p-3 rounded-xl flex items-center justify-between" style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.20)" }}>
+                            <div className="flex-1">
+                                <p className="text-xs font-black text-white flex items-center gap-1.5">
+                                    <Captions className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                    Live subtitrlar
+                                </p>
+                                <p className="text-[10px] mt-0.5" style={{ color: "rgba(160,220,215,0.65)" }}>Ovozingiz avto matnga aylanadi (uz-UZ)</p>
+                            </div>
+                            <button onClick={() => setCaptionStreamerOn(o => !o)}
+                                className="relative w-11 h-6 rounded-full transition"
+                                style={{ background: captionStreamerOn ? "linear-gradient(135deg,#00CEC8,#2B3EE8)" : "rgba(120,120,150,0.4)" }}>
+                                <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all"
+                                    style={{ left: captionStreamerOn ? "22px" : "2px" }} />
+                            </button>
+                        </div>
+
+                        {/* Batch AA — Donation goal */}
+                        <div className="mb-4">
+                            <p className="text-xs font-black mb-2 flex items-center gap-1.5" style={{ color: "rgba(245,158,11,0.85)" }}>
+                                <Target className="w-3.5 h-3.5" />Donate maqsad
+                            </p>
+                            <div className="grid grid-cols-2 gap-1.5 mb-2">
+                                <input value={goalDraft.amount} onChange={e => setGoalDraft({ ...goalDraft, amount: e.target.value.replace(/[^0-9]/g, "").slice(0, 10) })}
+                                    placeholder="Summa" className="px-3 py-2 rounded-lg text-xs text-white outline-none"
+                                    style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.22)" }} />
+                                <input value={goalDraft.label} onChange={e => setGoalDraft({ ...goalDraft, label: e.target.value.slice(0, 80) })}
+                                    placeholder="Nimaga (mikrofon...)" className="px-3 py-2 rounded-lg text-xs text-white outline-none"
+                                    style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.22)" }} />
+                            </div>
+                            <div className="flex gap-1.5">
+                                <button onClick={() => updateModSettings({ donationGoal: goalDraft.amount ? parseInt(goalDraft.amount) : null, donationGoalLabel: goalDraft.label })} disabled={modBusy}
+                                    className="flex-1 py-2 rounded-lg text-[10px] font-black text-white transition active:scale-95 disabled:opacity-50"
+                                    style={{ background: "linear-gradient(135deg,#F59E0B,#EF4444)" }}>
+                                    {modSettings.donationGoal ? "Yangilash" : "O'rnatish"}
+                                </button>
+                                {modSettings.donationGoal ? (
+                                    <button onClick={() => { setGoalDraft({ amount: "", label: "" }); updateModSettings({ donationGoal: null, donationGoalLabel: null }); }}
+                                        className="px-3 py-2 rounded-lg text-[10px] font-black text-white"
+                                        style={{ background: "rgba(239,68,68,0.20)", border: "1px solid rgba(239,68,68,0.40)" }}>
+                                        O&apos;chirish
+                                    </button>
+                                ) : null}
                             </div>
                         </div>
 

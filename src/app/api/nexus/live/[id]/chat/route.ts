@@ -47,12 +47,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     // __nx_poll:JSON     — poll boshlash (Batch G, streamer)
     // __nx_vote:JSON     — poll ovoz (Batch G)
     // __nx_ticker:<text> — scroll marquee (Batch K, streamer)
-    const REACT = "__nx_react:", POLL = "__nx_poll:", VOTE = "__nx_vote:", TICKER = "__nx_ticker:", CHAPTER = "__nx_chapter:";
+    const REACT = "__nx_react:", POLL = "__nx_poll:", VOTE = "__nx_vote:", TICKER = "__nx_ticker:", CHAPTER = "__nx_chapter:", CAPTION = "__nx_caption:";
     const regular: typeof msgs = [];
     const reactions: { id: string; icon: string; at: string; profileId: string }[] = [];
     const pollCandidates: { id: string; at: string; payload: unknown }[] = [];
     const voteCandidates: { id: string; profileId: string; at: string; pollId: string; idx: number }[] = [];
     const chapters: { id: string; sec: number; label: string }[] = [];
+    const captions: { id: string; text: string; at: string }[] = [];
     let tickerText: string | null = null;
     let tickerAt: number = 0;
     for (const m of msgs) {
@@ -77,6 +78,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 const label = rest.slice(colon + 1);
                 if (Number.isFinite(sec) && label) chapters.push({ id: m.id, sec, label });
             }
+        } else if (m.text.startsWith(CAPTION)) {
+            // Batch V — Live captions (5s window)
+            const text = m.text.slice(CAPTION.length).trim();
+            if (text) captions.push({ id: m.id, text, at: m.createdAt.toISOString() });
         } else {
             regular.push(m);
         }
@@ -96,6 +101,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         votes: voteCandidates,
         ticker: tickerText,
         chapters,
+        captions,
     });
 }
 

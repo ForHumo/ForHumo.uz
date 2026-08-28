@@ -1932,6 +1932,9 @@ model NexusLiveStream {
   raidToUsername String?                              // /nexus/u/<username> ga raid
   // Batch W — Custom watermark (VOD canvas'da chizilaki)
   watermarkUrl   String?                              // logo URL (Vercel Blob)
+  // Batch AA — Donation goal
+  donationGoal      Int?                              // target summa (streamer valyutasida)
+  donationGoalLabel String?                           // "Yangi mikrofon", "Studio jihoz" etc.
 
   createdAt   DateTime         @default(now())
   messages    NexusLiveMessage[]

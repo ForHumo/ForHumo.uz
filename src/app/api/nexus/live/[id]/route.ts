@@ -34,6 +34,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         where: { streamId: id, lastSeenAt: { gt: since } },
     });
 
+    // Batch AA — Total tips (donation goal progress)
+    let totalTips = 0;
+    if (stream.donationGoal && stream.donationGoal > 0) {
+        const agg = await prisma.nexusLiveMessage.aggregate({
+            where: { streamId: id, tipAmount: { gt: 0 } },
+            _sum: { tipAmount: true },
+        });
+        totalTips = agg._sum.tipAmount || 0;
+    }
+
     return NextResponse.json({
         stream: {
             id: stream.id, title: stream.title, description: stream.description, thumbUrl: stream.thumbUrl,
@@ -45,6 +55,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             sceneLayout: stream.sceneLayout,
             raidToUsername: stream.raidToUsername,
             watermarkUrl: stream.watermarkUrl,
+            donationGoal: stream.donationGoal, donationGoalLabel: stream.donationGoalLabel, totalTips,
             isMine: stream.profileId === meId,
             author: author ? { name: author.name, username: author.username, image: author.image, verified: isVerifiedProfile(author) } : null,
         },

@@ -26,9 +26,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             .filter((w: string) => w.length > 0 && w.length <= 50)
             .slice(0, 200);
     }
+    // Batch AA — Donation goal
+    if (body.donationGoal !== undefined) {
+        const g = Number(body.donationGoal);
+        patch.donationGoal = Number.isFinite(g) && g > 0 ? Math.floor(g) : null;
+    }
+    if (body.donationGoalLabel !== undefined) {
+        const l = String(body.donationGoalLabel || "").trim().slice(0, 80);
+        patch.donationGoalLabel = l || null;
+    }
     const updated = await prisma.nexusLiveStream.update({
         where: { id }, data: patch,
-        select: { slowSeconds: true, followersOnly: true, bannedWords: true },
+        select: { slowSeconds: true, followersOnly: true, bannedWords: true, donationGoal: true, donationGoalLabel: true },
     });
     return NextResponse.json({ settings: updated });
 }
