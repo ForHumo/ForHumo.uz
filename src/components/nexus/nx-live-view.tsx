@@ -250,13 +250,17 @@ export function LiveView() {
                                         }
                                         meta={<><Eye className="w-3 h-3" />{fmtViewers(s.peakViewers)} eng yuqori · {fmtStreamDur(s.startedAt, s.endedAt)}</>}
                                         corner={s.isMine ? (
-                                            <button onClick={async e => {
-                                                e.stopPropagation();
-                                                if (!confirm("Bu efirni butunlay o'chirasizmi? Bu amalni orqaga qaytarib bo'lmaydi.")) return;
-                                                const r = await fetch(`/api/nexus/live/${s.id}`, { method: "DELETE" });
-                                                if (r.ok) load(true);
-                                            }} title="O'chirish"
-                                                className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-lg"
+                                            <button type="button"
+                                                onMouseDown={e => e.stopPropagation()}
+                                                onPointerDown={e => e.stopPropagation()}
+                                                onClick={async e => {
+                                                    e.stopPropagation();
+                                                    e.preventDefault();
+                                                    if (!confirm("Bu efirni butunlay o'chirasizmi? Bu amalni orqaga qaytarib bo'lmaydi.")) return;
+                                                    const r = await fetch(`/api/nexus/live/${s.id}`, { method: "DELETE" });
+                                                    if (r.ok) load(true);
+                                                }} title="O'chirish"
+                                                className="absolute top-2 right-2 z-10 w-8 h-8 flex items-center justify-center rounded-lg"
                                                 style={{ background: "rgba(239,68,68,0.85)", backdropFilter: "blur(6px)" }}>
                                                 <Trash2 className="w-3.5 h-3.5 text-white" />
                                             </button>
@@ -306,11 +310,11 @@ function StreamCard({ s, onOpen, badge, meta, dim, corner }: {
                 style={{ border: `1px solid ${dim ? "rgba(100,110,140,0.25)" : "rgba(239,68,68,0.25)"}`, background: "linear-gradient(135deg, rgba(40,10,20,0.9), rgba(30,15,50,0.9))", opacity: dim ? 0.75 : 1 }}>
                 <img src={avatarOf(s.author)} alt="" className="w-16 h-16 rounded-full object-cover bg-white" style={{ border: "2px solid rgba(239,68,68,0.5)" }} />
                 <div className="absolute top-2 left-2">{badge}</div>
-                {corner}
-                {s.category && !corner && <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: "rgba(5,8,24,0.75)" }}>#{s.category}</span>}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center" style={{ background: "rgba(5,8,24,0.40)" }}>
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none" style={{ background: "rgba(5,8,24,0.40)" }}>
                     <span className="px-3 py-1.5 rounded-xl text-xs font-black text-white" style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>Kirish</span>
                 </div>
+                {corner}
+                {s.category && !corner && <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-white pointer-events-none" style={{ background: "rgba(5,8,24,0.75)" }}>#{s.category}</span>}
             </div>
             <div className="flex gap-2.5">
                 {s.author?.username ? (

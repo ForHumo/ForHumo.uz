@@ -194,6 +194,14 @@ export function NxGoLive() {
 
     useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
+    // Layout o'zgarganda studio ham yangilanadi
+    useEffect(() => {
+        studioRef.current?.setLayout(layout);
+    }, [layout]);
+    useEffect(() => {
+        studioRef.current?.setOverlay({ title, subtitle: category ? CATS.find(c => c.id === category)?.label : undefined });
+    }, [title, category]);
+
     const close = useCallback(() => setGoLiveOpen(false), [setGoLiveOpen]);
 
     if (!goLiveOpen) return null;
@@ -269,14 +277,6 @@ export function NxGoLive() {
         } catch { setErr("Tarmoq xatosi"); }
         finally { setStarting(false); }
     }
-
-    // Layout o'zgarganda studio ham yangilanadi
-    useEffect(() => {
-        studioRef.current?.setLayout(layout);
-    }, [layout]);
-    useEffect(() => {
-        studioRef.current?.setOverlay({ title, subtitle: category ? CATS.find(c => c.id === category)?.label : undefined });
-    }, [title, category]);
 
     // Screen share toggle
     async function toggleScreen() {
@@ -411,8 +411,8 @@ export function NxGoLive() {
     if (stage === "setup") {
         return (
             <>
-                <div className="fixed inset-0 z-[55]" style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(8px)" }} onClick={close} />
-                <div className="fixed inset-x-0 bottom-0 z-[55] flex flex-col rounded-t-3xl overflow-hidden md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[440px] md:rounded-3xl"
+                <div className="fixed inset-0 z-[200]" style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(8px)" }} onClick={close} />
+                <div className="fixed inset-x-0 bottom-0 z-[200] flex flex-col rounded-t-3xl overflow-hidden md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[440px] md:rounded-3xl"
                     style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(239,68,68,0.25)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)", maxHeight: "92vh" }}
                     onClick={e => e.stopPropagation()}>
                     <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
@@ -525,7 +525,7 @@ export function NxGoLive() {
     /* ── LIVE — studio ── */
     if (stage === "live") {
         return (
-            <div className="fixed inset-0 z-[55] flex flex-col md:flex-row" style={{ background: "rgba(5,8,24,0.98)" }}>
+            <div className="fixed inset-0 z-[200] flex flex-col md:flex-row" style={{ background: "rgba(5,8,24,0.98)" }}>
                 <div className="flex-1 flex items-center justify-center p-4 min-h-0">
                     <div className="w-full max-w-3xl">{cameraBlock}
                         {/* Studio panel — live paytida layout va screen share almashtirish */}
@@ -603,8 +603,8 @@ export function NxGoLive() {
     /* ── ENDED — statistika ── */
     return (
         <>
-            <div className="fixed inset-0 z-[55]" style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(8px)" }} onClick={close} />
-            <div className="fixed z-[55] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-sm p-7 rounded-3xl text-center"
+            <div className="fixed inset-0 z-[200]" style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(8px)" }} onClick={close} />
+            <div className="fixed z-[200] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-sm p-7 rounded-3xl text-center"
                 style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(239,68,68,0.25)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}
                 onClick={e => e.stopPropagation()}>
                 <div className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>

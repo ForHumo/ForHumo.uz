@@ -194,7 +194,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const isLive = stream?.status === "LIVE";
 
     return (
-        <div className="fixed inset-0 z-[60] flex flex-col md:flex-row" style={{ background: "rgba(5,8,24,0.98)" }}>
+        <div className="fixed inset-0 z-[200] flex flex-col md:flex-row" style={{ background: "rgba(5,8,24,0.98)" }}>
             <button onClick={onClose} className="absolute top-3 right-3 z-30 w-10 h-10 flex items-center justify-center rounded-full"
                 style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)" }}>
                 <X className="w-5 h-5 text-white" />
