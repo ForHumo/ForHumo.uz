@@ -7,6 +7,7 @@ import { useEffect, useState, useRef } from "react";
 import { Link } from "@/i18n/routing";
 import { Mic2, Play, Pause, Heart, Trophy, Trash2, Loader2, Users } from "lucide-react";
 import { NxVerifiedBadge } from "./nx-verified-badge";
+import { NxKaraokePlayer } from "./nx-karaoke-player";
 
 export interface KaraokePerformance {
     id: string; audioUrl: string; durationSec: number; score: number;
@@ -42,6 +43,8 @@ export function KaraokePerformanceCard({ p, onDeleted }: { p: KaraokePerformance
     const [progress, setProgress] = useState(0);
     const audioRef = useRef<HTMLAudioElement>(null);
     const [deleting, setDeleting] = useState(false);
+    const [duetOpen, setDuetOpen] = useState(false);
+    const [trackAudio, setTrackAudio] = useState<{ audioUrl: string; instrumentalUrl: string | null } | null>(null);
 
     async function toggle() {
         const a = audioRef.current;
@@ -74,6 +77,21 @@ export function KaraokePerformanceCard({ p, onDeleted }: { p: KaraokePerformance
         } finally { setDeleting(false); }
     }
 
+    async function startDuet() {
+        if (!p.track) return;
+        // Trek audio+instrumental URL'larni olamiz (agar hali yo'q bo'lsa)
+        if (!trackAudio) {
+            try {
+                const d = await fetch(`/api/nexus/karaoke/performances/${p.id}`).then(r => r.json());
+                setTrackAudio({
+                    audioUrl: d.performance.track.audioUrl,
+                    instrumentalUrl: d.performance.track.instrumentalUrl,
+                });
+            } catch { return; }
+        }
+        setDuetOpen(true);
+    }
+
     return (
         <div className="w-full rounded-2xl p-4 flex flex-col gap-3 relative"
             style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.08),rgba(236,72,153,0.06))",
@@ -96,6 +114,11 @@ export function KaraokePerformanceCard({ p, onDeleted }: { p: KaraokePerformance
                             {p.track.title}{p.track.artist ? ` — ${p.track.artist}` : ""}
                         </Link>
                     )}
+                    <Link href={`/nexus/karaoke/${p.id}`}
+                        className="text-[9px] hover:underline"
+                        style={{ color: "rgba(236,72,153,0.75)" }}>
+                        Havolani ochish →
+                    </Link>
                 </div>
                 {/* Score badge */}
                 <div className="flex-shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center flex-col"
@@ -145,12 +168,36 @@ export function KaraokePerformanceCard({ p, onDeleted }: { p: KaraokePerformance
                 </button>
                 <span className="flex items-center gap-1"><Play className="w-3 h-3 fill-current" />{fmtN(p.plays)}</span>
                 {p.duetOfId && <span className="flex items-center gap-1" style={{ color: "#EC4899" }}><Users className="w-3 h-3" />Duet</span>}
+                {/* Duet tugma — o'ziniki bo'lmasa */}
+                {!p.isMine && p.track && (
+                    <button onClick={startDuet}
+                        className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black active:scale-95 transition"
+                        style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", color: "#fff" }}>
+                        <Users className="w-3 h-3" /> Duet
+                    </button>
+                )}
                 {p.isMine && (
                     <button onClick={del} disabled={deleting} className="ml-auto flex items-center gap-1 text-red-400 active:scale-95">
                         {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                     </button>
                 )}
             </div>
+
+            {/* Duet karaoke player */}
+            {duetOpen && trackAudio && p.track && (
+                <NxKaraokePlayer
+                    open={true}
+                    onClose={() => setDuetOpen(false)}
+                    trackId={p.track.id}
+                    title={p.track.title}
+                    artist={p.track.artist}
+                    cover={p.track.coverUrl}
+                    audioUrl={trackAudio.audioUrl}
+                    duetOfPerformanceId={p.id}
+                    duetOfAudioUrl={p.audioUrl}
+                    duetOfPerformerName={p.performer?.name || p.performer?.username || null}
+                />
+            )}
         </div>
     );
 }
@@ -195,6 +242,8 @@ export function KaraokePerformancesFeed({ scope = "trending" }: { scope?: "trend
                     {scope === "mine" ? "Mening karaoke ijrolarim" : scope === "new" ? "Yangi karaoke" : "Top karaoke ijrolari"}
                 </span>
                 <span className="text-[11px] font-bold" style={{ color: "rgba(180,150,220,0.75)" }}>{items.length}</span>
+                <Link href="/nexus/karaoke" className="ml-auto text-[10px] font-black active:scale-95"
+                    style={{ color: "#EC4899" }}>Barchasi →</Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-4">
                 {items.map(p => (

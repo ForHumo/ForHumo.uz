@@ -20,6 +20,10 @@ interface Props {
     artist: string | null;
     cover: string | null;
     audioUrl: string;               // asosiy audio (vokal bilan)
+    // Duet rejimi — asosiy performance ustidan yangi variant
+    duetOfPerformanceId?: string | null;
+    duetOfAudioUrl?: string | null;   // parent user audio (parallel o'ynaydi)
+    duetOfPerformerName?: string | null;
 }
 
 interface LyricsPayload {
@@ -38,6 +42,7 @@ export function NxKaraokePlayer(p: Props) {
     const [muted, setMuted] = useState(false);
     const [useInstrumental, setUseInstrumental] = useState(false);
     const audioRef = useRef<HTMLAudioElement>(null);
+    const duetAudioRef = useRef<HTMLAudioElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const lyricsRef = useRef<HTMLDivElement>(null);
 
@@ -120,6 +125,7 @@ export function NxKaraokePlayer(p: Props) {
                     durationSec: Math.round(pendingResult.durationMs / 1000),
                     score: pendingResult.score,
                     caption: caption.trim() || null,
+                    duetOfId: p.duetOfPerformanceId || null,
                 }),
             });
             if (r.ok) {
@@ -148,6 +154,14 @@ export function NxKaraokePlayer(p: Props) {
         if (!v) return;
         if (playing) v.play().catch(() => { });
         else v.pause();
+    }, [playing]);
+
+    // Duet audio ham sinxron (parent user overlay)
+    useEffect(() => {
+        const d = duetAudioRef.current;
+        if (!d) return;
+        if (playing) d.play().catch(() => { });
+        else d.pause();
     }, [playing]);
 
     // Audio time update
@@ -442,8 +456,21 @@ export function NxKaraokePlayer(p: Props) {
                 </div>
             )}
 
+            {/* Duet header — asosiy ishtirokchi (agar duet rejimida bo'lsa) */}
+            {p.duetOfPerformanceId && p.duetOfPerformerName && (
+                <div className="absolute top-20 left-4 z-15 flex items-center gap-2 px-3 py-1.5 rounded-full"
+                    style={{ background: "rgba(236,72,153,0.15)", border: "1px solid rgba(236,72,153,0.40)", backdropFilter: "blur(8px)" }}>
+                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#EC4899" }}>Duet</span>
+                    <span className="text-[11px] font-bold text-white">{p.duetOfPerformerName} bilan</span>
+                </div>
+            )}
+
             {/* Audio element (yashirin) */}
             <audio ref={audioRef} src={audioSrc} preload="auto" autoPlay onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
+            {/* Duet audio — parent performerning yozib olgan variantI parallel o'ynaydi */}
+            {p.duetOfAudioUrl && (
+                <audio ref={duetAudioRef} src={p.duetOfAudioUrl} preload="auto" />
+            )}
         </div>
     );
 }

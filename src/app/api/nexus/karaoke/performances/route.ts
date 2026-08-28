@@ -9,6 +9,7 @@ import { isVerifiedProfile } from "@/lib/nexus";
 import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { banGuard } from "@/lib/moderation-guard";
 import { moderateOnCreate } from "@/lib/moderation";
+import { nexusNotify } from "@/lib/nexus-notify";
 import type { Prisma } from "@prisma/client";
 
 export async function GET(req: Request) {
@@ -113,11 +114,13 @@ export async function POST(req: Request) {
 
     // Duet — ixtiyoriy
     let duetOfId: string | null = null;
+    let duetParentAuthor: string | null = null;
     if (typeof body?.duetOfId === "string" && body.duetOfId) {
         const parent = await prisma.nexusKaraokePerformance.findFirst({
-            where: { id: body.duetOfId, hidden: false }, select: { id: true },
+            where: { id: body.duetOfId, hidden: false }, select: { id: true, profileId: true },
         });
         duetOfId = parent?.id ?? null;
+        duetParentAuthor = parent?.profileId ?? null;
     }
 
     const perf = await prisma.nexusKaraokePerformance.create({
@@ -130,6 +133,13 @@ export async function POST(req: Request) {
         text: caption ?? track.title, imageUrl: null, kind: "karaoke performance",
         authorId: profile.id,
     }));
+
+    // Duet — asosiy performance egasiga bildirishnoma
+    if (duetOfId && duetParentAuthor) {
+        after(() => nexusNotify({
+            recipientId: duetParentAuthor, actorId: profile.id, type: "TRACK_LIKE", trackId,
+        }));
+    }
 
     return NextResponse.json({ ok: true, performance: { id: perf.id, score, durationSec } });
 }
