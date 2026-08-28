@@ -10,7 +10,7 @@ import {
 import { Room, LocalVideoTrack, LocalAudioTrack, Track } from "livekit-client";
 import { upload } from "@vercel/blob/client";
 import { useNxPlayer } from "./nx-player-ctx";
-import { createStudio, startStudioRecorder, type Studio, type StudioRecorder, type SceneLayout } from "@/lib/nexus-live-studio";
+import { createStudio, startStudioRecorder, type Studio, type StudioRecorder, type SceneLayout, type PipCorner, type PipSize, type FrameStyle, type TransitionKind } from "@/lib/nexus-live-studio";
 import { formatMoney, type Currency } from "@/lib/money";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
@@ -86,6 +86,12 @@ export function NxGoLive() {
     const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
     const [currency, setCurrency] = useState<Currency>("UZS");
     const [totalTips, setTotalTips] = useState(0);
+    // Batch B + C + D: PiP position/size/frame/transition
+    const [pipCorner, setPipCorner] = useState<PipCorner>("br");
+    const [pipSize, setPipSize] = useState<PipSize>("md");
+    const [pipFrame, setPipFrame] = useState<FrameStyle>("rounded");
+    const [transition, setTransition] = useState<TransitionKind>("fade");
+    const [studioPanelOpen, setStudioPanelOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     useEffect(() => { setMounted(true); }, []);
     useEffect(() => {
@@ -212,13 +218,17 @@ export function NxGoLive() {
 
     useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
-    // Layout o'zgarganda studio ham yangilanadi
+    // Layout o'zgarganda studio ham yangilanadi (transition bilan — Batch C)
     useEffect(() => {
-        studioRef.current?.setLayout(layout);
-    }, [layout]);
+        studioRef.current?.setLayout(layout, transition);
+    }, [layout, transition]);
     useEffect(() => {
         studioRef.current?.setOverlay({ title, subtitle: category ? CATS.find(c => c.id === category)?.label : undefined });
     }, [title, category]);
+    // PiP position/size/frame o'zgarganda ham (Batch B + D)
+    useEffect(() => {
+        studioRef.current?.setPip({ corner: pipCorner, size: pipSize, frame: pipFrame });
+    }, [pipCorner, pipSize, pipFrame]);
 
     const close = useCallback(() => setGoLiveOpen(false), [setGoLiveOpen]);
 
@@ -241,11 +251,12 @@ export function NxGoLive() {
             if (!r.ok || !d.stream) { setErr(d.error || "Efir boshlanmadi"); return; }
             const newId: string = d.stream.id;
 
-            // Studio composer — camera + screen composite
+            // Studio composer — VOD recording uchun (LIVE broadcast dual-track)
             const studio = createStudio({
                 layout,
                 sources: { camera: mediaRef.current ?? null, screen: screenRef.current ?? null },
                 overlay: { title, subtitle: category ? CATS.find(c => c.id === category)?.label : undefined },
+                pip: { corner: pipCorner, size: pipSize, frame: pipFrame },
             });
             studioRef.current = studio;
 
@@ -619,6 +630,107 @@ export function NxGoLive() {
                                 {screenOn ? <><MonitorOff className="w-3.5 h-3.5" />Ekranni to&apos;xtatish</>
                                           : <><Monitor className="w-3.5 h-3.5" />Ekranni ulash</>}
                             </button>
+                        )}
+
+                        {/* Studio Panel — PiP tartibi + ramka + o'tish (Batch B+C+D) */}
+                        <button onClick={() => setStudioPanelOpen(o => !o)}
+                            className="w-full mb-2 flex items-center gap-2 justify-center py-2 rounded-xl text-xs font-black transition active:scale-95"
+                            style={studioPanelOpen
+                                ? { background: "rgba(139,92,246,0.20)", border: "1px solid rgba(139,92,246,0.45)", color: "#C4B5FD" }
+                                : { background: "rgba(139,92,246,0.06)", border: "1px dashed rgba(139,92,246,0.30)", color: "rgba(200,180,230,0.85)" }}>
+                            <Sparkles className="w-3.5 h-3.5" />
+                            {studioPanelOpen ? "Studio panelni yashirish" : "Studio panel"}
+                        </button>
+
+                        {studioPanelOpen && (
+                            <div className="mb-3 space-y-2.5 p-3 rounded-xl" style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.20)" }}>
+                                {/* PiP burchak — faqat pip layout'da */}
+                                {layout === "pip" && (
+                                    <>
+                                        <div>
+                                            <p className="text-[10px] font-black mb-1.5" style={{ color: "rgba(200,180,230,0.75)" }}>Kamera burchagi (PiP)</p>
+                                            <div className="grid grid-cols-4 gap-1.5">
+                                                {([
+                                                    { v: "tl", l: "Yuqori chap" },
+                                                    { v: "tr", l: "Yuqori o'ng" },
+                                                    { v: "bl", l: "Past chap" },
+                                                    { v: "br", l: "Past o'ng" },
+                                                ] as { v: PipCorner; l: string }[]).map(o => (
+                                                    <button key={o.v} onClick={() => setPipCorner(o.v)}
+                                                        className="py-1.5 rounded-lg text-[9px] font-black transition active:scale-95"
+                                                        style={pipCorner === o.v
+                                                            ? { background: "linear-gradient(135deg,#8B5CF6,#EC4899)", color: "#fff" }
+                                                            : { background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.25)", color: "rgba(200,180,230,0.85)" }}>
+                                                        {o.l}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black mb-1.5" style={{ color: "rgba(200,180,230,0.75)" }}>Kamera o&apos;lchami</p>
+                                            <div className="grid grid-cols-3 gap-1.5">
+                                                {(["sm", "md", "lg"] as PipSize[]).map(s => (
+                                                    <button key={s} onClick={() => setPipSize(s)}
+                                                        className="py-1.5 rounded-lg text-[10px] font-black transition active:scale-95"
+                                                        style={pipSize === s
+                                                            ? { background: "linear-gradient(135deg,#8B5CF6,#EC4899)", color: "#fff" }
+                                                            : { background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.25)", color: "rgba(200,180,230,0.85)" }}>
+                                                        {s === "sm" ? "Kichik" : s === "md" ? "O'rta" : "Katta"}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Ramka (Batch B) — pip/podcast/solo'da mavjud */}
+                                <div>
+                                    <p className="text-[10px] font-black mb-1.5" style={{ color: "rgba(200,180,230,0.75)" }}>Kamera ramkasi</p>
+                                    <div className="grid grid-cols-3 gap-1.5">
+                                        {([
+                                            { v: "none", l: "Yo'q" },
+                                            { v: "rounded", l: "Klassik" },
+                                            { v: "neon", l: "Neon" },
+                                            { v: "gradient", l: "Gradient" },
+                                            { v: "brand", l: "Nexus" },
+                                            { v: "polaroid", l: "Polaroid" },
+                                        ] as { v: FrameStyle; l: string }[]).map(o => (
+                                            <button key={o.v} onClick={() => setPipFrame(o.v)}
+                                                className="py-1.5 rounded-lg text-[10px] font-black transition active:scale-95"
+                                                style={pipFrame === o.v
+                                                    ? { background: "linear-gradient(135deg,#8B5CF6,#EC4899)", color: "#fff" }
+                                                    : { background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.25)", color: "rgba(200,180,230,0.85)" }}>
+                                                {o.l}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <p className="text-[8px] mt-1" style={{ color: "rgba(200,180,230,0.55)" }}>
+                                        Ramka faqat yozuvda (VOD) chiqadi — jonli oqim viewer'da alohida element
+                                    </p>
+                                </div>
+
+                                {/* Transition (Batch C) */}
+                                <div>
+                                    <p className="text-[10px] font-black mb-1.5" style={{ color: "rgba(200,180,230,0.75)" }}>Sahna o&apos;tishi</p>
+                                    <div className="grid grid-cols-5 gap-1.5">
+                                        {([
+                                            { v: "cut", l: "Kesish" },
+                                            { v: "fade", l: "Fade" },
+                                            { v: "slide-left", l: "← Slide" },
+                                            { v: "slide-right", l: "Slide →" },
+                                            { v: "wipe", l: "Wipe" },
+                                        ] as { v: TransitionKind; l: string }[]).map(o => (
+                                            <button key={o.v} onClick={() => setTransition(o.v)}
+                                                className="py-1.5 rounded-lg text-[9px] font-black transition active:scale-95"
+                                                style={transition === o.v
+                                                    ? { background: "linear-gradient(135deg,#8B5CF6,#EC4899)", color: "#fff" }
+                                                    : { background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.25)", color: "rgba(200,180,230,0.85)" }}>
+                                                {o.l}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         )}
                         <div className="flex items-center justify-between mt-3">
                             <p className="text-sm font-black text-white truncate pr-3">{title}</p>

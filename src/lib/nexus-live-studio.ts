@@ -3,6 +3,10 @@
 // Bu stream LiveKit'ga yuboriladi (video track) + MediaRecorder'ga yoziladi (VOD)
 
 export type SceneLayout = "solo" | "pip" | "screen" | "podcast";
+export type PipCorner = "br" | "bl" | "tr" | "tl";
+export type PipSize = "sm" | "md" | "lg";
+// Batch B — Nexus frame ramkalari (camera PiP atrofi)
+export type FrameStyle = "none" | "rounded" | "neon" | "gradient" | "brand" | "polaroid";
 
 export interface StudioSource {
     camera?: MediaStream | null;                  // getUserMedia video track
@@ -15,12 +19,22 @@ export interface StudioOverlay {
     logo?: HTMLImageElement | null;               // overlay logo (ixtiyoriy)
 }
 
+export interface StudioPip {
+    corner?: PipCorner;                           // Batch D — 4 burchakdan
+    size?: PipSize;                               // Batch D — 3 o'lcham
+    frame?: FrameStyle;                           // Batch B — dekorativ ramka
+}
+
+// Batch C — Sahna almashish (transition) turi
+export type TransitionKind = "cut" | "fade" | "slide-left" | "slide-right" | "wipe";
+
 export interface Studio {
     canvas: HTMLCanvasElement;
-    stream: MediaStream;                          // composited video stream (25fps)
-    setLayout: (l: SceneLayout) => void;
+    stream: MediaStream;                          // composited video stream (30fps)
+    setLayout: (l: SceneLayout, transition?: TransitionKind) => void;
     setSources: (s: StudioSource) => void;
     setOverlay: (o: StudioOverlay) => void;
+    setPip: (p: StudioPip) => void;
     stop: () => void;
 }
 
@@ -32,6 +46,7 @@ export function createStudio(initial: {
     layout?: SceneLayout;
     sources?: StudioSource;
     overlay?: StudioOverlay;
+    pip?: StudioPip;
 }): Studio {
     const canvas = document.createElement("canvas");
     canvas.width = W;
@@ -43,6 +58,13 @@ export function createStudio(initial: {
     let layout: SceneLayout = initial.layout ?? "solo";
     let sources: StudioSource = { ...(initial.sources ?? {}) };
     let overlay: StudioOverlay = { ...(initial.overlay ?? {}) };
+    let pip: StudioPip = { corner: "br", size: "md", frame: "rounded", ...(initial.pip ?? {}) };
+
+    // Batch C — transition state
+    let prevLayout: SceneLayout | null = null;
+    let transitionStart = 0;
+    const TRANSITION_MS = 320;
+    let currentTransition: TransitionKind = "cut";
 
     // Video elementlar (source → canvas o'tkazish)
     const camVideo = document.createElement("video");
@@ -79,9 +101,16 @@ export function createStudio(initial: {
             if (layout === "screen" && hasScr) {
                 drawCover(ctx, scrVideo, 0, 0, W, H);
             } else if (layout === "pip" && hasScr && hasCam) {
-                // Screen — asosiy, camera — o'ng past PiP
+                // Screen — asosiy, kamera — foydalanuvchi tanlagan burchakda
                 drawCover(ctx, scrVideo, 0, 0, W, H);
-                drawPip(ctx, camVideo, W - 320 - 24, H - 180 - 24, 320, 180);
+                const size = pip.size ?? "md";
+                const pw = size === "sm" ? 240 : size === "lg" ? 400 : 320;
+                const ph = Math.round(pw * 9 / 16);
+                const margin = 24;
+                const corner = pip.corner ?? "br";
+                const px = corner === "tl" || corner === "bl" ? margin : W - pw - margin;
+                const py = corner === "tl" || corner === "tr" ? margin : H - ph - margin;
+                drawPipFramed(ctx, camVideo, px, py, pw, ph, pip.frame ?? "rounded");
             } else if (layout === "podcast" && hasCam) {
                 // Podkast — camera markazda katta + neytral fon
                 const cx = W / 2, cy = H / 2;
@@ -122,6 +151,39 @@ export function createStudio(initial: {
                     ctx.fillText(overlay.subtitle.slice(0, 100), 32, 66);
                 }
             }
+            // Batch C — transition overlay (fade/slide/wipe)
+            if (transitionStart > 0) {
+                const elapsed = performance.now() - transitionStart;
+                if (elapsed < TRANSITION_MS) {
+                    const p = elapsed / TRANSITION_MS;
+                    if (currentTransition === "fade") {
+                        // qora fadeIn-out
+                        const opacity = p < 0.5 ? p * 2 : (1 - p) * 2;
+                        ctx.fillStyle = `rgba(5,8,24,${(opacity * 0.85).toFixed(3)})`;
+                        ctx.fillRect(0, 0, W, H);
+                    } else if (currentTransition === "slide-left") {
+                        // qora panel chapdan o'ngga
+                        const x = -W + W * (p * 2);
+                        ctx.fillStyle = "#050818";
+                        ctx.fillRect(x, 0, W, H);
+                    } else if (currentTransition === "slide-right") {
+                        const x = W - W * (p * 2);
+                        ctx.fillStyle = "#050818";
+                        ctx.fillRect(x, 0, W, H);
+                    } else if (currentTransition === "wipe") {
+                        // diagonalli wipe
+                        ctx.save();
+                        ctx.fillStyle = "rgba(5,8,24,0.85)";
+                        const wipeW = W * (p < 0.5 ? p * 2 : (1 - p) * 2);
+                        ctx.fillRect(0, 0, wipeW, H);
+                        ctx.restore();
+                    }
+                } else {
+                    transitionStart = 0;
+                    prevLayout = null;
+                }
+            }
+
             // Live badge (pastki chap)
             const badgeW = 90, badgeH = 32;
             ctx.fillStyle = "#EF4444";
@@ -141,9 +203,16 @@ export function createStudio(initial: {
     return {
         canvas,
         stream,
-        setLayout(l) { layout = l; },
+        setLayout(l, transition = "fade") {
+            if (l === layout) return;
+            prevLayout = layout;
+            currentTransition = transition;
+            transitionStart = performance.now();
+            layout = l;
+        },
         setSources(s) { sources = { ...s }; refreshSources(); },
         setOverlay(o) { overlay = { ...o }; },
+        setPip(p) { pip = { ...pip, ...p }; },
         stop() { running = false; stream.getTracks().forEach(t => t.stop()); },
     };
 }
@@ -167,7 +236,113 @@ function drawCover(ctx: CanvasRenderingContext2D, v: HTMLVideoElement, x: number
     ctx.drawImage(v, sx, sy, sw, sh, x, y, w, h);
 }
 function drawPip(ctx: CanvasRenderingContext2D, v: HTMLVideoElement, x: number, y: number, w: number, h: number) {
-    // Qorong'i shadow border
+    drawPipFramed(ctx, v, x, y, w, h, "rounded");
+}
+
+// Batch B — Nexus-branded PiP ramkalari
+function drawPipFramed(ctx: CanvasRenderingContext2D, v: HTMLVideoElement, x: number, y: number, w: number, h: number, frame: FrameStyle) {
+    if (frame === "none") {
+        // Ramka yo'q — toza to'rtburchak
+        drawCover(ctx, v, x, y, w, h);
+        return;
+    }
+
+    if (frame === "polaroid") {
+        // Polaroid — pastda joy bilan oq fon
+        const pad = 10, bottomPad = 34;
+        ctx.save();
+        ctx.shadowColor = "rgba(0,0,0,0.45)";
+        ctx.shadowBlur = 22;
+        ctx.shadowOffsetY = 8;
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(x - pad, y - pad, w + pad * 2, h + pad + bottomPad);
+        ctx.restore();
+        ctx.save();
+        ctx.rect(x, y, w, h);
+        ctx.clip();
+        drawCover(ctx, v, x, y, w, h);
+        ctx.restore();
+        // Kaption (streamer nomi joyi)
+        ctx.fillStyle = "#050818";
+        ctx.font = "bold 14px system-ui, sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("● JONLI", x + w / 2, y + h + bottomPad / 2);
+        return;
+    }
+
+    if (frame === "brand") {
+        // Nexus brend: gradient border + Nexus rangda oxirgi chiziq
+        ctx.save();
+        ctx.shadowColor = "rgba(0,0,0,0.55)";
+        ctx.shadowBlur = 18;
+        ctx.shadowOffsetY = 8;
+        roundRect(ctx, x, y, w, h, 14);
+        ctx.fillStyle = "#050818";
+        ctx.fill();
+        ctx.restore();
+        ctx.save();
+        roundRect(ctx, x + 4, y + 4, w - 8, h - 8, 10);
+        ctx.clip();
+        drawCover(ctx, v, x + 4, y + 4, w - 8, h - 8);
+        ctx.restore();
+        // Gradient border (turquoise → blue)
+        const gr = ctx.createLinearGradient(x, y, x + w, y + h);
+        gr.addColorStop(0, "#00CEC8"); gr.addColorStop(1, "#2B3EE8");
+        ctx.strokeStyle = gr; ctx.lineWidth = 3;
+        roundRect(ctx, x, y, w, h, 14);
+        ctx.stroke();
+        // Kichik "N" brand pastda
+        ctx.fillStyle = "#00CEC8";
+        ctx.fillRect(x + w - 26, y + h - 20, 18, 4);
+        return;
+    }
+
+    if (frame === "neon") {
+        // Neon — pulsing glow
+        ctx.save();
+        const t = performance.now() / 1000;
+        const pulse = 0.6 + Math.sin(t * 3) * 0.4;
+        ctx.shadowColor = `rgba(0,206,200,${pulse.toFixed(2)})`;
+        ctx.shadowBlur = 26;
+        roundRect(ctx, x, y, w, h, 12);
+        ctx.fillStyle = "#000";
+        ctx.fill();
+        ctx.restore();
+        ctx.save();
+        roundRect(ctx, x, y, w, h, 12);
+        ctx.clip();
+        drawCover(ctx, v, x, y, w, h);
+        ctx.restore();
+        ctx.strokeStyle = "#00CEC8"; ctx.lineWidth = 3;
+        roundRect(ctx, x, y, w, h, 12);
+        ctx.stroke();
+        return;
+    }
+
+    if (frame === "gradient") {
+        // Gradient border — Nexus qizil-narin
+        ctx.save();
+        ctx.shadowColor = "rgba(239,68,68,0.55)";
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetY = 6;
+        roundRect(ctx, x, y, w, h, 12);
+        ctx.fillStyle = "#000";
+        ctx.fill();
+        ctx.restore();
+        ctx.save();
+        roundRect(ctx, x + 3, y + 3, w - 6, h - 6, 9);
+        ctx.clip();
+        drawCover(ctx, v, x + 3, y + 3, w - 6, h - 6);
+        ctx.restore();
+        const gr = ctx.createLinearGradient(x, y, x + w, y);
+        gr.addColorStop(0, "#EF4444"); gr.addColorStop(1, "#F97316");
+        ctx.strokeStyle = gr; ctx.lineWidth = 3;
+        roundRect(ctx, x, y, w, h, 12);
+        ctx.stroke();
+        return;
+    }
+
+    // "rounded" — default
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,0.55)";
     ctx.shadowBlur = 16;
@@ -176,15 +351,12 @@ function drawPip(ctx: CanvasRenderingContext2D, v: HTMLVideoElement, x: number, 
     ctx.fillStyle = "#000";
     ctx.fill();
     ctx.restore();
-    // Clipping bilan rounded
     ctx.save();
     roundRect(ctx, x, y, w, h, 12);
     ctx.clip();
     drawCover(ctx, v, x, y, w, h);
     ctx.restore();
-    // Border
-    ctx.strokeStyle = "rgba(255,255,255,0.30)";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(255,255,255,0.30)"; ctx.lineWidth = 2;
     roundRect(ctx, x, y, w, h, 12);
     ctx.stroke();
 }
