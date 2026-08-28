@@ -11,6 +11,7 @@ import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { banGuard } from "@/lib/moderation-guard";
 import { isValidMediaUrl } from "@/lib/media-url";
 import { crossPostToOwnChannel, shouldAutoCrosspost } from "@/lib/nexus-crosspost";
+import { parseLrc } from "@/lib/nexus-lrc";
 
 // POST /api/nexus/tracks — yangi trek (musiqa/podkast/audiokitob)
 export async function POST(req: Request) {
@@ -22,9 +23,19 @@ export async function POST(req: Request) {
     const banned = await banGuard(profile.id); if (banned) return banned;
     if (await nexusRateLimited(profile.id, "track")) return NextResponse.json({ error: RATE_MSG }, { status: 429 });
 
-    const { title, artist, audioUrl, coverUrl, durationSec, kind, genre, crossToChannel } = await req.json();
+    const { title, artist, audioUrl, coverUrl, durationSec, kind, genre, crossToChannel, videoUrl, instrumentalUrl, lyricsLrc, videoOrientation } = await req.json();
     if (!isValidMediaUrl(audioUrl)) return NextResponse.json({ error: "Audio kerak" }, { status: 400 });
     if (!title?.trim()) return NextResponse.json({ error: "Sarlavha kerak" }, { status: 400 });
+
+    // Karaoke: lyrics LRC + instrumental audio + musiqa klipi (optional)
+    const cleanVideoUrl = isValidMediaUrl(videoUrl) ? videoUrl : null;
+    const cleanInstrumental = isValidMediaUrl(instrumentalUrl) ? instrumentalUrl : null;
+    const cleanLrc = typeof lyricsLrc === "string" && lyricsLrc.trim() ? lyricsLrc.slice(0, 200_000) : null;
+    const parsedLrc = cleanLrc ? parseLrc(cleanLrc) : null;
+    const hasKaraoke = (parsedLrc && parsedLrc.lines.length > 0) || !!cleanInstrumental;
+    const vOrient: "HORIZONTAL" | "VERTICAL" | null = cleanVideoUrl
+        ? (videoOrientation === "VERTICAL" ? "VERTICAL" : "HORIZONTAL")
+        : null;
 
     const track = await prisma.nexusTrack.create({
         data: {
@@ -36,8 +47,19 @@ export async function POST(req: Request) {
             durationSec: Number.isFinite(durationSec) ? Math.max(0, Math.round(Number(durationSec))) : 0,
             kind: kind === "PODCAST" ? "PODCAST" : kind === "AUDIOBOOK" ? "AUDIOBOOK" : "MUSIC",
             genre: typeof genre === "string" && genre ? genre : null,
+            videoUrl: cleanVideoUrl,
+            videoOrientation: vOrient,
+            instrumentalUrl: cleanInstrumental,
+            lyricsSource: cleanLrc,
+            hasKaraoke,
         },
     });
+    // Lyrics lines yozish (agar bor bo'lsa)
+    if (parsedLrc && parsedLrc.lines.length > 0) {
+        await prisma.nexusTrackLyricLine.createMany({
+            data: parsedLrc.lines.map(l => ({ trackId: track.id, timeMs: l.timeMs, text: l.text, order: l.order })),
+        });
+    }
 
     // Pre-publish moderatsiya (sarlavha+ijrochi matni + muqova)
     after(() => moderateOnCreate({
@@ -141,6 +163,7 @@ export async function GET(req: Request) {
                 durationSec: t.durationSec, kind: t.kind, genre: t.genre, plays: t.plays,
                 likeCount: t._count.likes, isLiked: likedIds.has(t.id),
                 isMine: t.profileId === meId, createdAt: t.createdAt,
+                hasKaraoke: t.hasKaraoke, videoUrl: t.videoUrl, videoOrientation: t.videoOrientation,
                 uploader: p ? { name: p.name, username: p.username, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null,
             };
         }),

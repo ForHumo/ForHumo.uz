@@ -2453,10 +2453,36 @@ model NexusTrack {
   plays       Int            @default(0)
   hidden      Boolean        @default(false)      // moderatsiya
   createdAt   DateTime       @default(now())
+
+  // Musiqa klipi (optional) — musiqa audiosi bilan video versiya (spec: klip bilan musiqa)
+  videoUrl        String?                         // Vercel Blob MP4
+  videoOrientation NexusVideoOrientation?         // klip orientatsiyasi (agar bor bo'lsa)
+
+  // Karaoke — timing bilan lyrics + instrumental (vokalsiz) audio
+  hasKaraoke      Boolean  @default(false)        // lyricalar va/yoki instrumental bor
+  instrumentalUrl String?                         // vokalsiz backing track (professional karaoke)
+  lyricsSource    String?                         // xom LRC yoki plain matn (kelajakda tahrirlash uchun)
+
   likes       NexusTrackLike[]
+  lyricsLines NexusTrackLyricLine[]
+
   @@index([kind, createdAt])
   @@index([kind, plays])
   @@index([profileId, createdAt])
+}
+
+// LRC formatidan parse qilingan timing lyrics (line-by-line)
+// Har qator: `timeMs` (boshlanish millisekundida) + `text` (qator matni)
+model NexusTrackLyricLine {
+  id       String   @id @default(cuid())
+  trackId  String
+  timeMs   Int                                     // boshlanish millisekundi (audio.currentTime * 1000)
+  text     String                                  // qator matni (bo'sh matn = "pauza")
+  order    Int                                     // 0-based qator tartibi
+  track    NexusTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@index([trackId, order])
+  @@index([trackId, timeMs])
 }
 
 enum NexusTrackKind {
