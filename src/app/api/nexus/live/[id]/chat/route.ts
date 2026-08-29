@@ -48,7 +48,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     // __nx_poll:JSON     — poll boshlash (Batch G, streamer)
     // __nx_vote:JSON     — poll ovoz (Batch G)
     // __nx_ticker:<text> — scroll marquee (Batch K, streamer)
-    const REACT = "__nx_react:", POLL = "__nx_poll:", VOTE = "__nx_vote:", TICKER = "__nx_ticker:", CHAPTER = "__nx_chapter:", CAPTION = "__nx_caption:", SYSTEM = "__nx_system:", PIN = "__nx_pin:";
+    const REACT = "__nx_react:", POLL = "__nx_poll:", VOTE = "__nx_vote:", TICKER = "__nx_ticker:", CHAPTER = "__nx_chapter:", CAPTION = "__nx_caption:", SYSTEM = "__nx_system:", PIN = "__nx_pin:", RULES = "__nx_rules:";
     const regular: typeof msgs = [];
     const reactions: { id: string; icon: string; at: string; profileId: string }[] = [];
     const pollCandidates: { id: string; at: string; payload: unknown }[] = [];
@@ -59,6 +59,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     let tickerAt: number = 0;
     let pinText: string | null = null;
     let pinAt: number = 0;
+    let rulesText: string | null = null;
+    let rulesAt: number = 0;
     for (const m of msgs) {
         if (m.text.startsWith(REACT) && m.tipAmount === 0) {
             reactions.push({ id: m.id, icon: m.text.slice(REACT.length).slice(0, 20), at: m.createdAt.toISOString(), profileId: m.profileId });
@@ -92,6 +94,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             // Batch BI — Pin (latest wins, empty = unpin)
             const t = m.text.slice(PIN.length).trim();
             if (m.createdAt.getTime() > pinAt) { pinText = t; pinAt = m.createdAt.getTime(); }
+        } else if (m.text.startsWith(RULES)) {
+            // Batch BU — Chat rules (latest wins)
+            const t = m.text.slice(RULES.length).trim();
+            if (m.createdAt.getTime() > rulesAt) { rulesText = t; rulesAt = m.createdAt.getTime(); }
         } else {
             regular.push(m);
         }
@@ -113,6 +119,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         chapters,
         captions,
         pin: pinText,
+        rules: rulesText,
     });
 }
 

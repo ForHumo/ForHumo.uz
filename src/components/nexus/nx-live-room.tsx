@@ -156,6 +156,11 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [pollBusy, setPollBusy] = useState(false);
     const [ticker, setTicker] = useState<string | null>(null);
     const [pinnedMsg, setPinnedMsg] = useState<string | null>(null);
+    // Batch BU — Chat rules
+    const [chatRules, setChatRules] = useState<string | null>(null);
+    const [rulesEditOpen, setRulesEditOpen] = useState(false);
+    const [rulesDraft, setRulesDraft] = useState("");
+    const [rulesDismissed, setRulesDismissed] = useState(false);
     // Batch S — chapters
     interface Chapter { id: string; sec: number; label: string; }
     const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -324,6 +329,10 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 // Batch BI — pin (latest wins, empty = unpin)
                 if (d.pin !== undefined) {
                     setPinnedMsg(d.pin || null);
+                }
+                // Batch BU — chat rules
+                if (d.rules !== undefined) {
+                    setChatRules(d.rules || null);
                 }
                 // Batch V — captions (5s window)
                 if (d.captions?.length) {
@@ -935,6 +944,16 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 setChapters(prev => [...prev, { id: `local-${Date.now()}`, sec: d.sec, label: d.label }].sort((a, b) => a.sec - b.sec));
                 setChapterEditOpen(false); setChapterDraft("");
             }
+        } catch { /* ignore */ }
+    }
+
+    async function saveRules() {
+        try {
+            const r = await fetch(`/api/nexus/live/${streamId}/rules`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: rulesDraft }),
+            });
+            if (r.ok) { setChatRules(rulesDraft || null); setRulesEditOpen(false); }
         } catch { /* ignore */ }
     }
 
@@ -2041,6 +2060,21 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 </div>
 
                 {/* Chat */}
+                {/* Batch BU — Chat rules banner (dismissible per session) */}
+                {chatRules && !rulesDismissed && (
+                    <div className="px-3 py-2 flex-shrink-0 flex items-start gap-2" style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.15), rgba(236,72,153,0.10))", borderBottom: "1px solid rgba(139,92,246,0.30)" }}>
+                        <Info className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: "#C4B5FD" }} />
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-black uppercase mb-0.5" style={{ color: "rgba(196,181,253,0.75)" }}>Chat qoidalari</p>
+                            <p className="text-[11px] font-bold whitespace-pre-wrap" style={{ color: "rgba(220,200,240,0.95)" }}>{chatRules}</p>
+                        </div>
+                        <button onClick={() => setRulesDismissed(true)} title="Yopish"
+                            className="w-5 h-5 flex items-center justify-center rounded-md flex-shrink-0"
+                            style={{ background: "rgba(139,92,246,0.15)" }}>
+                            <X className="w-2.5 h-2.5" style={{ color: "#C4B5FD" }} />
+                        </button>
+                    </div>
+                )}
                 {/* Batch BI — Pinned msg banner (sticky above chat) */}
                 {pinnedMsg && (
                     <div className="px-3 py-2 flex-shrink-0 flex items-start gap-2" style={{ background: "linear-gradient(135deg, rgba(0,206,200,0.12), rgba(43,62,232,0.12))", borderBottom: "1px solid rgba(0,206,200,0.30)" }}>
@@ -2439,6 +2473,33 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 </>
             )}
 
+            {/* Batch BU — Chat rules editor modal */}
+            {rulesEditOpen && (
+                <>
+                    <div className="fixed inset-0 z-[9998]" style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)" }} onClick={() => setRulesEditOpen(false)} />
+                    <div className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-md p-6 rounded-3xl animate-in fade-in zoom-in-95 duration-200"
+                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(139,92,246,0.45)", boxShadow: "0 24px 80px rgba(139,92,246,0.35)" }}>
+                        <div className="flex items-center gap-2 mb-4">
+                            <Info className="w-5 h-5" style={{ color: "#8B5CF6" }} />
+                            <h3 className="text-base font-black text-white">Chat qoidalari</h3>
+                            <button onClick={() => setRulesEditOpen(false)} className="ml-auto w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,0.05)" }}>
+                                <X className="w-4 h-4 text-white/70" />
+                            </button>
+                        </div>
+                        <textarea value={rulesDraft} onChange={e => setRulesDraft(e.target.value.slice(0, 500))} rows={5}
+                            placeholder="Masalan:&#10;• Reklama yozmang&#10;• Boshqalarni hurmat qiling&#10;• Faqat o'zbek/rus/ingliz"
+                            className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none resize-y mb-2"
+                            style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.30)", caretColor: "#EC4899" }} />
+                        <p className="text-[10px] mb-4" style={{ color: "rgba(200,180,230,0.60)" }}>{rulesDraft.length}/500 · Chat panel'da barcha viewerlarga chiqadi</p>
+                        <button onClick={saveRules}
+                            className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2"
+                            style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", boxShadow: "0 4px 20px rgba(139,92,246,0.35)" }}>
+                            <Info className="w-4 h-4" />{rulesDraft.trim() ? "Saqlash" : "O'chirish"}
+                        </button>
+                    </div>
+                </>
+            )}
+
             {/* Batch AM — Streamer panels drawer */}
             {panelsOpen && (
                 <>
@@ -2765,6 +2826,37 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                     </button>
                                 ) : null}
                             </div>
+                        </div>
+
+                        {/* Batch BU — Chat rules editor */}
+                        <div className="mb-3 p-3 rounded-xl" style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.20)" }}>
+                            <div className="flex items-center gap-2 mb-2">
+                                <Info className="w-3.5 h-3.5" style={{ color: "#8B5CF6" }} />
+                                <p className="text-xs font-black text-white">Chat qoidalari</p>
+                            </div>
+                            {chatRules ? (
+                                <>
+                                    <p className="text-[11px] mb-2 whitespace-pre-wrap" style={{ color: "rgba(200,180,230,0.85)" }}>{chatRules}</p>
+                                    <div className="flex gap-1.5">
+                                        <button onClick={() => { setRulesDraft(chatRules); setRulesEditOpen(true); }}
+                                            className="flex-1 py-1.5 rounded-lg text-[10px] font-black text-white"
+                                            style={{ background: "rgba(139,92,246,0.20)", border: "1px solid rgba(139,92,246,0.40)" }}>
+                                            Tahrirlash
+                                        </button>
+                                        <button onClick={() => { setRulesDraft(""); saveRules(); }}
+                                            className="px-3 py-1.5 rounded-lg text-[10px] font-black text-white"
+                                            style={{ background: "rgba(239,68,68,0.20)", border: "1px solid rgba(239,68,68,0.40)" }}>
+                                            <Trash2 className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <button onClick={() => { setRulesDraft(""); setRulesEditOpen(true); }}
+                                    className="w-full py-2 rounded-lg text-[10px] font-black text-white"
+                                    style={{ background: "rgba(139,92,246,0.15)", border: "1px dashed rgba(139,92,246,0.40)" }}>
+                                    <Plus className="w-3 h-3 inline mr-1" />Qoidalar qo&apos;shish
+                                </button>
+                            )}
                         </div>
 
                         {/* Batch AL — Sound alert (tip audio) */}
