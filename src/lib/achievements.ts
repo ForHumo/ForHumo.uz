@@ -32,6 +32,15 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     { code: "nexus.1k_followers",  title: "Yulduz",                description: "1000 kishi kuzatadi", icon: "Star", category: "nexus", tier: "gold" },
     { code: "nexus.first_video",   title: "Video muallif",         description: "Nexus'ga birinchi video yuklandi", icon: "Video", category: "nexus", tier: "bronze" },
     { code: "nexus.first_live",    title: "Jonli efir",            description: "Birinchi jonli efir o'tkazildi", icon: "Radio", category: "nexus", tier: "silver" },
+    // Batch BF — Live streaming milestones
+    { code: "nexus.live_5",        title: "Muntazam efirchi",      description: "5 ta jonli efir o'tkazildi", icon: "Radio", category: "nexus", tier: "silver" },
+    { code: "nexus.live_25",       title: "Efir ustasi",           description: "25 ta jonli efir o'tkazildi", icon: "Award", category: "nexus", tier: "gold" },
+    { code: "nexus.live_100",      title: "Efir yulduzi",          description: "100 ta jonli efir — samimiy ijodkor", icon: "Trophy", category: "nexus", tier: "platinum" },
+    { code: "nexus.live_100_peak", title: "100 ko'ruvchi",         description: "Efirda 100 ko'ruvchi yig'ildi", icon: "Eye", category: "nexus", tier: "silver" },
+    { code: "nexus.live_1k_peak",  title: "1000 ko'ruvchi",        description: "Efirda 1000 ko'ruvchi — katta auditoriya!", icon: "Users", category: "nexus", tier: "gold" },
+    { code: "nexus.live_first_tip", title: "Birinchi sovg'a",      description: "Efirda tomoshabin sovg'a yubordi", icon: "Gift", category: "nexus", tier: "bronze" },
+    { code: "nexus.live_1m_tips",  title: "Millionchi",            description: "Efirlardan 1M so'm yig'ildi", icon: "TrendingUp", category: "nexus", tier: "gold" },
+    { code: "nexus.live_first_sub", title: "Birinchi obunachi",    description: "Streamer'ga birinchi tier obunachi", icon: "Crown", category: "nexus", tier: "silver" },
 
     // Market
     { code: "market.first_order",  title: "Birinchi xarid",        description: "Humo Market'da birinchi buyurtma", icon: "ShoppingBag", category: "market", tier: "bronze" },

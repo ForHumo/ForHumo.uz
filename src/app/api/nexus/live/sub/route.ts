@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { sendTip } from "@/lib/nexus-tip";
 import { after } from "next/server";
 import { sendPushToProfile } from "@/lib/push";
+import { grantAchievement } from "@/lib/achievements";
 
 // Batch AJ — Streamer subscription (30 kunlik)
 // GET  ?username=X — my sub to that streamer (yoki umumiy count)
@@ -101,6 +102,9 @@ export async function POST(req: Request) {
         url: `/nexus/u/${target.username}`,
         tag: `nx-sub-${me.id}`,
     }).catch(() => null));
+
+    // Batch BF — First subscriber achievement
+    after(() => grantAchievement(target.id, "nexus.live_first_sub").catch(() => null));
 
     return NextResponse.json({ ok: true, sub });
 }

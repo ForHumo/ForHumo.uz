@@ -7,6 +7,7 @@ import { nexusRateLimited, RATE_MSG } from "@/lib/nexus-rate";
 import { banGuard } from "@/lib/moderation-guard";
 import { moderateOnCreate } from "@/lib/moderation";
 import { sendTip } from "@/lib/nexus-tip";
+import { grantAchievement } from "@/lib/achievements";
 import { nexusNotify } from "@/lib/nexus-notify";
 import { isBlockedBetween, getHiddenAuthorIds } from "@/lib/nexus-block";
 import { after } from "next/server";
@@ -47,7 +48,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     // __nx_poll:JSON     — poll boshlash (Batch G, streamer)
     // __nx_vote:JSON     — poll ovoz (Batch G)
     // __nx_ticker:<text> — scroll marquee (Batch K, streamer)
-    const REACT = "__nx_react:", POLL = "__nx_poll:", VOTE = "__nx_vote:", TICKER = "__nx_ticker:", CHAPTER = "__nx_chapter:", CAPTION = "__nx_caption:", SYSTEM = "__nx_system:";
+    const REACT = "__nx_react:", POLL = "__nx_poll:", VOTE = "__nx_vote:", TICKER = "__nx_ticker:", CHAPTER = "__nx_chapter:", CAPTION = "__nx_caption:", SYSTEM = "__nx_system:", PIN = "__nx_pin:";
     const regular: typeof msgs = [];
     const reactions: { id: string; icon: string; at: string; profileId: string }[] = [];
     const pollCandidates: { id: string; at: string; payload: unknown }[] = [];
@@ -56,6 +57,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const captions: { id: string; text: string; at: string }[] = [];
     let tickerText: string | null = null;
     let tickerAt: number = 0;
+    let pinText: string | null = null;
+    let pinAt: number = 0;
     for (const m of msgs) {
         if (m.text.startsWith(REACT) && m.tipAmount === 0) {
             reactions.push({ id: m.id, icon: m.text.slice(REACT.length).slice(0, 20), at: m.createdAt.toISOString(), profileId: m.profileId });
@@ -85,6 +88,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         } else if (m.text.startsWith(SYSTEM)) {
             // Batch H — System notification (guest joined, guest left, etc.)
             regular.push({ ...m, text: m.text }); // qoldiramiz — client "__nx_system:" bilan ajratadi
+        } else if (m.text.startsWith(PIN)) {
+            // Batch BI — Pin (latest wins, empty = unpin)
+            const t = m.text.slice(PIN.length).trim();
+            if (m.createdAt.getTime() > pinAt) { pinText = t; pinAt = m.createdAt.getTime(); }
         } else {
             regular.push(m);
         }
@@ -105,6 +112,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         ticker: tickerText,
         chapters,
         captions,
+        pin: pinText,
     });
 }
 
@@ -182,6 +190,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             data: { streamId: id, profileId: me.id, text: cleanText, tipAmount: tip },
         });
         after(() => nexusNotify({ recipientId: stream.profileId, actorId: me.id, type: "TIP", liveId: id, amount: received ?? null }));
+        // Batch BF — Live tip achievements (streamer'ga)
+        after(async () => {
+            await grantAchievement(stream.profileId, "nexus.live_first_tip");
+            // 1M so'm total tips check
+            const agg = await prisma.nexusLiveMessage.aggregate({
+                where: { tipAmount: { gt: 0 } },
+                _sum: { tipAmount: true },
+                // streamId asosida emas, streamer'ning barcha efirlaridan
+            });
+            const streams = await prisma.nexusLiveStream.findMany({ where: { profileId: stream.profileId }, select: { id: true } });
+            const totalAgg = await prisma.nexusLiveMessage.aggregate({
+                where: { streamId: { in: streams.map(s => s.id) }, tipAmount: { gt: 0 } },
+                _sum: { tipAmount: true },
+            });
+            if ((totalAgg._sum.tipAmount || 0) >= 1_000_000) await grantAchievement(stream.profileId, "nexus.live_1m_tips");
+            void agg;
+        });
         // Batch AE — Auto-highlight moments (tip spike detection)
         // Agar oxirgi 60s ichida >= 3 ta tip kelgan bo'lsa, avto-chapter yaratamiz
         after(async () => {

@@ -132,7 +132,14 @@ export async function POST(req: Request) {
     if (!isUpcoming && stream.privacy === "PUBLIC") {
         after(() => nexusNotifyFollowers({ actorId: me.id, type: "LIVE", liveId: stream.id }));
     }
-    after(() => { grantAchievement(me.id, "nexus.first_live"); });
+    after(async () => {
+        await grantAchievement(me.id, "nexus.first_live");
+        // Batch BF — Live milestones (5, 25, 100 streams)
+        const total = await prisma.nexusLiveStream.count({ where: { profileId: me.id } });
+        if (total >= 5) await grantAchievement(me.id, "nexus.live_5");
+        if (total >= 25) await grantAchievement(me.id, "nexus.live_25");
+        if (total >= 100) await grantAchievement(me.id, "nexus.live_100");
+    });
 
     // Cross-post — LIVE bo'lsa kanalda "Efir boshlandi" xabari (Play tugmali)
     after(async () => {

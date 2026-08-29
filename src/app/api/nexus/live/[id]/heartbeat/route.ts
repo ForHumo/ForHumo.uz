@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { after } from "next/server";
+import { grantAchievement } from "@/lib/achievements";
 
 const VIEWER_WINDOW_MS = 30_000;
 
@@ -14,7 +16,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
 
     const { id } = await params;
-    const stream = await prisma.nexusLiveStream.findUnique({ where: { id }, select: { id: true, status: true, peakViewers: true } });
+    const stream = await prisma.nexusLiveStream.findUnique({ where: { id }, select: { id: true, status: true, peakViewers: true, profileId: true } });
     if (!stream) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
 
     await prisma.nexusLiveViewer.upsert({
@@ -27,6 +29,11 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     const viewers = await prisma.nexusLiveViewer.count({ where: { streamId: id, lastSeenAt: { gt: since } } });
     if (viewers > stream.peakViewers) {
         await prisma.nexusLiveStream.update({ where: { id }, data: { peakViewers: viewers } });
+        // Batch BF — Peak viewer milestones (streamer'ga)
+        after(async () => {
+            if (viewers >= 100) await grantAchievement(stream.profileId, "nexus.live_100_peak");
+            if (viewers >= 1000) await grantAchievement(stream.profileId, "nexus.live_1k_peak");
+        });
     }
 
     return NextResponse.json({ viewers });

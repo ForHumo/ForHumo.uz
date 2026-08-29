@@ -32,7 +32,7 @@ import {
     Heart, Flame, Laugh, ThumbsUp, PartyPopper, Sparkles, Zap, Smile, UserPlus, UserCheck,
     BarChart3, Trash2, MoreVertical, Plus,
     Scissors, Rocket, Image as ImageIcon, Megaphone, Captions, Languages, Target, Terminal,
-    Users, UserMinus, Info, LayoutList, Music, Wifi, WifiOff, Save, Crown, MessageCircle,
+    Users, UserMinus, Info, LayoutList, Music, Wifi, WifiOff, Save, Crown, MessageCircle, Pin,
 } from "lucide-react";
 import { Room, RoomEvent, Track, VideoQuality, ConnectionQuality, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant, type RemoteVideoTrack } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
@@ -155,6 +155,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     const [myVoteIdx, setMyVoteIdx] = useState<number | null>(null);
     const [pollBusy, setPollBusy] = useState(false);
     const [ticker, setTicker] = useState<string | null>(null);
+    const [pinnedMsg, setPinnedMsg] = useState<string | null>(null);
     // Batch S — chapters
     interface Chapter { id: string; sec: number; label: string; }
     const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -319,6 +320,10 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 // Batch K — ticker (latest wins)
                 if (d.ticker !== undefined && d.ticker !== null) {
                     setTicker(d.ticker || null);
+                }
+                // Batch BI — pin (latest wins, empty = unpin)
+                if (d.pin !== undefined) {
+                    setPinnedMsg(d.pin || null);
                 }
                 // Batch V — captions (5s window)
                 if (d.captions?.length) {
@@ -930,6 +935,23 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 setChapters(prev => [...prev, { id: `local-${Date.now()}`, sec: d.sec, label: d.label }].sort((a, b) => a.sec - b.sec));
                 setChapterEditOpen(false); setChapterDraft("");
             }
+        } catch { /* ignore */ }
+    }
+
+    async function pinMessage(msgId: string) {
+        setMsgMenuId(null);
+        try {
+            await fetch(`/api/nexus/live/${streamId}/pin`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ msgId }),
+            });
+        } catch { /* ignore */ }
+    }
+    async function unpinMessage() {
+        try {
+            await fetch(`/api/nexus/live/${streamId}/pin`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: "" }),
+            });
+            setPinnedMsg(null);
         } catch { /* ignore */ }
     }
 
@@ -2019,6 +2041,20 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 </div>
 
                 {/* Chat */}
+                {/* Batch BI — Pinned msg banner (sticky above chat) */}
+                {pinnedMsg && (
+                    <div className="px-3 py-2 flex-shrink-0 flex items-start gap-2" style={{ background: "linear-gradient(135deg, rgba(0,206,200,0.12), rgba(43,62,232,0.12))", borderBottom: "1px solid rgba(0,206,200,0.30)" }}>
+                        <Pin className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: "#00CEC8" }} />
+                        <p className="flex-1 text-[11px] font-bold min-w-0" style={{ color: "rgba(200,240,240,0.95)" }}>{pinnedMsg}</p>
+                        {stream?.isMine && (
+                            <button onClick={unpinMessage} title="Unpin"
+                                className="w-5 h-5 flex items-center justify-center rounded-md flex-shrink-0"
+                                style={{ background: "rgba(0,206,200,0.15)" }}>
+                                <X className="w-2.5 h-2.5" style={{ color: "#00CEC8" }} />
+                            </button>
+                        )}
+                    </div>
+                )}
                 <div className="flex-1 overflow-y-auto px-4 py-2 min-h-0" style={{ scrollbarWidth: "none" }}>
                     {stream?.status === "UPCOMING" ? (
                         <p className="text-xs text-center py-6" style={{ color: "rgba(120,140,185,0.6)" }}>Chat efir boshlanganda ochiladi</p>
@@ -2073,8 +2109,14 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 {msgMenuId === m.id && (
                                     <div className="absolute right-0 top-6 z-10 rounded-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150 min-w-[140px]"
                                         style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(239,68,68,0.35)", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+                                        {stream?.isMine && (
+                                            <button onClick={() => pinMessage(m.id)}
+                                                className="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-white w-full text-left hover:bg-cyan-500/20 transition">
+                                                <Pin className="w-3 h-3" style={{ color: "#00CEC8" }} />Pin qilish
+                                            </button>
+                                        )}
                                         <button onClick={() => deleteMessage(m.id)}
-                                            className="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-white w-full text-left hover:bg-red-500/20 transition">
+                                            className="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-white w-full text-left hover:bg-red-500/20 transition border-t border-white/5">
                                             <Trash2 className="w-3 h-3 text-red-400" />O&apos;chirish
                                         </button>
                                         {stream?.isMine && m.profileId && m.profileId !== meUsername && (
