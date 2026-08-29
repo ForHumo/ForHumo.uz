@@ -688,6 +688,29 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
         } catch { /* ignore */ }
     }
 
+    // Batch BX — Stream title hashtag parsing (#tag → clickable)
+    function renderTitleTags(text: string): React.ReactNode {
+        const parts: React.ReactNode[] = [];
+        let last = 0;
+        const rx = /#([a-zA-Z0-9_]{2,30})/g;
+        let match: RegExpExecArray | null;
+        while ((match = rx.exec(text)) !== null) {
+            if (match.index > last) parts.push(text.slice(last, match.index));
+            const tag = match[1].toLowerCase();
+            parts.push(
+                <a key={match.index} href={`/nexus/live/category/${tag}`}
+                    className="font-black hover:underline"
+                    style={{ color: "#00CEC8" }}
+                    onClick={e => e.stopPropagation()}>
+                    #{match[1]}
+                </a>
+            );
+            last = match.index + match[0].length;
+        }
+        if (last < text.length) parts.push(text.slice(last));
+        return parts.length > 0 ? parts : text;
+    }
+
     // Batch AI — Emote inline replace (:name: → <img>)
     function renderChatText(text: string): React.ReactNode {
         if (!emotes.length || !text) return text;
@@ -1987,7 +2010,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
             {chatOpen && (
             <div className="md:w-96 flex flex-col flex-shrink-0 min-h-0" style={{ background: "rgba(8,12,32,0.98)", borderLeft: "1px solid rgba(239,68,68,0.15)", maxHeight: "100vh", height: "55vh" }}>
                 <div className="px-4 pt-4 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(239,68,68,0.10)" }}>
-                    <h3 className="text-sm font-black text-white leading-snug mb-1.5 pr-8">{stream?.title ?? "..."}</h3>
+                    <h3 className="text-sm font-black text-white leading-snug mb-1.5 pr-8">{stream?.title ? renderTitleTags(stream.title) : "..."}</h3>
                     <div className="flex items-center gap-2.5">
                         <img src={avatarOf(stream?.author ?? null)} alt="" className="w-7 h-7 rounded-full object-cover bg-white" style={{ border: "1px solid rgba(239,68,68,0.3)" }} />
                         <span className="text-xs font-bold text-white truncate inline-flex items-center gap-1">

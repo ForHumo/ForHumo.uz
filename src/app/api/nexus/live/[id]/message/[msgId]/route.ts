@@ -12,13 +12,14 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
 
     const { id, msgId } = await params;
     const [stream, msg] = await Promise.all([
-        prisma.nexusLiveStream.findUnique({ where: { id }, select: { profileId: true } }),
+        prisma.nexusLiveStream.findUnique({ where: { id }, select: { profileId: true, moderatorIds: true } }),
         prisma.nexusLiveMessage.findUnique({ where: { id: msgId }, select: { profileId: true, streamId: true, tipAmount: true } }),
     ]);
     if (!stream || !msg || msg.streamId !== id) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
     const isOwner = stream.profileId === me.id;
     const isMine = msg.profileId === me.id;
-    if (!isOwner && !isMine) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+    const isMod = (stream.moderatorIds || []).includes(me.id);
+    if (!isOwner && !isMine && !isMod) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
     // Super Chat'ni o'chirmaymiz (Zij tranzaksiyasi bo'lgan) — faqat yashiramiz
     await prisma.nexusLiveMessage.update({ where: { id: msgId }, data: { hidden: true } });
     return NextResponse.json({ ok: true });

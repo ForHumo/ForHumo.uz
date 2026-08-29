@@ -131,6 +131,23 @@ export async function POST(req: Request) {
     // Darhol jonli + ochiq efir bo'lsa — kuzatuvchilarga xabar
     if (!isUpcoming && stream.privacy === "PUBLIC") {
         after(() => nexusNotifyFollowers({ actorId: me.id, type: "LIVE", liveId: stream.id }));
+        // Batch CH — Active subscribers'ga Web Push
+        after(async () => {
+            const { sendPushToProfile } = await import("@/lib/push");
+            const subs = await prisma.nexusLiveSub.findMany({
+                where: { streamerId: me.id, active: true, expiresAt: { gt: new Date() } },
+                select: { subscriberId: true, tier: true },
+                take: 500,
+            });
+            const author = await prisma.userProfile.findUnique({ where: { id: me.id }, select: { name: true, username: true } });
+            const streamerName = author?.name || author?.username || "Streamer";
+            await Promise.all(subs.map(s => sendPushToProfile(s.subscriberId, {
+                title: `${streamerName} jonli efirni boshladi`,
+                body: `${stream.title}${s.tier === "PLATINUM" ? " · Platinum" : s.tier === "GOLD" ? " · Gold" : ""}`,
+                url: `/nexus/live/${stream.id}`,
+                tag: `nx-live-sub-${stream.id}`,
+            }).catch(() => null)));
+        });
     }
     after(async () => {
         await grantAchievement(me.id, "nexus.first_live");

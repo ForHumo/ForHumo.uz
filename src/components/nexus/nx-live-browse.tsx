@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
-import { Radio, Eye, Hash, TrendingUp, Crown, ChevronLeft, Users, ArrowRight } from "lucide-react";
+import { Radio, Eye, Hash, TrendingUp, Crown, ChevronLeft, Users, ArrowRight, CalendarClock } from "lucide-react";
 import { NxVerifiedBadge } from "./nx-verified-badge";
+import { NxScheduleCard } from "./nx-schedule-card";
 
 // Batch AZ — Live discovery hub (kategoriyalar + top streamerlar + rejadagi efirlar)
 interface Cat { id: string; label: string; liveCount: number; totalViewers: number; }
@@ -143,6 +144,19 @@ export function NxLiveBrowse() {
                         </div>
                     )}
                 </div>
+
+                {/* Top-1 streamer schedule (agar bor bo'lsa) */}
+                {top[0]?.author?.username && (
+                    <div className="mt-6">
+                        <div className="flex items-center gap-2 mb-2">
+                            <CalendarClock className="w-4 h-4" style={{ color: "#10B981" }} />
+                            <h2 className="text-sm font-black text-white">
+                                <span style={{ color: "rgba(200,240,215,0.75)" }}>@{top[0].author.username}</span> jadvali
+                            </h2>
+                        </div>
+                        <NxScheduleCard username={top[0].author.username} />
+                    </div>
+                )}
 
                 {/* Follow all btn */}
                 <Link href="/nexus" className="mt-6 w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black text-white transition active:scale-95"

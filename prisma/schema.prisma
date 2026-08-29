@@ -1926,6 +1926,8 @@ model NexusLiveStream {
   bannedUserIds  String[] @default([])                // bloklangan foydalanuvchi profileId'lari
   slowSeconds    Int      @default(0)                 // slow mode (0 = o'chiq)
   followersOnly  Boolean  @default(false)             // faqat kuzatuvchilar chat yozadi
+  // Batch CD — Chat moderators (streamer tomonidan ruxsat)
+  moderatorIds   String[] @default([])                // moderator profile IDs
   // Batch R — Ban words filter
   bannedWords    String[] @default([])                // taqiqlangan so'zlar (lowercased)
   // Batch T — Raid: efir tugagach viewerlarni yo'naltirish
