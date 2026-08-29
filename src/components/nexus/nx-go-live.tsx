@@ -232,6 +232,56 @@ export function NxGoLive() {
 
     const close = useCallback(() => setGoLiveOpen(false), [setGoLiveOpen]);
 
+    // ── Dual-track LiveKit sync (Batch A) — BEFORE early return (hooks rule) ──
+    const syncPublishedTracks = useCallback(async () => {
+        const room = roomRef.current;
+        if (!room) return;
+        const lp = room.localParticipant;
+        const refs = publishedTracksRef.current;
+        const wantCam = (layout === "solo" || layout === "podcast" || layout === "pip") && !!mediaRef.current;
+        const wantScr = (layout === "pip" || layout === "screen") && !!screenRef.current;
+
+        if (wantCam && !refs.cam && mediaRef.current) {
+            const t = mediaRef.current.getVideoTracks()[0];
+            if (t) {
+                try {
+                    const lv = new LocalVideoTrack(t);
+                    await lp.publishTrack(lv, {
+                        source: Track.Source.Camera,
+                        simulcast: true,
+                        videoEncoding: { maxBitrate: 2_500_000, maxFramerate: 30, priority: "high" },
+                    });
+                    refs.cam = lv;
+                } catch { /* ignore */ }
+            }
+        } else if (!wantCam && refs.cam) {
+            try { await lp.unpublishTrack(refs.cam.mediaStreamTrack, true); } catch { /* ignore */ }
+            refs.cam = undefined;
+        }
+
+        if (wantScr && !refs.scr && screenRef.current) {
+            const t = screenRef.current.getVideoTracks()[0];
+            if (t) {
+                try {
+                    const lv = new LocalVideoTrack(t);
+                    await lp.publishTrack(lv, {
+                        source: Track.Source.ScreenShare,
+                        simulcast: true,
+                        videoEncoding: { maxBitrate: 4_500_000, maxFramerate: 30, priority: "high" },
+                    });
+                    refs.scr = lv;
+                } catch { /* ignore */ }
+            }
+        } else if (!wantScr && refs.scr) {
+            try { await lp.unpublishTrack(refs.scr.mediaStreamTrack, true); } catch { /* ignore */ }
+            refs.scr = undefined;
+        }
+    }, [layout]);
+
+    useEffect(() => {
+        if (stage === "live") { syncPublishedTracks().catch(() => { }); }
+    }, [layout, screenOn, stage, syncPublishedTracks]);
+
     if (!goLiveOpen || !mounted) return null;
 
     const fmtDuration = (s: number) => {
@@ -301,62 +351,6 @@ export function NxGoLive() {
         } catch { setErr("Tarmoq xatosi"); }
         finally { setStarting(false); }
     }
-
-    // ── Dual-track LiveKit sync (Batch A) ──
-    // Layout va screenOn asosida kamera+ekran alohida track'lar publish/unpublish qilinadi.
-    // Tomoshabin viewer o'zi tartiblashi (PiP pozitsiya, hidesa) uchun composite EMAS.
-    const syncPublishedTracks = useCallback(async () => {
-        const room = roomRef.current;
-        if (!room) return;
-        const lp = room.localParticipant;
-        const refs = publishedTracksRef.current;
-        // Kim kerak?
-        const wantCam = (layout === "solo" || layout === "podcast" || layout === "pip") && !!mediaRef.current;
-        const wantScr = (layout === "pip" || layout === "screen") && !!screenRef.current;
-
-        // Kamera
-        if (wantCam && !refs.cam && mediaRef.current) {
-            const t = mediaRef.current.getVideoTracks()[0];
-            if (t) {
-                try {
-                    const lv = new LocalVideoTrack(t);
-                    await lp.publishTrack(lv, {
-                        source: Track.Source.Camera,
-                        simulcast: true,
-                        videoEncoding: { maxBitrate: 2_500_000, maxFramerate: 30, priority: "high" },
-                    });
-                    refs.cam = lv;
-                } catch { /* ignore */ }
-            }
-        } else if (!wantCam && refs.cam) {
-            try { await lp.unpublishTrack(refs.cam.mediaStreamTrack, true); } catch { /* ignore */ }
-            refs.cam = undefined;
-        }
-
-        // Screen share
-        if (wantScr && !refs.scr && screenRef.current) {
-            const t = screenRef.current.getVideoTracks()[0];
-            if (t) {
-                try {
-                    const lv = new LocalVideoTrack(t);
-                    await lp.publishTrack(lv, {
-                        source: Track.Source.ScreenShare,
-                        simulcast: true,
-                        videoEncoding: { maxBitrate: 4_500_000, maxFramerate: 30, priority: "high" },
-                    });
-                    refs.scr = lv;
-                } catch { /* ignore */ }
-            }
-        } else if (!wantScr && refs.scr) {
-            try { await lp.unpublishTrack(refs.scr.mediaStreamTrack, true); } catch { /* ignore */ }
-            refs.scr = undefined;
-        }
-    }, [layout]);
-
-    // Layout yoki screenOn o'zgarganda track'larni qayta sinxronlash
-    useEffect(() => {
-        if (stage === "live") { syncPublishedTracks().catch(() => { }); }
-    }, [layout, screenOn, stage, syncPublishedTracks]);
 
     // Screen share toggle
     async function toggleScreen() {
