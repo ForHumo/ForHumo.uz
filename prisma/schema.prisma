@@ -2058,6 +2058,18 @@ model NexusLiveSub {
   @@index([subscriberId, active])
 }
 
+// Batch CR — Custom chat commands (streamer !cmd → response)
+model NexusLiveCommand {
+  id         String   @id @default(cuid())
+  profileId  String                                    // streamer
+  name       String                                    // !discord, !music (lowercased, no !)
+  response   String                                    // matn javob (300 char)
+  usedCount  Int      @default(0)
+  createdAt  DateTime @default(now())
+  @@unique([profileId, name])
+  @@index([profileId, createdAt])
+}
+
 // Batch AK — Poll templates (streamer qayta ishlatishi uchun)
 model NexusLivePollTemplate {
   id            String   @id @default(cuid())

@@ -51,7 +51,7 @@ interface RoomStream {
     donationGoal?: number | null; donationGoalLabel?: string | null; totalTips?: number;
     soundAlertUrl?: string | null;
 }
-interface ChatMsg { id: string; text: string; tipAmount?: number; createdAt: string; profileId?: string; author: LAuthor | null }
+interface ChatMsg { id: string; text: string; tipAmount?: number; createdAt: string; profileId?: string; subTier?: string | null; author: LAuthor | null }
 
 function scPresets(c: Currency) { return c === "USD" ? [1, 5, 10, 50] : [5000, 10000, 50000, 100000]; }
 
@@ -219,6 +219,9 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     // Batch AI — Custom emotes
     interface Emote { id: string; name: string; imageUrl: string; }
     const [emotes, setEmotes] = useState<Emote[]>([]);
+    // Batch CR — Custom commands
+    interface LiveCommand { id: string; name: string; response: string; }
+    const [customCmds, setCustomCmds] = useState<LiveCommand[]>([]);
     const [emotePickerOpen, setEmotePickerOpen] = useState(false);
     const [emoteAdmin, setEmoteAdmin] = useState(false);
     const [emoteName, setEmoteName] = useState("");
@@ -553,6 +556,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
         const u = stream.author.username;
         fetch(`/api/nexus/panels?username=${u}`).then(r => r.json()).then(d => setPanels(d.panels || [])).catch(() => { });
         fetch(`/api/nexus/emotes?username=${u}`).then(r => r.json()).then(d => setEmotes(d.emotes || [])).catch(() => { });
+        fetch(`/api/nexus/live-commands?username=${u}`).then(r => r.json()).then(d => setCustomCmds(d.commands || [])).catch(() => { });
     }, [stream?.author?.username]);
 
     // Batch AL — Sound alert: tip alert paydo bo'lganda audio ijro etadi
@@ -1155,9 +1159,15 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
         };
     }, [stream?.status, streamId]);
 
-    // Batch FF — Slash commands parser
+    // Batch FF + CR — Slash + custom commands parser
     function expandSlashCommand(raw: string): string {
         const t = raw.trim();
+        // Batch CR — Custom commands (!name)
+        if (t.startsWith("!") && customCmds.length > 0) {
+            const cmdName = t.slice(1).split(/\s+/)[0].toLowerCase();
+            const cmd = customCmds.find(c => c.name === cmdName);
+            if (cmd) return cmd.response;
+        }
         if (!t.startsWith("/")) return t;
         const [cmd, ...rest] = t.slice(1).split(/\s+/);
         const arg = rest.join(" ");
@@ -2142,6 +2152,12 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                                 <div className="text-xs leading-relaxed min-w-0 flex-1">
                                     <p>
                                         <span className="font-black mr-1.5 inline-flex items-center gap-0.5" style={{ color: "rgba(240,160,140,0.95)" }}>
+                                            {m.subTier && (
+                                                <Crown className="w-3 h-3 mr-0.5" style={{
+                                                    color: m.subTier === "PLATINUM" ? "#8B5CF6" : m.subTier === "GOLD" ? "#F59E0B" : "#F59E0B",
+                                                    fill: m.subTier === "PLATINUM" ? "#8B5CF6" : m.subTier === "GOLD" ? "#F59E0B" : "transparent",
+                                                }} />
+                                            )}
                                             {m.author?.name || m.author?.username || "Foydalanuvchi"}
                                             {m.author?.verified && <NxVerifiedBadge category={(m.author as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
                                         </span>
@@ -2243,12 +2259,16 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             </div>
                         )}
                         {chatError && <p className="text-[11px] font-bold mb-2" style={{ color: "#EF4444" }}>{chatError}</p>}
-                        {/* Batch FF — Slash commands hint (input / bilan boshlanganda) */}
-                        {input.startsWith("/") && input.length >= 1 && (
+                        {/* Batch FF + CR — Command hint (/ or !) */}
+                        {(input.startsWith("/") || input.startsWith("!")) && input.length >= 1 && (
                             <div className="mb-2 p-2 rounded-lg text-[10px] font-bold flex items-center gap-1.5 flex-wrap"
                                 style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.20)", color: "rgba(160,220,215,0.85)" }}>
                                 <Terminal className="w-3 h-3" style={{ color: "#00CEC8" }} />
-                                <span>/me · /roll [N] · /flip · /8ball [savol] · /shrug</span>
+                                {input.startsWith("!") ? (
+                                    <span>{customCmds.length > 0 ? customCmds.slice(0, 5).map(c => `!${c.name}`).join(" · ") : "Streamer'da custom buyruq yo'q"}</span>
+                                ) : (
+                                    <span>/me · /roll [N] · /flip · /8ball [savol] · /shrug</span>
+                                )}
                             </div>
                         )}
                         <div className="flex gap-2">

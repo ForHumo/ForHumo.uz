@@ -43,6 +43,19 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         : [];
     const pMap = Object.fromEntries(profs.map(p => [p.id, p]));
 
+    // Batch CJ — Aktiv subscribers set (streamer profileId asosida)
+    let subSetTier = new Map<string, string>();
+    if (ids.length) {
+        const streamData = await prisma.nexusLiveStream.findUnique({ where: { id }, select: { profileId: true } });
+        if (streamData) {
+            const subs = await prisma.nexusLiveSub.findMany({
+                where: { streamerId: streamData.profileId, subscriberId: { in: ids }, active: true, expiresAt: { gt: new Date() } },
+                select: { subscriberId: true, tier: true },
+            });
+            subSetTier = new Map(subs.map(s => [s.subscriberId, s.tier]));
+        }
+    }
+
     // System xabarlar (Batch E/G/K)
     // __nx_react:<icon>  — floating reaction (Batch E)
     // __nx_poll:JSON     — poll boshlash (Batch G, streamer)
@@ -109,6 +122,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             return {
                 id: m.id, text: m.text, tipAmount: m.tipAmount, createdAt: m.createdAt,
                 profileId: m.profileId,
+                subTier: subSetTier.get(m.profileId) || null,
                 author: p ? { name: p.name, username: p.username, image: p.image, verified: isVerifiedProfile(p), verifiedCategory: isVerifiedProfile(p) ? (p.verifiedCategory || null) : null } : null,
             };
         }),
