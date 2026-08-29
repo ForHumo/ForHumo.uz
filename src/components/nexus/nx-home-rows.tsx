@@ -10,7 +10,7 @@ import { Link } from "@/i18n/routing";
 import { useNxPlayer, type NxTrack } from "./nx-player-ctx";
 import {
     Radio, Play, Eye, Film, Music2, Clock, TrendingDown,
-    Mic2, Headphones, BookOpen, Hash, Users,
+    Mic2, Headphones, BookOpen, Hash, Users, Scissors, Heart,
 } from "lucide-react";
 import { NxLiveRoom } from "./nx-live-room";
 
@@ -35,6 +35,11 @@ interface HBnItem {
 }
 interface HChannel {
     id: string; name: string; handle: string | null; avatarUrl: string | null; memberCount: number;
+}
+interface HClip {
+    id: string; title: string; startSec: number; endSec: number; plays: number; likes: number;
+    streamId: string; streamTitle: string; recordingUrl: string | null;
+    streamer: { name: string | null; username: string | null; image: string | null } | null;
 }
 
 function fmtN(n: number) {
@@ -61,6 +66,7 @@ export function NxHomeRows() {
     const [tracks, setTracks] = useState<HTrack[]>([]);            // musiqa audio
     const [channels, setChannels] = useState<HChannel[]>([]);
     const [bnItems, setBnItems] = useState<HBnItem[]>([]);
+    const [clips, setClips] = useState<HClip[]>([]);
     const [roomId, setRoomId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -87,6 +93,8 @@ export function NxHomeRows() {
             .catch(() => { });
         // BN cross-promo
         fetch("/api/bn/cross-promo/nexus-row").then(r => r.json()).then(d => setBnItems(d.items ?? [])).catch(() => { });
+        // Clips (Batch AN2)
+        fetch("/api/nexus/live/clips-feed?days=7&limit=15").then(r => r.json()).then(d => setClips(d.clips ?? [])).catch(() => { });
     }, []);
 
     // Live real-time refresh — 30s polling
@@ -133,7 +141,7 @@ export function NxHomeRows() {
 
     const anyContent = kino.length || musicVideos.length || gvideo.length || vvideo.length
         || gStream.length || vStream.length || podcasts.length || audiobooks.length
-        || tracks.length || channels.length || bnItems.length;
+        || tracks.length || channels.length || bnItems.length || clips.length;
     if (!anyContent) return null;
 
     return (
@@ -248,6 +256,40 @@ export function NxHomeRows() {
                             </div>
                             <p className="text-[9px] font-bold text-white truncate">{s.title}</p>
                         </button>
+                    ))}
+                </Row>
+            )}
+
+            {/* 6.5. Qirqimlar (Batch AN2) */}
+            {clips.length > 0 && (
+                <Row title="Trend qirqimlar" accent="#8B5CF6" Icon={Scissors}>
+                    {clips.map(c => (
+                        <a key={c.id} href={`/nexus/live/${c.streamId}?clip=${c.id}`} className="w-44 flex-shrink-0 text-left group block">
+                            <div className="relative aspect-video rounded-xl overflow-hidden mb-1.5"
+                                style={{ border: "1px solid rgba(139,92,246,0.35)", background: "linear-gradient(135deg, rgba(30,10,50,0.9), rgba(60,10,80,0.9))" }}>
+                                <video src={c.recordingUrl || undefined} muted playsInline preload="metadata"
+                                    className="w-full h-full object-cover"
+                                    onMouseEnter={e => { const v = e.currentTarget; v.currentTime = c.startSec; v.play().catch(() => { }); }}
+                                    onMouseLeave={e => { const v = e.currentTarget; v.pause(); v.currentTime = c.startSec; }}
+                                    onLoadedMetadata={e => { e.currentTarget.currentTime = c.startSec; }} />
+                                <span className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black text-white" style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)" }}>
+                                    <Scissors className="w-2.5 h-2.5" />CLIP
+                                </span>
+                                <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.8)" }}>
+                                    {fmtDur(c.endSec - c.startSec)}
+                                </span>
+                                <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1.5 text-[9px] font-bold text-white">
+                                    <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded" style={{ background: "rgba(5,8,24,0.8)" }}>
+                                        <Heart className="w-2.5 h-2.5" fill="currentColor" />{fmtN(c.likes)}
+                                    </span>
+                                </div>
+                            </div>
+                            <p className="text-[11px] font-bold text-white truncate">{c.title}</p>
+                            <p className="text-[9px] truncate flex items-center gap-1" style={{ color: "rgba(200,180,230,0.75)" }}>
+                                <img src={avatarOf(c.streamer)} alt="" className="w-3 h-3 rounded-full object-cover" />
+                                {c.streamer?.name || c.streamer?.username || "Streamer"} · {fmtN(c.plays)} ko&apos;rish
+                            </p>
+                        </a>
                     ))}
                 </Row>
             )}

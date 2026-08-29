@@ -2039,6 +2039,23 @@ model NexusLiveSchedule {
   @@index([profileId, active])
 }
 
+// Batch AJ — Streamer subscription (viewer streamer'ga oylik obuna)
+model NexusLiveSub {
+  id            String   @id @default(cuid())
+  subscriberId  String                                  // kim obuna
+  streamerId    String                                  // kimga
+  tier          String   @default("SUPPORTER")          // SUPPORTER / GOLD / PLATINUM
+  monthlyPrice  Int                                     // valyutada (streamer valyutasi)
+  currency      String   @default("UZS")                // UZS/USD
+  startedAt     DateTime @default(now())
+  expiresAt     DateTime                                // startedAt + 30 kun
+  active        Boolean  @default(true)
+  wasCancelled  Boolean  @default(false)
+  @@unique([subscriberId, streamerId])
+  @@index([streamerId, active, expiresAt])
+  @@index([subscriberId, active])
+}
+
 // Batch AK — Poll templates (streamer qayta ishlatishi uchun)
 model NexusLivePollTemplate {
   id            String   @id @default(cuid())

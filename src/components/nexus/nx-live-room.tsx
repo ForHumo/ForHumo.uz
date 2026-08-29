@@ -32,7 +32,7 @@ import {
     Heart, Flame, Laugh, ThumbsUp, PartyPopper, Sparkles, Zap, Smile, UserPlus, UserCheck,
     BarChart3, Trash2, MoreVertical, Plus,
     Scissors, Rocket, Image as ImageIcon, Megaphone, Captions, Languages, Target, Terminal,
-    Users, UserMinus, Info, LayoutList, Music, Wifi, WifiOff, Save,
+    Users, UserMinus, Info, LayoutList, Music, Wifi, WifiOff, Save, Crown, MessageCircle,
 } from "lucide-react";
 import { Room, RoomEvent, Track, VideoQuality, ConnectionQuality, type RemoteTrack, type RemoteTrackPublication, type RemoteParticipant, type RemoteVideoTrack } from "livekit-client";
 import { formatMoney, type Currency } from "@/lib/money";
@@ -226,6 +226,16 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
     interface PollTemplate { id: string; question: string; options: string[]; durationSec: number; usedCount: number; }
     const [pollTemplates, setPollTemplates] = useState<PollTemplate[]>([]);
     const [templatesOpen, setTemplatesOpen] = useState(false);
+    // Batch H2 — Extra guest camera tracks (multi-participant grid)
+    // Map<participantIdentity, RemoteVideoTrack>
+    const [extraCams, setExtraCams] = useState<Map<string, RemoteVideoTrack>>(new Map());
+    const extraCamRefs = useRef<Map<string, HTMLVideoElement | null>>(new Map());
+    // Batch AJ — Subscription
+    interface MySub { tier: string; monthlyPrice: number; currency: string; expiresAt: string; active: boolean; }
+    const [subCount, setSubCount] = useState(0);
+    const [mySub, setMySub] = useState<MySub | null>(null);
+    const [subModalOpen, setSubModalOpen] = useState(false);
+    const [subBusy, setSubBusy] = useState(false);
     // Batch V — Live captions
     const [captionOn, setCaptionOn] = useState(false);        // viewer: display
     const [captionStreamerOn, setCaptionStreamerOn] = useState(false); // streamer: SpeechRecognition
@@ -547,6 +557,42 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
         if (!stream?.isMine) return;
         fetch(`/api/nexus/poll-templates`).then(r => r.json()).then(d => setPollTemplates(d.templates || [])).catch(() => { });
     }, [stream?.isMine]);
+
+    // Batch AV — VOD chat replay: playback vaqti bilan chat sinxron
+    const [chatReplay, setChatReplay] = useState(true);        // ENDED bo'lsa default yoqilgan
+    const displayedMsgs = (() => {
+        if (stream?.status !== "ENDED" || !chatReplay || !stream?.startedAt) return msgs;
+        const startedMs = new Date(stream.startedAt).getTime();
+        const cutMs = startedMs + vodCur * 1000;
+        return msgs.filter(m => new Date(m.createdAt).getTime() <= cutMs);
+    })();
+
+    // Batch AJ — My sub + count
+    useEffect(() => {
+        if (!stream?.author?.username) return;
+        fetch(`/api/nexus/live/sub?username=${stream.author.username}`).then(r => r.json())
+            .then(d => { setSubCount(d.count || 0); if (d.mySub) setMySub(d.mySub); })
+            .catch(() => { });
+    }, [stream?.author?.username]);
+
+    async function subscribe(tier: string) {
+        if (!stream?.author?.username || subBusy) return;
+        setSubBusy(true);
+        try {
+            const r = await fetch(`/api/nexus/live/sub`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: stream.author.username, tier }),
+            });
+            const d = await r.json();
+            if (r.ok) {
+                setMySub(d.sub);
+                setSubCount(c => c + 1);
+                setSubModalOpen(false);
+            } else {
+                alert(d.error || "Xato");
+            }
+        } finally { setSubBusy(false); }
+    }
 
     async function saveCurrentAsTemplate() {
         const opts = pollOpts.map(o => o.trim()).filter(Boolean);
@@ -938,39 +984,72 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     el.addEventListener("resize", applyRes);
                     applyRes();
                 };
-                const onTrackSubscribed = (track: RemoteTrack, pub: RemoteTrackPublication, _p: RemoteParticipant) => {
+                // Batch H2 — Multi-participant video tracks
+                // Streamer camera → main PiP; Guest cameras → extraCams grid
+                const streamerId = stream?.author?.username;
+                let mainCameraAttached = false; // birinchi camera track main slotga
+                const onTrackSubscribed = (track: RemoteTrack, pub: RemoteTrackPublication, p: RemoteParticipant) => {
                     if (track.kind === Track.Kind.Video) {
                         setHasRemoteVideo(true);
                         if (pub.source === Track.Source.ScreenShare) {
                             attachVideoTo(track, videoElRef.current, pub);
                             setHasScreen(true);
                         } else {
-                            // Camera — agar screen ham keladigan bo'lsa PiP element'ga,
-                            // aks holda main element'ga
+                            // Camera source — kim publish qildi?
+                            // Identity == streamer.profileId (LiveKit token identity=profileId)
+                            const isStreamerCam = !mainCameraAttached; // birinchi kelgan main
                             const hasScr = !!videoElRef.current?.srcObject;
-                            if (hasScr) attachVideoTo(track, camPipElRef.current, pub);
-                            else attachVideoTo(track, videoElRef.current, pub);
-                            setHasCamera(true);
+                            if (isStreamerCam) {
+                                if (hasScr) attachVideoTo(track, camPipElRef.current, pub);
+                                else attachVideoTo(track, videoElRef.current, pub);
+                                mainCameraAttached = true;
+                                setHasCamera(true);
+                            } else {
+                                // Guest camera → extra tile
+                                setExtraCams(prev => {
+                                    const nx = new Map(prev);
+                                    nx.set(p.identity, track as RemoteVideoTrack);
+                                    return nx;
+                                });
+                                // Attach after render (setTimeout for ref)
+                                setTimeout(() => {
+                                    const el = extraCamRefs.current.get(p.identity);
+                                    if (el) track.attach(el);
+                                }, 100);
+                            }
                         }
                     } else if (track.kind === Track.Kind.Audio && audioElRef.current) {
                         track.attach(audioElRef.current);
                     }
                 };
-                const onTrackUnsubscribed = (track: RemoteTrack, pub: RemoteTrackPublication) => {
+                const onTrackUnsubscribed = (track: RemoteTrack, pub: RemoteTrackPublication, p: RemoteParticipant) => {
                     if (track.kind === Track.Kind.Video) {
                         if (pub.source === Track.Source.ScreenShare) {
                             if (videoElRef.current) track.detach(videoElRef.current);
                             setHasScreen(false);
                         } else {
-                            if (camPipElRef.current) track.detach(camPipElRef.current);
-                            if (videoElRef.current) track.detach(videoElRef.current);
-                            setHasCamera(false);
+                            // Guest camera'nimi?
+                            if (extraCams.has(p.identity)) {
+                                const el = extraCamRefs.current.get(p.identity);
+                                if (el) track.detach(el);
+                                setExtraCams(prev => {
+                                    const nx = new Map(prev);
+                                    nx.delete(p.identity);
+                                    return nx;
+                                });
+                            } else {
+                                if (camPipElRef.current) track.detach(camPipElRef.current);
+                                if (videoElRef.current) track.detach(videoElRef.current);
+                                setHasCamera(false);
+                                mainCameraAttached = false;
+                            }
                         }
                         remoteVideoTrackRef.current = null;
                     } else if (track.kind === Track.Kind.Audio && audioElRef.current) {
                         track.detach(audioElRef.current);
                     }
                 };
+                void streamerId;
 
                 room.on(RoomEvent.TrackSubscribed, onTrackSubscribed);
                 room.on(RoomEvent.TrackUnsubscribed, onTrackUnsubscribed);
@@ -1298,6 +1377,23 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             <Move className="w-2.5 h-2.5 text-white/70" />
                             <span className="text-[8px] font-black text-white/85">SUDRAB</span>
                         </div>
+                    </div>
+                )}
+
+                {/* Batch H2 — Extra guest camera tiles (streamer emas, boshqa co-hostlar) */}
+                {isLive && extraCams.size > 0 && (
+                    <div className="absolute left-4 bottom-24 z-20 flex gap-2 max-w-[60%] flex-wrap">
+                        {[...extraCams.entries()].slice(0, 4).map(([identity]) => (
+                            <div key={identity} className="w-32 h-20 rounded-lg overflow-hidden bg-black animate-in fade-in duration-200"
+                                style={{ border: "2px solid rgba(139,92,246,0.55)", boxShadow: "0 6px 20px rgba(139,92,246,0.35)" }}>
+                                <video ref={el => { extraCamRefs.current.set(identity, el); }}
+                                    autoPlay playsInline muted
+                                    className="w-full h-full object-cover" />
+                                <div className="absolute inset-x-0 bottom-0 px-1.5 py-0.5 text-[8px] font-black text-white truncate" style={{ background: "linear-gradient(0deg,rgba(0,0,0,0.85),rgba(0,0,0,0))" }}>
+                                    Guest
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
 
@@ -1896,13 +1992,29 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     )}
                     {/* Batch E — Follow button (o'zim emas + auth mavjud) */}
                     {stream && !stream.isMine && isFollowing !== null && meUsername !== stream.author?.username && (
-                        <button onClick={toggleFollow} disabled={followBusy}
-                            className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition active:scale-95 disabled:opacity-60"
-                            style={isFollowing
-                                ? { background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.35)", color: "#00CEC8" }
-                                : { background: "linear-gradient(135deg,#EF4444,#F97316)", color: "#fff", boxShadow: "0 4px 16px rgba(239,68,68,0.30)" }}>
-                            {isFollowing ? <><UserCheck className="w-3.5 h-3.5" />Kuzatilyapti</> : <><UserPlus className="w-3.5 h-3.5" />Kuzatish</>}
-                        </button>
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                            <button onClick={toggleFollow} disabled={followBusy}
+                                className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition active:scale-95 disabled:opacity-60"
+                                style={isFollowing
+                                    ? { background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.35)", color: "#00CEC8" }
+                                    : { background: "linear-gradient(135deg,#EF4444,#F97316)", color: "#fff", boxShadow: "0 4px 16px rgba(239,68,68,0.30)" }}>
+                                {isFollowing ? <><UserCheck className="w-3.5 h-3.5" />Kuzatilyapti</> : <><UserPlus className="w-3.5 h-3.5" />Kuzatish</>}
+                            </button>
+                            {/* Batch AJ — Sub tugma */}
+                            <button onClick={() => setSubModalOpen(true)}
+                                className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition active:scale-95"
+                                style={mySub
+                                    ? { background: "linear-gradient(135deg,#F59E0B,#EC4899)", color: "#fff", boxShadow: "0 4px 16px rgba(245,158,11,0.30)" }
+                                    : { background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.35)", color: "#F59E0B" }}>
+                                <Crown className="w-3.5 h-3.5" />{mySub ? mySub.tier : "Obuna"}
+                            </button>
+                        </div>
+                    )}
+                    {/* Sub count chip (streamer + boshqalar) */}
+                    {subCount > 0 && (
+                        <p className="text-[10px] mt-1.5 text-center" style={{ color: "rgba(245,158,11,0.75)" }}>
+                            <Crown className="w-3 h-3 inline mr-1" />{subCount} obunachi
+                        </p>
                     )}
                 </div>
 
@@ -1910,9 +2022,11 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 <div className="flex-1 overflow-y-auto px-4 py-2 min-h-0" style={{ scrollbarWidth: "none" }}>
                     {stream?.status === "UPCOMING" ? (
                         <p className="text-xs text-center py-6" style={{ color: "rgba(120,140,185,0.6)" }}>Chat efir boshlanganda ochiladi</p>
-                    ) : msgs.length === 0 ? (
-                        <p className="text-xs text-center py-6" style={{ color: "rgba(120,140,185,0.6)" }}>Birinchi xabarni yozing</p>
-                    ) : msgs.map(m => (
+                    ) : displayedMsgs.length === 0 ? (
+                        <p className="text-xs text-center py-6" style={{ color: "rgba(120,140,185,0.6)" }}>
+                            {stream?.status === "ENDED" && chatReplay ? "Playback bu vaqtida chat bo'sh edi" : "Birinchi xabarni yozing"}
+                        </p>
+                    ) : displayedMsgs.map(m => (
                         m.text.startsWith("__nx_system:") ? (
                             <div key={m.id} className="my-1.5 px-3 py-1.5 rounded-lg flex items-center gap-2" style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)" }}>
                                 <Info className="w-3 h-3 flex-shrink-0" style={{ color: "#00CEC8" }} />
@@ -2080,10 +2194,22 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                     </div>
                 )}
                 {stream?.status === "ENDED" && (
-                    <div className="px-4 py-3 flex-shrink-0 text-center" style={{ borderTop: "1px solid rgba(239,68,68,0.10)" }}>
-                        <p className="text-[11px] font-bold flex items-center justify-center gap-1.5" style={{ color: "rgba(150,150,180,0.7)" }}>
-                            <Radio className="w-3.5 h-3.5" /> Efir yakunlangan — chat yopiq
-                        </p>
+                    <div className="px-4 py-3 flex-shrink-0" style={{ borderTop: "1px solid rgba(239,68,68,0.10)" }}>
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: "rgba(150,150,180,0.7)" }}>
+                                <Radio className="w-3.5 h-3.5" /> Efir yakunlangan
+                            </p>
+                            {stream?.recordingUrl && (
+                                <button onClick={() => setChatReplay(o => !o)}
+                                    title="Chat playback bilan sinxron"
+                                    className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-black transition"
+                                    style={chatReplay
+                                        ? { background: "rgba(0,206,200,0.20)", border: "1px solid rgba(0,206,200,0.40)", color: "#00CEC8" }
+                                        : { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(200,200,220,0.75)" }}>
+                                    <MessageCircle className="w-3 h-3" />{chatReplay ? "Replay ON" : "Barcha chat"}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
@@ -2216,6 +2342,57 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                             style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", boxShadow: "0 4px 20px rgba(236,72,153,0.35)" }}>
                             <Zap className="w-4 h-4" />{tickerDraft.trim() ? "Saqlash" : "O'chirish"}
                         </button>
+                    </div>
+                </>
+            )}
+
+            {/* Batch AJ — Subscription modal */}
+            {subModalOpen && (
+                <>
+                    <div className="fixed inset-0 z-[9998]" style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(10px)" }} onClick={() => setSubModalOpen(false)} />
+                    <div className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-md p-6 rounded-3xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(245,158,11,0.45)", boxShadow: "0 24px 80px rgba(245,158,11,0.35)" }}>
+                        <div className="flex items-center gap-2 mb-4">
+                            <Crown className="w-5 h-5" style={{ color: "#F59E0B" }} />
+                            <h3 className="text-base font-black text-white">Obuna bo&apos;lish</h3>
+                            <button onClick={() => setSubModalOpen(false)} className="ml-auto w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,0.05)" }}>
+                                <X className="w-4 h-4 text-white/70" />
+                            </button>
+                        </div>
+                        {mySub && (
+                            <div className="mb-4 p-3 rounded-xl" style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(236,72,153,0.15))", border: "1px solid rgba(245,158,11,0.35)" }}>
+                                <p className="text-[11px] font-black text-white mb-0.5 flex items-center gap-1.5">
+                                    <Crown className="w-3.5 h-3.5" style={{ color: "#F59E0B" }} />{mySub.tier} — faol
+                                </p>
+                                <p className="text-[10px]" style={{ color: "rgba(255,220,180,0.75)" }}>
+                                    {new Date(mySub.expiresAt).toLocaleDateString("uz-UZ", { day: "numeric", month: "short", year: "numeric" })} gacha
+                                </p>
+                            </div>
+                        )}
+                        <p className="text-[11px] mb-3" style={{ color: "rgba(255,220,180,0.65)" }}>Streamer'ni har oy qo&apos;llab-quvvatlang. Obunachi badge chat'da chiqadi.</p>
+                        <div className="space-y-2">
+                            {([
+                                { tier: "SUPPORTER", price: 25000, label: "Supporter", desc: "Chat obunachi badge", color: "#F59E0B" },
+                                { tier: "GOLD", price: 100000, label: "Gold", desc: "Gold badge + priorityed chat", color: "#EC4899" },
+                                { tier: "PLATINUM", price: 500000, label: "Platinum", desc: "Platinum badge + shaxsiy DM ustuvorligi", color: "#8B5CF6" },
+                            ]).map(t => (
+                                <button key={t.tier} onClick={() => subscribe(t.tier)} disabled={subBusy}
+                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition active:scale-95 disabled:opacity-50"
+                                    style={{ background: `${t.color}15`, border: `1px solid ${t.color}40` }}>
+                                    <Crown className="w-4 h-4 flex-shrink-0" style={{ color: t.color }} />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-black text-white">{t.label}</p>
+                                        <p className="text-[10px]" style={{ color: "rgba(220,220,240,0.65)" }}>{t.desc}</p>
+                                    </div>
+                                    <span className="text-xs font-black tabular-nums" style={{ color: t.color }}>
+                                        {formatMoney(t.price, currency)}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                        <p className="text-[10px] mt-4 text-center" style={{ color: "rgba(180,180,220,0.55)" }}>
+                            30 kunlik obuna · avto-yangilanmaydi · For Pay hamyoningizdan yechiladi
+                        </p>
                     </div>
                 </>
             )}
