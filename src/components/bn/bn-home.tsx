@@ -18,6 +18,7 @@ import { BnReferralHero } from "./bn-referral-hero";
 import { BnInstallCard } from "./bn-install-card";
 import { BnNearbyRow } from "./bn-nearby-row";
 import { BnCheapestToday } from "./bn-cheapest-today";
+import { BnPriceDashboard } from "./bn-price-dashboard";
 import { BnTrendingRow } from "./bn-trending-row";
 import { BnReferralStatsChip } from "./bn-referral-stats-chip";
 import { BnNewShopsChip } from "./bn-new-shops-chip";
@@ -101,6 +102,9 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
 
             {/* ── Bugungi eng arzon (bozor o'rtachasidan past yoki 7-kunda tushgan) ── */}
             <BnCheapestToday />
+
+            {/* ── Bugungi bozor narxlari dashboard (kategoriya bo'yicha avg + AI prognoz) ── */}
+            <BnPriceDashboard />
 
             {/* ── Referral haftalik signal — >=3 kishi bonus olgan bo'lsa ── */}
             <BnReferralStatsChip />

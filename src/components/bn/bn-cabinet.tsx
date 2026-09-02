@@ -28,6 +28,7 @@ import { BnCategoryPicker } from "./bn-category-picker";
 import { BnPushCard } from "./bn-push-card";
 import { BnReferralLeaderboard } from "./bn-referral-leaderboard";
 import { BnAchievementsCard } from "./bn-achievements-card";
+import { BnPremiumUpgrade } from "./bn-premium-upgrade";
 
 type Tab = "home" | "products" | "orders" | "shop" | "money";
 
@@ -1403,6 +1404,9 @@ function MoneyTab({ balance, orderCount }: { balance: number; orderCount: number
             <BnReferralCard />
 
             <BnAchievementsCard />
+
+            {/* Premium tier obuna — sotuvchi do'koni bo'lsa ko'rinadi (API 404 qaytarsa jim) */}
+            <BnPremiumUpgrade />
 
             <BnReferralLeaderboard />
         </div>

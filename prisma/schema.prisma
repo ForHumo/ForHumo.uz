@@ -3001,6 +3001,12 @@ model BnShop {
   verifiedTier    BnVerifiedTier  @default(NONE)
   verifiedAt      DateTime?
   verifiedProgress Json           @default("{}")   // motivatsiya paneli uchun kesh
+
+  // Premium tier obuna — pullik yuqori tier (Bronze/Silver/Gold/Platinum).
+  // BnPremiumSubscription orqali oyiga to'lanadi. `premiumUntil > now()` = aktiv.
+  premiumTier   BnPremiumTier?                     // NULL = obunasiz (default)
+  premiumUntil  DateTime?
+
   approvedAt    DateTime?
   approvedById  String?
   rejectReason  String?
@@ -3643,6 +3649,51 @@ model BnBroadcast {
 
   @@index([createdAt])
   @@index([ownerId, createdAt])
+}
+
+// ── BN Featured mahsulot (boost) ────────────────────────────────────────────
+// Sotuvchi mahsulotini 24 soatga top-search'da yuqoriga chiqarish uchun pul
+// to'laydi (Wallet'dan). BnFeaturedListing aktiv bo'lsa qidiruvda birinchi
+// bosqichda ko'rinadi. Bir vaqtda bir mahsulot uchun bitta faol boost.
+//
+// Narxlar: 24 soat = 20 000 so'm, 3 kun = 50 000, 7 kun = 100 000.
+model BnFeaturedListing {
+  id          String   @id @default(cuid())
+  productId   String   @unique                     // mahsulot bir vaqtda faqat bitta faol boost
+  shopId      String                                // qaysi do'kon to'ladi (audit)
+  paidAmount  Int                                   // so'm
+  startsAt    DateTime @default(now())
+  expiresAt   DateTime                              // shu vaqtgacha aktiv
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([active, expiresAt])
+  @@index([shopId])
+}
+
+// ── BN Premium obuna (Bronze/Silver/Gold/Platinum) ──────────────────────────
+// Do'kon egasi oyiga to'laydi — badge, xususiyatlar, oxirgi tier'lar ko'proq boost imkoniyati.
+// Narxlar: Bronze 50K, Silver 150K, Gold 400K, Platinum 1M so'm/oy.
+// `BnShop.premiumUntil > now` bo'lsa do'kon "premium" holatida.
+model BnPremiumSubscription {
+  id          String        @id @default(cuid())
+  shopId      String
+  tier        BnPremiumTier
+  amount      Int                                    // so'mda to'langan
+  startsAt    DateTime      @default(now())
+  endsAt      DateTime                               // odatda +30 kun
+  autoRenew   Boolean       @default(false)          // kelajakda Payme auto-renewal
+  createdAt   DateTime      @default(now())
+
+  @@index([shopId, endsAt])
+  @@index([endsAt])
+}
+
+enum BnPremiumTier {
+  BRONZE      // 50 000 so'm/oy
+  SILVER      // 150 000 so'm/oy
+  GOLD        // 400 000 so'm/oy
+  PLATINUM    // 1 000 000 so'm/oy
 }
 
 // ── BN Narx tarixi ───────────────────────────────────────────────────────────

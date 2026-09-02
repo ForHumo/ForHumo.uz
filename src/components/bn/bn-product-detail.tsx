@@ -8,6 +8,8 @@ import { BnLink } from "./bn-nav";
 import { BnBackButton } from "./bn-back-button";
 import { BnReviews } from "./bn-reviews";
 import { BnPriceChart } from "./bn-price-chart";
+import { BnBuyBox } from "./bn-buy-box";
+import { BnOneClickBuy } from "./bn-one-click-buy";
 import {
     Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
     ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2, BellRing, MessageCircle,
@@ -299,10 +301,14 @@ export function BnProductDetail({
                         </Panel>
                     )}
 
+                    {/* Buy Box — bir xil mahsulot uchun eng arzon+ishonchli sotuvchi */}
+                    <BnBuyBox slug={p.slug} />
+
                     {/* Narx tarixi grafigi — vaqt bo'yicha narx dinamikasi (BN uniqueness) */}
                     <div className="mt-4">
                         <BnPriceChart slug={p.slug} />
                     </div>
+
 
                     {/* Boshqa do'konlar — narx solishtirish (BN ning asosiy va'dasi) */}
                     {others.length > 0 && (
@@ -539,6 +545,16 @@ export function BnProductDetail({
                                 : cartDone ? <><Check className="w-5 h-5" /> {t("addedToCart")}</>
                                 : <><ShoppingCart className="w-5 h-5" /> {t("addToCart")}</>}
                         </button>
+
+                        {/* Bir bosishda sotib olish (express order) */}
+                        {p.stock > 0 && (
+                            <BnOneClickBuy
+                                productId={p.id}
+                                qty={qty}
+                                disabled={cartBusy}
+                                className="mt-2"
+                            />
+                        )}
                         {cartDone && (
                             <BnLink
                                 href="/savat"
