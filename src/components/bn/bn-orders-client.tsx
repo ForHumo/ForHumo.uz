@@ -255,14 +255,18 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                             return (
                                 <div key={s.key} className="flex flex-col items-center flex-1 min-w-0">
                                     <span
-                                        className="w-8 h-8 rounded-full grid place-items-center text-[11px] font-black transition-colors"
+                                        className="relative w-8 h-8 rounded-full grid place-items-center text-[11px] font-black transition-all"
                                         style={{
                                             background: done ? BN.gold : active ? BN.goldSoft : BN.surfaceUp,
                                             color:      done ? BN.onGold : active ? BN.gold : BN.text3,
                                             border: active ? `2px solid ${BN.gold}` : "2px solid transparent",
+                                            boxShadow: active ? `0 0 0 4px ${BN.gold}22` : undefined,
                                         }}
                                     >
-                                        {done ? <Check className="w-4 h-4" /> : i + 1}
+                                        {active && !isTerminal && (
+                                            <span className="absolute inset-0 rounded-full animate-ping" style={{ background: BN.gold, opacity: 0.35 }} />
+                                        )}
+                                        <span className="relative">{done ? <Check className="w-4 h-4" /> : i + 1}</span>
                                     </span>
                                     <span className="text-[10.5px] font-bold mt-1.5 text-center" style={{ color: done || active ? BN.text : BN.text3 }}>
                                         {s.label}

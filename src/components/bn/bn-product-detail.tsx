@@ -10,6 +10,7 @@ import { BnReviews } from "./bn-reviews";
 import { BnPriceChart } from "./bn-price-chart";
 import { BnBuyBox } from "./bn-buy-box";
 import { BnOneClickBuy } from "./bn-one-click-buy";
+import { BnMobileActions } from "./bn-mobile-actions";
 import {
     Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
     ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2, BellRing, MessageCircle,
@@ -677,6 +678,15 @@ export function BnProductDetail({
                     </div>
                 </section>
             )}
+
+            {/* Mobile sticky bottom action bar — scroll pastga tushganda ko'rinadi */}
+            <BnMobileActions
+                productId={p.id}
+                price={p.price}
+                stock={p.stock}
+                onAddToCart={addToCart}
+                cartBusy={cartBusy}
+            />
         </div>
     );
 }

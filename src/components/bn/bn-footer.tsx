@@ -41,6 +41,7 @@ export function BnFooter() {
                         <FooterLink href="/qidiruv">{t("footer.allProducts")}</FooterLink>
                         <FooterLink href="/bozorlar">{t("footer.markets")}</FooterLink>
                         <FooterLink href="/dokonlar">{t("footer.shops")}</FooterLink>
+                        <FooterLink href="/xarita">{locale === "ru" ? "Карта" : locale === "en" ? "Map" : "Xarita"}</FooterLink>
                         <FooterLink href="/buyurtmalarim">{t("footer.myOrders")}</FooterLink>
                     </FooterCol>
 
