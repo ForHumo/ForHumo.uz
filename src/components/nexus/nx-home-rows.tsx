@@ -13,6 +13,7 @@ import {
     Mic2, Headphones, BookOpen, Hash, Users, Scissors, Heart,
 } from "lucide-react";
 import { NxLiveRoom } from "./nx-live-room";
+import { NxKaraokeRow } from "./nx-karaoke-row";
 
 interface HVid {
     id: string; title: string; thumbUrl: string | null; videoUrl: string;
@@ -146,6 +147,9 @@ export function NxHomeRows() {
 
     return (
         <div className="mt-2">
+            {/* 0. TOP karaoke ijrolari (haftalik) — bo'sh bo'lsa yashiradi */}
+            <NxKaraokeRow />
+
             {/* 1. Kinolar */}
             {kino.length > 0 && (
                 <Row title="Kinolar" accent="#F97316" Icon={Film}>

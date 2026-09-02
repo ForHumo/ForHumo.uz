@@ -3651,6 +3651,103 @@ model BnBroadcast {
   @@index([ownerId, createdAt])
 }
 
+// ── Nexus Pleylist (foydalanuvchi tomonidan tuzilgan trek to'plami) ────────
+model NexusPlaylist {
+  id          String                @id @default(cuid())
+  ownerId     String                                              // UserProfile.id
+  name        String                                              // max 100
+  description String?                                             // max 500
+  coverUrl    String?                                             // ixtiyoriy (aks holda birinchi trek cover'i)
+  isPublic    Boolean               @default(true)
+  playsCount  Int                   @default(0)                   // butun pleylist ijro etilgan soni
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  tracks      NexusPlaylistTrack[]
+
+  @@index([ownerId, updatedAt])
+  @@index([isPublic, updatedAt])
+}
+
+model NexusPlaylistTrack {
+  id          String   @id @default(cuid())
+  playlistId  String
+  trackId     String
+  position    Int                                                 // 0-based tartib
+  addedAt     DateTime @default(now())
+
+  playlist    NexusPlaylist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, trackId])
+  @@index([playlistId, position])
+}
+
+// ── Nexus Referral (foydalanuvchi taklif qilish bonusi) ────────────────────
+// Kod = username yoki humoId. Chaqirilgan foydalanuvchi Nexus'da birinchi
+// aktiv harakat qilsa (post/comment/like/DM), inviter va invitee'ga bonus
+// Wallet'ga o'tkaziladi: inviter 10 000 so'm, invitee 5 000 so'm.
+model NexusReferral {
+  id          String              @id @default(cuid())
+  inviterId   String                                                // UserProfile.id
+  inviteeId   String              @unique                          // bir foydalanuvchi bir marta chaqiriladi
+  status      NexusReferralStatus @default(PENDING)
+  rewardedAt  DateTime?
+  createdAt   DateTime            @default(now())
+
+  @@index([inviterId, status])
+  @@index([status, createdAt])
+}
+
+enum NexusReferralStatus {
+  PENDING
+  REWARDED
+  CANCELLED
+}
+
+// ── Nexus Reklama slot (feed native reklama — 3 slot) ──────────────────────
+// Nexus feed'ga har 15 postdan keyin native reklama ("Homiyning posti")
+// aylanma tarzda tushadi. Foydalanuvchi Nexus feed'da avtomatik ko'radi.
+// Narx BN AD bilan bir xil model (10$ sof foyda/kun, CBU kursi + soliq).
+model NexusAdSlot {
+  id                String    @id @default(cuid())
+  slot              Int                                   // 1-3
+  imageUrl          String
+  title             String                                // max 100 belgi
+  body              String?                               // ixtiyoriy tavsif (280 belgi)
+  ctaUrl            String
+  ctaText           String    @default("Batafsil")
+
+  ownerId           String                                // UserProfile.id — kim to'ladi
+  ownerUsername     String?                               // avatar/nom uchun snapshot
+  ownerAvatar       String?
+
+  startsAt          DateTime  @default(now())
+  expiresAt         DateTime
+  active            Boolean   @default(true)
+
+  // Moliyaviy snapshot
+  daysCount         Int
+  netUsdPerDay      Int       @default(10)
+  usdUzsRateSnap    Int
+  itParkAtPurchase  Boolean
+  paidAmountUzs     Int
+
+  // Statistika
+  impressions       Int       @default(0)
+  clicks            Int       @default(0)
+
+  // Moderatsiya
+  hidden            Boolean   @default(false)
+  moderationNote    String?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([slot, active, expiresAt])
+  @@index([ownerId, createdAt])
+  @@index([active, expiresAt])
+}
+
 // ── BN Reklama banner (bosh sahifa slider — 5 slot) ─────────────────────────
 // Sotuvchi (yoki har qanday foydalanuvchi) 1-5 slot'ga 1-30 kunga reklama
 // qo'yish uchun to'laydi. Narx: sof foyda 10$ / kun. Real UZS/USD kurs

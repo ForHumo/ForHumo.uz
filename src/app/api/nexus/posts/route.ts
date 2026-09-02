@@ -247,6 +247,11 @@ export async function POST(req: Request) {
     after(() => embedPost(post.id, post.text ?? "", post.hashtags));
     // Yutuq (birinchi post)
     after(() => { grantAchievement(profile.id, "nexus.first_post"); });
+    // Referral bonus — birinchi aktiv harakat (post yaratish) bo'lsa
+    after(async () => {
+        const { awardNxReferralOnFirstAction } = await import("@/lib/nexus-referral");
+        await awardNxReferralOnFirstAction(profile.id).catch(() => null);
+    });
 
     // Cross-post: agar tanlangan bo'lsa yoki auto-repost yoqilgan bo'lsa, egaligidagi kanalga xabar
     after(async () => {

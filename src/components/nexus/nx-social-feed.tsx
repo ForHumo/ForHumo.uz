@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import { NxVerifiedBadge } from "./nx-verified-badge";
+import { NxAdCard } from "./nx-ad-card";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tiplar (real API)
@@ -56,6 +57,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
     const PAGE = 15;
 
     const [posts, setPosts] = useState<Post[]>([]);
+    const [ads, setAds] = useState<Array<{ id: string; imageUrl: string; title: string; body: string | null; ctaUrl: string; ctaText: string; ownerUsername: string | null; ownerAvatar: string | null }>>([]);
     const [tabState, setTab] = useState<"foryou" | "following" | "explore">("foryou");
     const tab = controlledTab ?? tabState;
     const [loading, setLoading] = useState(true);
@@ -119,6 +121,18 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
     }, [tab, authorUsername, tag, postId]);
 
     useEffect(() => { loadFirst(); }, [loadFirst]);
+
+    // Nexus reklama — 3 slot, feed'ga aylanma tarzda kiritiladi
+    useEffect(() => {
+        (async () => {
+            try {
+                const r = await fetch("/api/nexus/ads/active");
+                if (!r.ok) return;
+                const d = await r.json();
+                if (Array.isArray(d.ads)) setAds(d.ads);
+            } catch { /* ignore */ }
+        })();
+    }, []);
 
     // ── Yangi post pollingi (H-3) — faqat umumiy feed ──
     useEffect(() => {
@@ -386,15 +400,21 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                 <EmptyState tab={tab} profileMode={profileMode} />
             ) : (
                 <div className="flex flex-col gap-3 px-4 pb-4">
-                    {posts.map(p => (
-                        <PostCard key={p.id} post={p}
-                            onLike={() => toggleLike(p)} onSave={() => toggleSave(p)}
-                            onDelete={() => deletePost(p.id)}
-                            onShare={() => openShareSheet((p.text ?? "Humo Nexus posti").slice(0, 60), `${typeof window !== "undefined" ? window.location.origin : "https://forhumo.uz"}/nexus/p/${p.id}`)}
-                            onBump={() => patch(p.id, x => ({ ...x, comments: x.comments + 1 }))}
-                            onVote={idx => votePoll(p, idx)}
-                            onBuy={() => buyPost(p)}
-                        />
+                    {posts.map((p, i) => (
+                        <React.Fragment key={p.id}>
+                            <PostCard post={p}
+                                onLike={() => toggleLike(p)} onSave={() => toggleSave(p)}
+                                onDelete={() => deletePost(p.id)}
+                                onShare={() => openShareSheet((p.text ?? "Humo Nexus posti").slice(0, 60), `${typeof window !== "undefined" ? window.location.origin : "https://forhumo.uz"}/nexus/p/${p.id}`)}
+                                onBump={() => patch(p.id, x => ({ ...x, comments: x.comments + 1 }))}
+                                onVote={idx => votePoll(p, idx)}
+                                onBuy={() => buyPost(p)}
+                            />
+                            {/* Nexus native reklama — har 15 postdan keyin (yoki oxirida) */}
+                            {ads.length > 0 && ((i + 1) % 15 === 0) && (
+                                <NxAdCard ad={ads[Math.floor(i / 15) % ads.length]} />
+                            )}
+                        </React.Fragment>
                     ))}
                     {hasMore && (
                         <button onClick={loadMore} disabled={loadingMore}
