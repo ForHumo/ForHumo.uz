@@ -7,6 +7,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { BnLink } from "./bn-nav";
 import { BnBackButton } from "./bn-back-button";
 import { BnReviews } from "./bn-reviews";
+import { BnPriceChart } from "./bn-price-chart";
 import {
     Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
     ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2, BellRing, MessageCircle,
@@ -297,6 +298,11 @@ export function BnProductDetail({
                             )}
                         </Panel>
                     )}
+
+                    {/* Narx tarixi grafigi — vaqt bo'yicha narx dinamikasi (BN uniqueness) */}
+                    <div className="mt-4">
+                        <BnPriceChart slug={p.slug} />
+                    </div>
 
                     {/* Boshqa do'konlar — narx solishtirish (BN ning asosiy va'dasi) */}
                     {others.length > 0 && (

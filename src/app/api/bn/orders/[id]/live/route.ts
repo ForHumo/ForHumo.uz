@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
+import { checkOrderTimeout } from "@/lib/bn-order-timeout";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -13,6 +14,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const auth = await requireBnAuth();
     if (auth instanceof NextResponse) return auth;
     const { id } = await params;
+
+    // Lazy timeout check — polling har chaqirilganda tekshirilsin
+    await checkOrderTimeout(id).catch(() => null);
 
     const o = await prisma.bnOrder.findUnique({
         where: { id },

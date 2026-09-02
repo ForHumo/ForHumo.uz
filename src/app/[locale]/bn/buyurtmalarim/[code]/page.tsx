@@ -33,6 +33,15 @@ export default async function Page({ params }: { params: Promise<{ code: string 
     }) : [];
     const slugById = new Map(products.map(p => [p.id, p.slug]));
 
+    // Rating: foydalanuvchi shu do'kon uchun sharh yozganmi (rating modali uchun)
+    const existingReview = order.status === "COMPLETED"
+        ? await prisma.bnShopReview.findUnique({
+            where: { shopId_profileId: { shopId: order.shopId, profileId: auth.profileId } },
+            select: { id: true },
+        })
+        : null;
+    const alreadyRated = !!existingReview;
+
     const dto: OrderDetailDTO = {
         id: order.id,
         code: order.code,
@@ -70,6 +79,7 @@ export default async function Page({ params }: { params: Promise<{ code: string 
             imageUrl: it.imageUrl,
             productSlug: slugById.get(it.productId) ?? null,
         })),
+        alreadyRated,
     };
 
     return <BnOrderDetailClient order={dto} />;

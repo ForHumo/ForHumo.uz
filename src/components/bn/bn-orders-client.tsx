@@ -16,6 +16,7 @@ import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
 import { BnBackButton } from "./bn-back-button";
 import { BnPushCard } from "./bn-push-card";
+import { BnRatingModal } from "./bn-rating-modal";
 
 export interface OrderListItem {
     id: string;
@@ -155,6 +156,8 @@ export interface OrderDetailDTO {
         id: string; productId: string; title: string; price: number; qty: number;
         imageUrl: string | null; productSlug: string | null;
     }[];
+    /** Foydalanuvchi shu do'kon uchun sharh yozganmi (rating modali uchun) */
+    alreadyRated?: boolean;
 }
 
 export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
@@ -462,6 +465,18 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                             >
                                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><RotateCw className="w-4 h-4" /> {t("reorder")}</>}
                             </button>
+                        )}
+
+                        {/* Sotuvchini baholash (COMPLETED bo'lsa + hali sharh yozmagan bo'lsa) */}
+                        {order.status === "COMPLETED" && !order.alreadyRated && (
+                            <div className="mt-3">
+                                <BnRatingModal
+                                    orderId={order.id}
+                                    shopName={order.shop.name}
+                                    alreadyRated={false}
+                                    autoOpen
+                                />
+                            </div>
                         )}
                     </Panel>
                 </aside>

@@ -3645,6 +3645,23 @@ model BnBroadcast {
   @@index([ownerId, createdAt])
 }
 
+// ── BN Narx tarixi ───────────────────────────────────────────────────────────
+// Har kuni cron mahsulot narxlarini snapshot qiladi. Mahsulot detali sahifada
+// 30/90/365 kunlik grafik ko'rsatiladi. `marketAvgPrice` bilan solishtirish
+// uchun ham bu tarix ishlatiladi (foydalanuvchi trendni ko'radi).
+//
+// Cron: `/api/cron/bn-price-snapshot` (kunlik). Faqat aktiv mahsulotlar.
+model BnPriceHistory {
+  id          String   @id @default(cuid())
+  productId   String
+  price       Int                                 // so'm (butun)
+  marketAvg   Int?                                // shu kungi marketAvgPrice snapshot
+  capturedAt  DateTime @default(now())
+
+  @@index([productId, capturedAt])
+  @@index([capturedAt])
+}
+
 // ── Zaxira usernamelar ───────────────────────────────────────────────────────
 // Foydalanuvchi olmaydigan @nomlar (tizim, brend, mashhur odam, davlat,
 // PERSONAL — yaqin odamlarga ajratilgan). VIP toifa keyin 10K+ faol
