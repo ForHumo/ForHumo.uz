@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     if (file.size > 5 * 1024 * 1024) {
         return NextResponse.json({ error: "too_large" }, { status: 413 });
     }
-    if (!["product", "shop", "scan"].includes(kind)) {
+    if (!["product", "shop", "scan", "ad"].includes(kind)) {
         return NextResponse.json({ error: "invalid_kind" }, { status: 400 });
     }
 

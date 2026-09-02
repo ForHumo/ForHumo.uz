@@ -1,116 +1,93 @@
 "use client";
 
-// Bosh sahifa reklama banner slayderi (Uzum uslubi, lekin BN uslubida qayta ishlangan).
-// 5 ta slayd, avto-aylanish, o'ngga/chapga tugmalar, nuqta indikatorlari.
-// FAZA 2 da haqiqiy BnBanner modeli (admin panelidan boshqariladi) bilan almashtiriladi.
+// Bosh sahifa reklama banner slayderi — REAL (BnAdBanner API'dan).
+// 5 slot: to'lgan slotlar sotuvchi bannerlari, bo'sh slot'lar "Bu yerda
+// sizning reklamangiz" placeholder + "Reklama qo'yish" tugma.
+// Har banner ko'rilganda impressions++, "Batafsil" bosilganda clicks++.
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Sparkles, Plus } from "lucide-react";
+import { useLocale } from "next-intl";
 import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
+import { BnAdBuyModal } from "./bn-ad-buy-modal";
 
-interface Slide {
-    id: string;
-    title: string;
-    subtitle: string;
-    cta: string;
-    href: string;
-    /** Ikki rangdan iborat gradient */
-    bg: [string, string];
-    /** Matn rangi (fonga qarab) */
-    ink: string;
-    /** Emoji o'rniga — brend so'zi (masalan "TOP", "50%") — kod bilan kattalashtiriladi */
-    accent: string;
+interface Banner {
+    id: string; slot: number; imageUrl: string; title: string; ctaUrl: string; shopSlug: string | null;
 }
-
-// Mock banner ro'yxati — foundeer/OWNER admin panelidan yangilaydi.
-const SLIDES: Slide[] = [
-    {
-        id: "s1",
-        title: "Bozor narxidan 30% gacha arzon",
-        subtitle: "Sotuvchilar bir mahsulotni turli narxda qo'yadi — solishtiring va yutib qoling",
-        cta: "Arzon mahsulotlarni ko'rish",
-        href: "/qidiruv?sort=cheap",
-        bg: ["#F5B301", "#B8860B"],
-        ink: "#1C1913",
-        accent: "-30%",
-    },
-    {
-        id: "s2",
-        title: "Ko'rib sotib olish endi onlayn",
-        subtitle: "24 soatga band qiling, bozorga borib ko'ring, yoqsa to'lang",
-        cta: "Qanday ishlaydi",
-        href: "/#inspect",
-        bg: ["#28282F", "#17171B"],
-        ink: "#F6F4F0",
-        accent: "24h",
-    },
-    {
-        id: "s3",
-        title: "Sergeli avto bozor — endi telefoningizda",
-        subtitle: "148 do'kon, minglab ehtiyot qism. Borib topmasangiz — havolani yuboring, sotuvchi qidiradi",
-        cta: "Sergeli bozorni ochish",
-        href: "/m/sergeli-avto-bozor",
-        bg: ["#3D2E15", "#1F1F25"],
-        ink: "#F6F4F0",
-        accent: "148",
-    },
-    {
-        id: "s4",
-        title: "Do'koningizni onlaynga chiqaring",
-        subtitle: "YaTT bilan ariza yuboring — mahsulot rasmini AI yozib beradi. Komissiya 5%, naqddan olinmaydi",
-        cta: "Sotuvchi bo'lish",
-        href: "/sotuvchi",
-        bg: ["#B8860B", "#F5B301"],
-        ink: "#1C1913",
-        accent: "5%",
-    },
-    {
-        id: "s5",
-        title: "Pul kafolat ostida",
-        subtitle: "For Pay orqali to'laysiz — qabul qilmaguningizcha sotuvchiga o'tmaydi",
-        cta: "Xavfsizlik haqida",
-        href: "/#safety",
-        bg: ["#15803D", "#0F5E2F"],
-        ink: "#F6F4F0",
-        accent: "100%",
-    },
-];
 
 const AUTO_MS = 5500;
 const SWIPE_THRESHOLD = 40;
+const TOTAL_SLOTS = 5;
+
+const PLACEHOLDER_GRADIENTS: [string, string][] = [
+    ["#F5B301", "#B8860B"],
+    ["#28282F", "#17171B"],
+    ["#3D2E15", "#1F1F25"],
+    ["#B8860B", "#F5B301"],
+    ["#15803D", "#0F5E2F"],
+];
 
 export function BnHeroSlider() {
+    const locale = useLocale();
+    const [banners, setBanners] = useState<(Banner | null)[]>(Array(TOTAL_SLOTS).fill(null));
+    const [loading, setLoading] = useState(true);
     const [idx, setIdx] = useState(0);
     const [paused, setPaused] = useState(false);
-    const [progress, setProgress] = useState(0);   // 0..100 (progress bar)
-
-    // Swipe (chapga/o'ngga surish)
+    const [progress, setProgress] = useState(0);
+    const [buyOpen, setBuyOpen] = useState(false);
+    const impressedRef = useRef<Set<string>>(new Set());
     const dragRef = useRef<{ x: number; y: number; active: boolean } | null>(null);
 
+    const t = (u: string, r: string, e: string) => locale === "ru" ? r : locale === "en" ? e : u;
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const r = await fetch("/api/bn/ads/active");
+                if (!r.ok) throw new Error();
+                const d = await r.json();
+                setBanners(Array.isArray(d.banners) ? d.banners : Array(TOTAL_SLOTS).fill(null));
+            } catch {
+                setBanners(Array(TOTAL_SLOTS).fill(null));
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, []);
+
     const go = useCallback((n: number) => {
-        setIdx(((n % SLIDES.length) + SLIDES.length) % SLIDES.length);
+        setIdx(((n % TOTAL_SLOTS) + TOTAL_SLOTS) % TOTAL_SLOTS);
         setProgress(0);
     }, []);
 
-    // Sekin to'ladigan progress bar (~60fps). To'lganda keyingiga o'tadi.
+    // Impression track (bir marta per session per banner)
     useEffect(() => {
-        if (paused) return;
+        const b = banners[idx];
+        if (!b) return;
+        if (impressedRef.current.has(b.id)) return;
+        impressedRef.current.add(b.id);
+        fetch(`/api/bn/ads/${b.id}/impression`, { method: "POST", keepalive: true }).catch(() => null);
+    }, [idx, banners]);
+
+    // Progress bar
+    useEffect(() => {
+        if (paused || loading) return;
         setProgress(0);
         const start = performance.now();
         let raf = 0;
-        const tick = (t: number) => {
-            const p = Math.min(100, ((t - start) / AUTO_MS) * 100);
+        const tick = (time: number) => {
+            const p = Math.min(100, ((time - start) / AUTO_MS) * 100);
             setProgress(p);
             if (p >= 100) {
-                setIdx(i => (i + 1) % SLIDES.length);
+                setIdx(i => (i + 1) % TOTAL_SLOTS);
                 return;
             }
             raf = requestAnimationFrame(tick);
         };
         raf = requestAnimationFrame(tick);
         return () => cancelAnimationFrame(raf);
-    }, [paused, idx]);
+    }, [paused, idx, loading]);
 
     function onPointerDown(e: React.PointerEvent) {
         dragRef.current = { x: e.clientX, y: e.clientY, active: true };
@@ -123,94 +100,128 @@ export function BnHeroSlider() {
         const dx = e.clientX - d.x;
         const dy = e.clientY - d.y;
         setPaused(false);
-        if (Math.abs(dy) > Math.abs(dx)) return;         // vertikal — skrol
+        if (Math.abs(dy) > Math.abs(dx)) return;
         if (Math.abs(dx) < SWIPE_THRESHOLD) return;
         go(dx < 0 ? idx + 1 : idx - 1);
     }
 
+    function handleCtaClick(bannerId: string) {
+        fetch(`/api/bn/ads/${bannerId}/click`, { method: "POST", keepalive: true }).catch(() => null);
+    }
+
     return (
-        <section
-            className="relative overflow-hidden rounded-3xl mb-8 select-none"
-            style={{ border: `1px solid ${BN.border}`, touchAction: "pan-y" }}
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-            onPointerDown={onPointerDown}
-            onPointerUp={onPointerUp}
-            onPointerCancel={() => { dragRef.current = null; setPaused(false); }}
-            data-no-swipe                              /* butun sahifa navbar swipe'ini bloklaydi */
-        >
-            {/* Slaydlar */}
-            <div
-                className="flex transition-transform duration-500 ease-out"
-                style={{ transform: `translateX(-${idx * 100}%)` }}
+        <>
+            <section
+                className="relative overflow-hidden rounded-3xl mb-8 select-none"
+                style={{ border: `1px solid ${BN.border}`, touchAction: "pan-y" }}
+                onMouseEnter={() => setPaused(true)}
+                onMouseLeave={() => setPaused(false)}
+                onPointerDown={onPointerDown}
+                onPointerUp={onPointerUp}
+                onPointerCancel={() => { dragRef.current = null; setPaused(false); }}
+                data-no-swipe
             >
-                {SLIDES.map(s => (
-                    <div
-                        key={s.id}
-                        className="w-full flex-shrink-0"
-                        style={{
-                            background: `linear-gradient(135deg, ${s.bg[0]} 0%, ${s.bg[1]} 100%)`,
-                            color: s.ink,
-                        }}
-                    >
-                        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-4 p-6 sm:p-8 md:p-10" style={{ minHeight: 210 }}>
-                            <div className="min-w-0">
-                                <h2 className="text-[22px] sm:text-[28px] md:text-[32px] font-black tracking-tight leading-[1.1] mb-2">
-                                    {s.title}
-                                </h2>
-                                <p className="text-[13px] sm:text-[14.5px] max-w-[520px] leading-relaxed opacity-90 mb-4">
-                                    {s.subtitle}
-                                </p>
-                                <BnLink
-                                    href={s.href}
-                                    className="inline-flex items-center gap-2 h-11 px-5 rounded-2xl text-[14px] font-black transition-transform active:scale-[0.97]"
+                <div
+                    className="flex transition-transform duration-500 ease-out"
+                    style={{ transform: `translateX(-${idx * 100}%)` }}
+                >
+                    {banners.map((b, i) => (
+                        <div key={i} className="w-full flex-shrink-0" style={{ minHeight: 210 }}>
+                            {b ? (
+                                // Haqiqiy reklama — rasm fon + overlay + CTA
+                                <div className="relative w-full" style={{ minHeight: 210 }}>
+                                    <img src={b.imageUrl} alt={b.title} className="absolute inset-0 w-full h-full object-cover" />
+                                    <div
+                                        className="absolute inset-0"
+                                        style={{ background: "linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 60%, rgba(0,0,0,0.55) 100%)" }}
+                                    />
+                                    <div className="relative flex flex-col justify-end p-6 sm:p-8 md:p-10 min-h-[210px]">
+                                        <div className="inline-flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-bold w-max mb-2" style={{ background: "rgba(255,255,255,0.9)", color: "#0A0E27" }}>
+                                            AD
+                                        </div>
+                                        <h2 className="text-[22px] sm:text-[28px] md:text-[32px] font-black tracking-tight leading-[1.1] mb-3 text-white max-w-[600px]">
+                                            {b.title}
+                                        </h2>
+                                        <a
+                                            href={b.ctaUrl}
+                                            target={b.ctaUrl.startsWith("http") && !b.ctaUrl.includes("bozornarxida.uz") ? "_blank" : "_self"}
+                                            rel="noopener noreferrer sponsored"
+                                            onClick={() => handleCtaClick(b.id)}
+                                            className="inline-flex items-center gap-2 h-11 px-5 rounded-2xl text-[14px] font-black transition-transform active:scale-[0.97] w-max"
+                                            style={{ background: BN.gold, color: BN.onGold }}
+                                        >
+                                            {t("Batafsil", "Подробнее", "Learn more")}
+                                            <ChevronRight className="w-4 h-4" />
+                                        </a>
+                                    </div>
+                                </div>
+                            ) : (
+                                // Bo'sh slot — "Bu yerda sizning reklamangiz"
+                                <div
+                                    className="w-full h-full grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-4 p-6 sm:p-8 md:p-10"
                                     style={{
-                                        background: s.ink,
-                                        color: s.bg[0],
+                                        minHeight: 210,
+                                        background: `linear-gradient(135deg, ${PLACEHOLDER_GRADIENTS[i][0]} 0%, ${PLACEHOLDER_GRADIENTS[i][1]} 100%)`,
+                                        color: "#F6F4F0",
                                     }}
                                 >
-                                    {s.cta}
-                                    <ChevronRight className="w-4 h-4" />
-                                </BnLink>
-                            </div>
-
-                            {/* Aksent — bo'sh joyni to'ldiruvchi katta yozuv */}
-                            <div
-                                className="hidden md:block text-[130px] font-black leading-none tabular-nums opacity-15 pr-2 select-none"
-                                style={{ color: s.ink, letterSpacing: "-0.05em" }}
-                                aria-hidden="true"
-                            >
-                                {s.accent}
-                            </div>
+                                    <div className="min-w-0">
+                                        <div className="inline-flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-bold w-max mb-2" style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}>
+                                            SLOT {i + 1} · {t("BO'SH", "СВОБОДНО", "AVAILABLE")}
+                                        </div>
+                                        <h2 className="text-[22px] sm:text-[28px] md:text-[32px] font-black tracking-tight leading-[1.1] mb-2">
+                                            {t("Bu yerda sizning reklamangiz", "Здесь ваша реклама", "Your ad could be here")}
+                                        </h2>
+                                        <p className="text-[13px] sm:text-[14.5px] max-w-[520px] leading-relaxed opacity-90 mb-4">
+                                            {t(
+                                                "Kunlik mijozlar Sizning reklamangizni ko'radi",
+                                                "Ежедневные клиенты увидят вашу рекламу",
+                                                "Daily buyers will see your ad",
+                                            )}
+                                        </p>
+                                        <button
+                                            onClick={() => setBuyOpen(true)}
+                                            className="inline-flex items-center gap-2 h-11 px-5 rounded-2xl text-[14px] font-black transition-transform active:scale-[0.97]"
+                                            style={{ background: "#F6F4F0", color: "#1C1913" }}
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            {t("Reklama qo'yish", "Разместить рекламу", "Place an ad")}
+                                        </button>
+                                    </div>
+                                    <div className="hidden md:block text-[120px] font-black leading-none opacity-15" aria-hidden="true">
+                                        <Sparkles className="w-32 h-32" style={{ color: "#F6F4F0" }} />
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
 
-            {/* Pastida: sekin to'ladigan progress bar segmentlari (nuqta o'rniga) */}
-            <div className="absolute left-4 right-4 bottom-3 flex items-center gap-1.5">
-                {SLIDES.map((_, i) => (
-                    <button
-                        key={i}
-                        type="button"
-                        onClick={() => go(i)}
-                        aria-label={`Slayd ${i + 1}`}
-                        className="flex-1 h-1 rounded-full overflow-hidden transition-opacity"
-                        style={{ background: "rgba(255,255,255,0.28)" }}
-                    >
-                        <span
-                            className="block h-full rounded-full"
-                            style={{
-                                width: i < idx ? "100%"
-                                    : i === idx ? `${progress}%`
-                                    : "0%",
-                                background: "#fff",
-                                transition: i === idx ? "none" : "width 0.3s",
-                            }}
-                        />
-                    </button>
-                ))}
-            </div>
-        </section>
+                {/* Progress bar segmentlari */}
+                <div className="absolute left-4 right-4 bottom-3 flex items-center gap-1.5">
+                    {Array(TOTAL_SLOTS).fill(0).map((_, i) => (
+                        <button
+                            key={i}
+                            type="button"
+                            onClick={() => go(i)}
+                            aria-label={`Slot ${i + 1}`}
+                            className="flex-1 h-1 rounded-full overflow-hidden transition-opacity"
+                            style={{ background: "rgba(255,255,255,0.28)" }}
+                        >
+                            <span
+                                className="block h-full rounded-full"
+                                style={{
+                                    width: i < idx ? "100%" : i === idx ? `${progress}%` : "0%",
+                                    background: "#fff",
+                                    transition: i === idx ? "none" : "width 0.3s",
+                                }}
+                            />
+                        </button>
+                    ))}
+                </div>
+            </section>
+
+            <BnAdBuyModal open={buyOpen} onClose={() => setBuyOpen(false)} onSuccess={() => location.reload()} />
+        </>
     );
 }

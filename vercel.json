@@ -17,6 +17,7 @@
         { "path": "/api/cron/channel-stories-cleanup", "schedule": "0 11 * * *" },
         { "path": "/api/cron/channel-esteam-sync", "schedule": "0 12 * * *" },
         { "path": "/api/cron/bn-price-snapshot",     "schedule": "0 13 * * *" },
-        { "path": "/api/cron/bn-order-timeout",      "schedule": "0 14 * * *" }
+        { "path": "/api/cron/bn-order-timeout",      "schedule": "0 14 * * *" },
+        { "path": "/api/cron/bn-ad-expire",          "schedule": "0 15 * * *" }
     ]
 }

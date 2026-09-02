@@ -3651,6 +3651,50 @@ model BnBroadcast {
   @@index([ownerId, createdAt])
 }
 
+// ── BN Reklama banner (bosh sahifa slider — 5 slot) ─────────────────────────
+// Sotuvchi (yoki har qanday foydalanuvchi) 1-5 slot'ga 1-30 kunga reklama
+// qo'yish uchun to'laydi. Narx: sof foyda 10$ / kun. Real UZS/USD kurs
+// (CBU API) va soliq stavkasi (IT Park bor/yo'q) asosida hisoblanadi.
+// Har banner AI moderation'dan o'tadi (kontent siyosat).
+//
+// Slot mantiq: 1-5. Bir slot uchun bir vaqtda faqat bitta faol banner.
+// Yangi sotib olishda bo'sh slot avto-tanlanadi. Barcha slot band bo'lsa 409.
+model BnAdBanner {
+  id                String    @id @default(cuid())
+  slot              Int                                   // 1-5
+  imageUrl          String
+  title             String                                // max 80 belgi
+  ctaUrl            String                                // "Batafsil" havolasi
+  ownerId           String                                // UserProfile.id — kim to'ladi
+  shopSlug          String?                               // agar sotuvchi bo'lsa
+
+  startsAt          DateTime  @default(now())
+  expiresAt         DateTime
+  active            Boolean   @default(true)
+
+  // Moliyaviy snapshot (sotib olish paytida yozib olinadi — keyingi kurs o'zgarishi ta'sir qilmaydi)
+  daysCount         Int                                   // 1-30
+  netUsdPerDay      Int       @default(10)                // qo'lga tushadigan $/kun
+  usdUzsRateSnap    Int                                   // masalan 11830 (butun so'm)
+  itParkAtPurchase  Boolean                               // sotib olish paytidagi rejim
+  paidAmountUzs     Int                                   // fakt to'langan so'm
+
+  // Statistika
+  impressions       Int       @default(0)                 // ko'rilgan
+  clicks            Int       @default(0)                 // "Batafsil" bosilgan
+
+  // Moderatsiya
+  hidden            Boolean   @default(false)             // moderator yashirgan
+  moderationNote    String?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([slot, active, expiresAt])
+  @@index([ownerId, createdAt])
+  @@index([active, expiresAt])
+}
+
 // ── BN Featured mahsulot (boost) ────────────────────────────────────────────
 // Sotuvchi mahsulotini 24 soatga top-search'da yuqoriga chiqarish uchun pul
 // to'laydi (Wallet'dan). BnFeaturedListing aktiv bo'lsa qidiruvda birinchi
