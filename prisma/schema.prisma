@@ -4171,3 +4171,182 @@ enum BelisPayStatus {
   REFUNDED
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BELIS v2 — IJARA MODELI (sarpo qutilari Fotiha/Beshik to'y uchun)
+//
+// Real biznes: qutilar SOTILMAYDI, ijaraga beriladi. Mijoz pasport nusxa
+// qoldiradi + zaklat + ijara puli. Marosim kunidan 1 kun oldin oladi, 3 kun
+// ichida qaytaradi. Buzilsa/kam qaytsa shtraf.
+//
+// Yuqoridagi eski BelisProduct/BelisOrder etc — SOTUV modeli, launch'gacha
+// keyingi sessiyada o'chiriladi (DB toza, real ma'lumot yo'q).
+// ═══════════════════════════════════════════════════════════════════════════
+
+// To'plam (Fotiha 14 quti / Beshik To'y 10 quti / kelajakda boshqalar).
+// `copyCount` — do'konda nechta nusxa borligi (masalan 3 ta Fotiha komplekt).
+// Availability calendar shu maydondan foydalanadi.
+model BelisKomplekt {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  kind          BelisKomplektKind
+  nameUz        String
+  nameRu        String?
+  nameEn        String?
+  descriptionUz String?  @db.Text
+  descriptionRu String?  @db.Text
+  descriptionEn String?  @db.Text
+  images        String[] @default([])
+  dailyRentUzs  Int                              // 1 kunlik ijara narxi (butun komplekt)
+  deposit       Int                              // zaklat summasi (butun mahsulot narxi)
+  itemsCount    Int                              // 14 / 10 (tarkibidagi qutilar soni)
+  copyCount     Int      @default(1)             // do'kondagi nusxa (bir vaqtda ijaraga berila oladigan)
+  isActive      Boolean  @default(true)
+  hidden        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items         BelisItem[]
+  bookings      BelisRentalBooking[]
+
+  @@index([kind, isActive])
+}
+
+enum BelisKomplektKind {
+  FOTIHA
+  BESHIK_TOY
+  CUSTOM
+}
+
+// Alohida quti (komplekt ichidagi bo'lak, ham alohida ijaraga berila oladi).
+// Bir quti bir necha komplektga tegishli bo'lishi mumkin emas (1:N).
+model BelisItem {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  komplektId    String?
+  komplekt      BelisKomplekt?  @relation(fields: [komplektId], references: [id], onDelete: SetNull)
+  kind          BelisItemKind
+  nameUz        String
+  nameRu        String?
+  nameEn        String?
+  images        String[]                @default([])
+  dailyRentUzs  Int                              // alohida ijara narxi (kunlik)
+  deposit       Int                              // shu qutining zaklati
+  copyCount     Int      @default(1)             // do'kondagi nusxa (alohida sotib olingan qo'shimchalar)
+  isActive      Boolean  @default(true)
+  hidden        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  bookings      BelisItemBooking[]
+
+  @@index([komplektId, isActive])
+}
+
+enum BelisItemKind {
+  PATIR_KATTA
+  PATIR_KICHIK
+  TOGORA
+  QURUQ_MEVA
+  HOL_MEVA
+  HOLVA
+  TORT
+  MANIKEN
+  PARFYUM
+  KATTA_IDISH
+  SANDIQ
+  SOCHQI
+  DOMIK
+  BOSHQA
+}
+
+// Ijara buyurtmasi (booking). Mijoz to'liq komplekt YOKI alohida qutilar
+// oladi. Sanalar: marosim kuni + pickup (marosim - 1) + qaytish (marosim + 3).
+model BelisRentalBooking {
+  id                String   @id @default(cuid())
+  code              String   @unique                     // "BEL-2026-00001"
+
+  // Xaridor
+  buyerId           String                               // UserProfile.id
+  buyerName         String                               // snapshot (o'zgarishsa saqlanadi)
+  buyerPhone        String
+  passportUrl       String?                              // Vercel Blob rasm URL
+  passportSeries    String?                              // "AB1234567"
+  contractUrl       String?                              // imzolangan PDF (kelajakda)
+
+  // Sana rejasi
+  eventDate         DateTime                             // marosim kuni (mijoz tanlaydi)
+  pickupDate        DateTime                             // odatda eventDate - 1
+  returnDate        DateTime                             // odatda eventDate + 3 (max)
+  actualReturnedAt  DateTime?                            // qaytgan real vaqt
+
+  // Tarkib — komplekt YOKI alohida qutilar (biri majburiy)
+  komplektId        String?
+  komplekt          BelisKomplekt?  @relation(fields: [komplektId], references: [id], onDelete: SetNull)
+  itemBookings      BelisItemBooking[]
+
+  // Moliya (butun so'mda, UZS)
+  rentDailyUzs      Int                                  // kelishilgan kunlik ijara
+  daysCount         Int                                  // taxminan 4-5
+  rentTotalUzs      Int                                  // rentDaily * daysCount
+  depositUzs        Int                                  // zaklat summasi
+  paidRent          Int      @default(0)                 // to'langan ijara
+  paidDeposit       Int      @default(0)                 // to'langan zaklat
+
+  // Holat
+  status            BelisBookingStatus @default(REQUESTED)
+  fulfillType       BelisRentalFulfill @default(PICKUP)
+  address           String?                              // agar YANDEX_CUSTOMER
+  note              String?  @db.Text
+
+  // Qaytish holati
+  damageReport      String?  @db.Text                    // qaytishida holat (rasm/matn)
+  damageImages      String[] @default([])
+  fineUzs           Int      @default(0)                 // shtraf (kechikish + zarar)
+  refundedUzs       Int      @default(0)                 // zaklatdan qaytarilgan
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  confirmedAt       DateTime?
+  cancelledAt       DateTime?
+  cancelReason      String?
+  confirmedById     String?                              // admin (@sevinch)
+  returnedById      String?                              // qaytishni belgilagan admin
+
+  @@index([buyerId, createdAt])
+  @@index([eventDate])
+  @@index([status, createdAt])
+  @@index([pickupDate])
+  @@index([returnDate])
+}
+
+enum BelisBookingStatus {
+  REQUESTED       // Mijoz ariza berdi (admin qo'lda tekshiradi)
+  CONFIRMED       // Admin tasdiqladi (pickup kutilyapti)
+  PICKED_UP       // Mijoz olib ketdi
+  RETURNED_OK     // Butun qaytardi, zaklat qaytariladi
+  RETURNED_DAMAGE // Buzilgan/kam — shtraf qo'llaniladi
+  LATE            // Qaytish sanasi o'tgan (avto belgilanadi cron/live check)
+  CANCELLED       // Bekor qilindi
+}
+
+enum BelisRentalFulfill {
+  PICKUP              // Mijoz do'konga o'zi keladi
+  YANDEX_CUSTOMER     // Mijoz Yandex chaqiradi, kuryerga o'zi to'laydi
+}
+
+// Alohida quti booking bandi (agar mijoz komplekt olmagan bo'lsa yoki
+// komplektdan tashqari qo'shimcha quti kerak bo'lsa).
+model BelisItemBooking {
+  id         String  @id @default(cuid())
+  bookingId  String
+  booking    BelisRentalBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  itemId     String
+  item       BelisItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  qty        Int      @default(1)
+  createdAt  DateTime @default(now())
+
+  @@index([itemId, bookingId])
+  @@index([bookingId])
+}
+
