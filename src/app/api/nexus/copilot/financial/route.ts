@@ -107,17 +107,21 @@ async function buildSnapshot(profileId: string): Promise<FinancialSnapshot | nul
         }
     } catch { /* fail-safe */ }
 
-    // Belis'da kutayotgan buyurtmalar (yakunlanmagan)
+    // Belis'da kutayotgan ijara arizalari (to'lanmagan/tugallanmagan)
     let belisPendingOrders = 0;
     try {
-        const belisOrders = await prisma.belisOrder.findMany({
+        const belisBookings = await prisma.belisRentalBooking.findMany({
             where: {
                 buyerId: profileId,
-                status: { in: ["NEW", "ACCEPTED", "PREPARING", "SHIPPING"] },
+                status: { in: ["REQUESTED", "CONFIRMED", "PICKED_UP", "LATE"] },
             },
-            select: { total: true },
+            select: { rentTotalUzs: true, depositUzs: true, paidRent: true, paidDeposit: true },
         });
-        for (const o of belisOrders) belisPendingOrders += Number(o.total);
+        for (const b of belisBookings) {
+            const owedRent = Math.max(0, b.rentTotalUzs - b.paidRent);
+            const owedDeposit = Math.max(0, b.depositUzs - b.paidDeposit);
+            belisPendingOrders += owedRent + owedDeposit;
+        }
     } catch { /* fail-safe */ }
 
     const upcomingCommitments = bnCartTotal + belisPendingOrders;

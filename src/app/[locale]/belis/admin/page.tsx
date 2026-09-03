@@ -1,17 +1,14 @@
+import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { requireBelisAdmin } from "@/lib/belis";
-import { BelisAdmin } from "@/components/belis/belis-admin";
+import { BelisAdminPage } from "@/components/belis/belis-admin-page";
 
-export const metadata = { title: "Belis Admin" };
+export const metadata: Metadata = {
+    title: "Belis admin",
+    robots: { index: false, follow: false },
+};
 
-export default async function BelisAdminPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    const session = await getServerSession(authOptions);
-    const gate = await requireBelisAdmin(session?.user?.email);
-    if (!gate.ok) redirect(`/${locale}/belis/kabinet`);
-    return <BelisAdmin />;
+    return <BelisAdminPage />;
 }

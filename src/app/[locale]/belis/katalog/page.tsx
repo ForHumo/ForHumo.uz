@@ -1,15 +1,14 @@
-import { setRequestLocale, getTranslations } from "next-intl/server";
-import { Metadata } from "next";
-import { BelisCatalog } from "@/components/belis/belis-catalog";
+import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
+import { BelisKatalogPage } from "@/components/belis/belis-katalog-page";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-    const { locale } = await params;
-    const t = await getTranslations({ locale, namespace: "belis" });
-    return { title: `${t("nav.catalog")} — ${t("brand")}` };
-}
+export const metadata: Metadata = {
+    title: "Sarpo qutilari katalogi · Belis",
+    description: "Fotiha va Beshik to'y uchun ijaraga sarpo qutilari — Toshkent.",
+};
 
-export default async function BelisCatalogPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    return <BelisCatalog />;
+    return <BelisKatalogPage />;
 }

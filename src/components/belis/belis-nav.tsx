@@ -21,9 +21,8 @@ interface NavItem { href: string; labelKey: string; icon: React.ElementType }
 const NAV_ITEMS: NavItem[] = [
     { href: "/belis",             labelKey: "home",        icon: Home },
     { href: "/belis/katalog",     labelKey: "catalog",     icon: Grid3x3 },
-    { href: "/belis/ai",          labelKey: "aiAssistant", icon: Sparkles },
-    { href: "/belis/saqlangan",   labelKey: "saved",       icon: Heart },
-    { href: "/belis/savat",       labelKey: "cart",        icon: ShoppingBag },
+    { href: "/belis/kabinet",     labelKey: "account",     icon: Package },
+    { href: "/belis/haqida",      labelKey: "about",       icon: Sparkles },
 ];
 
 export function BelisHeader() {
