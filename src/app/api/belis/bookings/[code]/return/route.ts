@@ -9,10 +9,11 @@
 //   }
 // Faqat PICKED_UP/LATE → RETURNED_OK/RETURNED_DAMAGE.
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBelisAdmin } from "@/lib/belis-auth";
 import { calcLateFine } from "@/lib/belis-booking";
+import { belisPush } from "@/lib/belis-notify";
 
 export async function POST(req: Request, { params }: { params: Promise<{ code: string }> }) {
     const auth = await requireBelisAdmin();
@@ -31,7 +32,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
         where: { code },
         select: {
             id: true, status: true, rentDailyUzs: true, depositUzs: true,
-            returnDate: true, paidDeposit: true,
+            returnDate: true, paidDeposit: true, buyerId: true,
         },
     });
     if (!b) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -58,6 +59,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
             refundedUzs: refunded,
             returnedById: auth.profileId,
         },
+    });
+
+    after(async () => {
+        const title = ok ? "Zaklat qaytariladi" : "Qaytish qabul qilindi (zarar)";
+        const body = ok
+            ? (totalFine > 0
+                ? `#${code} · Kechikish shtraf: ${totalFine.toLocaleString()} so'm · Qaytariladi: ${refunded.toLocaleString()} so'm`
+                : `#${code} · Rahmat! Zaklat to'liq qaytariladi: ${refunded.toLocaleString()} so'm`)
+            : `#${code} · Shtraf: ${totalFine.toLocaleString()} so'm · Qaytariladi: ${refunded.toLocaleString()} so'm`;
+        await belisPush(b.buyerId, {
+            title,
+            body,
+            link: `/buyurtma/${code}`,
+            tag: `belis:return:${code}`,
+        });
     });
 
     return NextResponse.json({

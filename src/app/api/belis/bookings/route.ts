@@ -15,9 +15,10 @@
 //
 // GET /api/belis/bookings                — mening bookinglarim (auth)
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBelisAuth } from "@/lib/belis-auth";
+import { belisPushAdmins } from "@/lib/belis-notify";
 import {
     calcBookingSchedule,
     isKomplektAvailable,
@@ -113,6 +114,16 @@ export async function POST(req: Request) {
             eventDate: true, pickupDate: true, returnDate: true,
             rentTotalUzs: true, depositUzs: true, daysCount: true,
         },
+    });
+
+    // Adminga (@sevinch) push — yangi ariza
+    after(async () => {
+        await belisPushAdmins({
+            title: "Yangi Belis arizasi",
+            body: `${buyerName} · ${schedule.eventDate.toLocaleDateString("uz-UZ")} marosim`,
+            link: `/admin/bookings/${booking.code}`,
+            tag: `belis:new:${booking.code}`,
+        });
     });
 
     return NextResponse.json({

@@ -3,9 +3,10 @@
 //
 // Ruxsat: faqat REQUESTED yoki CONFIRMED statusda (PICKED_UP dan keyin admin bekor qiladi).
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBelisAuth } from "@/lib/belis-auth";
+import { belisPush, belisPushAdmins } from "@/lib/belis-notify";
 
 export async function POST(req: Request, { params }: { params: Promise<{ code: string }> }) {
     const auth = await requireBelisAuth();
@@ -40,6 +41,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
             cancelledAt: new Date(),
             cancelReason: reason ?? (isOwner ? "Mijoz bekor qildi" : "Admin bekor qildi"),
         },
+    });
+
+    after(async () => {
+        if (isOwner) {
+            // Mijoz o'zi bekor qildi → adminga xabar
+            await belisPushAdmins({
+                title: "Belis: buyurtma bekor qilindi",
+                body: `#${code} · Mijoz: ${reason ?? "sababsiz"}`,
+                link: `/admin/bookings/${code}`,
+                tag: `belis:cancel:${code}`,
+            });
+        } else {
+            // Admin bekor qildi → mijozga xabar
+            await belisPush(b.buyerId, {
+                title: "Buyurtmangiz bekor qilindi",
+                body: `#${code}${reason ? ` · Sabab: ${reason}` : ""}`,
+                link: `/buyurtma/${code}`,
+                tag: `belis:cancel:${code}`,
+            });
+        }
     });
 
     return NextResponse.json({ ok: true });

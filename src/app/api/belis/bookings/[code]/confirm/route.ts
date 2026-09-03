@@ -2,9 +2,10 @@
 // POST /api/belis/bookings/[code]/confirm
 // Faqat REQUESTED → CONFIRMED.
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBelisAdmin } from "@/lib/belis-auth";
+import { belisPush } from "@/lib/belis-notify";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ code: string }> }) {
     const auth = await requireBelisAdmin();
@@ -13,7 +14,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ code: 
 
     const b = await prisma.belisRentalBooking.findUnique({
         where: { code },
-        select: { id: true, status: true },
+        select: { id: true, status: true, buyerId: true, pickupDate: true },
     });
     if (!b) return NextResponse.json({ error: "not_found" }, { status: 404 });
     if (b.status !== "REQUESTED") {
@@ -27,6 +28,15 @@ export async function POST(_req: Request, { params }: { params: Promise<{ code: 
             confirmedAt: new Date(),
             confirmedById: auth.profileId,
         },
+    });
+
+    after(async () => {
+        await belisPush(b.buyerId, {
+            title: "Arizangiz tasdiqlandi",
+            body: `#${code} · Olib ketish: ${b.pickupDate.toLocaleDateString("uz-UZ")}`,
+            link: `/buyurtma/${code}`,
+            tag: `belis:confirm:${code}`,
+        });
     });
 
     return NextResponse.json({ ok: true });
