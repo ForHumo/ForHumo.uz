@@ -6,9 +6,10 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
     ShieldCheck, Loader2, CheckCircle2, Package, Calendar, XCircle,
-    Phone, MapPin, Truck, Info, Send, AlertTriangle, RotateCw,
+    Phone, MapPin, Truck, Info, Send, AlertTriangle, RotateCw, Settings,
 } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
+import { BelisLink } from "./belis-nav";
 
 interface Booking {
     id: string;
@@ -101,7 +102,12 @@ export function BelisAdminPage() {
                     style={{ background: BELIS_GOLD_GRADIENT, color: BELIS.onGold }}>
                     <ShieldCheck className="w-5 h-5" />
                 </span>
-                <h1 className="text-[24px] font-black" style={{ color: BELIS.text }}>Belis admin</h1>
+                <h1 className="text-[24px] font-black flex-1" style={{ color: BELIS.text }}>Belis admin</h1>
+                <BelisLink href="/belis/admin/katalog"
+                    className="h-10 px-4 rounded-xl text-[13px] font-black flex items-center gap-1.5"
+                    style={{ background: BELIS.surface, color: BELIS.text, border: `1px solid ${BELIS.border}` }}>
+                    <Settings className="w-4 h-4" /> Katalog
+                </BelisLink>
             </div>
 
             <div className="flex items-center gap-1.5 mb-5 overflow-x-auto pb-1">
