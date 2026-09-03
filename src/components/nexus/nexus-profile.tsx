@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Link, useRouter } from "@/i18n/routing";
-import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle, MoreHorizontal, Ban, VolumeX, Volume2, ShieldAlert, Gift, Star, Settings2, TrendingUp } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Loader2, Edit3, UserPlus, UserCheck, UserX, MessageCircle, MoreHorizontal, Ban, VolumeX, Volume2, ShieldAlert, Gift, Star, Settings2, TrendingUp, Sparkles } from "lucide-react";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 import { NxPlayerProvider } from "./nx-player-ctx";
 import { NxShare } from "./nx-share";
@@ -307,6 +307,17 @@ export function NexusProfile({ username }: { username: string }) {
                                     className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-bold active:scale-[0.99] transition"
                                     style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(150,170,210,0.9)" }}>
                                     <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} /> Ko&apos;k belgi uchun ariza
+                                </Link>
+                            )}
+                            {data.isMe && (
+                                <Link href="/nexus/reklama"
+                                    className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-bold active:scale-[0.99] transition"
+                                    style={{
+                                        background: "linear-gradient(135deg, rgba(43,62,232,0.14) 0%, rgba(109,40,217,0.14) 50%, rgba(236,72,153,0.14) 100%)",
+                                        border: "1px solid rgba(236,72,153,0.30)",
+                                        color: "rgba(245,200,220,0.95)",
+                                    }}>
+                                    <Sparkles className="w-3.5 h-3.5" style={{ color: "#EC4899" }} /> Nexus reklama
                                 </Link>
                             )}
                         </div>
