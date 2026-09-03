@@ -83,6 +83,10 @@ export default async function Page() {
         verified: shopRaw.phoneVerified,
         verifiedTier: verifiedProgress?.tier ?? "NONE",
         verifiedProgress: verifiedProgress,
+        lat: shopRaw.lat,
+        lng: shopRaw.lng,
+        coverUrl: shopRaw.coverUrl,
+        description: shopRaw.description,
     };
 
     // APPROVED emas — statistika/ro'yxatlar kerak emas
@@ -108,7 +112,7 @@ export default async function Page() {
             orderBy: { placedAt: "desc" },
             take: 20,
             include: {
-                items: { take: 1, select: { imageUrl: true, title: true } },
+                items: { select: { imageUrl: true, title: true, qty: true, price: true, variantName: true } },
                 _count: { select: { items: true } },
             },
         }),
@@ -149,13 +153,28 @@ export default async function Page() {
         code: o.code,
         status: o.status,
         total: o.total,
+        subtotal: o.subtotal,
+        deliveryFee: o.deliveryFee,
         placedAt: o.placedAt.toISOString(),
+        confirmedAt: o.confirmedAt?.toISOString() ?? null,
+        readyAt: o.readyAt?.toISOString() ?? null,
+        completedAt: o.completedAt?.toISOString() ?? null,
+        cancelledAt: o.cancelledAt?.toISOString() ?? null,
+        cancelReason: o.cancelReason,
         fulfillType: o.fulfillType,
         itemCount: o._count.items,
         firstImage: o.items[0]?.imageUrl ?? null,
         firstTitle: o.items[0]?.title ?? null,
+        items: o.items.map(it => ({
+            title: it.title,
+            price: it.price,
+            qty: it.qty,
+            imageUrl: it.imageUrl,
+            variantName: it.variantName,
+        })),
         phone: o.phone,
         address: o.address,
+        note: o.note,
     }));
 
     const products: CabinetProduct[] = productsRaw.map(p => ({

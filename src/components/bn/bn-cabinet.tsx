@@ -10,6 +10,7 @@
 // Tab: Umumiy / Buyurtmalar / Mahsulotlar / Do'kon / Pul
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
@@ -30,6 +31,8 @@ import { BnReferralLeaderboard } from "./bn-referral-leaderboard";
 import { BnAchievementsCard } from "./bn-achievements-card";
 import { BnPremiumUpgrade } from "./bn-premium-upgrade";
 import { BnMyAdsCard } from "./bn-my-ads-card";
+import { BnBulkImportModal } from "./bn-bulk-import-modal";
+import { BnFeatureButton } from "./bn-feature-modal";
 
 type Tab = "home" | "products" | "orders" | "shop" | "money";
 
@@ -63,6 +66,11 @@ export interface CabinetShop {
     verified: boolean;
     verifiedTier?: "NONE" | "RETAIL" | "WHOLESALE";
     verifiedProgress?: VerifiedProgress | null;
+    // Onboarding checklist uchun (K10)
+    lat?: number | null;
+    lng?: number | null;
+    coverUrl?: string | null;
+    description?: string | null;
 }
 
 // Tasdiqlanganlik progress — server hisoblaydi, UI ko'rsatadi
@@ -91,13 +99,28 @@ export interface CabinetOrder {
     code: string;
     status: keyof typeof ORDER_STATUS_META;
     total: number;
+    subtotal?: number;
+    deliveryFee?: number;
     placedAt: string;
+    confirmedAt?: string | null;
+    readyAt?: string | null;
+    completedAt?: string | null;
+    cancelledAt?: string | null;
+    cancelReason?: string | null;
     fulfillType: "PICKUP" | "DELIVERY" | "INSPECT";
     itemCount: number;
     firstImage: string | null;
     firstTitle: string | null;
+    items?: Array<{
+        title: string;
+        price: number;
+        qty: number;
+        imageUrl: string | null;
+        variantName?: string | null;
+    }>;
     phone: string;
     address: string | null;
+    note?: string | null;
 }
 
 export interface CabinetProduct {
@@ -367,6 +390,7 @@ function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetSta
     return (
         <>
             <BnPushCard />
+            <OnboardingChecklist shop={shop} stats={stats} />
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
                 <Stat icon={<ShoppingBag className="w-[18px] h-[18px]" />} label={t("statOrders")} value={stats.ordersThisMonth.toString()} hint={t("statThisMonth")} />
                 <Stat icon={<TrendingUp className="w-[18px] h-[18px]" />} label={t("statSold")} value={fmtPrice(stats.revenueThisMonth)} hint={t("statThisMonth")} />
@@ -376,7 +400,7 @@ function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetSta
 
             {shop.verifiedProgress && <VerifiedProgressCard progress={shop.verifiedProgress} />}
 
-            {recent.length > 0 ? (
+            {recent.length > 0 && (
                 <div
                     className="p-5 rounded-2xl mb-6"
                     style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
@@ -386,18 +410,6 @@ function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetSta
                     </div>
                     <div className="space-y-2">
                         {recent.map(o => <RecentOrderRow key={o.id} o={o} />)}
-                    </div>
-                </div>
-            ) : (
-                <div
-                    className="p-5 rounded-2xl mb-6"
-                    style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
-                >
-                    <h2 className="text-[15px] font-black mb-4">{t("gettingStarted")}</h2>
-                    <div className="space-y-2.5">
-                        <Todo done title={t("todoApproved")} text={t("todoApprovedSub")} />
-                        <Todo title={t("todoLogo")} text={t("todoLogoSub")} />
-                        <Todo title={t("todoFirst")} text={t("todoFirstSub")} />
                     </div>
                 </div>
             )}
@@ -516,14 +528,56 @@ function VerifiedProgressCard({ progress }: { progress: VerifiedProgress }) {
 
 // ── BUYURTMALAR ─────────────────────────────────────────────────────────────
 
+type StatusFilter = "" | "PLACED" | "CONFIRMED" | "READY" | "COMPLETED" | "CANCELLED";
+
 function OrdersTab({ initial }: { initial: CabinetOrder[] }) {
     const t = useTranslations("bn.cabinet");
     const locale = useLocale();
-    const [items, setItems] = useState(initial);
+    const [items, setItems] = useState<CabinetOrder[]>(initial);
+    const [filter, setFilter] = useState<StatusFilter>("");
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
+    const [expanded, setExpanded] = useState<Set<string>>(new Set());
+    const [cancelTarget, setCancelTarget] = useState<CabinetOrder | null>(null);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(initial.length >= 20);
+    const [refreshing, setRefreshing] = useState(false);
 
-    async function changeStatus(id: string, next: "CONFIRMED" | "READY" | "COMPLETED" | "CANCELLED") {
-        const reason = next === "CANCELLED" ? prompt(t("cancelReasonPrompt")) ?? "" : undefined;
+    // Filter o'zgarsa yangi ma'lumot yuklaymiz
+    useEffect(() => {
+        let cancelled = false;
+        setRefreshing(true);
+        const q = filter ? `?status=${filter}` : "";
+        fetch(`/api/bn/orders/seller${q}`)
+            .then(r => r.json())
+            .then((d: { orders: CabinetOrder[]; hasMore: boolean }) => {
+                if (cancelled) return;
+                if (Array.isArray(d?.orders)) {
+                    setItems(d.orders);
+                    setHasMore(!!d.hasMore);
+                }
+            })
+            .catch(() => {})
+            .finally(() => { if (!cancelled) setRefreshing(false); });
+        return () => { cancelled = true; };
+    }, [filter]);
+
+    async function loadMore() {
+        if (loadingMore || !hasMore) return;
+        setLoadingMore(true);
+        try {
+            const q = filter ? `&status=${filter}` : "";
+            const r = await fetch(`/api/bn/orders/seller?skip=${items.length}${q}`);
+            const d = await r.json();
+            if (r.ok && Array.isArray(d?.orders)) {
+                setItems(prev => [...prev, ...d.orders]);
+                setHasMore(!!d.hasMore);
+            }
+        } finally {
+            setLoadingMore(false);
+        }
+    }
+
+    async function changeStatus(id: string, next: "CONFIRMED" | "READY" | "COMPLETED" | "CANCELLED", reason?: string) {
         setBusyIds(s => new Set([...s, id]));
         try {
             const r = await fetch(`/api/bn/orders/${id}/status`, {
@@ -533,7 +587,16 @@ function OrdersTab({ initial }: { initial: CabinetOrder[] }) {
             });
             const d = await r.json();
             if (r.ok && d?.ok) {
-                setItems(prev => prev.map(o => o.id === id ? { ...o, status: next as keyof typeof ORDER_STATUS_META } : o));
+                setItems(prev => prev.map(o => {
+                    if (o.id !== id) return o;
+                    const now = new Date().toISOString();
+                    const patch: Partial<CabinetOrder> = { status: next as CabinetOrder["status"] };
+                    if (next === "CONFIRMED") patch.confirmedAt = now;
+                    if (next === "READY")     patch.readyAt = now;
+                    if (next === "COMPLETED") patch.completedAt = now;
+                    if (next === "CANCELLED") { patch.cancelledAt = now; patch.cancelReason = reason ?? null; }
+                    return { ...o, ...patch };
+                }));
             } else {
                 alert(d?.error ?? t("statusErr"));
             }
@@ -542,94 +605,446 @@ function OrdersTab({ initial }: { initial: CabinetOrder[] }) {
         }
     }
 
-    if (items.length === 0) {
-        return (
-            <BnEmpty
-                icon={<ShoppingBag className="w-6 h-6" />}
-                title={t("ordersEmptyTitle")}
-                text={t("ordersEmptyText")}
-            />
-        );
+    function toggleExpand(id: string) {
+        setExpanded(s => {
+            const n = new Set(s);
+            if (n.has(id)) n.delete(id); else n.add(id);
+            return n;
+        });
     }
 
+    const filterDefs: { key: StatusFilter; labelKey: string }[] = [
+        { key: "",          labelKey: "filterAll" },
+        { key: "PLACED",    labelKey: "filterPlaced" },
+        { key: "CONFIRMED", labelKey: "filterConfirmed" },
+        { key: "READY",     labelKey: "filterReady" },
+        { key: "COMPLETED", labelKey: "filterCompleted" },
+        { key: "CANCELLED", labelKey: "filterCancelled" },
+    ];
+
     return (
-        <div className="space-y-2.5">
-            {items.map(o => {
-                const meta = ORDER_STATUS_META[o.status];
-                const busy = busyIds.has(o.id);
-                const canConfirm = o.status === "PLACED";
-                const canReady   = o.status === "CONFIRMED";
-                const canDone    = o.status === "READY";
-                const canCancel  = ["PLACED", "CONFIRMED", "READY"].includes(o.status);
+        <div className="space-y-3">
+            {/* Filter tablari */}
+            <div
+                className="flex items-center gap-1.5 overflow-x-auto p-1.5 rounded-2xl -mx-1"
+                style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+            >
+                {filterDefs.map(f => {
+                    const active = filter === f.key;
+                    return (
+                        <button
+                            key={f.key || "all"}
+                            onClick={() => setFilter(f.key)}
+                            className="flex-shrink-0 h-9 px-3.5 rounded-xl text-[12.5px] font-black transition-colors whitespace-nowrap"
+                            style={{
+                                background: active ? BN.gold : "transparent",
+                                color: active ? BN.onGold : BN.text2,
+                            }}
+                        >
+                            {t(f.labelKey)}
+                        </button>
+                    );
+                })}
+            </div>
 
-                return (
-                    <div
-                        key={o.id}
-                        className="p-4 rounded-2xl"
-                        style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
-                    >
-                        <div className="flex items-start gap-3 mb-3">
-                            <span
-                                className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0"
-                                style={{ background: BN.surfaceUp }}
-                            >
-                                {o.firstImage && (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={o.firstImage} alt="" className="w-full h-full object-cover" />
-                                )}
-                            </span>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                    <span
-                                        className="px-2 py-0.5 rounded-md text-[10px] font-black leading-none"
-                                        style={{ background: `${meta.color}1F`, color: meta.color }}
-                                    >
-                                        {meta.label}
-                                    </span>
-                                    <span className="text-[11px] tabular-nums" style={{ color: BN.text3 }}>#{o.code}</span>
-                                    <FulfillBadge type={o.fulfillType} />
-                                </div>
-                                <p className="text-[13px] font-bold line-clamp-1">{o.firstTitle}</p>
-                                <p className="text-[11.5px] mt-0.5" style={{ color: BN.text3 }}>
-                                    {t("productsN", { n: o.itemCount })} · {formatDate(o.placedAt, locale)}
-                                </p>
-                                <p className="text-[11.5px] mt-0.5 flex items-center gap-1" style={{ color: BN.text2 }}>
-                                    <Phone className="w-3 h-3" />{o.phone}
-                                    {o.address && <> · <MapPin className="w-3 h-3 inline" /> {o.address}</>}
-                                </p>
-                            </div>
-                            <span className="text-right flex-shrink-0">
-                                <span className="text-[15px] font-black tabular-nums">{fmtPrice(o.total)}</span>
-                            </span>
-                        </div>
+            {refreshing && items.length === 0 && (
+                <div className="flex items-center justify-center py-10">
+                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: BN.gold }} />
+                </div>
+            )}
 
-                        <div className="flex items-center gap-2 flex-wrap">
-                            {canConfirm && (
-                                <BtnSmall onClick={() => changeStatus(o.id, "CONFIRMED")} disabled={busy}>
-                                    <Check className="w-3.5 h-3.5" /> {t("confirm")}
-                                </BtnSmall>
-                            )}
-                            {canReady && (
-                                <BtnSmall onClick={() => changeStatus(o.id, "READY")} disabled={busy}>
-                                    <Package className="w-3.5 h-3.5" /> {t("ready")}
-                                </BtnSmall>
-                            )}
-                            {canDone && (
-                                <BtnSmall onClick={() => changeStatus(o.id, "COMPLETED")} disabled={busy} tone="ok">
-                                    {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Check className="w-3.5 h-3.5" /> {t("complete")}</>}
-                                </BtnSmall>
-                            )}
-                            {canCancel && (
-                                <BtnSmall onClick={() => changeStatus(o.id, "CANCELLED")} disabled={busy} tone="err">
-                                    <X className="w-3.5 h-3.5" /> {t("cancel")}
-                                </BtnSmall>
-                            )}
-                        </div>
-                    </div>
-                );
-            })}
+            {!refreshing && items.length === 0 && (
+                <BnEmpty
+                    icon={<ShoppingBag className="w-6 h-6" />}
+                    title={t("ordersEmptyTitle")}
+                    text={t("ordersEmptyText")}
+                />
+            )}
+
+            {items.map(o => (
+                <OrderCard
+                    key={o.id}
+                    order={o}
+                    busy={busyIds.has(o.id)}
+                    expanded={expanded.has(o.id)}
+                    onToggleExpand={() => toggleExpand(o.id)}
+                    onConfirm={() => changeStatus(o.id, "CONFIRMED")}
+                    onReady={() => changeStatus(o.id, "READY")}
+                    onComplete={() => changeStatus(o.id, "COMPLETED")}
+                    onCancel={() => setCancelTarget(o)}
+                    locale={locale}
+                    t={t}
+                />
+            ))}
+
+            {hasMore && items.length > 0 && (
+                <button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="w-full h-11 rounded-xl text-[13px] font-black disabled:opacity-60"
+                    style={{ background: BN.surface, color: BN.gold, border: `1px solid ${BN.borderGold}` }}
+                >
+                    {loadingMore
+                        ? <Loader2 className="w-4 h-4 animate-spin inline" />
+                        : t("loadMore")}
+                </button>
+            )}
+
+            {cancelTarget && (
+                <CancelModal
+                    order={cancelTarget}
+                    onClose={() => setCancelTarget(null)}
+                    onConfirm={async (reason) => {
+                        const id = cancelTarget.id;
+                        setCancelTarget(null);
+                        await changeStatus(id, "CANCELLED", reason);
+                    }}
+                    t={t}
+                />
+            )}
         </div>
     );
+}
+
+function OrderCard({
+    order: o, busy, expanded, onToggleExpand, onConfirm, onReady, onComplete, onCancel, locale, t,
+}: {
+    order: CabinetOrder;
+    busy: boolean;
+    expanded: boolean;
+    onToggleExpand: () => void;
+    onConfirm: () => void;
+    onReady: () => void;
+    onComplete: () => void;
+    onCancel: () => void;
+    locale: string;
+    t: (k: string, v?: Record<string, string | number>) => string;
+}) {
+    const meta = ORDER_STATUS_META[o.status];
+    const canConfirm = o.status === "PLACED";
+    const canReady   = o.status === "CONFIRMED";
+    const canDone    = o.status === "READY";
+    const canCancel  = ["PLACED", "CONFIRMED", "READY"].includes(o.status);
+    const isUrgent   = o.status === "PLACED";
+
+    return (
+        <div
+            className="p-4 rounded-2xl"
+            style={{
+                background: BN.surface,
+                border: `1px solid ${isUrgent ? BN.borderGold : BN.border}`,
+            }}
+        >
+            <div className="flex items-start gap-3 mb-3">
+                <span
+                    className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0"
+                    style={{ background: BN.surfaceUp }}
+                >
+                    {o.firstImage && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={o.firstImage} alt="" className="w-full h-full object-cover" />
+                    )}
+                </span>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span
+                            className="px-2 py-0.5 rounded-md text-[10px] font-black leading-none"
+                            style={{ background: `${meta.color}1F`, color: meta.color }}
+                        >
+                            {meta.label}
+                        </span>
+                        <span className="text-[11px] tabular-nums" style={{ color: BN.text3 }}>#{o.code}</span>
+                        <FulfillBadge type={o.fulfillType} />
+                    </div>
+                    <p className="text-[13px] font-bold line-clamp-1">{o.firstTitle}</p>
+                    <p className="text-[11.5px] mt-0.5" style={{ color: BN.text3 }}>
+                        {t("productsN", { n: o.itemCount })} · {formatDate(o.placedAt, locale)}
+                    </p>
+                    <p className="text-[11.5px] mt-0.5 flex items-center gap-1" style={{ color: BN.text2 }}>
+                        <Phone className="w-3 h-3" />{o.phone}
+                        {o.address && <> · <MapPin className="w-3 h-3 inline" /> {o.address}</>}
+                    </p>
+                </div>
+                <span className="text-right flex-shrink-0">
+                    <span className="text-[15px] font-black tabular-nums">{fmtPrice(o.total)}</span>
+                </span>
+            </div>
+
+            {/* 30-daqiqa timeout countdown — faqat PLACED */}
+            {o.status === "PLACED" && <TimeoutBar placedAt={o.placedAt} t={t} />}
+
+            {/* Bekor qilingan bo'lsa — sabab */}
+            {o.status === "CANCELLED" && o.cancelReason && (
+                <div
+                    className="mt-2 p-2.5 rounded-lg text-[12px] flex items-start gap-2"
+                    style={{ background: BN.errSoft, color: BN.err }}
+                >
+                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                    <span>{o.cancelReason}</span>
+                </div>
+            )}
+
+            {/* Kengaytirilgan tafsilotlar */}
+            {expanded && (
+                <div className="mt-3 space-y-2">
+                    {o.items && o.items.length > 0 && (
+                        <div
+                            className="p-3 rounded-xl space-y-2"
+                            style={{ background: BN.surfaceUp }}
+                        >
+                            <p className="text-[11px] font-black uppercase tracking-wide" style={{ color: BN.text3 }}>
+                                {t("orderItemsTitle")}
+                            </p>
+                            {o.items.map((it, idx) => (
+                                <div key={idx} className="flex items-center gap-2.5 text-[12.5px]">
+                                    <span
+                                        className="w-9 h-9 rounded-md overflow-hidden flex-shrink-0"
+                                        style={{ background: BN.surface }}
+                                    >
+                                        {it.imageUrl && (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={it.imageUrl} alt="" className="w-full h-full object-cover" />
+                                        )}
+                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-bold line-clamp-1">{it.title}</p>
+                                        {it.variantName && (
+                                            <p className="text-[11px]" style={{ color: BN.text3 }}>{it.variantName}</p>
+                                        )}
+                                    </div>
+                                    <span className="tabular-nums font-black text-[12px]" style={{ color: BN.text2 }}>
+                                        {it.qty} × {fmtPrice(it.price)}
+                                    </span>
+                                </div>
+                            ))}
+                            {typeof o.subtotal === "number" && (
+                                <div className="pt-2 mt-2 flex items-center justify-between text-[12px]" style={{ borderTop: `1px solid ${BN.border}` }}>
+                                    <span style={{ color: BN.text3 }}>{t("subtotal")}</span>
+                                    <span className="tabular-nums font-bold">{fmtPrice(o.subtotal)}</span>
+                                </div>
+                            )}
+                            {o.deliveryFee !== undefined && o.deliveryFee > 0 && (
+                                <div className="flex items-center justify-between text-[12px]">
+                                    <span style={{ color: BN.text3 }}>{t("deliveryFee")}</span>
+                                    <span className="tabular-nums font-bold">{fmtPrice(o.deliveryFee)}</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {o.note && (
+                        <div
+                            className="p-3 rounded-xl text-[12px]"
+                            style={{ background: BN.surfaceUp, color: BN.text2 }}
+                        >
+                            <p className="text-[11px] font-black uppercase tracking-wide mb-1" style={{ color: BN.text3 }}>
+                                {t("orderNoteTitle")}
+                            </p>
+                            {o.note}
+                        </div>
+                    )}
+
+                    <div className="flex items-center gap-2 text-[11.5px] flex-wrap" style={{ color: BN.text3 }}>
+                        <span>{t("timePlaced")}: {formatDate(o.placedAt, locale)}</span>
+                        {o.confirmedAt && <span>· {t("timeConfirmed")}: {formatDate(o.confirmedAt, locale)}</span>}
+                        {o.readyAt && <span>· {t("timeReady")}: {formatDate(o.readyAt, locale)}</span>}
+                        {o.completedAt && <span>· {t("timeCompleted")}: {formatDate(o.completedAt, locale)}</span>}
+                    </div>
+                </div>
+            )}
+
+            <div className="flex items-center gap-2 flex-wrap mt-3">
+                {canConfirm && (
+                    <BtnSmall onClick={onConfirm} disabled={busy}>
+                        <Check className="w-3.5 h-3.5" /> {t("confirm")}
+                    </BtnSmall>
+                )}
+                {canReady && (
+                    <BtnSmall onClick={onReady} disabled={busy}>
+                        <Package className="w-3.5 h-3.5" /> {t("ready")}
+                    </BtnSmall>
+                )}
+                {canDone && (
+                    <BtnSmall onClick={onComplete} disabled={busy} tone="ok">
+                        {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Check className="w-3.5 h-3.5" /> {t("complete")}</>}
+                    </BtnSmall>
+                )}
+                {canCancel && (
+                    <BtnSmall onClick={onCancel} disabled={busy} tone="err">
+                        <X className="w-3.5 h-3.5" /> {t("cancel")}
+                    </BtnSmall>
+                )}
+                <button
+                    onClick={onToggleExpand}
+                    className="ml-auto flex items-center gap-1 h-9 px-3 rounded-lg text-[12px] font-bold"
+                    style={{ color: BN.text3 }}
+                >
+                    {expanded ? t("collapse") : t("expand")}
+                    <ChevronRight className={`w-3.5 h-3.5 transition-transform ${expanded ? "rotate-90" : ""}`} />
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// 30-daqiqa PLACED countdown — Vercel cron backup, lekin UI'da tirik hisoblagich
+function TimeoutBar({ placedAt, t }: { placedAt: string; t: (k: string, v?: Record<string, string | number>) => string }) {
+    const TIMEOUT_MS = 30 * 60 * 1000;
+    const [now, setNow] = useState(() => Date.now());
+    useEffect(() => {
+        const id = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(id);
+    }, []);
+    const placedMs = new Date(placedAt).getTime();
+    const elapsed = now - placedMs;
+    const remain = Math.max(0, TIMEOUT_MS - elapsed);
+    const pct = Math.min(100, Math.max(0, (elapsed / TIMEOUT_MS) * 100));
+    const mins = Math.floor(remain / 60000);
+    const secs = Math.floor((remain % 60000) / 1000);
+    const critical = pct >= 66;
+    const barColor = pct >= 90 ? BN.err : critical ? BN.gold : BN.ok;
+
+    return (
+        <div
+            className="mt-2 p-2.5 rounded-lg"
+            style={{ background: critical ? BN.errSoft : BN.surfaceUp }}
+        >
+            <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-black flex items-center gap-1" style={{ color: critical ? BN.err : BN.text2 }}>
+                    <Clock className="w-3 h-3" /> {t("timeoutLabel")}
+                </span>
+                <span className="text-[12px] tabular-nums font-black" style={{ color: critical ? BN.err : BN.text }}>
+                    {remain > 0
+                        ? `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
+                        : t("timeoutExpired")}
+                </span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: `${BN.text3}22` }}>
+                <div
+                    className="h-full transition-all"
+                    style={{ width: `${pct}%`, background: barColor }}
+                />
+            </div>
+        </div>
+    );
+}
+
+// Portal cancel modal (prompt() o'rniga)
+function CancelModal({
+    order, onClose, onConfirm, t,
+}: {
+    order: CabinetOrder;
+    onClose: () => void;
+    onConfirm: (reason: string) => void | Promise<void>;
+    t: (k: string, v?: Record<string, string | number>) => string;
+}) {
+    const [reason, setReason] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
+    if (!mounted) return null;
+
+    const presets = [
+        t("cancelReasonOutOfStock"),
+        t("cancelReasonPriceChanged"),
+        t("cancelReasonCantDeliver"),
+        t("cancelReasonBuyerRequest"),
+    ];
+
+    async function submit() {
+        const finalReason = reason.trim();
+        if (!finalReason) return;
+        setSubmitting(true);
+        await onConfirm(finalReason);
+    }
+
+    const content = (
+        <div
+            className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.6)" }}
+            onClick={onClose}
+        >
+            <div
+                className="w-full max-w-md rounded-3xl p-5"
+                style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-start gap-3 mb-4">
+                    <span
+                        className="w-11 h-11 rounded-2xl grid place-items-center flex-shrink-0"
+                        style={{ background: BN.errSoft, color: BN.err }}
+                    >
+                        <AlertTriangle className="w-5 h-5" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-[16px] font-black">{t("cancelTitle")}</p>
+                        <p className="text-[12px] mt-0.5" style={{ color: BN.text3 }}>
+                            #{order.code} · {fmtPrice(order.total)}
+                        </p>
+                    </div>
+                    <button onClick={onClose} className="p-1" style={{ color: BN.text3 }}>
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <p className="text-[12.5px] mb-2" style={{ color: BN.text2 }}>{t("cancelReasonHelp")}</p>
+
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                    {presets.map(p => (
+                        <button
+                            key={p}
+                            onClick={() => setReason(p)}
+                            className="h-8 px-3 rounded-lg text-[11.5px] font-bold"
+                            style={{
+                                background: reason === p ? BN.goldSoft : BN.surfaceUp,
+                                color: reason === p ? BN.gold : BN.text2,
+                            }}
+                        >
+                            {p}
+                        </button>
+                    ))}
+                </div>
+
+                <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value.slice(0, 200))}
+                    placeholder={t("cancelReasonPlaceholder")}
+                    rows={3}
+                    className="w-full p-3 rounded-xl text-[13px] resize-none focus:outline-none"
+                    style={{
+                        background: BN.surfaceUp,
+                        color: BN.text,
+                        border: `1px solid ${BN.border}`,
+                    }}
+                />
+                <p className="text-[10.5px] mt-1 text-right tabular-nums" style={{ color: BN.text3 }}>
+                    {reason.length}/200
+                </p>
+
+                <div className="flex items-center gap-2 mt-4">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 h-11 rounded-xl text-[13px] font-black"
+                        style={{ background: BN.surfaceUp, color: BN.text }}
+                    >
+                        {t("cancelBack")}
+                    </button>
+                    <button
+                        onClick={submit}
+                        disabled={!reason.trim() || submitting}
+                        className="flex-1 h-11 rounded-xl text-[13px] font-black disabled:opacity-60 flex items-center justify-center gap-1.5"
+                        style={{ background: BN.err, color: "#fff" }}
+                    >
+                        {submitting
+                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                            : <><X className="w-4 h-4" /> {t("cancelConfirmBtn")}</>}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
+    return createPortal(content, document.body);
 }
 
 function BtnSmall({
@@ -660,6 +1075,7 @@ function ProductsTab({
     const locale = useLocale();
     const [items, setItems] = useState(initial);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
+    const [bulkOpen, setBulkOpen] = useState(false);
 
     async function remove(id: string) {
         if (!confirm(t("removeConfirm"))) return;
@@ -711,6 +1127,34 @@ function ProductsTab({
 
     return (
         <>
+            {/* Header — toolbar with add + bulk import */}
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <button
+                    onClick={() => setCreateOpen(true)}
+                    className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl text-[13px] font-black"
+                    style={{ background: BN.gold, color: BN.onGold }}
+                >
+                    <Plus className="w-4 h-4" />
+                    {t("addProduct")}
+                </button>
+                <button
+                    onClick={() => setBulkOpen(true)}
+                    className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl text-[13px] font-black"
+                    style={{ background: BN.surface, color: BN.text, border: `1px solid ${BN.border}` }}
+                >
+                    <Upload className="w-4 h-4" />
+                    {t("bulkImportBtn")}
+                </button>
+            </div>
+
+            {bulkOpen && (
+                <BnBulkImportModal
+                    onClose={() => setBulkOpen(false)}
+                    onDone={() => router.refresh()}
+                    categories={categories.map(c => ({ slug: c.slug, name: c.name }))}
+                />
+            )}
+
             {items.length === 0 ? (
                 <BnEmpty
                     icon={<Package className="w-6 h-6" />}
@@ -780,6 +1224,7 @@ function ProductsTab({
                                         >
                                             <EyeOff className="w-3.5 h-3.5" />
                                         </button>
+                                        {p.isActive && <BnFeatureButton productSlug={p.slug} compact />}
                                         <button
                                             onClick={() => remove(p.id)}
                                             disabled={busy || !p.isActive}
@@ -1685,6 +2130,144 @@ function Stat({ icon, label, value, hint }: { icon: React.ReactNode; label: stri
             </div>
             <p className="text-[20px] font-black tabular-nums leading-none mb-1">{value}</p>
             <p className="text-[11px]" style={{ color: BN.text3 }}>{hint}</p>
+        </div>
+    );
+}
+
+// ── ONBOARDING CHECKLIST (K10) ─────────────────────────────────────────────
+// APPROVED yangi sotuvchi uchun 5-qadamli yordamchi. Bir marta hammasi bajarilsa
+// yashiriladi (localStorage'da yashirinishi mumkin foydalanuvchi tomonidan ham).
+function OnboardingChecklist({ shop, stats }: { shop: CabinetShop; stats: CabinetStats }) {
+    const t = useTranslations("bn.cabinet");
+    const [dismissed, setDismissed] = useState(false);
+
+    useEffect(() => {
+        try {
+            const k = `bn-onboarding-dismissed-${shop.id}`;
+            setDismissed(localStorage.getItem(k) === "1");
+        } catch { /* noop */ }
+    }, [shop.id]);
+
+    if (shop.status !== "APPROVED") return null;
+
+    const steps = [
+        {
+            key: "approved",
+            done: true,
+            title: t("obApproved"),
+            text: t("obApprovedSub"),
+            href: null,
+        },
+        {
+            key: "logo",
+            done: !!shop.logoUrl,
+            title: t("obLogo"),
+            text: t("obLogoSub"),
+            href: "/kabinet?tab=shop",
+        },
+        {
+            key: "location",
+            done: !!(shop.lat && shop.lng),
+            title: t("obLocation"),
+            text: t("obLocationSub"),
+            href: "/kabinet?tab=shop",
+        },
+        {
+            key: "product",
+            done: stats.productsActive > 0,
+            title: t("obProduct"),
+            text: t("obProductSub"),
+            href: "/kabinet?tab=products",
+        },
+        {
+            key: "description",
+            done: !!(shop.description && shop.description.trim().length >= 40),
+            title: t("obDescription"),
+            text: t("obDescriptionSub"),
+            href: "/kabinet?tab=shop",
+        },
+    ];
+
+    const doneCount = steps.filter(s => s.done).length;
+    const allDone = doneCount === steps.length;
+
+    if (dismissed || allDone) return null;
+
+    const pct = Math.round((doneCount / steps.length) * 100);
+
+    function dismiss() {
+        try { localStorage.setItem(`bn-onboarding-dismissed-${shop.id}`, "1"); } catch { /* noop */ }
+        setDismissed(true);
+    }
+
+    return (
+        <div
+            className="p-5 rounded-2xl mb-4"
+            style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}
+        >
+            <div className="flex items-start gap-3 mb-4">
+                <span
+                    className="w-11 h-11 rounded-2xl grid place-items-center flex-shrink-0"
+                    style={{ background: BN.goldSoft, color: BN.gold }}
+                >
+                    <Sparkles className="w-5 h-5" />
+                </span>
+                <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-black">{t("obTitle")}</p>
+                    <p className="text-[12.5px] mt-0.5" style={{ color: BN.text2 }}>
+                        {t("obSubtitle", { done: doneCount, total: steps.length })}
+                    </p>
+                </div>
+                <button
+                    onClick={dismiss}
+                    className="p-1"
+                    style={{ color: BN.text3 }}
+                    aria-label={t("obDismiss")}
+                >
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
+
+            <div className="h-1.5 rounded-full overflow-hidden mb-4" style={{ background: `${BN.text3}22` }}>
+                <div className="h-full transition-all" style={{ width: `${pct}%`, background: BN.gold }} />
+            </div>
+
+            <div className="space-y-2">
+                {steps.map(s => (
+                    <div key={s.key} className="flex items-start gap-3">
+                        <span
+                            className="w-5 h-5 rounded-full flex-shrink-0 mt-0.5 grid place-items-center"
+                            style={{
+                                background: s.done ? BN.ok : "transparent",
+                                border: `2px solid ${s.done ? BN.ok : `${BN.text3}44`}`,
+                            }}
+                        >
+                            {s.done && <Check className="w-3 h-3" style={{ color: "#fff" }} strokeWidth={3} />}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                            <span
+                                className="block text-[13.5px] font-bold"
+                                style={{
+                                    color: s.done ? BN.text3 : BN.text,
+                                    textDecoration: s.done ? "line-through" : undefined,
+                                }}
+                            >
+                                {s.title}
+                            </span>
+                            <span className="block text-[12px] mt-0.5" style={{ color: BN.text3 }}>{s.text}</span>
+                        </span>
+                        {!s.done && s.href && (
+                            <BnLink
+                                href={s.href}
+                                className="flex-shrink-0 h-8 px-3 rounded-lg text-[11.5px] font-black flex items-center gap-1"
+                                style={{ background: BN.goldSoft, color: BN.gold }}
+                            >
+                                {t("obGo")} <ChevronRight className="w-3 h-3" />
+                            </BnLink>
+                        )}
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }

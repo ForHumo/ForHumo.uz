@@ -15,7 +15,7 @@ interface Pricing { hours: number; amount: number; labelUz: string; labelRu: str
 interface Active { id: string; paidAmount: number; startsAt: string; expiresAt: string; }
 interface Data { active: Active | null; pricing: readonly Pricing[]; }
 
-export function BnFeatureButton({ productSlug }: { productSlug: string }) {
+export function BnFeatureButton({ productSlug, compact }: { productSlug: string; compact?: boolean }) {
     const locale = useLocale();
     const [open, setOpen] = useState(false);
     const [data, setData] = useState<Data | null>(null);
@@ -62,14 +62,26 @@ export function BnFeatureButton({ productSlug }: { productSlug: string }) {
 
     return (
         <>
-            <button
-                onClick={() => setOpen(true)}
-                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl text-[13px] font-semibold"
-                style={{ background: "linear-gradient(135deg, #F5B301, #B8951F)", color: BN.onGold }}
-            >
-                <Rocket className="w-4 h-4" />
-                {t("Boost qilish", "Продвинуть", "Boost")}
-            </button>
+            {compact ? (
+                <button
+                    onClick={() => setOpen(true)}
+                    title={t("Boost qilish", "Продвинуть", "Boost")}
+                    className="w-8 h-8 grid place-items-center rounded-lg"
+                    style={{ background: BN.goldSoft, color: BN.gold }}
+                    aria-label={t("Boost qilish", "Продвинуть", "Boost")}
+                >
+                    <Rocket className="w-3.5 h-3.5" />
+                </button>
+            ) : (
+                <button
+                    onClick={() => setOpen(true)}
+                    className="inline-flex items-center gap-2 h-10 px-4 rounded-xl text-[13px] font-semibold"
+                    style={{ background: "linear-gradient(135deg, #F5B301, #B8951F)", color: BN.onGold }}
+                >
+                    <Rocket className="w-4 h-4" />
+                    {t("Boost qilish", "Продвинуть", "Boost")}
+                </button>
+            )}
 
             {open && typeof document !== "undefined" && createPortal(
                 <div
