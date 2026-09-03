@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { BelisHeader } from "@/components/belis/belis-nav";
+import { BelisTestBanner } from "@/components/belis/belis-test-banner";
 import { BELIS, BELIS_BG_GRADIENT, BELIS_SOCIAL } from "@/lib/belis-theme";
 import type { Metadata } from "next";
 
@@ -36,6 +37,7 @@ export default async function BelisLayout({
                 href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;500;700&display=swap"
             />
             <div className="min-h-full flex flex-col">
+                <BelisTestBanner />
                 <BelisHeader />
                 <main className="flex-1">
                     {children}

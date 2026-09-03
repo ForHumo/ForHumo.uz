@@ -5,8 +5,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
-    Package, Plus, Loader2, Upload, X, Save, Trash2, Edit3, ImageIcon, EyeOff, Eye,
-    ChevronLeft, AlertTriangle,
+    Package, Plus, Loader2, Upload, X, Save, Trash2, Edit3, ImageIcon,
+    ChevronLeft, AlertTriangle, Wand2,
 } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
 import { BelisLink } from "./belis-nav";
@@ -345,6 +345,14 @@ function KomplektModal({ komplekt, onClose, onSaved }: {
                         <textarea value={descriptionUz} onChange={e => setDescriptionUz(e.target.value.slice(0, 5000))}
                             rows={3} placeholder="Nima uchun bu komplekt yaxshi, qanday marosimga mos"
                             className="belis-input" style={{ height: "auto" }} />
+                        <BelisAiDescribeBtn
+                            type="komplekt"
+                            name={nameUz}
+                            kind={kind}
+                            itemsCount={Number(itemsCount) || 14}
+                            onFilled={(uz) => setDescriptionUz(uz)}
+                            disabled={!nameUz.trim()}
+                        />
                     </Field>
 
                     <Field label="Rasmlar">
@@ -626,5 +634,46 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
             <label className="text-[12px] font-black mb-1.5 block" style={{ color: BELIS.text }}>{label}</label>
             {children}
         </div>
+    );
+}
+
+// AI tavsif generatsiya tugmasi — komplekt/item modal ichida
+function BelisAiDescribeBtn({ type, name, kind, itemsCount, onFilled, disabled }: {
+    type: "komplekt" | "item";
+    name: string;
+    kind?: string;
+    itemsCount?: number;
+    onFilled: (uz: string) => void;
+    disabled?: boolean;
+}) {
+    const [busy, setBusy] = useState(false);
+    const [err, setErr] = useState<string | null>(null);
+    async function run() {
+        if (!name.trim()) return;
+        setBusy(true); setErr(null);
+        try {
+            const r = await fetch("/api/belis/ai/describe", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ type, name, kind, itemsCount }),
+            });
+            const d = await r.json();
+            if (!r.ok) {
+                setErr(d?.error === "ai_unavailable" ? "AI hozircha ishlamayapti" : "Xatolik");
+                return;
+            }
+            if (d?.uz) onFilled(d.uz);
+        } finally { setBusy(false); }
+    }
+    return (
+        <>
+            <button type="button" onClick={run} disabled={busy || disabled}
+                className="mt-1.5 inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11.5px] font-black disabled:opacity-60"
+                style={{ background: BELIS.goldSoft, color: BELIS.goldDeep }}>
+                {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                AI bilan yozish
+            </button>
+            {err && <p className="text-[11px] mt-1" style={{ color: BELIS.err }}>{err}</p>}
+        </>
     );
 }
