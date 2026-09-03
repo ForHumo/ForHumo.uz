@@ -7,6 +7,7 @@ import { useSession, signIn } from "next-auth/react";
 import { Package, ChevronRight, Loader2, LogIn, Calendar } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
 import { BelisLink } from "./belis-nav";
+import { BelisPushCard } from "./belis-push-card";
 
 interface Booking {
     id: string;
@@ -77,6 +78,8 @@ export function BelisMyBookings() {
                 </span>
                 <h1 className="text-[22px] font-black" style={{ color: BELIS.text }}>Mening arizalarim</h1>
             </div>
+
+            <BelisPushCard />
 
             {rows === null && (
                 <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: BELIS.gold }} /></div>

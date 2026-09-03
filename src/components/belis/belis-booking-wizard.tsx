@@ -11,9 +11,10 @@ import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "@/i18n/routing";
 import {
     X, ChevronRight, ChevronLeft, Calendar, User, Phone, MapPin, Upload,
-    Loader2, CheckCircle2, AlertTriangle, Info, CreditCard, Truck, LogIn,
+    Loader2, CheckCircle2, AlertTriangle, Info, CreditCard, Truck, LogIn, FileText,
 } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
+import { BelisContractModal } from "./belis-contract-modal";
 
 type Step = 1 | 2 | 3 | 4;
 type Fulfill = "PICKUP" | "YANDEX_CUSTOMER";
@@ -68,6 +69,7 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
     const [submitting, setSubmitting] = useState(false);
     const [err, setErr] = useState<string | null>(null);
     const [successCode, setSuccessCode] = useState<string | null>(null);
+    const [contractOpen, setContractOpen] = useState(false);
 
     const passportRef = useRef<HTMLInputElement>(null);
 
@@ -387,15 +389,24 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                                 <span>Ariza yuborilgach @sevinch qo&apos;ng&apos;iroq qiladi, aniqlashtiradi va tasdiqlaydi. Pul do&apos;konda naqd to&apos;laydi.</span>
                             </div>
 
-                            <label className="mt-4 flex items-start gap-2 cursor-pointer">
+                            <button type="button" onClick={() => setContractOpen(true)}
+                                className="mt-4 w-full h-11 rounded-xl text-[13px] font-black flex items-center justify-center gap-2"
+                                style={{ background: BELIS.bg, color: BELIS.text, border: `1px solid ${BELIS.border}` }}>
+                                <FileText className="w-4 h-4" /> Shartnomani to&apos;liq o&apos;qish
+                            </button>
+
+                            <label className="mt-3 flex items-start gap-2 cursor-pointer">
                                 <input type="checkbox" checked={acceptTerms} onChange={e => setAcceptTerms(e.target.checked)}
                                     className="mt-1 w-4 h-4" style={{ accentColor: BELIS.gold }} />
                                 <span className="text-[12px]" style={{ color: BELIS.text }}>
-                                    Sarpo qutilarini butun holida saqlab qaytarishga rozimen. Buzilsa/kam qaytsa <b>shtraf</b> ijara pulidan qimmatga tushishini tushunaman.
+                                    Sarpo ijara shartnomasi bilan tanishib chiqdim va uning barcha shartlariga rozimen.
+                                    Sarpo qutilarini butun holida saqlab qaytarishga majburiman, buzilsa/kam qaytsa shtraf ijara pulidan qimmatga tushishini tushunaman.
                                 </span>
                             </label>
                         </div>
                     )}
+
+                    {contractOpen && <BelisContractModal onClose={() => setContractOpen(false)} />}
 
                     {step === 4 && successCode && (
                         <div className="text-center py-8">

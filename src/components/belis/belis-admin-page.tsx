@@ -6,7 +6,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
     ShieldCheck, Loader2, CheckCircle2, Package, Calendar, XCircle,
-    Phone, MapPin, Truck, Info, Send, AlertTriangle, RotateCw, Settings,
+    Phone, MapPin, Truck, Info, Send, AlertTriangle, RotateCw, Settings, HelpCircle,
+    TrendingUp, ClipboardList,
 } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
 import { BelisLink } from "./belis-nav";
@@ -104,6 +105,12 @@ export function BelisAdminPage() {
                     <ShieldCheck className="w-5 h-5" />
                 </span>
                 <h1 className="text-[24px] font-black flex-1" style={{ color: BELIS.text }}>Belis admin</h1>
+                <BelisLink href="/belis/admin/qollanma"
+                    className="w-10 h-10 rounded-xl grid place-items-center"
+                    style={{ background: BELIS.goldSoft, color: BELIS.goldDeep }}
+                    title="Qo'llanma">
+                    <HelpCircle className="w-4 h-4" />
+                </BelisLink>
                 <BelisLink href="/belis/admin/kalendar"
                     className="h-10 px-4 rounded-xl text-[13px] font-black flex items-center gap-1.5"
                     style={{ background: BELIS.surface, color: BELIS.text, border: `1px solid ${BELIS.border}` }}>
@@ -115,6 +122,9 @@ export function BelisAdminPage() {
                     <Settings className="w-4 h-4" /> Katalog
                 </BelisLink>
             </div>
+
+            {/* KPI dashboard */}
+            <BelisKpiRow />
 
             <div className="flex items-center gap-1.5 mb-5 overflow-x-auto pb-1">
                 {TABS.map(t => {
@@ -354,6 +364,87 @@ function ReturnModal({ booking, onClose, onDone }: {
                     </button>
                 </div>
             </div>
+        </div>
+    );
+}
+
+// KPI dashboard qatori — bugun/hafta/butun vaqt statistikasi
+interface Stats {
+    today: { pickups: number; returns: number; requests: number };
+    thisWeek: { newBookings: number; completedOrders: number; expectedRevenue: number; actualRevenue: number };
+    allTime: { totalBookings: number; totalRevenue: number; activeKomplekts: number; activeItems: number };
+}
+
+function BelisKpiRow() {
+    const [stats, setStats] = useState<Stats | null>(null);
+    useEffect(() => {
+        fetch("/api/belis/admin/stats", { cache: "no-store" })
+            .then(r => r.json())
+            .then(d => setStats(d))
+            .catch(() => {});
+    }, []);
+
+    return (
+        <div className="mb-5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <KpiCard
+                    icon={<ClipboardList className="w-4 h-4" />}
+                    label="Bugungi ariza"
+                    value={stats?.today.requests ?? "…"}
+                    hint={stats ? `${stats.today.pickups} pickup · ${stats.today.returns} qaytish` : ""}
+                    accent
+                />
+                <KpiCard
+                    icon={<Package className="w-4 h-4" />}
+                    label="Hafta bookinglar"
+                    value={stats?.thisWeek.newBookings ?? "…"}
+                    hint={stats ? `${stats.thisWeek.completedOrders} yakunlangan` : ""}
+                />
+                <KpiCard
+                    icon={<TrendingUp className="w-4 h-4" />}
+                    label="Hafta daromad"
+                    value={stats ? `${(stats.thisWeek.actualRevenue / 1000).toFixed(0)}K` : "…"}
+                    hint={stats ? `${(stats.thisWeek.expectedRevenue / 1000).toFixed(0)}K kutilyapti` : ""}
+                    accent
+                />
+                <KpiCard
+                    icon={<ShieldCheck className="w-4 h-4" />}
+                    label="Katalog"
+                    value={stats?.allTime.activeKomplekts ?? "…"}
+                    hint={stats ? `${stats.allTime.activeItems} quti aktiv` : ""}
+                />
+            </div>
+        </div>
+    );
+}
+
+function KpiCard({ icon, label, value, hint, accent }: {
+    icon: React.ReactNode;
+    label: string;
+    value: string | number;
+    hint: string;
+    accent?: boolean;
+}) {
+    return (
+        <div className="rounded-2xl p-3"
+            style={{
+                background: accent ? BELIS_GOLD_GRADIENT : BELIS.surface,
+                border: `1px solid ${accent ? "transparent" : BELIS.border}`,
+            }}>
+            <div className="flex items-center gap-1 text-[11px] font-black"
+                style={{ color: accent ? BELIS.onGold : BELIS.text3 }}>
+                {icon} {label}
+            </div>
+            <p className="text-[20px] font-black mt-1 tabular-nums"
+                style={{ color: accent ? BELIS.onGold : BELIS.text }}>
+                {value}
+            </p>
+            {hint && (
+                <p className="text-[10.5px] mt-0.5"
+                    style={{ color: accent ? "rgba(58,53,32,0.65)" : BELIS.text3 }}>
+                    {hint}
+                </p>
+            )}
         </div>
     );
 }

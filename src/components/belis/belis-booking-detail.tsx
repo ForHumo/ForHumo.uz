@@ -8,6 +8,7 @@ import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
 import { BelisLink } from "./belis-nav";
 import { BelisLocationMap } from "./belis-location-map";
 import { BelisChatButton } from "./belis-booking-chat";
+import { BelisPushCard } from "./belis-push-card";
 
 interface ItemBooking {
     qty: number;
@@ -129,6 +130,9 @@ export function BelisBookingDetail({ code }: { code: string }) {
                     </span>
                 </div>
             </div>
+
+            {/* Push obuna */}
+            {!isTerminal && <BelisPushCard />}
 
             {/* Stepper */}
             {!isCancelled && (
