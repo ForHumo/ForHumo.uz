@@ -9,6 +9,9 @@ import {
     MapPin, Package, Globe, Sun, Bell, User, ChevronDown,
 } from "lucide-react";
 import { BELIS, BELIS_LOCATION } from "@/lib/belis-theme";
+import { BelisLocationMap } from "./belis-location-map";
+import { BelisMapPickerModal, type BelisLatLng } from "./belis-map-picker-modal";
+import { createPortal } from "react-dom";
 
 // BelisLink — locale-aware Link (Nexus/BN naqshi).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,17 +32,28 @@ export function BelisHeader() {
     const t = useTranslations("belis");
     const { data: session } = useSession();
     const [addrOpen, setAddrOpen] = useState(false);
-    const [clientAddr, setClientAddr] = useState<string>("");
+    const [belisMapOpen, setBelisMapOpen] = useState(false);
+    const [clientLoc, setClientLoc] = useState<BelisLatLng | null>(null);
     const [langOpen, setLangOpen] = useState(false);
     const [notifCount] = useState(0);   // Kelajakda backend'dan
 
-    // Foydalanuvchi manzili — localStorage'da saqlanadi
+    // Foydalanuvchi lokatsiyasi — localStorage'da JSON sifatida saqlanadi
+    // (yozma manzil taqiqlangan — memory feedback-location-map-only)
     useEffect(() => {
-        try { setClientAddr(localStorage.getItem("belis:client-addr") ?? ""); } catch {}
+        try {
+            const raw = localStorage.getItem("belis:client-loc");
+            if (raw) {
+                const parsed = JSON.parse(raw) as BelisLatLng;
+                if (parsed && typeof parsed.lat === "number" && typeof parsed.lng === "number") {
+                    setClientLoc(parsed);
+                }
+            }
+        } catch { /* noop */ }
     }, []);
-    function saveAddr(v: string) {
-        setClientAddr(v);
-        try { localStorage.setItem("belis:client-addr", v); } catch {}
+    function saveLoc(v: BelisLatLng) {
+        setClientLoc(v);
+        try { localStorage.setItem("belis:client-loc", JSON.stringify(v)); } catch { /* noop */ }
+        setAddrOpen(false);
     }
 
     return (
@@ -55,24 +69,23 @@ export function BelisHeader() {
                     <img src="/belis/belis.png" alt="Belis" className="h-10 w-auto object-contain" />
                 </BelisLink>
 
-                {/* Manzillar (Belis + client) */}
+                {/* Manzillar (Belis + client) — ikkalasi ham xaritada */}
                 <div className="hidden md:flex items-center gap-3 flex-1 min-w-0">
-                    {/* Belis manzili — statik */}
-                    <a href={`https://www.google.com/maps/search/?api=1&query=${BELIS_LOCATION.lat},${BELIS_LOCATION.lng}`}
-                        target="_blank" rel="noopener"
+                    {/* Belis manzili — bosilsa modal ichida xarita ochiladi */}
+                    <button onClick={() => setBelisMapOpen(true)}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition hover:brightness-95 flex-shrink-0"
-                        style={{ background: "rgba(212,175,55,0.08)", border: `1px solid ${BELIS.borderSoft}`, color: BELIS.text }}>
+                        style={{ background: "rgba(212,175,55,0.10)", border: `1px solid ${BELIS.borderSoft}`, color: BELIS.text }}>
                         <MapPin className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: BELIS.gold }} />
                         <span className="font-bold" style={{ fontFamily: "'Montserrat', sans-serif" }}>Belis · Toshkent</span>
-                    </a>
+                    </button>
 
-                    {/* Client manzili — bosilib tahrirlanadi */}
+                    {/* Client manzili — xaritada tanlash (yozma taqiqlangan) */}
                     <button onClick={() => setAddrOpen(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition hover:brightness-95 truncate max-w-[240px]"
-                        style={{ background: BELIS.surface, border: `1px solid ${BELIS.borderSoft}`, color: clientAddr ? BELIS.text : BELIS.text3 }}>
-                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} style={{ color: BELIS.text2 }} />
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition hover:brightness-95 truncate max-w-[280px]"
+                        style={{ background: BELIS.surface, border: `1px solid ${BELIS.borderSoft}`, color: clientLoc ? BELIS.text : BELIS.text3 }}>
+                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} style={{ color: clientLoc ? BELIS.goldDeep : BELIS.text2 }} />
                         <span className="truncate font-medium" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                            {clientAddr || "Yetkazish manzili"}
+                            {clientLoc?.address || "Yetkazish manzili — xaritadan"}
                         </span>
                     </button>
                 </div>
@@ -144,18 +157,50 @@ export function BelisHeader() {
                 </div>
             </div>
 
-            {/* Bottom navbar — Asosiy / Katalog / AI / Saqlangan / Savat */}
+            {/* Bottom navbar */}
             <BelisNavbar />
 
-            {/* Manzil modal */}
+            {/* Belis do'kon manzili modal (readonly xarita) */}
+            {belisMapOpen && (
+                <BelisShopMapModal onClose={() => setBelisMapOpen(false)} />
+            )}
+
+            {/* Mijoz yetkazish manzili — xaritadan (yozma taqiqlangan) */}
             {addrOpen && (
-                <AddressModal
-                    value={clientAddr}
-                    onSave={(v) => { saveAddr(v); setAddrOpen(false); }}
+                <BelisMapPickerModal
+                    value={clientLoc}
+                    onChange={saveLoc}
                     onClose={() => setAddrOpen(false)}
+                    title="Yetkazish manzili"
                 />
             )}
         </header>
+    );
+}
+
+// Belis do'kon manzili modali (readonly — foydalanuvchi ko'radi + route ochadi)
+function BelisShopMapModal({ onClose }: { onClose: () => void }) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+    if (!mounted) return null;
+    return createPortal(
+        <div className="fixed inset-0 z-[220] flex items-end sm:items-center justify-center p-0 sm:p-4"
+            style={{ background: "rgba(58,53,32,0.65)", backdropFilter: "blur(6px)" }}
+            onClick={onClose}>
+            <div className="w-full sm:max-w-[560px] max-h-[92vh] overflow-y-auto"
+                onClick={e => e.stopPropagation()}>
+                <div className="p-3 flex items-center justify-end sm:justify-between">
+                    <span className="hidden sm:inline text-[13px] font-black" style={{ color: BELIS.bg }}>Belis do&apos;kon manzili</span>
+                    <button onClick={onClose}
+                        className="w-9 h-9 rounded-full grid place-items-center"
+                        style={{ background: BELIS.surface, color: BELIS.text2 }}>
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+                <BelisLocationMap title="Belis do'kon manzili" />
+            </div>
+        </div>,
+        document.body,
     );
 }
 
@@ -193,59 +238,8 @@ export function BelisNavbar() {
     );
 }
 
-function AddressModal({ value, onSave, onClose }: {
-    value: string;
-    onSave: (v: string) => void;
-    onClose: () => void;
-}) {
-    const [v, setV] = useState(value);
-    return (
-        <div className="fixed inset-0 z-[60]" onClick={onClose}>
-            <div className="absolute inset-0" style={{ background: "rgba(58,53,32,0.55)", backdropFilter: "blur(4px)" }} />
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-[440px] rounded-2xl overflow-hidden"
-                style={{ background: BELIS.bg, border: `1px solid ${BELIS.gold}`, boxShadow: "0 24px 64px rgba(58,53,32,0.55)" }}
-                onClick={e => e.stopPropagation()}>
-                <div className="p-4 flex items-center gap-2" style={{ borderBottom: `1px solid ${BELIS.border}` }}>
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                        style={{ background: BELIS.gold }}>
-                        <MapPin className="w-4 h-4" style={{ color: BELIS.onGold }} strokeWidth={1.5} />
-                    </div>
-                    <h3 className="text-sm font-black flex-1" style={{ color: BELIS.text, fontFamily: "'Playfair Display', serif" }}>
-                        Yetkazish manzili
-                    </h3>
-                    <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center hover:brightness-95"
-                        style={{ background: BELIS.surface }}>
-                        <X className="w-4 h-4" strokeWidth={1.5} style={{ color: BELIS.text2 }} />
-                    </button>
-                </div>
-                <div className="p-4">
-                    <label className="text-[11px] block mb-1.5" style={{ color: BELIS.text2 }}>
-                        Manzilingizni kiriting (yetkazib berish uchun)
-                    </label>
-                    <textarea value={v} onChange={e => setV(e.target.value)}
-                        maxLength={200} rows={3}
-                        placeholder="Toshkent, Chilonzor, ..."
-                        className="w-full px-3 py-2.5 rounded-lg bg-transparent focus:outline-none"
-                        style={{ background: BELIS.surface, border: `1px solid ${BELIS.border}`, color: BELIS.text }} />
-                    <p className="text-[10px] mt-2" style={{ color: BELIS.text3 }}>
-                        Bu manzil brauzerda saqlanadi — buyurtma paytida avto-to&apos;ldiriladi.
-                    </p>
-                </div>
-                <div className="p-3 flex gap-2 justify-end" style={{ background: BELIS.surface, borderTop: `1px solid ${BELIS.borderSoft}` }}>
-                    <button onClick={onClose} className="px-4 py-2 rounded-lg text-xs font-bold"
-                        style={{ background: BELIS.bg, color: BELIS.text2, border: `1px solid ${BELIS.border}` }}>
-                        Bekor
-                    </button>
-                    <button onClick={() => onSave(v.trim())}
-                        className="px-5 py-2 rounded-lg text-xs font-black transition hover:brightness-110"
-                        style={{ background: "linear-gradient(135deg,#EBD79A,#D4AF37)", color: BELIS.onGold }}>
-                        Saqlash
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
+// Eski AddressModal (yozma) o'chirildi — endi faqat BelisMapPickerModal (xaritada).
+// Qoida: feedback-location-map-only — har doim xaritadan.
 
 // Eski BelisNav backwards compat — barcha eski import'lar ishlashi uchun
 export { BelisHeader as BelisNav };
