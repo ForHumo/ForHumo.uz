@@ -6,7 +6,7 @@ import { useSession, signIn } from "next-auth/react";
 import { useState, useEffect } from "react";
 import {
     Home, Grid3x3, Heart, ShoppingBag, Menu, X,
-    MapPin, Package, Globe, Sun, Bell, User, ChevronDown,
+    MapPin, Package, Globe, Sun, Bell, User, ChevronDown, LogIn,
 } from "lucide-react";
 import { BELIS, BELIS_LOCATION } from "@/lib/belis-theme";
 import { BelisLocationMap } from "./belis-location-map";
@@ -145,22 +145,30 @@ export function BelisHeader() {
                         )}
                     </button>
 
-                    {/* Profil */}
-                    <BelisLink href="/belis/kabinet"
-                        title="Kabinet"
-                        className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden hover:brightness-95 flex-shrink-0"
-                        style={{ background: BELIS.gold, border: `1px solid ${BELIS.gold}` }}>
-                        {session?.user?.image ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={session.user.image} alt="" className="w-full h-full object-cover" />
-                        ) : session ? (
-                            <span className="text-sm font-black" style={{ color: BELIS.onGold, fontFamily: "'Playfair Display', serif" }}>
-                                {(session.user?.name ?? "U").slice(0, 1).toUpperCase()}
-                            </span>
-                        ) : (
-                            <User className="w-4 h-4" strokeWidth={1.5} style={{ color: BELIS.onGold }} />
-                        )}
-                    </BelisLink>
+                    {/* Profil / Kirish */}
+                    {session ? (
+                        <BelisLink href="/belis/kabinet"
+                            title="Kabinet"
+                            className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden hover:brightness-95 flex-shrink-0"
+                            style={{ background: BELIS.gold, border: `1px solid ${BELIS.gold}` }}>
+                            {session.user?.image ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={session.user.image} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="text-sm font-black" style={{ color: BELIS.onGold, fontFamily: "'Playfair Display', serif" }}>
+                                    {(session.user?.name ?? "U").slice(0, 1).toUpperCase()}
+                                </span>
+                            )}
+                        </BelisLink>
+                    ) : (
+                        <button onClick={() => signIn("google")}
+                            title="Kirish"
+                            className="h-9 px-3 rounded-full flex items-center gap-1.5 text-[12px] font-black hover:brightness-95 flex-shrink-0"
+                            style={{ background: BELIS.gold, color: BELIS.onGold }}>
+                            <LogIn className="w-3.5 h-3.5" strokeWidth={2} />
+                            Kirish
+                        </button>
+                    )}
                 </div>
             </div>
 

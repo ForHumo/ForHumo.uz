@@ -19,6 +19,12 @@ interface Booking {
     status: "REQUESTED" | "CONFIRMED" | "PICKED_UP" | "RETURNED_OK" | "RETURNED_DAMAGE" | "LATE" | "CANCELLED";
     buyerName: string;
     buyerPhone: string;
+    buyer?: {
+        username: string | null;
+        humoId: string | null;
+        image: string | null;
+        verified: boolean;
+    } | null;
     eventDate: string;
     pickupDate: string;
     returnDate: string;
@@ -201,8 +207,21 @@ function AdminCard({ b, busy, onConfirm, onPickup, onReturn }: {
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[11px] font-black" style={{ color: BELIS.text3 }}>#{b.code}</span>
                         <StatusChip status={b.status} />
+                        {b.buyer?.verified && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded"
+                                title="Email tasdiqlangan"
+                                style={{ background: `${BELIS.ok}22`, color: BELIS.ok }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 2.4L18 4l1 4 3 2-1 4 1 4-3 2-1 4-3.6-.4L12 22l-2.4-2.4L6 20l-1-4-3-2 1-4-1-4 3-2 1-4 3.6.4z"/><path fill="#fff" d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" stroke="#fff" strokeWidth="1.5"/></svg>
+                            </span>
+                        )}
                     </div>
                     <p className="text-[14px] font-black mt-0.5" style={{ color: BELIS.text }}>{b.buyerName}</p>
+                    {b.buyer && (b.buyer.username || b.buyer.humoId) && (
+                        <p className="text-[10.5px] tabular-nums" style={{ color: BELIS.text3 }}>
+                            {b.buyer.username && <>@{b.buyer.username} </>}
+                            {b.buyer.humoId && <>· {b.buyer.humoId}</>}
+                        </p>
+                    )}
                     <p className="text-[12px]" style={{ color: BELIS.text2 }}>
                         {b.komplekt?.nameUz ?? "?"} · {fmtDate(b.eventDate)}
                     </p>

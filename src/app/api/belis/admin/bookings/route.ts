@@ -54,27 +54,44 @@ export async function GET(req: Request) {
         },
     });
 
+    // Xaridor Humo ID + username + verified ma'lumotini olib boyitamiz
+    const buyerIds = [...new Set(bookings.map(b => b.buyerId))];
+    const buyers = buyerIds.length ? await prisma.userProfile.findMany({
+        where: { id: { in: buyerIds } },
+        select: { id: true, username: true, humoId: true, image: true, emailVerified: true },
+    }) : [];
+    const buyerMap = new Map(buyers.map(b => [b.id, b]));
+
     return NextResponse.json({
-        bookings: bookings.map(b => ({
-            id: b.id,
-            code: b.code,
-            status: b.status,
-            buyerName: b.buyerName,
-            buyerPhone: b.buyerPhone,
-            eventDate: b.eventDate.toISOString(),
-            pickupDate: b.pickupDate.toISOString(),
-            returnDate: b.returnDate.toISOString(),
-            rentTotalUzs: b.rentTotalUzs,
-            depositUzs: b.depositUzs,
-            paidRent: b.paidRent,
-            paidDeposit: b.paidDeposit,
-            fulfillType: b.fulfillType,
-            address: b.address,
-            komplekt: b.komplekt,
-            fineUzs: b.fineUzs,
-            refundedUzs: b.refundedUzs,
-            createdAt: b.createdAt.toISOString(),
-        })),
+        bookings: bookings.map(b => {
+            const bp = buyerMap.get(b.buyerId) ?? null;
+            return {
+                id: b.id,
+                code: b.code,
+                status: b.status,
+                buyerName: b.buyerName,
+                buyerPhone: b.buyerPhone,
+                buyer: bp ? {
+                    username: bp.username,
+                    humoId: bp.humoId,
+                    image: bp.image,
+                    verified: !!bp.emailVerified,
+                } : null,
+                eventDate: b.eventDate.toISOString(),
+                pickupDate: b.pickupDate.toISOString(),
+                returnDate: b.returnDate.toISOString(),
+                rentTotalUzs: b.rentTotalUzs,
+                depositUzs: b.depositUzs,
+                paidRent: b.paidRent,
+                paidDeposit: b.paidDeposit,
+                fulfillType: b.fulfillType,
+                address: b.address,
+                komplekt: b.komplekt,
+                fineUzs: b.fineUzs,
+                refundedUzs: b.refundedUzs,
+                createdAt: b.createdAt.toISOString(),
+            };
+        }),
         hasMore: bookings.length === limit,
     });
 }

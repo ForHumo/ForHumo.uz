@@ -20,6 +20,12 @@ interface Detail {
     status: "REQUESTED" | "CONFIRMED" | "PICKED_UP" | "RETURNED_OK" | "RETURNED_DAMAGE" | "LATE" | "CANCELLED";
     buyerName: string;
     buyerPhone: string;
+    buyer?: {
+        username: string | null;
+        humoId: string | null;
+        image: string | null;
+        verified: boolean;
+    } | null;
     passportUrl: string | null;
     passportSeries: string | null;
     eventDate: string;
@@ -242,6 +248,32 @@ export function BelisBookingDetail({ code }: { code: string }) {
                         <div className="space-y-1.5 text-[13px]">
                             <Row label="Ism" value={data.buyerName} />
                             <Row label="Telefon" value={data.buyerPhone} />
+                            {data.buyer && (data.buyer.username || data.buyer.humoId) && (
+                                <div className="flex items-center justify-between pt-2 mt-2" style={{ borderTop: `1px dashed ${BELIS.border}` }}>
+                                    <span style={{ color: BELIS.text3 }}>Humo ID</span>
+                                    <span className="flex items-center gap-1.5">
+                                        {data.buyer.image && (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={data.buyer.image} alt="" className="w-5 h-5 rounded-full object-cover" />
+                                        )}
+                                        {data.buyer.username && (
+                                            <a href={`/id/${data.buyer.username}`} target="_blank" rel="noopener"
+                                                className="font-black" style={{ color: BELIS.goldDeep }}>
+                                                @{data.buyer.username}
+                                            </a>
+                                        )}
+                                        {data.buyer.humoId && (
+                                            <span className="text-[11px] tabular-nums px-1.5 py-0.5 rounded" style={{ background: BELIS.bg, color: BELIS.text2 }}>
+                                                {data.buyer.humoId}
+                                            </span>
+                                        )}
+                                        {data.buyer.verified && (
+                                            <span className="text-[10px] font-black px-1.5 py-0.5 rounded" title="Email tasdiqlangan"
+                                                style={{ background: `${BELIS.ok}22`, color: BELIS.ok }}>✓ Tasdiq</span>
+                                        )}
+                                    </span>
+                                </div>
+                            )}
                             {data.passportSeries && <Row label="Pasport" value={data.passportSeries} />}
                             {data.passportUrl && (
                                 <a href={data.passportUrl} target="_blank" rel="noopener noreferrer"

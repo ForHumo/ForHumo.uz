@@ -35,6 +35,15 @@ export async function POST(req: Request) {
     const auth = await requireBelisAuth();
     if (auth instanceof NextResponse) return auth;
 
+    // Humo ID gate — humoId bo'lmasa foydalanuvchi /id ga o'tishi kerak.
+    // Bu kutilmagan holatga qarshi (client gate ishlagan bo'lsa ham server tekshiruvi).
+    if (!auth.humoId) {
+        return NextResponse.json({
+            error: "humo_id_required",
+            hint: "Booking berish uchun Humo ID kerak. /id sahifasidan oling.",
+        }, { status: 403 });
+    }
+
     const body = await req.json().catch(() => ({}));
     const komplektSlug = String(body?.komplektSlug ?? "").trim();
     const eventDateStr = String(body?.eventDate ?? "").trim();

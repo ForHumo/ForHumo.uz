@@ -40,12 +40,26 @@ export async function GET(_req: Request, { params }: { params: Promise<{ code: s
         return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
 
+    // Xaridor Humo ID chip uchun (admin ko'radi)
+    const buyerProfile = auth.isAdmin || b.buyerId === auth.profileId
+        ? await prisma.userProfile.findUnique({
+            where: { id: b.buyerId },
+            select: { username: true, humoId: true, image: true, emailVerified: true },
+        })
+        : null;
+
     return NextResponse.json({
         id: b.id,
         code: b.code,
         status: b.status,
         buyerName: b.buyerName,
         buyerPhone: b.buyerPhone,
+        buyer: buyerProfile ? {
+            username: buyerProfile.username,
+            humoId: buyerProfile.humoId,
+            image: buyerProfile.image,
+            verified: !!buyerProfile.emailVerified,
+        } : null,
         // Pasport rasm faqat egasi yoki adminga
         passportUrl: (b.buyerId === auth.profileId || auth.isAdmin) ? b.passportUrl : null,
         passportSeries: (b.buyerId === auth.profileId || auth.isAdmin) ? b.passportSeries : null,

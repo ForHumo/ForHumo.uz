@@ -12,6 +12,7 @@ import { useRouter } from "@/i18n/routing";
 import {
     X, ChevronRight, ChevronLeft, Calendar, User, Phone, MapPin, Upload,
     Loader2, CheckCircle2, AlertTriangle, Info, CreditCard, Truck, LogIn, FileText,
+    BadgeCheck,
 } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
 import { BelisContractModal } from "./belis-contract-modal";
@@ -70,10 +71,28 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
     const [err, setErr] = useState<string | null>(null);
     const [successCode, setSuccessCode] = useState<string | null>(null);
     const [contractOpen, setContractOpen] = useState(false);
+    const [hasHumoId, setHasHumoId] = useState<boolean | null>(null);
+    const [profileUsername, setProfileUsername] = useState<string | null>(null);
 
     const passportRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => { setMounted(true); }, []);
+
+    // Humo ID + profil autofill
+    useEffect(() => {
+        if (status !== "authenticated") return;
+        fetch("/api/belis/me", { cache: "no-store" })
+            .then(r => r.json())
+            .then(d => {
+                if (d?.error) return;
+                setHasHumoId(!!d.hasHumoId);
+                setProfileUsername(d.username ?? null);
+                // Autofill (agar bo'sh bo'lsa)
+                if (d.name) setBuyerName(prev => prev || d.name);
+                if (d.phone) setBuyerPhone(prev => (prev === "+998" ? d.phone : prev));
+            })
+            .catch(() => {});
+    }, [status]);
 
     // Availability check har sana o'zgarishida
     useEffect(() => {
@@ -132,6 +151,7 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                     : d?.error === "name_too_short" ? "Ism qisqa (kamida 2 belgi)"
                     : d?.error === "address_required_for_yandex" ? "Manzil kiriting"
                     : d?.error === "past_date" ? "O'tgan sana tanlanmagan"
+                    : d?.error === "humo_id_required" ? "Humo ID kerak. /id sahifasidan oling."
                     : d?.error ?? "Xatolik";
                 setErr(msg);
                 return;
@@ -179,6 +199,37 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                         <LogIn className="w-4 h-4" /> Google bilan kirish
                     </button>
                     <button onClick={onClose} className="mt-2 text-[12.5px]" style={{ color: BELIS.text3 }}>Bekor</button>
+                </div>
+            </div>
+        );
+        return createPortal(content, document.body);
+    }
+
+    // Auth qilingan lekin Humo ID yo'q — /id ga yo'llash
+    if (status === "authenticated" && hasHumoId === false) {
+        const content = (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+                style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
+                <div className="w-full max-w-sm rounded-3xl p-6 text-center"
+                    style={{ background: BELIS.surface, border: `1px solid ${BELIS.borderSoft}` }}
+                    onClick={e => e.stopPropagation()}>
+                    <span className="w-14 h-14 rounded-2xl grid place-items-center mx-auto mb-4"
+                        style={{ background: BELIS_GOLD_GRADIENT, color: BELIS.onGold }}>
+                        <User className="w-7 h-7" />
+                    </span>
+                    <p className="text-[16px] font-black mb-1" style={{ color: BELIS.text }}>Humo ID kerak</p>
+                    <p className="text-[13px] mb-5" style={{ color: BELIS.text2 }}>
+                        Booking berish uchun Humo ID identifikatori kerak (`UZxxxxxxx`).
+                        1 daqiqada olasiz — profiliga o&apos;ting va faollashtiring.
+                    </p>
+                    <a href="/id" target="_blank" rel="noopener"
+                        className="w-full h-12 rounded-xl text-[14px] font-black flex items-center justify-center gap-2"
+                        style={{ background: BELIS_GOLD_GRADIENT, color: BELIS.onGold }}>
+                        Humo ID olish (yangi tabda)
+                    </a>
+                    <button onClick={onClose} className="mt-2 text-[12.5px]" style={{ color: BELIS.text3 }}>
+                        Keyinroq
+                    </button>
                 </div>
             </div>
         );
@@ -276,6 +327,16 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                     {step === 2 && (
                         <div className="space-y-4">
                             <h3 className="text-[15px] font-black" style={{ color: BELIS.text }}>Sizning ma&apos;lumotingiz</h3>
+
+                            {profileUsername && (
+                                <div className="flex items-center gap-2 p-3 rounded-xl"
+                                    style={{ background: BELIS.goldSoft, color: BELIS.onGold }}>
+                                    <BadgeCheck className="w-4 h-4 flex-shrink-0" />
+                                    <span className="text-[12.5px]">
+                                        Humo ID orqali kirdingiz: <b>@{profileUsername}</b>. Ma&apos;lumotlar avtomatik to&apos;ldirildi.
+                                    </span>
+                                </div>
+                            )}
 
                             <Field label="Ism va familiya" icon={<User className="w-4 h-4" />}>
                                 <input value={buyerName} onChange={e => setBuyerName(e.target.value.slice(0, 120))}
