@@ -11,6 +11,7 @@ import { BnPriceChart } from "./bn-price-chart";
 import { BnBuyBox } from "./bn-buy-box";
 import { BnOneClickBuy } from "./bn-one-click-buy";
 import { BnMobileActions } from "./bn-mobile-actions";
+import { BnInspectHoldModal } from "./bn-inspect-modal";
 import {
     Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
     ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2, BellRing, MessageCircle,
@@ -62,6 +63,7 @@ export function BnProductDetail({
     const [cartBusy, setCartBusy] = useState(false);
     const [cartDone, setCartDone] = useState(false);
     const [favBusy, setFavBusy] = useState(false);
+    const [inspectHold, setInspectHold] = useState<{ code: string; expiresAt: string; productTitle?: string } | null>(null);
     const [priceWatch, setPriceWatch] = useState(false);
     const [pwBusy, setPwBusy] = useState(false);
     // 18+ tovar — foydalanuvchi tasdiqlagunicha rasm xiralashadi
@@ -145,11 +147,10 @@ export function BnProductDetail({
             });
             const d = await r.json();
             if (r.ok && d?.ok) {
-                const exp = new Date(d.expiresAt).toLocaleString(locale, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
-                alert(`${t("holdOkTitle")} ${t("holdCode")}: ${d.code}\n\n${t("holdOkBody", { t: exp })}`);
+                setInspectHold({ code: d.code, expiresAt: d.expiresAt, productTitle: p.title });
                 router.refresh();
-            } else if (d?.error === "already_held") {
-                alert(`${t("holdAlready")}\n${t("holdCode")}: ${d.hold?.code}`);
+            } else if (d?.error === "already_held" && d?.hold?.code && d?.hold?.expiresAt) {
+                setInspectHold({ code: d.hold.code, expiresAt: d.hold.expiresAt, productTitle: p.title });
             } else if (r.status === 401) {
                 signIn("google");
             } else {
@@ -687,6 +688,15 @@ export function BnProductDetail({
                 onAddToCart={addToCart}
                 cartBusy={cartBusy}
             />
+
+            {/* Inspect hold modal — startInspect() muvaffaqiyatli bo'lganda ochiladi */}
+            {inspectHold && (
+                <BnInspectHoldModal
+                    hold={inspectHold}
+                    onClose={() => setInspectHold(null)}
+                    onCancelled={() => router.refresh()}
+                />
+            )}
         </div>
     );
 }

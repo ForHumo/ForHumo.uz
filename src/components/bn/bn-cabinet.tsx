@@ -33,6 +33,7 @@ import { BnPremiumUpgrade } from "./bn-premium-upgrade";
 import { BnMyAdsCard } from "./bn-my-ads-card";
 import { BnBulkImportModal } from "./bn-bulk-import-modal";
 import { BnFeatureButton } from "./bn-feature-modal";
+import { BnOrderChatButton } from "./bn-order-chat";
 
 type Tab = "home" | "products" | "orders" | "shop" | "money";
 
@@ -121,6 +122,7 @@ export interface CabinetOrder {
     phone: string;
     address: string | null;
     note?: string | null;
+    buyerName?: string;
 }
 
 export interface CabinetProduct {
@@ -873,6 +875,13 @@ function OrderCard({
                     <BtnSmall onClick={onCancel} disabled={busy} tone="err">
                         <X className="w-3.5 h-3.5" /> {t("cancel")}
                     </BtnSmall>
+                )}
+                {o.status !== "CANCELLED" && (
+                    <BnOrderChatButton
+                        orderId={o.id}
+                        orderCode={o.code}
+                        otherName={o.buyerName ?? "Xaridor"}
+                    />
                 )}
                 <button
                     onClick={onToggleExpand}

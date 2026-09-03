@@ -5,8 +5,6 @@
 //   status: PLACED | CONFIRMED | READY | COMPLETED | CANCELLED | "" (barchasi)
 //   skip:   pagination offset (default 0)
 //   limit:  1..50 (default 20)
-//
-// Javob: { orders: CabinetOrder[], hasMore, total? }
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -21,7 +19,6 @@ export async function GET(req: Request) {
     const auth = await requireBnAuth();
     if (auth instanceof NextResponse) return auth;
 
-    // Foydalanuvchining do'koni bormi?
     const shop = await prisma.bnShop.findFirst({
         where: { profileId: auth.profileId },
         select: { id: true, status: true },
@@ -40,18 +37,24 @@ export async function GET(req: Request) {
         where.status = statusParam;
     }
 
-    const [items] = await Promise.all([
-        prisma.bnOrder.findMany({
-            where,
-            orderBy: { placedAt: "desc" },
-            skip,
-            take: limit,
-            include: {
-                items: { select: { imageUrl: true, title: true, qty: true, price: true, variantName: true } },
-                _count: { select: { items: true } },
-            },
-        }),
-    ]);
+    const items = await prisma.bnOrder.findMany({
+        where,
+        orderBy: { placedAt: "desc" },
+        skip,
+        take: limit,
+        include: {
+            items: { select: { imageUrl: true, title: true, qty: true, price: true, variantName: true } },
+            _count: { select: { items: true } },
+        },
+    });
+
+    // Xaridor ismlari (chat uchun)
+    const buyerIds = [...new Set(items.map(o => o.buyerId))];
+    const buyers = buyerIds.length ? await prisma.userProfile.findMany({
+        where: { id: { in: buyerIds } },
+        select: { id: true, username: true, humoId: true },
+    }) : [];
+    const buyerMap = new Map(buyers.map(b => [b.id, b.username || b.humoId || "Xaridor"]));
 
     const orders = items.map(o => ({
         id: o.id,
@@ -80,6 +83,7 @@ export async function GET(req: Request) {
         phone: o.phone,
         address: o.address,
         note: o.note,
+        buyerName: buyerMap.get(o.buyerId) ?? "Xaridor",
     }));
 
     return NextResponse.json({

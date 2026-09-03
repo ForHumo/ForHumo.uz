@@ -17,6 +17,8 @@ import { BnEmpty } from "./bn-cards";
 import { BnBackButton } from "./bn-back-button";
 import { BnPushCard } from "./bn-push-card";
 import { BnRatingModal } from "./bn-rating-modal";
+import { BnOrderChatButton } from "./bn-order-chat";
+import { BnReturnButton } from "./bn-return-modal";
 
 export interface OrderListItem {
     id: string;
@@ -337,6 +339,13 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                                 </a>
                             )}
                         </div>
+                        <div className="mt-3">
+                            <BnOrderChatButton
+                                orderId={order.id}
+                                orderCode={order.code}
+                                otherName={order.shop.name}
+                            />
+                        </div>
                     </Panel>
 
                     {/* Mahsulotlar */}
@@ -480,6 +489,13 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                                     alreadyRated={false}
                                     autoOpen
                                 />
+                            </div>
+                        )}
+
+                        {/* Qaytarish so'rovi (READY yoki COMPLETED bo'lsa) */}
+                        {(order.status === "READY" || order.status === "COMPLETED") && (
+                            <div className="mt-3">
+                                <BnReturnButton orderId={order.id} orderCode={order.code} />
                             </div>
                         )}
                     </Panel>

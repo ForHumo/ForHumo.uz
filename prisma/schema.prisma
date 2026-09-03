@@ -3333,6 +3333,7 @@ model BnOrder {
   shopId        String
   shop          BnShop        @relation(fields: [shopId], references: [id])
   items         BnOrderItem[]
+  messages      BnOrderMessage[]
 
   subtotal      Int
   deliveryFee   Int           @default(0)
@@ -3361,6 +3362,23 @@ model BnOrder {
   @@index([shopId, placedAt])
   @@index([buyerId, placedAt])
   @@index([status, placedAt])
+}
+
+// Xaridor↔sotuvchi buyurtma ichida yozishuv (K2).
+// Bir buyurtma bo'yicha ikki tomon xabar almashadi. Push notification ham yuboriladi.
+// Faqat buyer va shop.profileId (ega) ko'ra oladi/yoza oladi.
+model BnOrderMessage {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     BnOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  senderId  String                                     // UserProfile.id — buyer YOKI shop egasi
+  text      String                                     // max 2000 belgi
+  imageUrl  String?                                    // ixtiyoriy rasm
+  readAt    DateTime?                                  // qarshi tomon o'qigan vaqt
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+  @@index([senderId, createdAt])
 }
 
 model BnOrderItem {
@@ -3510,6 +3528,7 @@ enum BnNotifType {
   ORDER_READY          // Xaridorga: mahsulot tayyor
   ORDER_COMPLETED      // Xaridorga: buyurtma yakunlandi
   ORDER_CANCELLED      // Xaridorga: sotuvchi bekor qildi (yoki aksincha)
+  ORDER_MESSAGE        // Xaridor/sotuvchi buyurtma ichida xabar yubordi
   REVIEW_RECEIVED      // Sotuvchiga: yangi sharh
   PRICE_DROP           // Xaridorga: kuzatilgan mahsulot narxi tushdi
   BAN_APPLIED          // Sotuvchiga: sizga ban qo'yildi

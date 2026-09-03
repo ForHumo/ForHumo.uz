@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     ShieldCheck, Store, MapPin, Phone, Check, X, Loader2, User,
-    Building2, ChevronRight, Users, Ban, ShieldOff, ClipboardList, Radio, LayoutDashboard,
+    Building2, ChevronRight, Users, Ban, ShieldOff, ClipboardList, Radio, LayoutDashboard, ImageIcon,
 } from "lucide-react";
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnAdminList } from "./bn-admin-list";
@@ -15,6 +15,7 @@ import { BnAdminBoycott } from "./bn-admin-boycott";
 import { BnAdminWaitlist } from "./bn-admin-waitlist";
 import { BnAdminBroadcast } from "./bn-admin-broadcast";
 import { BnAdminDashboard } from "./bn-admin-dashboard";
+import { BnAdminAds } from "./bn-admin-ads";
 
 export interface AdminShopRow {
     id: string;
@@ -57,7 +58,7 @@ const TABS = [
 
 export function BnAdminClient({ initial, role }: Props) {
     const router = useRouter();
-    const [section, setSection] = useState<"DASHBOARD" | "SHOPS" | "WAITLIST" | "ADMINS" | "BANS" | "BOYCOTT" | "BROADCAST">("DASHBOARD");
+    const [section, setSection] = useState<"DASHBOARD" | "SHOPS" | "WAITLIST" | "ADMINS" | "BANS" | "BOYCOTT" | "BROADCAST" | "ADS">("DASHBOARD");
     const [tab, setTab] = useState<AdminShopRow["status"]>("PENDING");
     const [rows, setRows] = useState<AdminShopRow[]>(initial);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
@@ -167,6 +168,17 @@ export function BnAdminClient({ initial, role }: Props) {
                 >
                     <ShieldOff className="w-3.5 h-3.5" /> Boykot
                 </button>
+                <button
+                    onClick={() => setSection("ADS")}
+                    className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-[12.5px] font-bold"
+                    style={{
+                        background: section === "ADS" ? BN.gold : BN.surface,
+                        color: section === "ADS" ? BN.onGold : BN.text2,
+                        border: `1px solid ${section === "ADS" ? BN.gold : BN.border}`,
+                    }}
+                >
+                    <ImageIcon className="w-3.5 h-3.5" /> Reklama
+                </button>
                 {role === "OWNER" && (
                     <button
                         onClick={() => setSection("ADMINS")}
@@ -195,7 +207,7 @@ export function BnAdminClient({ initial, role }: Props) {
                 )}
             </div>
 
-            {section === "DASHBOARD" ? <BnAdminDashboard /> : section === "ADMINS" && role === "OWNER" ? <BnAdminList /> : section === "BROADCAST" && role === "OWNER" ? <BnAdminBroadcast /> : section === "BANS" ? <BnAdminBans role={role} /> : section === "BOYCOTT" ? <BnAdminBoycott role={role} /> : section === "WAITLIST" ? <BnAdminWaitlist /> : (
+            {section === "DASHBOARD" ? <BnAdminDashboard /> : section === "ADMINS" && role === "OWNER" ? <BnAdminList /> : section === "BROADCAST" && role === "OWNER" ? <BnAdminBroadcast /> : section === "BANS" ? <BnAdminBans role={role} /> : section === "BOYCOTT" ? <BnAdminBoycott role={role} /> : section === "WAITLIST" ? <BnAdminWaitlist /> : section === "ADS" ? <BnAdminAds /> : (
             <><div className="flex items-center gap-1.5 my-6 overflow-x-auto pb-1">
                 {TABS.map(t => {
                     const count = rows.filter(s => s.status === t.key).length;
