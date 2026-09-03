@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Check, Loader2, Sparkles, Send, ClipboardList } from "lucide-react";
+import { Check, Loader2, Sparkles, Send, ClipboardList, Share2, MessageCircle, Copy, Users } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnBackButton } from "./bn-back-button";
@@ -83,6 +83,9 @@ export function BnSellerWaitlist({ markets = [] }: Props) {
                         {t("sentBack")}
                     </BnLink>
                 </div>
+
+                {/* Share sheet — do'stlarni chaqirish (viral loop) */}
+                <ShareInviteCard />
             </div>
         );
     }
@@ -194,6 +197,86 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
             <label className="block text-[12.5px] font-bold mb-1.5">{label}</label>
             {children}
             {hint && <p className="text-[11.5px] mt-1.5" style={{ color: BN.text3 }}>{hint}</p>}
+        </div>
+    );
+}
+
+// M3 — Do'stlarni chaqirish (waitlist muvaffaqiyatli signup'dan keyin)
+function ShareInviteCard() {
+    const t = useTranslations("bn.waitlist.share");
+    const [copied, setCopied] = useState(false);
+
+    const inviteUrl = "https://bozornarxida.uz/sotuvchi/waitlist?utm_source=invite&utm_medium=share&utm_campaign=seller_waitlist";
+    const messageText = t("shareMessage");
+    const fullText = `${messageText}\n\n${inviteUrl}`;
+
+    async function copyLink() {
+        try {
+            await navigator.clipboard.writeText(inviteUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+        } catch { /* noop */ }
+    }
+
+    function shareVia(channel: "telegram" | "whatsapp") {
+        const encoded = encodeURIComponent(fullText);
+        const url = channel === "telegram"
+            ? `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent(messageText)}`
+            : `https://wa.me/?text=${encoded}`;
+        window.open(url, "_blank", "noopener,noreferrer");
+    }
+
+    return (
+        <div
+            className="mt-4 p-5 rounded-3xl"
+            style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}
+        >
+            <div className="flex items-start gap-3 mb-4">
+                <span
+                    className="w-11 h-11 rounded-2xl grid place-items-center flex-shrink-0"
+                    style={{ background: BN.goldSoft, color: BN.gold }}
+                >
+                    <Users className="w-5 h-5" />
+                </span>
+                <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-black">{t("title")}</p>
+                    <p className="text-[12.5px] mt-0.5" style={{ color: BN.text2 }}>{t("subtitle")}</p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+                <button
+                    onClick={() => shareVia("telegram")}
+                    className="h-12 rounded-xl text-[12.5px] font-black flex flex-col items-center justify-center gap-0.5"
+                    style={{ background: "#229ED9", color: "#fff" }}
+                >
+                    <Share2 className="w-4 h-4" />
+                    Telegram
+                </button>
+                <button
+                    onClick={() => shareVia("whatsapp")}
+                    className="h-12 rounded-xl text-[12.5px] font-black flex flex-col items-center justify-center gap-0.5"
+                    style={{ background: "#25D366", color: "#fff" }}
+                >
+                    <MessageCircle className="w-4 h-4" />
+                    WhatsApp
+                </button>
+                <button
+                    onClick={copyLink}
+                    className="h-12 rounded-xl text-[12.5px] font-black flex flex-col items-center justify-center gap-0.5"
+                    style={{ background: copied ? BN.ok : BN.surfaceUp, color: copied ? "#fff" : BN.text }}
+                >
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copied ? t("copied") : t("copy")}
+                </button>
+            </div>
+
+            <div
+                className="mt-3 p-2.5 rounded-xl text-[11.5px] break-all"
+                style={{ background: BN.surfaceUp, color: BN.text3 }}
+            >
+                {inviteUrl}
+            </div>
         </div>
     );
 }

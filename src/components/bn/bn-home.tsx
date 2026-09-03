@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnHeroSlider } from "./bn-hero-slider";
+import { BnWelcomeTour } from "./bn-welcome-tour";
 import { BnLink, useBnBase } from "./bn-nav";
 import { useShopLocationText } from "./bn-cards";
 import { LiquidGlassNavbar } from "@/components/shared/liquid-glass-navbar";
@@ -20,6 +21,7 @@ import { BnNearbyRow } from "./bn-nearby-row";
 import { BnCheapestToday } from "./bn-cheapest-today";
 import { BnPriceDashboard } from "./bn-price-dashboard";
 import { BnTrendingRow } from "./bn-trending-row";
+import { BnTrendingCategories } from "./bn-trending-categories";
 import { BnReferralStatsChip } from "./bn-referral-stats-chip";
 import { BnNewShopsChip } from "./bn-new-shops-chip";
 import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
@@ -62,6 +64,9 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
 
     return (
         <div className="mx-auto max-w-[1280px] px-4 pt-5 pb-10">
+            {/* ── Birinchi tashrif — welcome tour (M1) ── */}
+            <BnWelcomeTour />
+
             {/* ── Sotuvchi Nexus stories (24 soatlik hikoyalar) ── */}
             <BnShopStories />
 
@@ -93,6 +98,9 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
                     cover={markets[2]?.coverUrl ?? markets[0]?.coverUrl ?? "https://picsum.photos/seed/bn-fallback-2/800/800"}
                 />
             </section>
+
+            {/* ── Trend kategoriyalar (7-kun VIEW event asosida top-8) — M2 ── */}
+            <BnTrendingCategories />
 
             {/* ── Yaqin do'konlar (geolocation) — permission bersa ko'rinadi ── */}
             <BnNearbyRow />

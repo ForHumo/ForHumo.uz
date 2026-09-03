@@ -12,6 +12,7 @@ import { BnBuyBox } from "./bn-buy-box";
 import { BnOneClickBuy } from "./bn-one-click-buy";
 import { BnMobileActions } from "./bn-mobile-actions";
 import { BnInspectHoldModal } from "./bn-inspect-modal";
+import { BnProductReferralCta } from "./bn-product-referral-cta";
 import {
     Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
     ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2, BellRing, MessageCircle,
@@ -669,6 +670,9 @@ export function BnProductDetail({
 
             {/* Sharhlar */}
             <BnReviews kind="product" slug={p.slug} />
+
+            {/* Referral viral loop CTA (M4) */}
+            <BnProductReferralCta productSlug={p.slug} productTitle={p.title} />
 
             {/* O'xshash mahsulotlar */}
             {similar.length > 0 && (

@@ -517,6 +517,9 @@
       "trustedShops": "Trusted shops",
       "trustedShopsSub": "AI-curated TOP-10 by rating and buyer activity",
       "seeAll": "See all",
+      "trendingCatsTitle": "Trending categories",
+      "viewAll": "View",
+      "nItems": "{n} items",
       "allBtn": "All",
       "cheap": "Cheap",
       "cheapTitle": "Cheaper than market price",
@@ -1110,6 +1113,33 @@
       "errNoOrder": "Order not found",
       "errImage": "Image upload error"
     },
+    "productRef": {
+      "anonTitle": "Share with friends — earn 10 000 sum",
+      "anonSubtitle": "Sign in to get your link. Every invited buyer who makes their first order earns you 10 000 sum and them a 5 000 sum bonus.",
+      "anonBtn": "Sign in (Google)",
+      "authTitle": "Share this product with a friend",
+      "authSubtitle": "They make their first order — you get 10 000 sum.",
+      "shareMessage": "Bozor Narxida: {product}. I have a referral — you get a bonus too.",
+      "earnedShort": "+{n}",
+      "copy": "Copy",
+      "copied": "Copied"
+    },
+    "tour": {
+      "skip": "Skip",
+      "back": "Back",
+      "nextBtn": "Next",
+      "startBtn": "Let's start",
+      "browseBtn": "Browse products",
+      "s1Title": "Buy at bazaar prices",
+      "s1Body": "See real prices from Tashkent bazaars online. Compare without leaving home — find the best deal.",
+      "s1Highlight": "Save up to 50%",
+      "s2Title": "Inspect before you buy — 24 hours",
+      "s2Body": "Come to the bazaar and see the product yourself. Don't like it — pay nothing. Item is held for 24 hours.",
+      "s2Highlight": "Free reservation — zero risk",
+      "s3Title": "Delivery or pickup",
+      "s3Body": "Courier across Tashkent, post to regions. Or pick up from the shop yourself — cheaper.",
+      "s3Highlight": "Courier from 20 000 sum"
+    },
     "inspect": {
       "yourCode": "Your code",
       "timeLeft": "Time left",
@@ -1279,6 +1309,13 @@
       "sentTitle": "Thanks! You're on the list",
       "sentText": "Jalol (BN project lead) will call you soon. Once the LLC opens, the seller cabinet will activate.",
       "sentBack": "Back to home",
+      "share": {
+        "title": "Invite your friends",
+        "subtitle": "Every new seller makes BN richer and more affordable.",
+        "shareMessage": "I signed up as a seller on Bozor Narxida. Join too — reserve your place before the LLC opens.",
+        "copy": "Copy",
+        "copied": "Copied"
+      },
       "errInvalidName": "Name must be at least 2 characters",
       "errInvalidPhone": "Phone must be +998 followed by 9 digits",
       "errTooMany": "Too many requests from this number. Try again tomorrow.",

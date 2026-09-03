@@ -517,6 +517,9 @@
       "trustedShops": "Ishonchli do'konlar",
       "trustedShopsSub": "Reyting va xaridor faolligiga qarab AI tuzgan TOP 10",
       "seeAll": "Barchasini ko'rish",
+      "trendingCatsTitle": "Tanlanayotgan turkumlar",
+      "viewAll": "Ko'rish",
+      "nItems": "{n} ta",
       "allBtn": "Barchasi",
       "cheap": "Arzon",
       "cheapTitle": "Bozor narxidan arzon",
@@ -1110,6 +1113,33 @@
       "errNoOrder": "Buyurtma topilmadi",
       "errImage": "Rasm yuklashda xato"
     },
+    "productRef": {
+      "anonTitle": "Do'stlaringizga ulash — 10 000 so'm oling",
+      "anonSubtitle": "Kirsangiz o'z havolangiz bo'ladi. Har chaqirilgan xaridor birinchi buyurtma qilsa — sizga 10 000, unga 5 000 so'm bonus.",
+      "anonBtn": "Kirish (Google)",
+      "authTitle": "Do'stingizga bu mahsulotni ulashing",
+      "authSubtitle": "U birinchi buyurtma bersa sizga 10 000 so'm keladi.",
+      "shareMessage": "Bozor Narxida: {product}. Menda referral — sen ham bonus olasan.",
+      "earnedShort": "+{n}",
+      "copy": "Nusxa",
+      "copied": "Nusxalandi"
+    },
+    "tour": {
+      "skip": "O'tkazib yuborish",
+      "back": "Ortga",
+      "nextBtn": "Keyingi",
+      "startBtn": "Boshlaymiz",
+      "browseBtn": "Mahsulotlarni ko'rish",
+      "s1Title": "Bozor narxida sotib oling",
+      "s1Body": "Toshkent bozorlaridagi haqiqiy do'konlarning narxlarini onlayn ko'ring. Do'konga bormasdan taqqoslang, eng arzon variantni toping.",
+      "s1Highlight": "50%'gacha tejash mumkin",
+      "s2Title": "Ko'rib sotib oling — 24 soat",
+      "s2Body": "Mahsulotni bozorga borib o'z ko'zingiz bilan ko'rasiz. Yoqmasa — hech narsa to'lamaysiz. 24 soat ushlanib turadi.",
+      "s2Highlight": "Bepul rezerv — riziq yo'q",
+      "s3Title": "Yetkazish yoki olib ketish",
+      "s3Body": "Toshkent bo'ylab kuryer, viloyatlarga pochta. Yoki o'zingiz do'konga borib olib keting — narxi arzonroq.",
+      "s3Highlight": "Kuryer 20 000 so'mdan"
+    },
     "inspect": {
       "yourCode": "Sizning kodingiz",
       "timeLeft": "Qolgan vaqt",
@@ -1279,6 +1309,13 @@
       "sentTitle": "Rahmat! Ro'yxatga yozildingiz",
       "sentText": "Jalol (BN loyiha rahbari) yaqinda telefoningizga qo'ng'iroq qiladi. MChJ ochilishi bilan sotuvchi kabineti faollashadi.",
       "sentBack": "Bosh sahifaga",
+      "share": {
+        "title": "Do'stlaringizni ham chaqiring",
+        "subtitle": "Har bir yangi sotuvchi bilan BN yanada boy va arzon bo'ladi.",
+        "shareMessage": "Bozor Narxida sotuvchi bo'lish uchun ro'yxatga yozildim. Sen ham qo'shil — MChJsiz oldindan navbat oling.",
+        "copy": "Nusxa",
+        "copied": "Nusxalandi"
+      },
       "errInvalidName": "Ism/nom kamida 2 belgi bo'lishi kerak",
       "errInvalidPhone": "Telefon +998 bilan boshlab 9 ta raqam bilan yakunlansin",
       "errTooMany": "Bu telefondan ko'p ariza yuborildi. Ertaga qayta urinib ko'ring.",
