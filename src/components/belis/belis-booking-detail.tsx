@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, Loader2, Calendar, MapPin, Phone, User, X, CheckCircle2, AlertTriangle, Package, Truck } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
 import { BelisLink } from "./belis-nav";
+import { BelisLocationMap } from "./belis-location-map";
 
 interface ItemBooking {
     qty: number;
@@ -255,6 +256,11 @@ export function BelisBookingDetail({ code }: { code: string }) {
                             <p className="text-[11.5px] font-black uppercase mb-1" style={{ color: BELIS.text3 }}>Izoh</p>
                             <p className="text-[13px]" style={{ color: BELIS.text }}>{data.note}</p>
                         </div>
+                    )}
+
+                    {/* Do'kon manzili — pickup yoki hatto yandex uchun ham foydali */}
+                    {data.fulfillType === "PICKUP" && (
+                        <BelisLocationMap title="Olib ketish manzili" compact />
                     )}
                 </div>
 

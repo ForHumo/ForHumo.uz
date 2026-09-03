@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT, BELIS_SOCIAL, BELIS_LOCATION } from "@/lib/belis-theme";
 import { BelisLink } from "./belis-nav";
+import { BelisLocationMap } from "./belis-location-map";
 
 interface Komplekt {
     id: string;
@@ -155,6 +156,12 @@ export function BelisHome() {
                         </Info>
                     </div>
                 </div>
+            </section>
+
+            {/* Manzil — Google Maps embed */}
+            <section>
+                <h2 className="text-[20px] font-black mb-4" style={{ color: BELIS.text }}>Bizni toping</h2>
+                <BelisLocationMap />
             </section>
 
             {/* Aloqa */}

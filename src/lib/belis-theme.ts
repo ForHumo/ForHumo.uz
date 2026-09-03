@@ -32,14 +32,22 @@ export const BELIS = {
 export const BELIS_BG_GRADIENT = "linear-gradient(135deg, #E7EBD7 0%, #C7CDB2 100%)";
 export const BELIS_GOLD_GRADIENT = "linear-gradient(135deg, #EBD79A 0%, #D4AF37 50%, #B8951F 100%)";
 
-// Belis manzili — Belis do'koni Toshkent'da
+// Belis manzili — Belis do'koni Toshkent'da (Google Maps'da ro'yxatga olingan)
 export const BELIS_LOCATION = {
-    lat: 41.196833,
-    lng: 69.155139,
+    lat: 41.196821906796046,
+    lng: 69.15528163852059,
     address: "Toshkent",
-    // Google Maps'da yozish uchun DMS format ham
     dms: `41°11'48.6"N 69°09'18.5"E`,
+    // Google Maps ulashish havolasi (mijoz ochib route ola oladi)
+    mapsShareUrl: "https://maps.app.goo.gl/AbHUBa991dxo2WVeA",
+    // Google Maps embed iframe src — Belis Place ID bilan bog'langan
+    mapsEmbedSrc: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1780.5688828740685!2d69.15528163852059!3d41.196821906796046!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae6375278d72f7%3A0x2f435b619d127120!2sBelis!5e1!3m2!1suz!2s!4v1788453735060!5m2!1suz!2s",
 } as const;
+
+/** Google Maps yo'nalish (routing) URL — istagan lokatsiyadan Belisga. */
+export function belisDirectionsUrl(): string {
+    return `https://www.google.com/maps/dir/?api=1&destination=${BELIS_LOCATION.lat},${BELIS_LOCATION.lng}&destination_place_id=ChIJ93KNJ3VjrjgRIHESnWFbQy8`;
+}
 
 // Belis social havolalari
 export const BELIS_SOCIAL = {
