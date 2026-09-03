@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useSession, signIn } from "next-auth/react";
 import { useState, useEffect } from "react";
 import {
-    Home, Grid3x3, Sparkles, Heart, ShoppingBag, Menu, X,
+    Home, Grid3x3, Heart, ShoppingBag, Menu, X,
     MapPin, Package, Globe, Sun, Bell, User, ChevronDown,
 } from "lucide-react";
 import { BELIS, BELIS_LOCATION } from "@/lib/belis-theme";
@@ -19,13 +19,20 @@ export function BelisLink({ href, className, style, children, onClick, ...rest }
     return <Link href={href} className={className} style={style} onClick={onClick} {...rest}>{children}</Link>;
 }
 
-interface NavItem { href: string; labelKey: string; icon: React.ElementType }
+interface NavItem {
+    href: string;
+    labelKey: string;
+    icon?: React.ElementType;
+    /** Ikonka o'rniga rasm (Humo AI logotipi) */
+    imageSrc?: string;
+}
 
 const NAV_ITEMS: NavItem[] = [
     { href: "/belis",             labelKey: "home",        icon: Home },
     { href: "/belis/katalog",     labelKey: "catalog",     icon: Grid3x3 },
-    { href: "/belis/kabinet",     labelKey: "account",     icon: Package },
-    { href: "/belis/haqida",      labelKey: "about",       icon: Sparkles },
+    { href: "/belis/ai",          labelKey: "aiAssistant", imageSrc: "/logos/humo-ai-black.png" },
+    { href: "/belis/saqlangan",   labelKey: "saved",       icon: Heart },
+    { href: "/belis/savat",       labelKey: "cart",        icon: ShoppingBag },
 ];
 
 export function BelisHeader() {
@@ -224,7 +231,13 @@ export function BelisNavbar() {
                                 color: active ? BELIS.gold : BELIS.text2,
                                 fontWeight: active ? 700 : 500,
                             }}>
-                            <Icon className="w-4 h-4" strokeWidth={active ? 2 : 1.5} />
+                            {it.imageSrc ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={it.imageSrc} alt="" className="h-4 w-auto object-contain"
+                                    style={{ opacity: active ? 1 : 0.75 }} />
+                            ) : Icon ? (
+                                <Icon className="w-4 h-4" strokeWidth={active ? 2 : 1.5} />
+                            ) : null}
                             {t(it.labelKey)}
                             {active && (
                                 <span className="absolute bottom-0 left-2 right-2 h-0.5"
