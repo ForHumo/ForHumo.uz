@@ -7,6 +7,7 @@ import { ChevronLeft, Loader2, Calendar, MapPin, Phone, User, X, CheckCircle2, A
 import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
 import { BelisLink } from "./belis-nav";
 import { BelisLocationMap } from "./belis-location-map";
+import { BelisChatButton } from "./belis-booking-chat";
 
 interface ItemBooking {
     qty: number;
@@ -120,10 +121,13 @@ export function BelisBookingDetail({ code }: { code: string }) {
                     <h1 className="text-[24px] font-black tracking-tight" style={{ color: BELIS.text }}>Buyurtma #{data.code}</h1>
                     <p className="text-[12px] mt-1" style={{ color: BELIS.text3 }}>Yaratilgan: {fmtDate(data.createdAt)}</p>
                 </div>
-                <span className="px-3 py-1.5 rounded-lg text-[13px] font-black"
-                    style={{ background: `${meta.color}1F`, color: meta.color }}>
-                    {meta.label}
-                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                    {!isCancelled && <BelisChatButton code={data.code} otherName="Belis (@sevinch)" />}
+                    <span className="px-3 py-1.5 rounded-lg text-[13px] font-black"
+                        style={{ background: `${meta.color}1F`, color: meta.color }}>
+                        {meta.label}
+                    </span>
+                </div>
             </div>
 
             {/* Stepper */}

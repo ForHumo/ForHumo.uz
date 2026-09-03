@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
 import { BelisLink } from "./belis-nav";
+import { BelisChatButton } from "./belis-booking-chat";
 
 interface Booking {
     id: string;
@@ -103,6 +104,11 @@ export function BelisAdminPage() {
                     <ShieldCheck className="w-5 h-5" />
                 </span>
                 <h1 className="text-[24px] font-black flex-1" style={{ color: BELIS.text }}>Belis admin</h1>
+                <BelisLink href="/belis/admin/kalendar"
+                    className="h-10 px-4 rounded-xl text-[13px] font-black flex items-center gap-1.5"
+                    style={{ background: BELIS.surface, color: BELIS.text, border: `1px solid ${BELIS.border}` }}>
+                    <Calendar className="w-4 h-4" /> Kalendar
+                </BelisLink>
                 <BelisLink href="/belis/admin/katalog"
                     className="h-10 px-4 rounded-xl text-[13px] font-black flex items-center gap-1.5"
                     style={{ background: BELIS.surface, color: BELIS.text, border: `1px solid ${BELIS.border}` }}>
@@ -236,11 +242,14 @@ function AdminCard({ b, busy, onConfirm, onPickup, onReturn }: {
                         <RotateCw className="w-3.5 h-3.5" /> Qaytdi
                     </button>
                 )}
-                <a href={`tel:${b.buyerPhone.replace(/\s/g, "")}`}
-                    className="ml-auto h-9 px-3 rounded-lg text-[12px] font-black flex items-center gap-1.5"
-                    style={{ background: BELIS.bg, color: BELIS.text }}>
-                    <Phone className="w-3.5 h-3.5" />
-                </a>
+                <div className="ml-auto flex items-center gap-2">
+                    <BelisChatButton code={b.code} otherName={b.buyerName} />
+                    <a href={`tel:${b.buyerPhone.replace(/\s/g, "")}`}
+                        className="h-9 px-3 rounded-lg text-[12px] font-black flex items-center gap-1.5"
+                        style={{ background: BELIS.bg, color: BELIS.text }}>
+                        <Phone className="w-3.5 h-3.5" />
+                    </a>
+                </div>
             </div>
         </div>
     );

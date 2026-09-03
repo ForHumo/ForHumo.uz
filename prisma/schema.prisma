@@ -3976,6 +3976,22 @@ enum ReservedCategory {
 // Eski SOTUV modeli (BelisProduct/BelisOrder/BelisCategory/BelisCollection/BelisCartItem/BelisFavorite/BelisReview + enumlar) 2026-09-03 da o'chirildi (DB 0 row, ijara modeliga o'tildi).
 // ═══════════════════════════════════════════════════════════════════════════
 
+// Belis buyurtma ichida yozishuv (mijoz ↔ @sevinch).
+// BN OrderMessage pattern — polling asosida (5s), push notification qo'shimcha.
+model BelisBookingMessage {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   BelisRentalBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  senderId  String                                     // UserProfile.id (mijoz yoki admin)
+  text      String                                     // max 2000
+  imageUrl  String?                                    // Vercel Blob
+  readAt    DateTime?                                  // qarshi tomon o'qigan
+  createdAt DateTime @default(now())
+
+  @@index([bookingId, createdAt])
+  @@index([senderId, createdAt])
+}
+
 model BelisTelegramUser {
   tgId         String   @id
   chatId       String
@@ -4103,6 +4119,7 @@ model BelisRentalBooking {
   komplektId        String?
   komplekt          BelisKomplekt?  @relation(fields: [komplektId], references: [id], onDelete: SetNull)
   itemBookings      BelisItemBooking[]
+  messages          BelisBookingMessage[]
 
   // Moliya (butun so'mda, UZS)
   rentDailyUzs      Int                                  // kelishilgan kunlik ijara
