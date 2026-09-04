@@ -66,6 +66,19 @@ export function AiChatPage() {
     const [ttsEnabled, setTtsEnabled] = useState(false);
     const [ttsSpeakingId, setTtsSpeakingId] = useState<string | null>(null);
     const [shareCopied, setShareCopied] = useState<string | null>(null);
+    // Til tanlash
+    const [aiLang, setAiLang] = useState<"uz" | "ru" | "en">("uz");
+
+    useEffect(() => {
+        try {
+            const l = localStorage.getItem("ai-lang");
+            if (l === "uz" || l === "ru" || l === "en") setAiLang(l);
+        } catch { /* ignore */ }
+    }, []);
+    function switchLang(l: "uz" | "ru" | "en") {
+        setAiLang(l);
+        try { localStorage.setItem("ai-lang", l); } catch { /* ignore */ }
+    }
     const bottomRef = useRef<HTMLDivElement>(null);
 
     // TTS toggle — LocalStorage'da saqlanadi
@@ -246,6 +259,7 @@ export function AiChatPage() {
                 conversationId: activeId ?? undefined,
                 attachmentUrl: att?.url,
                 attachmentType: att?.type,
+                language: aiLang,
             }),
         });
         const j = await r.json();
@@ -285,6 +299,7 @@ export function AiChatPage() {
                 body: JSON.stringify({
                     message: text, conversationId: activeId ?? undefined,
                     attachmentUrl: att?.url, attachmentType: att?.type,
+                    language: aiLang,
                 }),
             });
             if (!r.ok || !r.body) throw new Error("stream_failed");
@@ -513,6 +528,20 @@ export function AiChatPage() {
                             {activeId ? (convs.find(c => c.id === activeId)?.title ?? "Suhbat") : "Yangi chat"}
                         </p>
                     </div>
+                    {/* Til tanlash */}
+                    <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: "var(--card, rgba(0,0,0,0.04))" }}>
+                        {(["uz", "ru", "en"] as const).map(l => (
+                            <button key={l} onClick={() => switchLang(l)}
+                                className="px-2 h-7 rounded-md text-[10px] font-black transition-colors"
+                                style={{
+                                    background: aiLang === l ? T.gradient : "transparent",
+                                    color: aiLang === l ? T.onPrimary : "var(--muted-foreground)",
+                                }}>
+                                {l.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+
                     {/* TTS toggle */}
                     <button onClick={toggleTts}
                         title={ttsEnabled ? "Ovoz o'chiq" : "Ovoz yoqish"}

@@ -17,6 +17,7 @@ import { buildAiSystemPrompt } from "@/lib/ai-context-builder";
 import { extractKnowledgeFromMessage } from "@/lib/user-knowledge";
 import { belisRate } from "@/lib/belis-rate";
 import { aiJSON } from "@/lib/ai";
+import { embedAiMessage, findRelevantOldMessages } from "@/lib/ai-memory-search";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -49,6 +50,7 @@ export async function POST(req: Request) {
     const moduleOrigin = typeof body?.moduleOrigin === "string" ? body.moduleOrigin.slice(0, 20) : undefined;
     const attachmentUrl = typeof body?.attachmentUrl === "string" ? body.attachmentUrl.slice(0, 500) : null;
     const attachmentType = typeof body?.attachmentType === "string" ? body.attachmentType.slice(0, 20) : null;
+    const lang = ["uz", "ru", "en"].includes(String(body?.language)) ? String(body.language) as "uz" | "ru" | "en" : "uz";
 
     // Suhbatni topish/yaratish
     let conversationId: string | undefined = typeof body?.conversationId === "string" ? body.conversationId : undefined;
@@ -87,10 +89,22 @@ export async function POST(req: Request) {
         select: { role: true, body: true },
     });
     const history = priorMsgs.reverse();
-    const { system } = await buildAiSystemPrompt({
+    const { system: baseSystem } = await buildAiSystemPrompt({
         profileId: me.id, moduleOrigin,
         includeKnowledge: true, includeSignals: true,
+        language: lang,
     });
+
+    // Semantic memory — foydalanuvchining qadimgi eng mos xabarlari (RAG-lite)
+    let memoryContext = "";
+    try {
+        const relevant = await findRelevantOldMessages(me.id, userMsg, 3, [conversation.id]);
+        if (relevant.length > 0) {
+            memoryContext = `\n\nSIZNING QADIMGI SUHBATLARINGIZDAN MOS QISM:\n` +
+                relevant.map((r, i) => `${i + 1}. ${r.body.slice(0, 200)}`).join("\n");
+        }
+    } catch { /* fail-safe */ }
+    const system = baseSystem + memoryContext;
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -201,14 +215,18 @@ export async function POST(req: Request) {
                 });
                 controller.close();
 
-                // Fon rejim — knowledge extraction + usage log
+                // Fon rejim — knowledge extraction + embedding + usage log
                 after(async () => {
-                    await extractKnowledgeFromMessage({
-                        profileId: me.id,
-                        userMessage: userMsg,
-                        aiReply: fullReply,
-                        conversationContext: history.map(h => `${h.role}: ${h.body}`).join("\n"),
-                    });
+                    await Promise.all([
+                        extractKnowledgeFromMessage({
+                            profileId: me.id,
+                            userMessage: userMsg,
+                            aiReply: fullReply,
+                            conversationContext: history.map(h => `${h.role}: ${h.body}`).join("\n"),
+                        }),
+                        embedAiMessage(userDbMsg.id, userMsg),
+                        embedAiMessage(aiDbMsg.id, fullReply),
+                    ]);
                     await prisma.aiUsage.create({
                         data: { profileId: me.id, kind: `converse-stream:${moduleOrigin || "general"}` },
                     });

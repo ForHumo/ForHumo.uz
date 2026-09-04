@@ -1001,6 +1001,8 @@ model AiMessage {
   tokensOut      Int?
   createdAt      DateTime       @default(now())
 
+  embedding      Unsupported("vector(768)")?               // Gemini embedding — semantic search uchun
+
   @@index([conversationId, createdAt])
 }
 

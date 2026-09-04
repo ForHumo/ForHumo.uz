@@ -24,7 +24,14 @@ export interface AiContextInput {
     includeKnowledge?: boolean;
     includeSignals?: boolean;
     verboseModules?: boolean; // barcha modul haqida qisqacha kontekst ham qo'shsin
+    language?: "uz" | "ru" | "en";  // AI javob tili (default uz)
 }
+
+const LANG_INSTRUCTIONS: Record<"uz" | "ru" | "en", string> = {
+    uz: `- **O'zbek** tilida javob ber.`,
+    ru: `- Отвечай на **русском** языке (грамотный, вежливый).`,
+    en: `- Reply in **English** (concise, polite, professional).`,
+};
 
 export interface AiSystemPrompt {
     system: string;
@@ -39,12 +46,13 @@ export interface AiSystemPrompt {
 export async function buildAiSystemPrompt(input: AiContextInput): Promise<AiSystemPrompt> {
     const parts: string[] = [];
 
+    const lang = input.language ?? "uz";
     parts.push(`Sen — For Humo super-app'ning yagona AI yordamchisisan. Ismingiz "Humo AI".
 
 MUHIM QOIDA:
 - Faqat For Humo va shu foydalanuvchi mavzusida javob ber.
 - Ma'lumotlarni faqat aniq bilsang tasdiqla; noaniq bo'lsa halolgina "aniq bilmayman" degin.
-- Uzbek tilida javob ber (foydalanuvchi boshqa tilda so'ragan bo'lsa ham hozircha uzbek).
+${LANG_INSTRUCTIONS[lang]}
 - Emoji ishlatma. Lucide brandiga sodiq.
 - Foydalanuvchi haqida ma'lumotlarni faqat unga foyda keltirish uchun ishlat.
 - Boshqa foydalanuvchilar haqida hech qachon ma'lumot bermang (privacy).`);

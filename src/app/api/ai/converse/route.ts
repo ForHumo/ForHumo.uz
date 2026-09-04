@@ -58,6 +58,7 @@ export async function POST(req: Request) {
     const attachmentUrl = typeof body?.attachmentUrl === "string" ? body.attachmentUrl.slice(0, 500) : null;
     const attachmentType = typeof body?.attachmentType === "string" ? body.attachmentType.slice(0, 20) : null;
     const isImage = attachmentType === "image" && !!attachmentUrl;
+    const lang = ["uz", "ru", "en"].includes(String(body?.language)) ? String(body.language) as "uz" | "ru" | "en" : "uz";
     const extractKB = body?.extractKnowledge !== false;
     let conversationId: string | undefined = typeof body?.conversationId === "string" ? body.conversationId : undefined;
 
@@ -111,6 +112,7 @@ export async function POST(req: Request) {
         moduleOrigin,
         includeKnowledge: true,
         includeSignals: true,
+        language: lang,
     });
 
     // 4. Gemini chaqiruv — rasm bo'lsa vision, yo'q bo'lsa oddiy chat
