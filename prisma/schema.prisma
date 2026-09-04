@@ -3774,6 +3774,26 @@ model BnBroadcast {
   @@index([ownerId, createdAt])
 }
 
+// ── BN Sotuvchi AI tavsiyalar (kunlik kesh) ──────────────────────────────────
+// Har sotuvchi (shop egasi) uchun kunlik AI insights. Kunlik cron generatsiya qiladi,
+// kabinet UI qayta yuklamasidan ko'rsatiladi. Bir kunda bir shop uchun bir yozuv.
+model BnSellerInsight {
+  id          String   @id @default(cuid())
+  shopId      String
+  profileId   String                                  // shop egasi (qo'shimcha filtr uchun)
+  // Har biri: { type: "RESTOCK"|"DISCOUNT"|"PRICE"|"NEW_CATEGORY"|"ROTATE"|..., title, body, productId?, action?, actionUrl? }
+  items       Json     @default("[]")                 // 3-5 ta tavsiya
+  aiSummary   String?                                 // qisqa umumiy holat (1-2 gap)
+  dataHash    String?                                 // kirish ma'lumot xesh (dublikat oldini olish)
+  pushed      Boolean  @default(false)                // Nexus DM push yuborilganmi
+  seenAt      DateTime?                               // sotuvchi ochib ko'rgan sana
+  createdAt   DateTime @default(now())
+
+  @@index([shopId, createdAt])
+  @@index([profileId, createdAt])
+  @@index([pushed, createdAt])
+}
+
 // ── Nexus Pleylist (foydalanuvchi tomonidan tuzilgan trek to'plami) ────────
 model NexusPlaylist {
   id          String                @id @default(cuid())

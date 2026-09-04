@@ -31,6 +31,7 @@ import { BnReferralLeaderboard } from "./bn-referral-leaderboard";
 import { BnAchievementsCard } from "./bn-achievements-card";
 import { BnPremiumUpgrade } from "./bn-premium-upgrade";
 import { BnMyAdsCard } from "./bn-my-ads-card";
+import { BnSellerInsightsCard } from "./bn-seller-insights-card";
 import { BnBulkImportModal } from "./bn-bulk-import-modal";
 import { BnFeatureButton } from "./bn-feature-modal";
 import { BnOrderChatButton } from "./bn-order-chat";
@@ -399,6 +400,8 @@ function HomeTab({ shop, stats, orders }: { shop: CabinetShop; stats: CabinetSta
                 <Stat icon={<Package className="w-[18px] h-[18px]" />} label={t("statProducts")} value={stats.productsActive.toString()} hint={t("statActive")} />
                 <Stat icon={<Eye className="w-[18px] h-[18px]" />} label={t("statRating")} value={shop.rating > 0 ? shop.rating.toFixed(1) : "—"} hint={t("statNRatings", { n: shop.ratingCount })} />
             </div>
+
+            <BnSellerInsightsCard />
 
             {shop.verifiedProgress && <VerifiedProgressCard progress={shop.verifiedProgress} />}
 
