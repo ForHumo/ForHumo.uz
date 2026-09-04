@@ -97,7 +97,7 @@ export async function GET() {
         });
         await belisPush(b.buyerId, {
             title: "Qaytish sanasi o'tdi",
-            body: `#${b.code} · Har kun uchun 30% shtraf hisoblanadi. Iltimos qaytaring.`,
+            body: `#${b.code} · Har kun uchun 30% jarima hisoblanadi. Iltimos qaytaring.`,
             link: `/buyurtma/${b.code}`,
             tag: `belis:late:${b.code}`,
         });

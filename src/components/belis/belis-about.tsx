@@ -34,11 +34,11 @@ const FAQ = [
     },
     {
         q: "Sarpo buzilib qolsa yoki qaytmasa?",
-        a: "Har quti uchun zaklat qoldirilgan. Buzilgan/singan qismning narxi zaklatdan ushlab qolinadi. Qaytmasa to'liq zaklat va shtraf undiriladi.",
+        a: "Har quti uchun zaklat qoldirilgan. Buzilgan/singan qismning narxi zaklatdan ushlab qolinadi. Qaytmasa to'liq zaklat va jarima undiriladi.",
     },
     {
         q: "Kechiktirilsa nima bo'ladi?",
-        a: "Har kun kechikish uchun ijara pulining 30% shtraf hisoblanadi. 3 kundan ko'p kechiksangiz Belis bilan bog'laning.",
+        a: "Har kun kechikish uchun ijara pulining 30% jarima hisoblanadi. 3 kundan ko'p kechiksangiz Belis bilan bog'laning.",
     },
 ];
 
@@ -46,7 +46,7 @@ const RULES = [
     { icon: <CalendarClock className="w-5 h-5" />, title: "1 kun oldin, 3 kun ichida", text: "Sarpo marosim kunidan 1 kun oldin olib ketiladi va marosim tugagach 3 kun ichida qaytariladi." },
     { icon: <Shield className="w-5 h-5" />, title: "Pasport nusxa + shartnoma", text: "Asl pasport ushlab qolinmaydi. Faqat rasm nusxasi va shartnoma imzo qoldiriladi." },
     { icon: <Truck className="w-5 h-5" />, title: "Yandex mijoz to'lovi", text: "Kuryerni mijoz o'zi chaqiradi va o'zi to'laydi. Ijara summasi bilan qo'shilmaydi." },
-    { icon: <AlertTriangle className="w-5 h-5" />, title: "Zaklat va shtraf", text: "Har komplektga zaklat qoldiriladi. Butun qaytsa qaytariladi, buzilsa/kam qaytsa shtraf undiriladi." },
+    { icon: <AlertTriangle className="w-5 h-5" />, title: "Zaklat va jarima", text: "Har komplektga zaklat qoldiriladi. Butun qaytsa qaytariladi, buzilsa/kam qaytsa jarima undiriladi." },
 ];
 
 export function BelisAbout() {

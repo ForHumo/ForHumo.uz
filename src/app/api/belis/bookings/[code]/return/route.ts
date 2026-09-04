@@ -4,7 +4,7 @@
 //     ok: boolean,             // true = butun qaytdi (RETURNED_OK), false = zarar (RETURNED_DAMAGE)
 //     damageReport?: string,
 //     damageImages?: string[],
-//     fineUzs?: number,        // shtraf (kechikish + zarar)
+//     fineUzs?: number,        // jarima (kechikish + zarar)
 //     refundedUzs?: number,    // zaklatdan qaytarilgan (agar bo'lsa)
 //   }
 // Faqat PICKED_UP/LATE → RETURNED_OK/RETURNED_DAMAGE.
@@ -41,11 +41,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
     }
 
     const now = new Date();
-    // Kechikish shtraf avto-hisoblanadi
+    // Kechikish jarima avto-hisoblanadi
     const lateFine = calcLateFine(b.returnDate, now, b.rentDailyUzs);
     const totalFine = ok ? lateFine : (lateFine + manualFine);
 
-    // Zaklat qaytarish: to'langan zaklatdan shtraf ayirilgan qism
+    // Zaklat qaytarish: to'langan zaklatdan jarima ayirilgan qism
     const refunded = Math.max(0, b.paidDeposit - totalFine);
 
     await prisma.belisRentalBooking.update({
@@ -65,9 +65,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
         const title = ok ? "Zaklat qaytariladi" : "Qaytish qabul qilindi (zarar)";
         const body = ok
             ? (totalFine > 0
-                ? `#${code} · Kechikish shtraf: ${totalFine.toLocaleString()} so'm · Qaytariladi: ${refunded.toLocaleString()} so'm`
+                ? `#${code} · Kechikish jarima: ${totalFine.toLocaleString()} so'm · Qaytariladi: ${refunded.toLocaleString()} so'm`
                 : `#${code} · Rahmat! Zaklat to'liq qaytariladi: ${refunded.toLocaleString()} so'm`)
-            : `#${code} · Shtraf: ${totalFine.toLocaleString()} so'm · Qaytariladi: ${refunded.toLocaleString()} so'm`;
+            : `#${code} · Jarima: ${totalFine.toLocaleString()} so'm · Qaytariladi: ${refunded.toLocaleString()} so'm`;
         await belisPush(b.buyerId, {
             title,
             body,

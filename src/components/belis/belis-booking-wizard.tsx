@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
 import { BelisContractModal } from "./belis-contract-modal";
+import { BelisDatePicker } from "./belis-date-picker";
 
 type Step = 1 | 2 | 3 | 4;
 type Fulfill = "PICKUP" | "YANDEX_CUSTOMER";
@@ -276,13 +277,11 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                             <p className="text-[12.5px] mb-3" style={{ color: BELIS.text2 }}>
                                 Qaysi kuni marosim bo&apos;ladi? Sarpo bir kun oldin olib ketiladi va 3 kun ichida qaytariladi.
                             </p>
-                            <input
-                                type="date"
+                            <BelisDatePicker
                                 value={eventDate}
-                                onChange={e => setEventDate(e.target.value)}
+                                onChange={setEventDate}
                                 min={todayISO()}
-                                className="w-full h-12 rounded-xl px-4 text-[15px] font-bold focus:outline-none"
-                                style={{ background: BELIS.bg, color: BELIS.text, border: `1px solid ${BELIS.border}` }}
+                                placeholder="Marosim sanasini tanlang"
                             />
 
                             {availLoading && (
@@ -461,7 +460,7 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                                     className="mt-1 w-4 h-4" style={{ accentColor: BELIS.gold }} />
                                 <span className="text-[12px]" style={{ color: BELIS.text }}>
                                     Sarpo ijara shartnomasi bilan tanishib chiqdim va uning barcha shartlariga rozimen.
-                                    Sarpo qutilarini butun holida saqlab qaytarishga majburiman, buzilsa/kam qaytsa shtraf ijara pulidan qimmatga tushishini tushunaman.
+                                    Sarpo qutilarini butun holida saqlab qaytarishga majburiman, buzilsa/kam qaytsa jarima ijara pulidan qimmatga tushishini tushunaman.
                                 </span>
                             </label>
                         </div>

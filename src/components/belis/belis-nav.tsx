@@ -223,14 +223,20 @@ function BelisShopMapModal({ onClose }: { onClose: () => void }) {
 export function BelisNavbar() {
     const t = useTranslations("belis.nav");
     const path = useBelisPath();
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
     const isActive = (href: string) => (href === "/" ? path === "/" : path === href || path.startsWith(href + "/"));
 
-    return (
+    // MUHIM: portal orqali document.body'ga chiqaramiz.
+    // BelisHeader'da backdrop-blur bor va CSS spec bo'yicha backdrop-filter'li
+    // ancestor `position: fixed` child'ni viewport emas, ancestor'ga bog'laydi.
+    // Shu sabab navbar header ichida qolib, pastda emas tepada ko'rinardi.
+    const nav = (
         <div className="fixed bottom-4 left-0 right-0 z-[110] flex justify-center pointer-events-none">
             <nav
                 className="pointer-events-auto flex items-center gap-1 px-2 py-1 rounded-2xl"
                 style={{
-                    background: "rgba(240, 242, 225, 0.78)",
+                    background: "rgba(240, 242, 225, 0.82)",
                     backdropFilter: "blur(14px) saturate(150%)",
                     WebkitBackdropFilter: "blur(14px) saturate(150%)",
                     border: `1px solid ${BELIS.borderSoft}`,
@@ -259,6 +265,9 @@ export function BelisNavbar() {
             </nav>
         </div>
     );
+
+    if (!mounted) return null;
+    return createPortal(nav, document.body);
 }
 
 // Suppress unused import warning if BelisSmartLink not used yet

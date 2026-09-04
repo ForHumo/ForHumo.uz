@@ -6,7 +6,7 @@ import { FileText, Download } from "lucide-react";
 
 export const metadata: Metadata = {
     title: "Sarpo ijara shartnomasi · Belis",
-    description: "Belis sarpo qutilarini ijaraga olish shartnomasi. Ijara muddati, zaklat, shtraf, bekor qilish qoidalari.",
+    description: "Belis sarpo qutilarini ijaraga olish shartnomasi. Ijara muddati, zaklat, jarima, bekor qilish qoidalari.",
 };
 
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {

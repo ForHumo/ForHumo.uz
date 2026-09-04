@@ -365,7 +365,7 @@ function ReturnModal({ booking, onClose, onDone }: {
                             rows={3} placeholder="Qanday zarar (masalan: 2 tog'ora sinib qolgan)"
                             className="w-full p-3 rounded-xl text-[13px] resize-none focus:outline-none mb-2"
                             style={{ background: BELIS.bg, color: BELIS.text, border: `1px solid ${BELIS.border}` }} />
-                        <label className="text-[12px] font-black mb-1 block" style={{ color: BELIS.text }}>Shtraf (so&apos;m)</label>
+                        <label className="text-[12px] font-black mb-1 block" style={{ color: BELIS.text }}>Jarima (so&apos;m)</label>
                         <input value={fineUzs} onChange={e => setFineUzs(e.target.value.replace(/\D/g, ""))}
                             placeholder="0" inputMode="numeric"
                             className="w-full h-11 px-3 rounded-xl text-[13px] focus:outline-none"

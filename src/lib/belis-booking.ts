@@ -4,7 +4,7 @@
 // - Availability check: shu sanada komplekt/quti mavjudmi?
 // - Booking kod generatsiya: BEL-2026-00001
 // - Narx hisoblash: kunlik * kunlar + zaklat
-// - Shtraf: kechikish + zarar
+// - Jarima: kechikish + zarar
 //
 // TAXMIN qiymatlar Sevinch opamdan javob kelgach o'zgartiriladi (BELIS-V1-REJASI.md 9-bo'lim).
 
@@ -14,7 +14,7 @@ import { prisma } from "@/lib/prisma";
 export const BELIS_PICKUP_DAYS_BEFORE = 1;
 /** Marosim kunidan keyin nechta kun ichida qaytariladi (default 3). */
 export const BELIS_RETURN_DAYS_AFTER = 3;
-/** Kechikish shtraf — ijara kunlik narxining foizi (30%). TAXMIN */
+/** Kechikish jarima — ijara kunlik narxining foizi (30%). TAXMIN */
 export const BELIS_LATE_FINE_PCT = 0.30;
 
 export interface BookingSchedule {
@@ -82,7 +82,7 @@ export function calcBookingTotals(rentDailyUzs: number, daysCount: number, depos
     };
 }
 
-/** Kechikish shtrafi (returnDate dan keyin har kun uchun). */
+/** Kechikish jarimai (returnDate dan keyin har kun uchun). */
 export function calcLateFine(returnDate: Date, actualReturnedAt: Date, rentDailyUzs: number): number {
     const msLate = actualReturnedAt.getTime() - returnDate.getTime();
     if (msLate <= 0) return 0;

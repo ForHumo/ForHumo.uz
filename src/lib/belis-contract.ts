@@ -54,12 +54,12 @@ export const BELIS_CONTRACT_SECTIONS: ContractSection[] = [
     },
     {
         n: 5,
-        title: "Zarar va shtraflar",
+        title: "Zarar va jarimalar",
         items: [
             "Mahsulot buzilgan/singan/kir bo'lsa: har element uchun tuzatish/almashtirish qiymati zaklatdan ushlab qolinadi.",
             "Mahsulot qaytmagan taqdirda: to'liq bozor narxi undiriladi (zaklat + qo'shimcha to'lov).",
-            "Kechikish shtrafi: har kun uchun ijara pulining 30% miqdorida qo'shimcha hisoblanadi.",
-            "Shtraf hisobi qaytish paytida Ijaraga beruvchi tomonidan aniqlanadi va Ijarachiga taqdim etiladi.",
+            "Kechikish jarimai: har kun uchun ijara pulining 30% miqdorida qo'shimcha hisoblanadi.",
+            "Jarima hisobi qaytish paytida Ijaraga beruvchi tomonidan aniqlanadi va Ijarachiga taqdim etiladi.",
         ],
     },
     {

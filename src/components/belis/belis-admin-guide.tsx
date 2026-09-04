@@ -83,7 +83,7 @@ const SECTIONS: Section[] = [
             "Admin panelda \"Olib ketildi\" tabida shu bookingni toping",
             "\"Qaytdi\" tugmasini bosing",
             "Butun qaytgan bo'lsa — \"Butun qaytdi\" tanlang, zaklat to'liq qaytariladi",
-            "Buzilgan/kam bo'lsa — \"Zarar/kam\" tanlang, zarar tavsifini yozing, shtraf summa",
+            "Buzilgan/kam bo'lsa — \"Zarar/kam\" tanlang, zarar tavsifini yozing, jarima summa",
             "\"Yozib qo'yish\" — status yangilanadi",
         ],
         tip: "Kechikkan bo'lsa cron avtomatik LATE ga o'tkazadi va mijozga eslatma yuboradi.",

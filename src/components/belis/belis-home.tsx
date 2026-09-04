@@ -150,8 +150,8 @@ export function BelisHome() {
                         <Info icon={<Truck className="w-4 h-4" />} title="Yandex to'lovi">
                             Kuryerni mijoz o&apos;zi chaqiradi va to&apos;laydi. Ijara summasi bilan qo&apos;shilmaydi.
                         </Info>
-                        <Info icon={<Sparkles className="w-4 h-4" />} title="Zaklat va shtraf">
-                            Har komplektga zaklat qoldiriladi. Butun qaytsa — to&apos;liq qaytariladi. Buzilsa/kam qaytsa shtraf ijara pulidan qimmatga tushadi.
+                        <Info icon={<Sparkles className="w-4 h-4" />} title="Zaklat va jarima">
+                            Har komplektga zaklat qoldiriladi. Butun qaytsa — to&apos;liq qaytariladi. Buzilsa/kam qaytsa jarima ijara pulidan qimmatga tushadi.
                         </Info>
                     </div>
                 </div>

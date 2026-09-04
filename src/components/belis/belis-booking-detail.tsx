@@ -319,7 +319,7 @@ export function BelisBookingDetail({ code }: { code: string }) {
                             {data.paidDeposit > 0 && <Row label="To'landi (zaklat)" value={fmtSom(data.paidDeposit)} />}
                             {data.fineUzs > 0 && (
                                 <div className="flex items-center justify-between" style={{ color: BELIS.err }}>
-                                    <span>Shtraf</span>
+                                    <span>Jarima</span>
                                     <span className="font-black">{fmtSom(data.fineUzs)}</span>
                                 </div>
                             )}
