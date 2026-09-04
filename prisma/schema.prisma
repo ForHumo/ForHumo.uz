@@ -1219,6 +1219,7 @@ model NexusNotification {
   trackId     String?                             // trek like uchun
   liveId      String?                             // jonli efir uchun
   callId      String?                             // qo'ng'iroq (MISSED/ENDED) uchun
+  ticketId    String?                             // Support tiket ID (SUPPORT type uchun)
   amount      Int?           @map("amountZij")    // tip/xarid miqdori (foydalanuvchi valyutasida)
   read        Boolean        @default(false)
   createdAt   DateTime       @default(now())
@@ -1241,6 +1242,7 @@ enum NexusNotifType {
   SUB_EXPIRING
   CALL_MISSED
   MOD_WARN         // AI moderatsiya yumshoq ogohlantirish (yaqin do'st + o'rta severity)
+  SUPPORT          // Support ticket javob/status yangilanishi (@support agent orqali)
 }
 
 // Story — 24 soatlik vaqtinchalik kontent (multi-slide)

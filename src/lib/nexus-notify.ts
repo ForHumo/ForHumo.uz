@@ -6,7 +6,7 @@ import { getBlockedIds } from "@/lib/nexus-block";
 export type NexusNotifType =
     | "LIKE" | "COMMENT" | "FOLLOW" | "REPLY"
     | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION" | "SUB_EXPIRING"
-    | "CALL_MISSED" | "MOD_WARN";
+    | "CALL_MISSED" | "MOD_WARN" | "SUPPORT";
 
 const PUSH_TEXT: Record<NexusNotifType, string> = {
     LIKE: "postingizni yoqtirdi", COMMENT: "postingizga izoh qoldirdi", FOLLOW: "sizni kuzatdi",
@@ -15,8 +15,10 @@ const PUSH_TEXT: Record<NexusNotifType, string> = {
     TIP: "sizni qo'llab-quvvatladi", MENTION: "sizni eslatib o'tdi", SUB_EXPIRING: "obunangiz tugayapti",
     CALL_MISSED: "sizni chaqirdi (javob berilmadi)",
     MOD_WARN: "AI moderatsiya sizning oxirgi xabaringiz shubhali topdi (agar hazil bo'lsa, do'stingiz noto'g'ri tushunmasligiga ishonch hosil qiling)",
+    SUPPORT: "yordam so'rovingizga javob berdi",
 };
-function pushUrl(o: { postId?: string | null; videoId?: string | null; trackId?: string | null; liveId?: string | null; callId?: string | null }): string {
+function pushUrl(o: { postId?: string | null; videoId?: string | null; trackId?: string | null; liveId?: string | null; callId?: string | null; ticketId?: string | null; type?: NexusNotifType }): string {
+    if (o.type === "SUPPORT") return o.ticketId ? `/support?ticket=${o.ticketId}` : "/support";
     if (o.videoId) return `/nexus/v/${o.videoId}`;
     if (o.trackId) return `/nexus/t/${o.trackId}`;
     if (o.liveId) return `/nexus/live/${o.liveId}`;
@@ -35,11 +37,15 @@ export async function nexusNotify(opts: {
     trackId?: string | null;
     liveId?: string | null;
     callId?: string | null;
+    ticketId?: string | null;
     amount?: number | null;
+    // SUPPORT/MOD_WARN kabi tizim bildirishnomalarida oldindan matn berish mumkin
+    customBody?: string | null;
 }): Promise<void> {
-    // Odatda o'ziga bildirishnoma yubormaymiz — istisno: tizim ogohlantirishlari (MOD_WARN)
+    // Odatda o'ziga bildirishnoma yubormaymiz — istisno: tizim ogohlantirishlari (MOD_WARN, SUPPORT)
     if (!opts.recipientId) return;
-    if (opts.recipientId === opts.actorId && opts.type !== "MOD_WARN") return;
+    const isSystem = opts.type === "MOD_WARN" || opts.type === "SUPPORT";
+    if (opts.recipientId === opts.actorId && !isSystem) return;
     try {
         await prisma.nexusNotification.create({
             data: {
@@ -52,6 +58,7 @@ export async function nexusNotify(opts: {
                 trackId: opts.trackId ?? null,
                 liveId: opts.liveId ?? null,
                 callId: opts.callId ?? null,
+                ticketId: opts.ticketId ?? null,
                 amount: opts.amount ?? null,
             },
         });
@@ -65,8 +72,10 @@ export async function nexusNotify(opts: {
         // Web push (fire-and-forget; kalit yo'q bo'lsa jim o'tadi)
         const actor = await prisma.userProfile.findUnique({ where: { id: opts.actorId }, select: { name: true, username: true } });
         const who = actor?.name || (actor?.username ? `@${actor.username}` : "Kimdir");
+        const title = opts.type === "SUPPORT" ? "For Humo · Yordam" : "Nexus";
+        const body = opts.customBody?.slice(0, 200) || `${who} ${PUSH_TEXT[opts.type]}`;
         void sendPushToProfile(opts.recipientId, {
-            title: "Nexus", body: `${who} ${PUSH_TEXT[opts.type]}`, url: pushUrl(opts), tag: opts.type,
+            title, body, url: pushUrl({ ...opts, type: opts.type }), tag: opts.type,
         });
     } catch {
         /* bildirishnoma asosiy amalни buzmaydi */

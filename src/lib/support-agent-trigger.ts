@@ -3,6 +3,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { sendAgentDM } from "@/lib/nexus-agent-send";
+import { nexusNotify } from "@/lib/nexus-notify";
 
 interface Params {
     ticketId: string;
@@ -11,6 +12,20 @@ interface Params {
     newStatus?: string;
 }
 
+const STATUS_LABEL: Record<string, string> = {
+    open: "ochiq",
+    pending: "javob berildi",
+    closed: "yopildi",
+};
+
+/**
+ * Support tiket status o'zgarganda yoki admin javob bergach:
+ *   1. @support NexusAgent DM'ga strukturaviy karta yuboradi (mavjud)
+ *   2. NexusNotification (SUPPORT type) yaratadi — qo'ng'iroq/bell badge'da ko'rinadi
+ *   3. Web Push yuboradi (agar obuna bo'lsa) — qulflangan telefondagi bildirishnoma
+ *
+ * Uchalasi ham fail-safe (asosiy admin javob berishni buzmaydi).
+ */
 export async function triggerSupportAgentDM(p: Params): Promise<void> {
     try {
         const ticket = await prisma.supportTicket.findUnique({
@@ -25,15 +40,12 @@ export async function triggerSupportAgentDM(p: Params): Promise<void> {
             title = `Support: ${ticket.subject}`;
             body = (p.adminReplyBody ?? "").slice(0, 200);
         } else if (p.kind === "status-changed") {
-            const statusLabel: Record<string, string> = {
-                open: "ochiq",
-                pending: "javob berildi",
-                closed: "yopildi",
-            };
-            title = `Tiket holati: ${statusLabel[p.newStatus ?? ""] ?? p.newStatus}`;
-            body = `"${ticket.subject}" — ${statusLabel[p.newStatus ?? ""] ?? p.newStatus ?? ""}`;
+            const label = STATUS_LABEL[p.newStatus ?? ""] ?? p.newStatus ?? "";
+            title = `Tiket holati: ${label}`;
+            body = `"${ticket.subject}" — ${label}`;
         }
 
+        // 1. Agent DM karta
         await sendAgentDM({
             agentUsername: "support",
             toProfileId: ticket.profileId,
@@ -44,6 +56,23 @@ export async function triggerSupportAgentDM(p: Params): Promise<void> {
                 body,
             },
         });
+
+        // 2 + 3. NexusNotification + Web Push (aktor = @support agent, recipient = mijoz)
+        const agent = await prisma.userProfile.findUnique({
+            where: { username: "support" },
+            select: { id: true },
+        });
+        if (agent?.id) {
+            await nexusNotify({
+                recipientId: ticket.profileId,
+                actorId: agent.id,
+                type: "SUPPORT",
+                ticketId: ticket.id,
+                customBody: p.kind === "admin-reply"
+                    ? `Support: ${body || ticket.subject}`
+                    : `Tiket ${STATUS_LABEL[p.newStatus ?? ""] ?? p.newStatus}: ${ticket.subject}`,
+            });
+        }
     } catch (e) {
         console.error("triggerSupportAgentDM failed:", e);
     }

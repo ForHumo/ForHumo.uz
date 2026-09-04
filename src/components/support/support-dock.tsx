@@ -6,7 +6,8 @@
 // Sahifadan chiqmaydi.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { HeadsetIcon, X, ArrowLeft, Send, Plus, Loader2, MessageCircle, CheckCircle2, AlertTriangle, Lightbulb, Bug, CreditCard, HelpCircle, Clock, ShieldCheck, ChevronRight } from "lucide-react";
+import { HeadsetIcon, X, ArrowLeft, Send, Plus, Loader2, MessageCircle, CheckCircle2, AlertTriangle, Lightbulb, Bug, CreditCard, HelpCircle, Clock, ShieldCheck, ChevronRight, Sparkles } from "lucide-react";
+import { Link } from "@/i18n/routing";
 import { usePathname } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 
@@ -188,6 +189,25 @@ export function SupportDock() {
         window.addEventListener("support:open", h);
         return () => window.removeEventListener("support:open", h);
     }, [activeId]);
+
+    // Deep-link: `?ticket=<id>` (masalan SUPPORT bildirishnomasidan)
+    // Panelni ochib to'g'ridan-to'g'ri o'sha tiketni ko'rsatadi.
+    useEffect(() => {
+        if (authStatus !== "authenticated") return;
+        try {
+            const u = new URL(window.location.href);
+            const tid = u.searchParams.get("ticket");
+            if (tid) {
+                setActiveId(tid);
+                setView("thread");
+                setOpen(true);
+                // URL'ni tozalab qo'yamiz — refresh'da qayta ochilmasin
+                u.searchParams.delete("ticket");
+                window.history.replaceState({}, "", u.pathname + (u.search ? u.search : ""));
+            }
+        } catch {}
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authStatus]);
 
     // Suzuvchi tugma butunlay yashiringan — barcha modul navbarlarida (id/ai/nexus/
     // market/esport/pay/bn) Support tugmasi bor va bosh sahifada global header'da
@@ -464,6 +484,20 @@ export function SupportDock() {
                                 </form>
                             ) : (
                                 <div className="p-3 space-y-2">
+                                    {/* Nexus DM'da davom — bir bosishda @support DM'ga o'tadi.
+                                        Push+notif tayyor bo'lgani uchun mobil'da qulflangan holda ham eshitiladi. */}
+                                    <Link
+                                        href="/nexus?dm=support"
+                                        onClick={() => setOpen(false)}
+                                        className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/40 dark:to-blue-950/40 border border-sky-200/60 dark:border-sky-800/60 text-sky-900 dark:text-sky-200 text-[12px] font-semibold group hover:from-sky-100 hover:to-blue-100 dark:hover:from-sky-950/60 dark:hover:to-blue-950/60 transition-colors"
+                                    >
+                                        <span className="flex items-center gap-1.5">
+                                            <Sparkles className="w-3.5 h-3.5" />
+                                            Nexus DM&apos;da davom ettirish
+                                        </span>
+                                        <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                                    </Link>
+
                                     {loading && messages.length === 0 ? (
                                         <div className="flex justify-center py-8"><Loader2 className="animate-spin text-neutral-400" /></div>
                                     ) : messages.map(m => (

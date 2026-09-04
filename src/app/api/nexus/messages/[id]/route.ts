@@ -557,6 +557,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         after(() => pusherTrigger(userChannel(me.id), "nx:msg:new", { ...pushMsg, message: { ...pushMsg.message, mine: true } }));
     }
 
+    // Support inbound — qabul qiluvchi @support bo'lsa xabar SupportTicket'ga ham
+    // ko'chiriladi (ikki tomonlama ko'prik). Fail-safe.
+    if (!scheduledFor && msg.text) {
+        after(async () => {
+            const { mirrorNexusDmToSupport } = await import("@/lib/support-nexus-mirror");
+            await mirrorNexusDmToSupport({
+                senderProfileId: me.id,
+                recipientProfileId: otherId(conv, me.id),
+                text: msg.text ?? "",
+            });
+        });
+    }
+
     // Agent webhook — qabul qiluvchi agent bo'lsa, uning webhookUrl'iga POST.
     // Javob bo'lsa yangi agent xabari sifatida suhbatga yoziladi.
     if (!scheduledFor) {

@@ -6,7 +6,7 @@ import { useNxPlayer } from "./nx-player-ctx";
 import {
     X, Bell, Heart, MessageCircle, UserPlus, Reply,
     CheckCheck, Loader2, Flame, Music2, Coins, Radio, Gift, AtSign, BellRing, BellOff, Star, PhoneMissed,
-    Settings2, Check, ShieldAlert, Circle, Trash2,
+    Settings2, Check, ShieldAlert, Circle, Trash2, LifeBuoy,
 } from "lucide-react";
 import { NOTIF_TYPES, NOTIF_LABELS, type NotifTypeKey } from "@/lib/notif-types";
 import { formatMoney, type Currency } from "@/lib/money";
@@ -14,11 +14,12 @@ import { getPushState, subscribePush, unsubscribePush, type PushState } from "@/
 import { RINGTONE_LABELS, RINGTONE_DESCRIPTIONS, previewRingtone, type RingtoneVariant } from "@/lib/nexus-ringtone";
 import { NxVerifiedBadge } from "./nx-verified-badge";
 
-type NType = "LIKE" | "COMMENT" | "FOLLOW" | "REPLY" | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION" | "SUB_EXPIRING" | "CALL_MISSED" | "MOD_WARN";
+type NType = "LIKE" | "COMMENT" | "FOLLOW" | "REPLY" | "VIDEO_LIKE" | "VIDEO_COMMENT" | "TRACK_LIKE" | "PURCHASE" | "LIVE" | "TIP" | "MENTION" | "SUB_EXPIRING" | "CALL_MISSED" | "MOD_WARN" | "SUPPORT";
 interface NActor { name: string | null; username: string | null; image: string | null; verified: boolean }
 interface Notif {
     id: string; type: NType; read: boolean; createdAt: string; actor: NActor | null; postText: string | null;
     postId?: string | null; videoId?: string | null; trackId?: string | null; liveId?: string | null; callId?: string | null;
+    ticketId?: string | null;
     amount?: number | null;
 }
 
@@ -26,11 +27,13 @@ const TYPE_ICONS: Record<NType, React.ElementType> = {
     LIKE: Heart, COMMENT: MessageCircle, FOLLOW: UserPlus, REPLY: Reply,
     VIDEO_LIKE: Heart, VIDEO_COMMENT: MessageCircle, TRACK_LIKE: Music2, PURCHASE: Coins, LIVE: Radio, TIP: Gift, MENTION: AtSign, SUB_EXPIRING: Star, CALL_MISSED: PhoneMissed,
     MOD_WARN: ShieldAlert,
+    SUPPORT: LifeBuoy,
 };
 const TYPE_COLORS: Record<NType, string> = {
     LIKE: "#EF4444", COMMENT: "#2B3EE8", FOLLOW: "#10B981", REPLY: "#8B5CF6",
     VIDEO_LIKE: "#EF4444", VIDEO_COMMENT: "#8B5CF6", TRACK_LIKE: "#10B981", PURCHASE: "#00CEC8", LIVE: "#EF4444", TIP: "#F59E0B", MENTION: "#2B3EE8", SUB_EXPIRING: "#8B5CF6", CALL_MISSED: "#EF4444",
     MOD_WARN: "#F59E0B",
+    SUPPORT: "#0EA5E9",
 };
 const TYPE_TEXT: Record<NType, string> = {
     LIKE: "postingizni yoqtirdi",
@@ -47,10 +50,12 @@ const TYPE_TEXT: Record<NType, string> = {
     SUB_EXPIRING: "ijodkoriga obunangiz tugayapti",
     CALL_MISSED: "sizni chaqirdi (javob berilmadi)",
     MOD_WARN: "AI moderatsiya sizning oxirgi xabaringiz shubhali topdi (agar hazil bo'lsa, do'stingiz noto'g'ri tushunmasligiga ishonch hosil qiling)",
+    SUPPORT: "yordam so'rovingizga javob berdi",
 };
 
 // Bildirishnoma qaysi kontentga olib boradi
 function notifHref(n: Notif): string | null {
+    if (n.type === "SUPPORT") return n.ticketId ? `/support?ticket=${n.ticketId}` : "/support";
     if (n.videoId) return `/nexus/v/${n.videoId}`;
     if (n.trackId) return `/nexus/t/${n.trackId}`;
     if (n.liveId) return `/nexus/live/${n.liveId}`;

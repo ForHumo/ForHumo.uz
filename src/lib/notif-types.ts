@@ -5,6 +5,7 @@ export const NOTIF_TYPES = [
     "LIKE", "COMMENT", "FOLLOW", "REPLY",
     "VIDEO_LIKE", "VIDEO_COMMENT", "TRACK_LIKE",
     "PURCHASE", "LIVE", "TIP", "MENTION",
+    "SUPPORT",
 ] as const;
 
 export type NotifTypeKey = (typeof NOTIF_TYPES)[number];
@@ -22,4 +23,5 @@ export const NOTIF_LABELS: Record<NotifTypeKey, string> = {
     LIVE: "Kuzatgan odam jonli efirni boshladi",
     TIP: "Sizga tip yuborildi",
     MENTION: "Sizni post/izohda eslatib o'tishdi",
+    SUPPORT: "Yordam markazidan javob",
 };

@@ -40,18 +40,28 @@ export async function GET(req: Request) {
     const trackMap = Object.fromEntries(tracks.map(t => [t.id, t.title]));
     const liveMap = Object.fromEntries(lives.map(l => [l.id, l.title]));
 
+    // SUPPORT tur uchun tiket sarlavhalari
+    const ticketIds = [...new Set(rows.map(r => r.ticketId).filter((x): x is string => !!x))];
+    const tickets = ticketIds.length ? await prisma.supportTicket.findMany({
+        where: { id: { in: ticketIds } },
+        select: { id: true, subject: true, status: true },
+    }) : [];
+    const ticketMap = Object.fromEntries(tickets.map(t => [t.id, t]));
+
     const notifications = rows.map(n => {
         const a = aMap[n.actorId];
         const targetText =
             n.postId ? (postMap[n.postId] ?? null) :
             n.videoId ? (videoMap[n.videoId] ?? null) :
             n.trackId ? (trackMap[n.trackId] ?? null) :
-            n.liveId ? (liveMap[n.liveId] ?? null) : null;
+            n.liveId ? (liveMap[n.liveId] ?? null) :
+            n.ticketId ? (ticketMap[n.ticketId]?.subject ?? null) : null;
         return {
             id: n.id, type: n.type, read: n.read, createdAt: n.createdAt,
             actor: a ? { name: a.name, username: a.username, image: a.image, verified: isVerifiedProfile(a), verifiedCategory: isVerifiedProfile(a) ? (a.verifiedCategory || null) : null } : null,
             postText: targetText,
             postId: n.postId, videoId: n.videoId, trackId: n.trackId, liveId: n.liveId, callId: n.callId,
+            ticketId: n.ticketId,
             amount: n.amount,
         };
     });
