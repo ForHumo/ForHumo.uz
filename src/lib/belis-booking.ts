@@ -1,20 +1,26 @@
 // Belis ijara booking yordamchi funksiyalar.
 //
-// - Sana hisoblash: eventDate → pickupDate (-1 kun), returnDate (+3 kun)
+// - Sana hisoblash: eventDate → pickupDate (-1 kun), returnDate (+1 kun default, +2 max)
 // - Availability check: shu sanada komplekt/quti mavjudmi?
 // - Booking kod generatsiya: BEL-2026-00001
 // - Narx hisoblash: kunlik * kunlar + zaklat
 // - Jarima: kechikish + zarar
 //
-// TAXMIN qiymatlar Sevinch opamdan javob kelgach o'zgartiriladi (BELIS-V1-REJASI.md 9-bo'lim).
+// SEVINCH OPAMDAN TASDIQLANGAN (2026-09):
+//   - Ijara davomiyligi 2 kun default, max 3 kun (kechroq qaytarilsa)
+//   - Zaklat majburiy, pasport nusxasi majburiy (asl ushlab qolinmaydi)
+//   - Alohida quti ijaraga olsa bo'ladi (komplekt majburiy emas)
+//   - Yandex chaqirishni ikkala tomon ham qila oladi
 
 import { prisma } from "@/lib/prisma";
 
-/** Marosim kunidan avval nechta kun oldin olib ketiladi (default 1). */
+/** Marosim kunidan avval nechta kun oldin olib ketiladi. */
 export const BELIS_PICKUP_DAYS_BEFORE = 1;
-/** Marosim kunidan keyin nechta kun ichida qaytariladi (default 3). */
-export const BELIS_RETURN_DAYS_AFTER = 3;
-/** Kechikish jarima — ijara kunlik narxining foizi (30%). TAXMIN */
+/** Marosim kunidan keyin default qaytish (marosim ertasi = 2 kun ijara). */
+export const BELIS_RETURN_DAYS_AFTER = 1;
+/** Maksimal qaytish (marosimdan 2 kun keyin = 3 kun ijara). */
+export const BELIS_MAX_RETURN_DAYS_AFTER = 2;
+/** Kechikish jarima — ijara kunlik narxining foizi (30%). */
 export const BELIS_LATE_FINE_PCT = 0.30;
 
 export interface BookingSchedule {
@@ -24,15 +30,22 @@ export interface BookingSchedule {
     daysCount: number;
 }
 
-/** Marosim sanasidan booking jadvalini hisoblab beradi. */
-export function calcBookingSchedule(eventDate: Date): BookingSchedule {
+/** Marosim sanasidan booking jadvalini hisoblab beradi.
+ *  daysCount = to'lanadigan kunlar (pickup dan return gacha yotgan tunlar/kunlar).
+ *  Default: pickup=event-1, return=event+1 → 2 kun ijara. */
+export function calcBookingSchedule(eventDate: Date, returnDaysAfter?: number): BookingSchedule {
+    const after = Math.min(
+        BELIS_MAX_RETURN_DAYS_AFTER,
+        Math.max(0, returnDaysAfter ?? BELIS_RETURN_DAYS_AFTER),
+    );
     const pickup = new Date(eventDate);
     pickup.setDate(pickup.getDate() - BELIS_PICKUP_DAYS_BEFORE);
     const ret = new Date(eventDate);
-    ret.setDate(ret.getDate() + BELIS_RETURN_DAYS_AFTER);
-    // Kunlar soni: pickup dan return gacha (inclusive)
+    ret.setDate(ret.getDate() + after);
+    // Kunlar (nights) — pickup dan return gacha yotgan 24-soatlik bloklar.
+    // Default 2 kun (event-1 → event+1). Max 3 kun (event-1 → event+2).
     const msDiff = ret.getTime() - pickup.getTime();
-    const daysCount = Math.max(1, Math.ceil(msDiff / (24 * 3600 * 1000)) + 1);
+    const daysCount = Math.max(1, Math.ceil(msDiff / (24 * 3600 * 1000)));
     return { eventDate, pickupDate: pickup, returnDate: ret, daysCount };
 }
 

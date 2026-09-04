@@ -30,7 +30,7 @@ import type { BelisRentalFulfill } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED_FULFILL: BelisRentalFulfill[] = ["PICKUP", "YANDEX_CUSTOMER"];
+const ALLOWED_FULFILL: BelisRentalFulfill[] = ["PICKUP", "YANDEX_CUSTOMER", "YANDEX_BELIS"];
 
 export async function POST(req: Request) {
     const auth = await requireBelisAuth();
@@ -70,13 +70,20 @@ export async function POST(req: Request) {
         : "PICKUP";
     const address = typeof body?.address === "string" ? body.address.trim().slice(0, 300) : null;
     const note = typeof body?.note === "string" ? body.note.trim().slice(0, 500) : null;
+    // Qaytish kunlari (marosim keyingi N kun): default 1, max 2
+    const returnDaysAfterRaw = Number(body?.returnDaysAfter);
+    const returnDaysAfter = Number.isFinite(returnDaysAfterRaw) ? returnDaysAfterRaw : undefined;
 
     // Validatsiya
     if (!komplektSlug) return NextResponse.json({ error: "komplekt_required" }, { status: 400 });
     if (!eventDateStr) return NextResponse.json({ error: "event_date_required" }, { status: 400 });
     if (buyerName.length < 2) return NextResponse.json({ error: "name_too_short" }, { status: 400 });
     if (buyerPhone.length < 9) return NextResponse.json({ error: "phone_invalid" }, { status: 400 });
-    if (fulfillType === "YANDEX_CUSTOMER" && (!address || address.length < 5)) {
+    if (!passportUrl) {
+        // Sevinch opamdan tasdiqlangan: pasport nusxasi majburiy — bo'lmasa berilmaydi.
+        return NextResponse.json({ error: "passport_required" }, { status: 400 });
+    }
+    if ((fulfillType === "YANDEX_CUSTOMER" || fulfillType === "YANDEX_BELIS") && (!address || address.length < 5)) {
         return NextResponse.json({ error: "address_required_for_yandex" }, { status: 400 });
     }
 
@@ -95,7 +102,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "komplekt_not_found" }, { status: 404 });
     }
 
-    const schedule = calcBookingSchedule(eventDate);
+    const schedule = calcBookingSchedule(eventDate, returnDaysAfter);
     const avail = await isKomplektAvailable(k.id, schedule);
     if (!avail.available) {
         return NextResponse.json({

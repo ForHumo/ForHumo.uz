@@ -4169,6 +4169,7 @@ enum BelisBookingStatus {
 enum BelisRentalFulfill {
   PICKUP              // Mijoz do'konga o'zi keladi
   YANDEX_CUSTOMER     // Mijoz Yandex chaqiradi, kuryerga o'zi to'laydi
+  YANDEX_BELIS        // Belis Yandex chaqiradi (kuryer to'lovi buyurtma summasiga qo'shiladi)
 }
 
 // Alohida quti booking bandi (agar mijoz komplekt olmagan bo'lsa yoki

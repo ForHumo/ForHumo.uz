@@ -35,7 +35,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
         return NextResponse.json({ error: "not_found" }, { status: 404 });
     }
 
-    const schedule = calcBookingSchedule(eventDate);
+    const returnDaysAfterRaw = Number(url.searchParams.get("returnDaysAfter"));
+    const returnDaysAfter = Number.isFinite(returnDaysAfterRaw) ? returnDaysAfterRaw : undefined;
+    const schedule = calcBookingSchedule(eventDate, returnDaysAfter);
     const avail = await isKomplektAvailable(k.id, schedule);
     const totals = calcBookingTotals(k.dailyRentUzs, schedule.daysCount, k.deposit);
 

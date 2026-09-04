@@ -19,7 +19,7 @@ import { BelisContractModal } from "./belis-contract-modal";
 import { BelisDatePicker } from "./belis-date-picker";
 
 type Step = 1 | 2 | 3 | 4;
-type Fulfill = "PICKUP" | "YANDEX_CUSTOMER";
+type Fulfill = "PICKUP" | "YANDEX_CUSTOMER" | "YANDEX_BELIS";
 
 interface Availability {
     available: boolean;
@@ -58,8 +58,9 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
     const [mounted, setMounted] = useState(false);
     const [step, setStep] = useState<Step>(1);
 
-    // Step 1: sana
+    // Step 1: sana + qaytish davomiyligi (1 kun = 2 kun ijara default, 2 kun = 3 kun ijara max)
     const [eventDate, setEventDate] = useState<string>(todayISO());
+    const [returnDaysAfter, setReturnDaysAfter] = useState<1 | 2>(1);
     const [availLoading, setAvailLoading] = useState(false);
     const [avail, setAvail] = useState<Availability | null>(null);
 
@@ -106,14 +107,14 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
         if (!eventDate) return;
         setAvailLoading(true);
         setAvail(null);
-        fetch(`/api/belis/komplektlar/${komplektSlug}/availability?eventDate=${eventDate}`)
+        fetch(`/api/belis/komplektlar/${komplektSlug}/availability?eventDate=${eventDate}&returnDaysAfter=${returnDaysAfter}`)
             .then(r => r.json())
             .then((d: Availability | { error?: string }) => {
                 if ("available" in d) setAvail(d as Availability);
             })
             .catch(() => setAvail(null))
             .finally(() => setAvailLoading(false));
-    }, [eventDate, komplektSlug]);
+    }, [eventDate, komplektSlug, returnDaysAfter]);
 
     async function uploadPassport(file: File) {
         setPassportUploading(true);
@@ -147,8 +148,9 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                     passportUrl,
                     passportSeries: passportSeries.trim() || undefined,
                     fulfillType: fulfill,
-                    address: fulfill === "YANDEX_CUSTOMER" ? address.trim() : undefined,
+                    address: (fulfill === "YANDEX_CUSTOMER" || fulfill === "YANDEX_BELIS") ? address.trim() : undefined,
                     note: note.trim() || undefined,
+                    returnDaysAfter,
                 }),
             });
             const d = await r.json();
@@ -175,7 +177,8 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
     const canGo2 = !!avail?.available && !availLoading;
     const canGo3 = buyerName.trim().length >= 2
         && buyerPhone.trim().length >= 12
-        && (fulfill === "PICKUP" || address.trim().length >= 5);
+        && (fulfill === "PICKUP" || address.trim().length >= 5)
+        && !!passportUrl; // Sevinch tasdiqlagan: pasport majburiy
     const canSubmit = acceptTerms && canGo3 && canGo2;
 
     if (!mounted) return null;
@@ -281,7 +284,7 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                         <div>
                             <h3 className="text-[15px] font-black mb-3" style={{ color: BELIS.text }}>Marosim sanasi</h3>
                             <p className="text-[12.5px] mb-3" style={{ color: BELIS.text2 }}>
-                                Qaysi kuni marosim bo&apos;ladi? Sarpo bir kun oldin olib ketiladi va 3 kun ichida qaytariladi.
+                                Qaysi kuni marosim bo&apos;ladi? Sarpo bir kun oldin olib ketiladi.
                             </p>
                             <BelisDatePicker
                                 value={eventDate}
@@ -290,6 +293,32 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                                 max={maxDateISO()}
                                 placeholder="Marosim sanasini tanlang"
                             />
+
+                            <div className="mt-4">
+                                <label className="text-[12.5px] font-black mb-1.5 block" style={{ color: BELIS.text }}>
+                                    Qaytarish kuni
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[
+                                        { key: 1 as const, label: "Marosim ertasi", hint: "2 kun ijara (default)" },
+                                        { key: 2 as const, label: "2 kun keyin", hint: "3 kun ijara (max)" },
+                                    ].map(o => {
+                                        const active = returnDaysAfter === o.key;
+                                        return (
+                                            <button key={o.key} onClick={() => setReturnDaysAfter(o.key)}
+                                                className="p-3 rounded-xl text-left transition-colors"
+                                                style={{
+                                                    background: active ? BELIS.goldSoft : BELIS.bg,
+                                                    border: `1px solid ${active ? BELIS.gold : BELIS.border}`,
+                                                    color: BELIS.text,
+                                                }}>
+                                                <p className="text-[12.5px] font-black">{o.label}</p>
+                                                <p className="text-[11px] mt-0.5" style={{ color: BELIS.text2 }}>{o.hint}</p>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
 
                             {availLoading && (
                                 <div className="mt-4 p-4 rounded-xl flex items-center gap-2 justify-center"
@@ -358,10 +387,11 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
 
                             <div>
                                 <label className="text-[12.5px] font-black mb-1.5 block" style={{ color: BELIS.text }}>Yetkazish usuli</label>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 gap-2">
                                     {[
-                                        { key: "PICKUP" as const, icon: <MapPin className="w-4 h-4" />, label: "Do'konga o'zim boraman" },
-                                        { key: "YANDEX_CUSTOMER" as const, icon: <Truck className="w-4 h-4" />, label: "Yandex chaqiraman" },
+                                        { key: "PICKUP" as const, icon: <MapPin className="w-4 h-4" />, label: "Do'konga o'zim boraman", hint: "Belis do'konidan olib ketaman va qaytarib olib kelaman" },
+                                        { key: "YANDEX_CUSTOMER" as const, icon: <Truck className="w-4 h-4" />, label: "Yandex chaqiraman", hint: "Kuryer to'lovini o'zim to'layman" },
+                                        { key: "YANDEX_BELIS" as const, icon: <Truck className="w-4 h-4" />, label: "Belis chaqirsin", hint: "Kuryer to'lovi buyurtma summasiga qo'shiladi" },
                                     ].map(o => {
                                         const active = fulfill === o.key;
                                         return (
@@ -372,22 +402,18 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                                                     border: `1px solid ${active ? BELIS.gold : BELIS.border}`,
                                                     color: BELIS.text,
                                                 }}>
-                                                <div className="flex items-center gap-1.5 mb-1">
+                                                <div className="flex items-center gap-1.5">
                                                     {o.icon}
-                                                    <span className="text-[12px] font-black">{o.label}</span>
+                                                    <span className="text-[13px] font-black">{o.label}</span>
                                                 </div>
+                                                <p className="text-[11px] mt-1 ml-6" style={{ color: BELIS.text2 }}>{o.hint}</p>
                                             </button>
                                         );
                                     })}
                                 </div>
-                                {fulfill === "YANDEX_CUSTOMER" && (
-                                    <p className="text-[11.5px] mt-1.5" style={{ color: BELIS.text2 }}>
-                                        <Info className="w-3 h-3 inline" /> Yandex to&apos;lovini kuryerga o&apos;zingiz to&apos;laysiz.
-                                    </p>
-                                )}
                             </div>
 
-                            {fulfill === "YANDEX_CUSTOMER" && (
+                            {(fulfill === "YANDEX_CUSTOMER" || fulfill === "YANDEX_BELIS") && (
                                 <Field label="Manzil (yetkazish)" icon={<MapPin className="w-4 h-4" />}>
                                     <input value={address} onChange={e => setAddress(e.target.value.slice(0, 300))}
                                         placeholder="Toshkent, Yakkasaroy tumani, Bobur ko'chasi 42"
@@ -439,7 +465,11 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                                 <Row label="Qaytarish (oxirgi)" value={fmtDate(avail.schedule.returnDate)} />
                                 <Row label="Ism" value={buyerName} />
                                 <Row label="Telefon" value={buyerPhone} />
-                                <Row label="Usul" value={fulfill === "PICKUP" ? "Do'konga o'zim" : `Yandex (${address})`} />
+                                <Row label="Usul" value={
+                                    fulfill === "PICKUP" ? "Do'konga o'zim"
+                                    : fulfill === "YANDEX_CUSTOMER" ? `Yandex (mijoz to'laydi) — ${address}`
+                                    : `Yandex (Belis chaqiradi) — ${address}`
+                                } />
                                 <div className="pt-2 mt-2" style={{ borderTop: `1px solid ${BELIS.border}` }}>
                                     <Row label="Ijara puli" value={fmtSom(avail.totals.rentTotalUzs)} />
                                     <Row label="Zaklat" value={fmtSom(avail.totals.depositUzs)} />
