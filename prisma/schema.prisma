@@ -975,6 +975,8 @@ model AiConversation {
   title       String                                        // 60 chars max — birinchi xabardan AI generate qiladi
   topic       String?                                       // AI classifier: "belis"|"pay"|"nexus"|"market"|"bn"|"esport"|"id"|"personal"|"general"
   moduleOrigin String?                                      // qaysi moduldan boshlangan (belis/support/nexus/...)
+  shareId     String?       @unique                         // agar ulashilgan bo'lsa — 32-hex random (public read-only URL)
+  sharedAt    DateTime?
   lastMsgAt   DateTime      @default(now())
   createdAt   DateTime      @default(now())
   archived    Boolean       @default(false)                 // foydalanuvchi arxivlab qo'yishi mumkin

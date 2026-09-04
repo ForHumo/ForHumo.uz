@@ -9,7 +9,7 @@ import { useSession, signIn } from "next-auth/react";
 import {
     Send, Loader2, Plus, MessageSquare, Sparkles, Trash2, LogIn,
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
-    Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX,
+    Mic, MicOff, Paperclip, ImageIcon, Volume2, VolumeX, Share2, Check,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { moduleTheme } from "@/lib/module-theme";
@@ -65,6 +65,7 @@ export function AiChatPage() {
     // TTS (voice output)
     const [ttsEnabled, setTtsEnabled] = useState(false);
     const [ttsSpeakingId, setTtsSpeakingId] = useState<string | null>(null);
+    const [shareCopied, setShareCopied] = useState<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
     // TTS toggle — LocalStorage'da saqlanadi
@@ -358,6 +359,21 @@ export function AiChatPage() {
         if (r.ok) loadConvs();
     }
 
+    async function shareConv(id: string) {
+        const r = await fetch(`/api/ai/conversations/${id}/share`, { method: "POST" });
+        if (!r.ok) return;
+        const j = await r.json();
+        const full = typeof window !== "undefined" ? `${window.location.origin}${j.url}` : j.url;
+        try {
+            await navigator.clipboard.writeText(full);
+            setShareCopied(id);
+            setTimeout(() => setShareCopied(prev => prev === id ? null : prev), 2500);
+        } catch {
+            // fallback: prompt
+            window.prompt("Havolani nusxa oling:", full);
+        }
+    }
+
     if (status === "loading") {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -441,6 +457,13 @@ export function AiChatPage() {
                                         </p>
                                     </button>
                                     <div className="absolute top-1 right-1 hidden group-hover:flex items-center gap-0.5">
+                                        <button onClick={() => shareConv(c.id)}
+                                            title="Ulashish (havola nusxa)"
+                                            className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">
+                                            {shareCopied === c.id
+                                                ? <Check className="w-3 h-3 text-green-500" />
+                                                : <Share2 className="w-3 h-3" />}
+                                        </button>
                                         <button onClick={() => archiveConv(c.id, c.archived)}
                                             title={c.archived ? "Qayta faollashtir" : "Arxivlash"}
                                             className="p-1 rounded hover:bg-black/[0.06] dark:hover:bg-white/[0.08]">

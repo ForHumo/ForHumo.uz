@@ -570,6 +570,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                 text: msg.text ?? "",
             });
         });
+
+        // @ai (Humo AI) agentga yozilgan bo'lsa — real-time AI javob (kontexst bilan)
+        after(async () => {
+            const { mirrorNexusDmToAi } = await import("@/lib/ai-nexus-mirror");
+            await mirrorNexusDmToAi({
+                senderProfileId: me.id,
+                recipientProfileId: otherId(conv, me.id),
+                conversationId: conv.id,
+                text: msg.text ?? "",
+            });
+        });
     }
 
     // Agent webhook — qabul qiluvchi agent bo'lsa, uning webhookUrl'iga POST.
