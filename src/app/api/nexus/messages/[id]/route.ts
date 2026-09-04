@@ -558,13 +558,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     // Support inbound — qabul qiluvchi @support bo'lsa xabar SupportTicket'ga ham
-    // ko'chiriladi (ikki tomonlama ko'prik). Fail-safe.
+    // ko'chiriladi (ikki tomonlama ko'prik). C yondashuvda: AI first-line ham shu yerda.
+    // Fail-safe.
     if (!scheduledFor && msg.text) {
         after(async () => {
             const { mirrorNexusDmToSupport } = await import("@/lib/support-nexus-mirror");
             await mirrorNexusDmToSupport({
                 senderProfileId: me.id,
                 recipientProfileId: otherId(conv, me.id),
+                conversationId: conv.id,
                 text: msg.text ?? "",
             });
         });

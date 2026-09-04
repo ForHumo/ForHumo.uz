@@ -34,12 +34,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             id: ticket.id, subject: ticket.subject, status: ticket.status,
             module: ticket.module, email: ticket.email,
             profile: ticket.profile,
+            aiHandled: ticket.aiHandled,
+            escalated: ticket.escalated,
+            escalatedReason: ticket.escalatedReason,
             createdAt: ticket.createdAt.toISOString(),
             updatedAt: ticket.updatedAt.toISOString(),
         },
         messages: ticket.messages.map(m => ({
             id: m.id, body: m.body,
             fromAdmin: m.authorRole === "ADMIN",
+            fromAi: m.authorRole === "AI",
+            aiConfidence: m.aiConfidence,
             createdAt: m.createdAt.toISOString(),
         })),
     });

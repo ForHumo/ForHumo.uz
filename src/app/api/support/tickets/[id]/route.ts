@@ -45,7 +45,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         messages: ticket.messages.map(m => ({
             id: m.id,
             body: m.body,
-            fromAdmin: m.authorRole === "ADMIN",
+            fromAdmin: m.authorRole === "ADMIN" || m.authorRole === "AI",
+            fromAi: m.authorRole === "AI",
+            aiConfidence: m.aiConfidence,
             createdAt: m.createdAt.toISOString(),
         })),
     });

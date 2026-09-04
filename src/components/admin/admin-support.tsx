@@ -11,13 +11,20 @@ type TicketListItem = {
     id: string; subject: string; status: string; module: string | null;
     email: string;
     profile: { username: string | null; name: string | null; humoId: string | null } | null;
+    aiHandled: boolean;
+    aiConfidence: number | null;
+    escalated: boolean;
+    escalatedReason: string | null;
     createdAt: string; updatedAt: string;
-    lastMessage: { body: string; fromAdmin: boolean; readByAdmin: boolean; createdAt: string } | null;
+    lastMessage: { body: string; fromAdmin: boolean; fromAi?: boolean; readByAdmin: boolean; createdAt: string } | null;
 };
-type Message = { id: string; body: string; fromAdmin: boolean; createdAt: string };
+type Message = { id: string; body: string; fromAdmin: boolean; fromAi?: boolean; aiConfidence?: number | null; createdAt: string };
 type ActiveTicket = {
     id: string; subject: string; status: string; module: string | null; email: string;
     profile: { username: string | null; name: string | null; humoId: string | null; image: string | null } | null;
+    aiHandled?: boolean;
+    escalated?: boolean;
+    escalatedReason?: string | null;
     createdAt: string; updatedAt: string;
 };
 
@@ -28,7 +35,9 @@ const MODULE_LABEL: Record<string, string> = {
 
 export function AdminSupport() {
     const [status, setStatus] = useState<"open" | "pending" | "closed" | "all">("open");
+    const [filter, setFilter] = useState<"" | "escalated" | "ai">("");
     const [list, setList] = useState<TicketListItem[]>([]);
+    const [segments, setSegments] = useState<{ escalated: number; ai: number }>({ escalated: 0, ai: 0 });
     const [loadingList, setLoadingList] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [active, setActive] = useState<ActiveTicket | null>(null);
@@ -41,10 +50,16 @@ export function AdminSupport() {
     const loadList = useCallback(async () => {
         setLoadingList(true);
         try {
-            const r = await fetch(`/api/admin/support/tickets?status=${status}`, { cache: "no-store" });
-            if (r.ok) { const j = await r.json(); setList(j.items ?? []); }
+            const q = new URLSearchParams({ status });
+            if (filter) q.set("filter", filter);
+            const r = await fetch(`/api/admin/support/tickets?${q.toString()}`, { cache: "no-store" });
+            if (r.ok) {
+                const j = await r.json();
+                setList(j.items ?? []);
+                if (j.segments) setSegments(j.segments);
+            }
         } finally { setLoadingList(false); }
-    }, [status]);
+    }, [status, filter]);
 
     const loadThread = useCallback(async (id: string) => {
         setLoadingThread(true);
@@ -126,6 +141,48 @@ export function AdminSupport() {
                             </button>
                         ))}
                     </div>
+
+                    {/* C — AI/escalated filter chip'lar */}
+                    <div className="px-2 py-1.5 border-b border-gray-100 dark:border-white/[0.06] flex gap-1 flex-wrap">
+                        <button
+                            onClick={() => setFilter(filter === "escalated" ? "" : "escalated")}
+                            className={`px-2 py-1 rounded-md text-[10.5px] font-bold flex items-center gap-1 ${
+                                filter === "escalated"
+                                    ? "bg-red-500 text-white"
+                                    : "bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20"
+                            }`}
+                        >
+                            Insonga eskalatsiya
+                            {segments.escalated > 0 && (
+                                <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-red-500 text-[9px] flex items-center justify-center">
+                                    {segments.escalated > 99 ? "99+" : segments.escalated}
+                                </span>
+                            )}
+                        </button>
+                        <button
+                            onClick={() => setFilter(filter === "ai" ? "" : "ai")}
+                            className={`px-2 py-1 rounded-md text-[10.5px] font-bold flex items-center gap-1 ${
+                                filter === "ai"
+                                    ? "bg-purple-500 text-white"
+                                    : "bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20"
+                            }`}
+                        >
+                            <Sparkles size={10} /> AI ishlagan
+                            {segments.ai > 0 && (
+                                <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-purple-500 text-[9px] flex items-center justify-center">
+                                    {segments.ai > 99 ? "99+" : segments.ai}
+                                </span>
+                            )}
+                        </button>
+                        {filter && (
+                            <button
+                                onClick={() => setFilter("")}
+                                className="px-2 py-1 rounded-md text-[10.5px] font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                            >
+                                Tozalash
+                            </button>
+                        )}
+                    </div>
                     <div className="max-h-[70vh] overflow-y-auto">
                         {loadingList && list.length === 0 ? (
                             <div className="flex justify-center py-8"><Loader2 className="animate-spin text-gray-400" /></div>
@@ -140,7 +197,18 @@ export function AdminSupport() {
                                 }`}
                             >
                                 <div className="flex items-center justify-between gap-2">
-                                    <div className="text-sm font-semibold truncate">{t.subject}</div>
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        {t.escalated && (
+                                            <span title="Insonga eskalatsiya"
+                                                className="text-[9px] font-black px-1.5 py-0.5 rounded bg-red-500 text-white flex-shrink-0">
+                                                !
+                                            </span>
+                                        )}
+                                        {t.aiHandled && !t.escalated && (
+                                            <Sparkles size={11} className="text-purple-500 flex-shrink-0" />
+                                        )}
+                                        <div className="text-sm font-semibold truncate">{t.subject}</div>
+                                    </div>
                                     {t.lastMessage && !t.lastMessage.fromAdmin && !t.lastMessage.readByAdmin && (
                                         <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
                                     )}
@@ -212,14 +280,26 @@ export function AdminSupport() {
                                 {loadingThread && messages.length === 0 ? (
                                     <div className="flex justify-center py-8"><Loader2 className="animate-spin text-gray-400" /></div>
                                 ) : messages.map(m => (
-                                    <div key={m.id} className={`flex ${m.fromAdmin ? "justify-end" : "justify-start"}`}>
+                                    <div key={m.id} className={`flex ${m.fromAdmin || m.fromAi ? "justify-end" : "justify-start"}`}>
                                         <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap break-words ${
-                                            m.fromAdmin
+                                            m.fromAi
+                                                ? "bg-purple-500/10 text-purple-900 dark:text-purple-200 border border-purple-500/30 rounded-br-sm"
+                                                : m.fromAdmin
                                                 ? "bg-gray-900 dark:bg-white text-white dark:text-black rounded-br-sm"
                                                 : "bg-gray-100 dark:bg-white/[0.05] text-gray-800 dark:text-gray-200 rounded-bl-sm"
                                         }`}>
+                                            {m.fromAi && (
+                                                <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">
+                                                    <Sparkles size={10} /> AI
+                                                    {typeof m.aiConfidence === "number" && (
+                                                        <span className="ml-auto">
+                                                            {Math.round(m.aiConfidence * 100)}%
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
                                             {m.body}
-                                            <div className={`text-[10px] mt-1 opacity-60 ${m.fromAdmin ? "text-right" : ""}`}>
+                                            <div className={`text-[10px] mt-1 opacity-60 ${m.fromAdmin || m.fromAi ? "text-right" : ""}`}>
                                                 {new Date(m.createdAt).toLocaleString("uz-UZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                                             </div>
                                         </div>

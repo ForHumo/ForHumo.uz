@@ -196,20 +196,27 @@ model LoginEvent {
 }
 
 model SupportTicket {
-  id          String       @id @default(cuid())
-  profileId   String?
-  profile     UserProfile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
-  email       String
-  subject     String
-  message     String       // dastlabki xabar (backward compat)
-  status      String       @default("open")     // open / pending / closed
-  module      String?                            // "bn"|"nexus"|"market"|"pay"|"id"|"esport"|"ai"|"support"
-  updatedAt   DateTime     @default(now()) @updatedAt
-  createdAt   DateTime     @default(now())
-  messages    SupportMessage[]
+  id            String       @id @default(cuid())
+  profileId     String?
+  profile       UserProfile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  email         String
+  subject       String
+  message       String       // dastlabki xabar (backward compat)
+  status        String       @default("open")     // open / pending / closed
+  module        String?                            // "bn"|"nexus"|"market"|"pay"|"id"|"esport"|"ai"|"support"|"belis"
+  // C yondashuv — AI first-line
+  aiHandled     Boolean      @default(false)      // AI (Gemini) hech bo'lmasa 1 marta javob berdi
+  aiConfidence  Float?                            // 0..1 — oxirgi AI javobiga ishonch
+  escalated     Boolean      @default(false)      // Insonga eskalatsiya qilindi (foydalanuvchi so'radi yoki AI qila olmadi)
+  escalatedAt   DateTime?
+  escalatedReason String?                         // "user_requested" | "ai_low_confidence" | "ai_limit" | "manual"
+  updatedAt     DateTime     @default(now()) @updatedAt
+  createdAt     DateTime     @default(now())
+  messages      SupportMessage[]
 
   @@index([profileId, updatedAt(sort: Desc)])
   @@index([status, updatedAt(sort: Desc)])
+  @@index([escalated, updatedAt(sort: Desc)])
 }
 
 // ── Nexus foydalanuvchi papkalari (Telegram-style custom folders) ────────────
@@ -299,9 +306,11 @@ model SupportMessage {
   id           String        @id @default(cuid())
   ticketId     String
   ticket       SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  authorRole   String        // "USER" | "ADMIN"
-  authorId     String?       // profileId
+  authorRole   String        // "USER" | "ADMIN" | "AI"
+  authorId     String?       // profileId (AI uchun @support agent id)
   body         String        // <= 2000
+  aiModel      String?       // masalan "gemini-2.5-flash-lite" — AI javoblarida
+  aiConfidence Float?        // 0..1 — bu javob bo'yicha ishonch
   readByUser   Boolean       @default(true)
   readByAdmin  Boolean       @default(false)
   createdAt    DateTime      @default(now())
