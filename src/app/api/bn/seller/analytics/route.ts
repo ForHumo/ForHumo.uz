@@ -147,6 +147,49 @@ export async function GET(req: Request) {
     const totalViews = viewsCount;
     const conversionPct = totalViews > 0 ? +((totalItems / totalViews) * 100).toFixed(1) : 0;
 
+    // Kunlik trend (sotuv+tushum kunlar bo'yicha) — max 60 kun
+    const daysSpan = Math.min(60, Math.max(1, Math.ceil((to.getTime() - from.getTime()) / 86400000) + 1));
+    const trend: { day: string; orders: number; revenue: number; items: number }[] = [];
+    for (let i = 0; i < daysSpan; i++) {
+        const d = new Date(from.getTime() + i * 86400000);
+        const key = d.toISOString().slice(0, 10);
+        trend.push({ day: key, orders: 0, revenue: 0, items: 0 });
+    }
+    const trendIndex = new Map(trend.map((t, i) => [t.day, i]));
+    for (const o of orders) {
+        const key = (o.completedAt || o.placedAt).toISOString().slice(0, 10);
+        const idx = trendIndex.get(key);
+        if (idx !== undefined) {
+            trend[idx].orders += 1;
+            trend[idx].revenue += (o.subtotal - o.commission);
+        }
+    }
+    for (const it of items) {
+        const orderInfo = orders.find(o => o.id === it.orderId);
+        if (!orderInfo) continue;
+        const key = (orderInfo.completedAt || orderInfo.placedAt).toISOString().slice(0, 10);
+        const idx = trendIndex.get(key);
+        if (idx !== undefined) trend[idx].items += it.qty;
+    }
+
+    // Kategoriya bo'yicha breakdown
+    const productsForCat = await prisma.bnProduct.findMany({
+        where: { id: { in: [...soldIds].length > 0 ? [...soldIds] : ["_none_"] } },
+        select: { id: true, category: { select: { slug: true, name: true } } },
+    });
+    const catMap = new Map<string, { slug: string; name: string; soldQty: number; revenue: number; products: number }>();
+    for (const p of productsForCat) {
+        if (!p.category) continue;
+        const row = rowMap.get(p.id);
+        if (!row) continue;
+        const k = catMap.get(p.category.slug) || { slug: p.category.slug, name: p.category.name, soldQty: 0, revenue: 0, products: 0 };
+        k.soldQty += row.soldQty;
+        k.revenue += row.revenue;
+        k.products += 1;
+        catMap.set(p.category.slug, k);
+    }
+    const categoryBreakdown = [...catMap.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+
     // AI kunlik tavsiya (bo'lsa — oxirgi kunlik)
     const latestInsight = await prisma.bnSellerInsight.findFirst({
         where: { shopId: shop.id },
@@ -168,6 +211,8 @@ export async function GET(req: Request) {
             staleCount,
             unsoldCount: unsoldProducts.length,
         },
+        trend,
+        categoryBreakdown,
         rankings: {
             topSold,
             topRevenue: topRev,

@@ -1,15 +1,16 @@
 "use client";
 
-// Sotuvchi tahlil ekrani — 4 dashboard raqam + AI tavsiya + 5 reyting + sotilmagan.
-// Sana filtri bilan.
+// Sotuvchi tahlil ekrani — 4 dashboard raqam + AI tavsiya + trend grafik +
+// kategoriya breakdown + 5 reyting + sotilmagan (tez chegirma).
 
 import { useEffect, useMemo, useState } from "react";
 import {
     TrendingUp, TrendingDown, DollarSign, Package, Users, Eye,
     Trophy, Award, Percent, Ban, Sparkles, ChevronRight,
-    AlertTriangle, Calendar, Loader2, Store, Check,
+    AlertTriangle, Calendar, Loader2, Store, Check, Download,
+    Tag, BarChart3, Layers, X,
 } from "lucide-react";
-import { BN, fmtPrice } from "@/lib/bn-theme";
+import { BN, fmtPrice, fmtPriceShort } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 
 interface RankRow {
@@ -29,52 +30,39 @@ interface UnsoldRow {
     views: number;
     daysSinceCreated: number;
 }
-interface InsightItem {
-    type?: string;
-    title: string;
-    body?: string;
-    productId?: string;
-    action?: string;
-    actionUrl?: string;
-}
+interface TrendPoint { day: string; orders: number; revenue: number; items: number }
+interface CatRow { slug: string; name: string; soldQty: number; revenue: number; products: number }
+interface InsightItem { type?: string; title: string; body?: string; productId?: string; action?: string; actionUrl?: string }
+
 interface AnalyticsResp {
     shop: { id: string; name: string; productCount: number };
     period: { from: string; to: string };
     summary: {
-        totalRevenue: number;
-        totalOrders: number;
-        totalItems: number;
-        uniqueBuyers: number;
-        avgOrder: number;
-        totalViews: number;
-        conversionPct: number;
-        staleCount: number;
-        unsoldCount: number;
+        totalRevenue: number; totalOrders: number; totalItems: number;
+        uniqueBuyers: number; avgOrder: number; totalViews: number;
+        conversionPct: number; staleCount: number; unsoldCount: number;
     };
+    trend: TrendPoint[];
+    categoryBreakdown: CatRow[];
     rankings: {
-        topSold: RankRow[];
-        topRevenue: RankRow[];
-        lowSold: RankRow[];
-        lowRevenue: RankRow[];
+        topSold: RankRow[]; topRevenue: RankRow[];
+        lowSold: RankRow[]; lowRevenue: RankRow[];
         unsold: UnsoldRow[];
     };
     insight: {
-        id: string;
-        items: InsightItem[];
-        aiSummary: string | null;
-        createdAt: string;
-        seen: boolean;
+        id: string; items: InsightItem[]; aiSummary: string | null;
+        createdAt: string; seen: boolean;
     } | null;
 }
 
 type RankKey = "topSold" | "topRevenue" | "lowSold" | "lowRevenue" | "unsold";
 
 const RANK_META: Record<RankKey, { label: string; icon: typeof Trophy; color: string }> = {
-    topSold:    { label: "Eng ko'p sotilgan",   icon: Trophy,      color: BN.gold },
-    topRevenue: { label: "Eng ko'p tushum",     icon: DollarSign,  color: BN.ok },
-    lowSold:    { label: "Eng kam sotilgan",    icon: TrendingDown, color: BN.info },
-    lowRevenue: { label: "Eng kam tushum",      icon: Award,        color: BN.warn },
-    unsold:     { label: "Umuman sotilmagan",   icon: Ban,          color: BN.err },
+    topSold:    { label: "Eng ko'p sotilgan", icon: Trophy,      color: BN.gold },
+    topRevenue: { label: "Eng ko'p tushum",   icon: DollarSign,  color: BN.ok },
+    lowSold:    { label: "Eng kam sotilgan",  icon: TrendingDown, color: BN.info },
+    lowRevenue: { label: "Eng kam tushum",    icon: Award,        color: BN.warn },
+    unsold:     { label: "Umuman sotilmagan", icon: Ban,          color: BN.err },
 };
 
 function isoDate(d: Date): string {
@@ -89,38 +77,37 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
     const [data, setData] = useState<AnalyticsResp | null>(null);
     const [loading, setLoading] = useState(false);
     const [rank, setRank] = useState<RankKey>("topSold");
+    const [discountRow, setDiscountRow] = useState<UnsoldRow | null>(null);
 
-    useEffect(() => {
-        let alive = true;
+    const reload = () => {
         setLoading(true);
         fetch(`/api/bn/seller/analytics?from=${from}&to=${to}`, { cache: "no-store" })
             .then(r => r.json())
-            .then(j => { if (alive) setData(j); })
+            .then(j => setData(j))
             .catch(() => {})
-            .finally(() => { if (alive) setLoading(false); });
-        return () => { alive = false; };
-    }, [from, to]);
+            .finally(() => setLoading(false));
+    };
 
-    // Insight seen belgilash
+    useEffect(() => { reload(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [from, to]);
+
     useEffect(() => {
         if (!data?.insight || data.insight.seen) return;
         fetch("/api/bn/seller/insight/seen", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+            method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: data.insight.id }),
         }).catch(() => {});
     }, [data?.insight?.id, data?.insight?.seen]);
 
-    const rows: (RankRow | UnsoldRow)[] = useMemo(() => {
-        if (!data) return [];
-        return data.rankings[rank] as (RankRow | UnsoldRow)[];
-    }, [data, rank]);
+    const rows: (RankRow | UnsoldRow)[] = useMemo(() => data ? data.rankings[rank] : [], [data, rank]);
 
     const setQuickRange = (days: number) => {
         const t = new Date();
         const f = new Date(t.getTime() - (days - 1) * 86400000);
-        setFrom(isoDate(f));
-        setTo(isoDate(t));
+        setFrom(isoDate(f)); setTo(isoDate(t));
+    };
+
+    const exportCsv = () => {
+        window.open(`/api/bn/seller/analytics/export?type=${rank}&from=${from}&to=${to}`, "_blank");
     };
 
     return (
@@ -146,7 +133,7 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
                 </BnLink>
             </div>
 
-            {/* Sana filtri + tez tugma */}
+            {/* Sana filtri */}
             <div className="rounded-2xl p-3 mb-5 flex flex-wrap items-center gap-2"
                 style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
                 <div className="flex items-center gap-2 flex-1 min-w-[280px]">
@@ -160,11 +147,7 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
                         style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }} />
                 </div>
                 <div className="flex items-center gap-1.5">
-                    {[
-                        { d: 7, label: "7 kun" },
-                        { d: 30, label: "30 kun" },
-                        { d: 90, label: "90 kun" },
-                    ].map(x => (
+                    {[{ d: 7, label: "7 kun" }, { d: 30, label: "30 kun" }, { d: 90, label: "90 kun" }].map(x => (
                         <button key={x.d} onClick={() => setQuickRange(x.d)}
                             className="h-8 px-3 rounded-lg text-[12px] font-black hover:brightness-95"
                             style={{ background: BN.surfaceUp, color: BN.text2, border: `1px solid ${BN.border}` }}>
@@ -182,7 +165,7 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
 
             {data && (
                 <>
-                    {/* AI TAVSIYA (yuqorida — asosiy) */}
+                    {/* AI TAVSIYA */}
                     {data.insight && data.insight.items.length > 0 && (
                         <div className="rounded-2xl p-4 sm:p-5 mb-5"
                             style={{ background: `linear-gradient(135deg, ${BN.goldSoft} 0%, ${BN.surface} 60%)`,
@@ -190,7 +173,7 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
                             <div className="flex items-start gap-3 mb-3">
                                 <span className="w-9 h-9 rounded-xl grid place-items-center flex-shrink-0"
                                     style={{ background: BN.gold, color: BN.onGold }}>
-                                    <Sparkles className="w-4.5 h-4.5" />
+                                    <Sparkles className="w-4 h-4" />
                                 </span>
                                 <div className="min-w-0">
                                     <p className="text-[15px] font-black">AI tavsiya — bugun</p>
@@ -222,7 +205,7 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
                         </div>
                     )}
 
-                    {/* 4 KATTA RAQAM (dashboard) */}
+                    {/* 4 KATTA RAQAM */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-5">
                         <StatCard icon={DollarSign} label="Tushum" value={fmtPrice(data.summary.totalRevenue)}
                             hint={`${data.summary.totalOrders} buyurtma`} color={BN.ok} />
@@ -231,8 +214,63 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
                         <StatCard icon={Users} label="Xaridor" value={String(data.summary.uniqueBuyers)}
                             hint={data.summary.avgOrder > 0 ? `o'rt. ${fmtPrice(data.summary.avgOrder)}` : "—"} color={BN.info} />
                         <StatCard icon={Eye} label="Ko'rishlar" value={String(data.summary.totalViews)}
-                            hint={data.summary.conversionPct > 0 ? `${data.summary.conversionPct}% konversiya` : "—"} color={BN.warn} />
+                            hint={data.summary.conversionPct > 0 ? `${data.summary.conversionPct}% konv.` : "—"} color={BN.warn} />
                     </div>
+
+                    {/* TREND GRAFIK */}
+                    {data.trend.length > 1 && (
+                        <div className="rounded-2xl p-4 sm:p-5 mb-5"
+                            style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
+                            <div className="flex items-center gap-2 mb-4">
+                                <BarChart3 className="w-4 h-4" style={{ color: BN.gold }} />
+                                <p className="text-[14px] font-black" style={{ color: BN.text }}>Kunlik dinamika</p>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <MiniBars title="Tushum" data={data.trend} pick={p => p.revenue} color={BN.ok} money />
+                                <MiniBars title="Buyurtma" data={data.trend} pick={p => p.orders} color={BN.gold} />
+                                <MiniBars title="Sotildi (dona)" data={data.trend} pick={p => p.items} color={BN.info} />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* KATEGORIYA BREAKDOWN */}
+                    {data.categoryBreakdown.length > 0 && (
+                        <div className="rounded-2xl p-4 sm:p-5 mb-5"
+                            style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
+                            <div className="flex items-center gap-2 mb-3">
+                                <Layers className="w-4 h-4" style={{ color: BN.gold }} />
+                                <p className="text-[14px] font-black">Kategoriyalar bo'yicha</p>
+                            </div>
+                            <div className="space-y-2">
+                                {data.categoryBreakdown.map((c, i) => {
+                                    const maxRev = data.categoryBreakdown[0].revenue || 1;
+                                    const w = Math.round((c.revenue / maxRev) * 100);
+                                    return (
+                                        <div key={c.slug} className="p-2.5 rounded-xl"
+                                            style={{ background: BN.surfaceUp }}>
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <span className="text-[11px] font-black tabular-nums"
+                                                        style={{ color: i === 0 ? BN.gold : BN.text3 }}>{i + 1}.</span>
+                                                    <p className="text-[13px] font-bold truncate" style={{ color: BN.text }}>{c.name}</p>
+                                                </div>
+                                                <p className="text-[12.5px] font-black tabular-nums flex-shrink-0"
+                                                    style={{ color: BN.gold }}>{fmtPriceShort(c.revenue)}</p>
+                                            </div>
+                                            <div className="h-1.5 rounded-full overflow-hidden"
+                                                style={{ background: BN.surface }}>
+                                                <div style={{ width: `${w}%`, height: "100%",
+                                                    background: `linear-gradient(90deg, ${BN.gold}, ${BN.goldLight})` }} />
+                                            </div>
+                                            <p className="text-[10.5px] mt-1" style={{ color: BN.text3 }}>
+                                                {c.soldQty} dona · {c.products} mahsulot
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
                     {/* SOTILMAGAN OGOHLANTIRISH */}
                     {data.summary.staleCount > 0 && (
@@ -258,7 +296,6 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
                     {/* 5 REYTING */}
                     <div className="rounded-2xl overflow-hidden"
                         style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
-                        {/* Reyting tanlash */}
                         <div className="p-2 flex items-center gap-1.5 overflow-x-auto border-b"
                             style={{ borderColor: BN.border }}>
                             {(Object.keys(RANK_META) as RankKey[]).map(k => {
@@ -277,6 +314,13 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
                                     </button>
                                 );
                             })}
+                            <div className="flex-1" />
+                            <button onClick={exportCsv} disabled={rows.length === 0}
+                                className="h-9 px-3 rounded-xl text-[12px] font-black inline-flex items-center gap-1.5 flex-shrink-0 hover:brightness-95 disabled:opacity-40"
+                                style={{ background: BN.surfaceUp, color: BN.text2, border: `1px solid ${BN.border}` }}
+                                title="CSV eksport (Excel)">
+                                <Download className="w-3.5 h-3.5" /> CSV
+                            </button>
                         </div>
 
                         {rows.length === 0 ? (
@@ -289,13 +333,13 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
                         ) : (
                             <div className="divide-y" style={{ borderColor: BN.border }}>
                                 {rows.map((r, i) => (
-                                    <RankRow key={r.productId} row={r} index={i + 1} isUnsold={rank === "unsold"} />
+                                    <RankRow key={r.productId} row={r} index={i + 1} isUnsold={rank === "unsold"}
+                                        onDiscount={rank === "unsold" ? () => setDiscountRow(r as UnsoldRow) : undefined} />
                                 ))}
                             </div>
                         )}
                     </div>
 
-                    {/* Yakuniy izoh */}
                     <div className="mt-6 text-center">
                         <p className="text-[11.5px]" style={{ color: BN.text3 }}>
                             <Check className="w-3 h-3 inline mr-1" />
@@ -303,6 +347,11 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
                         </p>
                     </div>
                 </>
+            )}
+
+            {discountRow && (
+                <DiscountModal row={discountRow} onClose={() => setDiscountRow(null)}
+                    onDone={() => { setDiscountRow(null); reload(); }} />
             )}
         </div>
     );
@@ -324,7 +373,42 @@ function StatCard({ icon: Icon, label, value, hint, color }: {
     );
 }
 
-function RankRow({ row, index, isUnsold }: { row: RankRow | UnsoldRow; index: number; isUnsold: boolean }) {
+function MiniBars({ title, data, pick, color, money }: {
+    title: string; data: TrendPoint[]; pick: (p: TrendPoint) => number; color: string; money?: boolean;
+}) {
+    const values = data.map(pick);
+    const max = Math.max(1, ...values);
+    const total = values.reduce((a, b) => a + b, 0);
+    return (
+        <div>
+            <div className="flex items-baseline justify-between mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: BN.text3 }}>{title}</span>
+                <span className="text-[13px] font-black tabular-nums" style={{ color }}>
+                    {money ? fmtPriceShort(total) : total}
+                </span>
+            </div>
+            <div className="flex items-end gap-1 h-16" role="img" aria-label={`${title} kunlik grafik`}>
+                {data.map((p, i) => {
+                    const v = pick(p);
+                    const h = Math.round((v / max) * 100);
+                    const isLast = i === data.length - 1;
+                    return (
+                        <div key={p.day} title={`${p.day.slice(5)}: ${money ? fmtPriceShort(v) : v}`}
+                            className="flex-1 flex flex-col justify-end">
+                            <div className="w-full rounded-t transition-all"
+                                style={{ background: color, height: `${Math.max(3, h)}%`, opacity: v === 0 ? 0.15 : isLast ? 1 : 0.7 }} />
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+function RankRow({ row, index, isUnsold, onDiscount }: {
+    row: RankRow | UnsoldRow; index: number; isUnsold: boolean;
+    onDiscount?: () => void;
+}) {
     const isSold = "soldQty" in row;
     return (
         <div className="flex items-center gap-3 p-3 hover:brightness-95 transition"
@@ -370,13 +454,118 @@ function RankRow({ row, index, isUnsold }: { row: RankRow | UnsoldRow; index: nu
                     </p>
                 )}
             </div>
-            {isUnsold && (
-                <BnLink href={`/p/${row.productId}`}
+            {isUnsold && onDiscount && (
+                <button onClick={onDiscount} title="Chegirma qo'yish"
                     className="w-9 h-9 rounded-lg grid place-items-center flex-shrink-0 hover:brightness-95"
-                    style={{ background: BN.surfaceUp, color: BN.text2 }}>
-                    <ChevronRight className="w-4 h-4" />
-                </BnLink>
+                    style={{ background: BN.gold, color: BN.onGold }}>
+                    <Tag className="w-4 h-4" />
+                </button>
             )}
+        </div>
+    );
+}
+
+function DiscountModal({ row, onClose, onDone }: { row: UnsoldRow; onClose: () => void; onDone: () => void }) {
+    const [pct, setPct] = useState(15);
+    const [busy, setBusy] = useState(false);
+    const [err, setErr] = useState<string | null>(null);
+    const preview = Math.round(row.price * (1 - pct / 100) / 100) * 100;
+    const savePerUnit = row.price - preview;
+
+    const apply = async () => {
+        setBusy(true); setErr(null);
+        try {
+            const r = await fetch(`/api/bn/seller/products/${row.productId}/discount`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pct }),
+            });
+            const j = await r.json();
+            if (!r.ok) { setErr(j?.message || "Xatolik"); setBusy(false); return; }
+            onDone();
+        } catch {
+            setErr("Tarmoq xatosi");
+            setBusy(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[1000] grid place-items-center p-4"
+            style={{ background: "rgba(0,0,0,0.7)" }} onClick={onClose}>
+            <div onClick={e => e.stopPropagation()}
+                className="w-full max-w-md rounded-2xl overflow-hidden"
+                style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}>
+                <div className="p-4 flex items-center gap-2 border-b" style={{ borderColor: BN.border }}>
+                    <Tag className="w-4 h-4" style={{ color: BN.gold }} />
+                    <p className="text-[14px] font-black flex-1" style={{ color: BN.text }}>Chegirma qo'yish</p>
+                    <button onClick={onClose} className="w-8 h-8 rounded-lg grid place-items-center hover:brightness-95"
+                        style={{ color: BN.text2 }}>
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+                <div className="p-4 space-y-4">
+                    <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: BN.surfaceUp }}>
+                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0" style={{ background: BN.surface }}>
+                            {row.imageUrl && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={row.imageUrl} alt="" className="w-full h-full object-cover" />
+                            )}
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[13.5px] font-bold truncate" style={{ color: BN.text }}>{row.title}</p>
+                            <p className="text-[11.5px]" style={{ color: BN.text3 }}>
+                                Joriy: {fmtPrice(row.price)}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <p className="text-[12px] font-black uppercase tracking-wider" style={{ color: BN.text3 }}>
+                                Chegirma foizi
+                            </p>
+                            <p className="text-[18px] font-black" style={{ color: BN.gold }}>-{pct}%</p>
+                        </div>
+                        <input type="range" min={3} max={70} step={1} value={pct}
+                            onChange={e => setPct(Number(e.target.value))}
+                            className="w-full accent-current" style={{ color: BN.gold }} />
+                        <div className="flex justify-between text-[10.5px] mt-1" style={{ color: BN.text3 }}>
+                            <span>3%</span><span>70%</span>
+                        </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl grid grid-cols-2 gap-3"
+                        style={{ background: BN.goldSoft, border: `1px solid ${BN.borderGold}` }}>
+                        <div>
+                            <p className="text-[10.5px] font-black uppercase tracking-wider" style={{ color: BN.text3 }}>Yangi narx</p>
+                            <p className="text-[16px] font-black" style={{ color: BN.gold }}>{fmtPrice(preview)}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10.5px] font-black uppercase tracking-wider" style={{ color: BN.text3 }}>Tejaladi</p>
+                            <p className="text-[14px] font-black" style={{ color: BN.text }}>{fmtPrice(savePerUnit)}</p>
+                        </div>
+                    </div>
+
+                    {err && (
+                        <div className="text-[12px] p-2 rounded-lg" style={{ background: BN.errSoft, color: BN.err }}>
+                            {err}
+                        </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                        <button onClick={onClose} disabled={busy}
+                            className="flex-1 h-11 rounded-xl text-[13px] font-black hover:brightness-95"
+                            style={{ background: BN.surfaceUp, color: BN.text2, border: `1px solid ${BN.border}` }}>
+                            Bekor
+                        </button>
+                        <button onClick={apply} disabled={busy}
+                            className="flex-1 h-11 rounded-xl text-[13px] font-black hover:brightness-95 inline-flex items-center justify-center gap-1.5"
+                            style={{ background: BN.gold, color: BN.onGold }}>
+                            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4" />}
+                            Chegirmani qo'llash
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

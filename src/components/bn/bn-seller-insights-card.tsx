@@ -22,6 +22,7 @@ interface AnalyticsMini {
         items: { title: string; body?: string }[];
         aiSummary: string | null;
         seen: boolean;
+        createdAt: string;
     } | null;
 }
 
@@ -57,17 +58,26 @@ export function BnSellerInsightsCard() {
         summary: data.insight.aiSummary,
         count: data.insight.items.length,
     } : null;
+    const isNew = data.insight ? !data.insight.seen : false;
 
     return (
         <div className="space-y-3 mb-6">
             {/* AI tavsiya preview */}
             {preview && (
                 <BnLink href="/sotuvchi/tahlil"
-                    className="block rounded-2xl p-4 hover:brightness-95 transition"
+                    className="relative block rounded-2xl p-4 hover:brightness-95 transition"
                     style={{
                         background: `linear-gradient(135deg, ${BN.goldSoft} 0%, ${BN.surface} 60%)`,
                         border: `1px solid ${BN.borderGold}`,
                     }}>
+                    {isNew && (
+                        <span className="absolute top-2 right-2 flex items-center justify-center">
+                            <span className="absolute inline-flex h-4 w-4 rounded-full opacity-75 animate-ping"
+                                style={{ background: BN.gold }} />
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5"
+                                style={{ background: BN.gold }} />
+                        </span>
+                    )}
                     <div className="flex items-start gap-3">
                         <span className="w-9 h-9 rounded-xl grid place-items-center flex-shrink-0"
                             style={{ background: BN.gold, color: BN.onGold }}>
@@ -76,10 +86,17 @@ export function BnSellerInsightsCard() {
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
                                 <p className="text-[13px] font-black" style={{ color: BN.text }}>AI tavsiya</p>
-                                <span className="px-1.5 py-0.5 rounded-md text-[9.5px] font-black uppercase"
-                                    style={{ background: BN.gold, color: BN.onGold }}>
-                                    {preview.count} yangi
-                                </span>
+                                {isNew ? (
+                                    <span className="px-1.5 py-0.5 rounded-md text-[9.5px] font-black uppercase animate-pulse"
+                                        style={{ background: BN.gold, color: BN.onGold }}>
+                                        YANGI · {preview.count}
+                                    </span>
+                                ) : (
+                                    <span className="px-1.5 py-0.5 rounded-md text-[9.5px] font-black uppercase"
+                                        style={{ background: BN.goldSoft, color: BN.gold }}>
+                                        {preview.count} tavsiya
+                                    </span>
+                                )}
                             </div>
                             <p className="text-[13px] font-bold line-clamp-2" style={{ color: BN.text }}>
                                 {preview.firstItem?.title}
