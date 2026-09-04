@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { requireBelisAuth } from "@/lib/belis-auth";
+import { belisRate, BELIS_RATE_MSG } from "@/lib/belis-rate";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,15 @@ const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 export async function POST(req: Request) {
     const auth = await requireBelisAuth();
     if (auth instanceof NextResponse) return auth;
+
+    // Rate-limit: 10 rasm / soat / profil (spam yuklashdan himoya)
+    const rate = await belisRate(auth.profileId, "passportUpload");
+    if (rate.limited) {
+        return NextResponse.json({
+            error: "rate_limited",
+            message: BELIS_RATE_MSG,
+        }, { status: 429 });
+    }
 
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
         return NextResponse.json({ error: "storage_not_configured" }, { status: 503 });

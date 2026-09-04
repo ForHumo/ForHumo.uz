@@ -18,6 +18,7 @@
 import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBelisAuth } from "@/lib/belis-auth";
+import { belisRate, BELIS_RATE_MSG } from "@/lib/belis-rate";
 import { belisPushAdmins } from "@/lib/belis-notify";
 import {
     calcBookingSchedule,
@@ -42,6 +43,16 @@ export async function POST(req: Request) {
             error: "humo_id_required",
             hint: "Booking berish uchun Humo ID kerak. /id sahifasidan oling.",
         }, { status: 403 });
+    }
+
+    // Rate-limit: 5 ariza / soat / profil
+    const rate = await belisRate(auth.profileId, "bookingCreate");
+    if (rate.limited) {
+        return NextResponse.json({
+            error: "rate_limited",
+            message: BELIS_RATE_MSG,
+            retryAfterMinutes: rate.windowMinutes,
+        }, { status: 429 });
     }
 
     const body = await req.json().catch(() => ({}));

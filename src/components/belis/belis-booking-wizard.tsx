@@ -45,6 +45,12 @@ function todayISO(): string {
     const t = new Date();
     return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate() + 1).padStart(2, "0")}`;
 }
+function maxDateISO(): string {
+    // 6 oydan uzoq muddatga oldindan buyurtma qabul qilinmaydi
+    const t = new Date();
+    t.setMonth(t.getMonth() + 6);
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+}
 
 export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Props) {
     const { status } = useSession();
@@ -281,6 +287,7 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                                 value={eventDate}
                                 onChange={setEventDate}
                                 min={todayISO()}
+                                max={maxDateISO()}
                                 placeholder="Marosim sanasini tanlang"
                             />
 

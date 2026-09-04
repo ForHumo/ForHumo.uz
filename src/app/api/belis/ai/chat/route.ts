@@ -5,8 +5,11 @@
 // Javob: { reply: string, recommendedSlug?: string }
 
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { aiJSON, aiAvailable } from "@/lib/ai";
 import { prisma } from "@/lib/prisma";
+import { getBelisAuth } from "@/lib/belis-auth";
+import { belisRate, BELIS_RATE_MSG } from "@/lib/belis-rate";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -17,6 +20,21 @@ interface Reply { reply: string; recommendedSlug: string | null }
 export async function POST(req: Request) {
     if (!aiAvailable()) {
         return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
+    }
+
+    // Cost limit: anonim so'rovlarga ruxsat berma (Gemini pullik) + kuniga 30 so'rov/profil.
+    const auth = await getBelisAuth();
+    if (!auth) {
+        return NextResponse.json({ error: "auth_required" }, { status: 401 });
+    }
+    const rate = await belisRate(auth.profileId, "aiChat");
+    if (rate.limited) {
+        return NextResponse.json({
+            error: "rate_limited",
+            message: `${BELIS_RATE_MSG} (kuniga ${rate.max} so'rov chegarasi).`,
+            used: rate.used,
+            max: rate.max,
+        }, { status: 429 });
     }
 
     const body = await req.json().catch(() => ({}));
@@ -64,6 +82,13 @@ JSON qaytar: { "reply": "matn", "recommendedSlug": "fotiha-standart" yoki null }
     if (!result || !result.reply) {
         return NextResponse.json({ error: "ai_failed" }, { status: 502 });
     }
+
+    // Rate-limit uchun aiUsage yozamiz (belis kanaliga). Javobni kechiktirmasin.
+    after(async () => {
+        try {
+            await prisma.aiUsage.create({ data: { profileId: auth.profileId, kind: "belis" } });
+        } catch { /* fail-open */ }
+    });
 
     return NextResponse.json({
         reply: result.reply.trim().slice(0, 1000),

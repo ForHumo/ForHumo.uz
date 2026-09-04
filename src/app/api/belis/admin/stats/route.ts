@@ -75,6 +75,28 @@ export async function GET() {
         prisma.belisItem.count({ where: { isActive: true, hidden: false } }),
     ]);
 
+    // 7 kunlik trend — har kunga alohida count/summa (chart uchun)
+    const days: Array<{ day: string; label: string; bookings: number; revenue: number }> = [];
+    for (let i = 6; i >= 0; i--) {
+        const d0 = new Date(now); d0.setDate(d0.getDate() - i); d0.setHours(0, 0, 0, 0);
+        const d1 = new Date(d0); d1.setHours(23, 59, 59, 999);
+        const [bCount, rSum] = await Promise.all([
+            prisma.belisRentalBooking.count({
+                where: { createdAt: { gte: d0, lte: d1 } },
+            }),
+            prisma.belisRentalBooking.aggregate({
+                _sum: { paidRent: true, fineUzs: true },
+                where: { actualReturnedAt: { gte: d0, lte: d1 } },
+            }),
+        ]);
+        days.push({
+            day: d0.toISOString().slice(0, 10),
+            label: d0.toLocaleDateString("uz-UZ", { weekday: "short", day: "2-digit" }),
+            bookings: bCount,
+            revenue: (rSum._sum.paidRent ?? 0) + (rSum._sum.fineUzs ?? 0),
+        });
+    }
+
     return NextResponse.json({
         today: {
             pickups: pickupsToday,
@@ -93,5 +115,6 @@ export async function GET() {
             activeKomplekts,
             activeItems,
         },
+        trend: days,
     });
 }

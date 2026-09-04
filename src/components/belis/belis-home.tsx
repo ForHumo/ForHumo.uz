@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT, BELIS_SOCIAL, BELIS_LOCATION } from "@/lib/belis-theme";
 import { BelisLink } from "./belis-nav";
+import { BelisInstallCard } from "./belis-install-card";
 
 interface Komplekt {
     id: string;
@@ -76,6 +77,9 @@ export function BelisHome() {
                     </div>
                 </div>
             </section>
+
+            {/* PWA install banner (iOS Web Push uchun muhim) */}
+            <BelisInstallCard />
 
             {/* Komplektlar preview */}
             <section>

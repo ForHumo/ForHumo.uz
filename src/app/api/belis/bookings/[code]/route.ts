@@ -60,8 +60,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ code: s
             image: buyerProfile.image,
             verified: !!buyerProfile.emailVerified,
         } : null,
-        // Pasport rasm faqat egasi yoki adminga
-        passportUrl: (b.buyerId === auth.profileId || auth.isAdmin) ? b.passportUrl : null,
+        // Pasport rasm faqat egasi yoki adminga — proxy orqali (xom blob URL clientga tushmasin)
+        passportUrl: (b.buyerId === auth.profileId || auth.isAdmin) && b.passportUrl
+            ? `/api/belis/passport/${b.code}`
+            : null,
         passportSeries: (b.buyerId === auth.profileId || auth.isAdmin) ? b.passportSeries : null,
         contractUrl: b.contractUrl,
         eventDate: b.eventDate.toISOString(),

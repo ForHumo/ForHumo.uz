@@ -388,10 +388,12 @@ function ReturnModal({ booking, onClose, onDone }: {
 }
 
 // KPI dashboard qatori — bugun/hafta/butun vaqt statistikasi
+interface TrendDay { day: string; label: string; bookings: number; revenue: number }
 interface Stats {
     today: { pickups: number; returns: number; requests: number };
     thisWeek: { newBookings: number; completedOrders: number; expectedRevenue: number; actualRevenue: number };
     allTime: { totalBookings: number; totalRevenue: number; activeKomplekts: number; activeItems: number };
+    trend?: TrendDay[];
 }
 
 function BelisKpiRow() {
@@ -432,6 +434,66 @@ function BelisKpiRow() {
                     value={stats?.allTime.activeKomplekts ?? "…"}
                     hint={stats ? `${stats.allTime.activeItems} quti aktiv` : ""}
                 />
+            </div>
+
+            {stats?.trend && stats.trend.length > 0 && <BelisTrendChart data={stats.trend} />}
+        </div>
+    );
+}
+
+function BelisTrendChart({ data }: { data: TrendDay[] }) {
+    const maxBook = Math.max(1, ...data.map(d => d.bookings));
+    const maxRev = Math.max(1, ...data.map(d => d.revenue));
+    const todayIdx = data.length - 1;
+
+    return (
+        <div className="mt-3 rounded-2xl p-4"
+            style={{ background: BELIS.surface, border: `1px solid ${BELIS.border}` }}>
+            <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-black uppercase tracking-widest" style={{ color: BELIS.text3 }}>
+                    So&apos;nggi 7 kun
+                </p>
+                <div className="flex items-center gap-3 text-[10.5px]">
+                    <span className="flex items-center gap-1" style={{ color: BELIS.text2 }}>
+                        <span className="w-2 h-2 rounded-sm" style={{ background: BELIS.gold }} />
+                        Ariza
+                    </span>
+                    <span className="flex items-center gap-1" style={{ color: BELIS.text2 }}>
+                        <span className="w-2 h-2 rounded-sm" style={{ background: BELIS.goldDeep }} />
+                        Daromad
+                    </span>
+                </div>
+            </div>
+            <div className="flex items-end gap-1.5" style={{ height: 96 }}>
+                {data.map((d, i) => {
+                    const bh = Math.max(4, (d.bookings / maxBook) * 72);
+                    const rh = Math.max(4, (d.revenue / maxRev) * 72);
+                    const isToday = i === todayIdx;
+                    return (
+                        <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
+                            <div className="w-full flex items-end justify-center gap-0.5" style={{ height: 76 }}>
+                                <div className="w-full max-w-[10px] rounded-t"
+                                    title={`Ariza: ${d.bookings}`}
+                                    style={{
+                                        height: `${bh}px`,
+                                        background: BELIS.gold,
+                                        opacity: isToday ? 1 : 0.75,
+                                    }} />
+                                <div className="w-full max-w-[10px] rounded-t"
+                                    title={`Daromad: ${(d.revenue / 1000).toFixed(0)}K so'm`}
+                                    style={{
+                                        height: `${rh}px`,
+                                        background: BELIS.goldDeep,
+                                        opacity: isToday ? 1 : 0.75,
+                                    }} />
+                            </div>
+                            <span className="text-[9.5px] whitespace-nowrap"
+                                style={{ color: isToday ? BELIS.goldDeep : BELIS.text3, fontWeight: isToday ? 900 : 500 }}>
+                                {d.label}
+                            </span>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
