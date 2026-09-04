@@ -37,6 +37,7 @@ export function HumoIdNavbar() {
                     { label: "Profilim", href: "/id" },
                     { label: "Tahrirlash", href: "/id/edit" },
                     { label: "Tasdiqlash", href: "/id/verify" },
+                    { label: "Bilim bazam", href: "/id/knowledge" },
                 ],
             }}
             extra={<div className="flex items-center gap-2">{levelBadge}<NavbarSupportButton variant="blue" /></div>}

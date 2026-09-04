@@ -35,7 +35,27 @@ export function AiChatPage() {
     const [loadingConvs, setLoadingConvs] = useState(false);
     const [loadingThread, setLoadingThread] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);   // mobile
+    const [kbCount, setKbCount] = useState<number | null>(null);   // bilim bazasi kattaligi
+    const [kbBannerDismissed, setKbBannerDismissed] = useState(false);
     const bottomRef = useRef<HTMLDivElement>(null);
+
+    // KB count — banner ko'rsatish uchun
+    useEffect(() => {
+        if (status !== "authenticated") return;
+        fetch("/api/ai/knowledge", { cache: "no-store" })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (d) setKbCount(d.total ?? 0); })
+            .catch(() => {});
+        try {
+            const dismissed = localStorage.getItem("ai-kb-banner-dismissed");
+            if (dismissed) setKbBannerDismissed(true);
+        } catch { /* ignore */ }
+    }, [status]);
+
+    function dismissKbBanner() {
+        try { localStorage.setItem("ai-kb-banner-dismissed", "1"); } catch { /* ignore */ }
+        setKbBannerDismissed(true);
+    }
 
     // Yuklash — suhbatlar ro'yxati
     const loadConvs = useCallback(async () => {
@@ -283,6 +303,38 @@ export function AiChatPage() {
                         </p>
                     </div>
                 </header>
+
+                {/* Proaktiv KB banner — bilim bazasi 5 dan kam bo'lsa taklif */}
+                {kbCount !== null && kbCount < 5 && !kbBannerDismissed && (
+                    <div className="mx-4 mt-3 p-3 rounded-xl flex items-start gap-2.5 border"
+                        style={{ background: T.soft, borderColor: T.border }}>
+                        <span className="w-8 h-8 rounded-lg grid place-items-center flex-shrink-0"
+                            style={{ background: T.gradient, color: T.onPrimary }}>
+                            <Sparkles className="w-4 h-4" />
+                        </span>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[12.5px] font-black" style={{ color: T.primary }}>
+                                Sizni yaxshiroq tanish uchun 1 daqiqa
+                            </p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                                {kbCount === 0
+                                    ? "AI hozircha siz haqingizda hech narsa bilmaydi. Bir necha savolga javob bering — tavsiyalar aniqroq bo'ladi."
+                                    : `Hozir ${kbCount} ta ma'lumot. Yana bir necha savol javob bering — AI aniqroq javob beradi.`}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                                <Link href={"/id/discover" as never}
+                                    className="h-8 px-3 rounded-lg text-[11px] font-black flex items-center gap-1"
+                                    style={{ background: T.gradient, color: T.onPrimary }}>
+                                    Boshlash →
+                                </Link>
+                                <button onClick={dismissKbBanner}
+                                    className="text-[11px] text-muted-foreground hover:underline">
+                                    Keyinroq
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {!activeId && messages.length === 0 && (

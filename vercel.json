@@ -19,6 +19,7 @@
         { "path": "/api/cron/bn-price-snapshot",     "schedule": "0 13 * * *" },
         { "path": "/api/cron/bn-order-timeout",      "schedule": "0 14 * * *" },
         { "path": "/api/cron/bn-ad-expire",          "schedule": "0 15 * * *" },
-        { "path": "/api/cron/belis-daily",           "schedule": "30 3 * * *" }
+        { "path": "/api/cron/belis-daily",           "schedule": "30 3 * * *" },
+        { "path": "/api/cron/user-signals-refresh",  "schedule": "0 16 * * *" }
     ]
 }
