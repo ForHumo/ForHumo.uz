@@ -11,6 +11,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBelisAdmin } from "@/lib/belis-auth";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 60; // 1 daq cache
 
 export async function GET() {

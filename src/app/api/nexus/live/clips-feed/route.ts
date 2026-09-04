@@ -4,6 +4,7 @@ import { isVerifiedProfile } from "@/lib/nexus";
 
 // Batch AN — Nexus home uchun trend qirqimlar row
 // GET /clips-feed?days=7&limit=20 — top clips (likes + plays)
+export const dynamic = "force-dynamic";
 export const revalidate = 300; // 5 daq cache
 
 export async function GET(req: Request) {

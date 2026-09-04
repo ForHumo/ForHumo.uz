@@ -6,6 +6,7 @@ import { isVerifiedProfile } from "@/lib/nexus";
 // Ranking = 60% peak viewers + 40% tip summasi (per streamer, week aggregate)
 // GET /leaderboard — top 20 streamers this week
 
+export const dynamic = "force-dynamic";
 export const revalidate = 600; // 10 daq cache
 
 export async function GET(req: Request) {

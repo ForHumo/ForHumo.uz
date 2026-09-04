@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { BelisKomplektKind } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 300; // 5 daq cache
 
 const ALLOWED_KINDS: BelisKomplektKind[] = ["FOTIHA", "BESHIK_TOY", "CUSTOM"];

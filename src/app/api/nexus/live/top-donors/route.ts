@@ -5,6 +5,7 @@ import { isVerifiedProfile } from "@/lib/nexus";
 // Batch CM — Top donors lifetime (barcha efirlar bo'yicha)
 // GET ?username=X — streamer bo'yicha top donors
 // GET (no param) — global top donors
+export const dynamic = "force-dynamic";
 export const revalidate = 300;
 
 export async function GET(req: Request) {

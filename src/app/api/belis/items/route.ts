@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { BelisItemKind } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 300;
 
 const ALLOWED_KINDS: BelisItemKind[] = [

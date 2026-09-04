@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // Batch AC — Live kategoriyalarni jonli efir sonlari bilan (discovery uchun)
+export const dynamic = "force-dynamic";
 export const revalidate = 60;
 
 const CATEGORY_LABELS: Record<string, string> = {

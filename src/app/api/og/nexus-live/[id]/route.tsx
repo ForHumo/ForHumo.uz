@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 // Batch BG — Nexus jonli efir dinamik OG kartochkasi (1200×630)
 // Telegram/WhatsApp ulashishda avto-render.
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {

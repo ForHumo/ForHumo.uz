@@ -4,6 +4,7 @@ import { computeStreamerLevel } from "@/lib/nexus-live-level";
 
 // Batch CQ — Streamer level (composite from streams+peak+tips+subs)
 // GET ?username=X
+export const dynamic = "force-dynamic";
 export const revalidate = 300;
 
 export async function GET(req: Request) {
