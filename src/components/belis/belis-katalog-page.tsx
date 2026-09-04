@@ -3,9 +3,10 @@
 // Belis katalog — mavjud komplektlar ro'yxati.
 
 import { useEffect, useState } from "react";
-import { Sparkles, Package, ChevronRight, Loader2 } from "lucide-react";
+import { Sparkles, Package, ChevronRight, Loader2, LayoutGrid, Box } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
 import { BelisLink } from "./belis-nav";
+import { BelisItemsTab } from "./belis-items-tab";
 
 interface Komplekt {
     id: string;
@@ -32,17 +33,19 @@ function fmtSom(n: number): string {
 }
 
 export function BelisKatalogPage() {
+    const [tab, setTab] = useState<"komplekt" | "items">("komplekt");
     const [rows, setRows] = useState<Komplekt[] | null>(null);
     const [kind, setKind] = useState<"" | Komplekt["kind"]>("");
 
     useEffect(() => {
+        if (tab !== "komplekt") return;
         const q = kind ? `?kind=${kind}` : "";
         setRows(null);
         fetch(`/api/belis/komplektlar${q}`, { cache: "no-store" })
             .then(r => r.json())
             .then(d => setRows(Array.isArray(d?.komplektlar) ? d.komplektlar : []))
             .catch(() => setRows([]));
-    }, [kind]);
+    }, [kind, tab]);
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-6">
@@ -56,10 +59,35 @@ export function BelisKatalogPage() {
                         Sarpo qutilari
                     </h1>
                     <p className="text-[13px] mt-1" style={{ color: BELIS.text2 }}>
-                        Marosim uchun ijaraga oling — Fotiha, Beshik to&apos;y va boshqalar.
+                        Marosim uchun ijaraga oling — komplekt yoki alohida qutilar.
                     </p>
                 </div>
             </div>
+
+            {/* Katalog turi tab */}
+            <div className="flex items-center gap-2 mb-4 p-1 rounded-2xl w-fit"
+                style={{ background: BELIS.surface, border: `1px solid ${BELIS.border}` }}>
+                {[
+                    { key: "komplekt" as const, label: "Komplektlar", icon: LayoutGrid },
+                    { key: "items"    as const, label: "Alohida qutilar", icon: Box },
+                ].map(t => {
+                    const active = tab === t.key;
+                    const Icon = t.icon;
+                    return (
+                        <button key={t.key} onClick={() => setTab(t.key)}
+                            className="flex items-center gap-1.5 h-9 px-4 rounded-xl text-[12.5px] font-black transition-colors"
+                            style={{
+                                background: active ? BELIS_GOLD_GRADIENT : "transparent",
+                                color: active ? BELIS.onGold : BELIS.text2,
+                            }}>
+                            <Icon className="w-3.5 h-3.5" /> {t.label}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {tab === "items" ? <BelisItemsTab /> : (
+                <>
 
             {/* Filter chip'lar */}
             <div className="flex items-center gap-1.5 mb-5 overflow-x-auto pb-1">
@@ -132,6 +160,8 @@ export function BelisKatalogPage() {
                         </BelisLink>
                     ))}
                 </div>
+            )}
+                </>
             )}
         </div>
     );
