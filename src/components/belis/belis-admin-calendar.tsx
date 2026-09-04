@@ -121,7 +121,7 @@ export function BelisAdminCalendar() {
     return (
         <div className="max-w-6xl mx-auto px-4 py-6">
             <div className="flex items-center gap-2 mb-5">
-                <BelisLink href="/belis/admin"
+                <BelisLink href="/admin"
                     className="w-9 h-9 rounded-lg grid place-items-center"
                     style={{ background: BELIS.surface, color: BELIS.text2 }}>
                     <ChevronLeft className="w-4 h-4" />
@@ -227,7 +227,7 @@ export function BelisAdminCalendar() {
                     ) : (
                         <div className="space-y-2">
                             {selectedBookings.map(b => (
-                                <BelisLink key={b.id} href={`/belis/buyurtma/${b.code}` as never}
+                                <BelisLink key={b.id} href={`/buyurtma/${b.code}` as never}
                                     className="flex items-center gap-3 p-3 rounded-xl"
                                     style={{ background: BELIS.bg, border: `1px solid ${BELIS.border}` }}>
                                     <span className="w-2 h-10 rounded-full" style={{ background: STATUS_COLOR[b.status] }} />

@@ -1,38 +1,39 @@
 "use client";
 
-import { Link, usePathname } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { useSession, signIn } from "next-auth/react";
 import { useState, useEffect } from "react";
 import {
     Home, Grid3x3, Heart, ShoppingBag, Menu, X,
-    MapPin, Package, Globe, Sun, Bell, User, ChevronDown, LogIn,
+    MapPin, Package, Globe, Sun, Bell, LogIn, Sparkles,
 } from "lucide-react";
-import { BELIS, BELIS_LOCATION } from "@/lib/belis-theme";
+import { BELIS } from "@/lib/belis-theme";
 import { BelisLocationMap } from "./belis-location-map";
 import { BelisMapPickerModal, type BelisLatLng } from "./belis-map-picker-modal";
+import { BelisSmartLink, useBelisHref, useBelisPath } from "./belis-base";
 import { createPortal } from "react-dom";
+import NextLink from "next/link";
 
-// BelisLink — locale-aware Link (Nexus/BN naqshi).
+// BelisLink — base-aware. `href="/kabinet"` → belis.uz: /uz/kabinet, forhumo.uz: /uz/belis/kabinet
+// Eski `href="/belis/kabinet"` ham qabul qilinadi (base helper strip qiladi).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function BelisLink({ href, className, style, children, onClick, ...rest }: any) {
-    return <Link href={href} className={className} style={style} onClick={onClick} {...rest}>{children}</Link>;
+export function BelisLink({ href, className, style, children, onClick, title, target, rel, ...rest }: any) {
+    const to = useBelisHref();
+    return <NextLink href={to(href)} className={className} style={style} onClick={onClick} title={title} target={target} rel={rel} {...rest}>{children}</NextLink>;
 }
 
 interface NavItem {
     href: string;
     labelKey: string;
-    icon?: React.ElementType;
-    /** Ikonka o'rniga rasm (Humo AI logotipi) */
-    imageSrc?: string;
+    icon: React.ElementType;
 }
 
 const NAV_ITEMS: NavItem[] = [
-    { href: "/belis",             labelKey: "home",        icon: Home },
-    { href: "/belis/katalog",     labelKey: "catalog",     icon: Grid3x3 },
-    { href: "/belis/ai",          labelKey: "aiAssistant", imageSrc: "/logos/humo-ai-black.png" },
-    { href: "/belis/saqlangan",   labelKey: "saved",       icon: Heart },
-    { href: "/belis/savat",       labelKey: "cart",        icon: ShoppingBag },
+    { href: "/",           labelKey: "home",        icon: Home },
+    { href: "/katalog",    labelKey: "catalog",     icon: Grid3x3 },
+    { href: "/ai",         labelKey: "aiAssistant", icon: Sparkles },
+    { href: "/saqlangan",  labelKey: "saved",       icon: Heart },
+    { href: "/savat",      labelKey: "cart",        icon: ShoppingBag },
 ];
 
 export function BelisHeader() {
@@ -71,7 +72,7 @@ export function BelisHeader() {
             }}>
             <div className="max-w-7xl mx-auto px-4 h-16 flex items-center gap-4">
                 {/* Logo (image) */}
-                <BelisLink href="/belis" className="flex items-center gap-2 flex-shrink-0">
+                <BelisLink href="/" className="flex items-center gap-2 flex-shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/belis/belis.png" alt="Belis" className="h-10 w-auto object-contain" />
                 </BelisLink>
@@ -99,7 +100,7 @@ export function BelisHeader() {
 
                 {/* Header actions */}
                 <div className="ml-auto flex items-center gap-1">
-                    <BelisLink href="/belis/kabinet"
+                    <BelisLink href="/kabinet"
                         title="Mening buyurtmalarim"
                         className="hidden md:flex w-9 h-9 rounded-lg items-center justify-center hover:brightness-95"
                         style={{ background: BELIS.surface }}>
@@ -145,11 +146,11 @@ export function BelisHeader() {
                         )}
                     </button>
 
-                    {/* Profil / Kirish */}
+                    {/* Profil / Kirish — boshqa ikonlar bilan bir xil forma (kvadrat) */}
                     {session ? (
-                        <BelisLink href="/belis/kabinet"
+                        <BelisLink href="/kabinet"
                             title="Kabinet"
-                            className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden hover:brightness-95 flex-shrink-0"
+                            className="w-9 h-9 rounded-lg flex items-center justify-center overflow-hidden hover:brightness-95 flex-shrink-0"
                             style={{ background: BELIS.gold, border: `1px solid ${BELIS.gold}` }}>
                             {session.user?.image ? (
                                 // eslint-disable-next-line @next/next/no-img-element
@@ -163,7 +164,7 @@ export function BelisHeader() {
                     ) : (
                         <button onClick={() => signIn("google")}
                             title="Kirish"
-                            className="h-9 px-3 rounded-full flex items-center gap-1.5 text-[12px] font-black hover:brightness-95 flex-shrink-0"
+                            className="h-9 px-3 rounded-lg flex items-center gap-1.5 text-[12px] font-black hover:brightness-95 flex-shrink-0"
                             style={{ background: BELIS.gold, color: BELIS.onGold }}>
                             <LogIn className="w-3.5 h-3.5" strokeWidth={2} />
                             Kirish
@@ -221,36 +222,37 @@ function BelisShopMapModal({ onClose }: { onClose: () => void }) {
 
 export function BelisNavbar() {
     const t = useTranslations("belis.nav");
-    const pathname = usePathname();
-    const isActive = (href: string) =>
-        href === "/belis" ? pathname === "/belis" : pathname.startsWith(href);
+    const path = useBelisPath();
+    const isActive = (href: string) => (href === "/" ? path === "/" : path === href || path.startsWith(href + "/"));
 
     return (
-        <div className="border-t" style={{ borderColor: BELIS.borderSoft }}>
-            <nav className="max-w-7xl mx-auto px-4 flex items-center gap-1 overflow-x-auto no-scrollbar">
+        <div className="fixed bottom-4 left-0 right-0 z-[110] flex justify-center pointer-events-none">
+            <nav
+                className="pointer-events-auto flex items-center gap-1 px-2 py-1 rounded-2xl"
+                style={{
+                    background: "rgba(240, 242, 225, 0.78)",
+                    backdropFilter: "blur(14px) saturate(150%)",
+                    WebkitBackdropFilter: "blur(14px) saturate(150%)",
+                    border: `1px solid ${BELIS.borderSoft}`,
+                    boxShadow: "0 12px 32px rgba(58,53,32,0.18), 0 2px 6px rgba(58,53,32,0.06)",
+                }}
+            >
                 {NAV_ITEMS.map(it => {
                     const Icon = it.icon;
                     const active = isActive(it.href);
                     return (
                         <BelisLink key={it.href} href={it.href}
-                            className="flex items-center gap-1.5 px-4 py-2.5 text-xs whitespace-nowrap transition relative"
+                            className="relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-black whitespace-nowrap transition-colors"
                             style={{
+                                background: active ? BELIS.goldSoft : "transparent",
+                                color: active ? BELIS.onGold : BELIS.text2,
                                 fontFamily: "'Montserrat', sans-serif",
-                                color: active ? BELIS.gold : BELIS.text2,
-                                fontWeight: active ? 700 : 500,
                             }}>
-                            {it.imageSrc ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={it.imageSrc} alt="" className="h-4 w-auto object-contain"
-                                    style={{ opacity: active ? 1 : 0.75 }} />
-                            ) : Icon ? (
-                                <Icon className="w-4 h-4" strokeWidth={active ? 2 : 1.5} />
+                            {Icon ? (
+                                <Icon className="w-4 h-4" strokeWidth={active ? 2.2 : 1.6}
+                                    style={{ color: active ? BELIS.goldDeep : BELIS.text2 }} />
                             ) : null}
-                            {t(it.labelKey)}
-                            {active && (
-                                <span className="absolute bottom-0 left-2 right-2 h-0.5"
-                                    style={{ background: BELIS.gold, borderRadius: "2px 2px 0 0" }} />
-                            )}
+                            <span className="hidden sm:inline">{t(it.labelKey)}</span>
                         </BelisLink>
                     );
                 })}
@@ -258,6 +260,9 @@ export function BelisNavbar() {
         </div>
     );
 }
+
+// Suppress unused import warning if BelisSmartLink not used yet
+void BelisSmartLink;
 
 // Eski AddressModal (yozma) o'chirildi — endi faqat BelisMapPickerModal (xaritada).
 // Qoida: feedback-location-map-only — har doim xaritadan.

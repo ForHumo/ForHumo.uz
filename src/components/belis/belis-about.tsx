@@ -65,7 +65,7 @@ export function BelisAbout() {
                     to&apos;liq sarpo qutilarini ijaraga beradi. Bir marta sotib olmay,
                     kerakli kunga oling — arzon va oson.
                 </p>
-                <BelisLink href="/belis/katalog"
+                <BelisLink href="/katalog"
                     className="mt-6 inline-flex items-center gap-2 h-12 px-6 rounded-2xl text-[14px] font-black"
                     style={{ background: BELIS_GOLD_GRADIENT, color: BELIS.onGold }}>
                     Katalogga o&apos;tish <ChevronRight className="w-4 h-4" />

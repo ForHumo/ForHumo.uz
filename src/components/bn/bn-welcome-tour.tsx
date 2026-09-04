@@ -77,7 +77,7 @@ export function BnWelcomeTour() {
 
     const content = (
         <div
-            className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-2 sm:p-4"
+            className="bn-scope fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-2 sm:p-4"
             style={{ background: "rgba(0,0,0,0.75)" }}
             onClick={dismiss}
         >

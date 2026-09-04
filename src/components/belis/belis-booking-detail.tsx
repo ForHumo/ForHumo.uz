@@ -100,7 +100,7 @@ export function BelisBookingDetail({ code }: { code: string }) {
         return (
             <div className="max-w-2xl mx-auto px-4 py-16 text-center">
                 <p className="text-[15px]" style={{ color: BELIS.text2 }}>Buyurtma topilmadi yoki ruxsat yo&apos;q</p>
-                <BelisLink href="/belis/kabinet" className="mt-3 inline-block text-[13px] font-black" style={{ color: BELIS.goldDeep }}>
+                <BelisLink href="/kabinet" className="mt-3 inline-block text-[13px] font-black" style={{ color: BELIS.goldDeep }}>
                     Kabinetga qaytish
                 </BelisLink>
             </div>
@@ -118,7 +118,7 @@ export function BelisBookingDetail({ code }: { code: string }) {
 
     return (
         <div className="max-w-3xl mx-auto px-4 py-6">
-            <BelisLink href="/belis/kabinet" className="inline-flex items-center gap-1 text-[13px] font-black mb-4"
+            <BelisLink href="/kabinet" className="inline-flex items-center gap-1 text-[13px] font-black mb-4"
                 style={{ color: BELIS.text2 }}>
                 <ChevronLeft className="w-4 h-4" /> Kabinet
             </BelisLink>
@@ -197,7 +197,7 @@ export function BelisBookingDetail({ code }: { code: string }) {
                                 <Package className="w-4 h-4" style={{ color: BELIS.goldDeep }} />
                                 <h3 className="text-[14px] font-black" style={{ color: BELIS.text }}>Komplekt</h3>
                             </div>
-                            <BelisLink href={`/belis/k/${data.komplekt.slug}` as never} className="flex items-center gap-3">
+                            <BelisLink href={`/k/${data.komplekt.slug}` as never} className="flex items-center gap-3">
                                 <span className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0" style={{ background: BELIS.surfaceUp }}>
                                     {data.komplekt.images[0] && (
                                         // eslint-disable-next-line @next/next/no-img-element

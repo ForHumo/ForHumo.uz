@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT, BELIS_SOCIAL, BELIS_LOCATION } from "@/lib/belis-theme";
 import { BelisLink } from "./belis-nav";
-import { BelisLocationMap } from "./belis-location-map";
 
 interface Komplekt {
     id: string;
@@ -63,13 +62,13 @@ export function BelisHome() {
                         Marosim kunidan 1 kun oldin oling, 3 kun ichida qaytarib bering.
                     </p>
                     <div className="flex flex-wrap gap-2">
-                        <BelisLink href="/belis/katalog"
+                        <BelisLink href="/katalog"
                             className="h-12 px-6 rounded-2xl text-[14px] font-black flex items-center gap-2"
                             style={{ background: BELIS.text, color: BELIS.goldSoft }}>
                             <Package className="w-4 h-4" /> Katalog
                             <ArrowRight className="w-4 h-4" />
                         </BelisLink>
-                        <BelisLink href="/belis/kabinet"
+                        <BelisLink href="/kabinet"
                             className="h-12 px-6 rounded-2xl text-[14px] font-black flex items-center gap-2"
                             style={{ background: "rgba(255,255,255,0.35)", color: BELIS.onGold }}>
                             <CalendarClock className="w-4 h-4" /> Mening arizalarim
@@ -82,7 +81,7 @@ export function BelisHome() {
             <section>
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-[20px] font-black" style={{ color: BELIS.text }}>Mavjud komplektlar</h2>
-                    <BelisLink href="/belis/katalog" className="text-[13px] font-black flex items-center gap-0.5" style={{ color: BELIS.goldDeep }}>
+                    <BelisLink href="/katalog" className="text-[13px] font-black flex items-center gap-0.5" style={{ color: BELIS.goldDeep }}>
                         Barchasi <ChevronRight className="w-3.5 h-3.5" />
                     </BelisLink>
                 </div>
@@ -99,7 +98,7 @@ export function BelisHome() {
                 {rows && rows.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {rows.map(k => (
-                            <BelisLink key={k.id} href={`/belis/k/${k.slug}` as never}
+                            <BelisLink key={k.id} href={`/k/${k.slug}` as never}
                                 className="group rounded-2xl overflow-hidden transition-transform active:scale-[0.98]"
                                 style={{ background: BELIS.surface, border: `1px solid ${BELIS.border}` }}>
                                 <div className="relative aspect-[4/3] overflow-hidden" style={{ background: BELIS.surfaceUp }}>
@@ -156,12 +155,6 @@ export function BelisHome() {
                         </Info>
                     </div>
                 </div>
-            </section>
-
-            {/* Manzil — Google Maps embed */}
-            <section>
-                <h2 className="text-[20px] font-black mb-4" style={{ color: BELIS.text }}>Bizni toping</h2>
-                <BelisLocationMap />
             </section>
 
             {/* Aloqa */}

@@ -1,5 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
+import { headers } from "next/headers";
 import { BelisHeader } from "@/components/belis/belis-nav";
+import { BelisBaseProvider } from "@/components/belis/belis-base";
 import { BelisTestBanner } from "@/components/belis/belis-test-banner";
 import { BELIS, BELIS_BG_GRADIENT, BELIS_SOCIAL } from "@/lib/belis-theme";
 import type { Metadata } from "next";
@@ -15,8 +17,9 @@ export const metadata: Metadata = {
     },
 };
 
-// Belis modul shell — global header/footer'ni yopadi (fixed inset-0 z-[100]).
-// Fon: light-olive gradient (kunduz mode). Kech mode kelajakda.
+// belis.uz hosts (middleware bularni /belis/* ga rewrite qiladi)
+const BELIS_HOSTS = new Set(["belis.uz", "www.belis.uz"]);
+
 export default async function BelisLayout({
     children, params,
 }: {
@@ -25,6 +28,13 @@ export default async function BelisLayout({
 }) {
     const { locale } = await params;
     setRequestLocale(locale);
+
+    // Host'ga qarab base'ni aniqlaymiz:
+    //  belis.uz  → "" (URL toza: /uz/kabinet, foydalanuvchi ko'radi)
+    //  forhumo.uz → "/uz/belis" (prefiks bilan)
+    const hostHeader = (await headers()).get("host") ?? "";
+    const host = hostHeader.split(":")[0].toLowerCase();
+    const base = BELIS_HOSTS.has(host) ? "" : `/${locale}/belis`;
 
     return (
         <div className="fixed inset-0 z-[100] overflow-y-auto"
@@ -36,14 +46,16 @@ export default async function BelisLayout({
             <link rel="stylesheet"
                 href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;500;700&display=swap"
             />
-            <div className="min-h-full flex flex-col">
-                <BelisTestBanner />
-                <BelisHeader />
-                <main className="flex-1">
-                    {children}
-                </main>
-                <BelisFooter />
-            </div>
+            <BelisBaseProvider base={base} locale={locale}>
+                <div className="min-h-full flex flex-col">
+                    <BelisTestBanner />
+                    <BelisHeader />
+                    <main className="flex-1 pb-24">
+                        {children}
+                    </main>
+                    <BelisFooter />
+                </div>
+            </BelisBaseProvider>
         </div>
     );
 }
@@ -57,7 +69,6 @@ function BelisFooter() {
                 fontFamily: "'Montserrat', sans-serif",
             }}>
             <div className="max-w-7xl mx-auto px-4 text-center">
-                {/* Belis logo (rasm) */}
                 <div className="flex justify-center mb-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/belis/belis.png" alt="Belis" className="h-14 w-auto object-contain opacity-90" />
@@ -65,21 +76,14 @@ function BelisFooter() {
                 <p className="text-xs italic" style={{ color: BELIS.text2 }}>
                     Siz uchun, mehr bilan…
                 </p>
-
-                {/* Ijtimoiy */}
                 <div className="mt-4 flex justify-center gap-4 text-xs" style={{ color: BELIS.text2 }}>
-                    <a href={BELIS_SOCIAL.telegramChannel} target="_blank" rel="noopener" className="hover:underline" style={{ color: BELIS.gold }}>@belisuz</a>
+                    <a href={BELIS_SOCIAL.telegramChannel} target="_blank" rel="noopener" className="hover:underline" style={{ color: BELIS.gold }}>Telegram</a>
                     <span>·</span>
                     <a href={BELIS_SOCIAL.instagram} target="_blank" rel="noopener" className="hover:underline" style={{ color: BELIS.gold }}>Instagram</a>
-                    <span>·</span>
-                    <a href={BELIS_SOCIAL.telegramBot} target="_blank" rel="noopener" className="hover:underline" style={{ color: BELIS.gold }}>Bot</a>
                 </div>
-
                 <p className="text-[10px] mt-3" style={{ color: BELIS.text3 }}>
                     © Belis {new Date().getFullYear()}
                 </p>
-
-                {/* Powered by For Humo */}
                 <div className="mt-6 pt-4" style={{ borderTop: `1px solid ${BELIS.borderSoft}` }}>
                     <a href="/" className="inline-flex items-center gap-2 opacity-70 hover:opacity-100 transition">
                         <span className="text-[10px] uppercase tracking-widest" style={{ color: BELIS.text3 }}>Powered by</span>

@@ -36,7 +36,7 @@ export function BelisComingSoon({ title, description, icon, imageSrc }: Props) {
                 <p className="text-[13.5px] leading-relaxed mb-6" style={{ color: BELIS.text2 }}>
                     {description}
                 </p>
-                <BelisLink href="/belis/katalog"
+                <BelisLink href="/katalog"
                     className="inline-flex items-center gap-2 h-11 px-5 rounded-xl text-[13px] font-black"
                     style={{ background: BELIS_GOLD_GRADIENT, color: BELIS.onGold }}>
                     Katalogga o&apos;tish <ChevronRight className="w-4 h-4" />

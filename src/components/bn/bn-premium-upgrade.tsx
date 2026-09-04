@@ -176,7 +176,7 @@ export function BnPremiumUpgrade() {
 
             {/* Confirm modal */}
             {selectedTier && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.65)" }} onClick={() => !busy && setSelectedTier(null)}>
+                <div className="bn-scope fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.65)" }} onClick={() => !busy && setSelectedTier(null)}>
                     <div className="w-full max-w-[400px] rounded-2xl overflow-hidden" style={{ background: BN.surface, border: `1px solid ${BN.border}` }} onClick={e => e.stopPropagation()}>
                         <div className="p-5" style={{ borderBottom: `1px solid ${BN.border}` }}>
                             <div className="flex items-start justify-between">

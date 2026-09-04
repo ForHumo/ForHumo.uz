@@ -4,10 +4,12 @@
 
 import { useEffect, useState } from "react";
 import { useSession, signIn } from "next-auth/react";
-import { Package, ChevronRight, Loader2, LogIn, Calendar } from "lucide-react";
+import { Package, ChevronRight, Loader2, LogIn, Calendar, ShieldCheck, BookOpen } from "lucide-react";
 import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
 import { BelisLink } from "./belis-nav";
 import { BelisPushCard } from "./belis-push-card";
+
+const BELIS_ADMIN_USERNAMES = new Set(["sevinch", "abduvoris", "aaa"]);
 
 interface Booking {
     id: string;
@@ -41,8 +43,10 @@ function fmtDate(iso: string): string {
 }
 
 export function BelisMyBookings() {
-    const { status } = useSession();
+    const { data: session, status } = useSession();
     const [rows, setRows] = useState<Booking[] | null>(null);
+    const username = (session?.user as { username?: string | null } | undefined)?.username?.toLowerCase() ?? null;
+    const isAdmin = !!username && BELIS_ADMIN_USERNAMES.has(username);
 
     useEffect(() => {
         if (status !== "authenticated") return;
@@ -81,6 +85,47 @@ export function BelisMyBookings() {
 
             <BelisPushCard />
 
+            {isAdmin && (
+                <div className="mb-5 rounded-2xl p-4"
+                    style={{ background: BELIS.surface, border: `1px solid ${BELIS.borderSoft}` }}>
+                    <div className="flex items-center gap-2 mb-3">
+                        <span className="w-8 h-8 rounded-lg grid place-items-center"
+                            style={{ background: BELIS_GOLD_GRADIENT, color: BELIS.onGold }}>
+                            <ShieldCheck className="w-4 h-4" />
+                        </span>
+                        <p className="text-[13px] font-black uppercase tracking-widest" style={{ color: BELIS.text2 }}>
+                            Admin boshqaruvi
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        <BelisLink href="/admin"
+                            className="flex items-center justify-between p-3 rounded-xl text-[13px] font-black"
+                            style={{ background: BELIS_GOLD_GRADIENT, color: BELIS.onGold }}>
+                            <span className="flex items-center gap-1.5"><Package className="w-4 h-4" /> Panel</span>
+                            <ChevronRight className="w-4 h-4" />
+                        </BelisLink>
+                        <BelisLink href="/admin/katalog"
+                            className="flex items-center justify-between p-3 rounded-xl text-[13px] font-black"
+                            style={{ background: BELIS.goldSoft, color: BELIS.onGold }}>
+                            <span className="flex items-center gap-1.5"><Package className="w-4 h-4" /> Katalog</span>
+                            <ChevronRight className="w-4 h-4" />
+                        </BelisLink>
+                        <BelisLink href="/admin/kalendar"
+                            className="flex items-center justify-between p-3 rounded-xl text-[13px] font-black"
+                            style={{ background: BELIS.surfaceUp, color: BELIS.text, border: `1px solid ${BELIS.border}` }}>
+                            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> Kalendar</span>
+                            <ChevronRight className="w-4 h-4" />
+                        </BelisLink>
+                        <BelisLink href="/admin/qollanma"
+                            className="flex items-center justify-between p-3 rounded-xl text-[13px] font-black"
+                            style={{ background: BELIS.surfaceUp, color: BELIS.text, border: `1px solid ${BELIS.border}` }}>
+                            <span className="flex items-center gap-1.5"><BookOpen className="w-4 h-4" /> Qo&apos;llanma</span>
+                            <ChevronRight className="w-4 h-4" />
+                        </BelisLink>
+                    </div>
+                </div>
+            )}
+
             {rows === null && (
                 <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: BELIS.gold }} /></div>
             )}
@@ -88,7 +133,7 @@ export function BelisMyBookings() {
                 <div className="text-center py-16 rounded-2xl" style={{ background: BELIS.surface, border: `1px solid ${BELIS.border}` }}>
                     <Calendar className="w-10 h-10 mx-auto mb-3 opacity-60" style={{ color: BELIS.gold }} />
                     <p className="text-[14px]" style={{ color: BELIS.text2 }}>Hozircha arizangiz yo&apos;q</p>
-                    <BelisLink href="/belis/katalog" className="mt-3 inline-block text-[13px] font-black" style={{ color: BELIS.goldDeep }}>Katalogga o&apos;tish →</BelisLink>
+                    <BelisLink href="/katalog" className="mt-3 inline-block text-[13px] font-black" style={{ color: BELIS.goldDeep }}>Katalogga o&apos;tish →</BelisLink>
                 </div>
             )}
             {rows && rows.length > 0 && (
@@ -96,7 +141,7 @@ export function BelisMyBookings() {
                     {rows.map(b => {
                         const meta = STATUS_META[b.status];
                         return (
-                            <BelisLink key={b.id} href={`/belis/buyurtma/${b.code}` as never}
+                            <BelisLink key={b.id} href={`/buyurtma/${b.code}` as never}
                                 className="flex items-center gap-3 p-3 rounded-2xl transition-colors"
                                 style={{ background: BELIS.surface, border: `1px solid ${BELIS.border}` }}>
                                 <span className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0" style={{ background: BELIS.surfaceUp }}>

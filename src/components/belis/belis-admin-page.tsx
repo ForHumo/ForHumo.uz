@@ -111,18 +111,18 @@ export function BelisAdminPage() {
                     <ShieldCheck className="w-5 h-5" />
                 </span>
                 <h1 className="text-[24px] font-black flex-1" style={{ color: BELIS.text }}>Belis admin</h1>
-                <BelisLink href="/belis/admin/qollanma"
+                <BelisLink href="/admin/qollanma"
                     className="w-10 h-10 rounded-xl grid place-items-center"
                     style={{ background: BELIS.goldSoft, color: BELIS.goldDeep }}
                     title="Qo'llanma">
                     <HelpCircle className="w-4 h-4" />
                 </BelisLink>
-                <BelisLink href="/belis/admin/kalendar"
+                <BelisLink href="/admin/kalendar"
                     className="h-10 px-4 rounded-xl text-[13px] font-black flex items-center gap-1.5"
                     style={{ background: BELIS.surface, color: BELIS.text, border: `1px solid ${BELIS.border}` }}>
                     <Calendar className="w-4 h-4" /> Kalendar
                 </BelisLink>
-                <BelisLink href="/belis/admin/katalog"
+                <BelisLink href="/admin/katalog"
                     className="h-10 px-4 rounded-xl text-[13px] font-black flex items-center gap-1.5"
                     style={{ background: BELIS.surface, color: BELIS.text, border: `1px solid ${BELIS.border}` }}>
                     <Settings className="w-4 h-4" /> Katalog

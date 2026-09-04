@@ -102,7 +102,7 @@ export function BelisKatalogPage() {
             {rows && rows.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {rows.map(k => (
-                        <BelisLink key={k.id} href={`/belis/k/${k.slug}` as never}
+                        <BelisLink key={k.id} href={`/k/${k.slug}` as never}
                             className="group rounded-2xl overflow-hidden transition-transform active:scale-[0.98]"
                             style={{ background: BELIS.surface, border: `1px solid ${BELIS.border}` }}>
                             <div className="relative aspect-[4/3] overflow-hidden" style={{ background: BELIS.surfaceUp }}>

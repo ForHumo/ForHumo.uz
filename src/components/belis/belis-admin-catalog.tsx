@@ -100,7 +100,7 @@ export function BelisAdminCatalog() {
     return (
         <div className="max-w-6xl mx-auto px-4 py-6">
             <div className="flex items-center gap-2 mb-5">
-                <BelisLink href="/belis/admin"
+                <BelisLink href="/admin"
                     className="w-9 h-9 rounded-lg grid place-items-center"
                     style={{ background: BELIS.surface, color: BELIS.text2 }}>
                     <ChevronLeft className="w-4 h-4" />

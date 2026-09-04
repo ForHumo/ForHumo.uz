@@ -94,7 +94,7 @@ export function BelisAiChat() {
                                 <p className="text-[13.5px] whitespace-pre-wrap leading-relaxed">{m.text}</p>
                             </div>
                             {m.recommendedSlug && (
-                                <BelisLink href={`/belis/k/${m.recommendedSlug}` as never}
+                                <BelisLink href={`/k/${m.recommendedSlug}` as never}
                                     className="mt-2 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-[12.5px] font-black"
                                     style={{ background: BELIS.goldSoft, color: BELIS.onGold }}>
                                     <Package className="w-3.5 h-3.5" /> Komplektni ko&apos;rish <ChevronRight className="w-3.5 h-3.5" />

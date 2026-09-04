@@ -85,7 +85,7 @@ export function BnFeatureButton({ productSlug, compact }: { productSlug: string;
 
             {open && typeof document !== "undefined" && createPortal(
                 <div
-                    className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+                    className="bn-scope fixed inset-0 z-[9999] flex items-center justify-center p-4"
                     style={{ background: "rgba(0,0,0,0.65)" }}
                     onClick={() => setOpen(false)}
                 >

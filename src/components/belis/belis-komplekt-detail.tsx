@@ -57,7 +57,7 @@ export function BelisKomplektDetail({ slug }: { slug: string }) {
         return (
             <div className="max-w-2xl mx-auto px-4 py-16 text-center">
                 <p className="text-[15px]" style={{ color: BELIS.text2 }}>Komplekt topilmadi</p>
-                <BelisLink href="/belis/katalog" className="mt-3 inline-block text-[13px] font-black" style={{ color: BELIS.goldDeep }}>Katalogga qaytish</BelisLink>
+                <BelisLink href="/katalog" className="mt-3 inline-block text-[13px] font-black" style={{ color: BELIS.goldDeep }}>Katalogga qaytish</BelisLink>
             </div>
         );
     }
@@ -72,7 +72,7 @@ export function BelisKomplektDetail({ slug }: { slug: string }) {
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-6">
-            <BelisLink href="/belis/katalog" className="inline-flex items-center gap-1 text-[13px] font-black mb-4"
+            <BelisLink href="/katalog" className="inline-flex items-center gap-1 text-[13px] font-black mb-4"
                 style={{ color: BELIS.text2 }}>
                 <ChevronLeft className="w-4 h-4" /> Katalog
             </BelisLink>
