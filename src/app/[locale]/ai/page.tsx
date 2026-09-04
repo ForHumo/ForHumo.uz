@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "@/i18n/routing";
 
 /**
  * Humo AI — integrated with Humo ID
@@ -12,8 +13,17 @@ import { useSession } from "next-auth/react";
  * the iframe. The AI app boots up already knowing the real user.
  */
 export default function AIPage() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const [ready, setReady] = useState(false);
+    const router = useRouter();
+
+    // Auth qilingan foydalanuvchi → yangi native React chat sahifasi
+    // (Faza 2 AI xotira integratsiyasi). Iframe faqat anonim uchun qoladi.
+    useEffect(() => {
+        if (status === "authenticated") {
+            router.replace("/ai/chat");
+        }
+    }, [status, router]);
 
     useEffect(() => {
         if (!session?.user) return;

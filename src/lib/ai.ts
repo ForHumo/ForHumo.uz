@@ -86,6 +86,12 @@ export async function aiChatJSON<T>(messages: ChatMsg[], opts: GenOpts = {}): Pr
     return parseJson<T>(txt);
 }
 
+// Ko'p-turli suhbat (chat) + oddiy matn javob (system prompt bilan)
+export async function aiChat(messages: ChatMsg[], opts: GenOpts = {}): Promise<string> {
+    const contents: Content[] = messages.map(m => ({ role: m.role, parts: [{ text: m.text }] }));
+    return callGemini(contents, opts);
+}
+
 function parseJson<T>(txt: string): T | null {
     try { return JSON.parse(txt) as T; } catch { /* try extract */ }
     const m = txt.match(/\{[\s\S]*\}|\[[\s\S]*\]/);

@@ -965,6 +965,86 @@ model AiUsage {
   @@index([profileId, createdAt])
 }
 
+// ── Humo AI xotira tizimi (Faza 2) ─────────────────────────────────────
+// AI suhbat tarixi, mavzular bo'yicha guruhlash, foydalanuvchi bilim bazasi.
+// Har foydalanuvchi uchun alohida; boshqa hech kim (admin ham) o'qi olmaydi.
+
+model AiConversation {
+  id          String        @id @default(cuid())
+  profileId   String                                        // owner (faqat o'zi)
+  title       String                                        // 60 chars max — birinchi xabardan AI generate qiladi
+  topic       String?                                       // AI classifier: "belis"|"pay"|"nexus"|"market"|"bn"|"esport"|"id"|"personal"|"general"
+  moduleOrigin String?                                      // qaysi moduldan boshlangan (belis/support/nexus/...)
+  lastMsgAt   DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  archived    Boolean       @default(false)                 // foydalanuvchi arxivlab qo'yishi mumkin
+  messages    AiMessage[]
+
+  @@index([profileId, lastMsgAt(sort: Desc)])
+  @@index([profileId, topic])
+  @@index([profileId, archived])
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String                                     // "user" | "ai" | "system"
+  body           String                                     // asosiy matn (voice bo'lsa transcript)
+  audioUrl       String?                                    // ovozli xabar URL (Vercel Blob)
+  attachmentUrl  String?                                    // rasm/fayl
+  attachmentType String?                                    // "image" | "file" | "audio"
+  aiModel        String?                                    // "gemini-2.5-flash-lite" (AI javoblarida)
+  tokensIn       Int?                                       // xarajat monitoringi
+  tokensOut      Int?
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// Foydalanuvchi bilim bazasi — For Humo ekotizimi uni yaxshi tanishi uchun.
+// Har fakt shifrlangan (AES-GCM purpose="knowledge"), faqat egaga ko'rinadi.
+// Manba (source) transparency uchun — foydalanuvchi qayerdan olinganini ko'radi.
+model UserKnowledge {
+  id          String   @id @default(cuid())
+  profileId   String                                        // owner (faqat o'zi)
+  category    String                                        // "identity"|"family"|"work"|"interests"|"lifestyle"|"goals"|"contacts"|"assets"|"habits"|"other"
+  key         String                                        // masalan "marital_status", "car_model", "job_title"
+  valueEnc    String                                        // shifrlangan qiymat (base64)
+  valueIv     String                                        // shifrlangan IV (base64)
+  source      String                                        // "user"|"ai_extract"|"onboarding"|"signal:nexus"|"signal:market"|...
+  confidence  Float    @default(1.0)                        // 0..1 — signal'lardan olingan bo'lsa past
+  sensitive   Boolean  @default(false)                      // maxfiy (masalan daromad, sog'liq) — UI'da hidden
+  verifiedByUser Boolean @default(false)                    // foydalanuvchi tasdiqladimi
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([profileId, category, key])                      // bir user bir key uchun bir fakt (idempotent yangilanadi)
+  @@index([profileId, category])
+  @@index([profileId, updatedAt(sort: Desc)])
+}
+
+// Signal tarix — foydalanuvchi harakatlarining kunlik agregatsiyasi.
+// Cross-modul: har kuni cron bir marta hisoblab yozib qo'yadi.
+model UserSignals {
+  profileId       String   @id                              // UserProfile.id (FK'siz — lightweight)
+  // JSON — sanalar bo'yicha oraliq va so'nggi 30 kunlik snapshot
+  nexusFollows    Int      @default(0)                     // umumiy obuna soni
+  nexusPostsLiked Int      @default(0)                     // oxirgi 30 kun like
+  nexusVideosSeen Int      @default(0)                     // oxirgi 30 kun ko'rilgan
+  marketOrders    Int      @default(0)                     // umumiy buyurtma
+  marketCategories Json?                                    // ["kiyim", "elektronika", ...] — kategoriyalar
+  bnCategoryClicks Json?                                    // BN bo'yicha eng ko'p qaralganlar
+  belisBookings   Int      @default(0)                     // Belis ijara soni
+  payTransfers    Int      @default(0)                     // hamyon o'tkazma soni
+  topDmContacts   Json?                                    // ["@friend1", "@friend2"] — eng ko'p yozilganlar (username)
+  topFollowedAuthors Json?                                 // ["@blogger1"] — eng faol kuzatilganlar
+  lastAggregatedAt DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([updatedAt(sort: Desc)])
+}
+
 // Tavsiya algoritmi 4-bosqich: semantik embeddinglar (pgvector + Gemini).
 // Prisma vector turini bilmaydi → Unsupported; insert/qidiruv raw SQL orqali (lib/nexus-embed.ts).
 model NexusPostEmbedding {
