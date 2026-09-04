@@ -64,7 +64,11 @@ model UserProfile {
   locationIv    String?            // base64 IV for location decryption
 
   // Contact
+  // DEPRECATED: phone plaintext — endi phoneEnc/phoneIv shifrlangan.
+  // Backfill script tomonidan bo'shatilyapti (null bo'ladi).
   phone         String?
+  phoneEnc      String?            // AES-256-GCM shifrlangan phone (base64)
+  phoneIv       String?            // base64 IV
   // Kontakt sinxronizatsiyasi uchun raqamning SHA-256 hashi (E.164 normalizatsiya).
   // Boshqa foydalanuvchilar mening telefonimni topib men bilan bog'lanishi uchun.
   // Raw raqam saqlanmaydi (bu ustunda). phone o'zgarganda phoneHash ham yangilanadi.
@@ -134,7 +138,12 @@ model UserProfile {
   // 2FA (TOTP RFC 6238) — authenticator app (Google Authenticator, Authy, 1Password, ...)
   // Google OAuth ustidan qo'shimcha bosqich: sign-in → TOTP kod → sessiya
   totpEnabled       Boolean   @default(false)
-  totpSecret        String?              // base32-encoded shared secret (20 baytli)
+  // DEPRECATED: totpSecret plaintext base32 — endi totpSecretEnc/Iv (AES-256-GCM).
+  // Backfill script bo'shatadi (null). Yangi 2FA yoqishlar to'g'ridan-to'g'ri
+  // shifrlangan formatda yoziladi.
+  totpSecret        String?
+  totpSecretEnc     String?              // AES-256-GCM shifrlangan (base64)
+  totpSecretIv      String?              // base64 IV
   totpEnabledAt     DateTime?
   totpBackupCodes   Json?                // string[] — SHA-256 hex hashlangan; ishlatilgani ro'yxatdan chiqadi
 

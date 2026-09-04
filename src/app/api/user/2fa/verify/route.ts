@@ -9,6 +9,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { verifyTotp, generateBackupCodes, hashBackupCode } from "@/lib/totp";
+import { getTotpSecret } from "@/lib/user-secrets";
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
@@ -20,13 +21,14 @@ export async function POST(req: Request) {
 
     const me = await prisma.userProfile.findUnique({
         where: { email: session.user.email },
-        select: { id: true, totpSecret: true, totpEnabled: true },
+        select: { id: true, totpEnabled: true },
     });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
-    if (!me.totpSecret) return NextResponse.json({ error: "Avval setup'ni ishga tushiring" }, { status: 400 });
+    const secret = await getTotpSecret(me.id);
+    if (!secret) return NextResponse.json({ error: "Avval setup'ni ishga tushiring" }, { status: 400 });
     if (me.totpEnabled) return NextResponse.json({ error: "2FA allaqachon yoqilgan" }, { status: 400 });
 
-    if (!verifyTotp(me.totpSecret, code)) {
+    if (!verifyTotp(secret, code)) {
         return NextResponse.json({ error: "Kod noto'g'ri. Telefon soatingiz to'g'rimi?" }, { status: 400 });
     }
 

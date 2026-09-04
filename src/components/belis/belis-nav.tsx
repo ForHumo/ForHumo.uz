@@ -5,7 +5,7 @@ import { useSession, signIn } from "next-auth/react";
 import { useState, useEffect } from "react";
 import {
     Home, Grid3x3, Heart, ShoppingBag, Menu, X,
-    MapPin, Package, Globe, Sun, Bell, LogIn, Sparkles,
+    MapPin, Package, Globe, Sun, Bell, LogIn, Sparkles, HeadsetIcon,
 } from "lucide-react";
 import { BELIS } from "@/lib/belis-theme";
 import { BelisLocationMap } from "./belis-location-map";
@@ -133,6 +133,14 @@ export function BelisHeader() {
                         className="w-9 h-9 rounded-lg flex items-center justify-center hover:brightness-95"
                         style={{ background: BELIS.surface }}>
                         <Sun className="w-4 h-4" strokeWidth={1.5} style={{ color: BELIS.gold }} />
+                    </button>
+
+                    {/* Support — Belis olive-gold */}
+                    <button title="Yordam"
+                        onClick={() => window.dispatchEvent(new Event("support:open"))}
+                        className="w-9 h-9 rounded-lg flex items-center justify-center hover:brightness-95"
+                        style={{ background: BELIS.goldSoft, color: BELIS.goldDeep }}>
+                        <HeadsetIcon className="w-4 h-4" strokeWidth={1.5} />
                     </button>
 
                     {/* Bildirishnoma */}

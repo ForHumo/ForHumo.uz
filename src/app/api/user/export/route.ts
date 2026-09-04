@@ -138,7 +138,7 @@ export async function GET() {
             birthday:      me.birthday,
             image:         me.image,
             coverImage:    me.coverImage,
-            phone:         me.phone,
+            phone:         await (await import("@/lib/user-secrets")).getPhone(me.id),
             verified:      me.verified,
             verifiedCategory: me.verifiedCategory,
             level:         me.level,

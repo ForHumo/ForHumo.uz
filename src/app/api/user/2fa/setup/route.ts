@@ -11,6 +11,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateSecretBase32, otpauthUri } from "@/lib/totp";
+import { setTotpSecret } from "@/lib/user-secrets";
 
 export async function POST() {
     const session = await getServerSession(authOptions);
@@ -24,10 +25,11 @@ export async function POST() {
     if (me.totpEnabled) return NextResponse.json({ error: "2FA allaqachon yoqilgan. Avval o'chirib, keyin qayta sozlang." }, { status: 400 });
 
     const secret = generateSecretBase32(20);
-    // Faqat DB'ga saqlab qo'yamiz — verify muvaffaqiyatli bo'lsagina totpEnabled=true bo'ladi.
+    // Shifrlangan holda saqlaymiz (totpSecretEnc/Iv) — verify muvaffaqiyatli bo'lsagina totpEnabled=true.
+    await setTotpSecret(me.id, secret);
     await prisma.userProfile.update({
         where: { id: me.id },
-        data:  { totpSecret: secret, totpEnabled: false },
+        data:  { totpEnabled: false },
     });
 
     const account = me.username || me.humoId || me.email || "user";

@@ -9,6 +9,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { verifyTotp, generateBackupCodes, hashBackupCode } from "@/lib/totp";
+import { getTotpSecret } from "@/lib/user-secrets";
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -38,12 +39,13 @@ export async function POST(req: Request) {
 
     const me = await prisma.userProfile.findUnique({
         where: { email: session.user.email },
-        select: { id: true, totpEnabled: true, totpSecret: true },
+        select: { id: true, totpEnabled: true },
     });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
-    if (!me.totpEnabled || !me.totpSecret) return NextResponse.json({ error: "2FA yoqilmagan" }, { status: 400 });
+    const secret = await getTotpSecret(me.id);
+    if (!me.totpEnabled || !secret) return NextResponse.json({ error: "2FA yoqilmagan" }, { status: 400 });
 
-    if (!verifyTotp(me.totpSecret, code)) return NextResponse.json({ error: "Kod noto'g'ri" }, { status: 400 });
+    if (!verifyTotp(secret, code)) return NextResponse.json({ error: "Kod noto'g'ri" }, { status: 400 });
 
     const codes = generateBackupCodes(8);
     const hashed = codes.map(hashBackupCode);

@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { verifyTotp, verifyBackupCode, hashBackupCode } from "@/lib/totp";
 import { sign2faToken, verify2faToken, TWO_FA_COOKIE_NAME, TWO_FA_COOKIE_TTL_SEC } from "@/lib/2fa-cookie";
+import { getTotpSecret } from "@/lib/user-secrets";
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -38,17 +39,18 @@ export async function POST(req: Request) {
 
     const me = await prisma.userProfile.findUnique({
         where: { email: session.user.email },
-        select: { id: true, totpEnabled: true, totpSecret: true, totpBackupCodes: true },
+        select: { id: true, totpEnabled: true, totpBackupCodes: true },
     });
     if (!me) return NextResponse.json({ error: "Profil topilmadi" }, { status: 404 });
-    if (!me.totpEnabled || !me.totpSecret) return NextResponse.json({ error: "2FA yoqilmagan" }, { status: 400 });
+    const secret = await getTotpSecret(me.id);
+    if (!me.totpEnabled || !secret) return NextResponse.json({ error: "2FA yoqilmagan" }, { status: 400 });
 
     const isTotpFormat = /^\d{6}$/.test(code.replace(/\s/g, ""));
     let verified = false;
     let usedBackupHash: string | undefined;
 
     if (isTotpFormat) {
-        verified = verifyTotp(me.totpSecret, code);
+        verified = verifyTotp(secret, code);
     } else {
         const list = Array.isArray(me.totpBackupCodes) ? (me.totpBackupCodes as string[]) : [];
         const r = verifyBackupCode(code, list);

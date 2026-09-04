@@ -135,8 +135,8 @@ export function BnHeader({
                                 <button
                                     type="button"
                                     onClick={() => window.dispatchEvent(new Event("support:open"))}
-                                    className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl text-[12.5px] font-bold whitespace-nowrap flex-shrink-0 hover:opacity-80 transition-opacity"
-                                    style={{ color: BN.text2 }}
+                                    className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl text-[12.5px] font-bold whitespace-nowrap flex-shrink-0 hover:brightness-110 transition-all"
+                                    style={{ background: BN.goldSoft, color: BN.gold }}
                                 >
                                     <Headphones className="w-[15px] h-[15px]" />
                                     {tNav("support")}

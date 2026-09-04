@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HeadsetIcon, X, ArrowLeft, Send, Plus, Loader2, MessageCircle, CheckCircle2, AlertTriangle, Lightbulb, Bug, CreditCard, HelpCircle, Clock, ShieldCheck, ChevronRight, Sparkles } from "lucide-react";
 import { Link } from "@/i18n/routing";
+import { moduleTheme, type ModuleTheme } from "@/lib/module-theme";
 import { usePathname } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 
@@ -15,7 +16,7 @@ import { useSession, signIn } from "next-auth/react";
 interface QuickStart { subject: string; message: string }
 interface QuickCategory { id: string; icon: typeof Bug; title: string; desc: string; sample: QuickStart; tone: string }
 
-function SupportWelcome({ moduleLabel, onQuickStart }: { moduleLabel: string; onQuickStart: (pre: QuickStart) => void }) {
+function SupportWelcome({ moduleLabel, onQuickStart, theme }: { moduleLabel: string; onQuickStart: (pre: QuickStart) => void; theme: ModuleTheme }) {
     const categories: QuickCategory[] = [
         {
             id: "bug",
@@ -75,8 +76,9 @@ function SupportWelcome({ moduleLabel, onQuickStart }: { moduleLabel: string; on
         <div className="p-4 space-y-4">
             {/* Salom + tavsif */}
             <div className="text-center pt-2 pb-1">
-                <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center mb-2 shadow-lg shadow-blue-500/25">
-                    <HeadsetIcon className="w-6 h-6 text-white" />
+                <div className="mx-auto w-12 h-12 rounded-2xl flex items-center justify-center mb-2 shadow-lg"
+                    style={{ background: theme.gradient, boxShadow: theme.shadow }}>
+                    <HeadsetIcon className="w-6 h-6" style={{ color: theme.onPrimary }} />
                 </div>
                 <div className="text-base font-black">Salom! Qanday yordam beray?</div>
                 <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
@@ -85,10 +87,11 @@ function SupportWelcome({ moduleLabel, onQuickStart }: { moduleLabel: string; on
             </div>
 
             {/* Response time indikator */}
-            {/* PRIMARY — Nexus DM (B yondashuv) */}
+            {/* PRIMARY — Nexus DM (B yondashuv, modul-themed) */}
             <Link
                 href="/nexus?dm=support"
-                className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/25 group hover:shadow-xl hover:shadow-blue-500/35 transition-all"
+                className="flex items-center gap-3 p-3 rounded-xl shadow-lg group hover:shadow-xl transition-all"
+                style={{ background: theme.gradient, color: theme.onPrimary, boxShadow: theme.shadow }}
             >
                 <span className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm grid place-items-center flex-shrink-0">
                     <Sparkles className="w-5 h-5" />
@@ -197,6 +200,7 @@ export function SupportDock() {
     useEffect(() => { setHost(location.hostname); }, []);
 
     const currentModule = useMemo(() => detectModule(pathname ?? "", host), [pathname, host]);
+    const theme = useMemo(() => moduleTheme(currentModule), [currentModule]);
 
     // Tashqi tugmalar (masalan Market header'i) event orqali ochishi mumkin
     useEffect(() => {
@@ -416,7 +420,8 @@ export function SupportDock() {
                                     <Link
                                         href="/nexus?dm=support"
                                         onClick={() => setOpen(false)}
-                                        className="flex items-center gap-3 p-3 mb-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/25 group hover:shadow-xl hover:shadow-blue-500/35 transition-all"
+                                        className="flex items-center gap-3 p-3 mb-2 rounded-xl shadow-lg group hover:shadow-xl transition-all"
+                                        style={{ background: theme.gradient, color: theme.onPrimary, boxShadow: theme.shadow }}
                                     >
                                         <span className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm grid place-items-center flex-shrink-0">
                                             <Sparkles size={18} />
@@ -433,6 +438,7 @@ export function SupportDock() {
                                     ) : tickets.length === 0 ? (
                                         <SupportWelcome
                                             moduleLabel={MODULE_LABEL[currentModule] ?? "For Humo"}
+                                            theme={theme}
                                             onQuickStart={(pre) => {
                                                 setSubject(pre.subject);
                                                 setFirstMsg(pre.message);
@@ -554,7 +560,8 @@ export function SupportDock() {
                         {authStatus === "authenticated" && view === "list" && tickets.length > 0 && (
                             <button
                                 onClick={() => setView("new")}
-                                className="m-3 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition-all"
+                                className="m-3 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg transition-all hover:brightness-110"
+                                style={{ background: theme.gradient, color: theme.onPrimary, boxShadow: theme.shadow }}
                             >
                                 <Plus size={16} /> Yangi murojaat
                             </button>
