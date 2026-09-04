@@ -9,6 +9,7 @@ import { useSession, signIn } from "next-auth/react";
 import {
     Send, Loader2, Plus, MessageSquare, Sparkles, Trash2, LogIn,
     Archive, Menu, X as XIcon, User as UserIcon, Brain, ShieldCheck,
+    Mic, MicOff, Paperclip, ImageIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { moduleTheme } from "@/lib/module-theme";
@@ -20,7 +21,23 @@ interface ConvSummary {
 interface MsgRow {
     id: string; role: "user" | "ai" | "system"; body: string;
     audioUrl?: string | null; attachmentUrl?: string | null;
+    attachmentType?: string | null;
     aiModel?: string | null; createdAt: string;
+    followUps?: string[];   // AI'dan tavsiya keyingi savollar
+}
+
+// Web Speech API tiplari (browser API — TS deklarasiya)
+interface SpeechRecognitionResult { transcript: string; confidence: number }
+interface SpeechRecognitionEvent { results: ArrayLike<ArrayLike<SpeechRecognitionResult>>; resultIndex: number }
+interface SpeechRecognitionType {
+    lang: string;
+    continuous: boolean;
+    interimResults: boolean;
+    onresult: ((e: SpeechRecognitionEvent) => void) | null;
+    onerror: ((e: Event) => void) | null;
+    onend: (() => void) | null;
+    start: () => void;
+    stop: () => void;
 }
 
 const T = moduleTheme("ai");
@@ -37,7 +54,72 @@ export function AiChatPage() {
     const [sidebarOpen, setSidebarOpen] = useState(false);   // mobile
     const [kbCount, setKbCount] = useState<number | null>(null);   // bilim bazasi kattaligi
     const [kbBannerDismissed, setKbBannerDismissed] = useState(false);
+    // Voice input
+    const [recording, setRecording] = useState(false);
+    const [voiceSupported, setVoiceSupported] = useState(false);
+    const recognitionRef = useRef<SpeechRecognitionType | null>(null);
+    // Attachment
+    const [attachment, setAttachment] = useState<{ url: string; type: "image" | "file"; name: string } | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
+
+    // Web Speech API detektsiya
+    useEffect(() => {
+        try {
+            const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
+            setVoiceSupported(!!(w.SpeechRecognition || w.webkitSpeechRecognition));
+        } catch { /* ignore */ }
+    }, []);
+
+    function toggleVoice() {
+        if (recording) {
+            recognitionRef.current?.stop();
+            setRecording(false);
+            return;
+        }
+        try {
+            const w = window as unknown as {
+                SpeechRecognition?: new () => SpeechRecognitionType;
+                webkitSpeechRecognition?: new () => SpeechRecognitionType;
+            };
+            const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
+            if (!Ctor) return;
+            const r = new Ctor();
+            r.lang = "uz-UZ";
+            r.continuous = false;
+            r.interimResults = true;
+            r.onresult = (e: SpeechRecognitionEvent) => {
+                let transcript = "";
+                for (let i = e.resultIndex; i < e.results.length; i++) {
+                    transcript += e.results[i][0].transcript;
+                }
+                setInput(prev => (prev ? prev + " " : "") + transcript.trim());
+            };
+            r.onerror = () => setRecording(false);
+            r.onend = () => setRecording(false);
+            r.start();
+            recognitionRef.current = r;
+            setRecording(true);
+        } catch (e) {
+            console.error("voice failed", e);
+            setRecording(false);
+        }
+    }
+
+    async function uploadAttachment(file: File) {
+        if (uploading) return;
+        setUploading(true);
+        try {
+            const fd = new FormData();
+            fd.append("file", file);
+            const r = await fetch("/api/ai/upload", { method: "POST", body: fd });
+            if (!r.ok) { setUploading(false); return; }
+            const d = await r.json();
+            const isImage = file.type.startsWith("image/");
+            setAttachment({ url: d.url, type: isImage ? "image" : "file", name: file.name });
+        } finally { setUploading(false); }
+    }
 
     // KB count — banner ko'rsatish uchun
     useEffect(() => {
@@ -96,13 +178,17 @@ export function AiChatPage() {
     async function sendMessage(e?: React.FormEvent) {
         e?.preventDefault();
         const text = input.trim();
-        if (!text || sending) return;
+        if ((!text && !attachment) || sending) return;
         setSending(true);
         setInput("");
+        const attachmentSnapshot = attachment;
+        setAttachment(null);
 
         // Optimistic UI
         const tempMsg: MsgRow = {
-            id: `tmp-${Date.now()}`, role: "user", body: text,
+            id: `tmp-${Date.now()}`, role: "user", body: text || "(rasm)",
+            attachmentUrl: attachmentSnapshot?.url ?? null,
+            attachmentType: attachmentSnapshot?.type ?? null,
             createdAt: new Date().toISOString(),
         };
         setMessages(prev => [...prev, tempMsg]);
@@ -112,8 +198,10 @@ export function AiChatPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    message: text,
+                    message: text || "(rasm yubordim, tahlil qiling)",
                     conversationId: activeId ?? undefined,
+                    attachmentUrl: attachmentSnapshot?.url,
+                    attachmentType: attachmentSnapshot?.type,
                 }),
             });
             const j = await r.json();
@@ -128,10 +216,11 @@ export function AiChatPage() {
             }
             const newConvId = j.conversationId as string;
             const [userReal, aiReal] = j.messages ?? [];
+            const followUps: string[] = Array.isArray(j.followUps) ? j.followUps.slice(0, 3) : [];
             setMessages(prev => [
                 ...prev.filter(m => m.id !== tempMsg.id),
-                { ...userReal, role: "user" },
-                { ...aiReal, role: "ai" },
+                { ...userReal, role: "user", attachmentUrl: attachmentSnapshot?.url ?? null, attachmentType: attachmentSnapshot?.type ?? null },
+                { ...aiReal, role: "ai", followUps },
             ]);
             if (!activeId) {
                 setActiveId(newConvId);
@@ -370,38 +459,105 @@ export function AiChatPage() {
                         <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
                     )}
 
-                    {messages.map(m => {
+                    {messages.map((m, idx) => {
                         const isUser = m.role === "user";
+                        const isLastAi = !isUser && idx === messages.length - 1;
                         return (
-                            <div key={m.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+                            <div key={m.id} className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
                                 <div className="max-w-[75%] px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words"
                                     style={{
                                         background: isUser ? T.gradient : "var(--card, rgba(0,0,0,0.04))",
                                         color: isUser ? T.onPrimary : "var(--foreground)",
                                         borderRadius: isUser ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
                                     }}>
+                                    {m.attachmentType === "image" && m.attachmentUrl && (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={m.attachmentUrl} alt="" className="mb-2 max-w-full max-h-64 rounded-lg" />
+                                    )}
                                     {m.body}
                                     <div className={`text-[10px] mt-1 opacity-60 ${isUser ? "text-right" : ""}`}>
                                         {new Date(m.createdAt).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })}
                                         {m.aiModel && ` · ${m.aiModel}`}
                                     </div>
                                 </div>
+                                {/* Quick replies — faqat oxirgi AI xabari */}
+                                {isLastAi && Array.isArray(m.followUps) && m.followUps.length > 0 && !sending && (
+                                    <div className="mt-2 flex flex-wrap gap-1.5 max-w-[75%]">
+                                        {m.followUps.map((f, i) => (
+                                            <button key={i}
+                                                onClick={() => { setInput(f); }}
+                                                className="px-3 py-1.5 rounded-full text-xs font-semibold border hover:brightness-95"
+                                                style={{ borderColor: T.border, background: T.soft, color: T.primary }}>
+                                                {f}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
                     <div ref={bottomRef} />
                 </div>
 
-                <form onSubmit={sendMessage} className="border-t p-3 flex gap-2" style={{ borderColor: T.border }}>
+                {/* Attachment preview */}
+                {attachment && (
+                    <div className="mx-3 mt-2 p-2 rounded-xl border flex items-center gap-2"
+                        style={{ borderColor: T.border, background: T.soft }}>
+                        {attachment.type === "image" ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={attachment.url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                        ) : (
+                            <span className="w-12 h-12 rounded-lg grid place-items-center" style={{ background: T.gradient, color: T.onPrimary }}>
+                                <Paperclip className="w-4 h-4" />
+                            </span>
+                        )}
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black truncate">{attachment.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{attachment.type === "image" ? "Rasm" : "Fayl"}</p>
+                        </div>
+                        <button onClick={() => setAttachment(null)}
+                            className="w-8 h-8 rounded-lg grid place-items-center hover:brightness-95"
+                            style={{ background: T.soft, color: T.primary }}>
+                            <XIcon className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
+
+                <form onSubmit={sendMessage} className="border-t p-3 flex gap-2 items-end" style={{ borderColor: T.border }}>
+                    {/* Attachment button */}
+                    <input ref={fileInputRef} type="file" accept="image/*,application/pdf" hidden
+                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); e.target.value = ""; }} />
+                    <button type="button" onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading || !!attachment}
+                        title="Rasm yoki fayl"
+                        className="w-11 h-11 rounded-xl grid place-items-center disabled:opacity-40 hover:brightness-95"
+                        style={{ background: T.soft, color: T.primary }}>
+                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                    </button>
+
                     <input
                         value={input}
                         onChange={e => setInput(e.target.value.slice(0, 4000))}
-                        placeholder="Humo AI'ga xabar yozing..."
+                        placeholder={recording ? "Tinglayapman..." : "Humo AI'ga xabar yozing..."}
                         className="flex-1 h-11 px-4 rounded-xl border text-sm focus:outline-none focus:ring-2"
-                        style={{ borderColor: T.border, ["--tw-ring-color" as string]: T.primary + "50" }}
+                        style={{ borderColor: recording ? T.primary : T.border, ["--tw-ring-color" as string]: T.primary + "50" }}
                         disabled={sending}
                     />
-                    <button type="submit" disabled={sending || !input.trim()}
+
+                    {/* Voice input */}
+                    {voiceSupported && (
+                        <button type="button" onClick={toggleVoice}
+                            title={recording ? "To'xtatish" : "Ovoz bilan"}
+                            className="w-11 h-11 rounded-xl grid place-items-center"
+                            style={{
+                                background: recording ? "#EF4444" : T.soft,
+                                color: recording ? "#fff" : T.primary,
+                            }}>
+                            {recording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                        </button>
+                    )}
+
+                    <button type="submit" disabled={sending || (!input.trim() && !attachment)}
                         className="w-11 h-11 rounded-xl flex items-center justify-center disabled:opacity-50"
                         style={{ background: T.gradient, color: T.onPrimary }}>
                         {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

@@ -20,6 +20,7 @@
         { "path": "/api/cron/bn-order-timeout",      "schedule": "0 14 * * *" },
         { "path": "/api/cron/bn-ad-expire",          "schedule": "0 15 * * *" },
         { "path": "/api/cron/belis-daily",           "schedule": "30 3 * * *" },
-        { "path": "/api/cron/user-signals-refresh",  "schedule": "0 16 * * *" }
+        { "path": "/api/cron/user-signals-refresh",  "schedule": "0 16 * * *" },
+        { "path": "/api/cron/ai-profile-reminder",   "schedule": "0 17 * * *" }
     ]
 }

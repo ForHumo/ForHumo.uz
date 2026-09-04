@@ -122,6 +122,33 @@ export async function eraseAllKnowledge(profileId: string): Promise<number> {
     }
 }
 
+// ── Kritik PII/spam filterlar ────────────────────────────────────────────
+// Gemini prompt'da qoida yozgan bo'lsak ham, ba'zan chetlab o'tishi mumkin.
+// Bu yerda deterministik ikkinchi qatlam.
+
+/** 12-19 raqamli davomiy sonlar (karta, IBAN, IMEI, hisob) — hech qachon KB'ga tushmasin. */
+export function looksLikeCriticalPii(value: string): boolean {
+    const digits = value.replace(/\D/g, "");
+    if (digits.length >= 12 && digits.length <= 19) return true;
+    // Yashirin parol/kalit belgilari
+    if (/pass(word)?[:=]|api[_-]?key|secret|token/i.test(value)) return true;
+    // Email formatida bo'lgan qiymatlar (aniq foydalanuvchi email'ini KB'ga yozmaymiz — login orqali bilamiz)
+    if (/^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i.test(value.trim())) return true;
+    return false;
+}
+
+/** Bo'sh yoki takroriy belgi, faqat emoji/simvol yoki juda qisqa (< 2 harf) — spam. */
+export function isSpamOrGibberish(value: string): boolean {
+    const trimmed = value.trim();
+    if (trimmed.length < 2) return true;
+    // Faqat bir harf takrori ("aaaaa" yoki "!!!!!")
+    if (/^(.)\1{4,}$/.test(trimmed)) return true;
+    // 80%+ non-alfa (juda ko'p simvol/emoji)
+    const alpha = (trimmed.match(/[\p{L}\p{N}]/gu) || []).length;
+    if (alpha / trimmed.length < 0.3) return true;
+    return false;
+}
+
 /** Deshifrlangan qatorni o'qish (fail-safe). */
 function decodeRow(row: {
     id: string; category: string; key: string; valueEnc: string; valueIv: string;
@@ -157,12 +184,16 @@ export async function extractKnowledgeFromMessage(input: {
 }): Promise<{ extracted: number }> {
     if (!aiAvailable()) return { extracted: 0 };
 
-    const prompt = `Sen foydalanuvchi haqida faktlar chiqarish bo'yicha uskuna emassan. Faqat foydalanuvchi O'ZI aytgan yoki tasdiqlagan aniq faktlarni ol.
+    const prompt = `Sen foydalanuvchi haqida faktlar chiqarish bo'yicha uskunasan. Faqat foydalanuvchi O'ZI aytgan yoki tasdiqlagan aniq faktlarni ol.
 
-QOIDA:
+QOIDA (kritik):
 - Faqat foydalanuvchi haqida bo'lgan aniq faktlar. Boshqa odamlar haqida emas.
 - Fakt aniq bo'lmasa — SKIP.
-- Sezgir mavzular (sog'liq, jinsiy hayot, siyosat, din) — sensitive=true.
+- **HAQORAT/SPAM/SIYOSIY EKSTREMIZM/CHAQIRIQ** — SKIP (facts=[]).
+- **PII kritik ma'lumot** (pasport raqami, karta raqami, parol, IP, IMEI) — SKIP.
+- **Yolg'on ekanligi ochiq** ("Men prezidentman", "Men Bill Gatesman") — SKIP.
+- **Boshqa foydalanuvchini yomonlash** yoki uni "aniqlash" ("filan qari kishi") — SKIP.
+- Sezgir mavzular (sog'liq, jinsiy hayot, siyosat, din) — sensitive=true (skip qilma, lekin belgila).
 - Har fakt {category, key, value, confidence, sensitive}
 - Kategoriyalar: identity, family, work, interests, lifestyle, goals, contacts, assets, habits, other
 
@@ -176,6 +207,12 @@ Chiqadi: [
 
 Xabar: "Bugun charchadim"
 Chiqadi: []   (uzoq muddat bilim emas)
+
+Xabar: "Karta raqamim 8600 1234 5678 9012"
+Chiqadi: []   (kritik PII — hech qachon saqlanmasin)
+
+Xabar: "Men Toshkent hokimiman"
+Chiqadi: []   (yolg'on — tekshirilmagan)
 
 ${input.conversationContext ? `Suhbat konteksti:\n${input.conversationContext.slice(-500)}\n` : ""}
 Foydalanuvchi xabari: "${input.userMessage.slice(0, 1000)}"
@@ -198,6 +235,11 @@ Faktlar bo'lmasa: { "facts": [] }`;
             if (!KNOWLEDGE_CATEGORIES.includes(f.category as KnowledgeCategory)) continue;
             const conf = Math.max(0, Math.min(1, Number(f.confidence) || 0));
             if (conf < 0.5) continue;  // past ishonch — o'tkazib yuboramiz
+
+            // Belgilar filter: aniq kritik PII yoki spam — jim rad etamiz
+            if (looksLikeCriticalPii(f.value)) continue;
+            if (isSpamOrGibberish(f.value)) continue;
+
             await upsertKnowledge({
                 profileId: input.profileId,
                 category: f.category as KnowledgeCategory,

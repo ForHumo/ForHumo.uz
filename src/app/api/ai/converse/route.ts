@@ -15,7 +15,7 @@ import { NextResponse, after } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { aiAvailable, aiChat, aiText } from "@/lib/ai";
+import { aiAvailable, aiChat, aiText, aiJSON, aiVisionJSON } from "@/lib/ai";
 import { buildAiSystemPrompt } from "@/lib/ai-context-builder";
 import { extractKnowledgeFromMessage } from "@/lib/user-knowledge";
 import { belisRate } from "@/lib/belis-rate";
@@ -55,6 +55,9 @@ export async function POST(req: Request) {
     if (!userMsg) return NextResponse.json({ error: "message_required" }, { status: 400 });
     const moduleOrigin = typeof body?.moduleOrigin === "string" ? body.moduleOrigin.slice(0, 20) : undefined;
     const audioUrl = typeof body?.audioUrl === "string" ? body.audioUrl.slice(0, 500) : null;
+    const attachmentUrl = typeof body?.attachmentUrl === "string" ? body.attachmentUrl.slice(0, 500) : null;
+    const attachmentType = typeof body?.attachmentType === "string" ? body.attachmentType.slice(0, 20) : null;
+    const isImage = attachmentType === "image" && !!attachmentUrl;
     const extractKB = body?.extractKnowledge !== false;
     let conversationId: string | undefined = typeof body?.conversationId === "string" ? body.conversationId : undefined;
 
@@ -88,7 +91,8 @@ export async function POST(req: Request) {
             role: "user",
             body: userMsg,
             audioUrl,
-            attachmentType: audioUrl ? "audio" : null,
+            attachmentUrl,
+            attachmentType: attachmentUrl ? (attachmentType || "file") : (audioUrl ? "audio" : null),
         },
     });
 
@@ -109,17 +113,31 @@ export async function POST(req: Request) {
         includeSignals: true,
     });
 
-    // 4. Gemini chaqiruv
+    // 4. Gemini chaqiruv — rasm bo'lsa vision, yo'q bo'lsa oddiy chat
     let aiReply: string;
     try {
-        aiReply = await aiChat(
-            history.map(m => ({
-                role: m.role === "ai" ? "model" as const : "user" as const,
-                text: m.body,
-            })),
-            { system, temperature: 0.7 },
-        );
-        aiReply = (aiReply || "").trim().slice(0, 3000);
+        if (isImage && attachmentUrl) {
+            // Multi-modal: rasm tahlil qilish
+            const visionResult = await aiVisionJSON<{ reply: string }>(
+                `${userMsg}\n\nJSON qaytar: { "reply": "javob matn (uz)" }`,
+                attachmentUrl,
+                { system, temperature: 0.6 },
+            );
+            aiReply = (visionResult?.reply || "").trim().slice(0, 3000);
+            if (!aiReply) {
+                aiReply = await aiText(`Rasm bilan savol: "${userMsg}". Rasm tahlil qilib javob bering.`, { system });
+                aiReply = (aiReply || "").trim().slice(0, 3000);
+            }
+        } else {
+            aiReply = await aiChat(
+                history.map(m => ({
+                    role: m.role === "ai" ? "model" as const : "user" as const,
+                    text: m.body,
+                })),
+                { system, temperature: 0.7 },
+            );
+            aiReply = (aiReply || "").trim().slice(0, 3000);
+        }
         if (!aiReply) throw new Error("empty_response");
     } catch (e) {
         // Fallback — oddiy prompt bilan urinib ko'ramiz
@@ -151,7 +169,29 @@ export async function POST(req: Request) {
         },
     });
 
-    // 7. Knowledge extraction (fon rejim — javobni kechiktirmaydi)
+    // 7. Follow-up suggestions — 3 ta qisqa keyingi savol (parallel, lekin javobni kutmaydi juda uzoq)
+    let followUps: string[] = [];
+    try {
+        const followPrompt = `Suhbatning oxirgi holati:
+Foydalanuvchi: "${userMsg.slice(0, 300)}"
+AI: "${aiReply.slice(0, 500)}"
+
+Foydalanuvchi keyingi qadamda so'rashi mumkin bo'lgan 3 ta qisqa savolni O'zbek tilida chiqar (har biri 3-8 so'z). Formal shakl, savol belgisi bilan. Qaytmang: mavjud AI javobga takror.
+
+JSON: { "suggestions": ["savol1?", "savol2?", "savol3?"] }`;
+        const fResult = await Promise.race([
+            aiJSON<{ suggestions: string[] }>(followPrompt, { temperature: 0.7 }),
+            new Promise<null>(resolve => setTimeout(() => resolve(null), 4000)),   // 4s timeout
+        ]);
+        if (fResult?.suggestions && Array.isArray(fResult.suggestions)) {
+            followUps = fResult.suggestions
+                .filter(s => typeof s === "string" && s.length > 0)
+                .slice(0, 3)
+                .map(s => s.slice(0, 100).trim());
+        }
+    } catch { /* fail-safe — followUps bo'sh qoladi */ }
+
+    // 8. Knowledge extraction (fon rejim — javobni kechiktirmaydi)
     if (extractKB) {
         after(async () => {
             await extractKnowledgeFromMessage({
@@ -173,5 +213,6 @@ export async function POST(req: Request) {
             { id: userDbMsg.id, role: "user", body: userMsg, createdAt: userDbMsg.createdAt.toISOString() },
             { id: aiDbMsg.id, role: "ai", body: aiReply, createdAt: aiDbMsg.createdAt.toISOString() },
         ],
+        followUps,
     });
 }
