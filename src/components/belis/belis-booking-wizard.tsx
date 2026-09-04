@@ -74,6 +74,10 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
     const [passportUploading, setPassportUploading] = useState(false);
     const [note, setNote] = useState("");
     const [acceptTerms, setAcceptTerms] = useState(false);
+    // For Pay integratsiya — to'lov usuli
+    const [paymentMethod, setPaymentMethod] = useState<"CASH" | "WALLET">("CASH");
+    const [walletBalance, setWalletBalance] = useState<number | null>(null);
+    const [walletCurrency, setWalletCurrency] = useState<"UZS" | "USD">("UZS");
 
     const [submitting, setSubmitting] = useState(false);
     const [err, setErr] = useState<string | null>(null);
@@ -98,6 +102,19 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                 // Autofill (agar bo'sh bo'lsa)
                 if (d.name) setBuyerName(prev => prev || d.name);
                 if (d.phone) setBuyerPhone(prev => (prev === "+998" ? d.phone : prev));
+            })
+            .catch(() => {});
+    }, [status]);
+
+    // Wallet balansi (For Pay integratsiya — WALLET tugmasi ko'rsatish uchun)
+    useEffect(() => {
+        if (status !== "authenticated") return;
+        fetch("/api/pay/wallet", { cache: "no-store" })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => {
+                if (!d) return;
+                setWalletBalance(Number(d.balance ?? 0));
+                setWalletCurrency(d.currency === "USD" ? "USD" : "UZS");
             })
             .catch(() => {});
     }, [status]);
@@ -151,6 +168,7 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                     address: (fulfill === "YANDEX_CUSTOMER" || fulfill === "YANDEX_BELIS") ? address.trim() : undefined,
                     note: note.trim() || undefined,
                     returnDaysAfter,
+                    paymentMethod,
                 }),
             });
             const d = await r.json();
@@ -161,6 +179,7 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                     : d?.error === "address_required_for_yandex" ? "Manzil kiriting"
                     : d?.error === "past_date" ? "O'tgan sana tanlanmagan"
                     : d?.error === "humo_id_required" ? "Humo ID kerak. /id sahifasidan oling."
+                    : d?.error === "wallet_hold_failed" ? (d?.hint || "Hamyondan to'lov muvaffaqiyatsiz")
                     : d?.error ?? "Xatolik";
                 setErr(msg);
                 return;
@@ -480,10 +499,75 @@ export function BelisBookingWizard({ komplektSlug, komplektName, onClose }: Prop
                                 </div>
                             </div>
 
+                            {/* To'lov usuli — For Pay integratsiya */}
+                            <div className="mt-4">
+                                <label className="text-[12.5px] font-black mb-1.5 block" style={{ color: BELIS.text }}>
+                                    To&apos;lov usuli
+                                </label>
+                                <div className="grid grid-cols-1 gap-2">
+                                    <button type="button" onClick={() => setPaymentMethod("CASH")}
+                                        className="p-3 rounded-xl text-left transition-colors"
+                                        style={{
+                                            background: paymentMethod === "CASH" ? BELIS.goldSoft : BELIS.bg,
+                                            border: `1px solid ${paymentMethod === "CASH" ? BELIS.gold : BELIS.border}`,
+                                        }}>
+                                        <div className="flex items-center gap-1.5">
+                                            <CreditCard className="w-4 h-4" />
+                                            <span className="text-[13px] font-black" style={{ color: BELIS.text }}>Do&apos;konda naqd</span>
+                                        </div>
+                                        <p className="text-[11px] mt-1 ml-6" style={{ color: BELIS.text2 }}>
+                                            Sarpo olib ketilganda naqd to&apos;laysiz
+                                        </p>
+                                    </button>
+                                    {(() => {
+                                        const total = avail.totals.grandTotalUzs;
+                                        const balance = walletBalance ?? 0;
+                                        const hasEnough = balance >= total;
+                                        return (
+                                            <button type="button"
+                                                onClick={() => hasEnough && setPaymentMethod("WALLET")}
+                                                disabled={!hasEnough}
+                                                className="p-3 rounded-xl text-left transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                                style={{
+                                                    background: paymentMethod === "WALLET" ? BELIS.goldSoft : BELIS.bg,
+                                                    border: `1px solid ${paymentMethod === "WALLET" ? BELIS.gold : BELIS.border}`,
+                                                }}>
+                                                <div className="flex items-center gap-1.5">
+                                                    <CreditCard className="w-4 h-4" />
+                                                    <span className="text-[13px] font-black" style={{ color: BELIS.text }}>For Pay hamyondan</span>
+                                                    {walletBalance !== null && (
+                                                        <span className="ml-auto text-[10.5px] tabular-nums"
+                                                            style={{ color: hasEnough ? BELIS.ok : BELIS.err }}>
+                                                            {balance.toLocaleString("uz-UZ")} {walletCurrency === "USD" ? "$" : "so'm"}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] mt-1 ml-6" style={{ color: hasEnough ? BELIS.text2 : BELIS.err }}>
+                                                    {hasEnough
+                                                        ? "Ijara + zaklat bloklanadi. Zaklat qaytishida qaytariladi."
+                                                        : `Balansda pul yetmadi (${Math.max(0, total - balance).toLocaleString("uz-UZ")} so'm kam)`}
+                                                </p>
+                                                {!hasEnough && (
+                                                    <a href="/pay" target="_blank" rel="noopener"
+                                                        className="mt-2 ml-6 inline-block text-[11px] font-black underline"
+                                                        style={{ color: BELIS.goldDeep }}>
+                                                        Hamyonni to&apos;ldirish →
+                                                    </a>
+                                                )}
+                                            </button>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+
                             <div className="mt-4 p-3 rounded-xl text-[11.5px] flex items-start gap-2"
                                 style={{ background: BELIS.goldSoft, color: BELIS.onGold }}>
                                 <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                                <span>Ariza yuborilgach @sevinch qo&apos;ng&apos;iroq qiladi, aniqlashtiradi va tasdiqlaydi. Pul do&apos;konda naqd to&apos;laydi.</span>
+                                <span>
+                                    {paymentMethod === "WALLET"
+                                        ? "Ariza yuborilganda hamyondan ijara + zaklat bloklanadi. @sevinch tasdiqlashi kutiladi. Bekor qilinsa pul qaytariladi."
+                                        : "Ariza yuborilgach @sevinch qo'ng'iroq qiladi, aniqlashtiradi va tasdiqlaydi. Pul do'konda naqd to'laydi."}
+                                </span>
                             </div>
 
                             <button type="button" onClick={() => setContractOpen(true)}

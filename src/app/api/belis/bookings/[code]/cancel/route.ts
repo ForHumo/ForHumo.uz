@@ -18,7 +18,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
 
     const b = await prisma.belisRentalBooking.findUnique({
         where: { code },
-        select: { id: true, buyerId: true, status: true },
+        select: {
+            id: true, buyerId: true, status: true,
+            paymentMethod: true, rentTotalUzs: true, depositUzs: true,
+            holdTxRef: true, settleTxRef: true,
+        },
     });
     if (!b) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
@@ -42,6 +46,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
             cancelReason: reason ?? (isOwner ? "Mijoz bekor qildi" : "Admin bekor qildi"),
         },
     });
+
+    // For Pay: WALLET hold bo'lgan bo'lsa va hali settle qilinmagan bo'lsa — qaytarish
+    if (b.paymentMethod === "WALLET" && b.holdTxRef && !b.settleTxRef) {
+        const { releaseBookingHold } = await import("@/lib/belis-payments");
+        await releaseBookingHold({
+            bookingId: b.id,
+            bookingCode: code,
+            buyerProfileId: b.buyerId,
+            rentTotal: b.rentTotalUzs,
+            deposit: b.depositUzs,
+        });
+    }
 
     after(async () => {
         if (isOwner) {

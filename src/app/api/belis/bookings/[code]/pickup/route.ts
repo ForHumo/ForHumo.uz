@@ -18,7 +18,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
 
     const b = await prisma.belisRentalBooking.findUnique({
         where: { code },
-        select: { id: true, status: true, rentTotalUzs: true, depositUzs: true, buyerId: true, returnDate: true },
+        select: {
+            id: true, status: true, rentTotalUzs: true, depositUzs: true,
+            buyerId: true, returnDate: true, paymentMethod: true, settleTxRef: true,
+        },
     });
     if (!b) return NextResponse.json({ error: "not_found" }, { status: 404 });
     if (b.status !== "CONFIRMED") {
@@ -33,6 +36,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
             paidDeposit: paidDeposit > 0 ? paidDeposit : b.depositUzs,   // default: to'liq zaklat
         },
     });
+
+    // For Pay: WALLET bo'lsa ijara pulini @sevinch hamyoniga o'tkazish
+    if (b.paymentMethod === "WALLET" && !b.settleTxRef) {
+        const { settleBookingRent } = await import("@/lib/belis-payments");
+        await settleBookingRent({
+            bookingId: b.id,
+            bookingCode: code,
+            buyerProfileId: b.buyerId,
+            rentAmount: b.rentTotalUzs,
+        });
+    }
 
     after(async () => {
         await belisPush(b.buyerId, {

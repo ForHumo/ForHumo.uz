@@ -4160,6 +4160,17 @@ model BelisRentalBooking {
   confirmedById     String?                              // admin (@sevinch)
   returnedById      String?                              // qaytishni belgilagan admin
 
+  // ── For Pay integratsiyasi ────────────────────────────────────────────
+  // Ariza yaratganda mijoz to'lov usulini tanlaydi.
+  //   CASH — do'konda naqd (default, backward compat)
+  //   WALLET — For Pay hamyondan (ijara + zaklat bloklanadi eskro)
+  paymentMethod     String   @default("CASH")            // "CASH" | "WALLET"
+  walletCurrency    String?                              // hamyon valyutasi (UZS/USD)
+  holdTxRef         String?  @unique                     // WalletTransaction ref: "belis:hold:<code>"
+  settleTxRef       String?  @unique                     // "belis:settle:<code>" — ijara @sevinch ga
+  refundTxRef       String?  @unique                     // "belis:refund:<code>" — zaklat mijozga
+  fineTxRef         String?  @unique                     // "belis:fine:<code>" — jarima @sevinch ga
+
   @@index([buyerId, createdAt])
   @@index([eventDate])
   @@index([status, createdAt])

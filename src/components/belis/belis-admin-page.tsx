@@ -32,6 +32,11 @@ interface Booking {
     depositUzs: number;
     paidRent: number;
     paidDeposit: number;
+    paymentMethod?: "CASH" | "WALLET";
+    walletCurrency?: string | null;
+    holdTxRef?: string | null;
+    settleTxRef?: string | null;
+    refundTxRef?: string | null;
     fulfillType: "PICKUP" | "YANDEX_CUSTOMER";
     address: string | null;
     komplekt: { slug: string; nameUz: string; images: string[] } | null;
@@ -246,6 +251,27 @@ function AdminCard({ b, busy, onConfirm, onPickup, onReturn }: {
                 <div className="text-[11.5px] mb-3 p-2 rounded-lg flex items-start gap-1"
                     style={{ background: BELIS.bg, color: BELIS.text2 }}>
                     <MapPin className="w-3 h-3 flex-shrink-0 mt-0.5" />{b.address}
+                </div>
+            )}
+
+            {/* For Pay to'lov statusi */}
+            {b.paymentMethod === "WALLET" && (
+                <div className="mb-3 p-2 rounded-lg text-[10.5px]"
+                    style={{ background: BELIS.goldSoft, color: BELIS.onGold }}>
+                    <div className="flex items-center gap-1 mb-0.5">
+                        <span className="text-[10px] font-black uppercase tracking-widest">For Pay</span>
+                        {b.holdTxRef && !b.settleTxRef && !b.refundTxRef && <span>· hold (escrow)</span>}
+                        {b.settleTxRef && !b.refundTxRef && <span>· ijara @sevinch ga o&apos;tdi</span>}
+                        {b.refundTxRef && <span>· zaklat qaytdi</span>}
+                    </div>
+                    <div className="tabular-nums">
+                        Hold: {(b.rentTotalUzs + b.depositUzs).toLocaleString("uz-UZ")} so&apos;m
+                    </div>
+                </div>
+            )}
+            {b.paymentMethod === "CASH" && (
+                <div className="mb-3 text-[10.5px]" style={{ color: BELIS.text3 }}>
+                    · To&apos;lov: naqd (do&apos;konda)
                 </div>
             )}
 

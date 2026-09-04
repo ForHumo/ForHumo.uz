@@ -33,6 +33,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
         select: {
             id: true, status: true, rentDailyUzs: true, depositUzs: true,
             returnDate: true, paidDeposit: true, buyerId: true,
+            paymentMethod: true, refundTxRef: true, fineTxRef: true,
         },
     });
     if (!b) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -60,6 +61,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
             returnedById: auth.profileId,
         },
     });
+
+    // For Pay: WALLET bo'lsa zaklatni qaytarish + jarima @sevinch ga
+    if (b.paymentMethod === "WALLET" && !b.refundTxRef && !b.fineTxRef) {
+        const { refundBookingDeposit } = await import("@/lib/belis-payments");
+        await refundBookingDeposit({
+            bookingId: b.id,
+            bookingCode: code,
+            buyerProfileId: b.buyerId,
+            depositAmount: b.paidDeposit,
+            fineAmount: totalFine,
+        });
+    }
 
     after(async () => {
         const title = ok ? "Zaklat qaytariladi" : "Qaytish qabul qilindi (zarar)";

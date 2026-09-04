@@ -69,6 +69,22 @@ export function BelisItemBookingWizard({ items, onClose, onClearCart }: Props) {
     const [passportUploading, setPassportUploading] = useState(false);
     const [note, setNote] = useState("");
     const [acceptTerms, setAcceptTerms] = useState(false);
+    // For Pay to'lov usuli
+    const [paymentMethod, setPaymentMethod] = useState<"CASH" | "WALLET">("CASH");
+    const [walletBalance, setWalletBalance] = useState<number | null>(null);
+    const [walletCurrency, setWalletCurrency] = useState<"UZS" | "USD">("UZS");
+
+    useEffect(() => {
+        if (status !== "authenticated") return;
+        fetch("/api/pay/wallet", { cache: "no-store" })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => {
+                if (!d) return;
+                setWalletBalance(Number(d.balance ?? 0));
+                setWalletCurrency(d.currency === "USD" ? "USD" : "UZS");
+            })
+            .catch(() => {});
+    }, [status]);
 
     const [submitting, setSubmitting] = useState(false);
     const [err, setErr] = useState<string | null>(null);
@@ -133,6 +149,7 @@ export function BelisItemBookingWizard({ items, onClose, onClearCart }: Props) {
                     address: (fulfill === "YANDEX_CUSTOMER" || fulfill === "YANDEX_BELIS") ? address.trim() : undefined,
                     note: note.trim() || undefined,
                     returnDaysAfter,
+                    paymentMethod,
                 }),
             });
             const d = await r.json();
@@ -396,6 +413,44 @@ export function BelisItemBookingWizard({ items, onClose, onClearCart }: Props) {
                                         <span style={{ color: BELIS.text }}>JAMI:</span>
                                         <span style={{ color: BELIS.goldDeep }}>{fmtSom(grand)}</span>
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* To'lov usuli */}
+                            <div className="mt-3">
+                                <label className="text-[12.5px] font-black mb-1.5 block" style={{ color: BELIS.text }}>To&apos;lov usuli</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button type="button" onClick={() => setPaymentMethod("CASH")}
+                                        className="p-2.5 rounded-xl text-left text-[12px] font-black"
+                                        style={{
+                                            background: paymentMethod === "CASH" ? BELIS.goldSoft : BELIS.bg,
+                                            border: `1px solid ${paymentMethod === "CASH" ? BELIS.gold : BELIS.border}`,
+                                            color: BELIS.text,
+                                        }}>
+                                        Do&apos;konda naqd
+                                    </button>
+                                    {(() => {
+                                        const balance = walletBalance ?? 0;
+                                        const hasEnough = balance >= grand;
+                                        return (
+                                            <button type="button"
+                                                onClick={() => hasEnough && setPaymentMethod("WALLET")}
+                                                disabled={!hasEnough}
+                                                className="p-2.5 rounded-xl text-left text-[12px] font-black disabled:opacity-60"
+                                                style={{
+                                                    background: paymentMethod === "WALLET" ? BELIS.goldSoft : BELIS.bg,
+                                                    border: `1px solid ${paymentMethod === "WALLET" ? BELIS.gold : BELIS.border}`,
+                                                    color: BELIS.text,
+                                                }}>
+                                                For Pay hamyondan
+                                                <div className="text-[10px] font-normal mt-0.5" style={{ color: hasEnough ? BELIS.text2 : BELIS.err }}>
+                                                    {walletBalance !== null
+                                                        ? `${balance.toLocaleString("uz-UZ")} ${walletCurrency === "USD" ? "$" : "so'm"}`
+                                                        : "Yuklanmoqda…"}
+                                                </div>
+                                            </button>
+                                        );
+                                    })()}
                                 </div>
                             </div>
 

@@ -89,6 +89,13 @@ export async function GET(req: Request) {
                 komplekt: b.komplekt,
                 fineUzs: b.fineUzs,
                 refundedUzs: b.refundedUzs,
+                // For Pay
+                paymentMethod: b.paymentMethod,
+                walletCurrency: b.walletCurrency,
+                holdTxRef: b.holdTxRef,
+                settleTxRef: b.settleTxRef,
+                refundTxRef: b.refundTxRef,
+                fineTxRef: b.fineTxRef,
                 createdAt: b.createdAt.toISOString(),
             };
         }),

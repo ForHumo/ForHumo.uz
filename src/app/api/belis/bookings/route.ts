@@ -84,6 +84,9 @@ export async function POST(req: Request) {
     // Qaytish kunlari (marosim keyingi N kun): default 1, max 2
     const returnDaysAfterRaw = Number(body?.returnDaysAfter);
     const returnDaysAfter = Number.isFinite(returnDaysAfterRaw) ? returnDaysAfterRaw : undefined;
+    // To'lov usuli — For Pay wallet yoki naqd (default)
+    const paymentMethodRaw = String(body?.paymentMethod ?? "CASH").toUpperCase();
+    const paymentMethod: "CASH" | "WALLET" = paymentMethodRaw === "WALLET" ? "WALLET" : "CASH";
 
     // Validatsiya
     if (!isKomplektMode && !isItemsMode) {
@@ -229,11 +232,41 @@ export async function POST(req: Request) {
         });
     }
 
+    // For Pay: WALLET tanlangan bo'lsa hold qilish (escrow)
+    if (paymentMethod === "WALLET") {
+        const { holdBookingFunds } = await import("@/lib/belis-payments");
+        const hold = await holdBookingFunds({
+            bookingId: booking.id,
+            bookingCode: booking.code,
+            buyerProfileId: auth.profileId,
+            rentTotal: booking.rentTotalUzs,
+            deposit: booking.depositUzs,
+        });
+        if (!hold.ok) {
+            // Hold muvaffaqiyatsiz — ariza yaratildi lekin to'lov qilinmadi
+            // Bookingni CANCELLED qilib qaytaramiz (mijoz cash bilan davom etishi mumkin)
+            await prisma.belisRentalBooking.update({
+                where: { id: booking.id },
+                data: { status: "CANCELLED", cancelReason: `Wallet: ${hold.error}` },
+            });
+            return NextResponse.json({
+                error: "wallet_hold_failed",
+                reason: hold.error,
+                required: hold.required,
+                balance: hold.balance,
+                currency: hold.currency,
+                hint: hold.error === "insufficient_balance"
+                    ? "Hamyoningizda pul yetmadi — deposit qiling yoki naqd to'lov tanlang"
+                    : "Hamyondan to'lov muvaffaqiyatsiz — naqd to'lov bilan davom eting",
+            }, { status: 402 });
+        }
+    }
+
     // Adminga (@sevinch) push — yangi ariza
     after(async () => {
         await belisPushAdmins({
             title: "Yangi Belis arizasi",
-            body: `${buyerName} · ${schedule.eventDate.toLocaleDateString("uz-UZ")} marosim`,
+            body: `${buyerName} · ${schedule.eventDate.toLocaleDateString("uz-UZ")} marosim${paymentMethod === "WALLET" ? " · Wallet" : ""}`,
             link: `/admin/bookings/${booking.code}`,
             tag: `belis:new:${booking.code}`,
         });
