@@ -13,7 +13,7 @@ const WELCOME_BY_MODULE: Record<string, string> = {
     MARKET: "Salom! Men — Humo Market agentiman. Mahsulot izlash, buyurtma, savat va sotuvchi bilan bog'lanish bo'yicha yordam beraman.",
     PAY: "Salom! Men — For Pay agentiman. Balans, o'tkazma, seyf, kartochka va tarixni tekshirish uchun murojaat qiling.",
     BN: "Salom! Men — Bozor Narxida agentiman. Bozor narxlari, mahsulot izlash va narx-taqqoslash bo'yicha yordam beraman.",
-    SUPPORT: "Assalomu alaykum! Men — Humo Support agentiman. Har qanday muammo yoki savolingizni yozing — jamoamiz javob beradi. Odatda 4 soat ichida javob boradi.",
+    SUPPORT: "Assalomu alaykum! Men — Humo Support agentiman.\n\nHar qanday muammo yoki savolingizni shu chat'da yozing — jamoamiz ko'radi va javob beradi.\n\n• Odatda 4 soat ichida javob boradi\n• Bildirishnoma push xabari bilan darhol keladi\n• Suhbatlaringiz /support sahifasida tarix sifatida saqlanadi\n\nQanday yordam kerak?",
 };
 
 // Foydalanuvchi ma'lum agent bilan DM birinchi ochganda agent xabarni yuboradi.

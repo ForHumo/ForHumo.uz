@@ -85,9 +85,24 @@ function SupportWelcome({ moduleLabel, onQuickStart }: { moduleLabel: string; on
             </div>
 
             {/* Response time indikator */}
+            {/* PRIMARY — Nexus DM (B yondashuv) */}
+            <Link
+                href="/nexus?dm=support"
+                className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/25 group hover:shadow-xl hover:shadow-blue-500/35 transition-all"
+            >
+                <span className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm grid place-items-center flex-shrink-0">
+                    <Sparkles className="w-5 h-5" />
+                </span>
+                <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-black">Nexus DM&apos;da yozing</p>
+                    <p className="text-[11px] opacity-90 mt-0.5">Real-time chat · Push xabar</p>
+                </div>
+                <ChevronRight className="w-4 h-4 opacity-70 group-hover:translate-x-1 transition-transform" />
+            </Link>
+
             <div className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
                 <Clock className="w-3.5 h-3.5" />
-                <span>O'rtacha javob vaqti — 4 soat ichida</span>
+                <span>Yoki quyidagi mavzudan tanlang</span>
             </div>
 
             {/* Kategoriya kartalar */}
@@ -397,6 +412,22 @@ export function SupportDock() {
                                 </div>
                             ) : view === "list" ? (
                                 <div className="p-2">
+                                    {/* PRIMARY — Nexus DM'ga o'tish. B yondashuvda asosiy CTA */}
+                                    <Link
+                                        href="/nexus?dm=support"
+                                        onClick={() => setOpen(false)}
+                                        className="flex items-center gap-3 p-3 mb-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/25 group hover:shadow-xl hover:shadow-blue-500/35 transition-all"
+                                    >
+                                        <span className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm grid place-items-center flex-shrink-0">
+                                            <Sparkles size={18} />
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[13px] font-black">Nexus DM&apos;da yozing</p>
+                                            <p className="text-[11px] opacity-90 mt-0.5">Real-time · push xabar bilan</p>
+                                        </div>
+                                        <ChevronRight size={16} className="opacity-70 group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+
                                     {loading && tickets.length === 0 ? (
                                         <div className="flex justify-center py-8"><Loader2 className="animate-spin text-neutral-400" /></div>
                                     ) : tickets.length === 0 ? (

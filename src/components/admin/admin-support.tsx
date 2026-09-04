@@ -4,7 +4,8 @@
 // Chap — ro'yxat (status filter), o'ng — tanlangan tiket thread + composer.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Send, Loader2, CheckCircle2, RefreshCw, MessageCircle } from "lucide-react";
+import { Send, Loader2, CheckCircle2, RefreshCw, MessageCircle, Sparkles } from "lucide-react";
+import { Link } from "@/i18n/routing";
 
 type TicketListItem = {
     id: string; subject: string; status: string; module: string | null;
@@ -177,7 +178,17 @@ export function AdminSupport() {
                                             {active?.module && ` • ${MODULE_LABEL[active.module] ?? active.module}`}
                                         </div>
                                     </div>
-                                    <div className="flex gap-1 shrink-0">
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        {active?.profile?.username && (
+                                            <Link
+                                                href={`/nexus?dm=${active.profile.username}` as never}
+                                                target="_blank"
+                                                title="Nexus DM'da mijoz bilan yozish"
+                                                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:shadow-md transition-all"
+                                            >
+                                                <Sparkles size={11} /> Nexus DM
+                                            </Link>
+                                        )}
                                         {(["open", "pending", "closed"] as const).map(s => (
                                             <button
                                                 key={s}
