@@ -13,6 +13,7 @@ import {
 import { HumoAssistantPanel } from "./humo-assistant-panel";
 import { HumoNotifTray } from "./humo-notif-tray";
 import { HumoSearchPalette } from "./humo-search-palette";
+import { HumoInstallCard } from "./humo-install-card";
 
 const FOUNDER_USERNAMES = ["abduvoris", "aaa", "forhumo"];
 
@@ -155,6 +156,9 @@ export function HumoDashboard() {
                 <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-white/10" />
                 <div className="absolute -right-8 -bottom-20 w-32 h-32 rounded-full bg-white/10" />
             </div>
+
+            {/* PWA install banner */}
+            <HumoInstallCard />
 
             {/* Founder yorlig'i */}
             {isFounder && (
