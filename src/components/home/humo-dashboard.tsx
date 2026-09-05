@@ -14,6 +14,8 @@ import { HumoAssistantPanel } from "./humo-assistant-panel";
 import { HumoNotifTray } from "./humo-notif-tray";
 import { HumoSearchPalette } from "./humo-search-palette";
 import { HumoInstallCard } from "./humo-install-card";
+import { HumoTour } from "./humo-tour";
+import { HumoFeedbackWidget } from "./humo-feedback-widget";
 
 const FOUNDER_USERNAMES = ["abduvoris", "aaa", "forhumo"];
 
@@ -228,6 +230,8 @@ export function HumoDashboard() {
 
             {/* Universal AI Assistant (suzuvchi tugma) */}
             <HumoAssistantPanel />
+            <HumoFeedbackWidget module="humo" />
+            <HumoTour />
 
             {/* Aktivlik feed */}
             {activity && activity.length > 0 && (

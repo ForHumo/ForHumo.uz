@@ -3774,6 +3774,28 @@ model BnBroadcast {
   @@index([ownerId, createdAt])
 }
 
+// ── Humo universal in-app feedback ───────────────────────────────────────────
+// Foydalanuvchi istalgan sahifadan reaksiya beradi (kayfiyat + matn).
+// Admin ko'radi va yaxshilashga ishlatadi.
+model HumoFeedback {
+  id         String   @id @default(cuid())
+  profileId  String?                                 // ixtiyoriy (anonim ham mumkin)
+  mood       String                                  // "happy" | "neutral" | "sad" | "bug" | "idea"
+  message    String                                  // max 2000 belgi
+  url        String?                                 // qaysi sahifada berilgan
+  userAgent  String?                                 // brauzer info
+  module     String?                                 // "bn" | "belis" | "market" | "nexus" | "pay" | "id" | "humo"
+  imageUrl   String?                                 // ixtiyoriy screenshot
+  status     String   @default("new")                // new | reviewed | resolved | ignored
+  adminNote  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([profileId, createdAt])
+  @@index([module, createdAt])
+}
+
 // ── BN Sotuvchi AI tavsiyalar (kunlik kesh) ──────────────────────────────────
 // Har sotuvchi (shop egasi) uchun kunlik AI insights. Kunlik cron generatsiya qiladi,
 // kabinet UI qayta yuklamasidan ko'rsatiladi. Bir kunda bir shop uchun bir yozuv.
