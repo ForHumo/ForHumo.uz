@@ -10,6 +10,9 @@
     "test": "vitest run",
     "postinstall": "prisma generate"
   },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "@livekit/components-react": "^2.9.23",
     "@livekit/components-styles": "^1.2.0",
