@@ -21,6 +21,7 @@ import {
     BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel, TIER_META,
 } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
+import { BnProductCompareCard } from "./bn-product-compare-card";
 import { BnSectionTitle, useShopLocationText } from "./bn-cards";
 import type { BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
@@ -683,6 +684,9 @@ export function BnProductDetail({
                     </div>
                 </section>
             )}
+
+            {/* Cross-shop narx solishtirish — BN'ning asosiy va'dasi */}
+            <BnProductCompareCard productId={p.id} />
 
             {/* Mobile sticky bottom action bar — scroll pastga tushganda ko'rinadi */}
             <BnMobileActions

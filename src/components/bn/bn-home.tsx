@@ -11,6 +11,7 @@ import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnHeroSlider } from "./bn-hero-slider";
 import { AiQuickHelper } from "@/components/ai/ai-quick-helper";
+import { BnShoppingAssistant } from "./bn-shopping-assistant";
 import { BnWelcomeTour } from "./bn-welcome-tour";
 import { BnLink, useBnBase } from "./bn-nav";
 import { useShopLocationText } from "./bn-cards";
@@ -242,6 +243,7 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
 
             {/* AI quick helper (BN modul kontekstida) */}
             <AiQuickHelper module="bn" initialPrompt="Menga arzon mahsulot toping" />
+            <BnShoppingAssistant />
         </div>
     );
 }

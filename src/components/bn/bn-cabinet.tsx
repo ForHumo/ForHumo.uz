@@ -32,6 +32,7 @@ import { BnAchievementsCard } from "./bn-achievements-card";
 import { BnPremiumUpgrade } from "./bn-premium-upgrade";
 import { BnMyAdsCard } from "./bn-my-ads-card";
 import { BnSellerInsightsCard } from "./bn-seller-insights-card";
+import { BnBuyerInsightsCard } from "./bn-buyer-insights-card";
 import { BnBulkImportModal } from "./bn-bulk-import-modal";
 import { BnFeatureButton } from "./bn-feature-modal";
 import { BnOrderChatButton } from "./bn-order-chat";
@@ -213,6 +214,11 @@ export function BnCabinet(props: Props) {
     if (!shop) {
         return (
             <div className="mx-auto max-w-[1280px] px-4 py-8 pb-16">
+                {/* Xaridor uchun statistika (buyurtma yoki sevimli bo'lsa) */}
+                <div className="max-w-[720px] mx-auto">
+                    <BnBuyerInsightsCard />
+                </div>
+
                 <div
                     className="max-w-[480px] mx-auto p-8 rounded-3xl text-center"
                     style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}
