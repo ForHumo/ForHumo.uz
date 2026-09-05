@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { MARKET_CATEGORIES } from "@/lib/market-categories";
 import { ProductCard } from "./product-card";
+import { AiQuickHelper } from "@/components/ai/ai-quick-helper";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -205,6 +206,7 @@ export function MarketHome() {
 
                 </div>
             </div>
+            <AiQuickHelper module="market" initialPrompt="Menga sifatli mahsulot toping" />
         </>
     );
 }

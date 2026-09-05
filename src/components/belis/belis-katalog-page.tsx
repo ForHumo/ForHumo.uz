@@ -7,6 +7,7 @@ import { Sparkles, Package, ChevronRight, Loader2, LayoutGrid, Box } from "lucid
 import { BELIS, BELIS_GOLD_GRADIENT } from "@/lib/belis-theme";
 import { BelisLink } from "./belis-nav";
 import { BelisItemsTab } from "./belis-items-tab";
+import { BelisBuyerCard } from "./belis-buyer-card";
 import { AiQuickHelper } from "@/components/ai/ai-quick-helper";
 
 interface Komplekt {
@@ -88,6 +89,9 @@ export function BelisKatalogPage() {
             </div>
 
             <AiQuickHelper module="belis" initialPrompt="Menga mos komplekt tavsiya qiling" />
+
+            {/* Xaridor rezervlari (bo'lsa) */}
+            <BelisBuyerCard />
 
             {tab === "items" ? <BelisItemsTab /> : (
                 <>
