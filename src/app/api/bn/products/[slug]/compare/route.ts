@@ -2,7 +2,7 @@
 // Bir kategoriya ichidan o'xshash nomdagi mahsulotlarni topib qaytaradi
 // va narx tejalishini hisoblab beradi.
 //
-//   GET /api/bn/products/[id]/compare
+//   GET /api/bn/products/[slug]/compare  (slug yoki id qabul qiladi)
 //
 // Faqat aktiv+ochiq mahsulotlar, boshqa do'konlar (o'zi bilan solishtirmaydi).
 
@@ -14,11 +14,12 @@ export const revalidate = 300; // 5 daq cache
 
 export async function GET(
     _req: Request,
-    { params }: { params: Promise<{ id: string }> },
+    { params }: { params: Promise<{ slug: string }> },
 ) {
-    const { id } = await params;
-    const product = await prisma.bnProduct.findUnique({
-        where: { id },
+    const { slug } = await params;
+    // Slug ham, ID ham qabul qilamiz (kompatibillik)
+    const product = await prisma.bnProduct.findFirst({
+        where: { OR: [{ slug }, { id: slug }] },
         select: {
             id: true, title: true, price: true, shopId: true, categoryId: true,
             category: { select: { slug: true, name: true } },
