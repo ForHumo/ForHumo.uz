@@ -71,6 +71,16 @@ export function HumoDashboard() {
         }).catch(() => {}).finally(() => setLoading(false));
     }, []);
 
+    // Presence heartbeat — har 30s
+    useEffect(() => {
+        const ping = () => {
+            fetch("/api/user/presence", { method: "POST", cache: "no-store" }).catch(() => {});
+        };
+        ping();
+        const t = setInterval(ping, 30_000);
+        return () => clearInterval(t);
+    }, []);
+
     // Realtime SSE — 15s ticker unread + aktiv
     useEffect(() => {
         let es: EventSource | null = null;
@@ -143,9 +153,13 @@ export function HumoDashboard() {
                     background: "linear-gradient(135deg, hsl(220 80% 55%) 0%, hsl(260 70% 55%) 100%)",
                 }}>
                 <div className="relative z-10">
-                    <p className="text-[13px] text-white/80 font-bold">
+                    <p className="text-[13px] text-white/80 font-bold flex items-center gap-1.5">
                         {data.profile.humoId && <span className="font-black">{data.profile.humoId}</span>}
                         {data.profile.username && <> · @{data.profile.username}</>}
+                        <span className="ml-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-500/25 text-green-100 text-[10px] font-black uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                            Onlayn
+                        </span>
                     </p>
                     <h1 className="text-[24px] sm:text-[28px] font-black text-white mt-1 leading-tight">
                         Assalomu alaykum{data.profile.name ? `, ${data.profile.name.split(" ")[0]}` : ""}
@@ -233,6 +247,7 @@ export function HumoDashboard() {
                     <ModuleCard icon={Wallet} name="Pay" desc="Hamyon va o'tkazma" href="/pay" />
                     <ModuleCard icon={LifeBuoy} name="Yordam" desc="Support" href="/support" badge={m.support.openTickets || undefined} />
                     <ModuleCard icon={Calendar} name="Kalendar" desc="Barcha voqealar" href="/humo/kalendar" />
+                    <ModuleCard icon={Layers} name="Tarix" desc="Aktivlik jurnal" href="/humo/tarix" />
                 </div>
             </div>
 
