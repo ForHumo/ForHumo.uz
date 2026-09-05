@@ -67,6 +67,44 @@ export function HumoDashboard() {
         }).catch(() => {}).finally(() => setLoading(false));
     }, []);
 
+    // Realtime SSE — 15s ticker unread + aktiv
+    useEffect(() => {
+        let es: EventSource | null = null;
+        let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+        const connect = () => {
+            try {
+                es = new EventSource("/api/user/dashboard/stream");
+                es.onmessage = (e) => {
+                    try {
+                        const msg = JSON.parse(e.data);
+                        if (msg.type === "tick") {
+                            setData(prev => prev ? {
+                                ...prev,
+                                modules: {
+                                    ...prev.modules,
+                                    nexus: { ...prev.modules.nexus, unreadDM: msg.nexusUnread, unreadNotif: msg.notif },
+                                    bn: { ...prev.modules.bn, activeOrders: msg.bnActive },
+                                },
+                            } : prev);
+                        } else if (msg.type === "reconnect") {
+                            es?.close();
+                            reconnectTimer = setTimeout(connect, 1000);
+                        }
+                    } catch { /* skip */ }
+                };
+                es.onerror = () => {
+                    es?.close();
+                    reconnectTimer = setTimeout(connect, 5000);
+                };
+            } catch { /* skip */ }
+        };
+        connect();
+        return () => {
+            if (es) es.close();
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+        };
+    }, []);
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-16">
@@ -180,6 +218,7 @@ export function HumoDashboard() {
                     <ModuleCard icon={MessageCircle} name="Nexus" desc="Ijtimoiy tarmoq" href="/nexus" badge={m.nexus.unreadDM || undefined} />
                     <ModuleCard icon={Wallet} name="Pay" desc="Hamyon va o'tkazma" href="/pay" />
                     <ModuleCard icon={LifeBuoy} name="Yordam" desc="Support" href="/support" badge={m.support.openTickets || undefined} />
+                    <ModuleCard icon={Calendar} name="Kalendar" desc="Barcha voqealar" href="/humo/kalendar" />
                 </div>
             </div>
 
