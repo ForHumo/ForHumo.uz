@@ -11,6 +11,8 @@ import {
     Calendar, Layers, ArrowRight,
 } from "lucide-react";
 
+const FOUNDER_USERNAMES = ["abduvoris", "aaa", "forhumo"];
+
 interface DashboardResp {
     profile: { id: string; name: string | null; username: string | null; humoId: string | null; image: string | null };
     modules: {
@@ -73,6 +75,7 @@ export function HumoDashboard() {
 
     const m = data.modules;
     const totalNotifs = m.nexus.unreadDM + m.nexus.unreadNotif + m.support.openTickets;
+    const isFounder = !!data.profile.username && FOUNDER_USERNAMES.includes(data.profile.username);
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
@@ -105,6 +108,23 @@ export function HumoDashboard() {
                 <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-white/10" />
                 <div className="absolute -right-8 -bottom-20 w-32 h-32 rounded-full bg-white/10" />
             </div>
+
+            {/* Founder yorlig'i */}
+            {isFounder && (
+                <Link href={"/admin/analytics" as never}
+                    className="block rounded-2xl p-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:brightness-105 transition">
+                    <div className="flex items-center gap-3">
+                        <span className="w-10 h-10 rounded-xl grid place-items-center bg-white/20 backdrop-blur-sm flex-shrink-0">
+                            <TrendingUp className="w-5 h-5" />
+                        </span>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[13.5px] font-black">Founder Analytics</p>
+                            <p className="text-[11.5px] text-white/85">Barcha modul cross-modul katta rasm</p>
+                        </div>
+                        <ArrowRight className="w-4 h-4 flex-shrink-0" />
+                    </div>
+                </Link>
+            )}
 
             {/* Sotuvchi paneli (BN'da do'koni bor bo'lsa) */}
             {m.bn.sellerStats && m.bn.hasShop && (
