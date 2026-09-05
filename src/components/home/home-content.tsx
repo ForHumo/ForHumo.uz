@@ -3,6 +3,8 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
+import { useSession } from "next-auth/react";
+import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import {
     Gamepad2,
@@ -13,6 +15,7 @@ import {
     ShoppingBag,
     CreditCard,
     Store,
+    LayoutDashboard,
 } from "lucide-react";
 import { ProjectCard } from "@/components/ui/project-card";
 import { LiveBackground } from "@/components/home/live-background";
@@ -20,6 +23,7 @@ import { LiveBackground } from "@/components/home/live-background";
 export function HomeContent() {
     const tHero = useTranslations("Hero");
     const tProjects = useTranslations("Projects");
+    const { status } = useSession();
 
     const projectsData: {
         title: string;
@@ -196,6 +200,19 @@ export function HomeContent() {
                                 </motion.span>
                             </span>
                         </a>
+
+                        {status === "authenticated" && (
+                            <Link href={"/humo" as never}
+                                className="group relative inline-flex h-13 items-center justify-center rounded-full
+                                    px-9 font-bold
+                                    bg-gradient-to-r from-blue-500 to-purple-600
+                                    text-white
+                                    transition-all hover:shadow-[0_0_40px_-8px_rgba(99,102,241,0.6)]
+                                    border border-white/20">
+                                <LayoutDashboard className="w-4 h-4 mr-2" />
+                                Mening panelim
+                            </Link>
+                        )}
                     </motion.div>
                 </div>
             </section>
