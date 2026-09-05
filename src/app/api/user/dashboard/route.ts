@@ -22,6 +22,12 @@ export async function GET() {
     });
     if (!profile) return NextResponse.json({ error: "profile_not_found" }, { status: 404 });
 
+    // Achievement: birinchi marta dashboard ochish
+    try {
+        const { grantAchievement } = await import("@/lib/achievements");
+        void grantAchievement(profile.id, "humo.dashboard_first");
+    } catch { /* skip */ }
+
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const weekAgo = new Date(now.getTime() - 7 * 86400000);

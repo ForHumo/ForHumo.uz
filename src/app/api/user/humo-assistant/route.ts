@@ -139,11 +139,13 @@ Qoidalar:
 
     const cleanReply = (finalReply || "").trim().slice(0, 1500);
 
-    // aiUsage log
+    // aiUsage log + achievement
     try {
         await prisma.aiUsage.create({
             data: { profileId: profile.id, kind: "humo-assistant" },
         });
+        const { grantAchievement } = await import("@/lib/achievements");
+        void grantAchievement(profile.id, "humo.ai_first_use");
     } catch { /* fail-safe */ }
 
     return NextResponse.json({

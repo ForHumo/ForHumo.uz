@@ -115,6 +115,12 @@ export async function GET() {
         },
     };
 
+    // Achievement: GDPR eksport
+    try {
+        const { grantAchievement } = await import("@/lib/achievements");
+        void grantAchievement(profile.id, "humo.data_export");
+    } catch { /* skip */ }
+
     const filename = `humo-data-export-${profile.humoId || profile.id.slice(0, 8)}-${new Date().toISOString().slice(0, 10)}.json`;
 
     return new NextResponse(JSON.stringify(payload, null, 2), {

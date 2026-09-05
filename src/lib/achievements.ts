@@ -6,7 +6,7 @@
 import { prisma } from "@/lib/prisma";
 import { sendPushToProfile } from "@/lib/push";
 
-export type AchievementCategory = "esport" | "nexus" | "market" | "pay" | "id" | "bn";
+export type AchievementCategory = "esport" | "nexus" | "market" | "pay" | "id" | "bn" | "humo";
 export type AchievementTier = "bronze" | "silver" | "gold" | "platinum";
 
 // Katalog — barcha mavjud yutuqlar. UI ham shu ro'yxatdan foydalanadi (yutilganlarni belgilash uchun).
@@ -67,6 +67,13 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     { code: "bn.first_sale",       title: "BN sotuvchi",           description: "Do'koningiz BN'da birinchi savdo qildi", icon: "TrendingUp", category: "bn", tier: "silver" },
     { code: "bn.first_referral",   title: "Do'st chaqirdi",        description: "Chaqirilgan do'stingiz birinchi buyurtma berdi", icon: "UserPlus", category: "bn", tier: "silver" },
     { code: "bn.referral_10",      title: "BN elchi",              description: "10 ta do'st chaqirdingiz — TOP-10 leaderboard'da", icon: "Trophy", category: "bn", tier: "gold" },
+
+    // Humo super-app
+    { code: "humo.dashboard_first", title: "Universal panel",       description: "Birinchi marta Humo panelini ochdingiz", icon: "LayoutDashboard", category: "humo", tier: "bronze" },
+    { code: "humo.ai_first_use",    title: "AI bilan gaplashdi",    description: "Humo AI'ga birinchi savol berdingiz", icon: "Sparkles", category: "humo", tier: "bronze" },
+    { code: "humo.5_modules",       title: "Barcha modul",          description: "5 ta modul ishlatib ko'rdingiz (BN, Belis, Nexus, Market, Pay)", icon: "Layers", category: "humo", tier: "silver" },
+    { code: "humo.data_export",     title: "GDPR foydalanuvchi",    description: "Ma'lumotlaringizni eksport qildingiz — xavfsizlik e'tibor", icon: "ShieldCheck", category: "humo", tier: "silver" },
+    { code: "humo.pwa_installed",   title: "Ilova o'rnatildi",      description: "Bosh ekranga qo'shdingiz (PWA)", icon: "Smartphone", category: "humo", tier: "bronze" },
 ];
 
 const CATALOG_BY_CODE = new Map(ACHIEVEMENTS.map(a => [a.code, a]));
