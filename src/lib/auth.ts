@@ -6,6 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { isJtiRevoked, bumpLastSeenAt } from "@/lib/auth-session-cache";
 
 export const authOptions: NextAuthOptions = {
+    // Explicit secret — env yo'q bo'lsa NextAuth 500 beradi
+    secret: process.env.NEXTAUTH_SECRET,
+    // Multi-domain: Vercel proxy'da x-forwarded-host'ga ishonamiz
+    useSecureCookies: process.env.NODE_ENV === "production",
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -14,8 +18,28 @@ export const authOptions: NextAuthOptions = {
     ],
     pages: {
         signIn: "/",
+        // Xato paytida bosh sahifaga qaytariladi — /api/auth/error 500 muammosini oldini oladi
+        error: "/",
     },
     callbacks: {
+        // Multi-domain redirect callback — barcha 3 domenimizga ishonamiz.
+        // NextAuth default faqat baseUrl hostiga ruxsat beradi, bu multi-domainda muammo bo'lardi.
+        async redirect({ url, baseUrl }) {
+            // Relative URL — baseUrl bilan birlashtiramiz (o'z domen)
+            if (url.startsWith("/")) return `${baseUrl}${url}`;
+            // Absolute URL — faqat ishonchli hostlarga ruxsat
+            try {
+                const target = new URL(url);
+                const ALLOWED = new Set([
+                    "forhumo.uz", "www.forhumo.uz",
+                    "bozornarxida.uz", "www.bozornarxida.uz",
+                    "belis.uz", "www.belis.uz",
+                ]);
+                if (ALLOWED.has(target.hostname)) return url;
+            } catch { /* invalid URL */ }
+            return baseUrl;
+        },
+
         // On every sign-in: upsert UserProfile, record login event
         async signIn({ user, account }) {
             if (user.email) {
