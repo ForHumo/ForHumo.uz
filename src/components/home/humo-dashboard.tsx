@@ -10,6 +10,7 @@ import {
     Bell, LifeBuoy, ChevronRight, Loader2, TrendingUp,
     Calendar, Layers, ArrowRight,
 } from "lucide-react";
+import { HumoAssistantPanel } from "./humo-assistant-panel";
 
 const FOUNDER_USERNAMES = ["abduvoris", "aaa", "forhumo"];
 
@@ -173,6 +174,9 @@ export function HumoDashboard() {
                     <ModuleCard icon={LifeBuoy} name="Yordam" desc="Support" href="/support" badge={m.support.openTickets || undefined} />
                 </div>
             </div>
+
+            {/* Universal AI Assistant (suzuvchi tugma) */}
+            <HumoAssistantPanel />
 
             {/* Aktivlik feed */}
             {activity && activity.length > 0 && (
