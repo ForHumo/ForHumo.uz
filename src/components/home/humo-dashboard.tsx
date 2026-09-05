@@ -11,6 +11,8 @@ import {
     Calendar, Layers, ArrowRight,
 } from "lucide-react";
 import { HumoAssistantPanel } from "./humo-assistant-panel";
+import { HumoNotifTray } from "./humo-notif-tray";
+import { HumoSearchPalette } from "./humo-search-palette";
 
 const FOUNDER_USERNAMES = ["abduvoris", "aaa", "forhumo"];
 
@@ -80,6 +82,12 @@ export function HumoDashboard() {
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+            {/* Top bar: search + notif */}
+            <div className="flex items-center justify-end gap-1 -mt-2 mb-1">
+                <HumoSearchPalette />
+                <HumoNotifTray />
+            </div>
+
             {/* Salom + KPI */}
             <div className="rounded-3xl p-5 sm:p-6 relative overflow-hidden"
                 style={{
