@@ -16,6 +16,7 @@ import { HumoSearchPalette } from "./humo-search-palette";
 import { HumoInstallCard } from "./humo-install-card";
 import { HumoTour } from "./humo-tour";
 import { HumoFeedbackWidget } from "./humo-feedback-widget";
+import { HumoShareButton } from "./humo-share-button";
 
 const FOUNDER_USERNAMES = ["abduvoris", "aaa", "forhumo"];
 
@@ -123,9 +124,16 @@ export function HumoDashboard() {
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
-            {/* Top bar: search + notif */}
+            {/* Top bar: search + share + notif */}
             <div className="flex items-center justify-end gap-1 -mt-2 mb-1">
                 <HumoSearchPalette />
+                {data && data.profile.username && (
+                    <HumoShareButton
+                        url={`/r/${data.profile.username}`}
+                        title="For Humo — super-app"
+                        text={`For Humo'ga qo'shiling — @${data.profile.username} chaqirdi`}
+                    />
+                )}
                 <HumoNotifTray />
             </div>
 

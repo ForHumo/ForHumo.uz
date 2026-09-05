@@ -6,16 +6,29 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@/i18n/routing";
-import { Search, X, Loader2, Package, Store, MessageCircle, Film, Music, ChevronRight } from "lucide-react";
+import { Search, X, Loader2, Package, Store, MessageCircle, Film, Music, ChevronRight, Wallet, Calendar, Bot, LayoutDashboard, Sparkles, PenLine, Zap } from "lucide-react";
 
 interface SearchItem {
     id: string;
-    kind: "bn_product" | "bn_shop" | "nexus_user" | "nexus_video" | "nexus_track";
+    kind: "bn_product" | "bn_shop" | "nexus_user" | "nexus_video" | "nexus_track" | "action";
     title: string;
     subtitle?: string;
     image?: string;
     href: string;
+    icon?: typeof Zap;
 }
+
+const QUICK_ACTIONS: SearchItem[] = [
+    { id: "act-humo",     kind: "action", title: "Humo panel",        subtitle: "Barcha modul bir joyda", href: "/humo",             icon: LayoutDashboard },
+    { id: "act-kalendar", kind: "action", title: "Kalendar",          subtitle: "Belis + BN + Support",   href: "/humo/kalendar",    icon: Calendar },
+    { id: "act-pay",      kind: "action", title: "Hamyon",            subtitle: "Balans va tranzaksiyalar", href: "/pay",            icon: Wallet },
+    { id: "act-bn",       kind: "action", title: "Bozor Narxida",     subtitle: "Onlayn bozor",           href: "/bn",               icon: Store },
+    { id: "act-belis",    kind: "action", title: "Belis",             subtitle: "Sarpo qutilari ijara",   href: "/belis",            icon: Calendar },
+    { id: "act-nexus",    kind: "action", title: "Nexus",             subtitle: "Ijtimoiy tarmoq",        href: "/nexus",            icon: MessageCircle },
+    { id: "act-newpost",  kind: "action", title: "Yangi post yozish", subtitle: "Nexus'da",               href: "/nexus?compose=1",  icon: PenLine },
+    { id: "act-ai",       kind: "action", title: "Humo AI ochish",    subtitle: "Savol berish",           href: "/humo?ai=1",        icon: Bot },
+    { id: "act-eksport",  kind: "action", title: "Ma'lumot eksport",  subtitle: "GDPR",                   href: "/id/eksport",       icon: Sparkles },
+];
 
 const KIND_META: Record<string, { icon: typeof Package; color: string; label: string }> = {
     bn_product:  { icon: Package,        color: "#f5b301", label: "Mahsulot" },
@@ -23,6 +36,7 @@ const KIND_META: Record<string, { icon: typeof Package; color: string; label: st
     nexus_user:  { icon: MessageCircle,  color: "#3b82f6", label: "Foydalanuvchi" },
     nexus_video: { icon: Film,           color: "#ec4899", label: "Video" },
     nexus_track: { icon: Music,          color: "#a855f7", label: "Trek" },
+    action:      { icon: Zap,            color: "#8b5cf6", label: "Tez amal" },
 };
 
 export function HumoSearchPalette({ trigger = "button" }: { trigger?: "button" | "hidden" }) {
@@ -112,9 +126,27 @@ export function HumoSearchPalette({ trigger = "button" }: { trigger?: "button" |
                         {/* Results */}
                         <div className="flex-1 overflow-y-auto">
                             {q.length < 2 && (
-                                <div className="p-6 text-center">
-                                    <Search className="w-8 h-8 mx-auto mb-2 opacity-30 text-neutral-400" />
-                                    <p className="text-[12.5px] text-neutral-500">Qidirish uchun 2+ harf yozing</p>
+                                <div>
+                                    <div className="px-3 py-2 text-[10.5px] font-black uppercase tracking-wider text-neutral-500 bg-neutral-50 dark:bg-neutral-950">
+                                        Tez amallar
+                                    </div>
+                                    {QUICK_ACTIONS.map(a => {
+                                        const Icon = a.icon || Zap;
+                                        return (
+                                            <Link key={a.id} href={a.href as never}
+                                                onClick={() => setOpen(false)}
+                                                className="flex items-center gap-3 p-3 border-b border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition">
+                                                <span className="w-9 h-9 rounded-lg grid place-items-center flex-shrink-0 bg-purple-100 dark:bg-purple-950/50 text-purple-600">
+                                                    <Icon className="w-4 h-4" />
+                                                </span>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[13px] font-bold">{a.title}</p>
+                                                    <p className="text-[11.5px] text-neutral-500">{a.subtitle}</p>
+                                                </div>
+                                                <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
                             )}
                             {q.length >= 2 && !busy && items.length === 0 && (
