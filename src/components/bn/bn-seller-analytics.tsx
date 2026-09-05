@@ -8,10 +8,11 @@ import {
     TrendingUp, TrendingDown, DollarSign, Package, Users, Eye,
     Trophy, Award, Percent, Ban, Sparkles, ChevronRight,
     AlertTriangle, Calendar, Loader2, Store, Check, Download,
-    Tag, BarChart3, Layers, X,
+    Tag, BarChart3, Layers, X, Printer, Wand2, Send, PackageMinus,
 } from "lucide-react";
 import { BN, fmtPrice, fmtPriceShort } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
+import { BnSellerAiCommand } from "./bn-seller-ai-command";
 
 interface RankRow {
     productId: string;
@@ -126,6 +127,12 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
                         Sotuv reytinglari, sotilmagan mahsulotlar va AI tavsiyalar
                     </p>
                 </div>
+                <BnLink href="/sotuvchi/tahlil/chop-etish"
+                    className="h-10 px-3 rounded-xl inline-flex items-center gap-1.5 text-[13px] font-bold hover:brightness-95 flex-shrink-0"
+                    style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text2 }}
+                    title="PDF/bosma hisobot">
+                    <Printer className="w-4 h-4" /> PDF
+                </BnLink>
                 <BnLink href="/kabinet"
                     className="h-10 px-3 rounded-xl inline-flex items-center gap-1.5 text-[13px] font-bold hover:brightness-95 flex-shrink-0"
                     style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text2 }}>
@@ -165,6 +172,9 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
 
             {data && (
                 <>
+                    {/* AI BUYRUQ INPUT */}
+                    <BnSellerAiCommand onDone={reload} />
+
                     {/* AI TAVSIYA */}
                     {data.insight && data.insight.items.length > 0 && (
                         <div className="rounded-2xl p-4 sm:p-5 mb-5"
