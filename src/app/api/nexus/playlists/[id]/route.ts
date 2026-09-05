@@ -1,106 +1,82 @@
-// Nexus pleylist tafsiloti + treklar + delete + patch (rename/reorder)
-// GET /api/nexus/playlists/[id] → to'liq (treklar bilan)
-// PATCH { name?, description?, coverUrl?, isPublic?, order?: string[] (trackId[] tartibi) }
-// DELETE — faqat egasi
+// Nexus Playlist - single.
+//
+//   GET    /api/nexus/playlists/[id]   - detail + trekkar
+//   DELETE /api/nexus/playlists/[id]   - o'chirish (owner)
 
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-async function auth() {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) return null;
-    return prisma.userProfile.findUnique({
-        where: { email: session.user.email },
-        select: { id: true },
-    });
-}
-
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const me = await auth();
+    const session = await getServerSession(authOptions);
+    const profile = session?.user?.email ? await prisma.userProfile.findUnique({
+        where: { email: session.user.email }, select: { id: true },
+    }) : null;
+
     const pl = await prisma.nexusPlaylist.findUnique({
         where: { id },
         include: {
             tracks: {
                 orderBy: { position: "asc" },
-                select: { trackId: true, position: true },
             },
         },
     });
     if (!pl) return NextResponse.json({ error: "not_found" }, { status: 404 });
-    if (!pl.isPublic && me?.id !== pl.ownerId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
+    const isMine = profile?.id === pl.ownerId;
+    if (!pl.isPublic && !isMine) {
+        return NextResponse.json({ error: "private" }, { status: 403 });
+    }
+
+    // Trek ma'lumot to'ldirish
     const trackIds = pl.tracks.map(t => t.trackId);
     const tracks = trackIds.length > 0 ? await prisma.nexusTrack.findMany({
-        where: { id: { in: trackIds }, hidden: false },
-        select: { id: true, title: true, artist: true, coverUrl: true, audioUrl: true, durationSec: true, kind: true },
+        where: { id: { in: trackIds } },
     }) : [];
     const tMap = new Map(tracks.map(t => [t.id, t]));
-    const orderedTracks = pl.tracks
-        .map(pt => tMap.get(pt.trackId))
-        .filter((t): t is NonNullable<typeof t> => t !== undefined);
 
     const owner = await prisma.userProfile.findUnique({
         where: { id: pl.ownerId },
-        select: { id: true, name: true, username: true, image: true },
+        select: { username: true, name: true, image: true },
     });
 
     return NextResponse.json({
-        id: pl.id,
-        name: pl.name,
-        description: pl.description,
-        coverUrl: pl.coverUrl ?? orderedTracks[0]?.coverUrl ?? null,
-        isPublic: pl.isPublic,
-        playsCount: pl.playsCount,
-        tracks: orderedTracks,
-        owner,
-        isMine: me?.id === pl.ownerId,
+        id: pl.id, name: pl.name, description: pl.description,
+        coverUrl: pl.coverUrl, isPublic: pl.isPublic, playsCount: pl.playsCount,
+        updatedAt: pl.updatedAt.toISOString(),
+        owner, isMine,
+        tracks: pl.tracks.map(pt => {
+            const t = tMap.get(pt.trackId);
+            return t ? {
+                id: t.id, title: t.title, artist: t.artist,
+                coverUrl: t.coverUrl, audioUrl: t.audioUrl,
+                durationSec: t.durationSec, kind: t.kind,
+                position: pt.position, addedAt: pt.addedAt.toISOString(),
+            } : null;
+        }).filter(Boolean),
     });
-}
-
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
-    const me = await auth();
-    if (!me) return NextResponse.json({ error: "auth_required" }, { status: 401 });
-    const pl = await prisma.nexusPlaylist.findUnique({ where: { id }, select: { ownerId: true } });
-    if (!pl || pl.ownerId !== me.id) return NextResponse.json({ error: "not_found" }, { status: 404 });
-
-    const body = await req.json().catch(() => ({}));
-    const data: Record<string, unknown> = {};
-    if (typeof body?.name === "string") data.name = body.name.trim().slice(0, 100);
-    if (typeof body?.description === "string") data.description = body.description.trim().slice(0, 500) || null;
-    if (typeof body?.coverUrl === "string") data.coverUrl = body.coverUrl.trim() || null;
-    if (typeof body?.isPublic === "boolean") data.isPublic = body.isPublic;
-
-    if (Object.keys(data).length > 0) {
-        await prisma.nexusPlaylist.update({ where: { id }, data });
-    }
-
-    // Tartibni yangilash (reorder)
-    if (Array.isArray(body?.order) && body.order.length > 0) {
-        await prisma.$transaction(
-            body.order.map((trackId: string, i: number) =>
-                prisma.nexusPlaylistTrack.updateMany({
-                    where: { playlistId: id, trackId },
-                    data: { position: i },
-                }),
-            ),
-        );
-    }
-
-    return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const me = await auth();
-    if (!me) return NextResponse.json({ error: "auth_required" }, { status: 401 });
-    const pl = await prisma.nexusPlaylist.findUnique({ where: { id }, select: { ownerId: true } });
-    if (!pl || pl.ownerId !== me.id) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) return NextResponse.json({ error: "auth_required" }, { status: 401 });
+
+    const profile = await prisma.userProfile.findUnique({
+        where: { email: session.user.email }, select: { id: true },
+    });
+    if (!profile) return NextResponse.json({ error: "profile_not_found" }, { status: 404 });
+
+    const pl = await prisma.nexusPlaylist.findUnique({
+        where: { id }, select: { ownerId: true },
+    });
+    if (!pl) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    if (pl.ownerId !== profile.id) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+
     await prisma.nexusPlaylist.delete({ where: { id } });
     return NextResponse.json({ ok: true });
 }
