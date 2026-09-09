@@ -3774,6 +3774,85 @@ model BnBroadcast {
   @@index([ownerId, createdAt])
 }
 
+// ── Humo AI Telegram Business Bot ────────────────────────────────────────────
+// Foydalanuvchi @ForHumo_AIBot ni o'z Telegram Business akkauntiga ulaydi.
+// Bot foydalanuvchi nomidan mijoz xabarlarga AI (Gemini) bilan javob beradi.
+// Har foydalanuvchi o'z persona/FAQ/style'ini konfiguratsiya qiladi.
+
+model HumoBotConnection {
+  id                String    @id @default(cuid())
+  profileId         String    @unique                              // UserProfile.id — bir user bitta ulanish
+  telegramUserId    String                                          // Telegram user_id (Business account egasi)
+  telegramUsername  String?
+  connectionId      String    @unique                              // Telegram business_connection_id
+  isEnabled         Boolean   @default(true)                       // Foydalanuvchi bot'ni yoqib/o'chirib qo'ygan
+  canReply          Boolean   @default(true)                       // Bot javob berish huquqi bor (rights.can_reply)
+  connectedAt       DateTime  @default(now())
+  disconnectedAt    DateTime?                                       // Foydalanuvchi bot'ni olib tashladi
+  updatedAt         DateTime  @updatedAt
+
+  @@index([telegramUserId])
+  @@index([isEnabled, updatedAt])
+}
+
+model HumoBotConfig {
+  id                String    @id @default(cuid())
+  profileId         String    @unique                              // UserProfile.id
+  persona           String?                                         // "Men uy ijara agentiman"
+  greeting          String?                                         // "Assalomu alaykum, savolingiz bo'lsa yozing"
+  tone              String    @default("professional")             // professional | friendly | brief
+  language          String    @default("uz")                        // uz | ru | en | auto
+  faqJson           Json      @default("[]")                        // [{q, a}] massivi
+  workHours         String?                                         // "Du-Ju 09:00-18:00"
+  outOfHoursReply   String?                                         // "Hozir ish vaqti emas..."
+  escalationRules   String?                                         // "Agar mijoz shikoyat qilsa menga forward qiling"
+  bannedTopics      String?                                         // "Siyosat, din haqida javob berma"
+  autoReplyEnabled  Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model HumoBotMessage {
+  id                  String    @id @default(cuid())
+  profileId           String                                       // Bot egasi (For Humo user)
+  connectionId        String                                       // Telegram business_connection_id
+  chatId              String                                       // Telegram chat id
+  messageId           String                                       // Telegram message id
+  fromCustomerName    String?                                      // Mijoz nomi (agar bor)
+  customerText        String                                       // Kelgan xabar
+  aiReplyText         String?                                      // AI javob (agar berilgan)
+  aiReplyMessageId    String?                                      // AI javob TG message id
+  wasAutoReplied      Boolean   @default(false)
+  tokensUsed          Int?                                         // Gemini token
+  latencyMs           Int?                                         // AI response time
+  errorMessage        String?                                      // Xato yuz bergan bo'lsa
+  createdAt           DateTime  @default(now())
+
+  @@index([profileId, createdAt])
+  @@index([chatId, createdAt])
+  @@index([connectionId, createdAt])
+}
+
+model HumoBotSubscription {
+  id            String    @id @default(cuid())
+  profileId     String    @unique
+  tier          String    @default("free")                          // free | basic | pro | enterprise
+  status        String    @default("active")                        // active | expired | cancelled | trial
+  monthlyLimit  Int       @default(50)                              // Kuniga xabar chegarasi
+  usedThisMonth Int       @default(0)                               // Joriy oy ishlatilgan
+  billingCycle  String    @default("monthly")                       // monthly | yearly
+  priceUzs      Int       @default(0)                               // Oylik narx (so'm)
+  startedAt     DateTime  @default(now())
+  expiresAt     DateTime?                                            // Obuna tugash sanasi
+  cancelledAt   DateTime?
+  lastPayTxRef  String?                                              // Wallet tx idempotency ref
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status, expiresAt])
+  @@index([tier, status])
+}
+
 // ── Humo universal in-app feedback ───────────────────────────────────────────
 // Foydalanuvchi istalgan sahifadan reaksiya beradi (kayfiyat + matn).
 // Admin ko'radi va yaxshilashga ishlatadi.
