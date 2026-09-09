@@ -3872,6 +3872,51 @@ model TelegramBotChat {
   @@index([profileId])
 }
 
+// Business Mode chat kontekst — slot-fill (buyurtma yig'ish) holati.
+// Har bir (profileId+connectionId+chatId) uchun bir yozuv.
+model HumoBotChatState {
+  id            String    @id @default(cuid())
+  profileId     String                                       // Ega (bot egasi)
+  connectionId  String                                       // Telegram business_connection_id
+  chatId        String                                       // Mijoz chat id
+  // Buyurtma yig'ish jarayonida:
+  collecting    Boolean   @default(false)                    // slot-fill faol
+  slotStage     String?                                      // "name" | "phone" | "address" | "confirm" | "done"
+  customerName  String?
+  customerPhone String?
+  customerAddress String?
+  productMention String?                                     // Mijoz aytgan mahsulot/xizmat
+  notes         String?
+  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime  @default(now())
+
+  @@unique([profileId, connectionId, chatId])
+  @@index([profileId, updatedAt])
+}
+
+// Buyurtma qabul qilingan lead (CRM). Har muvaffaqiyatli slot-fill'dan keyin yaratiladi.
+model HumoBotLead {
+  id            String    @id @default(cuid())
+  profileId     String                                       // Ega (bot egasi)
+  connectionId  String                                       // TG business connection
+  chatId        String                                       // Mijoz chati
+  customerTgId  String?                                      // Mijoz Telegram id
+  customerTgUsername String?
+  customerName  String?
+  customerPhone String?
+  customerAddress String?
+  productMention String?
+  notes         String?
+  status        String    @default("OPEN")                   // OPEN | CONTACTED | WON | LOST
+  contactedAt   DateTime?
+  wonAmountUzs  Int?                                         // ega belgilashi mumkin
+  ownerNote     String?                                      // ega izohi
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([profileId, status, createdAt])
+}
+
 model HumoBotConnection {
   id                String    @id @default(cuid())
   profileId         String    @unique                              // UserProfile.id — bir user bitta ulanish

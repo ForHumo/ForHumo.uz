@@ -13,6 +13,7 @@ import {
     Crown, Percent, Calendar,
 } from "lucide-react";
 import { formatMoney } from "@/lib/money";
+import { HumoTgBotLeads } from "@/components/ai/humo-tg-bot-leads";
 
 interface FaqItem { q: string; a: string }
 
@@ -224,6 +225,7 @@ export function HumoTgBotSettings() {
             ) : (
                 <>
                     <StatsRow stats={data.stats} subscription={data.subscription} />
+                    <HumoTgBotLeads />
                     <ConfigEditor
                         config={data.config}
                         onSave={saveConfig}

@@ -128,12 +128,15 @@ export interface TgBusinessConnection {
 
 export interface TgBusinessMessage {
     message_id: number;
-    business_connection_id: string;             // Qaysi ulanish orqali
+    business_connection_id?: string;            // Business chat'da bo'lsa
     from?: TgUser;                              // Mijoz (Business akkaunt eganing suhbatdoshi)
     sender_business_bot?: TgUser;               // Bot javobi
     chat: TgChat;
     date: number;
     text?: string;
+    caption?: string;
+    voice?: { file_id: string; duration: number; mime_type?: string };
+    photo?: { file_id: string; width: number; height: number; file_size?: number }[];
     reply_to_message?: { message_id: number };
 }
 

@@ -21,7 +21,7 @@ interface TgMessageLite {
     text?: string;
     caption?: string;
     photo?: { file_id: string; width: number; height: number }[];
-    voice?: { file_id: string; duration: number };
+    voice?: { file_id: string; duration: number; mime_type?: string };
 }
 interface TgUpdateLite {
     update_id: number;
@@ -123,30 +123,95 @@ async function handleMessage(msg: TgMessageLite) {
         return;
     }
 
-    // 6) Voice (kelasi Faza — hozircha jim javob)
+    // 6) Voice — Gemini transkribatsiya → matn sifatida davom
     if (msg.voice) {
-        await sendMessage(BOT, {
-            chatId,
-            text: lang === "ru"
-                ? "Голосовые сообщения — скоро. Пока напишите текстом."
-                : lang === "en"
-                ? "Voice messages — coming soon. Please write text for now."
-                : "Ovozli xabar — tez kunda. Hozircha matn yozing.",
-        });
+        void sendChatAction(BOT, chatId, "typing");
+        try {
+            const { tgGetFileBytes } = await import("@/lib/telegram-bots");
+            const { aiTranscribeAudio } = await import("@/lib/ai");
+            const buf = await tgGetFileBytes(BOT, msg.voice.file_id);
+            if (buf) {
+                const transcript = await aiTranscribeAudio(buf, msg.voice.mime_type ?? "audio/ogg", { language: "auto" });
+                if (transcript) {
+                    // Transkribatsiya natijasini foydalanuvchiga ko'rsatib qidiruvga o'tamiz
+                    const heard = lang === "ru" ? `Услышал: <i>«${escapeHtml(transcript)}»</i>` : lang === "en" ? `Heard: <i>"${escapeHtml(transcript)}"</i>` : `Eshitdim: <i>«${escapeHtml(transcript)}»</i>`;
+                    await sendMessage(BOT, { chatId, text: heard, parseMode: "HTML" });
+                    const productSearch = await tryBnProductSearch(transcript, lang);
+                    if (productSearch) {
+                        await sendMessage(BOT, { chatId, text: productSearch, parseMode: "HTML", disableWebPreview: false });
+                        return;
+                    }
+                    const reply = await generateBotAiReply({
+                        bot: BOT, userText: transcript,
+                        telegramUserId: tgId, chatId: String(chatId), language: lang,
+                    });
+                    if (reply) {
+                        await sendMessage(BOT, { chatId, text: reply.text, disableWebPreview: true });
+                        return;
+                    }
+                }
+            }
+            await sendMessage(BOT, {
+                chatId,
+                text: lang === "ru" ? "Не разобрал голос. Напишите текстом."
+                    : lang === "en" ? "Couldn't understand the voice. Please write text."
+                    : "Ovozni tushunmadim. Matnda yozing.",
+            });
+        } catch (e) {
+            console.error("[bn-bot voice]", e);
+        }
         return;
     }
 
-    // 7) Rasm (kelasi Faza — Gemini vision + BN qidiruv)
+    // 7) Rasm → Gemini vision → nomni ajratib BN qidiruv
     if (msg.photo && msg.photo.length > 0) {
-        await sendMessage(BOT, {
-            chatId,
-            text: lang === "ru"
-                ? "Распознавание фото — скоро. Пока опишите товар текстом (например: <b>яблоко 5 кг</b>)."
+        void sendChatAction(BOT, chatId, "typing");
+        try {
+            const { tgGetFileBytes } = await import("@/lib/telegram-bots");
+            const { aiDescribeProductImage } = await import("@/lib/ai");
+            // Eng katta hajmli photo (oxirgi element)
+            const largest = msg.photo[msg.photo.length - 1];
+            const buf = await tgGetFileBytes(BOT, largest.file_id);
+            if (!buf) {
+                await sendMessage(BOT, {
+                    chatId,
+                    text: lang === "ru" ? "Не смог загрузить фото." : lang === "en" ? "Couldn't fetch the photo." : "Rasmni ola olmadim.",
+                });
+                return;
+            }
+            const desc = await aiDescribeProductImage(buf, "image/jpeg");
+            if (!desc || !desc.name) {
+                await sendMessage(BOT, {
+                    chatId,
+                    text: lang === "ru" ? "На фото мне не видно товара. Опишите текстом." : lang === "en" ? "I don't see a product in the photo. Describe in text." : "Rasmda mahsulot ko'rmadim. Matn bilan tavsiflab bering.",
+                });
+                return;
+            }
+            const heard = lang === "ru"
+                ? `Вижу: <i>«${escapeHtml(desc.name)}»</i>. Ищу...`
                 : lang === "en"
-                ? "Photo recognition — coming soon. Please type the product name (e.g. <b>apples 5 kg</b>)."
-                : "Rasm tanish — tez kunda. Iltimos mahsulotni matnda yozing (masalan: <b>olma 5 kg</b>).",
-            parseMode: "HTML",
-        });
+                ? `I see: <i>"${escapeHtml(desc.name)}"</i>. Searching...`
+                : `Ko'rdim: <i>«${escapeHtml(desc.name)}»</i>. Qidiryapman...`;
+            await sendMessage(BOT, { chatId, text: heard, parseMode: "HTML" });
+
+            // Qidiruv: birinchi keyword yoki name bo'yicha
+            const queries = [desc.name, ...(desc.keywords ?? [])].filter(Boolean).slice(0, 3);
+            for (const q of queries) {
+                const res = await tryBnProductSearch(q, lang);
+                if (res) {
+                    await sendMessage(BOT, { chatId, text: res, parseMode: "HTML", disableWebPreview: false });
+                    return;
+                }
+            }
+            const noMatch = lang === "ru"
+                ? `Похоже, такого товара пока нет в базе. Попробуйте: https://bozornarxida.uz/qidiruv?q=${encodeURIComponent(desc.name)}`
+                : lang === "en"
+                ? `Couldn't find this product yet. Try: https://bozornarxida.uz/qidiruv?q=${encodeURIComponent(desc.name)}`
+                : `Bunday mahsulot bazamizda hozircha topilmadi. Sinang: https://bozornarxida.uz/qidiruv?q=${encodeURIComponent(desc.name)}`;
+            await sendMessage(BOT, { chatId, text: noMatch });
+        } catch (e) {
+            console.error("[bn-bot photo]", e);
+        }
         return;
     }
 

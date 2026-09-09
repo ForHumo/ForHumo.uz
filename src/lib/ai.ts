@@ -127,3 +127,70 @@ export async function aiVisionJSON<T>(prompt: string, imageUrl: string | null, o
     const txt = await generate(parts, { ...opts, json: true });
     return parseJson<T>(txt);
 }
+
+/**
+ * Gemini bilan audio transkribatsiya. Kirish: OGG/Opus/WAV/MP3 buffer.
+ * Til: auto-detect (Gemini o'zi aniqlaydi), o'zbek/rus/ingliz uchun aniq ishlaydi.
+ * Kalit yo'q yoki xato → null (fail-safe).
+ */
+export async function aiTranscribeAudio(
+    buffer: Buffer,
+    mimeType: string,
+    opts: { language?: "uz" | "ru" | "en" | "auto" } = {},
+): Promise<string | null> {
+    if (!GEMINI_KEY) return null;
+    if (buffer.length > 15_000_000) return null;  // 15 MB limiti (Gemini 20 MB, xavfsiz zaxira)
+
+    const lang = opts.language ?? "auto";
+    const prompt = lang === "uz"
+        ? "Transcribe this audio in Uzbek (Latin script). Only the transcript, no extra text."
+        : lang === "ru"
+        ? "Transcribe this audio in Russian. Only the transcript, no extra text."
+        : lang === "en"
+        ? "Transcribe this audio in English. Only the transcript."
+        : "Transcribe this audio verbatim. Detect the language (Uzbek/Russian/English) and transcribe in that language's script. Only the transcript, no extra text or translation.";
+
+    try {
+        const parts: Part[] = [
+            { inline_data: { mime_type: mimeType, data: buffer.toString("base64") } },
+            { text: prompt },
+        ];
+        const txt = await generate(parts, { temperature: 0 });
+        return (txt || "").trim().slice(0, 4000);
+    } catch (e) {
+        console.error("[aiTranscribeAudio]", e);
+        return null;
+    }
+}
+
+/**
+ * Rasmdan mahsulot nomi/kategoriyani ajratib olish. BN qidiruvi uchun.
+ * Return: { name, category, description } yoki null.
+ */
+export async function aiDescribeProductImage(
+    buffer: Buffer,
+    mimeType: string,
+): Promise<{ name: string; keywords: string[]; description: string } | null> {
+    if (!GEMINI_KEY) return null;
+    if (buffer.length > 8_000_000) return null;
+
+    const prompt = `Rasmdagi mahsulotni tahlil qil va JSON qaytar:
+{
+  "name": "mahsulot qisqa nomi (1-3 so'z, o'zbek tilida, lotin)",
+  "keywords": ["qidiruv uchun kalit so'zlar (max 5)"],
+  "description": "1-2 gap tavsif (o'zbek)"
+}
+Faqat JSON. Agar rasm mahsulot bo'lmasa: {"name":"","keywords":[],"description":""}`;
+
+    try {
+        const parts: Part[] = [
+            { inline_data: { mime_type: mimeType, data: buffer.toString("base64") } },
+            { text: prompt },
+        ];
+        const txt = await generate(parts, { temperature: 0.2, json: true });
+        return parseJson<{ name: string; keywords: string[]; description: string }>(txt);
+    } catch (e) {
+        console.error("[aiDescribeProductImage]", e);
+        return null;
+    }
+}

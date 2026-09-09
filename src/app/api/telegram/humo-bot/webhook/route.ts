@@ -112,9 +112,24 @@ async function handleBusinessConnection(bc: TgBusinessConnection) {
 // ── business_message (mijoz → siz) ──────────────────────────────────────────
 
 async function handleBusinessMessage(msg: TgBusinessMessage) {
-    if (!msg.text || msg.text.length === 0) return;
     if (msg.sender_business_bot) return;                       // O'z javobimizni ignore
     if (msg.from?.is_bot) return;                              // Boshqa bot bilan gaplashmaslik (loop oldini)
+    if (!msg.business_connection_id) return;
+
+    // Voice → transkribatsiya → text sifatida davom
+    let workingText = msg.text ?? msg.caption ?? "";
+    if (!workingText && msg.voice) {
+        try {
+            const { tgGetFileBytes } = await import("@/lib/telegram-bots");
+            const { aiTranscribeAudio } = await import("@/lib/ai");
+            const buf = await tgGetFileBytes("humo_ai", msg.voice.file_id);
+            if (buf) {
+                const transcript = await aiTranscribeAudio(buf, msg.voice.mime_type ?? "audio/ogg", { language: "auto" });
+                if (transcript) workingText = transcript;
+            }
+        } catch (e) { console.error("[humo-bot voice]", e); }
+    }
+    if (!workingText || workingText.length === 0) return;
 
     const connection = await prisma.humoBotConnection.findUnique({
         where: { connectionId: msg.business_connection_id },
@@ -181,16 +196,37 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
     const isFirstContact = previousInThisChat === 0;
 
     // Mijoz tili
-    const detectedLang = detectLang(msg.text);
+    const detectedLang = detectLang(workingText);
     const configLang = (config.language ?? "uz") as "uz" | "ru" | "en" | "auto";
     const replyLang: "uz" | "ru" | "en" = configLang === "auto"
         ? detectedLang
         : (configLang === "uz" || configLang === "ru" || configLang === "en" ? configLang : "uz");
 
-    const inbound = msg.text.slice(0, MAX_INBOUND_LEN);
+    const inbound = workingText.slice(0, MAX_INBOUND_LEN);
     const customerName = msg.from
         ? [msg.from.first_name, msg.from.last_name].filter(Boolean).join(" ")
         : "Mijoz";
+
+    // ── Buyurtma qabul qilish (lead slot-fill) ──────────────────────────────
+    const leadHandled = await tryHandleLead({
+        profileId: connection.profileId,
+        connectionId: msg.business_connection_id,
+        chatId: String(msg.chat.id),
+        customerText: inbound,
+        customerTgId: msg.from ? String(msg.from.id) : null,
+        customerTgUsername: msg.from?.username ?? null,
+        customerName,
+        ownerName: profile?.name ?? "Ega",
+        persona: config.persona ?? null,
+        lang: replyLang,
+        tier,
+        showBranding: config.showBranding,
+        showAdFooter: config.showAdFooter,
+    });
+    if (leadHandled) {
+        // Lead flow xabarni yubordi va HumoBotMessage yozdi. Boshqa AI javob shart emas.
+        return;
+    }
 
     let aiReply: string | null = null;
     const startedAt = Date.now();
@@ -291,9 +327,23 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
 // ── direct chat (bot bilan gaplashish — endi Humo AI mirror) ────────────────
 
 async function handleDirectMessage(msg: TgBusinessMessage) {
-    if (!msg.text) return;
     if (msg.from?.is_bot) return;
-    const text = msg.text.trim();
+
+    // Voice → transkribatsiya (agar mavjud)
+    let workingText = msg.text ?? msg.caption ?? "";
+    if (!workingText && msg.voice) {
+        try {
+            const { tgGetFileBytes } = await import("@/lib/telegram-bots");
+            const { aiTranscribeAudio } = await import("@/lib/ai");
+            const buf = await tgGetFileBytes("humo_ai", msg.voice.file_id);
+            if (buf) {
+                const t = await aiTranscribeAudio(buf, msg.voice.mime_type ?? "audio/ogg", { language: "auto" });
+                if (t) workingText = t;
+            }
+        } catch (e) { console.error("[humo-bot direct voice]", e); }
+    }
+    if (!workingText) return;
+    const text = workingText.trim();
     const lang = pickTgLang(msg.from?.language_code);
     const tgId = String(msg.from?.id ?? "");
     if (!tgId) return;
@@ -669,4 +719,178 @@ function pricingText(lang: "uz" | "ru" | "en"): string {
         return `<b>Humo AI plans:</b>\n\n• <b>Free</b> — 50 messages/mo\n• <b>Basic</b> — 500 msg/mo · 29 000 UZS\n• <b>Pro</b> — 3 000 msg/mo · 99 000 UZS\n• <b>Enterprise</b> — 30 000 msg/mo · 299 000 UZS\n\nYearly is cheaper: Basic −10%, Pro −15%, Enterprise −20%.\n\nPayment only via For Pay wallet:\nhttps://forhumo.uz/ai/telegram-bot`;
     }
     return `<b>Humo AI tariflari:</b>\n\n• <b>Bepul</b> — 50 xabar/oy\n• <b>Basic</b> — 500 xabar/oy · 29 000 so'm\n• <b>Pro</b> — 3 000 xabar/oy · 99 000 so'm\n• <b>Enterprise</b> — 30 000 xabar/oy · 299 000 so'm\n\nYillik tarif arzon: Basic −10%, Pro −15%, Enterprise −20%.\n\nTo'lov faqat For Pay hamyoni orqali:\nhttps://forhumo.uz/ai/telegram-bot`;
+}
+
+// ── Buyurtma qabul qilish (Lead / CRM slot-fill) ────────────────────────────
+
+async function tryHandleLead(opts: {
+    profileId: string;
+    connectionId: string;
+    chatId: string;
+    customerText: string;
+    customerTgId: string | null;
+    customerTgUsername: string | null;
+    customerName: string;
+    ownerName: string;
+    persona: string | null;
+    lang: "uz" | "ru" | "en";
+    tier: string;
+    showBranding: boolean;
+    showAdFooter: boolean;
+}): Promise<boolean> {
+    const {
+        getOrCreateChatState, updateChatState, saveLead,
+        detectOrderIntent, nextSlot, slotQuestion, parseSlot,
+        inferProductMention,
+    } = await import("@/lib/humo-bot-lead");
+
+    const state = await getOrCreateChatState(opts.profileId, opts.connectionId, opts.chatId);
+
+    // Agar hali yig'ish boshlanmagan, niyatni tekshiramiz
+    if (!state.collecting) {
+        if (!detectOrderIntent(opts.customerText)) return false;
+
+        // Slot-fill boshlaymiz. Mahsulotni oldindan aniqlashga urinamiz.
+        const product = await inferProductMention(opts.customerText, opts.persona);
+        await updateChatState(opts.profileId, opts.connectionId, opts.chatId, {
+            collecting: true,
+            slotStage: "name",
+            productMention: product ?? opts.customerText.slice(0, 120),
+        });
+
+        const introMsg = opts.lang === "ru"
+            ? `Отлично! Оформлю заявку. ${slotQuestion("name", opts.lang)}`
+            : opts.lang === "en"
+            ? `Great! Let me take your request. ${slotQuestion("name", opts.lang)}`
+            : `Ajoyib! Buyurtmangizni qabul qilaman. ${slotQuestion("name", opts.lang)}`;
+
+        await sendLeadMessage(opts, introMsg);
+        return true;
+    }
+
+    // Yig'ish jarayonida — javobni parse qilamiz
+    const currentSlot = state.slotStage as "name" | "phone" | "address" | "confirm" | "done" | null;
+    if (!currentSlot || currentSlot === "done") {
+        // Reset — foydalanuvchi allaqachon tugatgan yoki noma'lum holat
+        await updateChatState(opts.profileId, opts.connectionId, opts.chatId, {
+            collecting: false, slotStage: null,
+        });
+        return false;
+    }
+
+    // Bekor qilish so'zi
+    if (/\b(bekor|otmen|отмен|cancel|stop|to['ʼ]?xta)\b/i.test(opts.customerText)) {
+        await updateChatState(opts.profileId, opts.connectionId, opts.chatId, {
+            collecting: false, slotStage: null,
+            customerName: null, customerPhone: null, customerAddress: null, productMention: null,
+        });
+        const bye = opts.lang === "ru" ? "Заявка отменена." : opts.lang === "en" ? "Request cancelled." : "Buyurtma bekor qilindi.";
+        await sendLeadMessage(opts, bye);
+        return true;
+    }
+
+    if (currentSlot === "name") {
+        const parsed = parseSlot("name", opts.customerText);
+        if (!parsed.value) {
+            await sendLeadMessage(opts, slotQuestion("name", opts.lang));
+            return true;
+        }
+        await updateChatState(opts.profileId, opts.connectionId, opts.chatId, {
+            customerName: parsed.value, slotStage: "phone",
+        });
+        await sendLeadMessage(opts, slotQuestion("phone", opts.lang));
+        return true;
+    }
+
+    if (currentSlot === "phone") {
+        const parsed = parseSlot("phone", opts.customerText);
+        if (!parsed.value) {
+            const retry = opts.lang === "ru"
+                ? `Не понял номер. Пример: +998 90 123 45 67`
+                : opts.lang === "en"
+                ? `Didn't catch that. Example: +998 90 123 45 67`
+                : `Raqamni ushlay olmadim. Masalan: +998 90 123 45 67`;
+            await sendLeadMessage(opts, retry);
+            return true;
+        }
+        await updateChatState(opts.profileId, opts.connectionId, opts.chatId, {
+            customerPhone: parsed.value, slotStage: "address",
+        });
+        await sendLeadMessage(opts, slotQuestion("address", opts.lang));
+        return true;
+    }
+
+    if (currentSlot === "address") {
+        const parsed = parseSlot("address", opts.customerText);
+        if (!parsed.value) {
+            await sendLeadMessage(opts, slotQuestion("address", opts.lang));
+            return true;
+        }
+
+        // To'liq — lead saqlaymiz
+        const fresh = await prisma.humoBotChatState.findUnique({
+            where: {
+                profileId_connectionId_chatId: {
+                    profileId: opts.profileId, connectionId: opts.connectionId, chatId: opts.chatId,
+                },
+            },
+        });
+
+        await saveLead({
+            profileId: opts.profileId,
+            connectionId: opts.connectionId,
+            chatId: opts.chatId,
+            customerTgId: opts.customerTgId,
+            customerTgUsername: opts.customerTgUsername,
+            customerName: fresh?.customerName ?? null,
+            customerPhone: fresh?.customerPhone ?? null,
+            customerAddress: parsed.value,
+            productMention: fresh?.productMention ?? null,
+            notes: null,
+        });
+
+        // State'ni reset qilamiz
+        await updateChatState(opts.profileId, opts.connectionId, opts.chatId, {
+            collecting: false, slotStage: "done",
+            customerAddress: parsed.value,
+        });
+
+        // Ega'ga push
+        try {
+            const { sendPushToProfile } = await import("@/lib/push");
+            const productLabel = fresh?.productMention ?? "So'rov";
+            await sendPushToProfile(opts.profileId, {
+                title: `Yangi buyurtma: ${productLabel}`,
+                body: `${fresh?.customerName ?? "Mijoz"} · ${fresh?.customerPhone ?? ""}`.trim(),
+                url: "https://forhumo.uz/ai/telegram-bot?tab=leads",
+                tag: `humo-bot-lead:${opts.profileId}`,
+            });
+        } catch (e) { console.error("[humo-bot lead-push]", e); }
+
+        await sendLeadMessage(opts, slotQuestion("confirm", opts.lang));
+        return true;
+    }
+
+    return false;
+}
+
+async function sendLeadMessage(opts: {
+    connectionId: string; chatId: string;
+    ownerName: string; tier: string;
+    showBranding: boolean; showAdFooter: boolean; lang: "uz" | "ru" | "en";
+}, text: string) {
+    const decorated = decorateReply({
+        reply: text,
+        tier: opts.tier,
+        showBranding: opts.showBranding,
+        showAdFooter: opts.showAdFooter,
+        ownerName: opts.ownerName,
+        language: opts.lang,
+    });
+    await sendBusinessMessage({
+        businessConnectionId: opts.connectionId,
+        chatId: opts.chatId,
+        text: decorated,
+        parseMode: "HTML",
+    });
 }
