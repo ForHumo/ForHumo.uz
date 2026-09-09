@@ -29,6 +29,8 @@ import { BnCategoryPicker } from "./bn-category-picker";
 import { BnPushCard } from "./bn-push-card";
 import { BnReferralLeaderboard } from "./bn-referral-leaderboard";
 import { BnAchievementsCard } from "./bn-achievements-card";
+import { BnMyPurchases } from "./bn-my-purchases";
+import { BnShopQrPanel } from "./bn-shop-qr-panel";
 import { BnPremiumUpgrade } from "./bn-premium-upgrade";
 import { BnMyAdsCard } from "./bn-my-ads-card";
 import { BnSellerInsightsCard } from "./bn-seller-insights-card";
@@ -1818,6 +1820,10 @@ function ShopTab({ shop }: { shop: CabinetShop }) {
                 <p>{t("shopRating")}: <span className="font-bold" style={{ color: BN.text2 }}>{shop.rating > 0 ? `${shop.rating.toFixed(1)} (${shop.ratingCount})` : t("noRating")}</span></p>
                 <p>{t("shopTier")}: <span className="font-bold" style={{ color: BN.text2 }}>{shop.tier}</span></p>
             </div>
+
+            <div className="pt-4">
+                <BnShopQrPanel shopSlug={shop.slug} shopName={shop.name} />
+            </div>
         </div>
     );
 }
@@ -1864,6 +1870,8 @@ function MoneyTab({ balance, orderCount }: { balance: number; orderCount: number
                 {t("payOpen")}
                 <ArrowUpRight className="w-4 h-4" />
             </a>
+
+            <BnMyPurchases />
 
             <BnReferralCard />
 

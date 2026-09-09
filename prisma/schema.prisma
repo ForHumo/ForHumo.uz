@@ -3125,6 +3125,8 @@ model BnShop {
   reviews       BnShopReview[]
 
   @@index([status, createdAt])
+  purchases     BnPurchase[]
+
   @@index([marketId, status])
   @@index([city, status])
   @@index([profileId])
@@ -3356,6 +3358,7 @@ model BnProduct {
   orderItems     BnOrderItem[]
   reviews        BnProductReview[]
   variants       BnProductVariant[]
+  purchases      BnPurchase[]
 
   @@index([shopId, createdAt])
   @@index([categoryId, isActive, hidden])
@@ -3463,9 +3466,66 @@ model BnOrder {
   completedAt   DateTime?
   cancelledAt   DateTime?
 
+  purchases     BnPurchase[]
+
   @@index([shopId, placedAt])
   @@index([buyerId, placedAt])
   @@index([status, placedAt])
+}
+
+// BN xarid tarixi — onlayn buyurtma + offline QR/qo'lda kiritish.
+// Muddati (expiresAt) yaqinlashsa — cron push yuboradi: "eng arzoni bu yerda".
+// Tug'ilgan kunda — mos qiziqishga qarab do'konlardan tavsiya.
+enum BnPurchaseSource {
+  ONLINE_ORDER    // BnOrder COMPLETED bo'lganda avto yozildi
+  OFFLINE_QR      // Do'konda QR skan qilib kiritildi
+  OFFLINE_MANUAL  // Foydalanuvchi qo'lda kiritdi (kabinet)
+  IMPORT          // CSV/import (kelajakda)
+}
+
+model BnPurchase {
+  id             String            @id @default(cuid())
+  profileId      String            // Xaridor (UserProfile.id)
+  shopId         String?           // Do'kon (agar bor bo'lsa — offline manual'da bo'lmasligi mumkin)
+  shop           BnShop?           @relation(fields: [shopId], references: [id], onDelete: SetNull)
+  productId      String?           // Mahsulot (agar bor bo'lsa)
+  product        BnProduct?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  // Denormalizatsiya — mahsulot/do'kon o'chirilsa ham tarix qoladi
+  title          String            // Mahsulot nomi
+  categorySlug   String?           // shelf-life topish uchun (masalan "meva", "sut")
+  quantity       Int               @default(1)
+  unit           String?           // "kg", "l", "dona"
+  priceUzs       Int               @default(0)       // birlik narx yoki umumiy
+
+  purchasedAt    DateTime          @default(now())
+  expiresAt      DateTime?         // Sro'g'i tugash sanasi (avto category'dan yoki qo'lda)
+
+  source         BnPurchaseSource  @default(OFFLINE_MANUAL)
+  orderId        String?           // BnOrder bilan bog'liq bo'lsa (ONLINE_ORDER)
+  order          BnOrder?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  reminderSentAt DateTime?         // Muddati reminderi yuborilgan bo'lsa (dedup)
+  reminderCount  Int               @default(0)      // Yuborilgan reminderlar soni (max 2)
+  hidden         Boolean           @default(false)  // Foydalanuvchi ro'yxatdan yashirsa
+
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([profileId, purchasedAt])
+  @@index([shopId, purchasedAt])
+  @@index([expiresAt, reminderSentAt])
+  @@index([orderId])
+}
+
+// Tug'ilgan kun tavsiyasi — dedup (bir yilda bir marta yuboriladi).
+model BnBirthdayReminded {
+  id         String   @id @default(cuid())
+  profileId  String
+  year       Int                                     // 2026
+  sentAt     DateTime @default(now())
+
+  @@unique([profileId, year])
 }
 
 // Xaridor↔sotuvchi buyurtma ichida yozishuv (K2).

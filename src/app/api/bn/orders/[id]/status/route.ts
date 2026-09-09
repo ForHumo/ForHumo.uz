@@ -115,15 +115,18 @@ export async function POST(
     // Escrow harakati
     if (next === "COMPLETED") {
         const s = await settleOrder(order.id);
-        // Referral bonus + BN yutuqlari (fail-safe, javobni kechiktirmasin)
+        // Referral bonus + BN yutuqlari + xarid tarixi (fail-safe, javobni kechiktirmasin)
         after(async () => {
             await awardReferralOnFirstCompleted(order.buyerId, order.id);
-            // Xaridorga birinchi buyurtma yutug'i (referral bo'lmasa ham beriladi)
             await grantAchievement(order.buyerId, "bn.first_order");
-            // Do'kon egasiga birinchi savdo yutug'i
             if (order.shop?.profileId) {
                 await grantAchievement(order.shop.profileId, "bn.first_sale");
             }
+            // Xarid tarixiga yozib qo'yamiz — muddati/tavsiya cron uchun
+            try {
+                const { recordPurchaseFromOrder } = await import("@/lib/bn-purchase");
+                await recordPurchaseFromOrder(order.id);
+            } catch (e) { console.error("[bn:purchase-record]", e); }
         });
         return NextResponse.json({ ok: true, settled: s.ok, reason: s.reason });
     }
