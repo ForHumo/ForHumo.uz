@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { aiAvailable, aiText } from "@/lib/ai";
+import { buildAiSystemPrompt } from "@/lib/ai-context-builder";
 import {
     sendBusinessMessage,
     sendMessage,
@@ -150,7 +151,7 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
                 showBranding: config.showBranding,
                 showAdFooter: config.showAdFooter,
                 ownerName: profile?.name ?? "Ega",
-                skipIntro: true,   // Ish vaqti javobiga intro qo'shmaymiz
+                language: config.language === "auto" ? "uz" : (config.language as "uz" | "ru" | "en"),
             });
             await sendBusinessMessage({
                 businessConnectionId: msg.business_connection_id,
@@ -200,8 +201,8 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
     if (faqHit) {
         aiReply = faqHit.a;
     } else if (aiAvailable()) {
-        // 2) AI
-        const systemPrompt = buildSystemPrompt({
+        // 2) AI — Business Mode system prompt + ega'ning For Humo konteksti
+        const businessPrompt = buildBusinessPrompt({
             persona: config.persona,
             tone: config.tone,
             language: replyLang,
@@ -213,6 +214,23 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
             isFirstContact,
             customerName,
         });
+        // Ega'ning For Humo ma'lumotlarini (Belis, Market, BN, Nexus...) qo'shamiz
+        let ownerContext = "";
+        try {
+            const ctx = await buildAiSystemPrompt({
+                profileId: connection.profileId,
+                moduleOrigin: "telegram-bot",
+                includeKnowledge: true,
+                includeSignals: true,
+                verboseModules: false,
+                language: replyLang,
+            });
+            // Faqat qisqacha profil + bilim va signallarni qoldiramiz (Humo AI o'zining rol qismini olib tashlaymiz)
+            ownerContext = "\n\n# EGA HAQIDA MA'LUMOTLAR (mijoz so'rasa yordam bering)\n" +
+                ctx.system.split(/^#\s/m).slice(1).map(s => "# " + s).join("").slice(0, 4000);
+        } catch { /* fail-safe */ }
+
+        const systemPrompt = businessPrompt + ownerContext;
         try {
             const raw = await aiText(inbound, { system: systemPrompt, temperature: 0.5 });
             aiReply = (raw || "").trim().slice(0, MAX_REPLY_LEN);
@@ -230,7 +248,7 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
             showBranding: config.showBranding,
             showAdFooter: config.showAdFooter,
             ownerName: profile?.name ?? "Ega",
-            skipIntro: !isFirstContact,   // Faqat 1-marta intro qo'shamiz
+            language: replyLang,
         });
         const send = await sendBusinessMessage({
             businessConnectionId: msg.business_connection_id,
@@ -389,9 +407,11 @@ function pickTgLang(code: string | undefined | null): "uz" | "ru" | "en" {
     return "en";   // Boshqa tillar uchun ingliz zaxira
 }
 
-// ── System prompt (identity + qat'iy qoidalar) ──────────────────────────────
+// ── Business Mode system prompt ─────────────────────────────────────────────
+// MUHIM: AI o'zining identitysini xabar boshida yozmasligi kerak — decorator qo'yadi.
+// AI faqat mijoz savoliga toza mazmun bilan javob beradi.
 
-function buildSystemPrompt(cfg: {
+function buildBusinessPrompt(cfg: {
     persona?: string | null;
     tone?: string;
     language: "uz" | "ru" | "en";
@@ -405,67 +425,92 @@ function buildSystemPrompt(cfg: {
 }): string {
     const owner = cfg.ownerName ?? "biznes egasi";
     const langInstruction = cfg.language === "ru"
-        ? "ОТВЕЧАЙ ТОЛЬКО ПО-РУССКИ."
+        ? "ОТВЕЧАЙ ТОЛЬКО ПО-РУССКИ (кириллица)."
         : cfg.language === "en"
         ? "ALWAYS reply in English."
-        : "FAQAT O'ZBEK TILIDA javob ber (lotin yozuvida).";
+        : "FAQAT O'ZBEK TILIDA (lotin yozuvida) javob ber.";
 
     const parts: string[] = [];
 
-    parts.push(`# ROL VA IDENTITY`);
-    parts.push(`Sen — ${owner} nomidan ishlaydigan AI yordamchisan (avtomatik javob beruvchi bot).`);
-    parts.push(`SEN ${owner.toUpperCase()} EMASSAN. Sen uning yordamchisisan.`);
-    parts.push(`Hech qachon "Mening ismim ${owner}" yoki o'zingni ${owner} deb tanishtirma.`);
-    parts.push(`Faqat kerak bo'lganda: "Men ${owner}ning AI yordamchisiman" — bir gapda.`);
+    parts.push(`# ROL`);
+    parts.push(`Sen — ${owner} nomidan Telegram Business chat'ida ishlaydigan avtomatik AI yordamchisisan.`);
+    parts.push(`SEN ${owner.toUpperCase()} EMASSAN. Sen uning AI yordamchisisan.`);
     parts.push("");
 
     parts.push(`# TIL`);
     parts.push(langInstruction);
     parts.push("");
 
-    parts.push(`# SALOMLASHISH — MUHIM`);
+    parts.push(`# QAT'IY TAQIQ (Doim'ni buzsang xato hisoblanadi)`);
+    parts.push(`1. HECH QACHON "Men ${owner}ning AI yordamchisiman", "Men AI yordamchiman", "Mening ismim..." kabi identity gapni YOZMA. Identity avtomatik ravishda tizim tomonidan qo'yiladi.`);
+    parts.push(`2. HECH QACHON o'zingni tanishtirma. Faqat mijoz savoliga MAZMUNLI javob ber.`);
+    parts.push(`3. Javobni birdan ma'noli mazmun bilan boshla — "Assalomu alaykum" yoki tanishuv gap YOZMA.`);
     if (cfg.isFirstContact) {
-        parts.push(`Bu chatda BIRINCHI marta gaplashyapsan. Bir marta qisqa salom ber (masalan "Assalomu alaykum" yoki "Salom") va darhol savolga o't.`);
+        parts.push(`4. Bu chatda 1-marta gaplashsang ham salomlashuvni YOZMA (avtomatik qo'yiladi).`);
     } else {
-        parts.push(`Bu chatda AVVAL suhbat bo'lgan. HECH QACHON SALOM BERMA. "Assalomu alaykum", "Salom", "Hello", "Здравствуйте" — HECH QAYSISINI YOZMA. Darhol javobga o't.`);
+        parts.push(`4. Bu chatda avval gaplashilgan — "salom", "assalomu alaykum" umuman YOZMA.`);
     }
+    parts.push(`5. Reklama urma, marketing gaplar QO'SHMA.`);
     parts.push("");
 
     parts.push(`# JAVOB USLUBI`);
-    if (cfg.tone === "friendly") parts.push(`- Ton: samimiy, do'stona, iliq.`);
-    else if (cfg.tone === "brief") parts.push(`- Ton: qisqa (1-2 gap), aniq, minimal.`);
-    else parts.push(`- Ton: professional, xushmuomala, ishonchli.`);
-    parts.push(`- Uzun javob berma (max 120 so'z, agar mijoz batafsil so'ramasa).`);
-    parts.push(`- Emoji ISHLATMA (mijoz oldin emoji yozgan bo'lsa mumkin, 1 ta).`);
-    parts.push(`- Reklama, marketing gap urma. Faqat mijoz savoliga javob ber.`);
+    if (cfg.tone === "friendly") parts.push(`Ton: samimiy, do'stona, iliq (lekin qisqa).`);
+    else if (cfg.tone === "brief") parts.push(`Ton: juda qisqa (1-2 gap), aniq, minimal.`);
+    else parts.push(`Ton: professional, xushmuomala, ishonchli.`);
+    parts.push(`Max 80 so'z (mijoz batafsil so'ramasa 40 so'z ichida qol).`);
+    parts.push(`Emoji ishlatma.`);
     parts.push("");
 
-    parts.push(`# BIZNES KONTEKSTI`);
-    if (cfg.persona) parts.push(`Biznes tavsifi: ${cfg.persona}`);
-    else parts.push(`Biznes tavsifi: KIRITILMAGAN. Umumiy javob ber, konkret detallar bermang.`);
-    if (cfg.greeting && cfg.isFirstContact) parts.push(`Egasining birinchi xabari: "${cfg.greeting}"`);
+    parts.push(`# BIZNES`);
+    if (cfg.persona) parts.push(`${cfg.persona}`);
+    else parts.push(`Biznes tavsifi hali kiritilmagan. Umumiy javob ber; konkret narx/detal so'rasa "menda hozircha aniq ma'lumot yo'q, ega o'zi javob beradi" degin.`);
+    if (cfg.greeting) parts.push(`Ega xabari (kontekst): "${cfg.greeting}"`);
     parts.push("");
 
     parts.push(`# QOIDALAR`);
-    parts.push(`- Bilmagan narsang haqida: "Bu haqda menda aniq ma'lumot yo'q, ${owner} o'zi javob beradi" de.`);
-    parts.push(`- Narx, aloqa, manzil kabi konkret ma'lumotni FAQAT FAQ'da ko'rsatilgan bo'lsa ayt.`);
-    parts.push(`- Mijoz shikoyat, muammo, murakkab so'rov qilsa: "${owner}ga uzatdim, tez orada o'zi javob beradi" de.`);
-    parts.push(`- Bu chat AI ekanligini so'rasa: "Ha, men Humo AI yordamchisiman" deb ochiq ayt.`);
-    if (cfg.bannedTopics) parts.push(`- Taqiq mavzular (javob berma, chetlab o't): ${cfg.bannedTopics}`);
+    parts.push(`- Bilmagan narsangda: "Bu haqda aniq ma'lumot yo'q, ega o'zi javob beradi" (o'zbekcha yoki mos tilda).`);
+    parts.push(`- Narx, aloqa, manzilni FAQAT FAQ'da yozilgan bo'lsagina ayt.`);
+    parts.push(`- Shikoyat/murakkab so'rov: "So'rovni egaga uzatdim, tez orada javob beradi".`);
+    parts.push(`- Sen kimsan so'rasa: "Men avtomatik AI yordamchiman" (qisqa, tabiiy).`);
+    if (cfg.bannedTopics) parts.push(`- Taqiq mavzular (javob berma): ${cfg.bannedTopics}`);
     if (cfg.escalationRules) parts.push(`- Eskalatsiya qoidalari: ${cfg.escalationRules}`);
     parts.push("");
 
     if (cfg.faq.length > 0) {
-        parts.push(`# FAQ (agar savol mos bo'lsa — aynan javobni ishlat)`);
+        parts.push(`# FAQ (mos kelsa aynan javobni ishlat)`);
         cfg.faq.slice(0, 20).forEach((f, i) => {
-            parts.push(`${i + 1}. Savol: ${f.q}\n   Javob: ${f.a}`);
+            parts.push(`${i + 1}. S: ${f.q}\n   J: ${f.a}`);
         });
     }
 
     return parts.join("\n");
 }
 
-// ── Reply bezash (branding + footer) ────────────────────────────────────────
+// ── Reply bezash (branding + marketing footer) ──────────────────────────────
+
+const AD_HEADLINES = {
+    uz: [
+        "Bu javobni AI berdi. Sizniki ham 24/7 javob berishi mumkin →",
+        "Uxlab yotganingizda ham mijozlarga javob bering →",
+        "Mijozlar kutayapti? AI 3 soniyada javob beradi →",
+        "Sizning Business chat'ingizda ham shunday AI ishlasin →",
+        "Bu bot 60+ soatlik ish vaqtingizni tejaydi. Ulash →",
+    ],
+    ru: [
+        "Этот ответ дал AI. Такой же для вашего Business — 24/7 →",
+        "Пока вы спите — AI отвечает клиентам за вас →",
+        "Клиенты ждут ответа? AI отвечает за 3 секунды →",
+        "Подключите такого же AI-ассистента к вашему Business →",
+        "Экономит 60+ часов работы в месяц. Подключить →",
+    ],
+    en: [
+        "This reply is by AI. Get one for your Business — 24/7 →",
+        "AI replies to your customers while you sleep →",
+        "Customers waiting? AI replies in 3 seconds →",
+        "Connect the same AI to your Telegram Business →",
+        "Saves 60+ hours a month. Try it →",
+    ],
+} as const;
 
 function decorateReply(opts: {
     reply: string;
@@ -473,30 +518,68 @@ function decorateReply(opts: {
     showBranding: boolean;
     showAdFooter: boolean;
     ownerName: string;
-    skipIntro: boolean;
+    language: "uz" | "ru" | "en";
 }): string {
     let out = opts.reply.trim();
 
-    // 1) Intro (identity chizig'i) — faqat 1-marta chat'da
+    // Bir necha AI o'z-o'zidan yozadigan tanishuv gaplarni tozalash
+    out = stripSelfIntro(out, opts.ownerName);
+
     const canRemoveBranding = opts.tier === "enterprise" || opts.tier === "enterprise_yearly";
     const canRemoveFooter = opts.tier === "pro" || opts.tier === "pro_yearly"
         || opts.tier === "enterprise" || opts.tier === "enterprise_yearly";
 
-    // Branding faqat 1-marta va faqat rasman o'chirilmagan bo'lsa
-    if (!opts.skipIntro) {
-        const brandName = (canRemoveBranding && !opts.showBranding)
-            ? "AI"
-            : `<a href="${BOT_LEARN_URL}">Humo AI</a>`;
-        const introLine = `<i>Men ${escapeHtml(opts.ownerName)}ning shaxsiy ${brandName} yordamchisiman.</i>\n\n`;
-        out = introLine + out;
-    }
+    // 1) Intro (identity chizig'i) — har javobga qo'shiladi
+    const brandName = (canRemoveBranding && !opts.showBranding)
+        ? "AI"
+        : `<a href="${BOT_LEARN_URL}">Humo AI</a>`;
+    const introLine = introFor(opts.language, opts.ownerName, brandName);
+    out = introLine + "\n\n" + out;
 
-    // 2) Footer reklama
+    // 2) Marketing footer (reklama)
     const footerAllowedRemoved = canRemoveFooter && !opts.showAdFooter;
     if (!footerAllowedRemoved) {
-        out += `\n\n— <a href="https://t.me/ForHumo_AIBot?start=learn">Humo AI</a>`;
+        const headline = pickHeadline(opts.language);
+        out += `\n\n<i>— ${headline} <a href="https://t.me/ForHumo_AIBot?start=learn">Humo AI</a></i>`;
     }
 
+    return out;
+}
+
+function introFor(lang: "uz" | "ru" | "en", owner: string, brandLink: string): string {
+    const safe = escapeHtml(owner);
+    if (lang === "ru") return `<i>Я — персональный ${brandLink} ассистент ${safe}.</i>`;
+    if (lang === "en") return `<i>I'm ${safe}'s personal ${brandLink} assistant.</i>`;
+    return `<i>Men ${safe}ning shaxsiy ${brandLink} yordamchisiman.</i>`;
+}
+
+function pickHeadline(lang: "uz" | "ru" | "en"): string {
+    const list = AD_HEADLINES[lang] ?? AD_HEADLINES.uz;
+    // Kunga qarab aylanadi — bir kun ichida ko'p mijozga bir xil ko'rinadi (natural)
+    const dayIdx = Math.floor(Date.now() / (24 * 60 * 60 * 1000)) % list.length;
+    return list[dayIdx];
+}
+
+/**
+ * AI ba'zida o'zi tanishuv gapi bilan boshlaydi — biz uni olib tashlaymiz
+ * (decorator kerakli intro'ni qo'yadi).
+ */
+function stripSelfIntro(text: string, ownerName: string): string {
+    const owner = ownerName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const patterns: RegExp[] = [
+        new RegExp(`^\\s*(?:Assalomu\\s+alaykum[,.!]?\\s*)?Men\\s+${owner}(?:['ʼ]?ning|ning)?[^\\n]*yordamchi[a-z]*[^\\n]*(?:\\n|$)`, "i"),
+        /^\s*Assalomu\s+alaykum[,.!]?\s*(?:\n|$)/i,
+        /^\s*Здравствуйте[,.!]?\s*(?:\n|$)/i,
+        /^\s*Hello[,.!]?\s*(?:\n|$)/i,
+        /^\s*Я\s*—?\s*(?:личный|персональный)?[^\n]*помощник[^\n]*(?:\n|$)/i,
+        /^\s*I['ʼ]?m\s+[^\n]*assistant[^\n]*(?:\n|$)/i,
+    ];
+    let out = text;
+    for (const p of patterns) {
+        const before = out;
+        out = out.replace(p, "").trimStart();
+        if (before !== out) break;   // Bir marta tozalash yetadi
+    }
     return out;
 }
 
