@@ -874,16 +874,48 @@ async function tryHandleLead(opts: {
             customerAddress: parsed.value,
         });
 
-        // Ega'ga push
+        // Ega'ga xabar berish: Web Push + Telegram (agar ega Humo ID Telegram'ga bog'langan bo'lsa)
         try {
             const { sendPushToProfile } = await import("@/lib/push");
             const productLabel = fresh?.productMention ?? "So'rov";
+            const customerName = fresh?.customerName ?? "Mijoz";
+            const customerPhone = fresh?.customerPhone ?? "";
+
             await sendPushToProfile(opts.profileId, {
                 title: `Yangi buyurtma: ${productLabel}`,
-                body: `${fresh?.customerName ?? "Mijoz"} · ${fresh?.customerPhone ?? ""}`.trim(),
+                body: `${customerName} · ${customerPhone}`.trim(),
                 url: "https://forhumo.uz/ai/telegram-bot?tab=leads",
                 tag: `humo-bot-lead:${opts.profileId}`,
             });
+
+            // Telegram Humo AI botga xabar (agar ega Humo ID'ni Telegram'ga bog'lagan bo'lsa)
+            try {
+                const identity = await prisma.identity.findFirst({
+                    where: { profileId: opts.profileId, provider: "TELEGRAM" },
+                    select: { providerId: true },
+                });
+                if (identity) {
+                    const { sendMessage: sendBot } = await import("@/lib/telegram-bots");
+                    const waLink = customerPhone
+                        ? `https://wa.me/${customerPhone.replace(/\D/g, "")}`
+                        : "";
+                    const tgLink = opts.customerTgUsername ? `https://t.me/${opts.customerTgUsername}` : "";
+                    const links = [waLink && `WhatsApp: ${waLink}`, tgLink && `Telegram: ${tgLink}`].filter(Boolean).join("\n");
+                    const msg = `<b>Yangi buyurtma</b>\n\n` +
+                        `<b>Mahsulot:</b> ${escapeHtml(productLabel)}\n` +
+                        `<b>Mijoz:</b> ${escapeHtml(customerName)}\n` +
+                        (customerPhone ? `<b>Telefon:</b> <code>${escapeHtml(customerPhone)}</code>\n` : "") +
+                        `<b>Manzil:</b> ${escapeHtml(parsed.value)}\n\n` +
+                        (links ? `${links}\n\n` : "") +
+                        `Boshqarish: https://forhumo.uz/ai/telegram-bot`;
+                    await sendBot("humo_ai", {
+                        chatId: identity.providerId,
+                        text: msg,
+                        parseMode: "HTML",
+                        disableWebPreview: true,
+                    });
+                }
+            } catch (e) { console.error("[humo-bot lead-tg-notify]", e); }
         } catch (e) { console.error("[humo-bot lead-push]", e); }
 
         await sendLeadMessage(opts, slotQuestion("confirm", opts.lang));

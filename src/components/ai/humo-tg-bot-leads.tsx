@@ -6,9 +6,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Users, Phone, MapPin, Package, Loader2, Check, X, Clock,
-    MessageSquare, TrendingUp, Send, Trophy, XCircle,
+    MessageSquare, TrendingUp, Send, Trophy, XCircle, Download, BarChart3,
 } from "lucide-react";
 import { formatMoney } from "@/lib/money";
+
+interface StatsResp {
+    days: number;
+    trend: Array<{ day: string; total: number; won: number; lost: number; open: number; contacted: number; wonSum: number }>;
+    totals: { total: number; won: number; lost: number; open: number; contacted: number; wonSum: number };
+    conversionRate: number;
+    avgWonUzs: number;
+}
 
 interface Lead {
     id: string;
@@ -40,6 +48,8 @@ export function HumoTgBotLeads() {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [counts, setCounts] = useState<Counts>({});
     const [loading, setLoading] = useState(false);
+    const [stats, setStats] = useState<StatsResp | null>(null);
+    const [showStats, setShowStats] = useState(false);
 
     const load = useCallback(async (s: Lead["status"]) => {
         setLoading(true);
@@ -54,7 +64,15 @@ export function HumoTgBotLeads() {
         finally { setLoading(false); }
     }, []);
 
+    const loadStats = useCallback(async () => {
+        try {
+            const r = await fetch("/api/telegram/humo-bot/leads/stats?days=14", { cache: "no-store" });
+            if (r.ok) setStats(await r.json());
+        } catch { /* noop */ }
+    }, []);
+
     useEffect(() => { void load(status); }, [status, load]);
+    useEffect(() => { void loadStats(); }, [loadStats]);
 
     const updateStatus = useCallback(async (id: string, next: Lead["status"], extra?: { wonAmountUzs?: number }) => {
         await fetch("/api/telegram/humo-bot/leads", {
@@ -69,8 +87,8 @@ export function HumoTgBotLeads() {
 
     return (
         <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-4">
-            <div className="flex items-center justify-between">
-                <div>
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex-1 min-w-0">
                     <h2 className="text-base font-semibold flex items-center gap-2">
                         <Users className="w-4 h-4 text-sky-500" />
                         Buyurtmalar (Leads)
@@ -84,7 +102,26 @@ export function HumoTgBotLeads() {
                         Mijoz Telegram Business chat'ida buyurtma bermoqchi bo'lsa — AI ism, telefon va manzilni yig'ib bu yerga saqlab qo'yadi.
                     </p>
                 </div>
+                <div className="flex items-center gap-1 shrink-0">
+                    <button
+                        onClick={() => setShowStats(v => !v)}
+                        className="p-1.5 rounded border border-border hover:bg-muted"
+                        title="Statistika"
+                    >
+                        <BarChart3 className="w-4 h-4" />
+                    </button>
+                    <a
+                        href={`/api/telegram/humo-bot/leads/export${status ? `?status=${status}` : ""}`}
+                        download
+                        className="p-1.5 rounded border border-border hover:bg-muted"
+                        title="CSV yuklab olish"
+                    >
+                        <Download className="w-4 h-4" />
+                    </a>
+                </div>
             </div>
+
+            {showStats && stats && <StatsBlock stats={stats} />}
 
             <div className="flex gap-1 border-b border-border">
                 {TABS.map(t => {
@@ -254,6 +291,63 @@ function LeadCard({ lead, onUpdate }: { lead: Lead; onUpdate: (id: string, next:
                     </>
                 )}
             </div>
+        </div>
+    );
+}
+
+function StatsBlock({ stats }: { stats: StatsResp }) {
+    const max = Math.max(1, ...stats.trend.map(d => d.total));
+    return (
+        <div className="rounded-lg border border-border/60 bg-background/50 p-3 space-y-3">
+            {/* 4 KPI */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Kpi label="Jami" value={stats.totals.total} color="text-sky-600" />
+                <Kpi label="Yakunlandi" value={stats.totals.won} color="text-emerald-600" />
+                <Kpi label="Konversion" value={`${stats.conversionRate}%`} color="text-amber-600" />
+                <Kpi label="O'rt. sotuv" value={stats.avgWonUzs > 0 ? formatMoney(stats.avgWonUzs, "UZS") : "—"} color="text-primary" />
+            </div>
+
+            {/* Kunlik trend chart */}
+            <div>
+                <div className="text-xs text-muted-foreground mb-1.5">Oxirgi {stats.days} kun</div>
+                <div className="flex items-end gap-0.5 h-14">
+                    {stats.trend.map(d => {
+                        const totalH = (d.total / max) * 100;
+                        const wonH = d.total > 0 ? (d.won / d.total) * totalH : 0;
+                        return (
+                            <div
+                                key={d.day}
+                                className="flex-1 flex flex-col justify-end relative group cursor-help"
+                                title={`${d.day} — ${d.total} lead, ${d.won} sotuv${d.wonSum > 0 ? ` (${formatMoney(d.wonSum, "UZS")})` : ""}`}
+                            >
+                                <div
+                                    className="w-full bg-sky-500/60 rounded-t-sm"
+                                    style={{ height: `${totalH}%`, minHeight: d.total > 0 ? 2 : 0 }}
+                                />
+                                {wonH > 0 && (
+                                    <div
+                                        className="w-full bg-emerald-500 rounded-t-sm absolute bottom-0"
+                                        style={{ height: `${wonH}%` }}
+                                    />
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+                <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-sky-500/60" /> Jami</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500" /> Sotuv</span>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function Kpi({ label, value, color }: { label: string; value: string | number; color: string }) {
+    return (
+        <div className="rounded border border-border/50 p-2">
+            <div className="text-[10px] text-muted-foreground">{label}</div>
+            <div className={`text-sm font-semibold mt-0.5 ${color}`}>{value}</div>
         </div>
     );
 }

@@ -22,6 +22,10 @@ interface TgMessageLite {
     caption?: string;
     photo?: { file_id: string; width: number; height: number }[];
     voice?: { file_id: string; duration: number; mime_type?: string };
+    reply_to_message?: {
+        message_id: number;
+        photo?: { file_id: string; width: number; height: number }[];
+    };
 }
 interface TgUpdateLite {
     update_id: number;
@@ -477,19 +481,21 @@ async function handleSellCommand(opts: {
         return;
     }
 
-    // Rasmni topish: msg.photo bevosita yoki reply_to_message ichida
-    const photos = opts.msg.photo?.length ? opts.msg.photo : null;
-    // Telegram Bot API'da reply_to_message qaytadi lekin TgMessageLite'da yo'q — kengaytirmasak ishlamaydi
-    // Hozircha faqat bir xabarda rasm + /sot NARX caption bo'lgan holatni qo'llaymiz
+    // Rasmni topish: (a) bevosita xabarda + caption, (b) reply-to-photo
+    const photos = opts.msg.photo?.length
+        ? opts.msg.photo
+        : opts.msg.reply_to_message?.photo?.length
+            ? opts.msg.reply_to_message.photo
+            : null;
 
     if (!photos) {
         await sendMessage(BOT, {
             chatId: opts.chatId,
             text: opts.lang === "ru"
-                ? "Прикрепите фото товара к сообщению с командой <code>/sot 45000</code>"
+                ? "Прикрепите фото товара с caption <code>/sot 45000</code>, или ответьте на фото командой <code>/sot 45000</code>"
                 : opts.lang === "en"
-                ? "Attach product photo with the caption <code>/sot 45000</code>"
-                : "Rasmga izoh sifatida <code>/sot 45000</code> yozing (fotoga qo'shib)",
+                ? "Attach a product photo with caption <code>/sot 45000</code>, or reply to a photo with <code>/sot 45000</code>"
+                : "Rasm caption'ida <code>/sot 45000</code> yozing, yoki rasmga javob berib <code>/sot 45000</code> yuboring",
             parseMode: "HTML",
         });
         return;
