@@ -81,6 +81,12 @@ export async function PUT(req: Request) {
         // Branding: faqat tier huquq bergan bo'lsagina o'chirish mumkin
         showBranding: canRemoveBranding ? body.showBranding !== false : true,
         showAdFooter: canRemoveFooter ? body.showAdFooter !== false : true,
+        // TTS: faqat Pro+ tarifda
+        ttsEnabled: canRemoveFooter ? body.ttsEnabled === true : false,
+        // BN do'kon slug: WON lead → BnPurchase yaratish uchun
+        linkedBnShopSlug: typeof body.linkedBnShopSlug === "string" && body.linkedBnShopSlug.trim()
+            ? body.linkedBnShopSlug.trim().slice(0, 100)
+            : null,
     };
 
     const config = await prisma.humoBotConfig.upsert({
@@ -132,6 +138,8 @@ function defaultConfig() {
         autoReplyEnabled: true,
         showBranding: true,
         showAdFooter: true,
+        ttsEnabled: false,
+        linkedBnShopSlug: null as string | null,
     };
 }
 

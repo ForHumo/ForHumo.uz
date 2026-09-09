@@ -110,6 +110,18 @@ async function handleMessage(msg: TgMessageLite) {
         return;
     }
 
+    // 4b) /sot NARX (rasm caption yoki reply-to-photo) — do'kon egasi mahsulot yaratadi
+    if (text.startsWith("/sot")) {
+        await handleSellCommand({
+            text,
+            msg,
+            tgId,
+            chatId,
+            lang,
+        });
+        return;
+    }
+
     // 5) /me (bog'langan bo'lsa profil'ni ko'rsatish)
     if (text === "/me") {
         const greet = await personalGreet(tgId, lang);
@@ -400,4 +412,168 @@ function linkInstructionText(lang: "uz" | "ru" | "en"): string {
         `2. <b>«Telegram bog'lash»</b> tugmasini bosing — 6 belgi kod olasiz\n` +
         `3. Yuboring: <code>/link SIZNINGKOD</code>\n\n` +
         `Shundan keyin ikkala bot (@ForHumo_AIBot va @bozornarxidabot) sizni taniydi.`;
+}
+
+// ── /sot NARX — do'kon egasi mahsulot yaratadi ──────────────────────────────
+
+async function handleSellCommand(opts: {
+    text: string;
+    msg: TgMessageLite;
+    tgId: string;
+    chatId: number;
+    lang: "uz" | "ru" | "en";
+}) {
+    const { findLinkedProfile } = await import("@/lib/telegram-link");
+    const linked = await findLinkedProfile(opts.tgId);
+
+    if (!linked) {
+        await sendMessage(BOT, {
+            chatId: opts.chatId,
+            text: opts.lang === "ru" ? "Сначала привяжите Humo ID: /link" :
+                  opts.lang === "en" ? "First link your Humo ID: /link" :
+                                       "Awval Humo ID'ni bog'lang: /link",
+        });
+        return;
+    }
+
+    const { prisma } = await import("@/lib/prisma");
+    const shop = await prisma.bnShop.findFirst({
+        where: { profileId: linked.profileId, status: { in: ["ACTIVE", "APPROVED", "VERIFIED"] as never[] } },
+        select: { id: true, slug: true, name: true },
+    }).catch(async () => {
+        // status filter noto'g'ri bo'lsa filtersiz izlash
+        return prisma.bnShop.findFirst({
+            where: { profileId: linked.profileId },
+            select: { id: true, slug: true, name: true },
+        });
+    });
+
+    if (!shop) {
+        await sendMessage(BOT, {
+            chatId: opts.chatId,
+            text: opts.lang === "ru"
+                ? "У вас нет активного магазина в BN. Откройте: https://bozornarxida.uz/sotuvchi"
+                : opts.lang === "en"
+                ? "You have no active shop in BN. Open: https://bozornarxida.uz/sotuvchi"
+                : "Sizda BN'da faol do'kon yo'q. Oching: https://bozornarxida.uz/sotuvchi",
+            parseMode: "HTML",
+        });
+        return;
+    }
+
+    // Narxni ajratish
+    const priceMatch = opts.text.match(/\/sot\s+(\d[\d\s]*)/);
+    const priceUzs = priceMatch ? parseInt(priceMatch[1].replace(/\s/g, "")) : 0;
+    if (!priceUzs || priceUzs < 1000) {
+        await sendMessage(BOT, {
+            chatId: opts.chatId,
+            text: opts.lang === "ru"
+                ? "Пример: <code>/sot 45000</code> (ответ на фото товара)"
+                : opts.lang === "en"
+                ? "Example: <code>/sot 45000</code> (reply to product photo)"
+                : "Namuna: <code>/sot 45000</code> (mahsulot rasmiga javob)",
+            parseMode: "HTML",
+        });
+        return;
+    }
+
+    // Rasmni topish: msg.photo bevosita yoki reply_to_message ichida
+    const photos = opts.msg.photo?.length ? opts.msg.photo : null;
+    // Telegram Bot API'da reply_to_message qaytadi lekin TgMessageLite'da yo'q — kengaytirmasak ishlamaydi
+    // Hozircha faqat bir xabarda rasm + /sot NARX caption bo'lgan holatni qo'llaymiz
+
+    if (!photos) {
+        await sendMessage(BOT, {
+            chatId: opts.chatId,
+            text: opts.lang === "ru"
+                ? "Прикрепите фото товара к сообщению с командой <code>/sot 45000</code>"
+                : opts.lang === "en"
+                ? "Attach product photo with the caption <code>/sot 45000</code>"
+                : "Rasmga izoh sifatida <code>/sot 45000</code> yozing (fotoga qo'shib)",
+            parseMode: "HTML",
+        });
+        return;
+    }
+
+    await sendChatAction(BOT, opts.chatId, "typing");
+
+    try {
+        const { tgGetFileBytes } = await import("@/lib/telegram-bots");
+        const { aiDescribeProductImage } = await import("@/lib/ai");
+
+        const largest = photos[photos.length - 1];
+        const buf = await tgGetFileBytes(BOT, largest.file_id);
+        if (!buf) {
+            await sendMessage(BOT, {
+                chatId: opts.chatId,
+                text: opts.lang === "ru" ? "Не смог загрузить фото." : opts.lang === "en" ? "Couldn't fetch photo." : "Rasmni ola olmadim.",
+            });
+            return;
+        }
+        const desc = await aiDescribeProductImage(buf, "image/jpeg");
+        const title = desc?.name?.trim() || (opts.lang === "ru" ? "Товар" : opts.lang === "en" ? "Product" : "Mahsulot");
+
+        // Vercel Blob'ga rasm yuklab olamiz
+        let imageUrl: string | null = null;
+        try {
+            const { put } = await import("@vercel/blob");
+            const fileName = `bn-tg/${shop.slug}/${Date.now()}.jpg`;
+            const blob = await put(fileName, buf, {
+                access: "public",
+                addRandomSuffix: false,
+                contentType: "image/jpeg",
+            });
+            imageUrl = blob.url;
+        } catch (e) {
+            console.error("[bn-bot /sot upload]", e);
+        }
+
+        // Slug yaratish
+        const slug = slugify(title) + "-" + Math.random().toString(36).slice(2, 7);
+
+        const created = await prisma.bnProduct.create({
+            data: {
+                shopId: shop.id,
+                title: title.slice(0, 120),
+                slug,
+                description: desc?.description ?? null,
+                images: imageUrl ? [imageUrl] : [],
+                price: priceUzs,
+                stock: 1,
+                isActive: true,
+                hidden: false,
+                allowPickup: true,
+                allowInspect: true,
+            },
+            select: { id: true, slug: true, title: true, price: true },
+        });
+
+        const productUrl = `https://bozornarxida.uz/p/${created.slug}`;
+        await sendMessage(BOT, {
+            chatId: opts.chatId,
+            text: opts.lang === "ru"
+                ? `Готово! Товар опубликован:\n<b>${escapeHtml(created.title)}</b> — ${formatSum(created.price)} сум\n${productUrl}\n\nОткройте кабинет для правок: https://bozornarxida.uz/kabinet`
+                : opts.lang === "en"
+                ? `Done! Product published:\n<b>${escapeHtml(created.title)}</b> — ${formatSum(created.price)} UZS\n${productUrl}\n\nEdit in cabinet: https://bozornarxida.uz/kabinet`
+                : `Tayyor! Mahsulot chop etildi:\n<b>${escapeHtml(created.title)}</b> — ${formatSum(created.price)} so'm\n${productUrl}\n\nTahrirlash uchun kabinet: https://bozornarxida.uz/kabinet`,
+            parseMode: "HTML",
+        });
+    } catch (e) {
+        console.error("[bn-bot /sot]", e);
+        await sendMessage(BOT, {
+            chatId: opts.chatId,
+            text: opts.lang === "ru" ? "Не смог создать товар. Попробуйте через сайт." : opts.lang === "en" ? "Couldn't create product. Try the website." : "Mahsulot yaratib bo'lmadi. Saytdan urinib ko'ring.",
+        });
+    }
+}
+
+function slugify(s: string): string {
+    return s.toLowerCase()
+        .replace(/[^a-z0-9Ѐ-ӿ\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .slice(0, 40) || "mahsulot";
+}
+
+function formatSum(n: number): string {
+    return new Intl.NumberFormat("uz-UZ").format(n);
 }

@@ -68,5 +68,53 @@ export async function PATCH(req: Request) {
         data: patch,
     });
     if (updated.count === 0) return NextResponse.json({ error: "not_found" }, { status: 404 });
-    return NextResponse.json({ ok: true });
+
+    // Agar WON qilingan bo'lsa va ega'ning BN do'koni bog'langan bo'lsa,
+    // BN'ga xarid tarixi (BnPurchase) yaratamiz — shop dashboard'da sotuv sifatida ko'rinadi.
+    let bnRecorded = false;
+    if (patch.status === "WON") {
+        try {
+            const lead = await prisma.humoBotLead.findUnique({
+                where: { id },
+                select: {
+                    productMention: true, wonAmountUzs: true, customerName: true, customerPhone: true,
+                },
+            });
+            const config = await prisma.humoBotConfig.findUnique({
+                where: { profileId: profile.id },
+                select: { linkedBnShopSlug: true },
+            });
+            if (lead && config?.linkedBnShopSlug) {
+                const shop = await prisma.bnShop.findUnique({
+                    where: { slug: config.linkedBnShopSlug },
+                    select: { id: true, profileId: true },
+                });
+                // Faqat o'z do'konimizni bog'lay olamiz (xavfsizlik)
+                if (shop && shop.profileId === profile.id) {
+                    // BnPurchase profileId — xaridor. Bizda hozir xaridor Humo ID yo'q,
+                    // shu sabab OFFLINE_MANUAL sifatida ega o'zining profileId'siga yozamiz
+                    // (kabinet'da shu do'kon ostida sotuv sifatida ko'rinishi uchun).
+                    const titleParts = [
+                        lead.productMention ?? "So'rov",
+                        lead.customerName ? `— ${lead.customerName}` : "",
+                        lead.customerPhone ? `(${lead.customerPhone})` : "",
+                    ].filter(Boolean).join(" ").slice(0, 200);
+                    await prisma.bnPurchase.create({
+                        data: {
+                            profileId: profile.id,           // Ega — sotuv o'zining tarixida
+                            shopId: shop.id,
+                            title: titleParts,
+                            quantity: 1,
+                            priceUzs: lead.wonAmountUzs ?? 0,
+                            purchasedAt: new Date(),
+                            source: "OFFLINE_MANUAL",
+                        },
+                    });
+                    bnRecorded = true;
+                }
+            }
+        } catch (e) { console.error("[humo-bot lead won → bn]", e); }
+    }
+
+    return NextResponse.json({ ok: true, bnRecorded });
 }

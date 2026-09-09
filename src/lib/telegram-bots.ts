@@ -105,8 +105,37 @@ export async function sendMessage(bot: BotKey, params: {
 }
 
 /** Chat action (typing) — Humo AI uchun ham qayta ishlatiladi. */
-export async function sendChatAction(bot: BotKey, chatId: number | string, action: "typing" | "upload_photo" = "typing"): Promise<TgResponse<boolean>> {
+export async function sendChatAction(bot: BotKey, chatId: number | string, action: "typing" | "upload_photo" | "record_voice" | "upload_voice" = "typing"): Promise<TgResponse<boolean>> {
     return tgCall(bot, "sendChatAction", { chat_id: chatId, action });
+}
+
+/** Voice (OGG/OPUS buffer) yuborish — Business Mode va oddiy chat uchun. */
+export async function sendVoice(bot: BotKey, params: {
+    chatId: number | string;
+    voiceBuffer: Buffer;
+    businessConnectionId?: string;
+    caption?: string;
+    parseMode?: "HTML" | "MarkdownV2";
+}): Promise<TgResponse<{ message_id: number }>> {
+    const token = tokenFor(bot);
+    // multipart/form-data uchun native FormData
+    const form = new FormData();
+    form.set("chat_id", String(params.chatId));
+    if (params.businessConnectionId) form.set("business_connection_id", params.businessConnectionId);
+    if (params.caption) form.set("caption", params.caption);
+    if (params.parseMode) form.set("parse_mode", params.parseMode);
+    const blob = new Blob([new Uint8Array(params.voiceBuffer)], { type: "audio/ogg" });
+    form.set("voice", blob, "voice.ogg");
+
+    try {
+        const r = await fetch(`${TG_API}/bot${token}/sendVoice`, {
+            method: "POST",
+            body: form,
+        });
+        return await r.json() as TgResponse<{ message_id: number }>;
+    } catch (e) {
+        return { ok: false, description: e instanceof Error ? e.message : "network_error" };
+    }
 }
 
 export async function setWebhook(bot: BotKey, url: string, secretToken: string, allowedUpdates: string[]): Promise<TgResponse<boolean>> {

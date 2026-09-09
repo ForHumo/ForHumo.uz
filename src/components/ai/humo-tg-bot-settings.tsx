@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { formatMoney } from "@/lib/money";
 import { HumoTgBotLeads } from "@/components/ai/humo-tg-bot-leads";
+import { HumoTgBotPushCard } from "@/components/ai/humo-tg-bot-push-card";
 
 interface FaqItem { q: string; a: string }
 
@@ -30,6 +31,8 @@ interface Config {
     autoReplyEnabled: boolean;
     showBranding: boolean;
     showAdFooter: boolean;
+    ttsEnabled: boolean;
+    linkedBnShopSlug: string | null;
 }
 
 interface Connection {
@@ -225,6 +228,7 @@ export function HumoTgBotSettings() {
             ) : (
                 <>
                     <StatsRow stats={data.stats} subscription={data.subscription} />
+                    <HumoTgBotPushCard />
                     <HumoTgBotLeads />
                     <ConfigEditor
                         config={data.config}
@@ -621,12 +625,39 @@ function BrandingSection({
                 onChange={v => onSave({ showAdFooter: !v })}
             />
 
+            <ToggleRow
+                title="Ovozli javob (TTS) — mijoz voice yuborsa"
+                subtitle="Mijoz voice yuborsa AI matn + ovoz bilan javob beradi. Pro tarifda faol."
+                checked={canRemoveFooter && config.ttsEnabled}
+                disabled={!canRemoveFooter || saving}
+                lockLabel="Faqat Pro yoki Enterprise"
+                onChange={v => onSave({ ttsEnabled: v })}
+            />
+
             <div className="text-xs text-muted-foreground bg-muted/40 p-3 rounded-lg flex gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>
                     Branding — Humo AI'ning tabiiy tarqalishi. Iltimos, o'chirishdan avval
                     o'ylab ko'ring: har xabar ostidagi kichkina havola boshqa biznesga botni topishga yordam beradi.
                 </span>
+            </div>
+
+            {/* BN do'kon bog'lash */}
+            <div className="pt-3 border-t border-border">
+                <label className="text-sm font-medium block mb-1">Bozor Narxida do'kon (ixtiyoriy)</label>
+                <p className="text-xs text-muted-foreground mb-2">
+                    Do'koningiz slug'ini kiriting — lead <b>Yakunlandi</b> qilinganda sotuv avto ravishda BN'da <b>xarid tarixi</b>ga yoziladi (kabinet Home statistikada ko'rinadi).
+                </p>
+                <input
+                    type="text"
+                    placeholder="masalan: umid-dokoni"
+                    defaultValue={config.linkedBnShopSlug ?? ""}
+                    onBlur={e => {
+                        const v = e.target.value.trim().toLowerCase();
+                        if (v !== (config.linkedBnShopSlug ?? "")) onSave({ linkedBnShopSlug: v || null });
+                    }}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm font-mono"
+                />
             </div>
         </div>
     );

@@ -118,7 +118,8 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
 
     // Voice → transkribatsiya → text sifatida davom
     let workingText = msg.text ?? msg.caption ?? "";
-    if (!workingText && msg.voice) {
+    const customerSentVoice = !!msg.voice && !workingText;
+    if (customerSentVoice && msg.voice) {
         try {
             const { tgGetFileBytes } = await import("@/lib/telegram-bots");
             const { aiTranscribeAudio } = await import("@/lib/ai");
@@ -297,6 +298,24 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
             sentMsgId = send.result.message_id;
         } else {
             errorMessage = send.description ?? "unknown";
+        }
+
+        // TTS: mijoz voice yuborsa + config.ttsEnabled + Pro+ tarif → ovozli javob ham
+        const ttsAllowed = config.ttsEnabled && (tier === "pro" || tier === "pro_yearly"
+            || tier === "enterprise" || tier === "enterprise_yearly");
+        if (customerSentVoice && ttsAllowed) {
+            try {
+                const { synthesizeToOgg } = await import("@/lib/ai-tts");
+                const { sendVoice } = await import("@/lib/telegram-bots");
+                const ogg = await synthesizeToOgg(aiReply, replyLang);
+                if (ogg) {
+                    await sendVoice("humo_ai", {
+                        chatId: msg.chat.id,
+                        voiceBuffer: ogg,
+                        businessConnectionId: msg.business_connection_id,
+                    });
+                }
+            } catch (e) { console.error("[humo-bot tts]", e); }
         }
     }
 

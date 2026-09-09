@@ -3948,6 +3948,8 @@ model HumoBotConfig {
   autoReplyEnabled  Boolean   @default(true)
   showBranding      Boolean   @default(true)                        // "Humo AI" so'zini xabar boshida qoldirish (Enterprise o'chira oladi)
   showAdFooter      Boolean   @default(true)                        // Pastdagi reklama footer'ini qoldirish (Pro+ o'chira oladi)
+  ttsEnabled        Boolean   @default(false)                       // Mijoz voice yuborsa bot ovozli javob ham beradi (Pro+)
+  linkedBnShopSlug  String?                                          // BN do'kon slug — lead → BnPurchase konvertatsiya uchun
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 }
