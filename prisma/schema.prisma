@@ -3779,6 +3779,39 @@ model BnBroadcast {
 // Bot foydalanuvchi nomidan mijoz xabarlarga AI (Gemini) bilan javob beradi.
 // Har foydalanuvchi o'z persona/FAQ/style'ini konfiguratsiya qiladi.
 
+// Humo ID ↔ Telegram bog'lash uchun qisqa muddatli kod.
+// Foydalanuvchi web'da (Humo ID sahifasi) kod oladi, uni bot'ga yuboradi
+// (masalan `/start link_ABC123` yoki `/link ABC123`). Bot Identity yozadi.
+model TelegramLinkCode {
+  id          String   @id @default(cuid())
+  code        String   @unique                              // 6-8 belgili tokendek
+  profileId   String                                        // Kim kod so'ragan (Humo ID egasi)
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime                                      // 10 daqiqa TTL
+  usedAt      DateTime?                                     // Bot tomonidan ishlatilgan bo'lsa
+  usedByTgId  String?                                       // Qaysi Telegram user u
+  usedByBot   String?                                       // Qaysi bot orqali (humo_ai | bozor_narxida)
+
+  @@index([profileId, createdAt])
+  @@index([expiresAt])
+}
+
+// Telegram bot chat konteksti — ko'p turn suhbat uchun oxirgi xabarlar.
+// Har bir turli bot va turli chat kombinatsiyasi bo'yicha alohida.
+model TelegramBotChat {
+  id            String   @id @default(cuid())
+  botKey        String                                       // "humo_ai" | "bozor_narxida"
+  telegramUserId String                                      // Foydalanuvchi Telegram id
+  chatId        String                                       // Odatda userId bilan bir xil (private chat)
+  profileId     String?                                      // Agar Humo ID'ga bog'langan bo'lsa
+  historyJson   Json     @default("[]")                     // [{role, text, at}] — oxirgi 10 turn
+  lastAt        DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  @@unique([botKey, telegramUserId])
+  @@index([profileId])
+}
+
 model HumoBotConnection {
   id                String    @id @default(cuid())
   profileId         String    @unique                              // UserProfile.id — bir user bitta ulanish

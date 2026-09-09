@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Pencil, ShieldCheck, Shield, ShieldAlert, CheckCircle2, HelpCircle, Headphones } from "lucide-react";
 import type { Metadata } from "next";
 import { CopyLinkButton, QRButton, DeleteAccountButton, LastLoginInfo } from "@/components/ui/profile-actions";
+import { TelegramLinkCard } from "@/components/id/telegram-link-card";
 
 export async function generateMetadata(): Promise<Metadata> {
     return { title: "Humo ID" };
@@ -349,6 +350,9 @@ export default async function HumoIdPage({
                         {t("support_link")}
                     </Link>
                 </div>
+
+                {/* ── Telegram bog'lash ───────────────────────────────────── */}
+                {session?.user?.email && <TelegramLinkCard />}
 
                 {/* ── Security section ───────────────────────────────────── */}
                 {session?.user?.email && (

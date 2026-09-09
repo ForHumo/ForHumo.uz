@@ -1,0 +1,338 @@
+// Bozor Narxida (@bozornarxidabot) — webhook handler.
+// Foydalanuvchi bot chat orqali BN'dan foydalanadi: /start, mahsulot izlash,
+// rasm yuborish (kelasi Faza), buyurtma tafsilotlari (linked bo'lsa).
+
+import { NextResponse, after } from "next/server";
+import { sendMessage, sendChatAction, secretFor } from "@/lib/telegram-bots";
+import { tryHandleLinkCommand, personalGreet, forHumoEcosystemBlock, pickLang, FOR_HUMO_FOLDER } from "@/lib/telegram-bot-common";
+import { generateBotAiReply } from "@/lib/telegram-bot-chat";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+export const maxDuration = 30;
+
+const BOT = "bozor_narxida" as const;
+
+interface TgFromLite { id: number; language_code?: string; is_bot?: boolean; first_name?: string; last_name?: string; username?: string }
+interface TgMessageLite {
+    message_id: number;
+    from?: TgFromLite;
+    chat: { id: number };
+    text?: string;
+    caption?: string;
+    photo?: { file_id: string; width: number; height: number }[];
+    voice?: { file_id: string; duration: number };
+}
+interface TgUpdateLite {
+    update_id: number;
+    message?: TgMessageLite;
+    edited_message?: TgMessageLite;
+}
+
+export async function POST(req: Request) {
+    const secret = secretFor(BOT);
+    if (secret) {
+        const provided = req.headers.get("x-telegram-bot-api-secret-token");
+        if (provided !== secret) {
+            return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+        }
+    }
+
+    let update: TgUpdateLite;
+    try {
+        update = await req.json();
+    } catch {
+        return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 });
+    }
+
+    if (update.message) {
+        after(async () => {
+            try { await handleMessage(update.message!); }
+            catch (e) { console.error("[bn-bot] error", e); }
+        });
+    }
+    return NextResponse.json({ ok: true });
+}
+
+async function handleMessage(msg: TgMessageLite) {
+    if (msg.from?.is_bot) return;
+    const lang = pickLang(msg.from?.language_code);
+    const chatId = msg.chat.id;
+    const tgId = String(msg.from?.id ?? "");
+    if (!tgId) return;
+
+    const text = (msg.text ?? msg.caption ?? "").trim();
+
+    // 1) /link va /start link_CODE
+    if (text) {
+        const handled = await tryHandleLinkCommand({
+            bot: BOT,
+            text,
+            telegramUserId: tgId,
+            telegramUsername: msg.from?.username ?? null,
+            chatId,
+            lang,
+        });
+        if (handled) return;
+    }
+
+    // 2) /start (oddiy)
+    if (text === "/start" || text.startsWith("/start")) {
+        const greet = await personalGreet(tgId, lang);
+        await sendMessage(BOT, {
+            chatId,
+            text: startText(lang, greet),
+            parseMode: "HTML",
+            disableWebPreview: true,
+        });
+        return;
+    }
+
+    // 3) /help
+    if (text === "/help") {
+        await sendMessage(BOT, {
+            chatId,
+            text: helpText(lang),
+            parseMode: "HTML",
+            disableWebPreview: true,
+        });
+        return;
+    }
+
+    // 4) /link (raqam'siz — kod so'rash ko'rsatmasi)
+    if (text === "/link") {
+        await sendMessage(BOT, {
+            chatId,
+            text: linkInstructionText(lang),
+            parseMode: "HTML",
+            disableWebPreview: true,
+        });
+        return;
+    }
+
+    // 5) /me (bog'langan bo'lsa profil'ni ko'rsatish)
+    if (text === "/me") {
+        const greet = await personalGreet(tgId, lang);
+        await sendMessage(BOT, {
+            chatId,
+            text: greet ? `${greet}\n\n${lang === "ru" ? "Профиль:" : lang === "en" ? "Profile:" : "Profilingiz:"} https://forhumo.uz/id`
+                : linkInstructionText(lang),
+            parseMode: "HTML",
+            disableWebPreview: true,
+        });
+        return;
+    }
+
+    // 6) Voice (kelasi Faza — hozircha jim javob)
+    if (msg.voice) {
+        await sendMessage(BOT, {
+            chatId,
+            text: lang === "ru"
+                ? "Голосовые сообщения — скоро. Пока напишите текстом."
+                : lang === "en"
+                ? "Voice messages — coming soon. Please write text for now."
+                : "Ovozli xabar — tez kunda. Hozircha matn yozing.",
+        });
+        return;
+    }
+
+    // 7) Rasm (kelasi Faza — Gemini vision + BN qidiruv)
+    if (msg.photo && msg.photo.length > 0) {
+        await sendMessage(BOT, {
+            chatId,
+            text: lang === "ru"
+                ? "Распознавание фото — скоро. Пока опишите товар текстом (например: <b>яблоко 5 кг</b>)."
+                : lang === "en"
+                ? "Photo recognition — coming soon. Please type the product name (e.g. <b>apples 5 kg</b>)."
+                : "Rasm tanish — tez kunda. Iltimos mahsulotni matnda yozing (masalan: <b>olma 5 kg</b>).",
+            parseMode: "HTML",
+        });
+        return;
+    }
+
+    // 8) Umumiy matn → BN mahsulot qidirish + AI (Humo AI mirror)
+    if (text.length > 0) {
+        void sendChatAction(BOT, chatId, "typing");
+
+        // Mahsulot izlash ishorasi: qisqa matn (< 60 chars) va so'rovga o'xshasa
+        const productSearch = await tryBnProductSearch(text, lang);
+        if (productSearch) {
+            await sendMessage(BOT, {
+                chatId,
+                text: productSearch,
+                parseMode: "HTML",
+                disableWebPreview: false,
+            });
+            return;
+        }
+
+        // Aks holda AI mirror
+        const reply = await generateBotAiReply({
+            bot: BOT,
+            userText: text,
+            telegramUserId: tgId,
+            chatId: String(chatId),
+            language: lang,
+        });
+        if (reply) {
+            await sendMessage(BOT, {
+                chatId,
+                text: reply.text,
+                disableWebPreview: true,
+            });
+        } else {
+            await sendMessage(BOT, {
+                chatId,
+                text: lang === "ru"
+                    ? "Не понял запрос. Попробуйте: <b>олма 5 кг</b> или <b>мясо цена</b>."
+                    : lang === "en"
+                    ? "Didn't understand. Try: <b>apples 5 kg</b> or <b>meat price</b>."
+                    : "Tushunmadim. Sinab ko'ring: <b>olma 5 kg</b> yoki <b>go'sht narxi</b>.",
+                parseMode: "HTML",
+            });
+        }
+    }
+}
+
+// ── BN mahsulot qidirish ────────────────────────────────────────────────────
+
+async function tryBnProductSearch(query: string, lang: "uz" | "ru" | "en"): Promise<string | null> {
+    if (query.length < 2 || query.length > 60) return null;
+    // Faqat mahsulotga o'xshash qisqa so'rov
+    if (query.startsWith("/")) return null;
+
+    try {
+        const { prisma } = await import("@/lib/prisma");
+        const products = await prisma.bnProduct.findMany({
+            where: {
+                isActive: true, hidden: false,
+                title: { contains: query, mode: "insensitive" },
+            },
+            take: 5,
+            orderBy: { updatedAt: "desc" },
+            select: {
+                slug: true, title: true, price: true,
+                shop: { select: { slug: true, name: true, market: { select: { name: true } } } },
+            },
+        });
+        if (products.length === 0) return null;
+
+        const header = lang === "ru"
+            ? `<b>Найдено ${products.length}:</b>\n\n`
+            : lang === "en"
+            ? `<b>Found ${products.length}:</b>\n\n`
+            : `<b>${products.length} ta topildi:</b>\n\n`;
+
+        const lines = products.map(p => {
+            const price = new Intl.NumberFormat("uz-UZ").format(Number(p.price ?? 0));
+            const currency = lang === "ru" ? " сум" : lang === "en" ? " UZS" : " so'm";
+            const shopName = p.shop?.name ?? "";
+            const marketName = p.shop?.market?.name ?? "";
+            const shopLine = marketName ? `${shopName} · ${marketName}` : shopName;
+            const url = `https://bozornarxida.uz/p/${p.slug}?utm_source=tg_bot&utm_medium=chat`;
+            return `• <a href="${url}"><b>${escapeHtml(p.title)}</b></a> — ${price}${currency}\n  ${escapeHtml(shopLine)}`;
+        });
+
+        const footer = lang === "ru"
+            ? `\n\n<a href="https://bozornarxida.uz/qidiruv?q=${encodeURIComponent(query)}">Все результаты →</a>`
+            : lang === "en"
+            ? `\n\n<a href="https://bozornarxida.uz/qidiruv?q=${encodeURIComponent(query)}">All results →</a>`
+            : `\n\n<a href="https://bozornarxida.uz/qidiruv?q=${encodeURIComponent(query)}">Barcha natijalar →</a>`;
+
+        return header + lines.join("\n\n") + footer;
+    } catch { return null; }
+}
+
+function escapeHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ── Matnlar ──────────────────────────────────────────────────────────────────
+
+function startText(lang: "uz" | "ru" | "en", personalGreet: string | null): string {
+    const greet = personalGreet ? `${personalGreet}\n\n` : "";
+    if (lang === "ru") {
+        return greet + `<b>Bozor Narxida</b> — маркетплейс базаров и магазинов Ташкента.\n\n` +
+            `Напишите название товара — покажу лучшие цены:\n` +
+            `• <i>яблоки 5 кг</i>\n` +
+            `• <i>мясо говядина цена</i>\n` +
+            `• <i>помидоры Чорсу</i>\n\n` +
+            `<b>Команды:</b>\n` +
+            `/help — помощь\n` +
+            `/link — привязать Humo ID\n` +
+            `/me — мой профиль\n\n` +
+            `Сайт: https://bozornarxida.uz` +
+            forHumoEcosystemBlock(lang);
+    }
+    if (lang === "en") {
+        return greet + `<b>Bozor Narxida</b> — Tashkent bazaars & shops marketplace.\n\n` +
+            `Type a product name — I'll show best prices:\n` +
+            `• <i>apples 5 kg</i>\n` +
+            `• <i>beef price</i>\n` +
+            `• <i>tomatoes Chorsu</i>\n\n` +
+            `<b>Commands:</b>\n` +
+            `/help — help\n` +
+            `/link — link your Humo ID\n` +
+            `/me — my profile\n\n` +
+            `Website: https://bozornarxida.uz` +
+            forHumoEcosystemBlock(lang);
+    }
+    return greet + `<b>Bozor Narxida</b> — Toshkent bozor va do'konlar marketplace'i.\n\n` +
+        `Mahsulot nomini yozing — eng arzon narxlarni ko'rsataman:\n` +
+        `• <i>olma 5 kg</i>\n` +
+        `• <i>mol go'shti narxi</i>\n` +
+        `• <i>pomidor Chorsu</i>\n\n` +
+        `<b>Buyruqlar:</b>\n` +
+        `/help — yordam\n` +
+        `/link — Humo ID'ga bog'lash\n` +
+        `/me — profilim\n\n` +
+        `Sayt: https://bozornarxida.uz` +
+        forHumoEcosystemBlock(lang);
+}
+
+function helpText(lang: "uz" | "ru" | "en"): string {
+    if (lang === "ru") {
+        return `<b>Как пользоваться:</b>\n\n` +
+            `<b>Поиск:</b> напишите название товара — покажу цены и магазины.\n\n` +
+            `<b>Humo ID:</b> получите код на https://forhumo.uz/id и отправьте <code>/link КОД</code> — так я буду знать ваши заказы, кошелёк и т.д.\n\n` +
+            `<b>Экосистема For Humo:</b>\n` +
+            `<a href="${FOR_HUMO_FOLDER}">Все каналы одной папкой</a>\n\n` +
+            `Мини-приложение (для входа в forhumo.uz одним кликом) — скоро.`;
+    }
+    if (lang === "en") {
+        return `<b>How to use:</b>\n\n` +
+            `<b>Search:</b> type a product name — I'll show prices and shops.\n\n` +
+            `<b>Humo ID:</b> get a code at https://forhumo.uz/id and send <code>/link CODE</code> — then I'll know your orders, wallet, etc.\n\n` +
+            `<b>For Humo ecosystem:</b>\n` +
+            `<a href="${FOR_HUMO_FOLDER}">All channels in one folder</a>\n\n` +
+            `Mini-app (one-click login to forhumo.uz) — coming soon.`;
+    }
+    return `<b>Qanday foydalanish:</b>\n\n` +
+        `<b>Qidiruv:</b> mahsulot nomini yozing — narx va do'konlarni ko'rsataman.\n\n` +
+        `<b>Humo ID:</b> https://forhumo.uz/id da kod oling va <code>/link KOD</code> yuboring — shunda buyurtmangiz, hamyoningiz haqida bilib javob beraman.\n\n` +
+        `<b>For Humo ekotizimi:</b>\n` +
+        `<a href="${FOR_HUMO_FOLDER}">Barcha kanallar bitta folder'da</a>\n\n` +
+        `Mini-app (forhumo.uz'ga 1 bosishda kirish) — tez kunda.`;
+}
+
+function linkInstructionText(lang: "uz" | "ru" | "en"): string {
+    if (lang === "ru") {
+        return `<b>Привязка Humo ID к Telegram:</b>\n\n` +
+            `1. Откройте <a href="https://forhumo.uz/id">forhumo.uz/id</a>\n` +
+            `2. Нажмите <b>«Привязать Telegram»</b> — получите 6-символьный код\n` +
+            `3. Отправьте: <code>/link ВАШКОД</code>\n\n` +
+            `После этого оба бота (@ForHumo_AIBot и @bozornarxidabot) будут знать, что это вы.`;
+    }
+    if (lang === "en") {
+        return `<b>Link Humo ID to Telegram:</b>\n\n` +
+            `1. Open <a href="https://forhumo.uz/id">forhumo.uz/id</a>\n` +
+            `2. Tap <b>"Link Telegram"</b> — you'll get a 6-char code\n` +
+            `3. Send: <code>/link YOURCODE</code>\n\n` +
+            `Both bots (@ForHumo_AIBot and @bozornarxidabot) will then recognize you.`;
+    }
+    return `<b>Humo ID'ni Telegram'ga bog'lash:</b>\n\n` +
+        `1. <a href="https://forhumo.uz/id">forhumo.uz/id</a> ni oching\n` +
+        `2. <b>«Telegram bog'lash»</b> tugmasini bosing — 6 belgi kod olasiz\n` +
+        `3. Yuboring: <code>/link SIZNINGKOD</code>\n\n` +
+        `Shundan keyin ikkala bot (@ForHumo_AIBot va @bozornarxidabot) sizni taniydi.`;
+}

@@ -288,15 +288,31 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
     ]);
 }
 
-// ── direct chat (bot bilan gaplashish) ──────────────────────────────────────
+// ── direct chat (bot bilan gaplashish — endi Humo AI mirror) ────────────────
 
 async function handleDirectMessage(msg: TgBusinessMessage) {
     if (!msg.text) return;
+    if (msg.from?.is_bot) return;
     const text = msg.text.trim();
     const lang = pickTgLang(msg.from?.language_code);
+    const tgId = String(msg.from?.id ?? "");
+    if (!tgId) return;
+    const chatIdStr = String(msg.chat.id);
 
-    if (text === "/start" || text.startsWith("/start ")) {
-        // Deep-link /start payload (masalan /start learn) — batafsil ko'rsatma
+    // 1) /link va /start link_CODE — Humo ID bog'lash
+    const { tryHandleLinkCommand, personalGreet, forHumoEcosystemBlock } = await import("@/lib/telegram-bot-common");
+    const handled = await tryHandleLinkCommand({
+        bot: "humo_ai",
+        text,
+        telegramUserId: tgId,
+        telegramUsername: msg.from?.username ?? null,
+        chatId: msg.chat.id,
+        lang,
+    });
+    if (handled) return;
+
+    // 2) /start (oddiy)
+    if (text === "/start" || text.startsWith("/start")) {
         const payload = text.slice("/start".length).trim();
         if (payload === "learn") {
             await sendMessage({
@@ -306,45 +322,65 @@ async function handleDirectMessage(msg: TgBusinessMessage) {
             });
             return;
         }
+        const greet = await personalGreet(tgId, lang);
+        await sendMessage({
+            chatId: msg.chat.id,
+            text: (greet ? `${greet}\n\n` : "") + startText(lang) + forHumoEcosystemBlock(lang),
+            parseMode: "HTML",
+        });
+        return;
+    }
+
+    // 3) Buyruqlar
+    if (text === "/help") {
+        await sendMessage({ chatId: msg.chat.id, text: helpSetupText(lang), parseMode: "HTML" });
+        return;
+    }
+    if (text === "/settings") {
+        await sendMessage({ chatId: msg.chat.id, text: settingsText(lang), parseMode: "HTML" });
+        return;
+    }
+    if (text === "/pricing" || text === "/plans") {
+        await sendMessage({ chatId: msg.chat.id, text: pricingText(lang), parseMode: "HTML" });
+        return;
+    }
+    if (text === "/link") {
+        const { FOR_HUMO_URL } = await import("@/lib/telegram-bot-common");
+        const linkMsg = lang === "ru"
+            ? `Получите код на <a href="${FOR_HUMO_URL}/id">forhumo.uz/id</a> и отправьте <code>/link КОД</code>.`
+            : lang === "en"
+            ? `Get a code at <a href="${FOR_HUMO_URL}/id">forhumo.uz/id</a> and send <code>/link CODE</code>.`
+            : `Kodni <a href="${FOR_HUMO_URL}/id">forhumo.uz/id</a> dan oling va <code>/link KOD</code> yuboring.`;
+        await sendMessage({ chatId: msg.chat.id, text: linkMsg, parseMode: "HTML" });
+        return;
+    }
+
+    // 4) Umumiy savol → Humo AI mirror (buildAiSystemPrompt + xotira)
+    const { generateBotAiReply } = await import("@/lib/telegram-bot-chat");
+    const { sendChatAction } = await import("@/lib/telegram-bots");
+    void sendChatAction("humo_ai", msg.chat.id, "typing").catch(() => { /* noop */ });
+
+    const reply = await generateBotAiReply({
+        bot: "humo_ai",
+        userText: text,
+        telegramUserId: tgId,
+        chatId: chatIdStr,
+        language: lang,
+    });
+    if (reply) {
+        await sendMessage({
+            chatId: msg.chat.id,
+            text: reply.text,
+            parseMode: "HTML",
+        });
+    } else {
+        // AI mavjud emas — sozlash sahifasiga havola
         await sendMessage({
             chatId: msg.chat.id,
             text: startText(lang),
             parseMode: "HTML",
         });
-        return;
     }
-
-    if (text === "/help") {
-        await sendMessage({
-            chatId: msg.chat.id,
-            text: helpSetupText(lang),
-            parseMode: "HTML",
-        });
-        return;
-    }
-    if (text === "/settings") {
-        await sendMessage({
-            chatId: msg.chat.id,
-            text: settingsText(lang),
-            parseMode: "HTML",
-        });
-        return;
-    }
-    if (text === "/pricing" || text === "/plans") {
-        await sendMessage({
-            chatId: msg.chat.id,
-            text: pricingText(lang),
-            parseMode: "HTML",
-        });
-        return;
-    }
-
-    // Aks holda — foydalanuvchi bot chatida yozdi, umumiy ma'lumot
-    await sendMessage({
-        chatId: msg.chat.id,
-        text: startText(lang),
-        parseMode: "HTML",
-    });
 }
 
 // ── Yordamchi funksiyalar ───────────────────────────────────────────────────
