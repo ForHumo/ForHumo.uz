@@ -3808,6 +3808,8 @@ model HumoBotConfig {
   escalationRules   String?                                         // "Agar mijoz shikoyat qilsa menga forward qiling"
   bannedTopics      String?                                         // "Siyosat, din haqida javob berma"
   autoReplyEnabled  Boolean   @default(true)
+  showBranding      Boolean   @default(true)                        // "Humo AI" so'zini xabar boshida qoldirish (Enterprise o'chira oladi)
+  showAdFooter      Boolean   @default(true)                        // Pastdagi reklama footer'ini qoldirish (Pro+ o'chira oladi)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 }

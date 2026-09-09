@@ -106,6 +106,7 @@ export interface TgUser {
     first_name: string;
     last_name?: string;
     username?: string;
+    language_code?: string;                     // "en", "ru", "uz" — foydalanuvchining Telegram tili
 }
 
 export interface TgChat {

@@ -57,6 +57,15 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "invalid_json" }, { status: 400 });
     }
 
+    // Tier'ni tekshirib branding/footer toggle'lariga huquq berish
+    const sub = await prisma.humoBotSubscription.findUnique({
+        where: { profileId: profile.id },
+        select: { tier: true },
+    });
+    const tier = sub?.tier ?? "free";
+    const canRemoveBranding = tier === "enterprise" || tier === "enterprise_yearly";
+    const canRemoveFooter = ["pro", "pro_yearly", "enterprise", "enterprise_yearly"].includes(tier);
+
     // Har bir maydonni validatsiya
     const data = {
         persona: str(body.persona, 500),
@@ -69,6 +78,9 @@ export async function PUT(req: Request) {
         bannedTopics: str(body.bannedTopics, 300),
         escalationRules: str(body.escalationRules, 300),
         autoReplyEnabled: body.autoReplyEnabled !== false,
+        // Branding: faqat tier huquq bergan bo'lsagina o'chirish mumkin
+        showBranding: canRemoveBranding ? body.showBranding !== false : true,
+        showAdFooter: canRemoveFooter ? body.showAdFooter !== false : true,
     };
 
     const config = await prisma.humoBotConfig.upsert({
@@ -118,6 +130,8 @@ function defaultConfig() {
         bannedTopics: "",
         escalationRules: "",
         autoReplyEnabled: true,
+        showBranding: true,
+        showAdFooter: true,
     };
 }
 

@@ -6,7 +6,8 @@
 //
 // Xavfsizlik: X-Telegram-Bot-Api-Secret-Token header tekshiruvi.
 
-import { NextResponse, after } from "next/server";
+import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { aiAvailable, aiText } from "@/lib/ai";
 import {
@@ -22,13 +23,14 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-const WEBHOOK_SECRET = process.env.HUMO_BOT_WEBHOOK_SECRET; // ixtiyoriy: set qilinsa header talab qilinadi
+const WEBHOOK_SECRET = process.env.HUMO_BOT_WEBHOOK_SECRET;
 
 const MAX_INBOUND_LEN = 4000;
-const MAX_REPLY_LEN = 2000;
+const MAX_REPLY_LEN = 1600;   // Footer + branding qo'shilganda 2000 ichida qoladi
+
+const BOT_LEARN_URL = "https://forhumo.uz/ai/telegram-bot";
 
 export async function POST(req: Request) {
-    // Xavfsizlik: agar secret token o'rnatilgan bo'lsa header'da tekshiramiz
     if (WEBHOOK_SECRET) {
         const provided = req.headers.get("x-telegram-bot-api-secret-token");
         if (provided !== WEBHOOK_SECRET) {
@@ -43,33 +45,26 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 });
     }
 
-    // Business ulanish o'zgarishi (yoqildi/o'chirildi/huquq o'zgardi)
     if (update.business_connection) {
-        await handleBusinessConnection(update.business_connection);
-        return NextResponse.json({ ok: true });
-    }
-
-    // Business chat'da yangi xabar → AI javob
-    if (update.business_message) {
-        // Javobni tez qaytaramiz, AI'ni fon rejimda ishga tushiramiz
         after(async () => {
-            try {
-                await handleBusinessMessage(update.business_message!);
-            } catch (e) {
-                console.error("[humo-bot] business_message error", e);
-            }
+            try { await handleBusinessConnection(update.business_connection!); }
+            catch (e) { console.error("[humo-bot] business_connection error", e); }
         });
         return NextResponse.json({ ok: true });
     }
 
-    // Oddiy bot chat (Business egasi bot bilan sozlash chatida gaplashadi)
+    if (update.business_message) {
+        after(async () => {
+            try { await handleBusinessMessage(update.business_message!); }
+            catch (e) { console.error("[humo-bot] business_message error", e); }
+        });
+        return NextResponse.json({ ok: true });
+    }
+
     if (update.message) {
         after(async () => {
-            try {
-                await handleDirectMessage(update.message!);
-            } catch (e) {
-                console.error("[humo-bot] message error", e);
-            }
+            try { await handleDirectMessage(update.message!); }
+            catch (e) { console.error("[humo-bot] message error", e); }
         });
         return NextResponse.json({ ok: true });
     }
@@ -77,21 +72,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, ignored: true });
 }
 
-// ── Handlers ────────────────────────────────────────────────────────────────
+// ── business_connection ─────────────────────────────────────────────────────
 
 async function handleBusinessConnection(bc: TgBusinessConnection) {
-    // Foydalanuvchi bot'ni Business akkauntga ulaganda yoki o'zgartirganda kelan
     const telegramUserId = String(bc.user.id);
     const canReply = bc.rights?.can_reply ?? true;
-
-    // Bu Telegram user'ni For Humo profil bilan bog'lash uchun user'ning username kerak
-    // Yoki foydalanuvchi bot bilan sozlash paytida o'z Humo ID'sini yuborishi
-    // Hozircha telegramUserId ni saqlaymiz, keyin foydalanuvchi web'da bog'laydi
 
     await prisma.humoBotConnection.upsert({
         where: { connectionId: bc.id },
         create: {
-            profileId: `pending-${telegramUserId}`,               // Placeholder — foydalanuvchi web'da bog'laydi
+            profileId: `pending-${telegramUserId}`,
             telegramUserId,
             telegramUsername: bc.user.username ?? null,
             connectionId: bc.id,
@@ -106,37 +96,32 @@ async function handleBusinessConnection(bc: TgBusinessConnection) {
         },
     });
 
-    // Foydalanuvchiga sozlash uchun link yuboramiz
     if (bc.is_enabled) {
-        const link = `https://forhumo.uz/ai/telegram-bot?tg=${telegramUserId}`;
+        const lang = pickTgLang(bc.user.language_code);
+        const link = `${BOT_LEARN_URL}?tg=${telegramUserId}`;
+        const msg = welcomeAfterConnect(lang, telegramUserId, link);
         await sendMessage({
             chatId: bc.user_chat_id,
-            text: `👋 Humo AI botiga xush kelibsiz!\n\nBotni sozlash uchun:\n${link}\n\nSizning Telegram ID: <code>${telegramUserId}</code>\n\nWeb'da Humo ID orqali kirib, personani, FAQ va ish vaqtini sozlang.`,
+            text: msg,
             parseMode: "HTML",
         });
     }
 }
 
+// ── business_message (mijoz → siz) ──────────────────────────────────────────
+
 async function handleBusinessMessage(msg: TgBusinessMessage) {
     if (!msg.text || msg.text.length === 0) return;
-    if (msg.sender_business_bot) return;  // O'z javobimizni ignore qilamiz (loop oldini)
+    if (msg.sender_business_bot) return;                       // O'z javobimizni ignore
+    if (msg.from?.is_bot) return;                              // Boshqa bot bilan gaplashmaslik (loop oldini)
 
     const connection = await prisma.humoBotConnection.findUnique({
         where: { connectionId: msg.business_connection_id },
     });
-    if (!connection) {
-        console.warn("[humo-bot] connection topilmadi:", msg.business_connection_id);
-        return;
-    }
+    if (!connection) return;
     if (!connection.isEnabled || !connection.canReply) return;
+    if (connection.profileId.startsWith("pending-")) return;
 
-    // Foydalanuvchi bog'lanmagan bo'lsa (pending)
-    if (connection.profileId.startsWith("pending-")) {
-        // Sozlash tugaguncha AI javob bermaymiz
-        return;
-    }
-
-    // Sozlash va obuna tekshirish
     const [config, sub, profile] = await Promise.all([
         prisma.humoBotConfig.findUnique({ where: { profileId: connection.profileId } }),
         prisma.humoBotSubscription.findUnique({ where: { profileId: connection.profileId } }),
@@ -145,69 +130,91 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
             select: { name: true, username: true },
         }),
     ]);
-
     if (!config || !config.autoReplyEnabled) return;
 
-    // Rate limit / obuna tekshiruvi
+    // Obuna tekshiruvi
     const tier = sub?.tier ?? "free";
-    const limit = sub?.monthlyLimit ?? 50;
+    const monthlyLimit = sub?.monthlyLimit ?? 50;
     const used = sub?.usedThisMonth ?? 0;
-    if (used >= limit) {
-        console.log(`[humo-bot] ${connection.profileId} monthly limit yetdi (${used}/${limit})`);
-        return;
-    }
+    if (used >= monthlyLimit) return;
     if (sub?.status === "expired" || sub?.status === "cancelled") return;
+    if (sub?.expiresAt && sub.expiresAt.getTime() < Date.now()) return;
 
-    // Ish vaqti tekshiruvi (ixtiyoriy)
+    // Ish vaqti tekshiruvi
     const now = new Date();
     if (config.workHours && !isInWorkHours(config.workHours, now)) {
         if (config.outOfHoursReply) {
+            const withBrand = decorateReply({
+                reply: config.outOfHoursReply,
+                tier,
+                showBranding: config.showBranding,
+                showAdFooter: config.showAdFooter,
+                ownerName: profile?.name ?? "Ega",
+                skipIntro: true,   // Ish vaqti javobiga intro qo'shmaymiz
+            });
             await sendBusinessMessage({
                 businessConnectionId: msg.business_connection_id,
                 chatId: msg.chat.id,
-                text: config.outOfHoursReply,
+                text: withBrand,
                 replyToMessageId: msg.message_id,
+                parseMode: "HTML",
             });
         }
         return;
     }
 
-    // Typing indicator
     void sendBusinessChatAction({
         businessConnectionId: msg.business_connection_id,
         chatId: msg.chat.id,
     });
 
-    // FAQ dan qidiruv (tez javob)
+    // Kontekst: bu chatda oldingi javob berganmizmi (salom takrorlamaslik uchun)
+    const previousInThisChat = await prisma.humoBotMessage.count({
+        where: {
+            profileId: connection.profileId,
+            chatId: String(msg.chat.id),
+            wasAutoReplied: true,
+            createdAt: { gte: hoursAgo(24) },
+        },
+    });
+    const isFirstContact = previousInThisChat === 0;
+
+    // Mijoz tili
+    const detectedLang = detectLang(msg.text);
+    const configLang = (config.language ?? "uz") as "uz" | "ru" | "en" | "auto";
+    const replyLang: "uz" | "ru" | "en" = configLang === "auto"
+        ? detectedLang
+        : (configLang === "uz" || configLang === "ru" || configLang === "en" ? configLang : "uz");
+
     const inbound = msg.text.slice(0, MAX_INBOUND_LEN);
-    const customerName = msg.from ? [msg.from.first_name, msg.from.last_name].filter(Boolean).join(" ") : "Mijoz";
+    const customerName = msg.from
+        ? [msg.from.first_name, msg.from.last_name].filter(Boolean).join(" ")
+        : "Mijoz";
 
     let aiReply: string | null = null;
     const startedAt = Date.now();
 
-    // FAQ eng oddiy: keyword match
+    // 1) FAQ tez javob
     const faq = parseFaq(config.faqJson);
-    const faqHit = faq.find(f => {
-        const q = f.q.toLowerCase();
-        const text = inbound.toLowerCase();
-        return q.length > 3 && text.includes(q.slice(0, Math.min(q.length, 20)));
-    });
+    const faqHit = matchFaq(faq, inbound);
     if (faqHit) {
         aiReply = faqHit.a;
     } else if (aiAvailable()) {
-        // AI bilan javob
+        // 2) AI
         const systemPrompt = buildSystemPrompt({
             persona: config.persona,
             tone: config.tone,
-            language: config.language,
+            language: replyLang,
             faq,
             greeting: config.greeting,
             bannedTopics: config.bannedTopics,
             escalationRules: config.escalationRules,
             ownerName: profile?.name ?? null,
+            isFirstContact,
+            customerName,
         });
         try {
-            const raw = await aiText(inbound, { system: systemPrompt, temperature: 0.6 });
+            const raw = await aiText(inbound, { system: systemPrompt, temperature: 0.5 });
             aiReply = (raw || "").trim().slice(0, MAX_REPLY_LEN);
         } catch (e) {
             console.error("[humo-bot] AI xato", e);
@@ -217,11 +224,20 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
     let sentMsgId: number | null = null;
     let errorMessage: string | null = null;
     if (aiReply && aiReply.length > 0) {
+        const decorated = decorateReply({
+            reply: aiReply,
+            tier,
+            showBranding: config.showBranding,
+            showAdFooter: config.showAdFooter,
+            ownerName: profile?.name ?? "Ega",
+            skipIntro: !isFirstContact,   // Faqat 1-marta intro qo'shamiz
+        });
         const send = await sendBusinessMessage({
             businessConnectionId: msg.business_connection_id,
             chatId: msg.chat.id,
-            text: aiReply,
+            text: decorated,
             replyToMessageId: msg.message_id,
+            parseMode: "HTML",
         });
         if (send.ok && send.result) {
             sentMsgId = send.result.message_id;
@@ -230,7 +246,6 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
         }
     }
 
-    // Log yozish + usage counter
     await Promise.all([
         prisma.humoBotMessage.create({
             data: {
@@ -255,15 +270,27 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
     ]);
 }
 
+// ── direct chat (bot bilan gaplashish) ──────────────────────────────────────
+
 async function handleDirectMessage(msg: TgBusinessMessage) {
-    // Foydalanuvchi bot bilan direct chatda gaplashsa (masalan /start)
     if (!msg.text) return;
     const text = msg.text.trim();
+    const lang = pickTgLang(msg.from?.language_code);
 
-    if (text === "/start" || text.startsWith("/start")) {
+    if (text === "/start" || text.startsWith("/start ")) {
+        // Deep-link /start payload (masalan /start learn) — batafsil ko'rsatma
+        const payload = text.slice("/start".length).trim();
+        if (payload === "learn") {
+            await sendMessage({
+                chatId: msg.chat.id,
+                text: helpSetupText(lang),
+                parseMode: "HTML",
+            });
+            return;
+        }
         await sendMessage({
             chatId: msg.chat.id,
-            text: `👋 Salom! Men Humo AI botman.\n\nMening asosiy vazifam — sizning Telegram Business akkauntingizda mijoz xabarlarga sizning nomingizdan avtomatik javob berish.\n\n<b>Sozlash bosqichlari:</b>\n1️⃣ Telegram Premium/Business obuna bo'ling\n2️⃣ Sozlamalar → Автоматизация чатов → @ForHumo_AIBot ulang\n3️⃣ Web'ga kiring: https://forhumo.uz/ai/telegram-bot\n4️⃣ Persona, FAQ va ish vaqtini sozlang\n\nSavolingiz bo'lsa yozing yoki https://forhumo.uz/support ga murojaat qiling.`,
+            text: startText(lang),
             parseMode: "HTML",
         });
         return;
@@ -272,11 +299,34 @@ async function handleDirectMessage(msg: TgBusinessMessage) {
     if (text === "/help") {
         await sendMessage({
             chatId: msg.chat.id,
-            text: `<b>Buyruqlar:</b>\n/start — boshlash\n/help — yordam\n/status — obuna holati\n\nBotni sozlash: https://forhumo.uz/ai/telegram-bot`,
+            text: helpSetupText(lang),
             parseMode: "HTML",
         });
         return;
     }
+    if (text === "/settings") {
+        await sendMessage({
+            chatId: msg.chat.id,
+            text: settingsText(lang),
+            parseMode: "HTML",
+        });
+        return;
+    }
+    if (text === "/pricing" || text === "/plans") {
+        await sendMessage({
+            chatId: msg.chat.id,
+            text: pricingText(lang),
+            parseMode: "HTML",
+        });
+        return;
+    }
+
+    // Aks holda — foydalanuvchi bot chatida yozdi, umumiy ma'lumot
+    await sendMessage({
+        chatId: msg.chat.id,
+        text: startText(lang),
+        parseMode: "HTML",
+    });
 }
 
 // ── Yordamchi funksiyalar ───────────────────────────────────────────────────
@@ -285,13 +335,25 @@ interface FaqItem { q: string; a: string }
 function parseFaq(raw: unknown): FaqItem[] {
     if (!Array.isArray(raw)) return [];
     return raw.filter((x): x is FaqItem =>
-        !!x && typeof x === "object" && typeof (x as FaqItem).q === "string" && typeof (x as FaqItem).a === "string"
+        !!x && typeof x === "object"
+        && typeof (x as FaqItem).q === "string"
+        && typeof (x as FaqItem).a === "string"
     ).slice(0, 30);
 }
 
+function matchFaq(faq: FaqItem[], text: string): FaqItem | null {
+    const t = text.toLowerCase();
+    for (const f of faq) {
+        const q = f.q.toLowerCase();
+        if (q.length < 4) continue;
+        // 4 belgidan uzun prefixni tekshiramiz
+        const head = q.slice(0, Math.min(q.length, 24));
+        if (t.includes(head)) return f;
+    }
+    return null;
+}
+
 function isInWorkHours(workHours: string, now: Date): boolean {
-    // Oddiy format: "Du-Ju 09:00-18:00" — chegaralarni ochish
-    // Hozir soddalashtirilgan: 9-18 kabi range
     const match = workHours.match(/(\d{1,2}):?(\d{2})?\s*[-–]\s*(\d{1,2}):?(\d{2})?/);
     if (!match) return true;
     const startH = parseInt(match[1]);
@@ -300,36 +362,192 @@ function isInWorkHours(workHours: string, now: Date): boolean {
     return h >= startH && h < endH;
 }
 
+function hoursAgo(n: number): Date {
+    return new Date(Date.now() - n * 60 * 60 * 1000);
+}
+
+/**
+ * Til aniqlash: kirillik → ru, boshqa → uz (default), ingliz belgilar ko'p → en.
+ * Oddiy heuristika (Gemini-ni sarflamasdan).
+ */
+function detectLang(text: string): "uz" | "ru" | "en" {
+    const cyr = (text.match(/[Ѐ-ӿ]/g) || []).length;
+    const lat = (text.match(/[A-Za-z]/g) || []).length;
+    if (cyr > lat) return "ru";
+    // O'zbekcha ko'rsatkichlar: sh/ch/o'/g'/ng/uz-specific words
+    if (/\b(salom|assalomu|xayrli|iltimos|rahmat|men|siz)\b/i.test(text)) return "uz";
+    if (/\b(hello|hi|hey|please|thanks|thank you|what|how|when|where)\b/i.test(text)) return "en";
+    return "uz";
+}
+
+function pickTgLang(code: string | undefined | null): "uz" | "ru" | "en" {
+    if (!code) return "uz";
+    const c = code.slice(0, 2).toLowerCase();
+    if (c === "ru") return "ru";
+    if (c === "en") return "en";
+    if (c === "uz") return "uz";
+    return "en";   // Boshqa tillar uchun ingliz zaxira
+}
+
+// ── System prompt (identity + qat'iy qoidalar) ──────────────────────────────
+
 function buildSystemPrompt(cfg: {
     persona?: string | null;
     tone?: string;
-    language?: string;
+    language: "uz" | "ru" | "en";
     faq: FaqItem[];
     greeting?: string | null;
     bannedTopics?: string | null;
     escalationRules?: string | null;
     ownerName?: string | null;
+    isFirstContact: boolean;
+    customerName: string;
 }): string {
-    const lang = cfg.language === "ru" ? "rus" : cfg.language === "en" ? "ingliz" : "o'zbek";
+    const owner = cfg.ownerName ?? "biznes egasi";
+    const langInstruction = cfg.language === "ru"
+        ? "ОТВЕЧАЙ ТОЛЬКО ПО-РУССКИ."
+        : cfg.language === "en"
+        ? "ALWAYS reply in English."
+        : "FAQAT O'ZBEK TILIDA javob ber (lotin yozuvida).";
+
     const parts: string[] = [];
-    parts.push(`Sen ${cfg.ownerName ?? "biznes egasi"} nomidan Telegram chat'da avtomatik javob beradigan AI yordamchisan.`);
-    parts.push(`Til: ${lang} tilida javob ber.`);
-    if (cfg.persona) parts.push(`Biznes: ${cfg.persona}`);
-    if (cfg.tone === "friendly") parts.push("Ton: samimiy, do'stona.");
-    else if (cfg.tone === "brief") parts.push("Ton: qisqa va aniq (1-2 gap).");
-    else parts.push("Ton: professional va xushmuomala.");
-    parts.push("Qoidalar:");
-    parts.push("- Faqat berilgan biznes doirasida javob ber.");
-    parts.push("- Bilmagan narsang haqida 'menda bu ma'lumot yo'q, egasi javob beradi' de.");
-    parts.push("- Uzun javob berma (max 200 so'z).");
-    parts.push("- Narx, aloqa yoki muhim ma'lumotni faqat FAQ'da bergan bo'lsa ayt.");
-    if (cfg.bannedTopics) parts.push(`Taqiq mavzular: ${cfg.bannedTopics}`);
-    if (cfg.escalationRules) parts.push(`Eskalatsiya: ${cfg.escalationRules}`);
+
+    parts.push(`# ROL VA IDENTITY`);
+    parts.push(`Sen — ${owner} nomidan ishlaydigan AI yordamchisan (avtomatik javob beruvchi bot).`);
+    parts.push(`SEN ${owner.toUpperCase()} EMASSAN. Sen uning yordamchisisan.`);
+    parts.push(`Hech qachon "Mening ismim ${owner}" yoki o'zingni ${owner} deb tanishtirma.`);
+    parts.push(`Faqat kerak bo'lganda: "Men ${owner}ning AI yordamchisiman" — bir gapda.`);
+    parts.push("");
+
+    parts.push(`# TIL`);
+    parts.push(langInstruction);
+    parts.push("");
+
+    parts.push(`# SALOMLASHISH — MUHIM`);
+    if (cfg.isFirstContact) {
+        parts.push(`Bu chatda BIRINCHI marta gaplashyapsan. Bir marta qisqa salom ber (masalan "Assalomu alaykum" yoki "Salom") va darhol savolga o't.`);
+    } else {
+        parts.push(`Bu chatda AVVAL suhbat bo'lgan. HECH QACHON SALOM BERMA. "Assalomu alaykum", "Salom", "Hello", "Здравствуйте" — HECH QAYSISINI YOZMA. Darhol javobga o't.`);
+    }
+    parts.push("");
+
+    parts.push(`# JAVOB USLUBI`);
+    if (cfg.tone === "friendly") parts.push(`- Ton: samimiy, do'stona, iliq.`);
+    else if (cfg.tone === "brief") parts.push(`- Ton: qisqa (1-2 gap), aniq, minimal.`);
+    else parts.push(`- Ton: professional, xushmuomala, ishonchli.`);
+    parts.push(`- Uzun javob berma (max 120 so'z, agar mijoz batafsil so'ramasa).`);
+    parts.push(`- Emoji ISHLATMA (mijoz oldin emoji yozgan bo'lsa mumkin, 1 ta).`);
+    parts.push(`- Reklama, marketing gap urma. Faqat mijoz savoliga javob ber.`);
+    parts.push("");
+
+    parts.push(`# BIZNES KONTEKSTI`);
+    if (cfg.persona) parts.push(`Biznes tavsifi: ${cfg.persona}`);
+    else parts.push(`Biznes tavsifi: KIRITILMAGAN. Umumiy javob ber, konkret detallar bermang.`);
+    if (cfg.greeting && cfg.isFirstContact) parts.push(`Egasining birinchi xabari: "${cfg.greeting}"`);
+    parts.push("");
+
+    parts.push(`# QOIDALAR`);
+    parts.push(`- Bilmagan narsang haqida: "Bu haqda menda aniq ma'lumot yo'q, ${owner} o'zi javob beradi" de.`);
+    parts.push(`- Narx, aloqa, manzil kabi konkret ma'lumotni FAQAT FAQ'da ko'rsatilgan bo'lsa ayt.`);
+    parts.push(`- Mijoz shikoyat, muammo, murakkab so'rov qilsa: "${owner}ga uzatdim, tez orada o'zi javob beradi" de.`);
+    parts.push(`- Bu chat AI ekanligini so'rasa: "Ha, men Humo AI yordamchisiman" deb ochiq ayt.`);
+    if (cfg.bannedTopics) parts.push(`- Taqiq mavzular (javob berma, chetlab o't): ${cfg.bannedTopics}`);
+    if (cfg.escalationRules) parts.push(`- Eskalatsiya qoidalari: ${cfg.escalationRules}`);
+    parts.push("");
+
     if (cfg.faq.length > 0) {
-        parts.push("\nFAQ (foydalanuvchi savoli bunga mos kelsa aynan javobni ber):");
+        parts.push(`# FAQ (agar savol mos bo'lsa — aynan javobni ishlat)`);
         cfg.faq.slice(0, 20).forEach((f, i) => {
-            parts.push(`${i + 1}. S: ${f.q}\n   J: ${f.a}`);
+            parts.push(`${i + 1}. Savol: ${f.q}\n   Javob: ${f.a}`);
         });
     }
+
     return parts.join("\n");
+}
+
+// ── Reply bezash (branding + footer) ────────────────────────────────────────
+
+function decorateReply(opts: {
+    reply: string;
+    tier: string;
+    showBranding: boolean;
+    showAdFooter: boolean;
+    ownerName: string;
+    skipIntro: boolean;
+}): string {
+    let out = opts.reply.trim();
+
+    // 1) Intro (identity chizig'i) — faqat 1-marta chat'da
+    const canRemoveBranding = opts.tier === "enterprise" || opts.tier === "enterprise_yearly";
+    const canRemoveFooter = opts.tier === "pro" || opts.tier === "pro_yearly"
+        || opts.tier === "enterprise" || opts.tier === "enterprise_yearly";
+
+    // Branding faqat 1-marta va faqat rasman o'chirilmagan bo'lsa
+    if (!opts.skipIntro) {
+        const brandName = (canRemoveBranding && !opts.showBranding)
+            ? "AI"
+            : `<a href="${BOT_LEARN_URL}">Humo AI</a>`;
+        const introLine = `<i>Men ${escapeHtml(opts.ownerName)}ning shaxsiy ${brandName} yordamchisiman.</i>\n\n`;
+        out = introLine + out;
+    }
+
+    // 2) Footer reklama
+    const footerAllowedRemoved = canRemoveFooter && !opts.showAdFooter;
+    if (!footerAllowedRemoved) {
+        out += `\n\n— <a href="https://t.me/ForHumo_AIBot?start=learn">Humo AI</a>`;
+    }
+
+    return out;
+}
+
+function escapeHtml(s: string): string {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ── Direct chat matnlari ────────────────────────────────────────────────────
+
+function welcomeAfterConnect(lang: "uz" | "ru" | "en", tgId: string, link: string): string {
+    if (lang === "ru") {
+        return `Добро пожаловать! Я — <b>Humo AI</b>, автоматический ассистент вашего Telegram Business.\n\nЧтобы настроить (persona, FAQ, часы работы):\n${link}\n\nВаш Telegram ID: <code>${tgId}</code>`;
+    }
+    if (lang === "en") {
+        return `Welcome! I'm <b>Humo AI</b> — an automated assistant for your Telegram Business account.\n\nSet me up (persona, FAQ, working hours):\n${link}\n\nYour Telegram ID: <code>${tgId}</code>`;
+    }
+    return `Xush kelibsiz! Men <b>Humo AI</b> — Telegram Business akkauntingizni avtomatik yordamchisi.\n\nMeni sozlash uchun (persona, FAQ, ish vaqti):\n${link}\n\nSizning Telegram ID: <code>${tgId}</code>`;
+}
+
+function startText(lang: "uz" | "ru" | "en"): string {
+    if (lang === "ru") {
+        return `Привет! Я <b>Humo AI</b> — AI-ассистент для Telegram Business.\n\nЯ отвечаю клиентам от вашего имени, когда вы заняты или спите.\n\n<b>Что я умею:</b>\n• Отвечать на вопросы клиентов 24/7\n• Использовать вашу FAQ базу\n• Работать по расписанию\n• Говорить в вашем стиле (persona)\n\n<b>Команды:</b>\n/help — как подключить\n/settings — настройка\n/pricing — тарифы\n\nПодробнее: https://forhumo.uz/ai/telegram-bot`;
+    }
+    if (lang === "en") {
+        return `Hi! I'm <b>Humo AI</b> — AI assistant for Telegram Business.\n\nI reply to your customers on your behalf when you're busy or asleep.\n\n<b>What I do:</b>\n• Answer customer questions 24/7\n• Use your FAQ knowledge base\n• Follow your working hours\n• Talk in your style (persona)\n\n<b>Commands:</b>\n/help — how to connect\n/settings — configure\n/pricing — plans\n\nLearn more: https://forhumo.uz/ai/telegram-bot`;
+    }
+    return `Salom! Men <b>Humo AI</b> — Telegram Business uchun AI yordamchi.\n\nSiz band bo'lganingiz yoki uxlab yotganingizda mijozlaringizga sizning nomingizdan javob beraman.\n\n<b>Nimalar qila olaman:</b>\n• Mijoz savollariga 24/7 javob\n• Sizning FAQ bazangizdan foydalanish\n• Ish vaqtingizga rioya qilish\n• Sizning uslubingizda gapirish (persona)\n\n<b>Buyruqlar:</b>\n/help — qanday ulash\n/settings — sozlash\n/pricing — tariflar\n\nBatafsil: https://forhumo.uz/ai/telegram-bot`;
+}
+
+function helpSetupText(lang: "uz" | "ru" | "en"): string {
+    if (lang === "ru") {
+        return `<b>Как подключить Humo AI:</b>\n\n<b>Требования:</b> Telegram Premium или Business подписка.\n\n<b>Шаг 1.</b> Откройте: Настройки → Telegram Business → <b>Чаты и автоматизация</b>.\n\n<b>Шаг 2.</b> Нажмите <b>Управлять</b> и введите имя бота:\n<code>@ForHumo_AIBot</code>\n\n<b>Шаг 3.</b> Выдайте боту право <b>Отвечать на сообщения</b>.\n\n<b>Шаг 4.</b> Я пришлю ваш Telegram ID. Скопируйте его и откройте:\nhttps://forhumo.uz/ai/telegram-bot\n\nВойдите через Humo ID, вставьте ID и нажмите «Связать». Далее настройте persona, FAQ и часы работы.`;
+    }
+    if (lang === "en") {
+        return `<b>How to connect Humo AI:</b>\n\n<b>Requirements:</b> Telegram Premium or Business subscription.\n\n<b>Step 1.</b> Open: Settings → Telegram Business → <b>Chatbots</b>.\n\n<b>Step 2.</b> Tap <b>Manage</b> and enter the bot username:\n<code>@ForHumo_AIBot</code>\n\n<b>Step 3.</b> Grant the <b>Reply to messages</b> right.\n\n<b>Step 4.</b> I'll send you your Telegram ID. Copy it and open:\nhttps://forhumo.uz/ai/telegram-bot\n\nLog in via Humo ID, paste the ID and tap "Link". Then configure persona, FAQ and working hours.`;
+    }
+    return `<b>Humo AI'ni qanday ulash:</b>\n\n<b>Talab:</b> Telegram Premium yoki Business obuna.\n\n<b>1-qadam.</b> Oching: Sozlamalar → Telegram Business → <b>Автоматизация чатов</b>.\n\n<b>2-qadam.</b> <b>Boshqarish</b>ga bosing va bot nomini kiriting:\n<code>@ForHumo_AIBot</code>\n\n<b>3-qadam.</b> Botga <b>Xabarlarga javob berish</b> huquqini bering.\n\n<b>4-qadam.</b> Men sizga Telegram ID yuboraman. Uni nusxa oling va oching:\nhttps://forhumo.uz/ai/telegram-bot\n\nHumo ID orqali kiring, ID'ni joylashtiring va «Bog'lash»ga bosing. Keyin persona, FAQ va ish vaqtini sozlang.`;
+}
+
+function settingsText(lang: "uz" | "ru" | "en"): string {
+    if (lang === "ru") return `Настройки бота — на сайте:\nhttps://forhumo.uz/ai/telegram-bot`;
+    if (lang === "en") return `Bot settings on the website:\nhttps://forhumo.uz/ai/telegram-bot`;
+    return `Bot sozlamalari saytda:\nhttps://forhumo.uz/ai/telegram-bot`;
+}
+
+function pricingText(lang: "uz" | "ru" | "en"): string {
+    if (lang === "ru") {
+        return `<b>Тарифы Humo AI:</b>\n\n• <b>Бесплатно</b> — 50 сообщ/мес\n• <b>Basic</b> — 500 сообщ/мес · 29 000 сум\n• <b>Pro</b> — 3 000 сообщ/мес · 99 000 сум\n• <b>Enterprise</b> — 30 000 сообщ/мес · 299 000 сум\n\nГодовые тарифы дешевле: Basic −10%, Pro −15%, Enterprise −20%.\n\nОплата только через For Pay кошелёк:\nhttps://forhumo.uz/ai/telegram-bot`;
+    }
+    if (lang === "en") {
+        return `<b>Humo AI plans:</b>\n\n• <b>Free</b> — 50 messages/mo\n• <b>Basic</b> — 500 msg/mo · 29 000 UZS\n• <b>Pro</b> — 3 000 msg/mo · 99 000 UZS\n• <b>Enterprise</b> — 30 000 msg/mo · 299 000 UZS\n\nYearly is cheaper: Basic −10%, Pro −15%, Enterprise −20%.\n\nPayment only via For Pay wallet:\nhttps://forhumo.uz/ai/telegram-bot`;
+    }
+    return `<b>Humo AI tariflari:</b>\n\n• <b>Bepul</b> — 50 xabar/oy\n• <b>Basic</b> — 500 xabar/oy · 29 000 so'm\n• <b>Pro</b> — 3 000 xabar/oy · 99 000 so'm\n• <b>Enterprise</b> — 30 000 xabar/oy · 299 000 so'm\n\nYillik tarif arzon: Basic −10%, Pro −15%, Enterprise −20%.\n\nTo'lov faqat For Pay hamyoni orqali:\nhttps://forhumo.uz/ai/telegram-bot`;
 }

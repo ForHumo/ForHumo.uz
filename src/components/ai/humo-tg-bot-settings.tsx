@@ -8,8 +8,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Bot, Check, ChevronRight, Copy, ExternalLink, Loader2, MessageSquare,
-    Plus, Save, Send, Settings2, Trash2, Users, Wallet, X, Zap, AlertCircle,
-    ShieldCheck, HelpCircle, Clock, Sparkles, Link as LinkIcon,
+    Plus, Save, Send, Settings2, Trash2, Users, Wallet, Zap, AlertCircle,
+    ShieldCheck, HelpCircle, Clock, Sparkles, Link as LinkIcon, Lock,
+    Crown, Percent, Calendar,
 } from "lucide-react";
 import { formatMoney } from "@/lib/money";
 
@@ -26,6 +27,8 @@ interface Config {
     bannedTopics: string | null;
     escalationRules: string | null;
     autoReplyEnabled: boolean;
+    showBranding: boolean;
+    showAdFooter: boolean;
 }
 
 interface Connection {
@@ -39,8 +42,10 @@ interface Connection {
     profileId: string;
 }
 
+type TierId = "free" | "basic" | "pro" | "enterprise" | "basic_yearly" | "pro_yearly" | "enterprise_yearly";
+
 interface Subscription {
-    tier: "free" | "basic" | "pro" | "enterprise";
+    tier: TierId;
     status: string;
     monthlyLimit: number;
     usedThisMonth: number;
@@ -59,12 +64,32 @@ interface ApiData {
     botUsername: string;
 }
 
-const TIERS = [
-    { id: "free", label: "Bepul", price: 0, limit: 50, features: ["Kunlik 1-2 mijoz", "Asosiy AI javob"] },
-    { id: "basic", label: "Basic", price: 29_000, limit: 500, features: ["Oyiga 500 xabar", "FAQ + persona", "Prioritet AI"], popular: false },
-    { id: "pro", label: "Pro", price: 99_000, limit: 3_000, features: ["Oyiga 3000 xabar", "Kelgusi funksiyalar", "Tez javob"], popular: true },
-    { id: "enterprise", label: "Enterprise", price: 299_000, limit: 30_000, features: ["Cheksiz xabarlar", "Maxsus qo'llab-quvvatlash"] },
-] as const;
+interface TierMeta {
+    id: TierId;
+    base: "free" | "basic" | "pro" | "enterprise";
+    label: string;
+    priceMonthly: number;                   // yillikda: oylik ekvivalenti (visual)
+    priceTotal: number;                     // haqiqiy to'lov summa
+    limit: number;
+    yearly: boolean;
+    savings: number;                        // yillikda tejaladigan summa (0 oylikda)
+    features: string[];
+    popular?: boolean;
+}
+
+const MONTHLY_TIERS: TierMeta[] = [
+    { id: "free", base: "free", label: "Bepul", priceMonthly: 0, priceTotal: 0, limit: 50, yearly: false, savings: 0, features: ["Kunlik 1-2 mijoz", "Asosiy AI javob", "Humo AI branding qoladi"] },
+    { id: "basic", base: "basic", label: "Basic", priceMonthly: 29_000, priceTotal: 29_000, limit: 500, yearly: false, savings: 0, features: ["Oyiga 500 xabar", "FAQ + persona", "Ish vaqti"] },
+    { id: "pro", base: "pro", label: "Pro", priceMonthly: 99_000, priceTotal: 99_000, limit: 3_000, yearly: false, savings: 0, features: ["Oyiga 3 000 xabar", "Footer reklamani o'chirish", "Prioritet AI"], popular: true },
+    { id: "enterprise", base: "enterprise", label: "Enterprise", priceMonthly: 299_000, priceTotal: 299_000, limit: 30_000, yearly: false, savings: 0, features: ["Oyiga 30 000 xabar", "Barcha branding o'chirilishi", "Maxsus qo'llab-quvvatlash"] },
+];
+
+const YEARLY_TIERS: TierMeta[] = [
+    { id: "free", base: "free", label: "Bepul", priceMonthly: 0, priceTotal: 0, limit: 50, yearly: false, savings: 0, features: ["Kunlik 1-2 mijoz", "Asosiy AI javob", "Humo AI branding qoladi"] },
+    { id: "basic_yearly", base: "basic", label: "Basic", priceMonthly: Math.round(29_000 * 12 * 0.9 / 12), priceTotal: Math.round(29_000 * 12 * 0.9 / 1000) * 1000, limit: 500, yearly: true, savings: 29_000 * 12 - Math.round(29_000 * 12 * 0.9 / 1000) * 1000, features: ["Yiliga 500 xabar/oy", "FAQ + persona", "−10% tejaysiz"] },
+    { id: "pro_yearly", base: "pro", label: "Pro", priceMonthly: Math.round(99_000 * 12 * 0.85 / 12), priceTotal: Math.round(99_000 * 12 * 0.85 / 1000) * 1000, limit: 3_000, yearly: true, savings: 99_000 * 12 - Math.round(99_000 * 12 * 0.85 / 1000) * 1000, features: ["Yiliga 3 000 xabar/oy", "Footer reklama o'chirish", "−15% tejaysiz"], popular: true },
+    { id: "enterprise_yearly", base: "enterprise", label: "Enterprise", priceMonthly: Math.round(299_000 * 12 * 0.8 / 12), priceTotal: Math.round(299_000 * 12 * 0.8 / 1000) * 1000, limit: 30_000, yearly: true, savings: 299_000 * 12 - Math.round(299_000 * 12 * 0.8 / 1000) * 1000, features: ["Yiliga 30 000 xabar/oy", "Barcha branding o'chirish", "−20% tejaysiz"] },
+];
 
 export function HumoTgBotSettings() {
     const [data, setData] = useState<ApiData | null>(null);
@@ -207,6 +232,12 @@ export function HumoTgBotSettings() {
                     <FaqEditor
                         items={data.config.faqJson}
                         onChange={items => saveConfig({ faqJson: items })}
+                        saving={saving}
+                    />
+                    <BrandingSection
+                        config={data.config}
+                        subscription={data.subscription}
+                        onSave={saveConfig}
                         saving={saving}
                     />
                     <SubscriptionSection
@@ -543,6 +574,103 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
     );
 }
 
+// ── Branding / reklama toggles ──────────────────────────────────────────────
+
+function BrandingSection({
+    config, subscription, onSave, saving,
+}: {
+    config: Config;
+    subscription: Subscription;
+    onSave: (patch: Partial<Config>) => void;
+    saving: boolean;
+}) {
+    const tier = subscription.tier;
+    const canRemoveFooter = tier === "pro" || tier === "pro_yearly" || tier === "enterprise" || tier === "enterprise_yearly";
+    const canRemoveBranding = tier === "enterprise" || tier === "enterprise_yearly";
+
+    return (
+        <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-4">
+            <div>
+                <h2 className="text-base font-semibold flex items-center gap-2">
+                    <Crown className="w-4 h-4 text-amber-500" />
+                    Humo AI branding
+                </h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                    Bot javoblarining boshidagi <b>&laquo;Humo AI&raquo;</b> yozuvi va pastdagi reklama footer'i.
+                    Obuna darajasiga qarab o'chira olasiz.
+                </p>
+            </div>
+
+            <ToggleRow
+                title="Xabar boshidagi &laquo;Humo AI&raquo; matnini o'chirish"
+                subtitle={`Yoqilsa: "Men [ismingiz]ning shaxsiy AI yordamchisiman" (Humo AI so'zisiz).`}
+                checked={canRemoveBranding && !config.showBranding}
+                disabled={!canRemoveBranding || saving}
+                lockLabel="Faqat Enterprise"
+                onChange={v => onSave({ showBranding: !v })}
+            />
+
+            <ToggleRow
+                title="Pastdagi &laquo;— Humo AI&raquo; reklama footer'ini o'chirish"
+                subtitle="Yoqilsa: har javob so'ngida &laquo;— Humo AI&raquo; havolasi qo'shilmaydi."
+                checked={canRemoveFooter && !config.showAdFooter}
+                disabled={!canRemoveFooter || saving}
+                lockLabel="Faqat Pro yoki Enterprise"
+                onChange={v => onSave({ showAdFooter: !v })}
+            />
+
+            <div className="text-xs text-muted-foreground bg-muted/40 p-3 rounded-lg flex gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>
+                    Branding — Humo AI'ning tabiiy tarqalishi. Iltimos, o'chirishdan avval
+                    o'ylab ko'ring: har xabar ostidagi kichkina havola boshqa biznesga botni topishga yordam beradi.
+                </span>
+            </div>
+        </div>
+    );
+}
+
+function ToggleRow({
+    title, subtitle, checked, disabled, lockLabel, onChange,
+}: {
+    title: string;
+    subtitle?: string;
+    checked: boolean;
+    disabled: boolean;
+    lockLabel?: string;
+    onChange: (v: boolean) => void;
+}) {
+    return (
+        <div className={`flex items-start justify-between gap-3 p-3 rounded-lg border ${disabled ? "border-border/40 bg-muted/20" : "border-border bg-background/50"}`}>
+            <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium flex items-center gap-1.5" dangerouslySetInnerHTML={{ __html: title }} />
+                {subtitle && (
+                    <div className="text-xs text-muted-foreground mt-0.5" dangerouslySetInnerHTML={{ __html: subtitle }} />
+                )}
+                {disabled && lockLabel && (
+                    <div className="text-[11px] text-amber-600 mt-1.5 flex items-center gap-1">
+                        <Lock className="w-3 h-3" />
+                        {lockLabel}
+                    </div>
+                )}
+            </div>
+            <button
+                onClick={() => !disabled && onChange(!checked)}
+                disabled={disabled}
+                className={`shrink-0 relative w-11 h-6 rounded-full transition-colors ${
+                    checked ? "bg-emerald-500" : "bg-muted"
+                } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+            >
+                <span
+                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                        checked ? "translate-x-5" : "translate-x-0.5"
+                    }`}
+                />
+            </button>
+        </div>
+    );
+}
+
 // ── 4. FAQ tahriri ───────────────────────────────────────────────────────────
 
 function FaqEditor({
@@ -635,9 +763,14 @@ function SubscriptionSection({
     onSubscribe: (tier: string) => void;
     subscribing: string | null;
 }) {
+    const [billing, setBilling] = useState<"monthly" | "yearly">(
+        current.tier.endsWith("_yearly") ? "yearly" : "monthly"
+    );
+    const tiers = billing === "yearly" ? YEARLY_TIERS : MONTHLY_TIERS;
+
     return (
         <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-4">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div>
                     <h2 className="text-base font-semibold flex items-center gap-2">
                         <Sparkles className="w-4 h-4" />
@@ -649,7 +782,7 @@ function SubscriptionSection({
                 </div>
                 <div className="text-right">
                     <div className="text-xs text-muted-foreground">Joriy reja</div>
-                    <div className="text-sm font-semibold uppercase">{current.tier}</div>
+                    <div className="text-sm font-semibold uppercase">{current.tier.replace("_", " ")}</div>
                     {current.expiresAt && (
                         <div className="text-[11px] text-muted-foreground flex items-center gap-1 justify-end mt-0.5">
                             <Clock className="w-3 h-3" />
@@ -659,8 +792,35 @@ function SubscriptionSection({
                 </div>
             </div>
 
+            {/* Monthly / Yearly toggle */}
+            <div className="flex items-center justify-center gap-2">
+                <div className="inline-flex rounded-lg bg-muted p-1">
+                    <button
+                        onClick={() => setBilling("monthly")}
+                        className={`px-4 py-1.5 rounded-md text-sm font-medium flex items-center gap-1.5 transition-colors ${
+                            billing === "monthly" ? "bg-background shadow-sm" : "text-muted-foreground"
+                        }`}
+                    >
+                        <Calendar className="w-3.5 h-3.5" />
+                        Oylik
+                    </button>
+                    <button
+                        onClick={() => setBilling("yearly")}
+                        className={`px-4 py-1.5 rounded-md text-sm font-medium flex items-center gap-1.5 transition-colors ${
+                            billing === "yearly" ? "bg-background shadow-sm" : "text-muted-foreground"
+                        }`}
+                    >
+                        <Calendar className="w-3.5 h-3.5" />
+                        Yillik
+                        <span className="ml-1 px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 text-[10px] font-semibold">
+                            −20% gacha
+                        </span>
+                    </button>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {TIERS.map(t => {
+                {tiers.map(t => {
                     const isCurrent = current.tier === t.id;
                     return (
                         <div
@@ -671,21 +831,48 @@ function SubscriptionSection({
                                     : "border-border bg-background/50"
                             }`}
                         >
-                            {(t as { popular?: boolean }).popular && (
-                                <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-semibold">
+                            {t.popular && (
+                                <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-semibold whitespace-nowrap">
                                     Ommabop
                                 </span>
                             )}
+                            {t.yearly && t.savings > 0 && (
+                                <span className="absolute -top-2 right-2 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-semibold whitespace-nowrap flex items-center gap-0.5">
+                                    <Percent className="w-2.5 h-2.5" />
+                                    Tejang
+                                </span>
+                            )}
+
                             <div className="font-semibold text-sm">{t.label}</div>
-                            <div className="mt-1 text-2xl font-bold">
-                                {t.price === 0 ? "0" : formatMoney(t.price, "UZS")}
-                            </div>
-                            <div className="text-[11px] text-muted-foreground">
-                                {t.price > 0 ? "/oy" : "har doim bepul"}
-                            </div>
+
+                            {t.priceTotal === 0 ? (
+                                <>
+                                    <div className="mt-1 text-2xl font-bold">0</div>
+                                    <div className="text-[11px] text-muted-foreground">har doim bepul</div>
+                                </>
+                            ) : t.yearly ? (
+                                <>
+                                    <div className="mt-1 text-2xl font-bold">
+                                        {formatMoney(t.priceMonthly, "UZS")}
+                                    </div>
+                                    <div className="text-[11px] text-muted-foreground">
+                                        /oy · yillik {formatMoney(t.priceTotal, "UZS")}
+                                    </div>
+                                    <div className="text-[11px] text-emerald-600 font-medium mt-0.5">
+                                        {formatMoney(t.savings, "UZS")} tejaysiz
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="mt-1 text-2xl font-bold">{formatMoney(t.priceTotal, "UZS")}</div>
+                                    <div className="text-[11px] text-muted-foreground">/oy</div>
+                                </>
+                            )}
+
                             <div className="mt-2 text-xs text-muted-foreground">
                                 {t.limit.toLocaleString("uz-UZ")} xabar / oy
                             </div>
+
                             <ul className="mt-3 space-y-1.5 text-xs flex-1">
                                 {t.features.map(f => (
                                     <li key={f} className="flex items-start gap-1.5">
@@ -694,13 +881,14 @@ function SubscriptionSection({
                                     </li>
                                 ))}
                             </ul>
+
                             <button
-                                disabled={isCurrent || subscribing !== null || t.id === "free"}
+                                disabled={isCurrent || subscribing !== null || t.priceTotal === 0}
                                 onClick={() => onSubscribe(t.id)}
                                 className={`mt-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 ${
                                     isCurrent
                                         ? "bg-muted text-muted-foreground cursor-default"
-                                        : t.id === "free"
+                                        : t.priceTotal === 0
                                         ? "bg-muted text-muted-foreground cursor-not-allowed"
                                         : "bg-primary text-primary-foreground hover:opacity-90"
                                 }`}
@@ -708,7 +896,7 @@ function SubscriptionSection({
                                 {subscribing === t.id
                                     ? <Loader2 className="w-4 h-4 animate-spin" />
                                     : isCurrent ? <><Check className="w-4 h-4" />Joriy</>
-                                    : t.id === "free" ? "Bepul reja"
+                                    : t.priceTotal === 0 ? "Bepul reja"
                                     : <><Send className="w-4 h-4" />Sotib olish</>}
                             </button>
                         </div>
@@ -719,8 +907,9 @@ function SubscriptionSection({
             <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <div>
-                    Obuna 30 kunga faollashadi. Uzaytirish uchun qo'lda qayta sotib oling — avto-yangilash yo'q.
-                    Bekor qilish istagan vaqtda mumkin (avval to'langan pul qaytmaydi).
+                    {billing === "yearly"
+                        ? "Yillik obuna 365 kunga faollashadi. Uzaytirish uchun qo'lda qayta sotib oling — avto-yangilash yo'q. Bekor qilish istagan vaqtda mumkin (avval to'langan pul qaytmaydi)."
+                        : "Oylik obuna 30 kunga faollashadi. Uzaytirish uchun qo'lda qayta sotib oling — avto-yangilash yo'q. Bekor qilish istagan vaqtda mumkin (avval to'langan pul qaytmaydi)."}
                 </div>
             </div>
         </div>
