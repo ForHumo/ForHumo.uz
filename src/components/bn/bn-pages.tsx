@@ -10,6 +10,7 @@ import { BnProductCard } from "./bn-product-card";
 import { BnShopCard, BnSectionTitle, BnEmpty, shopLocationText } from "./bn-cards";
 import { BnBackButton } from "./bn-back-button";
 import { BnBuyCta } from "./bn-buy-cta";
+import { BnShopFollowButton } from "./bn-shop-follow-button";
 import { BnReviews } from "./bn-reviews";
 import { BnMapView } from "./bn-map-view";
 import type { BnMarketDTO, BnProductDTO, BnShopDTO } from "@/lib/bn-data";
@@ -167,6 +168,7 @@ export function BnShopPage({
                             </span>
                         )}
                         <BnBuyCta shopSlug={s.slug} shopName={s.name} />
+                        <BnShopFollowButton shopSlug={s.slug} />
                     </div>
 
                     <p className="flex items-center gap-1.5 text-[13px] mb-2" style={{ color: BN.text2 }}>

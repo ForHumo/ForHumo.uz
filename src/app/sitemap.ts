@@ -45,6 +45,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const rows: MetadataRoute.Sitemap = [
             ...markets.map(m => ({ url: `${origin}${prefix}/m/${m.slug}`, lastModified: m.updatedAt, changeFrequency: "weekly" as const, priority: 0.8 })),
             ...cats.map(c => ({ url: `${origin}${prefix}/k/${c.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 })),
+            { url: `${origin}${prefix}/yangi`, lastModified: now, changeFrequency: "daily" as const, priority: 0.75 },
             ...shops.map(s => ({ url: `${origin}${prefix}/d/${s.slug}`, lastModified: s.updatedAt, changeFrequency: "weekly" as const, priority: 0.7 })),
             // Yangi canonical URL — /d/<shopSlug>/<productSlug>. Do'kon topilmasa /p/<slug> fallback.
             ...prods.map(p => ({

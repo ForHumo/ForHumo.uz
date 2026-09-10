@@ -3126,6 +3126,7 @@ model BnShop {
 
   @@index([status, createdAt])
   purchases     BnPurchase[]
+  followers     BnShopFollow[]
 
   @@index([marketId, status])
   @@index([city, status])
@@ -4263,6 +4264,21 @@ model BnPriceHistory {
 
   @@index([productId, capturedAt])
   @@index([capturedAt])
+}
+
+// Xaridor do'konga obuna. Do'kon yangi mahsulot chiqarsa xaridor push oladi.
+model BnShopFollow {
+  id         String   @id @default(cuid())
+  profileId  String                              // Xaridor (UserProfile.id)
+  shopId     String
+  shop       BnShop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  notifyNewProduct  Boolean  @default(true)      // Yangi mahsulot push
+  notifyPriceDrop   Boolean  @default(true)      // Ushbu do'konda yoqilgan mahsulotda narx tushsa
+  createdAt  DateTime @default(now())
+
+  @@unique([profileId, shopId])
+  @@index([shopId, createdAt])
+  @@index([profileId])
 }
 
 // ── Zaxira usernamelar ───────────────────────────────────────────────────────

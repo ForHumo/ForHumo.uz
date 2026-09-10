@@ -134,6 +134,34 @@ export async function POST(req: Request) {
         data: { productCount: { increment: 1 } },
     });
 
+    // Follower'larga Web Push — do'kon yangi mahsulot chiqardi (fail-safe, javobni kechiktirmaydi)
+    after(async () => {
+        try {
+            const shop = await prisma.bnShop.findUnique({
+                where: { id: shopRes.shop.id },
+                select: { slug: true, name: true },
+            });
+            if (!shop) return;
+            const followers = await prisma.bnShopFollow.findMany({
+                where: { shopId: shopRes.shop.id, notifyNewProduct: true },
+                take: 1000,
+                select: { profileId: true },
+            });
+            if (followers.length === 0) return;
+
+            const { sendPushToProfile } = await import("@/lib/push");
+            const url = `https://bozornarxida.uz/d/${shop.slug}/${product.slug}?utm_source=push&utm_medium=shop_follow`;
+            for (const f of followers) {
+                await sendPushToProfile(f.profileId, {
+                    title: `${shop.name}: yangi mahsulot`,
+                    body: `${product.title} — ${new Intl.NumberFormat("uz-UZ").format(product.price)} so'm`,
+                    url,
+                    tag: `bn-shop-newprod:${shop.slug}:${product.id.slice(0, 6)}`,
+                }).catch(() => { /* fail-safe per user */ });
+            }
+        } catch (e) { console.error("[bn shop-follow push]", e); }
+    });
+
     // Pre-publish AI moderatsiya — javobni kechiktirmaydi (after).
     // BN-spetsifik strict moderatsiya (rasm+matn birga).
     // AUTO-HIDE faqat: kalit-so'z BLOCK (yuqori ishonch) YOKI AI BLOCK + severity >= 0.85.
