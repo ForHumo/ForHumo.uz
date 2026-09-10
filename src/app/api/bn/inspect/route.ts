@@ -29,8 +29,9 @@ function genHoldCode(): string {
 }
 
 /** Band muddati uchun qo'shimcha to'lov: 1-kun bepul, keyingi har kun +3%.
- *  2-kun → 3%, 3-kun → 6%, ..., 7-kun → 18%. */
-export function calcHoldFee(price: number, days: number): number {
+ *  2-kun → 3%, 3-kun → 6%, ..., 7-kun → 18%.
+ *  Next.js route faylida non-HTTP eksport ruxsat etilmaydi — funksiya lokal (module-scope). */
+function calcHoldFee(price: number, days: number): number {
     const d = Math.max(1, Math.min(MAX_DAYS, Math.floor(days)));
     if (d <= 1) return 0;
     const pct = (d - 1) * 3;   // 3, 6, 9, 12, 15, 18
