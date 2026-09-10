@@ -519,7 +519,40 @@ export async function searchProducts(opts: {
         skip,
         take: limit,
     });
-    const dtos = rows.map(toProductDTO);
+    let dtos = rows.map(toProductDTO);
+
+    // Boost — aktiv reklama mahsulotlar birinchi (faqat "new" sort'da, boshqasida narx tartibi buzilmasin)
+    if (sort === "new" && dtos.length > 1) {
+        try {
+            const boosted = await prisma.bnAdBoost.findMany({
+                where: {
+                    status: "ACTIVE",
+                    expiresAt: { gt: new Date() },
+                    productId: { in: dtos.map(d => d.id) },
+                },
+                select: { productId: true, dailyCost: true },
+            });
+            if (boosted.length > 0) {
+                const boostRank = new Map(boosted.map(b => [b.productId, b.dailyCost]));
+                const boostedIds = new Set(boosted.map(b => b.productId));
+                const promoted = dtos.filter(d => boostedIds.has(d.id))
+                    .sort((a, b) => (boostRank.get(b.id) ?? 0) - (boostRank.get(a.id) ?? 0));
+                const rest = dtos.filter(d => !boostedIds.has(d.id));
+                dtos = [...promoted, ...rest];
+
+                // Impression track (fail-safe, async)
+                Promise.resolve().then(async () => {
+                    try {
+                        await prisma.bnAdBoost.updateMany({
+                            where: { productId: { in: promoted.map(p => p.id) }, status: "ACTIVE" },
+                            data: { impressions: { increment: 1 } },
+                        });
+                    } catch { /* noop */ }
+                });
+            }
+        } catch { /* noop */ }
+    }
+
     if (sort === "seasonal") {
         return dtos.filter(p => ["kiyim", "sport", "uy"].some(k => p.categorySlug.startsWith(k)));
     }

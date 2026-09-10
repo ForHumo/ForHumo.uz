@@ -19,7 +19,7 @@ import {
     TrendingUp, Eye, LogIn, ArrowUpRight, Check, Loader2, Truck,
     Clock, ChevronRight, MapPin, Phone, Building2, Trash2, EyeOff,
     Sparkles, ShieldCheck, AlertTriangle, Upload, Wand2, Users,
-    Send, MessageCircle,
+    Send, MessageCircle, Rocket,
 } from "lucide-react";
 import { BN, fmtPrice, ORDER_STATUS_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
@@ -31,6 +31,7 @@ import { BnReferralLeaderboard } from "./bn-referral-leaderboard";
 import { BnAchievementsCard } from "./bn-achievements-card";
 import { BnMyPurchases } from "./bn-my-purchases";
 import { BnShopQrPanel } from "./bn-shop-qr-panel";
+import { BnBoostPanel } from "./bn-boost-panel";
 import { BnPremiumUpgrade } from "./bn-premium-upgrade";
 import { BnMyAdsCard } from "./bn-my-ads-card";
 import { BnSellerInsightsCard } from "./bn-seller-insights-card";
@@ -1096,6 +1097,7 @@ function ProductsTab({
     const [items, setItems] = useState(initial);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
     const [bulkOpen, setBulkOpen] = useState(false);
+    const [boostFor, setBoostFor] = useState<{ id: string; title: string } | null>(null);
 
     async function remove(id: string) {
         if (!confirm(t("removeConfirm"))) return;
@@ -1245,6 +1247,16 @@ function ProductsTab({
                                             <EyeOff className="w-3.5 h-3.5" />
                                         </button>
                                         {p.isActive && <BnFeatureButton productSlug={p.slug} compact />}
+                                        {p.isActive && (
+                                            <button
+                                                onClick={() => setBoostFor({ id: p.id, title: p.title })}
+                                                title="Reklama (Boost)"
+                                                className="w-8 h-8 grid place-items-center rounded-lg"
+                                                style={{ background: BN.goldSoft, color: BN.gold }}
+                                            >
+                                                <Rocket className="w-3.5 h-3.5" />
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => remove(p.id)}
                                             disabled={busy || !p.isActive}
@@ -1275,6 +1287,14 @@ function ProductsTab({
                         setCreateOpen(false);
                         router.refresh();
                     }}
+                />
+            )}
+
+            {boostFor && (
+                <BnBoostPanel
+                    productId={boostFor.id}
+                    productTitle={boostFor.title}
+                    onClose={() => setBoostFor(null)}
                 />
             )}
         </>

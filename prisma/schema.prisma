@@ -3127,6 +3127,7 @@ model BnShop {
   @@index([status, createdAt])
   purchases     BnPurchase[]
   followers     BnShopFollow[]
+  chats         BnShopChat[]
 
   @@index([marketId, status])
   @@index([city, status])
@@ -3360,6 +3361,7 @@ model BnProduct {
   reviews        BnProductReview[]
   variants       BnProductVariant[]
   purchases      BnPurchase[]
+  boost          BnAdBoost?
 
   @@index([shopId, createdAt])
   @@index([categoryId, isActive, hidden])
@@ -4264,6 +4266,59 @@ model BnPriceHistory {
 
   @@index([productId, capturedAt])
   @@index([capturedAt])
+}
+
+// Do'kon ↔ xaridor umumiy chat (buyurtmasiz — pre-sale savollar uchun).
+// Har juftlik uchun bitta chat.
+model BnShopChat {
+  id          String   @id @default(cuid())
+  buyerId     String                            // Xaridor UserProfile.id
+  shopId      String
+  shop        BnShop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  messages    BnShopChatMessage[]
+  buyerUnread Int      @default(0)             // Xaridor uchun o'qilmagan (do'kon yubordi)
+  shopUnread  Int      @default(0)             // Do'kon uchun o'qilmagan (xaridor yubordi)
+  lastAt      DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@unique([buyerId, shopId])
+  @@index([shopId, lastAt])
+  @@index([buyerId, lastAt])
+}
+
+model BnShopChatMessage {
+  id         String   @id @default(cuid())
+  chatId     String
+  chat       BnShopChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  fromShop   Boolean                           // true = sotuvchi javobi, false = xaridor xabari
+  text       String                            // max 2000 belgi
+  imageUrl   String?
+  readAt     DateTime?                         // Qarshi tomon o'qigan vaqt
+  createdAt  DateTime @default(now())
+
+  @@index([chatId, createdAt])
+}
+
+// BN reklama (Boost) — sotuvchi mahsulotini yuqorida chiqaradi.
+// For Pay hamyoni orqali to'lanadi. Kunlik xarajat asosida muddat hisoblanadi.
+model BnAdBoost {
+  id           String   @id @default(cuid())
+  productId    String   @unique                // Bir mahsulot uchun bir aktiv boost
+  product      BnProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ownerId      String                          // Sotuvchi UserProfile.id
+  totalBudget  Int                             // Umumiy byudjet (so'm) — For Pay'dan olindi
+  dailyCost    Int                             // Kunlik miqdor (so'm)
+  startedAt    DateTime @default(now())
+  expiresAt   DateTime                         // startedAt + (totalBudget / dailyCost) kun
+  status      String    @default("ACTIVE")     // ACTIVE | PAUSED | ENDED
+  impressions Int       @default(0)            // Ko'rishlar
+  clicks      Int       @default(0)            // Bosishlar
+  txRef       String                           // WalletTransaction ref (idempotency)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, expiresAt])
+  @@index([ownerId, createdAt])
 }
 
 // Xaridor do'konga obuna. Do'kon yangi mahsulot chiqarsa xaridor push oladi.
