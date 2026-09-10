@@ -1717,8 +1717,19 @@ function ShopTab({ shop }: { shop: CabinetShop }) {
             fd.append("kind", "shop");
             const r = await fetch("/api/bn/upload", { method: "POST", body: fd });
             const d = await r.json();
-            if (r.ok) setLogoUrl(d.url);
-            else setMsg(d?.error ?? t("imgUploadErr"));
+            if (r.ok) {
+                setLogoUrl(d.url);
+                // Avto-save: upload muvaffaqiyatli bo'lgach darhol saqlaymiz.
+                // Foydalanuvchi "Save" tugmasini bosishni unutsa ham logo ko'rinadi.
+                await fetch("/api/bn/seller/shop", {
+                    method: "PATCH",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ logoUrl: d.url }),
+                });
+                router.refresh();
+            } else {
+                setMsg(d?.error ?? t("imgUploadErr"));
+            }
         } finally { setBusy(false); if (fileRef.current) fileRef.current.value = ""; }
     }
 

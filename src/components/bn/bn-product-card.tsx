@@ -151,7 +151,7 @@ export function BnProductCard({
 
     return (
         <BnLink
-            href={`/p/${p.slug}`}
+            href={p.shopSlug ? `/d/${p.shopSlug}/${p.slug}` : `/p/${p.slug}`}
             newTab
             className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-150 active:scale-[0.985]"
             style={{ background: BN.surface, border: `1px solid ${BN.border}` }}

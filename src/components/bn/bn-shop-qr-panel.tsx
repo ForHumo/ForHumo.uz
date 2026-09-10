@@ -11,34 +11,11 @@ export function BnShopQrPanel({ shopSlug, shopName }: { shopSlug: string; shopNa
 
     const svgUrl = `/api/bn/shops/${shopSlug}/qr`;
     const pngUrl = `/api/bn/shops/${shopSlug}/qr?format=png`;
-    const targetUrl = `https://bozornarxida.uz/d/${shopSlug}?buy=1`;
+    const printUrl = `/api/bn/shops/${shopSlug}/qr/print?size=${size}`;
+    const targetUrl = `https://bozornarxida.uz/d/${shopSlug}?scan=1`;
 
     const openPrint = () => {
-        const w = window.open("", "_blank", "width=800,height=1000");
-        if (!w) return;
-        const html = `<!doctype html><html><head><title>${escapeHtml(shopName)} — QR</title>
-<style>
-  body { margin: 0; font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-  .card { text-align: center; padding: 40px; max-width: ${size === "a4" ? "600px" : "420px"}; }
-  h1 { font-size: 24px; margin: 0 0 8px; }
-  .sub { color: #666; margin-bottom: 24px; }
-  img { max-width: 100%; width: ${size === "a4" ? "500px" : "360px"}; }
-  .cta { margin-top: 16px; font-size: 18px; color: #d97706; font-weight: 600; }
-  .url { margin-top: 6px; color: #999; font-size: 12px; word-break: break-all; }
-  @media print { body { margin: 0 } .card { padding: 20px } }
-</style></head><body>
-<div class="card">
-  <h1>${escapeHtml(shopName)}</h1>
-  <div class="sub">Bozor Narxida — Xarid tarixi</div>
-  <img src="${pngUrl}" alt="QR" />
-  <div class="cta">QR ni skan qiling → "Xarid qildim"</div>
-  <div class="url">${targetUrl}</div>
-</div>
-<script>window.onload = () => setTimeout(() => window.print(), 400);</script>
-</body></html>`;
-        w.document.open();
-        w.document.write(html);
-        w.document.close();
+        window.open(printUrl, "_blank", "width=880,height=1100");
     };
 
     return (
@@ -104,6 +81,3 @@ export function BnShopQrPanel({ shopSlug, shopName }: { shopSlug: string; shopNa
     );
 }
 
-function escapeHtml(s: string): string {
-    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
