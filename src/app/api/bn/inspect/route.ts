@@ -20,11 +20,21 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 
-const HOLD_HOURS = 24;
+const HOLD_HOURS_PER_DAY = 24;
+const MAX_DAYS = 7;
 
 function genHoldCode(): string {
     const r = Math.random().toString(36).slice(2, 6).toUpperCase();
     return `BN-${r}`;
+}
+
+/** Band muddati uchun qo'shimcha to'lov: 1-kun bepul, keyingi har kun +3%.
+ *  2-kun → 3%, 3-kun → 6%, ..., 7-kun → 18%. */
+export function calcHoldFee(price: number, days: number): number {
+    const d = Math.max(1, Math.min(MAX_DAYS, Math.floor(days)));
+    if (d <= 1) return 0;
+    const pct = (d - 1) * 3;   // 3, 6, 9, 12, 15, 18
+    return Math.round((price * pct) / 100);
 }
 
 /** Xaridor barcha faol holdlarni ko'radi. */
@@ -50,6 +60,7 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const productId = String(body?.productId ?? "");
     const qty = Math.max(1, Math.min(3, Number(body?.qty) || 1));
+    const holdDays = Math.max(1, Math.min(MAX_DAYS, Math.floor(Number(body?.holdDays) || 1)));
 
     if (!productId) return NextResponse.json({ error: "productId_required" }, { status: 400 });
 
@@ -75,7 +86,8 @@ export async function POST(req: Request) {
         }, { status: 409 });
     }
 
-    const expiresAt = new Date(Date.now() + HOLD_HOURS * 3600_000);
+    const expiresAt = new Date(Date.now() + holdDays * HOLD_HOURS_PER_DAY * 3600_000);
+    const holdFee = calcHoldFee(product.price, holdDays);
     let code = "";
 
     try {
@@ -97,7 +109,8 @@ export async function POST(req: Request) {
 
             await tx.bnInspectHold.create({
                 data: {
-                    code, productId, profileId: auth.profileId, qty, expiresAt,
+                    code, productId, profileId: auth.profileId, qty,
+                    holdDays, holdFee, expiresAt,
                 },
             });
         });
@@ -107,5 +120,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "hold_failed", detail: msg }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true, code, expiresAt, holdHours: HOLD_HOURS });
+    return NextResponse.json({
+        ok: true, code, expiresAt,
+        holdDays, holdFee,
+        holdHours: holdDays * HOLD_HOURS_PER_DAY,   // legacy client
+    });
 }

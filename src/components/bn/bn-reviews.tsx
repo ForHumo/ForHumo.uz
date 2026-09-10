@@ -9,6 +9,7 @@ import { useSession, signIn } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { Star, User, Loader2 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
+import { bnToast } from "./bn-toast";
 
 interface Review {
     id: string;
@@ -51,11 +52,11 @@ export function BnReviews({ kind, slug }: Props) {
         const d = await r.json();
         if (!r.ok) {
             if (d?.error === "no_completed_order") {
-                alert(kind === "product" ? t("errNoCompletedProduct") : t("errNoCompletedShop"));
+                bnToast(kind === "product" ? t("errNoCompletedProduct") : t("errNoCompletedShop"), "error");
             } else if (d?.error === "already_reviewed") {
-                alert(t("errAlreadyReviewed"));
+                bnToast(t("errAlreadyReviewed"), "error");
             } else {
-                alert(d?.error ?? t("errGeneric"));
+                bnToast(d?.error ?? t("errGeneric"), "error");
             }
             return;
         }

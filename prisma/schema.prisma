@@ -3609,7 +3609,12 @@ model BnInspectHold {
   productId   String
   profileId   String                               // xaridor
   qty         Int       @default(1)
-  expiresAt   DateTime                             // +24 soat
+  // Band muddati: 1-7 kun. 1-kun bepul, undan keyin har qo'shimcha kun uchun
+  // mahsulot narxidan 3% qo'shiladi (2-kun +3%, 3-kun +6%, ... 7-kun +18%).
+  // Fee finalPrice.confirmga o'tganda buyurtma summasiga qo'shiladi.
+  holdDays    Int       @default(1)
+  holdFee     Int       @default(0)                // so'm, snapshot mahsulot narxi asosida
+  expiresAt   DateTime                             // now + holdDays × 24h
   usedAt      DateTime?                            // sotuvchi tasdiqladi
   cancelledAt DateTime?
   createdAt   DateTime  @default(now())

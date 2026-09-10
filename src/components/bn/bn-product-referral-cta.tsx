@@ -9,8 +9,9 @@
 import { useEffect, useState } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { Gift, Share2, MessageCircle, Copy, Check, LogIn } from "lucide-react";
+import { Gift, Copy, Check, LogIn } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
+import { TelegramIcon, WhatsAppIcon } from "@/components/brand-icons";
 
 interface Props {
     productSlug: string;
@@ -127,7 +128,7 @@ export function BnProductReferralCta({ productSlug, productTitle }: Props) {
                     className="h-11 rounded-xl text-[12px] font-black flex flex-col items-center justify-center gap-0.5"
                     style={{ background: "#229ED9", color: "#fff" }}
                 >
-                    <Share2 className="w-4 h-4" />
+                    <TelegramIcon className="w-4 h-4" />
                     Telegram
                 </button>
                 <button
@@ -135,7 +136,7 @@ export function BnProductReferralCta({ productSlug, productTitle }: Props) {
                     className="h-11 rounded-xl text-[12px] font-black flex flex-col items-center justify-center gap-0.5"
                     style={{ background: "#25D366", color: "#fff" }}
                 >
-                    <MessageCircle className="w-4 h-4" />
+                    <WhatsAppIcon className="w-4 h-4" />
                     WhatsApp
                 </button>
                 <button

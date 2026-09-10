@@ -96,6 +96,7 @@ function BnShopChatModal({
     const [sending, setSending] = useState(false);
     const [text, setText] = useState(initialText ?? "");
     const [showOfferForm, setShowOfferForm] = useState(!!initialText && !!product);
+    const [viewerIsSeller, setViewerIsSeller] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const load = useCallback(async () => {
@@ -108,6 +109,7 @@ function BnShopChatModal({
             if (r.ok) {
                 const j = await r.json();
                 setMessages(j.messages ?? []);
+                setViewerIsSeller(!!j.viewerIsSeller);
             }
         } finally { setLoading(false); }
     }, [shopSlug]);
@@ -220,6 +222,7 @@ function BnShopChatModal({
                         messages.map(m => (
                             <MessageBubble key={m.id} m={m}
                                 originalPrice={product?.price}
+                                viewerIsSeller={viewerIsSeller}
                                 onRespond={respondToOffer}
                                 sending={sending}
                             />
@@ -282,15 +285,16 @@ function BnShopChatModal({
 // ── Xabar sharlari ─────────────────────────────────────────────────────────
 
 function MessageBubble({
-    m, originalPrice, onRespond, sending,
+    m, originalPrice, viewerIsSeller, onRespond, sending,
 }: {
     m: Msg;
     originalPrice?: number;
+    viewerIsSeller: boolean;
     onRespond: (id: string, action: "ACCEPT" | "REJECT") => void;
     sending: boolean;
 }) {
     if (m.kind === "OFFER" || m.kind === "COUNTER") {
-        return <OfferBubble m={m} originalPrice={originalPrice} onRespond={onRespond} sending={sending} />;
+        return <OfferBubble m={m} originalPrice={originalPrice} viewerIsSeller={viewerIsSeller} onRespond={onRespond} sending={sending} />;
     }
     if (m.kind === "ACCEPT" || m.kind === "REJECT") {
         return <SystemBubble m={m} />;
@@ -319,23 +323,21 @@ function MessageBubble({
 }
 
 function OfferBubble({
-    m, originalPrice, onRespond, sending,
+    m, originalPrice, viewerIsSeller, onRespond, sending,
 }: {
     m: Msg;
     originalPrice?: number;
+    viewerIsSeller: boolean;
     onRespond: (id: string, action: "ACCEPT" | "REJECT") => void;
     sending: boolean;
 }) {
     const amount = m.offerAmount ?? 0;
     const status = m.offerStatus ?? "PENDING";
     const isPending = status === "PENDING";
-    // Bu taklif "menga" (qarshi tomon)dan kelganini aniqlash:
-    // xaridor jihatidan qarshi tomon = do'kon (fromShop=true)
-    // sotuvchi jihatidan qarshi tomon = xaridor (fromShop=false)
-    // Bu komponent xaridorga ham, sotuvchiga ham xizmat qiladi — biz "javob bera olamanmi"ni
-    // shu bilan aniqlaymiz: bu xabar mendan EMAS (fromShop farqli).
-    // Ammo bu komponent client-side, biz kimligimizni bilmaymiz. Shuning uchun ikkala tomon
-    // uchun ham tugmalarni ko'rsatamiz — server tomonda o'zi tekshiradi.
+    // Taklifga faqat qarshi tomon javob bera oladi:
+    //   xaridor taklif (fromShop=false) → sotuvchi javob beradi
+    //   sotuvchi qarshi taklif (fromShop=true) → xaridor javob beradi
+    const canRespond = isPending && (m.fromShop ? !viewerIsSeller : viewerIsSeller);
 
     const pct = originalPrice ? Math.round((amount / originalPrice) * 100) : null;
     const label = m.kind === "COUNTER" ? "Qarshi taklif" : "Narx taklifi";
@@ -383,8 +385,8 @@ function OfferBubble({
                         {meta.icon} {meta.text}
                     </span>
                 </div>
-                {/* Javob tugmalari (faqat PENDING'da) */}
-                {isPending && (
+                {/* Javob tugmalari — faqat qarshi tomonga ko'rinadi */}
+                {canRespond && (
                     <div className="grid grid-cols-2 gap-0 border-t"
                         style={{ borderColor: m.fromShop ? BN.border : "rgba(0,0,0,0.15)" }}>
                         <button

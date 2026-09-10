@@ -35,11 +35,15 @@ export function BnInspectHoldModal({ hold, onClose, onCancelled }: {
 
     const expMs = new Date(hold.expiresAt).getTime();
     const remain = Math.max(0, expMs - now);
-    const totalMs = 24 * 3600 * 1000;
-    const pct = Math.min(100, Math.max(0, ((totalMs - remain) / totalMs) * 100));
-    const hours = Math.floor(remain / 3600000);
+    // Umumiy davomiylik hold yaratilganda o'zgaruvchan (1-7 kun). ExpiresAt - now < 7 kun
+    // barcha holatlarda to'g'ri progress bo'lishi uchun boshlanish vaqtidan (yoki 7 kun cap) hisoblaymiz.
+    // Timer manzil-belgi sifatida "N kun M soat" ko'rsatiladi.
+    const days = Math.floor(remain / (24 * 3600 * 1000));
+    const hours = Math.floor((remain % (24 * 3600 * 1000)) / 3600000);
     const mins = Math.floor((remain % 3600000) / 60000);
     const secs = Math.floor((remain % 60000) / 1000);
+    const totalMs = Math.max(24 * 3600 * 1000, expMs - new Date(hold.expiresAt).getTime() + 7 * 24 * 3600 * 1000);
+    const pct = Math.min(100, Math.max(0, ((totalMs - remain) / totalMs) * 100));
     const expired = remain <= 0;
 
     async function copy() {
@@ -119,7 +123,9 @@ export function BnInspectHoldModal({ hold, onClose, onCancelled }: {
                         >
                             {expired
                                 ? t("expired")
-                                : `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`}
+                                : days > 0
+                                    ? `${days} kun ${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`
+                                    : `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`}
                         </span>
                     </div>
                     <div className="h-2 rounded-full overflow-hidden" style={{ background: `${BN.text3}22` }}>

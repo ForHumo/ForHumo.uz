@@ -14,6 +14,7 @@ import { SupportDock } from "@/components/support/support-dock";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BnAttributionCapture } from "@/components/analytics/bn-attribution-capture";
+import { BnToastHost } from "@/components/bn/bn-toast";
 import "@/app/globals.css";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
@@ -142,6 +143,7 @@ export default async function LocaleLayout({
                         </AuthBarrier>
                         <SupportDock />
                         <BnAttributionCapture />
+                        <BnToastHost />
                     </Providers>
                 </NextIntlClientProvider>
                 <Analytics />

@@ -6,6 +6,9 @@ import { useSession, signIn } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { BnLink } from "./bn-nav";
 import { BnShopChatButton } from "./bn-shop-chat-button";
+import { WhatsAppIcon, HumoNexusLogo } from "@/components/brand-icons";
+import { bnToast } from "./bn-toast";
+import { BnInspectDaysPicker } from "./bn-inspect-days-picker";
 import { BnBackButton } from "./bn-back-button";
 import { BnReviews } from "./bn-reviews";
 import { BnPriceChart } from "./bn-price-chart";
@@ -68,6 +71,7 @@ export function BnProductDetail({
     const [cartDone, setCartDone] = useState(false);
     const [favBusy, setFavBusy] = useState(false);
     const [inspectHold, setInspectHold] = useState<{ code: string; expiresAt: string; productTitle?: string } | null>(null);
+    const [inspectDaysOpen, setInspectDaysOpen] = useState(false);
     const [priceWatch, setPriceWatch] = useState(false);
     const [pwBusy, setPwBusy] = useState(false);
     // 18+ tovar — foydalanuvchi tasdiqlagunicha rasm xiralashadi
@@ -140,14 +144,20 @@ export function BnProductDetail({
         } finally { setCartBusy(false); }
     }
 
-    async function startInspect() {
+    function startInspect() {
         if (status === "unauthenticated") { signIn("google"); return; }
+        // Kun tanlash oynasini ochamiz — foydalanuvchi 1-7 kun tanlaydi
+        setInspectDaysOpen(true);
+    }
+
+    async function confirmInspect(days: number) {
+        setInspectDaysOpen(false);
         setCartBusy(true);
         try {
             const r = await fetch("/api/bn/inspect", {
                 method: "POST",
                 headers: { "content-type": "application/json" },
-                body: JSON.stringify({ productId: p.id, qty }),
+                body: JSON.stringify({ productId: p.id, qty, holdDays: days }),
             });
             const d = await r.json();
             if (r.ok && d?.ok) {
@@ -158,7 +168,7 @@ export function BnProductDetail({
             } else if (r.status === 401) {
                 signIn("google");
             } else {
-                alert(d?.error ?? t("holdError"));
+                bnToast(d?.error ?? t("holdError"), "error");
             }
         } finally { setCartBusy(false); }
     }
@@ -599,24 +609,33 @@ export function BnProductDetail({
                             </button>
                         )}
 
-                        <div className="flex gap-2 mt-2.5">
-                            <SecondaryBtn onClick={toggleFav} disabled={favBusy}>
-                                <Heart className="w-4 h-4" style={{ fill: fav ? BN.err : "none", color: fav ? BN.err : undefined }} />
-                                {fav ? t("favSaved") : t("fav")}
-                            </SecondaryBtn>
-                            <SecondaryBtn onClick={() => navigator.share?.({ title: p.title, url: location.href })}>
-                                <Share2 className="w-4 h-4" />
-                                {t("share")}
-                            </SecondaryBtn>
-                            {/* WhatsApp share — deep-link, prefilled matn */}
-                            <a href={`https://wa.me/?text=${encodeURIComponent(`${p.title} — ${typeof window !== "undefined" ? window.location.href : ""}`)}`}
-                                target="_blank" rel="noopener noreferrer"
-                                aria-label="WhatsApp'ga yuborish"
-                                className="flex items-center justify-center gap-1.5 h-11 px-3 rounded-2xl text-[12.5px] font-bold transition-transform active:scale-[0.97]"
-                                style={{ background: "#25D366", color: "#fff" }}>
-                                <MessageCircle className="w-4 h-4" />
-                            </a>
-                        </div>
+                        {/* Sotuvchi WhatsApp'i verified bo'lsa → 3-tugma qatorida chiqadi.
+                            Aks holda faqat Saqlash+Ulashish qoladi (kengroq bo'ladi). */}
+                        {(() => {
+                            const waPhone = shop?.phoneVerified ? (shop.phone ?? "").replace(/\D/g, "") : "";
+                            const showWa = waPhone.length >= 9;
+                            return (
+                                <div className="flex gap-2 mt-2.5">
+                                    <SecondaryBtn onClick={toggleFav} disabled={favBusy}>
+                                        <Heart className="w-4 h-4" style={{ fill: fav ? BN.err : "none", color: fav ? BN.err : undefined }} />
+                                        {fav ? t("favSaved") : t("fav")}
+                                    </SecondaryBtn>
+                                    <SecondaryBtn onClick={() => navigator.share?.({ title: p.title, url: location.href })}>
+                                        <Share2 className="w-4 h-4" />
+                                        {t("share")}
+                                    </SecondaryBtn>
+                                    {showWa && (
+                                        <a href={`https://wa.me/${waPhone}?text=${encodeURIComponent(`${p.title} — ${typeof window !== "undefined" ? window.location.href : ""}`)}`}
+                                            target="_blank" rel="noopener noreferrer"
+                                            aria-label="Sotuvchiga WhatsApp orqali yozish"
+                                            className="flex items-center justify-center gap-1.5 h-11 px-3 rounded-2xl text-[12.5px] font-bold transition-transform active:scale-[0.97]"
+                                            style={{ background: "#25D366", color: "#fff" }}>
+                                            <WhatsAppIcon className="w-4 h-4" />
+                                        </a>
+                                    )}
+                                </div>
+                            );
+                        })()}
 
                         <a
                             href={`https://forhumo.uz/${locale}/nexus?bnProduct=${p.slug}&text=${encodeURIComponent(p.title)}`}
@@ -625,6 +644,7 @@ export function BnProductDetail({
                             className="flex items-center justify-center gap-2 w-full h-11 mt-2.5 rounded-2xl text-[13px] font-bold"
                             style={{ background: "linear-gradient(90deg, #2B3EE8 0%, #00CEC8 100%)", color: "#fff" }}
                         >
+                            <HumoNexusLogo size={18} />
                             {t("shareOnNexus")}
                         </a>
 
@@ -717,6 +737,15 @@ export function BnProductDetail({
                 onAddToCart={addToCart}
                 cartBusy={cartBusy}
             />
+
+            {/* Kun tanlash oynasi — band qilishdan oldin (1 kun bepul, keyingi kunlar +3%) */}
+            {inspectDaysOpen && (
+                <BnInspectDaysPicker
+                    productPrice={p.price}
+                    onCancel={() => setInspectDaysOpen(false)}
+                    onConfirm={days => confirmInspect(days)}
+                />
+            )}
 
             {/* Inspect hold modal — startInspect() muvaffaqiyatli bo'lganda ochiladi */}
             {inspectHold && (

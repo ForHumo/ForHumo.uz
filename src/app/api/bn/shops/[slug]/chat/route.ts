@@ -67,7 +67,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ slug: string }
             data: { readAt: new Date() },
         });
 
-        return NextResponse.json({ messages, shop: { name: shop.name, logoUrl: shop.logoUrl } });
+        return NextResponse.json({ messages, shop: { name: shop.name, logoUrl: shop.logoUrl }, viewerIsSeller: isOwner });
     }
 
     // Xaridor — o'z chatini oladi
@@ -162,18 +162,30 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
     if (kind === "ACCEPT" && !finalText) finalText = "Taklifni qabul qildim";
     if (kind === "REJECT" && !finalText) finalText = "Taklifni rad etdim";
 
-    // ACCEPT/REJECT — oldingi taklifga javob → oldingisining offerStatus'ini yangilash
-    if ((kind === "ACCEPT" || kind === "REJECT") && answersOfferId) {
-        await prisma.bnShopChatMessage.updateMany({
-            where: { id: answersOfferId, chatId: chat.id, offerStatus: "PENDING" },
-            data: { offerStatus: kind === "ACCEPT" ? "ACCEPTED" : "REJECTED" },
+    // ACCEPT/REJECT/COUNTER — taklifga javob:
+    // Qoida: taklifni FAQAT qarshi tomon boshqarishi mumkin.
+    //   - Xaridor taklif (fromShop=false) yuborsa → faqat sotuvchi (isOwner) qabul/rad qila oladi.
+    //   - Sotuvchi qarshi taklif (fromShop=true) yuborsa → faqat xaridor qabul/rad qila oladi.
+    // Aks holda 403 qaytariladi.
+    if (kind === "ACCEPT" || kind === "REJECT" || kind === "COUNTER") {
+        const offer = await prisma.bnShopChatMessage.findFirst({
+            where: { id: answersOfferId!, chatId: chat.id },
+            select: { fromShop: true, offerStatus: true, kind: true },
         });
-    }
-    // COUNTER — oldingi taklifni COUNTERED deb belgilash
-    if (kind === "COUNTER" && answersOfferId) {
-        await prisma.bnShopChatMessage.updateMany({
-            where: { id: answersOfferId, chatId: chat.id, offerStatus: "PENDING" },
-            data: { offerStatus: "COUNTERED" },
+        if (!offer) return NextResponse.json({ error: "offer_not_found" }, { status: 404 });
+        if (offer.offerStatus !== "PENDING") {
+            return NextResponse.json({ error: "offer_already_resolved" }, { status: 409 });
+        }
+        // Taklifga faqat qarshi tomon javob berishi mumkin
+        if (offer.fromShop === isOwner) {
+            return NextResponse.json({ error: "not_your_turn" }, { status: 403 });
+        }
+        const newStatus = kind === "ACCEPT" ? "ACCEPTED"
+            : kind === "REJECT" ? "REJECTED"
+            : "COUNTERED";
+        await prisma.bnShopChatMessage.update({
+            where: { id: answersOfferId! },
+            data: { offerStatus: newStatus },
         });
     }
 

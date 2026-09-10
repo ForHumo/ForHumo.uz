@@ -11,6 +11,7 @@ import { BnLink } from "./bn-nav";
 import { BnBackButton } from "./bn-back-button";
 import { BnPhoneInput, isValidUzPhone } from "./bn-phone-input";
 import { BnSelect } from "./bn-select";
+import { TelegramIcon, WhatsAppIcon } from "@/components/brand-icons";
 import { getAttribution } from "@/lib/bn-analytics";
 import type { BnMarketDTO } from "@/lib/bn-data";
 
@@ -251,7 +252,7 @@ function ShareInviteCard() {
                     className="h-12 rounded-xl text-[12.5px] font-black flex flex-col items-center justify-center gap-0.5"
                     style={{ background: "#229ED9", color: "#fff" }}
                 >
-                    <Share2 className="w-4 h-4" />
+                    <TelegramIcon className="w-4 h-4" />
                     Telegram
                 </button>
                 <button
@@ -259,7 +260,7 @@ function ShareInviteCard() {
                     className="h-12 rounded-xl text-[12.5px] font-black flex flex-col items-center justify-center gap-0.5"
                     style={{ background: "#25D366", color: "#fff" }}
                 >
-                    <MessageCircle className="w-4 h-4" />
+                    <WhatsAppIcon className="w-4 h-4" />
                     WhatsApp
                 </button>
                 <button

@@ -27,6 +27,7 @@ import { BnEmpty } from "./bn-cards";
 import { BnPhoneInput } from "./bn-phone-input";
 import { BnCategoryPicker } from "./bn-category-picker";
 import { BnSelect } from "./bn-select";
+import { ForPayLogo, TelegramIcon, WhatsAppIcon } from "@/components/brand-icons";
 import { BnPushCard } from "./bn-push-card";
 import { BnReferralLeaderboard } from "./bn-referral-leaderboard";
 import { BnAchievementsCard } from "./bn-achievements-card";
@@ -1888,7 +1889,7 @@ function MoneyTab({ balance, orderCount }: { balance: number; orderCount: number
                 className="flex items-center justify-center gap-2 w-full h-12 rounded-2xl text-[14px] font-bold mb-6"
                 style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text }}
             >
-                <Wallet className="w-4 h-4" />
+                <ForPayLogo size={20} />
                 {t("payOpen")}
                 <ArrowUpRight className="w-4 h-4" />
             </a>
@@ -2024,13 +2025,13 @@ function BnReferralCard() {
                         <a href={tgUrl} target="_blank" rel="noopener noreferrer"
                             className="flex items-center justify-center gap-1.5 h-11 rounded-xl text-[13px] font-bold"
                             style={{ background: "#229ED9", color: "#fff" }}>
-                            <Send className="w-4 h-4" />
+                            <TelegramIcon className="w-4 h-4" />
                             {t("shareTelegram")}
                         </a>
                         <a href={waUrl} target="_blank" rel="noopener noreferrer"
                             className="flex items-center justify-center gap-1.5 h-11 rounded-xl text-[13px] font-bold"
                             style={{ background: "#25D366", color: "#fff" }}>
-                            <MessageCircle className="w-4 h-4" />
+                            <WhatsAppIcon className="w-4 h-4" />
                             {t("shareWhatsApp")}
                         </a>
                     </div>

@@ -599,7 +599,7 @@
       "wayPickup": "Pick up from shop",
       "wayPickupFree": "Free",
       "wayDelivery": "Delivery",
-      "wayDeliveryText": "20,000 UZS across Tashkent",
+      "wayDeliveryText": "Cost is agreed with the seller at checkout",
       "wayInspect": "See before you buy",
       "wayInspectText": "We hold for 24h — visit, inspect, pay if it fits",
       "wayEscrow": "Funds held in escrow",

@@ -47,6 +47,9 @@ export interface BnShopDTO {
     ownerUsername?: string | null;
     /** Tasdiqlanganlik (galochka) — cron avtomatik hisoblab qo'yadi */
     verifiedTier?: "NONE" | "RETAIL" | "WHOLESALE";
+    /** Do'kon telefoni (WhatsApp aloqasi uchun; verified bo'lgan taqdirdagina) */
+    phone?: string | null;
+    phoneVerified?: boolean;
 }
 
 export interface BnProductDTO {
@@ -115,6 +118,8 @@ function toShopDTO(s: ShopWithMarket, ownerUsername?: string | null): BnShopDTO 
         lng: s.lng,
         ownerUsername: ownerUsername ?? null,
         verifiedTier: (s.verifiedTier as "NONE" | "RETAIL" | "WHOLESALE" | undefined) ?? "NONE",
+        phone: (s as { phone?: string | null }).phone ?? null,
+        phoneVerified: (s as { phoneVerified?: boolean }).phoneVerified ?? false,
     };
 }
 
@@ -180,7 +185,7 @@ export async function viewerCanSeeWholesale(profileId: string | null): Promise<b
 // ── Yuklovchilar ────────────────────────────────────────────────────────────
 
 const PRODUCT_INCLUDE = {
-    shop: { select: { slug: true, name: true, tier: true, verifiedTier: true, city: true, status: true, lat: true, lng: true, market: { select: { name: true } } } },
+    shop: { select: { slug: true, name: true, tier: true, verifiedTier: true, city: true, status: true, lat: true, lng: true, phone: true, phoneVerified: true, market: { select: { name: true } } } },
     category: { select: { slug: true } },
 } as const;
 
