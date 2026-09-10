@@ -87,7 +87,7 @@ export function BnCheapestToday() {
                 {items.map(item => (
                     <BnLink
                         key={item.id}
-                        href={`/p/${item.slug}`}
+                        href={`/d/${item.shopSlug}/${item.slug}`}
                         className="shrink-0 w-[180px] rounded-2xl overflow-hidden group"
                         style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                     >

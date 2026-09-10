@@ -63,7 +63,7 @@ export function BnBuyBox({ slug }: { slug: string }) {
             </div>
 
             <BnLink
-                href={`/p/${data.winner.slug}`}
+                href={`/d/${data.winner.shop.slug}/${data.winner.slug}`}
                 className="flex gap-3 rounded-xl p-3 hover:bg-white/5 transition-colors"
                 style={{ background: BN.surfaceUp }}
             >
@@ -111,7 +111,7 @@ export function BnBuyBox({ slug }: { slug: string }) {
                     </summary>
                     <div className="mt-2 space-y-1.5">
                         {data.alternatives.map(a => (
-                            <BnLink key={a.id} href={`/p/${a.slug}`} className="flex items-center justify-between rounded-lg px-3 py-2 text-[12.5px]" style={{ background: BN.surfaceUp }}>
+                            <BnLink key={a.id} href={`/d/${a.shop.slug}/${a.slug}`} className="flex items-center justify-between rounded-lg px-3 py-2 text-[12.5px]" style={{ background: BN.surfaceUp }}>
                                 <span className="truncate" style={{ color: BN.text }}>{a.shop.name}</span>
                                 <span className="font-semibold" style={{ color: BN.gold }}>{formatMoney(a.price, "UZS")}</span>
                             </BnLink>

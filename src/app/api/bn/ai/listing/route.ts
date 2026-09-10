@@ -17,6 +17,7 @@ interface AIResult {
     description: string;
     categorySlug: string | null;
     marketAvgPrice: number | null;
+    suggestedPrice: number | null;   // Konkurent narx tavsiyasi (marketAvg dan ~5-10% kam)
     attributes: Record<string, string | number | boolean>;
     hasProblem?: string;   // agar rasm mahsulot emas (adult, forbidden, etc.) — sabab
 }
@@ -60,7 +61,8 @@ Sotuvchi mahsulot rasmini yukladi. Sen quyidagi ma'lumotlarni JSON qaytar:
   "title": "mahsulot nomi (uzbek, aniq, brend+model bo'lsa yozing)",
   "description": "2-3 gap tavsif (uzbek, ishonchli, mubolag'asiz)",
   "categorySlug": "eng mos slug (quyidagi ro'yxatdan aynan bir)",
-  "marketAvgPrice": 0,  // Toshkent bozorida taxminiy narx (UZS, butun son). Aniqmasa 0
+  "marketAvgPrice": 0,  // Toshkent bozorida taxminiy o'rtacha narx (UZS, butun son). Aniqmasa 0
+  "suggestedPrice": 0,  // Sotuvchi uchun tavsiya — konkurent narx, marketAvg dan 5-8% kam. Aniqmasa 0
   "attributes": { "brand": "...", "model": "...", ... },  // faqat rasmdan aniqlanadigan qiymatlar
   "hasProblem": null  // agar rasm mahsulot emas yoki nomaqbul bo'lsa (adult, silah, giyohvand), qisqa sabab. Aks holda null.
 }
@@ -88,6 +90,11 @@ Muhim:
     if (result.categorySlug) {
         const exists = cats.some(c => c.slug === result.categorySlug);
         if (!exists) result.categorySlug = null;
+    }
+
+    // suggestedPrice yo'q bo'lsa marketAvg dan 7% kam qilib hisoblaymiz (o'zbek bozor mantiq'i)
+    if (!result.suggestedPrice && result.marketAvgPrice && result.marketAvgPrice > 1000) {
+        result.suggestedPrice = Math.round(result.marketAvgPrice * 0.93 / 1000) * 1000;
     }
 
     return NextResponse.json({ ok: true, result });

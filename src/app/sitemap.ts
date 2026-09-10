@@ -34,14 +34,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             prisma.bnMarket.findMany({ where: { isActive: true }, select: { slug: true, updatedAt: true }, take: 500 }),
             prisma.bnCategory.findMany({ where: { isActive: true }, select: { slug: true }, take: 500 }),
             prisma.bnShop.findMany({ where: { status: "APPROVED" }, select: { slug: true, updatedAt: true }, take: 2000 }),
-            prisma.bnProduct.findMany({ where: { isActive: true, hidden: false }, select: { slug: true, updatedAt: true }, take: 10000, orderBy: { updatedAt: "desc" } }),
+            prisma.bnProduct.findMany({
+                where: { isActive: true, hidden: false },
+                select: { slug: true, updatedAt: true, shop: { select: { slug: true } } },
+                take: 10000,
+                orderBy: { updatedAt: "desc" },
+            }),
         ]);
 
         const rows: MetadataRoute.Sitemap = [
             ...markets.map(m => ({ url: `${origin}${prefix}/m/${m.slug}`, lastModified: m.updatedAt, changeFrequency: "weekly" as const, priority: 0.8 })),
             ...cats.map(c => ({ url: `${origin}${prefix}/k/${c.slug}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 })),
             ...shops.map(s => ({ url: `${origin}${prefix}/d/${s.slug}`, lastModified: s.updatedAt, changeFrequency: "weekly" as const, priority: 0.7 })),
-            ...prods.map(p => ({ url: `${origin}${prefix}/p/${p.slug}`, lastModified: p.updatedAt, changeFrequency: "weekly" as const, priority: 0.6 })),
+            // Yangi canonical URL — /d/<shopSlug>/<productSlug>. Do'kon topilmasa /p/<slug> fallback.
+            ...prods.map(p => ({
+                url: `${origin}${prefix}${p.shop?.slug ? `/d/${p.shop.slug}/${p.slug}` : `/p/${p.slug}`}`,
+                lastModified: p.updatedAt,
+                changeFrequency: "weekly" as const,
+                priority: 0.6,
+            })),
         ];
 
         return [...staticPaths, ...rows];

@@ -365,7 +365,7 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                                     </span>
                                     <div className="flex-1 min-w-0">
                                         {it.productSlug ? (
-                                            <BnLink href={`/p/${it.productSlug}`} className="block text-[13px] font-bold line-clamp-2 hover:text-[color:var(--bn-gold)]">
+                                            <BnLink href={order.shop?.slug ? `/d/${order.shop.slug}/${it.productSlug}` : `/p/${it.productSlug}`} className="block text-[13px] font-bold line-clamp-2 hover:text-[color:var(--bn-gold)]">
                                                 {it.title}
                                             </BnLink>
                                         ) : (

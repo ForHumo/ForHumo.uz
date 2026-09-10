@@ -1353,6 +1353,8 @@ function CreateProductModal({
             if (res.description) setDescription(res.description);
             if (res.categorySlug) setCategorySlug(res.categorySlug);
             if (res.marketAvgPrice) setMarketAvgPrice(String(res.marketAvgPrice));
+            // suggestedPrice — sotuvchi hali narx belgilamagan bo'lsa avto-to'ldiramiz
+            if (res.suggestedPrice && !price) setPrice(String(res.suggestedPrice));
             if (res.attributes && typeof res.attributes === "object") {
                 setAttrs(prev => ({ ...prev, ...res.attributes }));
             }

@@ -141,7 +141,7 @@ export function BnBuyerInsightsCard() {
                             const savings = d.oldPrice && d.oldPrice > d.price ? d.oldPrice - d.price : 0;
                             const savePct = d.oldPrice && d.oldPrice > 0 ? Math.round((savings / d.oldPrice) * 100) : 0;
                             return (
-                                <BnLink key={d.productId} href={`/p/${d.slug}`}
+                                <BnLink key={d.productId} href={d.shopSlug ? `/d/${d.shopSlug}/${d.slug}` : `/p/${d.slug}`}
                                     className="flex items-center gap-3 p-2 rounded-xl hover:brightness-95"
                                     style={{ background: BN.surfaceUp }}>
                                     <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0"
