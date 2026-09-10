@@ -30,6 +30,7 @@ const MAX_INBOUND_LEN = 4000;
 const MAX_REPLY_LEN = 1600;   // Footer + branding qo'shilganda 2000 ichida qoladi
 
 const BOT_LEARN_URL = "https://forhumo.uz/ai/telegram-bot";
+const BOT_USERNAME = "forhumo_aibot";   // Chatda "@forhumo_aibot" mention orqali chaqirish uchun
 
 export async function POST(req: Request) {
     if (WEBHOOK_SECRET) {
@@ -116,6 +117,26 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
     if (msg.from?.is_bot) return;                              // Boshqa bot bilan gaplashmaslik (loop oldini)
     if (!msg.business_connection_id) return;
 
+    // Connection'ni oldindan olib, xabar egasi (biznes akkaunt egasi) tomonidan yozilganini aniqlaymiz.
+    // Agar ega o'zi yozgan bo'lsa — Telegram Business `business_message` ham beradi. Bu holda AI
+    // faqat aniq chaqirilganda javob berishi kerak (bot xabariga "Reply" yoki chatda "@forhumo_aibot").
+    const preConnection = await prisma.humoBotConnection.findUnique({
+        where: { connectionId: msg.business_connection_id },
+    });
+    if (!preConnection) return;
+
+    const isFromOwner = !!msg.from && String(msg.from.id) === preConnection.telegramUserId;
+    if (isFromOwner) {
+        const rawText = (msg.text ?? msg.caption ?? "").toLowerCase();
+        const mentionsBot = rawText.includes(`@${BOT_USERNAME}`);
+        const replyFrom = msg.reply_to_message?.from;
+        const isReplyToBot = !!replyFrom && (
+            replyFrom.is_bot === true
+            || (replyFrom.username ?? "").toLowerCase() === BOT_USERNAME
+        );
+        if (!mentionsBot && !isReplyToBot) return;             // Ega o'zi yozdi, AI'ni chaqirmadi — jim
+    }
+
     // Voice → transkribatsiya → text sifatida davom
     let workingText = msg.text ?? msg.caption ?? "";
     const customerSentVoice = !!msg.voice && !workingText;
@@ -132,10 +153,16 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
     }
     if (!workingText || workingText.length === 0) return;
 
-    const connection = await prisma.humoBotConnection.findUnique({
-        where: { connectionId: msg.business_connection_id },
-    });
-    if (!connection) return;
+    // Ega chaqirig'ida "@forhumo_aibot" mention'ni matndan olib tashlaymiz —
+    // AI toza savol ko'radi, o'ziga qaratilgan tegni takrorlashga tushib qolmasin.
+    if (isFromOwner) {
+        workingText = workingText
+            .replace(new RegExp(`@${BOT_USERNAME}\\b`, "gi"), "")
+            .trim();
+        if (!workingText) return;
+    }
+
+    const connection = preConnection;
     if (!connection.isEnabled || !connection.canReply) return;
     if (connection.profileId.startsWith("pending-")) return;
 

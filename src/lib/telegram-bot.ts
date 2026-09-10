@@ -137,7 +137,12 @@ export interface TgBusinessMessage {
     caption?: string;
     voice?: { file_id: string; duration: number; mime_type?: string };
     photo?: { file_id: string; width: number; height: number; file_size?: number }[];
-    reply_to_message?: { message_id: number };
+    reply_to_message?: {
+        message_id: number;
+        from?: TgUser;
+        text?: string;
+    };
+    entities?: { type: string; offset: number; length: number }[];
 }
 
 export interface TgUpdate {
