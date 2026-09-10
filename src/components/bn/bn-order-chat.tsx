@@ -4,6 +4,7 @@
 // Portal modal, 5s polling, rasm yuklash (BN blob), enter=send.
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { bnToast } from "./bn-toast";
 import { createPortal } from "react-dom";
 import { X, Send, Loader2, ImagePlus, MessageCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -154,7 +155,7 @@ export function BnOrderChat({ orderId, orderCode, otherName, onClose }: {
             if (r.ok && d?.url) {
                 await send(d.url);
             } else {
-                alert(d?.error ?? "Upload xatoligi");
+                bnToast(d?.error ?? "Upload xatoligi", "error");
             }
         } finally {
             setUploading(false);

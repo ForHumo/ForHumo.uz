@@ -1,6 +1,9 @@
 // Sotuvchi o'z do'koni sozlamalarini tahrir qiladi.
 //
-//   PATCH /api/bn/seller/shop  { name?, description?, logoUrl?, coverUrl?, phone?, workHours?, address? }
+//   PATCH /api/bn/seller/shop?slug=<x>
+//     body: { name?, description?, logoUrl?, coverUrl?, phone?, workHours?,
+//             address?, lat?, lng?, marketSection?, marketShopNo? }
+//   slug parametri berilmasa — sotuvchining birinchi do'koni
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -10,9 +13,17 @@ export async function PATCH(req: Request) {
     const auth = await requireBnAuth();
     if (auth instanceof NextResponse) return auth;
 
-    const shop = await prisma.bnShop.findFirst({
-        where: { profileId: auth.profileId }, select: { id: true, status: true },
-    });
+    const url = new URL(req.url);
+    const targetSlug = url.searchParams.get("slug");
+
+    const shop = targetSlug
+        ? await prisma.bnShop.findFirst({
+            where: { slug: targetSlug, profileId: auth.profileId },
+            select: { id: true, status: true },
+        })
+        : await prisma.bnShop.findFirst({
+            where: { profileId: auth.profileId }, select: { id: true, status: true },
+        });
     if (!shop) return NextResponse.json({ error: "no_shop" }, { status: 404 });
 
     const b = await req.json().catch(() => ({}));
@@ -25,6 +36,13 @@ export async function PATCH(req: Request) {
     if (typeof b?.phone === "string" && b.phone.replace(/\D/g, "").length >= 9) data.phone = b.phone.trim();
     if (typeof b?.workHours === "string") data.workHours = b.workHours.trim().slice(0, 120) || null;
     if (typeof b?.address === "string") data.address = b.address.trim().slice(0, 200) || null;
+
+    // Joylashuv — STANDALONE do'kon uchun kritik
+    if (typeof b?.lat === "number" && Number.isFinite(b.lat)) data.lat = b.lat;
+    if (typeof b?.lng === "number" && Number.isFinite(b.lng)) data.lng = b.lng;
+    // Bozor ichida (IN_MARKET) — qator + do'kon raqami
+    if (typeof b?.marketSection === "string") data.marketSection = b.marketSection.trim().slice(0, 40) || null;
+    if (typeof b?.marketShopNo === "string") data.marketShopNo = b.marketShopNo.trim().slice(0, 20) || null;
 
     const updated = await prisma.bnShop.update({ where: { id: shop.id }, data });
     return NextResponse.json({ ok: true, shop: updated });

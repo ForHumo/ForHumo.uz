@@ -5,6 +5,7 @@
 // bosh sahifada emas — bu ularni doim qulay qiladi. Standard e-commerce UX.
 
 import { useEffect, useState } from "react";
+import { bnToast } from "./bn-toast";
 import { useLocale } from "next-intl";
 import { ShoppingCart, Zap, Loader2 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
@@ -50,8 +51,8 @@ export function BnMobileActions({ productId, variantId, price, stock, onAddToCar
             });
             const d = await r.json();
             if (r.ok) router.push(`/kabinet/buyurtma/${d.orderCode}`);
-            else if (d.error === "insufficient_balance") alert(t("Hamyonda pul yetmadi", "Недостаточно средств", "Insufficient balance"));
-            else alert(t("Xatolik", "Ошибка", "Error"));
+            else if (d.error === "insufficient_balance") bnToast(t("Hamyonda pul yetmadi", "Недостаточно средств", "Insufficient balance"), "error");
+            else bnToast(t("Xatolik", "Ошибка", "Error"), "error");
         } finally {
             setBuying(false);
         }

@@ -6,6 +6,7 @@
 // yozmagan bo'lsa 1.5 sek delay bilan ochiladi. localStorage'da dismiss saqlanadi.
 
 import { useEffect, useRef, useState } from "react";
+import { bnToast } from "./bn-toast";
 import { createPortal } from "react-dom";
 import { useLocale } from "next-intl";
 import { Star, X, Send, CheckCircle2 } from "lucide-react";
@@ -57,7 +58,7 @@ export function BnRatingModal({ orderId, shopName, alreadyRated, autoOpen }: Pro
             setDone(true);
             setTimeout(() => setOpen(false), 1500);
         } catch {
-            alert(locale === "ru" ? "Ошибка" : locale === "en" ? "Error" : "Xatolik");
+            bnToast(locale === "ru" ? "Ошибка" : locale === "en" ? "Error" : "Xatolik", "error");
         } finally {
             setSubmitting(false);
         }

@@ -4,6 +4,7 @@
 // Server sahifadan initial ma'lumot keladi. Cancel amali client'da.
 
 import { useState, useEffect } from "react";
+import { bnToast } from "./bn-toast";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
@@ -465,10 +466,10 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
                                         const d = await r.json();
                                         if (r.ok) {
                                             const skippedText = d.skipped ? t("reorderSkipped", { n: d.skipped }) : "";
-                                            alert(t("reorderMsg", { added: d.added, skipped: skippedText }));
+                                            bnToast(t("reorderMsg", { added: d.added, skipped: skippedText }), "success");
                                             router.refresh();
                                         } else {
-                                            alert(d?.error ?? t("reorderErr"));
+                                            bnToast(d?.error ?? t("reorderErr"), "error");
                                         }
                                     } finally { setBusy(false); }
                                 }}

@@ -3,6 +3,7 @@
 // BN admin — arizalar navbati. Faqat OWNER/MODERATOR admin ko'radi.
 
 import { useState } from "react";
+import { bnToast } from "./bn-toast";
 import { useRouter } from "next/navigation";
 import {
     ShieldCheck, Store, MapPin, Phone, Check, X, Loader2, User,
@@ -380,10 +381,10 @@ function ShopActions({ shopId, shopName, role, status }: {
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify({ shopId, reason: reason.trim() }),
             });
-            if (r.ok) alert("So'rov yuborildi. OWNER hal qiladi.");
+            if (r.ok) bnToast("So'rov yuborildi. OWNER hal qiladi.", "error");
             else {
                 const j = await r.json().catch(() => ({}));
-                alert(j.error === "already_pending" ? "Bu do'kon uchun so'rov allaqachon bor" : "Xatolik");
+                bnToast(j.error === "already_pending" ? "Bu do'kon uchun so'rov allaqachon bor" : "Xatolik", "error");
             }
         } finally { setBusy(false); }
     }
@@ -399,8 +400,8 @@ function ShopActions({ shopId, shopName, role, status }: {
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify({ shopId, reason: reason.trim() }),
             });
-            if (r.ok) { alert("Do'kon chiqarib yuborildi"); router.refresh(); }
-            else alert("Xatolik");
+            if (r.ok) { bnToast("Do'kon chiqarib yuborildi", "error"); router.refresh(); }
+            else bnToast("Xatolik", "error");
         } finally { setBusy(false); }
     }
 

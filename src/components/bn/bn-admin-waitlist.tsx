@@ -4,6 +4,7 @@
 // Jalol shu ekrandan qo'ng'iroq qilinadigan ro'yxatni ko'radi, holatni yangilaydi.
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { bnToast } from "./bn-toast";
 import {
     ClipboardList, Loader2, Phone, MessageCircle, Check, X,
     Clock, PhoneCall, Store, Trash2, Download, AlertTriangle, Search,
@@ -92,7 +93,7 @@ export function BnAdminWaitlist() {
                 body: JSON.stringify({ ids, status: nextStatus }),
             });
             const d = await r.json();
-            if (!r.ok) { alert(d?.error ?? "Xatolik"); return; }
+            if (!r.ok) { bnToast(d?.error ?? "Xatolik", "error"); return; }
             clearSelection();
             load();
         } finally { setBulkBusy(false); }
@@ -149,7 +150,7 @@ export function BnAdminWaitlist() {
                 body: JSON.stringify(patch),
             });
             const d = await r.json();
-            if (!r.ok) { alert(d?.error ?? "Xatolik"); return; }
+            if (!r.ok) { bnToast(d?.error ?? "Xatolik", "error"); return; }
             // Agar status o'zgarsa — hozirgi tab'dan olib tashlab, statistikani qayta yuklaymiz
             if (patch.status && patch.status !== tab) {
                 setEntries(prev => prev.filter(e => e.id !== id));

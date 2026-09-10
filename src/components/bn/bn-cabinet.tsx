@@ -19,7 +19,7 @@ import {
     TrendingUp, Eye, LogIn, ArrowUpRight, Check, Loader2, Truck,
     Clock, ChevronRight, MapPin, Phone, Building2, Trash2, EyeOff,
     Sparkles, ShieldCheck, AlertTriangle, Upload, Wand2, Users,
-    Send, MessageCircle, Rocket,
+    Send, MessageCircle, Rocket, QrCode, ExternalLink,
 } from "lucide-react";
 import { BN, fmtPrice, ORDER_STATUS_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
@@ -28,6 +28,9 @@ import { BnPhoneInput } from "./bn-phone-input";
 import { BnCategoryPicker } from "./bn-category-picker";
 import { BnSelect } from "./bn-select";
 import { ForPayLogo, TelegramIcon, WhatsAppIcon } from "@/components/brand-icons";
+import { BnSellerChats } from "./bn-seller-chats";
+import { BnMapPicker } from "./bn-map-picker";
+import { bnToast } from "./bn-toast";
 import { BnPushCard } from "./bn-push-card";
 import { BnReferralLeaderboard } from "./bn-referral-leaderboard";
 import { BnAchievementsCard } from "./bn-achievements-card";
@@ -42,11 +45,12 @@ import { BnBulkImportModal } from "./bn-bulk-import-modal";
 import { BnFeatureButton } from "./bn-feature-modal";
 import { BnOrderChatButton } from "./bn-order-chat";
 
-type Tab = "home" | "products" | "orders" | "shop" | "money";
+type Tab = "home" | "products" | "orders" | "chats" | "shop" | "money";
 
 const TAB_DEFS: { key: Tab; labelKey: string; icon: React.ReactNode }[] = [
     { key: "home",     labelKey: "tabHome",     icon: <LayoutDashboard className="w-[18px] h-[18px]" /> },
     { key: "orders",   labelKey: "tabOrders",   icon: <ShoppingBag className="w-[18px] h-[18px]" /> },
+    { key: "chats",    labelKey: "tabChats",    icon: <MessageCircle className="w-[18px] h-[18px]" /> },
     { key: "products", labelKey: "tabProducts", icon: <Package className="w-[18px] h-[18px]" /> },
     { key: "shop",     labelKey: "tabShop",     icon: <Store className="w-[18px] h-[18px]" /> },
     { key: "money",    labelKey: "tabMoney",    icon: <Wallet className="w-[18px] h-[18px]" /> },
@@ -390,6 +394,7 @@ export function BnCabinet(props: Props) {
                     setCreateOpen={setCreateOpen}
                 />
             )}
+            {tab === "chats" && <BnSellerChats />}
             {tab === "shop" && <ShopTab shop={shop} />}
             {tab === "money" && <MoneyTab balance={walletBalance} orderCount={orders.filter(o => o.status === "COMPLETED").length} />}
         </div>
@@ -614,7 +619,7 @@ function OrdersTab({ initial }: { initial: CabinetOrder[] }) {
                     return { ...o, ...patch };
                 }));
             } else {
-                alert(d?.error ?? t("statusErr"));
+                bnToast(d?.error ?? t("statusErr"), "error");
             }
         } finally {
             setBusyIds(s => { const n = new Set(s); n.delete(id); return n; });
@@ -1709,20 +1714,52 @@ function CreateProductModal({
 
 // ── DO'KON SOZLAMALARI ─────────────────────────────────────────────────────
 
+// ── PROFESSIONAL Shop management ──────────────────────────────────────────
+// Bo'limlar: Asosiy | Aloqa | Joylashuv | QR
+// Tepada: statistika kartochka + "Ommaviy profil" tugma + multi-shop switcher
+
+type ShopSection = "basic" | "contact" | "location" | "qr";
+
 function ShopTab({ shop }: { shop: CabinetShop }) {
     const router = useRouter();
     const t = useTranslations("bn.cabinet");
+    const locale = useLocale();
+
+    const [section, setSection] = useState<ShopSection>("basic");
     const [name, setName] = useState(shop.name);
     const [phone, setPhone] = useState(shop.phone);
-    const [description, setDescription] = useState("");
+    const [description, setDescription] = useState(shop.description ?? "");
     const [logoUrl, setLogoUrl] = useState(shop.logoUrl ?? "");
+    const [coverUrl, setCoverUrl] = useState(shop.coverUrl ?? "");
     const [workHours, setWorkHours] = useState("");
+    const [address, setAddress] = useState(shop.address ?? "");
+    const [lat, setLat] = useState<number | null>(shop.lat ?? null);
+    const [lng, setLng] = useState<number | null>(shop.lng ?? null);
+    const [marketSection, setMarketSection] = useState(shop.marketSection ?? "");
+    const [marketShopNo, setMarketShopNo] = useState(shop.marketShopNo ?? "");
     const [busy, setBusy] = useState(false);
-    const [msg, setMsg] = useState<string | null>(null);
-    const fileRef = useRef<HTMLInputElement>(null);
+    const logoFileRef = useRef<HTMLInputElement>(null);
+    const coverFileRef = useRef<HTMLInputElement>(null);
 
-    async function uploadLogo(file: File) {
-        setBusy(true); setMsg(null);
+    // Multi-shop + stats
+    const [allShops, setAllShops] = useState<Array<{ slug: string; name: string }>>([]);
+    const [followerCount, setFollowerCount] = useState<number | null>(null);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const [ms, fw] = await Promise.all([
+                    fetch("/api/bn/seller/my-shops", { cache: "no-store" }).then(r => r.ok ? r.json() : { shops: [] }),
+                    fetch(`/api/bn/shops/${shop.slug}/follow`, { cache: "no-store" }).then(r => r.ok ? r.json() : { count: 0 }),
+                ]);
+                setAllShops(ms.shops ?? []);
+                setFollowerCount(fw.count ?? 0);
+            } catch { /* jim */ }
+        })();
+    }, [shop.slug]);
+
+    async function uploadImage(file: File, kind: "logo" | "cover") {
+        setBusy(true);
         try {
             const fd = new FormData();
             fd.append("file", file);
@@ -1730,122 +1767,289 @@ function ShopTab({ shop }: { shop: CabinetShop }) {
             const r = await fetch("/api/bn/upload", { method: "POST", body: fd });
             const d = await r.json();
             if (r.ok) {
-                setLogoUrl(d.url);
-                // Avto-save: upload muvaffaqiyatli bo'lgach darhol saqlaymiz.
-                // Foydalanuvchi "Save" tugmasini bosishni unutsa ham logo ko'rinadi.
-                await fetch("/api/bn/seller/shop", {
+                if (kind === "logo") setLogoUrl(d.url);
+                else setCoverUrl(d.url);
+                await fetch(`/api/bn/seller/shop?slug=${shop.slug}`, {
                     method: "PATCH",
                     headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ logoUrl: d.url }),
+                    body: JSON.stringify(kind === "logo" ? { logoUrl: d.url } : { coverUrl: d.url }),
                 });
                 router.refresh();
+                bnToast(kind === "logo" ? "Logo yangilandi" : "Muqova yangilandi", "success");
             } else {
-                setMsg(d?.error ?? t("imgUploadErr"));
+                bnToast(d?.error ?? t("imgUploadErr"), "error");
             }
-        } finally { setBusy(false); if (fileRef.current) fileRef.current.value = ""; }
+        } finally {
+            setBusy(false);
+            if (logoFileRef.current) logoFileRef.current.value = "";
+            if (coverFileRef.current) coverFileRef.current.value = "";
+        }
     }
 
-    async function save() {
-        setBusy(true); setMsg(null);
+    async function saveSection(fields: Record<string, unknown>) {
+        setBusy(true);
         try {
-            const r = await fetch("/api/bn/seller/shop", {
+            const r = await fetch(`/api/bn/seller/shop?slug=${shop.slug}`, {
                 method: "PATCH",
                 headers: { "content-type": "application/json" },
-                body: JSON.stringify({ name, phone, description, logoUrl, workHours }),
+                body: JSON.stringify(fields),
             });
-            const d = await r.json();
-            if (r.ok) { setMsg(t("saved")); router.refresh(); }
-            else setMsg(d?.error ?? t("saveErr"));
-        } catch { setMsg(t("netErr")); }
+            if (r.ok) { bnToast(t("saved"), "success"); router.refresh(); }
+            else {
+                const d = await r.json().catch(() => ({}));
+                bnToast(d?.error ?? t("saveErr"), "error");
+            }
+        } catch { bnToast(t("netErr"), "error"); }
         finally { setBusy(false); }
     }
 
+    const sections: { key: ShopSection; label: string; icon: React.ReactNode }[] = [
+        { key: "basic",    label: "Asosiy",    icon: <Store className="w-4 h-4" /> },
+        { key: "contact",  label: "Aloqa",     icon: <Phone className="w-4 h-4" /> },
+        { key: "location", label: "Joylashuv", icon: <MapPin className="w-4 h-4" /> },
+        { key: "qr",       label: "QR",        icon: <QrCode className="w-4 h-4" /> },
+    ];
+
+    const publicUrl = `https://bozornarxida.uz/${locale}/d/${shop.slug}`;
+
     return (
         <div className="space-y-4">
-            <FieldLabel label={t("shopLogo")}>
-                <div className="flex items-center gap-3">
-                    <span
-                        className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 grid place-items-center"
-                        style={{ background: BN.surfaceUp }}
-                    >
-                        {logoUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={logoUrl} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                            <Store className="w-8 h-8" style={{ color: BN.text3 }} />
-                        )}
-                    </span>
-                    <button
-                        type="button"
-                        onClick={() => fileRef.current?.click()}
-                        disabled={busy}
-                        className="h-11 px-4 rounded-xl text-[13px] font-bold"
-                        style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}
-                    >
-                        {busy ? <Loader2 className="w-4 h-4 animate-spin inline" /> : <><Upload className="w-4 h-4 inline mr-1" /> {t("uploadNew")}</>}
-                    </button>
-                    <input
-                        ref={fileRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={e => { const f = e.target.files?.[0]; if (f) void uploadLogo(f); }}
-                    />
+            {/* Statistika + Public profil */}
+            <div className="p-4 rounded-3xl"
+                style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}>
+                <div className="flex items-center gap-3 mb-3">
+                    {shop.logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={shop.logoUrl} alt="" className="w-14 h-14 rounded-2xl object-cover flex-shrink-0" />
+                    ) : (
+                        <div className="w-14 h-14 rounded-2xl grid place-items-center flex-shrink-0"
+                            style={{ background: BN.surfaceUp }}>
+                            <Store className="w-6 h-6" style={{ color: BN.text3 }} />
+                        </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                        <div className="text-[16px] font-black truncate">{shop.name}</div>
+                        <div className="text-[11.5px]" style={{ color: BN.text3 }}>
+                            {locLabel(shop)} · {shop.tier}
+                        </div>
+                    </div>
+                    <a href={publicUrl} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-[12px] font-bold"
+                        style={{ background: BN.gold, color: BN.onGold }}>
+                        <ExternalLink className="w-3.5 h-3.5" /> Ommaviy profil
+                    </a>
                 </div>
-            </FieldLabel>
-
-            <FieldLabel label={t("shopName")}>
-                <input value={name} onChange={e => setName(e.target.value)} className="bn-form-input" />
-            </FieldLabel>
-
-            <FieldLabel label={t("phone")}>
-                <BnPhoneInput value={phone} onChange={setPhone} />
-            </FieldLabel>
-
-            <FieldLabel label={t("workHours")}>
-                <input
-                    value={workHours}
-                    onChange={e => setWorkHours(e.target.value)}
-                    placeholder={t("workHoursPh")}
-                    className="bn-form-input"
-                />
-            </FieldLabel>
-
-            <FieldLabel label={t("shopDesc")}>
-                <textarea
-                    value={description}
-                    onChange={e => setDescription(e.target.value)}
-                    rows={3}
-                    maxLength={500}
-                    placeholder={t("shopDescPh")}
-                    className="bn-form-input resize-none"
-                />
-            </FieldLabel>
-
-            {msg && (
-                <p className="text-[12.5px] p-3 rounded-lg" style={{ background: BN.surfaceUp, color: BN.text2 }}>
-                    {msg}
-                </p>
-            )}
-
-            <button
-                onClick={save}
-                disabled={busy}
-                className="w-full h-12 rounded-2xl text-[15px] font-black disabled:opacity-60"
-                style={{ background: BN.gold, color: BN.onGold }}
-            >
-                {busy ? <Loader2 className="w-5 h-5 animate-spin inline" /> : t("save")}
-            </button>
-
-            <div className="pt-4 space-y-2 text-[12.5px]" style={{ borderTop: `1px solid ${BN.border}`, color: BN.text3 }}>
-                <p>{t("shopUrl")}: <span className="font-bold" style={{ color: BN.text2 }}>/d/{shop.slug}</span></p>
-                <p>{t("shopLoc")}: <span className="font-bold" style={{ color: BN.text2 }}>{locLabel(shop)}</span></p>
-                <p>{t("shopRating")}: <span className="font-bold" style={{ color: BN.text2 }}>{shop.rating > 0 ? `${shop.rating.toFixed(1)} (${shop.ratingCount})` : t("noRating")}</span></p>
-                <p>{t("shopTier")}: <span className="font-bold" style={{ color: BN.text2 }}>{shop.tier}</span></p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <StatMini label="Reyting" value={shop.rating > 0 ? `${shop.rating.toFixed(1)} ★` : "yo'q"} accent />
+                    <StatMini label="Sharhlar" value={String(shop.ratingCount)} />
+                    <StatMini label="Obunachilar" value={followerCount !== null ? String(followerCount) : "…"} />
+                    <StatMini label="Mahsulotlar" value={String(shop.productCount)} />
+                </div>
             </div>
 
-            <div className="pt-4">
+            {/* Ko'p do'kon switcher */}
+            {allShops.length > 1 && (
+                <div className="p-3 rounded-2xl" style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
+                    <div className="text-[11px] font-black uppercase mb-2" style={{ color: BN.text3 }}>
+                        Do&apos;konlaringiz ({allShops.length})
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        {allShops.map(s => {
+                            const isCurrent = s.slug === shop.slug;
+                            return (
+                                <a key={s.slug}
+                                    href={isCurrent ? `#` : `https://bozornarxida.uz/${locale}/d/${s.slug}`}
+                                    target={isCurrent ? "_self" : "_blank"} rel="noopener noreferrer"
+                                    className="flex items-center gap-2 p-2 rounded-lg text-[12.5px]"
+                                    style={{
+                                        background: isCurrent ? BN.goldSoft : BN.surfaceUp,
+                                        color: isCurrent ? BN.gold : BN.text2,
+                                        border: `1px solid ${isCurrent ? BN.borderGold : "transparent"}`,
+                                    }}>
+                                    <Store className="w-3.5 h-3.5" />
+                                    <span className="truncate">{s.name}</span>
+                                    {isCurrent && <span className="ml-auto text-[10px] font-black">joriy</span>}
+                                </a>
+                            );
+                        })}
+                    </div>
+                    <p className="text-[10.5px] mt-2" style={{ color: BN.text3 }}>
+                        Boshqa do&apos;konni tahrirlash uchun ommaviy sahifasidan ochib, sotuvchi rejimida davom eting.
+                    </p>
+                </div>
+            )}
+
+            {/* Bo'lim tanlash */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                {sections.map(s => (
+                    <button
+                        key={s.key}
+                        onClick={() => setSection(s.key)}
+                        className="flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-[13px] font-bold flex-shrink-0 transition-colors"
+                        style={{
+                            background: section === s.key ? BN.goldSoft : BN.surface,
+                            color: section === s.key ? BN.gold : BN.text2,
+                            border: `1px solid ${section === s.key ? BN.borderGold : BN.border}`,
+                        }}>
+                        {s.icon}
+                        {s.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* ASOSIY: logo + nomi + tavsif + muqova */}
+            {section === "basic" && (
+                <div className="space-y-4">
+                    <FieldLabel label="Logo">
+                        <div className="flex items-center gap-3">
+                            <span className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 grid place-items-center"
+                                style={{ background: BN.surfaceUp }}>
+                                {logoUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={logoUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                    <Store className="w-8 h-8" style={{ color: BN.text3 }} />
+                                )}
+                            </span>
+                            <button type="button" onClick={() => logoFileRef.current?.click()} disabled={busy}
+                                className="h-11 px-4 rounded-xl text-[13px] font-bold"
+                                style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}>
+                                {busy ? <Loader2 className="w-4 h-4 animate-spin inline" /> : <><Upload className="w-4 h-4 inline mr-1" /> Yangilash</>}
+                            </button>
+                            <input ref={logoFileRef} type="file" accept="image/*" className="hidden"
+                                onChange={e => { const f = e.target.files?.[0]; if (f) void uploadImage(f, "logo"); }} />
+                        </div>
+                    </FieldLabel>
+
+                    <FieldLabel label="Muqova rasm (3:1 tavsiya)">
+                        <div className="space-y-2">
+                            {coverUrl && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={coverUrl} alt="" className="w-full aspect-[3/1] rounded-2xl object-cover"
+                                    style={{ border: `1px solid ${BN.border}` }} />
+                            )}
+                            <button type="button" onClick={() => coverFileRef.current?.click()} disabled={busy}
+                                className="h-11 px-4 rounded-xl text-[13px] font-bold"
+                                style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}>
+                                {busy ? <Loader2 className="w-4 h-4 animate-spin inline" /> : <><Upload className="w-4 h-4 inline mr-1" /> {coverUrl ? "Almashtirish" : "Muqova qo'shish"}</>}
+                            </button>
+                            <input ref={coverFileRef} type="file" accept="image/*" className="hidden"
+                                onChange={e => { const f = e.target.files?.[0]; if (f) void uploadImage(f, "cover"); }} />
+                        </div>
+                    </FieldLabel>
+
+                    <FieldLabel label="Nomi">
+                        <input value={name} onChange={e => setName(e.target.value)} className="bn-form-input" />
+                    </FieldLabel>
+
+                    <FieldLabel label="Tavsif (500 belgi)">
+                        <textarea value={description} onChange={e => setDescription(e.target.value)}
+                            rows={4} maxLength={500}
+                            placeholder="Do'konni qisqacha tanishtiring — nima sotasiz, nima bilan mashhursiz"
+                            className="bn-form-input resize-none" />
+                    </FieldLabel>
+
+                    <button onClick={() => saveSection({ name, description })} disabled={busy}
+                        className="w-full h-12 rounded-2xl text-[15px] font-black disabled:opacity-60"
+                        style={{ background: BN.gold, color: BN.onGold }}>
+                        {busy ? <Loader2 className="w-5 h-5 animate-spin inline" /> : "Saqlash"}
+                    </button>
+                </div>
+            )}
+
+            {/* ALOQA: telefon + ish vaqti */}
+            {section === "contact" && (
+                <div className="space-y-4">
+                    <FieldLabel label="Telefon (WhatsApp faol raqam)">
+                        <BnPhoneInput value={phone} onChange={setPhone} />
+                        <p className="text-[11px] mt-1" style={{ color: BN.text3 }}>
+                            Xaridor WhatsApp orqali savol yozish uchun. Raqam tasdiqlangan bo&apos;lsa mahsulotda yashil WA tugma chiqadi.
+                        </p>
+                    </FieldLabel>
+
+                    <FieldLabel label="Ish vaqti">
+                        <input value={workHours} onChange={e => setWorkHours(e.target.value)}
+                            placeholder="Har kuni 09:00 — 20:00"
+                            className="bn-form-input" />
+                    </FieldLabel>
+
+                    <button onClick={() => saveSection({ phone, workHours })} disabled={busy}
+                        className="w-full h-12 rounded-2xl text-[15px] font-black disabled:opacity-60"
+                        style={{ background: BN.gold, color: BN.onGold }}>
+                        {busy ? <Loader2 className="w-5 h-5 animate-spin inline" /> : "Saqlash"}
+                    </button>
+                </div>
+            )}
+
+            {/* JOYLASHUV: bozor ichida yoki alohida */}
+            {section === "location" && (
+                <div className="space-y-4">
+                    <div className="p-3 rounded-2xl text-[12.5px]"
+                        style={{ background: BN.surfaceUp, color: BN.text2 }}>
+                        <strong>Turi:</strong> {locLabel(shop)}
+                    </div>
+
+                    {shop.locationType === "IN_MARKET" && (
+                        <>
+                            <FieldLabel label="Qator (bozor ichida)">
+                                <input value={marketSection} onChange={e => setMarketSection(e.target.value)}
+                                    placeholder="12-qator"
+                                    className="bn-form-input" />
+                            </FieldLabel>
+                            <FieldLabel label="Do'kon raqami">
+                                <input value={marketShopNo} onChange={e => setMarketShopNo(e.target.value)}
+                                    placeholder="45"
+                                    className="bn-form-input" />
+                            </FieldLabel>
+                            <button onClick={() => saveSection({ marketSection, marketShopNo })} disabled={busy}
+                                className="w-full h-12 rounded-2xl text-[15px] font-black disabled:opacity-60"
+                                style={{ background: BN.gold, color: BN.onGold }}>
+                                {busy ? <Loader2 className="w-5 h-5 animate-spin inline" /> : "Saqlash"}
+                            </button>
+                        </>
+                    )}
+
+                    {shop.locationType === "STANDALONE" && (
+                        <>
+                            <FieldLabel label="Manzil (xarita bilan tanlang)">
+                                <BnMapPicker
+                                    value={lat !== null && lng !== null ? { lat, lng, address } : null}
+                                    onChange={v => { setLat(v.lat); setLng(v.lng); setAddress(v.address); }}
+                                />
+                            </FieldLabel>
+                            <button onClick={() => saveSection({ lat, lng, address })}
+                                disabled={busy || lat === null || lng === null}
+                                className="w-full h-12 rounded-2xl text-[15px] font-black disabled:opacity-60"
+                                style={{ background: BN.gold, color: BN.onGold }}>
+                                {busy ? <Loader2 className="w-5 h-5 animate-spin inline" /> : "Manzilni saqlash"}
+                            </button>
+                        </>
+                    )}
+
+                    {shop.locationType === "ONLINE" && (
+                        <div className="p-4 rounded-2xl text-[13px]"
+                            style={{ background: BN.surfaceUp, color: BN.text2 }}>
+                            Onlayn do&apos;kon — fizik manzil talab qilinmaydi.
+                            Yetkazish sozlamalarini &quot;Aloqa&quot; bo&apos;limida ishlating.
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* QR — do'kon uchun bosma QR karta */}
+            {section === "qr" && (
                 <BnShopQrPanel shopSlug={shop.slug} shopName={shop.name} />
+            )}
+        </div>
+    );
+}
+
+function StatMini({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+    return (
+        <div className="p-2.5 rounded-xl" style={{ background: BN.surfaceUp }}>
+            <div className="text-[10.5px] font-bold uppercase" style={{ color: BN.text3 }}>{label}</div>
+            <div className="text-[15px] font-black tabular-nums mt-0.5" style={{ color: accent ? BN.gold : BN.text }}>
+                {value}
             </div>
         </div>
     );

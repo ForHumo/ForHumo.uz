@@ -9,6 +9,7 @@
 // Rasmlar: bir necha URL space yoki | bilan ajratilgan.
 
 import { useState, useMemo, useRef, useEffect } from "react";
+import { bnToast } from "./bn-toast";
 import { createPortal } from "react-dom";
 import {
     X, Upload, Copy, FileSpreadsheet, CheckCircle2, AlertTriangle, Loader2, ChevronRight, Download,
@@ -114,7 +115,7 @@ export function BnBulkImportModal({
                 setResults(d.results);
                 setStep("preview");
             } else {
-                alert(d?.error ?? "Xatolik");
+                bnToast(d?.error ?? "Xatolik", "error");
             }
         } finally {
             setBusy(false);
@@ -143,7 +144,7 @@ export function BnBulkImportModal({
                 setResults(d.results);
                 setStep("done");
             } else {
-                alert(d?.error ?? "Xatolik");
+                bnToast(d?.error ?? "Xatolik", "error");
             }
         } finally {
             setBusy(false);

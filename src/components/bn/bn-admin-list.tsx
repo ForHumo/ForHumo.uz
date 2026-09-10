@@ -4,6 +4,7 @@
 // Adminlarni qo'shish, o'chirish (OWNER'ni emas), rolini o'zgartirish.
 
 import { useEffect, useState } from "react";
+import { bnToast } from "./bn-toast";
 import {
     UserPlus, Trash2, ShieldCheck, Shield, X, Loader2, User,
 } from "lucide-react";
@@ -45,7 +46,7 @@ export function BnAdminList() {
 
     async function remove(id: string, isOwner: boolean) {
         if (isOwner) {
-            alert("OWNER'ni olib tashlab bo'lmaydi. Bir-birimizni ololmaymiz.");
+            bnToast("OWNER'ni olib tashlab bo'lmaydi. Bir-birimizni ololmaymiz.", "error");
             return;
         }
         if (!confirm("Bu adminni olib tashlaysizmi?")) return;

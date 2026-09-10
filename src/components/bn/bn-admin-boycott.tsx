@@ -3,6 +3,7 @@
 // BN Admin — Boykot brendlar boshqaruvi (OWNER only).
 
 import { useEffect, useState } from "react";
+import { bnToast } from "./bn-toast";
 import { BN } from "@/lib/bn-theme";
 import { Ban, Plus, X, Loader2, Trash2 } from "lucide-react";
 
@@ -39,7 +40,7 @@ export function BnAdminBoycott({ role }: { role: "OWNER" | "MODERATOR" }) {
         try {
             const r = await fetch(`/api/bn/boycott/${id}`, { method: "DELETE" });
             if (r.ok) setBrands(prev => prev.filter(b => b.id !== id));
-            else alert("Xatolik");
+            else bnToast("Xatolik", "error");
         } finally {
             setBusy(s => { const n = new Set(s); n.delete(id); return n; });
         }
