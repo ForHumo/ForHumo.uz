@@ -740,9 +740,14 @@ function decorateReply(opts: {
         ? "AI"
         : `<a href="${BOT_LEARN_URL}">Humo AI</a>`;
     const introLine = introFor(opts.language, opts.ownerName, brandName);
-    out = introLine + "\n\n" + out;
 
-    // 2) Marketing footer (reklama)
+    // 2) Asosiy javob — Telegram sitata (blockquote) + qalin+kursiv
+    // AI xom matn qaytaradi, HTML kutilmaydi — shuning uchun asosini escape qilamiz
+    // (link/HTML AI'dan chiqmaydi; buzilishning oldini olamiz)
+    const body = `<blockquote><b><i>${escapeHtml(out)}</i></b></blockquote>`;
+    out = introLine + "\n\n" + body;
+
+    // 3) Marketing footer (reklama)
     const footerAllowedRemoved = canRemoveFooter && !opts.showAdFooter;
     if (!footerAllowedRemoved) {
         const headline = pickHeadline(opts.language);
