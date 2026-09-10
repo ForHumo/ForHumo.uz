@@ -494,10 +494,22 @@ export async function searchProducts(opts: {
         where.isNegotiable = true;
     }
     if (q?.trim()) {
-        where.OR = [
-            { title: { contains: q.trim(), mode: "insensitive" } },
-            { description: { contains: q.trim(), mode: "insensitive" } },
-        ];
+        // Ko'p tilli qidiruv: `searchIndex` maydonida barcha tarjimalar + transliteratsiya
+        // + kalit so'zlar (masalan "kolbasa" ↔ "колбаса" ↔ "sausage") jamlangan.
+        // Xaridor har uchta tilda ham topa oladi.
+        const query = q.trim();
+        // Transliteratsiya variantlari — eski mahsulotlar searchIndex'siz bo'lsa
+        // ham topa olish uchun title/description bo'yicha ham qidiramiz.
+        const { transliterate } = await import("@/lib/bn-i18n-product-lite");
+        const variants = [query, ...transliterate(query)].filter((v, i, a) => v && a.indexOf(v) === i);
+        where.OR = variants.flatMap(v => [
+            { searchIndex: { contains: v.toLowerCase(), mode: "insensitive" } },
+            { title:       { contains: v, mode: "insensitive" } },
+            { description: { contains: v, mode: "insensitive" } },
+            { titleUz:     { contains: v, mode: "insensitive" } },
+            { titleRu:     { contains: v, mode: "insensitive" } },
+            { titleEn:     { contains: v, mode: "insensitive" } },
+        ]);
     }
     if (categorySlug) {
         const cat = await prisma.bnCategory.findUnique({

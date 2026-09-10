@@ -105,12 +105,18 @@ export async function POST(req: Request) {
         : null;
     const wholesaleTiers = isWholesale ? parseTiers(body?.wholesaleTiers) : [];
 
+    // Boshlang'ich searchIndex — asosiy title/description asosida (transliteratsiya bilan).
+    // Keyin fon rejimda AI 3 tilga tarjima qiladi va indeksni yangilaydi.
+    const { buildSearchIndex, translateAndIndexProduct } = await import("@/lib/bn-i18n-product");
+    const initialIndex = buildSearchIndex({ title, description });
+
     const product = await prisma.bnProduct.create({
         data: {
             slug,
             shopId: shopRes.shop.id,
             categoryId: cat.id,
             title, description,
+            searchIndex: initialIndex,
             price, oldPrice, marketAvgPrice,
             images,
             attributes: attributes as never,
@@ -127,6 +133,9 @@ export async function POST(req: Request) {
             hidden: false,
         },
     });
+
+    // 3-til AI tarjima (fon, javobni kechiktirmaydi)
+    after(() => translateAndIndexProduct(product.id));
 
     // Do'kon productCount denorm
     await prisma.bnShop.update({

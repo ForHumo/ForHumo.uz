@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronRight, Sparkles, Plus } from "lucide-react";
 import { useLocale } from "next-intl";
 import { BN } from "@/lib/bn-theme";
-import { BnLink } from "./bn-nav";
+import { BnLink, useBnBase } from "./bn-nav";
 import { BnAdBuyModal } from "./bn-ad-buy-modal";
 
 interface Banner {
@@ -30,6 +30,7 @@ const PLACEHOLDER_GRADIENTS: [string, string][] = [
 
 export function BnHeroSlider() {
     const locale = useLocale();
+    const { hasShop } = useBnBase();
     const [banners, setBanners] = useState<(Banner | null)[]>(Array(TOTAL_SLOTS).fill(null));
     const [loading, setLoading] = useState(true);
     const [idx, setIdx] = useState(0);
@@ -184,14 +185,18 @@ export function BnHeroSlider() {
                                                 "Daily buyers will see your ad",
                                             )}
                                         </p>
-                                        <button
-                                            onClick={() => setBuyOpen(true)}
-                                            className="inline-flex items-center gap-2 h-11 px-5 rounded-2xl text-[14px] font-black transition-transform active:scale-[0.97]"
-                                            style={{ background: "#F6F4F0", color: "#1C1913" }}
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                            {t("Reklama qo'yish", "Разместить рекламу", "Place an ad")}
-                                        </button>
+                                        {/* Tugma faqat sotuvchi (do'koni bor) uchun ko'rinadi.
+                                            Do'koni yo'q foydalanuvchiga umuman ko'rsatilmaydi — chalg'itmaslik uchun. */}
+                                        {hasShop && (
+                                            <button
+                                                onClick={() => setBuyOpen(true)}
+                                                className="inline-flex items-center gap-2 h-11 px-5 rounded-2xl text-[14px] font-black transition-transform active:scale-[0.97]"
+                                                style={{ background: "#F6F4F0", color: "#1C1913" }}
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                                {t("Reklama qo'yish", "Разместить рекламу", "Place an ad")}
+                                            </button>
+                                        )}
                                     </div>
                                     <div className="hidden md:block text-[120px] font-black leading-none opacity-15" aria-hidden="true">
                                         <Sparkles className="w-32 h-32" style={{ color: "#F6F4F0" }} />

@@ -2,9 +2,11 @@
 // Faqat do'kon egasi.
 
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 import { parseTiers } from "@/lib/bn-wholesale";
+import { translateAndIndexProduct } from "@/lib/bn-i18n-product";
 
 export async function PATCH(
     req: Request,
@@ -59,6 +61,12 @@ export async function PATCH(
     }
 
     const updated = await prisma.bnProduct.update({ where: { id }, data });
+
+    // Agar title yoki description o'zgargan bo'lsa — 3 tilga tarjima va searchIndex qayta hisoblansin.
+    if (data.title !== undefined || data.description !== undefined) {
+        after(() => translateAndIndexProduct(id));
+    }
+
     return NextResponse.json({ ok: true, product: updated });
 }
 

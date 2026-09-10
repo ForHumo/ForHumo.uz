@@ -3313,11 +3313,24 @@ model BnProduct {
   categoryId     String?
   category       BnCategory?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
-  title          String
+  title          String                            // Sotuvchi o'z tilida yozgan asosiy nom
   slug           String            @unique
   description    String?
   images         String[]          @default([])    // maks 10
   videos         String[]          @default([])    // maks 2
+
+  // Ko'p tilli tarjimalar — AI yaratish paytida avto-generatsiya qiladi.
+  // Xaridor qidiruvi 3 tilning barchasida topadi (masalan "soat" → "watch"/"часы"
+  // xaridor ham topadi). Bo'sh bo'lsa asosiy title/description ishlatiladi.
+  titleUz        String?
+  titleRu        String?
+  titleEn        String?
+  descriptionUz  String?
+  descriptionRu  String?
+  descriptionEn  String?
+  // Qidiruv indeksi — barcha tillar + kalit so'zlar bir qatorda, lowercased.
+  // Bu maydonga qarab `contains` qidiruv ishlaydi.
+  searchIndex    String?
 
   price          Int                               // so'm (butun)
   oldPrice       Int?

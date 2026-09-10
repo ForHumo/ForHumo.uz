@@ -6,79 +6,118 @@
 // Sahifadan chiqmaydi.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { HeadsetIcon, X, ArrowLeft, Send, Plus, Loader2, MessageCircle, CheckCircle2, AlertTriangle, Lightbulb, Bug, CreditCard, HelpCircle, Clock, ShieldCheck, ChevronRight, Sparkles } from "lucide-react";
+import Image from "next/image";
+import { HeadsetIcon, X, ArrowLeft, Send, Plus, Loader2, MessageCircle, CheckCircle2, AlertTriangle, Lightbulb, Bug, CreditCard, HelpCircle, Clock, ShieldCheck, ChevronRight, Mail } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { moduleTheme, type ModuleTheme } from "@/lib/module-theme";
 import { usePathname } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 
-// ── Welcome ekran (birinchi marta kirganda / murojaat yo'q holatda) ─────────
-interface QuickStart { subject: string; message: string }
-interface QuickCategory { id: string; icon: typeof Bug; title: string; desc: string; sample: QuickStart; tone: string }
+// ── Kategoriya shabloni — har savol alohida qulflangan yorliq + tahrirlanuvchi katak
+// (foydalanuvchi shablon matnini o'chira olmasin, faqat javob qismini yozadi)
+interface QuickField { key: string; label: string; placeholder?: string; multiline?: boolean; required?: boolean; }
+interface QuickCategory {
+    id: string;
+    icon: typeof Bug;
+    title: string;
+    desc: string;
+    tone: string;
+    subject: string;              // sarlavha shabloni (masalan "[BN] Xato haqida")
+    fields: QuickField[];         // har biri alohida qulflangan yorliq + kirituvchi katak
+}
 
-function SupportWelcome({ moduleLabel, onQuickStart, theme }: { moduleLabel: string; onQuickStart: (pre: QuickStart) => void; theme: ModuleTheme }) {
-    const categories: QuickCategory[] = [
+function buildCategories(moduleLabel: string): QuickCategory[] {
+    return [
         {
-            id: "bug",
-            icon: Bug,
+            id: "bug", icon: Bug,
             title: "Xato / nosozlik",
             desc: "Biror narsa ishlamayapti",
             tone: "text-red-600 dark:text-red-400 bg-red-500/10",
-            sample: {
-                subject: `[${moduleLabel}] Xato haqida`,
-                message: `Modul: ${moduleLabel}\nNima kutgan edim: \nNima yuz berdi: \nQanday takrorlash mumkin: `,
-            },
+            subject: `[${moduleLabel}] Xato haqida`,
+            fields: [
+                { key: "expected",  label: "Nima kutgan edim",       placeholder: "Masalan: Buyurtma tugmasi bosilishi kerak edi", required: true, multiline: true },
+                { key: "actual",    label: "Nima yuz berdi",         placeholder: "Masalan: Tugma bosilmadi / xato ochilib qoldi", required: true, multiline: true },
+                { key: "steps",     label: "Qanday takrorlash mumkin", placeholder: "1) Bosh sahifa\n2) Mahsulot ochish\n3) ...",     multiline: true },
+                { key: "device",    label: "Qurilma / brauzer",      placeholder: "Masalan: iPhone 13, Safari 17" },
+            ],
         },
         {
-            id: "account",
-            icon: ShieldCheck,
+            id: "account", icon: ShieldCheck,
             title: "Hisob / kirish",
             desc: "Login, parol, 2FA, ma'lumot",
             tone: "text-blue-600 dark:text-blue-400 bg-blue-500/10",
-            sample: {
-                subject: "Hisob bilan bog'liq savol",
-                message: "Muammoni batafsil yozing: ",
-            },
+            subject: "Hisob bilan bog'liq savol",
+            fields: [
+                { key: "problem",   label: "Muammo qanday",          placeholder: "Masalan: kirolmayapman / 2FA kod kelmayapti", required: true, multiline: true },
+                { key: "tried",     label: "Nima urinib ko'rganman", placeholder: "Masalan: parol tikladim, boshqa brauzerdan kirdim", multiline: true },
+                { key: "email",     label: "Ro'yxatdan o'tgan email", placeholder: "misol@gmail.com" },
+            ],
         },
         {
-            id: "billing",
-            icon: CreditCard,
+            id: "billing", icon: CreditCard,
             title: "To'lov / hamyon",
             desc: "For Pay, buyurtma, chek",
             tone: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10",
-            sample: {
-                subject: "To'lov haqida savol",
-                message: "Tranzaksiya ma'lumotlari (id, sana, summa): \nMuammo: ",
-            },
+            subject: "To'lov haqida savol",
+            fields: [
+                { key: "txId",      label: "Tranzaksiya ID (bo'lsa)", placeholder: "Masalan: TX_12345 yoki buyurtma raqami" },
+                { key: "amount",    label: "Summa va sana",           placeholder: "Masalan: 150 000 so'm · 15-avg 14:32" },
+                { key: "problem",   label: "Muammo",                  placeholder: "Masalan: pul yechildi lekin buyurtma yaratilmadi", required: true, multiline: true },
+            ],
         },
         {
-            id: "feedback",
-            icon: Lightbulb,
+            id: "feedback", icon: Lightbulb,
             title: "Taklif / fikr",
             desc: "Yangi imkoniyat, yaxshilash",
             tone: "text-amber-600 dark:text-amber-400 bg-amber-500/10",
-            sample: {
-                subject: "Taklif",
-                message: "Fikrimni ulashmoqchiman: ",
-            },
+            subject: "Taklif",
+            fields: [
+                { key: "idea",      label: "G'oya nima",              placeholder: "Masalan: buyurtma statusini SMS orqali yuborilsin", required: true, multiline: true },
+                { key: "why",       label: "Nima uchun kerak",        placeholder: "Nima uchun bu foydali bo'ladi", multiline: true },
+            ],
         },
         {
-            id: "other",
-            icon: HelpCircle,
+            id: "other", icon: HelpCircle,
             title: "Boshqa savol",
-            desc: "Bo'sh forma",
+            desc: "Umumiy savol yoki murojaat",
             tone: "text-neutral-600 dark:text-neutral-400 bg-neutral-500/10",
-            sample: { subject: "", message: "" },
+            subject: "",
+            fields: [
+                { key: "subject",   label: "Mavzu (qisqacha)",        placeholder: "Nima haqida", required: true },
+                { key: "message",   label: "Xabar",                   placeholder: "Batafsil yozing", required: true, multiline: true },
+            ],
         },
     ];
+}
+
+// ── Brand ikonkalar — inline SVG (rasmiy shakl)
+function TelegramIcon({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
+            <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.24 3.64 11.95c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.7L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/>
+        </svg>
+    );
+}
+function GmailIcon({ className }: { className?: string }) {
+    // "Gmail" konvert shakli — brand quyi taqiqli hudud emas (oddiy geometrik)
+    return (
+        <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="2" />
+            <path d="M3 7l9 6 9-6" />
+        </svg>
+    );
+}
+
+function SupportWelcome({ moduleLabel, onQuickStart, theme }: { moduleLabel: string; onQuickStart: (c: QuickCategory) => void; theme: ModuleTheme }) {
+    const categories = buildCategories(moduleLabel);
 
     return (
         <div className="p-4 space-y-4">
-            {/* Salom + tavsif */}
+            {/* Salom + rasmiy Humo Support logo */}
             <div className="text-center pt-2 pb-1">
-                <div className="mx-auto w-12 h-12 rounded-2xl flex items-center justify-center mb-2 shadow-lg"
-                    style={{ background: theme.gradient, boxShadow: theme.shadow }}>
-                    <HeadsetIcon className="w-6 h-6" style={{ color: theme.onPrimary }} />
+                <div className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-2 overflow-hidden bg-white dark:bg-neutral-900 shadow-lg"
+                    style={{ boxShadow: theme.shadow }}>
+                    <Image src="/logos/humo-support.png" alt="Humo Support" width={48} height={48} className="object-contain" />
                 </div>
                 <div className="text-base font-black">Salom! Qanday yordam beray?</div>
                 <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
@@ -86,15 +125,14 @@ function SupportWelcome({ moduleLabel, onQuickStart, theme }: { moduleLabel: str
                 </div>
             </div>
 
-            {/* Response time indikator */}
-            {/* PRIMARY — Nexus DM (B yondashuv, modul-themed) */}
+            {/* PRIMARY — Nexus DM (Humo Nexus rasmiy logo bilan) */}
             <Link
                 href="/nexus?dm=support"
                 className="flex items-center gap-3 p-3 rounded-xl shadow-lg group hover:shadow-xl transition-all"
                 style={{ background: theme.gradient, color: theme.onPrimary, boxShadow: theme.shadow }}
             >
-                <span className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm grid place-items-center flex-shrink-0">
-                    <Sparkles className="w-5 h-5" />
+                <span className="w-10 h-10 rounded-xl bg-white/95 grid place-items-center flex-shrink-0 overflow-hidden">
+                    <Image src="/logos/humo-nexus.png" alt="Humo Nexus" width={32} height={32} className="object-contain" />
                 </span>
                 <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-black">Nexus DM&apos;da yozing</p>
@@ -113,7 +151,7 @@ function SupportWelcome({ moduleLabel, onQuickStart, theme }: { moduleLabel: str
                 {categories.map(c => (
                     <button
                         key={c.id}
-                        onClick={() => onQuickStart(c.sample)}
+                        onClick={() => onQuickStart(c)}
                         className="w-full flex items-center gap-3 p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900/60 transition-colors text-left group"
                     >
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${c.tone}`}>
@@ -128,18 +166,23 @@ function SupportWelcome({ moduleLabel, onQuickStart, theme }: { moduleLabel: str
                 ))}
             </div>
 
-            {/* Boshqa aloqa kanallari */}
+            {/* Boshqa aloqa kanallari — rasmiy brand ikonlar */}
             <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800">
                 <div className="text-xs font-bold text-neutral-500 mb-2">Yoki bevosita:</div>
                 <div className="grid grid-cols-2 gap-2">
                     <a href="https://t.me/ForHumo_Support" target="_blank" rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-1.5 h-9 rounded-lg bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] text-xs font-bold transition-colors">
-                        <MessageCircle className="w-3.5 h-3.5" /> Telegram
+                        className="flex items-center justify-center gap-1.5 h-10 rounded-lg text-xs font-bold transition-colors"
+                        style={{ background: "#229ED9", color: "#fff" }}>
+                        <TelegramIcon className="w-4 h-4" /> Telegram
                     </a>
-                    <a href="mailto:support@forhumo.uz"
-                        className="flex items-center justify-center gap-1.5 h-9 rounded-lg bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-bold transition-colors">
-                        <AlertTriangle className="w-3.5 h-3.5" /> Email
+                    <a href="mailto:ceo@forhumo.uz"
+                        className="flex items-center justify-center gap-1.5 h-10 rounded-lg text-xs font-bold transition-colors"
+                        style={{ background: "#EA4335", color: "#fff" }}>
+                        <GmailIcon className="w-4 h-4" /> Email
                     </a>
+                </div>
+                <div className="text-[10.5px] text-neutral-500 text-center mt-2">
+                    ceo@forhumo.uz · t.me/ForHumo_Support
                 </div>
             </div>
 
@@ -192,6 +235,8 @@ export function SupportDock() {
     const [unread, setUnread] = useState(0);
     const [subject, setSubject] = useState("");
     const [firstMsg, setFirstMsg] = useState("");
+    const [activeCategory, setActiveCategory] = useState<QuickCategory | null>(null);
+    const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
     const [reply, setReply] = useState("");
     const [sending, setSending] = useState(false);
     const [host, setHost] = useState("");
@@ -310,18 +355,37 @@ export function SupportDock() {
 
     async function createTicket(e: React.FormEvent) {
         e.preventDefault();
-        if (subject.trim().length < 3 || firstMsg.trim().length < 5) return;
+        // Strukturalangan kategoriya bo'lsa — javoblardan matn tuzamiz
+        let finalSubject = subject.trim();
+        let finalMessage = firstMsg.trim();
+        if (activeCategory) {
+            // Har bir katak: label + javob (bo'sh emas bo'lganlar). Ba'zilari majburiy.
+            const missing = activeCategory.fields.find(f => f.required && !(fieldValues[f.key] ?? "").trim());
+            if (missing) return;
+            // Sarlavha shabloni + birinchi majburiy javob (agar bor bo'lsa "subject" katagi bo'lmasa)
+            const subjectFromField = fieldValues["subject"]?.trim();
+            finalSubject = subjectFromField || activeCategory.subject || activeCategory.title;
+            const parts = [`Modul: ${MODULE_LABEL[currentModule] ?? currentModule}`];
+            for (const f of activeCategory.fields) {
+                if (f.key === "subject") continue;   // sarlavhaga tushdi
+                const v = (fieldValues[f.key] ?? "").trim();
+                if (v) parts.push(`${f.label}: ${v}`);
+            }
+            finalMessage = parts.join("\n");
+        }
+        if (finalSubject.length < 3 || finalMessage.length < 5) return;
         setSending(true);
         try {
             const r = await fetch("/api/support/tickets", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ subject: subject.trim(), message: firstMsg.trim(), module: currentModule }),
+                body: JSON.stringify({ subject: finalSubject, message: finalMessage, module: currentModule }),
             });
             if (r.ok) {
                 const j = await r.json();
                 setTickets(list => [j.ticket, ...list]);
                 setSubject(""); setFirstMsg("");
+                setActiveCategory(null); setFieldValues({});
                 setActiveId(j.ticket.id);
                 setView("thread");
             }
@@ -386,12 +450,17 @@ export function SupportDock() {
                         <div className="flex items-center gap-2 px-3 py-3 border-b border-neutral-200 dark:border-neutral-800">
                             {view !== "list" && (
                                 <button
-                                    onClick={() => { setView("list"); setActiveId(null); }}
+                                    onClick={() => { setView("list"); setActiveId(null); setActiveCategory(null); setFieldValues({}); }}
                                     className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800"
                                     aria-label="Orqaga"
                                 >
                                     <ArrowLeft size={18} />
                                 </button>
+                            )}
+                            {view === "list" && (
+                                <span className="w-8 h-8 rounded-lg overflow-hidden bg-white dark:bg-neutral-900 grid place-items-center flex-shrink-0">
+                                    <Image src="/logos/humo-support.png" alt="" width={28} height={28} className="object-contain" />
+                                </span>
                             )}
                             <div className="flex-1 min-w-0">
                                 <div className="text-sm font-semibold truncate">
@@ -438,8 +507,8 @@ export function SupportDock() {
                                         className="flex items-center gap-3 p-3 mb-2 rounded-xl shadow-lg group hover:shadow-xl transition-all"
                                         style={{ background: theme.gradient, color: theme.onPrimary, boxShadow: theme.shadow }}
                                     >
-                                        <span className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm grid place-items-center flex-shrink-0">
-                                            <Sparkles size={18} />
+                                        <span className="w-10 h-10 rounded-xl bg-white/95 grid place-items-center flex-shrink-0 overflow-hidden">
+                                            <Image src="/logos/humo-nexus.png" alt="Humo Nexus" width={32} height={32} className="object-contain" />
                                         </span>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[13px] font-black">Nexus DM&apos;da yozing</p>
@@ -454,9 +523,11 @@ export function SupportDock() {
                                         <SupportWelcome
                                             moduleLabel={MODULE_LABEL[currentModule] ?? "For Humo"}
                                             theme={theme}
-                                            onQuickStart={(pre) => {
-                                                setSubject(pre.subject);
-                                                setFirstMsg(pre.message);
+                                            onQuickStart={(cat) => {
+                                                setActiveCategory(cat);
+                                                setFieldValues({});
+                                                setSubject(cat.subject);
+                                                setFirstMsg("");
                                                 setView("new");
                                             }}
                                         />
@@ -501,34 +572,90 @@ export function SupportDock() {
                                 </div>
                             ) : view === "new" ? (
                                 <form onSubmit={createTicket} className="p-4 space-y-3">
-                                    <div className="text-xs text-neutral-500">
-                                        Modul: <span className="font-medium text-neutral-700 dark:text-neutral-300">{MODULE_LABEL[currentModule] ?? currentModule}</span>
+                                    {/* Modul chip — qulflangan (foydalanuvchi o'chira olmaydi) */}
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+                                        <span className="text-[11px] text-neutral-500 font-bold">Modul:</span>
+                                        <span className="text-[13px] font-black" style={{ color: theme.primary }}>
+                                            {MODULE_LABEL[currentModule] ?? currentModule}
+                                        </span>
                                     </div>
-                                    <div>
-                                        <label className="block text-xs text-neutral-500 mb-1">Mavzu</label>
-                                        <input
-                                            value={subject}
-                                            onChange={e => setSubject(e.target.value)}
-                                            placeholder="Qisqa mavzu"
-                                            maxLength={100}
-                                            className="w-full px-3 py-2 rounded-lg bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-sm focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs text-neutral-500 mb-1">Xabar</label>
-                                        <textarea
-                                            value={firstMsg}
-                                            onChange={e => setFirstMsg(e.target.value)}
-                                            placeholder="Muammoni batafsil yozing"
-                                            rows={6}
-                                            maxLength={2000}
-                                            className="w-full px-3 py-2 rounded-lg bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-sm focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 resize-none"
-                                        />
-                                    </div>
+
+                                    {activeCategory ? (
+                                        <>
+                                            {/* Sarlavha shabloni — qulflangan, kategoriya tanlanganda avto */}
+                                            {activeCategory.subject && (
+                                                <div>
+                                                    <label className="block text-[11px] text-neutral-500 mb-1 font-bold">Mavzu</label>
+                                                    <div className="w-full px-3 py-2 rounded-lg bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-sm text-neutral-500 select-none">
+                                                        {activeCategory.subject}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {/* Har savol alohida katak */}
+                                            {activeCategory.fields.map(f => (
+                                                <div key={f.key}>
+                                                    <label className="block text-[11px] text-neutral-500 mb-1 font-bold">
+                                                        {f.label} {f.required && <span className="text-red-500">*</span>}
+                                                    </label>
+                                                    {f.multiline ? (
+                                                        <textarea
+                                                            value={fieldValues[f.key] ?? ""}
+                                                            onChange={e => setFieldValues(v => ({ ...v, [f.key]: e.target.value }))}
+                                                            placeholder={f.placeholder}
+                                                            rows={3}
+                                                            maxLength={1000}
+                                                            className="w-full px-3 py-2 rounded-lg bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-sm focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 resize-none"
+                                                        />
+                                                    ) : (
+                                                        <input
+                                                            value={fieldValues[f.key] ?? ""}
+                                                            onChange={e => setFieldValues(v => ({ ...v, [f.key]: e.target.value }))}
+                                                            placeholder={f.placeholder}
+                                                            maxLength={200}
+                                                            className="w-full px-3 py-2 rounded-lg bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-sm focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
+                                                        />
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </>
+                                    ) : (
+                                        // Kategoriya tanlanmagan (masalan Yangi murojaat tugmasi bilan) — oddiy 2 katak
+                                        <>
+                                            <div>
+                                                <label className="block text-[11px] text-neutral-500 mb-1 font-bold">Mavzu</label>
+                                                <input
+                                                    value={subject}
+                                                    onChange={e => setSubject(e.target.value)}
+                                                    placeholder="Qisqa mavzu"
+                                                    maxLength={100}
+                                                    className="w-full px-3 py-2 rounded-lg bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-sm focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[11px] text-neutral-500 mb-1 font-bold">Xabar</label>
+                                                <textarea
+                                                    value={firstMsg}
+                                                    onChange={e => setFirstMsg(e.target.value)}
+                                                    placeholder="Muammoni batafsil yozing"
+                                                    rows={6}
+                                                    maxLength={2000}
+                                                    className="w-full px-3 py-2 rounded-lg bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-sm focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 resize-none"
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+
                                     <button
                                         type="submit"
-                                        disabled={sending || subject.trim().length < 3 || firstMsg.trim().length < 5}
-                                        className="w-full py-2.5 rounded-full bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                                        disabled={
+                                            sending || (
+                                                activeCategory
+                                                    ? activeCategory.fields.some(f => f.required && !(fieldValues[f.key] ?? "").trim())
+                                                    : subject.trim().length < 3 || firstMsg.trim().length < 5
+                                            )
+                                        }
+                                        className="w-full py-2.5 rounded-full text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+                                        style={{ background: theme.gradient, color: theme.onPrimary }}
                                     >
                                         {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={14} />}
                                         Yuborish
@@ -544,7 +671,7 @@ export function SupportDock() {
                                         className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/40 dark:to-blue-950/40 border border-sky-200/60 dark:border-sky-800/60 text-sky-900 dark:text-sky-200 text-[12px] font-semibold group hover:from-sky-100 hover:to-blue-100 dark:hover:from-sky-950/60 dark:hover:to-blue-950/60 transition-colors"
                                     >
                                         <span className="flex items-center gap-1.5">
-                                            <Sparkles className="w-3.5 h-3.5" />
+                                            <Image src="/logos/humo-nexus.png" alt="" width={14} height={14} className="object-contain" />
                                             Nexus DM&apos;da davom ettirish
                                         </span>
                                         <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
