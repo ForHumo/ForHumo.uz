@@ -13,9 +13,14 @@ export async function GET() {
     const auth = await requireBnAuth();
     if (auth instanceof NextResponse) return auth;
 
-    // Sotuvchining barcha do'konlari
+    // Sotuvchining barcha do'konlari — TERMINATED (chiqarib yuborilgan) bo'lmasa
+    // hamma holatda chat ko'rinadi. PENDING/SUSPENDED holatlarda ham sotuvchi
+    // xaridor bilan gaplasha oladi (savdolashuv olib borishi mumkin).
     const shops = await prisma.bnShop.findMany({
-        where: { profileId: auth.profileId, status: "APPROVED" },
+        where: {
+            profileId: auth.profileId,
+            status: { not: "TERMINATED" },
+        },
         select: { id: true, slug: true, name: true },
     });
     if (shops.length === 0) return NextResponse.json({ chats: [] });

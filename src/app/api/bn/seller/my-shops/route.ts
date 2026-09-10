@@ -13,7 +13,7 @@ export async function GET() {
     if (auth instanceof NextResponse) return auth;
 
     const shops = await prisma.bnShop.findMany({
-        where: { profileId: auth.profileId, status: "APPROVED" },
+        where: { profileId: auth.profileId, status: { not: "TERMINATED" } },
         select: { slug: true, name: true },
         orderBy: { createdAt: "desc" },
     });
