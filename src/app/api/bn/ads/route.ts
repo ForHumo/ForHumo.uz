@@ -29,13 +29,45 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const imageUrl = String(body?.imageUrl ?? "").trim();
     const title = String(body?.title ?? "").trim().slice(0, 80);
+    const detailText = String(body?.detailText ?? "").trim().slice(0, 80);
     const ctaUrl = String(body?.ctaUrl ?? "").trim();
     const days = Math.max(1, Math.min(30, Math.floor(Number(body?.days) || 1)));
-    const shopSlug = body?.shopSlug ? String(body.shopSlug).trim() : null;
+
+    // Faqat rasmiy sotuvchilar reklama joylashi mumkin.
+    // Sotuvchining aktiv do'konlari ro'yxati — havola shu do'konlar ichida bo'lishi kerak.
+    const myShops = await prisma.bnShop.findMany({
+        where: { profileId: auth.profileId, status: "APPROVED" },
+        select: { slug: true },
+    });
+    if (myShops.length === 0) {
+        return NextResponse.json({ error: "seller_required", detail: "Reklama joylash uchun avval do'kon ochishingiz kerak" }, { status: 403 });
+    }
+    const shopSlugs = new Set(myShops.map(s => s.slug));
 
     if (!imageUrl || !isHttpUrl(imageUrl)) return NextResponse.json({ error: "invalid_image" }, { status: 400 });
     if (title.length < 3) return NextResponse.json({ error: "invalid_title" }, { status: 400 });
     if (!ctaUrl || !isHttpUrl(ctaUrl)) return NextResponse.json({ error: "invalid_url" }, { status: 400 });
+
+    // Havola faqat sotuvchining o'z do'konidan yoki mahsulotidan bo'lishi kerak:
+    //   https://bozornarxida.uz/d/<meniki>            — do'kon
+    //   https://bozornarxida.uz/d/<meniki>/<slug>     — mahsulot
+    try {
+        const u = new URL(ctaUrl);
+        if (!u.hostname.endsWith("bozornarxida.uz")) {
+            return NextResponse.json({ error: "invalid_url", detail: "Havola bozornarxida.uz da bo'lishi kerak" }, { status: 400 });
+        }
+        const m = u.pathname.match(/^\/(?:[a-z]{2}\/)?d\/([^\/]+)(?:\/([^\/]+))?/);
+        if (!m) {
+            return NextResponse.json({ error: "invalid_url", detail: "Havola /d/<do'kon> yoki /d/<do'kon>/<mahsulot> ko'rinishida bo'lishi kerak" }, { status: 400 });
+        }
+        if (!shopSlugs.has(m[1])) {
+            return NextResponse.json({ error: "invalid_url", detail: "Havola faqat o'zingizning do'koningizga bo'lishi mumkin" }, { status: 400 });
+        }
+    } catch {
+        return NextResponse.json({ error: "invalid_url" }, { status: 400 });
+    }
+
+    const shopSlug = (new URL(ctaUrl).pathname.match(/^\/(?:[a-z]{2}\/)?d\/([^\/]+)/)?.[1]) ?? null;
 
     // Slot avto-tanlash: bo'sh (yoki eskirgan) slot
     const now = new Date();
@@ -68,6 +100,7 @@ export async function POST(req: Request) {
                     slot: freeSlot,
                     imageUrl,
                     title,
+                    detailText: detailText || null,
                     ctaUrl,
                     ownerId: auth.profileId,
                     shopSlug,

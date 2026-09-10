@@ -4175,6 +4175,7 @@ model BnAdBanner {
   slot              Int                                   // 1-5
   imageUrl          String
   title             String                                // max 80 belgi
+  detailText        String?                               // Ikkinchi qator (kichik matn, max 80 belgi)
   ctaUrl            String                                // "Batafsil" havolasi
   ownerId           String                                // UserProfile.id — kim to'ladi
   shopSlug          String?                               // agar sotuvchi bo'lsa

@@ -546,26 +546,7 @@ function BnNotificationsClient() {
 }
 
 export function BnLocationPage() {
-    const t = useTranslations("bn.pages");
-    return (
-        <Wrap>
-            <PageHead title={t("locationTitle")} subtitle={t("locationSub")} />
-            <BnEmpty
-                icon={<Navigation className="w-6 h-6" />}
-                title={t("locationEmptyTitle")}
-                text={t("locationEmptyText")}
-                action={
-                    <button
-                        className="inline-flex items-center gap-2 h-11 px-5 rounded-xl text-[14px] font-black"
-                        style={{ background: BN.gold, color: BN.onGold }}
-                    >
-                        <Navigation className="w-4 h-4" />
-                        {t("detectLocation")}
-                    </button>
-                }
-            />
-        </Wrap>
-    );
+    return <BnLocationPageInner />;
 }
 
 export function BnPickupPage() {
@@ -626,5 +607,185 @@ function Row({ href, icon, label }: { href: string; icon: React.ReactNode; label
             <span className="flex-1 text-[14px] font-bold">{label}</span>
             <ChevronRight className="w-4 h-4" style={{ color: BN.text3 }} />
         </BnLink>
+    );
+}
+
+// ── /joylashuv sahifasi ichki qismi (haqiqiy geolocation) ──────────────────
+
+interface NearbyShopLite {
+    id: string; slug: string; name: string; logoUrl: string | null;
+    district: string | null; marketName: string | null;
+    locationType: "IN_MARKET" | "STANDALONE" | "ONLINE";
+    rating: number; productCount: number;
+    lat: number; lng: number; distKm: number;
+}
+
+const BN_COORDS_KEY = "bn-user-coords-v1";
+
+function BnLocationPageInner() {
+    const t = useTranslations("bn.pages");
+    const [state, setState] = useState<"idle" | "loading" | "ready" | "denied" | "unavailable" | "empty">("idle");
+    const [shops, setShops] = useState<NearbyShopLite[]>([]);
+    const [errText, setErrText] = useState<string | null>(null);
+    const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+    // Session cache — nearby row bilan ulash
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        try {
+            const raw = sessionStorage.getItem(BN_COORDS_KEY);
+            if (raw) {
+                const c = JSON.parse(raw) as { lat: number; lng: number; at: number };
+                if (Date.now() - c.at < 30 * 60 * 1000) {
+                    setCoords({ lat: c.lat, lng: c.lng });
+                    void loadNearby(c.lat, c.lng);
+                }
+            }
+        } catch { /* ignore */ }
+    }, []);
+
+    async function loadNearby(lat: number, lng: number) {
+        setState("loading");
+        setErrText(null);
+        try {
+            const r = await fetch(`/api/bn/nearby?lat=${lat}&lng=${lng}&radius=15&limit=30`);
+            if (!r.ok) { setState("empty"); return; }
+            const d = await r.json();
+            const arr = (d.shops ?? []) as NearbyShopLite[];
+            if (arr.length === 0) { setState("empty"); return; }
+            setShops(arr);
+            setState("ready");
+        } catch {
+            setState("empty");
+            setErrText("Tarmoq xatosi");
+        }
+    }
+
+    function detect() {
+        if (typeof window === "undefined") return;
+        if (!("geolocation" in navigator)) {
+            setState("unavailable");
+            return;
+        }
+        setState("loading");
+        setErrText(null);
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                const { latitude: lat, longitude: lng } = pos.coords;
+                try {
+                    sessionStorage.setItem(BN_COORDS_KEY, JSON.stringify({ lat, lng, at: Date.now() }));
+                } catch { /* ignore */ }
+                setCoords({ lat, lng });
+                void loadNearby(lat, lng);
+            },
+            err => {
+                setState("denied");
+                setErrText(err.code === 1
+                    ? "Ruxsat berilmadi. Brauzer sozlamalaridan joylashuvga ruxsat bering."
+                    : err.code === 3 ? "Vaqt tugadi. Qayta urinib ko'ring."
+                    : "Joylashuvni aniqlab bo'lmadi");
+            },
+            { timeout: 10000, maximumAge: 5 * 60 * 1000, enableHighAccuracy: false },
+        );
+    }
+
+    return (
+        <Wrap>
+            <PageHead title={t("locationTitle")} subtitle={t("locationSub")} />
+
+            {/* Boshqaruv paneli */}
+            <div className="rounded-2xl p-4 mb-5 flex flex-wrap items-center gap-3"
+                style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
+                <div className="flex-1 min-w-[200px]">
+                    <div className="text-[13px] font-bold" style={{ color: BN.text }}>
+                        {coords ? "Joylashuvingiz aniqlandi" : "Joylashuv belgilanmagan"}
+                    </div>
+                    <div className="text-[12px] mt-0.5" style={{ color: BN.text3 }}>
+                        {coords
+                            ? `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`
+                            : "Manzilingizni aniqlab, yaqin do'konlarni ko'rsatamiz."}
+                    </div>
+                </div>
+                <button
+                    onClick={detect}
+                    disabled={state === "loading"}
+                    className="inline-flex items-center gap-2 h-11 px-5 rounded-xl text-[14px] font-black disabled:opacity-70 transition-transform active:scale-[0.98]"
+                    style={{ background: BN.gold, color: BN.onGold }}
+                >
+                    {state === "loading" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
+                    {coords ? "Yangilash" : t("detectLocation")}
+                </button>
+            </div>
+
+            {/* Xato yoki taklif */}
+            {(state === "denied" || state === "unavailable") && (
+                <div className="rounded-xl p-3 mb-4 text-[13px]"
+                    style={{ background: BN.errSoft, color: BN.err, border: `1px solid ${BN.err}33` }}>
+                    {errText ?? "Joylashuv aniqlanmadi"}
+                </div>
+            )}
+
+            {/* Bo'sh / boshlang'ich holat */}
+            {state === "idle" && (
+                <BnEmpty
+                    icon={<Navigation className="w-6 h-6" />}
+                    title={t("locationEmptyTitle")}
+                    text={t("locationEmptyText")}
+                />
+            )}
+
+            {state === "loading" && (
+                <div className="flex items-center justify-center py-10">
+                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: BN.gold }} />
+                </div>
+            )}
+
+            {state === "empty" && (
+                <BnEmpty
+                    icon={<MapPin className="w-6 h-6" />}
+                    title="Yaqin do'kon topilmadi"
+                    text="15 km atrofda hali do'konlar yo'q. Yaqin orada sotuvchilar qo'shiladi."
+                />
+            )}
+
+            {state === "ready" && shops.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {shops.map(s => (
+                        <BnLink
+                            key={s.id}
+                            href={`/d/${s.slug}`}
+                            className="flex items-center gap-3 p-3 rounded-2xl transition-transform hover:scale-[1.01]"
+                            style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
+                        >
+                            {s.logoUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={s.logoUrl} alt="" className="w-12 h-12 rounded-xl object-cover shrink-0" />
+                            ) : (
+                                <div className="w-12 h-12 rounded-xl shrink-0 grid place-items-center"
+                                    style={{ background: BN.surfaceUp }}>
+                                    <Store className="w-5 h-5" style={{ color: BN.text3 }} />
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <div className="text-[14px] font-bold truncate" style={{ color: BN.text }}>{s.name}</div>
+                                <div className="text-[11.5px] truncate" style={{ color: BN.text3 }}>
+                                    {[s.marketName, s.district].filter(Boolean).join(" · ") || "Onlayn"}
+                                </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                                <div className="text-[13px] font-black tabular-nums" style={{ color: BN.gold }}>
+                                    {s.distKm < 1 ? `${Math.round(s.distKm * 1000)} m` : `${s.distKm.toFixed(1)} km`}
+                                </div>
+                                {s.rating > 0 && (
+                                    <div className="text-[11px] flex items-center gap-0.5 justify-end mt-0.5" style={{ color: BN.text3 }}>
+                                        <Star className="w-3 h-3" /> {s.rating.toFixed(1)}
+                                    </div>
+                                )}
+                            </div>
+                        </BnLink>
+                    ))}
+                </div>
+            )}
+        </Wrap>
     );
 }

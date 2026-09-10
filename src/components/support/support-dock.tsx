@@ -250,12 +250,27 @@ export function SupportDock() {
         return () => { alive = false; clearInterval(t); };
     }, [authStatus]);
 
+    const [loadedOnce, setLoadedOnce] = useState(false);
     const loadList = useCallback(async () => {
         setLoading(true);
+        // Xavfsizlik: 10s'dan keyin so'zsiz loading = false
+        // (agar tarmoq javob bermasa spinner cheksiz aylanmasin)
+        const guard = window.setTimeout(() => setLoading(false), 10000);
         try {
             const r = await fetch("/api/support/tickets", { cache: "no-store" });
-            if (r.ok) { const j = await r.json(); setTickets(j.items ?? []); }
-        } finally { setLoading(false); }
+            if (r.ok) {
+                const j = await r.json().catch(() => ({}));
+                setTickets(Array.isArray(j?.items) ? j.items : []);
+            } else {
+                setTickets([]);   // 401/500 → bo'sh, welcome ekran ko'rinadi
+            }
+        } catch {
+            setTickets([]);
+        } finally {
+            window.clearTimeout(guard);
+            setLoading(false);
+            setLoadedOnce(true);
+        }
     }, []);
 
     const loadThread = useCallback(async (id: string) => {
@@ -433,7 +448,7 @@ export function SupportDock() {
                                         <ChevronRight size={16} className="opacity-70 group-hover:translate-x-1 transition-transform" />
                                     </Link>
 
-                                    {loading && tickets.length === 0 ? (
+                                    {loading && tickets.length === 0 && !loadedOnce ? (
                                         <div className="flex justify-center py-8"><Loader2 className="animate-spin text-neutral-400" /></div>
                                     ) : tickets.length === 0 ? (
                                         <SupportWelcome

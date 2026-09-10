@@ -3,9 +3,9 @@
 // BN AI scan — foydalanuvchi mahsulot rasmini yuklaydi (kamera yoki fayl),
 // Vision AI aniqlab, DB'da o'xshash mahsulotlarni topib qaytaradi.
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
-    Camera, Upload, ScanLine, Loader2, Sparkles, X, ArrowRight,
+    Camera, Upload, ScanLine, Loader2, Sparkles, X, ArrowRight, RefreshCw,
 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
@@ -35,6 +35,72 @@ export function BnScanClient() {
     const [err, setErr] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const cameraInputRef = useRef<HTMLInputElement>(null);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const [cameraOpen, setCameraOpen] = useState(false);
+    const [cameraFacing, setCameraFacing] = useState<"user" | "environment">("environment");
+
+    // Kamera oqimini boshlash / yopish
+    async function openCamera(facing: "user" | "environment" = cameraFacing) {
+        setErr(null);
+        if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+            // getUserMedia mavjud emas — file picker fallback
+            cameraInputRef.current?.click();
+            return;
+        }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 720 } },
+                audio: false,
+            });
+            streamRef.current = stream;
+            setCameraOpen(true);
+            setCameraFacing(facing);
+            // Video srcObject'ni useEffect keyingi renderda qo'yadi (video hali mount qilinmagan)
+            setTimeout(() => {
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                    void videoRef.current.play().catch(() => { /* noop */ });
+                }
+            }, 30);
+        } catch {
+            // Ruxsat berilmadi yoki kamera yo'q — file picker'ga tushamiz
+            setErr("Kameraga ruxsat berilmadi. Fayldan tanlashga o'ting.");
+            cameraInputRef.current?.click();
+        }
+    }
+    function closeCamera() {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => t.stop());
+            streamRef.current = null;
+        }
+        setCameraOpen(false);
+    }
+    // Component unmount'da to'xtatish
+    useEffect(() => () => { closeCamera(); }, []);
+
+    // Snap → Blob → File → upload
+    async function snap() {
+        const video = videoRef.current;
+        if (!video || video.videoWidth === 0) return;
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(video, 0, 0);
+        canvas.toBlob(async blob => {
+            if (!blob) return;
+            const file = new File([blob], `scan-${Date.now()}.jpg`, { type: "image/jpeg" });
+            closeCamera();
+            await uploadFile(file);
+        }, "image/jpeg", 0.9);
+    }
+
+    function flipCamera() {
+        closeCamera();
+        void openCamera(cameraFacing === "user" ? "environment" : "user");
+    }
 
     async function uploadFile(file: File) {
         setErr(null);
@@ -117,7 +183,7 @@ export function BnScanClient() {
 
                     <div className="flex flex-col sm:flex-row gap-2.5 max-w-[420px] mx-auto">
                         <button
-                            onClick={() => cameraInputRef.current?.click()}
+                            onClick={() => openCamera()}
                             disabled={uploading}
                             className="flex items-center justify-center gap-2 flex-1 h-12 rounded-2xl text-[14px] font-black disabled:opacity-60"
                             style={{ background: BN.gold, color: BN.onGold }}
@@ -229,6 +295,38 @@ export function BnScanClient() {
             {err && (
                 <div className="mt-4 p-3 rounded-xl text-[13px]" style={{ background: BN.errSoft, color: BN.err }}>
                     {err}
+                </div>
+            )}
+
+            {/* Kamera overlay — getUserMedia real oqim */}
+            {cameraOpen && (
+                <div className="fixed inset-0 z-[300] bg-black flex flex-col">
+                    <div className="flex items-center justify-between px-4 py-3"
+                        style={{ background: "rgba(0,0,0,0.7)" }}>
+                        <button onClick={closeCamera} className="w-10 h-10 grid place-items-center rounded-full bg-white/10 text-white">
+                            <X className="w-5 h-5" />
+                        </button>
+                        <div className="text-white text-sm font-bold">Mahsulotni suratga oling</div>
+                        <button onClick={flipCamera} className="w-10 h-10 grid place-items-center rounded-full bg-white/10 text-white" aria-label="Kamerani almashtirish">
+                            <RefreshCw className="w-5 h-5" />
+                        </button>
+                    </div>
+                    <div className="flex-1 relative overflow-hidden flex items-center justify-center">
+                        <video ref={videoRef} className="max-h-full max-w-full" playsInline muted autoPlay />
+                        {/* Ramka */}
+                        <div className="pointer-events-none absolute inset-8 rounded-3xl"
+                            style={{ border: `2px dashed ${BN.gold}`, boxShadow: "inset 0 0 60px rgba(0,0,0,0.4)" }} />
+                    </div>
+                    <div className="flex items-center justify-center py-5" style={{ background: "rgba(0,0,0,0.85)" }}>
+                        <button
+                            onClick={snap}
+                            className="w-[72px] h-[72px] rounded-full grid place-items-center"
+                            style={{ background: "#fff", boxShadow: `0 0 0 4px rgba(255,255,255,0.25)` }}
+                            aria-label="Suratga olish"
+                        >
+                            <div className="w-14 h-14 rounded-full" style={{ background: BN.gold }} />
+                        </button>
+                    </div>
                 </div>
             )}
 

@@ -27,7 +27,7 @@ export async function GET() {
             expiresAt: { gt: now },
         },
         select: {
-            id: true, slot: true, imageUrl: true, title: true, ctaUrl: true, shopSlug: true,
+            id: true, slot: true, imageUrl: true, title: true, detailText: true, ctaUrl: true, shopSlug: true,
         },
         orderBy: [{ slot: "asc" }, { createdAt: "desc" }],
     });

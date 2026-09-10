@@ -86,13 +86,46 @@ Muhim:
     if (filter.categorySlug && !cats.some(c => c.slug === filter.categorySlug)) filter.categorySlug = null;
     if (filter.marketSlug && !mkts.some(m => m.slug === filter.marketSlug)) filter.marketSlug = null;
 
-    const products = await searchProducts({
-        q: filter.keywords || q,
+    const keywords = filter.keywords || q;
+    // Bosqichma-bosqich fallback: kategoriya ba'zan noto'g'ri chiqadi
+    // yoki mahsulotlar hali kategoriyaga tegilmagan bo'ladi (ayniqsa yangi do'konlar).
+    // Shuning uchun agar to'liq filter 0 natija bersa, tor filter'larni olib tashlaymiz.
+    let products = await searchProducts({
+        q: keywords,
         categorySlug: filter.categorySlug ?? undefined,
         marketSlug: filter.marketSlug ?? undefined,
         sort: filter.sort ?? "new",
         limit: 40,
     });
+
+    let fallbackNote: string | null = null;
+    // 1-fallback: kategoriya olib tashlansin, faqat kalit so'z + bozor
+    if (products.length === 0 && filter.categorySlug) {
+        products = await searchProducts({
+            q: keywords,
+            marketSlug: filter.marketSlug ?? undefined,
+            sort: filter.sort ?? "new",
+            limit: 40,
+        });
+        if (products.length > 0) fallbackNote = "category_dropped";
+    }
+    // 2-fallback: bozor ham olib tashlansin — faqat kalit so'z bo'yicha barcha bozorlar
+    if (products.length === 0 && (filter.marketSlug || filter.categorySlug)) {
+        products = await searchProducts({
+            q: keywords,
+            sort: filter.sort ?? "new",
+            limit: 40,
+        });
+        if (products.length > 0) fallbackNote = "filters_dropped";
+    }
+    // 3-fallback: kalit so'zni qisqartirib qayta qidirish (birinchi so'z, "kolbasa kerak" → "kolbasa")
+    if (products.length === 0) {
+        const firstWord = keywords.split(/\s+/)[0];
+        if (firstWord && firstWord !== keywords && firstWord.length >= 3) {
+            products = await searchProducts({ q: firstWord, sort: "new", limit: 40 });
+            if (products.length > 0) fallbackNote = "keyword_shortened";
+        }
+    }
 
     // Narx filtrlash (AI dan kelgan bo'lsa)
     let filtered = products;
@@ -105,5 +138,6 @@ Muhim:
         products: filtered,
         reply: filter.reply,
         sourceQuery: q,
+        fallbackNote,   // debug uchun; UI ko'rsatmasa ham
     });
 }

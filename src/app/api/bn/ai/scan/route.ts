@@ -64,13 +64,61 @@ Muhim:
         detected.categorySlug = null;
     }
 
-    // Qidiruv — asosiy keyword (birinchi 2 so'z) + kategoriya
-    const searchQ = (detected.keywords ?? []).slice(0, 3).join(" ") || detected.title;
-    const products = await searchProducts({
-        q: searchQ,
-        categorySlug: detected.categorySlug ?? undefined,
-        limit: 20,
-    });
+    // Qidiruv — bir necha strategiyada urinamiz (bosqichma-bosqich kengaytiramiz)
+    const det = detected;   // TS uchun — closure ichida null-narrowing yo'qolmasin
+    const keywords = (det.keywords ?? []).filter(k => k && k.length >= 2);
+    const title = det.title || "";
 
-    return NextResponse.json({ ok: true, detected, products });
+    // Har bir kalit so'zni alohida qidiramiz, dublikatsiz birlashtiramiz
+    const tried = new Set<string>();
+    const collected: import("@/lib/bn-data").BnProductDTO[] = [];
+
+    async function push(q: string, opts: { withCat?: boolean } = {}) {
+        if (!q || tried.has(q + (opts.withCat ? "|c" : ""))) return;
+        tried.add(q + (opts.withCat ? "|c" : ""));
+        const arr = await searchProducts({
+            q,
+            categorySlug: opts.withCat ? det.categorySlug ?? undefined : undefined,
+            limit: 20,
+        });
+        for (const p of arr) {
+            if (!collected.find(x => x.id === p.id)) collected.push(p);
+        }
+    }
+
+    // 1. Kategoriya + brand+model (aniq)
+    if (keywords.length >= 2 && det.categorySlug) {
+        await push(keywords.slice(0, 2).join(" "), { withCat: true });
+    }
+    // 2. Brand+model (kategoriyasiz — kategoriya noto'g'ri chiqishi mumkin)
+    if (collected.length < 5 && keywords.length >= 2) {
+        await push(keywords.slice(0, 2).join(" "));
+    }
+    // 3. To'liq keywords
+    if (collected.length < 5 && keywords.length > 0) {
+        await push(keywords.join(" "));
+    }
+    // 4. Har bir keyword alohida
+    if (collected.length < 5) {
+        for (const kw of keywords.slice(0, 4)) {
+            if (collected.length >= 20) break;
+            await push(kw);
+        }
+    }
+    // 5. Sarlavha bo'yicha
+    if (collected.length < 5 && title) {
+        await push(title);
+        // Sarlavhaning birinchi so'zi
+        const first = title.split(/\s+/)[0];
+        if (first && first.length >= 3) await push(first);
+    }
+    // 6. Faqat kategoriya (bo'sh bo'lmasa hech bo'lmasa kategoriya bo'yicha ko'rsatamiz)
+    if (collected.length < 3 && det.categorySlug) {
+        const arr = await searchProducts({ categorySlug: det.categorySlug, limit: 10 });
+        for (const p of arr) {
+            if (!collected.find(x => x.id === p.id)) collected.push(p);
+        }
+    }
+
+    return NextResponse.json({ ok: true, detected: det, products: collected.slice(0, 20) });
 }

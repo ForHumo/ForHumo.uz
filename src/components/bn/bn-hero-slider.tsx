@@ -13,7 +13,7 @@ import { BnLink } from "./bn-nav";
 import { BnAdBuyModal } from "./bn-ad-buy-modal";
 
 interface Banner {
-    id: string; slot: number; imageUrl: string; title: string; ctaUrl: string; shopSlug: string | null;
+    id: string; slot: number; imageUrl: string; title: string; detailText?: string | null; ctaUrl: string; shopSlug: string | null;
 }
 
 const AUTO_MS = 5500;
@@ -139,9 +139,14 @@ export function BnHeroSlider() {
                                         <div className="inline-flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-bold w-max mb-2" style={{ background: "rgba(255,255,255,0.9)", color: "#0A0E27" }}>
                                             AD
                                         </div>
-                                        <h2 className="text-[22px] sm:text-[28px] md:text-[32px] font-black tracking-tight leading-[1.1] mb-3 text-white max-w-[600px]">
+                                        <h2 className="text-[22px] sm:text-[28px] md:text-[32px] font-black tracking-tight leading-[1.1] mb-1 text-white max-w-[600px]">
                                             {b.title}
                                         </h2>
+                                        {b.detailText && (
+                                            <p className="text-[12.5px] sm:text-[13.5px] text-white/80 mb-3 max-w-[600px] leading-snug">
+                                                {b.detailText}
+                                            </p>
+                                        )}
                                         <a
                                             href={b.ctaUrl}
                                             target={b.ctaUrl.startsWith("http") && !b.ctaUrl.includes("bozornarxida.uz") ? "_blank" : "_self"}
