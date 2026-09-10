@@ -230,6 +230,7 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
     }
 
     let aiReply: string | null = null;
+    let messageVariant: "A" | "B" | null = null;
     const startedAt = Date.now();
 
     // 1) FAQ tez javob
@@ -238,10 +239,82 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
     if (faqHit) {
         aiReply = faqHit.a;
     } else if (aiAvailable()) {
+        // A/B variant tanlash — chat davomida bir xil qoladi
+        const { pickVariantForChat } = await import("@/lib/humo-bot-ab");
+        const chatState = await prisma.humoBotChatState.findUnique({
+            where: {
+                profileId_connectionId_chatId: {
+                    profileId: connection.profileId,
+                    connectionId: msg.business_connection_id,
+                    chatId: String(msg.chat.id),
+                },
+            },
+        });
+        let activeVariant: "A" | "B" = "A";
+        if (config.abTestingEnabled && config.personaB) {
+            activeVariant = (chatState?.variant as "A" | "B" | undefined) ?? pickVariantForChat(connection.profileId, String(msg.chat.id));
+            if (!chatState?.variant) {
+                await prisma.humoBotChatState.upsert({
+                    where: {
+                        profileId_connectionId_chatId: {
+                            profileId: connection.profileId,
+                            connectionId: msg.business_connection_id,
+                            chatId: String(msg.chat.id),
+                        },
+                    },
+                    create: {
+                        profileId: connection.profileId,
+                        connectionId: msg.business_connection_id,
+                        chatId: String(msg.chat.id),
+                        variant: activeVariant,
+                    },
+                    update: { variant: activeVariant },
+                });
+            }
+        }
+
+        // Voice fingerprint (1 marta, transkriptdan ton'ni taxmin)
+        if (customerSentVoice && !chatState?.fingerprintDone) {
+            try {
+                const { analyzeTranscriptTone } = await import("@/lib/humo-bot-fingerprint");
+                const fp = await analyzeTranscriptTone(workingText);
+                if (fp) {
+                    await prisma.humoBotChatState.upsert({
+                        where: {
+                            profileId_connectionId_chatId: {
+                                profileId: connection.profileId,
+                                connectionId: msg.business_connection_id,
+                                chatId: String(msg.chat.id),
+                            },
+                        },
+                        create: {
+                            profileId: connection.profileId,
+                            connectionId: msg.business_connection_id,
+                            chatId: String(msg.chat.id),
+                            customerToneHint: fp.toneHint,
+                            fingerprintDone: true,
+                        },
+                        update: { customerToneHint: fp.toneHint, fingerprintDone: true },
+                    });
+                }
+            } catch (e) { console.error("[humo-bot fp]", e); }
+        }
+
+        const activePersona = activeVariant === "B" && config.personaB
+            ? config.personaB
+            : config.persona;
+        const toneOverride = chatState?.customerToneHint ?? null;
+        messageVariant = config.abTestingEnabled ? activeVariant : null;
+
         // 2) AI — Business Mode system prompt + ega'ning For Humo konteksti
+        const finalTone = toneOverride === "hurried" ? "brief"
+            : toneOverride === "friendly" ? "friendly"
+            : toneOverride === "formal" ? "professional"
+            : config.tone;
+
         const businessPrompt = buildBusinessPrompt({
-            persona: config.persona,
-            tone: config.tone,
+            persona: activePersona,
+            tone: finalTone,
             language: replyLang,
             faq,
             greeting: config.greeting,
@@ -333,6 +406,7 @@ async function handleBusinessMessage(msg: TgBusinessMessage) {
                 wasAutoReplied: !!sentMsgId,
                 latencyMs: Date.now() - startedAt,
                 errorMessage,
+                usedVariant: messageVariant,
             },
         }),
         sentMsgId ? prisma.humoBotSubscription.upsert({

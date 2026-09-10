@@ -133,8 +133,14 @@ export async function saveLead(input: {
     customerAddress: string | null;
     productMention: string | null;
     notes: string | null;
+    variant?: "A" | "B" | null;
 }) {
-    return prisma.humoBotLead.create({ data: input });
+    return prisma.humoBotLead.create({
+        data: {
+            ...input,
+            variant: input.variant ?? undefined,
+        },
+    });
 }
 
 /** AI'dan mahsulot/xizmat mavzusini bir gapda chiqarish (ega'ga tushinarli). */

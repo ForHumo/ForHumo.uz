@@ -3887,6 +3887,13 @@ model HumoBotChatState {
   customerAddress String?
   productMention String?                                     // Mijoz aytgan mahsulot/xizmat
   notes         String?
+  // A/B testing variant (birinchi javob paytida tanlanadi, chat davomida saqlanadi)
+  variant       String?                                      // "A" | "B"
+  // Voice fingerprint — Gemini birinchi voice'dan taxmin qiladi
+  customerAgeGuess    String?                                // "young" | "adult" | "elderly"
+  customerGenderGuess String?                                // "male" | "female" | "unknown"
+  customerToneHint    String?                                // "friendly" | "formal" | "hurried"
+  fingerprintDone     Boolean  @default(false)               // Tahlil qilinganmi (1 marta bajariladi)
   updatedAt     DateTime  @updatedAt
   createdAt     DateTime  @default(now())
 
@@ -3911,10 +3918,19 @@ model HumoBotLead {
   contactedAt   DateTime?
   wonAmountUzs  Int?                                         // ega belgilashi mumkin
   ownerNote     String?                                      // ega izohi
+  // Konfirmatsiya
+  confirmSentAt   DateTime?                                  // Mijozga xabar yuborilgan vaqt
+  confirmChannel  String?                                    // "whatsapp" | "telegram"
+  // BN integratsiya
+  bnOrderId       String?                                    // BnOrder yaratilgan bo'lsa
+  bnPurchaseId    String?                                    // BnPurchase yaratilgan bo'lsa
+  // A/B testing
+  variant       String?                                      // "A" | "B" — qaysi persona bilan qabul qilingan
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@index([profileId, status, createdAt])
+  @@index([variant, createdAt])
 }
 
 model HumoBotConnection {
@@ -3950,6 +3966,13 @@ model HumoBotConfig {
   showAdFooter      Boolean   @default(true)                        // Pastdagi reklama footer'ini qoldirish (Pro+ o'chira oladi)
   ttsEnabled        Boolean   @default(false)                       // Mijoz voice yuborsa bot ovozli javob ham beradi (Pro+)
   linkedBnShopSlug  String?                                          // BN do'kon slug — lead → BnPurchase konvertatsiya uchun
+  // Mijozga avto-konfirmatsiya (lead WON bo'lganda)
+  autoConfirmEnabled Boolean  @default(true)                        // WON → mijozga xabar (WhatsApp/Telegram)
+  confirmChannel    String    @default("auto")                       // auto | whatsapp | telegram | none
+  confirmTemplate   String?                                          // Placeholderlar: {name}, {product}, {price}, {phone}, {address}
+  // A/B testing — Pro+ funksiya
+  abTestingEnabled  Boolean   @default(false)
+  personaB          String?                                          // Ikkinchi persona (A = asosiy persona)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 }
@@ -3968,6 +3991,8 @@ model HumoBotMessage {
   tokensUsed          Int?                                         // Gemini token
   latencyMs           Int?                                         // AI response time
   errorMessage        String?                                      // Xato yuz bergan bo'lsa
+  usedVariant         String?                                      // "A" | "B" — A/B testing uchun
+  escalated           Boolean   @default(false)                    // AI hal qila olmadi (lead qabul qilindi)
   createdAt           DateTime  @default(now())
 
   @@index([profileId, createdAt])

@@ -15,6 +15,7 @@ import {
 import { formatMoney } from "@/lib/money";
 import { HumoTgBotLeads } from "@/components/ai/humo-tg-bot-leads";
 import { HumoTgBotPushCard } from "@/components/ai/humo-tg-bot-push-card";
+import { HumoTgBotSla } from "@/components/ai/humo-tg-bot-sla";
 
 interface FaqItem { q: string; a: string }
 
@@ -33,6 +34,11 @@ interface Config {
     showAdFooter: boolean;
     ttsEnabled: boolean;
     linkedBnShopSlug: string | null;
+    autoConfirmEnabled: boolean;
+    confirmChannel: "auto" | "whatsapp" | "telegram" | "none";
+    confirmTemplate: string | null;
+    abTestingEnabled: boolean;
+    personaB: string | null;
 }
 
 interface Connection {
@@ -230,6 +236,7 @@ export function HumoTgBotSettings() {
                     <StatsRow stats={data.stats} subscription={data.subscription} />
                     <HumoTgBotPushCard />
                     <HumoTgBotLeads />
+                    <HumoTgBotSla />
                     <ConfigEditor
                         config={data.config}
                         onSave={saveConfig}
@@ -657,6 +664,86 @@ function BrandingSection({
                         if (v !== (config.linkedBnShopSlug ?? "")) onSave({ linkedBnShopSlug: v || null });
                     }}
                     className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm font-mono"
+                />
+            </div>
+
+            {/* Mijoz konfirmatsiya */}
+            <div className="pt-3 border-t border-border space-y-2">
+                <label className="text-sm font-medium block">Mijoz konfirmatsiyasi</label>
+                <p className="text-xs text-muted-foreground">
+                    Lead <b>Yakunlandi</b> qilinganda mijozga avto xabar. Placeholderlar: <code>{"{name}"} {"{product}"} {"{price}"} {"{phone}"} {"{address}"} {"{owner}"}</code>
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={config.autoConfirmEnabled}
+                            onChange={e => onSave({ autoConfirmEnabled: e.target.checked })}
+                            className="w-4 h-4"
+                        />
+                        Yoqilgan
+                    </label>
+                    <select
+                        value={config.confirmChannel}
+                        onChange={e => onSave({ confirmChannel: e.target.value as Config["confirmChannel"] })}
+                        className="px-2 py-1.5 rounded-lg border border-border bg-background text-sm"
+                    >
+                        <option value="auto">Avto (TG &gt; WA)</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="telegram">Telegram</option>
+                        <option value="none">O'chirilgan</option>
+                    </select>
+                </div>
+                <textarea
+                    rows={3}
+                    maxLength={1000}
+                    defaultValue={config.confirmTemplate ?? ""}
+                    onBlur={e => {
+                        const v = e.target.value.trim();
+                        if (v !== (config.confirmTemplate ?? "")) onSave({ confirmTemplate: v || null });
+                    }}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-none"
+                    placeholder="Assalomu alaykum {name}!&#10;Buyurtmangiz qabul qilindi: {product}&#10;Tez orada aloqaga chiqamiz."
+                />
+            </div>
+
+            {/* A/B testing — Pro+ */}
+            <div className="pt-3 border-t border-border space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                    <div>
+                        <label className="text-sm font-medium block">A/B testing (persona)</label>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            Chatlar 50/50 A yoki B persona bilan javob oladi. Konversion natijalarni SLA panelda ko'rasiz.
+                        </p>
+                    </div>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer shrink-0">
+                        <input
+                            type="checkbox"
+                            checked={config.abTestingEnabled}
+                            onChange={e => onSave({ abTestingEnabled: e.target.checked })}
+                            disabled={!canRemoveFooter}
+                            className="w-4 h-4"
+                        />
+                        {config.abTestingEnabled ? "Yoqilgan" : "O'chirilgan"}
+                    </label>
+                </div>
+                {!canRemoveFooter && (
+                    <div className="text-[11px] text-amber-600 flex items-center gap-1">
+                        <Lock className="w-3 h-3" />
+                        Faqat Pro yoki Enterprise
+                    </div>
+                )}
+                <textarea
+                    rows={2}
+                    maxLength={500}
+                    defaultValue={config.personaB ?? ""}
+                    onBlur={e => {
+                        const v = e.target.value.trim();
+                        if (v !== (config.personaB ?? "")) onSave({ personaB: v || null });
+                    }}
+                    disabled={!canRemoveFooter || !config.abTestingEnabled}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-none disabled:opacity-50"
+                    placeholder="Persona B — sinov varianti (masalan &laquo;juda do'stona, hazillashadigan uslub&raquo;)"
                 />
             </div>
         </div>

@@ -116,5 +116,39 @@ export async function PATCH(req: Request) {
         } catch (e) { console.error("[humo-bot lead won → bn]", e); }
     }
 
-    return NextResponse.json({ ok: true, bnRecorded });
+    // Konfirmatsiya: WON qilinganda mijozga xabar (WhatsApp/Telegram)
+    let confirmResult: { sent: boolean; channel: string | null; openUrl?: string | null; error?: string } | null = null;
+    if (patch.status === "WON") {
+        try {
+            const [lead, cfg, ownerProfile] = await Promise.all([
+                prisma.humoBotLead.findUnique({ where: { id } }),
+                prisma.humoBotConfig.findUnique({
+                    where: { profileId: profile.id },
+                    select: { autoConfirmEnabled: true, confirmChannel: true, confirmTemplate: true },
+                }),
+                prisma.userProfile.findUnique({
+                    where: { id: profile.id },
+                    select: { name: true, username: true },
+                }),
+            ]);
+            if (lead && cfg?.autoConfirmEnabled) {
+                const { sendConfirmation } = await import("@/lib/humo-bot-confirm");
+                const r = await sendConfirmation({
+                    leadId: lead.id,
+                    ownerName: ownerProfile?.name ?? ownerProfile?.username ?? "Sotuvchi",
+                    customerName: lead.customerName,
+                    customerPhone: lead.customerPhone,
+                    customerTgId: lead.customerTgId,
+                    customerAddress: lead.customerAddress,
+                    productMention: lead.productMention,
+                    wonAmountUzs: lead.wonAmountUzs,
+                    channel: (cfg.confirmChannel ?? "auto") as "auto" | "whatsapp" | "telegram" | "none",
+                    template: cfg.confirmTemplate,
+                });
+                confirmResult = r;
+            }
+        } catch (e) { console.error("[humo-bot lead-confirm]", e); }
+    }
+
+    return NextResponse.json({ ok: true, bnRecorded, confirmResult });
 }

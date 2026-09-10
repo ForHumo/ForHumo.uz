@@ -87,6 +87,13 @@ export async function PUT(req: Request) {
         linkedBnShopSlug: typeof body.linkedBnShopSlug === "string" && body.linkedBnShopSlug.trim()
             ? body.linkedBnShopSlug.trim().slice(0, 100)
             : null,
+        // Mijoz konfirmatsiya
+        autoConfirmEnabled: body.autoConfirmEnabled !== false,
+        confirmChannel: pick(body.confirmChannel, ["auto", "whatsapp", "telegram", "none"], "auto"),
+        confirmTemplate: str(body.confirmTemplate, 1000),
+        // A/B testing — Pro+ tarifda
+        abTestingEnabled: canRemoveFooter ? body.abTestingEnabled === true : false,
+        personaB: canRemoveFooter ? str(body.personaB, 500) : null,
     };
 
     const config = await prisma.humoBotConfig.upsert({
@@ -140,6 +147,11 @@ function defaultConfig() {
         showAdFooter: true,
         ttsEnabled: false,
         linkedBnShopSlug: null as string | null,
+        autoConfirmEnabled: true,
+        confirmChannel: "auto",
+        confirmTemplate: null as string | null,
+        abTestingEnabled: false,
+        personaB: null as string | null,
     };
 }
 
