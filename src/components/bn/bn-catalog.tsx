@@ -63,6 +63,7 @@ export function BnCatalog({
     const [onlyCheap, setOnlyCheap] = useState(sp.get("cheap") === "1" || initialSort === "cheap");
     const [onlyInspect, setOnlyInspect] = useState(sp.get("inspect") === "1");
     const [onlyDelivery, setOnlyDelivery] = useState(sp.get("delivery") === "1");
+    const [onlyNegotiable, setOnlyNegotiable] = useState(sp.get("negotiable") === "1");
     const [maxPrice, setMaxPrice] = useState<number | null>(
         sp.get("maxPrice") ? Number(sp.get("maxPrice")) : null
     );
@@ -78,6 +79,7 @@ export function BnCatalog({
         setOrDel("cheap", onlyCheap);
         setOrDel("inspect", onlyInspect);
         setOrDel("delivery", onlyDelivery);
+        setOrDel("negotiable", onlyNegotiable);
         setOrDel("maxPrice", maxPrice);
         setOrDel("sort", sort === "new" ? null : sort);   // "new" default — URL toza
         const qs = params.toString();
@@ -87,7 +89,7 @@ export function BnCatalog({
             router.replace(target, { scroll: false });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [marketSlug, onlyCheap, onlyInspect, onlyDelivery, maxPrice, sort]);
+    }, [marketSlug, onlyCheap, onlyInspect, onlyDelivery, onlyNegotiable, maxPrice, sort]);
 
     // Pagination — SSR birinchi sahifani beradi, keyin "Yana yuklash" bosilsa
     // /api/bn/products/search'dan keyingi 30 ta olamiz.
@@ -103,10 +105,11 @@ export function BnCatalog({
             const mName = markets.find(m => m.slug === marketSlug)?.name;
             list = list.filter(p => p.marketName === mName);
         }
-        if (onlyCheap)    list = list.filter(p => p.marketAvgPrice && p.price < p.marketAvgPrice);
-        if (onlyInspect)  list = list.filter(p => p.allowInspect);
-        if (onlyDelivery) list = list.filter(p => p.allowDelivery);
-        if (maxPrice)     list = list.filter(p => p.price <= maxPrice);
+        if (onlyCheap)      list = list.filter(p => p.marketAvgPrice && p.price < p.marketAvgPrice);
+        if (onlyInspect)    list = list.filter(p => p.allowInspect);
+        if (onlyDelivery)   list = list.filter(p => p.allowDelivery);
+        if (onlyNegotiable) list = list.filter(p => p.isNegotiable);
+        if (maxPrice)       list = list.filter(p => p.price <= maxPrice);
 
         switch (sort) {
             case "cheap":
@@ -119,7 +122,7 @@ export function BnCatalog({
             default: break;
         }
         return list;
-    }, [initialProducts, extraProducts, markets, marketSlug, onlyCheap, onlyInspect, onlyDelivery, maxPrice, sort]);
+    }, [initialProducts, extraProducts, markets, marketSlug, onlyCheap, onlyInspect, onlyDelivery, onlyNegotiable, maxPrice, sort]);
 
     async function loadMore() {
         if (loadingMore || !hasMore) return;
@@ -143,11 +146,12 @@ export function BnCatalog({
 
     const activeFilters =
         (marketSlug ? 1 : 0) + (onlyCheap ? 1 : 0) + (onlyInspect ? 1 : 0)
-        + (onlyDelivery ? 1 : 0) + (maxPrice ? 1 : 0);
+        + (onlyDelivery ? 1 : 0) + (onlyNegotiable ? 1 : 0) + (maxPrice ? 1 : 0);
 
     function reset() {
         setMarketSlug(null); setOnlyCheap(false);
-        setOnlyInspect(false); setOnlyDelivery(false); setMaxPrice(null);
+        setOnlyInspect(false); setOnlyDelivery(false);
+        setOnlyNegotiable(false); setMaxPrice(null);
     }
 
     const title = subCategory?.name ?? category?.name
@@ -330,6 +334,8 @@ export function BnCatalog({
                                     label={t("quickInspect")} />
                                 <Toggle checked={onlyDelivery} onChange={setOnlyDelivery}
                                     label={t("quickDelivery")} />
+                                <Toggle checked={onlyNegotiable} onChange={setOnlyNegotiable}
+                                    label={t("quickNegotiable")} />
                             </FilterGroup>
 
                             <FilterGroup title={t("groupMarket")}>

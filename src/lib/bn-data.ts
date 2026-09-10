@@ -476,8 +476,10 @@ export async function searchProducts(opts: {
     profileId?: string | null;
     /** Faqat ulgurji mahsulotlar kerak (/bn/ulgurji sahifasi uchun) */
     wholesaleOnly?: boolean;
+    /** Faqat narx kelishilishi mumkin bo'lgan mahsulotlar (Narx kelishuvi filtri) */
+    negotiableOnly?: boolean;
 }): Promise<BnProductDTO[]> {
-    const { q, categorySlug, marketSlug, sort = "new", limit = 60, skip = 0, profileId = null, wholesaleOnly = false } = opts;
+    const { q, categorySlug, marketSlug, sort = "new", limit = 60, skip = 0, profileId = null, wholesaleOnly = false, negotiableOnly = false } = opts;
 
     const seeWholesale = await viewerCanSeeWholesale(profileId);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -487,6 +489,9 @@ export async function searchProducts(opts: {
         where.isWholesale = true;
     } else if (!seeWholesale) {
         where.isWholesale = false;
+    }
+    if (negotiableOnly) {
+        where.isNegotiable = true;
     }
     if (q?.trim()) {
         where.OR = [

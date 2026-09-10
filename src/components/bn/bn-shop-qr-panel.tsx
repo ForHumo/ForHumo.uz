@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { QrCode, Download, Printer, ExternalLink, Sun, Moon, Check } from "lucide-react";
+import { BnSelect } from "@/components/bn/bn-select";
 
 type Theme = "dark" | "light";
 type Lang = "uz" | "ru" | "en";
@@ -114,16 +115,18 @@ export function BnShopQrPanel({ shopSlug, shopName }: { shopSlug: string; shopNa
             </div>
 
             {/* Hajm */}
-            <div className="flex items-center gap-2 text-xs">
-                <label className="text-neutral-600 dark:text-neutral-400">Hajmi:</label>
-                <select
+            <div className="flex items-center gap-2">
+                <label className="text-xs text-neutral-600 dark:text-neutral-400 shrink-0">Hajmi:</label>
+                <BnSelect
+                    className="flex-1 max-w-[220px]"
+                    ariaLabel="Chop etish hajmi"
                     value={size}
-                    onChange={e => setSize(e.target.value as "a4" | "a5")}
-                    className="px-2 py-1 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950"
-                >
-                    <option value="a5">A5 (o&apos;rta)</option>
-                    <option value="a4">A4 (katta)</option>
-                </select>
+                    onChange={v => setSize(v as "a4" | "a5")}
+                    options={[
+                        { value: "a5", label: "A5 (o'rta)" },
+                        { value: "a4", label: "A4 (katta)" },
+                    ]}
+                />
             </div>
 
             {/* Actions */}

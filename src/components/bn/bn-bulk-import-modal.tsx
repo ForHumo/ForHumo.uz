@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { BN } from "@/lib/bn-theme";
+import { BnSelect } from "./bn-select";
 
 type Step = "intro" | "paste" | "preview" | "done";
 
@@ -295,17 +296,13 @@ export function BnBulkImportModal({
                                 <label className="text-[12px] font-black block mb-1.5" style={{ color: BN.text2 }}>
                                     {t("bulkDefaultCat")}
                                 </label>
-                                <select
+                                <BnSelect
                                     value={defaultCat}
-                                    onChange={(e) => setDefaultCat(e.target.value)}
-                                    className="w-full h-11 px-3 rounded-xl text-[13px] focus:outline-none"
-                                    style={{ background: BN.surfaceUp, color: BN.text, border: `1px solid ${BN.border}` }}
-                                >
-                                    <option value="">{t("bulkDefaultCatNone")}</option>
-                                    {categories.map(c => (
-                                        <option key={c.slug} value={c.slug}>{c.name} ({c.slug})</option>
-                                    ))}
-                                </select>
+                                    onChange={setDefaultCat}
+                                    placeholder={t("bulkDefaultCatNone")}
+                                    ariaLabel={t("bulkDefaultCat")}
+                                    options={categories.map(c => ({ value: c.slug, label: `${c.name} (${c.slug})` }))}
+                                />
                             </div>
                         </div>
                     )}

@@ -13,6 +13,7 @@ import {
 import { BN, fmtPrice, fmtPriceShort } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnSellerAiCommand } from "./bn-seller-ai-command";
+import { BnDateInput } from "./bn-date-input";
 
 interface RankRow {
     productId: string;
@@ -145,13 +146,9 @@ export function BnSellerAnalytics({ shopName }: { shopName: string }) {
                 style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
                 <div className="flex items-center gap-2 flex-1 min-w-[280px]">
                     <Calendar className="w-4 h-4 flex-shrink-0" style={{ color: BN.gold }} />
-                    <input type="date" value={from} max={to} onChange={e => setFrom(e.target.value)}
-                        className="h-9 px-2.5 rounded-lg text-[13px] font-bold w-[145px]"
-                        style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }} />
+                    <BnDateInput value={from} max={to} onChange={setFrom} className="w-[160px]" ariaLabel="Boshlanish sanasi" />
                     <span className="text-[12px]" style={{ color: BN.text3 }}>—</span>
-                    <input type="date" value={to} min={from} max={isoDate(now)} onChange={e => setTo(e.target.value)}
-                        className="h-9 px-2.5 rounded-lg text-[13px] font-bold w-[145px]"
-                        style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }} />
+                    <BnDateInput value={to} min={from} max={isoDate(now)} onChange={setTo} className="w-[160px]" ariaLabel="Tugash sanasi" />
                 </div>
                 <div className="flex items-center gap-1.5">
                     {[{ d: 7, label: "7 kun" }, { d: 30, label: "30 kun" }, { d: 90, label: "90 kun" }].map(x => (

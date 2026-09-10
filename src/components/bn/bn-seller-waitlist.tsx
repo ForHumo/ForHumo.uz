@@ -10,6 +10,7 @@ import { BN } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnBackButton } from "./bn-back-button";
 import { BnPhoneInput, isValidUzPhone } from "./bn-phone-input";
+import { BnSelect } from "./bn-select";
 import { getAttribution } from "@/lib/bn-analytics";
 import type { BnMarketDTO } from "@/lib/bn-data";
 
@@ -134,13 +135,13 @@ export function BnSellerWaitlist({ markets = [] }: Props) {
                 </Field>
 
                 <Field label={t("marketLabel")} hint={t("marketHint")}>
-                    <select value={marketSlug} onChange={e => setMarketSlug(e.target.value)}
-                        className="bn-wl-input appearance-none">
-                        <option value="">{t("marketPlaceholder")}</option>
-                        {markets.map(m => (
-                            <option key={m.slug} value={m.slug}>{m.name}</option>
-                        ))}
-                    </select>
+                    <BnSelect
+                        value={marketSlug}
+                        onChange={setMarketSlug}
+                        placeholder={t("marketPlaceholder")}
+                        ariaLabel={t("marketLabel")}
+                        options={markets.map(m => ({ value: m.slug, label: m.name }))}
+                    />
                 </Field>
 
                 <Field label={t("categoryLabel")} hint={t("categoryHint")}>

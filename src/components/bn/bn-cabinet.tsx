@@ -26,6 +26,7 @@ import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
 import { BnPhoneInput } from "./bn-phone-input";
 import { BnCategoryPicker } from "./bn-category-picker";
+import { BnSelect } from "./bn-select";
 import { BnPushCard } from "./bn-push-card";
 import { BnReferralLeaderboard } from "./bn-referral-leaderboard";
 import { BnAchievementsCard } from "./bn-achievements-card";
@@ -1450,18 +1451,6 @@ function CreateProductModal({
 
                     <FieldLabel label={t("fldCategory")}>
                         <BnCategoryPicker categories={categories} value={categorySlug} onChange={setCategorySlug} />
-                        <select
-                            hidden
-                            value={categorySlug}
-                            onChange={e => setCategorySlug(e.target.value)}
-                            className="bn-form-input"
-                        >
-                            {categories.map(c => (
-                                <option key={c.slug} value={c.slug}>
-                                    {c.isSub ? "  └ " : ""}{c.name}
-                                </option>
-                            ))}
-                        </select>
                     </FieldLabel>
 
                     <FieldLabel label={t("fldDesc")}>
@@ -2124,14 +2113,13 @@ function AttrInput({
         return (
             <label className="block">
                 {label}
-                <select
+                <BnSelect
                     value={String(value ?? "")}
-                    onChange={e => onChange(e.target.value)}
-                    className="bn-form-input"
-                >
-                    <option value="">{unselected}</option>
-                    {def.options.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
+                    onChange={onChange}
+                    placeholder={unselected}
+                    ariaLabel={def.label}
+                    options={def.options.map(o => ({ value: o, label: o }))}
+                />
             </label>
         );
     }

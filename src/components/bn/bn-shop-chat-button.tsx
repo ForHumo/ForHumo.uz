@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MessageCircle, X, Send, Loader2 } from "lucide-react";
+import { BN } from "@/lib/bn-theme";
 
 interface Msg {
     id: string;
@@ -17,15 +18,19 @@ interface Msg {
 
 export function BnShopChatButton({ shopSlug, shopName }: { shopSlug: string; shopName: string }) {
     const [open, setOpen] = useState(false);
+    const [initialText, setInitialText] = useState<string>("");
 
-    // ?chat=1 bilan avto ochish (push bosilganda)
+    // ?chat=1 bilan avto ochish (push bosilganda) + ?msg= bilan matn oldindan to'ldiriladi
     useEffect(() => {
         if (typeof window === "undefined") return;
         const params = new URL(window.location.href).searchParams;
         if (params.get("chat") === "1") {
             setOpen(true);
+            const preset = params.get("msg");
+            if (preset) setInitialText(preset);
             const cleaned = new URL(window.location.href);
             cleaned.searchParams.delete("chat");
+            cleaned.searchParams.delete("msg");
             window.history.replaceState({}, "", cleaned.toString());
         }
     }, []);
@@ -34,24 +39,25 @@ export function BnShopChatButton({ shopSlug, shopName }: { shopSlug: string; sho
         <>
             <button
                 onClick={() => setOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500 text-white text-xs font-medium hover:bg-sky-600"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-transform active:scale-[0.98]"
+                style={{ background: BN.gold, color: BN.onGold }}
             >
                 <MessageCircle className="w-3.5 h-3.5" />
                 Yozishish
             </button>
 
-            {open && <BnShopChatModal shopSlug={shopSlug} shopName={shopName} onClose={() => setOpen(false)} />}
+            {open && <BnShopChatModal shopSlug={shopSlug} shopName={shopName} initialText={initialText} onClose={() => { setOpen(false); setInitialText(""); }} />}
         </>
     );
 }
 
 function BnShopChatModal({
-    shopSlug, shopName, onClose,
-}: { shopSlug: string; shopName: string; onClose: () => void }) {
+    shopSlug, shopName, initialText, onClose,
+}: { shopSlug: string; shopName: string; initialText?: string; onClose: () => void }) {
     const [messages, setMessages] = useState<Msg[]>([]);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
-    const [text, setText] = useState("");
+    const [text, setText] = useState(initialText ?? "");
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const load = useCallback(async () => {
@@ -99,52 +105,52 @@ function BnShopChatModal({
     }, [text, shopSlug, load]);
 
     return (
-        <div className="fixed inset-0 z-[200] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <div className="w-full sm:max-w-md bg-white dark:bg-neutral-900 rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[85vh] flex flex-col">
+        <div className="fixed inset-0 z-[200] bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[85vh] flex flex-col"
+                style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
+                <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${BN.border}` }}>
                     <div className="flex items-center gap-2 min-w-0">
-                        <MessageCircle className="w-5 h-5 text-sky-500 shrink-0" />
+                        <MessageCircle className="w-5 h-5 shrink-0" style={{ color: BN.gold }} />
                         <div className="min-w-0">
-                            <div className="text-sm font-semibold truncate">{shopName}</div>
-                            <div className="text-[11px] text-neutral-500">Do&apos;kon bilan chat</div>
+                            <div className="text-sm font-bold truncate" style={{ color: BN.text }}>{shopName}</div>
+                            <div className="text-[11px]" style={{ color: BN.text3 }}>Do&apos;kon bilan chat</div>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded">
-                        <X className="w-4 h-4" />
+                    <button onClick={onClose} aria-label="Yopish"
+                        className="p-1.5 rounded"
+                        style={{ background: BN.surfaceUp }}>
+                        <X className="w-4 h-4" style={{ color: BN.text2 }} />
                     </button>
                 </div>
 
                 {/* Messages */}
-                <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[300px]">
+                <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[300px]" style={{ background: BN.bg }}>
                     {loading ? (
                         <div className="flex justify-center py-6">
-                            <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
+                            <Loader2 className="w-5 h-5 animate-spin" style={{ color: BN.text3 }} />
                         </div>
                     ) : messages.length === 0 ? (
-                        <div className="text-center py-8 text-xs text-neutral-500">
+                        <div className="text-center py-8 text-xs" style={{ color: BN.text3 }}>
                             Hozircha xabar yo&apos;q.<br />
                             Do&apos;konga savolingizni yozing — sotuvchi javob beradi.
                         </div>
                     ) : (
                         messages.map(m => (
-                            <div
-                                key={m.id}
-                                className={`flex ${m.fromShop ? "justify-start" : "justify-end"}`}
-                            >
+                            <div key={m.id} className={`flex ${m.fromShop ? "justify-start" : "justify-end"}`}>
                                 <div
-                                    className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
-                                        m.fromShop
-                                            ? "bg-neutral-100 dark:bg-neutral-800 rounded-bl-md"
-                                            : "bg-sky-500 text-white rounded-br-md"
-                                    }`}
+                                    className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${m.fromShop ? "rounded-bl-md" : "rounded-br-md"}`}
+                                    style={{
+                                        background: m.fromShop ? BN.surfaceUp : BN.gold,
+                                        color: m.fromShop ? BN.text : BN.onGold,
+                                    }}
                                 >
                                     {m.imageUrl && (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img src={m.imageUrl} alt="" className="max-w-full rounded-lg mb-1" />
                                     )}
                                     {m.text && <div className="whitespace-pre-wrap break-words">{m.text}</div>}
-                                    <div className={`text-[10px] mt-1 ${m.fromShop ? "text-neutral-500" : "text-white/70"}`}>
+                                    <div className="text-[10px] mt-1 opacity-70">
                                         {new Date(m.createdAt).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })}
                                     </div>
                                 </div>
@@ -154,20 +160,23 @@ function BnShopChatModal({
                 </div>
 
                 {/* Composer */}
-                <div className="p-3 border-t border-neutral-200 dark:border-neutral-800 flex gap-2">
+                <div className="p-3 flex gap-2" style={{ borderTop: `1px solid ${BN.border}` }}>
                     <input
                         type="text"
                         value={text}
                         onChange={e => setText(e.target.value)}
                         onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(); } }}
                         placeholder="Xabar yozing..."
-                        className="flex-1 px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-sm"
+                        className="flex-1 px-3 py-2 rounded-lg text-sm focus:outline-none"
+                        style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
                         maxLength={2000}
                     />
                     <button
                         onClick={send}
                         disabled={sending || !text.trim()}
-                        className="px-3 rounded-lg bg-sky-500 text-white disabled:opacity-50 hover:bg-sky-600"
+                        className="px-3 rounded-lg disabled:opacity-50"
+                        style={{ background: BN.gold, color: BN.onGold }}
+                        aria-label="Yuborish"
                     >
                         {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     </button>

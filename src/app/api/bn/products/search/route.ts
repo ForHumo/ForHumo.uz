@@ -19,12 +19,14 @@ export async function GET(req: Request) {
     const skip = Math.max(0, Number(url.searchParams.get("skip")) || 0);
     const limit = Math.min(60, Math.max(1, Number(url.searchParams.get("limit")) || 30));
     const wholesaleOnly = url.searchParams.get("wholesale") === "1";
+    const negotiableOnly = url.searchParams.get("negotiable") === "1";
 
     const auth = await getBnAuth().catch(() => null);
     const products = await searchProducts({
         q, categorySlug, marketSlug, sort, skip, limit,
         profileId: auth?.profileId ?? null,
         wholesaleOnly,
+        negotiableOnly,
     });
 
     return NextResponse.json({

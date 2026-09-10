@@ -488,10 +488,17 @@ export function BnProductDetail({
                         )}
 
                         {p.isNegotiable && (
-                            <p className="flex items-center gap-1.5 text-[12.5px] mb-4" style={{ color: BN.text2 }}>
-                                <Info className="w-3.5 h-3.5 flex-shrink-0" style={{ color: BN.gold }} />
-                                {t("negotiableNote")}
-                            </p>
+                            <BnLink
+                                href={`/d/${p.shopSlug}?chat=1&msg=${encodeURIComponent(
+                                    t("negotiablePrefill", { title: p.title, price: p.price.toLocaleString(locale) })
+                                )}`}
+                                className="mb-4 w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-[13px] font-bold transition-transform active:scale-[0.98]"
+                                style={{ background: BN.goldSoft, border: `1px solid ${BN.borderGold}`, color: BN.gold }}
+                            >
+                                <MessageCircle className="w-4 h-4 flex-shrink-0" />
+                                <span className="flex-1 text-left">{t("negotiableCta")}</span>
+                                <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                            </BnLink>
                         )}
 
                         {/* Ijtimoiy proof — prioritet: buyers > sold > viewers.
