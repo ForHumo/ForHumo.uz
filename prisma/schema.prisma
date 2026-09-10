@@ -4287,14 +4287,25 @@ model BnShopChat {
 }
 
 model BnShopChatMessage {
-  id         String   @id @default(cuid())
-  chatId     String
-  chat       BnShopChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  fromShop   Boolean                           // true = sotuvchi javobi, false = xaridor xabari
-  text       String                            // max 2000 belgi
-  imageUrl   String?
-  readAt     DateTime?                         // Qarshi tomon o'qigan vaqt
-  createdAt  DateTime @default(now())
+  id           String   @id @default(cuid())
+  chatId       String
+  chat         BnShopChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  fromShop     Boolean                           // true = sotuvchi javobi, false = xaridor xabari
+  text         String                            // max 2000 belgi
+  imageUrl     String?
+  readAt       DateTime?                         // Qarshi tomon o'qigan vaqt
+  createdAt    DateTime @default(now())
+
+  // Narx kelishuvi (Jalol'ning fikri) — savdolashuv strukturalangan xabarlari:
+  //   "TEXT" (default) — oddiy xabar
+  //   "OFFER" — xaridor narx taklif qildi (offerAmount majburiy)
+  //   "COUNTER" — sotuvchi qarshi taklif berdi (fromShop=true + offerAmount)
+  //   "ACCEPT" — taklifni qabul qildi (raqamsiz — hozirgi mavjud taklifga bog'liq)
+  //   "REJECT" — taklifni rad etdi
+  kind         String   @default("TEXT")
+  productId    String?                           // Qaysi mahsulot uchun (OFFER/COUNTER)
+  offerAmount  Int?                              // Taklif qilingan narx (so'm)
+  offerStatus  String?                           // OFFER/COUNTER uchun: "PENDING" | "ACCEPTED" | "REJECTED" | "COUNTERED"
 
   @@index([chatId, createdAt])
 }

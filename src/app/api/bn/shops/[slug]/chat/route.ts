@@ -108,7 +108,23 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
     const body = await req.json().catch(() => ({}));
     const text = typeof body?.text === "string" ? body.text.trim().slice(0, MAX_TEXT) : "";
     const imageUrl = typeof body?.imageUrl === "string" ? body.imageUrl.trim().slice(0, 500) : null;
-    if (!text && !imageUrl) return NextResponse.json({ error: "empty" }, { status: 400 });
+
+    // Narx kelishuvi (savdolashuv) — strukturalangan xabar turlari
+    const kindRaw = typeof body?.kind === "string" ? body.kind : "TEXT";
+    const kind = (["TEXT", "OFFER", "COUNTER", "ACCEPT", "REJECT"] as const)
+        .includes(kindRaw as never) ? kindRaw : "TEXT";
+    const productId = typeof body?.productId === "string" ? body.productId : null;
+    const offerAmountRaw = Number(body?.offerAmount);
+    const offerAmount = Number.isFinite(offerAmountRaw) && offerAmountRaw > 0 ? Math.floor(offerAmountRaw) : null;
+    const answersOfferId = typeof body?.answersOfferId === "string" ? body.answersOfferId : null;
+
+    if (kind === "TEXT" && !text && !imageUrl) return NextResponse.json({ error: "empty" }, { status: 400 });
+    if ((kind === "OFFER" || kind === "COUNTER") && (!offerAmount || !productId)) {
+        return NextResponse.json({ error: "offer_amount_and_product_required" }, { status: 400 });
+    }
+    if ((kind === "ACCEPT" || kind === "REJECT") && !answersOfferId) {
+        return NextResponse.json({ error: "answersOfferId_required" }, { status: 400 });
+    }
 
     const isOwner = shop.profileId === auth.profileId;
 
@@ -135,12 +151,42 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
         chat = await findOrCreateChat(auth.profileId, shop.id);
     }
 
+    // OFFER/COUNTER — matn avto tayyorlanadi (agar bo'sh bo'lsa)
+    let finalText = text;
+    if ((kind === "OFFER" || kind === "COUNTER") && offerAmount && !finalText) {
+        const price = offerAmount.toLocaleString("uz-UZ");
+        finalText = kind === "OFFER"
+            ? `Narx taklifi: ${price} so'm`
+            : `Qarshi taklif: ${price} so'm`;
+    }
+    if (kind === "ACCEPT" && !finalText) finalText = "Taklifni qabul qildim";
+    if (kind === "REJECT" && !finalText) finalText = "Taklifni rad etdim";
+
+    // ACCEPT/REJECT — oldingi taklifga javob → oldingisining offerStatus'ini yangilash
+    if ((kind === "ACCEPT" || kind === "REJECT") && answersOfferId) {
+        await prisma.bnShopChatMessage.updateMany({
+            where: { id: answersOfferId, chatId: chat.id, offerStatus: "PENDING" },
+            data: { offerStatus: kind === "ACCEPT" ? "ACCEPTED" : "REJECTED" },
+        });
+    }
+    // COUNTER — oldingi taklifni COUNTERED deb belgilash
+    if (kind === "COUNTER" && answersOfferId) {
+        await prisma.bnShopChatMessage.updateMany({
+            where: { id: answersOfferId, chatId: chat.id, offerStatus: "PENDING" },
+            data: { offerStatus: "COUNTERED" },
+        });
+    }
+
     const msg = await prisma.bnShopChatMessage.create({
         data: {
             chatId: chat.id,
             fromShop: isOwner,
-            text,
+            text: finalText,
             imageUrl,
+            kind,
+            productId: (kind === "OFFER" || kind === "COUNTER") ? productId : null,
+            offerAmount: (kind === "OFFER" || kind === "COUNTER") ? offerAmount : null,
+            offerStatus: (kind === "OFFER" || kind === "COUNTER") ? "PENDING" : null,
         },
     });
 
@@ -157,9 +203,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
         try {
             const recipientId = isOwner ? chat.buyerId : shop.profileId;
             const senderLabel = isOwner ? shop.name : "Mijoz";
+            let pushTitle = `${senderLabel}: yangi xabar`;
+            if (kind === "OFFER")   pushTitle = `${senderLabel}: narx taklif qildi`;
+            if (kind === "COUNTER") pushTitle = `${senderLabel}: qarshi taklif berdi`;
+            if (kind === "ACCEPT")  pushTitle = `${senderLabel}: taklifni qabul qildi`;
+            if (kind === "REJECT")  pushTitle = `${senderLabel}: taklifni rad etdi`;
             await sendPushToProfile(recipientId, {
-                title: `${senderLabel}: yangi xabar`,
-                body: text ? text.slice(0, 100) : "Rasm yubordi",
+                title: pushTitle,
+                body: finalText ? finalText.slice(0, 100) : "Rasm yubordi",
                 url: isOwner
                     ? `https://bozornarxida.uz/d/${slug}?chat=1`
                     : `https://bozornarxida.uz/kabinet?tab=chats&shop=${slug}`,

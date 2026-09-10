@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { BnLink } from "./bn-nav";
+import { BnShopChatButton } from "./bn-shop-chat-button";
 import { BnBackButton } from "./bn-back-button";
 import { BnReviews } from "./bn-reviews";
 import { BnPriceChart } from "./bn-price-chart";
@@ -488,17 +489,26 @@ export function BnProductDetail({
                         )}
 
                         {p.isNegotiable && (
-                            <BnLink
-                                href={`/d/${p.shopSlug}?chat=1&msg=${encodeURIComponent(
-                                    t("negotiablePrefill", { title: p.title, price: p.price.toLocaleString(locale) })
-                                )}`}
-                                className="mb-4 w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-[13px] font-bold transition-transform active:scale-[0.98]"
-                                style={{ background: BN.goldSoft, border: `1px solid ${BN.borderGold}`, color: BN.gold }}
-                            >
-                                <MessageCircle className="w-4 h-4 flex-shrink-0" />
-                                <span className="flex-1 text-left">{t("negotiableCta")}</span>
-                                <ChevronRight className="w-4 h-4 flex-shrink-0" />
-                            </BnLink>
+                            <div className="mb-4">
+                                <div className="flex items-center gap-1.5 text-[12.5px] mb-1.5" style={{ color: BN.text2 }}>
+                                    <Info className="w-3.5 h-3.5 flex-shrink-0" style={{ color: BN.gold }} />
+                                    {t("negotiableNote")}
+                                </div>
+                                {/* Ichki BnShopChatButton — product konteksti bilan ochilsa Narx taklif qilish tabi paydo bo'ladi */}
+                                <div className="[&>button]:w-full [&>button]:h-11 [&>button]:text-[14px] [&>button]:justify-center [&>button]:gap-2">
+                                    <BnShopChatButton
+                                        shopSlug={p.shopSlug}
+                                        shopName={p.shopName}
+                                        triggerLabel={t("negotiableCta")}
+                                        product={{
+                                            id: p.id,
+                                            title: p.title,
+                                            price: p.price,
+                                            imageUrl: p.images?.[0] ?? null,
+                                        }}
+                                    />
+                                </div>
+                            </div>
                         )}
 
                         {/* Ijtimoiy proof — prioritet: buyers > sold > viewers.
