@@ -18,8 +18,18 @@ const MAX_PER_PHONE_24H = 3;
 const MAX_PER_IP_24H = 10;
 
 function getClientIp(req: Request): string {
+    // Vercel'ning ishonchli header'i — user tomonidan override qilib bo'lmaydi
+    // (Vercel edge har request'ni yangilaydi).
+    const vercel = req.headers.get("x-vercel-forwarded-for");
+    if (vercel) return vercel.split(",")[0].trim();
+    // Fallback: x-forwarded-for OXIRGI IP — Vercel/CDN client IP'ni oxiriga
+    // APPEND qiladi. User o'zi yozgan birinchi IP soxta bo'lishi mumkin.
+    // (Ilgari birinchi IP'ni olardik — X-Forwarded-For spoofing xavfi edi.)
     const xff = req.headers.get("x-forwarded-for");
-    if (xff) return xff.split(",")[0].trim();
+    if (xff) {
+        const parts = xff.split(",").map(s => s.trim()).filter(Boolean);
+        if (parts.length > 0) return parts[parts.length - 1];
+    }
     const real = req.headers.get("x-real-ip");
     if (real) return real.trim();
     return "unknown";

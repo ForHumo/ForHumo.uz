@@ -6,14 +6,17 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
+// QA testda yaratgan barcha soxta yozuvlar (2 raund).
+const TEST_NAMES = ["Spam ", "Test QA", "XFF Bypass ", "Mass Assign", "Race", "Test"];
+const TEST_NOTES = ["attack", "parallel-"];
 const beforeDelete = await prisma.bnSellerWaitlist.findMany({
     where: {
         OR: [
-            { name: { startsWith: "Spam " } },
-            { name: "Test QA" },
+            ...TEST_NAMES.map(n => ({ name: n.endsWith(" ") ? { startsWith: n } : n })),
+            ...TEST_NOTES.map(n => ({ note: n.endsWith("-") ? { startsWith: n } : { contains: n } })),
         ],
     },
-    select: { id: true, name: true, phone: true, createdAt: true },
+    select: { id: true, name: true, phone: true, note: true, createdAt: true },
     orderBy: { createdAt: "asc" },
 });
 console.log(`Topildi: ${beforeDelete.length} ta QA test yozuv`);
@@ -29,10 +32,7 @@ if (beforeDelete.length === 0) {
 
 const result = await prisma.bnSellerWaitlist.deleteMany({
     where: {
-        OR: [
-            { name: { startsWith: "Spam " } },
-            { name: "Test QA" },
-        ],
+        id: { in: beforeDelete.map(w => w.id) },
     },
 });
 console.log(`O'chirildi: ${result.count} ta yozuv.`);
