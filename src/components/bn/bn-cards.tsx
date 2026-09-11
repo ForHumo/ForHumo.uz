@@ -201,7 +201,7 @@ export function BnSectionTitle({
     return (
         <div className="flex items-end justify-between gap-3 mb-4">
             <div className="min-w-0">
-                <h2 className="text-[19px] sm:text-[22px] font-black tracking-tight leading-none">{title}</h2>
+                <h2 className="bn-display text-[20px] sm:text-[24px] font-black tracking-tight leading-none">{title}</h2>
                 {subtitle && (
                     <p className="text-[13px] mt-1.5" style={{ color: BN.text3 }}>{subtitle}</p>
                 )}

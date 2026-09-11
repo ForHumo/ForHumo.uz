@@ -4,6 +4,7 @@
 
 import type { ReactNode } from "react";
 import { headers } from "next/headers";
+import { Playfair_Display, Manrope } from "next/font/google";
 import { BnHeader } from "@/components/bn/bn-header";
 import { BnFooter } from "@/components/bn/bn-footer";
 import { BnNavbar } from "@/components/bn/bn-navbar";
@@ -17,6 +18,22 @@ import { getBnAuth } from "@/lib/bn-auth";
 import { prisma } from "@/lib/prisma";
 
 const BN_HOSTS = ["bozornarxida.uz", "www.bozornarxida.uz"];
+
+// Premium tipografiya — Kirill + Lotin ikkalasini qo'llaydi (uz/ru/en).
+// Display: Playfair Display — yuqori kontrastli hashamatli serif (sarlavhalar, brend).
+// Body:   Manrope — geometrik, toza, tabular raqamlar (narxlar uchun ideal).
+const bnDisplay = Playfair_Display({
+    subsets: ["latin", "cyrillic"],
+    weight: ["600", "700", "800", "900"],
+    variable: "--bn-font-display",
+    display: "swap",
+});
+const bnBody = Manrope({
+    subsets: ["latin", "cyrillic"],
+    weight: ["400", "500", "600", "700", "800"],
+    variable: "--bn-font-body",
+    display: "swap",
+});
 
 import type { Metadata, Viewport } from "next";
 
@@ -92,7 +109,7 @@ export default async function BnLayout({
     const hasShop = !!shop;
 
     return (
-        <div className="bn-scope fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden">
+        <div className={`bn-scope ${bnDisplay.variable} ${bnBody.variable} fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden`}>
             <BnStyles />
             <BnAurora />
             <BnBaseProvider base={base} locale={locale} hasShop={hasShop}>

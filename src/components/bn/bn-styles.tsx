@@ -1,99 +1,185 @@
 "use client";
 
-// BN rang tizimi — Kunduzgi / Tungi / Tizim.
-// next-themes `<html class="dark">` qo'yadi; biz shunga bog'lanamiz.
+// Bozor Narxida — premium dizayn tizimi ("Tilla luxury").
+// Yo'nalish: O'zbek milliy tilla (zar) hashamati — logo'dagi antique gold
+// gradient (B qora/oq + N tilla) asos qilib olingan.
 //
-// Kunduzgi: och bejiviy / molochniy (foydalanuvchi so'rovi)
-// Tungi:    qora emas — sezilib turadigan to'q kulrang (foydalanuvchi so'rovi)
+//   Kunduzgi (Ivory & Gold): issiq ivory/parchment fon, boy antique tilla accent.
+//   Tungi (Midnight Registan): chuqur issiq charcoal, yorqin shampan tillasi porlaydi.
+//
+// next-themes `<html class="dark">` qo'yadi; biz shunga bog'lanamiz.
+// Komponentlarda hex yozilmaydi — doim BN.* (bn-theme.ts) ishlatiladi.
 
 export function BnStyles() {
     return (
         <style jsx global>{`
             .bn-scope {
-                /* ── KUNDUZGI (och bejiviy / molochniy) ── */
-                --bn-gold:        #B8860B;
-                --bn-gold-light:  #E0A800;
-                --bn-gold-dark:   #8A6508;
-                --bn-gold-soft:   rgba(184, 134, 11, 0.10);
-                --bn-gold-edge:   rgba(184, 134, 11, 0.28);
+                /* ── KUNDUZGI — Ivory & Gold ─────────────────────────────
+                   Boy antique tilla (logo o'rta toni), issiq parchment fon. */
+                --bn-gold:        #9E7A1E;
+                --bn-gold-light:  #C29A2E;
+                --bn-gold-dark:   #6E5312;
+                --bn-gold-soft:   rgba(158, 122, 30, 0.09);
+                --bn-gold-edge:   rgba(158, 122, 30, 0.30);
+                --bn-gold-grad:   linear-gradient(135deg, #C9A63C 0%, #A67C1A 48%, #7A5A12 100%);
+                --bn-gold-sheen:  linear-gradient(105deg, #B98E24 0%, #E2C766 45%, #A67C1A 100%);
 
-                --bn-bg:          #FAF6EE;
-                --bn-surface:     #FFFFFF;
-                --bn-surface-up:  #F4EFE3;
-                --bn-surface-top: #EBE4D4;
+                --bn-bg:          #F7F1E5;
+                --bn-surface:     #FFFDF8;
+                --bn-surface-up:  #F1E9D7;
+                --bn-surface-top: #E8DDC7;
 
-                --bn-border:      rgba(60, 50, 30, 0.11);
-                --bn-border-gold: rgba(184, 134, 11, 0.30);
+                --bn-border:      rgba(74, 58, 22, 0.12);
+                --bn-border-gold: rgba(158, 122, 30, 0.32);
 
-                --bn-text:        #1C1913;
-                --bn-text-2:      #5F594C;
-                --bn-text-3:      #918A7B;
-                --bn-on-gold:     #FFFFFF;
+                --bn-text:        #1B1610;
+                --bn-text-2:      #5A5041;
+                --bn-text-3:      #94886F;
+                --bn-on-gold:     #FFFDF8;
 
                 --bn-ok:          #15803D;
                 --bn-ok-soft:     rgba(21, 128, 61, 0.10);
                 --bn-warn:        #B45309;
                 --bn-warn-soft:   rgba(180, 83, 9, 0.10);
-                --bn-err:         #B91C1C;
-                --bn-err-soft:    rgba(185, 28, 28, 0.10);
+                --bn-err:         #B21F1F;
+                --bn-err-soft:    rgba(178, 31, 31, 0.10);
                 --bn-info:        #1D4ED8;
 
-                --bn-glass:       rgba(255, 253, 248, 0.72);
-                --bn-shadow:      0 8px 32px rgba(60, 45, 15, 0.10);
+                --bn-glass:       rgba(255, 253, 246, 0.74);
+                --bn-shadow:      0 1px 2px rgba(74, 58, 22, 0.06), 0 10px 34px rgba(74, 58, 22, 0.10);
+                --bn-shadow-gold: 0 6px 24px rgba(158, 122, 30, 0.22);
 
-                /* Jonli fon (och) */
-                --bn-orb-1:       rgba(224, 168, 0, 0.16);
-                --bn-orb-2:       rgba(200, 150, 80, 0.13);
-                --bn-orb-3:       rgba(180, 140, 40, 0.10);
+                /* Jonli fon orbitlari (issiq tilla) */
+                --bn-orb-1:       rgba(201, 166, 60, 0.16);
+                --bn-orb-2:       rgba(180, 140, 50, 0.11);
+                --bn-orb-3:       rgba(158, 122, 30, 0.09);
 
                 background: var(--bn-bg);
                 color: var(--bn-text);
                 color-scheme: light;
+                font-family: var(--bn-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+                -webkit-font-smoothing: antialiased;
+                text-rendering: optimizeLegibility;
+                font-feature-settings: "cv11", "ss01";
             }
 
-            /* ── TUNGI (to'q kulrang, qora emas) ── */
+            /* ── TUNGI — Midnight Registan ───────────────────────────────
+               Chuqur issiq charcoal, yorqin shampan tillasi (logo yuqori toni). */
             .dark .bn-scope {
-                --bn-gold:        #F5B301;
-                --bn-gold-light:  #FFCE3D;
-                --bn-gold-dark:   #C98F00;
-                --bn-gold-soft:   rgba(245, 179, 1, 0.11);
-                --bn-gold-edge:   rgba(245, 179, 1, 0.24);
+                --bn-gold:        #E6C56A;
+                --bn-gold-light:  #F3DB93;
+                --bn-gold-dark:   #B8933B;
+                --bn-gold-soft:   rgba(230, 197, 106, 0.10);
+                --bn-gold-edge:   rgba(230, 197, 106, 0.26);
+                --bn-gold-grad:   linear-gradient(135deg, #F0D585 0%, #D9B450 46%, #A9822B 100%);
+                --bn-gold-sheen:  linear-gradient(105deg, #C9A63C 0%, #F4DD8E 45%, #C9A63C 100%);
 
-                --bn-bg:          #17171B;
-                --bn-surface:     #1F1F25;
-                --bn-surface-up:  #28282F;
-                --bn-surface-top: #32323A;
+                --bn-bg:          #15120B;
+                --bn-surface:     #1F1B12;
+                --bn-surface-up:  #2A2417;
+                --bn-surface-top: #362E1E;
 
-                --bn-border:      rgba(255, 255, 255, 0.09);
-                --bn-border-gold: rgba(245, 179, 1, 0.24);
+                --bn-border:      rgba(230, 197, 106, 0.11);
+                --bn-border-gold: rgba(230, 197, 106, 0.28);
 
-                --bn-text:        #F6F4F0;
-                --bn-text-2:      #A9A296;
-                --bn-text-3:      #7C7568;
-                --bn-on-gold:     #17171B;
+                --bn-text:        #F6F0E2;
+                --bn-text-2:      #B7AD95;
+                --bn-text-3:      #877D68;
+                --bn-on-gold:     #1A1409;
 
-                --bn-ok:          #4ADE80;
-                --bn-ok-soft:     rgba(74, 222, 128, 0.12);
-                --bn-warn:        #FBBF24;
-                --bn-warn-soft:   rgba(251, 191, 36, 0.12);
-                --bn-err:         #F87171;
-                --bn-err-soft:    rgba(248, 113, 113, 0.12);
-                --bn-info:        #60A5FA;
+                --bn-ok:          #58C87E;
+                --bn-ok-soft:     rgba(88, 200, 126, 0.12);
+                --bn-warn:        #E5B04A;
+                --bn-warn-soft:   rgba(229, 176, 74, 0.12);
+                --bn-err:         #EF8B80;
+                --bn-err-soft:    rgba(239, 139, 128, 0.12);
+                --bn-info:        #78A6F5;
 
-                --bn-glass:       rgba(28, 28, 33, 0.72);
-                --bn-shadow:      0 8px 32px rgba(0, 0, 0, 0.45);
+                --bn-glass:       rgba(24, 20, 13, 0.72);
+                --bn-shadow:      0 1px 2px rgba(0, 0, 0, 0.40), 0 14px 44px rgba(0, 0, 0, 0.52);
+                --bn-shadow-gold: 0 8px 30px rgba(230, 197, 106, 0.18);
 
-                --bn-orb-1:       rgba(245, 179, 1, 0.11);
-                --bn-orb-2:       rgba(201, 143, 0, 0.09);
-                --bn-orb-3:       rgba(120, 100, 60, 0.10);
+                --bn-orb-1:       rgba(230, 197, 106, 0.10);
+                --bn-orb-2:       rgba(184, 147, 59, 0.08);
+                --bn-orb-3:       rgba(120, 95, 40, 0.09);
 
                 color-scheme: dark;
             }
 
-            /* Aurora — GPU-only animatsiya.
-               Eski versiya har freymda filter:blur qayta hisoblardi.
-               Yangi versiya: contain:strict paint izolyatsiya, will-change:transform bilan
-               GPU layer, faqat translate3d animatsiya (compositor-only, main thread 0% band). */
+            /* ── Tipografiya ─────────────────────────────────────────────
+               Body: Manrope. Display serif (Playfair): sahifa H1 + .bn-display.
+               Funksional UI sarlavhalari (h2/h3) toza sans'da qoladi. */
+            .bn-scope h1,
+            .bn-scope .bn-display {
+                font-family: var(--bn-font-display), "Playfair Display", Georgia, "Times New Roman", serif;
+                letter-spacing: -0.01em;
+                font-feature-settings: "lnum", "kern";
+            }
+            .bn-scope .bn-display-sans {
+                font-family: var(--bn-font-body), system-ui, sans-serif !important;
+            }
+            /* Narxlar/raqamlar — tabular, tekis ustunlar */
+            .bn-scope .tabular-nums,
+            .bn-scope .bn-num {
+                font-variant-numeric: tabular-nums lining-nums;
+                font-feature-settings: "tnum", "lnum";
+            }
+            /* Kirill (ru) — display serif'da biroz kengroq oraliq, o'qishga qulay */
+            .bn-scope:lang(ru) h1,
+            .bn-scope:lang(ru) .bn-display,
+            [lang="ru"] .bn-scope h1,
+            [lang="ru"] .bn-scope .bn-display {
+                letter-spacing: 0.005em;
+            }
+
+            /* Tilla gradient matn (logo N kabi) — sarlavha aksenti uchun */
+            .bn-gold-text {
+                background: var(--bn-gold-sheen);
+                -webkit-background-clip: text;
+                background-clip: text;
+                -webkit-text-fill-color: transparent;
+                color: transparent;
+            }
+            /* Tilla gradient fon (premium tugma/aksent) */
+            .bn-gold-grad {
+                background: var(--bn-gold-grad);
+                color: var(--bn-on-gold);
+            }
+            /* Nozik tilla porlash chizig'i (kartochka tepasida) */
+            .bn-hairline-gold {
+                background: linear-gradient(90deg, transparent, var(--bn-gold-edge) 20%, var(--bn-gold) 50%, var(--bn-gold-edge) 80%, transparent);
+            }
+
+            /* Matn belgilash (selection) — tilla */
+            .bn-scope ::selection {
+                background: var(--bn-gold-soft);
+                color: var(--bn-gold-dark);
+            }
+            .dark .bn-scope ::selection {
+                color: var(--bn-gold-light);
+            }
+
+            /* Fokus halqasi — tilla, refined (klaviatura navigatsiyasi) */
+            .bn-scope :focus-visible {
+                outline: 2px solid var(--bn-gold);
+                outline-offset: 2px;
+                border-radius: 6px;
+            }
+
+            /* Nozik skrollbar — tilla */
+            .bn-scope ::-webkit-scrollbar { width: 10px; height: 10px; }
+            .bn-scope ::-webkit-scrollbar-track { background: transparent; }
+            .bn-scope ::-webkit-scrollbar-thumb {
+                background: var(--bn-gold-edge);
+                border-radius: 999px;
+                border: 3px solid transparent;
+                background-clip: content-box;
+            }
+            .bn-scope ::-webkit-scrollbar-thumb:hover { background: var(--bn-gold); background-clip: content-box; }
+
+            /* ── Atmosfera — Aurora (GPU-only) ───────────────────────────
+               Issiq tilla orbitlar. contain:strict + will-change:transform +
+               faqat translate3d → compositor-only, main thread 0% band. */
             .bn-aurora {
                 position: fixed;
                 inset: 0;
@@ -105,29 +191,37 @@ export function BnStyles() {
             .bn-aurora span {
                 position: absolute;
                 border-radius: 50%;
-                filter: blur(60px);
+                filter: blur(64px);
                 opacity: 0.9;
                 will-change: transform;
                 transform: translate3d(0, 0, 0);
                 backface-visibility: hidden;
             }
             .bn-aurora span:nth-child(1) {
-                width: 44vw; height: 44vw;
-                left: -8vw; top: -8vw;
+                width: 46vw; height: 46vw;
+                left: -10vw; top: -10vw;
                 background: var(--bn-orb-1);
-                animation: bn-orb-a 32s ease-in-out infinite alternate;
+                animation: bn-orb-a 34s ease-in-out infinite alternate;
             }
             .bn-aurora span:nth-child(2) {
                 width: 40vw; height: 40vw;
-                right: -10vw; top: 15vh;
+                right: -12vw; top: 12vh;
                 background: var(--bn-orb-2);
-                animation: bn-orb-b 38s ease-in-out infinite alternate;
+                animation: bn-orb-b 40s ease-in-out infinite alternate;
             }
             .bn-aurora span:nth-child(3) {
                 width: 38vw; height: 38vw;
-                left: 20vw; bottom: -12vw;
+                left: 18vw; bottom: -14vw;
                 background: var(--bn-orb-3);
-                animation: bn-orb-c 44s ease-in-out infinite alternate;
+                animation: bn-orb-c 46s ease-in-out infinite alternate;
+            }
+            /* Nozik "zar" don teksturasi — juda past opacity, faqat chuqurlik uchun */
+            .bn-aurora::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                opacity: 0.025;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
             }
             @keyframes bn-orb-a {
                 0%   { transform: translate3d(0, 0, 0); }
@@ -145,23 +239,54 @@ export function BnStyles() {
                 .bn-aurora span { animation: none !important; }
             }
 
-            /* ── Umumiy input uslubi ── */
+            /* ── Umumiy input uslubi — premium fokus ── */
             .bn-input {
                 width: 100%;
                 height: 46px;
-                border-radius: 12px;
-                padding: 0 14px;
+                border-radius: 13px;
+                padding: 0 15px;
                 font-size: 14px;
                 outline: none;
                 background: var(--bn-surface-up);
                 border: 1px solid var(--bn-border);
                 color: var(--bn-text);
                 caret-color: var(--bn-gold);
-                transition: border-color 0.15s;
+                transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
             }
-            .bn-input:focus { border-color: var(--bn-gold-edge); }
+            .bn-input:focus {
+                border-color: var(--bn-gold);
+                box-shadow: 0 0 0 3px var(--bn-gold-soft);
+                background: var(--bn-surface);
+            }
             .bn-input::placeholder { color: var(--bn-text-3); }
             textarea.bn-input { height: auto; }
+
+            /* Premium kartochka ko'tarilishi (hover) */
+            .bn-lift {
+                transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease;
+            }
+            .bn-lift:hover {
+                transform: translateY(-3px);
+                box-shadow: var(--bn-shadow);
+            }
+
+            /* Tilla "shimmer" — skeleton/yuklanish holati uchun */
+            .bn-shimmer {
+                background: linear-gradient(100deg, var(--bn-surface-up) 30%, var(--bn-gold-soft) 50%, var(--bn-surface-up) 70%);
+                background-size: 200% 100%;
+                animation: bn-shimmer 1.5s ease-in-out infinite;
+            }
+            @keyframes bn-shimmer {
+                0%   { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+
+            /* Sahifa yuklanishida yumshoq ko'tarilib chiqish (staggered reveal) */
+            @keyframes bn-rise {
+                from { opacity: 0; transform: translateY(10px); }
+                to   { opacity: 1; transform: translateY(0); }
+            }
+            .bn-rise { animation: bn-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
             /* Skrollbarni yashirish (gorizontal qatorlar uchun) */
             .bn-noscroll { scrollbar-width: none; -ms-overflow-style: none; }
@@ -177,7 +302,6 @@ export function BnStyles() {
                 cursor: pointer;
                 outline: none;
             }
-            /* WebKit (Chrome/Safari/Edge) — track */
             .bn-range::-webkit-slider-runnable-track {
                 height: 6px;
                 border-radius: 999px;
@@ -197,13 +321,12 @@ export function BnStyles() {
                 border-radius: 50%;
                 background: var(--bn-gold);
                 border: 3px solid var(--bn-surface);
-                box-shadow: 0 2px 8px rgba(0,0,0,0.35), 0 0 0 1px var(--bn-gold-edge);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.28), 0 0 0 1px var(--bn-gold-edge);
                 cursor: grab;
                 margin-top: -7px;
                 transition: transform 0.12s;
             }
-            .bn-range::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.1); }
-            /* Firefox */
+            .bn-range::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.12); }
             .bn-range::-moz-range-track {
                 height: 6px;
                 border-radius: 999px;
@@ -220,47 +343,41 @@ export function BnStyles() {
                 border-radius: 50%;
                 background: var(--bn-gold);
                 border: 3px solid var(--bn-surface);
-                box-shadow: 0 2px 8px rgba(0,0,0,0.35), 0 0 0 1px var(--bn-gold-edge);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.28), 0 0 0 1px var(--bn-gold-edge);
                 cursor: grab;
             }
-            .bn-range::-moz-range-thumb:active { cursor: grabbing; transform: scale(1.1); }
+            .bn-range::-moz-range-thumb:active { cursor: grabbing; transform: scale(1.12); }
             .bn-range:disabled { opacity: 0.5; cursor: not-allowed; }
 
             /* ── Mobil + foldable moslashuvi ─────────────────────────────
-               iPhone Duo, Galaxy Fold, kichik cover ekranlarga xush kelibsiz.
-               Juda tor (≤ 380px) va foldable "flex" pozitsiyalari uchun. */
-
-            /* Ultra tor (iPhone Duo cover, kichkina foldable — < 360px) */
+               iPhone Duo, Galaxy Fold, kichik cover ekranlar. */
             @media (max-width: 359px) {
                 .bn-scope .bn-hide-xxs { display: none !important; }
-                .bn-scope h1, .bn-scope .bn-h1 { font-size: 20px !important; line-height: 1.2 !important; }
-                .bn-scope .text-\[24px\], .bn-scope .text-\[26px\], .bn-scope .text-\[28px\], .bn-scope .text-\[30px\], .bn-scope .text-\[32px\] {
-                    font-size: 20px !important;
+                .bn-scope h1, .bn-scope .bn-h1 { font-size: 22px !important; line-height: 1.15 !important; }
+                .bn-scope .text-\\[24px\\], .bn-scope .text-\\[26px\\], .bn-scope .text-\\[28px\\], .bn-scope .text-\\[30px\\], .bn-scope .text-\\[32px\\] {
+                    font-size: 21px !important;
                 }
                 .bn-scope .px-4 { padding-left: 12px !important; padding-right: 12px !important; }
                 .bn-scope .gap-3 { gap: 0.5rem !important; }
                 .bn-scope .gap-4 { gap: 0.625rem !important; }
             }
-
-            /* Foldable landscape/inner (kengaytirilgan ekran — tablet o'lchami) —
-               desktop grid'lar buzilmasin, faqat qulay padding qo'llash. */
             @media (min-width: 720px) and (max-width: 1023px) and (orientation: landscape) {
                 .bn-scope .bn-fold-open { max-width: 900px; margin-left: auto; margin-right: auto; }
             }
 
-            /* iPhone/iPad safe-area — bottom navbar va ortga tugmasi uchun */
+            /* iPhone/iPad safe-area */
             .bn-scope { padding-top: env(safe-area-inset-top); }
 
-            /* iOS Safari: rangli tugmalar clickda tebranib qolmasligi */
+            /* iOS Safari: tap highlight yo'q */
             .bn-scope button, .bn-scope a { -webkit-tap-highlight-color: transparent; }
 
-            /* Juda uzun bir so'zli matnlarni sindirish (sarlavhalar 320px'da mos tushishi) */
+            /* Uzun bir so'zli sarlavhalar 320px'da sindirilsin */
             .bn-scope h1, .bn-scope h2 { overflow-wrap: break-word; word-break: break-word; }
         `}</style>
     );
 }
 
-/** Jonli gradient fon — sahifa ortida sekin harakatlanadi */
+/** Jonli gradient fon — sahifa ortida sekin harakatlanadi (issiq tilla orbitlar) */
 export function BnAurora() {
     return (
         <div className="bn-aurora" aria-hidden="true">

@@ -79,7 +79,7 @@ export function BnHeader({
                     <div className="hidden md:flex items-start gap-4 py-3">
                         <BnLink href="/" className="flex items-center gap-2.5 flex-shrink-0 group h-14">
                             <BnLogo size={52} />
-                            <span className="font-black text-[19px] tracking-tight leading-none">{t("brandName")}</span>
+                            <span className="bn-display font-black text-[20px] tracking-tight leading-none">{t("brandName")}</span>
                         </BnLink>
 
                         <div className="flex-1 min-w-0 flex flex-col gap-2.5">
@@ -211,7 +211,7 @@ export function BnHeader({
 
                             <BnLink href="/" className="flex items-center gap-2 flex-shrink-0">
                                 <BnLogo size={42} />
-                                <span className="font-black text-[16px] tracking-tight leading-none">{t("brandName")}</span>
+                                <span className="bn-display font-black text-[17px] tracking-tight leading-none">{t("brandName")}</span>
                             </BnLink>
 
                             <div className="flex-1" />
@@ -271,7 +271,7 @@ export function BnHeader({
                         <div className="flex items-center justify-between h-16 px-4" style={{ borderBottom: `1px solid ${BN.border}` }}>
                             <div className="flex items-center gap-2">
                                 <BnLogo size={30} />
-                                <span className="font-black text-[15px]">{t("brandName")}</span>
+                                <span className="bn-display font-black text-[16px]">{t("brandName")}</span>
                             </div>
                             <button
                                 onClick={() => setMenuOpen(false)}
