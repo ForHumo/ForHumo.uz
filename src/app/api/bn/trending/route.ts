@@ -5,8 +5,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
+// CDN cache — ochiq endpoint (auth yo'q), so'nggi kunlarga qarab hisoblanadi.
+// 10 daq fresh + 30 daq stale — mahsulot trendlari daqiqada o'zgarmaydi.
 export const revalidate = 600;
+
+function cached<T>(data: T) {
+    return NextResponse.json(data, {
+        headers: { "Cache-Control": "public, s-maxage=600, stale-while-revalidate=1800" },
+    });
+}
 
 const RANGE_DAYS: Record<string, number> = { "1d": 1, "7d": 7, "30d": 30 };
 
@@ -42,7 +49,7 @@ export async function GET(req: Request) {
     // Order-item count per product (parallel)
     const productIds = viewsGrouped.map(v => v.productId);
     if (productIds.length === 0) {
-        return NextResponse.json({ items: [] });
+        return cached({ items: [] });
     }
 
     const [ordersGrouped, products] = await Promise.all([
@@ -97,5 +104,5 @@ export async function GET(req: Request) {
         .sort((a, b) => b.score - a.score)
         .slice(0, 10);
 
-    return NextResponse.json({ items });
+    return cached({ items });
 }

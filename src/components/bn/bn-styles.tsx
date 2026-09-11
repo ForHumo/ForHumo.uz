@@ -90,23 +90,57 @@ export function BnStyles() {
                 color-scheme: dark;
             }
 
-            /* ── Statik fon gradient — animatsiyasiz (GPU/CPU tejash) ──
-               Eski animatsiyali "aurora" har freymda 3 katta blur qayta hisoblanardi;
-               scroll qilishda ham qayta paint bo'lardi — mobil'da qotib qolishga sabab.
-               Endi yagona radial gradient — bir marta paint, 0 CPU ishlatadi. */
+            /* Aurora — GPU-only animatsiya.
+               Eski versiya har freymda filter:blur qayta hisoblardi.
+               Yangi versiya: contain:strict paint izolyatsiya, will-change:transform bilan
+               GPU layer, faqat translate3d animatsiya (compositor-only, main thread 0% band). */
             .bn-aurora {
                 position: fixed;
                 inset: 0;
                 z-index: 0;
                 pointer-events: none;
                 overflow: hidden;
-                background:
-                    radial-gradient(ellipse 60vw 45vh at 15% 10%, var(--bn-orb-1), transparent 60%),
-                    radial-gradient(ellipse 50vw 40vh at 85% 30%, var(--bn-orb-2), transparent 60%),
-                    radial-gradient(ellipse 45vw 35vh at 50% 90%, var(--bn-orb-3), transparent 60%);
+                contain: strict;
             }
-            .bn-aurora span { display: none; }   /* eski span'lar keraksiz */
-
+            .bn-aurora span {
+                position: absolute;
+                border-radius: 50%;
+                filter: blur(60px);
+                opacity: 0.9;
+                will-change: transform;
+                transform: translate3d(0, 0, 0);
+                backface-visibility: hidden;
+            }
+            .bn-aurora span:nth-child(1) {
+                width: 44vw; height: 44vw;
+                left: -8vw; top: -8vw;
+                background: var(--bn-orb-1);
+                animation: bn-orb-a 32s ease-in-out infinite alternate;
+            }
+            .bn-aurora span:nth-child(2) {
+                width: 40vw; height: 40vw;
+                right: -10vw; top: 15vh;
+                background: var(--bn-orb-2);
+                animation: bn-orb-b 38s ease-in-out infinite alternate;
+            }
+            .bn-aurora span:nth-child(3) {
+                width: 38vw; height: 38vw;
+                left: 20vw; bottom: -12vw;
+                background: var(--bn-orb-3);
+                animation: bn-orb-c 44s ease-in-out infinite alternate;
+            }
+            @keyframes bn-orb-a {
+                0%   { transform: translate3d(0, 0, 0); }
+                100% { transform: translate3d(18vw, 12vh, 0); }
+            }
+            @keyframes bn-orb-b {
+                0%   { transform: translate3d(0, 0, 0); }
+                100% { transform: translate3d(-14vw, 18vh, 0); }
+            }
+            @keyframes bn-orb-c {
+                0%   { transform: translate3d(0, 0, 0); }
+                100% { transform: translate3d(12vw, -14vh, 0); }
+            }
             @media (prefers-reduced-motion: reduce) {
                 .bn-aurora span { animation: none !important; }
             }

@@ -7,8 +7,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 600; // 10 daq keshlash
+// CDN cache — public endpoint, tez o'zgarmaydi. 10 daq fresh + 30 daq stale.
+export const revalidate = 600;
+
+function cached<T>(data: T) {
+    return NextResponse.json(data, {
+        headers: { "Cache-Control": "public, s-maxage=600, stale-while-revalidate=1800" },
+    });
+}
 
 interface Row {
     slug: string;
@@ -94,5 +100,5 @@ export async function GET() {
     // Bo'sh mahsulotli kategoriyalarni chiqarib tashlaymiz
     rows = rows.filter(r => r.productCount > 0);
 
-    return NextResponse.json({ categories: rows });
+    return cached({ categories: rows });
 }

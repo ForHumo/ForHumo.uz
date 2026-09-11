@@ -10,7 +10,6 @@ import { BnNavbar } from "@/components/bn/bn-navbar";
 import { BnStyles, BnAurora } from "@/components/bn/bn-styles";
 import { BnBaseProvider } from "@/components/bn/bn-nav";
 import { BnSwipeNav } from "@/components/bn/bn-swipe-nav";
-import { BnFloatingBack } from "@/components/bn/bn-floating-back";
 import { BnOnboarding } from "@/components/bn/bn-onboarding";
 import { BnReferralAttach } from "@/components/bn/bn-referral-attach";
 import { getCategoriesTree } from "@/lib/bn-data";
@@ -109,7 +108,6 @@ export default async function BnLayout({
                         <BnFooter />
                     </div>
                     <BnNavbar />
-                    <BnFloatingBack locale={locale} />
                     <BnOnboarding />
                     <BnReferralAttach />
                 </BnSwipeNav>

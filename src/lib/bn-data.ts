@@ -189,60 +189,82 @@ const PRODUCT_INCLUDE = {
     category: { select: { slug: true } },
 } as const;
 
-export async function getMarkets(limit = 12): Promise<BnMarketDTO[]> {
-    const rows = await prisma.bnMarket.findMany({
-        where: { isActive: true },
-        orderBy: [{ order: "asc" }, { name: "asc" }],
-        take: limit,
-        select: {
-            id: true, slug: true, name: true, district: true,
-            coverUrl: true, workHours: true, shopCount: true, sections: true,
-        },
-    });
-    return rows.map(m => ({
-        id: m.id,
-        slug: m.slug,
-        name: m.name,
-        district: m.district ?? "Toshkent",
-        coverUrl: m.coverUrl ?? "",
-        workHours: m.workHours ?? "",
-        shopCount: m.shopCount,
-        sections: m.sections,
-    }));
-}
+export const getMarkets = unstable_cache(
+    async (limit = 12): Promise<BnMarketDTO[]> => {
+        const rows = await prisma.bnMarket.findMany({
+            where: { isActive: true },
+            orderBy: [{ order: "asc" }, { name: "asc" }],
+            take: limit,
+            select: {
+                id: true, slug: true, name: true, district: true,
+                coverUrl: true, workHours: true, shopCount: true, sections: true,
+            },
+        });
+        return rows.map(m => ({
+            id: m.id,
+            slug: m.slug,
+            name: m.name,
+            district: m.district ?? "Toshkent",
+            coverUrl: m.coverUrl ?? "",
+            workHours: m.workHours ?? "",
+            shopCount: m.shopCount,
+            sections: m.sections,
+        }));
+    },
+    ["bn-markets"],
+    { revalidate: 300, tags: ["bn-markets"] },
+);
 
-export async function getTopShops(limit = 10): Promise<BnShopDTO[]> {
-    // Reyting × log(reyting soni) — mock'dagi bilan bir xil formula
-    const shops = await prisma.bnShop.findMany({
-        where: { status: "APPROVED" },
-        orderBy: [{ rating: "desc" }, { ratingCount: "desc" }],
-        take: limit * 3,   // ko'proq olib, kodda saralaymiz
-        include: { market: { select: { slug: true, name: true } } },
-    });
-    const sorted = shops
-        .sort((a, b) => (b.rating * Math.log10(b.ratingCount + 10)) - (a.rating * Math.log10(a.ratingCount + 10)))
-        .slice(0, limit);
-    return sorted.map(s => toShopDTO(s));
-}
+export const getTopShops = unstable_cache(
+    async (limit = 10): Promise<BnShopDTO[]> => {
+        // Reyting × log(reyting soni) — mock'dagi bilan bir xil formula
+        const shops = await prisma.bnShop.findMany({
+            where: { status: "APPROVED" },
+            orderBy: [{ rating: "desc" }, { ratingCount: "desc" }],
+            take: limit * 3,   // ko'proq olib, kodda saralaymiz
+            include: { market: { select: { slug: true, name: true } } },
+        });
+        const sorted = shops
+            .sort((a, b) => (b.rating * Math.log10(b.ratingCount + 10)) - (a.rating * Math.log10(a.ratingCount + 10)))
+            .slice(0, limit);
+        return sorted.map(s => toShopDTO(s));
+    },
+    ["bn-top-shops"],
+    { revalidate: 180, tags: ["bn-top-shops"] },
+);
 
 /** Bosh sahifa uchun 5 xil feed — bir marta DBga borib qaytadi.
  *  profileId berilsa "Siz uchun" (rekomendatsiya) ham qo'shiladi.
  *  Ulgurji mahsulotlar: faqat BN do'kon egalari va admin'lar ko'radi. */
+// 200 ta so'nggi mahsulot (ulgurjisiz) — bosh sahifadagi 4 feed uchun asos.
+// Foydalanuvchining 99%ida seeWholesale=false — shuning uchun default variant cache'lanadi.
+const getHomeProductsPublic = unstable_cache(
+    async () => {
+        return prisma.bnProduct.findMany({
+            where: { isActive: true, hidden: false, isWholesale: false },
+            include: PRODUCT_INCLUDE,
+            take: 200,
+            orderBy: { createdAt: "desc" },
+        });
+    },
+    ["bn-home-products-public"],
+    { revalidate: 120, tags: ["bn-products"] },
+);
+
 export async function getHomeData(profileId: string | null = null) {
     const seeWholesale = await viewerCanSeeWholesale(profileId);
-    const baseWhere = seeWholesale
-        ? { isActive: true, hidden: false }
-        : { isActive: true, hidden: false, isWholesale: false };
 
     const [markets, topShops, allProducts, forYou] = await Promise.all([
         getMarkets(6),
         getTopShops(10),
-        prisma.bnProduct.findMany({
-            where: baseWhere,
-            include: PRODUCT_INCLUDE,
-            take: 200,   // yetarli — 4 feed × ko'p qator
-            orderBy: { createdAt: "desc" },
-        }),
+        seeWholesale
+            ? prisma.bnProduct.findMany({
+                where: { isActive: true, hidden: false },
+                include: PRODUCT_INCLUDE,
+                take: 200,
+                orderBy: { createdAt: "desc" },
+            })
+            : getHomeProductsPublic(),
         profileId ? getRecommendedProducts(profileId, 12) : Promise.resolve([] as BnProductDTO[]),
     ]);
 

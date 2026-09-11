@@ -150,8 +150,9 @@ export function BnNavbar() {
                     className="pointer-events-auto relative flex items-stretch p-1.5 rounded-[26px] select-none touch-none"
                     style={{
                         background: BN.glass,
-                        backdropFilter: "blur(24px) saturate(180%)",
-                        WebkitBackdropFilter: "blur(24px) saturate(180%)",
+                        backdropFilter: "blur(14px)",
+                        WebkitBackdropFilter: "blur(14px)",
+                        willChange: "backdrop-filter",
                         border: `1px solid ${BN.border}`,
                         boxShadow: BN.shadow,
                     }}

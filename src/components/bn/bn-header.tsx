@@ -68,8 +68,8 @@ export function BnHeader({
                 className="sticky top-0 z-40 transition-shadow"
                 style={{
                     background: scrolled ? BN.glass : BN.bg,
-                    backdropFilter: scrolled ? "blur(16px) saturate(180%)" : undefined,
-                    WebkitBackdropFilter: scrolled ? "blur(16px) saturate(180%)" : undefined,
+                    backdropFilter: scrolled ? "blur(10px)" : undefined,
+                    WebkitBackdropFilter: scrolled ? "blur(10px)" : undefined,
                     borderBottom: `1px solid ${BN.border}`,
                     boxShadow: scrolled ? BN.shadow : undefined,
                 }}
