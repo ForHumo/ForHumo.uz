@@ -91,7 +91,6 @@ export function BnBulkImportModal({
     const fileRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => { setMounted(true); }, []);
-    if (!mounted) return null;
 
     async function validate() {
         setBusy(true);
@@ -434,5 +433,6 @@ export function BnBulkImportModal({
         </div>
     );
 
+    if (!mounted) return null;
     return createPortal(content, document.body);
 }

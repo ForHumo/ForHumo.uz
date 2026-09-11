@@ -12,6 +12,7 @@ import { X, Upload, Loader2, CheckCircle2, Sparkles, RotateCw, ZoomIn, ZoomOut, 
 import { BN } from "@/lib/bn-theme";
 import { formatMoney } from "@/lib/money";
 import { BnSelect } from "./bn-select";
+import { BnLink } from "./bn-nav";
 
 interface Props {
     open: boolean;
@@ -238,11 +239,11 @@ export function BnAdBuyModal({ open, onClose, onSuccess }: Props) {
                                 style={{ background: "transparent", color: BN.text2, border: `1px solid ${BN.border}` }}>
                                 {t("Yopish", "Закрыть", "Close")}
                             </button>
-                            <a href="/sotuvchi"
+                            <BnLink href="/sotuvchi"
                                 className="flex-1 h-11 rounded-xl text-[14px] font-bold inline-flex items-center justify-center"
                                 style={{ background: BN.gold, color: BN.onGold }}>
                                 {t("Do'kon ochish", "Открыть магазин", "Open shop")}
-                            </a>
+                            </BnLink>
                         </div>
                     </div>
                 ) : (

@@ -28,7 +28,7 @@ export async function uniqueSlug(
     base: string,
     isTaken: (s: string) => Promise<boolean>,
 ): Promise<string> {
-    let s = slugify(base);
+    const s = slugify(base);
     if (!(await isTaken(s))) return s;
     for (let i = 2; i < 100; i++) {
         const cand = `${s}-${i}`;

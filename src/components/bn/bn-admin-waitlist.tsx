@@ -220,6 +220,7 @@ export function BnAdminWaitlist() {
 
                 {/* CSV eksport — hozirgi tab uchun + hammasi */}
                 <div className="flex items-center gap-1.5 ml-auto">
+                    {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- API route, file download */}
                     <a
                         href={`/api/bn/admin/waitlist/export?status=${tab}`}
                         title={`${tab} — CSV yuklash (Excel'da ochiladi)`}
@@ -230,6 +231,7 @@ export function BnAdminWaitlist() {
                         CSV ({stats[tab] ?? 0})
                     </a>
                     {total > (stats[tab] ?? 0) && (
+                        // eslint-disable-next-line @next/next/no-html-link-for-pages -- API route, file download
                         <a
                             href="/api/bn/admin/waitlist/export"
                             title="Barcha statuslar birga — CSV"
