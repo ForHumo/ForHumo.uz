@@ -28,22 +28,24 @@ export function BnSwitch({
             aria-label={ariaLabel}
             disabled={disabled}
             onClick={() => !disabled && onChange(!checked)}
-            className="relative shrink-0 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative shrink-0 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
                 width: dims.w,
                 height: dims.h,
                 background: checked ? BN.gold : BN.surfaceUp,
                 border: `1px solid ${checked ? BN.gold : BN.border}`,
+                transition: "background 0.22s ease, border-color 0.22s ease",
             }}
         >
             <span
-                className="absolute top-1/2 rounded-full transition-all shadow-sm"
+                className="absolute top-1/2 left-[3px] rounded-full shadow-sm"
                 style={{
                     width: dims.knob,
                     height: dims.knob,
                     background: checked ? BN.onGold : BN.text,
-                    left: checked ? `calc(100% - ${dims.knob + 3}px)` : "3px",
-                    transform: "translateY(-50%)",
+                    // GPU-only: left o'rniga translateX — buttery spring-uslub harakat
+                    transform: `translateY(-50%) translateX(${checked ? dims.w - dims.knob - 6 : 0}px)`,
+                    transition: "transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.22s ease",
                 }}
             />
         </button>

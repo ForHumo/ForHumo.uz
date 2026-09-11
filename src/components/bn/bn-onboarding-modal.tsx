@@ -17,11 +17,13 @@ interface StepMeta {
     textKey: string;
 }
 
+// Step ikon ranglari — tilla temaga hamohang issiq palitra (ko'k/binafsha olib
+// tashlandi). Har qadam biroz farqlansin, lekin premium tilla estetikasi buzilmasin.
 const STEP_META: StepMeta[] = [
-    { icon: Sparkles,    color: "#fbbf24", titleKey: "s1Title", textKey: "s1Text" },
-    { icon: ShoppingBag, color: "#60a5fa", titleKey: "s2Title", textKey: "s2Text" },
-    { icon: Truck,       color: "#34d399", titleKey: "s3Title", textKey: "s3Text" },
-    { icon: Shield,      color: "#a78bfa", titleKey: "s4Title", textKey: "s4Text" },
+    { icon: Sparkles,    color: "var(--bn-gold)",  titleKey: "s1Title", textKey: "s1Text" },
+    { icon: ShoppingBag, color: "#C08A2E",         titleKey: "s2Title", textKey: "s2Text" },
+    { icon: Truck,       color: "var(--bn-ok)",    titleKey: "s3Title", textKey: "s3Text" },
+    { icon: Shield,      color: "#B98E24",         titleKey: "s4Title", textKey: "s4Text" },
 ];
 
 export default function BnOnboardingModal({ onClose }: { onClose: () => void }) {
@@ -99,7 +101,7 @@ export default function BnOnboardingModal({ onClose }: { onClose: () => void }) 
                                 style={{
                                     width: i === step ? 20 : 6,
                                     height: 6,
-                                    background: i === step ? "#60a5fa" : "rgba(255,255,255,0.2)",
+                                    background: i === step ? BN.gold : BN.border,
                                 }}
                             />
                         ))}
@@ -116,7 +118,7 @@ export default function BnOnboardingModal({ onClose }: { onClose: () => void }) 
                         <button
                             onClick={next}
                             className="flex-1 rounded-2xl py-3 text-[14px] font-bold flex items-center justify-center gap-1.5 transition-transform active:scale-[0.98]"
-                            style={{ background: "#60a5fa", color: "#000" }}
+                            style={{ background: BN.gold, color: BN.onGold }}
                         >
                             {step < STEP_META.length - 1 ? t("next") : t("start")}
                             <ChevronRight className="w-4 h-4" />

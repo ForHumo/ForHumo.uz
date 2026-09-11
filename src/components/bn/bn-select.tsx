@@ -68,11 +68,11 @@ export function BnSelect({
             {open && (
                 <div
                     role="listbox"
-                    className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 max-h-72 overflow-y-auto rounded-xl py-1 shadow-2xl"
+                    className="bn-pop absolute left-0 right-0 top-[calc(100%+6px)] z-50 max-h-72 overflow-y-auto rounded-xl py-1"
                     style={{
                         background: BN.surfaceTop,
                         border: `1px solid ${BN.border}`,
-                        boxShadow: `0 20px 60px ${BN.shadow}`,
+                        boxShadow: BN.shadow,
                     }}
                 >
                     {options.map(opt => {

@@ -125,8 +125,8 @@ export function BnThemeToggle({ compact = false }: { compact?: boolean }) {
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
                     <div
-                        className="absolute right-0 top-full mt-2 z-50 w-[168px] p-1.5 rounded-2xl"
-                        style={{ background: BN.surface, border: `1px solid ${BN.border}`, boxShadow: BN.shadow }}
+                        className="bn-pop absolute right-0 top-full mt-2 z-50 w-[168px] p-1.5 rounded-2xl"
+                        style={{ background: BN.surface, border: `1px solid ${BN.border}`, boxShadow: BN.shadow, transformOrigin: "top right" }}
                     >
                         {MODES.map(m => {
                             const Icon = m.icon;
@@ -200,8 +200,8 @@ export function BnLangSwitch({ compact = false }: { compact?: boolean }) {
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
                     <div
-                        className="absolute right-0 top-full mt-2 z-50 w-[180px] p-1.5 rounded-2xl"
-                        style={{ background: BN.surface, border: `1px solid ${BN.border}`, boxShadow: BN.shadow }}
+                        className="bn-pop absolute right-0 top-full mt-2 z-50 w-[180px] p-1.5 rounded-2xl"
+                        style={{ background: BN.surface, border: `1px solid ${BN.border}`, boxShadow: BN.shadow, transformOrigin: "top right" }}
                     >
                         {LANGS.map(l => (
                             <button

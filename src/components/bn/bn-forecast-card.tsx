@@ -23,15 +23,15 @@ interface Data {
 }
 
 const DIR_META = {
-    up:   { icon: TrendingUp,   color: "#EF4444", bg: "#EF444422" },
-    down: { icon: TrendingDown, color: "#10B981", bg: "#10B98122" },
-    flat: { icon: Minus,        color: "#94A3B8", bg: "#94A3B822" },
+    up:   { icon: TrendingUp,   color: BN.err,   bg: BN.errSoft },
+    down: { icon: TrendingDown, color: BN.ok,    bg: BN.okSoft },
+    flat: { icon: Minus,        color: BN.text3, bg: BN.surfaceUp },
 };
 
 const CONFIDENCE_META = {
-    low:    { color: "#94A3B8", label: { uz: "Past", ru: "Низкая", en: "Low" } },
-    medium: { color: "#F59E0B", label: { uz: "O'rta", ru: "Средняя", en: "Medium" } },
-    high:   { color: "#10B981", label: { uz: "Yuqori", ru: "Высокая", en: "High" } },
+    low:    { color: BN.text3, label: { uz: "Past", ru: "Низкая", en: "Low" } },
+    medium: { color: BN.warn,  label: { uz: "O'rta", ru: "Средняя", en: "Medium" } },
+    high:   { color: BN.ok,    label: { uz: "Yuqori", ru: "Высокая", en: "High" } },
 };
 
 export function BnForecastCard({ categorySlug, onClose }: { categorySlug: string; onClose?: () => void }) {

@@ -56,11 +56,11 @@ export function BnToastHost() {
                 }[t.kind];
                 return (
                     <div key={t.id}
-                        className="pointer-events-auto flex items-start gap-2 pl-3 pr-2 py-2.5 rounded-xl shadow-2xl animate-[slideIn_0.2s_ease-out]"
+                        className="bn-toast-in pointer-events-auto flex items-start gap-2 pl-3 pr-2 py-2.5 rounded-xl"
                         style={{
                             background: BN.surface,
                             border: `1px solid ${BN.border}`,
-                            boxShadow: `0 20px 60px ${BN.shadow}, 0 0 0 1px ${meta.bg}44`,
+                            boxShadow: `${BN.shadow}, 0 0 0 1px ${meta.bg}44`,
                         }}
                     >
                         <span className="w-7 h-7 rounded-lg grid place-items-center flex-shrink-0 mt-0.5"

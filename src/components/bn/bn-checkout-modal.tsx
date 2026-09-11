@@ -153,9 +153,9 @@ export function BnCheckoutModal({ subtotal, canDelivery: canDeliveryProp, canIns
 
     return (
         <div className="fixed inset-0 z-[130]">
-            <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.55)" }} onClick={onClose} />
+            <div className="bn-overlay-in absolute inset-0" style={{ background: "rgba(0,0,0,0.55)" }} onClick={onClose} />
             <div
-                className="absolute inset-y-0 right-0 w-full sm:w-[460px] overflow-y-auto"
+                className="bn-drawer-in absolute inset-y-0 right-0 w-full sm:w-[460px] overflow-y-auto"
                 style={{ background: BN.surface, borderLeft: `1px solid ${BN.border}` }}
             >
                 {/* Sarlavha */}

@@ -177,12 +177,12 @@ export function BnAdBuyModal({ open, onClose, onSuccess }: Props) {
 
     return createPortal(
         <div
-            className="bn-scope fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto"
+            className="bn-scope bn-overlay-in fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto"
             style={{ background: "rgba(0,0,0,0.65)" }}
             onClick={() => !busy && !uploading && onClose()}
         >
             <div
-                className="w-full max-w-[520px] rounded-2xl overflow-hidden my-8"
+                className="bn-panel-in w-full max-w-[520px] rounded-2xl overflow-hidden my-8"
                 style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                 onClick={e => e.stopPropagation()}
             >

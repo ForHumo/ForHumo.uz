@@ -111,12 +111,12 @@ function CategoryModal({
 
     return (
         <div
-            className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="bn-overlay-in fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4"
             style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}
             onClick={onClose}
         >
             <div
-                className="w-full sm:max-w-[520px] max-h-[85vh] flex flex-col rounded-t-3xl sm:rounded-3xl overflow-hidden"
+                className="bn-sheet-in w-full sm:max-w-[520px] max-h-[85vh] flex flex-col rounded-t-3xl sm:rounded-3xl overflow-hidden"
                 style={{ background: BN.surface, border: `1px solid ${BN.border}` }}
                 onClick={(e) => e.stopPropagation()}
             >

@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { X, Search, Loader2, Check, ShoppingBag } from "lucide-react";
+import { BN } from "@/lib/bn-theme";
 
 interface Product {
     id: string;
@@ -100,11 +101,14 @@ export function BnPurchaseModal({
     }, [picked, customTitle, quantity, priceUzs, shopSlug, onClose, onSaved]);
 
     return (
-        <div className="fixed inset-0 z-[200] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <div className="w-full sm:max-w-md bg-white dark:bg-neutral-900 rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
+        <div className="bn-overlay-in fixed inset-0 z-[200] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div
+                className="bn-sheet-in w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                style={{ background: BN.surface, boxShadow: BN.shadow }}
+            >
+                <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${BN.border}` }}>
                     <div className="flex items-center gap-2">
-                        <ShoppingBag className="w-5 h-5 text-amber-500" />
+                        <ShoppingBag className="w-5 h-5" style={{ color: BN.gold }} />
                         <div>
                             <div className="text-sm font-semibold">Xarid qildim</div>
                             <div className="text-xs text-neutral-500">{shopName}</div>

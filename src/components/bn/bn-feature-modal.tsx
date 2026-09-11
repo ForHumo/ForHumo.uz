@@ -75,8 +75,7 @@ export function BnFeatureButton({ productSlug, compact }: { productSlug: string;
             ) : (
                 <button
                     onClick={() => setOpen(true)}
-                    className="inline-flex items-center gap-2 h-10 px-4 rounded-xl text-[13px] font-semibold"
-                    style={{ background: "linear-gradient(135deg, #F5B301, #B8951F)", color: BN.onGold }}
+                    className="bn-gold-grad inline-flex items-center gap-2 h-10 px-4 rounded-xl text-[13px] font-semibold"
                 >
                     <Rocket className="w-4 h-4" />
                     {t("Boost qilish", "Продвинуть", "Boost")}

@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Rocket, X, Loader2, Check, AlertCircle } from "lucide-react";
 import { formatMoney } from "@/lib/money";
+import { BN } from "@/lib/bn-theme";
 import { bnConfirm } from "./bn-dialog";
 
 interface Boost {
@@ -98,12 +99,18 @@ export function BnBoostPanel({ productId, productTitle, onClose }: {
 
     return (
         <div className="fixed inset-0 z-[130]">
-            <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-            <div className="absolute inset-y-0 right-0 w-full sm:w-[480px] bg-white dark:bg-neutral-900 overflow-y-auto border-l border-neutral-200 dark:border-neutral-800">
+            <div className="bn-overlay-in absolute inset-0 bg-black/60" onClick={onClose} />
+            <div
+                className="bn-drawer-in absolute inset-y-0 right-0 w-full sm:w-[480px] overflow-y-auto"
+                style={{ background: BN.surface, borderLeft: `1px solid ${BN.border}` }}
+            >
                 {/* Header */}
-                <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+                <div
+                    className="sticky top-0 z-10 flex items-center justify-between px-4 py-3"
+                    style={{ borderBottom: `1px solid ${BN.border}`, background: BN.surface }}
+                >
                     <div className="flex items-center gap-2">
-                        <Rocket className="w-5 h-5 text-amber-500" />
+                        <Rocket className="w-5 h-5" style={{ color: BN.gold }} />
                         <div>
                             <div className="text-sm font-semibold">Reklama (Boost)</div>
                             <div className="text-xs text-neutral-500 truncate max-w-[280px]">{productTitle}</div>

@@ -56,12 +56,12 @@ export function BnCheapestToday() {
                 <div className="flex items-center gap-3">
                     <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ background: "#10B98122", color: "#10B981" }}
+                        style={{ background: BN.okSoft, color: BN.ok }}
                     >
                         <TrendingDown className="w-5 h-5" />
                     </div>
                     <div>
-                        <h2 className="text-[18px] font-bold" style={{ color: BN.text }}>
+                        <h2 className="bn-display text-[20px] font-black tracking-tight" style={{ color: BN.text }}>
                             {locale === "ru" ? "Самые выгодные сегодня" : locale === "en" ? "Best Deals Today" : "Bugungi eng arzon"}
                         </h2>
                         <div className="text-[13px]" style={{ color: BN.text2 }}>
@@ -101,7 +101,7 @@ export function BnCheapestToday() {
                             )}
                             <div
                                 className="absolute top-2 left-2 px-2 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1"
-                                style={{ background: "#10B981", color: "#fff" }}
+                                style={{ background: BN.ok, color: "#fff" }}
                             >
                                 <TrendingDown className="w-3 h-3" />
                                 −{item.discountPct}%

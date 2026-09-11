@@ -288,6 +288,56 @@ export function BnStyles() {
             }
             .bn-rise { animation: bn-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
+            /* Dropdown/popover ochilishi — yumshoq fade + tepadan sirg'alib chiqish.
+               transform-origin tepada, GPU-only (opacity + transform). */
+            @keyframes bn-pop {
+                from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+                to   { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            .bn-pop {
+                animation: bn-pop 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
+                transform-origin: top;
+            }
+            /* Toast — o'ngdan sirg'alib kirish */
+            @keyframes bn-toast-in {
+                from { opacity: 0; transform: translateX(24px) scale(0.96); }
+                to   { opacity: 1; transform: translateX(0) scale(1); }
+            }
+            .bn-toast-in { animation: bn-toast-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+            /* ── Modal animatsiyalari ────────────────────────────────────
+               Qorong'i fon yumshoq paydo bo'ladi; panel markazda scale+fade
+               (dialog) yoki pastdan sirg'aladi (bottom-sheet). GPU-only. */
+            @keyframes bn-overlay-in {
+                from { opacity: 0; }
+                to   { opacity: 1; }
+            }
+            .bn-overlay-in { animation: bn-overlay-in 0.2s ease-out both; }
+
+            @keyframes bn-panel-in {
+                from { opacity: 0; transform: translateY(12px) scale(0.97); }
+                to   { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            .bn-panel-in { animation: bn-panel-in 0.26s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+            @keyframes bn-sheet-in {
+                from { opacity: 0; transform: translateY(28px); }
+                to   { opacity: 1; transform: translateY(0); }
+            }
+            .bn-sheet-in { animation: bn-sheet-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+            /* O'ngdan kiruvchi drawer (boost paneli kabi) */
+            @keyframes bn-drawer-in {
+                from { opacity: 0; transform: translateX(40px); }
+                to   { opacity: 1; transform: translateX(0); }
+            }
+            .bn-drawer-in { animation: bn-drawer-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+            @media (prefers-reduced-motion: reduce) {
+                .bn-pop, .bn-rise, .bn-toast-in,
+                .bn-overlay-in, .bn-panel-in, .bn-sheet-in, .bn-drawer-in { animation: none !important; }
+            }
+
             /* Skrollbarni yashirish (gorizontal qatorlar uchun) */
             .bn-noscroll { scrollbar-width: none; -ms-overflow-style: none; }
             .bn-noscroll::-webkit-scrollbar { display: none; }
