@@ -34,8 +34,16 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "invalid_kind" }, { status: 400 });
     }
 
-    const ext = file.name.split(".").pop() ?? "jpg";
-    const safe = (auth.email ?? "u").replace(/[^a-z0-9]/gi, "_");
+    // Kengaytmani ham xavfsizlashtiramiz — MIME image/* bo'lsa ham fayl nomi ".php"
+    // bo'lishi mumkin edi (ko'rinish uchun yomon). Kengaytmani rasm formatlaridan
+    // birortasiga majburiy tanlaymiz (jpg default).
+    const rawExt = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const ext = ["jpg", "jpeg", "png", "webp", "gif", "avif"].includes(rawExt) ? rawExt : "jpg";
+    // PII leak: ilgari `auth.email` fayl nomiga qo'shilardi
+    // (masalan `abduvoriskakhramonov_gmail_com_...png`) — public blob URL orqali
+    // sotuvchi email'i ochiq ko'rinardi (map/shops javobida ham). Endi profileId
+    // ning boshlang'ich 8 belgisi + random suffix — email hech qayerda emas.
+    const safe = auth.profileId.slice(0, 10);
     const filename = `bn/${kind}/${safe}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
 
     const blob = await put(filename, file, { access: "public", contentType: file.type });

@@ -5,12 +5,25 @@
 //   Rate limit: bitta IP+telefon 24 soatda 3 marta (spam himoyasi).
 
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getBnAuth } from "@/lib/bn-auth";
 import { grantAchievement } from "@/lib/achievements";
 
 const PHONE_RE = /^\+998\d{9}$/;
 const MAX_PER_PHONE_24H = 3;
+// IP-based spam himoyasi: turli telefon nomerlari bilan bo'lsa ham bitta IP
+// 24 soatda maksimum 10 ta yozuv yaratishi mumkin. Bosh sahifada test paytida
+// 8 soxta yozuv bir sekundda yaratilishi mumkin edi — endi bloklanadi.
+const MAX_PER_IP_24H = 10;
+
+function getClientIp(req: Request): string {
+    const xff = req.headers.get("x-forwarded-for");
+    if (xff) return xff.split(",")[0].trim();
+    const real = req.headers.get("x-real-ip");
+    if (real) return real.trim();
+    return "unknown";
+}
 
 function normalizePhone(raw: string): string {
     // Faqat raqamlar
@@ -47,6 +60,19 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "too_many_requests" }, { status: 429 });
     }
 
+    // IP-based rate limit — turli telefon nomerlari bilan spam qiluvchilarga qarshi.
+    // Ilgari attacker random telefon generatsiya qilib DB'ni to'ldirishi mumkin edi.
+    const ip = getClientIp(req);
+    const ipHash = ip === "unknown" ? null : createHash("sha256").update(ip).digest("hex").slice(0, 40);
+    if (ipHash) {
+        const ipRecentCount = await prisma.bnSellerWaitlist.count({
+            where: { ipHash, createdAt: { gte: dayAgo } },
+        }).catch(() => 0);
+        if (ipRecentCount >= MAX_PER_IP_24H) {
+            return NextResponse.json({ error: "too_many_requests" }, { status: 429 });
+        }
+    }
+
     // Bir xil telefon+marketSlug bo'lsa allaqachon PENDING — dublikat qaytaramiz
     const existing = await prisma.bnSellerWaitlist.findFirst({
         where: { phone, marketSlug, status: "PENDING" },
@@ -59,7 +85,7 @@ export async function POST(req: Request) {
     const entry = await prisma.bnSellerWaitlist.create({
         data: {
             name, phone, city,
-            marketSlug, category, note, source, ref,
+            marketSlug, category, note, source, ref, ipHash,
             status: "PENDING",
         },
         select: { id: true, createdAt: true },

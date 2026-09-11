@@ -3815,6 +3815,7 @@ model BnSellerWaitlist {
   note          String?                                                           // Qo'shimcha (tavsif, savol)
   source        String?                                                           // Qayerdan (utm_source yoki referrer)
   ref           String?                                                           // Referral kodi (agar bor bo'lsa)
+  ipHash        String?                                                           // SHA-256(ip) — IP-based rate limit uchun
   status        BnSellerWaitlistStatus   @default(PENDING)
   contactedById String?                                                           // Kim aloqaga chiqdi
   contactedAt   DateTime?
@@ -3825,6 +3826,7 @@ model BnSellerWaitlist {
 
   @@index([status, createdAt])
   @@index([phone])
+  @@index([ipHash, createdAt])
 }
 
 enum BnSellerWaitlistStatus {

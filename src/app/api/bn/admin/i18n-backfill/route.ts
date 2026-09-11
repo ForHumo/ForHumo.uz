@@ -14,8 +14,11 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-    const gate = await requireFounder();
-    if (gate instanceof NextResponse) return gate;
+    // requireFounder() founder profil'ni yoki null qaytaradi (hech qachon NextResponse emas).
+    // Ilgari `instanceof NextResponse` tekshiruvi HECH QACHON true bo'lmasdi — anonim
+    // POST endpoint'ga kirar edi (aslida Gemini xarajatini sarflaydigan xavf).
+    const founder = await requireFounder();
+    if (!founder) return NextResponse.json({ error: "founder_required" }, { status: 403 });
 
     const body = await req.json().catch(() => ({}));
     const limit = Math.min(50, Math.max(1, Number(body?.limit) || 20));
