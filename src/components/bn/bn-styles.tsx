@@ -230,6 +230,37 @@ export function BnStyles() {
             }
             .bn-range::-moz-range-thumb:active { cursor: grabbing; transform: scale(1.1); }
             .bn-range:disabled { opacity: 0.5; cursor: not-allowed; }
+
+            /* ── Mobil + foldable moslashuvi ─────────────────────────────
+               iPhone Duo, Galaxy Fold, kichik cover ekranlarga xush kelibsiz.
+               Juda tor (≤ 380px) va foldable "flex" pozitsiyalari uchun. */
+
+            /* Ultra tor (iPhone Duo cover, kichkina foldable — < 360px) */
+            @media (max-width: 359px) {
+                .bn-scope .bn-hide-xxs { display: none !important; }
+                .bn-scope h1, .bn-scope .bn-h1 { font-size: 20px !important; line-height: 1.2 !important; }
+                .bn-scope .text-\[24px\], .bn-scope .text-\[26px\], .bn-scope .text-\[28px\], .bn-scope .text-\[30px\], .bn-scope .text-\[32px\] {
+                    font-size: 20px !important;
+                }
+                .bn-scope .px-4 { padding-left: 12px !important; padding-right: 12px !important; }
+                .bn-scope .gap-3 { gap: 0.5rem !important; }
+                .bn-scope .gap-4 { gap: 0.625rem !important; }
+            }
+
+            /* Foldable landscape/inner (kengaytirilgan ekran — tablet o'lchami) —
+               desktop grid'lar buzilmasin, faqat qulay padding qo'llash. */
+            @media (min-width: 720px) and (max-width: 1023px) and (orientation: landscape) {
+                .bn-scope .bn-fold-open { max-width: 900px; margin-left: auto; margin-right: auto; }
+            }
+
+            /* iPhone/iPad safe-area — bottom navbar va ortga tugmasi uchun */
+            .bn-scope { padding-top: env(safe-area-inset-top); }
+
+            /* iOS Safari: rangli tugmalar clickda tebranib qolmasligi */
+            .bn-scope button, .bn-scope a { -webkit-tap-highlight-color: transparent; }
+
+            /* Juda uzun bir so'zli matnlarni sindirish (sarlavhalar 320px'da mos tushishi) */
+            .bn-scope h1, .bn-scope h2 { overflow-wrap: break-word; word-break: break-word; }
         `}</style>
     );
 }
