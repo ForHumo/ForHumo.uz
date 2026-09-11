@@ -12,6 +12,7 @@ import { BN, fmtPrice } from "@/lib/bn-theme";
 import { useBnHref } from "./bn-nav";
 import { BnPhoneInput, isValidUzPhone } from "./bn-phone-input";
 import { BnMapPicker, type BnLatLng } from "./bn-map-picker";
+import { BnSwitch } from "./bn-switch";
 
 interface SavedAddress {
     id: string;
@@ -240,15 +241,12 @@ export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: 
                                         placeholder={t("mapPlaceholder")}
                                     />
                                 </Field>
-                                <label className="flex items-center gap-2 text-[12.5px] cursor-pointer" style={{ color: BN.text2 }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={saveNext}
-                                        onChange={e => setSaveNext(e.target.checked)}
-                                        className="w-4 h-4"
-                                    />
-                                    {t("saveAddress")}
-                                </label>
+                                <div className="flex items-center gap-2 text-[12.5px]" style={{ color: BN.text2 }}>
+                                    <BnSwitch checked={saveNext} onChange={setSaveNext} ariaLabel={t("saveAddress")} size="sm" />
+                                    <span onClick={() => setSaveNext(!saveNext)} className="cursor-pointer select-none">
+                                        {t("saveAddress")}
+                                    </span>
+                                </div>
                             </>
                         )}
                         <Field label={t("note")}>

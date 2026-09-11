@@ -27,6 +27,7 @@ import { BnEmpty } from "./bn-cards";
 import { BnPhoneInput } from "./bn-phone-input";
 import { BnCategoryPicker } from "./bn-category-picker";
 import { BnSelect } from "./bn-select";
+import { BnSwitch, BnSwitchRow } from "./bn-switch";
 import { ForPayLogo, TelegramIcon, WhatsAppIcon } from "@/components/brand-icons";
 import { BnSellerChats } from "./bn-seller-chats";
 import { BnMapPicker } from "./bn-map-picker";
@@ -2301,17 +2302,11 @@ function AttrInput({
 
     if (def.type === "boolean") {
         return (
-            <label className="flex items-center gap-2.5 h-11 px-3 rounded-xl text-[13px] font-medium cursor-pointer transition-colors"
-                style={{ background: value ? BN.goldSoft : BN.surfaceUp }}
-            >
-                <input
-                    type="checkbox"
-                    checked={!!value}
-                    onChange={e => onChange(e.target.checked)}
-                    className="w-4 h-4"
-                />
-                <span style={{ color: value ? BN.gold : BN.text }}>{def.label}</span>
-            </label>
+            <BnSwitchRow
+                checked={!!value}
+                onChange={v => onChange(v)}
+                label={def.label}
+            />
         );
     }
     if (def.type === "select" && def.options) {
@@ -2356,21 +2351,8 @@ function AttrInput({
 }
 
 function ToggleRow({ checked, onChange, icon, label }: { checked: boolean; onChange: (v: boolean) => void; icon: React.ReactNode; label: string }) {
-    return (
-        <button
-            type="button"
-            onClick={() => onChange(!checked)}
-            className="flex items-center gap-2.5 w-full h-11 px-3 rounded-xl text-[13px] font-medium text-left transition-colors"
-            style={{ background: checked ? BN.goldSoft : BN.surfaceUp }}
-        >
-            <span style={{ color: checked ? BN.gold : BN.text3 }}>{icon}</span>
-            <span className="flex-1" style={{ color: checked ? BN.gold : BN.text }}>{label}</span>
-            <span
-                className="w-4 h-4 rounded-full flex-shrink-0"
-                style={{ background: checked ? BN.gold : "rgba(255,255,255,0.14)" }}
-            />
-        </button>
-    );
+    // BnSwitchRow wrapper — bir joyda BN uslub, hamma joyda switch bir xil ko'rinadi
+    return <BnSwitchRow checked={checked} onChange={onChange} icon={icon} label={label} />;
 }
 
 function Stat({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: string; hint: string }) {

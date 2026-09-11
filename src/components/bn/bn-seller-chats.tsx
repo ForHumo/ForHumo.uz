@@ -278,8 +278,9 @@ function SellerChatModal({ chat, onClose }: { chat: Chat; onClose: () => void })
     if (typeof document === "undefined") return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[200] bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden"
+        <div className="bn-scope fixed inset-0 z-[9999] bg-black/75 flex items-end sm:items-center justify-center p-0 sm:p-4"
+            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+            <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden"
                 style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${BN.border}` }}>
@@ -422,42 +423,85 @@ function SellerMessageBubble({
                             </button>
                         </div>
                     )}
-                    {canRespond && counterOpen && (
-                        <div className="p-3 border-t space-y-2" style={{ borderColor: BN.border }}>
-                            <div className="text-[11px] font-bold" style={{ color: BN.text3 }}>Qarshi taklif narxi</div>
-                            <div className="flex items-baseline gap-2 rounded-xl px-3 py-2"
-                                style={{ background: BN.surface, border: `1px solid ${BN.borderGold}` }}>
-                                <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    value={counterAmt}
-                                    onChange={e => setCounterAmt(Number(e.target.value.replace(/\D/g, "")) || 0)}
-                                    className="flex-1 bg-transparent text-[16px] font-black tabular-nums focus:outline-none"
-                                    style={{ color: BN.gold }}
-                                />
-                                <span className="text-[12px] font-bold" style={{ color: BN.text3 }}>so&apos;m</span>
+                    {canRespond && counterOpen && (() => {
+                        // Slider chegaralari: xaridor taklifi ↔ xaridor taklifi × 1.5
+                        // (mahsulot to'liq narxi ma'lum bo'lmagani uchun approx)
+                        const buyerOffer = m.offerAmount ?? 0;
+                        const sliderMin = buyerOffer;
+                        const sliderMax = Math.max(buyerOffer * 2, buyerOffer + 100000);
+                        const step = Math.max(1000, Math.round(buyerOffer / 100));
+                        return (
+                            <div className="p-3 border-t space-y-2.5" style={{ borderColor: BN.border, background: BN.surface }}>
+                                <div className="text-[11px] font-bold" style={{ color: BN.text3 }}>Qarshi taklif narxi</div>
+
+                                {/* Katta raqam kirituvchi */}
+                                <div className="flex items-baseline gap-2 rounded-xl px-3 py-2.5"
+                                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.borderGold}` }}>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={counterAmt}
+                                        onChange={e => setCounterAmt(Number(e.target.value.replace(/\D/g, "")) || 0)}
+                                        className="flex-1 bg-transparent text-[18px] font-black tabular-nums focus:outline-none"
+                                        style={{ color: BN.gold }}
+                                    />
+                                    <span className="text-[12px] font-bold" style={{ color: BN.text3 }}>so&apos;m</span>
+                                </div>
+
+                                {/* Slider */}
+                                <div>
+                                    <input
+                                        type="range"
+                                        min={sliderMin}
+                                        max={sliderMax}
+                                        step={step}
+                                        value={Math.max(sliderMin, Math.min(sliderMax, counterAmt))}
+                                        onChange={e => setCounterAmt(Number(e.target.value))}
+                                        className="w-full"
+                                        style={{ accentColor: BN.gold }}
+                                        aria-label="Qarshi taklif narxi"
+                                    />
+                                    <div className="flex justify-between text-[10px]" style={{ color: BN.text3 }}>
+                                        <span>{sliderMin.toLocaleString("uz-UZ")}</span>
+                                        <span>{sliderMax.toLocaleString("uz-UZ")}</span>
+                                    </div>
+                                </div>
+
+                                {/* Statistika: xaridordan farq */}
+                                <div className="rounded-xl px-3 py-2" style={{ background: BN.surfaceUp }}>
+                                    <div className="text-[10px]" style={{ color: BN.text3 }}>Xaridor taklifidan</div>
+                                    <div className="text-[14px] font-black tabular-nums"
+                                        style={{ color: counterAmt > buyerOffer ? BN.gold : BN.text }}>
+                                        {counterAmt > buyerOffer
+                                            ? `+${Math.round(((counterAmt - buyerOffer) / buyerOffer) * 100)}% (+${(counterAmt - buyerOffer).toLocaleString("uz-UZ")} so'm)`
+                                            : counterAmt === buyerOffer
+                                            ? "Bir xil (xaridor taklifi = sizniki)"
+                                            : `${Math.round(((buyerOffer - counterAmt) / buyerOffer) * 100)}% kam`}
+                                    </div>
+                                </div>
+
+                                <textarea value={counterNote} onChange={e => setCounterNote(e.target.value)}
+                                    placeholder="Ixtiyoriy izoh (nima uchun shu narx)"
+                                    rows={2} maxLength={300}
+                                    className="w-full px-3 py-2 rounded-lg text-[13px] resize-none focus:outline-none"
+                                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }} />
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button onClick={() => setCounterOpen(false)}
+                                        className="h-10 rounded-lg text-[12px] font-bold"
+                                        style={{ background: BN.surfaceUp, color: BN.text2 }}>
+                                        Bekor
+                                    </button>
+                                    <button
+                                        onClick={() => { onCounter(m.id, counterAmt, counterNote); setCounterOpen(false); }}
+                                        disabled={sending || counterAmt <= 0}
+                                        className="h-10 rounded-lg text-[12px] font-black disabled:opacity-50"
+                                        style={{ background: BN.gold, color: BN.onGold }}>
+                                        Yuborish
+                                    </button>
+                                </div>
                             </div>
-                            <textarea value={counterNote} onChange={e => setCounterNote(e.target.value)}
-                                placeholder="Ixtiyoriy izoh (nima uchun shu narx)"
-                                rows={2} maxLength={300}
-                                className="w-full px-3 py-2 rounded-lg text-[13px] resize-none focus:outline-none"
-                                style={{ background: BN.surface, border: `1px solid ${BN.border}`, color: BN.text }} />
-                            <div className="grid grid-cols-2 gap-2">
-                                <button onClick={() => setCounterOpen(false)}
-                                    className="h-10 rounded-lg text-[12px] font-bold"
-                                    style={{ background: BN.surface, color: BN.text2 }}>
-                                    Bekor
-                                </button>
-                                <button
-                                    onClick={() => { onCounter(m.id, counterAmt, counterNote); setCounterOpen(false); }}
-                                    disabled={sending || counterAmt <= 0}
-                                    className="h-10 rounded-lg text-[12px] font-black disabled:opacity-50"
-                                    style={{ background: BN.gold, color: BN.onGold }}>
-                                    Yuborish
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                        );
+                    })()}
                     <div className="px-3 pb-2 text-[10px] opacity-60">
                         {new Date(m.createdAt).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })}
                     </div>

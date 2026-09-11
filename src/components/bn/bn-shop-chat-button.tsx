@@ -11,6 +11,7 @@
 //   - Xaridor taklifiga [Qabul] / [Rad] / [Qarshi taklif]
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { MessageCircle, X, Send, Loader2, TagIcon, CheckCircle2, XCircle, ChevronDown } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 
@@ -169,9 +170,11 @@ function BnShopChatModal({
         } finally { setSending(false); }
     }, [shopSlug, load]);
 
-    return (
-        <div className="fixed inset-0 z-[200] bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden"
+    if (typeof document === "undefined") return null;
+    return createPortal(
+        <div className="bn-scope fixed inset-0 z-[9999] bg-black/75 flex items-end sm:items-center justify-center p-0 sm:p-4"
+            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+            <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden"
                 style={{ background: BN.surface, border: `1px solid ${BN.border}` }}>
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${BN.border}` }}>
@@ -278,7 +281,8 @@ function BnShopChatModal({
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body,
     );
 }
 
@@ -454,6 +458,10 @@ function OfferForm({
     // 90% dan boshlaymiz — real hayotda savdolashuv odatda 5-15% chegirma
     const [amount, setAmount] = useState(Math.round(product.price * 0.9));
     const [note, setNote] = useState(initialNote ?? "");
+    const [inputStr, setInputStr] = useState(String(Math.round(product.price * 0.9)));
+    // Xato: min < taklif < max chegaralaridan chiqib ketsa
+    const parsedInput = Number(inputStr.replace(/\D/g, "")) || 0;
+    const outOfRange = parsedInput > 0 && (parsedInput < min || parsedInput > max);
     const pct = Math.round((amount / product.price) * 100);
     // Ehtimol: 100% = 100, 90% = 60, 80% = 30, 70% = 15, ≤60% = 5 (heuristika)
     const successPct = amount >= product.price ? 100
@@ -463,8 +471,8 @@ function OfferForm({
         : amount >= product.price * 0.75 ? 20
         : amount >= product.price * 0.6  ? 10
         : 5;
-    const [inputStr, setInputStr] = useState(String(amount));
 
+    // Slider'dan o'zgarganda input matnini yangilash
     useEffect(() => {
         setInputStr(String(amount));
     }, [amount]);
@@ -480,29 +488,49 @@ function OfferForm({
                 </button>
             </div>
 
-            {/* Katta raqam kirituvchi */}
+            {/* Katta raqam kirituvchi — istalgan raqam yozish mumkin, chegara faqat blur/submit'da */}
             <div>
                 <div className="text-[10px] mb-1" style={{ color: BN.text3 }}>Sizning taklifingiz</div>
                 <div className="flex items-baseline gap-2 rounded-xl px-3 py-2.5"
-                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.borderGold}` }}>
+                    style={{
+                        background: BN.surfaceUp,
+                        border: `1px solid ${outOfRange ? BN.err : BN.borderGold}`,
+                    }}>
                     <input
                         type="text"
                         inputMode="numeric"
                         value={inputStr}
                         onChange={e => {
+                            // Faqat raqam qabul — clamp qilmaymiz, foydalanuvchi erkin yozadi
                             const digits = e.target.value.replace(/\D/g, "");
                             setInputStr(digits);
                             const n = Number(digits);
-                            if (Number.isFinite(n) && n > 0) {
-                                setAmount(Math.max(min, Math.min(max, n)));
+                            // Slider'ni ham yangilaymiz lekin faqat chegarada bo'lsa
+                            if (Number.isFinite(n) && n >= min && n <= max) {
+                                setAmount(n);
                             }
                         }}
-                        onBlur={() => setInputStr(String(amount))}
+                        onBlur={() => {
+                            // Blur'da clamp qilamiz: min < x < max
+                            const n = Number(inputStr.replace(/\D/g, "")) || 0;
+                            if (n > 0) {
+                                const clamped = Math.max(min, Math.min(max, n));
+                                setAmount(clamped);
+                                setInputStr(String(clamped));
+                            }
+                        }}
                         className="flex-1 bg-transparent text-[20px] font-black tabular-nums focus:outline-none"
-                        style={{ color: BN.gold }}
+                        style={{ color: outOfRange ? BN.err : BN.gold }}
                     />
                     <span className="text-[13px] font-bold" style={{ color: BN.text3 }}>so&apos;m</span>
                 </div>
+                {outOfRange && (
+                    <div className="text-[11px] mt-1" style={{ color: BN.err }}>
+                        {parsedInput < min
+                            ? `Minimal: ${min.toLocaleString("uz-UZ")} so'm (e'lon narxining 30%i)`
+                            : `Maksimal: ${max.toLocaleString("uz-UZ")} so'm (e'lon narxi)`}
+                    </div>
+                )}
             </div>
 
             {/* Slider */}
@@ -555,7 +583,7 @@ function OfferForm({
             {/* Yuborish */}
             <button
                 onClick={() => onSend(amount, note)}
-                disabled={sending || amount < min}
+                disabled={sending || amount < min || outOfRange}
                 className="w-full h-11 rounded-xl text-[14px] font-black flex items-center justify-center gap-2 disabled:opacity-50 transition-transform active:scale-[0.98]"
                 style={{ background: BN.gold, color: BN.onGold }}
             >
