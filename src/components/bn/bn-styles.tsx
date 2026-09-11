@@ -90,61 +90,22 @@ export function BnStyles() {
                 color-scheme: dark;
             }
 
-            /* ── Jonli fon: sekin suzuvchi gradient sharlar ── */
+            /* ── Statik fon gradient — animatsiyasiz (GPU/CPU tejash) ──
+               Eski animatsiyali "aurora" har freymda 3 katta blur qayta hisoblanardi;
+               scroll qilishda ham qayta paint bo'lardi — mobil'da qotib qolishga sabab.
+               Endi yagona radial gradient — bir marta paint, 0 CPU ishlatadi. */
             .bn-aurora {
                 position: fixed;
                 inset: 0;
                 z-index: 0;
                 pointer-events: none;
                 overflow: hidden;
+                background:
+                    radial-gradient(ellipse 60vw 45vh at 15% 10%, var(--bn-orb-1), transparent 60%),
+                    radial-gradient(ellipse 50vw 40vh at 85% 30%, var(--bn-orb-2), transparent 60%),
+                    radial-gradient(ellipse 45vw 35vh at 50% 90%, var(--bn-orb-3), transparent 60%);
             }
-            .bn-aurora span {
-                position: absolute;
-                border-radius: 9999px;
-                filter: blur(64px);          /* 90 → 64: mobil GPU'da sezilarli tezroq */
-                will-change: transform;
-                contain: strict;
-                transform: translateZ(0);    /* GPU layer */
-            }
-            .bn-aurora span:nth-child(1) {
-                width: 52vw; height: 52vw;
-                top: -18vw; left: -12vw;
-                background: var(--bn-orb-1);
-                animation: bn-float-a 26s ease-in-out infinite;
-            }
-            .bn-aurora span:nth-child(2) {
-                width: 44vw; height: 44vw;
-                top: 22vh; right: -14vw;
-                background: var(--bn-orb-2);
-                animation: bn-float-b 32s ease-in-out infinite;
-            }
-            .bn-aurora span:nth-child(3) {
-                width: 38vw; height: 38vw;
-                bottom: -14vw; left: 28vw;
-                background: var(--bn-orb-3);
-                animation: bn-float-c 38s ease-in-out infinite;
-            }
-
-            /* Kichik ekranda 3-orbni yashiramiz — GPU tejash */
-            @media (max-width: 640px) {
-                .bn-aurora span:nth-child(3) { display: none; }
-                .bn-aurora span { filter: blur(52px); }
-            }
-
-            @keyframes bn-float-a {
-                0%, 100% { transform: translate(0, 0) scale(1); }
-                33%      { transform: translate(6vw, 5vh) scale(1.12); }
-                66%      { transform: translate(-3vw, 9vh) scale(0.94); }
-            }
-            @keyframes bn-float-b {
-                0%, 100% { transform: translate(0, 0) scale(1); }
-                50%      { transform: translate(-7vw, -6vh) scale(1.15); }
-            }
-            @keyframes bn-float-c {
-                0%, 100% { transform: translate(0, 0) scale(1); }
-                40%      { transform: translate(5vw, -7vh) scale(1.08); }
-                75%      { transform: translate(-6vw, -2vh) scale(0.96); }
-            }
+            .bn-aurora span { display: none; }   /* eski span'lar keraksiz */
 
             @media (prefers-reduced-motion: reduce) {
                 .bn-aurora span { animation: none !important; }

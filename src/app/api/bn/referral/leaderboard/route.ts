@@ -6,7 +6,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
+// bn-cache-applied
+function bnCached<T>(data: T, status = 200) {
+    return NextResponse.json(data, {
+        status,
+        headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" },
+    });
+}
+
 export const revalidate = 900;   // 15 daqiqa
 
 interface Row {

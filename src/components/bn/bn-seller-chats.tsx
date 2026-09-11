@@ -42,10 +42,19 @@ export function BnSellerChats() {
     }, []);
 
     useEffect(() => { void load(); }, [load]);
-    // Polling 20s — do'kon egasi yangi xabar chiqishini kutmaydi
+    // Polling 30s + tab-visible tekshiruv — energiya va server yukini tejash
     useEffect(() => {
-        const id = window.setInterval(load, 20000);
-        return () => window.clearInterval(id);
+        let id: number | undefined;
+        const start = () => {
+            if (document.visibilityState === "visible") {
+                id = window.setInterval(load, 30000);
+            }
+        };
+        const stop = () => { if (id) { window.clearInterval(id); id = undefined; } };
+        const onVis = () => { stop(); start(); };
+        start();
+        document.addEventListener("visibilitychange", onVis);
+        return () => { stop(); document.removeEventListener("visibilitychange", onVis); };
     }, [load]);
 
     if (loading && chats.length === 0) {
@@ -216,8 +225,16 @@ function SellerChatModal({ chat, onClose }: { chat: Chat; onClose: () => void })
 
     useEffect(() => { void load(); }, [load]);
     useEffect(() => {
-        const id = window.setInterval(load, 4000);
-        return () => window.clearInterval(id);
+        // Chat polling 8s + tab-visible tekshiruv
+        let id: number | undefined;
+        const start = () => {
+            if (document.visibilityState === "visible") id = window.setInterval(load, 8000);
+        };
+        const stop = () => { if (id) { window.clearInterval(id); id = undefined; } };
+        const onVis = () => { stop(); start(); };
+        start();
+        document.addEventListener("visibilitychange", onVis);
+        return () => { stop(); document.removeEventListener("visibilitychange", onVis); };
     }, [load]);
     useEffect(() => {
         if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;

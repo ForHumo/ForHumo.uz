@@ -118,8 +118,19 @@ function BnShopChatModal({
     useEffect(() => { void load(); }, [load]);
 
     useEffect(() => {
-        const id = window.setInterval(load, 4000);
-        return () => window.clearInterval(id);
+        // Faqat tab ko'rinib turgan bo'lsa polling; yashirinsa to'xtatiladi (energiya tejash).
+        // Interval 4s → 8s — ancha real-time, lekin server yuki 50% pastroq.
+        let id: number | undefined;
+        const start = () => {
+            if (document.visibilityState === "visible") {
+                id = window.setInterval(load, 8000);
+            }
+        };
+        const stop = () => { if (id) { window.clearInterval(id); id = undefined; } };
+        const onVis = () => { stop(); start(); };
+        start();
+        document.addEventListener("visibilitychange", onVis);
+        return () => { stop(); document.removeEventListener("visibilitychange", onVis); };
     }, [load]);
 
     useEffect(() => {
