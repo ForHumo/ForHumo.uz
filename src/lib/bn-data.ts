@@ -295,32 +295,42 @@ export async function getMarketBySlug(slug: string) {
     });
 }
 
-export async function getShopBySlug(slug: string) {
-    const shop = await prisma.bnShop.findUnique({
-        where: { slug },
-        include: {
-            market: { select: { slug: true, name: true } },
-            products: {
-                where: { isActive: true, hidden: false },
-                include: PRODUCT_INCLUDE,
-                orderBy: { createdAt: "desc" },
-                take: 60,
+// Do'kon sahifasi — DTO qaytaradi (serializable), 60s cache. Do'konga trafik
+// spike bo'lsa DB'ni har request urmaydi.
+export const getShopBySlug = unstable_cache(
+    async (slug: string) => {
+        const shop = await prisma.bnShop.findUnique({
+            where: { slug },
+            include: {
+                market: { select: { slug: true, name: true } },
+                products: {
+                    where: { isActive: true, hidden: false },
+                    include: PRODUCT_INCLUDE,
+                    orderBy: { createdAt: "desc" },
+                    take: 60,
+                },
             },
-        },
-    });
-    if (!shop) return null;
-    // Nexus username — do'kon egasidan
-    const owner = await prisma.userProfile.findUnique({
-        where: { id: shop.profileId },
-        select: { username: true },
-    });
-    return {
-        shop: toShopDTO(shop, owner?.username),
-        products: shop.products.map(toProductDTO),
-    };
-}
+        });
+        if (!shop) return null;
+        // Nexus username — do'kon egasidan
+        const owner = await prisma.userProfile.findUnique({
+            where: { id: shop.profileId },
+            select: { username: true },
+        });
+        return {
+            shop: toShopDTO(shop, owner?.username),
+            products: shop.products.map(toProductDTO),
+        };
+    },
+    ["bn-shop-page"],
+    { revalidate: 60, tags: ["bn-shops"] },
+);
 
-export async function getProductBySlug(slug: string, profileId: string | null = null) {
+// Mahsulot sahifasi ma'lumoti — barcha ko'ruvchi uchun BIR XIL qism (ulgurji
+// gating'dan tashqari) 60s cache'lanadi. Viral mahsulotga spike bo'lsa har
+// request DB'ni ~8 marta urmaydi — cache hit'dan qaytadi (yuklama chidamliligi).
+const _productPageCached = unstable_cache(
+    async (slug: string) => {
     const p = await prisma.bnProduct.findUnique({
         where: { slug },
         include: PRODUCT_INCLUDE,
@@ -329,11 +339,6 @@ export async function getProductBySlug(slug: string, profileId: string | null = 
     // Ban/terminate qilingan do'kon mahsuloti — foydalanuvchilarga ko'rsatilmaydi
     if (!p.isActive || p.hidden) return null;
     if (p.shop && (p.shop as { status?: string }).status !== "APPROVED") return null;
-    // Ulgurji — faqat BN do'kon egalari va admin'lar ko'radi
-    if (p.isWholesale) {
-        const canSee = await viewerCanSeeWholesale(profileId);
-        if (!canSee) return null;
-    }
 
     // Ijtimoiy proof — oxirgi 7 kunda:
     //   soldRecent   — nechta buyurtma qismi (order-item count)
@@ -416,7 +421,24 @@ export async function getProductBySlug(slug: string, profileId: string | null = 
         similar: similar.map(toProductDTO),
         soldRecent,
         reviewVideos,
+        _isWholesale: p.isWholesale,   // ulgurji gate uchun (cache'dan tashqarida tekshiriladi)
     };
+    },
+    ["bn-product-page"],
+    { revalidate: 60, tags: ["bn-products"] },
+);
+
+export async function getProductBySlug(slug: string, profileId: string | null = null) {
+    const data = await _productPageCached(slug);
+    if (!data) return null;
+    // Ulgurji — faqat BN do'kon egalari va admin'lar ko'radi (per-request, cache'siz)
+    if (data._isWholesale) {
+        const canSee = await viewerCanSeeWholesale(profileId);
+        if (!canSee) return null;
+    }
+    const { _isWholesale, ...rest } = data;
+    void _isWholesale;
+    return rest;
 }
 
 export interface BnCategoryTreeDTO {

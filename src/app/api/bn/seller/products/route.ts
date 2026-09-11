@@ -10,6 +10,7 @@
 
 import { NextResponse } from "next/server";
 import { after } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 import { uniqueSlug } from "@/lib/bn-slug";
@@ -142,6 +143,9 @@ export async function POST(req: Request) {
         where: { id: shopRes.shop.id },
         data: { productCount: { increment: 1 } },
     });
+
+    // Cache'langan sahifalarni darhol yangilash (60s revalidate kutmasdan)
+    try { revalidateTag("bn-products"); revalidateTag("bn-shops"); } catch { /* fail-safe */ }
 
     // Follower'larga Web Push — do'kon yangi mahsulot chiqardi (fail-safe, javobni kechiktirmaydi)
     after(async () => {

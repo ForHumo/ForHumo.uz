@@ -3,10 +3,18 @@
 
 import { NextResponse } from "next/server";
 import { after } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 import { parseTiers } from "@/lib/bn-wholesale";
 import { translateAndIndexProduct } from "@/lib/bn-i18n-product";
+
+// Mahsulot o'zgarsa cache'langan sahifalar (mahsulot/do'kon/home) darhol yangilanadi
+// — 60s revalidate kutmasdan. Yuklama cache'i saqlanadi, lekin sotuvchi o'z
+// o'zgarishini shu zahoti ko'radi.
+function revalidateBnProduct() {
+    try { revalidateTag("bn-products"); revalidateTag("bn-shops"); } catch { /* fail-safe */ }
+}
 
 export async function PATCH(
     req: Request,
@@ -61,6 +69,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.bnProduct.update({ where: { id }, data });
+    revalidateBnProduct();
 
     // Agar title yoki description o'zgargan bo'lsa — 3 tilga tarjima va searchIndex qayta hisoblansin.
     if (data.title !== undefined || data.description !== undefined) {
@@ -92,5 +101,6 @@ export async function DELETE(
         where: { id: product.shop!.id },
         data: { productCount: { decrement: 1 } },
     });
+    revalidateBnProduct();
     return NextResponse.json({ ok: true });
 }
