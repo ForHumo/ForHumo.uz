@@ -30,6 +30,9 @@ export interface CartItem {
         stock: number;
         allowDelivery: boolean;
         allowInspect: boolean;
+        isWholesale?: boolean;
+        minWholesaleQty?: number | null;
+        wholesaleTiers?: { minQty: number; price: number }[];
         shopSlug: string;
         shopName: string;
         marketName: string | null;
@@ -158,7 +161,19 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
         groups.set(key, arr);
     }
 
-    const subtotal = items.reduce((s, i) => s + i.product.price * i.qty, 0);
+    // Ulgurji: mavjud pog'onaga qarab birlik narxi kamayadi.
+    function unitPriceOf(i: CartItem): number {
+        const p = i.product;
+        if (!p.isWholesale || !p.wholesaleTiers?.length) return p.price;
+        const tiers = [...p.wholesaleTiers].sort((a, b) => a.minQty - b.minQty);
+        let chosen = p.price;
+        for (const t of tiers) {
+            if (i.qty >= t.minQty) chosen = t.price;
+            else break;
+        }
+        return chosen;
+    }
+    const subtotal = items.reduce((s, i) => s + unitPriceOf(i) * i.qty, 0);
     const delivery = items.some(i => i.product.allowDelivery) ? 20_000 : 0;
     const total = subtotal + delivery;
 
@@ -231,13 +246,26 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                                                     >
                                                         {p.title}
                                                     </BnLink>
-                                                    <div className="flex items-baseline gap-2 mb-2">
+                                                    <div className="flex items-baseline gap-2 mb-2 flex-wrap">
                                                         <span className="text-[15px] font-black tabular-nums">
-                                                            {fmtPrice(p.price)}
+                                                            {fmtPrice(unitPriceOf(it))}
                                                         </span>
+                                                        {p.isWholesale && unitPriceOf(it) < p.price && (
+                                                            <span className="text-[10.5px] line-through tabular-nums" style={{ color: BN.text3 }}>
+                                                                {p.price.toLocaleString()}
+                                                            </span>
+                                                        )}
                                                         {rankMeta && (
                                                             <span className="text-[10.5px] font-bold" style={{ color: rankMeta.color }}>
                                                                 {rank === "cheap" ? t("rankCheap") : rank === "fair" ? t("rankFair") : t("rankExpensive")}
+                                                            </span>
+                                                        )}
+                                                        {p.isWholesale && (
+                                                            <span
+                                                                className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md"
+                                                                style={{ background: BN.goldSoft, color: BN.gold }}
+                                                            >
+                                                                {tProd("wholesaleBadge")}
                                                             </span>
                                                         )}
                                                     </div>
@@ -267,10 +295,13 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                                                         className="flex items-center rounded-xl overflow-hidden"
                                                         style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}
                                                     >
-                                                        <QtyBtn onClick={() => setQty(it.id, Math.max(1, it.qty - 1))} disabled={busy || it.qty <= 1}>
+                                                        <QtyBtn
+                                                            onClick={() => setQty(it.id, Math.max(p.isWholesale ? Math.max(2, p.minWholesaleQty ?? 2) : 1, it.qty - 1))}
+                                                            disabled={busy || it.qty <= (p.isWholesale ? Math.max(2, p.minWholesaleQty ?? 2) : 1)}
+                                                        >
                                                             <Minus className="w-3.5 h-3.5" />
                                                         </QtyBtn>
-                                                        <span className="w-9 text-center text-[13px] font-black tabular-nums">
+                                                        <span className="w-12 text-center text-[13px] font-black tabular-nums">
                                                             {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin inline" /> : it.qty}
                                                         </span>
                                                         <QtyBtn onClick={() => setQty(it.id, Math.min(p.stock, it.qty + 1))} disabled={busy || it.qty >= p.stock}>

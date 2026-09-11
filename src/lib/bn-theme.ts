@@ -88,11 +88,14 @@ export function priceDiffLabel(price: number, marketAvg: number | null | undefin
 
 export type ShopTier = "NEW" | "TRUSTED" | "VERIFIED" | "PREMIUM";
 
+// Hozircha barcha darajalarda komissiya 0% — "Bozor Narxida" nomi
+// oqlanishi uchun sotuvchi narxiga foizni yashirmasligi shart. Bozor
+// raqamlashgach tier-based komissiya (masalan NEW=5% → PREMIUM=3%) qaytariladi.
 export const TIER_META: Record<ShopTier, { label: string; color: string; commission: number }> = {
-    NEW:      { label: "Yangi",        color: BN.text3, commission: 0.05  },
-    TRUSTED:  { label: "Ishonchli",    color: BN.info,  commission: 0.05  },
-    VERIFIED: { label: "Tasdiqlangan", color: BN.ok,    commission: 0.045 },
-    PREMIUM:  { label: "Premium",      color: BN.gold,  commission: 0.04  },
+    NEW:      { label: "Yangi",        color: BN.text3, commission: 0 },
+    TRUSTED:  { label: "Ishonchli",    color: BN.info,  commission: 0 },
+    VERIFIED: { label: "Tasdiqlangan", color: BN.ok,    commission: 0 },
+    PREMIUM:  { label: "Premium",      color: BN.gold,  commission: 0 },
 };
 
 // ── Joylashuv turi ──────────────────────────────────────────────────────────
@@ -160,8 +163,9 @@ export function attrValueLabel(def: AttrDef, value: unknown): string {
 }
 
 // ── Komissiya ───────────────────────────────────────────────────────────────
+// Default 0% — bn-settle.ts BN_COMMISSION bilan mos. Faqat env orqali qo'llab bo'ladi.
 
-export const BN_COMMISSION = Number(process.env.BN_COMMISSION ?? 0.05);
+export const BN_COMMISSION = Number(process.env.BN_COMMISSION ?? 0);
 
 export function commissionFor(tier: ShopTier): number {
     return TIER_META[tier]?.commission ?? BN_COMMISSION;

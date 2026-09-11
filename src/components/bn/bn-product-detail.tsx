@@ -65,7 +65,24 @@ export function BnProductDetail({
     const locale = useLocale();
     const locText = useShopLocationText();
     const [imgIdx, setImgIdx] = useState(0);
-    const [qty, setQty] = useState(1);
+    // Ulgurji mahsulot bo'lsa boshlang'ich qty = minWholesaleQty (buyer'ni majburiy chegaraga
+    // olib boradi, aks holda cart 400 qaytarardi).
+    const [qty, setQty] = useState(() => {
+        if (p.isWholesale) return Math.max(2, p.minWholesaleQty ?? 2);
+        return 1;
+    });
+    // Joriy narx — ulgurji tier'lariga qarab hisoblanadi.
+    const wholesaleTiersSorted = (p.wholesaleTiers ?? []).slice().sort((a, b) => a.minQty - b.minQty);
+    const unitPrice = (() => {
+        if (!p.isWholesale || wholesaleTiersSorted.length === 0) return p.price;
+        let chosen = p.price;
+        for (const t of wholesaleTiersSorted) {
+            if (qty >= t.minQty) chosen = t.price;
+            else break;
+        }
+        return chosen;
+    })();
+    const minWholesaleQtyN = p.isWholesale ? Math.max(2, p.minWholesaleQty ?? 2) : 1;
     const [fav, setFav] = useState(false);
     const [cartBusy, setCartBusy] = useState(false);
     const [cartDone, setCartDone] = useState(false);
@@ -462,17 +479,76 @@ export function BnProductDetail({
                     <Panel>
                         <h1 className="text-[18px] font-black leading-snug mb-4">{p.title}</h1>
 
-                        {/* Narx */}
+                        {/* Ulgurji (B2B) belgisi */}
+                        {p.isWholesale && (
+                            <div
+                                className="flex items-center gap-2 rounded-xl px-3 py-2 mb-3 text-[12px] font-black"
+                                style={{ background: BN.goldSoft, color: BN.gold, border: `1px solid ${BN.borderGold}` }}
+                            >
+                                <Package className="w-3.5 h-3.5" />
+                                {t("wholesaleBadge")}
+                                <span style={{ color: BN.text2 }}> · {t("wholesaleMin", { qty: minWholesaleQtyN })}</span>
+                            </div>
+                        )}
+
+                        {/* Narx — ulgurji bo'lsa joriy tier narxi ko'rsatiladi */}
                         <div className="flex items-baseline gap-2.5 mb-2">
                             <span className="text-[30px] font-black tabular-nums leading-none">
-                                {fmtPrice(p.price)}
+                                {fmtPrice(unitPrice)}
                             </span>
-                            {p.oldPrice && p.oldPrice > p.price && (
-                                <span className="text-[15px] line-through tabular-nums" style={{ color: BN.text3 }}>
-                                    {p.oldPrice.toLocaleString(locale)}
-                                </span>
+                            {p.isWholesale ? (
+                                <span className="text-[13px]" style={{ color: BN.text3 }}>{t("perUnit")}</span>
+                            ) : (
+                                p.oldPrice && p.oldPrice > p.price && (
+                                    <span className="text-[15px] line-through tabular-nums" style={{ color: BN.text3 }}>
+                                        {p.oldPrice.toLocaleString(locale)}
+                                    </span>
+                                )
                             )}
                         </div>
+
+                        {/* Ulgurji jami summa — qty × unitPrice, joriy tier tanlangan */}
+                        {p.isWholesale && (
+                            <div className="flex items-center gap-2 text-[13px] mb-3" style={{ color: BN.text2 }}>
+                                <span>{qty} × {fmtPrice(unitPrice)} =</span>
+                                <span className="font-black text-[15px]" style={{ color: BN.text }}>
+                                    {fmtPrice(unitPrice * qty)}
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Ulgurji narx pog'onalari jadvali */}
+                        {p.isWholesale && wholesaleTiersSorted.length > 0 && (
+                            <div
+                                className="rounded-2xl p-3 mb-3"
+                                style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}
+                            >
+                                <p className="text-[11px] font-black uppercase tracking-wider mb-2" style={{ color: BN.text3 }}>
+                                    {t("wholesaleTiers")}
+                                </p>
+                                <div className="space-y-1.5">
+                                    {wholesaleTiersSorted.map((tier, i) => {
+                                        const next = wholesaleTiersSorted[i + 1];
+                                        const range = next ? `${tier.minQty}–${next.minQty - 1}` : `${tier.minQty}+`;
+                                        const active = qty >= tier.minQty && (!next || qty < next.minQty);
+                                        return (
+                                            <div
+                                                key={i}
+                                                className="flex items-center justify-between text-[12.5px] rounded-lg px-2 py-1"
+                                                style={{
+                                                    background: active ? BN.goldSoft : "transparent",
+                                                    color: active ? BN.gold : BN.text2,
+                                                    fontWeight: active ? 900 : 500,
+                                                }}
+                                            >
+                                                <span>{range} {t("stockUnit")}</span>
+                                                <span className="tabular-nums">{fmtPrice(tier.price)} / {t("perUnitShort")}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Bozor narxi bloki — BN ning asosiy va'dasi */}
                         {rankMeta && p.marketAvgPrice && (
@@ -560,8 +636,8 @@ export function BnProductDetail({
                                 className="flex items-center rounded-xl overflow-hidden"
                                 style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}
                             >
-                                <QtyBtn onClick={() => setQty(v => Math.max(1, v - 1))} disabled={qty <= 1}>−</QtyBtn>
-                                <span className="w-10 text-center text-[14px] font-black tabular-nums">{qty}</span>
+                                <QtyBtn onClick={() => setQty(v => Math.max(minWholesaleQtyN, v - 1))} disabled={qty <= minWholesaleQtyN}>−</QtyBtn>
+                                <span className="w-12 text-center text-[14px] font-black tabular-nums">{qty}</span>
                                 <QtyBtn onClick={() => setQty(v => Math.min(p.stock, v + 1))} disabled={qty >= p.stock}>+</QtyBtn>
                             </div>
                         </div>

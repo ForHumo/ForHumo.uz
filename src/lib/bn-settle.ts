@@ -8,8 +8,10 @@
 import { prisma } from "@/lib/prisma";
 import { getOrCreateWalletTx } from "@/lib/wallet";
 
-/** Komissiya foizi (0.05 = 5%). Env orqali sozlanadi. */
-export const BN_COMMISSION = Math.max(0, Math.min(0.5, Number(process.env.BN_COMMISSION ?? 0.05)));
+/** Komissiya foizi (0.05 = 5%). Hozircha default 0% —
+ *  "Bozor Narxida" nomini oqlash uchun sotuvchi narxiga hech nima qo'shilmasin.
+ *  Bozor raqamlashgach BN_COMMISSION env orqali 0.05 → 0.35 gacha ko'tariladi. */
+export const BN_COMMISSION = Math.max(0, Math.min(0.5, Number(process.env.BN_COMMISSION ?? 0)));
 
 /** Xaridor buyurtma kodini idempotent qilib qaytaradi. */
 export function orderRef(kind: "hold" | "settle" | "refund", orderId: string) {

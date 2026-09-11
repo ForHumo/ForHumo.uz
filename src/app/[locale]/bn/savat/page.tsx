@@ -25,7 +25,7 @@ export default async function Page() {
     const byId = new Map(products.map(p => [p.id, p]));
 
     const initial: CartItem[] = rawItems
-        .map(i => {
+        .map((i): CartItem | null => {
             const p = byId.get(i.productId);
             if (!p) return null;
             return {
@@ -41,6 +41,11 @@ export default async function Page() {
                     stock: p.stock,
                     allowDelivery: p.allowDelivery,
                     allowInspect: p.allowInspect,
+                    isWholesale: p.isWholesale ?? false,
+                    minWholesaleQty: p.minWholesaleQty ?? null,
+                    wholesaleTiers: Array.isArray(p.wholesaleTiers)
+                        ? (p.wholesaleTiers as { minQty: number; price: number }[])
+                        : [],
                     shopSlug: p.shop?.slug ?? "",
                     shopName: p.shop?.name ?? "",
                     marketName: p.shop?.market?.name ?? null,
