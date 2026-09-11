@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { aiVisionJSON, aiAvailable } from "@/lib/ai";
 import { searchProducts } from "@/lib/bn-data";
+import { aiGate } from "@/lib/ai-gate";
 
 interface Detected {
     title: string;         // qisqa nom (masalan "iPhone 13 Midnight")
@@ -20,6 +21,10 @@ export async function POST(req: Request) {
     if (!aiAvailable()) {
         return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
     }
+
+    // Auth + tezlik cheklovi (Gemini xarajatini himoya qilish)
+    const gate = await aiGate("bn-scan");
+    if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
 
     const body = await req.json().catch(() => ({}));
     const imageUrl = String(body?.imageUrl ?? "").trim();

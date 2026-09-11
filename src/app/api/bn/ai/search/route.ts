@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { aiJSON, aiAvailable } from "@/lib/ai";
 import { searchProducts } from "@/lib/bn-data";
+import { aiGate } from "@/lib/ai-gate";
 
 interface AIFilter {
     categorySlug: string | null;
@@ -25,6 +26,10 @@ export async function POST(req: Request) {
     if (!aiAvailable()) {
         return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
     }
+
+    // Auth + tezlik cheklovi (Gemini xarajatini himoya qilish)
+    const gate = await aiGate("bn-search");
+    if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
 
     const body = await req.json().catch(() => ({}));
     const q = String(body?.q ?? "").trim().slice(0, 300);

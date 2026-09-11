@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, ShoppingBag, Trash2, Store, Clock, Plus } from "lucide-react";
 import { BnPurchaseModal } from "@/components/bn/bn-purchase-modal";
+import { bnConfirm } from "@/components/bn/bn-dialog";
 
 interface PurchaseItem {
     id: string;
@@ -42,7 +43,11 @@ export function BnMyPurchases() {
     useEffect(() => { void load(); }, [load]);
 
     const remove = useCallback(async (id: string) => {
-        if (!confirm("Ro'yxatdan o'chirilsinmi?")) return;
+        const ok = await bnConfirm({
+            title: "Ro'yxatdan o'chirilsinmi?",
+            danger: true,
+        });
+        if (!ok) return;
         await fetch(`/api/bn/purchases?id=${id}`, { method: "DELETE" });
         void load();
     }, [load]);

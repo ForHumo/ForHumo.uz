@@ -14,6 +14,7 @@ import {
 import { BN, fmtPrice, priceRankOf, PRICE_RANK_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
+import { bnConfirm } from "./bn-dialog";
 import { BnCheckoutModal } from "./bn-checkout-modal";
 
 export interface CartItem {
@@ -86,7 +87,8 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
     }
 
     async function clear() {
-        if (!confirm(t("clearConfirm"))) return;
+        const ok = await bnConfirm({ title: t("clearConfirm"), danger: true });
+        if (!ok) return;
         setItems([]);
         try {
             await fetch(`/api/bn/cart?all=1`, { method: "DELETE" });

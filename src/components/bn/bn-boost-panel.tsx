@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Rocket, X, Loader2, Check, AlertCircle } from "lucide-react";
 import { formatMoney } from "@/lib/money";
+import { bnConfirm } from "./bn-dialog";
 
 interface Boost {
     id: string;
@@ -60,10 +61,12 @@ export function BnBoostPanel({ productId, productTitle, onClose }: {
         setErr(null);
         try {
             const total = pack.days * pack.dailyCost;
-            if (!confirm(`Boost yoqasizmi?\n\n${pack.label}\nJami: ${formatMoney(total, "UZS")} so'm hamyondan olinadi.`)) {
-                setCreating(null);
-                return;
-            }
+            const ok = await bnConfirm({
+                title: "Boost yoqasizmi?",
+                message: `${pack.label}\nJami: ${formatMoney(total, "UZS")} so'm hamyondan olinadi.`,
+                confirmLabel: "Yoqish",
+            });
+            if (!ok) { setCreating(null); return; }
             const r = await fetch("/api/bn/seller/boost", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -83,7 +86,12 @@ export function BnBoostPanel({ productId, productTitle, onClose }: {
     }, [productId, load]);
 
     const stop = useCallback(async (id: string) => {
-        if (!confirm("Boost'ni to'xtatasizmi? Foydalanilmagan pul qaytarilmaydi.")) return;
+        const ok = await bnConfirm({
+            title: "Boost'ni to'xtatasizmi?",
+            message: "Foydalanilmagan pul qaytarilmaydi.",
+            danger: true,
+        });
+        if (!ok) return;
         await fetch(`/api/bn/seller/boost?id=${id}`, { method: "DELETE" });
         void load();
     }, [load]);

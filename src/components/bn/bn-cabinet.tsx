@@ -32,6 +32,7 @@ import { ForPayLogo, TelegramIcon, WhatsAppIcon } from "@/components/brand-icons
 import { BnSellerChats } from "./bn-seller-chats";
 import { BnMapPicker } from "./bn-map-picker";
 import { bnToast } from "./bn-toast";
+import { bnConfirm, bnPrompt } from "./bn-dialog";
 import { BnPushCard } from "./bn-push-card";
 import { BnReferralLeaderboard } from "./bn-referral-leaderboard";
 import { BnAchievementsCard } from "./bn-achievements-card";
@@ -1108,7 +1109,11 @@ function ProductsTab({
     const [boostFor, setBoostFor] = useState<{ id: string; title: string } | null>(null);
 
     async function remove(id: string) {
-        if (!confirm(t("removeConfirm"))) return;
+        const ok = await bnConfirm({
+            title: t("removeConfirm"),
+            danger: true,
+        });
+        if (!ok) return;
         setBusyIds(s => new Set([...s, id]));
         setItems(prev => prev.map(p => p.id === id ? { ...p, isActive: false } : p));
         try {
@@ -1133,9 +1138,17 @@ function ProductsTab({
         }
     }
     async function quickEdit(p: CabinetProduct) {
-        const priceStr = prompt(t("quickEditPrice", { price: p.price.toLocaleString(locale) }), String(p.price));
+        const priceStr = await bnPrompt({
+            title: t("quickEditPrice", { price: p.price.toLocaleString(locale) }),
+            defaultValue: String(p.price),
+            inputType: "number",
+        });
         if (priceStr === null) return;
-        const stockStr = prompt(t("quickEditStock", { stock: p.stock }), String(p.stock));
+        const stockStr = await bnPrompt({
+            title: t("quickEditStock", { stock: p.stock }),
+            defaultValue: String(p.stock),
+            inputType: "number",
+        });
         if (stockStr === null) return;
         const newPrice = Math.max(1000, Math.floor(Number(priceStr.replace(/\D/g, "")) || p.price));
         const newStock = Math.max(0, Math.floor(Number(stockStr.replace(/\D/g, "")) || 0));

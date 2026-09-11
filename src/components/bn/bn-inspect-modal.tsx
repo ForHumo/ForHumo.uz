@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { X, Clock, Loader2, Eye, CheckCircle2, Copy, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { BN } from "@/lib/bn-theme";
+import { bnConfirm } from "./bn-dialog";
 
 interface Hold {
     code: string;
@@ -55,7 +56,8 @@ export function BnInspectHoldModal({ hold, onClose, onCancelled }: {
     }
 
     async function cancel() {
-        if (!confirm(t("cancelConfirm"))) return;
+        const ok = await bnConfirm({ title: t("cancelConfirm"), danger: true });
+        if (!ok) return;
         setCancelling(true);
         try {
             const r = await fetch(`/api/bn/inspect/${hold.code}/cancel`, { method: "POST" });

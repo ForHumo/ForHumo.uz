@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { bnToast } from "./bn-toast";
+import { bnConfirm } from "./bn-dialog";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
@@ -193,7 +194,12 @@ export function BnOrderDetailClient({ order }: { order: OrderDetailDTO }) {
     }, [order.id, order.status, router]);
 
     async function cancel() {
-        if (!confirm(t("cancelConfirm") + (order.paymentMethod === "WALLET" ? t("cancelConfirmRefund") : ""))) return;
+        const ok = await bnConfirm({
+            title: t("cancelConfirm"),
+            message: order.paymentMethod === "WALLET" ? t("cancelConfirmRefund") : undefined,
+            danger: true,
+        });
+        if (!ok) return;
         setBusy(true); setErr(null);
         try {
             const r = await fetch(`/api/bn/orders/${order.id}/cancel`, { method: "POST" });

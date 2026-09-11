@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { X, Truck, Package, Eye, Wallet, Banknote, Loader2, BookMarked, Check } from "lucide-react";
 import { BN, fmtPrice } from "@/lib/bn-theme";
+import { BN_FLAGS } from "@/lib/bn-flags";
 import { useBnHref } from "./bn-nav";
 import { BnPhoneInput, isValidUzPhone } from "./bn-phone-input";
 import { BnMapPicker, type BnLatLng } from "./bn-map-picker";
@@ -38,7 +39,11 @@ interface Props {
     onClose: () => void;
 }
 
-export function BnCheckoutModal({ subtotal, canDelivery, canInspect, onClose }: Props) {
+export function BnCheckoutModal({ subtotal, canDelivery: canDeliveryProp, canInspect, onClose }: Props) {
+    // Yetkazish (Yandex Go API) integratsiyasi yetgunga qadar butun DELIVERY
+    // varianti yashirin — mahsulot allowDelivery bo'lsa ham xaridor tanlolmaydi.
+    // Flag yoqilganda avvalgi allowDelivery-bo'yicha ruxsat qaytadi.
+    const canDelivery = BN_FLAGS.deliveryEnabled && canDeliveryProp;
     const router = useRouter();
     const to = useBnHref();
     const t = useTranslations("bn.checkout");

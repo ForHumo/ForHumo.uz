@@ -8,9 +8,8 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getBnAuth } from "@/lib/bn-auth";
 import { aiAvailable, aiJSON } from "@/lib/ai";
-import { belisRate } from "@/lib/belis-rate";
+import { aiGate } from "@/lib/ai-gate";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -39,21 +38,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
     }
 
-    const auth = await getBnAuth();
-    // Anonim ham chaqirishi mumkin, lekin rate-limit auth bo'lsa qattiqroq
-
-    // Rate limit (auth bo'lsa)
-    if (auth) {
-        try {
-            const rate = await belisRate(auth.profileId, "aiChat");
-            if (rate.limited) {
-                return NextResponse.json({
-                    error: "rate_limited",
-                    message: `Kuniga ${rate.max} AI so'rov chegarasi.`,
-                }, { status: 429 });
-            }
-        } catch { /* fail-open */ }
-    }
+    // Auth + tezlik cheklovi majburiy (Gemini xarajatini himoya qilish).
+    // Ilgari anonim chaqiruv ochiq edi — bu suiiste'mol xavfi.
+    const gate = await aiGate("bn-shopping");
+    if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
 
     const body = await req.json().catch(() => ({}));
     const text = String(body?.text ?? "").trim().slice(0, MAX_TEXT);
@@ -145,14 +133,7 @@ JSON qaytar:
         shop: p.shop, category: p.category,
     }));
 
-    // aiUsage log
-    if (auth) {
-        try {
-            await prisma.aiUsage.create({
-                data: { profileId: auth.profileId, kind: "bn-shopping" },
-            });
-        } catch { /* fail-safe */ }
-    }
+    // AI usage aiGate() ichida yozib bo'lingan — takroriy log kerak emas.
 
     return NextResponse.json({
         ok: true,
