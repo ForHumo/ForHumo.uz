@@ -448,7 +448,7 @@ function SellerMessageBubble({
                                     <span className="text-[12px] font-bold" style={{ color: BN.text3 }}>so&apos;m</span>
                                 </div>
 
-                                {/* Slider */}
+                                {/* BN uslubidagi slider */}
                                 <div>
                                     <input
                                         type="range"
@@ -457,11 +457,15 @@ function SellerMessageBubble({
                                         step={step}
                                         value={Math.max(sliderMin, Math.min(sliderMax, counterAmt))}
                                         onChange={e => setCounterAmt(Number(e.target.value))}
-                                        className="w-full"
-                                        style={{ accentColor: BN.gold }}
+                                        className="bn-range"
+                                        style={{
+                                            ["--bn-range-pct" as string]: sliderMax > sliderMin
+                                                ? `${Math.round(((Math.max(sliderMin, Math.min(sliderMax, counterAmt)) - sliderMin) / (sliderMax - sliderMin)) * 100)}%`
+                                                : "0%",
+                                        }}
                                         aria-label="Qarshi taklif narxi"
                                     />
-                                    <div className="flex justify-between text-[10px]" style={{ color: BN.text3 }}>
+                                    <div className="flex justify-between text-[10px] mt-1.5" style={{ color: BN.text3 }}>
                                         <span>{sliderMin.toLocaleString("uz-UZ")}</span>
                                         <span>{sliderMax.toLocaleString("uz-UZ")}</span>
                                     </div>

@@ -171,6 +171,65 @@ export function BnStyles() {
             /* Skrollbarni yashirish (gorizontal qatorlar uchun) */
             .bn-noscroll { scrollbar-width: none; -ms-overflow-style: none; }
             .bn-noscroll::-webkit-scrollbar { display: none; }
+
+            /* BN range slider — barcha browserlarda bir xil chiroyli ko'rinish */
+            .bn-range {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 100%;
+                height: 6px;
+                background: transparent;
+                cursor: pointer;
+                outline: none;
+            }
+            /* WebKit (Chrome/Safari/Edge) — track */
+            .bn-range::-webkit-slider-runnable-track {
+                height: 6px;
+                border-radius: 999px;
+                background: linear-gradient(
+                    to right,
+                    var(--bn-gold) 0%,
+                    var(--bn-gold) var(--bn-range-pct, 50%),
+                    var(--bn-surface-up) var(--bn-range-pct, 50%),
+                    var(--bn-surface-up) 100%
+                );
+            }
+            .bn-range::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: var(--bn-gold);
+                border: 3px solid var(--bn-surface);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.35), 0 0 0 1px var(--bn-gold-edge);
+                cursor: grab;
+                margin-top: -7px;
+                transition: transform 0.12s;
+            }
+            .bn-range::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.1); }
+            /* Firefox */
+            .bn-range::-moz-range-track {
+                height: 6px;
+                border-radius: 999px;
+                background: var(--bn-surface-up);
+            }
+            .bn-range::-moz-range-progress {
+                height: 6px;
+                border-radius: 999px;
+                background: var(--bn-gold);
+            }
+            .bn-range::-moz-range-thumb {
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: var(--bn-gold);
+                border: 3px solid var(--bn-surface);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.35), 0 0 0 1px var(--bn-gold-edge);
+                cursor: grab;
+            }
+            .bn-range::-moz-range-thumb:active { cursor: grabbing; transform: scale(1.1); }
+            .bn-range:disabled { opacity: 0.5; cursor: not-allowed; }
         `}</style>
     );
 }

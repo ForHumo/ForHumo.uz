@@ -534,7 +534,8 @@ function DiscountModal({ row, onClose, onDone }: { row: UnsoldRow; onClose: () =
                         </div>
                         <input type="range" min={3} max={70} step={1} value={pct}
                             onChange={e => setPct(Number(e.target.value))}
-                            className="w-full accent-current" style={{ color: BN.gold }} />
+                            className="bn-range"
+                            style={{ ["--bn-range-pct" as string]: `${Math.round(((pct - 3) / 67) * 100)}%` }} />
                         <div className="flex justify-between text-[10.5px] mt-1" style={{ color: BN.text3 }}>
                             <span>3%</span><span>70%</span>
                         </div>

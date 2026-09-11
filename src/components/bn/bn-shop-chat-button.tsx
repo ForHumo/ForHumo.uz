@@ -209,9 +209,14 @@ function BnShopChatModal({
                     </div>
                 )}
 
-                {/* Messages */}
-                <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[320px]"
-                    style={{ background: BN.bg }}>
+                {/* Messages — offer form ochilganda kichrayadi (max 120px), aks holda flex-1 */}
+                <div ref={scrollRef} className="overflow-y-auto p-3 space-y-2 transition-all"
+                    style={{
+                        background: BN.bg,
+                        flex: showOfferForm ? "0 0 auto" : "1 1 auto",
+                        maxHeight: showOfferForm ? "120px" : undefined,
+                        minHeight: showOfferForm ? "80px" : "220px",
+                    }}>
                     {loading ? (
                         <div className="flex justify-center py-6">
                             <Loader2 className="w-5 h-5 animate-spin" style={{ color: BN.text3 }} />
@@ -233,15 +238,17 @@ function BnShopChatModal({
                     )}
                 </div>
 
-                {/* Offer form (agar mahsulot + user showOfferForm bosgan) */}
+                {/* Offer form — ochilganda o'zi scroll bo'ladi, hamma tugmalar ko'rinadi */}
                 {product && showOfferForm && (
-                    <OfferForm
-                        product={product}
-                        onCancel={() => setShowOfferForm(false)}
-                        onSend={sendOffer}
-                        sending={sending}
-                        initialNote={text}
-                    />
+                    <div className="flex-1 overflow-y-auto" style={{ minHeight: 0 }}>
+                        <OfferForm
+                            product={product}
+                            onCancel={() => setShowOfferForm(false)}
+                            onSend={sendOffer}
+                            sending={sending}
+                            initialNote={text}
+                        />
+                    </div>
                 )}
 
                 {/* Composer */}
@@ -533,7 +540,7 @@ function OfferForm({
                 )}
             </div>
 
-            {/* Slider */}
+            {/* BN uslubidagi slider */}
             <div>
                 <input
                     type="range"
@@ -542,11 +549,14 @@ function OfferForm({
                     step={Math.max(1000, Math.round(product.price / 100))}
                     value={amount}
                     onChange={e => setAmount(Number(e.target.value))}
-                    className="w-full accent-[var(--bn-gold)]"
-                    style={{ accentColor: BN.gold }}
+                    className="bn-range"
+                    style={{
+                        // Slider'ning to'ldirilgan qismi foizi (webkit track uchun)
+                        ["--bn-range-pct" as string]: `${Math.round(((amount - min) / (max - min)) * 100)}%`,
+                    }}
                     aria-label="Taklif narxi"
                 />
-                <div className="flex justify-between text-[10px] mt-0.5" style={{ color: BN.text3 }}>
+                <div className="flex justify-between text-[10px] mt-1.5" style={{ color: BN.text3 }}>
                     <span>{min.toLocaleString("uz-UZ")} so&apos;m</span>
                     <span>{max.toLocaleString("uz-UZ")} so&apos;m</span>
                 </div>
