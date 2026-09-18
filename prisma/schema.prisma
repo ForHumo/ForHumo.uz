@@ -4405,6 +4405,30 @@ model BnShopChatMessage {
   @@index([chatId, createdAt])
 }
 
+// ── Narx kelishuvi rezervatsiyasi (concurrency himoyasi) ─────────────────────
+// Sotuvchi taklifni ACCEPT qilganda yaratiladi: kelishilgan narx + stock band.
+// Muammo hal qiladi: bitta mahsulotga (stock=1) bir nechta xaridor narx kelishsa,
+// sotuvchi ko'p taklifni qabul qilib qo'ymasin, kelishilgan xaridor mahsulotini
+// boshqa birov "olib ketmasin", va checkout kelishilgan narxni qo'llasin.
+//   status: ACTIVE (band) | USED (checkout qilindi) | EXPIRED | CANCELLED
+// Faol = status=ACTIVE AND expiresAt > now. Muddati o'tsa avtomatik bo'shaydi.
+model BnPriceDeal {
+  id            String    @id @default(cuid())
+  productId     String
+  buyerId       String                              // UserProfile.id — kelishgan xaridor
+  shopId        String
+  chatMessageId String?                             // qaysi taklif qabul qilindi (audit)
+  agreedPrice   Int                                 // kelishilgan birlik narx (so'm)
+  qty           Int       @default(1)
+  status        String    @default("ACTIVE")
+  expiresAt     DateTime                            // now + 48 soat
+  usedAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([productId, status, expiresAt])
+  @@index([buyerId, status, expiresAt])
+}
+
 // BN reklama (Boost) — sotuvchi mahsulotini yuqorida chiqaradi.
 // For Pay hamyoni orqali to'lanadi. Kunlik xarajat asosida muddat hisoblanadi.
 model BnAdBoost {

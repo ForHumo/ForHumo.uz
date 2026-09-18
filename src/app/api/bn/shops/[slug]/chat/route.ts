@@ -9,6 +9,7 @@ import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 import { sendPushToProfile } from "@/lib/push";
+import { reservedQty, DEAL_HOURS } from "@/lib/bn-deals";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -176,7 +177,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
     if (kind === "ACCEPT" || kind === "REJECT" || kind === "COUNTER") {
         const offer = await prisma.bnShopChatMessage.findFirst({
             where: { id: answersOfferId!, chatId: chat.id },
-            select: { fromShop: true, offerStatus: true, kind: true },
+            select: { fromShop: true, offerStatus: true, kind: true, productId: true, offerAmount: true },
         });
         if (!offer) return NextResponse.json({ error: "offer_not_found" }, { status: 404 });
         if (offer.offerStatus !== "PENDING") {
@@ -186,6 +187,27 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
         if (offer.fromShop === isOwner) {
             return NextResponse.json({ error: "not_your_turn" }, { status: 403 });
         }
+
+        // ACCEPT + mahsulotli taklif → rezervatsiya. Avval stock band emasligini
+        // tekshiramiz (bir nechta xaridor bir vaqtda kelishsa oversell bo'lmasin).
+        let dealToCreate: { productId: string; agreedPrice: number } | null = null;
+        if (kind === "ACCEPT" && offer.productId && offer.offerAmount && offer.offerAmount > 0) {
+            const product = await prisma.bnProduct.findUnique({
+                where: { id: offer.productId },
+                select: { stock: true },
+            });
+            if (product) {
+                const reserved = await reservedQty(prisma, offer.productId);
+                if (product.stock - reserved < 1) {
+                    return NextResponse.json({
+                        error: "no_stock_to_reserve",
+                        message: "Barcha zaxira band — avval mavjud kelishuvlar yakunlansin yoki zaxira qo'shing",
+                    }, { status: 409 });
+                }
+                dealToCreate = { productId: offer.productId, agreedPrice: offer.offerAmount };
+            }
+        }
+
         const newStatus = kind === "ACCEPT" ? "ACCEPTED"
             : kind === "REJECT" ? "REJECTED"
             : "COUNTERED";
@@ -193,6 +215,64 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
             where: { id: answersOfferId! },
             data: { offerStatus: newStatus },
         });
+
+        // Rezervatsiya — kelishilgan narx 48 soat band (checkout shu narxda o'tadi)
+        if (dealToCreate) {
+            const deal = dealToCreate;
+            await prisma.bnPriceDeal.create({
+                data: {
+                    productId: deal.productId,
+                    buyerId: chat.buyerId,
+                    shopId: shop.id,
+                    chatMessageId: answersOfferId,
+                    agreedPrice: deal.agreedPrice,
+                    qty: 1,
+                    expiresAt: new Date(Date.now() + DEAL_HOURS * 3600 * 1000),
+                },
+            });
+            // Xaridorga xabar (kelishildi)
+            after(async () => {
+                try {
+                    await sendPushToProfile(chat.buyerId, {
+                        title: `${shop.name}: narx qabul qilindi`,
+                        body: `${deal.agreedPrice.toLocaleString("uz-UZ")} so'm — ${DEAL_HOURS} soat band. Sotib oling.`,
+                        url: `https://bozornarxida.uz/kabinet?tab=chats&shop=${slug}`,
+                        tag: `bn-deal:${deal.productId}`,
+                    });
+                } catch { /* fail-safe */ }
+            });
+            // Zaxira tugagan bo'lsa — boshqa PENDING takliflarni avto-yopish
+            after(async () => {
+                try {
+                    const p = await prisma.bnProduct.findUnique({ where: { id: deal.productId }, select: { stock: true } });
+                    if (!p) return;
+                    const reserved = await reservedQty(prisma, deal.productId);
+                    if (p.stock - reserved > 0) return;   // hali zaxira bor — yopmaymiz
+                    const others = await prisma.bnShopChatMessage.findMany({
+                        where: {
+                            productId: deal.productId,
+                            kind: { in: ["OFFER", "COUNTER"] },
+                            offerStatus: "PENDING",
+                            chat: { shopId: shop.id },
+                            id: { not: answersOfferId ?? undefined },
+                        },
+                        select: { id: true, chat: { select: { buyerId: true } } },
+                        take: 100,
+                    });
+                    for (const o of others) {
+                        await prisma.bnShopChatMessage.update({ where: { id: o.id }, data: { offerStatus: "REJECTED" } });
+                        if (o.chat?.buyerId) {
+                            await sendPushToProfile(o.chat.buyerId, {
+                                title: `${shop.name}: mahsulot band bo'ldi`,
+                                body: "Boshqa xaridor bilan kelishildi. Uzr!",
+                                url: `https://bozornarxida.uz/d/${slug}`,
+                                tag: `bn-deal-closed:${deal.productId}`,
+                            }).catch(() => { });
+                        }
+                    }
+                } catch (e) { console.error("[bn deal auto-close]", e); }
+            });
+        }
     }
 
     const msg = await prisma.bnShopChatMessage.create({

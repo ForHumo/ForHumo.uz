@@ -26,6 +26,7 @@ import { trackBnEvent } from "@/lib/bn-events";
 import { viewerCanSeeWholesale } from "@/lib/bn-data";
 import { minQtyForProduct, parseTiers, priceForQty } from "@/lib/bn-wholesale";
 import { bnNotify } from "@/lib/bn-notify";
+import { activeDealsMap, reservedQty } from "@/lib/bn-deals";
 
 const DELIVERY_FEE = 20_000;   // Toshkent — flat tarif (FAZA 6 da API bilan almashtiriladi)
 
@@ -72,6 +73,15 @@ export async function POST(req: Request) {
     });
     const byId = new Map(products.map(p => [p.id, p]));
 
+    // Narx kelishuvi rezervatsiyalari — xaridorning faol kelishuvlari (kelishilgan
+    // narx checkout'da qo'llanadi) + boshqa xaridorlar band qilgan zaxira (o'zining
+    // band qilgan mahsulotini boshqa birov "olib ketmasin").
+    const deals = await activeDealsMap(auth.profileId, productIds);
+    const reservedOthers = new Map<string, number>();
+    for (const pid of new Set(productIds)) {
+        reservedOthers.set(pid, await reservedQty(prisma, pid, auth.profileId));
+    }
+
     // Ulgurji tekshiruvi (kamida bitta ulgurji mahsulot bo'lsa)
     const hasWholesale = products.some(p => p.isWholesale);
     if (hasWholesale) {
@@ -85,7 +95,7 @@ export async function POST(req: Request) {
     // Ulgurji uchun narx dinamik — tier'ga qarab hisoblanadi.
     // Variant tanlangan bo'lsa variant narxi va zapasi.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const groups = new Map<string, { productId: string; variantId: string | null; variantName: string | null; qty: number; unitPrice: number; product: any }[]>();
+    const groups = new Map<string, { productId: string; variantId: string | null; variantName: string | null; qty: number; unitPrice: number; dealId: string | null; product: any }[]>();
     for (const it of cartItems) {
         const p = byId.get(it.productId);
         if (!p || !p.isActive || p.hidden) {
@@ -97,12 +107,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "insufficient_stock", productId: it.productId, available: effectiveStock }, { status: 409 });
         }
         let unitPrice = it.variant?.price ?? p.price;
+        let dealId: string | null = null;
         if (p.isWholesale) {
             const minQty = minQtyForProduct(true, p.minWholesaleQty);
             if (it.qty < minQty) {
                 return NextResponse.json({ error: "wholesale_min_qty", productId: it.productId, minQty, message: `Kamida ${minQty} dona buyurtma qiling` }, { status: 400 });
             }
             unitPrice = priceForQty(unitPrice, parseTiers(p.wholesaleTiers), it.qty);
+        } else if (!it.variantId) {
+            // Narx kelishuvi — sotuvchi qabul qilgan narx checkout'da qo'llanadi
+            const deal = deals.get(it.productId);
+            if (deal) { unitPrice = deal.agreedPrice; dealId = deal.id; }
         }
         const key = p.shopId;
         const arr = groups.get(key) ?? [];
@@ -110,7 +125,7 @@ export async function POST(req: Request) {
             productId: it.productId,
             variantId: it.variantId,
             variantName: it.variant?.name ?? null,
-            qty: it.qty, unitPrice, product: p,
+            qty: it.qty, unitPrice, dealId, product: p,
         });
         groups.set(key, arr);
     }
@@ -201,11 +216,21 @@ export async function POST(req: Request) {
                             data: { sold: { increment: i.qty }, stock: { decrement: i.qty } },
                         }).catch(() => {});
                     } else {
+                        // Rezervatsiya-aware: boshqa xaridorlar band qilgan zaxirani
+                        // hisobga olamiz (o'zining kelishuvi bundan mustasno).
+                        const reservedByOthers = reservedOthers.get(i.productId) ?? 0;
                         const upd = await tx.bnProduct.updateMany({
-                            where: { id: i.productId, stock: { gte: i.qty } },
+                            where: { id: i.productId, stock: { gte: i.qty + reservedByOthers } },
                             data:  { stock: { decrement: i.qty }, sold: { increment: i.qty } },
                         });
                         if (upd.count === 0) throw new Error(`OVERSELL:${i.productId}`);
+                    }
+                    // Kelishilgan narx ishlatildi — rezervatsiyani yopamiz (tranzaksiya ichida)
+                    if (i.dealId) {
+                        await tx.bnPriceDeal.update({
+                            where: { id: i.dealId },
+                            data: { status: "USED", usedAt: new Date() },
+                        });
                     }
                 }
 

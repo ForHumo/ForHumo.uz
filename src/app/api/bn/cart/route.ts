@@ -14,6 +14,7 @@ import { requireBnAuth } from "@/lib/bn-auth";
 import { trackBnEvent } from "@/lib/bn-events";
 import { viewerCanSeeWholesale } from "@/lib/bn-data";
 import { minQtyForProduct } from "@/lib/bn-wholesale";
+import { activeDealsMap } from "@/lib/bn-deals";
 
 export async function GET() {
     const auth = await requireBnAuth();
@@ -35,12 +36,19 @@ export async function GET() {
     }) : [];
     const byId = new Map(products.map(p => [p.id, p]));
 
+    // Narx kelishuvi — xaridor bu mahsulotlar bo'yicha kelishgan bo'lsa,
+    // savatda kelishilgan narx ko'rsatiladi (checkout ham shu narxni qo'llaydi).
+    const deals = await activeDealsMap(auth.profileId, productIds);
+
     const enriched = items
         .map(i => {
             const p = byId.get(i.productId);
             if (!p) return null;
             // Variant tanlangan bo'lsa uning narxi va rasmi
-            const price = i.variant?.price ?? p.price;
+            const basePrice = i.variant?.price ?? p.price;
+            // Kelishilgan narx (faqat variantsiz, ulgurjisiz mahsulot uchun)
+            const deal = (!i.variantId && !p.isWholesale) ? deals.get(i.productId) : undefined;
+            const price = deal ? deal.agreedPrice : basePrice;
             const image = i.variant?.image ?? p.images[0] ?? null;
             return {
                 id: i.id,
@@ -50,7 +58,9 @@ export async function GET() {
                 createdAt: i.createdAt,
                 product: {
                     id: p.id, slug: p.slug, title: p.title,
-                    price,   // variant narxi bo'lsa uni ishlatamiz
+                    price,   // effektiv narx (kelishilgan bo'lsa — kelishilgan)
+                    dealPrice: deal ? deal.agreedPrice : null,   // kelishilgan narx (bor bo'lsa)
+                    listPrice: deal ? basePrice : null,          // asl narx (chizib ko'rsatish uchun)
                     marketAvgPrice: p.marketAvgPrice,
                     images: image ? [image] : p.images,
                     stock: i.variant?.stock ?? p.stock,
