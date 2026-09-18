@@ -45,6 +45,7 @@ import { BnMyAdsCard } from "./bn-my-ads-card";
 import { BnSellerInsightsCard } from "./bn-seller-insights-card";
 import { BnBuyerInsightsCard } from "./bn-buyer-insights-card";
 import { BnBulkImportModal } from "./bn-bulk-import-modal";
+import { BnAiImportModal } from "./bn-ai-import-modal";
 import { BnFeatureButton } from "./bn-feature-modal";
 import { BnOrderChatButton } from "./bn-order-chat";
 
@@ -1107,6 +1108,7 @@ function ProductsTab({
     const [items, setItems] = useState(initial);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
     const [bulkOpen, setBulkOpen] = useState(false);
+    const [aiImportOpen, setAiImportOpen] = useState(false);
     const [boostFor, setBoostFor] = useState<{ id: string; title: string } | null>(null);
 
     async function remove(id: string) {
@@ -1182,6 +1184,14 @@ function ProductsTab({
                     {t("addProduct")}
                 </button>
                 <button
+                    onClick={() => setAiImportOpen(true)}
+                    className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl text-[13px] font-black"
+                    style={{ background: BN.goldSoft, color: BN.gold, border: `1px solid ${BN.goldEdge}` }}
+                >
+                    <Sparkles className="w-4 h-4" />
+                    AI import
+                </button>
+                <button
                     onClick={() => setBulkOpen(true)}
                     className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl text-[13px] font-black"
                     style={{ background: BN.surface, color: BN.text, border: `1px solid ${BN.border}` }}
@@ -1190,6 +1200,14 @@ function ProductsTab({
                     {t("bulkImportBtn")}
                 </button>
             </div>
+
+            {aiImportOpen && (
+                <BnAiImportModal
+                    categories={categories}
+                    onClose={() => setAiImportOpen(false)}
+                    onDone={() => router.refresh()}
+                />
+            )}
 
             {bulkOpen && (
                 <BnBulkImportModal

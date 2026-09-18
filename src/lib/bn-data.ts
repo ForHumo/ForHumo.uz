@@ -584,6 +584,7 @@ export async function searchProducts(opts: {
             { titleUz:     { contains: v, mode: "insensitive" } },
             { titleRu:     { contains: v, mode: "insensitive" } },
             { titleEn:     { contains: v, mode: "insensitive" } },
+            { partNumber:  { contains: v, mode: "insensitive" } },   // avto qism raqami
         ]);
     }
     if (categorySlug) {

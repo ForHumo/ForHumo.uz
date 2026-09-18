@@ -13,6 +13,8 @@
 //         faqat WITH ATOMIC ITEM (row bo'yicha) — batch to'liq atomik emas).
 
 import { NextResponse } from "next/server";
+import { after } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireBnAuth } from "@/lib/bn-auth";
 import { uniqueSlug } from "@/lib/bn-slug";
@@ -32,6 +34,11 @@ interface RowInput {
     categorySlug?: string;
     oldPrice?: number | string;
     images?: string; // space or | separated URL list
+    // Avto import (AI import'dan keladi)
+    partNumber?: string | null;
+    oemNumbers?: string[];
+    universalFit?: boolean;
+    fits?: string[];   // BnCarModel id'lari
 }
 
 interface RowResult {
@@ -81,6 +88,17 @@ export async function POST(req: Request) {
     });
     const catMap = new Map(categories.map(c => [c.slug, c.id]));
 
+    // Avto moslik — barcha row'lardagi modelId'larni oldindan yig'ib validatsiya
+    const allFitIds = new Set<string>();
+    for (const r of rows) {
+        if (Array.isArray(r.fits)) for (const id of r.fits) if (id) allFitIds.add(String(id));
+    }
+    const validFitIds = allFitIds.size
+        ? new Set((await prisma.bnCarModel.findMany({ where: { id: { in: [...allFitIds] }, isActive: true }, select: { id: true } })).map(m => m.id))
+        : new Set<string>();
+
+    const { buildSearchIndex, translateAndIndexProduct } = await import("@/lib/bn-i18n-product");
+
     const results: RowResult[] = [];
 
     for (let i = 0; i < rows.length; i++) {
@@ -96,6 +114,15 @@ export async function POST(req: Request) {
         const imagesRaw = String(r.images ?? "").trim();
         const images = imagesRaw
             ? imagesRaw.split(/[|\s]+/).map(s => s.trim()).filter(s => /^https?:\/\//.test(s)).slice(0, 10)
+            : [];
+        // Avto moslik maydonlari
+        const partNumber = r.partNumber ? (String(r.partNumber).trim().slice(0, 64) || null) : null;
+        const oemNumbers = Array.isArray(r.oemNumbers)
+            ? [...new Set(r.oemNumbers.map(s => String(s).trim()).filter(Boolean))].slice(0, 20)
+            : [];
+        const universalFit = !!r.universalFit;
+        const rowFitIds = Array.isArray(r.fits)
+            ? [...new Set(r.fits.map(String).filter(id => validFitIds.has(id)))].slice(0, 60)
             : [];
 
         // Validatsiya
@@ -138,6 +165,15 @@ export async function POST(req: Request) {
                         const cnt = await prisma.bnProduct.count({ where: { slug: s } });
                         return cnt > 0;
                     });
+                    // Qism raqami (dashsiz variant ham) qidiruv indeksiga
+                    const partTokens: string[] = [];
+                    if (partNumber) partTokens.push(partNumber, partNumber.replace(/[^a-z0-9]/gi, ""));
+                    for (const o of oemNumbers) partTokens.push(o, o.replace(/[^a-z0-9]/gi, ""));
+                    const baseIndex = buildSearchIndex({ title, description });
+                    const searchIndex = partTokens.length
+                        ? `${baseIndex} ${partTokens.join(" ").toLowerCase()}`
+                        : baseIndex;
+
                     const created = await prisma.bnProduct.create({
                         data: {
                             slug,
@@ -145,6 +181,7 @@ export async function POST(req: Request) {
                             categoryId: catMap.get(categorySlug)!,
                             title,
                             description,
+                            searchIndex,
                             price,
                             oldPrice,
                             images,
@@ -154,6 +191,9 @@ export async function POST(req: Request) {
                             allowPickup: true,
                             allowDelivery: false,
                             allowInspect: true,
+                            partNumber,
+                            oemNumbers,
+                            universalFit,
                             isActive: true,
                             hidden: false,
                         },
@@ -161,6 +201,16 @@ export async function POST(req: Request) {
                     });
                     row.productId = created.id;
                     row.slug = created.slug;
+
+                    // Moslik yozuvlari
+                    if (!universalFit && rowFitIds.length) {
+                        await prisma.bnProductFit.createMany({
+                            data: rowFitIds.map(modelId => ({ productId: created.id, modelId })),
+                            skipDuplicates: true,
+                        });
+                    }
+                    // 3-til tarjima + indeks (fon; javobni kechiktirmaydi)
+                    after(() => translateAndIndexProduct(created.id));
                 }
             } catch (e) {
                 row.ok = false;
@@ -180,6 +230,7 @@ export async function POST(req: Request) {
             where: { id: shop.id },
             data: { productCount: { increment: okCount } },
         });
+        try { revalidateTag("bn-products"); revalidateTag("bn-shops"); } catch { /* fail-safe */ }
     }
 
     return NextResponse.json({
