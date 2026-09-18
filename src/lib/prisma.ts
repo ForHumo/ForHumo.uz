@@ -32,8 +32,13 @@ function resilientDbUrl(): string | undefined {
         // pooled'da 5 xavfsiz (PgBouncer backend'ni himoyalaydi). Direct (non-pooled)
         // ulanishda past qoldiramiz (Neon backend limitini himoyalash uchun).
         const isPooledLimit = isPooled ? '5' : '3'
-        if (!sp.has('connection_limit')) sp.set('connection_limit', isPooledLimit)
-        if (!sp.has('pool_timeout')) sp.set('pool_timeout', '15')
+        // Idempotent, LEKIN pooled'da xavfli 1 qiymatini majburan ko'taramiz —
+        // prod DATABASE_URL'da connection_limit=1 hardcoded bo'lsa ham fix qo'llanadi.
+        const existingLimit = sp.get('connection_limit')
+        if (!existingLimit || (isPooled && existingLimit === '1')) {
+            sp.set('connection_limit', isPooledLimit)
+        }
+        if (!sp.has('pool_timeout') || sp.get('pool_timeout') === '10') sp.set('pool_timeout', '15')
         if (!sp.has('connect_timeout')) sp.set('connect_timeout', '15')
 
         return u.toString()
