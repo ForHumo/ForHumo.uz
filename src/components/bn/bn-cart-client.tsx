@@ -25,6 +25,8 @@ export interface CartItem {
         slug: string;
         title: string;
         price: number;
+        dealPrice?: number | null;   // narx kelishuvi — kelishilgan narx (bor bo'lsa)
+        listPrice?: number | null;   // asl narx (kelishuv bo'lsa, chizib ko'rsatish)
         marketAvgPrice: number | null;
         images: string[];
         stock: number;
@@ -254,6 +256,16 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                                                             <span className="text-[10.5px] line-through tabular-nums" style={{ color: BN.text3 }}>
                                                                 {p.price.toLocaleString()}
                                                             </span>
+                                                        )}
+                                                        {p.dealPrice && p.listPrice && p.listPrice > p.dealPrice && (
+                                                            <>
+                                                                <span className="text-[10.5px] line-through tabular-nums" style={{ color: BN.text3 }}>
+                                                                    {p.listPrice.toLocaleString()}
+                                                                </span>
+                                                                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: BN.goldSoft, color: BN.gold }}>
+                                                                    kelishilgan
+                                                                </span>
+                                                            </>
                                                         )}
                                                         {rankMeta && (
                                                             <span className="text-[10.5px] font-bold" style={{ color: rankMeta.color }}>

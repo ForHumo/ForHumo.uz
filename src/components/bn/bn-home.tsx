@@ -19,6 +19,7 @@ import { BnShopStories } from "./bn-shop-stories";
 import { BnReferralHero } from "./bn-referral-hero";
 import { BnInstallCard } from "./bn-install-card";
 import { BnNearbyRow } from "./bn-nearby-row";
+import { BnGarageRow } from "./bn-garage-row";
 import { BnCheapestToday } from "./bn-cheapest-today";
 import { BnPriceDashboard } from "./bn-price-dashboard";
 import { BnTrendingRow } from "./bn-trending-row";
@@ -102,6 +103,9 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
 
             {/* ── Trend kategoriyalar (7-kun VIEW event asosida top-8) — M2 ── */}
             <BnTrendingCategories />
+
+            {/* ── Mashinamga mos (garaj asosidagi avto qismlar) — mashina tanlangan bo'lsa ── */}
+            <BnGarageRow />
 
             {/* ── Yaqin do'konlar (geolocation) — permission bersa ko'rinadi ── */}
             <BnNearbyRow />

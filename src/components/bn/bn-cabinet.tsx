@@ -19,7 +19,7 @@ import {
     TrendingUp, Eye, LogIn, ArrowUpRight, Check, Loader2, Truck,
     Clock, ChevronRight, MapPin, Phone, Building2, Trash2, EyeOff,
     Sparkles, ShieldCheck, AlertTriangle, Upload, Wand2, Users,
-    Send, MessageCircle, Rocket, QrCode, ExternalLink,
+    Send, MessageCircle, Rocket, QrCode, ExternalLink, Car,
 } from "lucide-react";
 import { BN, fmtPrice, ORDER_STATUS_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
@@ -46,6 +46,8 @@ import { BnSellerInsightsCard } from "./bn-seller-insights-card";
 import { BnBuyerInsightsCard } from "./bn-buyer-insights-card";
 import { BnBulkImportModal } from "./bn-bulk-import-modal";
 import { BnAiImportModal } from "./bn-ai-import-modal";
+import { BnDealsCard } from "./bn-deals-card";
+import { BnEditFitModal } from "./bn-edit-fit-modal";
 import { BnFeatureButton } from "./bn-feature-modal";
 import { BnOrderChatButton } from "./bn-order-chat";
 
@@ -151,6 +153,7 @@ export interface CabinetProduct {
     isActive: boolean;
     hidden: boolean;
     categoryName: string | null;
+    categorySlug?: string | null;
 }
 
 export interface CabinetCategory {
@@ -1110,6 +1113,7 @@ function ProductsTab({
     const [bulkOpen, setBulkOpen] = useState(false);
     const [aiImportOpen, setAiImportOpen] = useState(false);
     const [boostFor, setBoostFor] = useState<{ id: string; title: string } | null>(null);
+    const [fitFor, setFitFor] = useState<{ id: string; title: string } | null>(null);
 
     async function remove(id: string) {
         const ok = await bnConfirm({
@@ -1286,6 +1290,16 @@ function ProductsTab({
                                         >
                                             <EyeOff className="w-3.5 h-3.5" />
                                         </button>
+                                        {p.categorySlug?.startsWith("avto") && (
+                                            <button
+                                                onClick={() => setFitFor({ id: p.id, title: p.title })}
+                                                title="Mashina mosligi"
+                                                className="w-8 h-8 grid place-items-center rounded-lg"
+                                                style={{ background: BN.surfaceUp, color: BN.gold }}
+                                            >
+                                                <Car className="w-3.5 h-3.5" />
+                                            </button>
+                                        )}
                                         {p.isActive && <BnFeatureButton productSlug={p.slug} compact />}
                                         {p.isActive && (
                                             <button
@@ -1335,6 +1349,15 @@ function ProductsTab({
                     productId={boostFor.id}
                     productTitle={boostFor.title}
                     onClose={() => setBoostFor(null)}
+                />
+            )}
+
+            {fitFor && (
+                <BnEditFitModal
+                    productId={fitFor.id}
+                    productTitle={fitFor.title}
+                    onClose={() => setFitFor(null)}
+                    onSaved={() => router.refresh()}
                 />
             )}
         </>
@@ -2158,6 +2181,9 @@ function MoneyTab({ balance, orderCount }: { balance: number; orderCount: number
                 {t("payOpen")}
                 <ArrowUpRight className="w-4 h-4" />
             </a>
+
+            {/* Kelishilgan narxlarim — 48s band, kelishuv bo'lsa ko'rinadi */}
+            <BnDealsCard />
 
             <BnMyPurchases />
 

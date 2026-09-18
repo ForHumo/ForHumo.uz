@@ -7,6 +7,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { BnLink } from "./bn-nav";
 import { BnShopChatButton } from "./bn-shop-chat-button";
 import { BnSellerCallButton } from "./bn-seller-call-button";
+import { BnProductDealChip } from "./bn-product-deal-chip";
 import { WhatsAppIcon, HumoNexusLogo } from "@/components/brand-icons";
 import { bnToast } from "./bn-toast";
 import { BnInspectDaysPicker } from "./bn-inspect-days-picker";
@@ -21,7 +22,7 @@ import { BnProductReferralCta } from "./bn-product-referral-cta";
 import {
     Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
     ChevronLeft, ChevronRight, Heart, Share2, TrendingDown, Info, Globe, Loader2, BellRing, MessageCircle,
-    Car, Hash,
+    Car, Hash, Search,
 } from "lucide-react";
 import {
     BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel, TIER_META,
@@ -355,7 +356,15 @@ export function BnProductDetail({
                                     <span className="flex items-center gap-1.5" style={{ color: BN.text3 }}>
                                         <Hash className="w-3.5 h-3.5" /> Qism raqami
                                     </span>
-                                    <span className="font-black tabular-nums select-all">{partNumber}</span>
+                                    <BnLink
+                                        href={`/qidiruv?q=${encodeURIComponent(partNumber)}`}
+                                        className="font-black tabular-nums inline-flex items-center gap-1 transition-colors hover:opacity-80"
+                                        style={{ color: BN.gold }}
+                                        title="Shu raqam bo'yicha boshqa sotuvchilardan qidirish"
+                                    >
+                                        {partNumber}
+                                        <Search className="w-3.5 h-3.5" />
+                                    </BnLink>
                                 </div>
                             )}
                             {oemNumbers.length > 0 && (
@@ -531,6 +540,9 @@ export function BnProductDetail({
                 <div className="lg:sticky lg:top-[132px] lg:self-start">
                     <Panel>
                         <h1 className="text-[18px] font-black leading-snug mb-4">{p.title}</h1>
+
+                        {/* Siz kelishgan narx (narx kelishuvi bo'lsa) */}
+                        <BnProductDealChip productSlug={p.slug} />
 
                         {/* Ulgurji (B2B) belgisi */}
                         {p.isWholesale && (

@@ -16,6 +16,34 @@ function revalidateBnProduct() {
     try { revalidateTag("bn-products"); revalidateTag("bn-shops"); } catch { /* fail-safe */ }
 }
 
+// GET — mahsulotning joriy moslik ma'lumoti (fit-tahrirlash modal uchun).
+export async function GET(
+    _req: Request,
+    { params }: { params: Promise<{ id: string }> },
+) {
+    const auth = await requireBnAuth();
+    if (auth instanceof NextResponse) return auth;
+    const { id } = await params;
+
+    const product = await prisma.bnProduct.findUnique({
+        where: { id },
+        select: {
+            id: true, partNumber: true, oemNumbers: true, universalFit: true,
+            shop: { select: { profileId: true } },
+            fits: { select: { modelId: true, model: { select: { name: true, make: { select: { name: true } } } } } },
+        },
+    });
+    if (!product || product.shop?.profileId !== auth.profileId) {
+        return NextResponse.json({ error: "not_found" }, { status: 404 });
+    }
+    return NextResponse.json({
+        partNumber: product.partNumber ?? "",
+        oemNumbers: product.oemNumbers ?? [],
+        universalFit: product.universalFit ?? false,
+        fits: product.fits.map(f => ({ modelId: f.modelId, makeName: f.model.make.name, modelName: f.model.name })),
+    });
+}
+
 export async function PATCH(
     req: Request,
     { params }: { params: Promise<{ id: string }> },

@@ -120,7 +120,7 @@ export default async function Page() {
             where: { shopId: shopRaw.id },
             orderBy: { createdAt: "desc" },
             take: 50,
-            include: { category: { select: { name: true } } },
+            include: { category: { select: { name: true, slug: true } } },
         }),
         prisma.bnCategory.findMany({
             where: { isActive: true },
@@ -188,6 +188,7 @@ export default async function Page() {
         isActive: p.isActive,
         hidden: p.hidden,
         categoryName: p.category?.name ?? null,
+        categorySlug: p.category?.slug ?? null,
     }));
 
     // Kategoriya ro'yxati — top-level va sub aralashgan holatda (indent bilan).
