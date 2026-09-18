@@ -105,6 +105,10 @@ export default async function Page({
                 reviewVideos={data.reviewVideos.map(v => ({
                     id: v.id, title: v.title, thumbUrl: v.thumbUrl, views: v.views,
                 }))}
+                fits={data.fits}
+                partNumber={data.partNumber}
+                oemNumbers={data.oemNumbers}
+                universalFit={data.universalFit}
             />
         </>
     );

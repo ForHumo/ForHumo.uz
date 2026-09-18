@@ -88,6 +88,10 @@ export interface BnProductDTO {
     /** Do'kon koordinatalari — nearby masofa chip uchun (ixtiyoriy) */
     shopLat?: number | null;
     shopLng?: number | null;
+    /** Avto moslik — bu qism mos keladigan mashina model id'lari (garaj filtri) */
+    fitModelIds?: string[];
+    /** Universal — barcha mashinaga to'g'ri keladi (moy, umumiy aksessuar) */
+    universalFit?: boolean;
 }
 
 // ── Xaritalash: DB → DTO ────────────────────────────────────────────────────
@@ -127,6 +131,7 @@ type ProductWithRels = Awaited<ReturnType<typeof prisma.bnProduct.findMany>>[num
     & {
         shop: { slug: string; name: string; tier: string; verifiedTier?: string; market: { name: string } | null; city: string; lat?: number | null; lng?: number | null } | null;
         category: { slug: string } | null;
+        fits?: { modelId: string }[];
     };
 
 function toProductDTO(p: ProductWithRels): BnProductDTO {
@@ -162,6 +167,8 @@ function toProductDTO(p: ProductWithRels): BnProductDTO {
         shopVerifiedTier: (p.shop?.verifiedTier as "NONE" | "RETAIL" | "WHOLESALE" | undefined) ?? "NONE",
         shopLat: p.shop?.lat ?? null,
         shopLng: p.shop?.lng ?? null,
+        fitModelIds: p.fits?.map(f => f.modelId) ?? [],
+        universalFit: (p as { universalFit?: boolean }).universalFit ?? false,
     };
 }
 
@@ -187,6 +194,7 @@ export async function viewerCanSeeWholesale(profileId: string | null): Promise<b
 const PRODUCT_INCLUDE = {
     shop: { select: { slug: true, name: true, tier: true, verifiedTier: true, city: true, status: true, lat: true, lng: true, phone: true, phoneVerified: true, market: { select: { name: true } } } },
     category: { select: { slug: true } },
+    fits: { select: { modelId: true } },   // avto moslik — client filtr + karta belgisi
 } as const;
 
 export const getMarkets = unstable_cache(
@@ -413,6 +421,18 @@ const _productPageCached = unstable_cache(
         select: { id: true, title: true, thumbUrl: true, videoUrl: true, views: true, kind: true, orientation: true },
     });
 
+    // Avto moslik — bu qism mos keladigan mashinalar (detal sahifasi ko'rsatadi)
+    const fitRows = await prisma.bnProductFit.findMany({
+        where: { productId: p.id },
+        select: { model: { select: { name: true, slug: true, make: { select: { name: true, slug: true } } } } },
+        orderBy: { createdAt: "asc" },
+        take: 100,
+    });
+    const fits = fitRows.map(f => ({
+        makeName: f.model.make.name, makeSlug: f.model.make.slug,
+        modelName: f.model.name, modelSlug: f.model.slug,
+    }));
+
     return {
         product: toProductDTO(p),
         others:  others.map(toProductDTO),
@@ -421,6 +441,10 @@ const _productPageCached = unstable_cache(
         similar: similar.map(toProductDTO),
         soldRecent,
         reviewVideos,
+        fits,
+        partNumber: (p as { partNumber?: string | null }).partNumber ?? null,
+        oemNumbers: (p as { oemNumbers?: string[] }).oemNumbers ?? [],
+        universalFit: (p as { universalFit?: boolean }).universalFit ?? false,
         _isWholesale: p.isWholesale,   // ulgurji gate uchun (cache'dan tashqarida tekshiriladi)
     };
     },
@@ -527,8 +551,10 @@ export async function searchProducts(opts: {
     wholesaleOnly?: boolean;
     /** Faqat narx kelishilishi mumkin bo'lgan mahsulotlar (Narx kelishuvi filtri) */
     negotiableOnly?: boolean;
+    /** "Mening mashinam" filtri — shu modelga mos (yoki universal) qismlar */
+    carModelId?: string | null;
 }): Promise<BnProductDTO[]> {
-    const { q, categorySlug, marketSlug, sort = "new", limit = 60, skip = 0, profileId = null, wholesaleOnly = false, negotiableOnly = false } = opts;
+    const { q, categorySlug, marketSlug, sort = "new", limit = 60, skip = 0, profileId = null, wholesaleOnly = false, negotiableOnly = false, carModelId = null } = opts;
 
     const seeWholesale = await viewerCanSeeWholesale(profileId);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -571,6 +597,14 @@ export async function searchProducts(opts: {
     }
     if (marketSlug) {
         where.shop = { market: { slug: marketSlug } };
+    }
+    if (carModelId) {
+        // Shu modelga aniq mos qismlar YOKI universal (barcha mashinaga) qismlar.
+        // where.OR text qidiruv uchun band bo'lishi mumkin — shuning uchun AND ichida.
+        where.AND = [
+            ...(where.AND ?? []),
+            { OR: [{ universalFit: true }, { fits: { some: { modelId: carModelId } } }] },
+        ];
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

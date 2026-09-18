@@ -106,10 +106,35 @@ export async function POST(req: Request) {
         : null;
     const wholesaleTiers = isWholesale ? parseTiers(body?.wholesaleTiers) : [];
 
+    // Avto moslik (auto-parts): qism raqami + analog raqamlar + universal/model moslik
+    const partNumber = typeof body?.partNumber === "string" ? (body.partNumber.trim().slice(0, 64) || null) : null;
+    const oemNumbers = Array.isArray(body?.oemNumbers)
+        ? [...new Set(body.oemNumbers.map((s: unknown) => String(s).trim()).filter(Boolean))].slice(0, 20) as string[]
+        : [];
+    const universalFit = !!body?.universalFit;
+    const fitModelIds = Array.isArray(body?.fits)
+        ? [...new Set(body.fits.map((f: unknown) => String((f as { modelId?: unknown })?.modelId ?? "")).filter(Boolean))].slice(0, 60) as string[]
+        : [];
+    // Mos modellarni oldindan olib qidiruv indeksiga marka/model nomlarini qo'shamiz
+    // (masalan "Chevrolet Nexia 3" — text qidiruvda ham topilsin).
+    const fitModels = fitModelIds.length && !universalFit
+        ? await prisma.bnCarModel.findMany({
+            where: { id: { in: fitModelIds }, isActive: true },
+            select: { id: true, name: true, make: { select: { name: true } } },
+        })
+        : [];
+
     // Boshlang'ich searchIndex — asosiy title/description asosida (transliteratsiya bilan).
     // Keyin fon rejimda AI 3 tilga tarjima qiladi va indeksni yangilaydi.
     const { buildSearchIndex, translateAndIndexProduct } = await import("@/lib/bn-i18n-product");
-    const initialIndex = buildSearchIndex({ title, description });
+    const baseIndex = buildSearchIndex({ title, description });
+    // Qism raqami (dashsiz variant ham) + analog raqamlar + mos mashina nomlari indeksga
+    const partTokens: string[] = [];
+    if (partNumber) partTokens.push(partNumber, partNumber.replace(/[^a-z0-9]/gi, ""));
+    for (const o of oemNumbers) partTokens.push(o, o.replace(/[^a-z0-9]/gi, ""));
+    for (const m of fitModels) partTokens.push(m.name, `${m.make.name} ${m.name}`);
+    const extraIndex = partTokens.join(" ").toLowerCase().trim();
+    const initialIndex = extraIndex ? `${baseIndex} ${extraIndex}` : baseIndex;
 
     const product = await prisma.bnProduct.create({
         data: {
@@ -130,10 +155,21 @@ export async function POST(req: Request) {
             isWholesale,
             minWholesaleQty,
             wholesaleTiers: wholesaleTiers as never,
+            partNumber,
+            oemNumbers,
+            universalFit,
             isActive: true,
             hidden: false,
         },
     });
+
+    // Moslik yozuvlari (mahsulot ↔ mashina model) — universal bo'lmasa
+    if (!universalFit && fitModels.length) {
+        await prisma.bnProductFit.createMany({
+            data: fitModels.map(m => ({ productId: product.id, modelId: m.id })),
+            skipDuplicates: true,
+        });
+    }
 
     // 3-til AI tarjima (fon, javobni kechiktirmaydi)
     after(() => translateAndIndexProduct(product.id));

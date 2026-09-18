@@ -26,6 +26,7 @@ import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
 import { BnPhoneInput } from "./bn-phone-input";
 import { BnCategoryPicker } from "./bn-category-picker";
+import { BnFitSelector, type FitModel } from "./bn-fit-selector";
 import { BnSelect } from "./bn-select";
 import { BnSwitch, BnSwitchRow } from "./bn-switch";
 import { ForPayLogo, TelegramIcon, WhatsAppIcon } from "@/components/brand-icons";
@@ -1349,6 +1350,11 @@ function CreateProductModal({
     const [isWholesale, setIsWholesale] = useState(false);
     const [minWholesaleQty, setMinWholesaleQty] = useState("20");
     const [wholesaleTiers, setWholesaleTiers] = useState<{ minQty: string; price: string }[]>([]);
+    // Avto moslik (auto-parts vertical)
+    const [universalFit, setUniversalFit] = useState(false);
+    const [fits, setFits] = useState<FitModel[]>([]);
+    const [partNumber, setPartNumber] = useState("");
+    const [oemNumbers, setOemNumbers] = useState("");
     const [busy, setBusy] = useState(false);
     const [aiBusy, setAiBusy] = useState(false);
     const [uploadBusy, setUploadBusy] = useState(false);
@@ -1357,6 +1363,8 @@ function CreateProductModal({
     const canSubmit = title.trim().length >= 3 && Number(price) >= 1000 && !!categorySlug;
     const selectedCat = categories.find(c => c.slug === categorySlug);
     const schema = selectedCat?.attributeSchema ?? [];
+    // Avto kategoriya — "avto" yoki "avto-*" (moslik tanlagichi shu yerda ko'rinadi)
+    const isAuto = categorySlug === "avto" || categorySlug.startsWith("avto-");
 
     async function uploadImage(file: File) {
         setErr(null); setUploadBusy(true);
@@ -1428,6 +1436,13 @@ function CreateProductModal({
                             .filter(t => t.minQty > 0 && t.price > 0)
                         : [],
                     allowPickup, allowDelivery, allowInspect,
+                    // Avto moslik (faqat avto kategoriyalarda yuboriladi)
+                    partNumber: isAuto ? (partNumber.trim() || null) : null,
+                    oemNumbers: isAuto
+                        ? oemNumbers.split(",").map(s => s.trim()).filter(Boolean)
+                        : [],
+                    universalFit: isAuto ? universalFit : false,
+                    fits: isAuto && !universalFit ? fits.map(f => ({ modelId: f.modelId })) : [],
                 }),
             });
             const d = await r.json();
@@ -1589,6 +1604,20 @@ function CreateProductModal({
                                 ))}
                             </div>
                         </div>
+                    )}
+
+                    {/* Avto moslik — faqat avto kategoriyalarda */}
+                    {isAuto && (
+                        <BnFitSelector
+                            universalFit={universalFit}
+                            onUniversalChange={setUniversalFit}
+                            fits={fits}
+                            onFitsChange={setFits}
+                            partNumber={partNumber}
+                            onPartNumberChange={setPartNumber}
+                            oemNumbers={oemNumbers}
+                            onOemChange={setOemNumbers}
+                        />
                     )}
 
                     <div>

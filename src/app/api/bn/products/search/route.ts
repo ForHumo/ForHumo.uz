@@ -20,6 +20,7 @@ export async function GET(req: Request) {
     const limit = Math.min(60, Math.max(1, Number(url.searchParams.get("limit")) || 30));
     const wholesaleOnly = url.searchParams.get("wholesale") === "1";
     const negotiableOnly = url.searchParams.get("negotiable") === "1";
+    const carModelId = url.searchParams.get("car") || null;
 
     const auth = await getBnAuth().catch(() => null);
     const products = await searchProducts({
@@ -27,6 +28,7 @@ export async function GET(req: Request) {
         profileId: auth?.profileId ?? null,
         wholesaleOnly,
         negotiableOnly,
+        carModelId,
     });
 
     return NextResponse.json({

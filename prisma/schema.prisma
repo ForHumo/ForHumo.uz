@@ -3357,6 +3357,20 @@ model BnProduct {
   minWholesaleQty Int?                              // minimal buyurtma (masalan 20)
   wholesaleTiers Json              @default("[]")   // narx pog'onalari
 
+  // ── Avto ehtiyot qism (auto-parts vertical) ────────────────────────────────
+  // Qism raqami — xaridorlar aynan shu bo'yicha qidiradi ("48510-80D50").
+  // oemNumbers = OEM/analog cross-reference raqamlari (searchIndex'ga qo'shiladi).
+  partNumber     String?                            // asosiy katalog raqami (OEM)
+  oemNumbers     String[]          @default([])     // muqobil/analog raqamlar
+  // Moslik (compatibility) — qaysi mashinalarga to'g'ri keladi. BnProductFit orqali.
+  // universalFit=true bo'lsa hamma mashinaga (moy, umumiy aksessuar) — fit talab qilinmaydi.
+  universalFit   Boolean           @default(false)
+
+  // ── Fiskal (IKPU/MXIK) — kassa/ЭСФ uchun majburiy bo'ladi (Phase 3) ─────────
+  // Hozir ixtiyoriy; MChJ real sotuvga o'tganda to'ldiriladi.
+  ikpuCode       String?                            // MXIK/IKPU tovar kodi (soliq.uz)
+  packageCode    String?                            // qadoq kodi (birlik: dona/kg/litr)
+
   // Bozor narxi — BN ning asosiy va'dasi
   marketAvgPrice Int?                              // o'xshash mahsulotlar o'rtachasi
   priceRank      String?                           // "cheap" | "fair" | "expensive"
@@ -3375,11 +3389,71 @@ model BnProduct {
   variants       BnProductVariant[]
   purchases      BnPurchase[]
   boost          BnAdBoost?
+  fits           BnProductFit[]
 
   @@index([shopId, createdAt])
   @@index([categoryId, isActive, hidden])
   @@index([isActive, hidden, createdAt])
   @@index([price])
+  @@index([partNumber])
+}
+
+// ── Avto katalog (mashina marka/model) + moslik ──────────────────────────────
+// Auto-parts marketplace poydevori: xaridor "mening mashinam"ni tanlaydi
+// (marka → model → yil), unga AYNAN to'g'ri keladigan qismlar chiqadi.
+// Sotuvchi qismni joylaganda qaysi modellarga mos kelishini belgilaydi (BnProductFit).
+model BnCarMake {
+  id        String       @id @default(cuid())
+  slug      String       @unique                    // "chevrolet", "daewoo", "ravon"
+  name      String                                  // "Chevrolet"
+  logoUrl   String?
+  popular   Boolean      @default(false)            // O'zbekistonda ommabop (tepada ko'rsatiladi)
+  order     Int          @default(0)
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+
+  models    BnCarModel[]
+
+  @@index([popular, order])
+  @@index([isActive, order])
+}
+
+model BnCarModel {
+  id        String       @id @default(cuid())
+  makeId    String
+  make      BnCarMake    @relation(fields: [makeId], references: [id], onDelete: Cascade)
+  slug      String       @unique                    // "nexia-3", "cobalt", "gentra"
+  name      String                                  // "Nexia 3"
+  yearFrom  Int?                                    // ishlab chiqarish boshi (masalan 2015)
+  yearTo    Int?                                    // oxiri (null = hozirgacha)
+  bodyType  String?                                 // "Sedan", "Universal", "SUV", "Fургон"
+  order     Int          @default(0)
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+
+  fits      BnProductFit[]
+
+  @@index([makeId, order])
+  @@index([isActive])
+}
+
+// Mahsulot ↔ mashina moslik. Bitta qism ko'p modelga to'g'ri kelishi mumkin
+// (masalan Nexia 3 + Cobalt + Gentra bir xil kolodka). Ixtiyoriy yil oralig'i
+// modelnikini toraytiradi (masalan faqat 2018+ restyling).
+model BnProductFit {
+  id        String     @id @default(cuid())
+  productId String
+  product   BnProduct  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  modelId   String
+  model     BnCarModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  yearFrom  Int?                                    // model oralig'ini toraytiradi (ixtiyoriy)
+  yearTo    Int?
+  note      String?                                 // "faqat 1.5 dvigatel", "old" va h.k.
+  createdAt DateTime   @default(now())
+
+  @@unique([productId, modelId])
+  @@index([modelId])
+  @@index([productId])
 }
 
 // ── Savat va sevimlilar ──────────────────────────────────────────────────────

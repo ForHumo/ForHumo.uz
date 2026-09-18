@@ -8,6 +8,7 @@ import { SlidersHorizontal, X, Search, ChevronRight, Store, Package, Loader2 } f
 import { BN, fmtPrice } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnEmpty } from "./bn-cards";
+import { useGarage, BnGarageBar } from "./bn-garage";
 import type { BnMarketDTO, BnProductDTO } from "@/lib/bn-data";
 
 type SortKey = "new" | "cheap" | "price_asc" | "price_desc" | "rating";
@@ -67,6 +68,9 @@ export function BnCatalog({
     const [maxPrice, setMaxPrice] = useState<number | null>(
         sp.get("maxPrice") ? Number(sp.get("maxPrice")) : null
     );
+    // "Mening mashinam" (garaj) — faqat avto kategoriyalarda ko'rinadi
+    const garage = useGarage();
+    const isAutoCtx = (category?.slug ?? "").startsWith("avto") || (activeSubSlug ?? "").startsWith("avto");
 
     // Har filter o'zgarganda URL yangilanadi (scroll:false — sahifa tepasiga sakramaydi)
     useEffect(() => {
@@ -110,6 +114,11 @@ export function BnCatalog({
         if (onlyDelivery)   list = list.filter(p => p.allowDelivery);
         if (onlyNegotiable) list = list.filter(p => p.isNegotiable);
         if (maxPrice)       list = list.filter(p => p.price <= maxPrice);
+        // Garaj filtri — mashinaga mos (yoki universal) qismlar
+        if (isAutoCtx && garage.car) {
+            const mid = garage.car.modelId;
+            list = list.filter(p => p.universalFit || (p.fitModelIds ?? []).includes(mid));
+        }
 
         switch (sort) {
             case "cheap":
@@ -122,7 +131,7 @@ export function BnCatalog({
             default: break;
         }
         return list;
-    }, [initialProducts, extraProducts, markets, marketSlug, onlyCheap, onlyInspect, onlyDelivery, onlyNegotiable, maxPrice, sort]);
+    }, [initialProducts, extraProducts, markets, marketSlug, onlyCheap, onlyInspect, onlyDelivery, onlyNegotiable, maxPrice, sort, isAutoCtx, garage.car?.modelId]);
 
     async function loadMore() {
         if (loadingMore || !hasMore) return;
@@ -132,6 +141,7 @@ export function BnCatalog({
             if (query) params.set("q", query);
             if (category?.slug) params.set("category", subCategory?.slug ?? category.slug);
             params.set("sort", sort === "cheap" ? "cheap" : "new");
+            if (isAutoCtx && garage.car) params.set("car", garage.car.modelId);
             params.set("skip", String(initialProducts.length + extraProducts.length));
             params.set("limit", "30");
             const r = await fetch(`/api/bn/products/search?${params.toString()}`);
@@ -197,6 +207,11 @@ export function BnCatalog({
                         </BnLink>
                     ))}
                 </div>
+            )}
+
+            {/* Mening mashinam (garaj) — avto kategoriyalarda */}
+            {isAutoCtx && garage.ready && (
+                <BnGarageBar car={garage.car} onChange={garage.setCar} />
             )}
 
             {/* Boshqaruv paneli */}

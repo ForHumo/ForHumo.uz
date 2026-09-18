@@ -23,8 +23,13 @@ function resilientDbUrl(): string | undefined {
         const sp = u.searchParams
 
         if (isPooled && !sp.has('pgbouncer')) sp.set('pgbouncer', 'true')
-        if (!sp.has('connection_limit')) sp.set('connection_limit', isPooled ? '1' : '5')
-        if (!sp.has('pool_timeout')) sp.set('pool_timeout', '10')
+        // Serverless (Vercel, production) — har instansiya 1 ulanish; PgBouncer
+        // multiplekslaydi. Lokal dev esa BITTA uzoq-yashovchi process — 1 ulanish
+        // Promise.all so'rovlarini navbatga qo'yib "pool timeout" beradi, shuning
+        // uchun dev'da yuqoriroq limit (prod xatti-harakati o'zgarmaydi).
+        const isProd = process.env.NODE_ENV === 'production'
+        if (!sp.has('connection_limit')) sp.set('connection_limit', isPooled ? (isProd ? '1' : '10') : '5')
+        if (!sp.has('pool_timeout')) sp.set('pool_timeout', isProd ? '10' : '20')
         if (!sp.has('connect_timeout')) sp.set('connect_timeout', '10')
 
         return u.toString()

@@ -20,6 +20,7 @@ import { BnProductReferralCta } from "./bn-product-referral-cta";
 import {
     Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
     ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2, BellRing, MessageCircle,
+    Car, Hash,
 } from "lucide-react";
 import {
     BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel, TIER_META,
@@ -51,10 +52,16 @@ interface Props {
     viewersRecent?: number;
     /** Xaridor sharh reels (Nexus video tag=bn-review-<productId>) */
     reviewVideos?: ReviewVideo[];
+    /** Avto moslik — bu qism mos keladigan mashinalar */
+    fits?: { makeName: string; makeSlug: string; modelName: string; modelSlug: string }[];
+    partNumber?: string | null;
+    oemNumbers?: string[];
+    universalFit?: boolean;
 }
 
 export function BnProductDetail({
     product, shop, similar, others, soldRecent = 0, buyersRecent = 0, viewersRecent = 0, reviewVideos = [],
+    fits = [], partNumber = null, oemNumbers = [], universalFit = false,
 }: Props) {
     const p = product;
     const router = useRouter();
@@ -330,6 +337,53 @@ export function BnProductDetail({
                                         </div>
                                     ))}
                                 </dl>
+                            )}
+                        </Panel>
+                    )}
+
+                    {/* Avto moslik — bu qism qaysi mashinalarga to'g'ri keladi */}
+                    {(universalFit || fits.length > 0 || partNumber || oemNumbers.length > 0) && (
+                        <Panel className="mt-4">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Car className="w-4 h-4" style={{ color: BN.gold }} />
+                                <h2 className="text-[15px] font-black">Mashina mosligi</h2>
+                            </div>
+
+                            {partNumber && (
+                                <div className="flex items-center justify-between gap-3 py-2.5 text-[13px]" style={{ borderBottom: `1px solid ${BN.border}` }}>
+                                    <span className="flex items-center gap-1.5" style={{ color: BN.text3 }}>
+                                        <Hash className="w-3.5 h-3.5" /> Qism raqami
+                                    </span>
+                                    <span className="font-black tabular-nums select-all">{partNumber}</span>
+                                </div>
+                            )}
+                            {oemNumbers.length > 0 && (
+                                <div className="flex items-start justify-between gap-3 py-2.5 text-[13px]" style={{ borderBottom: `1px solid ${BN.border}` }}>
+                                    <span style={{ color: BN.text3 }}>Analog raqamlar</span>
+                                    <span className="font-semibold text-right select-all" style={{ color: BN.text2 }}>{oemNumbers.join(", ")}</span>
+                                </div>
+                            )}
+
+                            {universalFit ? (
+                                <div className="flex items-center gap-2 mt-3 px-3 py-2.5 rounded-xl text-[13px] font-bold"
+                                    style={{ background: BN.goldSoft, color: BN.gold }}>
+                                    <Globe className="w-4 h-4" /> Universal — barcha mashinaga to'g'ri keladi
+                                </div>
+                            ) : fits.length > 0 && (
+                                <div className="mt-3">
+                                    <p className="text-[12px] mb-2" style={{ color: BN.text3 }}>Quyidagi mashinalarga to'g'ri keladi:</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {fits.map(f => (
+                                            <span
+                                                key={f.modelSlug}
+                                                className="inline-flex items-center h-8 px-3 rounded-full text-[12px] font-bold"
+                                                style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text2 }}
+                                            >
+                                                {f.makeName} {f.modelName}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
                             )}
                         </Panel>
                     )}

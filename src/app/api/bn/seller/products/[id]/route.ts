@@ -68,7 +68,39 @@ export async function PATCH(
         data.wholesaleTiers = parseTiers(body.wholesaleTiers);
     }
 
+    // Avto moslik maydonlari
+    if (body?.partNumber !== undefined) {
+        data.partNumber = typeof body.partNumber === "string" ? (body.partNumber.trim().slice(0, 64) || null) : null;
+    }
+    if (body?.oemNumbers !== undefined) {
+        data.oemNumbers = Array.isArray(body.oemNumbers)
+            ? [...new Set(body.oemNumbers.map((s: unknown) => String(s).trim()).filter(Boolean))].slice(0, 20)
+            : [];
+    }
+    if (typeof body?.universalFit === "boolean") {
+        data.universalFit = body.universalFit;
+    }
+
     const updated = await prisma.bnProduct.update({ where: { id }, data });
+
+    // Moslik yozuvlarini sinxronlash — `fits` yuborilsa to'liq almashtiramiz.
+    // universalFit=true bo'lsa barcha fitlar o'chiriladi (universal — model kerak emas).
+    if (body?.universalFit === true) {
+        await prisma.bnProductFit.deleteMany({ where: { productId: id } });
+    } else if (Array.isArray(body?.fits)) {
+        const modelIds = [...new Set(body.fits.map((f: unknown) => String((f as { modelId?: unknown })?.modelId ?? "")).filter(Boolean))].slice(0, 60) as string[];
+        const valid = modelIds.length
+            ? (await prisma.bnCarModel.findMany({ where: { id: { in: modelIds }, isActive: true }, select: { id: true } })).map(m => m.id)
+            : [];
+        await prisma.bnProductFit.deleteMany({ where: { productId: id } });
+        if (valid.length) {
+            await prisma.bnProductFit.createMany({
+                data: valid.map(modelId => ({ productId: id, modelId })),
+                skipDuplicates: true,
+            });
+        }
+    }
+
     revalidateBnProduct();
 
     // Agar title yoki description o'zgargan bo'lsa — 3 tilga tarjima va searchIndex qayta hisoblansin.
