@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { MessageCircle, X, Send, Loader2, TagIcon, CheckCircle2, XCircle, ChevronDown } from "lucide-react";
+import { MessageCircle, X, Send, Loader2, TagIcon, CheckCircle2, XCircle, ChevronDown, Phone } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 
 interface OfferProduct {
@@ -29,7 +29,7 @@ interface Msg {
     imageUrl: string | null;
     createdAt: string;
     readAt: string | null;
-    kind: "TEXT" | "OFFER" | "COUNTER" | "ACCEPT" | "REJECT";
+    kind: "TEXT" | "OFFER" | "COUNTER" | "ACCEPT" | "REJECT" | "CALL";
     productId: string | null;
     offerAmount: number | null;
     offerStatus: "PENDING" | "ACCEPTED" | "REJECTED" | "COUNTERED" | null;
@@ -321,6 +321,9 @@ function MessageBubble({
     if (m.kind === "ACCEPT" || m.kind === "REJECT") {
         return <SystemBubble m={m} />;
     }
+    if (m.kind === "CALL") {
+        return <CallBubble m={m} />;
+    }
     // TEXT (default)
     return (
         <div className={`flex ${m.fromShop ? "justify-start" : "justify-end"}`}>
@@ -437,6 +440,28 @@ function OfferBubble({
                 )}
                 <div className="px-3 pb-2 text-[10px] opacity-60">
                     {new Date(m.createdAt).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function CallBubble({ m }: { m: Msg }) {
+    return (
+        <div className={`flex ${m.fromShop ? "justify-start" : "justify-end"}`}>
+            <div className="max-w-[85%] px-3 py-2.5 rounded-2xl flex items-center gap-2.5"
+                style={{ background: BN.goldSoft, color: BN.gold, border: `1px solid ${BN.borderGold}` }}>
+                <div className="w-8 h-8 grid place-items-center rounded-full shrink-0" style={{ background: BN.gold, color: BN.onGold }}>
+                    <Phone className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                    <div className="text-[13px] font-black">Qo&apos;ng&apos;iroq so&apos;rovi</div>
+                    {m.text && m.text !== "Qo'ng'iroq so'rovi" && (
+                        <div className="text-[12px] opacity-90 truncate" style={{ color: BN.text2 }}>{m.text}</div>
+                    )}
+                    <div className="text-[10px] mt-0.5 opacity-70">
+                        {new Date(m.createdAt).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })}
+                    </div>
                 </div>
             </div>
         </div>

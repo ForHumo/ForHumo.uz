@@ -111,7 +111,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
 
     // Narx kelishuvi (savdolashuv) — strukturalangan xabar turlari
     const kindRaw = typeof body?.kind === "string" ? body.kind : "TEXT";
-    const kind = (["TEXT", "OFFER", "COUNTER", "ACCEPT", "REJECT"] as const)
+    const kind = (["TEXT", "OFFER", "COUNTER", "ACCEPT", "REJECT", "CALL"] as const)
         .includes(kindRaw as never) ? kindRaw : "TEXT";
     const productId = typeof body?.productId === "string" ? body.productId : null;
     const offerAmountRaw = Number(body?.offerAmount);
@@ -127,6 +127,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
     }
 
     const isOwner = shop.profileId === auth.profileId;
+
+    // Qo'ng'iroq so'rovi — faqat xaridor sotuvchiga (telefon raqami yashirin)
+    if (kind === "CALL" && isOwner) {
+        return NextResponse.json({ error: "call_buyer_only" }, { status: 403 });
+    }
 
     // Rate limit
     const since = new Date(Date.now() - 10 * 60 * 1000);
@@ -161,6 +166,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
     }
     if (kind === "ACCEPT" && !finalText) finalText = "Taklifni qabul qildim";
     if (kind === "REJECT" && !finalText) finalText = "Taklifni rad etdim";
+    if (kind === "CALL" && !finalText) finalText = "Qo'ng'iroq so'rovi";
 
     // ACCEPT/REJECT/COUNTER — taklifga javob:
     // Qoida: taklifni FAQAT qarshi tomon boshqarishi mumkin.
@@ -196,7 +202,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
             text: finalText,
             imageUrl,
             kind,
-            productId: (kind === "OFFER" || kind === "COUNTER") ? productId : null,
+            productId: (kind === "OFFER" || kind === "COUNTER" || kind === "CALL") ? productId : null,
             offerAmount: (kind === "OFFER" || kind === "COUNTER") ? offerAmount : null,
             offerStatus: (kind === "OFFER" || kind === "COUNTER") ? "PENDING" : null,
         },
@@ -220,6 +226,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
             if (kind === "COUNTER") pushTitle = `${senderLabel}: qarshi taklif berdi`;
             if (kind === "ACCEPT")  pushTitle = `${senderLabel}: taklifni qabul qildi`;
             if (kind === "REJECT")  pushTitle = `${senderLabel}: taklifni rad etdi`;
+            if (kind === "CALL")    pushTitle = `${senderLabel}: qo'ng'iroq so'radi`;
             await sendPushToProfile(recipientId, {
                 title: pushTitle,
                 body: finalText ? finalText.slice(0, 100) : "Rasm yubordi",

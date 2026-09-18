@@ -6,6 +6,7 @@ import { useSession, signIn } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { BnLink } from "./bn-nav";
 import { BnShopChatButton } from "./bn-shop-chat-button";
+import { BnSellerCallButton } from "./bn-seller-call-button";
 import { WhatsAppIcon, HumoNexusLogo } from "@/components/brand-icons";
 import { bnToast } from "./bn-toast";
 import { BnInspectDaysPicker } from "./bn-inspect-days-picker";
@@ -19,7 +20,7 @@ import { BnInspectHoldModal } from "./bn-inspect-modal";
 import { BnProductReferralCta } from "./bn-product-referral-cta";
 import {
     Store, MapPin, Star, ShoppingCart, Eye, Truck, Package, Shield, Check,
-    ChevronLeft, ChevronRight, Heart, Share2, Phone, TrendingDown, Info, Globe, Loader2, BellRing, MessageCircle,
+    ChevronLeft, ChevronRight, Heart, Share2, TrendingDown, Info, Globe, Loader2, BellRing, MessageCircle,
     Car, Hash,
 } from "lucide-react";
 import {
@@ -495,13 +496,11 @@ export function BnProductDetail({
                             </BnLink>
 
                             <div className="grid grid-cols-2 gap-2 mt-4">
-                                <button
-                                    className="flex items-center justify-center gap-2 h-11 rounded-xl text-[13px] font-bold transition-colors"
-                                    style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
-                                >
-                                    <Phone className="w-4 h-4" />
-                                    {t("sellerCall")}
-                                </button>
+                                <BnSellerCallButton
+                                    shopSlug={shop.slug}
+                                    workHours={shop.workHours}
+                                    product={{ id: p.id, title: p.title }}
+                                />
                                 {shop.ownerUsername ? (
                                     <a
                                         href={`https://forhumo.uz/${locale}/nexus?dm=${shop.ownerUsername}`}

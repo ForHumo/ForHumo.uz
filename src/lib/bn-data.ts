@@ -50,6 +50,8 @@ export interface BnShopDTO {
     /** Do'kon telefoni (WhatsApp aloqasi uchun; verified bo'lgan taqdirdagina) */
     phone?: string | null;
     phoneVerified?: boolean;
+    /** Ish vaqti ("Dush–Yak 08:00–18:00") — FTC qo'ng'iroq gate + ochiq/yopiq badge */
+    workHours?: string | null;
 }
 
 export interface BnProductDTO {
@@ -124,6 +126,7 @@ function toShopDTO(s: ShopWithMarket, ownerUsername?: string | null): BnShopDTO 
         verifiedTier: (s.verifiedTier as "NONE" | "RETAIL" | "WHOLESALE" | undefined) ?? "NONE",
         phone: (s as { phone?: string | null }).phone ?? null,
         phoneVerified: (s as { phoneVerified?: boolean }).phoneVerified ?? false,
+        workHours: (s as { workHours?: string | null }).workHours ?? null,
     };
 }
 
