@@ -48,8 +48,17 @@ export const BN = {
 
 export type PriceRank = "cheap" | "fair" | "expensive";
 
+// Deterministik ming ajratgich — server va client BIR XIL natija berishi shart.
+// `toLocaleString("uz-UZ")` server (Node ICU) da "185 000", brauzerda "185,000"
+// berib hydration xatosini keltirib chiqarardi. Bu funksiya har joyda bir xil.
+export function groupThousands(n: number): string {
+    const neg = n < 0;
+    const s = Math.round(Math.abs(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return neg ? `-${s}` : s;
+}
+
 export function fmtPrice(som: number): string {
-    return `${som.toLocaleString("uz-UZ")} so'm`;
+    return `${groupThousands(som)} so'm`;
 }
 
 /** Qisqa ko'rinish: 1 250 000 → "1.25 mln" */

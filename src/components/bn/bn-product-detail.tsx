@@ -25,7 +25,7 @@ import {
     Car, Hash, Search,
 } from "lucide-react";
 import {
-    BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel, TIER_META,
+    BN, fmtPrice, groupThousands, priceRankOf, PRICE_RANK_META, priceDiffLabel, TIER_META,
 } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnProductCompareCard } from "./bn-product-compare-card";
@@ -566,7 +566,7 @@ export function BnProductDetail({
                             ) : (
                                 p.oldPrice && p.oldPrice > p.price && (
                                     <span className="text-[15px] line-through tabular-nums" style={{ color: BN.text3 }}>
-                                        {p.oldPrice.toLocaleString(locale)}
+                                        {groupThousands(p.oldPrice)}
                                     </span>
                                 )
                             )}
@@ -632,7 +632,7 @@ export function BnProductDetail({
                                     <p style={{ color: BN.text2 }}>
                                         {t("marketAvgLabel")}{" "}
                                         <span className="font-bold tabular-nums" style={{ color: BN.text }}>
-                                            {p.marketAvgPrice.toLocaleString(locale)} {t("currencySom")}
+                                            {groupThousands(p.marketAvgPrice)} {t("currencySom")}
                                         </span>
                                     </p>
                                 </div>
@@ -766,7 +766,7 @@ export function BnProductDetail({
                                         {t("share")}
                                     </SecondaryBtn>
                                     {showWa && (
-                                        <a href={`https://wa.me/${waPhone}?text=${encodeURIComponent(`${p.title} — ${typeof window !== "undefined" ? window.location.href : ""}`)}`}
+                                        <a href={`https://wa.me/${waPhone}?text=${encodeURIComponent(`${p.title} — https://bozornarxida.uz/d/${shop?.slug ?? ""}/${p.slug}`)}`}
                                             target="_blank" rel="noopener noreferrer"
                                             aria-label="Sotuvchiga WhatsApp orqali yozish"
                                             className="flex items-center justify-center gap-1.5 h-11 px-3 rounded-2xl text-[12.5px] font-bold transition-transform active:scale-[0.97]"
@@ -839,7 +839,7 @@ export function BnProductDetail({
                                 <div className="absolute inset-x-0 bottom-0 p-2" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent)" }}>
                                     <p className="text-[11px] font-bold text-white line-clamp-2">{v.title}</p>
                                     <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.7)" }}>
-                                        {v.views.toLocaleString(locale)} {t("reviewViews")}
+                                        {groupThousands(v.views)} {t("reviewViews")}
                                     </p>
                                 </div>
                             </a>

@@ -23,14 +23,18 @@ function resilientDbUrl(): string | undefined {
         const sp = u.searchParams
 
         if (isPooled && !sp.has('pgbouncer')) sp.set('pgbouncer', 'true')
-        // Serverless (Vercel, production) — har instansiya 1 ulanish; PgBouncer
-        // multiplekslaydi. Lokal dev esa BITTA uzoq-yashovchi process — 1 ulanish
-        // Promise.all so'rovlarini navbatga qo'yib "pool timeout" beradi, shuning
-        // uchun dev'da yuqoriroq limit (prod xatti-harakati o'zgarmaydi).
-        const isProd = process.env.NODE_ENV === 'production'
-        if (!sp.has('connection_limit')) sp.set('connection_limit', isPooled ? (isProd ? '1' : '10') : '5')
-        if (!sp.has('pool_timeout')) sp.set('pool_timeout', isProd ? '10' : '20')
-        if (!sp.has('connect_timeout')) sp.set('connect_timeout', '10')
+        // PgBouncer (pooled endpoint) minglab klientni bir nechta Postgres
+        // ulanishida multiplekslaydi — shuning uchun connection_limit bu yerda
+        // Prisma'ning INSTANSIYA-ichidagi puli (PgBouncer'ga nechta ulanish).
+        // connection_limit=1 juda past edi: sahifa render'i `Promise.all` bilan
+        // bir nechta so'rovni parallel yuborsa, ular 1 ulanishda navbatga tushib
+        // cold Neon'da pool_timeout'dan oshadi → "server-side exception" (500).
+        // pooled'da 5 xavfsiz (PgBouncer backend'ni himoyalaydi). Direct (non-pooled)
+        // ulanishda past qoldiramiz (Neon backend limitini himoyalash uchun).
+        const isPooledLimit = isPooled ? '5' : '3'
+        if (!sp.has('connection_limit')) sp.set('connection_limit', isPooledLimit)
+        if (!sp.has('pool_timeout')) sp.set('pool_timeout', '15')
+        if (!sp.has('connect_timeout')) sp.set('connect_timeout', '15')
 
         return u.toString()
     } catch {

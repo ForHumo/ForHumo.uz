@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { BnLink } from "./bn-nav";
 import { Store, ShoppingBasket, Star, Eye, Truck, BadgeCheck, Heart, Package } from "lucide-react";
-import { BN, fmtPrice, priceRankOf, PRICE_RANK_META, priceDiffLabel } from "@/lib/bn-theme";
+import { BN, fmtPrice, groupThousands, priceRankOf, PRICE_RANK_META, priceDiffLabel } from "@/lib/bn-theme";
 import { getFavoriteIds, peekFavorite, updateFavorite, subscribeFavorites } from "@/lib/bn-favorites-store";
 
 export interface ProductCardData {
@@ -101,7 +101,6 @@ export function BnProductCard({
     const showDiff = rank === "cheap" && diff;
 
     const t = useTranslations("bn.card");
-    const locale = useLocale();
     const { status } = useSession();
 
     // Masofa chip — shop coords + user coords mavjud bo'lsa
@@ -286,7 +285,7 @@ export function BnProductCard({
                     </span>
                     {p.oldPrice && p.oldPrice > p.price && (
                         <span className="text-[12px] line-through tabular-nums" style={{ color: BN.text3 }}>
-                            {p.oldPrice.toLocaleString(locale)}
+                            {groupThousands(p.oldPrice)}
                         </span>
                     )}
                 </div>
@@ -296,7 +295,7 @@ export function BnProductCard({
                     <p className="text-[11px] mb-1.5 leading-none" style={{ color: rankMeta.color }}>
                         {rank === "fair"
                             ? t("atMarketPrice")
-                            : t("avgAtMarket", { price: p.marketAvgPrice.toLocaleString(locale) })}
+                            : t("avgAtMarket", { price: groupThousands(p.marketAvgPrice) })}
                     </p>
                 )}
                 {p.isNegotiable && !rankMeta && (
