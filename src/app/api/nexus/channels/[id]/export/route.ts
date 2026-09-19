@@ -11,7 +11,10 @@ const MAX_MESSAGES = 5000;
 
 function csvEscape(v: string | null | undefined): string {
     if (v == null) return "";
-    const s = String(v).replace(/\r?\n/g, " ").replace(/"/g, '""');
+    let s = String(v).replace(/\r?\n/g, " ").replace(/"/g, '""');
+    // CSV formula injection oldini olish — a'zo yozgan matn "=", "+", "-", "@" bilan
+    // boshlansa, Excel/Sheets uni formula deb bajaradi (egaga hujum). ' bilan zararsizlantiramiz.
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
     return /[",]/.test(s) ? `"${s}"` : s;
 }
 
