@@ -11,7 +11,7 @@ import { BN, TIER_META } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnHeroSlider } from "./bn-hero-slider";
 // AiQuickHelper + BnShoppingAssistant olib tashlandi — skaner+ovoz yetadi
-import { BnWelcomeTour } from "./bn-welcome-tour";
+import { BnOnboarding } from "./bn-onboarding";
 import { BnLink, useBnBase } from "./bn-nav";
 import { useShopLocationText } from "./bn-cards";
 import { LiquidGlassNavbar } from "@/components/shared/liquid-glass-navbar";
@@ -66,8 +66,9 @@ export function BnHome({ initial }: { initial: BnHomeInitial }) {
 
     return (
         <div className="mx-auto max-w-[1280px] px-4 pt-5 pb-10">
-            {/* ── Birinchi tashrif — welcome tour (M1) ── */}
-            <BnWelcomeTour />
+            {/* ── Birinchi tashrif — onboarding (faqat bosh sahifada; ilgari layout'da
+                   global edi + bn-welcome-tour bilan ikki marta chiqardi) ── */}
+            <BnOnboarding />
 
             {/* ── Sotuvchi Nexus stories (24 soatlik hikoyalar) ── */}
             <BnShopStories />
