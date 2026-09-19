@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocale } from "next-intl";
 import { X, Rocket, Loader2, CheckCircle2, Clock } from "lucide-react";
-import { BN } from "@/lib/bn-theme";
+import { BN, fmtBnDateTime } from "@/lib/bn-theme";
 import { formatMoney } from "@/lib/money";
 
 interface Pricing { hours: number; amount: number; labelUz: string; labelRu: string; labelEn: string; }
@@ -115,7 +115,7 @@ export function BnFeatureButton({ productSlug, compact }: { productSlug: string;
                                     {t("Boost aktiv", "Продвижение активно", "Boost active")}
                                 </div>
                                 <div className="text-[12px] text-center" style={{ color: BN.text3 }}>
-                                    {t("Tugash", "Окончание", "Ends")}: {new Date(data.active.expiresAt).toLocaleString(locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : "uz-UZ")}
+                                    {t("Tugash", "Окончание", "Ends")}: {fmtBnDateTime(data.active.expiresAt, true)}
                                 </div>
                             </div>
                         ) : done ? (

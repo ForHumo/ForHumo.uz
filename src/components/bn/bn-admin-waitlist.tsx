@@ -9,7 +9,7 @@ import {
     ClipboardList, Loader2, Phone, MessageCircle, Check, X,
     Clock, PhoneCall, Store, Trash2, Download, AlertTriangle, Search,
 } from "lucide-react";
-import { BN } from "@/lib/bn-theme";
+import { BN, fmtBnDateTime } from "@/lib/bn-theme";
 
 type Status = "PENDING" | "CONTACTED" | "CONVERTED" | "REJECTED";
 
@@ -406,7 +406,7 @@ function WaitlistCard({
                         {e.phone}
                     </a>
                     <p className="text-[11.5px] mt-1.5" style={{ color: BN.text3 }}>
-                        {new Date(e.createdAt).toLocaleString("uz-UZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        {fmtBnDateTime(e.createdAt)}
                         {" · "}
                         <span style={{ color: e.daysWaiting >= 3 ? BN.err : e.daysWaiting >= 1 ? BN.gold : BN.text3 }}>
                             {e.daysWaiting === 0 ? "bugun" : `${e.daysWaiting} kun oldin`}
@@ -507,7 +507,7 @@ function WaitlistCard({
                 <p className="text-[11px] mb-3" style={{ color: BN.text3 }}>
                     Aloqa qildi: <b style={{ color: BN.text2 }}>{e.contactedBy.name ?? e.contactedBy.username ?? "?"}</b>
                     {" · "}
-                    {new Date(e.contactedAt).toLocaleString("uz-UZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    {fmtBnDateTime(e.contactedAt)}
                 </p>
             )}
 

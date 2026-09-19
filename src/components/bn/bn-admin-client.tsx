@@ -7,13 +7,14 @@ import { bnToast } from "./bn-toast";
 import { useRouter } from "next/navigation";
 import {
     ShieldCheck, Store, MapPin, Phone, Check, X, Loader2, User,
-    Building2, ChevronRight, Users, Ban, ShieldOff, ClipboardList, Radio, LayoutDashboard, ImageIcon,
+    Building2, ChevronRight, Users, Ban, ShieldOff, ClipboardList, Radio, LayoutDashboard, ImageIcon, Plus,
 } from "lucide-react";
-import { BN, TIER_META } from "@/lib/bn-theme";
+import { BN, TIER_META, fmtBnDateTime } from "@/lib/bn-theme";
 import { BnAdminList } from "./bn-admin-list";
 import { BnAdminBans } from "./bn-admin-bans";
 import { BnAdminBoycott } from "./bn-admin-boycott";
 import { BnAdminWaitlist } from "./bn-admin-waitlist";
+import { BnAdminAddShop } from "./bn-admin-add-shop";
 import { BnAdminBroadcast } from "./bn-admin-broadcast";
 import { BnAdminDashboard } from "./bn-admin-dashboard";
 import { BnAdminAds } from "./bn-admin-ads";
@@ -59,7 +60,7 @@ const TABS = [
 
 export function BnAdminClient({ initial, role }: Props) {
     const router = useRouter();
-    const [section, setSection] = useState<"DASHBOARD" | "SHOPS" | "WAITLIST" | "ADMINS" | "BANS" | "BOYCOTT" | "BROADCAST" | "ADS">("DASHBOARD");
+    const [section, setSection] = useState<"DASHBOARD" | "SHOPS" | "ADD_SHOP" | "WAITLIST" | "ADMINS" | "BANS" | "BOYCOTT" | "BROADCAST" | "ADS">("DASHBOARD");
     const [tab, setTab] = useState<AdminShopRow["status"]>("PENDING");
     const [rows, setRows] = useState<AdminShopRow[]>(initial);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
@@ -137,6 +138,17 @@ export function BnAdminClient({ initial, role }: Props) {
                     <Store className="w-3.5 h-3.5" /> Do&apos;konlar
                 </button>
                 <button
+                    onClick={() => setSection("ADD_SHOP")}
+                    className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-[12.5px] font-bold"
+                    style={{
+                        background: section === "ADD_SHOP" ? BN.gold : BN.surface,
+                        color: section === "ADD_SHOP" ? BN.onGold : BN.text2,
+                        border: `1px solid ${section === "ADD_SHOP" ? BN.gold : BN.border}`,
+                    }}
+                >
+                    <Plus className="w-3.5 h-3.5" /> Qo&apos;shish
+                </button>
+                <button
                     onClick={() => setSection("WAITLIST")}
                     className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-[12.5px] font-bold"
                     style={{
@@ -208,7 +220,7 @@ export function BnAdminClient({ initial, role }: Props) {
                 )}
             </div>
 
-            {section === "DASHBOARD" ? <BnAdminDashboard /> : section === "ADMINS" && role === "OWNER" ? <BnAdminList /> : section === "BROADCAST" && role === "OWNER" ? <BnAdminBroadcast /> : section === "BANS" ? <BnAdminBans role={role} /> : section === "BOYCOTT" ? <BnAdminBoycott role={role} /> : section === "WAITLIST" ? <BnAdminWaitlist /> : section === "ADS" ? <BnAdminAds /> : (
+            {section === "DASHBOARD" ? <BnAdminDashboard /> : section === "ADMINS" && role === "OWNER" ? <BnAdminList /> : section === "BROADCAST" && role === "OWNER" ? <BnAdminBroadcast /> : section === "BANS" ? <BnAdminBans role={role} /> : section === "BOYCOTT" ? <BnAdminBoycott role={role} /> : section === "WAITLIST" ? <BnAdminWaitlist /> : section === "ADS" ? <BnAdminAds /> : section === "ADD_SHOP" ? <BnAdminAddShop /> : (
             <><div className="flex items-center gap-1.5 my-6 overflow-x-auto pb-1">
                 {TABS.map(t => {
                     const count = rows.filter(s => s.status === t.key).length;
@@ -316,7 +328,7 @@ export function BnAdminClient({ initial, role }: Props) {
                                         {s.bankAccount && (
                                             <Row label="Bank" value={`${s.bankName ?? ""} · ${s.bankAccount} · MFO ${s.bankMfo ?? ""}`} />
                                         )}
-                                        <Row label="Ariza sanasi" value={new Date(s.createdAt).toLocaleString("uz-UZ")} />
+                                        <Row label="Ariza sanasi" value={fmtBnDateTime(s.createdAt, true)} />
                                         {s.rejectReason && (
                                             <div
                                                 className="p-2.5 rounded-lg text-[12.5px]"
