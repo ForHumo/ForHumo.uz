@@ -29,7 +29,6 @@ import {
 } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnProductCompareCard } from "./bn-product-compare-card";
-import { BnPriceHistoryChart } from "./bn-price-history-chart";
 import { BnSectionTitle, useShopLocationText } from "./bn-cards";
 import type { BnProductDTO, BnShopDTO } from "@/lib/bn-data";
 
@@ -866,9 +865,6 @@ export function BnProductDetail({
                     </div>
                 </section>
             )}
-
-            {/* Narx tarixi — 30/90/365 kun */}
-            <div className="mt-6"><BnPriceHistoryChart productSlug={p.slug} /></div>
 
             {/* Cross-shop narx solishtirish — BN'ning asosiy va'dasi */}
             <BnProductCompareCard productId={p.id} />
