@@ -283,7 +283,10 @@ export function BnProductCard({
                     <span className="text-[16px] font-black tabular-nums leading-none">
                         {fmtPrice(p.price)}
                     </span>
-                    {p.oldPrice && p.oldPrice > p.price && (
+                    {p.oldPrice && p.oldPrice > p.price && p.oldPrice <= p.price * 20 && (
+                        // Eski narx narxdan 20 barobardan (>95% chegirma) oshsa ko'rsatmaymiz —
+                        // deyarli har doim xato ma'lumot (masalan 35 000 yonida 5 272 578) va
+                        // ishonchni buzadi. Real chegirmalar (95% gacha) ko'rinaveradi.
                         <span className="text-[12px] line-through tabular-nums" style={{ color: BN.text3 }}>
                             {groupThousands(p.oldPrice)}
                         </span>
