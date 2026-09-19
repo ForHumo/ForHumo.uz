@@ -23,9 +23,11 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
             theme_color: "#17171B",
             lang: "uz",
             icons: [
-                { src: "/bn/favicon.png", sizes: "192x192", type: "image/png", purpose: "any" },
-                { src: "/bn/apple-icon.png", sizes: "512x512", type: "image/png", purpose: "any" },
-                { src: "/bn/apple-icon.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+                // TWA/Play uchun aniq o'lchamli ikonalar (avval favicon.png=64, apple-icon=180
+                // noto'g'ri 192/512 deb e'lon qilingandi → installability/ikona generatsiyasi buzilardi).
+                { src: "/bn/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+                { src: "/bn/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+                { src: "/bn/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
             ],
             categories: ["shopping", "business", "lifestyle"],
         };
