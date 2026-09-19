@@ -37,8 +37,11 @@ export async function settleOrder(orderId: string): Promise<{ ok: boolean; reaso
     try {
         await prisma.$transaction(async (tx) => {
             const wallet = await getOrCreateWalletTx(tx, order.shop!.profileId);
-            const newBalance = Number(wallet.balance) + net;
-            await tx.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } });
+            // Atomik increment — bir vaqtda bir nechta buyurtma bitta sotuvchiga settle
+            // bo'lsa, read-then-set kreditni yo'qotardi (lost update → sotuvchi pul yo'qotadi).
+            await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: net } } });
+            const w2 = await tx.wallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
+            const newBalance = Number(w2?.balance ?? 0);
             await tx.walletTransaction.create({
                 data: {
                     walletId: wallet.id,
@@ -77,8 +80,10 @@ export async function refundOrder(orderId: string): Promise<{ ok: boolean; reaso
     try {
         await prisma.$transaction(async (tx) => {
             const wallet = await getOrCreateWalletTx(tx, order.buyerId);
-            const newBalance = Number(wallet.balance) + order.total;
-            await tx.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } });
+            // Atomik increment (lost-update oldini olish — yuqoridagi settle kabi)
+            await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: order.total } } });
+            const w2 = await tx.wallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
+            const newBalance = Number(w2?.balance ?? 0);
             await tx.walletTransaction.create({
                 data: {
                     walletId: wallet.id,

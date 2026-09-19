@@ -115,9 +115,11 @@ export async function POST(req: Request) {
             }
             unitPrice = priceForQty(unitPrice, parseTiers(p.wholesaleTiers), it.qty);
         } else if (!it.variantId) {
-            // Narx kelishuvi — sotuvchi qabul qilgan narx checkout'da qo'llanadi
+            // Narx kelishuvi — sotuvchi qabul qilgan narx checkout'da qo'llanadi.
+            // FAQAT kelishilgan qty gacha — aks holda 1 dona arzon kelishib, 100 dona
+            // shu narxda olish mumkin bo'lardi (sotuvchi zarariga). qty oshsa oddiy narx.
             const deal = deals.get(it.productId);
-            if (deal) { unitPrice = deal.agreedPrice; dealId = deal.id; }
+            if (deal && it.qty <= deal.qty) { unitPrice = deal.agreedPrice; dealId = deal.id; }
         }
         const key = p.shopId;
         const arr = groups.get(key) ?? [];
@@ -153,12 +155,10 @@ export async function POST(req: Request) {
     const createdCodes: string[] = [];
     try {
         await prisma.$transaction(async (tx) => {
-            let walletBalance = 0;
             let walletId: string | null = null;
             let walletCurrency = "UZS";
             if (paymentMethod === "WALLET") {
                 const w = await getOrCreateWalletTx(tx, auth.profileId);
-                walletBalance = Number(w.balance);
                 walletId = w.id;
                 walletCurrency = w.currency;
             }
@@ -234,20 +234,28 @@ export async function POST(req: Request) {
                     }
                 }
 
-                // WALLET — hamyondan yechib olamiz (escrow)
+                // WALLET — hamyondan yechib olamiz (escrow). ATOMIK shartli kamaytirish:
+                // avval read-then-set edi (balance = walletBalance) — bir vaqtda ikkita
+                // checkout (double-submit / ikki tab) balansni faqat bir marta yechib,
+                // ikkita buyurtma yaratardi (double-spend). Endi `balance >= total` sharti
+                // bilan atomik decrement — ikkinchi so'rov 0 qator yangilaydi → xato.
                 if (paymentMethod === "WALLET" && walletId) {
-                    walletBalance -= total;
-                    await tx.wallet.update({
-                        where: { id: walletId },
-                        data:  { balance: walletBalance },
+                    const dec = await tx.wallet.updateMany({
+                        where: { id: walletId, balance: { gte: total } },
+                        data:  { balance: { decrement: total } },
                     });
+                    if (dec.count === 0) throw new Error("INSUFFICIENT_BALANCE");
+                    const w2 = await tx.wallet.findUnique({
+                        where: { id: walletId }, select: { balance: true },
+                    });
+                    const balanceAfter = Number(w2?.balance ?? 0);
                     await tx.walletTransaction.create({
                         data: {
                             walletId,
                             type: "PURCHASE",
                             amount: total,
                             currency: walletCurrency,
-                            balanceAfter: walletBalance,
+                            balanceAfter,
                             description: `BN buyurtma #${order.code} (eskrow)`,
                             ref: orderRef("hold", order.id),
                         },
@@ -263,6 +271,9 @@ export async function POST(req: Request) {
         if (msg.startsWith("OVERSELL:")) {
             const pid = msg.slice("OVERSELL:".length);
             return NextResponse.json({ error: "oversell", productId: pid }, { status: 409 });
+        }
+        if (msg === "INSUFFICIENT_BALANCE") {
+            return NextResponse.json({ error: "insufficient_balance" }, { status: 402 });
         }
         return NextResponse.json({ error: "checkout_failed", detail: msg }, { status: 500 });
     }
