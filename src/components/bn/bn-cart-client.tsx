@@ -235,9 +235,13 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                                                     className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0"
                                                     style={{ background: BN.surfaceUp }}
                                                 >
-                                                    {p.images[0] && (
+                                                    {p.images[0] ? (
                                                         // eslint-disable-next-line @next/next/no-img-element
                                                         <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span className="w-full h-full grid place-items-center" style={{ color: BN.text3 }}>
+                                                            <Store className="w-6 h-6" />
+                                                        </span>
                                                     )}
                                                 </BnLink>
 
@@ -353,7 +357,7 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
 
                         <button
                             onClick={() => setCheckoutOpen(true)}
-                            className="flex items-center justify-center gap-2 w-full h-13 mt-5 rounded-2xl text-[15px] font-black transition-transform active:scale-[0.98]"
+                            className="flex items-center justify-center gap-2 w-full mt-5 rounded-2xl text-[15px] font-black transition-transform active:scale-[0.98]"
                             style={{ height: 52, background: BN.gold, color: BN.onGold }}
                         >
                             {t("checkout")}
