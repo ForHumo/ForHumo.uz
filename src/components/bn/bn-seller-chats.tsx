@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { MessageCircle, Loader2, Store as StoreIcon, ChevronRight, Tag, Check, X } from "lucide-react";
-import { BN } from "@/lib/bn-theme";
+import { BN, groupThousands } from "@/lib/bn-theme";
 import { BnEmpty } from "./bn-cards";
 
 interface Chat {
@@ -424,7 +424,7 @@ function SellerMessageBubble({
                     </div>
                     <div className="px-3 pb-2">
                         <div className="text-[22px] font-black tabular-nums leading-tight">
-                            {(m.offerAmount ?? 0).toLocaleString("uz-UZ")} so&apos;m
+                            {groupThousands(m.offerAmount ?? 0)} so&apos;m
                         </div>
                     </div>
                     {m.text && !m.text.startsWith("Narx taklifi:") && !m.text.startsWith("Qarshi taklif:") && (
@@ -499,8 +499,8 @@ function SellerMessageBubble({
                                         aria-label="Qarshi taklif narxi"
                                     />
                                     <div className="flex justify-between text-[10px] mt-1.5" style={{ color: BN.text3 }}>
-                                        <span>{sliderMin.toLocaleString("uz-UZ")}</span>
-                                        <span>{sliderMax.toLocaleString("uz-UZ")}</span>
+                                        <span>{groupThousands(sliderMin)}</span>
+                                        <span>{groupThousands(sliderMax)}</span>
                                     </div>
                                 </div>
 
@@ -510,7 +510,7 @@ function SellerMessageBubble({
                                     <div className="text-[14px] font-black tabular-nums"
                                         style={{ color: counterAmt > buyerOffer ? BN.gold : BN.text }}>
                                         {counterAmt > buyerOffer
-                                            ? `+${Math.round(((counterAmt - buyerOffer) / buyerOffer) * 100)}% (+${(counterAmt - buyerOffer).toLocaleString("uz-UZ")} so'm)`
+                                            ? `+${Math.round(((counterAmt - buyerOffer) / buyerOffer) * 100)}% (+${groupThousands(counterAmt - buyerOffer)} so'm)`
                                             : counterAmt === buyerOffer
                                             ? "Bir xil (xaridor taklifi = sizniki)"
                                             : `${Math.round(((buyerOffer - counterAmt) / buyerOffer) * 100)}% kam`}

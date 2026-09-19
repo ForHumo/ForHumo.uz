@@ -5,7 +5,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Mic, MicOff, Search, Loader2, Sparkles, Send, X } from "lucide-react";
-import { BN } from "@/lib/bn-theme";
+import { BN, groupThousands } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnEmpty } from "./bn-cards";
 import type { BnProductDTO } from "@/lib/bn-data";
@@ -222,8 +222,8 @@ export function BnVoiceSearchClient({ initialQuery = "" }: { initialQuery?: stri
                 <div className="flex flex-wrap gap-2 mb-4">
                     {result.filter.categorySlug && <FilterChip label={`Kategoriya: ${result.filter.categorySlug}`} />}
                     {result.filter.marketSlug && <FilterChip label={`Bozor: ${result.filter.marketSlug}`} />}
-                    {result.filter.minPrice != null && <FilterChip label={`≥ ${result.filter.minPrice.toLocaleString("uz-UZ")} so'm`} />}
-                    {result.filter.maxPrice != null && <FilterChip label={`≤ ${result.filter.maxPrice.toLocaleString("uz-UZ")} so'm`} />}
+                    {result.filter.minPrice != null && <FilterChip label={`≥ ${groupThousands(result.filter.minPrice)} so'm`} />}
+                    {result.filter.maxPrice != null && <FilterChip label={`≤ ${groupThousands(result.filter.maxPrice)} so'm`} />}
                     {result.filter.sort && <FilterChip label={`Saralash: ${result.filter.sort}`} />}
                 </div>
             )}

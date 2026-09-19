@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { Handshake, Clock, ChevronRight } from "lucide-react";
-import { BN } from "@/lib/bn-theme";
+import { BN, groupThousands } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 
 interface Deal {
@@ -79,11 +79,11 @@ export function BnDealsCard() {
                                 <div className="text-[13px] font-bold truncate">{d.title}</div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-[14px] font-black tabular-nums" style={{ color: BN.gold }}>
-                                        {d.agreedPrice.toLocaleString("uz-UZ")} so&apos;m
+                                        {groupThousands(d.agreedPrice)} so&apos;m
                                     </span>
                                     {d.listPrice > d.agreedPrice && (
                                         <span className="text-[11px] line-through tabular-nums" style={{ color: BN.text3 }}>
-                                            {d.listPrice.toLocaleString("uz-UZ")}
+                                            {groupThousands(d.listPrice)}
                                         </span>
                                     )}
                                 </div>

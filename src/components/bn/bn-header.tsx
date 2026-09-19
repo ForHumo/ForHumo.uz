@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import {
     Search, ShoppingCart, Menu, X, User, Bell, LayoutGrid,
     Package, ChevronRight, LogIn, Navigation, Headphones, Heart, Store,
     Mic, Camera, ShoppingBag,
 } from "lucide-react";
-import { BN } from "@/lib/bn-theme";
+import { BN, groupThousands } from "@/lib/bn-theme";
 import { BnLink, useBnHref, useBnBase, BnThemeToggle, BnLangSwitch } from "./bn-nav";
 
 /** Header uchun kichik kategoriya DTO (dropdown menyu) */
@@ -37,7 +37,6 @@ export function BnHeader({
     const { data: session, status } = useSession();
     const t = useTranslations("bn");
     const tNav = useTranslations("bn.nav");
-    const localeIntl = useLocale();
     const [q, setQ] = useState("");
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
@@ -377,7 +376,7 @@ export function BnHeader({
                                 >
                                     <span>{c.name}</span>
                                     <span className="flex items-center gap-1.5 text-[11px]" style={{ color: BN.text3 }}>
-                                        {c.productCount.toLocaleString(localeIntl)}
+                                        {groupThousands(c.productCount)}
                                         <ChevronRight className="w-3.5 h-3.5" />
                                     </span>
                                 </BnLink>

@@ -2,10 +2,10 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { BnLink } from "./bn-nav";
 import { SlidersHorizontal, X, Search, ChevronRight, Store, Package, Loader2 } from "lucide-react";
-import { BN, fmtPrice } from "@/lib/bn-theme";
+import { BN, fmtPrice, groupThousands } from "@/lib/bn-theme";
 import { BnProductCard } from "./bn-product-card";
 import { BnEmpty } from "./bn-cards";
 import { useGarage, BnGarageBar } from "./bn-garage";
@@ -48,7 +48,6 @@ export function BnCatalog({
     const t = useTranslations("bn.catalog");
     const tCrumb = useTranslations("bn.breadcrumb");
     const tNav = useTranslations("bn.nav");
-    const locale = useLocale();
     // URL sync — filter'lar refresh/share'da saqlanadi.
     // ?market=chorsu&cheap=1&inspect=1&delivery=1&maxPrice=50000&sort=cheap
     const sp = useSearchParams();
@@ -188,7 +187,7 @@ export function BnCatalog({
                 </nav>
                 <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight leading-tight">{title}</h1>
                 <p className="text-[13px] mt-1.5" style={{ color: BN.text3 }}>
-                    {t("productsFound", { n: items.length.toLocaleString(locale) })}
+                    {t("productsFound", { n: groupThousands(items.length) })}
                 </p>
             </div>
 

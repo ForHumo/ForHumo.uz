@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MessageCircle, X, Send, Loader2, TagIcon, CheckCircle2, XCircle, ChevronDown, Phone } from "lucide-react";
-import { BN } from "@/lib/bn-theme";
+import { BN, groupThousands } from "@/lib/bn-theme";
 
 interface OfferProduct {
     id: string;
@@ -215,7 +215,7 @@ function BnShopChatModal({
                             <div className="text-[13px] font-bold truncate" style={{ color: BN.gold }}>{product.title}</div>
                         </div>
                         <div className="text-[12px] font-black tabular-nums" style={{ color: BN.gold }}>
-                            {product.price.toLocaleString("uz-UZ")} so&apos;m
+                            {groupThousands(product.price)} so&apos;m
                         </div>
                     </div>
                 )}
@@ -391,7 +391,7 @@ function OfferBubble({
                 {/* Summa */}
                 <div className="px-3 pb-2">
                     <div className="text-[22px] font-black tabular-nums leading-tight">
-                        {amount.toLocaleString("uz-UZ")} so&apos;m
+                        {groupThousands(amount)} so&apos;m
                     </div>
                     {pct !== null && (
                         <div className="text-[11px] opacity-70 mt-0.5">
@@ -570,8 +570,8 @@ function OfferForm({
                 {outOfRange && (
                     <div className="text-[11px] mt-1" style={{ color: BN.err }}>
                         {parsedInput < min
-                            ? `Minimal: ${min.toLocaleString("uz-UZ")} so'm (e'lon narxining 30%i)`
-                            : `Maksimal: ${max.toLocaleString("uz-UZ")} so'm (e'lon narxi)`}
+                            ? `Minimal: ${groupThousands(min)} so'm (e'lon narxining 30%i)`
+                            : `Maksimal: ${groupThousands(max)} so'm (e'lon narxi)`}
                     </div>
                 )}
             </div>
@@ -593,8 +593,8 @@ function OfferForm({
                     aria-label="Taklif narxi"
                 />
                 <div className="flex justify-between text-[10px] mt-1.5" style={{ color: BN.text3 }}>
-                    <span>{min.toLocaleString("uz-UZ")} so&apos;m</span>
-                    <span>{max.toLocaleString("uz-UZ")} so&apos;m</span>
+                    <span>{groupThousands(min)} so&apos;m</span>
+                    <span>{groupThousands(max)} so&apos;m</span>
                 </div>
             </div>
 

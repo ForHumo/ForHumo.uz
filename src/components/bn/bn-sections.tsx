@@ -9,7 +9,7 @@ import {
     ScanLine, Camera, Bell, Navigation, User, LogIn, Crown, Settings,
     ShoppingCart, Heart, LogOut, ShieldCheck, Loader2,
 } from "lucide-react";
-import { BN, TIER_META } from "@/lib/bn-theme";
+import { BN, TIER_META, groupThousands } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnEmpty, shopLocationText } from "./bn-cards";
 import type { BnCategoryTreeDTO, BnShopDTO } from "@/lib/bn-data";
@@ -110,7 +110,7 @@ export function BnCatalogPage({ categories }: { categories: BnCategoryTreeDTO[] 
                             className="flex items-center gap-1 text-[13px] font-bold"
                             style={{ color: BN.gold }}
                         >
-                            Barcha {cat.productCount.toLocaleString("uz-UZ")} ta
+                            Barcha {groupThousands(cat.productCount)} ta
                             <ChevronRight className="w-4 h-4" />
                         </BnLink>
                     </div>
@@ -126,7 +126,7 @@ export function BnCatalogPage({ categories }: { categories: BnCategoryTreeDTO[] 
                                 >
                                     <span className="truncate">{ch.name}</span>
                                     <span className="text-[11px] flex-shrink-0" style={{ color: BN.text3 }}>
-                                        {ch.productCount.toLocaleString("uz-UZ")}
+                                        {groupThousands(ch.productCount)}
                                     </span>
                                 </BnLink>
                             ))}
@@ -162,7 +162,7 @@ export function BnCatalogPage({ categories }: { categories: BnCategoryTreeDTO[] 
                                 <span className="flex-1 min-w-0">
                                     <span className="block text-[14.5px] font-black truncate">{c.name}</span>
                                     <span className="block text-[11.5px] mt-0.5" style={{ color: BN.text3 }}>
-                                        {c.productCount.toLocaleString("uz-UZ")} ta mahsulot
+                                        {groupThousands(c.productCount)} ta mahsulot
                                     </span>
                                 </span>
                                 <ChevronRight
@@ -179,7 +179,7 @@ export function BnCatalogPage({ categories }: { categories: BnCategoryTreeDTO[] 
                                         style={{ background: BN.goldSoft, color: BN.gold }}
                                     >
                                         <span>Barchasini ko&apos;rish</span>
-                                        <span className="text-[11px]">{c.productCount.toLocaleString("uz-UZ")}</span>
+                                        <span className="text-[11px]">{groupThousands(c.productCount)}</span>
                                     </BnLink>
                                     {c.children.map(ch => (
                                         <BnLink
@@ -190,7 +190,7 @@ export function BnCatalogPage({ categories }: { categories: BnCategoryTreeDTO[] 
                                         >
                                             <span className="truncate">{ch.name}</span>
                                             <span className="text-[11px] flex-shrink-0" style={{ color: BN.text3 }}>
-                                                {ch.productCount.toLocaleString("uz-UZ")}
+                                                {groupThousands(ch.productCount)}
                                             </span>
                                         </BnLink>
                                     ))}

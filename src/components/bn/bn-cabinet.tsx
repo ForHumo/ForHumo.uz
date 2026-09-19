@@ -21,7 +21,7 @@ import {
     Sparkles, ShieldCheck, AlertTriangle, Upload, Wand2, Users,
     Send, MessageCircle, Rocket, QrCode, ExternalLink, Car,
 } from "lucide-react";
-import { BN, fmtPrice, ORDER_STATUS_META } from "@/lib/bn-theme";
+import { BN, fmtPrice, groupThousands, ORDER_STATUS_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
 import { BnPhoneInput } from "./bn-phone-input";
@@ -1108,7 +1108,6 @@ function ProductsTab({
 }: { initial: CabinetProduct[]; categories: CabinetCategory[]; createOpen: boolean; setCreateOpen: (v: boolean) => void }) {
     const router = useRouter();
     const t = useTranslations("bn.cabinet");
-    const locale = useLocale();
     const [items, setItems] = useState(initial);
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
     const [bulkOpen, setBulkOpen] = useState(false);
@@ -1147,7 +1146,7 @@ function ProductsTab({
     }
     async function quickEdit(p: CabinetProduct) {
         const priceStr = await bnPrompt({
-            title: t("quickEditPrice", { price: p.price.toLocaleString(locale) }),
+            title: t("quickEditPrice", { price: groupThousands(p.price) }),
             defaultValue: String(p.price),
             inputType: "number",
         });

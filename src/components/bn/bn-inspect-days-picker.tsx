@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Clock, Info, CheckCircle2 } from "lucide-react";
-import { BN } from "@/lib/bn-theme";
+import { BN, groupThousands } from "@/lib/bn-theme";
 
 export function BnInspectDaysPicker({
     productPrice, onCancel, onConfirm,
@@ -78,13 +78,13 @@ export function BnInspectDaysPicker({
                                     )}
                                 </div>
                                 <div className="text-[11px]" style={{ color: BN.text3 }}>
-                                    {r.pct === 0 ? "Qo'shimcha to'lovsiz" : `+${r.pct}% (${r.fee.toLocaleString("uz-UZ")} so'm)`}
+                                    {r.pct === 0 ? "Qo'shimcha to'lovsiz" : `+${r.pct}% (${groupThousands(r.fee)} so'm)`}
                                 </div>
                             </div>
                             <div className="text-right">
                                 <div className="text-[14px] font-black tabular-nums"
                                     style={{ color: days === r.d ? BN.gold : BN.text }}>
-                                    {r.total.toLocaleString("uz-UZ")}
+                                    {groupThousands(r.total)}
                                 </div>
                                 <div className="text-[10px]" style={{ color: BN.text3 }}>so&apos;m</div>
                             </div>
@@ -117,7 +117,7 @@ export function BnInspectDaysPicker({
                         className="flex-[2] h-11 rounded-xl text-[13px] font-black flex items-center justify-center gap-2"
                         style={{ background: BN.gold, color: BN.onGold }}
                     >
-                        {days} kun band qilish · {selected.total.toLocaleString("uz-UZ")} so&apos;m
+                        {days} kun band qilish · {groupThousands(selected.total)} so&apos;m
                     </button>
                 </div>
             </div>

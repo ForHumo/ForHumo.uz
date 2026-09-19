@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Rocket, X, Loader2, Check, AlertCircle } from "lucide-react";
 import { formatMoney } from "@/lib/money";
-import { BN } from "@/lib/bn-theme";
+import { BN, groupThousands } from "@/lib/bn-theme";
 import { bnConfirm } from "./bn-dialog";
 
 interface Boost {
@@ -207,11 +207,11 @@ function ActiveBoost({ boost, onStop }: { boost: Boost; onStop: () => void }) {
             <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-lg p-2 bg-white dark:bg-neutral-900">
                     <div className="text-[10px] text-neutral-500">Ko&apos;rildi</div>
-                    <div className="text-sm font-bold mt-0.5">{boost.impressions.toLocaleString("uz-UZ")}</div>
+                    <div className="text-sm font-bold mt-0.5">{groupThousands(boost.impressions)}</div>
                 </div>
                 <div className="rounded-lg p-2 bg-white dark:bg-neutral-900">
                     <div className="text-[10px] text-neutral-500">Bosildi</div>
-                    <div className="text-sm font-bold mt-0.5">{boost.clicks.toLocaleString("uz-UZ")}</div>
+                    <div className="text-sm font-bold mt-0.5">{groupThousands(boost.clicks)}</div>
                 </div>
                 <div className="rounded-lg p-2 bg-white dark:bg-neutral-900">
                     <div className="text-[10px] text-neutral-500">CTR</div>

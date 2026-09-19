@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { Handshake, Clock } from "lucide-react";
-import { BN } from "@/lib/bn-theme";
+import { BN, groupThousands } from "@/lib/bn-theme";
 
 interface Deal { productSlug: string; agreedPrice: number; listPrice: number; expiresAt: string }
 
@@ -42,11 +42,11 @@ export function BnProductDealChip({ productSlug }: { productSlug: string }) {
             </div>
             <div className="flex items-baseline gap-2">
                 <span className="text-[20px] font-black tabular-nums" style={{ color: BN.gold }}>
-                    {deal.agreedPrice.toLocaleString("uz-UZ")} so&apos;m
+                    {groupThousands(deal.agreedPrice)} so&apos;m
                 </span>
                 {deal.listPrice > deal.agreedPrice && (
                     <span className="text-[13px] line-through tabular-nums" style={{ color: BN.text3 }}>
-                        {deal.listPrice.toLocaleString("uz-UZ")}
+                        {groupThousands(deal.listPrice)}
                     </span>
                 )}
             </div>
