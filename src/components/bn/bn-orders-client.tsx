@@ -13,7 +13,7 @@ import {
     Package, LogIn, ChevronRight, Clock, Check, X, Truck, Eye,
     Wallet, Banknote, Store, MapPin, Phone, Loader2, RotateCw,
 } from "lucide-react";
-import { BN, fmtPrice, ORDER_STATUS_META } from "@/lib/bn-theme";
+import { BN, fmtPrice, fmtBnDateTime, ORDER_STATUS_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
 import { BnBackButton } from "./bn-back-button";
@@ -583,18 +583,14 @@ function fulfillLabel(type: "PICKUP" | "DELIVERY" | "INSPECT", t: (k: string) =>
     return t("fulfillInspect");
 }
 
-function formatDate(iso: string, locale = "uz"): string {
-    try {
-        const d = new Date(iso);
-        return d.toLocaleString(locale, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-    } catch { return iso; }
+function formatDate(iso: string, _locale?: string): string {
+    void _locale;
+    try { return fmtBnDateTime(iso, true); } catch { return iso; }
 }
 
-function formatShort(iso: string, locale = "uz"): string {
-    try {
-        const d = new Date(iso);
-        return d.toLocaleString(locale, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-    } catch { return iso; }
+function formatShort(iso: string, _locale?: string): string {
+    void _locale;
+    try { return fmtBnDateTime(iso); } catch { return iso; }
 }
 
 // Clock unused olib tashlaymiz — tsc unused warning uchun

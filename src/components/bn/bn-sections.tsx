@@ -2,14 +2,14 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import {
     Car, Smartphone, Shirt, Sofa, Hammer, ShoppingBasket, Baby, Dumbbell,
     Sparkles, Wrench, Store, MapPin, Globe, Star, Package, ChevronRight,
     ScanLine, Camera, Bell, Navigation, User, LogIn, Crown, Settings,
     ShoppingCart, Heart, LogOut, ShieldCheck, Loader2,
 } from "lucide-react";
-import { BN, TIER_META, groupThousands } from "@/lib/bn-theme";
+import { BN, TIER_META, groupThousands, fmtBnDateTime } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnEmpty, shopLocationText } from "./bn-cards";
 import type { BnCategoryTreeDTO, BnShopDTO } from "@/lib/bn-data";
@@ -460,7 +460,6 @@ export function BnNotificationsPage() {
 
 function BnNotificationsClient() {
     const t = useTranslations("bn.notif");
-    const locale = useLocale();
     const [items, setItems] = useState<Array<{
         id: string; type: string; title: string; body: string | null;
         link: string | null; read: boolean; createdAt: string;
@@ -529,7 +528,7 @@ function BnNotificationsClient() {
                                 <p className="text-[13.5px] font-black" style={{ color: BN.text }}>{n.title}</p>
                                 {n.body && <p className="text-[12.5px] mt-0.5" style={{ color: BN.text2 }}>{n.body}</p>}
                                 <p className="text-[10.5px] mt-1.5" style={{ color: BN.text3 }}>
-                                    {new Date(n.createdAt).toLocaleString(locale, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                    {fmtBnDateTime(n.createdAt)}
                                 </p>
                             </div>
                             {n.link && (

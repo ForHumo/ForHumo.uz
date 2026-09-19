@@ -21,7 +21,7 @@ import {
     Sparkles, ShieldCheck, AlertTriangle, Upload, Wand2, Users,
     Send, MessageCircle, Rocket, QrCode, ExternalLink, Car,
 } from "lucide-react";
-import { BN, fmtPrice, groupThousands, ORDER_STATUS_META } from "@/lib/bn-theme";
+import { BN, fmtPrice, groupThousands, fmtBnDateTime, ORDER_STATUS_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
 import { BnPhoneInput } from "./bn-phone-input";
@@ -2672,8 +2672,9 @@ function locLabel(shop: CabinetShop): string {
     return "Onlayn do'kon";
 }
 
-function formatDate(iso: string, locale = "uz"): string {
+function formatDate(iso: string, _locale?: string): string {
+    void _locale;
     try {
-        return new Date(iso).toLocaleString(locale, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+        return fmtBnDateTime(iso);
     } catch { return iso; }
 }

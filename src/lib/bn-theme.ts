@@ -61,6 +61,20 @@ export function fmtPrice(som: number): string {
     return `${groupThousands(som)} so'm`;
 }
 
+// Deterministik sana — Toshkent vaqti (UTC+5), qattiq oy nomlari. Server va client
+// BIR XIL (toLocaleString ICU oy nomi + local timezone farqi hydration xatosi berardi).
+const UZ_MON = ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avg", "sen", "okt", "noy", "dek"];
+export function fmtBnDateTime(input: string | Date, withYear = false): string {
+    const t = new Date(new Date(input).getTime() + 5 * 3600 * 1000);
+    const day = t.getUTCDate();
+    const mon = UZ_MON[t.getUTCMonth()] ?? "";
+    const hh = String(t.getUTCHours()).padStart(2, "0");
+    const mm = String(t.getUTCMinutes()).padStart(2, "0");
+    return withYear
+        ? `${day} ${mon} ${t.getUTCFullYear()}, ${hh}:${mm}`
+        : `${day} ${mon}, ${hh}:${mm}`;
+}
+
 /** Qisqa ko'rinish: 1 250 000 → "1.25 mln" */
 export function fmtPriceShort(som: number): string {
     if (som >= 1_000_000) {
