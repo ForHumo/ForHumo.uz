@@ -417,8 +417,14 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     }
     const lastTs = useRef<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
+    // Xabar ro'yxati scroll konteyneri + "pastda turibdimi" bayrog'i.
+    // Auto-scroll faqat foydalanuvchi pastda bo'lsa ishlaydi — aks holda tarixni
+    // o'qiyotganda viewCount/reaksiya/yangi xabar uni pastga tortib yubormaydi.
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const nearBottomRef = useRef(true);
 
     const loadDetail = useCallback(() => {
+        nearBottomRef.current = true; // yangi kanal ochilganda pastdan (eng yangi xabardan) boshlanadi
         fetch(`/api/nexus/channels/${id}`).then(r => r.json()).then(d => { if (d.channel) setCh(d.channel); }).finally(() => setLoading(false));
     }, [id]);
     useEffect(() => { loadDetail(); }, [loadDetail]);
@@ -569,7 +575,11 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         return () => { stop = true; clearInterval(iv); };
     }, [id, ch?.isPrivate, ch?.isOwner, ch?.role]);
 
-    useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
+    useEffect(() => {
+        // Foydalanuvchi tepaga scroll qilib tarixni o'qiyotgan bo'lsa — pastga tortmaymiz.
+        if (!nearBottomRef.current) return;
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [msgs]);
 
     async function join() {
         if (joinBusy) return; setJoinBusy(true);
@@ -583,6 +593,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     async function send() {
         if (!input.trim() || busy) return;
         setBusy(true);
+        nearBottomRef.current = true; // o'z xabarimni yuborsam — pastga tushaman
         const text = input.trim(); setInput("");
         try { localStorage.removeItem(CH_DRAFT_PREFIX + id); } catch {}
         const replyToIdSnap = replyTo?.id ?? null;
@@ -605,6 +616,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
 
     // Rich media (voice/video-circle/location/contact) — attach menyudan keladi
     async function sendRich(p: ChannelAttachPayload) {
+        nearBottomRef.current = true; // o'z media xabarimni yuborsam — pastga tushaman
         const body: Record<string, unknown> = { ...p };
         if (p.mediaUrl) body.media = [p.mediaUrl];
         const r = await fetch(`/api/nexus/channels/${id}/messages`, {
@@ -1478,7 +1490,15 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                             </button>
                         );
                     })()}
-                    <div className="flex-1 overflow-y-auto px-3 min-h-0" style={{ scrollbarWidth: "none" }}>
+                    <div
+                        ref={scrollRef}
+                        onScroll={e => {
+                            const el = e.currentTarget;
+                            nearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+                        }}
+                        className="flex-1 overflow-y-auto px-3 min-h-0"
+                        style={{ scrollbarWidth: "none" }}
+                    >
                         {msgs.length === 0 ? (
                             <p className="text-xs text-center py-8" style={{ color: "rgba(120,140,185,0.6)" }}>{ch.canPost ? "Birinchi xabarni yozing" : "Hali xabar yo'q"}</p>
                         ) : msgs.map(m => (
