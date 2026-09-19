@@ -30,7 +30,10 @@ export function BnShopStories() {
             .finally(() => setLoaded(true));
     }, []);
 
-    if (loaded && items.length === 0) return null;
+    // Yuklanmaguncha ham hech nima ko'rsatmaymiz — aks holda bosh sahifada
+    // "Do'konlar hozir" sarlavhasi bo'sh qator bilan miltillab ko'rinadi (buzuqdek).
+    // Hikoyalar tayyor bo'lганда paydo bo'ladi (Instagram uslubi).
+    if (!loaded || items.length === 0) return null;
 
     return (
         <section className="mb-6">
