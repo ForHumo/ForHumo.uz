@@ -217,7 +217,7 @@ export function BnShopPage({
                             style={{ background: BN.gold, color: BN.onGold }}
                         >
                             <MessageCircle className="w-4 h-4" />
-                            Yozishish
+                            Nexus&apos;da yozish
                         </a>
                     )}
                     <button

@@ -9,10 +9,11 @@ import { BN } from "@/lib/bn-theme";
 export function BnShopFollowButton({ shopSlug }: { shopSlug: string }) {
     const [following, setFollowing] = useState(false);
     const [count, setCount] = useState(0);
-    const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
 
     const load = useCallback(async () => {
+        // Bo'sh skelet-quti chiqmasin — tugma darhol "Obuna bo'lish" holatida
+        // ko'rinadi, holat/soni fon rejimда yangilanadi.
         try {
             const r = await fetch(`/api/bn/shops/${shopSlug}/follow`, { cache: "no-store" });
             if (r.ok) {
@@ -20,7 +21,7 @@ export function BnShopFollowButton({ shopSlug }: { shopSlug: string }) {
                 setFollowing(!!j.following);
                 setCount(j.count ?? 0);
             }
-        } finally { setLoading(false); }
+        } catch { /* jim */ }
     }, [shopSlug]);
 
     useEffect(() => { void load(); }, [load]);
@@ -42,12 +43,6 @@ export function BnShopFollowButton({ shopSlug }: { shopSlug: string }) {
             }
         } finally { setBusy(false); }
     }, [shopSlug, following]);
-
-    if (loading) {
-        return (
-            <div className="h-8 w-24 rounded-lg animate-pulse" style={{ background: BN.surfaceUp }} />
-        );
-    }
 
     return (
         <button
