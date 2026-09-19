@@ -3547,6 +3547,7 @@ model BnOrder {
   paymentStatus BnPayStatus   @default(PENDING)
   escrowHeld    Boolean       @default(false)      // pul ushlanganmi
   settledAt     DateTime?                          // sotuvchiga to'langan
+  stockRestored Boolean       @default(false)      // bekor/qaytarishда stok BIR MARTA tiklanadi (idempotent, CASH ham)
 
   status        BnOrderStatus @default(PLACED)
   cancelReason  String?

@@ -76,7 +76,17 @@ export async function POST(
     if (next === "COMPLETED") update.completedAt = now;
     if (next === "CANCELLED") { update.cancelledAt = now; update.cancelReason = reason ?? "Sotuvchi bekor qildi"; }
 
-    await prisma.bnOrder.update({ where: { id: order.id }, data: update });
+    // Atomik compare-and-swap: faqat holat biz o'qigandek bo'lsa o'zgartiramiz.
+    // Aks holda ikki bir vaqtli so'rov (masalan COMPLETED + CANCELLED) ikkalasi ham
+    // o'tib, settleOrder (sotuvchiga to'lov) VA refundOrder (xaridorga qaytarish)
+    // birga ishlab, ikki tomon ham pul olardi (platforma zarari).
+    const upd = await prisma.bnOrder.updateMany({
+        where: { id: order.id, status: order.status },
+        data: update,
+    });
+    if (upd.count === 0) {
+        return NextResponse.json({ error: "conflict", from: order.status, to: next }, { status: 409 });
+    }
 
     // Xaridorga bildirishnoma (fail-safe)
     after(async () => {

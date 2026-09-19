@@ -74,38 +74,51 @@ export async function refundOrder(orderId: string): Promise<{ ok: boolean; reaso
         include: { items: true },
     });
     if (!order) return { ok: false, reason: "not_found" };
-    if (order.paymentMethod !== "WALLET") return { ok: true, reason: "cash_no_refund" };
-    if (!order.escrowHeld) return { ok: true, reason: "not_held" };
+
+    // Pul qaytarish FAQAT WALLET + escrow ushlangan bo'lsa. Stok tiklash esa BARCHA
+    // buyurtmalar uchun (CASH ham) — avval refundOrder CASH'da erta return qilib
+    // stokni tiklamas edi → bekor qilingan naqd buyurtmalarда stok abadiy yo'qolardi.
+    const needMoneyRefund = order.paymentMethod === "WALLET" && order.escrowHeld;
 
     try {
         await prisma.$transaction(async (tx) => {
-            const wallet = await getOrCreateWalletTx(tx, order.buyerId);
-            // Atomik increment (lost-update oldini olish — yuqoridagi settle kabi)
-            await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: order.total } } });
-            const w2 = await tx.wallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
-            const newBalance = Number(w2?.balance ?? 0);
-            await tx.walletTransaction.create({
-                data: {
-                    walletId: wallet.id,
-                    type: "REFUND",
-                    amount: order.total,
-                    currency: wallet.currency,
-                    balanceAfter: newBalance,
-                    description: `BN buyurtma #${order.code} bekor qilindi`,
-                    ref: orderRef("refund", order.id),
-                },
+            // Stok tiklash — atomik idempotent claim (stockRestored bayrog'i bilan).
+            // Qaysi call-site'dan (bekor/timeout/qaytarish) chaqirilsa ham BIR MARTA.
+            const claim = await tx.bnOrder.updateMany({
+                where: { id: order.id, stockRestored: false },
+                data: { stockRestored: true },
             });
-            // Stokni tiklaymiz
-            for (const it of order.items) {
-                await tx.bnProduct.update({
-                    where: { id: it.productId },
-                    data: { stock: { increment: it.qty }, sold: { decrement: it.qty } },
+            if (claim.count > 0) {
+                for (const it of order.items) {
+                    await tx.bnProduct.update({
+                        where: { id: it.productId },
+                        data: { stock: { increment: it.qty }, sold: { decrement: it.qty } },
+                    });
+                }
+            }
+
+            // Pul qaytarish (WALLET+escrow) — walletTransaction unique ref idempotent qiladi.
+            if (needMoneyRefund) {
+                const wallet = await getOrCreateWalletTx(tx, order.buyerId);
+                await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: order.total } } });
+                const w2 = await tx.wallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
+                const newBalance = Number(w2?.balance ?? 0);
+                await tx.walletTransaction.create({
+                    data: {
+                        walletId: wallet.id,
+                        type: "REFUND",
+                        amount: order.total,
+                        currency: wallet.currency,
+                        balanceAfter: newBalance,
+                        description: `BN buyurtma #${order.code} bekor qilindi`,
+                        ref: orderRef("refund", order.id),
+                    },
+                });
+                await tx.bnOrder.update({
+                    where: { id: order.id },
+                    data: { escrowHeld: false, paymentStatus: "REFUNDED" },
                 });
             }
-            await tx.bnOrder.update({
-                where: { id: order.id },
-                data: { escrowHeld: false, paymentStatus: "REFUNDED" },
-            });
         });
         return { ok: true };
     } catch (e: unknown) {

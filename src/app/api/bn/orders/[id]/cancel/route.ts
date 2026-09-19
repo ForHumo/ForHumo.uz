@@ -30,12 +30,17 @@ export async function POST(
         return NextResponse.json({ error: "cannot_cancel", currentStatus: order.status }, { status: 409 });
     }
 
-    await prisma.bnOrder.update({
-        where: { id: order.id },
+    // Atomik CAS — faqat hali PLACED bo'lsa bekor qilamiz (ikki bir vaqtli bekor yoki
+    // bekor+tasdiqlash poygasida faqat bittasi o'tsin; refundOrder ham bir marta ishlasin).
+    const upd = await prisma.bnOrder.updateMany({
+        where: { id: order.id, status: "PLACED" },
         data:  { status: "CANCELLED", cancelledAt: new Date(), cancelReason: reason },
     });
+    if (upd.count === 0) {
+        return NextResponse.json({ error: "cannot_cancel", currentStatus: order.status }, { status: 409 });
+    }
 
-    // WALLET bo'lsa — pul qaytariladi + stok tiklanadi (refundOrder ichida)
+    // Stok tiklanadi (barcha buyurtmalar, idempotent) + WALLET bo'lsa pul qaytariladi
     const refund = await refundOrder(order.id);
 
     return NextResponse.json({ ok: true, refunded: refund.ok });
