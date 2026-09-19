@@ -1,83 +1,63 @@
 "use client";
 
-// FTC — "Sotuvchiga qo'ng'iroq". Telefon raqami YASHIRIN (OLX uslubi):
-// xaridor tugmani bosadi → sotuvchiga mahsulot konteksti bilan qo'ng'iroq
-// so'rovi (push + chat) ketadi. Ish vaqti gate — yopiq bo'lsa so'rov saqlanadi,
-// ish vaqtida bog'lanishadi. Hech qaysi tomon raqami ko'rinmaydi.
+// FTC — "Sotuvchiga qo'ng'iroq". Jonli WebRTC qo'ng'iroq (ovoz, qo'ng'iroq ichida
+// video yoqiladi). Telefon raqami YASHIRIN — Nexus signaling orqali ketadi.
+// Ish vaqti badge ko'rsatiladi. Sotuvchi offline bo'lsa qo'ng'iroq javobsiz qoladi
+// (35s), keyin xaridor "Yozish" orqali xabar qoldiradi.
 
 import { useState } from "react";
-import { Phone, Loader2, Check } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Phone, Loader2 } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
-import { bnToast } from "./bn-toast";
 import { shopAvailability } from "@/lib/bn-hours";
+import { startBnCall } from "./bn-call-provider";
 
 interface Props {
-    shopSlug: string;
+    sellerId?: string | null;
+    shopName: string;
+    shopLogo?: string | null;
+    ownerUsername?: string | null;
     workHours?: string | null;
-    product: { id: string; title: string };
+    product: { id: string; title: string; image?: string | null };
 }
 
-export function BnSellerCallButton({ shopSlug, workHours, product }: Props) {
+export function BnSellerCallButton({ sellerId, shopName, shopLogo, ownerUsername, workHours, product }: Props) {
+    const { status } = useSession();
     const [busy, setBusy] = useState(false);
-    const [done, setDone] = useState(false);
     const avail = shopAvailability(workHours);
 
-    async function request() {
-        if (busy || done) return;
-        setBusy(true);
-        try {
-            const r = await fetch(`/api/bn/shops/${shopSlug}/chat`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    kind: "CALL",
-                    productId: product.id,
-                    text: `${product.title} — qo'ng'iroq qilishingizni so'rayman`,
-                }),
-            });
-            if (r.status === 401) {
-                window.location.href = `/api/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`;
-                return;
-            }
-            if (r.status === 429) {
-                bnToast("Juda ko'p so'rov — biroz kutib qayta urining", "error");
-                return;
-            }
-            if (!r.ok) {
-                bnToast("So'rov yuborilmadi, qayta urining", "error");
-                return;
-            }
-            setDone(true);
-            bnToast(
-                avail.open === false
-                    ? "Do'kon hozir yopiq. So'rovingiz saqlandi — ish vaqtida bog'lanishadi."
-                    : "Qo'ng'iroq so'rovi yuborildi. Sotuvchi tez orada bog'lanadi.",
-                "success",
-            );
-        } catch {
-            bnToast("Ulanish xatoligi", "error");
-        } finally {
-            setBusy(false);
+    function call() {
+        if (busy) return;
+        if (status !== "authenticated") {
+            window.location.href = `/api/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`;
+            return;
         }
+        if (!sellerId) return;
+        setBusy(true);
+        startBnCall({
+            peerId: sellerId,
+            kind: "AUDIO",
+            bnProductId: product.id,
+            peer: { id: sellerId, name: shopName, username: ownerUsername ?? null, image: shopLogo ?? null },
+            bnProduct: { title: product.title, image: product.image ?? null },
+        });
+        setTimeout(() => setBusy(false), 1500);
     }
 
-    // Ochiq/yopiq nuqta rangi
     const dot = avail.open === true ? BN.ok : avail.open === false ? BN.err : BN.text3;
 
     return (
         <button
-            onClick={request}
-            disabled={busy || done}
-            className="flex flex-col items-center justify-center gap-0.5 h-11 rounded-xl text-[13px] font-bold transition-colors disabled:opacity-70"
+            onClick={call}
+            disabled={busy || !sellerId}
+            className="flex flex-col items-center justify-center gap-0.5 h-11 rounded-xl text-[13px] font-bold transition-colors disabled:opacity-60"
             style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}`, color: BN.text }}
         >
             <span className="flex items-center gap-2">
-                {busy ? <Loader2 className="w-4 h-4 animate-spin" />
-                    : done ? <Check className="w-4 h-4" style={{ color: BN.ok }} />
-                    : <Phone className="w-4 h-4" />}
-                {done ? "So'rov yuborildi" : "Qo'ng'iroq"}
+                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Phone className="w-4 h-4" />}
+                Qo&apos;ng&apos;iroq
             </span>
-            {!done && avail.open !== null && (
+            {avail.open !== null && (
                 <span className="flex items-center gap-1 text-[10px] font-medium" style={{ color: BN.text3 }}>
                     <span className="w-1.5 h-1.5 rounded-full" style={{ background: dot }} />
                     {avail.label}

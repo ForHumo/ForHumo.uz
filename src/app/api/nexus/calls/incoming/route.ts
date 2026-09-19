@@ -41,7 +41,16 @@ export async function GET() {
         where: { id: c.callerId },
         select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
     });
+    // BN qo'ng'irog'i bo'lsa — mahsulot konteksti (sotuvchi "qaysi e'lon bo'yicha" ko'radi)
+    let bnProduct: { id: string; title: string; image: string | null; slug: string } | null = null;
+    if (c.bnProductId) {
+        const p = await prisma.bnProduct.findUnique({
+            where: { id: c.bnProductId },
+            select: { id: true, title: true, images: true, slug: true },
+        }).catch(() => null);
+        if (p) bnProduct = { id: p.id, title: p.title, image: p.images?.[0] ?? null, slug: p.slug };
+    }
     return NextResponse.json({
-        call: { id: c.id, kind: c.kind, status: c.status, createdAt: c.createdAt, caller },
+        call: { id: c.id, kind: c.kind, status: c.status, createdAt: c.createdAt, caller, bnProductId: c.bnProductId, bnProduct },
     });
 }

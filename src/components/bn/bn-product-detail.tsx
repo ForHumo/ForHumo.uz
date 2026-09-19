@@ -506,9 +506,12 @@ export function BnProductDetail({
 
                             <div className="grid grid-cols-2 gap-2 mt-4">
                                 <BnSellerCallButton
-                                    shopSlug={shop.slug}
+                                    sellerId={shop.sellerId}
+                                    shopName={shop.name}
+                                    shopLogo={shop.logoUrl}
+                                    ownerUsername={shop.ownerUsername}
                                     workHours={shop.workHours}
-                                    product={{ id: p.id, title: p.title }}
+                                    product={{ id: p.id, title: p.title, image: p.images?.[0] ?? null }}
                                 />
                                 {shop.ownerUsername ? (
                                     <a

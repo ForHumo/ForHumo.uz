@@ -13,6 +13,7 @@ import { BnBaseProvider } from "@/components/bn/bn-nav";
 import { BnSwipeNav } from "@/components/bn/bn-swipe-nav";
 import { BnOnboarding } from "@/components/bn/bn-onboarding";
 import { BnReferralAttach } from "@/components/bn/bn-referral-attach";
+import { BnCallProvider } from "@/components/bn/bn-call-provider";
 import { getCategoriesTree } from "@/lib/bn-data";
 import { getBnAuth } from "@/lib/bn-auth";
 import { prisma } from "@/lib/prisma";
@@ -127,6 +128,7 @@ export default async function BnLayout({
                     <BnNavbar />
                     <BnOnboarding />
                     <BnReferralAttach />
+                    <BnCallProvider />
                 </BnSwipeNav>
             </BnBaseProvider>
         </div>

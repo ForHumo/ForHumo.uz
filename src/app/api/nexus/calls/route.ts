@@ -18,6 +18,7 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const peerId: string | undefined = body?.peerId;
     const kind: "AUDIO" | "VIDEO" = body?.kind === "VIDEO" ? "VIDEO" : "AUDIO";
+    const bnProductId: string | null = typeof body?.bnProductId === "string" ? body.bnProductId : null;
     if (!peerId || peerId === me.id) return NextResponse.json({ error: "Yaroqsiz peer" }, { status: 400 });
 
     const peer = await prisma.userProfile.findUnique({ where: { id: peerId }, select: { id: true } });
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
     if (active) return NextResponse.json({ error: "Sizda faol chaqiruv bor" }, { status: 409 });
 
     const call = await prisma.nexusCall.create({
-        data: { callerId: me.id, calleeId: peer.id, kind, status: "RINGING" },
+        data: { callerId: me.id, calleeId: peer.id, kind, status: "RINGING", bnProductId },
         select: { id: true, kind: true, status: true, callerId: true, calleeId: true, createdAt: true },
     });
 
@@ -51,7 +52,7 @@ export async function POST(req: Request) {
             select: { id: true, name: true, username: true, image: true, humoId: true, verified: true, verifiedCategory: true },
         });
         pusher.trigger(userChannel(peer.id), "call:incoming", {
-            id: call.id, kind: call.kind, caller: meProf,
+            id: call.id, kind: call.kind, caller: meProf, bnProductId,
         }).catch(() => { });
     }
 

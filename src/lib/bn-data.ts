@@ -52,6 +52,8 @@ export interface BnShopDTO {
     phoneVerified?: boolean;
     /** Ish vaqti ("Dush–Yak 08:00–18:00") — FTC qo'ng'iroq gate + ochiq/yopiq badge */
     workHours?: string | null;
+    /** Sotuvchi UserProfile.id — jonli qo'ng'iroq peerId sifatida (faqat to'liq do'kon yozuvida) */
+    sellerId?: string | null;
 }
 
 export interface BnProductDTO {
@@ -127,6 +129,7 @@ function toShopDTO(s: ShopWithMarket, ownerUsername?: string | null): BnShopDTO 
         phone: (s as { phone?: string | null }).phone ?? null,
         phoneVerified: (s as { phoneVerified?: boolean }).phoneVerified ?? false,
         workHours: (s as { workHours?: string | null }).workHours ?? null,
+        sellerId: (s as { profileId?: string | null }).profileId ?? null,
     };
 }
 

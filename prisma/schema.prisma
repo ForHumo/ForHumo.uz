@@ -1824,6 +1824,7 @@ model NexusCall {
   calleeId    String                                    // UserProfile.id — qabul qiluvchi
   kind        NexusCallKind    @default(AUDIO)
   status      NexusCallStatus  @default(RINGING)
+  bnProductId String?                                   // BN qo'ng'irog'i bo'lsa: qaysi mahsulot haqida (kontekst)
   createdAt   DateTime         @default(now())
   acceptedAt  DateTime?
   endedAt     DateTime?
