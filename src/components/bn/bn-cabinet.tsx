@@ -47,6 +47,7 @@ import { BnBuyerInsightsCard } from "./bn-buyer-insights-card";
 import { BnBulkImportModal } from "./bn-bulk-import-modal";
 import { BnAiImportModal } from "./bn-ai-import-modal";
 import { BnDealsCard } from "./bn-deals-card";
+import { BnCallsCard } from "./bn-calls-card";
 import { BnEditFitModal } from "./bn-edit-fit-modal";
 import { BnFeatureButton } from "./bn-feature-modal";
 import { BnOrderChatButton } from "./bn-order-chat";
@@ -2184,6 +2185,9 @@ function MoneyTab({ balance, orderCount }: { balance: number; orderCount: number
 
             {/* Kelishilgan narxlarim — 48s band, kelishuv bo'lsa ko'rinadi */}
             <BnDealsCard />
+
+            {/* Qo'ng'iroqlar tarixi — BN qo'ng'iroq bo'lsa ko'rinadi */}
+            <BnCallsCard />
 
             <BnMyPurchases />
 

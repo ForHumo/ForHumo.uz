@@ -190,8 +190,9 @@ function fmtTimeAgo(d: Date): string {
 
 import { createPortal } from "react-dom";
 import { useRef } from "react";
-import { X as XIcon, Send, Loader2 as Spin } from "lucide-react";
+import { X as XIcon, Send, Loader2 as Spin, Phone } from "lucide-react";
 import { bnToast } from "./bn-toast";
+import { startBnCall } from "./bn-call-provider";
 
 interface Msg {
     id: string;
@@ -316,10 +317,25 @@ function SellerChatModal({ chat, onClose }: { chat: Chat; onClose: () => void })
                             <div className="text-[11px]" style={{ color: BN.text3 }}>Xaridor · {chat.shopName}</div>
                         </div>
                     </div>
-                    <button onClick={onClose} aria-label="Yopish"
-                        className="p-1.5 rounded" style={{ background: BN.surfaceUp }}>
-                        <XIcon className="w-4 h-4" style={{ color: BN.text2 }} />
-                    </button>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button
+                            onClick={() => startBnCall({
+                                peerId: chat.buyerId,
+                                kind: "AUDIO",
+                                peer: { id: chat.buyerId, name: chat.buyer?.name ?? null, username: chat.buyer?.username ?? null, image: chat.buyer?.image ?? null },
+                                bnProduct: null,
+                            })}
+                            aria-label="Qo'ng'iroq"
+                            className="w-9 h-9 grid place-items-center rounded-full"
+                            style={{ background: BN.goldSoft, color: BN.gold }}
+                        >
+                            <Phone className="w-4 h-4" />
+                        </button>
+                        <button onClick={onClose} aria-label="Yopish"
+                            className="p-1.5 rounded" style={{ background: BN.surfaceUp }}>
+                            <XIcon className="w-4 h-4" style={{ color: BN.text2 }} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Messages */}
