@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isSafeWebhookUrl } from "@/lib/agent-webhook";
 
 async function meAndAgent(id: string) {
     const s = await getServerSession(authOptions);
@@ -40,6 +41,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const body = await req.json().catch(() => ({}));
     const webhookUrl = typeof body?.webhookUrl === "string" ? body.webhookUrl.trim().slice(0, 500) : undefined;
+    // SSRF: webhook URL ichki/xususiy manzil bo'lmasin (bo'sh = webhook o'chirish, ruxsat)
+    if (webhookUrl !== undefined && webhookUrl !== "" && !isSafeWebhookUrl(webhookUrl)) {
+        return NextResponse.json({ error: "Webhook URL noto'g'ri yoki ichki/xususiy manzil (https tashqi domen kerak)" }, { status: 400 });
+    }
     const name = typeof body?.name === "string" ? body.name.trim().slice(0, 50) : undefined;
     const image = typeof body?.image === "string" ? body.image.trim().slice(0, 500) : undefined;
     const rateLimitPerMinute = typeof body?.rateLimitPerMinute === "number"

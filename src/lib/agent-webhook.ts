@@ -30,6 +30,47 @@ export function generateApiKey(): string {
     return AGENT_KEY_PREFIX + crypto.randomBytes(32).toString("hex");
 }
 
+// SSRF himoyasi — agent webhook URL'i ichki/xususiy manzillarga ishora qilmasin.
+// Server bu URL'ga POST yuboradi (va javobni agent xabari sifatida ko'rsatadi), shuning
+// uchun localhost, xususiy IP diapazonlari, bulut metadata (169.254.169.254) va ichki
+// domenlar bloklanadi. Yozishda (PATCH) rad qilamiz + chaqirishda ham qayta tekshiramiz.
+// Eslatma: DNS-rebinding (tashqi hostname ichki IP'ga resolve bo'lishi) bu qatlamda
+// to'liq yopilmaydi — u fetch vaqtida IP-pinning talab qiladi (kelajakdagi ish).
+export function isSafeWebhookUrl(raw: string | null | undefined): boolean {
+    if (!raw) return false;
+    let u: URL;
+    try { u = new URL(raw); } catch { return false; }
+    if (u.protocol !== "http:" && u.protocol !== "https:") return false;
+    const host = u.hostname.toLowerCase();
+    if (!host) return false;
+    // Ichki/maxsus domen nomlari
+    if (host === "localhost" || host === "0.0.0.0"
+        || host.endsWith(".localhost") || host.endsWith(".local")
+        || host.endsWith(".internal") || host === "metadata.google.internal") {
+        return false;
+    }
+    // IPv6 literal — loopback/link-local/unique-local
+    if (host.includes(":")) {
+        const h = host.replace(/^\[|\]$/g, "");
+        if (h === "::1" || h === "::" || h.startsWith("fe80") || h.startsWith("fc") || h.startsWith("fd") || h.startsWith("::ffff:")) {
+            return false;
+        }
+    }
+    // IPv4 literal — xususiy/reserved diapazonlar
+    const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+    if (m) {
+        const a = Number(m[1]), b = Number(m[2]);
+        if (a > 255 || b > 255 || Number(m[3]) > 255 || Number(m[4]) > 255) return false;
+        if (a === 0 || a === 10 || a === 127) return false;             // 0/8, 10/8, loopback
+        if (a === 169 && b === 254) return false;                        // link-local (metadata)
+        if (a === 172 && b >= 16 && b <= 31) return false;               // 172.16/12
+        if (a === 192 && b === 168) return false;                        // 192.168/16
+        if (a === 100 && b >= 64 && b <= 127) return false;              // CGNAT 100.64/10
+        if (a >= 224) return false;                                      // multicast/reserved
+    }
+    return true;
+}
+
 // Yuqori darajali yordamchi — agar suhbatdagi peer agent bo'lsa system eventini fire qiladi.
 // Fail-safe: agent yo'q yoki webhook sozlanmagan bo'lsa hech nima qilmaydi.
 // Ishlatish: edit/delete/pin endpoint'larida after() ichida chaqiring.
@@ -186,6 +227,7 @@ export async function sendToAgentWebhook(
     payload: AgentWebhookPayload,
 ): Promise<AgentWebhookReply | null> {
     if (!agent.webhookUrl || !agent.apiKey) return null;
+    if (!isSafeWebhookUrl(agent.webhookUrl)) return null; // SSRF himoyasi (DB'da eski xavfli URL bo'lsa ham)
     const body = JSON.stringify(payload);
     const timestamp = String(Math.floor(Date.now() / 1000));
     const signature = signPayload(agent.apiKey, timestamp, body);
@@ -276,6 +318,7 @@ export async function fetchAgentInlineResults(
     payload: AgentWebhookPayload,
 ): Promise<AgentInlineResult[]> {
     if (!agent.webhookUrl || !agent.apiKey) return [];
+    if (!isSafeWebhookUrl(agent.webhookUrl)) return []; // SSRF himoyasi (DB'da eski xavfli URL bo'lsa ham)
     const body = JSON.stringify(payload);
     const timestamp = String(Math.floor(Date.now() / 1000));
     const signature = signPayload(agent.apiKey, timestamp, body);
