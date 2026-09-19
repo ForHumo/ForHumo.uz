@@ -63,18 +63,51 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (request.status !== "PENDING") return NextResponse.json({ ok: true, alreadyDecided: true });
 
     if (decision === "APPROVE") {
-        await prisma.$transaction([
-            prisma.nexusChannelMember.upsert({
-                where: { channelId_profileId: { channelId: id, profileId: request.profileId } },
-                create: { channelId: id, profileId: request.profileId, role: "MEMBER" },
-                update: {},
-            }),
-            prisma.nexusChannel.update({ where: { id }, data: { memberCount: { increment: 1 } } }),
-            prisma.nexusChannelJoinRequest.update({
+        // Ban ustunlik qiladi — bloklangan foydalanuvchini approve orqali qaytarib qo'shmaymiz
+        const banned = await prisma.nexusChannelBan.findUnique({
+            where: { channelId_profileId: { channelId: id, profileId: request.profileId } },
+            select: { id: true },
+        });
+        if (banned) {
+            await prisma.nexusChannelJoinRequest.update({
+                where: { id: requestId },
+                data: { status: "REJECTED", decidedAt: new Date(), decidedById: me.id },
+            });
+            return NextResponse.json({ error: "Bu foydalanuvchi bloklangan" }, { status: 400 });
+        }
+        // Allaqachon a'zomi? (havola/boshqa yo'l bilan qo'shilgan bo'lishi mumkin) —
+        // shunda memberCount ikki marta oshib ketmasin (drift oldini olamiz).
+        const already = await prisma.nexusChannelMember.findUnique({
+            where: { channelId_profileId: { channelId: id, profileId: request.profileId } },
+            select: { id: true },
+        });
+        if (already) {
+            await prisma.nexusChannelJoinRequest.update({
                 where: { id: requestId },
                 data: { status: "APPROVED", decidedAt: new Date(), decidedById: me.id },
-            }),
-        ]);
+            });
+        } else {
+            try {
+                await prisma.$transaction([
+                    prisma.nexusChannelMember.create({
+                        data: { channelId: id, profileId: request.profileId, role: "MEMBER" },
+                    }),
+                    prisma.nexusChannel.update({ where: { id }, data: { memberCount: { increment: 1 } } }),
+                    prisma.nexusChannelJoinRequest.update({
+                        where: { id: requestId },
+                        data: { status: "APPROVED", decidedAt: new Date(), decidedById: me.id },
+                    }),
+                ]);
+            } catch (e) {
+                // Race: bir vaqtda a'zo bo'lib qoldi → count oshirmaymiz, faqat so'rovni yopamiz
+                if ((e as { code?: string })?.code === "P2002") {
+                    await prisma.nexusChannelJoinRequest.update({
+                        where: { id: requestId },
+                        data: { status: "APPROVED", decidedAt: new Date(), decidedById: me.id },
+                    });
+                } else throw e;
+            }
+        }
         await logChannelAudit({ channelId: id, actorId: me.id, action: "approve-join", targetId: request.profileId });
     } else {
         await prisma.nexusChannelJoinRequest.update({

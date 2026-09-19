@@ -68,6 +68,14 @@ export async function POST(_req: Request, { params }: { params: Promise<{ code: 
         });
     }
 
+    // Ban tekshiruvi — bloklangan foydalanuvchi havola orqali ham kira olmasin
+    // (oddiy join route'da tekshiriladi; havola bilan kirish ban'ni chetlab o'tmasin)
+    const banned = await prisma.nexusChannelBan.findUnique({
+        where: { channelId_profileId: { channelId: inv.channel.id, profileId: me.id } },
+        select: { id: true },
+    });
+    if (banned) return NextResponse.json({ error: "Siz bu guruh/kanaldan bloklangansiz" }, { status: 403 });
+
     // Guruh limit — 500
     if (inv.channel.memberCount >= 500) {
         return NextResponse.json({ error: "Guruh to'lgan (500)" }, { status: 400 });
