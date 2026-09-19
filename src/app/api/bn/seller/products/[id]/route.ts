@@ -29,6 +29,7 @@ export async function GET(
         where: { id },
         select: {
             id: true, partNumber: true, oemNumbers: true, universalFit: true,
+            ikpuCode: true, packageCode: true,
             shop: { select: { profileId: true } },
             fits: { select: { modelId: true, model: { select: { name: true, make: { select: { name: true } } } } } },
         },
@@ -40,6 +41,8 @@ export async function GET(
         partNumber: product.partNumber ?? "",
         oemNumbers: product.oemNumbers ?? [],
         universalFit: product.universalFit ?? false,
+        ikpuCode: product.ikpuCode ?? "",
+        packageCode: product.packageCode ?? "",
         fits: product.fits.map(f => ({ modelId: f.modelId, makeName: f.model.make.name, modelName: f.model.name })),
     });
 }
@@ -107,6 +110,14 @@ export async function PATCH(
     }
     if (typeof body?.universalFit === "boolean") {
         data.universalFit = body.universalFit;
+    }
+
+    // Fiskal (IKPU/MXIK) — kassa/ЭСФ tayyorlik
+    if (body?.ikpuCode !== undefined) {
+        data.ikpuCode = typeof body.ikpuCode === "string" ? (body.ikpuCode.replace(/\D/g, "").slice(0, 17) || null) : null;
+    }
+    if (body?.packageCode !== undefined) {
+        data.packageCode = typeof body.packageCode === "string" ? (body.packageCode.replace(/\D/g, "").slice(0, 10) || null) : null;
     }
 
     const updated = await prisma.bnProduct.update({ where: { id }, data });

@@ -11,7 +11,7 @@ import {
     ShoppingCart, Trash2, Plus, Minus, LogIn, ArrowRight, Loader2,
     Store, Truck, Eye, Package,
 } from "lucide-react";
-import { BN, fmtPrice, priceRankOf, PRICE_RANK_META } from "@/lib/bn-theme";
+import { BN, fmtPrice, groupThousands, priceRankOf, PRICE_RANK_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
 import { BnEmpty } from "./bn-cards";
 import { bnConfirm } from "./bn-dialog";
@@ -254,13 +254,13 @@ export function BnCartClient({ initial, unauthenticated }: Props) {
                                                         </span>
                                                         {p.isWholesale && unitPriceOf(it) < p.price && (
                                                             <span className="text-[10.5px] line-through tabular-nums" style={{ color: BN.text3 }}>
-                                                                {p.price.toLocaleString()}
+                                                                {groupThousands(p.price)}
                                                             </span>
                                                         )}
                                                         {p.dealPrice && p.listPrice && p.listPrice > p.dealPrice && (
                                                             <>
                                                                 <span className="text-[10.5px] line-through tabular-nums" style={{ color: BN.text3 }}>
-                                                                    {p.listPrice.toLocaleString()}
+                                                                    {groupThousands(p.listPrice)}
                                                                 </span>
                                                                 <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: BN.goldSoft, color: BN.gold }}>
                                                                     kelishilgan

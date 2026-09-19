@@ -39,6 +39,9 @@ interface RowInput {
     oemNumbers?: string[];
     universalFit?: boolean;
     fits?: string[];   // BnCarModel id'lari
+    // Fiskal (IKPU/MXIK) — ixtiyoriy
+    ikpuCode?: string | null;
+    packageCode?: string | null;
 }
 
 interface RowResult {
@@ -121,6 +124,8 @@ export async function POST(req: Request) {
             ? [...new Set(r.oemNumbers.map(s => String(s).trim()).filter(Boolean))].slice(0, 20)
             : [];
         const universalFit = !!r.universalFit;
+        const ikpuCode = r.ikpuCode ? (String(r.ikpuCode).replace(/\D/g, "").slice(0, 17) || null) : null;
+        const packageCode = r.packageCode ? (String(r.packageCode).replace(/\D/g, "").slice(0, 10) || null) : null;
         const rowFitIds = Array.isArray(r.fits)
             ? [...new Set(r.fits.map(String).filter(id => validFitIds.has(id)))].slice(0, 60)
             : [];
@@ -194,6 +199,8 @@ export async function POST(req: Request) {
                             partNumber,
                             oemNumbers,
                             universalFit,
+                            ikpuCode,
+                            packageCode,
                             isActive: true,
                             hidden: false,
                         },

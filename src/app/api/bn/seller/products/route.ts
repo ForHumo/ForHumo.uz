@@ -112,6 +112,10 @@ export async function POST(req: Request) {
         ? [...new Set(body.oemNumbers.map((s: unknown) => String(s).trim()).filter(Boolean))].slice(0, 20) as string[]
         : [];
     const universalFit = !!body?.universalFit;
+    // Fiskal (IKPU/MXIK) — kassa/ЭСФ uchun (hozir ixtiyoriy, Phase 3 majburiy bo'ladi).
+    // MXIK/IKPU 17 xonali tovar tasnif kodi (tasnif.soliq.uz), qadoq kodi alohida.
+    const ikpuCode = typeof body?.ikpuCode === "string" ? (body.ikpuCode.replace(/\D/g, "").slice(0, 17) || null) : null;
+    const packageCode = typeof body?.packageCode === "string" ? (body.packageCode.replace(/\D/g, "").slice(0, 10) || null) : null;
     const fitModelIds = Array.isArray(body?.fits)
         ? [...new Set(body.fits.map((f: unknown) => String((f as { modelId?: unknown })?.modelId ?? "")).filter(Boolean))].slice(0, 60) as string[]
         : [];
@@ -158,6 +162,8 @@ export async function POST(req: Request) {
             partNumber,
             oemNumbers,
             universalFit,
+            ikpuCode,
+            packageCode,
             isActive: true,
             hidden: false,
         },

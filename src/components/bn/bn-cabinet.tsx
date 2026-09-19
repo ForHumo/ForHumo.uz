@@ -20,6 +20,7 @@ import {
     Clock, ChevronRight, MapPin, Phone, Building2, Trash2, EyeOff,
     Sparkles, ShieldCheck, AlertTriangle, Upload, Wand2, Users,
     Send, MessageCircle, Rocket, QrCode, ExternalLink, Car,
+    Receipt, ChevronDown,
 } from "lucide-react";
 import { BN, fmtPrice, groupThousands, fmtBnDateTime, ORDER_STATUS_META } from "@/lib/bn-theme";
 import { BnLink } from "./bn-nav";
@@ -1396,6 +1397,10 @@ function CreateProductModal({
     const [fits, setFits] = useState<FitModel[]>([]);
     const [partNumber, setPartNumber] = useState("");
     const [oemNumbers, setOemNumbers] = useState("");
+    // Fiskal (IKPU/MXIK) — kelajakdagi kassa/ЭСФ uchun, ixtiyoriy
+    const [ikpuCode, setIkpuCode] = useState("");
+    const [packageCode, setPackageCode] = useState("");
+    const [fiscalOpen, setFiscalOpen] = useState(false);
     const [busy, setBusy] = useState(false);
     const [aiBusy, setAiBusy] = useState(false);
     const [uploadBusy, setUploadBusy] = useState(false);
@@ -1484,6 +1489,9 @@ function CreateProductModal({
                         : [],
                     universalFit: isAuto ? universalFit : false,
                     fits: isAuto && !universalFit ? fits.map(f => ({ modelId: f.modelId })) : [],
+                    // Fiskal (ixtiyoriy)
+                    ikpuCode: ikpuCode.trim() || null,
+                    packageCode: packageCode.trim() || null,
                 }),
             });
             const d = await r.json();
@@ -1751,6 +1759,53 @@ function CreateProductModal({
                             </div>
                         </div>
                     )}
+
+                    {/* Fiskal ma'lumot (IKPU/MXIK) — ixtiyoriy, kelajakdagi kassa/ЭСФ uchun */}
+                    <div className="rounded-2xl overflow-hidden" style={{ background: BN.surfaceUp, border: `1px solid ${BN.border}` }}>
+                        <button
+                            type="button"
+                            onClick={() => setFiscalOpen(o => !o)}
+                            className="w-full flex items-center justify-between px-3.5 h-12"
+                        >
+                            <span className="flex items-center gap-2">
+                                <Receipt className="w-4 h-4" style={{ color: BN.gold }} />
+                                <span className="text-[12.5px] font-black">{t("fiscalTitle")}</span>
+                                {(ikpuCode || packageCode) && <Check className="w-3.5 h-3.5" style={{ color: BN.ok }} />}
+                            </span>
+                            <ChevronDown className={`w-4 h-4 transition-transform ${fiscalOpen ? "rotate-180" : ""}`} style={{ color: BN.text3 }} />
+                        </button>
+                        {fiscalOpen && (
+                            <div className="px-3.5 pb-3.5 space-y-3">
+                                <p className="text-[11px] leading-relaxed" style={{ color: BN.text3 }}>{t("fiscalHint")}</p>
+                                <div>
+                                    <label className="block text-[12px] font-semibold mb-1.5" style={{ color: BN.text2 }}>
+                                        {t("fiscalIkpu")}
+                                    </label>
+                                    <input
+                                        value={ikpuCode}
+                                        onChange={e => setIkpuCode(e.target.value.replace(/\D/g, "").slice(0, 17))}
+                                        inputMode="numeric"
+                                        placeholder="00000000000000000"
+                                        className="bn-form-input tabular-nums"
+                                    />
+                                    <p className="text-[10.5px] mt-1" style={{ color: BN.text3 }}>{t("fiscalIkpuHint")}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-[12px] font-semibold mb-1.5" style={{ color: BN.text2 }}>
+                                        {t("fiscalPackage")}
+                                    </label>
+                                    <input
+                                        value={packageCode}
+                                        onChange={e => setPackageCode(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                                        inputMode="numeric"
+                                        placeholder="1250000"
+                                        className="bn-form-input tabular-nums"
+                                    />
+                                    <p className="text-[10.5px] mt-1" style={{ color: BN.text3 }}>{t("fiscalPackageHint")}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
                     {err && (
                         <div className="p-3 rounded-xl text-[12.5px]" style={{ background: BN.errSoft, color: BN.err }}>

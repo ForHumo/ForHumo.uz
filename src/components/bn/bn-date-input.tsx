@@ -8,12 +8,20 @@ import { useRef, useEffect, useState } from "react";
 import { Calendar } from "lucide-react";
 import { BN } from "@/lib/bn-theme";
 
+// Deterministik oy nomlari — SSR (Node ICU) va klient (brauzer ICU) bir xil
+// chiqsin (aks holda toLocaleDateString hydration mismatch beradi → oq ekran).
+const MON: Record<string, string[]> = {
+    uz: ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avg", "sen", "okt", "noy", "dek"],
+    ru: ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"],
+    en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+};
 function fmt(iso: string, locale: string): string {
     if (!iso) return "";
-    try {
-        const d = new Date(iso + "T00:00:00");
-        return d.toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" });
-    } catch { return iso; }
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    if (!m) return iso;
+    const lang = locale.startsWith("ru") ? "ru" : locale.startsWith("en") ? "en" : "uz";
+    const mon = MON[lang][Number(m[2]) - 1] ?? "";
+    return `${m[3]} ${mon} ${m[1]}`;
 }
 
 export function BnDateInput({
