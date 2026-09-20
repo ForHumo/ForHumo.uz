@@ -91,54 +91,57 @@ export async function awardReferralOnFirstCompleted(
             where: { profileId: ref.inviterId },
             create: { profileId: ref.inviterId, balance: new Prisma.Decimal(0), currency },
             update: {},
-            select: { id: true, balance: true },
+            select: { id: true },
         });
         const inviteeWallet = await prisma.wallet.upsert({
             where: { profileId: buyerId },
             create: { profileId: buyerId, balance: new Prisma.Decimal(0), currency },
             update: {},
-            select: { id: true, balance: true },
+            select: { id: true },
         });
 
-        const inviterAfter = new Prisma.Decimal(inviterWallet.balance).plus(ref.inviterReward);
-        const inviteeAfter = new Prisma.Decimal(inviteeWallet.balance).plus(ref.inviteeReward);
-
-        await prisma.$transaction([
-            prisma.wallet.update({
+        // ATOMIK increment — avval read-then-set (balance = inviterAfter) edi: bir vaqtda
+        // bir nechta invitee bonus kredit qilsa (inviter 10 kishini chaqirib, bir nechtasi
+        // birdaniga birinchi buyurtma qilsa) kredit yo'qolardi (lost update → chaqiruvchi
+        // bonus yo'qotadi). balanceAfter update qaytargan qiymatdan olinadi.
+        await prisma.$transaction(async (tx) => {
+            const inv = await tx.wallet.update({
                 where: { id: inviterWallet.id },
-                data: { balance: inviterAfter },
-            }),
-            prisma.walletTransaction.create({
+                data: { balance: { increment: ref.inviterReward } },
+                select: { balance: true },
+            });
+            await tx.walletTransaction.create({
                 data: {
                     walletId: inviterWallet.id,
                     type: "REWARD",
                     amount: new Prisma.Decimal(ref.inviterReward),
                     currency,
-                    balanceAfter: inviterAfter,
+                    balanceAfter: inv.balance,
                     description: `Do'st chaqirdingiz — birinchi buyurtma bonus`,
                     ref: `bnref:${ref.id}:inviter`,
                 },
-            }),
-            prisma.wallet.update({
+            });
+            const inve = await tx.wallet.update({
                 where: { id: inviteeWallet.id },
-                data: { balance: inviteeAfter },
-            }),
-            prisma.walletTransaction.create({
+                data: { balance: { increment: ref.inviteeReward } },
+                select: { balance: true },
+            });
+            await tx.walletTransaction.create({
                 data: {
                     walletId: inviteeWallet.id,
                     type: "REWARD",
                     amount: new Prisma.Decimal(ref.inviteeReward),
                     currency,
-                    balanceAfter: inviteeAfter,
+                    balanceAfter: inve.balance,
                     description: `Referral bo'yicha birinchi xarid bonusi`,
                     ref: `bnref:${ref.id}:invitee`,
                 },
-            }),
-            prisma.bnReferral.update({
+            });
+            await tx.bnReferral.update({
                 where: { id: ref.id },
                 data: { status: "REWARDED", rewardOrderId: orderId, rewardedAt: new Date() },
-            }),
-        ]);
+            });
+        });
 
         // Yutuqlar (fail-safe)
         await grantAchievement(ref.inviterId, "bn.first_referral");
