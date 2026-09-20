@@ -53,17 +53,22 @@ export async function POST(
     // APPROVED → pul qaytarish (WALLET bo'lgan bo'lsa), stock tiklash
     let refunded = false;
     if (decision === "APPROVED") {
-        // Stock tiklash
-        for (const item of order.items) {
-            await prisma.bnProduct.update({
-                where: { id: item.productId },
-                data: {
-                    stock: { increment: item.qty },
-                    sold: { decrement: Math.min(item.qty, 999999) },
-                },
-            }).catch(() => {});
+        // Stock tiklash — idempotent claim (refundOrder bilan BIR XIL stockRestored
+        // bayrog'i). Aks holda WALLET qaytarishda refundOrder ham stokni tiklab,
+        // IKKI MARTA qo'shilardi (bu joyda + refundOrder ichida).
+        const claim = await prisma.bnOrder.updateMany({
+            where: { id: order.id, stockRestored: false },
+            data: { stockRestored: true },
+        });
+        if (claim.count > 0) {
+            for (const item of order.items) {
+                await prisma.bnProduct.update({
+                    where: { id: item.productId },
+                    data: { stock: { increment: item.qty }, sold: { decrement: item.qty } },
+                }).catch(() => {});
+            }
         }
-        // Pul qaytarish
+        // Pul qaytarish (refundOrder stock claim'ni already-true topib faqat pulni qaytaradi)
         if (order.paymentMethod === "WALLET" && order.escrowHeld && !order.settledAt) {
             const r = await refundOrder(order.id);
             refunded = r.ok;
