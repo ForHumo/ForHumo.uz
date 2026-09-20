@@ -76,28 +76,46 @@ export async function POST(req: Request) {
                 code: "INSUFFICIENT_ZIJ", required: price, available: Number(wallet.balance),
             }, { status: 400 });
 
-        const newBalance = Number(wallet.balance) - price;
-        const [, brand] = await prisma.$transaction([
-            prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
-            prisma.marketBrand.create({
-                data: {
-                    slug, name: name.trim(),
-                    description: description?.trim() ?? null,
-                    category: cats[0], categories: cats, logo: logo ?? null,
-                    ownerId: profile.id,
-                    isPaid: true,
-                    verified: isFounder,
-                },
-            }),
-            prisma.walletTransaction.create({
-                data: {
-                    walletId: wallet.id, type: "PURCHASE", amount: price, balanceAfter: newBalance,
-                    description: `Brend ochish: ${name.trim()}`,
-                },
-            }),
-        ]);
-        after(() => { grantAchievement(profile.id, "market.first_brand"); });
-        return NextResponse.json({ brand, charged: price });
+        // ATOMIK shartli decrement — avval read-then-set edi: bir vaqtda ikki brend
+        // ochish (double-submit) balansni bir marta yechib ikkita brend ochardi.
+        try {
+            const brand = await prisma.$transaction(async (tx) => {
+                const dec = await tx.wallet.updateMany({
+                    where: { id: wallet.id, balance: { gte: price } },
+                    data: { balance: { decrement: price } },
+                });
+                if (dec.count === 0) throw new Error("INSUFFICIENT_ZIJ");
+                const w2 = await tx.wallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
+                const newBalance = Number(w2?.balance ?? 0);
+                const created = await tx.marketBrand.create({
+                    data: {
+                        slug, name: name.trim(),
+                        description: description?.trim() ?? null,
+                        category: cats[0], categories: cats, logo: logo ?? null,
+                        ownerId: profile.id,
+                        isPaid: true,
+                        verified: isFounder,
+                    },
+                });
+                await tx.walletTransaction.create({
+                    data: {
+                        walletId: wallet.id, type: "PURCHASE", amount: price, balanceAfter: newBalance,
+                        description: `Brend ochish: ${name.trim()}`,
+                    },
+                });
+                return created;
+            });
+            after(() => { grantAchievement(profile.id, "market.first_brand"); });
+            return NextResponse.json({ brand, charged: price });
+        } catch (e) {
+            if (e instanceof Error && e.message === "INSUFFICIENT_ZIJ") {
+                return NextResponse.json({
+                    error: `Brend ochish narxi ${price.toLocaleString()} so'm. Balansingiz yetarli emas.`,
+                    code: "INSUFFICIENT_ZIJ", required: price,
+                }, { status: 400 });
+            }
+            throw e;
+        }
     }
 
     // Bepul brend (1-chi yoki asoschi)

@@ -55,16 +55,22 @@ export async function POST(req: Request) {
     if (action === 1) {
         // Complete — balansga qo'shish (unique constraint bilan race-safe)
         try {
-            const newBalance = Number(wallet.balance) + amount;
-            await prisma.$transaction([
-                prisma.walletTransaction.create({
+            // ATOMIK increment + idempotent. Avval increment, keyin walletTransaction:
+            // duplikat webhook create'да P2002 → butun tx rollback (increment ham bekor)
+            // → ikki marta kredit yo'q. Avvalgi read-then-set bir vaqtli boshqa kreditni
+            // yo'qotardi (lost update).
+            await prisma.$transaction(async (tx) => {
+                const updated = await tx.wallet.update({
+                    where: { id: wallet.id },
+                    data: { balance: { increment: amount } },
+                });
+                await tx.walletTransaction.create({
                     data: {
                         walletId: wallet.id, type: "DEPOSIT", amount, currency: wallet.currency,
-                        balanceAfter: newBalance, description: "Click to'ldirish", ref: clickTransId,
+                        balanceAfter: updated.balance, description: "Click to'ldirish", ref: clickTransId,
                     },
-                }),
-                prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
-            ]);
+                });
+            });
         } catch (e) {
             const code = (e as { code?: string }).code;
             if (code !== "P2002") throw e;

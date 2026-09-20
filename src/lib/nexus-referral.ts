@@ -62,44 +62,51 @@ export async function awardNxReferralOnFirstAction(actorId: string): Promise<{ a
             where: { profileId: ref.inviterId },
             create: { profileId: ref.inviterId, balance: new Prisma.Decimal(0), currency },
             update: {},
-            select: { id: true, balance: true },
+            select: { id: true },
         });
         const inviteeWallet = await prisma.wallet.upsert({
             where: { profileId: actorId },
             create: { profileId: actorId, balance: new Prisma.Decimal(0), currency },
             update: {},
-            select: { id: true, balance: true },
+            select: { id: true },
         });
 
-        const inviterAfter = new Prisma.Decimal(inviterWallet.balance).plus(NX_REFERRAL_INVITER_BONUS);
-        const inviteeAfter = new Prisma.Decimal(inviteeWallet.balance).plus(NX_REFERRAL_INVITEE_BONUS);
-
-        await prisma.$transaction([
-            prisma.wallet.update({ where: { id: inviterWallet.id }, data: { balance: inviterAfter } }),
-            prisma.walletTransaction.create({
+        // ATOMIK increment — read-then-set (balance = inviterAfter) bir vaqtli boshqa
+        // kreditni yo'qotardi (lost update). balanceAfter update qaytargan qiymatdan.
+        await prisma.$transaction(async (tx) => {
+            const inv = await tx.wallet.update({
+                where: { id: inviterWallet.id },
+                data: { balance: { increment: NX_REFERRAL_INVITER_BONUS } },
+                select: { balance: true },
+            });
+            await tx.walletTransaction.create({
                 data: {
                     walletId: inviterWallet.id, type: "REWARD",
                     amount: new Prisma.Decimal(NX_REFERRAL_INVITER_BONUS),
-                    currency, balanceAfter: inviterAfter,
+                    currency, balanceAfter: inv.balance,
                     description: "Nexus do'st chaqirish bonusi",
                     ref: `nxref:${ref.id}:inviter`,
                 },
-            }),
-            prisma.wallet.update({ where: { id: inviteeWallet.id }, data: { balance: inviteeAfter } }),
-            prisma.walletTransaction.create({
+            });
+            const inve = await tx.wallet.update({
+                where: { id: inviteeWallet.id },
+                data: { balance: { increment: NX_REFERRAL_INVITEE_BONUS } },
+                select: { balance: true },
+            });
+            await tx.walletTransaction.create({
                 data: {
                     walletId: inviteeWallet.id, type: "REWARD",
                     amount: new Prisma.Decimal(NX_REFERRAL_INVITEE_BONUS),
-                    currency, balanceAfter: inviteeAfter,
+                    currency, balanceAfter: inve.balance,
                     description: "Nexus'ga xush kelibsiz bonusi",
                     ref: `nxref:${ref.id}:invitee`,
                 },
-            }),
-            prisma.nexusReferral.update({
+            });
+            await tx.nexusReferral.update({
                 where: { id: ref.id },
                 data: { status: "REWARDED", rewardedAt: new Date() },
-            }),
-        ]);
+            });
+        });
 
         return { awarded: true };
     } catch (e) {

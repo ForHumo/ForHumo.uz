@@ -97,10 +97,15 @@ export async function POST(req: Request) {
 
             let newBalance: number | null = null;
             if (paymentMethod === "WALLET" && walletId) {
-                const w = await tx.wallet.findUnique({ where: { id: walletId } });
-                if (!w || Number(w.balance) < total) throw new Error("INSUFFICIENT_ZIJ");
-                newBalance = Number(w.balance) - total;
-                await tx.wallet.update({ where: { id: walletId }, data: { balance: newBalance } });
+                // ATOMIK shartli decrement — read-then-set edi: ikki bir vaqtli checkout
+                // balansni bir marta yechib ikkita buyurtma yaratardi (double-spend).
+                const dec = await tx.wallet.updateMany({
+                    where: { id: walletId, balance: { gte: total } },
+                    data: { balance: { decrement: total } },
+                });
+                if (dec.count === 0) throw new Error("INSUFFICIENT_ZIJ");
+                const w2 = await tx.wallet.findUnique({ where: { id: walletId }, select: { balance: true } });
+                newBalance = Number(w2?.balance ?? 0);
                 await tx.walletTransaction.create({
                     data: { walletId, type: "PURCHASE", amount: total, balanceAfter: newBalance, description: `Humo Market — ${cartItems.length} ta mahsulot` },
                 });

@@ -35,17 +35,21 @@ export async function POST(req: Request) {
         return NextResponse.json({ redirectUrl: res.redirectUrl });
     }
 
-    // Test (yoki darhol tasdiqlangan) — balansga qo'shamiz
-    const newBalance = roundMoney(Number(wallet.balance) + amount, currency);
-    const [updated, tx] = await prisma.$transaction([
-        prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
-        prisma.walletTransaction.create({
+    // Test (yoki darhol tasdiqlangan) — balansga qo'shamiz. ATOMIK increment
+    // (bir vaqtda ikki deposit read-then-set bilan kreditni yo'qotmasin).
+    const [updated, tx] = await prisma.$transaction(async (txc) => {
+        const updated = await txc.wallet.update({
+            where: { id: wallet.id },
+            data: { balance: { increment: amount } },
+        });
+        const tx = await txc.walletTransaction.create({
             data: {
-                walletId: wallet.id, type: "DEPOSIT", amount, currency, balanceAfter: newBalance,
+                walletId: wallet.id, type: "DEPOSIT", amount, currency, balanceAfter: updated.balance,
                 description: provider.live ? "To'ldirish" : "Test to'ldirish", ref: res.providerRef ?? null,
             },
-        }),
-    ]);
+        });
+        return [updated, tx] as const;
+    });
 
     after(() => { grantAchievement(profile.id, "pay.first_deposit"); });
     after(() => triggerPayAgentForTransaction(tx.id));

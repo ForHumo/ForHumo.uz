@@ -88,11 +88,20 @@ export async function holdBookingFunds(input: HoldInput): Promise<HoldResult> {
                     required, balance, currency: w.currency,
                 };
             }
-            const newBalance = balance - required;
-            await tx.wallet.update({
-                where: { id: w.id },
-                data: { balance: newBalance },
+            // ATOMIK shartli decrement — bir vaqtda ikki hold double-spend qilmasin
+            // (avvalgi read-then-set balansni bir marta yechib, ikkita hold ochardi).
+            const dec = await tx.wallet.updateMany({
+                where: { id: w.id, balance: { gte: required } },
+                data: { balance: { decrement: required } },
             });
+            if (dec.count === 0) {
+                return {
+                    ok: false as const, error: "insufficient_balance" as const,
+                    required, balance, currency: w.currency,
+                };
+            }
+            const w2 = await tx.wallet.findUnique({ where: { id: w.id }, select: { balance: true } });
+            const newBalance = Number(w2?.balance ?? 0);
             const ref = `belis:hold:${input.bookingCode}`;
             await tx.walletTransaction.create({
                 data: {

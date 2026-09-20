@@ -56,8 +56,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         if (order.paymentMethod === "WALLET" && Number(order.total) > 0) {
             let wallet = await prisma.wallet.findUnique({ where: { profileId: order.profileId } });
             if (!wallet) wallet = await prisma.wallet.create({ data: { profileId: order.profileId } });
-            const newBalance = Number(wallet.balance) + Number(order.total);
-            ops.push(prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }));
+            const newBalance = Number(wallet.balance) + Number(order.total);   // balanceAfter (best-effort)
+            // ATOMIK increment — read-then-set bir vaqtli boshqa kreditni yo'qotardi (lost update)
+            ops.push(prisma.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: Number(order.total) } } }));
             ops.push(prisma.walletTransaction.create({
                 data: {
                     walletId: wallet.id, type: "REFUND", amount: Number(order.total), balanceAfter: newBalance,

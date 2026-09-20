@@ -77,16 +77,20 @@ export async function POST(req: Request) {
 
                 // Idempotent: (walletId, ref) unique — ikkinchi urinishda P2002 → allaqachon qilingan deymiz
                 try {
-                    const newBalance = Number(wallet.balance) + amount;
-                    await prisma.$transaction([
-                        prisma.walletTransaction.create({
+                    // ATOMIK increment + idempotent (increment → create; duplikatда P2002
+                    // butun tx'ni rollback qiladi). Avvalgi read-then-set lost-update edi.
+                    await prisma.$transaction(async (tx) => {
+                        const updated = await tx.wallet.update({
+                            where: { id: wallet.id },
+                            data: { balance: { increment: amount } },
+                        });
+                        await tx.walletTransaction.create({
                             data: {
                                 walletId: wallet.id, type: "DEPOSIT", amount, currency: wallet.currency,
-                                balanceAfter: newBalance, description: "Payme to'ldirish", ref: paymeId,
+                                balanceAfter: updated.balance, description: "Payme to'ldirish", ref: paymeId,
                             },
-                        }),
-                        prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
-                    ]);
+                        });
+                    });
                 } catch (e) {
                     const code = (e as { code?: string }).code;
                     if (code !== "P2002") throw e;

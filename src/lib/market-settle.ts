@@ -45,8 +45,10 @@ export async function settleOrder(orderId: string) {
         if (net <= 0) continue;
         let wallet = await prisma.wallet.findUnique({ where: { profileId: ownerId } });
         if (!wallet) wallet = await prisma.wallet.create({ data: { profileId: ownerId } });
-        const newBalance = Number(wallet.balance) + net;
-        ops.push(prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }));
+        const newBalance = Number(wallet.balance) + net;   // balanceAfter uchun (best-effort)
+        // ATOMIK increment — bir vaqtda bir sotuvchiga bir nechta buyurtma settle bo'lsa
+        // read-then-set kreditni yo'qotardi (lost update).
+        ops.push(prisma.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: net } } }));
         ops.push(prisma.walletTransaction.create({
             data: {
                 walletId: wallet.id, type: "SALE", amount: net, balanceAfter: newBalance,

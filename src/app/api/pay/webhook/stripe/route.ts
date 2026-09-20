@@ -56,16 +56,20 @@ export async function POST(req: Request) {
 
     // Idempotent (unique constraint bilan race-safe)
     try {
-        const newBalance = Number(wallet.balance) + amountUsd;
-        await prisma.$transaction([
-            prisma.walletTransaction.create({
+        // ATOMIK increment + idempotent (increment → create; duplikatда P2002 butun
+        // tx'ni rollback qiladi). Avvalgi read-then-set lost-update edi.
+        await prisma.$transaction(async (tx) => {
+            const updated = await tx.wallet.update({
+                where: { id: wallet.id },
+                data: { balance: { increment: amountUsd } },
+            });
+            await tx.walletTransaction.create({
                 data: {
                     walletId: wallet.id, type: "DEPOSIT", amount: amountUsd, currency: wallet.currency,
-                    balanceAfter: newBalance, description: "Stripe to'ldirish", ref: sessionId,
+                    balanceAfter: updated.balance, description: "Stripe to'ldirish", ref: sessionId,
                 },
-            }),
-            prisma.wallet.update({ where: { id: wallet.id }, data: { balance: newBalance } }),
-        ]);
+            });
+        });
     } catch (e) {
         const code = (e as { code?: string }).code;
         if (code !== "P2002") throw e;
