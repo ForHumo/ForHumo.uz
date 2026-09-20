@@ -190,46 +190,63 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
 
         // ACCEPT + mahsulotli taklif → rezervatsiya. Avval stock band emasligini
         // tekshiramiz (bir nechta xaridor bir vaqtda kelishsa oversell bo'lmasin).
-        let dealToCreate: { productId: string; agreedPrice: number } | null = null;
+        const newStatus = kind === "ACCEPT" ? "ACCEPTED"
+            : kind === "REJECT" ? "REJECTED"
+            : "COUNTERED";
+
+        // ACCEPT + mahsulotli taklif → rezervatsiya. Bir vaqtda ikki ACCEPT bitta
+        // stock=1 mahsulotga ikkita deal yaratmasin: tekshiruv + status + deal bitta
+        // SERIALIZABLE tranzaksiyada atomik. Aks holda ikkalasi reserved=0 o'qib,
+        // ikkita deal ochardi (ikki xaridorga "band" deb yolg'on va'da berilardi).
+        let createdDeal: { productId: string; agreedPrice: number } | null = null;
         if (kind === "ACCEPT" && offer.productId && offer.offerAmount && offer.offerAmount > 0) {
-            const product = await prisma.bnProduct.findUnique({
-                where: { id: offer.productId },
-                select: { stock: true },
-            });
-            if (product) {
-                const reserved = await reservedQty(prisma, offer.productId);
-                if (product.stock - reserved < 1) {
+            const pid = offer.productId;
+            const amount = offer.offerAmount;
+            try {
+                await prisma.$transaction(async (tx) => {
+                    const product = await tx.bnProduct.findUnique({ where: { id: pid }, select: { stock: true } });
+                    if (!product) throw new Error("NO_PRODUCT");
+                    const reserved = await reservedQty(tx, pid);
+                    if (product.stock - reserved < 1) throw new Error("NO_STOCK");
+                    await tx.bnShopChatMessage.update({ where: { id: answersOfferId! }, data: { offerStatus: "ACCEPTED" } });
+                    await tx.bnPriceDeal.create({
+                        data: {
+                            productId: pid, buyerId: chat.buyerId, shopId: shop.id,
+                            chatMessageId: answersOfferId, agreedPrice: amount, qty: 1,
+                            expiresAt: new Date(Date.now() + DEAL_HOURS * 3600 * 1000),
+                        },
+                    });
+                }, { isolationLevel: "Serializable" });
+                createdDeal = { productId: pid, agreedPrice: amount };
+            } catch (e) {
+                const em = e instanceof Error ? e.message : String(e);
+                if (em === "NO_STOCK") {
                     return NextResponse.json({
                         error: "no_stock_to_reserve",
                         message: "Barcha zaxira band — avval mavjud kelishuvlar yakunlansin yoki zaxira qo'shing",
                     }, { status: 409 });
                 }
-                dealToCreate = { productId: offer.productId, agreedPrice: offer.offerAmount };
+                if (em === "NO_PRODUCT") {
+                    await prisma.bnShopChatMessage.update({ where: { id: answersOfferId! }, data: { offerStatus: "ACCEPTED" } });
+                } else if (/P2034|40001|serial|write conflict|deadlock/i.test(em)) {
+                    return NextResponse.json({
+                        error: "conflict_retry",
+                        message: "Bir vaqtda boshqa kelishuv bo'ldi — qayta urining",
+                    }, { status: 409 });
+                } else {
+                    return NextResponse.json({ error: "accept_failed" }, { status: 500 });
+                }
             }
+        } else {
+            await prisma.bnShopChatMessage.update({
+                where: { id: answersOfferId! },
+                data: { offerStatus: newStatus },
+            });
         }
 
-        const newStatus = kind === "ACCEPT" ? "ACCEPTED"
-            : kind === "REJECT" ? "REJECTED"
-            : "COUNTERED";
-        await prisma.bnShopChatMessage.update({
-            where: { id: answersOfferId! },
-            data: { offerStatus: newStatus },
-        });
-
-        // Rezervatsiya — kelishilgan narx 48 soat band (checkout shu narxda o'tadi)
-        if (dealToCreate) {
-            const deal = dealToCreate;
-            await prisma.bnPriceDeal.create({
-                data: {
-                    productId: deal.productId,
-                    buyerId: chat.buyerId,
-                    shopId: shop.id,
-                    chatMessageId: answersOfferId,
-                    agreedPrice: deal.agreedPrice,
-                    qty: 1,
-                    expiresAt: new Date(Date.now() + DEAL_HOURS * 3600 * 1000),
-                },
-            });
+        // Rezervatsiya muvaffaqiyatli — xaridorga xabar + boshqa takliflarni avto-yopish
+        if (createdDeal) {
+            const deal = createdDeal;
             // Xaridorga xabar (kelishildi)
             after(async () => {
                 try {
