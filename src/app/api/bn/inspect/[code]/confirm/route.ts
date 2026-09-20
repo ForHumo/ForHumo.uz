@@ -56,6 +56,15 @@ export async function POST(
 
     try {
         await prisma.$transaction(async (tx) => {
+            // Atomik: holdni "used" deb egallash — faqat hali ochiq VA muddati o'tmagan
+            // bo'lsa. Aks holda (bir vaqtda bekor / expiry) sotuv + stok tiklash birga
+            // bo'lib, inventar buzilardi. G'olib faqat bittasi.
+            const claim = await tx.bnInspectHold.updateMany({
+                where: { id: hold.id, usedAt: null, cancelledAt: null, expiresAt: { gt: new Date() } },
+                data:  { usedAt: new Date() },
+            });
+            if (claim.count === 0) throw new Error("HOLD_CLOSED");
+
             const order = await tx.bnOrder.create({
                 data: {
                     code: orderCode,
@@ -89,14 +98,13 @@ export async function POST(
                 where: { id: product.id },
                 data:  { sold: { increment: hold.qty } },
             });
-
-            await tx.bnInspectHold.update({
-                where: { id: hold.id },
-                data:  { usedAt: new Date() },
-            });
+            // usedAt yuqorida atomik claim'да o'rnatildi (bu yerda takror shart emas)
         });
     } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
+        if (msg === "HOLD_CLOSED") {
+            return NextResponse.json({ error: "hold_closed" }, { status: 409 });
+        }
         return NextResponse.json({ error: "confirm_failed", detail: msg }, { status: 500 });
     }
 

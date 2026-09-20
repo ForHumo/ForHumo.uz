@@ -20,16 +20,27 @@ export async function POST(
         return NextResponse.json({ error: "already_closed" }, { status: 409 });
     }
 
-    await prisma.$transaction(async (tx) => {
-        await tx.bnInspectHold.update({
-            where: { id: hold.id },
-            data:  { cancelledAt: new Date() },
+    // Atomik claim — faqat hali OCHIQ bo'lsa yopamiz va stokni tiklaymiz. Aks holda
+    // (bir vaqtda ikkinchi bekor, expiry-cron yoki confirm) stok ikki marta tiklanib,
+    // fantom zaxira paydo bo'lardi.
+    try {
+        await prisma.$transaction(async (tx) => {
+            const claim = await tx.bnInspectHold.updateMany({
+                where: { id: hold.id, usedAt: null, cancelledAt: null },
+                data:  { cancelledAt: new Date() },
+            });
+            if (claim.count === 0) throw new Error("ALREADY_CLOSED");
+            await tx.bnProduct.update({
+                where: { id: hold.productId },
+                data:  { stock: { increment: hold.qty } },
+            });
         });
-        await tx.bnProduct.update({
-            where: { id: hold.productId },
-            data:  { stock: { increment: hold.qty } },
-        });
-    });
+    } catch (e) {
+        if (e instanceof Error && e.message === "ALREADY_CLOSED") {
+            return NextResponse.json({ error: "already_closed" }, { status: 409 });
+        }
+        return NextResponse.json({ error: "cancel_failed" }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true });
 }

@@ -24,17 +24,21 @@ export async function GET(req: Request) {
     let restored = 0;
     for (const h of stale) {
         try {
-            await prisma.$transaction(async (tx) => {
-                await tx.bnInspectHold.update({
-                    where: { id: h.id },
+            const done = await prisma.$transaction(async (tx) => {
+                // Atomik claim — faqat hali ochiq bo'lsa (bekor/confirm allaqachon
+                // yopmagan bo'lsa) yopamiz va stokni tiklaymiz. Aks holda ikki marta.
+                const claim = await tx.bnInspectHold.updateMany({
+                    where: { id: h.id, usedAt: null, cancelledAt: null },
                     data:  { cancelledAt: now },
                 });
+                if (claim.count === 0) return false;
                 await tx.bnProduct.update({
                     where: { id: h.productId },
                     data:  { stock: { increment: h.qty } },
                 });
+                return true;
             });
-            restored++;
+            if (done) restored++;
         } catch { /* skip */ }
     }
 
