@@ -1,41 +1,47 @@
-// Digital Asset Links — TWA (Google Play) uchun.
-// bozornarxida.uz shu faylda Android ilovani "tasdiqlaydi" → TWA brauzer
-// manzil chizig'isiz, to'liq ekran ochiladi (aks holda tepada URL bar qoladi).
+// Digital Asset Links — TWA (Google Play) uchun. HOST-AWARE: har domen o'z TWA paketini
+// tasdiqlaydi → ilova manzil chizig'isiz to'liq ekran ochiladi (aks holda tepada URL bar).
+//
+//   bozornarxida.uz (+www)            → Bozor Narxida TWA
+//     TWA_PACKAGE_NAME, TWA_SHA256_FINGERPRINTS
+//   forhumo.uz (+www) / humoesport.uz → Humo eSport TWA
+//     TWA_ESPORT_PACKAGE_NAME, TWA_ESPORT_SHA256_FINGERPRINTS
 //
 // TO'LDIRISH (Bubblewrap build'dan KEYIN — KOD O'ZGARTIRMASDAN, Vercel env orqali):
-//   TWA_PACKAGE_NAME         = uz.bozornarxida.twa      (Bubblewrap applicationId)
-//   TWA_SHA256_FINGERPRINTS  = AA:BB:CC:...,DD:EE:FF:... (vergul bilan; probel shart emas)
-//
-// Fingerprint(lar)ni qayerdan olish:
-//   - Play App Signing YOQILGAN bo'lsa (tavsiya): Play Console → Test and release →
-//     Setup → App integrity → "App signing key certificate" VA "Upload key certificate"
-//     ikkalasining SHA-256 ini qo'shing (ikkalasi ham kerak).
-//   - Yoki lokal keystore'dan: `keytool -list -v -keystore <fayl>.keystore` → SHA-256.
+//   <PKG>          = uz.forhumo.esport.twa      (Bubblewrap applicationId)
+//   <FINGERPRINTS> = AA:BB:CC:...,DD:EE:FF:...  (vergul bilan)
+// Play App Signing YOQILGAN bo'lsa: "App signing key" VA "Upload key" SHA-256 IKKALASI.
 //
 // Env yo'q bo'lsa bo'sh massiv [] qaytadi (yaroqli JSON) — TWA hali tasdiqlanmaydi,
 // lekin sayt buzilmaydi. Env qo'yib redeploy qilinsa darhol ishlaydi.
 
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-    const pkg = process.env.TWA_PACKAGE_NAME?.trim();
-    const fingerprints = (process.env.TWA_SHA256_FINGERPRINTS ?? "")
+function entry(pkg?: string, fingerprints?: string) {
+    const p = pkg?.trim();
+    const f = (fingerprints ?? "")
         .split(",")
         .map(s => s.trim().toUpperCase())
         .filter(Boolean);
+    if (!p || f.length === 0) return null;
+    return {
+        relation: ["delegate_permission/common.handle_all_urls"],
+        target: { namespace: "android_app", package_name: p, sha256_cert_fingerprints: f },
+    };
+}
 
-    const body = pkg && fingerprints.length > 0
-        ? [{
-            relation: ["delegate_permission/common.handle_all_urls"],
-            target: {
-                namespace: "android_app",
-                package_name: pkg,
-                sha256_cert_fingerprints: fingerprints,
-            },
-        }]
-        : [];
+export async function GET() {
+    const host = (await headers()).get("host")?.split(":")[0].toLowerCase() ?? "";
+    const isBn = host === "bozornarxida.uz" || host === "www.bozornarxida.uz";
+
+    const e = isBn
+        ? entry(process.env.TWA_PACKAGE_NAME, process.env.TWA_SHA256_FINGERPRINTS)
+        // forhumo.uz (+www) / humoesport.uz → Humo eSport TWA
+        : entry(process.env.TWA_ESPORT_PACKAGE_NAME, process.env.TWA_ESPORT_SHA256_FINGERPRINTS);
+
+    const body = e ? [e] : [];
 
     return NextResponse.json(body, {
         headers: {
