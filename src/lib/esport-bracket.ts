@@ -52,6 +52,12 @@ export async function generateBracket(tournamentId: string): Promise<{ ok: boole
         for (let s = 0; s < size / Math.pow(2, r); s++) data.push({ tournamentId, round: r, slot: s, bracket: "MAIN", teamAId: null, teamBId: null, seedA: null, seedB: null });
     }
     if (t.thirdPlace && rounds >= 2) data.push({ tournamentId, round: rounds, slot: 0, bracket: "THIRD", teamAId: null, teamBId: null, seedA: null, seedB: null });
+
+    // Atomik claim — setka YOZILISHIDAN oldin. Barcha validatsiya/seeding yuqorida
+    // read-only bo'ldi; endi bracketReady'ni faqat u false bo'lganda claim qilamiz.
+    // Aks holda bir vaqtli generate (admin bosishi + cron) DUBLIKAT setka yaratardi.
+    const claim = await prisma.esTournament.updateMany({ where: { id: tournamentId, bracketReady: false }, data: { bracketReady: true } });
+    if (claim.count === 0) return { ok: false, error: "Setka allaqachon tuzilgan" };
     await prisma.esMatch.createMany({ data });
 
     // 2) Ulanishlar (g'olib -> keyingi round; yarim final mag'lubi -> 3-o'rin)
@@ -73,7 +79,8 @@ export async function generateBracket(tournamentId: string): Promise<{ ok: boole
     }
     if (ops.length) await prisma.$transaction(ops);
 
-    await prisma.esTournament.update({ where: { id: tournamentId }, data: { bracketReady: true, status: "LIVE" } });
+    // bracketReady yuqorida atomik claim'da o'rnatildi — bu yerda faqat status.
+    await prisma.esTournament.update({ where: { id: tournamentId }, data: { status: "LIVE" } });
 
     // 3) Bye'larni avto-o'tkazish
     await autoAdvanceByes(tournamentId);

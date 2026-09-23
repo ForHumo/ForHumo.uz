@@ -43,13 +43,23 @@ export async function POST(req: Request) {
     const nextStartsAt = b.nextStartsAt ? new Date(b.nextStartsAt) : new Date();
     const nextEndsAt = b.nextEndsAt ? new Date(b.nextEndsAt) : null;
 
-    const result = await prisma.$transaction(async tx => {
-        await tx.esSeason.update({ where: { id: seasonId }, data: { active: false, endsAt: new Date() } });
-        const ns = await tx.esSeason.create({ data: { gameId: season.gameId, name: nextName, startsAt: nextStartsAt, endsAt: nextEndsAt, active: true } });
-        const data = [...nextDiv.entries()].map(([teamId, divisionId]) => ({ seasonId: ns.id, divisionId, teamId }));
-        if (data.length) await tx.esStanding.createMany({ data });
-        return { nextId: ns.id, carried: data.length, promoted: moved.size };
-    });
+    let result;
+    try {
+        result = await prisma.$transaction(async tx => {
+            // Atomik CAS — mavsum HALI faol bo'lgandagina yopamiz. Aks holda double-click
+            // (yoki ikki so'rov) mavsumni qayta yopib, IKKINCHI keyingi mavsum + dublikat
+            // standings yaratardi. count=0 => allaqachon rollover qilingan.
+            const closed = await tx.esSeason.updateMany({ where: { id: seasonId, active: true }, data: { active: false, endsAt: new Date() } });
+            if (closed.count === 0) throw new Error("ALREADY_ROLLED");
+            const ns = await tx.esSeason.create({ data: { gameId: season.gameId, name: nextName, startsAt: nextStartsAt, endsAt: nextEndsAt, active: true } });
+            const data = [...nextDiv.entries()].map(([teamId, divisionId]) => ({ seasonId: ns.id, divisionId, teamId }));
+            if (data.length) await tx.esStanding.createMany({ data });
+            return { nextId: ns.id, carried: data.length, promoted: moved.size };
+        });
+    } catch (e) {
+        if (e instanceof Error && e.message === "ALREADY_ROLLED") return NextResponse.json({ error: "Mavsum allaqachon yakunlangan" }, { status: 400 });
+        throw e;
+    }
 
     return NextResponse.json({ ok: true, ...result });
 }

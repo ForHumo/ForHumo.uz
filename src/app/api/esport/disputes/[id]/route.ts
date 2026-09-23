@@ -16,7 +16,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!action) return NextResponse.json({ error: "Noto'g'ri amal" }, { status: 400 });
     const note = typeof b.note === "string" && b.note.trim() ? b.note.trim().slice(0, 500) : null;
 
-    await prisma.esDispute.update({ where: { id }, data: { status: action, adminNote: note, resolvedAt: new Date() } });
+    // Atomik CAS — faqat OPEN bo'lsa yopamiz (bir vaqtli ikki hakam qarori yoki
+    // double-click ikki marta yopib, ikki marta bildirishnoma yubormasin).
+    const claim = await prisma.esDispute.updateMany({ where: { id, status: "OPEN" }, data: { status: action, adminNote: note, resolvedAt: new Date() } });
+    if (claim.count === 0) return NextResponse.json({ error: "E'tiroz allaqachon yopilgan" }, { status: 400 });
     await esNotify(d.filedBy, {
         type: "DISPUTE_RESULT",
         title: action === "RESOLVED" ? "E'tiroz qabul qilindi" : "E'tiroz rad etildi",
