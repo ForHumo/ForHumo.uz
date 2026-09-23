@@ -11,6 +11,9 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
 
     if (isBn) {
         return {
+            // id — PWA identligini barqaror qiladi (start_url o'zgarsa ham "bir xil ilova").
+            // Chrome/Play shu bilan ilovani taniydi; TWA update'da muhim.
+            id: "/",
             name: "Bozor Narxida",
             short_name: "BN",
             description:
@@ -27,7 +30,11 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
                 // noto'g'ri 192/512 deb e'lon qilingandi → installability/ikona generatsiyasi buzilardi).
                 { src: "/bn/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
                 { src: "/bn/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-                { src: "/bn/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+                // Maskable ALOHIDA fayl — logo safe-zone (markaziy 60%) ichida, oq fon bilan.
+                // Avval to'liq-chetgacha icon-512 maskable deb berilgandi → Android adaptiv
+                // ikonada (doira/squircle niqob) burchaklari kesilardi. Bubblewrap aynan shu
+                // maskable'ni Play launcher ikonasiga ishlatadi.
+                { src: "/bn/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
             ],
             categories: ["shopping", "business", "lifestyle"],
         };

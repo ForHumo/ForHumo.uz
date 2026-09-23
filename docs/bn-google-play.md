@@ -4,10 +4,19 @@ Mavjud PWA (`bozornarxida.uz`) ni **TWA (Trusted Web Activity)** orqali Android 
 o'raymiz. Yangi kod yozilmaydi — sayt shundayligicha ilova ichida ochiladi.
 
 ## Kod tomonidan TAYYOR (bu repo'da qilingan)
-- ✅ PWA manifest (`/manifest.webmanifest`) — BN nomi, `standalone`, to'g'ri ikonalar
-  (192 + 512 + maskable). Host `bozornarxida.uz` bo'lsa avtomatik BN manifest chiqadi.
-- ✅ Service worker (`/sw.js`) — offline shell (mavjud edi).
+- ✅ PWA manifest (`/manifest.webmanifest`) — BN nomi, `standalone`, `id`, to'g'ri ikonalar.
+  Host `bozornarxida.uz` bo'lsa avtomatik BN manifest chiqadi.
+- ✅ Ikonalar — `any`: `/bn/icon-192.png` (192×192) + `/bn/icon-512.png` (512×512).
+  **maskable: ALOHIDA** `/bn/icon-maskable-512.png` — logo safe-zone (markaziy ~60%)
+  ichida, oq fon bilan. (Avval to'liq-chetgacha icon-512 maskable deb berilgan edi →
+  Android adaptiv ikonada burchaklari kesilardi. Bubblewrap aynan shu maskable'ni Play
+  launcher ikonasiga oladi, shuning uchun bu muhim edi.)
+- ✅ Service worker (`/sw.js`) — offline shell. Endi **`BnServiceWorker`** (BN layout)
+  orqali BARCHA foydalanuvchida erta ro'yxatga olinadi (avval faqat push yoqilganda
+  edi) → offline + Chrome `beforeinstallprompt` (bir-bosishli o'rnatish) ishonchli.
 - ✅ `/.well-known/assetlinks.json` route — hozircha bo'sh `[]`, env qo'yilганда to'ladi.
+  Middleware `.`-li yo'llarni chetlab o'tadi, shuning uchun `bozornarxida.uz` hostida ham
+  `/.well-known/assetlinks.json` va `/manifest.webmanifest` to'g'ri (rewrite'siz) beriladi.
 
 ## Sizning tomoningizdan QOLGAN qadamlar
 
