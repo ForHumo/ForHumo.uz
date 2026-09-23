@@ -33,9 +33,24 @@ npm i -g @bubblewrap/cli
 Birinchi ishga tushirishda JDK + Android SDK'ni o'zi so'rab yuklab oladi.
 
 ### 2. Loyihani init qilish
+
+> ⚠️ **MUHIM — WWW redirect (2026-09-23 jonli tekshiruvda topildi):**
+> `bozornarxida.uz` (apex) hozir **308 redirect** bilan `www.bozornarxida.uz` ga
+> yo'naltiradi (Vercel'da www = birlamchi domen). TWA'ni **redirect qilmaydigan
+> kanonik host bilan** init qiling, aks holda Digital Asset Links tekshiruvi
+> chalkashadi va telefonda **URL bar chiqib qoladi**. Ikki variant:
+>
+> - **(A) Hoziroq ishlaydi:** `www.bozornarxida.uz` ni ishlating (quyida shunday).
+>   assetlinks/manifest www'da to'g'ridan-to'g'ri (redirect'siz) beriladi.
+> - **(B) Toza yechim (tavsiya):** Vercel → Project → Domains'da **`bozornarxida.uz`
+>   (www'siz) ni Primary qiling** (www → apex redirect bo'lsin). Shunda hamma narsa
+>   kod'dagi `metadataBase: https://bozornarxida.uz` + OG/canonical bilan mos keladi.
+>   Keyin init'da apex host'ni ishlating. (Bu Vercel sozlamasi — kod emas.)
+
 ```bash
 mkdir bn-twa && cd bn-twa
-bubblewrap init --manifest https://bozornarxida.uz/manifest.webmanifest
+# Redirect qilmaydigan kanonik host (hozir = www). B variantni tanlasangiz apex yozing.
+bubblewrap init --manifest https://www.bozornarxida.uz/manifest.webmanifest
 ```
 So'raganda:
 - **Application ID (package name):** `uz.bozornarxida.twa` (yoki xohlagan, lekin keyin
@@ -61,11 +76,12 @@ SHA-256 ni oling. Keyin **Vercel → Project → Settings → Environment Variab
 TWA_PACKAGE_NAME        = uz.bozornarxida.twa
 TWA_SHA256_FINGERPRINTS = <SHA-256 fingerprint>
 ```
-**Redeploy** qiling. Tekshiring:
+**Redeploy** qiling. Tekshiring (redirect qilmaydigan kanonik host — 2-qadamdagidek):
 ```bash
-curl https://bozornarxida.uz/.well-known/assetlinks.json
+curl https://www.bozornarxida.uz/.well-known/assetlinks.json
 ```
-endi `[]` emas, ichida package + fingerprint ko'rinishi kerak.
+endi `[]` emas, ichida package + fingerprint ko'rinishi kerak. (Apex `bozornarxida.uz`
+so'rasangiz 308 → www; DAL tekshiruvi uchun to'g'ridan-to'g'ri www'ni ishlating.)
 
 ### 5. Play Console (bir martalik $25'dan keyin)
 1. Yangi ilova yarating (Bozor Narxida, uz).
