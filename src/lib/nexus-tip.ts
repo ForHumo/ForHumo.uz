@@ -2,6 +2,7 @@
 // Donor o'z valyutasida yuboradi; ijodkor o'z valyutasida (kerak bo'lsa FX konvert) oladi.
 // Video xarididagi $transaction pattern bilan bir xil. Super Chat ham shundan foydalanadi.
 
+import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { roundMoney, convert, currencyForCountry, type Currency } from "@/lib/money";
 
@@ -31,6 +32,10 @@ export async function sendTip(opts: {
             const wallet = await tx.wallet.findUnique({ where: { profileId: opts.donorId } });
             if (!wallet) return { result: "no_funds" as const };
             const dCur = cur(wallet.currency);
+            // Har tip NOYOB ref — avval ref = targetId/recipientId edi, shuning uchun
+            // bir target/ijodkorga IKKINCHI tip (yoki ikkinchi donor) (walletId,ref) unique'ga
+            // urilib "invalid" qaytardi — ya'ni takroriy tip / Super Chat butunlay ishlamasdi.
+            const tipRef = `tip:${crypto.randomUUID()}`;
 
             // Donor — atomik shartli debit (race-safe: balans yetarli bo'lsagina kamayadi)
             const debit = await tx.wallet.updateMany({ where: { id: wallet.id, balance: { gte: amount } }, data: { balance: { decrement: amount } } });
@@ -38,7 +43,7 @@ export async function sendTip(opts: {
             const afterDonor = await tx.wallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
             const newDonorBal = roundMoney(Number(afterDonor?.balance ?? 0), dCur);
             await tx.walletTransaction.create({
-                data: { walletId: wallet.id, type: "TRANSFER_OUT", amount, currency: dCur, balanceAfter: newDonorBal, description: "Nexus qo'llab-quvvatlash (tip)", ref: opts.targetId ?? opts.recipientId },
+                data: { walletId: wallet.id, type: "TRANSFER_OUT", amount, currency: dCur, balanceAfter: newDonorBal, description: "Nexus qo'llab-quvvatlash (tip)", ref: tipRef },
             });
 
             // Ijodkor — TRANSFER_IN (o'z valyutasiga konvert; hamyon bo'lmasa yaratiladi)
@@ -50,7 +55,7 @@ export async function sendTip(opts: {
             const afterRec = await tx.wallet.findUnique({ where: { id: aw.id }, select: { balance: true } });
             const newRecBal = roundMoney(Number(afterRec?.balance ?? 0), rCur);
             await tx.walletTransaction.create({
-                data: { walletId: aw.id, type: "TRANSFER_IN", amount: received, currency: rCur, balanceAfter: newRecBal, description: "Nexus tip (qo'llab-quvvatlash daromadi)", ref: opts.targetId ?? opts.donorId },
+                data: { walletId: aw.id, type: "TRANSFER_IN", amount: received, currency: rCur, balanceAfter: newRecBal, description: "Nexus tip (qo'llab-quvvatlash daromadi)", ref: tipRef },
             });
 
             const tip = await tx.nexusTip.create({

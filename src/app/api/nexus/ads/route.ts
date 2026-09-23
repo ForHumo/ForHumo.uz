@@ -64,9 +64,16 @@ export async function POST(req: Request) {
     try {
         const created = await prisma.$transaction(async (tx) => {
             const wallet = await getOrCreateWalletTx(tx, profile.id);
-            if (Number(wallet.balance) < total) throw new Error("insufficient_balance");
-            const newBal = Number(wallet.balance) - total;
-            await tx.wallet.update({ where: { id: wallet.id }, data: { balance: newBal } });
+            // ATOMIK shartli decrement — avval read-then-set (balance: newBal) edi: bir vaqtli
+            // ikki reklama xaridi balansni bir marta yechib ikkitasini yaratardi (lost-update/
+            // double-spend). Interactive tx Read-Committed'da row-lock qilmaydi.
+            const debit = await tx.wallet.updateMany({
+                where: { id: wallet.id, balance: { gte: total } },
+                data: { balance: { decrement: total } },
+            });
+            if (debit.count === 0) throw new Error("insufficient_balance");
+            const after = await tx.wallet.findUnique({ where: { id: wallet.id }, select: { balance: true } });
+            const newBal = Number(after?.balance ?? 0);
 
             const expiresAt = new Date(Date.now() + days * 24 * 3600 * 1000);
             const ad = await tx.nexusAdSlot.create({
