@@ -77,9 +77,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!stream) return NextResponse.json({ error: "Topilmadi" }, { status: 404 });
 
     if (action === "start" && stream.status === "UPCOMING") {
-        const updated = await prisma.nexusLiveStream.update({
-            where: { id }, data: { status: "LIVE", startedAt: new Date() },
+        // Atomik CAS — bir vaqtli/double-click ikki "start" reminder push'ni IKKI marta
+        // yubormasin (faqat status hali UPCOMING bo'lganda claim qilamiz).
+        const claim = await prisma.nexusLiveStream.updateMany({
+            where: { id, status: "UPCOMING" }, data: { status: "LIVE", startedAt: new Date() },
         });
+        const updated = await prisma.nexusLiveStream.findUnique({ where: { id } });
+        if (claim.count === 0) return NextResponse.json({ stream: updated }); // allaqachon boshlangan — push takrorlanmaydi
         // Batch N — Reminder subscribers'ga push yuborish (bir marta, notified=true)
         after(async () => {
             const reminders = await prisma.nexusLiveReminder.findMany({
@@ -92,7 +96,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             const title = `${author?.name || author?.username || "Streamer"} jonli efirni boshladi`;
             await Promise.all(reminders.map(r =>
                 sendPushToProfile(r.profileId, {
-                    title, body: updated.title,
+                    title, body: updated?.title ?? "",
                     url: `/nexus/live/${id}`, tag: `nx-live-${id}`,
                 }).catch(() => null)
             ));
