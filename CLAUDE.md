@@ -59,10 +59,9 @@ Bu qismni tushunish uchun bir nechta faylni birga o'qish kerak. Eng muhim naqshl
 - Sahifalar deyarli har doim **ingichka server wrapper**: `await params` → `setRequestLocale(locale)` → `generateMetadata()` → katta **client komponent**ni (`src/components/<modul>/`) render qiladi. Haqiqiy logika sahifada emas, komponentlarda.
 - UI matnlari `messages/{uz,ru,en}.json` da; `useTranslations()` orqali olinadi.
 
-### 2. Ikkita parallel identity modeli (MUHIM gotcha)
-- **`UserProfile`** — asosiy Humo ID identity, `email` bo'yicha unique. NextAuth (`src/lib/auth.ts`) `signIn` callback'ida shu modelga `upsert` qiladi, login eventlarini yozadi (oxirgi 10 tasini saqlaydi), `level` ni 1 ga ko'taradi.
-- **`User`** — faqat esport uchun, `nickname` bo'yicha unique. Jamoalar/turnirlar shu modelga bog'lanadi.
-- **Bu ikkisi FK bilan bog'lanmagan.** "Foydalanuvchi" ustida ishlayotganda qaysi modelligini aniqlang.
+### 2. Identity — hamma narsa `UserProfile` ustida
+- **`UserProfile`** — yagona Humo ID identity, `email` bo'yicha unique. NextAuth (`src/lib/auth.ts`) `signIn` callback'ida shu modelga `upsert` qiladi, login eventlarini yozadi (oxirgi 10 tasini saqlaydi), `level` ni 1 ga ko'taradi.
+- **Esport ham `UserProfile` ustida:** `EsAthlete.humoProfileId` (@unique — bir Humo ID = bitta athlete) → `UserProfile.id`; jamoa egaligi `EsTeam.ownerId` ham `UserProfile.id`. Eski alohida `User`/`PlayerProfile` esport modellari **olib tashlangan** — endi "ikki identity" gotcha YO'Q.
 
 ### 3. Auth oqimi (NextAuth v4, JWT strategy)
 - Faqat **GoogleProvider** ulangan (`src/lib/auth.ts`).
@@ -79,14 +78,14 @@ Bu qismni tushunish uchun bir nechta faylni birga o'qish kerak. Eng muhim naqshl
 - Pay biznes-logikasi `src/app/api/pay/*` (deposit/withdraw/transfer/safe/wallet). **Hozir TEST rejim** (deposit darhol tushadi). MChJ + merchant hisob + kalitlar foydalanuvchidan kelganda real ishlaydi.
 - ⚠️ **Market hali Zij'da** (narxlari migratsiya qilinmagan; Nexus shoppable postlarda vaqtincha UZS sifatida ko'rsatiladi). Market valyuta migratsiyasi keyingi ish.
 
-### 5. Repository vs API-direct (mos kelmaslik)
-- **Esport** DB logikasi `src/lib/repositories/` da (players / teams / tournaments).
-- **Market va Pay** esa `prisma`'ni to'g'ridan-to'g'ri API route'larida chaqiradi (repository qatlami yo'q).
-- Yangi kod yozayotganda mavjud modulning uslubiga moslang.
+### 5. DB kirish uslubi — prisma-direct
+- **Barcha modullar** (Esport, Market, Pay, Nexus, BN) `prisma`'ni **to'g'ridan-to'g'ri** API route'larda chaqiradi — repository qatlami yo'q (eski `src/lib/repositories/` OLIB TASHLANGAN).
+- Esport murakkab logikasi `src/lib/esport*.ts` yordamchilarida: `esport-bracket` (setka/Elo), `esport-transfer`, `esport-elo`, `esport-lock`, `esport-contract`, `esport-block`, `esport-notify` + `esport-nexus-*` (Nexus kanal sync).
 
-### 6. Esport rollari (ikkinchi rol tizimi)
-- `src/lib/permissions.ts` — `ORGANIZER` / `MODERATOR` / `SYSTEM_AI` rollari → action ruxsatlari (`hasPermission()`).
-- Bu Prisma `UserRole` (USER/ADMIN) dan **alohida** tizim. `/esport/admin` (`esport/admin/page.tsx`) shu role-based ruxsatlardan foydalanadi.
+### 6. Esport ruxsatlari — `src/lib/esport.ts`
+- `getMyProfile()` (login `UserProfile`), `getEsportAdmin()` (`EsAdmin` jadvali yoki ega), `getEsportOwner()` (faqat ega). Ega = `ESPORT_OWNER_HUMO_ID = "UZ6889574"` / `abduvoris`.
+- `/esport/admin` va `api/esport/admin/*` shular bilan gate'lanadi. (Eski `src/lib/permissions.ts` ORGANIZER/MODERATOR tizimi — OLIB TASHLANGAN.)
+- ⚠️ **Esport pul yo'llari konkurentlik-himoyalangan** (2026-09 sweep): fund/payout/transfer atomik `$transaction`; match/league natijasi + rollover + generateBracket **CAS** (`updateMany where status/flag`); `WalletTransaction @@unique([walletId,ref])` idempotentlik (`tour:<id>:p<n>`, `transfer:<id>`). Yangi esport pul/status kodида shu naqshlarni saqla.
 
 ### 7. Shifrlangan manzil
 - `src/lib/crypto.ts` — AES-256-GCM. `UserProfile.location` (shifrlangan) + `locationIv` juftligida saqlanadi. Kalit: `LOCATION_ENCRYPTION_KEY` (bo'lmasa `NEXTAUTH_SECRET` dan derive qilinadi).
@@ -98,7 +97,7 @@ Bu qismni tushunish uchun bir nechta faylni birga o'qish kerak. Eng muhim naqshl
 ## Ma'lumotlar bazasi modellari (`prisma/schema.prisma`)
 
 **Humo ID:** `UserProfile`, `LoginEvent`, `SupportTicket`, `EmailVerificationCode`
-**Esport:** `User`, `PlayerProfile`, `Team`, `TeamInvite`, `TeamMember`, `JoinRequest`, `Tournament`, `TournamentTeam`, `TournamentMatch`, `TournamentStanding`
+**Esport (barchasi `Es`-prefiksli):** `EsAdmin`, `EsGame`, `EsTeam`, `EsTeamStaff`, `EsTeamInvite`, `EsJoinRequest`, `EsRoster`, `EsAthlete` (`humoProfileId`→UserProfile), `EsRosterMember`, `EsDivision`, `EsSeason`, `EsTournament`, `EsTournamentTeam`, `EsMatch`, `EsStanding`, `EsLeagueMatch`, `EsTransfer`, `EsContract`, `EsDispute`, `EsBroadcast`, `EsNews`, `EsRetro`/`EsRetroMatch`, `EsRequest`/`EsRequestApproval`, `EsNotification`
 **Market:** `MarketBrand` (+`categories[]`), `MarketProduct` (+`videos[]`, `variantLabel`), `MarketProductVariant` (narx/stock har biriga), `MarketCartItem` (+`variantId`), `MarketOrder` (+`discount`/`promoCode`/`settledAt`), `MarketOrderItem` (+`variantId`/`variantName`), `MarketWishlist`, `MarketReview` (+`media[]`), `MarketReviewReply` (cheksiz ichma-ich `parentId`), `MarketReviewLike`, `MarketBrandReview`, `MarketProductQuestion`, `MarketProductAnswer`, `MarketNotification`, `MarketPromoCode`
 **Nexus:** `NexusPost` (+`marketProductId` — shoppable), `NexusLike`, `NexusSave`, `NexusComment` (`parentId`), `NexusFollow`, `NexusNotification`, `NexusStory` (24 soat), `NexusStoryView`, `NexusConversation` (1:1 DM), `NexusMessage`, `NexusVideo` (LONG/SHORT + orientation/tags/descImages/isMature/priceZij/prevVideoId series), `NexusVideoView`, `NexusVideoLike`, `NexusVideoComment`, `NexusVideoPurchase`, `NexusWatchLater`, `NexusPushSub` (Web Push — BN ham ishlatadi)
 **BN (Bozor Narxida):** `BnMarket`, `BnShop`, `BnCategory`, `BnProduct` (+`marketAvgPrice`/`images[]`/`isMature`/`isWholesale`/`isActive`/`hidden`), `BnProductVariant`, `BnCartItem`, `BnFavorite`, `BnAddress`, `BnPriceWatch`, `BnOrder`, `BnOrderItem`, `BnInspectHold`, `BnReturn`, `BnProductReview`, `BnShopReview`, `BnBan`/`BnTerminationRequest`, `BnAdmin`, `BnNotification`, `BnUserEvent`+`BnInterest` (personalizatsiya), `BnBoycottBrand`, `BnReferral` (viral), `BnSellerWaitlist` (MChJsiz oldindan yig'ish), `BnBroadcast` (admin push audit + rate limit manbai). Enum'lar: `BnLegalType`, `BnLocationType` (IN_MARKET/STANDALONE/ONLINE), `BnShopStatus`, `BnShopTier`, `BnVerifiedTier`, `BnFulfillType`, `BnPayMethod`/`BnPayStatus`, `BnOrderStatus`, `BnReturnStatus`, `BnAdminRole`, `BnNotifType`, `BnEventType`, `BnFavPrivacy`, `BnBanScope`/`BnBanType`/`BnBanStatus`/`BnBanDecidedBy`, `BnSellerWaitlistStatus` (PENDING/CONTACTED/APPROVED/REJECTED), `BnReferralStatus` (PENDING/REWARDED/CANCELLED). Web Push — `NexusPushSub` qayta ishlatiladi (universal).
@@ -113,7 +112,7 @@ Bu qismni tushunish uchun bir nechta faylni birga o'qish kerak. Eng muhim naqshl
 | Modul | Marshrut | Backend | Holat | Izoh |
 |---|---|---|---|---|
 | **Humo ID** | `/id`, `/id/edit`, `/id/[username]`, `/id/verify` | `api/user/*` to'liq | ✅ Tayyor | Profil, edit (642 qator), onboarding, avatar/cover upload, account delete |
-| **Esport** | `/esport`, `/teams`, `/players`, `/tournaments`, `/esport/admin`, `/history` | `api/teams/*`, `api/tournaments/*` + repositories | ✅ Tayyor | Role-based admin, jamoa invite/join, turnir registratsiya |
+| **Esport** | `/esport`, `/esport/teams`(+`/[id]`), `/esport/tournaments`(+`/[id]`), `/esport/athlete`, `/esport/standings`, `/esport/transfers`, `/esport/rules`, `/esport/admin` | `api/esport/*` + `src/lib/esport*.ts` | ✅ Tayyor | Liga (divizion/mavsum/rollover), turnir (bracket/payout escrow), transfer+kontrakt, disputes, Elo, broadcast (Cloudflare stub) |
 | **Market** | `/market`, `/catalog`, `/cart`, `/orders`, `/wishlist`, `/product/[slug]`(+`/edit`), `/product/add`, `/brand/manage`, `/brand/[slug]`, `/profile`, `/profile/activity`, `/notifications`, `/dashboard`, `/u/[username]` | `api/market/*` to'liq | ✅ Tayyor (test) | Sharh tahrir/o'chirish, pagination, **variantlar** (rang/o'lcham, narx+stock), **Q&A**, **buyurtma kuzatuvi** (stepper+sotuvchi boshqaruvi), bekor→Zij qaytarish, oversell guard (atomik), **promokod** (founder), **sotuvchi dashboard**, **payout** (escrow 5%), shikoyat/flag, ommaviy profil. **Real launch'ga qoldi:** to'lov gateway, KYC, yetkazish |
 | **Pay (ALKH)** | `/pay` | `api/pay/*` (deposit/transfer/safe/wallet) | 🟡 Funksional | Deposit **test rejim**, withdraw o'chirilgan. ⚠️ `alkh-pay-content.tsx` `TX_META` har bir `ZijTransactionType`ni qamrashi shart (fallback bor) |
 | **Nexus** | `/nexus` (SPA), `/nexus/u/[username]`, `/nexus/tag/[tag]` | `api/nexus/*` (…calls/live/videos/tracks/channels) | ✅ Real | Feed + profil + qidiruv/kashf + bildirishnoma + stories + DM + **Video** (real MP4 yuklash/player/like/izoh/obuna) + **1:1 Chaqiruv** (WebRTC + Pusher + TURN + effektlar) + **Guruh chaqiruv** (LiveKit) + **Jonli efir** (LiveKit ingest) + Kanallar/Guruhlar (channels API). Mock modallar (40+) 2026-08-02 tozalandi |
