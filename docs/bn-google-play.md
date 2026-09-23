@@ -83,8 +83,12 @@ endi `[]` emas, ichida package + fingerprint ko'rinishi kerak.
 
 ### 6. Do'kon ma'lumotlari (dizayn/qo'lda)
 - Ilova ikonasi 512×512 — bor (`/bn/icon-512.png`).
-- **Feature graphic 1024×500** — yasash kerak (dizayn ishi).
-- **Skrinshotlar** — kamida 2 ta telefon skrinshoti.
+- **Feature graphic 1024×500** — TAYYOR: `docs/play-assets/feature-graphic-1024x500.png`
+  (qora #17171B fon, RN mark, "Bozor Narxida" wordmark; RGB, alfa'siz — Play talabi).
+  Play Console → Main store listing → Graphics → Feature graphic'ga yuklang.
+- **Skrinshotlar** — kamida 2 ta telefon skrinshoti (eng yaxshisi haqiqiy telefonda
+  olingan; Play "real" skrinshotni afzal ko'radi). Kerak bo'lsa dizayn qilingan promo
+  ramkalarini ham tayyorlab bera olaman.
 - **Maxfiylik siyosati URL** — Google majburiy qiladi. `bozornarxida.uz/privacy-policy`
   ishlashini tekshiring (yoki BN uchun alohida sahifa qo'shiladi).
 - **Data safety** formasi + **Content rating** so'rovnomasi.
