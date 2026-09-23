@@ -54,8 +54,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const roundLabel = isFinal ? "FINAL" : `Bosqich ${match.round}`;
 
         const winMsg = isFinal
-            ? `🏆 **CHAMPIONS!**\n\n**${teamW.tag}** ${a}:${b} ${teamL.tag}\n\n${tournament.name} turniri **${teamW.name}** tomonidan yutildi! Tabriklaymiz! 🎉`
-            : `**Turnir o'yin natijasi**\n\n🏆 **${teamW.tag}** ${a}:${b} ${teamL.tag}\n\n${tournament.name} — ${roundLabel}\n\n${teamW.name} keyingi bosqichga o'tdi.${proofUrl ? "\n\nDalil: " + proofUrl : ""}`;
+            ? `**CHAMPIONS!**\n\n**${teamW.tag}** ${a}:${b} ${teamL.tag}\n\n${tournament.name} turniri **${teamW.name}** tomonidan yutildi! Tabriklaymiz!`
+            : `**Turnir o'yin natijasi**\n\n**${teamW.tag}** ${a}:${b} ${teamL.tag}\n\n${tournament.name} — ${roundLabel}\n\n${teamW.name} keyingi bosqichga o'tdi.${proofUrl ? "\n\nDalil: " + proofUrl : ""}`;
 
         const loseMsg = isFinal
             ? `**Final natijasi**\n\n${teamW.tag} ${a}:${b} **${teamL.tag}**\n\n${tournament.name} finalida ${teamW.name} g'olib bo'ldi. Kumush medal — ${teamL.name}! Keyingi turnirlarda omad tilaymiz.`

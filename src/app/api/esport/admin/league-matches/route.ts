@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { after } from "next/server";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getEsportAdmin } from "@/lib/esport";
 import { applyElo } from "@/lib/esport-elo";
@@ -74,17 +73,25 @@ export async function PATCH(req: Request) {
         prisma.esRoster.findUnique({ where: { teamId_gameId: { teamId: loserId, gameId: season.gameId } }, select: { id: true, rating: true, peakRating: true, lowRating: true } }),
     ]) : [null, null];
 
-    const ops: Prisma.PrismaPromise<unknown>[] = [
-        prisma.esLeagueMatch.update({ where: { id }, data: { scoreA: a, scoreB: b, winnerId, status: "DONE", proofUrl } }),
-    ];
-    if (stW) ops.push(prisma.esStanding.update({ where: { id: stW.id }, data: { points: { increment: WIN_POINTS }, wins: { increment: 1 }, played: { increment: 1 } } }));
-    if (stL) ops.push(prisma.esStanding.update({ where: { id: stL.id }, data: { losses: { increment: 1 }, played: { increment: 1 } } }));
-    if (rosterW && rosterL) {
-        const { newA, newB } = applyElo(rosterW.rating, rosterL.rating, true);
-        ops.push(prisma.esRoster.update({ where: { id: rosterW.id }, data: { rating: newA, peakRating: Math.max(rosterW.peakRating, newA), lowRating: Math.min(rosterW.lowRating, newA) } }));
-        ops.push(prisma.esRoster.update({ where: { id: rosterL.id }, data: { rating: newB, peakRating: Math.max(rosterL.peakRating, newB), lowRating: Math.min(rosterL.lowRating, newB) } }));
-    }
-    await prisma.$transaction(ops);
+    // Atomik CAS claim + standings/Elo bitta tranzaksiyada — double-submit (yoki bir
+    // vaqtli ikki natija) standings'ni IKKI marta increment qilmasin (points/wins/
+    // losses/played shishib ketardi) va Elo'ni ikki marta qo'llamasin.
+    const claimed = await prisma.$transaction(async (tx) => {
+        const claim = await tx.esLeagueMatch.updateMany({
+            where: { id, status: { not: "DONE" } },
+            data: { scoreA: a, scoreB: b, winnerId, status: "DONE", proofUrl },
+        });
+        if (claim.count === 0) return false;
+        if (stW) await tx.esStanding.update({ where: { id: stW.id }, data: { points: { increment: WIN_POINTS }, wins: { increment: 1 }, played: { increment: 1 } } });
+        if (stL) await tx.esStanding.update({ where: { id: stL.id }, data: { losses: { increment: 1 }, played: { increment: 1 } } });
+        if (rosterW && rosterL) {
+            const { newA, newB } = applyElo(rosterW.rating, rosterL.rating, true);
+            await tx.esRoster.update({ where: { id: rosterW.id }, data: { rating: newA, peakRating: Math.max(rosterW.peakRating, newA), lowRating: Math.min(rosterW.lowRating, newA) } });
+            await tx.esRoster.update({ where: { id: rosterL.id }, data: { rating: newB, peakRating: Math.max(rosterL.peakRating, newB), lowRating: Math.min(rosterL.lowRating, newB) } });
+        }
+        return true;
+    });
+    if (!claimed) return NextResponse.json({ error: "Natija allaqachon kiritilgan" }, { status: 400 });
 
     // Humo eSport nomidan ikkala jamoa chatiga o'yin natijasi + Elo o'zgarishi
     after(async () => {
@@ -93,7 +100,7 @@ export async function PATCH(req: Request) {
             prisma.esTeam.findUnique({ where: { id: loserId }, select: { name: true, tag: true } }),
         ]);
         if (!teamW || !teamL) return;
-        const winMsg = `**League o'yin natijasi**\n\n🏆 **${teamW.tag}** ${a}:${b} ${teamL.tag}\n\n${teamW.name} g'olib chiqdi (+${WIN_POINTS} ochko). ${rosterW && rosterL ? "Elo yangilandi." : ""}${proofUrl ? "\n\nDalil: " + proofUrl : ""}`;
+        const winMsg = `**League o'yin natijasi**\n\n**${teamW.tag}** ${a}:${b} ${teamL.tag}\n\n${teamW.name} g'olib chiqdi (+${WIN_POINTS} ochko). ${rosterW && rosterL ? "Elo yangilandi." : ""}${proofUrl ? "\n\nDalil: " + proofUrl : ""}`;
         const loseMsg = `**League o'yin natijasi**\n\n${teamW.tag} ${a}:${b} **${teamL.tag}**\n\n${teamW.name} g'olib chiqdi. Keyingi safar omad tilaymiz!${proofUrl ? "\n\nDalil: " + proofUrl : ""}`;
         await postToEsTeamChannel(winnerId, winMsg);
         await postToEsTeamChannel(loserId, loseMsg);

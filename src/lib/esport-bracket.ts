@@ -116,7 +116,14 @@ export async function recordTournamentResult(matchId: string, a: number, b: numb
     const winnerId = a > b ? m.teamAId : m.teamBId;
     const loserId = a > b ? m.teamBId : m.teamAId;
 
-    await prisma.esMatch.update({ where: { id: matchId }, data: { scoreA: a, scoreB: b, winnerId, status: "DONE" } });
+    // Atomik CAS claim — ikki bir vaqtli natija (yoki admin double-click) natijani IKKI
+    // marta yozib, Elo'ni ikki marta qo'llab, g'olibni ikki marta o'tkazmasin. Faqat status
+    // hali DONE bo'lmaganda claim qilamiz; ikkinchi chaqiruv count=0 oladi va to'xtaydi.
+    const claim = await prisma.esMatch.updateMany({
+        where: { id: matchId, status: { not: "DONE" } },
+        data: { scoreA: a, scoreB: b, winnerId, status: "DONE" },
+    });
+    if (claim.count === 0) return { ok: false, error: "Natija allaqachon kiritilgan" };
     if (m.nextMatchId && m.nextSlot) await putTeam(m.nextMatchId, m.nextSlot, winnerId);
     if (m.loserNextMatchId && m.loserNextSlot) await putTeam(m.loserNextMatchId, m.loserNextSlot, loserId);
 

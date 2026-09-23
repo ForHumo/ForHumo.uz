@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { after } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { canManageTeam } from "@/lib/esport-block";
 import { getMyProfile } from "@/lib/esport";
@@ -56,16 +57,22 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         if (!inDiv) return NextResponse.json({ error: "Jamoa bu divizionда emas" }, { status: 400 });
     }
 
-    // To'lganmi?
-    if (t.maxTeams > 0) {
-        const count = await prisma.esTournamentTeam.count({ where: { tournamentId: id } });
-        if (count >= t.maxTeams) return NextResponse.json({ error: "Turnir to'lgan" }, { status: 400 });
-    }
-
+    // To'lish tekshiruvi (maxTeams) + ro'yxatga qo'shishni ATOMIK qilamiz (Serializable) —
+    // aks holda bir vaqtli ikki ro'yxat check-then-create bilan maxTeams'dan oshib ketardi
+    // (setka nextPow2 buzilishi / ortiqcha jamoa). Unique (tournamentId, teamId) dublni to'sadi.
     try {
-        await prisma.esTournamentTeam.create({ data: { tournamentId: id, teamId, rosterId: roster.id } });
-    } catch {
-        return NextResponse.json({ error: "Jamoa allaqachon ro'yxatda" }, { status: 409 });
+        await prisma.$transaction(async (tx) => {
+            if (t.maxTeams > 0) {
+                const count = await tx.esTournamentTeam.count({ where: { tournamentId: id } });
+                if (count >= t.maxTeams) throw new Error("FULL");
+            }
+            await tx.esTournamentTeam.create({ data: { tournamentId: id, teamId, rosterId: roster.id } });
+        }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    } catch (e) {
+        if (e instanceof Error && e.message === "FULL") return NextResponse.json({ error: "Turnir to'lgan" }, { status: 400 });
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")
+            return NextResponse.json({ error: "Jamoa allaqachon ro'yxatda" }, { status: 409 });
+        return NextResponse.json({ error: "Ro'yxatdan o'tishda xatolik — qayta urinib ko'ring" }, { status: 409 });
     }
     // Nexus turnir chat'ga yangi jamoa a'zolarini sinxron qo'shish
     after(() => syncEsTournamentChannel(id));
