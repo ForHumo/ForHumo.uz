@@ -79,7 +79,7 @@ export function NxFolderModal({
             <div className="fixed inset-0 z-[70]" style={{ background: "rgba(5,8,24,0.65)" }}
                 onClick={() => !busy && onClose()} />
             <div className="fixed z-[70] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md rounded-2xl overflow-hidden max-h-[90vh] flex flex-col"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
+                style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
                 <div className="px-5 py-4 flex items-center gap-3 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center"

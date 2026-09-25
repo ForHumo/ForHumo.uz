@@ -109,7 +109,7 @@ export function NxPlaylist() {
                            md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2
                            md:w-[560px] md:max-h-[85vh] md:rounded-3xl"
                 style={{
-                    background: "rgba(8,12,32,0.98)",
+                    background: "var(--nx-elevated)",
                     border:     "1px solid rgb(var(--nx-accent-rgb) / 0.22)",
                     boxShadow:  "0 32px 80px rgba(0,0,0,0.70)",
                     maxHeight:  "88vh",

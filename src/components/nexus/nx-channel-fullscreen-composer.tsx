@@ -91,7 +91,7 @@ export function NxChannelFullscreenComposer({
     const maxLen = 4000;
 
     return (
-        <div className="fixed inset-0 z-[400] flex flex-col" style={{ background: "rgba(5,8,24,0.99)" }}>
+        <div className="fixed inset-0 z-[400] flex flex-col" style={{ background: "var(--nx-elevated)" }}>
             <div className="flex items-center justify-between px-4 py-3 flex-shrink-0"
                 style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                 <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"

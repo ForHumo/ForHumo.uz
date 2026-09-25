@@ -198,7 +198,7 @@ export function NxSearch() {
 
             <div className="fixed inset-x-0 top-0 z-50 flex flex-col transition-all duration-300"
                 style={{
-                    background: "rgba(8,12,32,0.98)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.22)",
+                    background: "var(--nx-elevated)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.22)",
                     boxShadow: "0 8px 48px rgba(0,0,0,0.60)", maxHeight: searchOpen ? "85vh" : "0",
                     opacity: searchOpen ? 1 : 0, pointerEvents: searchOpen ? "auto" : "none",
                     transform: searchOpen ? "translateY(0)" : "translateY(-8px)",

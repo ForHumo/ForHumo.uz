@@ -215,7 +215,7 @@ export function NexusProfile({ username }: { username: string }) {
                                                 <>
                                                     <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
                                                     <div className="absolute right-0 mt-2 w-52 rounded-2xl overflow-hidden z-40 backdrop-blur-xl"
-                                                        style={{ background: "rgba(10,16,40,0.97)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 40px rgba(0,0,0,0.5)" }}>
+                                                        style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 40px rgba(0,0,0,0.5)" }}>
                                                         {!iBlocked && (
                                                             <button onClick={toggleMute} disabled={busy}
                                                                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-white active:bg-white/5 transition">

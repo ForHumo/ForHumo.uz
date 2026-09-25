@@ -98,7 +98,7 @@ export function NxBanModal({ ban, onClose }: Props) {
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4"
             style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(12px)" }}>
             <div className="w-full max-w-md rounded-3xl overflow-hidden"
-                style={{ background: "rgba(11,16,40,0.98)", border: "1px solid rgba(239,68,68,0.30)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
+                style={{ background: "var(--nx-elevated)", border: "1px solid rgba(239,68,68,0.30)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
 
                 {/* Header */}
                 <div className="px-6 py-5 flex items-center gap-4" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>

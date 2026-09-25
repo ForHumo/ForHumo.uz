@@ -1529,7 +1529,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 <>
                     <div className="fixed inset-0 z-[80]" style={{ background: "rgba(5,8,24,0.70)" }} onClick={() => !transferBusy && setTransferOpen(false)} />
                     <div className="fixed z-[80] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-sm rounded-2xl overflow-hidden"
-                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
+                        style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
                         <div className="px-5 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                                 style={{ background: "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.20),rgb(var(--nx-accent-rgb) / 0.20))" }}>
@@ -1600,7 +1600,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 <>
                     <div className="fixed inset-0 z-[70]" style={{ background: "rgba(5,8,24,0.60)" }} onClick={() => setLocSheetOpen(false)} />
                     <div className="fixed z-[70] left-1/2 bottom-6 -translate-x-1/2 w-[92%] max-w-md rounded-2xl overflow-hidden"
-                        style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
+                        style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
                         <div className="px-5 py-4" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                             <h3 className="text-sm font-black text-[var(--nx-text)]">Joylashuv jo'natish</h3>
                             <p className="text-[11px] mt-0.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>Statik yoki jonli muddat bilan</p>
@@ -1672,7 +1672,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                            lg:top-1/2 lg:left-1/2 lg:right-auto lg:-translate-x-1/2 lg:-translate-y-1/2
                            lg:w-[min(1100px,95vw)] lg:h-[min(85vh,820px)] lg:max-h-none lg:rounded-3xl
                            lg:flex-row"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}
+                style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}
                 onClick={e => e.stopPropagation()}>
 
                 {/* LEFT — suhbatlar ro'yxati / yangi xabar */}
@@ -1714,7 +1714,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             {/* Multi-select bulk toolbar (DM-16) */}
             {inSelectMode && (
                 <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[350] flex items-center gap-1 px-3 py-2 rounded-full"
-                    style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+                    style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
                     <button onClick={clearSelection}
                         className="w-8 h-8 flex items-center justify-center rounded-full"
                         style={{ background: "rgb(var(--nx-accent-rgb) / 0.20)" }}>

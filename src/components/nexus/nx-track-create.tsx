@@ -160,7 +160,7 @@ export function NxTrackCreate({ open, onClose, onCreated, defaultKind = "MUSIC" 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }} onClick={close}>
             <div onClick={e => e.stopPropagation()} className="w-full sm:max-w-md rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(16,185,129,0.25)", maxHeight: "92vh" }}>
+                style={{ background: "var(--nx-elevated)", border: "1px solid rgba(16,185,129,0.25)", maxHeight: "92vh" }}>
 
                 <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(16,185,129,0.14)" }}>
                     <h3 className="text-sm font-black text-[var(--nx-text)]">Trek yuklash</h3>

@@ -48,7 +48,7 @@ export function NxShare() {
             <div className="fixed inset-0 z-[80]" style={{ background: "rgba(5,8,24,0.80)", backdropFilter: "blur(8px)" }} onClick={closeShareSheet} />
 
             <div className="fixed inset-x-0 bottom-0 z-[80] flex flex-col rounded-t-3xl overflow-hidden md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[440px] md:rounded-3xl"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}
+                style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}
                 onClick={e => e.stopPropagation()}>
 
                 <div className="flex justify-center pt-3 pb-1 flex-shrink-0">

@@ -213,7 +213,7 @@ function MapModal({ value, onChange, onClose }: {
         <>
             <div className="fixed inset-0 z-[80]" style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(8px)" }} onClick={onClose} />
             <div className="fixed inset-2 bottom-2 top-2 z-[80] flex flex-col rounded-3xl overflow-hidden md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[720px] md:h-[760px] md:max-w-[calc(100vw-32px)] md:max-h-[92vh]"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}
+                style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}
                 onClick={e => e.stopPropagation()}>
 
                 {/* Header */}

@@ -402,7 +402,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                 <>
                     <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm" onClick={() => setShowRules(false)} />
                     <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 md:inset-x-0 md:mx-auto md:max-w-lg z-[201] p-6 rounded-2xl max-h-[80vh] overflow-y-auto"
-                        style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
+                        style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                         <div className="flex items-center gap-2 mb-4">
                             <Shield className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                             <h3 className="text-lg font-black text-[var(--nx-text)]">Kanal qoidalari</h3>

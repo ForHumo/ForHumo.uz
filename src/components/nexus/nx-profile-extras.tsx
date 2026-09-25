@@ -269,7 +269,7 @@ export function NxProfileQrModal({ username, open, onClose }: { username: string
         <>
             <div className="fixed inset-0 z-[70]" style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(8px)" }} onClick={onClose} />
             <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[70] rounded-3xl overflow-hidden md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[380px]"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}
+                style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", boxShadow: "0 32px 80px rgba(0,0,0,0.70)" }}
                 onClick={e => e.stopPropagation()}>
 
                 <div className="flex items-center justify-between px-5 pt-5 pb-3">

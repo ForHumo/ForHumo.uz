@@ -256,7 +256,7 @@ export function NxNotifications() {
             <div className="fixed inset-x-0 bottom-0 z-[60] flex flex-col rounded-t-3xl overflow-hidden
                            md:inset-x-auto md:inset-y-auto md:top-16 md:right-4 md:bottom-auto
                            md:w-[380px] md:max-h-[calc(100vh-80px)] md:rounded-2xl"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)", maxHeight: "85vh" }}
+                style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)", maxHeight: "85vh" }}
                 onClick={e => e.stopPropagation()}>
 
                 {/* Header */}
@@ -378,7 +378,7 @@ export function NxNotifications() {
                             {dayGroups.map(dg => (
                                 <div key={dg.label}>
                                     <p className="sticky top-0 z-10 px-4 py-1.5 text-[9px] font-black uppercase tracking-widest"
-                                        style={{ background: "rgba(8,12,32,0.95)", color: "rgb(var(--nx-text-2-rgb)/0.60)", backdropFilter: "blur(8px)" }}>
+                                        style={{ background: "var(--nx-elevated)", color: "rgb(var(--nx-text-2-rgb)/0.60)", backdropFilter: "blur(8px)" }}>
                                         {dg.label}
                                     </p>
                                     {dg.items.map(n => {

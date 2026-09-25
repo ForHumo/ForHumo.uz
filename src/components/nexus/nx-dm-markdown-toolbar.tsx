@@ -40,7 +40,7 @@ export function NxDmMarkdownToolbar({
     }
     return (
         <div className="flex items-center gap-1 p-1.5 rounded-full"
-            style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
+            style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
             <Btn onClick={() => apply(el => wrapSelectionInInput(el, "**"))} title="Bold" icon={<Bold className="w-3.5 h-3.5" />} />
             <Btn onClick={() => apply(el => wrapSelectionInInput(el, "*"))} title="Italic" icon={<Italic className="w-3.5 h-3.5" />} />
             <Btn onClick={() => apply(el => wrapSelectionInInput(el, "`"))} title="Code" icon={<Code className="w-3.5 h-3.5" />} />

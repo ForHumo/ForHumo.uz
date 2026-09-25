@@ -50,7 +50,7 @@ export function NxConfirm({
                 onClick={busy ? undefined : onCancel} />
             <div className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-sm p-6 rounded-3xl animate-in fade-in zoom-in-95 duration-200"
                 style={{
-                    background: "rgba(8,12,32,0.98)",
+                    background: "var(--nx-elevated)",
                     border: `1px solid ${tone === "danger" ? "rgba(239,68,68,0.35)" : "rgb(var(--nx-accent-rgb) / 0.30)"}`,
                     boxShadow: `0 24px 80px rgba(0,0,0,0.70), 0 0 40px ${tone === "danger" ? "rgba(239,68,68,0.15)" : "rgb(var(--nx-accent-rgb) / 0.15)"}`,
                 }}>

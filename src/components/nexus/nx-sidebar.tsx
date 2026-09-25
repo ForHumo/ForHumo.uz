@@ -49,7 +49,7 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
             <aside
                 className="fixed top-0 left-0 bottom-0 z-[56] flex flex-col w-72 max-w-[88vw] transition-transform duration-300"
                 style={{
-                    background: "rgba(8,12,32,0.97)",
+                    background: "var(--nx-elevated)",
                     backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
                     borderLeft: "1px solid rgb(var(--nx-accent-rgb) / 0.22)",
                     boxShadow: "-8px 0 48px rgb(var(--nx-accent-rgb) / 0.12)",

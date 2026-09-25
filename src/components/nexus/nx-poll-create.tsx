@@ -75,7 +75,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
         <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4"
             style={{ background: "rgba(5,8,24,0.85)", backdropFilter: "blur(12px)" }} onClick={onClose}>
             <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden"
-                style={{ background: "rgba(11,16,40,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", maxHeight: "90vh" }}
+                style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", maxHeight: "90vh" }}
                 onClick={e => e.stopPropagation()}>
 
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>

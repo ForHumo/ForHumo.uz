@@ -303,7 +303,7 @@ function NxGroupStoryCreate({
     return (
         <div className="fixed inset-0 z-[500] bg-black/85 flex items-center justify-center p-4">
             <div className="max-w-md w-full rounded-3xl overflow-hidden flex flex-col"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)", maxHeight: "90vh" }}>
+                style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)", maxHeight: "90vh" }}>
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">

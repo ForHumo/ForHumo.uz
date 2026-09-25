@@ -198,7 +198,7 @@ export function NxChannelRichAttach({
             </button>
             {open && (
                 <div className="absolute left-0 bottom-full mb-2 min-w-[180px] z-[400] py-1 rounded-2xl"
-                    style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}>
+                    style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}>
                     <button onClick={() => startRecording("voice")}
                         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-[var(--nx-text)]">
                         <Mic className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
@@ -232,7 +232,7 @@ export function NxChannelRichAttach({
                 <>
                     <div className="fixed inset-0 z-[500] bg-black/60" onClick={() => setContactOpen(false)} />
                     <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto z-[501] p-5 rounded-3xl"
-                        style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)" }}
+                        style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)" }}
                         onClick={e => e.stopPropagation()}>
                         <h3 className="text-base font-black text-[var(--nx-text)] mb-4 flex items-center gap-2">
                             <User className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Kontakt ulashish

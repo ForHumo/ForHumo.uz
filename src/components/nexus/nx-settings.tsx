@@ -50,7 +50,7 @@ export function NxSettings({ open, onClose }: Props) {
                 <div
                     className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl overflow-hidden transition-all duration-300"
                     style={{
-                        background: "rgba(8,12,32,0.98)",
+                        background: "var(--nx-elevated)",
                         backdropFilter: "blur(24px)",
                         WebkitBackdropFilter: "blur(24px)",
                         border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)",

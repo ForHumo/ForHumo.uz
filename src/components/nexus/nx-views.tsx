@@ -848,7 +848,7 @@ export function ProfileView() {
                     <div
                         className="fixed inset-x-4 bottom-0 z-[60] rounded-t-3xl overflow-hidden md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[420px] md:rounded-3xl"
                         style={{
-                            background: "rgba(8,12,32,0.98)",
+                            background: "var(--nx-elevated)",
                             border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)",
                             boxShadow: "0 32px 80px rgba(0,0,0,0.60)",
                         }}

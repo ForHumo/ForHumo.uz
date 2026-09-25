@@ -58,7 +58,7 @@ export function NxAgentInlineMode({
     return (
         <div className="absolute bottom-full left-2 right-2 mb-2 max-h-[320px] overflow-y-auto z-[400] rounded-2xl"
             style={{
-                background: "rgba(8,12,32,0.99)",
+                background: "var(--nx-elevated)",
                 border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)",
                 boxShadow: "0 12px 32px rgba(0,0,0,0.4)",
                 scrollbarWidth: "none",

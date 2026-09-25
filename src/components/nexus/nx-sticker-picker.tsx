@@ -31,7 +31,7 @@ export function NxStickerPicker({
         <>
             <div className="fixed inset-0 z-[400] bg-black/60" onClick={onClose} />
             <div className="fixed inset-x-4 bottom-20 md:inset-x-auto md:right-4 md:bottom-24 max-w-md mx-auto md:mx-0 md:w-96 z-[401] rounded-2xl overflow-hidden"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}
+                style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-4 py-3"
                     style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>

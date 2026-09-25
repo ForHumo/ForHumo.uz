@@ -7718,7 +7718,7 @@ function TransferSheet({
         <>
             <div className="fixed inset-0 z-[80]" style={{ background: "var(--nx-surface)" }} onClick={() => !busy && onClose()} />
             <div className="fixed z-[80] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-sm rounded-2xl overflow-hidden"
-                style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
+                style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", boxShadow: "0 24px 64px rgba(0,0,0,0.70)" }}>
                 <div className="px-5 py-4 flex items-center gap-3" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                         style={{ background: "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.20),rgb(var(--nx-accent-rgb) / 0.20))" }}>
@@ -8663,7 +8663,7 @@ function NxVideoLightbox({ src, onClose }: { src: string; onClose: () => void })
 
     return (
         <div className="fixed inset-0 z-[220] flex items-center justify-center"
-            style={{ background: "rgba(3,5,15,0.95)", backdropFilter: "blur(8px)" }}
+            style={{ background: "var(--nx-elevated)", backdropFilter: "blur(8px)" }}
             onClick={onClose}
             onMouseMove={bumpControls}>
 

@@ -140,7 +140,7 @@ export function NxReport() {
                                     <button key={c.id}
                                         onClick={() => { setSelectedCat(c.id); setStep("detail"); }}
                                         className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all active:scale-[0.98]"
-                                        style={{ background: "rgba(8,12,32,0.95)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
+                                        style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                         <div className="flex-1">
                                             <p className="text-[12px] font-bold text-[var(--nx-text)]">{c.label}</p>
                                             <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-3-rgb)/0.60)" }}>{c.description}</p>
@@ -230,7 +230,7 @@ export function NxReport() {
                             const cat = CATEGORIES.find(c => c.id === r.category);
                             return (
                                 <div key={r.id} className="p-4 rounded-2xl"
-                                    style={{ background: "rgba(8,12,32,0.95)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
+                                    style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                     <div className="flex items-center gap-2 mb-2">
                                         <Flag className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#EF4444" }} />
                                         <span className="text-[11px] font-bold text-[var(--nx-text)] flex-1 truncate">{r.target}</span>

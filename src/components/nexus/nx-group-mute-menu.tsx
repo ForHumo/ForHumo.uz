@@ -66,7 +66,7 @@ export function NxGroupMuteButton({ channelId }: { channelId: string }) {
 
             {open && (
                 <div className="absolute right-0 top-11 min-w-[180px] z-[400] py-1 rounded-2xl overflow-hidden"
-                    style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}>
+                    style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}>
                     <div className="px-3 py-2 text-[10px] uppercase tracking-widest"
                         style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         Ovozsizlantirish

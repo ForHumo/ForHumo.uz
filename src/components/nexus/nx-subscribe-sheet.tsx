@@ -64,7 +64,7 @@ export function NxSubscribeSheet({
         <>
             <div className="fixed inset-0 z-[80]" style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(8px)" }} onClick={onClose} />
             <div className="fixed inset-x-0 bottom-0 z-[80] rounded-t-3xl overflow-hidden md:inset-x-auto md:left-1/2 md:bottom-auto md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[420px] md:rounded-3xl"
-                style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(139,92,246,0.30)", boxShadow: "0 24px 64px rgba(0,0,0,0.7)" }}
+                style={{ background: "var(--nx-elevated)", border: "1px solid rgba(139,92,246,0.30)", boxShadow: "0 24px 64px rgba(0,0,0,0.7)" }}
                 onClick={e => e.stopPropagation()}>
 
                 {done ? (
