@@ -3,16 +3,18 @@
 //
 //   bozornarxida.uz (+www)            → Bozor Narxida TWA
 //     TWA_PACKAGE_NAME, TWA_SHA256_FINGERPRINTS
-//   forhumo.uz (+www) / humoesport.uz → Humo eSport TWA
-//     TWA_ESPORT_PACKAGE_NAME, TWA_ESPORT_SHA256_FINGERPRINTS
+//   forhumo.uz (+www) / humoesport.uz → Humo eSport VA Humo Nexus TWA (BIR host, IKKALA ilova)
+//     eSport: TWA_ESPORT_PACKAGE_NAME, TWA_ESPORT_SHA256_FINGERPRINTS
+//     Nexus:  TWA_NEXUS_PACKAGE_NAME,  TWA_NEXUS_SHA256_FINGERPRINTS
+//   Bir host bir nechta TWA'ni tasdiqlashi mumkin — javob statement MASSIVI (har ilova bitta).
 //
 // TO'LDIRISH (Bubblewrap build'dan KEYIN — KOD O'ZGARTIRMASDAN, Vercel env orqali):
-//   <PKG>          = uz.forhumo.esport.twa      (Bubblewrap applicationId)
+//   <PKG>          = uz.forhumo.esport.twa / uz.forhumo.nexus.twa  (Bubblewrap applicationId)
 //   <FINGERPRINTS> = AA:BB:CC:...,DD:EE:FF:...  (vergul bilan)
 // Play App Signing YOQILGAN bo'lsa: "App signing key" VA "Upload key" SHA-256 IKKALASI.
 //
-// Env yo'q bo'lsa bo'sh massiv [] qaytadi (yaroqli JSON) — TWA hali tasdiqlanmaydi,
-// lekin sayt buzilmaydi. Env qo'yib redeploy qilinsa darhol ishlaydi.
+// Env yo'q bo'lsa o'sha ilova statement'i tushib qoladi (bo'sh bo'lsa [] — yaroqli JSON).
+// Env qo'yib redeploy qilinsa darhol ishlaydi; sayt hech qachon buzilmaydi.
 
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
@@ -36,12 +38,15 @@ export async function GET() {
     const host = (await headers()).get("host")?.split(":")[0].toLowerCase() ?? "";
     const isBn = host === "bozornarxida.uz" || host === "www.bozornarxida.uz";
 
-    const e = isBn
-        ? entry(process.env.TWA_PACKAGE_NAME, process.env.TWA_SHA256_FINGERPRINTS)
-        // forhumo.uz (+www) / humoesport.uz → Humo eSport TWA
-        : entry(process.env.TWA_ESPORT_PACKAGE_NAME, process.env.TWA_ESPORT_SHA256_FINGERPRINTS);
+    const entries = isBn
+        ? [entry(process.env.TWA_PACKAGE_NAME, process.env.TWA_SHA256_FINGERPRINTS)]
+        // forhumo.uz (+www) / humoesport.uz → Humo eSport VA Humo Nexus (bir host, ikkala TWA)
+        : [
+            entry(process.env.TWA_ESPORT_PACKAGE_NAME, process.env.TWA_ESPORT_SHA256_FINGERPRINTS),
+            entry(process.env.TWA_NEXUS_PACKAGE_NAME, process.env.TWA_NEXUS_SHA256_FINGERPRINTS),
+        ];
 
-    const body = e ? [e] : [];
+    const body = entries.filter(Boolean);
 
     return NextResponse.json(body, {
         headers: {

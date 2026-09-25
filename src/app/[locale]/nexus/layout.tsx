@@ -1,3 +1,4 @@
+import type { Metadata, Viewport } from "next";
 import { getServerSession } from "next-auth";
 import { setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -8,7 +9,30 @@ import { Link } from "@/i18n/routing";
 import { Fingerprint, LogIn, ArrowRight } from "lucide-react";
 import { NexusUsernameGate } from "@/components/nexus/nexus-username-gate";
 import { NxToastProvider } from "@/components/nexus/ui/nx-toast";
+import { NxServiceWorker } from "@/components/nexus/nx-service-worker";
 import { verify2faToken, TWO_FA_COOKIE_NAME } from "@/lib/2fa-cookie";
+
+// Path-scoped PWA manifest (forhumo.uz/nexus TWA) — root "For Humo" manifestidan alohida.
+export function generateMetadata(): Metadata {
+    return {
+        title: "Humo Nexus",  // tab: "Humo Nexus | For Humo"
+        applicationName: "Humo Nexus",
+        manifest: "/nexus.webmanifest",
+        icons: {
+            icon: [
+                { url: "/nexus/icon-192.png", type: "image/png", sizes: "192x192" },
+                { url: "/nexus/icon-512.png", type: "image/png", sizes: "512x512" },
+            ],
+            apple: "/nexus/icon-192.png",
+        },
+        appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Humo Nexus" },
+    };
+}
+
+export const viewport: Viewport = {
+    themeColor: "#0A0C12",
+    viewportFit: "cover",
+};
 
 // Nexus — global header/footer ustini yopadi, o'z to'liq ekran qobig'i bor.
 // DARVOZA: Humo Nexus faqat Humo ID + @username olgan foydalanuvchilar uchun.
@@ -52,29 +76,29 @@ export default async function NexusLayout({ children, params }: {
 
     if (!hasHumoId) {
         return (
-            <div className="fixed inset-0 z-[100] overflow-hidden flex items-center justify-center p-6" style={{ background: "#050818" }}>
+            <div className="fixed inset-0 z-[100] overflow-hidden flex items-center justify-center p-6" style={{ background: "var(--nx-bg)" }}>
                 {/* Fon nurlari */}
-                <div className="absolute pointer-events-none" style={{ top: "-15%", left: "-10%", width: "60%", height: "60%", background: "radial-gradient(ellipse at center, rgba(43,62,232,0.20) 0%, transparent 70%)" }} />
-                <div className="absolute pointer-events-none" style={{ bottom: "-15%", right: "-10%", width: "60%", height: "60%", background: "radial-gradient(ellipse at center, rgba(0,206,200,0.16) 0%, transparent 70%)" }} />
+                <div className="absolute pointer-events-none" style={{ top: "-15%", left: "-10%", width: "60%", height: "60%", background: "radial-gradient(ellipse at center, rgb(var(--nx-accent-rgb) / 0.20) 0%, transparent 70%)" }} />
+                <div className="absolute pointer-events-none" style={{ bottom: "-15%", right: "-10%", width: "60%", height: "60%", background: "radial-gradient(ellipse at center, rgb(var(--nx-accent-rgb) / 0.12) 0%, transparent 70%)" }} />
 
-                <div className="relative w-full max-w-md p-8 rounded-3xl text-center" style={{ background: "rgba(11,18,40,0.75)", border: "1px solid rgba(43,62,232,0.28)", backdropFilter: "blur(20px)" }}>
-                    <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-5" style={{ background: "var(--nx-accent)", boxShadow: "0 8px 32px rgba(43,62,232,0.45)" }}>
+                <div className="relative w-full max-w-md p-8 rounded-3xl text-center" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.28)", backdropFilter: "blur(20px)" }}>
+                    <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-5" style={{ background: "var(--nx-accent)", boxShadow: "0 8px 32px rgb(var(--nx-accent-rgb) / 0.45)" }}>
                         <Fingerprint className="w-8 h-8 text-white" />
                     </div>
-                    <h1 className="text-xl font-black text-white mb-2">
+                    <h1 className="text-xl font-black text-[var(--nx-text)] mb-2">
                         Humo Nexus — <span style={{ background: "var(--nx-accent)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Humo ID</span> bilan
                     </h1>
-                    <p className="text-sm leading-relaxed mb-6" style={{ color: "rgba(150,170,220,0.85)" }}>
+                    <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--nx-text-2)" }}>
                         {signedIn
                             ? "Nexus ijtimoiy tarmog'idan foydalanish uchun Humo ID ro'yxatdan o'tishini yakunlang — bu bir daqiqa vaqt oladi."
                             : "Nexus ijtimoiy tarmog'idan foydalanish uchun avval hisobingizga kiring va Humo ID oling."}
                     </p>
                     <Link href={signedIn ? "/id" : "/"}
                         className="w-full h-12 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2"
-                        style={{ background: "var(--nx-accent)", boxShadow: "0 4px 20px rgba(43,62,232,0.4)" }}>
+                        style={{ background: "var(--nx-accent)", boxShadow: "0 4px 20px rgb(var(--nx-accent-rgb) / 0.4)" }}>
                         {signedIn ? <><Fingerprint className="w-4 h-4" /> Humo ID olish</> : <><LogIn className="w-4 h-4" /> Kirish</>}
                     </Link>
-                    <Link href="/" className="mt-3 inline-flex items-center gap-1 text-xs font-bold transition-colors hover:text-white" style={{ color: "rgba(120,140,190,0.75)" }}>
+                    <Link href="/" className="mt-3 inline-flex items-center gap-1 text-xs font-bold transition-colors hover:text-[var(--nx-text)]" style={{ color: "var(--nx-text-2)" }}>
                         Bosh sahifaga qaytish <ArrowRight className="w-3 h-3" />
                     </Link>
                 </div>
@@ -85,6 +109,7 @@ export default async function NexusLayout({ children, params }: {
     return (
         <div className="nx-scope fixed inset-0 z-[100] overflow-hidden">
             <NxToastProvider>{children}</NxToastProvider>
+            <NxServiceWorker />
         </div>
     );
 }
