@@ -30,7 +30,7 @@ type PostType = "text" | "photo" | "video" | "poll";
 type Privacy = "PUBLIC" | "FOLLOWERS" | "SUBSCRIBERS" | "PRIVATE";
 
 const POST_TYPES: { value: PostType; label: string; icon: React.ElementType; color: string }[] = [
-    { value: "text", label: "Matn", icon: AlignLeft, color: "#2B3EE8" },
+    { value: "text", label: "Matn", icon: AlignLeft, color: "var(--nx-accent)" },
     { value: "photo", label: "Rasm", icon: ImgIcon, color: "#10B981" },
     { value: "video", label: "Video", icon: Film, color: "#EF4444" },
     { value: "poll", label: "So'rovnoma", icon: BarChart2, color: "#8B5CF6" },
@@ -220,7 +220,7 @@ export function NxCreatePost() {
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "var(--nx-accent)" }}>
                             <Plus className="w-4 h-4 text-white" />
                         </div>
                         <h2 className="text-base font-black text-white">Yangi post</h2>
@@ -241,7 +241,7 @@ export function NxCreatePost() {
                                         <button key={value}
                                             onClick={() => { setPrivacy(value); setShowPrivacy(false); }}
                                             className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-xs font-bold transition-all duration-100"
-                                            style={{ color: privacy === value ? "#00CEC8" : "rgba(160,180,230,0.85)" }}>
+                                            style={{ color: privacy === value ? "var(--nx-accent)" : "rgba(160,180,230,0.85)" }}>
                                             <Icon className="w-3.5 h-3.5" />
                                             {label}
                                         </button>
@@ -294,7 +294,7 @@ export function NxCreatePost() {
                     {/* AI yordam (Humo AI) */}
                     {postType !== "poll" && (
                         <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-black mr-0.5" style={{ color: "#00CEC8" }}><Sparkles className="w-3 h-3" />AI</span>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-black mr-0.5" style={{ color: "var(--nx-accent)" }}><Sparkles className="w-3 h-3" />AI</span>
                             <AiBtn busy={aiBusy === "caption"} onClick={() => aiAssist("caption")} label="Tavsif yoz" />
                             <AiBtn busy={aiBusy === "tags"} onClick={() => aiAssist("tags")} label="Teglar" />
                             <AiBtn busy={aiBusy === "translate"} onClick={() => aiAssist("translate", "ru")} label="RU" />
@@ -325,7 +325,7 @@ export function NxCreatePost() {
                                 <label className="w-full flex flex-col items-center justify-center gap-2 py-6 rounded-2xl cursor-pointer transition-all duration-150"
                                     style={{ background: "rgba(43,62,232,0.06)", border: "2px dashed rgba(43,62,232,0.25)" }}>
                                     {uploading ? (
-                                        <Loader2 className="w-7 h-7 animate-spin" style={{ color: "#00CEC8" }} />
+                                        <Loader2 className="w-7 h-7 animate-spin" style={{ color: "var(--nx-accent)" }} />
                                     ) : postType === "photo" ? (
                                         <ImgIcon className="w-8 h-8" style={{ color: "rgba(43,62,232,0.50)" }} />
                                     ) : (
@@ -381,7 +381,7 @@ export function NxCreatePost() {
                                         <button key={d.hours} onClick={() => setPollHours(d.hours)}
                                             className="px-2 py-1 rounded-lg text-[10px] font-bold transition-all duration-150"
                                             style={pollHours === d.hours
-                                                ? { background: "rgba(43,62,232,0.30)", color: "#00CEC8" }
+                                                ? { background: "rgba(43,62,232,0.30)", color: "var(--nx-accent)" }
                                                 : { background: "rgba(43,62,232,0.10)", color: "rgba(140,160,210,0.80)" }}>{d.label}</button>
                                     ))}
                                 </div>
@@ -402,7 +402,7 @@ export function NxCreatePost() {
                                         <button key={tag} onClick={() => toggleTag(tag)}
                                             className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition-all duration-150"
                                             style={active
-                                                ? { background: "rgba(43,62,232,0.25)", border: "1px solid rgba(43,62,232,0.50)", color: "#00CEC8" }
+                                                ? { background: "rgba(43,62,232,0.25)", border: "1px solid rgba(43,62,232,0.50)", color: "var(--nx-accent)" }
                                                 : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(140,160,210,0.80)" }}>
                                             <Hash className="w-2.5 h-2.5" />
                                             {tag}
@@ -488,14 +488,14 @@ export function NxCreatePost() {
                                                 {c.avatarUrl
                                                     ? <img src={c.avatarUrl} alt="" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
                                                     : <div className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] font-black text-white"
-                                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>{c.name[0]?.toUpperCase() ?? "K"}</div>}
+                                                        style={{ background: "var(--nx-accent)" }}>{c.name[0]?.toUpperCase() ?? "K"}</div>}
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-[11px] font-bold text-white truncate">{c.name}</p>
                                                     <p className="text-[9px]" style={{ color: "rgba(140,160,210,0.65)" }}>
                                                         {c.handle ? `@${c.handle} · ` : ""}{c.memberCount} a&apos;zo
                                                     </p>
                                                 </div>
-                                                {crossChannelId === c.id && <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#00CEC8" }}>
+                                                {crossChannelId === c.id && <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "var(--nx-accent)" }}>
                                                     <span className="text-white text-[10px] font-black">✓</span>
                                                 </div>}
                                             </button>
@@ -521,7 +521,7 @@ export function NxCreatePost() {
                         <button onClick={publish} disabled={!canPublish || publishing || uploading}
                             className="w-full py-3.5 rounded-2xl font-black text-sm text-white flex items-center justify-center gap-2 transition-all duration-200"
                             style={canPublish && !publishing && !uploading
-                                ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 8px 24px rgba(43,62,232,0.35)" }
+                                ? { background: "var(--nx-accent)", boxShadow: "0 8px 24px rgba(43,62,232,0.35)" }
                                 : { background: "rgba(43,62,232,0.15)", opacity: 0.6 }}>
                             {publishing
                                 ? <><Loader2 className="w-4 h-4 animate-spin" /> E&apos;lon qilinmoqda...</>

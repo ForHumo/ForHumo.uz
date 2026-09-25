@@ -327,8 +327,9 @@ html:not(.dark) .es-bg textarea::placeholder { color: var(--es-faint) !important
 
 /* ── Nexus app-shell utilities ────────────────────────────────────────────── */
 
-/* Nexus design tokens — adaptive (light default + .dark override) */
-.nx-scope {
+/* Nexus design tokens — adaptive (light default + .dark override). Global (:root) —
+   nexus komponentlar nx-scope tashqarisida (home cross-promo, gate) ham ishlashi uchun. */
+:root {
   --nx-bg:#FBFBFD; --nx-surface:#FFFFFF; --nx-surface-2:#F5F6F8; --nx-elevated:#FFFFFF;
   --nx-border:rgba(12,17,29,.09); --nx-border-2:rgba(12,17,29,.16);
   --nx-text:#0E1320; --nx-text-2:#5B6472; --nx-text-3:#98A0AE;
@@ -337,7 +338,7 @@ html:not(.dark) .es-bg textarea::placeholder { color: var(--es-faint) !important
   --nx-shadow:0 1px 2px rgba(16,24,40,.06), 0 6px 20px rgba(16,24,40,.08);
   --nx-r-sm:8px; --nx-r-md:12px; --nx-r-lg:16px; --nx-r-xl:22px; --nx-r-avatar:13px;
 }
-.dark .nx-scope {
+.dark {
   --nx-bg:#0A0C12; --nx-surface:#12151E; --nx-surface-2:#171B26; --nx-elevated:#1B2130;
   --nx-border:rgba(255,255,255,.08); --nx-border-2:rgba(255,255,255,.14);
   --nx-text:#F2F4F8; --nx-text-2:#9AA3B2; --nx-text-3:#626B7A;

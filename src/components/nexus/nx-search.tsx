@@ -172,7 +172,7 @@ export function NxSearch() {
                     ) : (
                         <button onClick={() => follow(u)} disabled={followBusy === u.username}
                             className="px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1 flex-shrink-0 active:scale-95 transition"
-                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }}>
+                            style={{ background: "var(--nx-accent)", color: "#fff" }}>
                             <UserPlus className="w-3 h-3" /> Kuzatish
                         </button>
                     )
@@ -208,8 +208,8 @@ export function NxSearch() {
                     <Search className="w-5 h-5 flex-shrink-0" style={{ color: "rgba(43,62,232,0.60)" }} />
                     <input ref={inputRef} type="text" value={query} onChange={e => setQuery(e.target.value)}
                         placeholder="Odamlar, video, audio, jonli, #hashtag..."
-                        className="flex-1 bg-transparent text-white text-base outline-none" style={{ caretColor: "#00CEC8" }} />
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#00CEC8" }} />
+                        className="flex-1 bg-transparent text-white text-base outline-none" style={{ caretColor: "var(--nx-accent)" }} />
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         : query && <button onClick={() => setQuery("")}><X className="w-4 h-4" style={{ color: "rgba(160,176,224,0.60)" }} /></button>}
                     <button onClick={close} className="px-3 py-1.5 rounded-lg text-xs font-bold"
                         style={{ background: "rgba(43,62,232,0.12)", color: "rgba(160,176,224,0.80)" }}>Bekor</button>
@@ -230,7 +230,7 @@ export function NxSearch() {
                             <button key={t.id} onClick={() => setFilter(t.id)}
                                 className="flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all active:scale-95"
                                 style={filter === t.id
-                                    ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }
+                                    ? { background: "var(--nx-accent)", color: "#fff" }
                                     : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(160,180,230,0.85)" }}>
                                 {t.label}<span className="ml-1 opacity-70">{t.n}</span>
                             </button>
@@ -274,7 +274,7 @@ export function NxSearch() {
                                             <Link key={t.tag} href={`/nexus/tag/${t.tag}`} onClick={close}
                                                 className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold"
                                                 style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(180,195,235,0.9)" }}>
-                                                <Hash className="w-3 h-3" style={{ color: "#00CEC8" }} />{t.tag}
+                                                <Hash className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />{t.tag}
                                                 <span className="text-[10px]" style={{ color: "rgba(120,140,185,0.6)" }}>{t.count}</span>
                                             </Link>
                                         ))}
@@ -291,7 +291,7 @@ export function NxSearch() {
                             )}
                         </>
                     ) : loading && !hasAny ? (
-                        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     ) : !hasAny ? (
                         <div className="flex flex-col items-center justify-center py-14">
                             <Search className="w-10 h-10 mb-3" style={{ color: "rgba(43,62,232,0.25)" }} />
@@ -310,7 +310,7 @@ export function NxSearch() {
                                         <Link key={t.tag} href={`/nexus/tag/${t.tag}`} onClick={close}
                                             className="flex items-center gap-3 px-2 py-2 rounded-xl">
                                             <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(43,62,232,0.12)" }}>
-                                                <Hash className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                                                <Hash className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-sm font-bold text-white truncate">#{t.tag}</p>

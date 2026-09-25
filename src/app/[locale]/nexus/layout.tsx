@@ -58,11 +58,11 @@ export default async function NexusLayout({ children, params }: {
                 <div className="absolute pointer-events-none" style={{ bottom: "-15%", right: "-10%", width: "60%", height: "60%", background: "radial-gradient(ellipse at center, rgba(0,206,200,0.16) 0%, transparent 70%)" }} />
 
                 <div className="relative w-full max-w-md p-8 rounded-3xl text-center" style={{ background: "rgba(11,18,40,0.75)", border: "1px solid rgba(43,62,232,0.28)", backdropFilter: "blur(20px)" }}>
-                    <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-5" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 8px 32px rgba(43,62,232,0.45)" }}>
+                    <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-5" style={{ background: "var(--nx-accent)", boxShadow: "0 8px 32px rgba(43,62,232,0.45)" }}>
                         <Fingerprint className="w-8 h-8 text-white" />
                     </div>
                     <h1 className="text-xl font-black text-white mb-2">
-                        Humo Nexus — <span style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Humo ID</span> bilan
+                        Humo Nexus — <span style={{ background: "var(--nx-accent)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Humo ID</span> bilan
                     </h1>
                     <p className="text-sm leading-relaxed mb-6" style={{ color: "rgba(150,170,220,0.85)" }}>
                         {signedIn
@@ -71,7 +71,7 @@ export default async function NexusLayout({ children, params }: {
                     </p>
                     <Link href={signedIn ? "/id" : "/"}
                         className="w-full h-12 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.4)" }}>
+                        style={{ background: "var(--nx-accent)", boxShadow: "0 4px 20px rgba(43,62,232,0.4)" }}>
                         {signedIn ? <><Fingerprint className="w-4 h-4" /> Humo ID olish</> : <><LogIn className="w-4 h-4" /> Kirish</>}
                     </Link>
                     <Link href="/" className="mt-3 inline-flex items-center gap-1 text-xs font-bold transition-colors hover:text-white" style={{ color: "rgba(120,140,190,0.75)" }}>

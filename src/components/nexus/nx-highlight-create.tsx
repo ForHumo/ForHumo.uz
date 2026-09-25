@@ -89,7 +89,7 @@ export function NxHighlightCreate({ onClose, onCreated }: Props) {
                         <input value={title} onChange={e => setTitle(e.target.value.slice(0, 60))}
                             placeholder="Sayohatlar, Ishlar, Retseptlar..."
                             className="w-full px-3.5 py-3 rounded-xl text-sm text-white outline-none"
-                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
+                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                     </div>
 
                     <div>
@@ -97,7 +97,7 @@ export function NxHighlightCreate({ onClose, onCreated }: Props) {
                             Story'lar tanlang ({selected.size} tanlandi)
                         </label>
                         {loading ? (
-                            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#00CEC8" }} /></div>
+                            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                         ) : stories.length === 0 ? (
                             <div className="text-center py-8">
                                 <p className="text-sm font-bold text-white/70">Aktiv story'lar yo'q</p>
@@ -117,7 +117,7 @@ export function NxHighlightCreate({ onClose, onCreated }: Props) {
                                             ) : previewUrl ? (
                                                 <img src={previewUrl} alt="" className="w-full h-full object-cover" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-white text-[9px] font-bold px-1 text-center" style={{ background: "#2B3EE8" }}>
+                                                <div className="w-full h-full flex items-center justify-center text-white text-[9px] font-bold px-1 text-center" style={{ background: "var(--nx-accent)" }}>
                                                     {s.caption?.slice(0, 20) || "Aa"}
                                                 </div>
                                             )}

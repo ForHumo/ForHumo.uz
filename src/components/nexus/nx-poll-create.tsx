@@ -79,7 +79,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                 onClick={e => e.stopPropagation()}>
 
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <BarChart2 className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                    <BarChart2 className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                     <p className="text-base font-black text-white flex-1">Yangi so&apos;rovnoma</p>
                     <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }}>
                         <X className="w-4 h-4 text-white" />
@@ -93,7 +93,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                         <input value={question} onChange={e => setQuestion(e.target.value.slice(0, 300))}
                             placeholder="Nima haqida so'rayapsiz?"
                             className="w-full px-3.5 py-3 rounded-xl text-sm text-white outline-none"
-                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
+                            style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                         <p className="text-[10px] mt-1 text-right" style={{ color: "rgba(140,160,210,0.60)" }}>{question.length}/300</p>
                     </div>
 
@@ -108,7 +108,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                                     <input value={o} onChange={e => updateOption(i, e.target.value)}
                                         placeholder={`Variant ${i + 1}`}
                                         className="flex-1 px-3 py-2.5 rounded-lg text-sm text-white outline-none"
-                                        style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "#00CEC8" }} />
+                                        style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "var(--nx-accent)" }} />
                                     {options.length > 2 && (
                                         <button onClick={() => removeOption(i)} title="O'chirish"
                                             className="w-10 flex items-center justify-center rounded-lg flex-shrink-0"
@@ -139,7 +139,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                             </p>
                         </div>
                         <div className="w-10 h-5 rounded-full relative flex-shrink-0 transition-colors"
-                            style={{ background: multi ? "#00CEC8" : "rgba(80,100,150,0.4)" }}>
+                            style={{ background: multi ? "var(--nx-accent)" : "rgba(80,100,150,0.4)" }}>
                             <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
                                 style={{ left: multi ? "22px" : "2px" }} />
                         </div>
@@ -153,7 +153,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                                 <button key={d.key} onClick={() => setDuration(d.key)}
                                     className="px-2 py-2 rounded-lg text-[11px] font-bold transition active:scale-95"
                                     style={duration === d.key
-                                        ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }
+                                        ? { background: "var(--nx-accent)", color: "#fff" }
                                         : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(160,180,230,0.85)" }}>
                                     {d.label}
                                 </button>
@@ -174,7 +174,7 @@ export function NxPollCreate({ open, onClose, onCreated }: Props) {
                     </button>
                     <button onClick={submit} disabled={!canSubmit}
                         className="flex-1 px-4 py-3 rounded-xl text-xs font-black text-white disabled:opacity-40 flex items-center justify-center gap-2"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        style={{ background: "var(--nx-accent)" }}>
                         {busy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                         Jo&apos;natish
                     </button>

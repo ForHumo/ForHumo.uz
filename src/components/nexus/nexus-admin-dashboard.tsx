@@ -59,7 +59,7 @@ export function NexusAdminDashboard() {
                         </Link>
                         <div>
                             <h1 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
-                                <Shield className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                                <Shield className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                                 Nexus admin
                             </h1>
                             <p className="text-xs" style={{ color: "rgba(140,160,210,0.75)" }}>
@@ -75,13 +75,13 @@ export function NexusAdminDashboard() {
                         style={{ background: "rgba(0,206,200,0.14)", border: "1px solid rgba(0,206,200,0.30)" }}
                         title="Yangilash"
                     >
-                        {refreshing ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#00CEC8" }} /> : <RefreshCw className="w-4 h-4" style={{ color: "#00CEC8" }} />}
+                        {refreshing ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--nx-accent)" }} /> : <RefreshCw className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />}
                     </button>
                 </div>
 
                 {loading ? (
                     <div className="flex items-center justify-center py-32">
-                        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#00CEC8" }} />
+                        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--nx-accent)" }} />
                     </div>
                 ) : !data ? (
                     <div className="text-center py-32 text-sm" style={{ color: "rgba(200,210,240,0.75)" }}>
@@ -91,8 +91,8 @@ export function NexusAdminDashboard() {
                     <>
                         {/* 4 KPI Cards */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                            <KpiCard icon={MessageSquare} label="DM (bugungi)" value={data.dm.today} sub={`${data.dm.week.toLocaleString()} — 7 kun`} color="#2B3EE8" />
-                            <KpiCard icon={Hash} label="Kanal (bugungi)" value={data.channel.today} sub={`${data.channel.activeChannels} faol kanal`} color="#00CEC8" />
+                            <KpiCard icon={MessageSquare} label="DM (bugungi)" value={data.dm.today} sub={`${data.dm.week.toLocaleString()} — 7 kun`} color="var(--nx-accent)" />
+                            <KpiCard icon={Hash} label="Kanal (bugungi)" value={data.channel.today} sub={`${data.channel.activeChannels} faol kanal`} color="var(--nx-accent)" />
                             <KpiCard icon={Users} label="Guruh xabari" value={data.channel.week} sub={`${data.channel.activeGroups} faol guruh`} color="#F59E0B" />
                             <KpiCard icon={Activity} label="Faol (7 kun)" value={data.users.active7d} sub={`+${data.users.newSignups7d} yangi`} color="#22C55E" />
                         </div>
@@ -103,8 +103,8 @@ export function NexusAdminDashboard() {
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-sm font-black text-white">Xabarlar (30 kun)</h2>
                                 <div className="flex items-center gap-3 text-[10px]" style={{ color: "rgba(180,192,224,0.85)" }}>
-                                    <LegendItem color="#2B3EE8" label="DM" />
-                                    <LegendItem color="#00CEC8" label="Kanal" />
+                                    <LegendItem color="var(--nx-accent)" label="DM" />
+                                    <LegendItem color="var(--nx-accent)" label="Kanal" />
                                 </div>
                             </div>
                             <DailyChart data={data.messagesByDay} />
@@ -153,7 +153,7 @@ export function NexusAdminDashboard() {
                                             <div key={s.profileId} className="flex items-center gap-2.5 p-2 rounded-lg"
                                                 style={{ background: "rgba(43,62,232,0.06)" }}>
                                                 <span className="w-5 text-[10px] font-black text-center"
-                                                    style={{ color: i < 3 ? "#00CEC8" : "rgba(140,160,210,0.65)" }}>
+                                                    style={{ color: i < 3 ? "var(--nx-accent)" : "rgba(140,160,210,0.65)" }}>
                                                     {i + 1}
                                                 </span>
                                                 {s.image ? (
@@ -174,7 +174,7 @@ export function NexusAdminDashboard() {
                                                         </p>
                                                     )}
                                                 </div>
-                                                <span className="text-xs font-black tabular-nums" style={{ color: "#00CEC8" }}>
+                                                <span className="text-xs font-black tabular-nums" style={{ color: "var(--nx-accent)" }}>
                                                     {s.count.toLocaleString()}
                                                 </span>
                                             </div>
@@ -196,27 +196,27 @@ export function NexusAdminDashboard() {
                                             <div key={c.channelId} className="flex items-center gap-2.5 p-2 rounded-lg"
                                                 style={{ background: "rgba(43,62,232,0.06)" }}>
                                                 <span className="w-5 text-[10px] font-black text-center"
-                                                    style={{ color: i < 3 ? "#00CEC8" : "rgba(140,160,210,0.65)" }}>
+                                                    style={{ color: i < 3 ? "var(--nx-accent)" : "rgba(140,160,210,0.65)" }}>
                                                     {i + 1}
                                                 </span>
                                                 {c.avatarUrl ? (
                                                     <Image src={c.avatarUrl} alt="" width={28} height={28} className="w-7 h-7 rounded-xl object-cover" unoptimized />
                                                 ) : (
                                                     <div className="w-7 h-7 rounded-xl flex items-center justify-center"
-                                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                                        style={{ background: "var(--nx-accent)" }}>
                                                         {c.type === "GROUP" ? <Users className="w-3.5 h-3.5 text-white" /> : <Hash className="w-3.5 h-3.5 text-white" />}
                                                     </div>
                                                 )}
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-xs font-bold text-white truncate flex items-center gap-1">
                                                         {c.name || "Nomsiz"}
-                                                        {c.handle && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                                        {c.handle && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                                     </p>
                                                     <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.65)" }}>
                                                         {c.handle ? `@${c.handle}` : (c.type === "GROUP" ? "Guruh" : "Kanal")} · {c.memberCount} a&apos;zo
                                                     </p>
                                                 </div>
-                                                <span className="text-xs font-black tabular-nums" style={{ color: "#00CEC8" }}>
+                                                <span className="text-xs font-black tabular-nums" style={{ color: "var(--nx-accent)" }}>
                                                     {c.msgCount.toLocaleString()}
                                                 </span>
                                             </div>
@@ -301,10 +301,10 @@ function DailyChart({ data }: { data: Array<{ date: string; dm: number; channel:
                     return (
                         <g key={d.date}>
                             {chH > 0 && (
-                                <rect x={x} y={yTop} width={barW} height={chH} fill="#00CEC8" opacity={0.85} rx="1.5" />
+                                <rect x={x} y={yTop} width={barW} height={chH} fill="var(--nx-accent)" opacity={0.85} rx="1.5" />
                             )}
                             {dmH > 0 && (
-                                <rect x={x} y={yTop + chH} width={barW} height={dmH} fill="#2B3EE8" opacity={0.85} rx="1.5" />
+                                <rect x={x} y={yTop + chH} width={barW} height={dmH} fill="var(--nx-accent)" opacity={0.85} rx="1.5" />
                             )}
                             <title>{`${d.date}: DM ${d.dm}, kanal ${d.channel}`}</title>
                         </g>

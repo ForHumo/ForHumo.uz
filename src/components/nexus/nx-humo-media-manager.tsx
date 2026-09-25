@@ -1,7 +1,7 @@
 "use client";
 
 // Nexus GIF / Sticker "Agent" boshqaruv sahifasi. Nexus palette
-// (rgba(11,18,40,...) fon, rgba(43,62,232,...) accent + #00CEC8) —
+// (rgba(11,18,40,...) fon, rgba(43,62,232,...) accent + var(--nx-accent)) —
 // Nexus shell bilan bir xil vizual tili.
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -54,13 +54,13 @@ const NX = {
     panelStrong: "rgba(11,18,40,0.98)",
     border: "rgba(43,62,232,0.28)",
     borderSoft: "rgba(43,62,232,0.16)",
-    accent: "#00CEC8",
+    accent: "var(--nx-accent)",
     accentBg: "rgba(0,206,200,0.14)",
     blueBg: "rgba(43,62,232,0.10)",
     text: "rgba(230,238,255,0.96)",
     text2: "rgba(200,215,245,0.75)",
     text3: "rgba(150,170,220,0.55)",
-    gradient: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+    gradient: "var(--nx-accent)",
 };
 
 export function NxHumoMediaManager({ kind }: { kind: Kind }) {

@@ -120,13 +120,13 @@ export function NxSubscribeSheet({
                             {insufficient ? (
                                 <Link href="/pay" onClick={onClose}
                                     className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-white"
-                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    style={{ background: "var(--nx-accent)" }}>
                                     <Wallet className="w-4 h-4" /> Hamyonni to&apos;ldirish
                                 </Link>
                             ) : (
                                 <button onClick={subscribe} disabled={busy}
                                     className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-white disabled:opacity-50 active:scale-[0.99] transition"
-                                    style={{ background: "linear-gradient(135deg,#8B5CF6,#2B3EE8)", boxShadow: "0 6px 24px rgba(139,92,246,0.35)" }}>
+                                    style={{ background: "linear-gradient(135deg,#8B5CF6,var(--nx-accent))", boxShadow: "0 6px 24px rgba(139,92,246,0.35)" }}>
                                     {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                                     {formatMoney(price, currency)} — {alreadyActive ? "Uzaytirish" : "Obuna bo'lish"}
                                 </button>

@@ -229,7 +229,7 @@ export function NxAgentManageModal({
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <Bot className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <Bot className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Bot boshqaruvi
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -240,7 +240,7 @@ export function NxAgentManageModal({
 
                 {loading || !detail ? (
                     <div className="flex justify-center py-16 flex-1">
-                        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} />
+                        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} />
                     </div>
                 ) : (
                     <>
@@ -255,7 +255,7 @@ export function NxAgentManageModal({
                                 <p className="text-[11px]" style={{ color: "rgba(160,176,224,0.7)" }}>@{detail.username}</p>
                             </div>
                             <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full"
-                                style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>
+                                style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>
                                 BOT
                             </span>
                         </div>
@@ -337,7 +337,7 @@ export function NxAgentManageModal({
                                                         className="h-11 px-3 flex-shrink-0"
                                                         style={{ background: copied ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.20)" }}>
                                                         {copied
-                                                            ? <Check className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                                            ? <Check className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                                             : <Copy className="w-4 h-4" style={{ color: "white" }} />}
                                                     </button>
                                                 </div>
@@ -422,7 +422,7 @@ export function NxAgentManageModal({
                                         <div className="flex flex-wrap gap-1.5 mb-2">
                                             {tags.map(t => (
                                                 <span key={t} className="inline-flex items-center gap-1 h-7 px-2 rounded-full text-[10px] font-bold"
-                                                    style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>
+                                                    style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>
                                                     #{t}
                                                     <button onClick={() => removeTag(t)} className="ml-0.5">
                                                         <X className="w-3 h-3" />
@@ -468,7 +468,7 @@ export function NxAgentManageModal({
                                     </div>
                                     <button onClick={save} disabled={saving}
                                         className="w-full h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                                        style={{ background: "linear-gradient(135deg, #2B3EE8, #00CEC8)", color: "white" }}>
+                                        style={{ background: "linear-gradient(135deg, var(--nx-accent), var(--nx-accent))", color: "white" }}>
                                         {saving ? <Loader2 className="w-4 h-4 animate-spin" />
                                             : saved ? <Check className="w-4 h-4" />
                                             : <Save className="w-4 h-4" />}
@@ -485,14 +485,14 @@ export function NxAgentManageModal({
                                         </p>
                                         <button onClick={addCmd} disabled={commands.length >= 32}
                                             className="inline-flex items-center gap-1 px-3 h-8 rounded-lg text-xs font-black disabled:opacity-50"
-                                            style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>
+                                            style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>
                                             <Plus className="w-3 h-3" /> Qo&apos;shish
                                         </button>
                                     </div>
                                     {commands.length === 0 ? (
                                         <div className="p-6 rounded-2xl text-center"
                                             style={{ background: "rgba(11,18,40,0.55)", border: "1px dashed rgba(43,62,232,0.20)" }}>
-                                            <Terminal className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "#00CEC8" }} />
+                                            <Terminal className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
                                             <p className="text-sm" style={{ color: "rgba(160,176,224,0.7)" }}>
                                                 Buyruq yo&apos;q. Qo&apos;shish bosing.
                                             </p>
@@ -503,7 +503,7 @@ export function NxAgentManageModal({
                                                 <div key={i} className="p-3 rounded-xl space-y-2"
                                                     style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-sm font-bold" style={{ color: "#00CEC8" }}>/</span>
+                                                        <span className="text-sm font-bold" style={{ color: "var(--nx-accent)" }}>/</span>
                                                         <input value={c.cmd}
                                                             onChange={e => updateCmd(i, { cmd: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 32) })}
                                                             placeholder="start"
@@ -528,7 +528,7 @@ export function NxAgentManageModal({
                                     )}
                                     <button onClick={save} disabled={saving}
                                         className="w-full h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                                        style={{ background: "linear-gradient(135deg, #2B3EE8, #00CEC8)", color: "white" }}>
+                                        style={{ background: "linear-gradient(135deg, var(--nx-accent), var(--nx-accent))", color: "white" }}>
                                         {saving ? <Loader2 className="w-4 h-4 animate-spin" />
                                             : saved ? <Check className="w-4 h-4" />
                                             : <Save className="w-4 h-4" />}
@@ -540,12 +540,12 @@ export function NxAgentManageModal({
                             {tab === "logs" && (
                                 logsLoading ? (
                                     <div className="flex justify-center py-8">
-                                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#2B3EE8" }} />
+                                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} />
                                     </div>
                                 ) : logs.length === 0 ? (
                                     <div className="p-8 rounded-2xl text-center"
                                         style={{ background: "rgba(11,18,40,0.55)", border: "1px dashed rgba(43,62,232,0.20)" }}>
-                                        <History className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "#00CEC8" }} />
+                                        <History className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
                                         <p className="text-sm" style={{ color: "rgba(160,176,224,0.75)" }}>
                                             Hali chaqiruv yo&apos;q
                                         </p>
@@ -565,7 +565,7 @@ export function NxAgentManageModal({
                                                 <div className="flex items-center gap-1.5 mb-1">
                                                     <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded"
                                                         style={l.ok
-                                                            ? { background: "rgba(0,206,200,0.14)", color: "#00CEC8" }
+                                                            ? { background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }
                                                             : { background: "rgba(239,68,68,0.14)", color: "#EF4444" }}>
                                                         {l.ok ? "OK" : "FAIL"}
                                                     </span>
@@ -621,7 +621,7 @@ export function NxAgentManageModal({
                                                     {stats.topCommands.slice(0, 5).map((c, i) => (
                                                         <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg"
                                                             style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
-                                                            <span className="text-xs font-bold" style={{ color: "#00CEC8" }}>/{c.cmd}</span>
+                                                            <span className="text-xs font-bold" style={{ color: "var(--nx-accent)" }}>/{c.cmd}</span>
                                                             <span className="text-xs" style={{ color: "rgba(160,176,224,0.85)" }}>{c.count}</span>
                                                         </div>
                                                     ))}
@@ -631,7 +631,7 @@ export function NxAgentManageModal({
                                     </>
                                 ) : (
                                     <div className="flex justify-center py-8">
-                                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#2B3EE8" }} />
+                                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} />
                                     </div>
                                 )
                             )}
@@ -648,7 +648,7 @@ function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
         <button onClick={onClick}
             className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg text-[11px] font-black flex-shrink-0"
             style={active
-                ? { background: "rgba(0,206,200,0.20)", color: "white", border: "1px solid #00CEC8" }
+                ? { background: "rgba(0,206,200,0.20)", color: "white", border: "1px solid var(--nx-accent)" }
                 : { background: "rgba(11,18,40,0.55)", color: "rgba(160,176,224,0.85)", border: "1px solid rgba(43,62,232,0.14)" }}>
             {icon} {label}
         </button>

@@ -113,7 +113,7 @@ export function NxSettings({ open, onClose }: Props) {
                                         <tab.icon
                                             className="w-4 h-4 flex-shrink-0"
                                             style={{
-                                                color: active ? "#00CEC8" : "rgba(100,120,170,0.70)",
+                                                color: active ? "var(--nx-accent)" : "rgba(100,120,170,0.70)",
                                             }}
                                         />
                                         <span
@@ -210,7 +210,7 @@ function Toggle({ defaultOn = false }: { defaultOn?: boolean }) {
             className="relative flex-shrink-0 w-10 h-5.5 rounded-full transition-all duration-200"
             style={{
                 background: on
-                    ? "linear-gradient(135deg,#2B3EE8,#00CEC8)"
+                    ? "var(--nx-accent)"
                     : "rgba(43,62,232,0.18)",
                 minWidth: "40px",
                 height: "22px",
@@ -223,7 +223,7 @@ function Toggle({ defaultOn = false }: { defaultOn?: boolean }) {
                     boxShadow: on ? "0 0 8px rgba(0,206,200,0.50)" : "none",
                 }}
             >
-                {on && <Check className="w-2.5 h-2.5" style={{ color: "#2B3EE8" }} />}
+                {on && <Check className="w-2.5 h-2.5" style={{ color: "var(--nx-accent)" }} />}
             </span>
         </button>
     );
@@ -239,7 +239,7 @@ function SelectBadge({ options, defaultVal }: { options: string[]; defaultVal: s
                     onClick={() => setVal(opt)}
                     className="px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all duration-150"
                     style={{
-                        background: val === opt ? "linear-gradient(135deg,#2B3EE8,#00CEC8)" : "rgba(43,62,232,0.12)",
+                        background: val === opt ? "var(--nx-accent)" : "rgba(43,62,232,0.12)",
                         color: val === opt ? "#fff" : "rgba(120,140,190,0.80)",
                         border: val === opt ? "none" : "1px solid rgba(43,62,232,0.16)",
                     }}
@@ -414,7 +414,7 @@ function PrivacyPanel() {
                                 className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition disabled:opacity-50"
                                 style={state.privacyPushPreview === opt ? {
                                     background: "rgba(0,206,200,0.15)",
-                                    color: "#00CEC8",
+                                    color: "var(--nx-accent)",
                                     border: "1px solid rgba(0,206,200,0.40)",
                                 } : {
                                     background: "rgba(43,62,232,0.06)",
@@ -468,7 +468,7 @@ function PrivacyRow({ icon: Icon, label, description, value, onChange, saving }:
                         className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition disabled:opacity-50"
                         style={value === opt ? {
                             background: "rgba(0,206,200,0.15)",
-                            color: "#00CEC8",
+                            color: "var(--nx-accent)",
                             border: "1px solid rgba(0,206,200,0.40)",
                         } : {
                             background: "rgba(43,62,232,0.06)",
@@ -536,7 +536,7 @@ function PaymentPanel() {
                     right={
                         <span
                             className="px-2.5 py-1 rounded-lg text-[10px] font-black"
-                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}
+                            style={{ background: "var(--nx-accent)" }}
                         >
                             Yangilash
                         </span>

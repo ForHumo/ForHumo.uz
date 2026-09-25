@@ -84,7 +84,7 @@ export function NxTrendingBanner() {
                             </div>
                             <div className="flex items-center gap-3 text-[10px] mt-0.5" style={{ color: "rgba(200,180,140,0.85)" }}>
                                 <span className="flex items-center gap-0.5"><Heart className="w-3 h-3" style={{ color: "#EF4444" }} />{writer.likes}</span>
-                                <span className="flex items-center gap-0.5"><MessageCircle className="w-3 h-3" style={{ color: "#00CEC8" }} />{writer.comments}</span>
+                                <span className="flex items-center gap-0.5"><MessageCircle className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />{writer.comments}</span>
                                 <span>{writer.posts} post</span>
                             </div>
                         </div>
@@ -128,7 +128,7 @@ export function NxTrendingBanner() {
                 <div className="mx-4 rounded-2xl overflow-hidden"
                     style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.20)" }}>
                     <div className="flex items-center gap-2 px-4 pt-3 pb-1">
-                        <UserPlus className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                        <UserPlus className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                         <span className="text-xs font-black text-white">Kim kuzatishga arziydi</span>
                     </div>
                     <div className="flex gap-2 overflow-x-auto px-4 pb-3 pt-1" style={{ scrollbarWidth: "none" }}>
@@ -153,8 +153,8 @@ export function NxTrendingBanner() {
                                     <button onClick={() => toggleFollow(s.username!)}
                                         className="mt-2 w-full py-1.5 rounded-lg text-[10px] font-black flex items-center justify-center gap-1 active:scale-95 transition-transform"
                                         style={isF
-                                            ? { background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.35)", color: "#00CEC8" }
-                                            : { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }}>
+                                            ? { background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.35)", color: "var(--nx-accent)" }
+                                            : { background: "var(--nx-accent)", color: "#fff" }}>
                                         {isF ? <><Check className="w-3 h-3" />Kuzatilmoqda</> : <><UserPlus className="w-3 h-3" />Kuzatish</>}
                                     </button>
                                 </div>

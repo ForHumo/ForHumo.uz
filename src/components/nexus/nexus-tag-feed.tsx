@@ -18,7 +18,7 @@ export function NexusTagFeed({ tag }: { tag: string }) {
                         <ArrowLeft className="w-4 h-4 text-white" />
                     </button>
                     <div className="flex items-center gap-1.5 min-w-0">
-                        <Hash className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                        <Hash className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                         <span className="text-base font-black text-white truncate">{tag}</span>
                     </div>
                 </header>

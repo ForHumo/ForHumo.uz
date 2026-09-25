@@ -139,7 +139,7 @@ export function NxSaved() {
                             <button key={id} onClick={() => setTab(id)}
                                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition flex-shrink-0"
                                 style={tab === id
-                                    ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }
+                                    ? { background: "var(--nx-accent)", color: "#fff" }
                                     : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(140,160,210,0.85)" }}>
                                 <Icon className="w-3.5 h-3.5" />{label}
                             </button>
@@ -158,7 +158,7 @@ export function NxSaved() {
                         <input value={query} onChange={e => setQuery(e.target.value)}
                             placeholder={tab === "all" ? "Post ichidan qidirish..." : tab === "videos" ? "Video ichidan qidirish..." : "Tarix ichidan qidirish..."}
                             className="w-full h-9 rounded-xl pl-9 pr-9 text-sm text-white outline-none"
-                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "#00CEC8" }} />
+                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "var(--nx-accent)" }} />
                         {query && (
                             <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
                                 <X className="w-3.5 h-3.5" style={{ color: "rgba(160,180,220,0.70)" }} />
@@ -208,7 +208,7 @@ export function NxSaved() {
                                     <div className="flex justify-center mt-3">
                                         <button onClick={loadMorePosts} disabled={loadingMore}
                                             className="px-5 py-2 rounded-xl text-xs font-black text-white active:scale-95 disabled:opacity-50"
-                                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                            style={{ background: "var(--nx-accent)" }}>
                                             {loadingMore ? <><Loader2 className="w-3 h-3 animate-spin inline mr-1" />Yuklanmoqda</> : "Ko'proq"}
                                         </button>
                                     </div>
@@ -265,7 +265,7 @@ export function NxSaved() {
                                                 </div>
                                                 {v.duration && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.85)" }}><Clock className="w-2.5 h-2.5" />{v.duration}</span>}
                                             </div>
-                                            <p className="text-[11px] font-bold text-white line-clamp-2 leading-snug group-hover:text-[#00CEC8] transition-colors">{v.title}</p>
+                                            <p className="text-[11px] font-bold text-white line-clamp-2 leading-snug group-hover:text-[var(--nx-accent)] transition-colors">{v.title}</p>
                                             <p className="text-[9px] mt-0.5" style={{ color: "rgba(100,120,170,0.75)" }}>{v.author}</p>
                                         </button>
                                     ))}

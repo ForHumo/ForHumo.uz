@@ -51,17 +51,17 @@ export function NexusAnalytics() {
                     <ArrowLeft className="w-4 h-4 text-white" />
                 </button>
                 <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                    <TrendingUp className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                     <span className="text-sm font-black text-white">Ijodkor analitikasi</span>
                 </div>
             </header>
 
             {loading ? (
-                <div className="flex justify-center py-24"><Loader2 className="w-8 h-8 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                <div className="flex justify-center py-24"><Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
             ) : !data ? (
                 <div className="flex flex-col items-center py-24 px-6 text-center">
                     <p className="text-sm font-bold text-white/70">Ma&apos;lumot yuklanmadi</p>
-                    <Link href="/nexus" className="mt-4 px-5 py-2.5 rounded-xl text-xs font-black text-white" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>Nexus&apos;ga qaytish</Link>
+                    <Link href="/nexus" className="mt-4 px-5 py-2.5 rounded-xl text-xs font-black text-white" style={{ background: "var(--nx-accent)" }}>Nexus&apos;ga qaytish</Link>
                 </div>
             ) : (
                 <div className="px-4 py-4 pb-28 max-w-2xl mx-auto">
@@ -84,7 +84,7 @@ export function NexusAnalytics() {
                     {/* Auditoriya */}
                     <p className="text-[11px] font-black uppercase tracking-widest mb-2 px-1" style={{ color: "rgba(43,62,232,0.6)" }}>Auditoriya</p>
                     <div className="grid grid-cols-2 gap-2.5 mb-4">
-                        <StatCard icon={Users} color="#2B3EE8" label="Kuzatuvchilar" value={data.audience.followers} />
+                        <StatCard icon={Users} color="var(--nx-accent)" label="Kuzatuvchilar" value={data.audience.followers} />
                         <StatCard icon={Star} color="#8B5CF6" label="Obunachilar" value={data.audience.subscribers} />
                     </div>
 
@@ -93,7 +93,7 @@ export function NexusAnalytics() {
                     <div className="grid grid-cols-2 gap-2.5 mb-4">
                         <StatCard icon={Film} color="#EF4444" label="Videolar" value={data.content.videos} sub={`${fmtN(data.content.videoViews)} ko'rish · ${fmtN(data.content.videoLikes)} like`} />
                         <StatCard icon={Music2} color="#10B981" label="Audio" value={data.content.tracks} sub={`${fmtN(data.content.trackPlays)} tinglash`} />
-                        <StatCard icon={FileText} color="#2B3EE8" label="Postlar" value={data.content.posts} sub={`${fmtN(data.content.postLikes)} like`} />
+                        <StatCard icon={FileText} color="var(--nx-accent)" label="Postlar" value={data.content.posts} sub={`${fmtN(data.content.postLikes)} like`} />
                         <StatCard icon={Radio} color="#F97316" label="Jonli efirlar" value={data.content.lives} />
                     </div>
 

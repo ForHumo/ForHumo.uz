@@ -194,7 +194,7 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
     }
 
     const progress = duration > 0 ? current / duration : 0;
-    const activeColor = mine ? "#ffffff" : "#00CEC8";
+    const activeColor = mine ? "#ffffff" : "var(--nx-accent)";
     const dimColor = mine ? "rgba(255,255,255,0.35)" : "rgba(0,206,200,0.30)";
 
     return (
@@ -281,7 +281,7 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
                     }}>
                     {transcribing
                         ? <Loader2 className="w-3 h-3 animate-spin" style={{ color: activeColor }} />
-                        : <FileText className="w-3 h-3" style={{ color: transcript ? "#00CEC8" : activeColor }} />
+                        : <FileText className="w-3 h-3" style={{ color: transcript ? "var(--nx-accent)" : activeColor }} />
                     }
                 </button>
             )}
@@ -291,11 +291,11 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
         {transcript && (
             <div className="pl-2 pr-1 pt-1 text-xs italic"
                 style={{
-                    borderLeft: `2px solid ${mine ? "rgba(255,255,255,0.60)" : "#00CEC8"}`,
+                    borderLeft: `2px solid ${mine ? "rgba(255,255,255,0.60)" : "var(--nx-accent)"}`,
                     color: mine ? "rgba(255,255,255,0.90)" : "rgba(220,230,255,0.85)",
                 }}>
                 <span className="text-[9px] font-black uppercase tracking-wider mr-1.5"
-                    style={{ color: mine ? "rgba(255,255,255,0.75)" : "#00CEC8" }}>Transkript</span>
+                    style={{ color: mine ? "rgba(255,255,255,0.75)" : "var(--nx-accent)" }}>Transkript</span>
                 {transcript}
             </div>
         )}

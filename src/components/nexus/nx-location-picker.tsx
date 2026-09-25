@@ -42,7 +42,7 @@ export function NxLocationPicker({ value, onChange, disabled }: Props) {
             <button type="button" onClick={() => setOpen(true)} disabled={disabled}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95 disabled:opacity-50"
                 style={value
-                    ? { background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.35)", color: "#00CEC8" }
+                    ? { background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.35)", color: "var(--nx-accent)" }
                     : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(160,180,230,0.85)" }}>
                 <MapPin className="w-3.5 h-3.5" />
                 {value ? <span className="truncate max-w-[180px]">{value.name}</span> : "Joylashuv"}
@@ -94,7 +94,7 @@ function MapModal({ value, onChange, onClose }: {
             // Marker
             const icon = L.divIcon({
                 className: "",
-                html: `<div style="width:26px;height:26px;border-radius:50%;background:#00CEC8;border:3px solid #fff;box-shadow:0 4px 16px rgba(0,206,200,0.6);"></div>`,
+                html: `<div style="width:26px;height:26px;border-radius:50%;background:var(--nx-accent);border:3px solid #fff;box-shadow:0 4px 16px rgba(0,206,200,0.6);"></div>`,
                 iconSize: [26, 26], iconAnchor: [13, 13],
             });
             const marker = L.marker([startLat, startLng], { icon, draggable: true }).addTo(map);
@@ -219,7 +219,7 @@ function MapModal({ value, onChange, onClose }: {
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <MapPin className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <MapPin className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Joylashuvni tanlang
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl"
@@ -236,8 +236,8 @@ function MapModal({ value, onChange, onClose }: {
                             <input value={query} onChange={e => setQuery(e.target.value)}
                                 placeholder="Chorsu bozori, Amir Temur ko'chasi..."
                                 className="w-full h-10 rounded-xl pl-9 pr-9 text-sm text-white outline-none"
-                                style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.25)", caretColor: "#00CEC8" }} />
-                            {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin" style={{ color: "#00CEC8" }} />}
+                                style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.25)", caretColor: "var(--nx-accent)" }} />
+                            {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin" style={{ color: "var(--nx-accent)" }} />}
                         </div>
                         <button onClick={askAi} disabled={!query.trim() || aiBusy} title="AI orqali topish"
                             className="h-10 px-3 flex items-center gap-1 rounded-xl text-[11px] font-black transition active:scale-95 disabled:opacity-50"
@@ -249,7 +249,7 @@ function MapModal({ value, onChange, onClose }: {
                         <button onClick={useGps} disabled={gpsBusy} title="Joyimni aniqlash (GPS)"
                             className="h-10 w-10 flex items-center justify-center rounded-xl transition active:scale-95 disabled:opacity-50"
                             style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                            {gpsBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#2B3EE8" }} /> : <LocateFixed className="w-3.5 h-3.5" style={{ color: "#2B3EE8" }} />}
+                            {gpsBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "var(--nx-accent)" }} /> : <LocateFixed className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />}
                         </button>
                     </div>
                     {aiCandidates.length > 0 && (
@@ -270,7 +270,7 @@ function MapModal({ value, onChange, onClose }: {
                                 <button key={i} onClick={() => selectResult(r)}
                                     className="w-full flex items-start gap-2 p-2 rounded-lg text-left transition active:scale-[0.99]"
                                     style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.14)" }}>
-                                    <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                    <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                     <div className="min-w-0">
                                         <p className="text-xs font-bold text-white truncate">{r.name}</p>
                                         {(r.city || r.country) && (
@@ -300,7 +300,7 @@ function MapModal({ value, onChange, onClose }: {
                 <div className="px-4 py-3 flex-shrink-0 space-y-2" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
                     {pending && (
                         <div className="flex items-center gap-2 p-2.5 rounded-xl" style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)" }}>
-                            <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                            <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                             <div className="min-w-0 flex-1">
                                 <p className="text-xs font-bold text-white truncate">
                                     {reverseBusy ? "Nom aniqlanmoqda..." : (pending.name || `${pending.lat.toFixed(5)}, ${pending.lng.toFixed(5)}`)}
@@ -313,7 +313,7 @@ function MapModal({ value, onChange, onClose }: {
                     )}
                     <button onClick={confirm} disabled={!pending}
                         className="w-full py-3 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 active:scale-95 disabled:opacity-40"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        style={{ background: "var(--nx-accent)" }}>
                         <Check className="w-4 h-4" /> Tasdiqlash
                     </button>
                 </div>

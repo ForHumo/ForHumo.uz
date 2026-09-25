@@ -31,7 +31,7 @@ const FILTER_CSS: Record<string, string> = {
     bw: "grayscale(1) contrast(1.15)",
 };
 
-const BG_COLORS = ["#2B3EE8", "#00CEC8", "#EF4444", "#F59E0B", "#10B981", "#8B5CF6", "#EC4899", "#000000", "#EAB308", "#3B82F6"];
+const BG_COLORS = ["var(--nx-accent)", "var(--nx-accent)", "#EF4444", "#F59E0B", "#10B981", "#8B5CF6", "#EC4899", "#000000", "#EAB308", "#3B82F6"];
 
 interface Slide {
     localId: string;
@@ -233,9 +233,9 @@ export function NxStoryCreate() {
                         <button onClick={() => fileRef.current?.click()} disabled={uploading}
                             className="flex flex-col items-center justify-center gap-3 w-full flex-1 rounded-2xl border-2 border-dashed"
                             style={{ borderColor: "rgba(43,62,232,0.35)", background: "rgba(43,62,232,0.05)" }}>
-                            {uploading ? <Loader2 className="w-10 h-10 animate-spin" style={{ color: "#00CEC8" }} /> : (
+                            {uploading ? <Loader2 className="w-10 h-10 animate-spin" style={{ color: "var(--nx-accent)" }} /> : (
                                 <>
-                                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "var(--nx-accent)" }}>
                                         <ImagePlus className="w-8 h-8 text-white" />
                                     </div>
                                     <span className="text-sm font-bold text-white">Rasm yoki video tanlang</span>
@@ -260,7 +260,7 @@ export function NxStoryCreate() {
                                 <>
                                     {active.mediaType === "TEXT" ? (
                                         <div className="w-full h-full flex items-center justify-center px-6"
-                                            style={{ background: active.bgColor || "#2B3EE8" }}>
+                                            style={{ background: active.bgColor || "var(--nx-accent)" }}>
                                             <p className="text-2xl sm:text-3xl font-black text-white text-center leading-tight"
                                                 style={{ textShadow: "0 2px 12px rgba(0,0,0,0.35)" }}>
                                                 {active.caption || "Matn yozing..."}
@@ -354,7 +354,7 @@ export function NxStoryCreate() {
                                                 <button key={f.key} onClick={() => updateActive({ filter: f.key })}
                                                     className="px-3 py-2 rounded-lg text-[11px] font-bold flex-shrink-0"
                                                     style={active.filter === f.key
-                                                        ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }
+                                                        ? { background: "var(--nx-accent)", color: "#fff" }
                                                         : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.20)", color: "rgba(160,180,230,0.85)" }}>
                                                     {f.label}
                                                 </button>
@@ -397,7 +397,7 @@ export function NxStoryCreate() {
                                                     {TEXT_COLORS.map(c => (
                                                         <button key={c} onClick={() => updateOverlay(activeOverlay.id, { color: c })}
                                                             className="w-7 h-7 rounded-lg"
-                                                            style={{ background: c, border: activeOverlay.color === c ? "2px solid #00CEC8" : "1px solid rgba(255,255,255,0.20)" }} />
+                                                            style={{ background: c, border: activeOverlay.color === c ? "2px solid var(--nx-accent)" : "1px solid rgba(255,255,255,0.20)" }} />
                                                     ))}
                                                 </div>
                                             </div>
@@ -409,7 +409,7 @@ export function NxStoryCreate() {
                                                             className="w-7 h-7 rounded-lg flex items-center justify-center"
                                                             style={{
                                                                 background: c === "transparent" ? "rgba(255,255,255,0.05)" : c,
-                                                                border: (activeOverlay.bg || "transparent") === c ? "2px solid #00CEC8" : "1px solid rgba(255,255,255,0.20)",
+                                                                border: (activeOverlay.bg || "transparent") === c ? "2px solid var(--nx-accent)" : "1px solid rgba(255,255,255,0.20)",
                                                             }}>
                                                             {c === "transparent" && <X className="w-3 h-3 text-white" />}
                                                         </button>
@@ -434,7 +434,7 @@ export function NxStoryCreate() {
                                     ) : (
                                         <button onClick={addTextOverlay}
                                             className="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold text-white"
-                                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                            style={{ background: "var(--nx-accent)" }}>
                                             <Plus className="w-4 h-4" /> Matn qo&apos;shish
                                         </button>
                                     )
@@ -495,7 +495,7 @@ export function NxStoryCreate() {
                                                         onClick={() => { setMusicTrackId(t.id); setMusicTitle(`${t.title}${t.artist ? " — " + t.artist : ""}`); }}
                                                         className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left"
                                                         style={{ background: musicTrackId === t.id ? "rgba(0,206,200,0.12)" : "rgba(43,62,232,0.06)" }}>
-                                                        <Music className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                                        <Music className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                                         <div className="min-w-0 flex-1">
                                                             <p className="text-xs font-bold text-white truncate">{t.title}</p>
                                                             {t.artist && <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.75)" }}>{t.artist}</p>}
@@ -514,32 +514,32 @@ export function NxStoryCreate() {
                             {active && active.mediaType !== "TEXT" && (
                                 <button onClick={() => setTab(t => t === "filter" ? "none" : "filter")}
                                     className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold"
-                                    style={tab === "filter" ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8" } : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,230,0.85)" }}>
+                                    style={tab === "filter" ? { background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" } : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,230,0.85)" }}>
                                     <Sparkles className="w-3.5 h-3.5" /> Filter
                                 </button>
                             )}
                             {active && active.mediaType === "TEXT" && (
                                 <button onClick={() => setTab(t => t === "bg" ? "none" : "bg")}
                                     className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold"
-                                    style={tab === "bg" ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8" } : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,230,0.85)" }}>
+                                    style={tab === "bg" ? { background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" } : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,230,0.85)" }}>
                                     <Palette className="w-3.5 h-3.5" /> Fon
                                 </button>
                             )}
                             <button onClick={() => setTab(t => t === "text" ? "none" : "text")}
                                 className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold"
-                                style={tab === "text" ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8" } : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,230,0.85)" }}>
+                                style={tab === "text" ? { background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" } : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,230,0.85)" }}>
                                 <Type className="w-3.5 h-3.5" /> Matn
                             </button>
                             <button onClick={() => setTab(t => t === "sticker" ? "none" : "sticker")}
                                 className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold"
-                                style={tab === "sticker" ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8" } : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,230,0.85)" }}>
+                                style={tab === "sticker" ? { background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" } : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,230,0.85)" }}>
                                 <Smile className="w-3.5 h-3.5" /> Sticker
                             </button>
                             <button onClick={() => setTab(t => t === "music" ? "none" : "music")}
                                 className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold"
-                                style={tab === "music" ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8" } : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,230,0.85)" }}>
+                                style={tab === "music" ? { background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" } : { background: "rgba(43,62,232,0.06)", color: "rgba(160,180,230,0.85)" }}>
                                 <Music className="w-3.5 h-3.5" /> Musiqa
-                                {musicTrackId && <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#00CEC8" }} />}
+                                {musicTrackId && <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--nx-accent)" }} />}
                             </button>
                         </div>
 
@@ -548,13 +548,13 @@ export function NxStoryCreate() {
                             {slides.map((s, i) => (
                                 <button key={s.localId} onClick={() => { setActiveIdx(i); setSelectedOverlayId(null); }}
                                     className="relative flex-shrink-0 w-12 h-16 rounded-lg overflow-hidden"
-                                    style={{ border: i === activeIdx ? "2px solid #00CEC8" : "1px solid rgba(255,255,255,0.15)", background: s.bgColor || "#111" }}>
+                                    style={{ border: i === activeIdx ? "2px solid var(--nx-accent)" : "1px solid rgba(255,255,255,0.15)", background: s.bgColor || "#111" }}>
                                     {s.mediaType === "IMAGE" && <img src={s.mediaUrl} alt="" className="w-full h-full object-cover" />}
                                     {s.mediaType === "VIDEO" && <video src={s.mediaUrl} muted className="w-full h-full object-cover" />}
                                     {s.mediaType === "TEXT" && <div className="w-full h-full flex items-center justify-center text-white text-[8px] font-bold px-1 text-center truncate">{s.caption || "Aa"}</div>}
                                     {s.overlays.length > 0 && (
                                         <span className="absolute top-0.5 right-0.5 w-3 h-3 rounded-full text-[7px] font-black text-black flex items-center justify-center"
-                                            style={{ background: "#00CEC8" }}>{s.overlays.length}</span>
+                                            style={{ background: "var(--nx-accent)" }}>{s.overlays.length}</span>
                                     )}
                                     {i === activeIdx && slides.length > 1 && (
                                         <span onClick={(e) => { e.stopPropagation(); removeSlide(i); }}
@@ -586,10 +586,10 @@ export function NxStoryCreate() {
                             <input value={storyCaption} onChange={e => setStoryCaption(e.target.value.slice(0, 300))}
                                 placeholder="Story izohi (ixtiyoriy)..."
                                 className="flex-1 h-10 rounded-full px-4 text-sm text-white outline-none"
-                                style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.20)", caretColor: "#00CEC8" }} />
+                                style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.20)", caretColor: "var(--nx-accent)" }} />
                             <button onClick={publish} disabled={posting || slides.length === 0}
                                 className="w-10 h-10 flex items-center justify-center rounded-full text-white flex-shrink-0 disabled:opacity-50"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                style={{ background: "var(--nx-accent)" }}>
                                 {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                             </button>
                         </div>

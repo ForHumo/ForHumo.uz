@@ -30,8 +30,8 @@ const TYPE_ICONS: Record<NType, React.ElementType> = {
     SUPPORT: LifeBuoy,
 };
 const TYPE_COLORS: Record<NType, string> = {
-    LIKE: "#EF4444", COMMENT: "#2B3EE8", FOLLOW: "#10B981", REPLY: "#8B5CF6",
-    VIDEO_LIKE: "#EF4444", VIDEO_COMMENT: "#8B5CF6", TRACK_LIKE: "#10B981", PURCHASE: "#00CEC8", LIVE: "#EF4444", TIP: "#F59E0B", MENTION: "#2B3EE8", SUB_EXPIRING: "#8B5CF6", CALL_MISSED: "#EF4444",
+    LIKE: "#EF4444", COMMENT: "var(--nx-accent)", FOLLOW: "#10B981", REPLY: "#8B5CF6",
+    VIDEO_LIKE: "#EF4444", VIDEO_COMMENT: "#8B5CF6", TRACK_LIKE: "#10B981", PURCHASE: "var(--nx-accent)", LIVE: "#EF4444", TIP: "#F59E0B", MENTION: "var(--nx-accent)", SUB_EXPIRING: "#8B5CF6", CALL_MISSED: "#EF4444",
     MOD_WARN: "#F59E0B",
     SUPPORT: "#0EA5E9",
 };
@@ -261,7 +261,7 @@ export function NxNotifications() {
 
                 {/* Header */}
                 <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <Bell className="w-5 h-5 flex-shrink-0" style={{ color: "#2B3EE8" }} />
+                    <Bell className="w-5 h-5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                     <div className="flex-1">
                         <h3 className="text-base font-black text-white">Bildirishnomalar</h3>
                         {unreadCount > 0 && <p className="text-[10px]" style={{ color: "rgba(0,206,200,0.80)" }}>{unreadCount} ta yangi</p>}
@@ -270,7 +270,7 @@ export function NxNotifications() {
                         <button onClick={togglePush} disabled={pushBusy} title={pushState === "subscribed" ? "Push yoqilgan" : "Push'ni yoqish"}
                             className="flex items-center justify-center w-8 h-8 rounded-lg"
                             style={pushState === "subscribed"
-                                ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8" }
+                                ? { background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" }
                                 : { background: "rgba(43,62,232,0.12)", color: "rgba(140,160,210,0.85)" }}>
                             {pushBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : pushState === "subscribed" ? <BellRing className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
                         </button>
@@ -291,7 +291,7 @@ export function NxNotifications() {
                     <button onClick={() => setPrefsOpen(o => !o)} title="Bildirishnoma sozlamalari"
                         className="w-8 h-8 flex items-center justify-center rounded-lg"
                         style={prefsOpen
-                            ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8" }
+                            ? { background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" }
                             : { background: "rgba(43,62,232,0.12)", color: "rgba(140,160,210,0.85)" }}>
                         <Settings2 className="w-3.5 h-3.5" />
                     </button>
@@ -313,7 +313,7 @@ export function NxNotifications() {
                                     style={{ background: enabled ? "rgba(0,206,200,0.08)" : "rgba(43,62,232,0.05)" }}>
                                     <span className="text-[11px] font-bold text-white flex-1 truncate">{NOTIF_LABELS[t]}</span>
                                     <div className="w-9 h-5 rounded-full relative flex-shrink-0 transition-colors"
-                                        style={{ background: enabled ? "#00CEC8" : "rgba(80,100,150,0.4)" }}>
+                                        style={{ background: enabled ? "var(--nx-accent)" : "rgba(80,100,150,0.4)" }}>
                                         <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
                                             style={{ left: enabled ? "18px" : "2px" }} />
                                     </div>
@@ -331,7 +331,7 @@ export function NxNotifications() {
                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all active:scale-[0.98]"
                                     style={{ background: active ? "rgba(0,206,200,0.12)" : "rgba(43,62,232,0.05)", border: active ? "1px solid rgba(0,206,200,0.30)" : "1px solid transparent" }}>
                                     <div className="w-5 h-5 flex-shrink-0 rounded-full flex items-center justify-center"
-                                        style={{ background: active ? "#00CEC8" : "rgba(80,100,150,0.20)" }}>
+                                        style={{ background: active ? "var(--nx-accent)" : "rgba(80,100,150,0.20)" }}>
                                         {active && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -350,7 +350,7 @@ export function NxNotifications() {
                         <button key={f.id} onClick={() => setFilter(f.id)}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold flex-shrink-0 transition-all duration-150"
                             style={filter === f.id
-                                ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }
+                                ? { background: "var(--nx-accent)", color: "#fff" }
                                 : { background: "rgba(43,62,232,0.08)", color: "rgba(140,160,210,0.80)", border: "1px solid rgba(43,62,232,0.16)" }}>
                             <f.icon className="w-3 h-3" />{f.label}
                         </button>
@@ -405,7 +405,7 @@ export function NxNotifications() {
                                                     {n.postText && <p className="text-[11px] mt-0.5 truncate" style={{ color: "rgba(120,140,185,0.7)" }}>&ldquo;{n.postText}&rdquo;</p>}
                                                     <p className="text-[10px] mt-0.5" style={{ color: "rgba(80,100,150,0.75)" }}>{timeAgo(n.createdAt)}</p>
                                                 </div>
-                                                {!n.read && <div className="w-2 h-2 rounded-full flex-shrink-0 mt-2" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }} />}
+                                                {!n.read && <div className="w-2 h-2 rounded-full flex-shrink-0 mt-2" style={{ background: "var(--nx-accent)" }} />}
                                             </>
                                         );
                                         const cls = "group w-full flex items-start gap-3 px-4 py-3.5 text-left transition-all duration-150 relative";
@@ -433,7 +433,7 @@ export function NxNotifications() {
                                 <div className="flex justify-center py-4">
                                     <button onClick={loadMore} disabled={loadingMore}
                                         className="px-5 py-2 rounded-xl text-xs font-black text-white active:scale-95 disabled:opacity-50"
-                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                        style={{ background: "var(--nx-accent)" }}>
                                         {loadingMore ? <><Loader2 className="w-3 h-3 animate-spin inline mr-1" />Yuklanmoqda</> : "Ko'proq"}
                                     </button>
                                 </div>

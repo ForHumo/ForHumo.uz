@@ -26,7 +26,7 @@ export function NexusVideoPermalink({ id }: { id: string }) {
     return (
         <NxPlayerProvider>
             <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#050818" }}>
-                <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#2B3EE8" }} />
+                <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--nx-accent)" }} />
             </div>
             <Opener id={id} />
             <NxVideoPlayer />

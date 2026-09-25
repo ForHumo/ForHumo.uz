@@ -97,7 +97,7 @@ export function NxTopWritersRow() {
                             </div>
                             <div className="flex items-center justify-center gap-1.5 text-[9px] mt-0.5" style={{ color: "rgba(140,160,210,0.75)" }}>
                                 <span className="flex items-center gap-0.5"><Heart className="w-2.5 h-2.5" style={{ color: "#EF4444" }} />{fmtN(w.likes)}</span>
-                                <span className="flex items-center gap-0.5"><MessageCircle className="w-2.5 h-2.5" style={{ color: "#00CEC8" }} />{fmtN(w.comments)}</span>
+                                <span className="flex items-center gap-0.5"><MessageCircle className="w-2.5 h-2.5" style={{ color: "var(--nx-accent)" }} />{fmtN(w.comments)}</span>
                             </div>
                         </div>
                     </Link>

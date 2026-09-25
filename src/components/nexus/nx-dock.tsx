@@ -20,12 +20,12 @@ export type NxTab =
     | "profile";
 
 const TABS: { id: NxTab; icon: React.ElementType; label: string; color: string }[] = [
-    { id: "feed",    icon: LayoutDashboard,  label: "Asosiy",   color: "#2B3EE8" },
+    { id: "feed",    icon: LayoutDashboard,  label: "Asosiy",   color: "var(--nx-accent)" },
     { id: "video",   icon: Clapperboard,     label: "Video",    color: "#8B5CF6" },
     { id: "live",    icon: Radio,            label: "Jonli",    color: "#EF4444" },
     { id: "media",   icon: LibraryBig,       label: "Media",    color: "#10B981" },
     { id: "social",  icon: MessagesSquare,   label: "Ijtimoiy", color: "#F59E0B" },
-    { id: "profile", icon: CircleUserRound,  label: "Profil",   color: "#00CEC8" },
+    { id: "profile", icon: CircleUserRound,  label: "Profil",   color: "var(--nx-accent)" },
 ];
 
 interface Props {
@@ -114,7 +114,7 @@ function CreateButton({ onClick }: { onClick: () => void }) {
             onClick={handleClick}
             className="nx-ripple-wrap mx-1.5 w-11 h-11 rounded-full flex items-center justify-center"
             style={{
-                background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                background: "var(--nx-accent)",
                 boxShadow: "0 0 24px rgba(43,62,232,0.55), 0 4px 16px rgba(0,0,0,0.45)",
             }}
         >

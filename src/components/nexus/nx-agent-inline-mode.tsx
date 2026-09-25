@@ -73,7 +73,7 @@ export function NxAgentInlineMode({
             </div>
             {loading ? (
                 <div className="flex justify-center py-4">
-                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#2B3EE8" }} />
+                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--nx-accent)" }} />
                 </div>
             ) : error ? (
                 <div className="p-4 text-center text-xs" style={{ color: "#EF4444" }}>
@@ -81,7 +81,7 @@ export function NxAgentInlineMode({
                 </div>
             ) : results.length === 0 ? (
                 <div className="p-4 text-center">
-                    <Bot className="w-6 h-6 mx-auto mb-1 opacity-40" style={{ color: "#00CEC8" }} />
+                    <Bot className="w-6 h-6 mx-auto mb-1 opacity-40" style={{ color: "var(--nx-accent)" }} />
                     <p className="text-xs" style={{ color: "rgba(160,176,224,0.75)" }}>
                         {query ? "Natija yo'q" : "So'rov yozing..."}
                     </p>

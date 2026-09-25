@@ -11,7 +11,7 @@ import { NxMyAdsCard } from "./nx-my-ads-card";
 import { NxAdminAds } from "./nx-admin-ads";
 import { formatMoney } from "@/lib/money";
 
-const NX_GRADIENT = "linear-gradient(135deg, #2B3EE8 0%, #6D28D9 50%, #EC4899 100%)";
+const NX_GRADIENT = "linear-gradient(135deg, var(--nx-accent) 0%, #6D28D9 50%, #EC4899 100%)";
 const NX_BG = "rgba(255,255,255,0.05)";
 const NX_BORDER = "rgba(255,255,255,0.10)";
 

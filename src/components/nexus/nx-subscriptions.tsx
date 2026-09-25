@@ -85,7 +85,7 @@ export function NxSubscriptions() {
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h2 className="text-base font-black text-white flex items-center gap-2">
-                        <Users className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <Users className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Aloqalar
                     </h2>
                     <button onClick={() => setSubsOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full"
@@ -103,7 +103,7 @@ export function NxSubscriptions() {
                         <button key={id} onClick={() => setTab(id)}
                             className="flex-1 px-3 py-2 rounded-xl text-xs font-black transition active:scale-95"
                             style={tab === id
-                                ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }
+                                ? { background: "var(--nx-accent)", color: "#fff" }
                                 : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(140,160,210,0.85)" }}>
                             {label}{users.length > 0 && tab === id && <span className="ml-1 opacity-70">{users.length}</span>}
                         </button>
@@ -117,7 +117,7 @@ export function NxSubscriptions() {
                         <input value={query} onChange={e => setQuery(e.target.value)}
                             placeholder="Ism yoki @username..."
                             className="w-full h-9 rounded-xl pl-9 pr-9 text-sm text-white outline-none"
-                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "#00CEC8" }} />
+                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "var(--nx-accent)" }} />
                         {query && (
                             <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
                                 <X className="w-3.5 h-3.5" style={{ color: "rgba(160,180,220,0.70)" }} />
@@ -176,7 +176,7 @@ export function NxSubscriptions() {
                                     ) : (
                                         <button onClick={() => toggleFollow(u)} disabled={busy === u.username}
                                             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-black flex-shrink-0 disabled:opacity-50"
-                                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }}>
+                                            style={{ background: "var(--nx-accent)", color: "#fff" }}>
                                             {busy === u.username ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserPlus className="w-3 h-3" />}
                                             Kuzatish
                                         </button>

@@ -13,10 +13,10 @@ export function NxText({ text, className, style }: { text: string; className?: s
             {parts.map((part, i) => {
                 if (/^@[a-z0-9_]{3,20}$/i.test(part)) {
                     const u = part.slice(1).toLowerCase();
-                    return <Link key={i} href={`/nexus/u/${u}`} className="font-bold hover:underline" style={{ color: "#00CEC8" }}>{part}</Link>;
+                    return <Link key={i} href={`/nexus/u/${u}`} className="font-bold hover:underline" style={{ color: "var(--nx-accent)" }}>{part}</Link>;
                 }
                 if (/^#[\p{L}\p{N}_]+$/u.test(part)) {
-                    return <Link key={i} href={`/nexus/tag/${part.slice(1)}`} className="font-bold hover:underline" style={{ color: "#2B3EE8" }}>{part}</Link>;
+                    return <Link key={i} href={`/nexus/tag/${part.slice(1)}`} className="font-bold hover:underline" style={{ color: "var(--nx-accent)" }}>{part}</Link>;
                 }
                 return <React.Fragment key={i}>{part}</React.Fragment>;
             })}

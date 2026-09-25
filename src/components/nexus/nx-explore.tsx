@@ -151,7 +151,7 @@ export function NxExplore() {
                         <button onClick={refresh} disabled={refreshing || loading} title="Yangilash"
                             className="w-8 h-8 flex items-center justify-center rounded-xl active:scale-95"
                             style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.25)" }}>
-                            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} style={{ color: "#00CEC8" }} />
+                            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} style={{ color: "var(--nx-accent)" }} />
                         </button>
                         <button onClick={close} className="w-8 h-8 flex items-center justify-center rounded-xl"
                             style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.18)" }}>
@@ -171,7 +171,7 @@ export function NxExplore() {
                             <button key={t.id} onClick={() => setTab(t.id)}
                                 className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-black transition-all active:scale-95"
                                 style={tab === t.id
-                                    ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }
+                                    ? { background: "var(--nx-accent)", color: "#fff" }
                                     : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(160,180,230,0.85)" }}>
                                 {t.label}{tab === t.id && t.count > 0 ? ` (${t.count})` : ""}
                             </button>
@@ -181,7 +181,7 @@ export function NxExplore() {
 
                 <div className="flex-1 overflow-y-auto pb-6" style={{ scrollbarWidth: "none" }}>
                     {loading ? (
-                        <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                        <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     ) : (
                         <>
                             {/* Jonli efirlar (all + lives) */}
@@ -213,7 +213,7 @@ export function NxExplore() {
 
                             {/* Trending hashtaglar */}
                             {(tab === "all" || tab === "tags") && tags.length > 0 && (
-                                <SectionHead icon={<Hash className="w-4 h-4" style={{ color: "#00CEC8" }} />} title="Trending hashtag" accent="#00CEC8">
+                                <SectionHead icon={<Hash className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />} title="Trending hashtag" accent="var(--nx-accent)">
                                     <div className="grid grid-cols-2 gap-2 px-3">
                                         {tags.slice(0, tab === "tags" ? 20 : 6).map((t, i) => (
                                             <Link key={t.tag} href={`/nexus/tag/${t.tag}`} onClick={close}
@@ -222,7 +222,7 @@ export function NxExplore() {
                                                 <span className="text-sm font-black" style={{ color: "rgba(80,100,150,0.6)", minWidth: "16px" }}>{i + 1}</span>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-1">
-                                                        <Hash className="w-3 h-3 flex-shrink-0" style={{ color: "#2B3EE8" }} />
+                                                        <Hash className="w-3 h-3 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                                         <span className="text-[12px] font-bold text-white truncate">{t.tag}</span>
                                                     </div>
                                                     <span className="text-[9px]" style={{ color: "rgba(80,100,150,0.7)" }}>{t.count} post</span>
@@ -250,7 +250,7 @@ export function NxExplore() {
                                                     {p.text && <p className="text-[12px] mt-0.5 line-clamp-2" style={{ color: "rgba(200,215,245,0.85)" }}>{p.text}</p>}
                                                     <div className="flex items-center gap-3 mt-1.5 text-[10px]" style={{ color: "rgba(120,140,185,0.7)" }}>
                                                         <span className="flex items-center gap-1"><Heart className="w-3 h-3" style={{ color: "#EF4444" }} />{p.likes}</span>
-                                                        <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" style={{ color: "#00CEC8" }} />{p.comments}</span>
+                                                        <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />{p.comments}</span>
                                                     </div>
                                                 </div>
                                             </Link>
@@ -311,7 +311,7 @@ export function NxExplore() {
 
                             {/* Tavsiya odamlar */}
                             {(tab === "all" || tab === "people") && (
-                                <SectionHead icon={<Users className="w-4 h-4" style={{ color: "#00CEC8" }} />} title="Kim kuzatishga arziydi" accent="#00CEC8">
+                                <SectionHead icon={<Users className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />} title="Kim kuzatishga arziydi" accent="var(--nx-accent)">
                                     {users.length === 0 ? (
                                         <p className="text-xs px-4" style={{ color: "rgba(120,140,185,0.6)" }}>Hozircha tavsiya yo&apos;q</p>
                                     ) : (
@@ -341,7 +341,7 @@ export function NxExplore() {
                                                                 ) : (
                                                                     <button onClick={() => follow(u)} disabled={followBusy === u.username}
                                                                         className="px-3 py-1.5 rounded-xl text-[11px] font-black flex items-center gap-1 flex-shrink-0 active:scale-95 transition"
-                                                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }}>
+                                                                        style={{ background: "var(--nx-accent)", color: "#fff" }}>
                                                                         <UserPlus className="w-3 h-3" /> Kuzatish
                                                                     </button>
                                                                 )

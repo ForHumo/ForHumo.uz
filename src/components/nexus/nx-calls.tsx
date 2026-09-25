@@ -111,7 +111,7 @@ export function NxCalls() {
                         <input value={query} onChange={e => setQuery(e.target.value)}
                             placeholder="Qidirish..."
                             className="w-full h-9 rounded-xl pl-9 pr-9 text-sm text-white outline-none"
-                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "#00CEC8" }} />
+                            style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "var(--nx-accent)" }} />
                         {query && (
                             <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
                                 <X className="h-3.5 w-3.5" style={{ color: "rgba(160,180,220,0.70)" }} />
@@ -127,7 +127,7 @@ export function NxCalls() {
                             <button key={t.id} onClick={() => setFilter(t.id)}
                                 className="flex-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition active:scale-95"
                                 style={filter === t.id
-                                    ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }
+                                    ? { background: "var(--nx-accent)", color: "#fff" }
                                     : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(160,180,230,0.85)" }}>
                                 {t.label}{t.n > 0 && <span className="ml-1 opacity-70">{t.n}</span>}
                             </button>
@@ -139,7 +139,7 @@ export function NxCalls() {
                     {filter !== "missed" && (
                         <button onClick={() => { setCallsOpen(false); setGroupCallOpen(true); }}
                             className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-black text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-95"
-                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            style={{ background: "var(--nx-accent)" }}>
                             <Users className="h-4 w-4" /> Guruh chaqiruv (LiveKit)
                         </button>
                     )}
@@ -158,18 +158,18 @@ export function NxCalls() {
                                 <div key={g.id} className="mb-1 flex items-center gap-3 rounded-2xl p-3"
                                     style={{ border: "1px solid rgba(0,206,200,0.35)", background: "rgba(0,206,200,0.05)" }}>
                                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
-                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                        style={{ background: "var(--nx-accent)" }}>
                                         <Users className="h-5 w-5 text-white" />
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-sm font-bold text-white">{g.title || "Guruh chaqiruv"}</p>
-                                        <p className="mt-0.5 text-[10px]" style={{ color: "#00CEC8" }}>
+                                        <p className="mt-0.5 text-[10px]" style={{ color: "var(--nx-accent)" }}>
                                             Faol · {g.participantCount} ishtirokchi{g.isHost ? " · Host" : ""}
                                         </p>
                                     </div>
                                     <button onClick={() => { setCallsOpen(false); openGroupCall(g.id); }}
                                         className="rounded-xl px-3 py-1.5 text-xs font-black text-white shadow-lg"
-                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                        style={{ background: "var(--nx-accent)" }}>
                                         Kirish
                                     </button>
                                 </div>
@@ -191,7 +191,7 @@ export function NxCalls() {
                                             <div className="flex items-center gap-1.5">
                                                 <p className="truncate text-sm font-bold text-white">{g.title || "Guruh chaqiruv"}</p>
                                                 {g.recordings && g.recordings.length > 0 && (
-                                                    <Mic className="h-3 w-3 shrink-0" style={{ color: "#00CEC8" }} />
+                                                    <Mic className="h-3 w-3 shrink-0" style={{ color: "var(--nx-accent)" }} />
                                                 )}
                                             </div>
                                             <p className="mt-0.5 text-[10px]" style={{ color: "rgba(80,100,150,0.85)" }}>
@@ -203,7 +203,7 @@ export function NxCalls() {
                                         <div className="flex flex-col gap-1.5 border-t px-3 py-2.5" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
                                             {g.recordings.map(r => (
                                                 <div key={r.id} className="flex items-center gap-2">
-                                                    <Mic className="h-3.5 w-3.5 shrink-0" style={{ color: "#00CEC8" }} />
+                                                    <Mic className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--nx-accent)" }} />
                                                     <audio src={r.audioUrl} controls className="h-8 flex-1" style={{ minWidth: 0 }} />
                                                     <span className="shrink-0 text-[10px]" style={{ color: "rgba(80,100,150,0.85)" }}>{formatDur(r.durationSec)}</span>
                                                 </div>
@@ -250,7 +250,7 @@ export function NxCalls() {
                                                             <p className="truncate text-sm font-bold text-white">{peerLabel}</p>
                                                             {c.peer?.verified && <NxVerifiedBadge category={c.peer.verifiedCategory} size={14} />}
                                                             {c.recordings && c.recordings.length > 0 && (
-                                                                <Mic className="h-3 w-3 shrink-0" style={{ color: "#00CEC8" }} />
+                                                                <Mic className="h-3 w-3 shrink-0" style={{ color: "var(--nx-accent)" }} />
                                                             )}
                                                         </div>
                                                         <div className="mt-0.5 flex items-center gap-1.5">
@@ -265,13 +265,13 @@ export function NxCalls() {
                                                             disabled={!c.peer?.id}
                                                             className="flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-90 disabled:opacity-30"
                                                             style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                                                            <Phone className="h-4 w-4" style={{ color: "#00CEC8" }} />
+                                                            <Phone className="h-4 w-4" style={{ color: "var(--nx-accent)" }} />
                                                         </button>
                                                         <button onClick={() => dial(c.peer?.id, "VIDEO")}
                                                             disabled={!c.peer?.id}
                                                             className="flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-90 disabled:opacity-30"
                                                             style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                                                            <Video className="h-4 w-4" style={{ color: "#2B3EE8" }} />
+                                                            <Video className="h-4 w-4" style={{ color: "var(--nx-accent)" }} />
                                                         </button>
                                                     </div>
                                                 </div>
@@ -279,7 +279,7 @@ export function NxCalls() {
                                                     <div className="flex flex-col gap-1.5 border-t px-3 py-2.5" style={{ borderColor: "rgba(43,62,232,0.15)" }}>
                                                         {c.recordings.map(r => (
                                                             <div key={r.id} className="flex items-center gap-2">
-                                                                <Mic className="h-3.5 w-3.5 shrink-0" style={{ color: "#00CEC8" }} />
+                                                                <Mic className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--nx-accent)" }} />
                                                                 <audio src={r.audioUrl} controls className="h-8 flex-1" style={{ minWidth: 0 }} />
                                                                 <span className="shrink-0 text-[10px]" style={{ color: "rgba(80,100,150,0.85)" }}>{formatDur(r.durationSec)}</span>
                                                             </div>

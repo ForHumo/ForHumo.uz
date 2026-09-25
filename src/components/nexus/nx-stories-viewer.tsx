@@ -258,7 +258,7 @@ export function NxStoriesViewer() {
                                 className="w-full h-full object-cover" />
                         ) : isText ? (
                             <div className="w-full h-full flex items-center justify-center px-6"
-                                style={{ background: slide.bgColor || "#2B3EE8" }}>
+                                style={{ background: slide.bgColor || "var(--nx-accent)" }}>
                                 <p className="text-2xl sm:text-3xl font-black text-white text-center leading-tight"
                                     style={{ textShadow: "0 2px 12px rgba(0,0,0,0.35)" }}>
                                     {slide.caption || "..."}
@@ -404,7 +404,7 @@ export function NxStoriesViewer() {
                                     {replyText.trim() && (
                                         <button onClick={sendReply} disabled={replySending}
                                             className="w-10 h-10 flex items-center justify-center rounded-full flex-shrink-0"
-                                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                            style={{ background: "var(--nx-accent)" }}>
                                             {replySending ? <Loader className="w-4 h-4 animate-spin text-white" /> : <Send className="w-4 h-4 text-white" />}
                                         </button>
                                     )}

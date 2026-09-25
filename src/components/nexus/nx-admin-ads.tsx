@@ -8,7 +8,7 @@ import {
     ImageIcon, EyeOff, Eye, Loader2, ExternalLink, TrendingUp, MousePointerClick, AlertTriangle, Clock, X, Sparkles,
 } from "lucide-react";
 
-const NX_GRADIENT = "linear-gradient(135deg, #2B3EE8 0%, #6D28D9 50%, #EC4899 100%)";
+const NX_GRADIENT = "linear-gradient(135deg, var(--nx-accent) 0%, #6D28D9 50%, #EC4899 100%)";
 const NX_BG = "rgba(255,255,255,0.05)";
 const NX_BORDER = "rgba(255,255,255,0.10)";
 

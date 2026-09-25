@@ -13,13 +13,13 @@ const NX = {
     panelStrong: "rgba(11,18,40,0.98)",
     border: "rgba(43,62,232,0.30)",
     borderSoft: "rgba(43,62,232,0.16)",
-    accent: "#00CEC8",
+    accent: "var(--nx-accent)",
     blueBg: "rgba(43,62,232,0.10)",
     blueBgActive: "rgba(43,62,232,0.20)",
     text: "rgba(230,238,255,0.96)",
     text2: "rgba(200,215,245,0.75)",
     text3: "rgba(150,170,220,0.55)",
-    gradient: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+    gradient: "var(--nx-accent)",
 };
 
 type Kind = "GIF" | "STICKER";

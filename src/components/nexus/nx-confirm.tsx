@@ -40,8 +40,8 @@ export function NxConfirm({
 
     if (!mounted || !open) return null;
 
-    const accent = tone === "danger" ? "#EF4444" : "#00CEC8";
-    const accent2 = tone === "danger" ? "#F97316" : "#2B3EE8";
+    const accent = tone === "danger" ? "#EF4444" : "var(--nx-accent)";
+    const accent2 = tone === "danger" ? "#F97316" : "var(--nx-accent)";
 
     return createPortal(
         <>

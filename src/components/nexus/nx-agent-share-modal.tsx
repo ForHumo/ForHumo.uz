@@ -57,7 +57,7 @@ export function NxAgentShareModal({
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <QrCode className="w-4 h-4" style={{ color: "#00CEC8" }} /> Bot ulash
+                        <QrCode className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Bot ulash
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
@@ -70,7 +70,7 @@ export function NxAgentShareModal({
                         style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                             style={{ background: "rgba(0,206,200,0.14)" }}>
-                            <Bot className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                            <Bot className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-black text-white truncate">{name}</p>
@@ -103,7 +103,7 @@ export function NxAgentShareModal({
                             <button onClick={copy} className="h-11 px-3 flex-shrink-0"
                                 style={{ background: copied ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.20)" }}>
                                 {copied
-                                    ? <Check className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                    ? <Check className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                     : <Copy className="w-4 h-4" style={{ color: "white" }} />}
                             </button>
                         </div>

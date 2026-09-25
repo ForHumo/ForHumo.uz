@@ -153,7 +153,7 @@ export function MediaView() {
                     <button key={id} onClick={() => setSub(id)}
                         className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold flex-shrink-0 transition-all duration-200 active:scale-95"
                         style={sub === id
-                            ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white", boxShadow: "0 4px 16px rgba(43,62,232,0.40)" }
+                            ? { background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 16px rgba(43,62,232,0.40)" }
                             : { background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(140,160,210,0.85)" }}>
                         <Icon className="w-4 h-4" />
                         {label}
@@ -234,7 +234,7 @@ export function MediaView() {
                 ) : searchResults && searchResults.length === 0 ? (
                     <EmptyState icon={Search} title="Natija topilmadi" hint={`"${query}" bo'yicha hech narsa yo'q`} />
                 ) : searchResults ? (
-                    <TrackRow title={`"${query}" bo'yicha natijalar`} accent="#00CEC8"
+                    <TrackRow title={`"${query}" bo'yicha natijalar`} accent="var(--nx-accent)"
                         items={searchResults} onPlay={i => playFrom(searchResults, i)} onLike={toggleLike} onKaraoke={setKaraokeTrack} />
                 ) : null
             ) : loading ? (
@@ -257,12 +257,12 @@ export function MediaView() {
                                         ? <img src={v.thumbUrl} alt={v.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                                         : <div className="w-full h-full flex items-center justify-center"><Film className="w-8 h-8 text-white/40" /></div>}
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ background: "rgba(5,8,24,0.35)" }}>
-                                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}><Play className="w-5 h-5 text-white fill-white ml-0.5" /></div>
+                                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--nx-accent)" }}><Play className="w-5 h-5 text-white fill-white ml-0.5" /></div>
                                     </div>
-                                    {v.price > 0 && <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>{formatMoney(v.price, v.priceCurrency ?? "UZS")}</span>}
+                                    {v.price > 0 && <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "var(--nx-accent)" }}>{formatMoney(v.price, v.priceCurrency ?? "UZS")}</span>}
                                     {v.durationSec > 0 && <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                 </div>
-                                <h4 className="text-sm font-bold text-white leading-snug line-clamp-2 group-hover:text-[#00CEC8] transition-colors">{v.title}</h4>
+                                <h4 className="text-sm font-bold text-white leading-snug line-clamp-2 group-hover:text-[var(--nx-accent)] transition-colors">{v.title}</h4>
                                 <p className="text-[11px] mt-1 flex items-center gap-1.5" style={{ color: "rgba(100,120,170,0.8)" }}>
                                     <span className="truncate">{v.author?.name || v.author?.username || ""}</span>
                                     <span>·</span>
@@ -280,7 +280,7 @@ export function MediaView() {
                     <TrackRow title={sub === "music" ? "Top treklar" : sub === "podcast" ? "Mashhur podkastlar" : "Mashhur audiokitoblar"}
                         accent="#10B981" items={topTracks} onPlay={i => playFrom(topTracks, i)} onLike={toggleLike} onKaraoke={setKaraokeTrack}
                         empty="Hali trek yo'q — birinchi bo'lib yuklang!" />
-                    <TrackRow title="Yangi qo'shilgan" accent="#00CEC8" items={newTracks} onPlay={i => playFrom(newTracks, i)} onLike={toggleLike} onKaraoke={setKaraokeTrack} hideIfEmpty />
+                    <TrackRow title="Yangi qo'shilgan" accent="var(--nx-accent)" items={newTracks} onPlay={i => playFrom(newTracks, i)} onLike={toggleLike} onKaraoke={setKaraokeTrack} hideIfEmpty />
                     <TrackRow title="Sevimlilarim" accent="#EF4444" items={likedTracks} onPlay={i => playFrom(likedTracks, i)} onLike={toggleLike} onKaraoke={setKaraokeTrack} hideIfEmpty />
                 </>
             )}

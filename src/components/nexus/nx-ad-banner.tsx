@@ -12,7 +12,7 @@ export function NxAdBanner() {
             <Link href="/pay"
                 className="relative block h-32 sm:h-40 rounded-2xl overflow-hidden group active:scale-[0.99] transition-transform"
                 style={{
-                    background: "linear-gradient(135deg, #2B3EE8 0%, #6D28D9 50%, #EC4899 100%)",
+                    background: "linear-gradient(135deg, var(--nx-accent) 0%, #6D28D9 50%, #EC4899 100%)",
                     boxShadow: "0 12px 40px rgba(43,62,232,0.35)",
                 }}>
                 {/* Dekorativ elementlar */}

@@ -42,7 +42,7 @@ export function NxBotCommandAutocomplete({
                 <Command className="w-3 h-3" /> Bot buyruqlari
             </div>
             {loading ? (
-                <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
             ) : (
                 items.map((c, i) => (
                     <button key={i}
@@ -52,7 +52,7 @@ export function NxBotCommandAutocomplete({
                             className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                             <p className="text-sm text-white truncate">
-                                <span style={{ color: "#00CEC8" }}>{c.cmd}</span>
+                                <span style={{ color: "var(--nx-accent)" }}>{c.cmd}</span>
                                 {c.botHandle && <span className="text-[11px] ml-1" style={{ color: "rgba(140,160,210,0.6)" }}>@{c.botHandle}</span>}
                             </p>
                             {c.description && <p className="text-[11px] truncate" style={{ color: "rgba(180,195,235,0.75)" }}>{c.description}</p>}

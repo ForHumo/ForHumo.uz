@@ -115,7 +115,7 @@ export function NxImageEditor({ file, onCancel, onConfirm }: Props) {
                 </div>
                 <button onClick={handleConfirm} disabled={saving || !croppedArea}
                     className="px-4 py-2 rounded-lg text-xs font-black flex items-center gap-1.5 transition disabled:opacity-50"
-                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white", boxShadow: "0 4px 16px rgba(43,62,232,0.35)" }}>
+                    style={{ background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 16px rgba(43,62,232,0.35)" }}>
                     {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                     Yuborish
                 </button>
@@ -155,7 +155,7 @@ export function NxImageEditor({ file, onCancel, onConfirm }: Props) {
                             <button key={a.label} onClick={() => setAspect(a.value ?? undefined)}
                                 className="flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold transition"
                                 style={active ? {
-                                    background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white",
+                                    background: "var(--nx-accent)", color: "white",
                                 } : {
                                     background: "rgba(43,62,232,0.10)", color: "rgba(200,215,245,0.85)",
                                     border: "1px solid rgba(43,62,232,0.25)",
@@ -169,7 +169,7 @@ export function NxImageEditor({ file, onCancel, onConfirm }: Props) {
                     <button onClick={() => setRotation(r => (r + 90) % 360)} title="90° aylantirish"
                         className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition hover:brightness-125"
                         style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.30)" }}>
-                        <RotateCw className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                        <RotateCw className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                     </button>
                 </div>
                 {/* Zoom slider */}
@@ -180,7 +180,7 @@ export function NxImageEditor({ file, onCancel, onConfirm }: Props) {
                         onChange={(e) => setZoom(Number(e.target.value))}
                         className="flex-1 h-1 rounded-full appearance-none cursor-pointer"
                         style={{
-                            background: `linear-gradient(90deg, #00CEC8 0%, #2B3EE8 ${((zoom - 1) / 2) * 100}%, rgba(43,62,232,0.20) ${((zoom - 1) / 2) * 100}%)`,
+                            background: `linear-gradient(90deg, var(--nx-accent) 0%, var(--nx-accent) ${((zoom - 1) / 2) * 100}%, rgba(43,62,232,0.20) ${((zoom - 1) / 2) * 100}%)`,
                         }} />
                     <span className="text-[10px] font-black tabular-nums w-10 text-right"
                         style={{ color: "rgba(220,230,255,0.85)" }}>{Math.round(zoom * 100)}%</span>

@@ -48,7 +48,7 @@ export function NxE2eBanner({ peerName, peerFingerprint, myFingerprint }: Props)
                 style={{
                     background: verified ? "rgba(16,185,129,0.08)" : "rgba(0,206,200,0.08)",
                     borderColor: verified ? "rgba(16,185,129,0.20)" : "rgba(0,206,200,0.20)",
-                    color: verified ? "#10B981" : "#00CEC8",
+                    color: verified ? "#10B981" : "var(--nx-accent)",
                 }}>
                 <Lock className="w-3.5 h-3.5" />
                 <span>Uchi-uchidan shifrlangan</span>

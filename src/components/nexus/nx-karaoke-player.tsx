@@ -408,7 +408,7 @@ export function NxKaraokePlayer(p: Props) {
                                     <div className="text-center">
                                         <p className="text-4xl font-black" style={{
                                             background: pendingResult.score >= 80 ? "linear-gradient(135deg,#F5B301,#F97316)"
-                                                : pendingResult.score >= 60 ? "linear-gradient(135deg,#00CEC8,#10B981)"
+                                                : pendingResult.score >= 60 ? "linear-gradient(135deg,var(--nx-accent),#10B981)"
                                                 : "linear-gradient(135deg,#8B5CF6,#EC4899)",
                                             WebkitBackgroundClip: "text",
                                             WebkitTextFillColor: "transparent",

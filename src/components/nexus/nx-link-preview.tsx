@@ -90,7 +90,7 @@ export function NxLinkPreview({ text, compact = false }: { text: string; compact
             )}
             <div className="px-3 py-2.5">
                 <p className="text-[10px] uppercase tracking-widest font-black mb-0.5"
-                    style={{ color: "#00CEC8" }}>
+                    style={{ color: "var(--nx-accent)" }}>
                     {meta.site ?? host}
                 </p>
                 {meta.title && <p className="text-sm font-bold text-white line-clamp-2 mb-0.5">{meta.title}</p>}

@@ -75,7 +75,7 @@ export function NxAgentCreateModal({
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <Bot className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <Bot className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         {created ? "Bot yaratildi" : "Yangi agent"}
                     </h3>
                     <button onClick={close} className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -89,7 +89,7 @@ export function NxAgentCreateModal({
                         <>
                             <div className="p-4 rounded-2xl text-center"
                                 style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.30)" }}>
-                                <Bot className="w-10 h-10 mx-auto mb-2" style={{ color: "#00CEC8" }} />
+                                <Bot className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm font-black text-white">@{created.agent.username}</p>
                                 <p className="text-xs mt-0.5" style={{ color: "rgba(160,176,224,0.85)" }}>{created.agent.name}</p>
                             </div>
@@ -117,7 +117,7 @@ export function NxAgentCreateModal({
                                         className="h-11 px-3 flex-shrink-0"
                                         style={{ background: copied ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.20)" }}>
                                         {copied
-                                            ? <Check className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                            ? <Check className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                             : <Copy className="w-4 h-4" style={{ color: "white" }} />}
                                     </button>
                                 </div>
@@ -125,7 +125,7 @@ export function NxAgentCreateModal({
 
                             <button onClick={close}
                                 className="w-full h-11 rounded-full font-black text-sm"
-                                style={{ background: "linear-gradient(135deg, #2B3EE8, #00CEC8)", color: "white" }}>
+                                style={{ background: "linear-gradient(135deg, var(--nx-accent), var(--nx-accent))", color: "white" }}>
                                 Tayyor
                             </button>
                         </>
@@ -186,7 +186,7 @@ export function NxAgentCreateModal({
 
                             <button onClick={submit} disabled={busy}
                                 className="w-full h-11 rounded-full font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                                style={{ background: "linear-gradient(135deg, #2B3EE8, #00CEC8)", color: "white" }}>
+                                style={{ background: "linear-gradient(135deg, var(--nx-accent), var(--nx-accent))", color: "white" }}>
                                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
                                 Bot yaratish
                             </button>

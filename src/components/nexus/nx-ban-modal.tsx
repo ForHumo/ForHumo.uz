@@ -150,7 +150,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                         <div className="flex flex-col items-center py-4 gap-2">
                             <div className="w-14 h-14 rounded-full flex items-center justify-center"
                                 style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.35)" }}>
-                                <CheckCircle2 className="w-7 h-7" style={{ color: "#00CEC8" }} />
+                                <CheckCircle2 className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
                             </div>
                             <p className="text-sm font-black text-white text-center">Ariza yuborildi</p>
                             <p className="text-xs text-center max-w-xs" style={{ color: "rgba(140,160,210,0.80)" }}>
@@ -171,7 +171,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                                 placeholder="Masalan: Bu xabar yaqin do'stimga hazil edi..."
                                 rows={4} maxLength={2000}
                                 className="w-full px-3.5 py-3 rounded-xl text-sm text-white outline-none resize-none"
-                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
+                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                             <div className="flex items-center justify-between mt-1 px-1">
                                 <span className="text-[10px]" style={{ color: err ? "#EF4444" : "rgba(140,160,210,0.60)" }}>
                                     {err || `${appealText.length}/2000`}
@@ -185,7 +185,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                                 </button>
                                 <button onClick={submitAppeal} disabled={sending || appealText.trim().length < 20}
                                     className="flex-1 px-4 py-3 rounded-xl text-xs font-black text-white disabled:opacity-50 flex items-center justify-center gap-2"
-                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    style={{ background: "var(--nx-accent)" }}>
                                     {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                                     Yuborish
                                 </button>
@@ -195,7 +195,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                         <div>
                             <button onClick={() => setShowAppeal(true)}
                                 className="w-full px-4 py-3 rounded-xl text-xs font-black text-white active:scale-[0.98] transition"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                style={{ background: "var(--nx-accent)" }}>
                                 Adolatsiz deb hisoblayman — ariza yuborish
                             </button>
                             <p className="text-[10px] mt-2 text-center" style={{ color: "rgba(140,160,210,0.60)" }}>

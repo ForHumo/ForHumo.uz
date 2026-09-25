@@ -40,7 +40,7 @@ export function NxStories() {
                             </div>
                         </div>
                         <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center"
-                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", border: "2px solid #050818", boxShadow: "0 0 8px rgba(0,206,200,0.60)" }}>
+                            style={{ background: "var(--nx-accent)", border: "2px solid #050818", boxShadow: "0 0 8px rgba(0,206,200,0.60)" }}>
                             <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                         </div>
                     </div>
@@ -57,7 +57,7 @@ export function NxStories() {
                             <div className="w-[58px] h-[58px] rounded-full"
                                 style={g.allSeen
                                     ? { background: "rgba(60,70,100,0.45)", padding: "2.5px" }
-                                    : { background: "linear-gradient(135deg,#2B3EE8 0%,#00CEC8 100%)", padding: "2.5px", boxShadow: "0 0 12px rgba(43,62,232,0.40)" }}>
+                                    : { background: "linear-gradient(135deg,var(--nx-accent) 0%,var(--nx-accent) 100%)", padding: "2.5px", boxShadow: "0 0 12px rgba(43,62,232,0.40)" }}>
                                 <div className="w-full h-full rounded-full overflow-hidden" style={{ border: "2px solid #050818" }}>
                                     <img src={avatar} alt={label} className="w-full h-full object-cover bg-white" />
                                 </div>

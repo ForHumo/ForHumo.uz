@@ -63,7 +63,7 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
                 <span
                     className="hidden sm:block text-[17px] font-black tracking-tight"
                     style={{
-                        background: "linear-gradient(135deg, #2B3EE8 0%, #00CEC8 100%)",
+                        background: "linear-gradient(135deg, var(--nx-accent) 0%, var(--nx-accent) 100%)",
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
                         backgroundClip: "text",
@@ -232,10 +232,10 @@ function CreateBtn({ onClick }: { onClick: () => void }) {
             <PlusSquare
                 ref={iconRef as React.Ref<SVGSVGElement>}
                 className="w-4 h-4 flex-shrink-0"
-                style={{ color: "#00CEC8" }}
+                style={{ color: "var(--nx-accent)" }}
             />
             <span className="text-xs font-black" style={{
-                background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                background: "var(--nx-accent)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -308,7 +308,7 @@ function BellButton({ onOpen }: { onOpen: () => void }) {
             {unread > 0 && (
                 <span
                     className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-black text-white"
-                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 0 6px rgba(0,206,200,0.8)" }}
+                    style={{ background: "var(--nx-accent)", boxShadow: "0 0 6px rgba(0,206,200,0.8)" }}
                 >
                     {unread > 9 ? "9+" : unread}
                 </span>
@@ -408,7 +408,7 @@ function ProfileButton({ session }: { session: ReturnType<typeof useSession>["da
                 style={{
                     background: image
                         ? "transparent"
-                        : "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                        : "var(--nx-accent)",
                 }}
             >
                 {image ? (

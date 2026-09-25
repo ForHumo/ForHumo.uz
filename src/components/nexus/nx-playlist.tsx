@@ -125,7 +125,7 @@ export function NxPlaylist() {
                             <X className="w-4 h-4 text-white" />
                         </button>
                     ) : (
-                        <ListMusic className="w-5 h-5 flex-shrink-0" style={{ color: "#2B3EE8" }} />
+                        <ListMusic className="w-5 h-5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                     )}
                     <div className="flex-1">
                         <h3 className="text-base font-black text-white">
@@ -141,7 +141,7 @@ export function NxPlaylist() {
                         <button
                             onClick={() => { playQueue(selected.tracks, 0); setPlaylistsOpen(false); }}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-white transition-all duration-150 active:scale-95"
-                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            style={{ background: "var(--nx-accent)" }}>
                             <Play className="w-3 h-3 fill-white" />
                             Ijro
                         </button>
@@ -149,7 +149,7 @@ export function NxPlaylist() {
                     {!selected && (
                         <button onClick={() => setCreating(true)}
                             className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black text-white transition-all duration-150 active:scale-95"
-                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            style={{ background: "var(--nx-accent)" }}>
                             <Plus className="w-3.5 h-3.5" />
                             Yangi
                         </button>
@@ -171,10 +171,10 @@ export function NxPlaylist() {
                                     onKeyDown={e => e.key === "Enter" && createPlaylist()}
                                     placeholder="Playlist nomi..."
                                     className="flex-1 h-9 rounded-xl px-3 text-sm text-white outline-none"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
+                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                                 <button onClick={createPlaylist}
                                     className="px-3 py-2 rounded-xl text-xs font-black text-white"
-                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    style={{ background: "var(--nx-accent)" }}>
                                     <Check className="w-4 h-4" />
                                 </button>
                                 <button onClick={() => { setCreating(false); setNewName(""); }}
@@ -258,7 +258,7 @@ export function NxPlaylist() {
                                                     <div className="flex items-center gap-1.5 flex-shrink-0">
                                                         <span className="text-[10px]" style={{ color: "rgba(80,100,150,0.60)" }}>{t.duration}</span>
                                                         {inList
-                                                            ? <Check className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                                            ? <Check className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                                             : <Plus className="w-4 h-4" style={{ color: "rgba(43,62,232,0.60)" }} />
                                                         }
                                                     </div>

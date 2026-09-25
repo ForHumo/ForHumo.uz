@@ -42,7 +42,7 @@ export function NxMentionAutocomplete({
             </div>
             {loading ? (
                 <div className="flex justify-center py-6">
-                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#2B3EE8" }} />
+                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--nx-accent)" }} />
                 </div>
             ) : (
                 items.map(u => (

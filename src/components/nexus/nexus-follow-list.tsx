@@ -56,7 +56,7 @@ export function NexusFollowList({ username, type, onClose }: {
                 </div>
                 <div className="overflow-y-auto p-2">
                     {loading ? (
-                        <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                        <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     ) : users.length === 0 ? (
                         <p className="text-center py-10 text-xs" style={{ color: "rgba(120,140,185,0.7)" }}>Hozircha hech kim yo&apos;q</p>
                     ) : users.map((u, i) => (
@@ -76,7 +76,7 @@ export function NexusFollowList({ username, type, onClose }: {
                                     className="px-3 py-1.5 rounded-lg text-[11px] font-black flex-shrink-0 active:scale-95 transition"
                                     style={u.isFollowing
                                         ? { background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)", color: "rgba(140,160,210,0.85)" }
-                                        : { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }}>
+                                        : { background: "var(--nx-accent)", color: "#fff" }}>
                                     {u.isFollowing ? "Kuzatilmoqda" : "Kuzatish"}
                                 </button>
                             )}

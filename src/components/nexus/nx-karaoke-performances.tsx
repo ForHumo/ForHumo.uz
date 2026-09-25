@@ -26,7 +26,7 @@ function fmtN(n: number) {
 function fmtDur(s: number) { const m = Math.floor(s / 60), sec = Math.floor(s % 60); return `${m}:${String(sec).padStart(2, "0")}`; }
 function scoreColor(score: number): string {
     if (score >= 80) return "linear-gradient(135deg,#F5B301,#F97316)";
-    if (score >= 60) return "linear-gradient(135deg,#00CEC8,#10B981)";
+    if (score >= 60) return "linear-gradient(135deg,var(--nx-accent),#10B981)";
     if (score >= 40) return "linear-gradient(135deg,#8B5CF6,#EC4899)";
     return "linear-gradient(135deg,#6B7280,#4B5563)";
 }

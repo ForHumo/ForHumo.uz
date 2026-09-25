@@ -131,7 +131,7 @@ export function NxTipSheet({
                             <textarea value={message} onChange={e => setMessage(e.target.value.slice(0, 200))}
                                 placeholder="Xabar qoldiring (ixtiyoriy)" rows={2}
                                 className="mt-3 w-full px-3 py-2.5 rounded-xl bg-transparent text-white text-sm outline-none resize-none"
-                                style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "#00CEC8" }} />
+                                style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "var(--nx-accent)" }} />
 
                             {/* Balans */}
                             {balance !== null && (
@@ -146,7 +146,7 @@ export function NxTipSheet({
                             {insufficient ? (
                                 <Link href="/pay" onClick={onClose}
                                     className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-white"
-                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    style={{ background: "var(--nx-accent)" }}>
                                     <Wallet className="w-4 h-4" /> Hamyonni to&apos;ldirish
                                 </Link>
                             ) : (

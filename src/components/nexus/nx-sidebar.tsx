@@ -59,7 +59,7 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 h-[60px] flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <span className="text-base font-black tracking-tight"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                        style={{ background: "var(--nx-accent)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
                         Humo Nexus
                     </span>
                     <button onClick={onClose}
@@ -77,7 +77,7 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
                             className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-150 active:scale-[0.99]"
                             style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}>
                             <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center text-base font-black text-white"
-                                style={{ background: image ? "transparent" : "linear-gradient(135deg,#2B3EE8,#00CEC8)", border: "2px solid rgba(43,62,232,0.35)" }}>
+                                style={{ background: image ? "transparent" : "var(--nx-accent)", border: "2px solid rgba(43,62,232,0.35)" }}>
                                 {image
                                     ? <img src={image} alt={name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                     : letter}

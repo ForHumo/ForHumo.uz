@@ -545,7 +545,7 @@ export function NxGoLive() {
                             <button onClick={toggleScreen}
                                 className="w-full flex items-center gap-2 justify-center py-2.5 rounded-xl text-xs font-black transition active:scale-95"
                                 style={screenOn
-                                    ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.40)", color: "#00CEC8" }
+                                    ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.40)", color: "var(--nx-accent)" }
                                     : { background: "rgba(239,68,68,0.06)", border: "1px dashed rgba(239,68,68,0.30)", color: "rgba(220,160,150,0.85)" }}>
                                 {screenOn ? <><Monitor className="w-3.5 h-3.5" />Ekran ulashilyapti — bekor qilish</>
                                           : <><Monitor className="w-3.5 h-3.5" />Ekranni ulash</>}
@@ -619,7 +619,7 @@ export function NxGoLive() {
                             <button onClick={toggleScreen}
                                 className="w-full mb-2 flex items-center gap-2 justify-center py-2 rounded-xl text-xs font-black transition active:scale-95"
                                 style={screenOn
-                                    ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.40)", color: "#00CEC8" }
+                                    ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.40)", color: "var(--nx-accent)" }
                                     : { background: "rgba(43,62,232,0.06)", border: "1px dashed rgba(43,62,232,0.30)", color: "rgba(160,180,230,0.85)" }}>
                                 {screenOn ? <><MonitorOff className="w-3.5 h-3.5" />Ekranni to&apos;xtatish</>
                                           : <><Monitor className="w-3.5 h-3.5" />Ekranni ulash</>}
@@ -825,14 +825,14 @@ export function NxGoLive() {
                 </div>
                 {recordingReady && recordingUrl && (
                     <div className="mb-4 p-3 rounded-xl" style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.30)" }}>
-                        <p className="text-[11px] font-black mb-1" style={{ color: "#00CEC8" }}>Yozuv tayyor</p>
+                        <p className="text-[11px] font-black mb-1" style={{ color: "var(--nx-accent)" }}>Yozuv tayyor</p>
                         <p className="text-[10px] mb-2" style={{ color: "rgba(160,220,215,0.85)" }}>
                             Efir Nexus'da endi qayta ko&apos;rish mumkin
                         </p>
                         <video src={recordingUrl} controls playsInline className="w-full rounded-lg bg-black" style={{ maxHeight: 160 }} />
                     </div>
                 )}
-                <button onClick={close} className="w-full h-11 rounded-xl text-sm font-black text-white" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                <button onClick={close} className="w-full h-11 rounded-xl text-sm font-black text-white" style={{ background: "var(--nx-accent)" }}>
                     Yopish
                 </button>
             </div>

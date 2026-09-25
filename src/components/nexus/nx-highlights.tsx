@@ -144,7 +144,7 @@ function NxHighlightViewer({ highlightId, onClose }: { highlightId: string; onCl
                 {slide && (
                     <>
                         {isText ? (
-                            <div className="w-full h-full flex items-center justify-center px-6" style={{ background: slide.bgColor || "#2B3EE8" }}>
+                            <div className="w-full h-full flex items-center justify-center px-6" style={{ background: slide.bgColor || "var(--nx-accent)" }}>
                                 <p className="text-2xl sm:text-3xl font-black text-white text-center leading-tight">
                                     {slide.caption || "..."}
                                 </p>

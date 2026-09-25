@@ -62,7 +62,7 @@ export function NxFinancialCopilot({
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <div>
                         <h3 className="text-base font-black text-white flex items-center gap-2">
-                            <Sparkles className="w-4 h-4" style={{ color: "#00CEC8" }} /> Financial Copilot
+                            <Sparkles className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Financial Copilot
                         </h3>
                         <p className="text-[10px] flex items-center gap-1 mt-0.5" style={{ color: "rgba(140,160,210,0.7)" }}>
                             <ShieldCheck className="w-3 h-3" /> Faqat sizning ma&apos;lumotlaringiz o&apos;qiladi
@@ -96,7 +96,7 @@ export function NxFinancialCopilot({
                                         <button key={d} onClick={() => setScanDepth(d)} disabled={busy}
                                             className="flex-1 py-2 rounded-xl text-xs font-bold"
                                             style={scanDepth === d
-                                                ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white" }
+                                                ? { background: "var(--nx-accent)", color: "white" }
                                                 : { background: "rgba(11,18,40,0.55)", color: "rgba(200,215,245,0.85)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                             {d}
                                         </button>
@@ -105,7 +105,7 @@ export function NxFinancialCopilot({
                             </div>
                             <button onClick={run} disabled={busy}
                                 className="w-full py-3 rounded-xl text-sm font-bold text-white disabled:opacity-60 flex items-center justify-center gap-2"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                style={{ background: "var(--nx-accent)" }}>
                                 {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> AI tahlil qilyapti...</>
                                     : <><Sparkles className="w-4 h-4" /> Tavsiya olish</>}
                             </button>
@@ -137,7 +137,7 @@ export function NxFinancialCopilot({
                             {/* Private */}
                             <div className="p-4 rounded-2xl"
                                 style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.22)" }}>
-                                <p className="text-[10px] uppercase tracking-widest mb-2 flex items-center gap-1" style={{ color: "#00CEC8" }}>
+                                <p className="text-[10px] uppercase tracking-widest mb-2 flex items-center gap-1" style={{ color: "var(--nx-accent)" }}>
                                     <TrendingUp className="w-3 h-3" /> Faqat siz uchun (sirli)
                                 </p>
                                 <p className="text-sm whitespace-pre-wrap" style={{ color: "rgba(220,230,255,0.95)" }}>
@@ -164,7 +164,7 @@ export function NxFinancialCopilot({
                                         {onSendPublic && (
                                             <button onClick={() => { onSendPublic(pub); onClose(); }}
                                                 className="flex-1 py-2 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5"
-                                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                                style={{ background: "var(--nx-accent)" }}>
                                                 <Send className="w-3.5 h-3.5" /> Chatga yuborish
                                             </button>
                                         )}

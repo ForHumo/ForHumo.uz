@@ -83,7 +83,7 @@ export function NxFolderModal({
                 <div className="px-5 py-4 flex items-center gap-3 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        style={{ background: "var(--nx-accent)" }}>
                         <Folder className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex-1">
@@ -155,7 +155,7 @@ export function NxFolderModal({
                                             setTypes(n);
                                         }}
                                         className="w-4 h-4 rounded"
-                                        style={{ accentColor: "#00CEC8" }} />
+                                        style={{ accentColor: "var(--nx-accent)" }} />
                                     <span className="text-sm text-white">{t.label}</span>
                                 </label>
                             ))}
@@ -163,7 +163,7 @@ export function NxFolderModal({
                                 style={{ background: "rgba(43,62,232,0.06)" }}>
                                 <input type="checkbox" checked={includeUnread}
                                     onChange={e => setIncludeUnread(e.target.checked)}
-                                    className="w-4 h-4 rounded" style={{ accentColor: "#00CEC8" }} />
+                                    className="w-4 h-4 rounded" style={{ accentColor: "var(--nx-accent)" }} />
                                 <span className="text-sm text-white">Faqat o&apos;qilmaganlar</span>
                             </label>
                         </div>
@@ -178,7 +178,7 @@ export function NxFolderModal({
                         style={{ background: "rgba(43,62,232,0.10)" }}>Bekor</button>
                     <button onClick={save} disabled={busy || !name.trim()}
                         className="flex-1 py-2.5 rounded-xl text-xs font-black text-white disabled:opacity-40 flex items-center justify-center gap-2"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        style={{ background: "var(--nx-accent)" }}>
                         {busy && <Loader2 size={14} className="animate-spin" />}
                         Yaratish
                     </button>

@@ -36,7 +36,7 @@ export function NxStickerPicker({
                 <div className="flex items-center justify-between px-4 py-3"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-sm font-black text-white flex items-center gap-2">
-                        <Sticker className="w-4 h-4" style={{ color: "#00CEC8" }} /> Stikerlar
+                        <Sticker className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Stikerlar
                     </h3>
                     <button onClick={onClose} className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/5">
                         <X className="w-4 h-4 text-white" />
@@ -56,7 +56,7 @@ export function NxStickerPicker({
                         <button key={s.id} onClick={() => setTab(s.id)}
                             className="flex-shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold whitespace-nowrap"
                             style={tab === s.id
-                                ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8" }
+                                ? { background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" }
                                 : { background: "transparent", color: "rgba(140,160,210,0.8)" }}>
                             {s.label}
                         </button>

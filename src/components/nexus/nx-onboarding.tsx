@@ -100,7 +100,7 @@ export function NxOnboarding() {
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                 <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        style={{ background: "var(--nx-accent)" }}>
                         <Sparkles className="w-4 h-4 text-white" />
                     </div>
                     <div>
@@ -118,7 +118,7 @@ export function NxOnboarding() {
                     const inner = (
                         <>
                             <div className="w-5 h-5 flex-shrink-0">
-                                {s.done ? <CheckCircle2 className="w-5 h-5" style={{ color: "#00CEC8" }} /> : <Circle className="w-5 h-5" style={{ color: "rgba(140,160,210,0.4)" }} />}
+                                {s.done ? <CheckCircle2 className="w-5 h-5" style={{ color: "var(--nx-accent)" }} /> : <Circle className="w-5 h-5" style={{ color: "rgba(140,160,210,0.4)" }} />}
                             </div>
                             <s.icon className="w-4 h-4 flex-shrink-0" style={{ color: s.done ? "rgba(0,206,200,0.6)" : "rgba(140,160,210,0.75)" }} />
                             <span className="text-xs font-semibold flex-1 truncate" style={{ color: s.done ? "rgba(140,160,210,0.55)" : "rgba(230,235,250,0.95)", textDecoration: s.done ? "line-through" : "none" }}>

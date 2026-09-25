@@ -91,7 +91,7 @@ export function NxCreatorSubSettings({
                                 <button key={p} onClick={() => { setPrice(p); setCustom(""); }}
                                     className="py-2.5 rounded-xl text-[11px] font-black transition-all active:scale-95"
                                     style={active
-                                        ? { background: "linear-gradient(135deg,#8B5CF6,#2B3EE8)", color: "#fff" }
+                                        ? { background: "linear-gradient(135deg,#8B5CF6,var(--nx-accent))", color: "#fff" }
                                         : { background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.22)", color: "rgba(196,181,253,0.95)" }}>
                                     {p === 0 ? "O'chiq" : formatMoney(p, currency)}
                                 </button>
@@ -108,7 +108,7 @@ export function NxCreatorSubSettings({
 
                     <button onClick={save} disabled={busy}
                         className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-white disabled:opacity-50 active:scale-[0.99] transition"
-                        style={{ background: "linear-gradient(135deg,#8B5CF6,#2B3EE8)" }}>
+                        style={{ background: "linear-gradient(135deg,#8B5CF6,var(--nx-accent))" }}>
                         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         {effective > 0 ? `${formatMoney(effective, currency)}/oy — Saqlash` : "O'chirib saqlash"}
                     </button>

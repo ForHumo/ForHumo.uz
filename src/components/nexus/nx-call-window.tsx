@@ -1136,7 +1136,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                             const active = voiceFx === fx.id;
                             return (
                                 <button key={fx.id} onClick={() => applyVoiceFx(fx.id)}
-                                    style={active ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.45)" } : undefined}
+                                    style={active ? { background: "var(--nx-accent)", boxShadow: "0 4px 20px rgba(43,62,232,0.45)" } : undefined}
                                     className={`flex flex-col items-center gap-0.5 rounded-2xl p-3 text-center transition-transform hover:scale-105 active:scale-95 ${active ? "text-white" : "bg-white/10 text-white/90 ring-1 ring-white/15"}`}>
                                     <span className="text-sm font-black">{fx.label}</span>
                                     <span className="text-[10px] opacity-70">{fx.hint}</span>
@@ -1155,7 +1155,7 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                             const hint = id === "none" ? "Asl fon" : "MediaPipe segmentatsiya";
                             return (
                                 <button key={id} onClick={() => applyBgFx(id)} disabled={disabled}
-                                    style={active ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.45)" } : undefined}
+                                    style={active ? { background: "var(--nx-accent)", boxShadow: "0 4px 20px rgba(43,62,232,0.45)" } : undefined}
                                     className={`flex flex-col items-center gap-0.5 rounded-2xl p-3 text-center transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 ${active ? "text-white" : "bg-white/10 text-white/90 ring-1 ring-white/15"}`}>
                                     <span className="text-sm font-black">{label}</span>
                                     <span className="text-[10px] opacity-70">{bgBusy && active ? "Yuklanmoqda…" : hint}</span>
@@ -1171,11 +1171,11 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
                             const disabled = videoSource !== "camera" || bgBusy;
                             return (
                                 <button key={p.id} onClick={() => applyBgFx("image", p.url)} disabled={disabled} title={p.label}
-                                    className={`relative aspect-square overflow-hidden rounded-xl transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 ${active ? "ring-2 ring-[#00CEC8]" : "ring-1 ring-white/15"}`}>
+                                    className={`relative aspect-square overflow-hidden rounded-xl transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 ${active ? "ring-2 ring-[var(--nx-accent)]" : "ring-1 ring-white/15"}`}>
                                     <img src={p.url} alt={p.label} className="h-full w-full object-cover" />
                                     {active && (
                                         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                                            <div className="h-2 w-2 rounded-full bg-[#00CEC8]" />
+                                            <div className="h-2 w-2 rounded-full bg-[var(--nx-accent)]" />
                                         </div>
                                     )}
                                 </button>
@@ -1196,11 +1196,11 @@ export default function NxCallWindow({ callId, role, kind: initialKind, peer, au
     );
 }
 
-// Active — Nexus accent gradient (#2B3EE8 → #00CEC8). Inactive — kulrang shishasimon.
+// Active — Nexus accent gradient (var(--nx-accent) → var(--nx-accent)). Inactive — kulrang shishasimon.
 function CtrlButton({ onClick, active, icon, disabled }: { onClick: () => void; active: boolean; icon: React.ReactNode; disabled?: boolean }) {
     return (
         <button onClick={onClick} disabled={disabled}
-            style={active ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.45)" } : undefined}
+            style={active ? { background: "var(--nx-accent)", boxShadow: "0 4px 20px rgba(43,62,232,0.45)" } : undefined}
             className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 ${active ? "" : "bg-white/15 ring-1 ring-white/25 backdrop-blur-sm"}`}>
             {icon}
         </button>

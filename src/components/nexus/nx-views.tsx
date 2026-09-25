@@ -64,7 +64,7 @@ export function FeedView() {
                         onClick={() => setFeedTab(t.id)}
                         className="px-4 py-2 rounded-xl text-xs font-black flex-shrink-0 transition-all duration-200 active:scale-95"
                         style={feedTab === t.id ? {
-                            background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                            background: "var(--nx-accent)",
                             color: "white",
                         } : {
                             background: "rgba(11,18,40,0.60)",
@@ -179,7 +179,7 @@ function SocialViewMobile() {
                         onClick={() => setSub(id)}
                         className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition-all duration-200 active:scale-95"
                         style={sub === id ? {
-                            background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                            background: "var(--nx-accent)",
                             color: "white",
                         } : {
                             background: "rgba(11,18,40,0.60)",
@@ -199,7 +199,7 @@ function SocialViewMobile() {
                         title="Ikki marta bosing — o'chirish"
                         className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition-all duration-200 active:scale-95"
                         style={sub === `folder:${f.id}` ? {
-                            background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                            background: "var(--nx-accent)",
                             color: "white",
                         } : {
                             background: "rgba(11,18,40,0.60)",
@@ -354,7 +354,7 @@ function AgentsTab() {
                 <div className="flex-1" />
                 <button onClick={() => setCreateOpen(true)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black text-white"
-                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                    style={{ background: "var(--nx-accent)" }}>
                     <Plus className="w-3.5 h-3.5" /> Bot
                 </button>
             </div>
@@ -375,7 +375,7 @@ function AgentsTab() {
                     <button onClick={() => setModuleFilter(null)}
                         className="px-3 h-7 rounded-full text-[10px] font-black flex-shrink-0"
                         style={!moduleFilter
-                            ? { background: "rgba(0,206,200,0.20)", color: "white", border: "1px solid #00CEC8" }
+                            ? { background: "rgba(0,206,200,0.20)", color: "white", border: "1px solid var(--nx-accent)" }
                             : { background: "rgba(11,18,40,0.55)", color: "rgba(160,176,224,0.85)", border: "1px solid rgba(43,62,232,0.14)" }}>
                         Barchasi
                     </button>
@@ -383,7 +383,7 @@ function AgentsTab() {
                         <button key={m} onClick={() => setModuleFilter(m === moduleFilter ? null : m)}
                             className="px-3 h-7 rounded-full text-[10px] font-black flex-shrink-0"
                             style={moduleFilter === m
-                                ? { background: "rgba(0,206,200,0.20)", color: "white", border: "1px solid #00CEC8" }
+                                ? { background: "rgba(0,206,200,0.20)", color: "white", border: "1px solid var(--nx-accent)" }
                                 : { background: "rgba(11,18,40,0.55)", color: "rgba(160,176,224,0.85)", border: "1px solid rgba(43,62,232,0.14)" }}>
                             {MODULE_LABELS[m] ?? m}
                         </button>
@@ -397,14 +397,14 @@ function AgentsTab() {
             ) : filtered.length === 0 ? (
                 <div className="p-8 rounded-2xl text-center"
                     style={{ background: "rgba(11,18,40,0.55)", border: "1px dashed rgba(43,62,232,0.20)" }}>
-                    <Bot className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "#00CEC8" }} />
+                    <Bot className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
                     <p className="text-sm" style={{ color: "rgba(160,176,224,0.75)" }}>
                         {scope === "mine" ? "Sizda bot yo'q" : "Bot topilmadi"}
                     </p>
                     {scope === "mine" && (
                         <button onClick={() => setCreateOpen(true)}
                             className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black text-white"
-                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            style={{ background: "var(--nx-accent)" }}>
                             <Plus className="w-3.5 h-3.5" /> Birinchi bot yaratish
                         </button>
                     )}
@@ -454,11 +454,11 @@ function AgentCard({
                     <div className="flex items-center gap-1.5">
                         <p className="text-sm font-bold text-white truncate">{agent.name}</p>
                         <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0"
-                            style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>
+                            style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>
                             BOT
                         </span>
                         {agent.isSystem && (
-                            <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} fill="#00CEC8" stroke="#050818" />
+                            <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} fill="var(--nx-accent)" stroke="#050818" />
                         )}
                     </div>
                     <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.70)" }}>
@@ -469,7 +469,7 @@ function AgentCard({
             <div className="flex gap-1.5">
                 <button onClick={onDM}
                     className="flex-1 h-8 rounded-lg text-[11px] font-black flex items-center justify-center gap-1.5"
-                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white" }}>
+                    style={{ background: "var(--nx-accent)", color: "white" }}>
                     <MessageSquare className="w-3 h-3" /> DM
                 </button>
                 <button onClick={onShare} title="Ulash"
@@ -595,7 +595,7 @@ export function ProfileView() {
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 relative">
                     {/* Avatar */}
                     <div className="w-20 h-20 rounded-2xl p-[2.5px] flex-shrink-0"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 0 32px rgba(43,62,232,0.45)" }}>
+                        style={{ background: "var(--nx-accent)", boxShadow: "0 0 32px rgba(43,62,232,0.45)" }}>
                         <div className="w-full h-full rounded-[14px] bg-[#050818] overflow-hidden flex items-center justify-center text-2xl font-black text-white">
                             {displayImage
                                 ? <img src={displayImage} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -606,7 +606,7 @@ export function ProfileView() {
                     <div className="flex-1 text-center sm:text-left">
                         <h2 className="text-2xl font-black text-white mb-0.5">{displayName}</h2>
                         {profile?.username && (
-                            <p className="text-xs font-mono mb-1" style={{ color: "#00CEC8" }}>@{profile.username}</p>
+                            <p className="text-xs font-mono mb-1" style={{ color: "var(--nx-accent)" }}>@{profile.username}</p>
                         )}
                         <p className="text-sm font-mono mb-2" style={{ color: "rgba(100,120,170,0.80)" }}>{sessionEmail}</p>
                         {profile?.bio && (
@@ -619,14 +619,14 @@ export function ProfileView() {
                             {verified && (
                                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white"
                                     style={{ background: "rgba(0,206,200,0.14)", border: "1px solid rgba(0,206,200,0.35)" }}>
-                                    <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />
+                                    <BadgeCheck className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />
                                     Tasdiqlangan
                                 </span>
                             )}
                             {profile?.humoId && (
                                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white font-mono"
                                     style={{ background: "rgba(43,62,232,0.18)", border: "1px solid rgba(43,62,232,0.30)" }}>
-                                    <Shield className="w-3 h-3" style={{ color: "#2B3EE8" }} />
+                                    <Shield className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />
                                     {profile.humoId}
                                 </span>
                             )}
@@ -644,7 +644,7 @@ export function ProfileView() {
                         <button
                             onClick={openEdit}
                             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity duration-150 hover:opacity-85 active:scale-95"
-                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 18px rgba(43,62,232,0.45)" }}
+                            style={{ background: "var(--nx-accent)", boxShadow: "0 4px 18px rgba(43,62,232,0.45)" }}
                         >
                             <Edit3 className="w-3.5 h-3.5" />
                             Tahrirlash
@@ -726,7 +726,7 @@ export function ProfileView() {
             <div className="mx-4 mt-3 grid grid-cols-2 gap-3">
                 {([
                     { icon: Heart,      label: "Olingan layklar", value: nx?.likes != null ? String(nx.likes) : "—", gradient: "from-red-500 to-pink-600" },
-                    { icon: UserCheck,  label: "Obunachi",   value: nx ? String(nx.followers) : "—",  gradient: "from-[#2B3EE8] to-[#00CEC8]",  action: profile?.username ? () => setFollowList("followers") : undefined },
+                    { icon: UserCheck,  label: "Obunachi",   value: nx ? String(nx.followers) : "—",  gradient: "from-[var(--nx-accent)] to-[var(--nx-accent)]",  action: profile?.username ? () => setFollowList("followers") : undefined },
                     { icon: CreditCard, label: "Hamyon",     value: balance != null ? formatMoney(balance, balanceCurrency) : "—", gradient: "from-emerald-500 to-teal-600", href: "/pay" as const },
                     { icon: Shield,     label: "Xavfsizlik", value: profile?.emailVerified ? "Yaxshi" : "Boshlang'ich", gradient: "from-violet-500 to-indigo-600" },
                 ] as Array<{ icon: typeof Heart; label: string; value: string; gradient: string; action?: (() => void) | undefined; href?: string }>).map(({ icon: Icon, label, value, gradient, action, href }, i) => {
@@ -768,13 +768,13 @@ export function ProfileView() {
                     <div className="flex items-center justify-between px-5 py-3"
                         style={{ borderBottom: "1px solid rgba(43,62,232,0.12)" }}>
                         <h3 className="text-sm font-black text-white flex items-center gap-2">
-                            <Clock className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                            <Clock className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                             Ko&apos;rish tarixi ({watchHistory.length})
                         </h3>
                         <div className="flex items-center gap-2">
                             <button onClick={openSavedHistory}
                                 className="text-[10px] font-bold px-2.5 py-1 rounded-lg"
-                                style={{ color: "#00CEC8", background: "rgba(0,206,200,0.08)" }}>
+                                style={{ color: "var(--nx-accent)", background: "rgba(0,206,200,0.08)" }}>
                                 Barchasi
                             </button>
                             <button onClick={clearHistory}
@@ -802,7 +802,7 @@ export function ProfileView() {
                                     <div className="absolute bottom-1 right-1 px-1 py-0.5 rounded text-[8px] font-bold"
                                         style={{ background: "rgba(5,8,24,0.80)" }}>{v.duration}</div>
                                 </div>
-                                <p className="text-[10px] font-bold text-white line-clamp-2 leading-snug group-hover:text-[#00CEC8] transition-colors">{v.title}</p>
+                                <p className="text-[10px] font-bold text-white line-clamp-2 leading-snug group-hover:text-[var(--nx-accent)] transition-colors">{v.title}</p>
                                 <p className="text-[9px] mt-0.5" style={{ color: "rgba(80,100,150,0.80)" }}>{v.author}</p>
                             </button>
                         ))}
@@ -814,7 +814,7 @@ export function ProfileView() {
             <div className="mx-4 mt-3 rounded-2xl p-5"
                 style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.20)" }}>
                 <h3 className="text-sm font-black text-white mb-3 flex items-center gap-2">
-                    <Settings className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                    <Settings className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                     Hisob
                 </h3>
                 <div className="space-y-2">
@@ -881,7 +881,7 @@ export function ProfileView() {
                                         style={{
                                             background: "rgba(5,8,24,0.70)",
                                             border: "1px solid rgba(43,62,232,0.25)",
-                                            caretColor: "#00CEC8",
+                                            caretColor: "var(--nx-accent)",
                                         }}
                                         onFocus={e => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.55)")}
                                         onBlur={e  => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.25)")}
@@ -898,7 +898,7 @@ export function ProfileView() {
                                         style={{
                                             background: "rgba(5,8,24,0.70)",
                                             border: "1px solid rgba(43,62,232,0.25)",
-                                            caretColor: "#00CEC8",
+                                            caretColor: "var(--nx-accent)",
                                         }}
                                         onFocus={e => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.55)")}
                                         onBlur={e  => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.25)")}
@@ -918,7 +918,7 @@ export function ProfileView() {
                                     style={{
                                         background: "rgba(5,8,24,0.70)",
                                         border: "1px solid rgba(43,62,232,0.25)",
-                                        caretColor: "#00CEC8",
+                                        caretColor: "var(--nx-accent)",
                                     }}
                                     onFocus={e => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.55)")}
                                     onBlur={e  => (e.currentTarget.style.borderColor = "rgba(43,62,232,0.25)")}
@@ -934,7 +934,7 @@ export function ProfileView() {
                                 disabled={saving}
                                 className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 transition-opacity duration-150"
                                 style={{
-                                    background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                                    background: "var(--nx-accent)",
                                     boxShadow: "0 4px 18px rgba(43,62,232,0.40)",
                                     opacity: saving ? 0.70 : 1,
                                 }}

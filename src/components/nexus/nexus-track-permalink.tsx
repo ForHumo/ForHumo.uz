@@ -71,7 +71,7 @@ function Inner({ id }: { id: string }) {
                     <h1 className="text-xl font-black text-white mb-1">{t.title}</h1>
                     <p className="text-sm mb-3 flex items-center gap-1.5" style={{ color: "rgba(140,180,160,0.9)" }}>
                         {t.artist || t.uploader?.name || t.uploader?.username || "Noma'lum"}
-                        {t.uploader?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
+                        {t.uploader?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />}
                     </p>
                     <p className="text-xs mb-6 flex items-center gap-3" style={{ color: "rgba(100,130,115,0.85)" }}>
                         <span className="flex items-center gap-1"><Headphones className="w-3 h-3" />{fmtN(t.plays)} tinglash</span>

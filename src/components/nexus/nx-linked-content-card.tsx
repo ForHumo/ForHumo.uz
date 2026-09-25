@@ -25,7 +25,7 @@ function typeMeta(type: string) {
         case "video": return { label: "Video", color: "#8B5CF6", Icon: Play };
         case "live":  return { label: "Jonli efir", color: "#EF4444", Icon: Radio };
         case "track": return { label: "Musiqa", color: "#10B981", Icon: Music2 };
-        default:      return { label: "Post", color: "#00CEC8", Icon: MessageCircle };
+        default:      return { label: "Post", color: "var(--nx-accent)", Icon: MessageCircle };
     }
 }
 

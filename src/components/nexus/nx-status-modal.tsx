@@ -125,7 +125,7 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                                     style={{
                                         background: mins === o.m ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.08)",
                                         border: `1px solid ${mins === o.m ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.20)"}`,
-                                        color: mins === o.m ? "#00CEC8" : "rgba(220,230,255,0.85)",
+                                        color: mins === o.m ? "var(--nx-accent)" : "rgba(220,230,255,0.85)",
                                     }}>
                                     {o.label}
                                 </button>
@@ -150,7 +150,7 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                                             border: `1px solid ${isActive ? "rgba(0,206,200,0.40)" : "rgba(43,62,232,0.15)"}`,
                                         }}>
                                         <Icon className="w-4 h-4 flex-shrink-0" style={{ color: p.color }} />
-                                        <span className="text-xs truncate" style={{ color: isActive ? "#00CEC8" : "rgba(220,230,255,0.90)" }}>
+                                        <span className="text-xs truncate" style={{ color: isActive ? "var(--nx-accent)" : "rgba(220,230,255,0.90)" }}>
                                             {p.text}
                                         </span>
                                     </button>
@@ -178,7 +178,7 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                     </button>
                     <button onClick={save} disabled={busy || (!selectedKey && !text.trim())}
                         className="flex-1 h-10 rounded-lg text-sm font-black text-white disabled:opacity-40 flex items-center justify-center gap-2"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        style={{ background: "var(--nx-accent)" }}>
                         {busy && <Loader2 className="w-4 h-4 animate-spin" />}
                         Saqlash
                     </button>

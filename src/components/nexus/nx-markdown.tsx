@@ -23,7 +23,7 @@ function withMentions(node: React.ReactNode, keyBase: string): React.ReactNode {
                 href={`/nexus/u/${un}`}
                 onClick={e => e.stopPropagation()}
                 className="font-bold hover:underline"
-                style={{ color: "#00CEC8" }}>
+                style={{ color: "var(--nx-accent)" }}>
                 @{un}
             </Link>
         );
@@ -55,7 +55,7 @@ function textWithEmoji(s: string, key: string, size = 18): React.ReactNode {
                     href={`/nexus/u/${un}`}
                     onClick={e => e.stopPropagation()}
                     className="font-bold hover:underline"
-                    style={{ color: "#00CEC8" }}>
+                    style={{ color: "var(--nx-accent)" }}>
                     @{un}
                 </Link>
             );
@@ -66,7 +66,7 @@ function textWithEmoji(s: string, key: string, size = 18): React.ReactNode {
                     href={`/nexus/tag/${tag.toLowerCase()}`}
                     onClick={e => e.stopPropagation()}
                     className="font-bold hover:underline"
-                    style={{ color: "#00CEC8" }}>
+                    style={{ color: "var(--nx-accent)" }}>
                     #{tag}
                 </Link>
             );
@@ -120,7 +120,7 @@ function parseInline(text: string, key: string): React.ReactNode[] {
                 if (URL_RE.test(url)) {
                     nodes.push(
                         <a key={k} href={url} target="_blank" rel="noopener noreferrer"
-                            className="underline hover:opacity-80" style={{ color: "#00CEC8" }}>
+                            className="underline hover:opacity-80" style={{ color: "var(--nx-accent)" }}>
                             {textWithEmoji(label, `${k}-e`)}
                         </a>
                     );

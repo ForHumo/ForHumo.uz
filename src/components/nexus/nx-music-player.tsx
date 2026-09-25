@@ -42,7 +42,7 @@ function MiniPlayer() {
             {/* Progress xat */}
             <div className="absolute top-0 left-0 right-0 h-0.5 rounded-t-2xl overflow-hidden">
                 <div className="h-full transition-all duration-1000"
-                    style={{ width: `${progress}%`, background: "linear-gradient(90deg,#2B3EE8,#00CEC8)" }} />
+                    style={{ width: `${progress}%`, background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))" }} />
             </div>
 
             <img
@@ -132,7 +132,7 @@ function ExpandedPlayer() {
                     </div>
                     <button onClick={() => setShowQueue(p => !p)}>
                         <ListMusic className="w-5 h-5 transition-colors duration-200"
-                            style={{ color: showQueue ? "#00CEC8" : "rgba(160,176,224,0.70)" }} />
+                            style={{ color: showQueue ? "var(--nx-accent)" : "rgba(160,176,224,0.70)" }} />
                     </button>
                 </div>
 
@@ -169,7 +169,7 @@ function ExpandedPlayer() {
                         onClick={handleSeek}
                     >
                         <div className="absolute left-0 top-0 h-full rounded-full transition-all duration-1000"
-                            style={{ width: `${progress}%`, background: "linear-gradient(90deg,#2B3EE8,#00CEC8)" }} />
+                            style={{ width: `${progress}%`, background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))" }} />
                         <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                             style={{ left: `calc(${progress}% - 8px)`, boxShadow: "0 0 8px rgba(43,62,232,0.60)" }} />
                     </div>
@@ -183,7 +183,7 @@ function ExpandedPlayer() {
                 <div className="w-full flex items-center justify-between mt-4">
                     <button onClick={toggleShuffle}>
                         <Shuffle className="w-5 h-5 transition-colors duration-200"
-                            style={{ color: shuffle ? "#00CEC8" : "rgba(100,120,170,0.60)" }} />
+                            style={{ color: shuffle ? "var(--nx-accent)" : "rgba(100,120,170,0.60)" }} />
                     </button>
 
                     <SkipBtn onClick={prevTrack} direction="back" />
@@ -192,7 +192,7 @@ function ExpandedPlayer() {
 
                     <button onClick={toggleRepeat}>
                         <Repeat className="w-5 h-5 transition-colors duration-200"
-                            style={{ color: repeat ? "#00CEC8" : "rgba(100,120,170,0.60)" }} />
+                            style={{ color: repeat ? "var(--nx-accent)" : "rgba(100,120,170,0.60)" }} />
                     </button>
                 </div>
 
@@ -211,7 +211,7 @@ function ExpandedPlayer() {
                         }}
                     >
                         <div className="h-full rounded-full"
-                            style={{ width: `${volume}%`, background: "linear-gradient(90deg,#2B3EE8,#00CEC8)" }} />
+                            style={{ width: `${volume}%`, background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))" }} />
                     </div>
                     <span className="text-[10px] w-7 text-right" style={{ color: "rgba(100,120,170,0.60)" }}>{volume}%</span>
                 </div>
@@ -260,7 +260,7 @@ function ExpandedPlayer() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-bold truncate"
-                                        style={{ color: i === queueIndex ? "#00CEC8" : "rgba(200,210,235,0.90)" }}>
+                                        style={{ color: i === queueIndex ? "var(--nx-accent)" : "rgba(200,210,235,0.90)" }}>
                                         {t.title}
                                     </p>
                                     <p className="text-[9px] truncate" style={{ color: "rgba(80,100,150,0.80)" }}>
@@ -353,7 +353,7 @@ function PlayPauseBtn({ isPlaying, onToggle }: { isPlaying: boolean; onToggle: (
             onClick={handleClick}
             className="nx-press w-16 h-16 flex items-center justify-center rounded-full"
             style={{
-                background: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                background: "var(--nx-accent)",
                 boxShadow: "0 0 32px rgba(43,62,232,0.50), 0 0 64px rgba(0,206,200,0.20)",
             }}
         >

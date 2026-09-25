@@ -39,8 +39,8 @@ export function NxShare() {
     const options = [
         { id: "telegram", label: "Telegram", icon: Send, color: "#0088CC", run: () => openExternal(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`) },
         { id: "whatsapp", label: "WhatsApp", icon: Users, color: "#25D366", run: () => openExternal(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`) },
-        ...(canNativeShare ? [{ id: "more", label: "Boshqa...", icon: Share2, color: "#8B5CF6", run: nativeShare }] : [{ id: "msg", label: "SMS / Email", icon: MessageCircle, color: "#2B3EE8", run: () => openExternal(`mailto:?subject=${encodeURIComponent("Humo Nexus")}&body=${encodeURIComponent(text + "\n" + url)}`) }]),
-        { id: "copy", label: "Havolani\nko'chirish", icon: copied ? Check : Link2, color: "#00CEC8", run: copyLink },
+        ...(canNativeShare ? [{ id: "more", label: "Boshqa...", icon: Share2, color: "#8B5CF6", run: nativeShare }] : [{ id: "msg", label: "SMS / Email", icon: MessageCircle, color: "var(--nx-accent)", run: () => openExternal(`mailto:?subject=${encodeURIComponent("Humo Nexus")}&body=${encodeURIComponent(text + "\n" + url)}`) }]),
+        { id: "copy", label: "Havolani\nko'chirish", icon: copied ? Check : Link2, color: "var(--nx-accent)", run: copyLink },
     ];
 
     return (
@@ -91,7 +91,7 @@ export function NxShare() {
                         <button onClick={copyLink}
                             className="flex-shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all duration-200"
                             style={copied
-                                ? { background: "rgba(0,206,200,0.15)", color: "#00CEC8", border: "1px solid rgba(0,206,200,0.30)" }
+                                ? { background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)", border: "1px solid rgba(0,206,200,0.30)" }
                                 : { background: "rgba(43,62,232,0.15)", color: "white", border: "1px solid rgba(43,62,232,0.30)" }}>
                             {copied ? "Ko'chirildi" : "Ko'chirish"}
                         </button>

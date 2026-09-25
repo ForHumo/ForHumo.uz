@@ -29,7 +29,7 @@ interface Price {
 }
 
 // Nexus gradient (bn-hero'dan ilhom)
-const NX_GRADIENT = "linear-gradient(135deg, #2B3EE8 0%, #6D28D9 50%, #EC4899 100%)";
+const NX_GRADIENT = "linear-gradient(135deg, var(--nx-accent) 0%, #6D28D9 50%, #EC4899 100%)";
 const NX_GLASS_BG = "rgba(255,255,255,0.06)";
 const NX_GLASS_BORDER = "rgba(255,255,255,0.14)";
 
