@@ -137,7 +137,7 @@ export function NxGroupTopicsModal({
                                 <input value={newName} onChange={e => setNewName(e.target.value)}
                                     placeholder="Mavzu nomi..." maxLength={80}
                                     className="w-full rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                                 <div className="flex gap-1 overflow-x-auto py-1" style={{ scrollbarWidth: "none" }}>
                                     {ICONS.map(i => (
                                         <button key={i} onClick={() => setNewIcon(i)}

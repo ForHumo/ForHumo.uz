@@ -85,7 +85,7 @@ export function NxFinancialCopilot({
                                     rows={2} maxLength={500}
                                     placeholder="Masalan: '200k qarz berishga arziydimi?' yoki bo'sh qoldiring — AI o'zi topadi"
                                     className="w-full rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none resize-none"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                             </div>
                             <div>
                                 <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.7)" }}>

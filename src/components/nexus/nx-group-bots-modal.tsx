@@ -138,7 +138,7 @@ export function NxGroupBotsModal({
                                 <input value={q} onChange={e => setQ(e.target.value)}
                                     placeholder="Bot qidiring @handle yoki nomi..."
                                     className="w-full rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                                 <div className="max-h-[180px] overflow-y-auto space-y-1" style={{ scrollbarWidth: "none" }}>
                                     {suggestions.map(a => (
                                         <button key={a.id} onClick={() => add(a.id, false)}

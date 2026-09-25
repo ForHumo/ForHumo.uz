@@ -297,7 +297,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
             {(pullOffset > 0 || refreshing) && (
                 <div className="absolute left-0 right-0 flex justify-center pointer-events-none" style={{ top: -50, height: 50 }}>
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-                        style={{ background: "rgba(8,14,32,0.90)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
+                        style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                         <RefreshCw className={`w-3.5 h-3.5 ${refreshing || pullOffset > 55 ? "animate-spin" : ""}`}
                             style={{ color: "var(--nx-accent)", transform: !refreshing && pullOffset <= 55 ? `rotate(${pullOffset * 4}deg)` : undefined }} />
                         <span className="text-[10px] font-black" style={{ color: "rgb(var(--nx-text-2-rgb)/0.90)" }}>
@@ -322,7 +322,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
             {/* ── Tab (faqat umumiy feed va tashqi controlled emas) ── */}
             {!profileMode && !hideTabBar && (
             <div className="sticky top-0 z-20 flex gap-0 mx-4 mt-4 mb-3 rounded-2xl overflow-hidden backdrop-blur-md"
-                style={{ background: "rgba(8,14,32,0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                 {(["foryou", "following", "explore"] as const).map(t => (
                     <button key={t} onClick={() => setTab(t)}
                         className="flex-1 py-2.5 text-xs font-black transition-all duration-200"
@@ -980,7 +980,7 @@ function NxFeedVideo({ src, single }: { src: string; single: boolean }) {
 function PostSkeleton() {
     return (
         <div className="rounded-2xl overflow-hidden animate-pulse"
-            style={{ background: "rgba(8,14,32,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.12)" }}>
+            style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.12)" }}>
             <div className="flex items-center gap-3 px-4 pt-4 pb-3">
                 <div className="w-10 h-10 rounded-2xl" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }} />
                 <div className="flex-1 space-y-1.5">

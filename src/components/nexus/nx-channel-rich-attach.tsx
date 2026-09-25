@@ -241,15 +241,15 @@ export function NxChannelRichAttach({
                             <input value={contactName} onChange={e => setContactName(e.target.value)}
                                 placeholder="Ism (majburiy)"
                                 className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none"
-                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                             <input value={contactPhone} onChange={e => setContactPhone(e.target.value)}
                                 placeholder="Telefon (majburiy)" inputMode="tel"
                                 className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none"
-                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                             <input value={contactUsername} onChange={e => setContactUsername(e.target.value)}
                                 placeholder="@username (ixtiyoriy — Humo hisobi)"
                                 className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none"
-                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }} />
                         </div>
                         <div className="flex gap-2 mt-4">
                             <button onClick={() => setContactOpen(false)}

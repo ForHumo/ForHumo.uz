@@ -106,7 +106,7 @@ export function NxTrendingBanner() {
                         {trends.map((t, i) => (
                             <Link key={t.tag} href={`/nexus/tag/${t.tag}`}
                                 className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl active:scale-95 transition-transform"
-                                style={{ background: "rgba(8,14,32,0.65)", border: "1px solid rgba(239,68,68,0.30)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(239,68,68,0.30)" }}>
                                 <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black text-[var(--nx-text)]"
                                     style={{ background: i === 0 ? "linear-gradient(135deg,#EF4444,#F97316)"
                                         : i === 1 ? "linear-gradient(135deg,#F97316,#F5B301)"
@@ -126,7 +126,7 @@ export function NxTrendingBanner() {
             {/* H-18: Kim kuzatishga arziydi */}
             {visibleSugs.length > 0 && (
                 <div className="mx-4 rounded-2xl overflow-hidden"
-                    style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
+                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                     <div className="flex items-center gap-2 px-4 pt-3 pb-1">
                         <UserPlus className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                         <span className="text-xs font-black text-[var(--nx-text)]">Kim kuzatishga arziydi</span>
@@ -139,7 +139,7 @@ export function NxTrendingBanner() {
                                     style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                     <button onClick={() => dismiss(s.username!)}
                                         className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black"
-                                        style={{ background: "rgba(8,14,32,0.7)", color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>×</button>
+                                        style={{ background: "var(--nx-surface)", color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>×</button>
                                     <Link href={`/nexus/u/${s.username}`} className="block">
                                         <div className="w-12 h-12 mx-auto rounded-2xl overflow-hidden mb-2" style={{ border: "2px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
                                             <img src={avatarOf(s)} alt="" className="w-full h-full object-cover bg-white" />

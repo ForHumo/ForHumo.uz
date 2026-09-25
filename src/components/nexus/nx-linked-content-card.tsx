@@ -37,7 +37,7 @@ export function LinkedContentCard({ type, id, title, thumb }: Props) {
     return (
         <Link href={href} onClick={e => e.stopPropagation()}
             className="relative block mb-1.5 rounded-xl overflow-hidden group active:scale-[0.99] transition-transform"
-            style={{ background: "rgba(5,8,24,0.60)", border: `1px solid ${color}44` }}>
+            style={{ background: "var(--nx-surface)", border: `1px solid ${color}44` }}>
             {thumb ? (
                 <div className="relative aspect-video">
                     <img src={thumb} alt="" className="w-full h-full object-cover" />
@@ -66,7 +66,7 @@ export function LinkedContentCard({ type, id, title, thumb }: Props) {
                 </div>
             )}
             {/* Sarlavha + havola indikatori */}
-            <div className="flex items-center gap-2 px-3 py-2" style={{ background: "rgba(5,8,24,0.50)" }}>
+            <div className="flex items-center gap-2 px-3 py-2" style={{ background: "var(--nx-surface)" }}>
                 <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-black uppercase tracking-widest" style={{ color }}>{label}</p>
                     <p className="text-sm font-bold text-[var(--nx-text)] truncate">{title}</p>

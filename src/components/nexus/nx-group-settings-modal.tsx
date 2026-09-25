@@ -238,7 +238,7 @@ export function NxGroupSettingsModal({
                                 <input disabled={!canEdit} value={data.name}
                                     onChange={e => setData({ ...data, name: e.target.value })}
                                     className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none disabled:opacity-60"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                             </div>
 
                             {/* Tavsif */}
@@ -250,7 +250,7 @@ export function NxGroupSettingsModal({
                                     onChange={e => setData({ ...data, description: e.target.value })}
                                     rows={3}
                                     className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none resize-none disabled:opacity-60"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                             </div>
 
                             {/* Qoidalar */}
@@ -263,7 +263,7 @@ export function NxGroupSettingsModal({
                                     rows={4}
                                     placeholder="Guruh qoidalarini yozing..."
                                     className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none resize-none disabled:opacity-60"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                             </div>
 
                             {/* Slow mode */}
@@ -275,7 +275,7 @@ export function NxGroupSettingsModal({
                                     <select disabled={!canEdit} value={data.slowModeSeconds}
                                         onChange={e => setData({ ...data, slowModeSeconds: Number(e.target.value) })}
                                         className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none disabled:opacity-60"
-                                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
+                                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                         {SLOW_MODE_OPTIONS.map(o => (
                                             <option key={o.value} value={o.value} style={{ background: "#080C20" }}>{o.label}</option>
                                         ))}
@@ -291,7 +291,7 @@ export function NxGroupSettingsModal({
                                 <select disabled={!canEdit} value={data.autoDeleteAfterSeconds}
                                     onChange={e => setData({ ...data, autoDeleteAfterSeconds: Number(e.target.value) })}
                                     className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none disabled:opacity-60"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)" }}>
                                     {AUTO_DELETE_OPTIONS.map(o => (
                                         <option key={o.value} value={o.value} style={{ background: "#080C20" }}>{o.label}</option>
                                     ))}

@@ -96,7 +96,7 @@ export function NxHumoMediaManager({ kind }: { kind: Kind }) {
             }} />
 
             <header className="sticky top-0 z-10 backdrop-blur-md" style={{
-                background: "rgba(5,8,24,0.85)",
+                background: "var(--nx-bg)",
                 borderBottom: `1px solid ${NX.border}`,
             }}>
                 <div className="max-w-[880px] mx-auto flex items-center gap-3 px-4 h-14">
@@ -208,7 +208,7 @@ function PackCard({ pack, onOpen }: { pack: Pack; onOpen: () => void }) {
         <button onClick={onOpen}
             className="text-left rounded-2xl overflow-hidden transition-colors active:scale-[0.99]"
             style={{ background: NX.panel, border: `1px solid ${NX.border}` }}>
-            <div className="aspect-square grid grid-cols-2 gap-0.5 p-0.5" style={{ background: "rgba(5,8,24,0.6)" }}>
+            <div className="aspect-square grid grid-cols-2 gap-0.5 p-0.5" style={{ background: "var(--nx-surface)" }}>
                 {showCover ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={pack.coverUrl!} alt="" className="col-span-2 row-span-2 w-full h-full object-cover" />
@@ -510,7 +510,7 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
             {pack.isOwner && staged && (
                 <div className="mb-4 p-3 rounded-xl" style={{ background: NX.blueBg, border: `1px solid ${NX.borderSoft}` }}>
                     <div className="flex items-start gap-3 mb-3">
-                        <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "rgba(5,8,24,0.5)" }}>
+                        <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "var(--nx-surface)" }}>
                             {staged.isVideo ? (
                                 <video src={staged.previewUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
                             ) : (
@@ -542,7 +542,7 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
                             autoFocus
                             onKeyDown={e => { if (e.key === "Enter" && !uploading) void submitStaged(); }}
                             className="w-full mt-1 h-10 px-3 rounded-lg text-[13px] outline-none"
-                            style={{ background: "rgba(5,8,24,0.6)", border: `1px solid ${NX.borderSoft}`, color: NX.text, caretColor: NX.accent }} />
+                            style={{ background: "var(--nx-surface)", border: `1px solid ${NX.borderSoft}`, color: NX.text, caretColor: NX.accent }} />
                     </label>
                     {uploadErr && <p className="text-[12px] mt-2" style={{ color: "#ff6b6b" }}>{uploadErr}</p>}
                     <div className="flex items-center justify-end gap-2 mt-3">
@@ -576,7 +576,7 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[60vh] overflow-y-auto">
                     {pack.items!.map(it => (
                         <div key={it.id} className="relative aspect-square rounded-lg overflow-hidden group"
-                            style={{ background: "rgba(5,8,24,0.6)" }}>
+                            style={{ background: "var(--nx-surface)" }}>
                             {pack.kind === "GIF" ? (
                                 <video src={it.mediaUrl} autoPlay muted loop playsInline
                                     className="w-full h-full object-cover" />
@@ -612,7 +612,7 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
                     </p>
                     <div className="flex items-center gap-2">
                         <div className="flex-1 flex items-center gap-1 rounded-lg h-9 px-2"
-                            style={{ background: "rgba(5,8,24,0.60)", border: `1px solid ${NX.borderSoft}` }}>
+                            style={{ background: "var(--nx-surface)", border: `1px solid ${NX.borderSoft}` }}>
                             <span className="text-[13px] font-black" style={{ color: NX.text3 }}>@</span>
                             <input type="text"
                                 value={transferUsername}

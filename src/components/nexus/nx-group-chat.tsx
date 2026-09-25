@@ -76,7 +76,7 @@ export function NxGroupChat({ open, onClose }: { open: boolean; onClose: () => v
                     <input value={text} onChange={e => setText(e.target.value)}
                         placeholder="Xabar yozing..."
                         className="flex-1 rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none"
-                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
+                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                     <button type="submit" disabled={isSending || !text.trim()}
                         className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--nx-text)] shadow-lg disabled:opacity-40"
                         style={{ background: "var(--nx-accent)" }}>

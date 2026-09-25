@@ -326,7 +326,7 @@ export function NxTrackCreate({ open, onClose, onCreated, defaultKind = "MUSIC" 
                                                     placeholder={"[00:12.50] Birinchi qator matni\n[00:15.20] Ikkinchi qator\n[00:18.00] ..."}
                                                     rows={5}
                                                     className="w-full px-3 py-2 rounded-lg text-[11px] font-mono text-[var(--nx-text)] outline-none resize-y"
-                                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(139,92,246,0.22)", caretColor: "#8B5CF6" }} />
+                                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(139,92,246,0.22)", caretColor: "#8B5CF6" }} />
                                                 <p className="text-[9px] mt-1" style={{ color: "rgba(180,150,220,0.55)" }}>
                                                     Format: <span className="font-mono">[mm:ss.xx] matn</span> — har qatorda vaqt tegi va matn
                                                 </p>

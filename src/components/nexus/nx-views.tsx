@@ -796,7 +796,7 @@ export function ProfileView() {
                                     style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                     <img src={v.image} alt={v.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                        style={{ background: "rgba(5,8,24,0.50)" }}>
+                                        style={{ background: "var(--nx-surface)" }}>
                                         <Play className="w-5 h-5 text-white fill-white" />
                                     </div>
                                     <div className="absolute bottom-1 right-1 px-1 py-0.5 rounded text-[8px] font-bold text-white"

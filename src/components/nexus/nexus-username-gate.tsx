@@ -68,7 +68,7 @@ export function NexusUsernameGate({ suggested }: { suggested?: string }) {
                         autoFocus
                         maxLength={20}
                         className="w-full h-12 rounded-xl pl-9 pr-11 text-sm text-[var(--nx-text)] outline-none lowercase"
-                        style={{ background: "rgba(5,8,24,0.60)", border: `1px solid ${err ? "rgba(239,68,68,0.5)" : valid ? "rgb(var(--nx-accent-rgb) / 0.5)" : "rgb(var(--nx-accent-rgb) / 0.25)"}`, caretColor: "var(--nx-accent)" }} />
+                        style={{ background: "var(--nx-surface)", border: `1px solid ${err ? "rgba(239,68,68,0.5)" : valid ? "rgb(var(--nx-accent-rgb) / 0.5)" : "rgb(var(--nx-accent-rgb) / 0.25)"}`, caretColor: "var(--nx-accent)" }} />
                     {valid && <Check className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--nx-accent)" }} />}
                 </div>
 

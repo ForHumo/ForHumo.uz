@@ -143,7 +143,7 @@ export function NxGroupMembersModal({
                     <input value={q} onChange={e => setQ(e.target.value)}
                         placeholder="A'zoni qidiring..."
                         className="w-full rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none"
-                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
+                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-3 py-2" style={{ scrollbarWidth: "none" }}>
