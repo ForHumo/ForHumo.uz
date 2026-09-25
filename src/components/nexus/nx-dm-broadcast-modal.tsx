@@ -3,6 +3,7 @@
 // Broadcast list modal — WhatsApp uslub. Ro'yxatlar + yangi yaratish + xabar yuborish.
 
 import { useEffect, useState } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import {
     X, Users, Loader2, Plus, Send, Trash2, Search,
 } from "lucide-react";
@@ -98,12 +99,12 @@ export function NxDmBroadcastModal({
             });
             const d = await r.json().catch(() => ({}));
             if (r.ok) {
-                alert(`${d.sent} ta a'zoga yuborildi`);
+                nxToast(`${d.sent} ta a'zoga yuborildi`);
                 setText("");
                 setTab("list");
                 setActiveList(null);
             } else {
-                alert(d?.error ?? "Xato");
+                nxToast(d?.error ?? "Xato");
             }
         } finally { setSending(false); }
     }

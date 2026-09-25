@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import {
     Hash, Users, Plus, Loader2, X, Send, BadgeCheck, Lock, ArrowLeft, Check, Megaphone, UserPlus, Trash2, Shield, ShieldOff, BarChart2, Pin, PinOff, Edit3, Smile, Reply, Forward, Bookmark, BookmarkCheck, Search, Volume2, VolumeX, Languages, Copy, History, Clock, MoreVertical, LogOut, Eye,
 } from "lucide-react";
@@ -327,7 +328,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                     ? { ...x, commentCount: (x.commentCount ?? 0) + 1 } : x));
             } else {
                 const d = await r.json().catch(() => ({}));
-                alert(d?.error ?? "Izoh yuborilmadi");
+                nxToast(d?.error ?? "Izoh yuborilmadi");
             }
         } finally { setSendingComment(false); }
     }
@@ -359,7 +360,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     // Per-post share (Telegram uslubi) — clipboard'ga permalink URL nusxa oladi.
     async function sharePostLink(msgId: string) {
         if (!ch?.handle) {
-            alert("Faqat public @handle kanallarida share ishlaydi");
+            nxToast("Faqat public @handle kanallarida share ishlaydi");
             return;
         }
         const url = `${window.location.origin}/nexus/ch/${encodeURIComponent(ch.handle)}/msg/${encodeURIComponent(msgId)}`;
@@ -371,7 +372,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
         } catch { /* user cancelled */ }
         try {
             await navigator.clipboard.writeText(url);
-            alert("Havola nusxa olindi");
+            nxToast("Havola nusxa olindi");
         } catch {
             prompt("Havola:", url);
         }
@@ -412,7 +413,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             ));
         } else {
             const e = await r.json().catch(() => ({}));
-            alert(e.error || "Ovoz berib bo'lmadi");
+            nxToast(e.error || "Ovoz berib bo'lmadi");
         }
     }
     const lastTs = useRef<string | null>(null);
@@ -628,7 +629,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             lastTs.current = d.message.createdAt;
         } else {
             const e = await r.json().catch(() => ({}));
-            alert(e.error || "Xato");
+            nxToast(e.error || "Xato");
         }
     }
 
@@ -643,7 +644,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             ));
         } else {
             const e = await r.json().catch(() => ({}));
-            alert(e.error || "O'chirib bo'lmadi");
+            nxToast(e.error || "O'chirib bo'lmadi");
         }
     }
 
@@ -774,7 +775,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             el.scrollIntoView({ behavior: "smooth", block: "center" });
             el.animate([{ background: "rgba(0,206,200,0.20)" }, { background: "transparent" }], { duration: 1400, iterations: 1 });
         } else {
-            alert("Xabar hozirgi ko'rinishda emas — biroz yuqoriga aylantiring");
+            nxToast("Xabar hozirgi ko'rinishda emas — biroz yuqoriga aylantiring");
         }
     }
 
@@ -808,7 +809,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                 body: JSON.stringify({ text, target }),
             });
             if (r.ok) { const d = await r.json(); setTranslated(prev => ({ ...prev, [msgId]: d.translated })); }
-            else alert("Tarjima qilib bo'lmadi");
+            else nxToast("Tarjima qilib bo'lmadi");
         } finally {
             setTranslating(prev => { const n = { ...prev }; delete n[msgId]; return n; });
         }
@@ -903,7 +904,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             if (r.ok) setForwardMsg(null);
             else {
                 const d = await r.json().catch(() => ({}));
-                alert(d?.error ?? "Yuborib bo'lmadi");
+                nxToast(d?.error ?? "Yuborib bo'lmadi");
             }
         } finally { setForwarding(false); }
     }
@@ -934,7 +935,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             if (r.ok) setForwardMsg(null);
             else {
                 const d = await r.json().catch(() => ({}));
-                alert(d?.error ?? "Yuborib bo'lmadi");
+                nxToast(d?.error ?? "Yuborib bo'lmadi");
             }
         } finally { setForwarding(false); }
     }
@@ -956,14 +957,14 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             setEditingId(null); setEditingText("");
         } else {
             const d = await r.json().catch(() => ({}));
-            alert(d?.error ?? "Tahrirlab bo'lmadi");
+            nxToast(d?.error ?? "Tahrirlab bo'lmadi");
         }
     }
     async function deleteMsg(m: ChMsg) {
         if (!confirm("Xabarni o'chirilsinmi?")) return;
         const r = await fetch(`/api/nexus/channels/${id}/messages/${m.id}`, { method: "DELETE" });
         if (r.ok) setMsgs(prev => prev.filter(x => x.id !== m.id));
-        else alert("O'chirib bo'lmadi");
+        else nxToast("O'chirib bo'lmadi");
     }
     async function toggleBookmark(m: ChMsg) {
         const now = !m.bookmarked;
@@ -998,7 +999,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
             setMsgs(prev => prev.map(x => x.id === m.id ? { ...x, pinnedAt: isPinned ? null : nowIso } : x));
         } else {
             const d = await r.json().catch(() => ({}));
-            alert(d?.error ?? "Bajarib bo'lmadi");
+            nxToast(d?.error ?? "Bajarib bo'lmadi");
         }
     }
     const canManage = ch?.isOwner || ch?.role === "ADMIN";

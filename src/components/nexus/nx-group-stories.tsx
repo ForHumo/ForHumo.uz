@@ -3,6 +3,7 @@
 // Guruh stories — chat header ostida gorizontal qator. Bosilsa viewer ochiladi.
 
 import { useEffect, useState, useRef } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { X, Loader2, Camera, Upload, Play, Eye, Trash2 } from "lucide-react";
 
 type Story = {
@@ -294,7 +295,7 @@ function NxGroupStoryCreate({
             if (r.ok) onCreated();
             else {
                 const d = await r.json().catch(() => ({}));
-                alert(d.error || "Xato");
+                nxToast(d.error || "Xato");
             }
         } finally { setBusy(false); }
     };

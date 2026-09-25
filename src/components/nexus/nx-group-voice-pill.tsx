@@ -4,6 +4,7 @@
 // (agar faol voice chat bo'lsa). OWNER/ADMIN "Boshlash" tugmasini ko'radi.
 
 import { useEffect, useState } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { Mic, Phone, PhoneOff, Loader2, Radio } from "lucide-react";
 
 type Active = {
@@ -40,7 +41,7 @@ export function NxGroupVoicePill({
             if (r.ok) load();
             else {
                 const d = await r.json().catch(() => ({}));
-                alert(d.error || "Voice chat yaratib bo'lmadi");
+                nxToast(d.error || "Voice chat yaratib bo'lmadi");
             }
         } finally { setBusy(false); }
     };

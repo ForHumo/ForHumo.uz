@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { useSession } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import { useNxPlayer } from "./nx-player-ctx";
@@ -118,14 +119,14 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ title: peerName ? `${peerName} bilan` : null }),
             }).then(x => x.json());
-            if (!c?.call?.id) { alert(c?.error || "Yaratib bo'lmadi"); return; }
+            if (!c?.call?.id) { nxToast(c?.error || "Yaratib bo'lmadi"); return; }
             await fetch(`/api/nexus/group-calls/${c.call.id}/invite`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ profileIds: [peerId] }),
             }).catch(() => { });
             openGroupCall(c.call.id);
         } catch (e) {
-            alert(e instanceof Error ? e.message : "Xato");
+            nxToast(e instanceof Error ? e.message : "Xato");
         }
     }, [openGroupCall]);
     const [conversations, setConversations] = useState<Conv[]>([]);
@@ -240,7 +241,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text: m.text, target }),
             });
-            if (r.ok) { const d = await r.json(); alert(`Tarjima:\n\n${d.translated}`); }
+            if (r.ok) { const d = await r.json(); nxToast(`Tarjima:\n\n${d.translated}`); }
         } catch {}
     }
     const [query, setQuery] = useState("");
@@ -344,7 +345,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 const wasBanned = await handleMaybeBan(res);
                 if (!wasBanned) {
                     const e = await res.json().catch(() => ({}));
-                    alert(e.error || "Jo'natib bo'lmadi");
+                    nxToast(e.error || "Jo'natib bo'lmadi");
                 }
             }
         } finally { setSending(false); }
@@ -399,7 +400,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 setRecSeconds(Math.floor((Date.now() - recStartRef.current) / 1000));
             }, 200);
         } catch (e) {
-            alert(e instanceof Error ? e.message : "Mikrofonga ruxsat berilmadi");
+            nxToast(e instanceof Error ? e.message : "Mikrofonga ruxsat berilmadi");
         }
     }
     function stopVoice(cancel: boolean = false) {
@@ -468,12 +469,12 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 const wasBanned = await handleMaybeBan(res);
                 if (!wasBanned) {
                     const e = await res.json().catch(() => ({}));
-                    alert(e.error || "Jo'natib bo'lmadi");
+                    nxToast(e.error || "Jo'natib bo'lmadi");
                 }
             }
         } catch (e) {
             setMessages(m => m.filter(x => x.id !== temp.id));
-            alert(e instanceof Error ? e.message : "Yuklashda xato");
+            nxToast(e instanceof Error ? e.message : "Yuklashda xato");
         } finally {
             setUploading(false); setUploadPct(0);
             if (fileInputRef.current) fileInputRef.current.value = "";
@@ -553,7 +554,7 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
             ));
         } else {
             const e = await res.json().catch(() => ({}));
-            alert(e.error || "Ovoz berib bo'lmadi");
+            nxToast(e.error || "Ovoz berib bo'lmadi");
         }
     }
 
@@ -633,10 +634,10 @@ export function NxMessages({ openWithUsername }: { openWithUsername?: string | n
                 loadConvs();
             } else {
                 const e = await res.json().catch(() => ({}));
-                alert(e.error || "Jo'natib bo'lmadi");
+                nxToast(e.error || "Jo'natib bo'lmadi");
             }
         } catch (e) {
-            alert(e instanceof Error ? e.message : "Joylashuvni olib bo'lmadi");
+            nxToast(e instanceof Error ? e.message : "Joylashuvni olib bo'lmadi");
         } finally { setLocBusy(false); }
     }
     async function stopLiveLocation(msgId: string) {

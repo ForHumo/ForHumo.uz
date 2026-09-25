@@ -6,6 +6,7 @@
 // Mobile'da bu komponent ishlatilmaydi — SocialView eski tabsni ko'rsatadi.
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { Loader2, Send, Bot as BotIcon, Search, MessageSquare, Phone, Video, MoreVertical, BadgeCheck, X, Hash, Users, Megaphone, Paperclip, Wallet, MapPin, Mic, Smile, Trash2, Camera, BarChart2, Copy, Reply, Check, CheckCheck, Edit3, ChevronLeft, ChevronRight, Languages, FileIcon, Download, Forward, Pin, PinOff, Archive, ArchiveRestore, BellOff, Bell, Inbox, CheckSquare, Square, ChevronDown, Timer, Flame, Clock, Plus, Shield, ShieldOff, Volume2, VolumeX, Palette, Bookmark, BookmarkCheck, FileText, History, Lock, Unlock, Sparkles, Settings, PenSquare, Sticker, Film, ExternalLink, EyeOff, Eye, AlertTriangle, Play, Pause, RotateCw, ZoomIn, ZoomOut, Maximize2, Minimize2, UserCircle } from "lucide-react";
@@ -6784,7 +6785,7 @@ function NxChannelInfoPanel({ id }: { id: string }) {
                 setMembers(prev => prev.map(m => m.profileId === profileId ? { ...m, role } : m));
             } else {
                 const d = await r.json().catch(() => ({}));
-                alert(d?.error ?? "Bajarib bo'lmadi");
+                nxToast(d?.error ?? "Bajarib bo'lmadi");
             }
         } finally {
             setActionBusy(null);
@@ -6801,7 +6802,7 @@ function NxChannelInfoPanel({ id }: { id: string }) {
                 setInfo(prev => prev ? { ...prev, memberCount: Math.max(0, prev.memberCount - 1) } : prev);
             } else {
                 const d = await r.json().catch(() => ({}));
-                alert(d?.error ?? "Chiqarib bo'lmadi");
+                nxToast(d?.error ?? "Chiqarib bo'lmadi");
             }
         } finally {
             setActionBusy(null);

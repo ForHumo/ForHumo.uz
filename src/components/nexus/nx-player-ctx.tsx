@@ -4,6 +4,7 @@ import {
     createContext, useContext, useState,
     useCallback, useRef, useEffect, type ReactNode,
 } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Turlar
@@ -288,7 +289,7 @@ export function NxPlayerProvider({ children }: { children: ReactNode }) {
             body: JSON.stringify({ peerId, kind }),
         }).then(x => x.json()).catch(() => null);
         if (!r?.call) {
-            if (r?.error) alert(r.error);
+            if (r?.error) nxToast(r.error);
             return;
         }
         const det = await fetch(`/api/nexus/calls/${r.call.id}`).then(x => x.json()).catch(() => null);

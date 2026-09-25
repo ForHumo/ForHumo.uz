@@ -5,6 +5,7 @@
 // Barcha 5 qadam bajarilsa checklist yopiladi (localStorage).
 
 import { useEffect, useState, useCallback } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { CheckCircle2, Circle, X, Sparkles, UserPlus, PenSquare, Camera, Bell, ChevronRight } from "lucide-react";
 import { useNxPlayer } from "./nx-player-ctx";
 import { getPushState, subscribePush } from "@/lib/push-client";
@@ -71,10 +72,10 @@ export function NxOnboarding() {
         try {
             const state = await subscribePush();
             if (state === "subscribed") { load(); return; }
-            if (state === "denied") { alert("Brauzer sozlamalarida bildirishnomalarga ruxsat bering. Sozlamalar → Sayt sozlamalari → Bildirishnomalar → Ruxsat berish."); return; }
-            if (state === "unsupported") { alert("Sizning brauzeringiz push bildirishnomalarni qo'llab-quvvatlamaydi."); return; }
+            if (state === "denied") { nxToast("Brauzer sozlamalarida bildirishnomalarga ruxsat bering. Sozlamalar → Sayt sozlamalari → Bildirishnomalar → Ruxsat berish."); return; }
+            if (state === "unsupported") { nxToast("Sizning brauzeringiz push bildirishnomalarni qo'llab-quvvatlamaydi."); return; }
         } catch (e) {
-            alert(e instanceof Error ? e.message : "Xato yuz berdi");
+            nxToast(e instanceof Error ? e.message : "Xato yuz berdi");
         }
     };
 

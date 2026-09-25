@@ -4,6 +4,7 @@
 // Multi-slide (2-10), TEXT/IMAGE/VIDEO, filter, music, per-slide overlays.
 
 import { useState, useRef, useEffect } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { upload } from "@vercel/blob/client";
 import { useNxPlayer } from "./nx-player-ctx";
 import {
@@ -147,7 +148,7 @@ export function NxStoryCreate() {
     async function pick(files: FileList | null) {
         const file = files?.[0];
         if (!file) return;
-        if (slides.length >= 10) { alert("Maks 10 slide"); return; }
+        if (slides.length >= 10) { nxToast("Maks 10 slide"); return; }
         setUploading(true);
         try {
             const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -159,14 +160,14 @@ export function NxStoryCreate() {
             setActiveIdx(slides.length);
             setSelectedOverlayId(null);
             setTab("none");
-        } catch { alert("Yuklab bo'lmadi"); }
+        } catch { nxToast("Yuklab bo'lmadi"); }
         finally {
             setUploading(false);
             if (fileRef.current) fileRef.current.value = "";
         }
     }
     function addTextSlide() {
-        if (slides.length >= 10) { alert("Maks 10 slide"); return; }
+        if (slides.length >= 10) { nxToast("Maks 10 slide"); return; }
         const s = newTextSlide();
         setSlides(prev => [...prev, s]);
         setActiveIdx(slides.length);
@@ -204,7 +205,7 @@ export function NxStoryCreate() {
                 setSlides([]);
             } else {
                 const d = await res.json().catch(() => ({}));
-                alert(d.error || "Xato");
+                nxToast(d.error || "Xato");
             }
         } finally { setPosting(false); }
     }

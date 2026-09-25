@@ -4,6 +4,7 @@
 // Rate-limit: 3/24s (server tekshiradi).
 
 import { useEffect, useState } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { X, Loader2, Megaphone, AlertTriangle, Check } from "lucide-react";
 
 type Status = { used: number; remaining: number; memberCount: number };
@@ -45,7 +46,7 @@ export function NxChannelBroadcastModal({
                 setDone(true);
                 setTimeout(() => { onSent(); onClose(); }, 1500);
             } else {
-                alert(d?.error ?? "Yuborilmadi");
+                nxToast(d?.error ?? "Yuborilmadi");
                 setConfirmStage(false);
             }
         } finally {

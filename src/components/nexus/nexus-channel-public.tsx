@@ -5,6 +5,7 @@
 // Anonim foydalanuvchiga signIn CTA, a'zoga "Kanalga o'tish" tugmasi.
 
 import { useEffect, useState } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { useSession, signIn } from "next-auth/react";
 import { Link } from "@/i18n/routing";
 import {
@@ -151,7 +152,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                 window.location.href = `/nexus?channel=${encodeURIComponent(handle)}`;
             } else {
                 const d = await res.json().catch(() => ({}));
-                alert(d?.error ?? "Qo'shilib bo'lmadi");
+                nxToast(d?.error ?? "Qo'shilib bo'lmadi");
             }
         } finally {
             setJoining(false);

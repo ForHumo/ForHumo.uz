@@ -23,6 +23,7 @@ declare global {
 }
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { createPortal } from "react-dom";
 import {
     X, Radio, Eye, Send, Loader2, StopCircle, Clock, CalendarClock, Gift,
@@ -607,7 +608,7 @@ export function NxLiveRoom({ streamId, onClose }: { streamId: string; onClose: (
                 setSubCount(c => c + 1);
                 setSubModalOpen(false);
             } else {
-                alert(d.error || "Xato");
+                nxToast(d.error || "Xato");
             }
         } finally { setSubBusy(false); }
     }

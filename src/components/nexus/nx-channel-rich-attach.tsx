@@ -4,6 +4,7 @@
 // Plus tugmasi bosilsa 4 opsiya ochiladi.
 
 import { useEffect, useRef, useState } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { Paperclip, Mic, Video, MapPin, User, X, Loader2, Square, EyeOff } from "lucide-react";
 
 export type ChannelAttachPayload = {
@@ -53,7 +54,7 @@ export function NxChannelRichAttach({
 
     async function shareLocation() {
         setOpen(false);
-        if (!navigator.geolocation) { alert("Brauzer joylashuvni qo'llamaydi"); return; }
+        if (!navigator.geolocation) { nxToast("Brauzer joylashuvni qo'llamaydi"); return; }
         setBusy(true);
         try {
             await new Promise<void>((resolve, reject) => {
@@ -68,7 +69,7 @@ export function NxChannelRichAttach({
                     } catch (err) { reject(err); }
                 }, (err) => reject(err), { enableHighAccuracy: true, timeout: 10000 });
             });
-        } catch { alert("Joylashuvni olib bo'lmadi"); }
+        } catch { nxToast("Joylashuvni olib bo'lmadi"); }
         finally { setBusy(false); }
     }
 
@@ -107,7 +108,7 @@ export function NxChannelRichAttach({
             setElapsed(0);
             setRecording(kind);
             tickRef.current = setInterval(() => setElapsed(Date.now() - startedAtRef.current), 250);
-        } catch { alert("Mikrofon/kamera ochilmadi"); }
+        } catch { nxToast("Mikrofon/kamera ochilmadi"); }
     }
 
     async function stopRecording(cancel: boolean) {

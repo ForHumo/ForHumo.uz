@@ -5,6 +5,7 @@
 // jadval qo'yish, sponsored URL (agar kanal sponsoredEnabled=true).
 
 import { useRef, useState } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import {
     X, Send, Bold, Italic, Code, Link as LinkIcon, List, Quote, Loader2,
     Sparkles, Eye, Edit3, Radio,
@@ -81,7 +82,7 @@ export function NxChannelFullscreenComposer({
                 onClose();
             } else {
                 const d = await r.json().catch(() => ({}));
-                alert(d?.error ?? "Yuborilmadi");
+                nxToast(d?.error ?? "Yuborilmadi");
             }
         } finally { setBusy(false); }
     }

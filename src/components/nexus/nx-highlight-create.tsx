@@ -4,6 +4,7 @@
 // Faqat o'z hisobiga tegishli.
 
 import { useState, useEffect } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { X, Loader2, Check, Star, Plus } from "lucide-react";
 
 interface Props {
@@ -63,7 +64,7 @@ export function NxHighlightCreate({ onClose, onCreated }: Props) {
             if (res.ok) onCreated();
             else {
                 const d = await res.json().catch(() => ({}));
-                alert(d.error || "Xato");
+                nxToast(d.error || "Xato");
             }
         } finally { setBusy(false); }
     }

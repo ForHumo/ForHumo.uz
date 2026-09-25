@@ -5,6 +5,7 @@
 // Kanal uchun: post signature toggle, ruxsat etilgan reaksiyalar to'plami.
 
 import { useEffect, useState } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { X, Loader2, Save, Trash2, Clock, ShieldOff, Users, MessageSquare, Image as ImageIcon, Link as LinkIcon, Pin, Info, Sparkles, Languages, Camera, Upload, Signature as SignatureIcon, Smile } from "lucide-react";
 
 type ChannelData = {
@@ -194,7 +195,7 @@ export function NxGroupSettingsModal({
                                                         body: JSON.stringify({ coverUrl: res.url }),
                                                     });
                                                     onUpdated?.();
-                                                } catch { alert("Yuklab bo'lmadi"); }
+                                                } catch { nxToast("Yuklab bo'lmadi"); }
                                             }} />
                                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition">
                                             <Upload className="w-6 h-6 text-[var(--nx-text)]" />
@@ -219,7 +220,7 @@ export function NxGroupSettingsModal({
                                                         body: JSON.stringify({ avatarUrl: res.url }),
                                                     });
                                                     onUpdated?.();
-                                                } catch { alert("Yuklab bo'lmadi"); }
+                                                } catch { nxToast("Yuklab bo'lmadi"); }
                                             }} />
                                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition">
                                             <Camera className="w-4 h-4 text-[var(--nx-text)]" />

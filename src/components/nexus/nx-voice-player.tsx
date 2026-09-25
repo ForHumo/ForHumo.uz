@@ -5,6 +5,7 @@
 // Faqat vizual iluziya; foydalanuvchi tajribasi Telegram/WhatsApp'ga o'xshaydi.
 
 import { useEffect, useRef, useState } from "react";
+import { nxToast } from "@/components/nexus/ui/nx-toast";
 import { Play, Pause, FileText, Loader2 } from "lucide-react";
 
 interface Props {
@@ -74,7 +75,7 @@ export function NxVoicePlayer({ src, mine, seed, initialDurationMs, enableTransc
                 setTranscript(d.text ?? "");
             } else {
                 const d = await r.json().catch(() => ({}));
-                alert(d?.error ?? "Transkripsiya bo'lmadi");
+                nxToast(d?.error ?? "Transkripsiya bo'lmadi");
             }
         } finally { setTranscribing(false); }
     }
