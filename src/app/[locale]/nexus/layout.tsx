@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { Link } from "@/i18n/routing";
 import { Fingerprint, LogIn, ArrowRight } from "lucide-react";
 import { NexusUsernameGate } from "@/components/nexus/nexus-username-gate";
+import { NxToastProvider } from "@/components/nexus/ui/nx-toast";
 import { verify2faToken, TWO_FA_COOKIE_NAME } from "@/lib/2fa-cookie";
 
 // Nexus — global header/footer ustini yopadi, o'z to'liq ekran qobig'i bor.
@@ -82,8 +83,8 @@ export default async function NexusLayout({ children, params }: {
     }
 
     return (
-        <div className="fixed inset-0 z-[100] overflow-hidden">
-            {children}
+        <div className="nx-scope fixed inset-0 z-[100] overflow-hidden">
+            <NxToastProvider>{children}</NxToastProvider>
         </div>
     );
 }
