@@ -124,7 +124,7 @@ export function NexusProfile({ username }: { username: string }) {
                     style={{ background: "var(--nx-surface)", borderBottom: "1px solid var(--nx-border)" }}>
                     <button onClick={() => router.back()} className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
-                        <ArrowLeft className="w-4 h-4 text-white" />
+                        <ArrowLeft className="w-4 h-4 text-[var(--nx-accent)]" />
                     </button>
                     <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
@@ -144,7 +144,7 @@ export function NexusProfile({ username }: { username: string }) {
                 ) : notFound || !data ? (
                     <div className="flex flex-col items-center py-24 px-6 text-center">
                         <UserX className="w-12 h-12 mb-3" style={{ color: "var(--nx-text-3)" }} />
-                        <p className="text-sm font-bold text-white/80">Foydalanuvchi topilmadi</p>
+                        <p className="text-sm font-bold text-[var(--nx-text-2)]">Foydalanuvchi topilmadi</p>
                         <Link href="/nexus" className="mt-4 px-5 py-2.5 rounded-xl text-xs font-black text-white"
                             style={{ background: "var(--nx-accent)" }}>Nexus&apos;ga qaytish</Link>
                     </div>
@@ -218,7 +218,7 @@ export function NexusProfile({ username }: { username: string }) {
                                                         style={{ background: "var(--nx-elevated)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)", boxShadow: "0 12px 40px rgba(0,0,0,0.5)" }}>
                                                         {!iBlocked && (
                                                             <button onClick={toggleMute} disabled={busy}
-                                                                className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-white active:bg-white/5 transition">
+                                                                className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-[var(--nx-text)] active:bg-white/5 transition">
                                                                 {iMuted ? <Volume2 className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> : <VolumeX className="w-4 h-4" style={{ color: "var(--nx-text-2)" }} />}
                                                                 {iMuted ? "Ovozni qaytarish" : "Ovozsizlantirish"}
                                                             </button>
@@ -328,7 +328,7 @@ export function NexusProfile({ username }: { username: string }) {
                                     style={{ background: "rgba(232,43,62,0.10)", border: "1px solid rgba(232,43,62,0.25)" }}>
                                     {iBlocked ? <Ban className="w-6 h-6" style={{ color: "rgba(245,150,160,0.9)" }} /> : <ShieldAlert className="w-6 h-6" style={{ color: "rgba(245,150,160,0.9)" }} />}
                                 </div>
-                                <p className="text-sm font-black text-white/85">
+                                <p className="text-sm font-black text-[var(--nx-text)]">
                                     {iBlocked ? "Siz bu foydalanuvchini bloklagansiz" : "Kontent mavjud emas"}
                                 </p>
                                 <p className="text-xs mt-1.5 max-w-xs" style={{ color: "var(--nx-text-3)" }}>

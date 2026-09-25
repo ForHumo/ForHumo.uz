@@ -337,14 +337,14 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
             {/* ── Post yaratish (faqat umumiy feed) ── */}
             {!profileMode && (
             <div className="mx-4 mb-4 p-4 rounded-2xl"
-                style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
+                style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                 <div className="flex gap-3">
                     <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0" style={{ background: "var(--nx-accent)" }}>
                         <img src={session?.user?.image || "https://api.dicebear.com/9.x/avataaars/svg?seed=me"} alt="" className="w-full h-full object-cover" />
                     </div>
                     <textarea value={postText} onChange={e => setPostText(e.target.value)}
                         placeholder="Nima haqida o'ylayapsiz?" rows={2}
-                        className="flex-1 bg-transparent text-sm text-white outline-none resize-none leading-relaxed" style={{ caretColor: "var(--nx-accent)" }} />
+                        className="flex-1 bg-transparent text-sm text-[var(--nx-text)] outline-none resize-none leading-relaxed" style={{ caretColor: "var(--nx-accent)" }} />
                 </div>
 
                 {/* Media preview */}
@@ -418,7 +418,7 @@ export function NxSocialFeed({ authorUsername, tag, postId, controlledTab, hideT
                     ))}
                     {hasMore && (
                         <button onClick={loadMore} disabled={loadingMore}
-                            className="mx-auto mt-2 px-6 py-2.5 rounded-xl text-xs font-black text-white" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
+                            className="mx-auto mt-2 px-6 py-2.5 rounded-xl text-xs font-black text-[var(--nx-accent)]" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                             {loadingMore ? "..." : "Ko'proq"}
                         </button>
                     )}
@@ -600,7 +600,7 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote, 
                         style={{ background: "linear-gradient(135deg,#F5B301,#F97316)" }}>
                         <Lock className="w-6 h-6 text-white" />
                     </div>
-                    <p className="text-sm font-black text-white mb-1">Pullik post</p>
+                    <p className="text-sm font-black text-[var(--nx-text)] mb-1">Pullik post</p>
                     <p className="text-[11px] mb-3" style={{ color: "rgba(200,180,140,0.85)" }}>
                         {p.subsFree ? "Pullik obunachi kuzatuvchilarga bepul. Boshqalar sotib olib ko'radi." : "Sotib olgach cheksiz ko'rasiz — mablag' avtorga o'tadi."}
                     </p>
@@ -618,8 +618,8 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote, 
             {editing ? (
                 <div className="px-4 pb-3">
                     <textarea value={editText} onChange={e => setEditText(e.target.value)} rows={3} autoFocus
-                        className="w-full px-3 py-2.5 rounded-xl text-sm text-white outline-none resize-none"
-                        style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", caretColor: "var(--nx-accent)" }} />
+                        className="w-full px-3 py-2.5 rounded-xl text-sm text-[var(--nx-text)] outline-none resize-none"
+                        style={{ background: "var(--nx-surface-2)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)", caretColor: "var(--nx-accent)" }} />
                     <div className="flex gap-2 mt-2 justify-end">
                         <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>Bekor</button>
                         <button onClick={saveEdit} disabled={editBusy} className="px-4 py-1.5 rounded-lg text-xs font-black text-white flex items-center gap-1.5" style={{ background: "var(--nx-accent)" }}>
@@ -675,7 +675,7 @@ function PostCard({ post: p, onLike, onSave, onDelete, onShare, onBump, onVote, 
                                             style={{ width: `${pct}%`, background: isMyVote ? "rgb(var(--nx-accent-rgb) / 0.18)" : "rgb(var(--nx-accent-rgb) / 0.16)" }} />
                                     )}
                                     <div className="relative flex items-center justify-between gap-2">
-                                        <span className="text-xs font-bold text-white flex items-center gap-1.5 min-w-0">
+                                        <span className="text-xs font-bold text-[var(--nx-text)] flex items-center gap-1.5 min-w-0">
                                             <span className="truncate">{opt}</span>
                                             {isMyVote && <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                         </span>
@@ -797,7 +797,7 @@ function CommentsSection({ postId, onAdded }: { postId: string; onAdded: () => v
                             <img src={avatarOf(c.author)} alt="" className="w-7 h-7 rounded-lg object-cover bg-white flex-shrink-0" />
                             <div className="flex-1 min-w-0 rounded-xl px-3 py-2" style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)" }}>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-xs font-bold text-white">{c.author?.name ?? c.author?.username ?? "Foydalanuvchi"}</span>
+                                    <span className="text-xs font-bold text-[var(--nx-text)]">{c.author?.name ?? c.author?.username ?? "Foydalanuvchi"}</span>
                                     {c.author?.verified && <NxVerifiedBadge category={(c.author as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
                                     <span className="text-[9px]" style={{ color: "rgb(var(--nx-text-3-rgb)/0.7)" }}>{timeAgo(c.createdAt)}</span>
                                     {!c.isMine && (
@@ -818,7 +818,7 @@ function CommentsSection({ postId, onAdded }: { postId: string; onAdded: () => v
                         <div className="flex gap-2 items-center pt-1">
                             <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()}
                                 placeholder="Izoh yozing..." maxLength={500}
-                                className="flex-1 bg-transparent text-xs text-white outline-none rounded-xl px-3 py-2"
+                                className="flex-1 bg-transparent text-xs text-[var(--nx-text)] outline-none rounded-xl px-3 py-2"
                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }} />
                             <button onClick={submit} disabled={busy || !text.trim()}
                                 className="w-8 h-8 flex items-center justify-center rounded-xl text-white disabled:opacity-40"
@@ -1014,7 +1014,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
                     style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>
                     <MessageCircle className="w-6 h-6" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }} />
                 </div>
-                <p className="text-sm font-black text-white/85 mb-1">Hali post yo&apos;q</p>
+                <p className="text-sm font-black text-[var(--nx-text)] mb-1">Hali post yo&apos;q</p>
                 <p className="text-xs" style={{ color: "var(--nx-text-3)" }}>Bu foydalanuvchi hali post ulashmagan.</p>
             </div>
         );
@@ -1026,7 +1026,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
                     style={{ background: "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.15),rgb(var(--nx-accent-rgb) / 0.15))", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                     <UserPlus className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
                 </div>
-                <p className="text-base font-black text-white mb-2">Obunalar bo&apos;sh</p>
+                <p className="text-base font-black text-[var(--nx-text)] mb-2">Obunalar bo&apos;sh</p>
                 <p className="text-xs mb-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                     Kuzatgan odamlaringizdan hali post yo&apos;q. Qiziqarli mualliflarni Kashfiyot tabidan toping.
                 </p>
@@ -1045,7 +1045,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
                     style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.15),rgb(var(--nx-accent-rgb) / 0.15))", border: "1px solid rgba(139,92,246,0.25)" }}>
                     <Compass className="w-7 h-7" style={{ color: "#8B5CF6" }} />
                 </div>
-                <p className="text-base font-black text-white mb-2">Trending hali bo&apos;sh</p>
+                <p className="text-base font-black text-[var(--nx-text)] mb-2">Trending hali bo&apos;sh</p>
                 <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                     Bugun trending postlar hali to&apos;planmagan. Birinchi bo&apos;lib mavzu boshlang!
                 </p>
@@ -1058,7 +1058,7 @@ function EmptyState({ tab, profileMode }: { tab: "foryou" | "following" | "explo
                 style={{ background: "linear-gradient(135deg,rgb(var(--nx-accent-rgb) / 0.15),rgb(var(--nx-accent-rgb) / 0.15))", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
                 <Sparkles className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
             </div>
-            <p className="text-base font-black text-white mb-2">Feed bo&apos;sh</p>
+            <p className="text-base font-black text-[var(--nx-text)] mb-2">Feed bo&apos;sh</p>
             <p className="text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                 Birinchi bo&apos;lib post ulashing yoki qiziqarli odamlarni kuzata boshlang.
             </p>

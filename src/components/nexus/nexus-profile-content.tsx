@@ -93,13 +93,13 @@ export function NexusProfileContent({ username, counts }: { username: string; co
     return (
         <>
             {/* Tab paneli */}
-            <div className="mt-5 px-2 flex gap-1 sticky top-14 z-10 backdrop-blur-xl" style={{ background: "rgba(5,8,24,0.85)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
+            <div className="mt-5 px-2 flex gap-1 sticky top-14 z-10 backdrop-blur-xl" style={{ background: "var(--nx-bg)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                 {tabs.map(t => {
                     const active = tab === t.key;
                     return (
                         <button key={t.key} onClick={() => setTab(t.key)}
                             className="relative flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-black transition-colors"
-                            style={{ color: active ? "#fff" : "var(--nx-text-3)" }}>
+                            style={{ color: active ? "var(--nx-text)" : "var(--nx-text-3)" }}>
                             <t.icon className="w-3.5 h-3.5" />
                             <span>{t.label}</span>
                             {t.count > 0 && <span className="text-[10px] font-bold" style={{ color: active ? "var(--nx-accent)" : "rgb(var(--nx-text-3-rgb)/0.6)" }}>{fmtN(t.count)}</span>}
@@ -118,14 +118,14 @@ export function NexusProfileContent({ username, counts }: { username: string; co
                             : <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 px-3 pt-3">
                                 {videos.map(v => (
                                     <button key={v.id} onClick={() => openVid(v)} className="text-left group">
-                                        <div className="relative aspect-video rounded-xl overflow-hidden mb-1.5" style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
+                                        <div className="relative aspect-video rounded-xl overflow-hidden mb-1.5" style={{ background: "var(--nx-surface-2)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                                             {v.thumbUrl
                                                 ? <img src={v.thumbUrl} alt="" className="w-full h-full object-cover" />
                                                 : <div className="w-full h-full flex items-center justify-center"><Play className="w-7 h-7" style={{ color: "var(--nx-text-3)" }} /></div>}
                                             {v.locked && <span className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black text-white" style={{ background: "rgb(var(--nx-accent-rgb) / 0.9)" }}><Lock className="w-2.5 h-2.5" />{formatMoney(v.price, v.priceCurrency ?? "UZS")}</span>}
                                             {v.durationSec > 0 && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                         </div>
-                                        <p className="text-xs font-bold text-white line-clamp-2 leading-snug group-hover:text-[#8B5CF6] transition-colors">{v.title}</p>
+                                        <p className="text-xs font-bold text-[var(--nx-text)] line-clamp-2 leading-snug group-hover:text-[#8B5CF6] transition-colors">{v.title}</p>
                                         <p className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: "var(--nx-text-3)" }}><Eye className="w-2.5 h-2.5" />{fmtN(v.views)}</p>
                                     </button>
                                 ))}
@@ -137,7 +137,7 @@ export function NexusProfileContent({ username, counts }: { username: string; co
                         : tracks.length === 0 ? <Empty icon={Music2} text="Audio yo'q" />
                             : <div className="flex flex-col gap-1 px-3 pt-3">
                                 {tracks.map((t, i) => (
-                                    <button key={t.id} onClick={() => playTrackAt(i)} className="flex items-center gap-3 p-2 rounded-xl text-left active:scale-[0.99] transition" style={{ background: "rgba(11,18,40,0.5)" }}>
+                                    <button key={t.id} onClick={() => playTrackAt(i)} className="flex items-center gap-3 p-2 rounded-xl text-left active:scale-[0.99] transition" style={{ background: "var(--nx-surface)" }}>
                                         <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                             {t.coverUrl
                                                 ? <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
@@ -145,7 +145,7 @@ export function NexusProfileContent({ username, counts }: { username: string; co
                                             <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition" style={{ background: "rgba(5,8,24,0.5)" }}><Play className="w-5 h-5 text-white" /></div>
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-bold text-white truncate">{t.title}</p>
+                                            <p className="text-sm font-bold text-[var(--nx-text)] truncate">{t.title}</p>
                                             <p className="text-[11px] truncate" style={{ color: "var(--nx-text-3)" }}>{t.artist || t.uploader?.name || "Noma'lum"}</p>
                                         </div>
                                         <span className="text-[10px] flex items-center gap-1 flex-shrink-0" style={{ color: "rgb(var(--nx-text-3-rgb)/0.7)" }}><Play className="w-2.5 h-2.5" />{fmtN(t.plays)}</span>
@@ -161,13 +161,13 @@ export function NexusProfileContent({ username, counts }: { username: string; co
                                 {lives.map(s => {
                                     const isLive = s.status === "LIVE";
                                     return (
-                                        <button key={s.id} onClick={() => setRoomId(s.id)} className="flex items-center gap-3 p-2.5 rounded-2xl text-left active:scale-[0.99] transition" style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
+                                        <button key={s.id} onClick={() => setRoomId(s.id)} className="flex items-center gap-3 p-2.5 rounded-2xl text-left active:scale-[0.99] transition" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                                             <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(40,10,20,0.9), rgba(30,15,50,0.9))" }}>
                                                 <img src={avatarOf(s.author)} alt="" className="w-9 h-9 rounded-full object-cover bg-white" />
                                                 {isLive && <span className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-black text-white" style={{ background: "#EF4444" }}><span className="w-1 h-1 rounded-full bg-white animate-pulse" />LIVE</span>}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-bold text-white truncate">{s.title}</p>
+                                                <p className="text-sm font-bold text-[var(--nx-text)] truncate">{s.title}</p>
                                                 <p className="text-[11px] mt-0.5 flex items-center gap-1.5" style={{ color: "var(--nx-text-3)" }}>
                                                     {isLive
                                                         ? <><Eye className="w-2.5 h-2.5" />{fmtN(s.viewers)} ko&apos;rmoqda</>
@@ -195,7 +195,7 @@ function Empty({ icon: Icon, text }: { icon: typeof FileText; text: string }) {
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                 <Icon className="w-5 h-5" style={{ color: "var(--nx-text-3)" }} />
             </div>
-            <p className="text-sm font-bold text-white/55">{text}</p>
+            <p className="text-sm font-bold text-[var(--nx-text-2)]">{text}</p>
         </div>
     );
 }

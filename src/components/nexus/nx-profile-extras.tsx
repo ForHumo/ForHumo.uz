@@ -51,7 +51,7 @@ export function NxProfileAchievements() {
 
     if (loading) {
         return (
-            <div className="mx-4 mt-3 rounded-2xl p-5 animate-pulse" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
+            <div className="mx-4 mt-3 rounded-2xl p-5 animate-pulse" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                 <div className="h-3.5 rounded w-32 mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }} />
                 <div className="grid grid-cols-4 gap-2">
                     {[0,1,2,3,4,5,6,7].map(i => (
@@ -70,10 +70,10 @@ export function NxProfileAchievements() {
     const shown = [...earned, ...unearned].slice(0, 12);
 
     return (
-        <div className="mx-4 mt-3 rounded-2xl p-5" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
+        <div className="mx-4 mt-3 rounded-2xl p-5" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
             <div className="flex items-center gap-2 mb-3">
                 <Trophy className="w-4 h-4" style={{ color: "#F5B301" }} />
-                <h3 className="text-sm font-black text-white flex-1">Yutuqlar</h3>
+                <h3 className="text-sm font-black text-[var(--nx-text)] flex-1">Yutuqlar</h3>
                 <span className="text-xs font-black" style={{ color: "#F5B301" }}>{earnedCount}<span className="opacity-60">/{totalCount}</span></span>
             </div>
             <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
@@ -142,7 +142,7 @@ export function NxProfileActivity() {
 
     if (loading) {
         return (
-            <div className="mx-4 mt-3 rounded-2xl p-5 animate-pulse" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
+            <div className="mx-4 mt-3 rounded-2xl p-5 animate-pulse" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                 <div className="h-3.5 rounded w-40 mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }} />
                 <div className="flex flex-col gap-2">
                     {[0,1,2].map(i => (
@@ -156,8 +156,8 @@ export function NxProfileActivity() {
     if (posts.length === 0 && videos.length === 0 && tracks.length === 0) return null;
 
     return (
-        <div className="mx-4 mt-3 rounded-2xl p-5" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
-            <h3 className="text-sm font-black text-white mb-3 flex items-center gap-2">
+        <div className="mx-4 mt-3 rounded-2xl p-5" style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
+            <h3 className="text-sm font-black text-[var(--nx-text)] mb-3 flex items-center gap-2">
                 <Sparkles className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                 So&apos;nggi faoliyat
             </h3>
@@ -197,10 +197,10 @@ export function NxProfileActivity() {
                                 <div className="relative aspect-video rounded-lg overflow-hidden mb-1" style={{ border: "1px solid rgba(139,92,246,0.20)", background: "rgba(139,92,246,0.08)" }}>
                                     {v.thumbUrl
                                         ? <img src={v.thumbUrl} alt="" className="w-full h-full object-cover" />
-                                        : <div className="w-full h-full flex items-center justify-center"><Play className="w-4 h-4 text-white/40" /></div>}
+                                        : <div className="w-full h-full flex items-center justify-center"><Play className="w-4 h-4 text-[var(--nx-text-3)]" /></div>}
                                     {v.durationSec > 0 && <span className="absolute bottom-1 right-1 px-1 rounded text-[8px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                 </div>
-                                <p className="text-[10px] font-bold text-white line-clamp-1">{v.title}</p>
+                                <p className="text-[10px] font-bold text-[var(--nx-text)] line-clamp-1">{v.title}</p>
                                 <p className="text-[9px] flex items-center gap-0.5" style={{ color: "var(--nx-text-3)" }}>
                                     <Eye className="w-2.5 h-2.5" />{fmtN(v.views)}
                                 </p>
@@ -223,7 +223,7 @@ export function NxProfileActivity() {
                                         ? <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
                                         : <div className="w-full h-full flex items-center justify-center"><Music2 className="w-4 h-4" style={{ color: "rgba(16,185,129,0.5)" }} /></div>}
                                 </div>
-                                <p className="text-xs font-bold text-white flex-1 truncate">{t.title}</p>
+                                <p className="text-xs font-bold text-[var(--nx-text)] flex-1 truncate">{t.title}</p>
                                 <span className="text-[10px] flex items-center gap-0.5 flex-shrink-0" style={{ color: "#10B981" }}>
                                     <Play className="w-2.5 h-2.5 fill-current" />{fmtN(t.plays)}
                                 </span>
@@ -273,10 +273,10 @@ export function NxProfileQrModal({ username, open, onClose }: { username: string
                 onClick={e => e.stopPropagation()}>
 
                 <div className="flex items-center justify-between px-5 pt-5 pb-3">
-                    <h3 className="text-base font-black text-white">Profil ulashish</h3>
+                    <h3 className="text-base font-black text-[var(--nx-text)]">Profil ulashish</h3>
                     <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl"
                         style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-accent)]" />
                     </button>
                 </div>
 
@@ -291,7 +291,7 @@ export function NxProfileQrModal({ username, open, onClose }: { username: string
                             <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     )}
-                    <p className="text-sm font-black text-white mb-1">@{username}</p>
+                    <p className="text-sm font-black text-[var(--nx-text)] mb-1">@{username}</p>
                     <p className="text-[11px] text-center mb-4" style={{ color: "rgb(var(--nx-text-2-rgb)/0.75)" }}>
                         QR kodni skaner qiling yoki havolani ulashing
                     </p>
