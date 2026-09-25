@@ -56,18 +56,18 @@ export function NxConfirm({
                 }}>
                 <div className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
                     style={{ background: `linear-gradient(135deg, ${accent}, ${accent2})`, boxShadow: `0 8px 24px ${tone === "danger" ? "rgba(239,68,68,0.35)" : "rgba(0,206,200,0.30)"}` }}>
-                    <AlertTriangle className="w-7 h-7 text-white" />
+                    <AlertTriangle className="w-7 h-7 text-[var(--nx-text)]" />
                 </div>
-                <h3 className="text-base font-black text-white text-center mb-2">{title}</h3>
+                <h3 className="text-base font-black text-[var(--nx-text)] text-center mb-2">{title}</h3>
                 <p className="text-xs leading-relaxed text-center mb-6" style={{ color: "rgba(180,190,220,0.85)" }}>{message}</p>
                 <div className="flex gap-2">
                     <button onClick={onCancel} disabled={busy}
-                        className="flex-1 h-11 rounded-xl text-sm font-black text-white transition active:scale-95 disabled:opacity-50"
+                        className="flex-1 h-11 rounded-xl text-sm font-black text-[var(--nx-text)] transition active:scale-95 disabled:opacity-50"
                         style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.30)" }}>
                         {cancelText}
                     </button>
                     <button onClick={onConfirm} disabled={busy}
-                        className="flex-1 h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 transition active:scale-95 disabled:opacity-50"
+                        className="flex-1 h-11 rounded-xl text-sm font-black text-[var(--nx-text)] flex items-center justify-center gap-2 transition active:scale-95 disabled:opacity-50"
                         style={{ background: `linear-gradient(135deg, ${accent}, ${accent2})`, boxShadow: `0 4px 16px ${tone === "danger" ? "rgba(239,68,68,0.30)" : "rgba(0,206,200,0.25)"}` }}>
                         {busy && <Loader2 className="w-4 h-4 animate-spin" />}
                         {confirmText}

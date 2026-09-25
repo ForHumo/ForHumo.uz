@@ -43,15 +43,15 @@ function KaraokePageInner() {
     }
 
     return (
-        <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: "#050818" }}>
+        <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: "var(--nx-bg)" }}>
             {/* Header */}
             <div className="flex-shrink-0 flex items-center gap-3 px-4 pt-4 pb-3" style={{ borderBottom: "1px solid rgba(139,92,246,0.20)" }}>
                 <Link href="/nexus" className="w-9 h-9 flex items-center justify-center rounded-xl"
                     style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.25)" }}>
-                    <ArrowLeft className="w-4 h-4 text-white" />
+                    <ArrowLeft className="w-4 h-4 text-[var(--nx-text)]" />
                 </Link>
                 <div className="flex-1">
-                    <h1 className="text-lg font-black text-white flex items-center gap-2">
+                    <h1 className="text-lg font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Trophy className="w-5 h-5" style={{ color: "#EC4899" }} />
                         Karaoke
                     </h1>
@@ -106,7 +106,7 @@ function KaraokePageInner() {
                         {hasMore && (
                             <div className="flex justify-center mt-4">
                                 <button onClick={loadMore} disabled={loadingMore}
-                                    className="px-5 py-2 rounded-xl text-xs font-black text-white active:scale-95 disabled:opacity-50"
+                                    className="px-5 py-2 rounded-xl text-xs font-black text-[var(--nx-text)] active:scale-95 disabled:opacity-50"
                                     style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)" }}>
                                     {loadingMore ? <><Loader2 className="w-3 h-3 animate-spin inline mr-1" />Yuklanmoqda</> : "Ko'proq"}
                                 </button>

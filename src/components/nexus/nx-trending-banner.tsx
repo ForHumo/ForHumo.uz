@@ -70,8 +70,8 @@ export function NxTrendingBanner() {
                                 <img src={avatarOf(writer)} alt="" className="w-full h-full object-cover bg-white" />
                             </div>
                             <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
-                                style={{ background: "linear-gradient(135deg,#F5B301,#F97316)", border: "2px solid #050818" }}>
-                                <Crown className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                                style={{ background: "linear-gradient(135deg,#F5B301,#F97316)", border: "2px solid var(--nx-bg)" }}>
+                                <Crown className="w-2.5 h-2.5 text-[var(--nx-text)]" strokeWidth={3} />
                             </div>
                         </div>
                         <div className="flex-1 min-w-0">
@@ -79,7 +79,7 @@ export function NxTrendingBanner() {
                                 <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: "#F5B301" }}>Bu haftaning yulduzi</span>
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-sm font-black text-white truncate">{writer.name ?? writer.username}</span>
+                                <span className="text-sm font-black text-[var(--nx-text)] truncate">{writer.name ?? writer.username}</span>
                                 {writer.verified && <NxVerifiedBadge category={writer.verifiedCategory} size={13} />}
                             </div>
                             <div className="flex items-center gap-3 text-[10px] mt-0.5" style={{ color: "rgba(200,180,140,0.85)" }}>
@@ -99,20 +99,20 @@ export function NxTrendingBanner() {
                         border: "1px solid rgba(239,68,68,0.25)" }}>
                     <div className="flex items-center gap-2 px-4 pt-3 pb-1">
                         <Flame className="w-3.5 h-3.5" style={{ color: "#EF4444" }} />
-                        <span className="text-xs font-black text-white">Bugungi trending</span>
-                        <TrendingUp className="w-3 h-3 ml-auto" style={{ color: "rgba(160,180,230,0.60)" }} />
+                        <span className="text-xs font-black text-[var(--nx-text)]">Bugungi trending</span>
+                        <TrendingUp className="w-3 h-3 ml-auto" style={{ color: "var(--nx-text-2)" }} />
                     </div>
                     <div className="flex gap-2 overflow-x-auto px-4 pb-3 pt-1" style={{ scrollbarWidth: "none" }}>
                         {trends.map((t, i) => (
                             <Link key={t.tag} href={`/nexus/tag/${t.tag}`}
                                 className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl active:scale-95 transition-transform"
                                 style={{ background: "rgba(8,14,32,0.65)", border: "1px solid rgba(239,68,68,0.30)" }}>
-                                <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black text-white"
+                                <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black text-[var(--nx-text)]"
                                     style={{ background: i === 0 ? "linear-gradient(135deg,#EF4444,#F97316)"
                                         : i === 1 ? "linear-gradient(135deg,#F97316,#F5B301)"
                                         : "linear-gradient(135deg,#F5B301,#8B5CF6)" }}>{i + 1}</span>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="text-xs font-black text-white truncate flex items-center gap-0.5">
+                                    <span className="text-xs font-black text-[var(--nx-text)] truncate flex items-center gap-0.5">
                                         <Hash className="w-3 h-3" style={{ color: "#EF4444" }} />{t.tag}
                                     </span>
                                     <span className="text-[9px]" style={{ color: "rgba(140,160,210,0.75)" }}>{t.count} post</span>
@@ -129,7 +129,7 @@ export function NxTrendingBanner() {
                     style={{ background: "rgba(8,14,32,0.70)", border: "1px solid rgba(43,62,232,0.20)" }}>
                     <div className="flex items-center gap-2 px-4 pt-3 pb-1">
                         <UserPlus className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
-                        <span className="text-xs font-black text-white">Kim kuzatishga arziydi</span>
+                        <span className="text-xs font-black text-[var(--nx-text)]">Kim kuzatishga arziydi</span>
                     </div>
                     <div className="flex gap-2 overflow-x-auto px-4 pb-3 pt-1" style={{ scrollbarWidth: "none" }}>
                         {visibleSugs.map(s => {
@@ -145,10 +145,10 @@ export function NxTrendingBanner() {
                                             <img src={avatarOf(s)} alt="" className="w-full h-full object-cover bg-white" />
                                         </div>
                                         <div className="text-center flex items-center justify-center gap-1">
-                                            <span className="text-[11px] font-black text-white truncate">{s.name ?? s.username}</span>
+                                            <span className="text-[11px] font-black text-[var(--nx-text)] truncate">{s.name ?? s.username}</span>
                                             {s.verified && <NxVerifiedBadge category={s.verifiedCategory} size={11} />}
                                         </div>
-                                        <p className="text-center text-[9px] truncate" style={{ color: "rgba(80,100,150,0.75)" }}>@{s.username}</p>
+                                        <p className="text-center text-[9px] truncate" style={{ color: "var(--nx-text-2)" }}>@{s.username}</p>
                                     </Link>
                                     <button onClick={() => toggleFollow(s.username!)}
                                         className="mt-2 w-full py-1.5 rounded-lg text-[10px] font-black flex items-center justify-center gap-1 active:scale-95 transition-transform"

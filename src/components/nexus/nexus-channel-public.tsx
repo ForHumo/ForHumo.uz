@@ -168,7 +168,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
 
     if (loading) {
         return (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: "#050818" }}>
+            <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: "var(--nx-bg)" }}>
                 <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--nx-accent)" }} />
             </div>
         );
@@ -176,13 +176,13 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
 
     if (error || !data) {
         return (
-            <div className="fixed inset-0 z-[100] overflow-y-auto" style={{ background: "#050818" }}>
+            <div className="fixed inset-0 z-[100] overflow-y-auto" style={{ background: "var(--nx-bg)" }}>
                 <div className="max-w-2xl mx-auto px-4 py-16 text-center">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.30)" }}>
                         <Megaphone className="w-8 h-8" style={{ color: "#EF4444" }} />
                     </div>
-                    <p className="text-lg font-bold text-white mb-2">{error ?? "Kanal topilmadi"}</p>
+                    <p className="text-lg font-bold text-[var(--nx-text)] mb-2">{error ?? "Kanal topilmadi"}</p>
                     <p className="text-sm mb-6" style={{ color: "rgba(160,176,224,0.7)" }}>
                         Havola noto'g'ri yoki kanal o'chirilgan bo'lishi mumkin.
                     </p>
@@ -205,7 +205,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
     const parallaxScale = 1 + Math.min(0.15, scrollY / 800);
 
     return (
-        <div className="fixed inset-0 z-[100] overflow-y-auto nexus-ch-public-scroll" style={{ background: "#050818" }}>
+        <div className="fixed inset-0 z-[100] overflow-y-auto nexus-ch-public-scroll" style={{ background: "var(--nx-bg)" }}>
             <div className="max-w-2xl mx-auto pb-16">
                 {/* Back link */}
                 <div className="px-4 pt-6 pb-2">
@@ -217,7 +217,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
 
                 {/* Cover with parallax */}
                 <div className="relative mx-4 mt-3 rounded-3xl overflow-hidden"
-                    style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)" }}>
                     <div className="relative w-full h-40 md:h-56 overflow-hidden">
                         <div className="absolute inset-0 will-change-transform"
                             style={{
@@ -235,11 +235,11 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                         <div className="flex items-end gap-4">
                             <img src={channel.avatarUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${encodeURIComponent(channel.name)}`}
                                 alt="" className="w-24 h-24 rounded-2xl object-cover flex-shrink-0"
-                                style={{ background: "white", border: "3px solid #050818" }} />
+                                style={{ background: "white", border: "3px solid var(--nx-bg)" }} />
                             <div className="flex-1 min-w-0 pb-1">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <h1 className="text-2xl font-black text-white truncate">{channel.name}</h1>
-                                    {isVerified && <BadgeCheck className="w-6 h-6 flex-shrink-0" style={{ color: "var(--nx-accent)" }} fill="var(--nx-accent)" stroke="#050818" />}
+                                    <h1 className="text-2xl font-black text-[var(--nx-text)] truncate">{channel.name}</h1>
+                                    {isVerified && <BadgeCheck className="w-6 h-6 flex-shrink-0" style={{ color: "var(--nx-accent)" }} fill="var(--nx-accent)" stroke="var(--nx-bg)" />}
                                     {channel.isPrivate && (
                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest"
                                             style={{ background: "rgba(239,68,68,0.12)", color: "#EF4444", border: "1px solid rgba(239,68,68,0.30)" }}>
@@ -331,7 +331,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                     </h2>
                     {recent.length === 0 ? (
                         <div className="p-8 rounded-2xl text-center"
-                            style={{ background: "rgba(11,18,40,0.60)", border: "1px dashed rgba(43,62,232,0.20)" }}>
+                            style={{ background: "var(--nx-surface)", border: "1px dashed rgba(43,62,232,0.20)" }}>
                             <Megaphone className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
                             <p className="text-sm" style={{ color: "rgba(160,176,224,0.7)" }}>
                                 {channel.isPrivate ? "Yopiq kanal — postlar faqat a'zolarga ko'rinadi" : "Hali xabar yo'q"}
@@ -342,7 +342,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                             {recent.map(p => (
                                 <Link key={p.id} href={`/nexus/ch/${encodeURIComponent(handle)}/msg/${encodeURIComponent(p.id)}`}
                                     className="block p-4 rounded-2xl transition"
-                                    style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.16)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.16)" }}>
                                     <div className="flex items-start gap-3">
                                         {p.firstMedia && (p.mediaType === "image" || !p.mediaType) ? (
                                             <img src={p.firstMedia} alt="" className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
@@ -361,13 +361,13 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
 
                                         <div className="flex-1 min-w-0">
                                             {p.preview ? (
-                                                <div className="text-sm text-white line-clamp-3">
+                                                <div className="text-sm text-[var(--nx-text)] line-clamp-3">
                                                     <NxMarkdown text={p.preview} />
                                                 </div>
                                             ) : p.isPoll ? (
-                                                <p className="text-sm text-white font-bold">So'rovnoma</p>
+                                                <p className="text-sm text-[var(--nx-text)] font-bold">So'rovnoma</p>
                                             ) : p.hasMedia ? (
-                                                <p className="text-sm text-white font-bold">
+                                                <p className="text-sm text-[var(--nx-text)] font-bold">
                                                     {p.mediaType === "video" ? "Video" : p.mediaType === "audio" ? "Ovoz" : p.mediaType === "location" ? "Joylashuv" : p.mediaType === "contact" ? "Kontakt" : "Rasm"}
                                                     {p.mediaCount > 1 && ` · ${p.mediaCount}`}
                                                 </p>
@@ -389,7 +389,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                 </div>
 
                 {/* Powered by Humo */}
-                <div className="mt-8 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>
+                <div className="mt-8 text-center text-xs" style={{ color: "var(--nx-text-3)" }}>
                     <Link href="/nexus" className="hover:underline">
                         Humo Nexus · Ijtimoiy tarmoq
                     </Link>
@@ -404,7 +404,7 @@ export function NexusChannelPublic({ handle }: { handle: string }) {
                         style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}>
                         <div className="flex items-center gap-2 mb-4">
                             <Shield className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
-                            <h3 className="text-lg font-black text-white">Kanal qoidalari</h3>
+                            <h3 className="text-lg font-black text-[var(--nx-text)]">Kanal qoidalari</h3>
                         </div>
                         <div className="text-sm whitespace-pre-wrap" style={{ color: "rgba(220,230,250,0.92)" }}>
                             <NxMarkdown text={channel.rules} />

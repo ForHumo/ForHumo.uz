@@ -34,14 +34,14 @@ function PermalinkInner({ id }: { id: string }) {
     useEffect(() => { load(); }, [load]);
 
     return (
-        <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: "#050818" }}>
+        <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: "var(--nx-bg)" }}>
             {/* Header */}
             <div className="flex-shrink-0 flex items-center gap-3 px-4 pt-4 pb-3" style={{ borderBottom: "1px solid rgba(139,92,246,0.20)" }}>
                 <Link href="/nexus/karaoke" className="w-9 h-9 flex items-center justify-center rounded-xl"
                     style={{ background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.25)" }}>
-                    <ArrowLeft className="w-4 h-4 text-white" />
+                    <ArrowLeft className="w-4 h-4 text-[var(--nx-text)]" />
                 </Link>
-                <h1 className="text-lg font-black text-white flex-1">Karaoke ijro</h1>
+                <h1 className="text-lg font-black text-[var(--nx-text)] flex-1">Karaoke ijro</h1>
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-4" style={{ scrollbarWidth: "none" }}>
@@ -68,7 +68,7 @@ function PermalinkInner({ id }: { id: string }) {
                             <div>
                                 <div className="flex items-center gap-2 mb-3">
                                     <Trophy className="w-4 h-4" style={{ color: "#F5B301" }} />
-                                    <h2 className="text-sm font-black text-white">Shu trek bo&apos;yicha top</h2>
+                                    <h2 className="text-sm font-black text-[var(--nx-text)]">Shu trek bo&apos;yicha top</h2>
                                     <span className="text-[11px]" style={{ color: "rgba(180,150,220,0.75)" }}>{leaderboard.length}</span>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

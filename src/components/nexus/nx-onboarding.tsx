@@ -101,10 +101,10 @@ export function NxOnboarding() {
                 <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl flex items-center justify-center"
                         style={{ background: "var(--nx-accent)" }}>
-                        <Sparkles className="w-4 h-4 text-white" />
+                        <Sparkles className="w-4 h-4 text-[var(--nx-text)]" />
                     </div>
                     <div>
-                        <p className="text-sm font-black text-white leading-tight">Boshlash uchun {steps.length} qadam</p>
+                        <p className="text-sm font-black text-[var(--nx-text)] leading-tight">Boshlash uchun {steps.length} qadam</p>
                         <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.85)" }}>{doneCount}/{steps.length} bajarildi</p>
                     </div>
                 </div>

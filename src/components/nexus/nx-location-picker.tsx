@@ -43,7 +43,7 @@ export function NxLocationPicker({ value, onChange, disabled }: Props) {
                 className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95 disabled:opacity-50"
                 style={value
                     ? { background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.35)", color: "var(--nx-accent)" }
-                    : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(160,180,230,0.85)" }}>
+                    : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", color: "var(--nx-text-2)" }}>
                 <MapPin className="w-3.5 h-3.5" />
                 {value ? <span className="truncate max-w-[180px]">{value.name}</span> : "Joylashuv"}
                 {value && (
@@ -218,13 +218,13 @@ function MapModal({ value, onChange, onClose }: {
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <MapPin className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Joylashuvni tanlang
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl"
                         style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -235,7 +235,7 @@ function MapModal({ value, onChange, onClose }: {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgba(0,206,200,0.55)" }} />
                             <input value={query} onChange={e => setQuery(e.target.value)}
                                 placeholder="Chorsu bozori, Amir Temur ko'chasi..."
-                                className="w-full h-10 rounded-xl pl-9 pr-9 text-sm text-white outline-none"
+                                className="w-full h-10 rounded-xl pl-9 pr-9 text-sm text-[var(--nx-text)] outline-none"
                                 style={{ background: "rgba(0,206,200,0.06)", border: "1px solid rgba(0,206,200,0.25)", caretColor: "var(--nx-accent)" }} />
                             {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin" style={{ color: "var(--nx-accent)" }} />}
                         </div>
@@ -272,7 +272,7 @@ function MapModal({ value, onChange, onClose }: {
                                     style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                     <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                     <div className="min-w-0">
-                                        <p className="text-xs font-bold text-white truncate">{r.name}</p>
+                                        <p className="text-xs font-bold text-[var(--nx-text)] truncate">{r.name}</p>
                                         {(r.city || r.country) && (
                                             <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.70)" }}>
                                                 {[r.city, r.country].filter(Boolean).join(", ")}
@@ -302,7 +302,7 @@ function MapModal({ value, onChange, onClose }: {
                         <div className="flex items-center gap-2 p-2.5 rounded-xl" style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)" }}>
                             <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                             <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-white truncate">
+                                <p className="text-xs font-bold text-[var(--nx-text)] truncate">
                                     {reverseBusy ? "Nom aniqlanmoqda..." : (pending.name || `${pending.lat.toFixed(5)}, ${pending.lng.toFixed(5)}`)}
                                 </p>
                                 <p className="text-[9px] font-mono" style={{ color: "rgba(140,160,210,0.70)" }}>
@@ -312,7 +312,7 @@ function MapModal({ value, onChange, onClose }: {
                         </div>
                     )}
                     <button onClick={confirm} disabled={!pending}
-                        className="w-full py-3 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 active:scale-95 disabled:opacity-40"
+                        className="w-full py-3 rounded-xl text-sm font-black text-[var(--nx-text)] flex items-center justify-center gap-2 active:scale-95 disabled:opacity-40"
                         style={{ background: "var(--nx-accent)" }}>
                         <Check className="w-4 h-4" /> Tasdiqlash
                     </button>

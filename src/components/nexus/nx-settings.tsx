@@ -67,7 +67,7 @@ export function NxSettings({ open, onClose }: Props) {
                         style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}
                     >
                         <div>
-                            <h2 className="text-base font-black text-white">Sozlamalar</h2>
+                            <h2 className="text-base font-black text-[var(--nx-text)]">Sozlamalar</h2>
                             <p className="text-[11px] mt-0.5" style={{ color: "rgba(100,120,170,0.80)" }}>
                                 Nexus tajribangizni moslang
                             </p>
@@ -119,7 +119,7 @@ export function NxSettings({ open, onClose }: Props) {
                                         <span
                                             className="text-[13px] font-semibold"
                                             style={{
-                                                color: active ? "rgba(220,230,255,0.95)" : "rgba(120,140,190,0.80)",
+                                                color: active ? "rgba(220,230,255,0.95)" : "var(--nx-text-3)",
                                             }}
                                         >
                                             {tab.label}
@@ -190,7 +190,7 @@ function SettingsRow({
                 <Icon className="w-3.5 h-3.5" style={{ color: "rgba(100,140,220,0.90)" }} />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white">{label}</p>
+                <p className="text-sm font-semibold text-[var(--nx-text)]">{label}</p>
                 {description && (
                     <p className="text-[10px] mt-0.5" style={{ color: "rgba(100,120,170,0.70)" }}>
                         {description}
@@ -240,7 +240,7 @@ function SelectBadge({ options, defaultVal }: { options: string[]; defaultVal: s
                     className="px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all duration-150"
                     style={{
                         background: val === opt ? "var(--nx-accent)" : "rgba(43,62,232,0.12)",
-                        color: val === opt ? "#fff" : "rgba(120,140,190,0.80)",
+                        color: val === opt ? "#fff" : "var(--nx-text-3)",
                         border: val === opt ? "none" : "1px solid rgba(43,62,232,0.16)",
                     }}
                 >
@@ -400,7 +400,7 @@ function PrivacyPanel() {
                             <Bell className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-white">Push ko'rinishi</p>
+                            <p className="text-xs font-bold text-[var(--nx-text)]">Push ko'rinishi</p>
                             <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.65)" }}>
                                 Xabar kelganda telefonda nima ko'rinadi
                             </p>
@@ -457,7 +457,7 @@ function PrivacyRow({ icon: Icon, label, description, value, onChange, saving }:
                     <Icon className="w-4 h-4" style={{ color: "rgba(160,176,224,0.85)" }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-white">{label}</p>
+                    <p className="text-xs font-bold text-[var(--nx-text)]">{label}</p>
                     <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.65)" }}>{description}</p>
                 </div>
                 {saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-white/40" />}

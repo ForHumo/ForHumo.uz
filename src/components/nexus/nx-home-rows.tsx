@@ -177,11 +177,11 @@ export function NxHomeRows() {
                                     ) : (
                                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(5,8,24,0.40)" }}>
                                             <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
-                                                <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                                                <Play className="w-4 h-4 text-[var(--nx-text)] fill-white ml-0.5" />
                                             </div>
                                         </div>
                                     )}
-                                    <span className="absolute bottom-1.5 right-1.5 px-1 py-0.5 rounded text-[8px] font-bold text-white flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.8)" }}>
+                                    <span className="absolute bottom-1.5 right-1.5 px-1 py-0.5 rounded text-[8px] font-bold text-[var(--nx-text)] flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.8)" }}>
                                         <Clock className="w-2 h-2" />{fmtDur(t.durationSec)}
                                     </span>
                                 </div>
@@ -213,7 +213,7 @@ export function NxHomeRows() {
                                     : <div className="w-full h-full flex items-center justify-center"><Play className="w-5 h-5 text-white/30" /></div>}
                                 <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(5,8,24,0.9) 0%, transparent 55%)" }} />
                                 <div className="absolute bottom-1 left-1 right-1">
-                                    <p className="text-[9px] font-bold text-white line-clamp-2 leading-tight">{v.title}</p>
+                                    <p className="text-[9px] font-bold text-[var(--nx-text)] line-clamp-2 leading-tight">{v.title}</p>
                                     <p className="text-[8px] flex items-center gap-0.5 mt-0.5" style={{ color: "rgba(220,200,220,0.85)" }}>
                                         <Eye className="w-2 h-2" />{fmtN(v.views)}
                                     </p>
@@ -232,14 +232,14 @@ export function NxHomeRows() {
                             <div className="relative aspect-video rounded-xl overflow-hidden mb-1.5 flex items-center justify-center"
                                 style={{ border: "1px solid rgba(239,68,68,0.30)", background: "linear-gradient(135deg, rgba(40,10,20,0.9), rgba(30,15,50,0.9))" }}>
                                 <img src={avatarOf(s.author)} alt="" className="w-12 h-12 rounded-full object-cover bg-white" style={{ border: "2px solid rgba(239,68,68,0.5)" }} />
-                                <span className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black text-white" style={{ background: "#EF4444" }}>
+                                <span className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black text-[var(--nx-text)]" style={{ background: "#EF4444" }}>
                                     <span className="w-1 h-1 rounded-full bg-white animate-pulse" />LIVE
                                 </span>
-                                <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.8)" }}>
+                                <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.8)" }}>
                                     <Eye className="w-2.5 h-2.5" />{fmtN(s.viewers)}
                                 </span>
                             </div>
-                            <p className="text-[11px] font-bold text-white truncate">{s.title}</p>
+                            <p className="text-[11px] font-bold text-[var(--nx-text)] truncate">{s.title}</p>
                             <p className="text-[9px] truncate" style={{ color: "rgba(150,130,150,0.85)" }}>{s.author?.name || s.author?.username || "Streamer"}</p>
                         </button>
                     ))}
@@ -254,11 +254,11 @@ export function NxHomeRows() {
                             <div className="relative aspect-[9/16] rounded-xl overflow-hidden mb-1"
                                 style={{ border: "1px solid rgba(220,38,38,0.30)", background: "linear-gradient(135deg, rgba(40,10,20,0.9), rgba(30,15,50,0.9))" }}>
                                 <img src={avatarOf(s.author)} alt="" className="w-full h-full object-cover" />
-                                <span className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1 py-0.5 rounded text-[8px] font-black text-white" style={{ background: "#DC2626" }}>
+                                <span className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1 py-0.5 rounded text-[8px] font-black text-[var(--nx-text)]" style={{ background: "#DC2626" }}>
                                     <span className="w-1 h-1 rounded-full bg-white animate-pulse" />LIVE
                                 </span>
                             </div>
-                            <p className="text-[9px] font-bold text-white truncate">{s.title}</p>
+                            <p className="text-[9px] font-bold text-[var(--nx-text)] truncate">{s.title}</p>
                         </button>
                     ))}
                 </Row>
@@ -276,19 +276,19 @@ export function NxHomeRows() {
                                     onMouseEnter={e => { const v = e.currentTarget; v.currentTime = c.startSec; v.play().catch(() => { }); }}
                                     onMouseLeave={e => { const v = e.currentTarget; v.pause(); v.currentTime = c.startSec; }}
                                     onLoadedMetadata={e => { e.currentTarget.currentTime = c.startSec; }} />
-                                <span className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black text-white" style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)" }}>
+                                <span className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black text-[var(--nx-text)]" style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)" }}>
                                     <Scissors className="w-2.5 h-2.5" />CLIP
                                 </span>
-                                <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.8)" }}>
+                                <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.8)" }}>
                                     {fmtDur(c.endSec - c.startSec)}
                                 </span>
-                                <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1.5 text-[9px] font-bold text-white">
+                                <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1.5 text-[9px] font-bold text-[var(--nx-text)]">
                                     <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded" style={{ background: "rgba(5,8,24,0.8)" }}>
                                         <Heart className="w-2.5 h-2.5" fill="currentColor" />{fmtN(c.likes)}
                                     </span>
                                 </div>
                             </div>
-                            <p className="text-[11px] font-bold text-white truncate">{c.title}</p>
+                            <p className="text-[11px] font-bold text-[var(--nx-text)] truncate">{c.title}</p>
                             <p className="text-[9px] truncate flex items-center gap-1" style={{ color: "rgba(200,180,230,0.75)" }}>
                                 <img src={avatarOf(c.streamer)} alt="" className="w-3 h-3 rounded-full object-cover" />
                                 {c.streamer?.name || c.streamer?.username || "Streamer"} · {fmtN(c.plays)} ko&apos;rish
@@ -322,9 +322,9 @@ export function NxHomeRows() {
                         <Link key={c.id} href={`/nexus/c/${c.id}`} className="w-32 flex-shrink-0 flex flex-col items-center gap-1.5 text-center group">
                             {c.avatarUrl
                                 ? <img src={c.avatarUrl} alt={c.name} className="w-16 h-16 rounded-2xl object-cover" style={{ border: "2px solid rgba(43,62,232,0.30)" }} />
-                                : <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-white"
+                                : <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-[var(--nx-text)]"
                                     style={{ background: "var(--nx-accent)", border: "2px solid rgba(43,62,232,0.30)" }}>{c.name[0]?.toUpperCase() ?? "K"}</div>}
-                            <p className="text-[11px] font-bold text-white truncate w-full group-hover:text-[var(--nx-accent)] transition-colors">{c.name}</p>
+                            <p className="text-[11px] font-bold text-[var(--nx-text)] truncate w-full group-hover:text-[var(--nx-accent)] transition-colors">{c.name}</p>
                             <p className="text-[9px] flex items-center gap-0.5" style={{ color: "rgba(140,160,210,0.75)" }}>
                                 <Users className="w-2.5 h-2.5" />{fmtN(c.memberCount)}
                             </p>
@@ -347,7 +347,7 @@ export function NxHomeRows() {
                                 <span className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black leading-none"
                                     style={{ background: "#22C55E", color: "#0A0A0A" }}>−{p.savedPct}%</span>
                             </div>
-                            <p className="text-[11px] font-bold text-white line-clamp-2 leading-snug group-hover:text-[#F5B301] transition-colors">{p.title}</p>
+                            <p className="text-[11px] font-bold text-[var(--nx-text)] line-clamp-2 leading-snug group-hover:text-[#F5B301] transition-colors">{p.title}</p>
                             <p className="text-[11px] font-black tabular-nums mt-0.5" style={{ color: "#F5B301" }}>{fmtSom(p.price)} so&apos;m</p>
                             <p className="text-[9px] line-through tabular-nums" style={{ color: "rgba(150,150,150,0.7)" }}>{fmtSom(p.marketAvg)}</p>
                         </a>
@@ -367,7 +367,7 @@ function Row({ title, accent, Icon, children }: { title: string; accent: string;
         <div className="mb-4">
             <div className="px-4 mb-2 flex items-center gap-2">
                 <Icon className="w-3.5 h-3.5" style={{ color: accent }} />
-                <span className="text-sm font-black text-white">{title}</span>
+                <span className="text-sm font-black text-[var(--nx-text)]">{title}</span>
             </div>
             <div className="flex gap-3 overflow-x-auto px-4 pb-1" style={{ scrollbarWidth: "none" }}>{children}</div>
         </div>
@@ -384,15 +384,15 @@ function VidCard({ v, onOpen, accent, badge }: { v: HVid; onOpen: () => void; ac
                     : <div className="w-full h-full flex items-center justify-center"><Film className="w-6 h-6 text-white/30" /></div>}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(5,8,24,0.35)" }}>
                     <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}CC)` }}>
-                        <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                        <Play className="w-5 h-5 text-[var(--nx-text)] fill-white ml-0.5" />
                     </div>
                 </div>
                 {badge && (
-                    <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-black text-white uppercase" style={{ background: accent }}>{badge}</span>
+                    <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-black text-[var(--nx-text)] uppercase" style={{ background: accent }}>{badge}</span>
                 )}
-                {v.durationSec > 0 && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
+                {v.durationSec > 0 && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
             </div>
-            <p className="text-[11px] font-bold text-white line-clamp-2 leading-snug">{v.title}</p>
+            <p className="text-[11px] font-bold text-[var(--nx-text)] line-clamp-2 leading-snug">{v.title}</p>
             <p className="text-[9px] flex items-center gap-1" style={{ color: "rgba(100,120,170,0.75)" }}>
                 <span className="truncate">{v.author?.name || v.author?.username || ""}</span>
                 <span>·</span><Eye className="w-2.5 h-2.5" />{fmtN(v.views)}
@@ -410,11 +410,11 @@ function TrackCard({ t, accent, onPlay }: { t: HTrack; accent: string; onPlay: (
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(5,8,24,0.40)" }}>
                     <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}CC)` }}>
-                        <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                        <Play className="w-4 h-4 text-[var(--nx-text)] fill-white ml-0.5" />
                     </div>
                 </div>
             </div>
-            <p className="text-[11px] font-bold text-white truncate">{t.title}</p>
+            <p className="text-[11px] font-bold text-[var(--nx-text)] truncate">{t.title}</p>
             <p className="text-[9px] truncate" style={{ color: "rgba(120,150,135,0.8)" }}>{t.artist || t.uploader?.name || ""}</p>
         </button>
     );

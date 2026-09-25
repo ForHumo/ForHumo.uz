@@ -45,13 +45,13 @@ export function NxGroupParticipants({ open, onClose, callId, isHost }: Props) {
                 style={{ border: "1px solid rgba(43,62,232,0.22)" }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex flex-shrink-0 items-center justify-between px-5 pt-5 pb-3">
-                    <h3 className="flex items-center gap-2 text-base font-black text-white">
+                    <h3 className="flex items-center gap-2 text-base font-black text-[var(--nx-text)]">
                         <Users className="h-4 w-4" style={{ color: "var(--nx-accent)" }} /> Ishtirokchilar ({participants.length})
                     </h3>
                     <button onClick={onClose}
                         className="flex h-8 w-8 items-center justify-center rounded-full"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                        <X className="h-4 w-4 text-white" />
+                        <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -63,15 +63,15 @@ export function NxGroupParticipants({ open, onClose, callId, isHost }: Props) {
                         return (
                             <div key={p.identity}
                                 className="mb-1 flex items-center gap-3 rounded-2xl p-2.5 transition-colors hover:bg-white/[0.03]">
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-xs font-black text-white">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-xs font-black text-[var(--nx-text)]">
                                     {label.slice(0, 2).toUpperCase()}
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-1.5">
-                                        <p className="truncate text-sm font-bold text-white">{label}</p>
-                                        {isMe && <span className="rounded-md px-1.5 py-0.5 text-[9px] font-black text-white" style={{ background: "rgba(0,206,200,0.25)", color: "var(--nx-accent)" }}>Siz</span>}
+                                        <p className="truncate text-sm font-bold text-[var(--nx-text)]">{label}</p>
+                                        {isMe && <span className="rounded-md px-1.5 py-0.5 text-[9px] font-black text-[var(--nx-text)]" style={{ background: "rgba(0,206,200,0.25)", color: "var(--nx-accent)" }}>Siz</span>}
                                     </div>
-                                    <p className="mt-0.5 text-[10px]" style={{ color: p.isSpeaking ? "var(--nx-accent)" : "rgba(80,100,150,0.85)" }}>
+                                    <p className="mt-0.5 text-[10px]" style={{ color: p.isSpeaking ? "var(--nx-accent)" : "var(--nx-text-2)" }}>
                                         {p.isSpeaking ? "Gapiryapti" : (p.isMicrophoneEnabled ? "Mikrofon yoniq" : "Mikrofon o'chiq")}
                                     </p>
                                 </div>
@@ -82,7 +82,7 @@ export function NxGroupParticipants({ open, onClose, callId, isHost }: Props) {
                                                 title="Mikrofonini o'chirish"
                                                 className="flex h-8 w-8 items-center justify-center rounded-lg disabled:opacity-50"
                                                 style={{ background: "rgba(43,62,232,0.15)" }}>
-                                                <MicOff className="h-3.5 w-3.5 text-white" />
+                                                <MicOff className="h-3.5 w-3.5 text-[var(--nx-text)]" />
                                             </button>
                                         )}
                                         <button onClick={() => kick(p.identity)} disabled={isBusy}

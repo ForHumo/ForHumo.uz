@@ -46,12 +46,12 @@ export function NxGroupSummarize({
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Sparkles className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> AI xulosa
                     </h3>
                     <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                        <X className="h-4 w-4 text-white" />
+                        <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -65,7 +65,7 @@ export function NxGroupSummarize({
                                 className="flex-1 py-2 rounded-xl text-xs font-bold transition"
                                 style={count === c
                                     ? { background: "var(--nx-accent)", color: "white" }
-                                    : { background: "rgba(11,18,40,0.55)", color: "rgba(200,215,245,0.85)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    : { background: "var(--nx-surface)", color: "rgba(200,215,245,0.85)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                 {c}
                             </button>
                         ))}
@@ -73,7 +73,7 @@ export function NxGroupSummarize({
 
                     {!summary && !error && (
                         <button onClick={run} disabled={busy}
-                            className="w-full py-3 rounded-xl text-sm font-bold text-white disabled:opacity-60 flex items-center justify-center gap-2"
+                            className="w-full py-3 rounded-xl text-sm font-bold text-[var(--nx-text)] disabled:opacity-60 flex items-center justify-center gap-2"
                             style={{ background: "var(--nx-accent)" }}>
                             {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> AI o&apos;qiyapti...</> : <><Sparkles className="w-4 h-4" /> Xulosa qilish</>}
                         </button>
@@ -101,7 +101,7 @@ export function NxGroupSummarize({
                                     <Copy className="w-4 h-4" /> Nusxa
                                 </button>
                                 <button onClick={run} disabled={busy}
-                                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60"
+                                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-[var(--nx-text)] disabled:opacity-60"
                                     style={{ background: "var(--nx-accent)" }}>
                                     {busy ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Qayta"}
                                 </button>

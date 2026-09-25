@@ -26,7 +26,7 @@ export function NxChannelShareModal({
         if (!open || !publicUrl) return;
         QRCode.toDataURL(publicUrl, {
             width: 320, margin: 1,
-            color: { dark: "#050818", light: "#ffffff" },
+            color: { dark: "var(--nx-bg)", light: "#ffffff" },
         }).then(setQrDataUrl).catch(() => setQrDataUrl(null));
     }, [open, publicUrl]);
 
@@ -60,7 +60,7 @@ export function NxChannelShareModal({
                 <div className="fixed inset-0 z-[320] bg-black/70 backdrop-blur-sm" onClick={onClose} />
                 <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 md:inset-x-0 md:mx-auto md:max-w-md z-[321] p-6 rounded-3xl"
                     style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}>
-                    <h3 className="text-base font-black text-white mb-2">Ulash uchun @handle kerak</h3>
+                    <h3 className="text-base font-black text-[var(--nx-text)] mb-2">Ulash uchun @handle kerak</h3>
                     <p className="text-sm mb-4" style={{ color: "rgba(160,176,224,0.85)" }}>
                         Xususiy kanal handle&apos;siz. Sozlamalardan @handle qo&apos;shing.
                     </p>
@@ -80,12 +80,12 @@ export function NxChannelShareModal({
                 style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}>
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <QrCode className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Kanal ulash
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -108,9 +108,9 @@ export function NxChannelShareModal({
                             Ommaviy havola
                         </label>
                         <div className="flex items-center gap-1 rounded-xl overflow-hidden"
-                            style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)" }}>
                             <div className="flex-1 min-w-0 px-3 py-2.5">
-                                <p className="text-xs text-white truncate">{publicUrl}</p>
+                                <p className="text-xs text-[var(--nx-text)] truncate">{publicUrl}</p>
                             </div>
                             <button onClick={copy} className="h-11 px-3 flex-shrink-0"
                                 style={{ background: copied ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.20)" }}>

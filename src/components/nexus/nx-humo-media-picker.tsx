@@ -10,7 +10,7 @@ import { X, Search, Loader2, UserPlus, ExternalLink, Package } from "lucide-reac
 
 // Nexus tema — nx-messages, nx-sidebar bilan bir xil
 const NX = {
-    panelStrong: "rgba(11,18,40,0.98)",
+    panelStrong: "var(--nx-surface)",
     border: "rgba(43,62,232,0.30)",
     borderSoft: "rgba(43,62,232,0.16)",
     accent: "var(--nx-accent)",
@@ -18,7 +18,7 @@ const NX = {
     blueBgActive: "rgba(43,62,232,0.20)",
     text: "rgba(230,238,255,0.96)",
     text2: "rgba(200,215,245,0.75)",
-    text3: "rgba(150,170,220,0.55)",
+    text3: "var(--nx-text-2)",
     gradient: "var(--nx-accent)",
 };
 
@@ -217,7 +217,7 @@ function PackRow({ pack, onPick, onSubscribe }: {
                 <span className="ml-auto text-[10px] tabular-nums" style={{ color: NX.text3 }}>{items.length}</span>
                 {onSubscribe && (
                     <button onClick={onSubscribe}
-                        className="h-6 px-2 rounded-md text-[10px] font-black flex items-center gap-1 text-white"
+                        className="h-6 px-2 rounded-md text-[10px] font-black flex items-center gap-1 text-[var(--nx-text)]"
                         style={{ background: NX.gradient }}>
                         <UserPlus className="w-2.5 h-2.5" /> Qo&apos;sh
                     </button>
@@ -256,7 +256,7 @@ function EmptyMine({ kind }: { kind: Kind }) {
                 Hali {label.toLowerCase()} pack yaratmagansiz.
             </p>
             <a href={`/nexus/agent/${kind.toLowerCase()}`} target="_blank" rel="noopener"
-                className="inline-flex items-center gap-1.5 mt-3 h-9 px-4 rounded-lg text-[12px] font-black text-white"
+                className="inline-flex items-center gap-1.5 mt-3 h-9 px-4 rounded-lg text-[12px] font-black text-[var(--nx-text)]"
                 style={{ background: NX.gradient }}>
                 <ExternalLink className="w-3.5 h-3.5" />
                 Agent&apos;ga o&apos;tish

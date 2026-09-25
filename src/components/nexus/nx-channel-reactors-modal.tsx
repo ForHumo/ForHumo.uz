@@ -48,12 +48,12 @@ export function NxChannelReactorsModal({
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Smile className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Reaksiya berganlar
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -73,7 +73,7 @@ export function NxChannelReactorsModal({
                                         className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full flex-shrink-0"
                                         style={activeEmoji === g.emoji
                                             ? { background: "rgba(0,206,200,0.20)", border: "1px solid var(--nx-accent)", color: "white" }
-                                            : { background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(200,214,247,0.9)" }}>
+                                            : { background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(200,214,247,0.9)" }}>
                                         <span className="text-lg leading-none">{g.emoji}</span>
                                         <span className="text-xs font-bold">{g.count}</span>
                                     </button>
@@ -83,13 +83,13 @@ export function NxChannelReactorsModal({
                         <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
                             {active?.users.map(u => (
                                 <div key={u.id} className="flex items-center gap-2 px-3 py-2 rounded-lg mb-1"
-                                    style={{ background: "rgba(11,18,40,0.55)" }}>
+                                    style={{ background: "var(--nx-surface)" }}>
                                     <img src={u.image ?? "/logos/forhumo.png"} alt=""
                                         className="w-8 h-8 rounded-full object-cover"
                                         style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-white truncate">{u.name ?? u.username ?? "?"}</p>
-                                        {u.username && <p className="text-[10px]" style={{ color: "rgba(120,140,185,0.7)" }}>@{u.username}</p>}
+                                        <p className="text-sm font-bold text-[var(--nx-text)] truncate">{u.name ?? u.username ?? "?"}</p>
+                                        {u.username && <p className="text-[10px]" style={{ color: "var(--nx-text-3)" }}>@{u.username}</p>}
                                     </div>
                                     <span className="text-lg leading-none flex-shrink-0">{active.emoji}</span>
                                 </div>

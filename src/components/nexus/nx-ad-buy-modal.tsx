@@ -132,7 +132,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
             onClick={() => !busy && !uploading && onClose()}
         >
             <div
-                className="w-full max-w-[560px] rounded-3xl overflow-hidden my-8 text-white"
+                className="w-full max-w-[560px] rounded-3xl overflow-hidden my-8 text-[var(--nx-text)]"
                 style={{ background: "#0a0f1e", border: `1px solid ${NX_GLASS_BORDER}` }}
                 onClick={e => e.stopPropagation()}
             >
@@ -246,7 +246,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
                                     value={title}
                                     onChange={e => setTitle(e.target.value.slice(0, 100))}
                                     placeholder={t("Kanal, video yoki mahsulotingiz haqida", "О канале, видео или товаре", "About your channel, video, or product")}
-                                    className="mt-1.5 w-full h-11 rounded-xl px-3 text-[13px] outline-none text-white"
+                                    className="mt-1.5 w-full h-11 rounded-xl px-3 text-[13px] outline-none text-[var(--nx-text)]"
                                     style={{ background: NX_GLASS_BG, border: `1px solid ${NX_GLASS_BORDER}` }}
                                 />
                             </div>
@@ -261,7 +261,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
                                     onChange={e => setBody(e.target.value.slice(0, 280))}
                                     rows={2}
                                     placeholder={t("Ixtiyoriy — o'quvchini nima kutmoqda", "Опционально — что ждёт читателя", "Optional — what awaits the reader")}
-                                    className="mt-1.5 w-full rounded-xl px-3 py-2 text-[13px] outline-none text-white resize-none"
+                                    className="mt-1.5 w-full rounded-xl px-3 py-2 text-[13px] outline-none text-[var(--nx-text)] resize-none"
                                     style={{ background: NX_GLASS_BG, border: `1px solid ${NX_GLASS_BORDER}` }}
                                 />
                             </div>
@@ -276,7 +276,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
                                         value={ctaText}
                                         onChange={e => setCtaText(e.target.value.slice(0, 20))}
                                         placeholder={t("Batafsil", "Подробнее", "Learn more")}
-                                        className="mt-1.5 w-full h-11 rounded-xl px-3 text-[12.5px] outline-none text-white"
+                                        className="mt-1.5 w-full h-11 rounded-xl px-3 text-[12.5px] outline-none text-[var(--nx-text)]"
                                         style={{ background: NX_GLASS_BG, border: `1px solid ${NX_GLASS_BORDER}` }}
                                     />
                                 </div>
@@ -289,7 +289,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
                                         value={ctaUrl}
                                         onChange={e => setCtaUrl(e.target.value)}
                                         placeholder="https://forhumo.uz/nexus/v/..."
-                                        className="mt-1.5 w-full h-11 rounded-xl px-3 text-[13px] outline-none text-white"
+                                        className="mt-1.5 w-full h-11 rounded-xl px-3 text-[13px] outline-none text-[var(--nx-text)]"
                                         style={{ background: NX_GLASS_BG, border: `1px solid ${NX_GLASS_BORDER}` }}
                                     />
                                 </div>
@@ -329,7 +329,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
                                     style={{ background: NX_GLASS_BG, border: `1px solid ${NX_GLASS_BORDER}` }}
                                 >
                                     <div className="flex items-center justify-between mb-3">
-                                        <span className="text-[13px] font-black text-white">
+                                        <span className="text-[13px] font-black text-[var(--nx-text)]">
                                             {t("Jami narx", "Итого", "Total")}
                                         </span>
                                         <span
@@ -378,7 +378,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
                             <button
                                 onClick={submit}
                                 disabled={busy || !imageUrl || !title.trim() || !ctaUrl.trim() || !price}
-                                className="flex-1 h-11 rounded-xl text-[13px] font-black flex items-center justify-center gap-2 disabled:opacity-50 text-white"
+                                className="flex-1 h-11 rounded-xl text-[13px] font-black flex items-center justify-center gap-2 disabled:opacity-50 text-[var(--nx-text)]"
                                 style={{
                                     background: NX_GRADIENT,
                                     boxShadow: "0 8px 24px rgba(109,40,217,0.4)",

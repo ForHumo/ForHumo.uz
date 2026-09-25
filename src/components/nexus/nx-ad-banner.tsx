@@ -27,13 +27,13 @@ export function NxAdBanner() {
                             style={{ background: "rgba(255,255,255,0.20)", color: "#fff", backdropFilter: "blur(4px)" }}>
                             <Sparkles className="w-2.5 h-2.5" /> Reklama
                         </div>
-                        <h3 className="text-lg sm:text-2xl font-black text-white leading-tight mb-1">
+                        <h3 className="text-lg sm:text-2xl font-black text-[var(--nx-text)] leading-tight mb-1">
                             For Pay hamyoni
                         </h3>
                         <p className="text-xs sm:text-sm text-white/85 leading-relaxed">
                             Nexus ijodkorlariga tip yuboring, pullik postlarni sotib oling
                         </p>
-                        <div className="inline-flex items-center gap-1 mt-2 px-3 py-1.5 rounded-xl text-xs font-black text-white"
+                        <div className="inline-flex items-center gap-1 mt-2 px-3 py-1.5 rounded-xl text-xs font-black text-[var(--nx-text)]"
                             style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(4px)" }}>
                             Ochish <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
                         </div>

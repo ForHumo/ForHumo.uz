@@ -88,7 +88,7 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
             onClick={() => !busy && onClose()}>
             <div onClick={e => e.stopPropagation()}
                 className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "85vh" }}>
+                style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "85vh" }}>
                 <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
                     <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>Maxsus status</p>
                     <button onClick={onClose} disabled={busy}
@@ -105,7 +105,7 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                         </div>
                         <input value={text} onChange={e => setText(e.target.value.slice(0, 60))}
                             placeholder="Nima qilyapsiz..."
-                            className="flex-1 h-11 px-3 rounded-lg bg-transparent text-white text-sm focus:outline-none"
+                            className="flex-1 h-11 px-3 rounded-lg bg-transparent text-[var(--nx-text)] text-sm focus:outline-none"
                             style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
                     </div>
 
@@ -173,11 +173,11 @@ export function NxStatusModal({ initialEmoji, initialText, onClose, onSaved }: P
                     )}
                     <button onClick={onClose} disabled={busy}
                         className="flex-1 h-10 rounded-lg text-sm font-black"
-                        style={{ background: "rgba(11,18,40,0.85)", color: "#fff", border: "1px solid rgba(43,62,232,0.30)" }}>
+                        style={{ background: "var(--nx-surface)", color: "#fff", border: "1px solid rgba(43,62,232,0.30)" }}>
                         Bekor
                     </button>
                     <button onClick={save} disabled={busy || (!selectedKey && !text.trim())}
-                        className="flex-1 h-10 rounded-lg text-sm font-black text-white disabled:opacity-40 flex items-center justify-center gap-2"
+                        className="flex-1 h-10 rounded-lg text-sm font-black text-[var(--nx-text)] disabled:opacity-40 flex items-center justify-center gap-2"
                         style={{ background: "var(--nx-accent)" }}>
                         {busy && <Loader2 className="w-4 h-4 animate-spin" />}
                         Saqlash

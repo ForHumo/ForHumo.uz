@@ -78,7 +78,7 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
     return (
         <div className="px-4">
             <button onClick={() => setMessagesOpen(true)}
-                className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl text-sm font-bold text-white mb-3 transition-all duration-150 active:scale-[0.99]"
+                className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl text-sm font-bold text-[var(--nx-text)] mb-3 transition-all duration-150 active:scale-[0.99]"
                 style={{ background: "var(--nx-accent)", boxShadow: "0 4px 20px rgba(43,62,232,0.35)" }}>
                 <Pencil className="w-4 h-4" /> Yangi suhbat
             </button>
@@ -93,7 +93,7 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
                     <p className="text-sm font-bold text-white/60 mb-1">
                         {filterUnread ? "O'qilmagan suhbat yo'q" : "Hali suhbat yo'q"}
                     </p>
-                    <p className="text-xs" style={{ color: "rgba(120,140,185,0.7)" }}>
+                    <p className="text-xs" style={{ color: "var(--nx-text-3)" }}>
                         {filterUnread ? "Barcha xabarlar o'qib bo'lingan" : "Profilga kirib \"Xabar\" orqali yozing"}
                     </p>
                 </div>
@@ -110,24 +110,24 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
                                     if (c.other?.username) openDM(c.other.username);
                                 }}
                                 className="w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all duration-150 active:scale-[0.99]"
-                                style={{ background: c.unread ? "rgba(43,62,232,0.10)" : "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                style={{ background: c.unread ? "rgba(43,62,232,0.10)" : "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                 {isSelf ? (
                                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
                                         style={{ background: "var(--nx-accent)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                                        <Bookmark className="w-5 h-5 text-white" />
+                                        <Bookmark className="w-5 h-5 text-[var(--nx-text)]" />
                                     </div>
                                 ) : (
                                     <img src={avatarOf(c.other)} alt="" className="w-12 h-12 rounded-2xl object-cover bg-white flex-shrink-0" style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
                                 )}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
-                                        <span className="text-sm font-bold text-white truncate">{name}</span>
+                                        <span className="text-sm font-bold text-[var(--nx-text)] truncate">{name}</span>
                                         {c.other?.verified && !isSelf && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                         {c.pinned && <Pin className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(140,160,210,0.7)" }} />}
                                         {c.muted && <VolumeX className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(140,160,210,0.7)" }} />}
                                         <span className="ml-auto text-[10px] flex-shrink-0" style={{ color: "rgba(100,120,170,0.7)" }}>{timeAgo(c.lastMessageAt)}</span>
                                     </div>
-                                    <p className="text-xs truncate mt-0.5" style={{ color: c.unread ? "rgba(200,215,245,0.95)" : "rgba(120,140,185,0.8)", fontWeight: c.unread ? 600 : 400 }}>
+                                    <p className="text-xs truncate mt-0.5" style={{ color: c.unread ? "rgba(200,215,245,0.95)" : "var(--nx-text-3)", fontWeight: c.unread ? 600 : 400 }}>
                                         {draft ? (
                                             <><span style={{ color: "#F97316", fontWeight: 700 }}>Qoralama: </span>{draft.slice(0, 60)}</>
                                         ) : (

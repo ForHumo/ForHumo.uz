@@ -41,7 +41,7 @@ export function NxScheduleCard({ username, compact }: { username: string; compac
         <div className={compact ? "p-3 rounded-xl" : "p-4 rounded-2xl"} style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.25)" }}>
             <div className="flex items-center gap-2 mb-2">
                 <CalendarClock className="w-3.5 h-3.5" style={{ color: "#10B981" }} />
-                <p className={`font-black text-white ${compact ? "text-xs" : "text-sm"}`}>Efir jadvali</p>
+                <p className={`font-black text-[var(--nx-text)] ${compact ? "text-xs" : "text-sm"}`}>Efir jadvali</p>
                 <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-auto" style={{ background: "rgba(16,185,129,0.20)", color: "#34D399" }}>
                     {items.length}
                 </span>
@@ -53,7 +53,7 @@ export function NxScheduleCard({ username, compact }: { username: string; compac
                         <div key={it.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ background: "rgba(16,185,129,0.05)" }}>
                             <Clock className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(52,211,153,0.75)" }} />
                             <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-bold text-white truncate">{it.title}</p>
+                                <p className="text-[11px] font-bold text-[var(--nx-text)] truncate">{it.title}</p>
                                 <p className="text-[9px]" style={{ color: "rgba(180,240,215,0.75)" }}>
                                     {isRecurring
                                         ? `Har ${DAY_NAMES[it.dayOfWeek ?? 0]}`

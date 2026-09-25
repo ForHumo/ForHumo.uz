@@ -95,10 +95,10 @@ export function NxChannelFullscreenComposer({
                 style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                 <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                     style={{ background: "rgba(43,62,232,0.12)" }}>
-                    <X className="w-4 h-4 text-white" />
+                    <X className="w-4 h-4 text-[var(--nx-text)]" />
                 </button>
                 <div className="flex-1 min-w-0 text-center px-3">
-                    <p className="text-sm font-black text-white truncate">
+                    <p className="text-sm font-black text-[var(--nx-text)] truncate">
                         {channelType === "CHANNEL" ? "Yangi e'lon" : "Yangi xabar"}
                     </p>
                     <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>
@@ -111,7 +111,7 @@ export function NxChannelFullscreenComposer({
                         style={preview
                             ? { background: "rgba(0,206,200,0.20)", border: "1px solid var(--nx-accent)" }
                             : { background: "rgba(43,62,232,0.12)" }}>
-                        {preview ? <Edit3 className="w-4 h-4 text-white" /> : <Eye className="w-4 h-4 text-white" />}
+                        {preview ? <Edit3 className="w-4 h-4 text-[var(--nx-text)]" /> : <Eye className="w-4 h-4 text-[var(--nx-text)]" />}
                     </button>
                     <button onClick={send} disabled={!canSend}
                         className="h-8 px-4 rounded-full text-sm font-black flex items-center gap-1.5 disabled:opacity-40"
@@ -145,9 +145,9 @@ export function NxChannelFullscreenComposer({
                 {preview ? (
                     <div className="max-w-2xl mx-auto">
                         <div className="rounded-2xl p-4"
-                            style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)" }}>
                             {text.trim() ? (
-                                <div className="text-sm text-white whitespace-pre-wrap">
+                                <div className="text-sm text-[var(--nx-text)] whitespace-pre-wrap">
                                     <NxMarkdown text={text} />
                                 </div>
                             ) : (
@@ -175,7 +175,7 @@ export function NxChannelFullscreenComposer({
                                 : "Xabar yozing..."}
                             className="w-full min-h-[50vh] rounded-xl p-4 text-sm resize-y focus:outline-none"
                             style={{
-                                background: "rgba(11,18,40,0.55)",
+                                background: "var(--nx-surface)",
                                 border: "1px solid rgba(43,62,232,0.20)",
                                 color: "white",
                                 lineHeight: 1.6,
@@ -185,19 +185,19 @@ export function NxChannelFullscreenComposer({
                         />
                         {sponsoredEnabled && isOwner && channelType === "CHANNEL" && (
                             <div className="mt-4 p-3 rounded-xl"
-                                style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" checked={sponsored}
                                         onChange={e => setSponsored(e.target.checked)} />
                                     <Radio className="w-4 h-4" style={{ color: "#F5B301" }} />
-                                    <span className="text-sm font-bold text-white">Sponsored post</span>
+                                    <span className="text-sm font-bold text-[var(--nx-text)]">Sponsored post</span>
                                 </label>
                                 {sponsored && (
                                     <input value={sponsoredUrl}
                                         onChange={e => setSponsoredUrl(e.target.value.slice(0, 500))}
                                         placeholder="Reklama URL (ixtiyoriy) — https://..."
                                         className="mt-2 w-full h-10 rounded-lg px-3 text-xs focus:outline-none"
-                                        style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }}
+                                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }}
                                     />
                                 )}
                             </div>
@@ -213,7 +213,7 @@ function ToolbarBtn({ onClick, title, icon }: { onClick: () => void; title: stri
     return (
         <button type="button" onClick={onClick} title={title}
             className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-white/[0.05]"
-            style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(200,214,247,0.9)" }}>
+            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(200,214,247,0.9)" }}>
             {icon}
         </button>
     );

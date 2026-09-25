@@ -1,7 +1,7 @@
 "use client";
 
 // Nexus GIF / Sticker "Agent" boshqaruv sahifasi. Nexus palette
-// (rgba(11,18,40,...) fon, rgba(43,62,232,...) accent + var(--nx-accent)) —
+// (var(--nx-surface) fon, rgba(43,62,232,...) accent + var(--nx-accent)) —
 // Nexus shell bilan bir xil vizual tili.
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -49,9 +49,9 @@ const STICKER_MAX_BYTES = 1 * 1024 * 1024;
 
 // Nexus tema (nx-sidebar/nx-messages bilan bir xil)
 const NX = {
-    bg: "#050818",
-    panel: "rgba(11,18,40,0.85)",
-    panelStrong: "rgba(11,18,40,0.98)",
+    bg: "var(--nx-bg)",
+    panel: "var(--nx-surface)",
+    panelStrong: "var(--nx-surface)",
     border: "rgba(43,62,232,0.28)",
     borderSoft: "rgba(43,62,232,0.16)",
     accent: "var(--nx-accent)",
@@ -59,7 +59,7 @@ const NX = {
     blueBg: "rgba(43,62,232,0.10)",
     text: "rgba(230,238,255,0.96)",
     text2: "rgba(200,215,245,0.75)",
-    text3: "rgba(150,170,220,0.55)",
+    text3: "var(--nx-text-2)",
     gradient: "var(--nx-accent)",
 };
 
@@ -107,11 +107,11 @@ export function NxHumoMediaManager({ kind }: { kind: Kind }) {
                         <ArrowLeft className="w-4 h-4" />
                     </button>
                     <div className="w-8 h-8 rounded-lg grid place-items-center" style={{ background: NX.gradient }}>
-                        <KindIcon className="w-4 h-4 text-white" />
+                        <KindIcon className="w-4 h-4 text-[var(--nx-text)]" />
                     </div>
                     <h1 className="text-[15px] font-black flex-1">@{kind.toLowerCase()} — {kindLabel} Agent</h1>
                     <button onClick={() => setCreateOpen(true)}
-                        className="h-8 px-3 rounded-lg text-[12.5px] font-black flex items-center gap-1.5 text-white"
+                        className="h-8 px-3 rounded-lg text-[12.5px] font-black flex items-center gap-1.5 text-[var(--nx-text)]"
                         style={{ background: NX.gradient }}>
                         <Plus className="w-3.5 h-3.5" /> Pack
                     </button>
@@ -192,7 +192,7 @@ function EmptyState({ label, cta, onCta, hint }: { label: string; cta?: string; 
             {hint && <p className="text-[11.5px] mt-1" style={{ color: NX.text3 }}>{hint}</p>}
             {cta && onCta && (
                 <button onClick={onCta}
-                    className="mt-3 h-9 px-4 rounded-lg text-[12.5px] font-black inline-flex items-center gap-1.5 text-white"
+                    className="mt-3 h-9 px-4 rounded-lg text-[12.5px] font-black inline-flex items-center gap-1.5 text-[var(--nx-text)]"
                     style={{ background: NX.gradient }}>
                     <Plus className="w-3.5 h-3.5" /> {cta}
                 </button>
@@ -219,7 +219,7 @@ function PackCard({ pack, onOpen }: { pack: Pack; onOpen: () => void }) {
                 ) : (
                     <>
                         {items.map(it => (
-                            <div key={it.id} className="relative aspect-square overflow-hidden" style={{ background: "rgba(11,18,40,0.6)" }}>
+                            <div key={it.id} className="relative aspect-square overflow-hidden" style={{ background: "var(--nx-surface)" }}>
                                 {pack.kind === "GIF" ? (
                                     it.thumbUrl ? (
                                         // eslint-disable-next-line @next/next/no-img-element
@@ -289,7 +289,7 @@ function CreatePackModal({ kind, onClose, onCreated }: { kind: Kind; onClose: ()
                 <button onClick={onClose} disabled={busy}
                     className="h-9 px-3 rounded-lg text-[12.5px] font-bold" style={{ color: NX.text2 }}>Bekor</button>
                 <button onClick={submit} disabled={busy || name.trim().length < 2}
-                    className="h-9 px-4 rounded-lg text-[12.5px] font-black flex items-center gap-1.5 text-white disabled:opacity-40"
+                    className="h-9 px-4 rounded-lg text-[12.5px] font-black flex items-center gap-1.5 text-[var(--nx-text)] disabled:opacity-40"
                     style={{ background: NX.gradient }}>
                     {busy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     Yaratish
@@ -483,7 +483,7 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
                     </button>
                 ) : (
                     <button onClick={subscribe}
-                        className="h-8 px-3 rounded-lg text-[11.5px] font-black flex items-center gap-1.5 text-white"
+                        className="h-8 px-3 rounded-lg text-[11.5px] font-black flex items-center gap-1.5 text-[var(--nx-text)]"
                         style={{ background: NX.gradient }}>
                         <UserPlus className="w-3.5 h-3.5" /> Qo&apos;shish
                     </button>
@@ -549,7 +549,7 @@ function PackDetailModal({ slug, onClose }: { slug: string; onClose: () => void 
                         <button onClick={cancelStaged} disabled={uploading}
                             className="h-9 px-3 rounded-lg text-[12.5px] font-bold" style={{ color: NX.text2 }}>Bekor</button>
                         <button onClick={submitStaged} disabled={uploading || (pack.kind === "STICKER" && keywords.trim().length === 0)}
-                            className="h-9 px-4 rounded-lg text-[12.5px] font-black flex items-center gap-1.5 text-white disabled:opacity-40"
+                            className="h-9 px-4 rounded-lg text-[12.5px] font-black flex items-center gap-1.5 text-[var(--nx-text)] disabled:opacity-40"
                             style={{ background: NX.gradient }}>
                             {uploading ? (
                                 <>

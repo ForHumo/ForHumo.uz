@@ -54,7 +54,7 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
             onClick={() => !busy && onClose()}>
             <div onClick={e => e.stopPropagation()}
                 className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "85vh" }}>
+                style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "85vh" }}>
                 {/* Header */}
                 <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
                     <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>
@@ -96,7 +96,7 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                         <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>Nom</label>
                         <input value={name} onChange={e => setName(e.target.value)}
                             maxLength={80} placeholder={type === "CHANNEL" ? "Mening kanalim" : "Do'stlar guruhi"}
-                            className="w-full h-10 px-3 mt-1 rounded-lg bg-transparent text-white text-sm focus:outline-none"
+                            className="w-full h-10 px-3 mt-1 rounded-lg bg-transparent text-[var(--nx-text)] text-sm focus:outline-none"
                             style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
                     </div>
                     <div>
@@ -105,14 +105,14 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                             <span className="pl-3 pr-1 text-white/60 text-sm">@</span>
                             <input value={handle} onChange={e => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 30))}
                                 placeholder="mening_kanalim"
-                                className="flex-1 h-10 pr-3 bg-transparent text-white text-sm focus:outline-none" />
+                                className="flex-1 h-10 pr-3 bg-transparent text-[var(--nx-text)] text-sm focus:outline-none" />
                         </div>
                     </div>
                     <div>
                         <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>Tavsif</label>
                         <textarea value={description} onChange={e => setDescription(e.target.value.slice(0, 500))}
                             rows={2} placeholder="Bu erda nima haqida gaplashiladi..."
-                            className="w-full px-3 py-2 mt-1 rounded-lg bg-transparent text-white text-xs focus:outline-none resize-none"
+                            className="w-full px-3 py-2 mt-1 rounded-lg bg-transparent text-[var(--nx-text)] text-xs focus:outline-none resize-none"
                             style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -150,11 +150,11 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                 <div className="p-4 border-t flex gap-2" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
                     <button onClick={onClose} disabled={busy}
                         className="flex-1 h-10 rounded-lg text-sm font-black"
-                        style={{ background: "rgba(11,18,40,0.85)", color: "#fff", border: "1px solid rgba(43,62,232,0.30)" }}>
+                        style={{ background: "var(--nx-surface)", color: "#fff", border: "1px solid rgba(43,62,232,0.30)" }}>
                         Bekor
                     </button>
                     <button onClick={submit} disabled={busy || !name.trim()}
-                        className="flex-1 h-10 rounded-lg text-sm font-black text-white disabled:opacity-40 flex items-center justify-center gap-2"
+                        className="flex-1 h-10 rounded-lg text-sm font-black text-[var(--nx-text)] disabled:opacity-40 flex items-center justify-center gap-2"
                         style={{ background: "var(--nx-accent)" }}>
                         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                         Yaratish

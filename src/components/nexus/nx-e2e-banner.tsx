@@ -89,7 +89,7 @@ export function NxE2eBanner({ peerName, peerFingerprint, myFingerprint }: Props)
                                 </div>
                             ) : (
                                 <button onClick={confirm}
-                                    className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold flex items-center justify-center gap-2">
+                                    className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-[var(--nx-text)] text-sm font-bold flex items-center justify-center gap-2">
                                     <ShieldCheck className="w-4 h-4" /> Tekshirdim
                                 </button>
                             )}

@@ -46,7 +46,7 @@ export function NxGroupStoriesBar({
                         style={{ background: "rgba(43,62,232,0.10)", border: "1px dashed rgba(0,206,200,0.35)" }}>
                         <Camera className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                     </div>
-                    <span className="text-[10px] font-bold" style={{ color: "rgba(180,195,235,0.85)" }}>Hikoya</span>
+                    <span className="text-[10px] font-bold" style={{ color: "var(--nx-text-2)" }}>Hikoya</span>
                 </button>
             </div>
         );
@@ -63,7 +63,7 @@ export function NxGroupStoriesBar({
                         style={{ background: "rgba(43,62,232,0.10)", border: "1px dashed rgba(0,206,200,0.35)" }}>
                         <Camera className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                     </div>
-                    <span className="text-[10px] font-bold truncate max-w-[60px]" style={{ color: "rgba(180,195,235,0.85)" }}>Siz</span>
+                    <span className="text-[10px] font-bold truncate max-w-[60px]" style={{ color: "var(--nx-text-2)" }}>Siz</span>
                 </button>
                 {stories.map((s, i) => (
                     <button key={s.id} onClick={() => setViewerIdx(i)}
@@ -71,14 +71,14 @@ export function NxGroupStoriesBar({
                         <div className="w-14 h-14 rounded-full p-0.5"
                             style={{
                                 background: s.seen
-                                    ? "rgba(120,140,185,0.35)"
+                                    ? "var(--nx-text-3)"
                                     : "var(--nx-accent)",
                             }}>
                             <img src={s.author?.image ?? "/logos/forhumo.png"} alt=""
                                 className="w-full h-full rounded-full object-cover"
                                 style={{ border: "2px solid rgba(8,12,32,0.99)" }} />
                         </div>
-                        <span className="text-[10px] truncate max-w-[60px]" style={{ color: "rgba(180,195,235,0.85)" }}>
+                        <span className="text-[10px] truncate max-w-[60px]" style={{ color: "var(--nx-text-2)" }}>
                             {s.author?.name?.split(" ")[0] ?? s.author?.username ?? "?"}
                         </span>
                     </button>
@@ -179,7 +179,7 @@ function NxGroupStoryViewer({
                     </div>
                 ))}
             </div>
-            <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 text-white">
+            <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 text-[var(--nx-text)]">
                 <img src={current.author?.image ?? "/logos/forhumo.png"} alt="" className="w-7 h-7 rounded-full object-cover" />
                 <p className="text-sm font-bold flex-1 truncate">{current.author?.name ?? current.author?.username}</p>
                 {isMine && (
@@ -188,7 +188,7 @@ function NxGroupStoryViewer({
                             title="Kim ko'rgan"
                             className="w-8 h-8 rounded-full flex items-center justify-center"
                             style={{ background: "rgba(255,255,255,0.15)" }}>
-                            <Eye className="w-4 h-4 text-white" />
+                            <Eye className="w-4 h-4 text-[var(--nx-text)]" />
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); deleteStory(); }}
                             title="O'chirish"
@@ -200,7 +200,7 @@ function NxGroupStoryViewer({
                 )}
                 <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                     style={{ background: "rgba(255,255,255,0.15)" }}>
-                    <X className="w-4 h-4 text-white" />
+                    <X className="w-4 h-4 text-[var(--nx-text)]" />
                 </button>
             </div>
             <div className="flex-1 flex items-center justify-center relative" onClick={(e) => e.stopPropagation()}>
@@ -218,7 +218,7 @@ function NxGroupStoryViewer({
                     onClick={() => { if (idx < stories.length - 1) setIdx(idx + 1); else onClose(); }} />
             </div>
             {current.caption && (
-                <div className="flex-shrink-0 px-4 py-3 text-center text-sm text-white"
+                <div className="flex-shrink-0 px-4 py-3 text-center text-sm text-[var(--nx-text)]"
                     style={{ background: "linear-gradient(0deg,rgba(0,0,0,0.7),transparent)" }}>
                     {current.caption}
                 </div>
@@ -227,19 +227,19 @@ function NxGroupStoryViewer({
             {viewersOpen && (
                 <div className="absolute inset-0 z-10 bg-black/80 flex flex-col" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-between px-4 py-3">
-                        <p className="text-sm font-black text-white flex items-center gap-2">
+                        <p className="text-sm font-black text-[var(--nx-text)] flex items-center gap-2">
                             <Eye className="w-4 h-4" /> {viewers.length} ta ko&apos;rildi
                         </p>
                         <button onClick={() => setViewersOpen(false)}
                             className="w-8 h-8 rounded-full flex items-center justify-center"
                             style={{ background: "rgba(255,255,255,0.15)" }}>
-                            <X className="w-4 h-4 text-white" />
+                            <X className="w-4 h-4 text-[var(--nx-text)]" />
                         </button>
                     </div>
                     <div className="flex-1 overflow-y-auto px-3 pb-3">
                         {viewersLoading ? (
                             <div className="flex justify-center py-10">
-                                <Loader2 className="w-6 h-6 animate-spin text-white" />
+                                <Loader2 className="w-6 h-6 animate-spin text-[var(--nx-text)]" />
                             </div>
                         ) : viewers.length === 0 ? (
                             <p className="py-10 text-center text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>Hech kim ko&apos;rmagan</p>
@@ -249,7 +249,7 @@ function NxGroupStoryViewer({
                                     className="w-9 h-9 rounded-full object-cover"
                                     style={{ border: "1px solid rgba(255,255,255,0.15)" }} />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-white truncate">{v.profile?.name ?? v.profile?.username ?? "?"}</p>
+                                    <p className="text-sm font-bold text-[var(--nx-text)] truncate">{v.profile?.name ?? v.profile?.username ?? "?"}</p>
                                     {v.profile?.username && <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.5)" }}>@{v.profile.username}</p>}
                                 </div>
                             </div>
@@ -305,12 +305,12 @@ function NxGroupStoryCreate({
                 style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)", maxHeight: "90vh" }}>
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Camera className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Yangi hikoya (24 soat)
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
                 <div className="p-5 flex-1 overflow-y-auto space-y-3">
@@ -321,7 +321,7 @@ function NxGroupStoryCreate({
                             <div className="border-2 border-dashed rounded-2xl py-16 flex flex-col items-center gap-2 cursor-pointer"
                                 style={{ borderColor: "rgba(0,206,200,0.35)" }}>
                                 <Upload className="w-8 h-8" style={{ color: "var(--nx-accent)" }} />
-                                <p className="text-sm font-bold text-white">Rasm yoki video tanlang</p>
+                                <p className="text-sm font-bold text-[var(--nx-text)]">Rasm yoki video tanlang</p>
                                 <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>24 soatga jonli bo&apos;ladi</p>
                             </div>
                         </label>
@@ -335,7 +335,7 @@ function NxGroupStoryCreate({
                             <button onClick={() => { setFile(null); setPreview(null); }}
                                 className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center"
                                 style={{ background: "rgba(0,0,0,0.6)" }}>
-                                <X className="w-4 h-4 text-white" />
+                                <X className="w-4 h-4 text-[var(--nx-text)]" />
                             </button>
                         </div>
                     )}
@@ -343,14 +343,14 @@ function NxGroupStoryCreate({
                         <textarea value={caption} onChange={e => setCaption(e.target.value)}
                             placeholder="Izoh (ixtiyoriy)..."
                             rows={2} maxLength={500}
-                            className="w-full rounded-xl px-3 py-2 text-sm text-white outline-none resize-none"
-                            style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.22)" }} />
+                            className="w-full rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none resize-none"
+                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.22)" }} />
                     )}
                 </div>
                 {preview && (
                     <div className="flex-shrink-0 px-5 py-4" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
                         <button onClick={upload} disabled={busy}
-                            className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 disabled:opacity-60"
+                            className="w-full py-3 rounded-xl text-sm font-bold text-[var(--nx-text)] flex items-center justify-center gap-2 disabled:opacity-60"
                             style={{ background: "var(--nx-accent)" }}>
                             {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> Yuklanmoqda...</> : <><Play className="w-4 h-4" /> Hikoya qo&apos;shish</>}
                         </button>

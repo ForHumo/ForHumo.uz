@@ -47,11 +47,11 @@ export function LinkedContentCard({ type, id, title, thumb }: Props) {
                         <div className="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-transform group-hover:scale-110"
                             style={{ background: `linear-gradient(135deg, ${color}, ${color}CC)`,
                                 boxShadow: `0 8px 24px ${color}80` }}>
-                            <Icon className={`w-6 h-6 text-white ${isLive ? "" : "fill-white"} ml-0.5`} />
+                            <Icon className={`w-6 h-6 text-[var(--nx-text)] ${isLive ? "" : "fill-white"} ml-0.5`} />
                         </div>
                     </div>
                     {/* Type badge yuqorida chapda */}
-                    <span className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-white uppercase"
+                    <span className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black text-[var(--nx-text)] uppercase"
                         style={{ background: color }}>
                         {isLive && <span className="w-1 h-1 rounded-full bg-white animate-pulse" />}
                         <Icon className="w-2.5 h-2.5" />{label}
@@ -61,7 +61,7 @@ export function LinkedContentCard({ type, id, title, thumb }: Props) {
                 <div className="flex items-center justify-center py-8" style={{ background: `${color}15` }}>
                     <div className="w-14 h-14 rounded-full flex items-center justify-center"
                         style={{ background: `linear-gradient(135deg, ${color}, ${color}CC)` }}>
-                        <Icon className={`w-6 h-6 text-white ${isLive ? "" : "fill-white"} ml-0.5`} />
+                        <Icon className={`w-6 h-6 text-[var(--nx-text)] ${isLive ? "" : "fill-white"} ml-0.5`} />
                     </div>
                 </div>
             )}
@@ -69,7 +69,7 @@ export function LinkedContentCard({ type, id, title, thumb }: Props) {
             <div className="flex items-center gap-2 px-3 py-2" style={{ background: "rgba(5,8,24,0.50)" }}>
                 <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-black uppercase tracking-widest" style={{ color }}>{label}</p>
-                    <p className="text-sm font-bold text-white truncate">{title}</p>
+                    <p className="text-sm font-bold text-[var(--nx-text)] truncate">{title}</p>
                 </div>
                 <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" style={{ color: `${color}CC` }} />
             </div>

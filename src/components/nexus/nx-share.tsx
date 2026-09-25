@@ -57,11 +57,11 @@ export function NxShare() {
 
                 <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
                     <div className="min-w-0">
-                        <h3 className="text-sm font-black text-white">Ulashish</h3>
+                        <h3 className="text-sm font-black text-[var(--nx-text)]">Ulashish</h3>
                         {shareSheetTitle && <p className="text-[10px] mt-0.5 truncate max-w-[260px]" style={{ color: "rgba(100,120,170,0.75)" }}>{shareSheetTitle}</p>}
                     </div>
                     <button onClick={closeShareSheet} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 

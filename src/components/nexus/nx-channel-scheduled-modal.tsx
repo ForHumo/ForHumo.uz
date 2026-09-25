@@ -85,12 +85,12 @@ export function NxChannelScheduledModal({
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Calendar className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Rejadagi postlar · {items.length}
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
@@ -102,7 +102,7 @@ export function NxChannelScheduledModal({
                             <p className="text-sm" style={{ color: "rgba(160,176,224,0.7)" }}>
                                 Rejalashtirilgan post yo&apos;q
                             </p>
-                            <p className="text-[11px] mt-1" style={{ color: "rgba(120,140,185,0.6)" }}>
+                            <p className="text-[11px] mt-1" style={{ color: "var(--nx-text-3)" }}>
                                 Yangi post yozayotganda &quot;Jadval&quot; opsiyasi bilan qo&apos;shing
                             </p>
                         </div>
@@ -110,7 +110,7 @@ export function NxChannelScheduledModal({
                         <div className="space-y-2">
                             {items.map(item => (
                                 <div key={item.id} className="p-3 rounded-xl"
-                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black"
                                             style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>
@@ -138,15 +138,15 @@ export function NxChannelScheduledModal({
                                         ) : null}
                                         <div className="flex-1 min-w-0">
                                             {item.text && (
-                                                <p className="text-sm text-white line-clamp-3">{item.text}</p>
+                                                <p className="text-sm text-[var(--nx-text)] line-clamp-3">{item.text}</p>
                                             )}
                                             {!item.text && item.isPoll && (
-                                                <p className="text-sm text-white font-bold">
+                                                <p className="text-sm text-[var(--nx-text)] font-bold">
                                                     So&apos;rovnoma: <span className="font-normal">{item.pollQuestion}</span>
                                                 </p>
                                             )}
                                             {!item.text && !item.isPoll && item.hasMedia && (
-                                                <p className="text-sm text-white">
+                                                <p className="text-sm text-[var(--nx-text)]">
                                                     {item.mediaType === "video" ? "Video" : item.mediaType === "audio" ? "Ovoz" : "Media"}
                                                     {item.mediaCount > 1 && ` · ${item.mediaCount}`}
                                                 </p>

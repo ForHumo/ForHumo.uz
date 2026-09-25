@@ -41,7 +41,7 @@ export function NxBroadcastPage() {
                     <h1 className="text-xl font-black">Broadcast ro'yxatlari</h1>
                     <p className="text-xs opacity-70">Bir xabar — bir necha kontaktga alohida DM tarzida.</p>
                 </div>
-                <button onClick={() => setCreating(true)} className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold flex items-center gap-2">
+                <button onClick={() => setCreating(true)} className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-[var(--nx-text)] text-sm font-bold flex items-center gap-2">
                     <Plus className="w-4 h-4" /> Yangi
                 </button>
             </div>
@@ -109,7 +109,7 @@ function CreateListModal({ onClose, onCreated }: { onClose: () => void; onCreate
                 {err && <div className="mt-2 text-xs text-red-500 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{err}</div>}
                 <div className="grid grid-cols-2 gap-2 mt-4">
                     <button onClick={onClose} className="h-11 rounded-xl bg-black/5 dark:bg-white/5 text-sm font-bold">Bekor</button>
-                    <button onClick={submit} disabled={busy || !name.trim()} className="h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50">
+                    <button onClick={submit} disabled={busy || !name.trim()} className="h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-[var(--nx-text)] text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50">
                         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Yaratish
                     </button>
                 </div>
@@ -190,7 +190,7 @@ function BroadcastDetail({ list, onBack, onDeleted }: { list: ListRow; onBack: (
                 <div className="flex items-center justify-between mt-2">
                     <div className="text-xs opacity-60">{sendText.length} / 2000</div>
                     <button onClick={send} disabled={sending || !sendText.trim() || members.length === 0}
-                        className="h-10 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold flex items-center gap-2 disabled:opacity-50">
+                        className="h-10 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-[var(--nx-text)] text-sm font-bold flex items-center gap-2 disabled:opacity-50">
                         {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         Yuborish ({members.length})
                     </button>
@@ -242,7 +242,7 @@ function BroadcastDetail({ list, onBack, onDeleted }: { list: ListRow; onBack: (
                         <div className="text-xs opacity-70 mb-4">"{list.name}" — bu amal qaytarilmaydi. Yuborilgan xabarlar saqlanadi.</div>
                         <div className="grid grid-cols-2 gap-2">
                             <button onClick={() => setConfirmDelete(false)} className="h-11 rounded-xl bg-black/5 dark:bg-white/5 text-sm font-bold">Bekor</button>
-                            <button onClick={deleteList} className="h-11 rounded-xl bg-red-600 text-white text-sm font-bold">O'chirish</button>
+                            <button onClick={deleteList} className="h-11 rounded-xl bg-red-600 text-[var(--nx-text)] text-sm font-bold">O'chirish</button>
                         </div>
                     </div>
                 </div>
@@ -328,7 +328,7 @@ function AddMembersModal({ listId, existing, onClose, onAdded }: { listId: strin
                 {err && <div className="px-4 py-2 text-xs text-red-500 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{err}</div>}
                 <div className="p-4 border-t border-black/10 dark:border-white/10">
                     <button onClick={add} disabled={busy || selected.size === 0}
-                        className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50">
+                        className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-[var(--nx-text)] text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50">
                         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                         Qo'shish{selected.size > 0 ? ` (${selected.size})` : ""}
                     </button>

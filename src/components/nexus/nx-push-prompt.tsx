@@ -54,10 +54,10 @@ export function NxPushPrompt() {
                 backdropFilter: "blur(12px)",
             }}>
             <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.20)" }}>
-                <Bell className="w-4 h-4 text-white" />
+                <Bell className="w-4 h-4 text-[var(--nx-text)]" />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-white leading-tight">Bildirishnomalarni yoqing</p>
+                <p className="text-sm font-black text-[var(--nx-text)] leading-tight">Bildirishnomalarni yoqing</p>
                 <p className="text-[11px] text-white/85 leading-tight mt-0.5">Yangi xabar va chaqiruvlarni o&apos;tkazib yubormang</p>
             </div>
             <button onClick={enable} disabled={busy}
@@ -68,7 +68,7 @@ export function NxPushPrompt() {
             <button onClick={() => dismiss(7)}
                 className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center active:scale-95 transition"
                 style={{ background: "rgba(0,0,0,0.20)" }} title="Keyinroq">
-                <X className="w-3.5 h-3.5 text-white" />
+                <X className="w-3.5 h-3.5 text-[var(--nx-text)]" />
             </button>
         </div>
     );

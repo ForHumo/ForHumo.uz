@@ -69,8 +69,8 @@ export function NexusShell() {
             {/* Global presence subscription — nexus'ga kirgan bo'lsa "onlayn" bo'ladi */}
             <PresenceKeepalive />
             <div
-                className="w-full h-full flex flex-col overflow-hidden text-white select-none"
-                style={{ background: "#050818" }}
+                className="w-full h-full flex flex-col overflow-hidden text-[var(--nx-text)] select-none"
+                style={{ background: "var(--nx-bg)" }}
             >
                 <NexusBackground />
 

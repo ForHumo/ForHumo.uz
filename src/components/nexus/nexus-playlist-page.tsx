@@ -71,7 +71,7 @@ export function NexusPlaylistPage({ id }: { id: string }) {
                     <Lock className="w-10 h-10 mx-auto mb-2 opacity-30 text-neutral-400" />
                     <p className="text-[13px] text-neutral-500">{error || "Pleylist mavjud emas"}</p>
                     <Link href={"/nexus" as never}
-                        className="inline-block mt-4 h-10 px-4 rounded-xl bg-black text-white text-[13px] font-black">
+                        className="inline-block mt-4 h-10 px-4 rounded-xl bg-black text-[var(--nx-text)] text-[13px] font-black">
                         Nexus'ga qaytish
                     </Link>
                 </div>
@@ -128,7 +128,7 @@ export function NexusPlaylistPage({ id }: { id: string }) {
 
                         <div className="flex items-center gap-2">
                             <button onClick={playAll} disabled={data.tracks.length === 0}
-                                className="h-11 px-5 rounded-xl bg-purple-600 text-white text-[13.5px] font-black inline-flex items-center gap-1.5 hover:bg-purple-700 disabled:opacity-40">
+                                className="h-11 px-5 rounded-xl bg-purple-600 text-[var(--nx-text)] text-[13.5px] font-black inline-flex items-center gap-1.5 hover:bg-purple-700 disabled:opacity-40">
                                 <Play className="w-4 h-4" fill="white" /> Barchasini ijro qilish
                             </button>
                             <button onClick={() => navigator.clipboard.writeText(window.location.href).catch(() => {})}

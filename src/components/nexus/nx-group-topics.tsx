@@ -72,12 +72,12 @@ export function NxGroupTopicsModal({
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Hash className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Mavzular
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -86,11 +86,11 @@ export function NxGroupTopicsModal({
                     <button onClick={() => { onSelect(null); onClose(); }}
                         className="w-full flex items-center gap-3 rounded-2xl px-3 py-3 mb-1 text-left"
                         style={{
-                            background: currentTopicId === null ? "rgba(0,206,200,0.10)" : "rgba(11,18,40,0.55)",
+                            background: currentTopicId === null ? "rgba(0,206,200,0.10)" : "var(--nx-surface)",
                             border: `1px solid ${currentTopicId === null ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.14)"}`,
                         }}>
                         <MessageSquare className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(160,176,224,0.85)" }} />
-                        <p className="flex-1 text-sm font-bold text-white">Umumiy</p>
+                        <p className="flex-1 text-sm font-bold text-[var(--nx-text)]">Umumiy</p>
                     </button>
 
                     {loading && (
@@ -100,14 +100,14 @@ export function NxGroupTopicsModal({
                     {topics.map(t => (
                         <div key={t.id} className="flex items-center gap-2 rounded-2xl px-3 py-2.5 mb-1"
                             style={{
-                                background: currentTopicId === t.id ? "rgba(0,206,200,0.10)" : "rgba(11,18,40,0.55)",
+                                background: currentTopicId === t.id ? "rgba(0,206,200,0.10)" : "var(--nx-surface)",
                                 border: `1px solid ${currentTopicId === t.id ? "rgba(0,206,200,0.30)" : "rgba(43,62,232,0.14)"}`,
                             }}>
                             <button onClick={() => { onSelect(t.id); onClose(); }}
                                 className="flex-1 flex items-center gap-2 text-left">
                                 <span className="text-xl flex-shrink-0">{t.icon ?? "#"}</span>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-white truncate">{t.name}</p>
+                                    <p className="text-sm font-bold text-[var(--nx-text)] truncate">{t.name}</p>
                                     <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
                                         {t.messageCount} xabar
                                     </p>
@@ -136,7 +136,7 @@ export function NxGroupTopicsModal({
                             <div className="space-y-2">
                                 <input value={newName} onChange={e => setNewName(e.target.value)}
                                     placeholder="Mavzu nomi..." maxLength={80}
-                                    className="w-full rounded-xl px-3 py-2 text-sm text-white outline-none"
+                                    className="w-full rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none"
                                     style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }} />
                                 <div className="flex gap-1 overflow-x-auto py-1" style={{ scrollbarWidth: "none" }}>
                                     {ICONS.map(i => (
@@ -144,7 +144,7 @@ export function NxGroupTopicsModal({
                                             className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-xl"
                                             style={newIcon === i
                                                 ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.35)" }
-                                                : { background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                                : { background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                             {i}
                                         </button>
                                     ))}
@@ -154,7 +154,7 @@ export function NxGroupTopicsModal({
                                         className="flex-1 py-2 rounded-xl text-xs font-bold"
                                         style={{ background: "rgba(43,62,232,0.12)", color: "white" }}>Bekor</button>
                                     <button onClick={create} disabled={busy || !newName.trim()}
-                                        className="flex-1 py-2 rounded-xl text-xs font-bold text-white disabled:opacity-50"
+                                        className="flex-1 py-2 rounded-xl text-xs font-bold text-[var(--nx-text)] disabled:opacity-50"
                                         style={{ background: "var(--nx-accent)" }}>
                                         {busy ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Yaratish"}
                                     </button>

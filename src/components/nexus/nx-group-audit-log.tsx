@@ -66,12 +66,12 @@ export function NxGroupAuditLog({
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <ScrollText className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Admin jurnali
                     </h3>
                     <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                        <X className="h-4 w-4 text-white" />
+                        <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
@@ -80,18 +80,18 @@ export function NxGroupAuditLog({
                             <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     ) : items.length === 0 ? (
-                        <p className="py-8 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>Hozircha voqea yo&apos;q</p>
+                        <p className="py-8 text-center text-xs" style={{ color: "var(--nx-text-3)" }}>Hozircha voqea yo&apos;q</p>
                     ) : items.map(e => {
                         const meta = ACTION_META[e.action] ?? { icon: Edit3, label: e.action, color: "rgba(140,160,210,0.8)" };
                         return (
                             <div key={e.id} className="flex items-start gap-2 px-3 py-2 mb-1 rounded-xl"
-                                style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                 <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
                                     style={{ background: `${meta.color}20`, border: `1px solid ${meta.color}40` }}>
                                     <meta.icon className="w-4 h-4" style={{ color: meta.color }} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-white">
+                                    <p className="text-xs text-[var(--nx-text)]">
                                         <span className="font-bold">{e.actor?.name ?? e.actor?.username ?? "?"}</span>
                                         {" — "}
                                         <span style={{ color: meta.color }}>{meta.label}</span>
@@ -101,7 +101,7 @@ export function NxGroupAuditLog({
                                     </p>
                                     {e.detail && <p className="text-[10px] mt-0.5 italic" style={{ color: "rgba(140,160,210,0.7)" }}>{e.detail}</p>}
                                 </div>
-                                <span className="text-[10px] flex-shrink-0" style={{ color: "rgba(120,140,185,0.6)" }}>{timeAgo(e.createdAt)}</span>
+                                <span className="text-[10px] flex-shrink-0" style={{ color: "var(--nx-text-3)" }}>{timeAgo(e.createdAt)}</span>
                             </div>
                         );
                     })}

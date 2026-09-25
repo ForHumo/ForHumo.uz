@@ -122,13 +122,13 @@ export function NxPlaylist() {
                     {selected ? (
                         <button onClick={() => setSelected(null)} className="w-8 h-8 flex items-center justify-center rounded-xl"
                             style={{ background: "rgba(43,62,232,0.10)" }}>
-                            <X className="w-4 h-4 text-white" />
+                            <X className="w-4 h-4 text-[var(--nx-text)]" />
                         </button>
                     ) : (
                         <ListMusic className="w-5 h-5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                     )}
                     <div className="flex-1">
-                        <h3 className="text-base font-black text-white">
+                        <h3 className="text-base font-black text-[var(--nx-text)]">
                             {selected ? selected.name : "Playlistlar"}
                         </h3>
                         {selected && (
@@ -140,7 +140,7 @@ export function NxPlaylist() {
                     {selected && selected.tracks.length > 0 && (
                         <button
                             onClick={() => { playQueue(selected.tracks, 0); setPlaylistsOpen(false); }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-white transition-all duration-150 active:scale-95"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-[var(--nx-text)] transition-all duration-150 active:scale-95"
                             style={{ background: "var(--nx-accent)" }}>
                             <Play className="w-3 h-3 fill-white" />
                             Ijro
@@ -148,7 +148,7 @@ export function NxPlaylist() {
                     )}
                     {!selected && (
                         <button onClick={() => setCreating(true)}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black text-white transition-all duration-150 active:scale-95"
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black text-[var(--nx-text)] transition-all duration-150 active:scale-95"
                             style={{ background: "var(--nx-accent)" }}>
                             <Plus className="w-3.5 h-3.5" />
                             Yangi
@@ -157,7 +157,7 @@ export function NxPlaylist() {
                     <button onClick={() => setPlaylistsOpen(false)}
                         className="w-8 h-8 flex items-center justify-center rounded-xl"
                         style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.18)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -165,15 +165,15 @@ export function NxPlaylist() {
                     {/* Playlist yaratish formi */}
                     {creating && !selected && (
                         <div className="mx-4 mt-4 p-4 rounded-2xl" style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.20)" }}>
-                            <p className="text-xs font-black text-white mb-2">Yangi playlist nomi</p>
+                            <p className="text-xs font-black text-[var(--nx-text)] mb-2">Yangi playlist nomi</p>
                             <div className="flex gap-2">
                                 <input autoFocus type="text" value={newName} onChange={e => setNewName(e.target.value)}
                                     onKeyDown={e => e.key === "Enter" && createPlaylist()}
                                     placeholder="Playlist nomi..."
-                                    className="flex-1 h-9 rounded-xl px-3 text-sm text-white outline-none"
+                                    className="flex-1 h-9 rounded-xl px-3 text-sm text-[var(--nx-text)] outline-none"
                                     style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                                 <button onClick={createPlaylist}
-                                    className="px-3 py-2 rounded-xl text-xs font-black text-white"
+                                    className="px-3 py-2 rounded-xl text-xs font-black text-[var(--nx-text)]"
                                     style={{ background: "var(--nx-accent)" }}>
                                     <Check className="w-4 h-4" />
                                 </button>
@@ -192,7 +192,7 @@ export function NxPlaylist() {
                             {playlists.map(pl => (
                                 <button key={pl.id} onClick={() => setSelected(pl)}
                                     className="flex items-center gap-3 p-3 rounded-2xl text-left transition-all duration-150"
-                                    style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.16)" }}
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.16)" }}
                                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.40)"}
                                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "rgba(43,62,232,0.16)"}
                                 >
@@ -206,8 +206,8 @@ export function NxPlaylist() {
                                         }
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-white truncate">{pl.name}</p>
-                                        <p className="text-[10px] mt-0.5" style={{ color: "rgba(80,100,150,0.75)" }}>
+                                        <p className="text-sm font-bold text-[var(--nx-text)] truncate">{pl.name}</p>
+                                        <p className="text-[10px] mt-0.5" style={{ color: "var(--nx-text-2)" }}>
                                             {pl.tracks.length} ta trek · {totalDuration(pl.tracks)}
                                         </p>
                                         <p className="text-[9px] mt-0.5" style={{ color: "rgba(60,80,120,0.60)" }}>
@@ -248,15 +248,15 @@ export function NxPlaylist() {
                                                 <button key={t.title}
                                                     onClick={() => { if (!inList) { addTrackToPlaylist(selected.id, t); setSelected(prev => prev ? { ...prev, tracks: [...prev.tracks, t] } : null); } }}
                                                     className="flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-all duration-150"
-                                                    style={{ background: inList ? "rgba(43,62,232,0.06)" : "rgba(11,18,40,0.50)", border: `1px solid ${inList ? "rgba(43,62,232,0.25)" : "rgba(43,62,232,0.12)"}` }}
+                                                    style={{ background: inList ? "rgba(43,62,232,0.06)" : "var(--nx-surface)", border: `1px solid ${inList ? "rgba(43,62,232,0.25)" : "rgba(43,62,232,0.12)"}` }}
                                                 >
                                                     <img src={t.image} alt={t.title} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-[12px] font-bold text-white truncate">{t.title}</p>
-                                                        <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.75)" }}>{t.artist}</p>
+                                                        <p className="text-[12px] font-bold text-[var(--nx-text)] truncate">{t.title}</p>
+                                                        <p className="text-[10px]" style={{ color: "var(--nx-text-2)" }}>{t.artist}</p>
                                                     </div>
                                                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                                                        <span className="text-[10px]" style={{ color: "rgba(80,100,150,0.60)" }}>{t.duration}</span>
+                                                        <span className="text-[10px]" style={{ color: "var(--nx-text-2)" }}>{t.duration}</span>
                                                         {inList
                                                             ? <Check className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                                             : <Plus className="w-4 h-4" style={{ color: "rgba(43,62,232,0.60)" }} />
@@ -277,22 +277,22 @@ export function NxPlaylist() {
                                 <div className="flex flex-col items-center py-10">
                                     <Music2 className="w-12 h-12 mb-3" style={{ color: "rgba(43,62,232,0.25)" }} />
                                     <p className="text-sm text-white/40">Bu playlist bo'sh</p>
-                                    <p className="text-xs mt-1" style={{ color: "rgba(80,100,150,0.50)" }}>Yuqoridan trek qo'shing</p>
+                                    <p className="text-xs mt-1" style={{ color: "var(--nx-text-2)" }}>Yuqoridan trek qo'shing</p>
                                 </div>
                             ) : (
                                 <div className="flex flex-col gap-1.5">
                                     {selected.tracks.map((t, i) => (
                                         <div key={t.title} className="flex items-center gap-2.5 p-2.5 rounded-xl group"
-                                            style={{ background: "rgba(11,18,40,0.50)", border: "1px solid rgba(43,62,232,0.12)" }}>
+                                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.12)" }}>
                                             <span className="w-4 text-[10px] text-center flex-shrink-0"
-                                                style={{ color: "rgba(80,100,150,0.60)" }}>{i + 1}</span>
+                                                style={{ color: "var(--nx-text-2)" }}>{i + 1}</span>
                                             <img src={t.image} alt={t.title} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[12px] font-bold text-white truncate">{t.title}</p>
-                                                <p className="text-[10px]" style={{ color: "rgba(80,100,150,0.75)" }}>{t.artist}</p>
+                                                <p className="text-[12px] font-bold text-[var(--nx-text)] truncate">{t.title}</p>
+                                                <p className="text-[10px]" style={{ color: "var(--nx-text-2)" }}>{t.artist}</p>
                                             </div>
                                             <div className="flex items-center gap-1.5">
-                                                <span className="text-[10px] flex items-center gap-0.5" style={{ color: "rgba(80,100,150,0.60)" }}>
+                                                <span className="text-[10px] flex items-center gap-0.5" style={{ color: "var(--nx-text-2)" }}>
                                                     <Clock className="w-2.5 h-2.5" />{t.duration}
                                                 </span>
                                                 <button

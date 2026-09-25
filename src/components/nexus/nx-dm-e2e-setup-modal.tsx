@@ -155,13 +155,13 @@ export function NxDmE2eSetupModal({
                 style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <KeyRound className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         E2E shifrlash kalitlari
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -208,7 +208,7 @@ export function NxDmE2eSetupModal({
                             </div>
                         ) : serverKeysWithStatus.length === 0 ? (
                             <div className="p-6 rounded-xl text-center"
-                                style={{ background: "rgba(11,18,40,0.55)", border: "1px dashed rgba(43,62,232,0.20)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px dashed rgba(43,62,232,0.20)" }}>
                                 <KeyRound className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm" style={{ color: "rgba(160,176,224,0.75)" }}>
                                     Kalit yo&apos;q. Yuqoridagi tugma bilan yarating.
@@ -219,7 +219,7 @@ export function NxDmE2eSetupModal({
                                 {serverKeysWithStatus.map(k => (
                                     <div key={k.id} className="p-3 rounded-xl"
                                         style={{
-                                            background: "rgba(11,18,40,0.55)",
+                                            background: "var(--nx-surface)",
                                             border: `1px solid ${k.isActive ? "var(--nx-accent)" : "rgba(43,62,232,0.14)"}`,
                                         }}>
                                         <div className="flex items-center gap-2 mb-1.5">
@@ -281,7 +281,7 @@ export function NxDmE2eSetupModal({
                             style={{ color: "rgba(160,176,224,0.7)" }}>
                             Xavfsizlik eslatmalari
                         </p>
-                        <ul className="text-[11px] space-y-1.5" style={{ color: "rgba(180,195,235,0.85)" }}>
+                        <ul className="text-[11px] space-y-1.5" style={{ color: "var(--nx-text-2)" }}>
                             <li className="flex items-start gap-1.5">
                                 <ShieldCheck className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                 <span>Private kalit brauzer'ning shifrlangan IndexedDB'da saqlanadi</span>

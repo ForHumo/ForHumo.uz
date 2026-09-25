@@ -40,12 +40,12 @@ export function NxGroupPinnedList({
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Pin className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Pinlangan · {items.length}
                     </h3>
                     <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                        <X className="h-4 w-4 text-white" />
+                        <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
@@ -54,18 +54,18 @@ export function NxGroupPinnedList({
                             <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     ) : items.length === 0 ? (
-                        <p className="py-8 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>Pinlangan xabar yo&apos;q</p>
+                        <p className="py-8 text-center text-xs" style={{ color: "var(--nx-text-3)" }}>Pinlangan xabar yo&apos;q</p>
                     ) : items.map(m => (
                         <button key={m.id} onClick={() => { onJump?.(m.id); onClose(); }}
                             className="w-full text-left rounded-2xl px-3 py-2.5 mb-1 hover:bg-white/5 transition"
-                            style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                             <div className="flex items-center gap-2 mb-1">
                                 {m.author?.image && <img src={m.author.image} alt="" className="w-5 h-5 rounded-full object-cover" />}
                                 <p className="text-[11px] font-bold" style={{ color: "var(--nx-accent)" }}>
                                     {m.author?.name ?? m.author?.username ?? "Anonim"}
                                 </p>
                             </div>
-                            <p className="text-sm text-white line-clamp-2">
+                            <p className="text-sm text-[var(--nx-text)] line-clamp-2">
                                 {m.text ?? (m.mediaType === "location" ? "[joylashuv]"
                                     : m.mediaType === "contact" ? "[kontakt]"
                                     : m.mediaType === "audio" ? "[ovoz]"

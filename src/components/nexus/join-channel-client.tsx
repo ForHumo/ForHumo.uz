@@ -55,9 +55,9 @@ export function JoinChannelClient({ code }: { code: string }) {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-            style={{ background: "linear-gradient(180deg,#050818 0%,#0A1130 100%)" }}>
+            style={{ background: "linear-gradient(180deg,var(--nx-bg) 0%,#0A1130 100%)" }}>
             <div className="w-full max-w-sm rounded-3xl p-6"
-                style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.30)" }}>
+                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)" }}>
                 {loading ? (
                     <div className="flex justify-center py-12">
                         <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--nx-accent)" }} />
@@ -65,9 +65,9 @@ export function JoinChannelClient({ code }: { code: string }) {
                 ) : error ? (
                     <div className="text-center py-6">
                         <AlertCircle className="w-10 h-10 mx-auto mb-3" style={{ color: "#EF4444" }} />
-                        <p className="text-sm font-bold text-white">{error}</p>
+                        <p className="text-sm font-bold text-[var(--nx-text)]">{error}</p>
                         <button onClick={() => router.push("/nexus")}
-                            className="mt-4 text-xs font-bold px-4 py-2 rounded-xl text-white"
+                            className="mt-4 text-xs font-bold px-4 py-2 rounded-xl text-[var(--nx-text)]"
                             style={{ background: "rgba(43,62,232,0.20)", border: "1px solid rgba(43,62,232,0.35)" }}>
                             Nexus'ga o'tish
                         </button>
@@ -82,8 +82,8 @@ export function JoinChannelClient({ code }: { code: string }) {
                                 <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-3"
                                     style={{ background: "var(--nx-accent)" }}>
                                     {ch.type === "GROUP"
-                                        ? <Users className="w-8 h-8 text-white" />
-                                        : <Hash className="w-8 h-8 text-white" />
+                                        ? <Users className="w-8 h-8 text-[var(--nx-text)]" />
+                                        : <Hash className="w-8 h-8 text-[var(--nx-text)]" />
                                     }
                                 </div>
                             )}
@@ -91,7 +91,7 @@ export function JoinChannelClient({ code }: { code: string }) {
                                 style={{ color: "var(--nx-accent)" }}>
                                 {ch.type === "GROUP" ? "Guruh" : "Kanal"}
                             </p>
-                            <h1 className="text-lg font-black text-white mb-1">{ch.name}</h1>
+                            <h1 className="text-lg font-black text-[var(--nx-text)] mb-1">{ch.name}</h1>
                             {ch.handle && (
                                 <p className="text-xs" style={{ color: "rgba(140,160,210,0.75)" }}>@{ch.handle}</p>
                             )}
@@ -107,7 +107,7 @@ export function JoinChannelClient({ code }: { code: string }) {
                         </div>
 
                         <button onClick={join} disabled={joining}
-                            className="mt-6 w-full py-3 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-40"
+                            className="mt-6 w-full py-3 rounded-2xl text-sm font-black text-[var(--nx-text)] flex items-center justify-center gap-2 disabled:opacity-40"
                             style={{ background: "var(--nx-accent)" }}>
                             {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : status !== "authenticated" ? <LogIn className="w-4 h-4" /> : <Check className="w-4 h-4" />}
                             {status !== "authenticated" ? "Kirish va qo'shilish" : "Qo'shilish"}

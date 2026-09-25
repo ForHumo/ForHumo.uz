@@ -65,11 +65,11 @@ export function NxGroupMediaTab({
 
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white">Ulashilgan kontent</h3>
+                    <h3 className="text-base font-black text-[var(--nx-text)]">Ulashilgan kontent</h3>
                     <button onClick={onClose}
                         className="flex h-8 w-8 items-center justify-center rounded-full"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                        <X className="h-4 w-4 text-white" />
+                        <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -81,7 +81,7 @@ export function NxGroupMediaTab({
                             className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold"
                             style={tab === t.key
                                 ? { background: "rgba(43,62,232,0.18)", color: "#fff" }
-                                : { background: "rgba(11,18,40,0.5)", color: "rgba(140,160,210,0.8)" }}>
+                                : { background: "var(--nx-surface)", color: "rgba(140,160,210,0.8)" }}>
                             <t.icon className="w-3.5 h-3.5" />
                             {t.label}
                         </button>
@@ -94,7 +94,7 @@ export function NxGroupMediaTab({
                             <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     ) : items.length === 0 ? (
-                        <p className="py-8 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>Hech narsa yo&apos;q</p>
+                        <p className="py-8 text-center text-xs" style={{ color: "var(--nx-text-3)" }}>Hech narsa yo&apos;q</p>
                     ) : tab === "image" ? (
                         <div className="grid grid-cols-3 gap-1">
                             {items.map((it, i) => (
@@ -121,10 +121,10 @@ export function NxGroupMediaTab({
                             {items.map((it, i) => (
                                 <a key={i} href={it.url} target="_blank" rel="noopener"
                                     className="flex items-center gap-3 rounded-xl px-3 py-2.5"
-                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                     <FileText className="w-8 h-8 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm text-white truncate">{it.name || it.url.split("/").pop()}</p>
+                                        <p className="text-sm text-[var(--nx-text)] truncate">{it.name || it.url.split("/").pop()}</p>
                                         {it.size && <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>{formatSize(it.size)}</p>}
                                     </div>
                                     <ExternalLink className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.6)" }} />
@@ -136,9 +136,9 @@ export function NxGroupMediaTab({
                             {items.map((it, i) => (
                                 <a key={i} href={it.url} target="_blank" rel="noopener"
                                     className="flex items-center gap-3 rounded-xl px-3 py-2.5"
-                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                     <LinkIcon className="w-5 h-5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
-                                    <p className="text-xs text-white flex-1 truncate">{it.url}</p>
+                                    <p className="text-xs text-[var(--nx-text)] flex-1 truncate">{it.url}</p>
                                     <ExternalLink className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.6)" }} />
                                 </a>
                             ))}

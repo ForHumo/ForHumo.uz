@@ -138,11 +138,11 @@ export function NxGroupSettingsModal({
 
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white">Guruh sozlamalari</h3>
+                    <h3 className="text-base font-black text-[var(--nx-text)]">Guruh sozlamalari</h3>
                     <button onClick={onClose}
                         className="flex h-8 w-8 items-center justify-center rounded-full"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                        <X className="h-4 w-4 text-white" />
+                        <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -163,8 +163,8 @@ export function NxGroupSettingsModal({
                                         <Info className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-white">Humo eSport tomonidan boshqariladi</p>
-                                        <p className="text-[11px]" style={{ color: "rgba(180,195,235,0.85)" }}>
+                                        <p className="text-sm font-bold text-[var(--nx-text)]">Humo eSport tomonidan boshqariladi</p>
+                                        <p className="text-[11px]" style={{ color: "var(--nx-text-2)" }}>
                                             A&apos;zolar jamoa tarkibiga qarab avto-sinxron. Jamoa sahifasini ochish →
                                         </p>
                                     </div>
@@ -197,7 +197,7 @@ export function NxGroupSettingsModal({
                                                 } catch { alert("Yuklab bo'lmadi"); }
                                             }} />
                                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition">
-                                            <Upload className="w-6 h-6 text-white" />
+                                            <Upload className="w-6 h-6 text-[var(--nx-text)]" />
                                         </div>
                                     </label>
                                     {/* Avatar (cover ustida) */}
@@ -222,7 +222,7 @@ export function NxGroupSettingsModal({
                                                 } catch { alert("Yuklab bo'lmadi"); }
                                             }} />
                                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition">
-                                            <Camera className="w-4 h-4 text-white" />
+                                            <Camera className="w-4 h-4 text-[var(--nx-text)]" />
                                         </div>
                                     </label>
                                 </div>
@@ -236,7 +236,7 @@ export function NxGroupSettingsModal({
                                 </label>
                                 <input disabled={!canEdit} value={data.name}
                                     onChange={e => setData({ ...data, name: e.target.value })}
-                                    className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none disabled:opacity-60"
+                                    className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none disabled:opacity-60"
                                     style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                             </div>
 
@@ -248,7 +248,7 @@ export function NxGroupSettingsModal({
                                 <textarea disabled={!canEdit} value={data.description ?? ""}
                                     onChange={e => setData({ ...data, description: e.target.value })}
                                     rows={3}
-                                    className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none resize-none disabled:opacity-60"
+                                    className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none resize-none disabled:opacity-60"
                                     style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                             </div>
 
@@ -261,7 +261,7 @@ export function NxGroupSettingsModal({
                                     onChange={e => setData({ ...data, rules: e.target.value })}
                                     rows={4}
                                     placeholder="Guruh qoidalarini yozing..."
-                                    className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none resize-none disabled:opacity-60"
+                                    className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none resize-none disabled:opacity-60"
                                     style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                             </div>
 
@@ -273,7 +273,7 @@ export function NxGroupSettingsModal({
                                     </label>
                                     <select disabled={!canEdit} value={data.slowModeSeconds}
                                         onChange={e => setData({ ...data, slowModeSeconds: Number(e.target.value) })}
-                                        className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none disabled:opacity-60"
+                                        className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none disabled:opacity-60"
                                         style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }}>
                                         {SLOW_MODE_OPTIONS.map(o => (
                                             <option key={o.value} value={o.value} style={{ background: "#080C20" }}>{o.label}</option>
@@ -289,7 +289,7 @@ export function NxGroupSettingsModal({
                                 </label>
                                 <select disabled={!canEdit} value={data.autoDeleteAfterSeconds}
                                     onChange={e => setData({ ...data, autoDeleteAfterSeconds: Number(e.target.value) })}
-                                    className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none disabled:opacity-60"
+                                    className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none disabled:opacity-60"
                                     style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }}>
                                     {AUTO_DELETE_OPTIONS.map(o => (
                                         <option key={o.value} value={o.value} style={{ background: "#080C20" }}>{o.label}</option>
@@ -300,11 +300,11 @@ export function NxGroupSettingsModal({
                             {/* Restrict forwarding — faqat owner */}
                             {isOwner && (
                                 <label className="flex items-center gap-3 rounded-xl px-3 py-3"
-                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                     <input type="checkbox" checked={data.restrictForwarding}
                                         onChange={e => setData({ ...data, restrictForwarding: e.target.checked })} />
                                     <div className="flex-1">
-                                        <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                                        <p className="text-sm font-bold text-[var(--nx-text)] flex items-center gap-1.5">
                                             <ShieldOff className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             Forward taqiqi
                                         </p>
@@ -317,11 +317,11 @@ export function NxGroupSettingsModal({
                             {/* AI moderator — faqat owner */}
                             {isOwner && (
                                 <label className="flex items-center gap-3 rounded-xl px-3 py-3"
-                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                     <input type="checkbox" checked={data.aiModerator}
                                         onChange={e => setData({ ...data, aiModerator: e.target.checked })} />
                                     <div className="flex-1">
-                                        <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                                        <p className="text-sm font-bold text-[var(--nx-text)] flex items-center gap-1.5">
                                             <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             AI moderator
                                         </p>
@@ -334,11 +334,11 @@ export function NxGroupSettingsModal({
                             {/* Post signature — faqat owner + CHANNEL */}
                             {isOwner && data.type === "CHANNEL" && (
                                 <label className="flex items-center gap-3 rounded-xl px-3 py-3"
-                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                     <input type="checkbox" checked={data.signaturesEnabled}
                                         onChange={e => setData({ ...data, signaturesEnabled: e.target.checked })} />
                                     <div className="flex-1">
-                                        <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                                        <p className="text-sm font-bold text-[var(--nx-text)] flex items-center gap-1.5">
                                             <SignatureIcon className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             Post imzosi
                                         </p>
@@ -365,11 +365,11 @@ export function NxGroupSettingsModal({
                             {/* Sponsored toggle — CHANNEL owner */}
                             {isOwner && data.type === "CHANNEL" && (
                                 <label className="flex items-center gap-3 rounded-xl px-3 py-3"
-                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(245,179,1,0.20)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(245,179,1,0.20)" }}>
                                     <input type="checkbox" checked={data.sponsoredEnabled}
                                         onChange={e => setData({ ...data, sponsoredEnabled: e.target.checked })} />
                                     <div className="flex-1">
-                                        <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                                        <p className="text-sm font-bold text-[var(--nx-text)] flex items-center gap-1.5">
                                             <Sparkles className="w-3.5 h-3.5" style={{ color: "#F5B301" }} />
                                             Sponsored postlar
                                         </p>
@@ -382,11 +382,11 @@ export function NxGroupSettingsModal({
                             {/* Auto-translate — faqat owner */}
                             {isOwner && data.type === "GROUP" && (
                                 <label className="flex items-center gap-3 rounded-xl px-3 py-3"
-                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                     <input type="checkbox" checked={data.autoTranslate}
                                         onChange={e => setData({ ...data, autoTranslate: e.target.checked })} />
                                     <div className="flex-1">
-                                        <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                                        <p className="text-sm font-bold text-[var(--nx-text)] flex items-center gap-1.5">
                                             <Languages className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             Avto-tarjima
                                         </p>
@@ -409,11 +409,11 @@ export function NxGroupSettingsModal({
                                             return (
                                                 <label key={key}
                                                     className="flex items-center gap-3 rounded-xl px-3 py-2.5"
-                                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                                     <input type="checkbox" checked={val}
                                                         onChange={e => setPerm(key, e.target.checked)} />
                                                     <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.8)" }} />
-                                                    <p className="text-sm text-white flex-1">{label}</p>
+                                                    <p className="text-sm text-[var(--nx-text)] flex-1">{label}</p>
                                                 </label>
                                             );
                                         })}
@@ -426,7 +426,7 @@ export function NxGroupSettingsModal({
                         <div className="flex-shrink-0 px-5 py-4 space-y-2" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
                             {canEdit && (
                                 <button onClick={save} disabled={saving}
-                                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-60"
+                                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-[var(--nx-text)] disabled:opacity-60"
                                     style={{ background: "var(--nx-accent)" }}>
                                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     Saqlash
@@ -469,8 +469,8 @@ function DiscussionGroupPicker({
 
     return (
         <div className="rounded-xl px-3 py-3"
-            style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
-            <p className="text-sm font-bold text-white flex items-center gap-1.5 mb-1">
+            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+            <p className="text-sm font-bold text-[var(--nx-text)] flex items-center gap-1.5 mb-1">
                 <MessageSquare className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                 Muhokama guruhi
             </p>
@@ -480,7 +480,7 @@ function DiscussionGroupPicker({
             <select disabled={loading} value={value ?? ""}
                 onChange={e => onChange(e.target.value || null)}
                 className="w-full h-10 rounded-lg px-3 text-xs focus:outline-none"
-                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }}>
+                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }}>
                 <option value="">— Yo&apos;q (uzish) —</option>
                 {groups.map(g => (
                     <option key={g.id} value={g.id}>{g.name}</option>
@@ -516,10 +516,10 @@ function AllowedReactionsEditor({
 
     return (
         <div className="rounded-xl px-3 py-3"
-            style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
             <div className="flex items-center gap-2 mb-2">
                 <Smile className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
-                <p className="text-sm font-bold text-white flex-1">Ruxsat etilgan reaksiyalar</p>
+                <p className="text-sm font-bold text-[var(--nx-text)] flex-1">Ruxsat etilgan reaksiyalar</p>
                 {active && (
                     <button type="button" onClick={() => onChange([])}
                         className="text-[10px] font-bold hover:underline"
@@ -541,7 +541,7 @@ function AllowedReactionsEditor({
                             className="w-9 h-9 rounded-lg flex items-center justify-center text-xl transition"
                             style={on
                                 ? { background: "rgba(0,206,200,0.20)", border: "1px solid var(--nx-accent)" }
-                                : { background: "rgba(11,18,40,0.30)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                : { background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                             {e}
                         </button>
                     );

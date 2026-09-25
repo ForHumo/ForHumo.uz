@@ -263,7 +263,7 @@ export function NxNotifications() {
                 <div className="flex items-center gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <Bell className="w-5 h-5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                     <div className="flex-1">
-                        <h3 className="text-base font-black text-white">Bildirishnomalar</h3>
+                        <h3 className="text-base font-black text-[var(--nx-text)]">Bildirishnomalar</h3>
                         {unreadCount > 0 && <p className="text-[10px]" style={{ color: "rgba(0,206,200,0.80)" }}>{unreadCount} ta yangi</p>}
                     </div>
                     {pushState !== "unsupported" && pushState !== "denied" && (
@@ -297,7 +297,7 @@ export function NxNotifications() {
                     </button>
                     <button onClick={close} className="w-8 h-8 flex items-center justify-center rounded-xl"
                         style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.18)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -311,9 +311,9 @@ export function NxNotifications() {
                                 <button key={t} onClick={() => togglePref(t)}
                                     className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-left transition-all active:scale-[0.98]"
                                     style={{ background: enabled ? "rgba(0,206,200,0.08)" : "rgba(43,62,232,0.05)" }}>
-                                    <span className="text-[11px] font-bold text-white flex-1 truncate">{NOTIF_LABELS[t]}</span>
+                                    <span className="text-[11px] font-bold text-[var(--nx-text)] flex-1 truncate">{NOTIF_LABELS[t]}</span>
                                     <div className="w-9 h-5 rounded-full relative flex-shrink-0 transition-colors"
-                                        style={{ background: enabled ? "var(--nx-accent)" : "rgba(80,100,150,0.4)" }}>
+                                        style={{ background: enabled ? "var(--nx-accent)" : "var(--nx-text-2)" }}>
                                         <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
                                             style={{ left: enabled ? "18px" : "2px" }} />
                                     </div>
@@ -323,7 +323,7 @@ export function NxNotifications() {
 
                         {/* Ringtone selektori */}
                         <p className="text-[10px] font-black uppercase tracking-wider mt-4 mb-2" style={{ color: "rgba(140,160,210,0.75)" }}>Chaqiruv ohangi</p>
-                        <p className="text-[10px] mb-2" style={{ color: "rgba(120,140,185,0.65)" }}>Tanlash uchun bosing — darrov namuna eshittiradi</p>
+                        <p className="text-[10px] mb-2" style={{ color: "var(--nx-text-3)" }}>Tanlash uchun bosing — darrov namuna eshittiradi</p>
                         {(Object.keys(RINGTONE_LABELS) as RingtoneVariant[]).map(v => {
                             const active = ringtone === v;
                             return (
@@ -331,12 +331,12 @@ export function NxNotifications() {
                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all active:scale-[0.98]"
                                     style={{ background: active ? "rgba(0,206,200,0.12)" : "rgba(43,62,232,0.05)", border: active ? "1px solid rgba(0,206,200,0.30)" : "1px solid transparent" }}>
                                     <div className="w-5 h-5 flex-shrink-0 rounded-full flex items-center justify-center"
-                                        style={{ background: active ? "var(--nx-accent)" : "rgba(80,100,150,0.20)" }}>
-                                        {active && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                                        style={{ background: active ? "var(--nx-accent)" : "var(--nx-text-2)" }}>
+                                        {active && <Check className="w-3 h-3 text-[var(--nx-text)]" strokeWidth={3} />}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[11px] font-bold text-white leading-tight">{RINGTONE_LABELS[v]}</p>
-                                        <p className="text-[10px] mt-0.5" style={{ color: "rgba(120,140,185,0.75)" }}>{RINGTONE_DESCRIPTIONS[v]}</p>
+                                        <p className="text-[11px] font-bold text-[var(--nx-text)] leading-tight">{RINGTONE_LABELS[v]}</p>
+                                        <p className="text-[10px] mt-0.5" style={{ color: "var(--nx-text-3)" }}>{RINGTONE_DESCRIPTIONS[v]}</p>
                                     </div>
                                 </button>
                             );
@@ -390,11 +390,11 @@ export function NxNotifications() {
                                                         <img src={avatarOf(n.actor)} alt="" className="w-full h-full object-cover bg-white" />
                                                     </div>
                                                     <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: TYPE_COLORS[n.type] }}>
-                                                        <Icon className="w-2.5 h-2.5 text-white" />
+                                                        <Icon className="w-2.5 h-2.5 text-[var(--nx-text)]" />
                                                     </div>
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-[13px] text-white leading-snug">
+                                                    <p className="text-[13px] text-[var(--nx-text)] leading-snug">
                                                         <span className="font-bold inline-flex items-center gap-0.5">
                                                             {n.actor?.name || n.actor?.username || "Kimdir"}
                                                             {n.actor?.verified && <NxVerifiedBadge category={(n.actor as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={12} />}
@@ -402,8 +402,8 @@ export function NxNotifications() {
                                                         <span style={{ color: "rgba(180,200,240,0.85)" }}>{TYPE_TEXT[n.type]}</span>
                                                         {n.type === "TIP" && n.amount ? <span className="font-black ml-1" style={{ color: "#F59E0B" }}>{formatMoney(n.amount, currency)}</span> : null}
                                                     </p>
-                                                    {n.postText && <p className="text-[11px] mt-0.5 truncate" style={{ color: "rgba(120,140,185,0.7)" }}>&ldquo;{n.postText}&rdquo;</p>}
-                                                    <p className="text-[10px] mt-0.5" style={{ color: "rgba(80,100,150,0.75)" }}>{timeAgo(n.createdAt)}</p>
+                                                    {n.postText && <p className="text-[11px] mt-0.5 truncate" style={{ color: "var(--nx-text-3)" }}>&ldquo;{n.postText}&rdquo;</p>}
+                                                    <p className="text-[10px] mt-0.5" style={{ color: "var(--nx-text-2)" }}>{timeAgo(n.createdAt)}</p>
                                                 </div>
                                                 {!n.read && <div className="w-2 h-2 rounded-full flex-shrink-0 mt-2" style={{ background: "var(--nx-accent)" }} />}
                                             </>
@@ -432,7 +432,7 @@ export function NxNotifications() {
                             {filter !== "unread" && hasMore && (
                                 <div className="flex justify-center py-4">
                                     <button onClick={loadMore} disabled={loadingMore}
-                                        className="px-5 py-2 rounded-xl text-xs font-black text-white active:scale-95 disabled:opacity-50"
+                                        className="px-5 py-2 rounded-xl text-xs font-black text-[var(--nx-text)] active:scale-95 disabled:opacity-50"
                                         style={{ background: "var(--nx-accent)" }}>
                                         {loadingMore ? <><Loader2 className="w-3 h-3 animate-spin inline mr-1" />Yuklanmoqda</> : "Ko'proq"}
                                     </button>

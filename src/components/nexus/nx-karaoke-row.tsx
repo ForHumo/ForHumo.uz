@@ -47,7 +47,7 @@ export function NxKaraokeRow() {
                     <Mic2 className="w-4.5 h-4.5" style={{ color: "#A78BFA" }} />
                 </div>
                 <div className="flex-1">
-                    <div className="text-[16px] font-bold text-white">TOP karaoke ijrolari</div>
+                    <div className="text-[16px] font-bold text-[var(--nx-text)]">TOP karaoke ijrolari</div>
                     <div className="text-[11.5px]" style={{ color: "rgba(255,255,255,0.55)" }}>
                         Eng yuqori ball va like — haftalik top
                     </div>
@@ -77,17 +77,17 @@ export function NxKaraokeRow() {
                                     {p.score}
                                 </div>
                                 {p.duetOfId && (
-                                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[9px] font-bold text-white"
+                                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[9px] font-bold text-[var(--nx-text)]"
                                         style={{ background: "rgba(139,92,246,0.75)" }}>
                                         DUET
                                     </div>
                                 )}
-                                <div className="absolute bottom-2 left-2 right-2 flex items-center gap-1.5 text-[10px] text-white">
+                                <div className="absolute bottom-2 left-2 right-2 flex items-center gap-1.5 text-[10px] text-[var(--nx-text)]">
                                     <span className="inline-flex items-center gap-0.5"><Play className="w-3 h-3" fill="currentColor" />{p.plays.toLocaleString()}</span>
                                     <span className="inline-flex items-center gap-0.5"><Heart className="w-3 h-3" fill={p.isLiked ? "#EF4444" : "none"} style={{ color: p.isLiked ? "#EF4444" : undefined }} />{p.likeCount}</span>
                                 </div>
                             </div>
-                            <div className="text-[12.5px] font-semibold text-white line-clamp-1">{p.track?.title ?? "Karaoke"}</div>
+                            <div className="text-[12.5px] font-semibold text-[var(--nx-text)] line-clamp-1">{p.track?.title ?? "Karaoke"}</div>
                             <div className="text-[11px]" style={{ color: "rgba(255,255,255,0.5)" }}>{perfName}</div>
                         </Link>
                     );

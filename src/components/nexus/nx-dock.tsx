@@ -118,7 +118,7 @@ function CreateButton({ onClick }: { onClick: () => void }) {
                 boxShadow: "0 0 24px rgba(43,62,232,0.55), 0 4px 16px rgba(0,0,0,0.45)",
             }}
         >
-            <Plus className="w-5 h-5 text-white" strokeWidth={2.5} />
+            <Plus className="w-5 h-5 text-[var(--nx-text)]" strokeWidth={2.5} />
         </button>
     );
 }
@@ -178,7 +178,7 @@ function DockItem({ Icon, label, color, isActive, onClick }: ItemProps) {
                     className={cn("transition-all duration-300 flex-shrink-0", isActive ? "w-[15px] h-[15px]" : "w-[18px] h-[18px]")}
                     strokeWidth={isActive ? 2.0 : 1.6}
                     style={{
-                        color: isActive ? color : "rgba(120,140,185,0.75)",
+                        color: isActive ? color : "var(--nx-text-3)",
                         filter: isActive ? `drop-shadow(0 0 6px ${color}80)` : "none",
                     }}
                 />

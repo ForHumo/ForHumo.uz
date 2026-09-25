@@ -49,7 +49,7 @@ export function NxLiveCategory({ category, label }: { category: string; label: s
     }, [category, debouncedQ]);
 
     return (
-        <div className="min-h-screen pb-24" style={{ background: "#050818" }}>
+        <div className="min-h-screen pb-24" style={{ background: "var(--nx-bg)" }}>
             <div className="px-4 pt-4 md:pt-6 max-w-4xl mx-auto">
                 <Link href="/nexus/live/browse" className="inline-flex items-center gap-1 text-[11px] font-black mb-3 hover:underline" style={{ color: "rgba(200,180,230,0.75)" }}>
                     <ChevronLeft className="w-3.5 h-3.5" />Hub
@@ -61,10 +61,10 @@ export function NxLiveCategory({ category, label }: { category: string; label: s
                     <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(139,92,246,0.35), transparent 70%)" }} />
                     <div className="flex items-center gap-3 relative">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)" }}>
-                            <Hash className="w-5 h-5 text-white" />
+                            <Hash className="w-5 h-5 text-[var(--nx-text)]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-xl md:text-2xl font-black text-white leading-tight">#{label}</h1>
+                            <h1 className="text-xl md:text-2xl font-black text-[var(--nx-text)] leading-tight">#{label}</h1>
                             <p className="text-[11px]" style={{ color: "rgba(220,200,220,0.75)" }}>
                                 {live.length} jonli · {upcoming.length} rejada · {ended.length} tugagan
                             </p>
@@ -77,7 +77,7 @@ export function NxLiveCategory({ category, label }: { category: string; label: s
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgba(139,92,246,0.55)" }} />
                     <input value={q} onChange={e => setQ(e.target.value)}
                         placeholder={`#${label} ichida qidiruv...`}
-                        className="w-full h-10 rounded-xl pl-10 pr-9 text-sm text-white outline-none"
+                        className="w-full h-10 rounded-xl pl-10 pr-9 text-sm text-[var(--nx-text)] outline-none"
                         style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.30)", caretColor: "#EC4899" }} />
                     {q && (
                         <button onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -97,7 +97,7 @@ export function NxLiveCategory({ category, label }: { category: string; label: s
                         {live.length > 0 && (
                             <Section title="Hozir jonli" accent="#EF4444" Icon={Radio}>
                                 {live.map(s => <StreamCard key={s.id} s={s} onOpen={() => setRoomId(s.id)}
-                                    badge={<span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "#EF4444" }}>
+                                    badge={<span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-[var(--nx-text)]" style={{ background: "#EF4444" }}>
                                         <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />LIVE
                                     </span>}
                                     meta={<><Eye className="w-3 h-3" />{fmtN(s.viewers)} ko&apos;rmoqda</>} />)}
@@ -106,14 +106,14 @@ export function NxLiveCategory({ category, label }: { category: string; label: s
                         {upcoming.length > 0 && (
                             <Section title="Tez kunda" accent="#10B981" Icon={CalendarClock}>
                                 {upcoming.map(s => <StreamCard key={s.id} s={s} onOpen={() => setRoomId(s.id)}
-                                    badge={<span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "#10B981" }}>REJADA</span>}
+                                    badge={<span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-[var(--nx-text)]" style={{ background: "#10B981" }}>REJADA</span>}
                                     meta={<><CalendarClock className="w-3 h-3" />{fmtWhen(s.scheduledAt)}</>} />)}
                             </Section>
                         )}
                         {ended.length > 0 && (
                             <Section title="Yaqinda tugagan" accent="#8B5CF6" Icon={Radio}>
                                 {ended.map(s => <StreamCard key={s.id} s={s} onOpen={() => setRoomId(s.id)}
-                                    badge={<span className="px-2 py-0.5 rounded text-[10px] font-black text-white" style={{ background: s.recordingUrl ? "linear-gradient(135deg,#8B5CF6,#6366F1)" : "rgba(100,110,140,0.85)" }}>
+                                    badge={<span className="px-2 py-0.5 rounded text-[10px] font-black text-[var(--nx-text)]" style={{ background: s.recordingUrl ? "linear-gradient(135deg,#8B5CF6,#6366F1)" : "rgba(100,110,140,0.85)" }}>
                                         {s.recordingUrl ? "YOZUV" : "TUGADI"}
                                     </span>}
                                     meta={<><Eye className="w-3 h-3" />{fmtN(s.peakViewers)} eng yuqori</>} />)}
@@ -141,7 +141,7 @@ function Section({ title, accent, Icon, children }: { title: string; accent: str
         <div className="mb-5">
             <div className="flex items-center gap-2 mb-2">
                 <Icon className="w-3.5 h-3.5" style={{ color: accent }} />
-                <h2 className="text-sm font-black text-white">{title}</h2>
+                <h2 className="text-sm font-black text-[var(--nx-text)]">{title}</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{children}</div>
         </div>
@@ -156,10 +156,10 @@ function StreamCard({ s, onOpen, badge, meta }: { s: LStream; onOpen: () => void
                 <img src={avatarOf(s.author)} alt="" className="w-16 h-16 rounded-full object-cover bg-white" style={{ border: "2px solid rgba(139,92,246,0.5)" }} />
                 <div className="absolute top-2 left-2">{badge}</div>
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition flex items-center justify-center pointer-events-none" style={{ background: "rgba(5,8,24,0.40)" }}>
-                    <span className="px-3 py-1.5 rounded-xl text-xs font-black text-white" style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)" }}>Kirish</span>
+                    <span className="px-3 py-1.5 rounded-xl text-xs font-black text-[var(--nx-text)]" style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)" }}>Kirish</span>
                 </div>
             </div>
-            <p className="text-sm font-bold text-white truncate">{s.title}</p>
+            <p className="text-sm font-bold text-[var(--nx-text)] truncate">{s.title}</p>
             <p className="text-[11px] flex items-center gap-1.5" style={{ color: "rgba(200,180,230,0.75)" }}>
                 <span className="truncate flex items-center gap-0.5">
                     {s.author?.name || s.author?.username || "Streamer"}

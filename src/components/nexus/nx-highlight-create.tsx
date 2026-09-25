@@ -77,9 +77,9 @@ export function NxHighlightCreate({ onClose, onCreated }: Props) {
 
                 <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <Star className="w-5 h-5" style={{ color: "#EAB308" }} />
-                    <p className="text-base font-black text-white flex-1">Yangi highlight</p>
+                    <p className="text-base font-black text-[var(--nx-text)] flex-1">Yangi highlight</p>
                     <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -88,7 +88,7 @@ export function NxHighlightCreate({ onClose, onCreated }: Props) {
                         <label className="text-[10px] font-black uppercase tracking-widest mb-1.5 block" style={{ color: "rgba(140,160,210,0.75)" }}>Sarlavha</label>
                         <input value={title} onChange={e => setTitle(e.target.value.slice(0, 60))}
                             placeholder="Sayohatlar, Ishlar, Retseptlar..."
-                            className="w-full px-3.5 py-3 rounded-xl text-sm text-white outline-none"
+                            className="w-full px-3.5 py-3 rounded-xl text-sm text-[var(--nx-text)] outline-none"
                             style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                     </div>
 
@@ -117,7 +117,7 @@ export function NxHighlightCreate({ onClose, onCreated }: Props) {
                                             ) : previewUrl ? (
                                                 <img src={previewUrl} alt="" className="w-full h-full object-cover" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-white text-[9px] font-bold px-1 text-center" style={{ background: "var(--nx-accent)" }}>
+                                                <div className="w-full h-full flex items-center justify-center text-[var(--nx-text)] text-[9px] font-bold px-1 text-center" style={{ background: "var(--nx-accent)" }}>
                                                     {s.caption?.slice(0, 20) || "Aa"}
                                                 </div>
                                             )}
@@ -136,7 +136,7 @@ export function NxHighlightCreate({ onClose, onCreated }: Props) {
 
                 <div className="px-5 py-3 flex gap-2" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
                     <button onClick={onClose} disabled={busy}
-                        className="flex-1 px-4 py-3 rounded-xl text-xs font-bold text-white disabled:opacity-50"
+                        className="flex-1 px-4 py-3 rounded-xl text-xs font-bold text-[var(--nx-text)] disabled:opacity-50"
                         style={{ background: "rgba(43,62,232,0.10)" }}>
                         Bekor
                     </button>

@@ -119,7 +119,7 @@ export function NxContactsPage() {
             <div className="rounded-2xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-black/20 p-4 mb-4">
                 {hasContactPicker && (
                     <button onClick={syncBrowserContacts} disabled={busy}
-                        className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 mb-2">
+                        className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-[var(--nx-text)] text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 mb-2">
                         {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> Yuklanmoqda</> : <><Smartphone className="w-4 h-4" /> Telefondan kontaktlar tanlash</>}
                     </button>
                 )}
@@ -211,7 +211,7 @@ function ManualInputModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
                 <div className="grid grid-cols-2 gap-2">
                     <button onClick={onClose} className="h-11 rounded-xl bg-black/5 dark:bg-white/5 text-sm font-bold">Bekor</button>
                     <button onClick={() => contacts.length > 0 && onSubmit(contacts)} disabled={contacts.length === 0}
-                        className="h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold disabled:opacity-50">
+                        className="h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-[var(--nx-text)] text-sm font-bold disabled:opacity-50">
                         Sinxronlash
                     </button>
                 </div>

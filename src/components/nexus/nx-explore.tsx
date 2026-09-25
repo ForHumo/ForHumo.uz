@@ -147,7 +147,7 @@ export function NxExplore() {
                 <div className="px-4 pt-4 pb-2 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <div className="flex items-center gap-3 mb-3">
                         <Flame className="w-5 h-5 flex-shrink-0" style={{ color: "#F97316" }} />
-                        <h3 className="text-base font-black text-white flex-1">Kashfiyot</h3>
+                        <h3 className="text-base font-black text-[var(--nx-text)] flex-1">Kashfiyot</h3>
                         <button onClick={refresh} disabled={refreshing || loading} title="Yangilash"
                             className="w-8 h-8 flex items-center justify-center rounded-xl active:scale-95"
                             style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.25)" }}>
@@ -155,7 +155,7 @@ export function NxExplore() {
                         </button>
                         <button onClick={close} className="w-8 h-8 flex items-center justify-center rounded-xl"
                             style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.18)" }}>
-                            <X className="w-4 h-4 text-white" />
+                            <X className="w-4 h-4 text-[var(--nx-text)]" />
                         </button>
                     </div>
                     <button onClick={() => { close(); setSearchOpen(true); }}
@@ -172,7 +172,7 @@ export function NxExplore() {
                                 className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-black transition-all active:scale-95"
                                 style={tab === t.id
                                     ? { background: "var(--nx-accent)", color: "#fff" }
-                                    : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(160,180,230,0.85)" }}>
+                                    : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "var(--nx-text-2)" }}>
                                 {t.label}{tab === t.id && t.count > 0 ? ` (${t.count})` : ""}
                             </button>
                         ))}
@@ -191,18 +191,18 @@ export function NxExplore() {
                                         {lives.map(l => (
                                             <button key={l.id} onClick={() => openLive(l.id)}
                                                 className="text-left rounded-xl overflow-hidden active:scale-[0.98] transition"
-                                                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(239,68,68,0.25)" }}>
                                                 <div className="relative aspect-video flex items-center justify-center" style={{ background: "linear-gradient(135deg,rgba(40,10,20,0.9),rgba(30,15,50,0.9))" }}>
                                                     <img src={avatarOf(l.author)} alt="" className="w-10 h-10 rounded-full object-cover bg-white" style={{ border: "2px solid rgba(239,68,68,0.5)" }} />
-                                                    <span className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black text-white" style={{ background: "#EF4444" }}>
+                                                    <span className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black text-[var(--nx-text)]" style={{ background: "#EF4444" }}>
                                                         <span className="w-1 h-1 rounded-full bg-white animate-pulse" />LIVE
                                                     </span>
-                                                    <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.8)" }}>
+                                                    <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.8)" }}>
                                                         <Eye className="w-2.5 h-2.5" />{fmtN(l.viewers)}
                                                     </span>
                                                 </div>
                                                 <div className="px-2 py-1.5">
-                                                    <p className="text-[11px] font-bold text-white truncate">{l.title}</p>
+                                                    <p className="text-[11px] font-bold text-[var(--nx-text)] truncate">{l.title}</p>
                                                     <p className="text-[9px] truncate" style={{ color: "rgba(150,130,150,0.85)" }}>{l.author?.name || l.author?.username || "Streamer"}</p>
                                                 </div>
                                             </button>
@@ -218,14 +218,14 @@ export function NxExplore() {
                                         {tags.slice(0, tab === "tags" ? 20 : 6).map((t, i) => (
                                             <Link key={t.tag} href={`/nexus/tag/${t.tag}`} onClick={close}
                                                 className="flex items-center gap-2.5 p-2.5 rounded-xl active:scale-[0.98] transition"
-                                                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.14)" }}>
-                                                <span className="text-sm font-black" style={{ color: "rgba(80,100,150,0.6)", minWidth: "16px" }}>{i + 1}</span>
+                                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                                <span className="text-sm font-black" style={{ color: "var(--nx-text-2)", minWidth: "16px" }}>{i + 1}</span>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-1">
                                                         <Hash className="w-3 h-3 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
-                                                        <span className="text-[12px] font-bold text-white truncate">{t.tag}</span>
+                                                        <span className="text-[12px] font-bold text-[var(--nx-text)] truncate">{t.tag}</span>
                                                     </div>
-                                                    <span className="text-[9px]" style={{ color: "rgba(80,100,150,0.7)" }}>{t.count} post</span>
+                                                    <span className="text-[9px]" style={{ color: "var(--nx-text-2)" }}>{t.count} post</span>
                                                 </div>
                                             </Link>
                                         ))}
@@ -240,15 +240,15 @@ export function NxExplore() {
                                         {posts.map(p => (
                                             <Link key={p.id} href={`/nexus/p/${p.id}`} onClick={close}
                                                 className="flex gap-3 p-3 rounded-xl active:scale-[0.99] transition"
-                                                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(245,179,1,0.15)" }}>
+                                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(245,179,1,0.15)" }}>
                                                 <img src={avatarOf(p.author)} alt="" className="w-9 h-9 rounded-xl object-cover bg-white flex-shrink-0" />
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-1">
-                                                        <span className="text-xs font-bold text-white truncate">{p.author?.name || p.author?.username || "Foydalanuvchi"}</span>
+                                                        <span className="text-xs font-bold text-[var(--nx-text)] truncate">{p.author?.name || p.author?.username || "Foydalanuvchi"}</span>
                                                         {p.author?.verified && <NxVerifiedBadge category={p.author?.verifiedCategory} size={12} />}
                                                     </div>
                                                     {p.text && <p className="text-[12px] mt-0.5 line-clamp-2" style={{ color: "rgba(200,215,245,0.85)" }}>{p.text}</p>}
-                                                    <div className="flex items-center gap-3 mt-1.5 text-[10px]" style={{ color: "rgba(120,140,185,0.7)" }}>
+                                                    <div className="flex items-center gap-3 mt-1.5 text-[10px]" style={{ color: "var(--nx-text-3)" }}>
                                                         <span className="flex items-center gap-1"><Heart className="w-3 h-3" style={{ color: "#EF4444" }} />{p.likes}</span>
                                                         <span className="flex items-center gap-1"><MessageCircle className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />{p.comments}</span>
                                                     </div>
@@ -266,16 +266,16 @@ export function NxExplore() {
                                         {videos.map(v => (
                                             <button key={v.id} onClick={() => playVid(v)}
                                                 className="text-left rounded-xl overflow-hidden active:scale-[0.98] transition"
-                                                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(139,92,246,0.20)" }}>
+                                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(139,92,246,0.20)" }}>
                                                 <div className="relative aspect-video" style={{ background: "rgba(139,92,246,0.10)" }}>
                                                     {v.thumbUrl
                                                         ? <img src={v.thumbUrl} alt={v.title} className="w-full h-full object-cover" />
                                                         : <div className="w-full h-full flex items-center justify-center"><Play className="w-6 h-6" style={{ color: "rgba(139,92,246,0.4)" }} /></div>}
-                                                    {v.durationSec > 0 && <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
+                                                    {v.durationSec > 0 && <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                                 </div>
                                                 <div className="px-2 py-1.5">
-                                                    <p className="text-[11px] font-bold text-white line-clamp-2 leading-snug">{v.title}</p>
-                                                    <p className="text-[9px] mt-0.5 flex items-center gap-1" style={{ color: "rgba(120,140,185,0.7)" }}>
+                                                    <p className="text-[11px] font-bold text-[var(--nx-text)] line-clamp-2 leading-snug">{v.title}</p>
+                                                    <p className="text-[9px] mt-0.5 flex items-center gap-1" style={{ color: "var(--nx-text-3)" }}>
                                                         <Eye className="w-2.5 h-2.5" />{fmtN(v.views)}
                                                     </p>
                                                 </div>
@@ -297,7 +297,7 @@ export function NxExplore() {
                                                         : <div className="w-full h-full flex items-center justify-center"><Music2 className="w-4 h-4" style={{ color: "rgba(16,185,129,0.5)" }} /></div>}
                                                 </div>
                                                 <div className="min-w-0 flex-1 text-left">
-                                                    <p className="text-sm font-bold text-white truncate">{t.title}</p>
+                                                    <p className="text-sm font-bold text-[var(--nx-text)] truncate">{t.title}</p>
                                                     <p className="text-[11px] truncate" style={{ color: "rgba(120,150,135,0.8)" }}>{t.artist ?? "Noma'lum"}</p>
                                                 </div>
                                                 <span className="text-[10px] flex items-center gap-1 flex-shrink-0" style={{ color: "#10B981" }}>
@@ -313,7 +313,7 @@ export function NxExplore() {
                             {(tab === "all" || tab === "people") && (
                                 <SectionHead icon={<Users className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />} title="Kim kuzatishga arziydi" accent="var(--nx-accent)">
                                     {users.length === 0 ? (
-                                        <p className="text-xs px-4" style={{ color: "rgba(120,140,185,0.6)" }}>Hozircha tavsiya yo&apos;q</p>
+                                        <p className="text-xs px-4" style={{ color: "var(--nx-text-3)" }}>Hozircha tavsiya yo&apos;q</p>
                                     ) : (
                                         <>
                                             <div className="flex flex-col gap-2 px-3">
@@ -321,15 +321,15 @@ export function NxExplore() {
                                                     const isF = !!u.username && followed.has(u.username);
                                                     return (
                                                         <div key={i} className="flex items-center gap-3 p-3 rounded-xl"
-                                                            style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                                             <Link href={u.username ? `/nexus/u/${u.username}` : "/nexus"} onClick={close} className="flex items-center gap-3 flex-1 min-w-0">
                                                                 <img src={avatarOf(u)} alt="" className="w-10 h-10 rounded-xl object-cover bg-white flex-shrink-0" />
                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="flex items-center gap-1.5">
-                                                                        <span className="text-sm font-bold text-white truncate">{u.name || u.username || "Foydalanuvchi"}</span>
+                                                                        <span className="text-sm font-bold text-[var(--nx-text)] truncate">{u.name || u.username || "Foydalanuvchi"}</span>
                                                                         {u.verified && <NxVerifiedBadge category={u.verifiedCategory} size={13} />}
                                                                     </div>
-                                                                    {u.username && <span className="text-[10px]" style={{ color: "rgba(80,100,150,0.75)" }}>@{u.username}</span>}
+                                                                    {u.username && <span className="text-[10px]" style={{ color: "var(--nx-text-2)" }}>@{u.username}</span>}
                                                                 </div>
                                                             </Link>
                                                             {u.username && (
@@ -354,7 +354,7 @@ export function NxExplore() {
                                                 <div className="px-3 mt-2">
                                                     <button onClick={loadMoreUsers} disabled={loadingMore}
                                                         className="w-full py-2.5 rounded-xl text-xs font-black active:scale-[0.99] transition disabled:opacity-50"
-                                                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)", color: "rgba(180,195,235,0.9)" }}>
+                                                        style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)", color: "var(--nx-text-2)" }}>
                                                         {loadingMore ? "..." : "Ko'proq ko'rsatish"}
                                                     </button>
                                                 </div>
@@ -368,7 +368,7 @@ export function NxExplore() {
                                 <div className="text-center py-16 px-6">
                                     <Sparkles className="w-10 h-10 mx-auto mb-3" style={{ color: "rgba(43,62,232,0.25)" }} />
                                     <p className="text-sm font-black text-white/60 mb-1">Kashfiyot hozircha bo&apos;sh</p>
-                                    <p className="text-xs" style={{ color: "rgba(80,100,150,0.75)" }}>Birinchi bo&apos;lib kontent qo&apos;shing yoki keyinroq qayta tekshiring.</p>
+                                    <p className="text-xs" style={{ color: "var(--nx-text-2)" }}>Birinchi bo&apos;lib kontent qo&apos;shing yoki keyinroq qayta tekshiring.</p>
                                 </div>
                             )}
                         </>

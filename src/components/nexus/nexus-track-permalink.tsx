@@ -51,12 +51,12 @@ function Inner({ id }: { id: string }) {
     const kindLabel = t?.kind === "PODCAST" ? "Podkast" : t?.kind === "AUDIOBOOK" ? "Audiokitob" : "Musiqa";
 
     return (
-        <div className="h-full overflow-y-auto text-white" style={{ background: "#050818" }}>
+        <div className="h-full overflow-y-auto text-[var(--nx-text)]" style={{ background: "var(--nx-bg)" }}>
             <header className="sticky top-0 z-20 flex items-center gap-3 px-3 h-14 backdrop-blur-xl" style={{ background: "rgba(5,8,24,0.80)", borderBottom: "1px solid rgba(16,185,129,0.18)" }}>
                 <button onClick={() => router.push("/nexus")} className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(16,185,129,0.12)" }}>
-                    <ArrowLeft className="w-4 h-4 text-white" />
+                    <ArrowLeft className="w-4 h-4 text-[var(--nx-text)]" />
                 </button>
-                <div className="flex items-center gap-1.5 min-w-0"><Music2 className="w-4 h-4 flex-shrink-0" style={{ color: "#10B981" }} /><span className="text-base font-black text-white truncate">{kindLabel}</span></div>
+                <div className="flex items-center gap-1.5 min-w-0"><Music2 className="w-4 h-4 flex-shrink-0" style={{ color: "#10B981" }} /><span className="text-base font-black text-[var(--nx-text)] truncate">{kindLabel}</span></div>
             </header>
 
             {loading ? (
@@ -68,7 +68,7 @@ function Inner({ id }: { id: string }) {
                     <div className="w-56 h-56 rounded-3xl overflow-hidden mb-6" style={{ border: "1px solid rgba(16,185,129,0.25)", boxShadow: "0 16px 48px rgba(16,185,129,0.18)" }}>
                         <img src={cover} alt={t.title} className="w-full h-full object-cover" />
                     </div>
-                    <h1 className="text-xl font-black text-white mb-1">{t.title}</h1>
+                    <h1 className="text-xl font-black text-[var(--nx-text)] mb-1">{t.title}</h1>
                     <p className="text-sm mb-3 flex items-center gap-1.5" style={{ color: "rgba(140,180,160,0.9)" }}>
                         {t.artist || t.uploader?.name || t.uploader?.username || "Noma'lum"}
                         {t.uploader?.verified && <BadgeCheck className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />}
@@ -79,7 +79,7 @@ function Inner({ id }: { id: string }) {
                         {t.genre && <span>#{t.genre}</span>}
                     </p>
 
-                    <button onClick={play} className="w-full h-13 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2 mb-3" style={{ background: "linear-gradient(135deg,#10B981,#0D9488)", boxShadow: "0 8px 24px rgba(16,185,129,0.35)", height: 52 }}>
+                    <button onClick={play} className="w-full h-13 rounded-2xl text-sm font-black text-[var(--nx-text)] flex items-center justify-center gap-2 mb-3" style={{ background: "linear-gradient(135deg,#10B981,#0D9488)", boxShadow: "0 8px 24px rgba(16,185,129,0.35)", height: 52 }}>
                         <Play className="w-5 h-5 fill-white" /> Tinglash
                     </button>
                     <div className="flex gap-2 w-full">

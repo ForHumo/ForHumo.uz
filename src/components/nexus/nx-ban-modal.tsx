@@ -107,12 +107,12 @@ export function NxBanModal({ ban, onClose }: Props) {
                         <ShieldAlert className="w-6 h-6" style={{ color: "#EF4444" }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-base font-black text-white">Vaqtincha bloklandingiz</p>
+                        <p className="text-base font-black text-[var(--nx-text)]">Vaqtincha bloklandingiz</p>
                         <p className="text-xs mt-0.5" style={{ color: "rgba(140,160,210,0.85)" }}>AI xavfsizlik tizimi topgan qoidabuzarlik</p>
                     </div>
                     {!isForever && !isHard && (
                         <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }}>
-                            <X className="w-4 h-4 text-white" />
+                            <X className="w-4 h-4 text-[var(--nx-text)]" />
                         </button>
                     )}
                 </div>
@@ -122,7 +122,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                     {/* Sabab */}
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(140,160,210,0.75)" }}>Sabab</p>
-                        <p className="text-sm font-bold text-white">{reasonLabel}</p>
+                        <p className="text-sm font-bold text-[var(--nx-text)]">{reasonLabel}</p>
                         {isHard && (
                             <p className="text-[11px] mt-2 px-3 py-2 rounded-lg" style={{ color: "#EF4444", background: "rgba(239,68,68,0.10)" }}>
                                 Bu kategoriya jiddiy — o'zbekiston qonunchiligiga zid.
@@ -136,7 +136,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                         <div className="flex items-center gap-2.5 px-3.5 py-3 rounded-xl"
                             style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.20)" }}>
                             <Clock className="w-4 h-4" style={{ color: "#EF4444" }} />
-                            <span className="text-base font-black text-white tabular-nums flex-1">{remaining.text}</span>
+                            <span className="text-base font-black text-[var(--nx-text)] tabular-nums flex-1">{remaining.text}</span>
                         </div>
                         {ban.expiresAt && (
                             <p className="text-[10px] mt-1.5 px-1" style={{ color: "rgba(140,160,210,0.60)" }}>
@@ -152,7 +152,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                                 style={{ background: "rgba(0,206,200,0.12)", border: "1px solid rgba(0,206,200,0.35)" }}>
                                 <CheckCircle2 className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
                             </div>
-                            <p className="text-sm font-black text-white text-center">Ariza yuborildi</p>
+                            <p className="text-sm font-black text-[var(--nx-text)] text-center">Ariza yuborildi</p>
                             <p className="text-xs text-center max-w-xs" style={{ color: "rgba(140,160,210,0.80)" }}>
                                 Asoschi qisqa vaqt ichida ko'rib chiqadi. Adolatli bo'lsa blok bekor qilinadi.
                             </p>
@@ -170,7 +170,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                             <textarea value={appealText} onChange={e => { setAppealText(e.target.value.slice(0, 2000)); setErr(null); }}
                                 placeholder="Masalan: Bu xabar yaqin do'stimga hazil edi..."
                                 rows={4} maxLength={2000}
-                                className="w-full px-3.5 py-3 rounded-xl text-sm text-white outline-none resize-none"
+                                className="w-full px-3.5 py-3 rounded-xl text-sm text-[var(--nx-text)] outline-none resize-none"
                                 style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                             <div className="flex items-center justify-between mt-1 px-1">
                                 <span className="text-[10px]" style={{ color: err ? "#EF4444" : "rgba(140,160,210,0.60)" }}>
@@ -184,7 +184,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                                     Bekor
                                 </button>
                                 <button onClick={submitAppeal} disabled={sending || appealText.trim().length < 20}
-                                    className="flex-1 px-4 py-3 rounded-xl text-xs font-black text-white disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="flex-1 px-4 py-3 rounded-xl text-xs font-black text-[var(--nx-text)] disabled:opacity-50 flex items-center justify-center gap-2"
                                     style={{ background: "var(--nx-accent)" }}>
                                     {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                                     Yuborish
@@ -194,7 +194,7 @@ export function NxBanModal({ ban, onClose }: Props) {
                     ) : (
                         <div>
                             <button onClick={() => setShowAppeal(true)}
-                                className="w-full px-4 py-3 rounded-xl text-xs font-black text-white active:scale-[0.98] transition"
+                                className="w-full px-4 py-3 rounded-xl text-xs font-black text-[var(--nx-text)] active:scale-[0.98] transition"
                                 style={{ background: "var(--nx-accent)" }}>
                                 Adolatsiz deb hisoblayman — ariza yuborish
                             </button>

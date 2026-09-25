@@ -37,7 +37,7 @@ export function NxTopWritersRow() {
             <div className="mt-3 mb-3">
                 <div className="px-4 mb-2 flex items-center gap-2">
                     <Crown className="w-3.5 h-3.5" style={{ color: "#F5B301" }} />
-                    <span className="text-sm font-black text-white">Bu haftaning yulduzlari</span>
+                    <span className="text-sm font-black text-[var(--nx-text)]">Bu haftaning yulduzlari</span>
                 </div>
                 <div className="flex gap-2 overflow-x-auto px-4 pb-1" style={{ scrollbarWidth: "none" }}>
                     {[0,1,2,3,4].map(i => (
@@ -56,7 +56,7 @@ export function NxTopWritersRow() {
         <div className="mt-3 mb-3">
             <div className="px-4 mb-2 flex items-center gap-2">
                 <Crown className="w-3.5 h-3.5" style={{ color: "#F5B301" }} />
-                <span className="text-sm font-black text-white">Bu haftaning yulduzlari</span>
+                <span className="text-sm font-black text-[var(--nx-text)]">Bu haftaning yulduzlari</span>
                 <span className="text-[10px] ml-auto" style={{ color: "rgba(245,179,1,0.75)" }}>TOP 50</span>
             </div>
             <div className="flex gap-3 overflow-x-auto px-4 pb-1" style={{ scrollbarWidth: "none" }}>
@@ -65,7 +65,7 @@ export function NxTopWritersRow() {
                         className="w-24 flex-shrink-0 flex flex-col items-center gap-1.5 group active:scale-95 transition-transform">
                         <div className="relative">
                             {/* Rank raqami */}
-                            <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black text-white z-10"
+                            <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black text-[var(--nx-text)] z-10"
                                 style={{
                                     background: i === 0 ? "linear-gradient(135deg,#F5B301,#F97316)"
                                         : i === 1 ? "linear-gradient(135deg,#C0C0C0,#9CA3AF)"
@@ -92,7 +92,7 @@ export function NxTopWritersRow() {
                         </div>
                         <div className="text-center min-w-0 w-full">
                             <div className="flex items-center justify-center gap-0.5">
-                                <span className="text-[11px] font-black text-white truncate">{w.name || w.username}</span>
+                                <span className="text-[11px] font-black text-[var(--nx-text)] truncate">{w.name || w.username}</span>
                                 {w.verified && <NxVerifiedBadge category={w.verifiedCategory} size={10} />}
                             </div>
                             <div className="flex items-center justify-center gap-1.5 text-[9px] mt-0.5" style={{ color: "rgba(140,160,210,0.75)" }}>

@@ -52,7 +52,7 @@ export function NxAgentButtons({
                         return (
                             <button key={bi} type="button" disabled={isBusy}
                                 onClick={() => trigger(btn)}
-                                className="flex-1 min-w-0 py-1.5 px-2 rounded-md text-[11px] font-bold text-white truncate transition hover:brightness-110 active:scale-95 disabled:opacity-60"
+                                className="flex-1 min-w-0 py-1.5 px-2 rounded-md text-[11px] font-bold text-[var(--nx-text)] truncate transition hover:brightness-110 active:scale-95 disabled:opacity-60"
                                 style={{
                                     background: mine ? "rgba(255,255,255,0.14)" : "rgba(0,206,200,0.18)",
                                     border: `1px solid ${mine ? "rgba(255,255,255,0.20)" : "rgba(0,206,200,0.35)"}`,

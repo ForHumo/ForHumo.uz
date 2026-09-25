@@ -103,7 +103,7 @@ export function NxAdminAds() {
                         <button
                             key={tab.key}
                             onClick={() => setFilter(tab.key)}
-                            className="h-10 px-4 rounded-xl text-[13px] font-black flex-shrink-0 text-white"
+                            className="h-10 px-4 rounded-xl text-[13px] font-black flex-shrink-0 text-[var(--nx-text)]"
                             style={{
                                 background: active ? NX_GRADIENT : NX_BG,
                                 border: `1px solid ${active ? "transparent" : NX_BORDER}`,
@@ -169,7 +169,7 @@ function AdCard({ b, busy, onHide, onUnhide }: {
 
     return (
         <div
-            className="p-4 rounded-2xl text-white"
+            className="p-4 rounded-2xl text-[var(--nx-text)]"
             style={{
                 background: NX_BG,
                 border: `1px solid ${b.hidden ? "rgba(248,113,113,0.35)" : NX_BORDER}`,
@@ -211,7 +211,7 @@ function AdCard({ b, busy, onHide, onUnhide }: {
                         href={b.ctaUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[11px] flex items-center gap-1 mt-1 truncate text-white/60 hover:text-white"
+                        className="text-[11px] flex items-center gap-1 mt-1 truncate text-white/60 hover:text-[var(--nx-text)]"
                     >
                         <ExternalLink className="w-3 h-3" /> {b.ctaUrl}
                     </a>
@@ -251,7 +251,7 @@ function AdCard({ b, busy, onHide, onUnhide }: {
                     <button
                         onClick={onUnhide}
                         disabled={busy}
-                        className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-[12.5px] font-black disabled:opacity-60 text-white"
+                        className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-[12.5px] font-black disabled:opacity-60 text-[var(--nx-text)]"
                         style={{ background: NX_GRADIENT }}
                     >
                         {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Eye className="w-3.5 h-3.5" /> Qayta ochish</>}
@@ -297,7 +297,7 @@ function HideModal({ banner, note, setNote, onClose, onConfirm, busy }: {
             onClick={onClose}
         >
             <div
-                className="w-full max-w-md rounded-3xl p-5 text-white"
+                className="w-full max-w-md rounded-3xl p-5 text-[var(--nx-text)]"
                 style={{ background: "#0a0f1e", border: `1px solid ${NX_BORDER}` }}
                 onClick={(e) => e.stopPropagation()}
             >
@@ -313,7 +313,7 @@ function HideModal({ banner, note, setNote, onClose, onConfirm, busy }: {
                     onChange={(e) => setNote(e.target.value.slice(0, 300))}
                     rows={3}
                     placeholder="Sabab (ixtiyoriy — sohib ko'radi)"
-                    className="w-full p-3 rounded-xl text-[13px] resize-none focus:outline-none text-white"
+                    className="w-full p-3 rounded-xl text-[13px] resize-none focus:outline-none text-[var(--nx-text)]"
                     style={{
                         background: NX_BG,
                         border: `1px solid ${NX_BORDER}`,
@@ -326,7 +326,7 @@ function HideModal({ banner, note, setNote, onClose, onConfirm, busy }: {
                 <div className="flex items-center gap-2 mt-4">
                     <button
                         onClick={onClose}
-                        className="flex-1 h-11 rounded-xl text-[13px] font-black text-white"
+                        className="flex-1 h-11 rounded-xl text-[13px] font-black text-[var(--nx-text)]"
                         style={{ background: NX_BG, border: `1px solid ${NX_BORDER}` }}
                     >
                         Ortga
@@ -334,7 +334,7 @@ function HideModal({ banner, note, setNote, onClose, onConfirm, busy }: {
                     <button
                         onClick={onConfirm}
                         disabled={busy}
-                        className="flex-1 h-11 rounded-xl text-[13px] font-black flex items-center justify-center gap-1.5 text-white"
+                        className="flex-1 h-11 rounded-xl text-[13px] font-black flex items-center justify-center gap-1.5 text-[var(--nx-text)]"
                         style={{ background: "#dc2626" }}
                     >
                         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><EyeOff className="w-4 h-4" /> Yashirish</>}

@@ -168,9 +168,9 @@ export function LiveView() {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-1 duration-250 pb-32">
             {/* Header */}
-            <div className="mx-4 mt-4 mb-3 p-5 rounded-2xl relative overflow-hidden" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(239,68,68,0.22)" }}>
+            <div className="mx-4 mt-4 mb-3 p-5 rounded-2xl relative overflow-hidden" style={{ background: "var(--nx-surface)", border: "1px solid rgba(239,68,68,0.22)" }}>
                 <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(239,68,68,0.25) 0%, transparent 70%)" }} />
-                <h2 className="text-2xl md:text-3xl font-black text-white mb-1 relative">Jonli <span style={{ background: "linear-gradient(135deg,#EF4444,#F97316)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Efirlar</span></h2>
+                <h2 className="text-2xl md:text-3xl font-black text-[var(--nx-text)] mb-1 relative">Jonli <span style={{ background: "linear-gradient(135deg,#EF4444,#F97316)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Efirlar</span></h2>
                 <p className="text-xs mb-3 relative" style={{ color: "rgba(140,160,210,0.75)" }}>Real vaqtda — chat va ko&apos;ruvchilar jonli</p>
 
                 {/* Qidiruv */}
@@ -178,7 +178,7 @@ export function LiveView() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgba(239,68,68,0.55)" }} />
                     <input value={query} onChange={e => setQuery(e.target.value)}
                         placeholder="Efir sarlavhasi yoki kategoriya..."
-                        className="w-full h-10 rounded-xl pl-10 pr-9 text-sm text-white outline-none"
+                        className="w-full h-10 rounded-xl pl-10 pr-9 text-sm text-[var(--nx-text)] outline-none"
                         style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(239,68,68,0.22)", caretColor: "#EF4444" }} />
                     {query && (
                         <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -207,14 +207,14 @@ export function LiveView() {
                     style={{ background: "linear-gradient(135deg, rgba(239,68,68,0.18) 0%, rgba(249,115,22,0.12) 100%)", border: "1px solid rgba(239,68,68,0.35)", boxShadow: "0 4px 24px rgba(239,68,68,0.12)" }}>
                     <div className="relative flex-shrink-0">
                         <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
-                            <Radio className="w-5 h-5 text-white" />
+                            <Radio className="w-5 h-5 text-[var(--nx-text)]" />
                         </div>
                         <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 flex items-center justify-center">
                             <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                         </span>
                     </div>
                     <div className="flex-1 text-left">
-                        <p className="text-sm font-black text-white leading-tight">Jonli Efir Boshlash</p>
+                        <p className="text-sm font-black text-[var(--nx-text)] leading-tight">Jonli Efir Boshlash</p>
                         <p className="text-[11px] mt-0.5" style={{ color: "rgba(200,120,100,0.85)" }}>Auditoriyangizga real vaqtda ulaning</p>
                     </div>
                     <ChevronRight className="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" style={{ color: "rgba(239,68,68,0.70)" }} />
@@ -240,14 +240,14 @@ export function LiveView() {
                                 <div className="px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {live.map(s => (
                                         <StreamCard key={s.id} s={s} onOpen={() => setRoomId(s.id)}
-                                            badge={<span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "#EF4444" }}><span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />LIVE</span>}
+                                            badge={<span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-[var(--nx-text)]" style={{ background: "#EF4444" }}><span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />LIVE</span>}
                                             meta={<><Eye className="w-3 h-3" />{fmtViewers(s.viewers)} ko&apos;rmoqda</>} />
                                     ))}
                                 </div>
                                 {liveHasMore && (
                                     <div className="flex justify-center mt-4 px-4">
                                         <button onClick={loadMoreLive} disabled={loadingMore}
-                                            className="px-5 py-2 rounded-xl text-xs font-black text-white active:scale-95 disabled:opacity-50"
+                                            className="px-5 py-2 rounded-xl text-xs font-black text-[var(--nx-text)] active:scale-95 disabled:opacity-50"
                                             style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
                                             {loadingMore ? <><Loader2 className="w-3 h-3 animate-spin inline mr-1" />Yuklanmoqda</> : "Ko'proq efir"}
                                         </button>
@@ -265,14 +265,14 @@ export function LiveView() {
                                     const rem = reminders.has(s.id);
                                     return (
                                         <StreamCard key={s.id} s={s} onOpen={() => setRoomId(s.id)}
-                                            badge={<span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "#10B981" }}><CalendarClock className="w-3 h-3" />REJADA</span>}
+                                            badge={<span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-[var(--nx-text)]" style={{ background: "#10B981" }}><CalendarClock className="w-3 h-3" />REJADA</span>}
                                             meta={<><Clock className="w-3 h-3" />{fmtWhen(s.scheduledAt)}</>}
                                             corner={
                                                 <button onClick={e => { e.stopPropagation(); toggleReminder(s.id); }}
                                                     title={rem ? "Eslatma yoqilgan" : "Eslatma qo'shish"}
                                                     className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-lg"
                                                     style={{ background: rem ? "rgba(16,185,129,0.85)" : "rgba(5,8,24,0.75)", backdropFilter: "blur(6px)" }}>
-                                                    {rem ? <BellRing className="w-3.5 h-3.5 text-white" /> : <Bell className="w-3.5 h-3.5 text-white" />}
+                                                    {rem ? <BellRing className="w-3.5 h-3.5 text-[var(--nx-text)]" /> : <Bell className="w-3.5 h-3.5 text-[var(--nx-text)]" />}
                                                 </button>
                                             } />
                                     );
@@ -291,10 +291,10 @@ export function LiveView() {
                                         dim={!s.recordingUrl}
                                         badge={
                                             s.recordingUrl
-                                                ? <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "linear-gradient(135deg,#8B5CF6,#6366F1)" }}>
+                                                ? <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-[var(--nx-text)]" style={{ background: "linear-gradient(135deg,#8B5CF6,#6366F1)" }}>
                                                     <Play className="w-2.5 h-2.5 fill-current" />YOZUV
                                                   </span>
-                                                : <span className="px-2 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "rgba(100,110,140,0.85)" }}>TUGADI</span>
+                                                : <span className="px-2 py-0.5 rounded text-[10px] font-black text-[var(--nx-text)]" style={{ background: "rgba(100,110,140,0.85)" }}>TUGADI</span>
                                         }
                                         meta={<><Eye className="w-3 h-3" />{fmtViewers(s.peakViewers)} eng yuqori · {fmtStreamDur(s.startedAt, s.endedAt)}</>}
                                         corner={s.isMine ? (
@@ -308,7 +308,7 @@ export function LiveView() {
                                                 }} title="O'chirish"
                                                 className="absolute top-2 right-2 z-10 w-8 h-8 flex items-center justify-center rounded-lg"
                                                 style={{ background: "rgba(239,68,68,0.85)", backdropFilter: "blur(6px)" }}>
-                                                <Trash2 className="w-3.5 h-3.5 text-white" />
+                                                <Trash2 className="w-3.5 h-3.5 text-[var(--nx-text)]" />
                                             </button>
                                         ) : null} />
                                 ))}
@@ -342,7 +342,7 @@ function Section({ title, accent, children }: { title: string; accent: string; c
         <div className="mb-6">
             <div className="px-4 mb-3 flex items-center gap-2">
                 <div className="w-1 h-4 rounded-full" style={{ background: accent }} />
-                <span className="text-sm font-black text-white">{title}</span>
+                <span className="text-sm font-black text-[var(--nx-text)]">{title}</span>
             </div>
             {children}
         </div>
@@ -370,10 +370,10 @@ function StreamCard({ s, onOpen, badge, meta, dim, corner }: {
                 <img src={avatarOf(s.author)} alt="" className="w-16 h-16 rounded-full object-cover bg-white" style={{ border: "2px solid rgba(239,68,68,0.5)" }} />
                 <div className="absolute top-2 left-2">{badge}</div>
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none" style={{ background: "rgba(5,8,24,0.40)" }}>
-                    <span className="px-3 py-1.5 rounded-xl text-xs font-black text-white" style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>Kirish</span>
+                    <span className="px-3 py-1.5 rounded-xl text-xs font-black text-[var(--nx-text)]" style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>Kirish</span>
                 </div>
                 {corner}
-                {s.category && !corner && <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-white pointer-events-none" style={{ background: "rgba(5,8,24,0.75)" }}>#{s.category}</span>}
+                {s.category && !corner && <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-[var(--nx-text)] pointer-events-none" style={{ background: "rgba(5,8,24,0.75)" }}>#{s.category}</span>}
             </div>
             <div className="flex gap-2.5">
                 {s.author?.username ? (
@@ -384,11 +384,11 @@ function StreamCard({ s, onOpen, badge, meta, dim, corner }: {
                     <img src={avatarOf(s.author)} alt="" className="w-8 h-8 rounded-full flex-shrink-0 object-cover bg-white" style={{ border: "1px solid rgba(239,68,68,0.25)" }} />
                 )}
                 <div className="min-w-0">
-                    <h4 className="text-sm font-bold text-white leading-snug line-clamp-2 group-hover:text-[#F97316] transition-colors">{s.title}</h4>
+                    <h4 className="text-sm font-bold text-[var(--nx-text)] leading-snug line-clamp-2 group-hover:text-[#F97316] transition-colors">{s.title}</h4>
                     <p className="text-[11px] mt-1 flex items-center gap-1.5" style={{ color: "rgba(150,130,150,0.85)" }}>
                         {s.author?.username ? (
                             <Link href={`/nexus/u/${s.author.username}`} onClick={e => e.stopPropagation()}
-                                className="truncate inline-flex items-center gap-0.5 hover:text-white transition-colors">
+                                className="truncate inline-flex items-center gap-0.5 hover:text-[var(--nx-text)] transition-colors">
                                 {s.author.name || s.author.username}
                                 {s.author.verified && <NxVerifiedBadge category={s.author.verifiedCategory} size={12} />}
                             </Link>

@@ -112,12 +112,12 @@ export function NxChatLockModal({
             onClick={() => !busy && onClose()}>
             <div onClick={e => e.stopPropagation()}
                 className="w-full max-w-sm rounded-2xl overflow-hidden"
-                style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)" }}>
+                style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)" }}>
                 <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
                     <div className="flex items-center gap-2">
                         {mode === "unlock" ? <Unlock className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                             : <Lock className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />}
-                        <p className="text-sm font-black text-white">{title}</p>
+                        <p className="text-sm font-black text-[var(--nx-text)]">{title}</p>
                     </div>
                     <button onClick={onClose} className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
                         <X className="w-4 h-4 text-white/70" />
@@ -179,14 +179,14 @@ export function NxChatLockModal({
                             <div className="grid grid-cols-3 gap-2">
                                 {["1","2","3","4","5","6","7","8","9"].map(d => (
                                     <button key={d} type="button" onClick={() => addDigit(d)}
-                                        className="h-12 rounded-xl text-lg font-black text-white transition active:scale-95"
+                                        className="h-12 rounded-xl text-lg font-black text-[var(--nx-text)] transition active:scale-95"
                                         style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>
                                         {d}
                                     </button>
                                 ))}
                                 <div /> {/* bo'sh joy */}
                                 <button type="button" onClick={() => addDigit("0")}
-                                    className="h-12 rounded-xl text-lg font-black text-white transition active:scale-95"
+                                    className="h-12 rounded-xl text-lg font-black text-[var(--nx-text)] transition active:scale-95"
                                     style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>0</button>
                                 <button type="button" onClick={backDigit}
                                     className="h-12 rounded-xl flex items-center justify-center transition active:scale-95"
@@ -216,7 +216,7 @@ export function NxChatLockModal({
                     )}
 
                     <button onClick={submit} disabled={busy || (kind === "pin" && pin.length < 4)}
-                        className="w-full py-3 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-40"
+                        className="w-full py-3 rounded-xl text-sm font-black text-[var(--nx-text)] flex items-center justify-center gap-2 disabled:opacity-40"
                         style={{ background: "var(--nx-accent)" }}>
                         {busy && <Loader2 className="w-4 h-4 animate-spin" />}
                         {mode === "setup" && step === 1 && "Keyingi"}

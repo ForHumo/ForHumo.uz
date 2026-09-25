@@ -60,13 +60,13 @@ export function NxGroupIncoming() {
                     <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-white/15">
                         {incomingGroup.inviter.image
                             ? <Image src={incomingGroup.inviter.image} alt="" width={56} height={56} className="h-full w-full object-cover" />
-                            : <div className="flex h-full w-full items-center justify-center text-lg font-black text-white">
+                            : <div className="flex h-full w-full items-center justify-center text-lg font-black text-[var(--nx-text)]">
                                 {invLabel.slice(0, 2).toUpperCase()}
                             </div>}
                     </div>
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                            <p className="truncate text-base font-black text-white">{invLabel}</p>
+                            <p className="truncate text-base font-black text-[var(--nx-text)]">{invLabel}</p>
                             {incomingGroup.inviter.verified && <BadgeCheck className="h-4 w-4 text-sky-400" />}
                         </div>
                         <p className="mt-0.5 flex items-center gap-1.5 text-xs font-semibold text-white/70">
@@ -78,11 +78,11 @@ export function NxGroupIncoming() {
                 <div className="flex items-center justify-around gap-4">
                     <button onClick={decline}
                         className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-600 shadow-lg transition-transform hover:scale-105 active:scale-95">
-                        <PhoneOff className="h-6 w-6 text-white" />
+                        <PhoneOff className="h-6 w-6 text-[var(--nx-text)]" />
                     </button>
                     <button onClick={accept}
                         className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 shadow-lg transition-transform hover:scale-105 active:scale-95">
-                        <Users className="h-6 w-6 text-white" />
+                        <Users className="h-6 w-6 text-[var(--nx-text)]" />
                     </button>
                 </div>
             </div>

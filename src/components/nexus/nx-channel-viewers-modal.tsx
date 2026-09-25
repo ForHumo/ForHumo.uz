@@ -51,13 +51,13 @@ export function NxChannelViewersModal({
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Eye className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Ko&apos;rganlar · {total}
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -77,13 +77,13 @@ export function NxChannelViewersModal({
                             </p>
                             {viewers.map(v => (
                                 <div key={v.id} className="flex items-center gap-2 px-3 py-2 rounded-lg mb-1"
-                                    style={{ background: "rgba(11,18,40,0.55)" }}>
+                                    style={{ background: "var(--nx-surface)" }}>
                                     <img src={v.image ?? "/logos/forhumo.png"} alt=""
                                         className="w-8 h-8 rounded-full object-cover"
                                         style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-white truncate">{v.name ?? v.username ?? "?"}</p>
-                                        {v.username && <p className="text-[10px]" style={{ color: "rgba(120,140,185,0.7)" }}>@{v.username}</p>}
+                                        <p className="text-sm font-bold text-[var(--nx-text)] truncate">{v.name ?? v.username ?? "?"}</p>
+                                        {v.username && <p className="text-[10px]" style={{ color: "var(--nx-text-3)" }}>@{v.username}</p>}
                                     </div>
                                     <span className="text-[10px] flex-shrink-0" style={{ color: "rgba(140,160,210,0.7)" }}>
                                         {timeAgo(v.viewedAt)}

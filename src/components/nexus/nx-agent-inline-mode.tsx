@@ -69,7 +69,7 @@ export function NxAgentInlineMode({
                     <Sparkles className="w-3 h-3" /> Inline · @{bot}
                     {query && <span className="opacity-60">· {query.slice(0, 30)}</span>}
                 </div>
-                <button onClick={onClose} className="text-[10px] hover:text-white">Yopish</button>
+                <button onClick={onClose} className="text-[10px] hover:text-[var(--nx-text)]">Yopish</button>
             </div>
             {loading ? (
                 <div className="flex justify-center py-4">
@@ -98,10 +98,10 @@ export function NxAgentInlineMode({
                                     style={{ background: "rgba(43,62,232,0.10)" }} />
                             )}
                             <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold text-white truncate">{r.title}</p>
+                                <p className="text-xs font-bold text-[var(--nx-text)] truncate">{r.title}</p>
                                 {r.description && (
                                     <p className="text-[11px] mt-0.5 line-clamp-2"
-                                        style={{ color: "rgba(180,195,235,0.75)" }}>
+                                        style={{ color: "var(--nx-text-2)" }}>
                                         {r.description}
                                     </p>
                                 )}

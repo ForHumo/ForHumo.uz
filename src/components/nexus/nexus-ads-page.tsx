@@ -50,7 +50,7 @@ export function NexusAdsPage() {
     // Anonim — signIn CTA
     if (status === "unauthenticated") {
         return (
-            <div className="min-h-screen text-white" style={{ background: "#050914" }}>
+            <div className="min-h-screen text-[var(--nx-text)]" style={{ background: "#050914" }}>
                 <div className="max-w-2xl mx-auto px-4 py-12">
                     <div
                         className="rounded-3xl overflow-hidden"
@@ -81,7 +81,7 @@ export function NexusAdsPage() {
                         <div className="p-6">
                             <button
                                 onClick={() => signIn("google")}
-                                className="w-full h-12 rounded-xl text-[14px] font-black flex items-center justify-center gap-2 text-white"
+                                className="w-full h-12 rounded-xl text-[14px] font-black flex items-center justify-center gap-2 text-[var(--nx-text)]"
                                 style={{ background: NX_GRADIENT }}
                             >
                                 <LogIn className="w-4 h-4" />
@@ -95,7 +95,7 @@ export function NexusAdsPage() {
     }
 
     return (
-        <div className="min-h-screen text-white pb-24" style={{ background: "#050914" }}>
+        <div className="min-h-screen text-[var(--nx-text)] pb-24" style={{ background: "#050914" }}>
             <div className="max-w-3xl mx-auto px-4 py-6">
                 {/* Hero */}
                 <div
@@ -237,7 +237,7 @@ function Feature({ icon, label }: { icon: React.ReactNode; label: string }) {
             className="p-3 rounded-2xl text-center"
             style={{ background: NX_BG, border: `1px solid ${NX_BORDER}` }}
         >
-            <div className="w-8 h-8 rounded-xl grid place-items-center mx-auto mb-1.5 text-white" style={{ background: NX_GRADIENT }}>
+            <div className="w-8 h-8 rounded-xl grid place-items-center mx-auto mb-1.5 text-[var(--nx-text)]" style={{ background: NX_GRADIENT }}>
                 {icon}
             </div>
             <p className="text-[11px] font-bold text-white/80">{label}</p>

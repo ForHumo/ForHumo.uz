@@ -47,7 +47,7 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
 
     return (
         <div className="fixed inset-0 z-[100] overflow-y-auto"
-            style={{ background: "#050818" }}>
+            style={{ background: "var(--nx-bg)" }}>
             <div className="max-w-2xl mx-auto px-4 py-8">
                 <Link href="/nexus" className="inline-flex items-center gap-2 mb-6 text-sm font-bold"
                     style={{ color: "rgba(160,176,224,0.85)" }}>
@@ -71,13 +71,13 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
 
                 {data && (
                     <div className="rounded-2xl overflow-hidden"
-                        style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                        style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)" }}>
                         {/* Kanal header */}
                         <div className="p-5 border-b flex items-center gap-3" style={{ borderColor: "rgba(43,62,232,0.14)" }}>
                             <img src={data.channel.avatarUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${encodeURIComponent(data.channel.name)}`}
                                 alt="" className="w-14 h-14 rounded-2xl object-cover bg-white flex-shrink-0" />
                             <div className="flex-1 min-w-0">
-                                <p className="text-base font-black text-white truncate">{data.channel.name}</p>
+                                <p className="text-base font-black text-[var(--nx-text)] truncate">{data.channel.name}</p>
                                 <div className="mt-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider"
                                     style={{ color: "var(--nx-accent)" }}>
                                     {data.channel.type === "GROUP" ? <Users className="w-3 h-3" /> : <Megaphone className="w-3 h-3" />}
@@ -125,7 +125,7 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
                             {data.message.pollQuestion && (
                                 <div className="mt-3 p-3 rounded-xl"
                                     style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.20)" }}>
-                                    <p className="text-xs font-black text-white">{data.message.pollQuestion}</p>
+                                    <p className="text-xs font-black text-[var(--nx-text)]">{data.message.pollQuestion}</p>
                                     <div className="mt-2 space-y-1">
                                         {(data.message.pollOptions ?? []).map((o, i) => (
                                             <p key={i} className="text-xs" style={{ color: "rgba(220,230,255,0.85)" }}>• {o}</p>
@@ -143,7 +143,7 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
                                 <Copy className="w-3.5 h-3.5" /> Havoladan nusxa olish
                             </button>
                             <Link href={`/nexus?channel=${data.channel.handle}`}
-                                className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-black text-white"
+                                className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-black text-[var(--nx-text)]"
                                 style={{ background: "var(--nx-accent)" }}>
                                 <ExternalLink className="w-3.5 h-3.5" /> Kanalni ochish
                             </Link>

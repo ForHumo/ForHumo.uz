@@ -103,12 +103,12 @@ export function KaraokePerformanceCard({ p, onDeleted }: { p: KaraokePerformance
                 <div className="flex-1 min-w-0">
                     <Link href={p.performer?.username ? `/nexus/u/${p.performer.username}` : "/nexus"}
                         className="flex items-center gap-1 min-w-0">
-                        <span className="text-sm font-black text-white truncate">{p.performer?.name || p.performer?.username || "Foydalanuvchi"}</span>
+                        <span className="text-sm font-black text-[var(--nx-text)] truncate">{p.performer?.name || p.performer?.username || "Foydalanuvchi"}</span>
                         {p.performer?.verified && <NxVerifiedBadge category={p.performer?.verifiedCategory} size={12} />}
                     </Link>
                     {p.track && (
                         <Link href={`/nexus/t/${p.track.id}`}
-                            className="text-[10px] flex items-center gap-1 truncate hover:text-white transition-colors"
+                            className="text-[10px] flex items-center gap-1 truncate hover:text-[var(--nx-text)] transition-colors"
                             style={{ color: "rgba(180,150,220,0.75)" }}>
                             <Mic2 className="w-2.5 h-2.5" />
                             {p.track.title}{p.track.artist ? ` — ${p.track.artist}` : ""}
@@ -123,7 +123,7 @@ export function KaraokePerformanceCard({ p, onDeleted }: { p: KaraokePerformance
                 {/* Score badge */}
                 <div className="flex-shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center flex-col"
                     style={{ background: scoreColor(p.score), boxShadow: `0 4px 12px ${p.score >= 60 ? "rgba(0,206,200,0.35)" : "rgba(139,92,246,0.35)"}` }}>
-                    <span className="text-sm font-black text-white leading-none">{p.score}</span>
+                    <span className="text-sm font-black text-[var(--nx-text)] leading-none">{p.score}</span>
                     <span className="text-[7px] font-black text-white/85 uppercase mt-0.5">Ball</span>
                 </div>
             </div>
@@ -138,7 +138,7 @@ export function KaraokePerformanceCard({ p, onDeleted }: { p: KaraokePerformance
                 <button onClick={toggle}
                     className="w-10 h-10 flex items-center justify-center rounded-full flex-shrink-0"
                     style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", boxShadow: "0 4px 12px rgba(236,72,153,0.45)" }}>
-                    {playing ? <Pause className="w-5 h-5 text-white fill-white" /> : <Play className="w-5 h-5 text-white fill-white ml-0.5" />}
+                    {playing ? <Pause className="w-5 h-5 text-[var(--nx-text)] fill-white" /> : <Play className="w-5 h-5 text-[var(--nx-text)] fill-white ml-0.5" />}
                 </button>
                 {/* Progress bar */}
                 <div className="flex-1 min-w-0">
@@ -221,7 +221,7 @@ export function KaraokePerformancesFeed({ scope = "trending" }: { scope?: "trend
             <div className="mb-6">
                 <div className="px-4 mb-3 flex items-center gap-2">
                     <Trophy className="w-4 h-4" style={{ color: "#EC4899" }} />
-                    <span className="text-sm font-black text-white">Top karaoke ijrolari</span>
+                    <span className="text-sm font-black text-[var(--nx-text)]">Top karaoke ijrolari</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-4">
                     {[0,1].map(i => (
@@ -238,7 +238,7 @@ export function KaraokePerformancesFeed({ scope = "trending" }: { scope?: "trend
         <div className="mb-6">
             <div className="px-4 mb-3 flex items-center gap-2">
                 <Trophy className="w-4 h-4" style={{ color: "#EC4899" }} />
-                <span className="text-sm font-black text-white">
+                <span className="text-sm font-black text-[var(--nx-text)]">
                     {scope === "mine" ? "Mening karaoke ijrolarim" : scope === "new" ? "Yangi karaoke" : "Top karaoke ijrolari"}
                 </span>
                 <span className="text-[11px] font-bold" style={{ color: "rgba(180,150,220,0.75)" }}>{items.length}</span>

@@ -81,12 +81,12 @@ export function NxGroupBotsModal({
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Bot className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Botlar
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -94,14 +94,14 @@ export function NxGroupBotsModal({
                     {loading ? (
                         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     ) : bots.length === 0 ? (
-                        <p className="py-8 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>Bot qo&apos;shilmagan</p>
+                        <p className="py-8 text-center text-xs" style={{ color: "var(--nx-text-3)" }}>Bot qo&apos;shilmagan</p>
                     ) : bots.map(b => (
                         <div key={b.id} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 mb-1"
-                            style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                             <img src={b.agent?.avatarUrl ?? "/logos/forhumo.png"} alt=""
                                 className="w-10 h-10 rounded-full object-cover" />
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-white truncate">{b.agent?.name ?? "?"}</p>
+                                <p className="text-sm font-bold text-[var(--nx-text)] truncate">{b.agent?.name ?? "?"}</p>
                                 {b.agent?.handle && <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>@{b.agent.handle}</p>}
                             </div>
                             {canManage && (
@@ -137,7 +137,7 @@ export function NxGroupBotsModal({
                             <div className="space-y-2">
                                 <input value={q} onChange={e => setQ(e.target.value)}
                                     placeholder="Bot qidiring @handle yoki nomi..."
-                                    className="w-full rounded-xl px-3 py-2 text-sm text-white outline-none"
+                                    className="w-full rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none"
                                     style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }} />
                                 <div className="max-h-[180px] overflow-y-auto space-y-1" style={{ scrollbarWidth: "none" }}>
                                     {suggestions.map(a => (
@@ -146,7 +146,7 @@ export function NxGroupBotsModal({
                                             <img src={a.avatarUrl ?? "/logos/forhumo.png"} alt=""
                                                 className="w-8 h-8 rounded-full object-cover" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold text-white truncate">{a.name}</p>
+                                                <p className="text-xs font-bold text-[var(--nx-text)] truncate">{a.name}</p>
                                                 {a.handle && <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>@{a.handle}</p>}
                                             </div>
                                         </button>

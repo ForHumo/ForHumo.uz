@@ -66,7 +66,7 @@ export function NxAdCard({ ad }: { ad: NxAd }) {
                     </div>
                 )}
                 <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-semibold text-white flex items-center gap-1.5">
+                    <div className="text-[13px] font-semibold text-[var(--nx-text)] flex items-center gap-1.5">
                         {ad.ownerUsername ?? "For Humo"}
                         <span className="inline-flex items-center h-5 px-1.5 rounded text-[9px] font-bold" style={{ background: "rgba(139,92,246,0.25)", color: "#C4B5FD" }}>
                             HOMIY
@@ -83,7 +83,7 @@ export function NxAdCard({ ad }: { ad: NxAd }) {
 
             {/* Sarlavha + body */}
             <div className="p-4">
-                <h3 className="text-[16px] font-bold text-white leading-tight mb-1.5">{ad.title}</h3>
+                <h3 className="text-[16px] font-bold text-[var(--nx-text)] leading-tight mb-1.5">{ad.title}</h3>
                 {ad.body && (
                     <p className="text-[13px] leading-relaxed mb-3" style={{ color: "rgba(255,255,255,0.75)" }}>
                         {ad.body}

@@ -66,13 +66,13 @@ export function NxDmE2eVerifyModal({
                 style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}>
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <ShieldCheck className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         E2E verify · {peerName}
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -101,7 +101,7 @@ export function NxDmE2eVerifyModal({
                                 return (
                                     <div key={k.id} className="p-3 rounded-xl"
                                         style={{
-                                            background: "rgba(11,18,40,0.55)",
+                                            background: "var(--nx-surface)",
                                             border: `1px solid ${verified ? "var(--nx-accent)" : "rgba(43,62,232,0.14)"}`,
                                         }}>
                                         <div className="flex items-center gap-2 mb-2">

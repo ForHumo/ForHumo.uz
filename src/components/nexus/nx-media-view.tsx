@@ -154,7 +154,7 @@ export function MediaView() {
                         className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold flex-shrink-0 transition-all duration-200 active:scale-95"
                         style={sub === id
                             ? { background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 16px rgba(43,62,232,0.40)" }
-                            : { background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(140,160,210,0.85)" }}>
+                            : { background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(140,160,210,0.85)" }}>
                         <Icon className="w-4 h-4" />
                         {label}
                     </button>
@@ -169,7 +169,7 @@ export function MediaView() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgba(16,185,129,0.55)" }} />
                             <input value={query} onChange={e => setQuery(e.target.value)}
                                 placeholder={sub === "music" ? "Trek/ijrochi qidiring..." : sub === "podcast" ? "Podkast qidiring..." : "Audiokitob qidiring..."}
-                                className="w-full h-10 rounded-xl pl-10 pr-9 text-sm text-white outline-none"
+                                className="w-full h-10 rounded-xl pl-10 pr-9 text-sm text-[var(--nx-text)] outline-none"
                                 style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.22)", caretColor: "#10B981" }} />
                             {query && (
                                 <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -182,7 +182,7 @@ export function MediaView() {
                             title="Aralashtirib boshlash"
                             className="w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 disabled:opacity-40 active:scale-95"
                             style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
-                            <Shuffle className="w-4 h-4 text-white" />
+                            <Shuffle className="w-4 h-4 text-[var(--nx-text)]" />
                         </button>
                     </div>
 
@@ -214,10 +214,10 @@ export function MediaView() {
                             className="w-full flex items-center gap-3 p-4 rounded-2xl transition-all duration-150 active:scale-[0.99]"
                             style={{ background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.25)" }}>
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
-                                <Plus className="w-5 h-5 text-white" />
+                                <Plus className="w-5 h-5 text-[var(--nx-text)]" />
                             </div>
                             <div className="flex-1 text-left">
-                                <p className="text-sm font-black text-white">Trek yuklash</p>
+                                <p className="text-sm font-black text-[var(--nx-text)]">Trek yuklash</p>
                                 <p className="text-[10px]" style={{ color: "rgba(80,180,140,0.80)" }}>
                                     {sub === "music" ? "Musiqangizni" : sub === "podcast" ? "Podkastingizni" : "Audiokitobingizni"} butun Nexus tinglasin
                                 </p>
@@ -257,12 +257,12 @@ export function MediaView() {
                                         ? <img src={v.thumbUrl} alt={v.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                                         : <div className="w-full h-full flex items-center justify-center"><Film className="w-8 h-8 text-white/40" /></div>}
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ background: "rgba(5,8,24,0.35)" }}>
-                                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--nx-accent)" }}><Play className="w-5 h-5 text-white fill-white ml-0.5" /></div>
+                                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--nx-accent)" }}><Play className="w-5 h-5 text-[var(--nx-text)] fill-white ml-0.5" /></div>
                                     </div>
-                                    {v.price > 0 && <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "var(--nx-accent)" }}>{formatMoney(v.price, v.priceCurrency ?? "UZS")}</span>}
-                                    {v.durationSec > 0 && <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
+                                    {v.price > 0 && <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-black text-[var(--nx-text)]" style={{ background: "var(--nx-accent)" }}>{formatMoney(v.price, v.priceCurrency ?? "UZS")}</span>}
+                                    {v.durationSec > 0 && <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                 </div>
-                                <h4 className="text-sm font-bold text-white leading-snug line-clamp-2 group-hover:text-[var(--nx-accent)] transition-colors">{v.title}</h4>
+                                <h4 className="text-sm font-bold text-[var(--nx-text)] leading-snug line-clamp-2 group-hover:text-[var(--nx-accent)] transition-colors">{v.title}</h4>
                                 <p className="text-[11px] mt-1 flex items-center gap-1.5" style={{ color: "rgba(100,120,170,0.8)" }}>
                                     <span className="truncate">{v.author?.name || v.author?.username || ""}</span>
                                     <span>·</span>
@@ -314,7 +314,7 @@ function TrackRow({ title, accent, items, onPlay, onLike, onKaraoke, empty, hide
         <div className="mb-6">
             <div className="px-4 mb-3 flex items-center gap-2">
                 <div className="w-1 h-4 rounded-full" style={{ background: accent }} />
-                <span className="text-sm font-black text-white">{title}</span>
+                <span className="text-sm font-black text-[var(--nx-text)]">{title}</span>
                 {items.length > 0 && <span className="text-[11px] font-bold" style={{ color: "rgba(100,120,170,0.7)" }}>{items.length}</span>}
             </div>
             {items.length === 0 ? (
@@ -331,7 +331,7 @@ function TrackRow({ title, accent, items, onPlay, onLike, onKaraoke, empty, hide
                                 <img src={coverOf(t)} alt={t.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(5,8,24,0.40)" }}>
                                     <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
-                                        <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                                        <Play className="w-5 h-5 text-[var(--nx-text)] fill-white ml-0.5" />
                                     </div>
                                 </div>
                                 <button onClick={e => { e.stopPropagation(); onLike(t); }}
@@ -343,20 +343,20 @@ function TrackRow({ title, accent, items, onPlay, onLike, onKaraoke, empty, hide
                                 {t.hasKaraoke && onKaraoke && (
                                     <button onClick={e => { e.stopPropagation(); onKaraoke(t); }}
                                         title="Karaoke"
-                                        className="absolute top-2 left-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black text-white uppercase"
+                                        className="absolute top-2 left-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black text-[var(--nx-text)] uppercase"
                                         style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)", boxShadow: "0 4px 12px rgba(139,92,246,0.45)" }}>
                                         <Mic2 className="w-2.5 h-2.5" /> KARAOKE
                                     </button>
                                 )}
-                                <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold text-white flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.80)" }}>
+                                <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)] flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.80)" }}>
                                     <Clock className="w-2.5 h-2.5" />{fmtDur(t.durationSec)}
                                 </span>
                             </div>
-                            <p className="text-xs font-bold text-white truncate">{t.title}</p>
+                            <p className="text-xs font-bold text-[var(--nx-text)] truncate">{t.title}</p>
                             <p className="text-[10px] truncate flex items-center gap-1" style={{ color: "rgba(120,150,135,0.85)" }}>
                                 {t.uploader?.username ? (
                                     <Link href={`/nexus/u/${t.uploader.username}`}
-                                        className="truncate inline-flex items-center gap-0.5 hover:text-white transition-colors"
+                                        className="truncate inline-flex items-center gap-0.5 hover:text-[var(--nx-text)] transition-colors"
                                         onClick={e => e.stopPropagation()}>
                                         {t.artist || t.uploader.name || t.uploader.username}
                                         {t.uploader.verified && <NxVerifiedBadge category={t.uploader.verifiedCategory} size={10} />}

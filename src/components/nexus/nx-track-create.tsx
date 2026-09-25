@@ -163,9 +163,9 @@ export function NxTrackCreate({ open, onClose, onCreated, defaultKind = "MUSIC" 
                 style={{ background: "rgba(8,12,32,0.98)", border: "1px solid rgba(16,185,129,0.25)", maxHeight: "92vh" }}>
 
                 <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(16,185,129,0.14)" }}>
-                    <h3 className="text-sm font-black text-white">Trek yuklash</h3>
+                    <h3 className="text-sm font-black text-[var(--nx-text)]">Trek yuklash</h3>
                     <button onClick={close} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgba(16,185,129,0.10)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -181,9 +181,9 @@ export function NxTrackCreate({ open, onClose, onCreated, defaultKind = "MUSIC" 
                             ) : (
                                 <>
                                     <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
-                                        <Music2 className="w-8 h-8 text-white" />
+                                        <Music2 className="w-8 h-8 text-[var(--nx-text)]" />
                                     </div>
-                                    <span className="text-sm font-bold text-white">Audio tanlang</span>
+                                    <span className="text-sm font-bold text-[var(--nx-text)]">Audio tanlang</span>
                                     <span className="text-[11px]" style={{ color: "rgba(120,160,140,0.7)" }}>MP3, M4A, WAV, OGG · cheksiz hajm</span>
                                 </>
                             )}
@@ -216,11 +216,11 @@ export function NxTrackCreate({ open, onClose, onCreated, defaultKind = "MUSIC" 
                             </div>
 
                             <input value={title} onChange={e => setTitle(e.target.value.slice(0, 200))} placeholder="Trek nomi *"
-                                className="w-full h-11 px-3 rounded-xl text-sm text-white outline-none"
+                                className="w-full h-11 px-3 rounded-xl text-sm text-[var(--nx-text)] outline-none"
                                 style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.18)", caretColor: "#10B981" }} />
 
                             <input value={artist} onChange={e => setArtist(e.target.value.slice(0, 120))} placeholder="Ijrochi / muallif (ixtiyoriy)"
-                                className="w-full h-11 px-3 rounded-xl text-sm text-white outline-none"
+                                className="w-full h-11 px-3 rounded-xl text-sm text-[var(--nx-text)] outline-none"
                                 style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.18)", caretColor: "#10B981" }} />
 
                             <div>
@@ -260,7 +260,7 @@ export function NxTrackCreate({ open, onClose, onCreated, defaultKind = "MUSIC" 
                                         className="w-full flex items-center gap-2 p-3 text-left">
                                         <Mic2 className="w-4 h-4" style={{ color: "#8B5CF6" }} />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-black text-white">Karaoke va musiqa klipi</p>
+                                            <p className="text-xs font-black text-[var(--nx-text)]">Karaoke va musiqa klipi</p>
                                             <p className="text-[10px]" style={{ color: "rgba(180,150,220,0.75)" }}>
                                                 Klip video, instrumental (vokalsiz), lyrics timing (LRC)
                                             </p>
@@ -277,7 +277,7 @@ export function NxTrackCreate({ open, onClose, onCreated, defaultKind = "MUSIC" 
                                                 {videoUrl ? (
                                                     <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: "rgba(139,92,246,0.10)" }}>
                                                         <VideoIcon className="w-4 h-4" style={{ color: "#8B5CF6" }} />
-                                                        <span className="text-[11px] font-bold text-white flex-1 truncate">Yuklandi ({videoOrient === "VERTICAL" ? "9:16" : "16:9"})</span>
+                                                        <span className="text-[11px] font-bold text-[var(--nx-text)] flex-1 truncate">Yuklandi ({videoOrient === "VERTICAL" ? "9:16" : "16:9"})</span>
                                                         <button onClick={() => setVideoUrl(null)}><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
                                                     </div>
                                                 ) : (
@@ -298,7 +298,7 @@ export function NxTrackCreate({ open, onClose, onCreated, defaultKind = "MUSIC" 
                                                 {instrumentalUrl ? (
                                                     <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: "rgba(139,92,246,0.10)" }}>
                                                         <Music2 className="w-4 h-4" style={{ color: "#8B5CF6" }} />
-                                                        <span className="text-[11px] font-bold text-white flex-1 truncate">Instrumental yuklandi</span>
+                                                        <span className="text-[11px] font-bold text-[var(--nx-text)] flex-1 truncate">Instrumental yuklandi</span>
                                                         <button onClick={() => setInstrumentalUrl(null)}><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
                                                     </div>
                                                 ) : (
@@ -325,7 +325,7 @@ export function NxTrackCreate({ open, onClose, onCreated, defaultKind = "MUSIC" 
                                                 <textarea value={lyricsLrc} onChange={e => setLyricsLrc(e.target.value.slice(0, 200_000))}
                                                     placeholder={"[00:12.50] Birinchi qator matni\n[00:15.20] Ikkinchi qator\n[00:18.00] ..."}
                                                     rows={5}
-                                                    className="w-full px-3 py-2 rounded-lg text-[11px] font-mono text-white outline-none resize-y"
+                                                    className="w-full px-3 py-2 rounded-lg text-[11px] font-mono text-[var(--nx-text)] outline-none resize-y"
                                                     style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(139,92,246,0.22)", caretColor: "#8B5CF6" }} />
                                                 <p className="text-[9px] mt-1" style={{ color: "rgba(180,150,220,0.55)" }}>
                                                     Format: <span className="font-mono">[mm:ss.xx] matn</span> — har qatorda vaqt tegi va matn
@@ -339,7 +339,7 @@ export function NxTrackCreate({ open, onClose, onCreated, defaultKind = "MUSIC" 
                             {err && <p className="text-xs text-red-400 font-bold">{err}</p>}
 
                             <button onClick={publish} disabled={posting || !title.trim() || coverBusy}
-                                className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-50"
+                                className="w-full h-11 rounded-xl text-sm font-black text-[var(--nx-text)] flex items-center justify-center gap-2 disabled:opacity-50"
                                 style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
                                 {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4" /> Joylash</>}
                             </button>

@@ -84,10 +84,10 @@ export function NxFolderModal({
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center"
                         style={{ background: "var(--nx-accent)" }}>
-                        <Folder className="w-4 h-4 text-white" />
+                        <Folder className="w-4 h-4 text-[var(--nx-text)]" />
                     </div>
                     <div className="flex-1">
-                        <h3 className="text-sm font-black text-white">Yangi papka</h3>
+                        <h3 className="text-sm font-black text-[var(--nx-text)]">Yangi papka</h3>
                         <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.65)" }}>
                             Chatlaringizni papkalarga bo&apos;ling
                         </p>
@@ -106,7 +106,7 @@ export function NxFolderModal({
                         <input value={name} onChange={e => setName(e.target.value)}
                             placeholder="Ish, IT, Do'stlar..."
                             maxLength={30} autoFocus
-                            className="w-full mt-1.5 px-3 py-2.5 rounded-xl bg-transparent text-white text-sm focus:outline-none"
+                            className="w-full mt-1.5 px-3 py-2.5 rounded-xl bg-transparent text-[var(--nx-text)] text-sm focus:outline-none"
                             style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
                     </div>
 
@@ -156,7 +156,7 @@ export function NxFolderModal({
                                         }}
                                         className="w-4 h-4 rounded"
                                         style={{ accentColor: "var(--nx-accent)" }} />
-                                    <span className="text-sm text-white">{t.label}</span>
+                                    <span className="text-sm text-[var(--nx-text)]">{t.label}</span>
                                 </label>
                             ))}
                             <label className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer"
@@ -164,7 +164,7 @@ export function NxFolderModal({
                                 <input type="checkbox" checked={includeUnread}
                                     onChange={e => setIncludeUnread(e.target.checked)}
                                     className="w-4 h-4 rounded" style={{ accentColor: "var(--nx-accent)" }} />
-                                <span className="text-sm text-white">Faqat o&apos;qilmaganlar</span>
+                                <span className="text-sm text-[var(--nx-text)]">Faqat o&apos;qilmaganlar</span>
                             </label>
                         </div>
                     </div>
@@ -177,7 +177,7 @@ export function NxFolderModal({
                         className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white/70"
                         style={{ background: "rgba(43,62,232,0.10)" }}>Bekor</button>
                     <button onClick={save} disabled={busy || !name.trim()}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-black text-white disabled:opacity-40 flex items-center justify-center gap-2"
+                        className="flex-1 py-2.5 rounded-xl text-xs font-black text-[var(--nx-text)] disabled:opacity-40 flex items-center justify-center gap-2"
                         style={{ background: "var(--nx-accent)" }}>
                         {busy && <Loader2 size={14} className="animate-spin" />}
                         Yaratish

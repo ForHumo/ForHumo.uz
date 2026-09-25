@@ -147,7 +147,7 @@ export function NxSaved() {
                     </div>
                     <button onClick={() => setSavedOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -157,7 +157,7 @@ export function NxSaved() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgba(43,62,232,0.55)" }} />
                         <input value={query} onChange={e => setQuery(e.target.value)}
                             placeholder={tab === "all" ? "Post ichidan qidirish..." : tab === "videos" ? "Video ichidan qidirish..." : "Tarix ichidan qidirish..."}
-                            className="w-full h-9 rounded-xl pl-9 pr-9 text-sm text-white outline-none"
+                            className="w-full h-9 rounded-xl pl-9 pr-9 text-sm text-[var(--nx-text)] outline-none"
                             style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "var(--nx-accent)" }} />
                         {query && (
                             <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -179,7 +179,7 @@ export function NxSaved() {
                             <>
                                 <div className="flex flex-col gap-2">
                                     {filteredPosts.map(p => (
-                                        <div key={p.id} className="flex gap-3 p-3 rounded-2xl" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.16)" }}>
+                                        <div key={p.id} className="flex gap-3 p-3 rounded-2xl" style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.16)" }}>
                                             <Link href={`/nexus/p/${p.id}`} onClick={() => setSavedOpen(false)} className="flex gap-3 flex-1 min-w-0">
                                                 {p.media[0] && (
                                                     <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0" style={{ background: "rgba(43,62,232,0.10)" }}>
@@ -189,9 +189,9 @@ export function NxSaved() {
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-1.5 mb-1">
                                                         <img src={avatarOf(p.author)} alt="" className="w-5 h-5 rounded-md object-cover bg-white" />
-                                                        <span className="text-xs font-bold text-white truncate">{p.author?.name || p.author?.username || "Foydalanuvchi"}</span>
+                                                        <span className="text-xs font-bold text-[var(--nx-text)] truncate">{p.author?.name || p.author?.username || "Foydalanuvchi"}</span>
                                                         {p.author?.verified && <NxVerifiedBadge category={p.author?.verifiedCategory} size={11} />}
-                                                        <span className="text-[9px] flex-shrink-0" style={{ color: "rgba(80,100,150,0.7)" }}>{timeAgo(p.createdAt)}</span>
+                                                        <span className="text-[9px] flex-shrink-0" style={{ color: "var(--nx-text-2)" }}>{timeAgo(p.createdAt)}</span>
                                                     </div>
                                                     <p className="text-xs line-clamp-2 leading-relaxed" style={{ color: "rgba(190,205,240,0.85)" }}>{p.text || "(media post)"}</p>
                                                 </div>
@@ -207,7 +207,7 @@ export function NxSaved() {
                                 {!q && hasMore && (
                                     <div className="flex justify-center mt-3">
                                         <button onClick={loadMorePosts} disabled={loadingMore}
-                                            className="px-5 py-2 rounded-xl text-xs font-black text-white active:scale-95 disabled:opacity-50"
+                                            className="px-5 py-2 rounded-xl text-xs font-black text-[var(--nx-text)] active:scale-95 disabled:opacity-50"
                                             style={{ background: "var(--nx-accent)" }}>
                                             {loadingMore ? <><Loader2 className="w-3 h-3 animate-spin inline mr-1" />Yuklanmoqda</> : "Ko'proq"}
                                         </button>
@@ -228,17 +228,17 @@ export function NxSaved() {
                                                     ? <img src={v.thumbUrl} alt={v.title} className="w-full h-full object-cover" />
                                                     : <div className="w-full h-full flex items-center justify-center"><Film className="w-6 h-6 text-white/30" /></div>}
                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(5,8,24,0.40)" }}>
-                                                    <Play className="w-6 h-6 text-white fill-white" />
+                                                    <Play className="w-6 h-6 text-[var(--nx-text)] fill-white" />
                                                 </div>
-                                                {v.durationSec > 0 && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
+                                                {v.durationSec > 0 && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                             </div>
-                                            <p className="text-[11px] font-bold text-white line-clamp-2 leading-snug text-left">{v.title}</p>
+                                            <p className="text-[11px] font-bold text-[var(--nx-text)] line-clamp-2 leading-snug text-left">{v.title}</p>
                                             <p className="text-[9px] mt-0.5 text-left" style={{ color: "rgba(100,120,170,0.75)" }}>{v.author?.name || v.author?.username || "Foydalanuvchi"}</p>
                                         </button>
                                         <button onClick={() => unsaveVideo(v.id)} title="Belgilashdan olib tashlash"
                                             className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 md:hover:opacity-100 transition-opacity"
                                             style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(6px)" }}>
-                                            <X className="w-3 h-3 text-white" />
+                                            <X className="w-3 h-3 text-[var(--nx-text)]" />
                                         </button>
                                     </div>
                                 ))}
@@ -261,11 +261,11 @@ export function NxSaved() {
                                             <div className="relative aspect-video rounded-xl overflow-hidden mb-1.5" style={{ border: "1px solid rgba(43,62,232,0.15)", background: "rgba(43,62,232,0.08)" }}>
                                                 {v.image && <img src={v.image} alt={v.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />}
                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(5,8,24,0.45)" }}>
-                                                    <Play className="w-6 h-6 text-white fill-white" />
+                                                    <Play className="w-6 h-6 text-[var(--nx-text)] fill-white" />
                                                 </div>
-                                                {v.duration && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.85)" }}><Clock className="w-2.5 h-2.5" />{v.duration}</span>}
+                                                {v.duration && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)] flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.85)" }}><Clock className="w-2.5 h-2.5" />{v.duration}</span>}
                                             </div>
-                                            <p className="text-[11px] font-bold text-white line-clamp-2 leading-snug group-hover:text-[var(--nx-accent)] transition-colors">{v.title}</p>
+                                            <p className="text-[11px] font-bold text-[var(--nx-text)] line-clamp-2 leading-snug group-hover:text-[var(--nx-accent)] transition-colors">{v.title}</p>
                                             <p className="text-[9px] mt-0.5" style={{ color: "rgba(100,120,170,0.75)" }}>{v.author}</p>
                                         </button>
                                     ))}
@@ -281,7 +281,7 @@ export function NxSaved() {
 
 function SavedSkeleton() {
     return (
-        <div className="flex gap-3 p-3 rounded-2xl animate-pulse" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.12)" }}>
+        <div className="flex gap-3 p-3 rounded-2xl animate-pulse" style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.12)" }}>
             <div className="w-16 h-16 rounded-xl flex-shrink-0" style={{ background: "rgba(43,62,232,0.15)" }} />
             <div className="flex-1 space-y-1.5">
                 <div className="h-2.5 rounded" style={{ background: "rgba(43,62,232,0.15)", width: "40%" }} />

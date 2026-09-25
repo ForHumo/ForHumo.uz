@@ -85,13 +85,13 @@ export function NxDmChatLockSetup({
                 style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}>
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Lock className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Yopiq chatlar (PIN)
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -116,7 +116,7 @@ export function NxDmChatLockSetup({
                                         style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.30)" }}>
                                         <Lock className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-black text-white">PIN yoqilgan</p>
+                                            <p className="text-sm font-black text-[var(--nx-text)]">PIN yoqilgan</p>
                                             {status.hintText && (
                                                 <p className="text-[11px] mt-0.5" style={{ color: "rgba(160,176,224,0.85)" }}>
                                                     Eslatma: {status.hintText}
@@ -152,7 +152,7 @@ export function NxDmChatLockSetup({
                                 <input value={hint} onChange={e => setHint(e.target.value.slice(0, 80))}
                                     placeholder="Tug'ilgan yil / oxirgi 4 raqam..."
                                     className="w-full h-10 rounded-lg px-3 text-sm focus:outline-none"
-                                    style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }} />
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }} />
                             </div>
                             {error && <ErrorBox error={error} />}
                             <div className="flex gap-2">
@@ -233,7 +233,7 @@ function PinField({ label, value, onChange }: { label: string; value: string; on
                 onChange={e => onChange(e.target.value.replace(/\D/g, "").slice(0, 8))}
                 placeholder="••••"
                 className="w-full h-11 rounded-xl px-3 text-lg text-center tracking-widest focus:outline-none"
-                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.30)", color: "white", letterSpacing: "0.4em" }} />
+                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white", letterSpacing: "0.4em" }} />
         </div>
     );
 }

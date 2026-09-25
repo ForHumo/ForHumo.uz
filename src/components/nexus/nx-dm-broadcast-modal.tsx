@@ -123,13 +123,13 @@ export function NxDmBroadcastModal({
                 style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}>
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Users className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         {tab === "list" ? "Broadcast ro'yxatlar" : tab === "create" ? "Yangi ro'yxat" : activeList?.name}
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -142,7 +142,7 @@ export function NxDmBroadcastModal({
                                 <Users className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm" style={{ color: "rgba(160,176,224,0.7)" }}>Ro&apos;yxat yo&apos;q</p>
                                 <button onClick={() => setTab("create")}
-                                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black text-white"
+                                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black text-[var(--nx-text)]"
                                     style={{ background: "var(--nx-accent)" }}>
                                     <Plus className="w-3.5 h-3.5" /> Birinchi ro&apos;yxat
                                 </button>
@@ -150,17 +150,17 @@ export function NxDmBroadcastModal({
                         ) : (
                             <>
                                 <button onClick={() => setTab("create")}
-                                    className="w-full mb-2 h-10 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2"
+                                    className="w-full mb-2 h-10 rounded-xl text-sm font-black text-[var(--nx-text)] flex items-center justify-center gap-2"
                                     style={{ background: "var(--nx-accent)" }}>
                                     <Plus className="w-4 h-4" /> Yangi ro&apos;yxat
                                 </button>
                                 <div className="space-y-1.5">
                                     {items.map(l => (
                                         <div key={l.id} className="p-3 rounded-xl flex items-center gap-3"
-                                            style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                             <button onClick={() => { setActiveList(l); setTab("send"); }}
                                                 className="flex-1 min-w-0 text-left">
-                                                <p className="text-sm font-black text-white truncate">{l.name}</p>
+                                                <p className="text-sm font-black text-[var(--nx-text)] truncate">{l.name}</p>
                                                 <p className="text-[11px]" style={{ color: "rgba(160,176,224,0.7)" }}>
                                                     {l.memberCount} a&apos;zo
                                                 </p>
@@ -169,7 +169,7 @@ export function NxDmBroadcastModal({
                                                 {l.members.slice(0, 3).map(m => (
                                                     <img key={m.id} src={m.image ?? "/logos/forhumo.png"} alt=""
                                                         className="w-6 h-6 rounded-full object-cover"
-                                                        style={{ border: "2px solid #050818" }} />
+                                                        style={{ border: "2px solid var(--nx-bg)" }} />
                                                 ))}
                                             </div>
                                             <button onClick={() => delList(l.id)}
@@ -189,13 +189,13 @@ export function NxDmBroadcastModal({
                             <input value={name} onChange={e => setName(e.target.value.slice(0, 80))}
                                 placeholder="Ro'yxat nomi (masalan: Do'stlar)"
                                 className="w-full h-11 rounded-xl px-3 text-sm focus:outline-none mb-3"
-                                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }} />
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }} />
                             <div className="relative mb-2">
                                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "rgba(140,160,210,0.6)" }} />
                                 <input value={contactSearch} onChange={e => setContactSearch(e.target.value)}
                                     placeholder="Kontakt qidirish..."
                                     className="w-full h-10 rounded-xl pl-9 pr-3 text-sm focus:outline-none"
-                                    style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.20)", color: "white" }} />
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)", color: "white" }} />
                             </div>
                             <p className="text-[11px] mb-2" style={{ color: "rgba(160,176,224,0.7)" }}>
                                 Tanlangan: {selectedIds.size}
@@ -212,18 +212,18 @@ export function NxDmBroadcastModal({
                                             }}
                                             className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left"
                                             style={{
-                                                background: on ? "rgba(0,206,200,0.14)" : "rgba(11,18,40,0.55)",
+                                                background: on ? "rgba(0,206,200,0.14)" : "var(--nx-surface)",
                                                 border: `1px solid ${on ? "var(--nx-accent)" : "rgba(43,62,232,0.14)"}`,
                                             }}>
                                             <img src={c.image ?? "/logos/forhumo.png"} alt=""
                                                 className="w-8 h-8 rounded-full object-cover" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-bold text-white truncate">{c.name ?? c.username ?? "?"}</p>
+                                                <p className="text-sm font-bold text-[var(--nx-text)] truncate">{c.name ?? c.username ?? "?"}</p>
                                                 {c.username && <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.7)" }}>@{c.username}</p>}
                                             </div>
                                             {on && <div className="w-5 h-5 rounded-full flex items-center justify-center"
                                                 style={{ background: "var(--nx-accent)" }}>
-                                                <span className="text-[10px] font-black text-white">✓</span>
+                                                <span className="text-[10px] font-black text-[var(--nx-text)]">✓</span>
                                             </div>}
                                         </button>
                                     );
@@ -235,8 +235,8 @@ export function NxDmBroadcastModal({
                     {tab === "send" && activeList && (
                         <>
                             <div className="p-3 rounded-xl mb-3"
-                                style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
-                                <p className="text-sm font-black text-white">{activeList.name}</p>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                <p className="text-sm font-black text-[var(--nx-text)]">{activeList.name}</p>
                                 <p className="text-[11px]" style={{ color: "rgba(160,176,224,0.7)" }}>
                                     {activeList.memberCount} a&apos;zoga alohida DM yuboriladi
                                 </p>
@@ -245,7 +245,7 @@ export function NxDmBroadcastModal({
                                 placeholder="Xabar matni..."
                                 rows={5}
                                 className="w-full rounded-xl p-3 text-sm resize-none focus:outline-none"
-                                style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }} />
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }} />
                         </>
                     )}
                 </div>
@@ -271,7 +271,7 @@ export function NxDmBroadcastModal({
                     <div className="p-3 flex-shrink-0" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
                         <button onClick={send} disabled={!text.trim() || sending}
                             className="w-full h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                            style={{ background: "linear-gradient(135deg,#F5B301,#F97316)", color: "#050818" }}>
+                            style={{ background: "linear-gradient(135deg,#F5B301,#F97316)", color: "var(--nx-bg)" }}>
                             {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                             {activeList?.memberCount} kishiga yuborish
                         </button>

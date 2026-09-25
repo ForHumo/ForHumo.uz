@@ -138,7 +138,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
             onClick={() => !busy && onClose()}>
             <div onClick={e => e.stopPropagation()}
                 className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
-                style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "85vh" }}>
+                style={{ background: "var(--nx-bg)", border: "1px solid rgba(43,62,232,0.30)", maxHeight: "85vh" }}>
                 {/* Header */}
                 <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
                     <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                         </label>
                         <input value={title} onChange={e => setTitle(e.target.value)}
                             maxLength={64} autoFocus placeholder="Do'stlar guruhi..."
-                            className="w-full h-10 px-3 mt-1 rounded-lg bg-transparent text-white text-sm focus:outline-none"
+                            className="w-full h-10 px-3 mt-1 rounded-lg bg-transparent text-[var(--nx-text)] text-sm focus:outline-none"
                             style={{ border: "1px solid rgba(43,62,232,0.30)" }} />
                     </div>
                     {folders.length > 0 && (
@@ -251,7 +251,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                                             </div>
                                         )}
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-xs font-bold truncate text-white">
+                                            <p className="text-xs font-bold truncate text-[var(--nx-text)]">
                                                 {c.name || c.username || "Foydalanuvchi"}
                                             </p>
                                             {c.username && (
@@ -288,7 +288,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                         type="button"
                         onClick={onClose}
                         disabled={busy}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white transition disabled:opacity-40"
+                        className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[var(--nx-text)] transition disabled:opacity-40"
                         style={{ background: "rgba(43,62,232,0.10)" }}
                     >
                         Bekor
@@ -297,7 +297,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                         type="button"
                         onClick={submit}
                         disabled={busy || !title.trim() || selectedIds.size < 1}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-black text-white transition disabled:opacity-40 flex items-center justify-center gap-2"
+                        className="flex-1 py-2.5 rounded-xl text-xs font-black text-[var(--nx-text)] transition disabled:opacity-40 flex items-center justify-center gap-2"
                         style={{ background: "var(--nx-accent)" }}
                     >
                         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}

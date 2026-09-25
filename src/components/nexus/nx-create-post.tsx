@@ -221,9 +221,9 @@ export function NxCreatePost() {
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "var(--nx-accent)" }}>
-                            <Plus className="w-4 h-4 text-white" />
+                            <Plus className="w-4 h-4 text-[var(--nx-text)]" />
                         </div>
-                        <h2 className="text-base font-black text-white">Yangi post</h2>
+                        <h2 className="text-base font-black text-[var(--nx-text)]">Yangi post</h2>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="relative">
@@ -236,12 +236,12 @@ export function NxCreatePost() {
                             </button>
                             {showPrivacy && (
                                 <div className="absolute right-0 top-full mt-1 z-10 rounded-xl overflow-hidden w-36"
-                                    style={{ background: "rgba(11,18,40,0.98)", border: "1px solid rgba(43,62,232,0.25)", boxShadow: "0 8px 24px rgba(0,0,0,0.60)" }}>
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.25)", boxShadow: "0 8px 24px rgba(0,0,0,0.60)" }}>
                                     {privacyOptions.map(({ value, label, icon: Icon }) => (
                                         <button key={value}
                                             onClick={() => { setPrivacy(value); setShowPrivacy(false); }}
                                             className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-xs font-bold transition-all duration-100"
-                                            style={{ color: privacy === value ? "var(--nx-accent)" : "rgba(160,180,230,0.85)" }}>
+                                            style={{ color: privacy === value ? "var(--nx-accent)" : "var(--nx-text-2)" }}>
                                             <Icon className="w-3.5 h-3.5" />
                                             {label}
                                         </button>
@@ -252,7 +252,7 @@ export function NxCreatePost() {
                         <button onClick={close}
                             className="w-8 h-8 flex items-center justify-center rounded-full"
                             style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                            <X className="w-4 h-4 text-white" />
+                            <X className="w-4 h-4 text-[var(--nx-text)]" />
                         </button>
                     </div>
                 </div>
@@ -287,7 +287,7 @@ export function NxCreatePost() {
                             "So'rovnoma savolingizni kiriting..."
                         }
                         rows={4}
-                        className="w-full bg-transparent text-sm text-white placeholder:text-[rgba(80,100,150,0.60)] outline-none resize-none mb-2"
+                        className="w-full bg-transparent text-sm text-[var(--nx-text)] placeholder:text-[var(--nx-text-2)] outline-none resize-none mb-2"
                         style={{ minHeight: 80 }}
                     />
 
@@ -315,7 +315,7 @@ export function NxCreatePost() {
                                                 : <img src={url} alt="" className={`w-full object-cover ${media.length > 1 ? "h-24" : "max-h-64"}`} />}
                                             <button onClick={() => setMedia(prev => prev.filter((_, idx) => idx !== i))}
                                                 className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full" style={{ background: "rgba(0,0,0,0.65)" }}>
-                                                <X className="w-3 h-3 text-white" />
+                                                <X className="w-3 h-3 text-[var(--nx-text)]" />
                                             </button>
                                         </div>
                                     ))}
@@ -355,7 +355,7 @@ export function NxCreatePost() {
                                         onChange={e => updatePollOption(i, e.target.value)}
                                         placeholder={`${i + 1}-variant`}
                                         maxLength={60}
-                                        className="flex-1 px-4 py-3 rounded-xl bg-transparent text-sm text-white placeholder:text-[rgba(80,100,150,0.60)] outline-none"
+                                        className="flex-1 px-4 py-3 rounded-xl bg-transparent text-sm text-[var(--nx-text)] placeholder:text-[var(--nx-text-2)] outline-none"
                                         style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.22)" }}
                                     />
                                     {pollOptions.length > 2 && (
@@ -375,7 +375,7 @@ export function NxCreatePost() {
                                 </button>
                             )}
                             <div className="flex items-center justify-between px-1">
-                                <span className="text-xs" style={{ color: "rgba(80,100,150,0.70)" }}>Davomiyligi:</span>
+                                <span className="text-xs" style={{ color: "var(--nx-text-2)" }}>Davomiyligi:</span>
                                 <div className="flex gap-1">
                                     {POLL_DURATIONS.map(d => (
                                         <button key={d.hours} onClick={() => setPollHours(d.hours)}
@@ -392,7 +392,7 @@ export function NxCreatePost() {
                     {/* Trending teglar — real */}
                     {trendTags.length > 0 && (
                         <div className="mb-4">
-                            <p className="text-[10px] font-bold mb-2 px-1" style={{ color: "rgba(80,100,150,0.70)" }}>
+                            <p className="text-[10px] font-bold mb-2 px-1" style={{ color: "var(--nx-text-2)" }}>
                                 Trenddagi teglar
                             </p>
                             <div className="flex flex-wrap gap-1.5">
@@ -422,7 +422,7 @@ export function NxCreatePost() {
                     <div className="mb-2 rounded-2xl p-3" style={{ background: "rgba(245,179,1,0.06)", border: "1px solid rgba(245,179,1,0.22)" }}>
                         <div className="flex items-center gap-2 mb-2">
                             <Star className="w-3.5 h-3.5" style={{ color: "#F5B301" }} />
-                            <span className="text-xs font-black text-white">Pullik post</span>
+                            <span className="text-xs font-black text-[var(--nx-text)]">Pullik post</span>
                             <span className="text-[10px] ml-auto" style={{ color: "rgba(200,180,140,0.75)" }}>
                                 {price > 0 ? `${price.toLocaleString("uz-UZ")} so'm` : "Bepul"}
                             </span>
@@ -432,7 +432,7 @@ export function NxCreatePost() {
                                 value={price || ""}
                                 onChange={e => setPrice(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
                                 placeholder="Narx (0 = bepul)"
-                                className="flex-1 h-9 px-3 rounded-xl text-sm text-white outline-none"
+                                className="flex-1 h-9 px-3 rounded-xl text-sm text-[var(--nx-text)] outline-none"
                                 style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(245,179,1,0.25)", caretColor: "#F5B301" }} />
                             <div className="flex gap-1">
                                 {[0, 5000, 10000, 25000].map(v => (
@@ -469,7 +469,7 @@ export function NxCreatePost() {
                             <label className="flex items-center gap-2 cursor-pointer p-3">
                                 <input type="checkbox" checked={crossToChannel} onChange={e => setCrossToChannel(e.target.checked)} className="w-4 h-4" />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-black text-white">Kanalga ham joylash</p>
+                                    <p className="text-xs font-black text-[var(--nx-text)]">Kanalga ham joylash</p>
                                     <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.75)" }}>
                                         Post o&apos;z kanalingizga xabar sifatida ham yuboriladi
                                     </p>
@@ -487,16 +487,16 @@ export function NxCreatePost() {
                                                     : { background: "rgba(43,62,232,0.05)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                                 {c.avatarUrl
                                                     ? <img src={c.avatarUrl} alt="" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
-                                                    : <div className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] font-black text-white"
+                                                    : <div className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] font-black text-[var(--nx-text)]"
                                                         style={{ background: "var(--nx-accent)" }}>{c.name[0]?.toUpperCase() ?? "K"}</div>}
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-[11px] font-bold text-white truncate">{c.name}</p>
+                                                    <p className="text-[11px] font-bold text-[var(--nx-text)] truncate">{c.name}</p>
                                                     <p className="text-[9px]" style={{ color: "rgba(140,160,210,0.65)" }}>
                                                         {c.handle ? `@${c.handle} · ` : ""}{c.memberCount} a&apos;zo
                                                     </p>
                                                 </div>
                                                 {crossChannelId === c.id && <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "var(--nx-accent)" }}>
-                                                    <span className="text-white text-[10px] font-black">✓</span>
+                                                    <span className="text-[var(--nx-text)] text-[10px] font-black">✓</span>
                                                 </div>}
                                             </button>
                                         ))}
@@ -519,7 +519,7 @@ export function NxCreatePost() {
                         </div>
                     ) : (
                         <button onClick={publish} disabled={!canPublish || publishing || uploading}
-                            className="w-full py-3.5 rounded-2xl font-black text-sm text-white flex items-center justify-center gap-2 transition-all duration-200"
+                            className="w-full py-3.5 rounded-2xl font-black text-sm text-[var(--nx-text)] flex items-center justify-center gap-2 transition-all duration-200"
                             style={canPublish && !publishing && !uploading
                                 ? { background: "var(--nx-accent)", boxShadow: "0 8px 24px rgba(43,62,232,0.35)" }
                                 : { background: "rgba(43,62,232,0.15)", opacity: 0.6 }}>

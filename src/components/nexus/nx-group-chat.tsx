@@ -35,19 +35,19 @@ export function NxGroupChat({ open, onClose }: { open: boolean; onClose: () => v
                 style={{ border: "1px solid rgba(43,62,232,0.22)" }}
                 onClick={e => e.stopPropagation()}>
                 <div className="flex flex-shrink-0 items-center justify-between px-5 pt-5 pb-3">
-                    <h3 className="flex items-center gap-2 text-base font-black text-white">
+                    <h3 className="flex items-center gap-2 text-base font-black text-[var(--nx-text)]">
                         <MessageSquare className="h-4 w-4" style={{ color: "var(--nx-accent)" }} /> Chat
                     </h3>
                     <button onClick={onClose}
                         className="flex h-8 w-8 items-center justify-center rounded-full"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                        <X className="h-4 w-4 text-white" />
+                        <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
                 <div ref={listRef} className="flex-1 space-y-2 overflow-y-auto px-4 py-2" style={{ scrollbarWidth: "none" }}>
                     {chatMessages.length === 0 && (
-                        <p className="py-10 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>Suhbat boshlang</p>
+                        <p className="py-10 text-center text-xs" style={{ color: "var(--nx-text-3)" }}>Suhbat boshlang</p>
                     )}
                     {chatMessages.map((m, i) => {
                         const mine = m.from?.identity === localParticipant?.identity;
@@ -58,7 +58,7 @@ export function NxGroupChat({ open, onClose }: { open: boolean; onClose: () => v
                                     {!mine && (
                                         <p className="pl-2 text-[10px] font-bold" style={{ color: "rgba(0,206,200,0.85)" }}>{label}</p>
                                     )}
-                                    <div className={`rounded-2xl px-3 py-2 text-sm ${mine ? "text-white" : "text-white"}`}
+                                    <div className={`rounded-2xl px-3 py-2 text-sm ${mine ? "text-[var(--nx-text)]" : "text-[var(--nx-text)]"}`}
                                         style={mine
                                             ? { background: "var(--nx-accent)" }
                                             : { background: "rgba(43,62,232,0.15)" }}>
@@ -75,10 +75,10 @@ export function NxGroupChat({ open, onClose }: { open: boolean; onClose: () => v
                     style={{ borderTop: "1px solid rgba(43,62,232,0.15)" }}>
                     <input value={text} onChange={e => setText(e.target.value)}
                         placeholder="Xabar yozing..."
-                        className="flex-1 rounded-xl px-3 py-2 text-sm text-white outline-none"
+                        className="flex-1 rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none"
                         style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                     <button type="submit" disabled={isSending || !text.trim()}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-lg disabled:opacity-40"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--nx-text)] shadow-lg disabled:opacity-40"
                         style={{ background: "var(--nx-accent)" }}>
                         <Send className="h-4 w-4" />
                     </button>

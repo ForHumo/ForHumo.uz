@@ -55,10 +55,10 @@ export function NexusAdminDashboard() {
                         <Link href="/nexus"
                             className="w-9 h-9 rounded-xl flex items-center justify-center transition"
                             style={{ background: "rgba(43,62,232,0.14)", border: "1px solid rgba(43,62,232,0.28)" }}>
-                            <ArrowLeft className="w-4 h-4 text-white" />
+                            <ArrowLeft className="w-4 h-4 text-[var(--nx-text)]" />
                         </Link>
                         <div>
-                            <h1 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
+                            <h1 className="text-xl md:text-2xl font-black text-[var(--nx-text)] flex items-center gap-2">
                                 <Shield className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                                 Nexus admin
                             </h1>
@@ -99,9 +99,9 @@ export function NexusAdminDashboard() {
 
                         {/* 30-day chart */}
                         <div className="rounded-2xl p-4 md:p-5 mb-6"
-                            style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)" }}>
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-sm font-black text-white">Xabarlar (30 kun)</h2>
+                                <h2 className="text-sm font-black text-[var(--nx-text)]">Xabarlar (30 kun)</h2>
                                 <div className="flex items-center gap-3 text-[10px]" style={{ color: "rgba(180,192,224,0.85)" }}>
                                     <LegendItem color="var(--nx-accent)" label="DM" />
                                     <LegendItem color="var(--nx-accent)" label="Kanal" />
@@ -122,13 +122,13 @@ export function NexusAdminDashboard() {
                                     <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(180,192,224,0.65)" }}>
                                         Kutayotgan flag
                                     </p>
-                                    <p className="text-lg font-black text-white">{data.moderation.pendingFlags}</p>
+                                    <p className="text-lg font-black text-[var(--nx-text)]">{data.moderation.pendingFlags}</p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(180,192,224,0.65)" }}>
                                         Yashirilgan (7 kun)
                                     </p>
-                                    <p className="text-lg font-black text-white">{data.moderation.hiddenChanMsg7d}</p>
+                                    <p className="text-lg font-black text-[var(--nx-text)]">{data.moderation.hiddenChanMsg7d}</p>
                                 </div>
                             </div>
                             <Link href="/admin/moderation"
@@ -141,8 +141,8 @@ export function NexusAdminDashboard() {
                         {/* Top senderlar + kanallar (2 ustun) */}
                         <div className="grid md:grid-cols-2 gap-4">
                             <div className="rounded-2xl p-4"
-                                style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.20)" }}>
-                                <h2 className="text-sm font-black text-white mb-3">Top 10 yozuvchi (7 kun)</h2>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                                <h2 className="text-sm font-black text-[var(--nx-text)] mb-3">Top 10 yozuvchi (7 kun)</h2>
                                 {data.topSenders7d.length === 0 ? (
                                     <p className="text-xs py-4 text-center" style={{ color: "rgba(140,160,210,0.60)" }}>
                                         Ma&apos;lumot yo&apos;q
@@ -165,7 +165,7 @@ export function NexusAdminDashboard() {
                                                     </div>
                                                 )}
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-bold text-white truncate">
+                                                    <p className="text-xs font-bold text-[var(--nx-text)] truncate">
                                                         {s.name || s.username || "Foydalanuvchi"}
                                                     </p>
                                                     {s.username && (
@@ -184,8 +184,8 @@ export function NexusAdminDashboard() {
                             </div>
 
                             <div className="rounded-2xl p-4"
-                                style={{ background: "rgba(11,18,40,0.65)", border: "1px solid rgba(43,62,232,0.20)" }}>
-                                <h2 className="text-sm font-black text-white mb-3">Top 10 kanal/guruh (7 kun)</h2>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.20)" }}>
+                                <h2 className="text-sm font-black text-[var(--nx-text)] mb-3">Top 10 kanal/guruh (7 kun)</h2>
                                 {data.topChannels7d.length === 0 ? (
                                     <p className="text-xs py-4 text-center" style={{ color: "rgba(140,160,210,0.60)" }}>
                                         Ma&apos;lumot yo&apos;q
@@ -204,11 +204,11 @@ export function NexusAdminDashboard() {
                                                 ) : (
                                                     <div className="w-7 h-7 rounded-xl flex items-center justify-center"
                                                         style={{ background: "var(--nx-accent)" }}>
-                                                        {c.type === "GROUP" ? <Users className="w-3.5 h-3.5 text-white" /> : <Hash className="w-3.5 h-3.5 text-white" />}
+                                                        {c.type === "GROUP" ? <Users className="w-3.5 h-3.5 text-[var(--nx-text)]" /> : <Hash className="w-3.5 h-3.5 text-[var(--nx-text)]" />}
                                                     </div>
                                                 )}
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-bold text-white truncate flex items-center gap-1">
+                                                    <p className="text-xs font-bold text-[var(--nx-text)] truncate flex items-center gap-1">
                                                         {c.name || "Nomsiz"}
                                                         {c.handle && <BadgeCheck className="w-3 h-3 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                                     </p>
@@ -239,7 +239,7 @@ export function NexusAdminDashboard() {
 function KpiCard({ icon: Icon, label, value, sub, color }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; value: number; sub: string; color: string }) {
     return (
         <div className="rounded-2xl p-3.5"
-            style={{ background: `linear-gradient(135deg, ${color}18, rgba(11,18,40,0.55))`, border: `1px solid ${color}30` }}>
+            style={{ background: `linear-gradient(135deg, ${color}18, var(--nx-surface))`, border: `1px solid ${color}30` }}>
             <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}22` }}>
                     <Icon className="w-4 h-4" style={{ color }} />
@@ -248,7 +248,7 @@ function KpiCard({ icon: Icon, label, value, sub, color }: { icon: React.Compone
                     {label}
                 </span>
             </div>
-            <p className="text-2xl font-black text-white tabular-nums">{value.toLocaleString()}</p>
+            <p className="text-2xl font-black text-[var(--nx-text)] tabular-nums">{value.toLocaleString()}</p>
             <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.65)" }}>{sub}</p>
         </div>
     );

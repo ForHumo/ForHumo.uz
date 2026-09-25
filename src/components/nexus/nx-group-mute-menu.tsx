@@ -59,9 +59,9 @@ export function NxGroupMuteButton({ channelId }: { channelId: string }) {
                 title={isMuted ? "Xabarnoma o'chirilgan" : "Xabarnoma yoqilgan"}
                 className="w-9 h-9 rounded-full flex items-center justify-center disabled:opacity-50"
                 style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                {busy ? <Loader2 className="w-4 h-4 animate-spin text-white" />
+                {busy ? <Loader2 className="w-4 h-4 animate-spin text-[var(--nx-text)]" />
                     : isMuted ? <BellOff className="w-4 h-4" style={{ color: "#FFC107" }} />
-                        : <Bell className="w-4 h-4 text-white" />}
+                        : <Bell className="w-4 h-4 text-[var(--nx-text)]" />}
             </button>
 
             {open && (
@@ -73,7 +73,7 @@ export function NxGroupMuteButton({ channelId }: { channelId: string }) {
                     </div>
                     {OPTIONS.map(o => (
                         <button key={o.key} onClick={() => setMute(o.key)}
-                            className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/5">
+                            className="w-full text-left px-3 py-2 text-sm text-[var(--nx-text)] hover:bg-white/5">
                             {o.label}
                         </button>
                     ))}

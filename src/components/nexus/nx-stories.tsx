@@ -25,14 +25,14 @@ export function NxStories() {
 
     return (
         <div className="relative flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.12)" }}>
-            <div className="absolute right-0 top-0 bottom-0 w-12 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, transparent, #050818)" }} />
+            <div className="absolute right-0 top-0 bottom-0 w-12 z-10 pointer-events-none" style={{ background: "linear-gradient(to right, transparent, var(--nx-bg))" }} />
 
             <div className="flex items-start gap-4 overflow-x-auto px-4 py-3" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
                 {/* Hikoya qo'shish */}
                 <button onClick={() => setStoryCreateOpen(true)} className="flex flex-col items-center gap-1.5 flex-shrink-0 active:scale-95 transition-transform duration-150">
                     <div className="relative">
                         <div className="w-[58px] h-[58px] rounded-full p-[2px]" style={{ background: "rgba(43,62,232,0.20)", border: "2px dashed rgba(43,62,232,0.40)" }}>
-                            <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center text-lg font-black text-white"
+                            <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center text-lg font-black text-[var(--nx-text)]"
                                 style={{ background: myImage ? "transparent" : "linear-gradient(135deg,rgba(43,62,232,0.30),rgba(0,206,200,0.20))" }}>
                                 {myImage
                                     ? <img src={myImage} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -40,8 +40,8 @@ export function NxStories() {
                             </div>
                         </div>
                         <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center"
-                            style={{ background: "var(--nx-accent)", border: "2px solid #050818", boxShadow: "0 0 8px rgba(0,206,200,0.60)" }}>
-                            <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                            style={{ background: "var(--nx-accent)", border: "2px solid var(--nx-bg)", boxShadow: "0 0 8px rgba(0,206,200,0.60)" }}>
+                            <Plus className="w-2.5 h-2.5 text-[var(--nx-text)]" strokeWidth={3} />
                         </div>
                     </div>
                     <span className="text-[10px] font-medium text-center truncate w-16" style={{ color: "rgba(160,176,224,0.70)" }}>Hikoya</span>
@@ -58,11 +58,11 @@ export function NxStories() {
                                 style={g.allSeen
                                     ? { background: "rgba(60,70,100,0.45)", padding: "2.5px" }
                                     : { background: "linear-gradient(135deg,var(--nx-accent) 0%,var(--nx-accent) 100%)", padding: "2.5px", boxShadow: "0 0 12px rgba(43,62,232,0.40)" }}>
-                                <div className="w-full h-full rounded-full overflow-hidden" style={{ border: "2px solid #050818" }}>
+                                <div className="w-full h-full rounded-full overflow-hidden" style={{ border: "2px solid var(--nx-bg)" }}>
                                     <img src={avatar} alt={label} className="w-full h-full object-cover bg-white" />
                                 </div>
                             </div>
-                            <span className="text-[10px] font-medium text-center truncate w-16 group-hover:text-white transition-colors duration-150"
+                            <span className="text-[10px] font-medium text-center truncate w-16 group-hover:text-[var(--nx-text)] transition-colors duration-150"
                                 style={{ color: g.allSeen ? "rgba(100,120,160,0.6)" : "rgba(180,195,230,0.9)" }}>{label}</span>
                         </button>
                     );

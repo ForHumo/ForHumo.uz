@@ -53,8 +53,8 @@ export function NxMentionAutocomplete({
                             className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                             style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-white truncate">{u.name ?? u.username}</p>
-                            {u.username && <p className="text-[11px]" style={{ color: "rgba(120,140,185,0.7)" }}>@{u.username}</p>}
+                            <p className="text-sm font-bold text-[var(--nx-text)] truncate">{u.name ?? u.username}</p>
+                            {u.username && <p className="text-[11px]" style={{ color: "var(--nx-text-3)" }}>@{u.username}</p>}
                         </div>
                     </button>
                 ))

@@ -170,7 +170,7 @@ export function NxChannelRichAttach({
             <div className="flex items-center gap-2 px-2 py-1.5 rounded-xl"
                 style={{ background: "rgba(255,50,80,0.12)", border: "1px solid rgba(255,50,80,0.35)" }}>
                 <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#FF3250" }} />
-                <span className="text-xs font-mono text-white">{mm}:{ss}</span>
+                <span className="text-xs font-mono text-[var(--nx-text)]">{mm}:{ss}</span>
                 <button onClick={() => stopRecording(true)}
                     title="Bekor qilish"
                     className="w-7 h-7 rounded-lg flex items-center justify-center"
@@ -181,7 +181,7 @@ export function NxChannelRichAttach({
                     title="Yuborish"
                     className="w-7 h-7 rounded-lg flex items-center justify-center"
                     style={{ background: "var(--nx-accent)" }}>
-                    <Square className="w-3.5 h-3.5 text-white" />
+                    <Square className="w-3.5 h-3.5 text-[var(--nx-text)]" />
                 </button>
             </div>
         );
@@ -191,7 +191,7 @@ export function NxChannelRichAttach({
         <div ref={rootRef} className="relative flex-shrink-0">
             <button onClick={() => setOpen(v => !v)} disabled={disabled || busy}
                 title="Media qo'shish"
-                className="w-10 h-10 flex items-center justify-center rounded-xl text-white disabled:opacity-40"
+                className="w-10 h-10 flex items-center justify-center rounded-xl text-[var(--nx-text)] disabled:opacity-40"
                 style={{ background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.25)" }}>
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
             </button>
@@ -199,22 +199,22 @@ export function NxChannelRichAttach({
                 <div className="absolute left-0 bottom-full mb-2 min-w-[180px] z-[400] py-1 rounded-2xl"
                     style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}>
                     <button onClick={() => startRecording("voice")}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-white">
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-[var(--nx-text)]">
                         <Mic className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Ovoz xabar
                     </button>
                     <button onClick={() => startRecording("video")}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-white">
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-[var(--nx-text)]">
                         <Video className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Video-doira
                     </button>
                     <button onClick={shareLocation}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-white">
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-[var(--nx-text)]">
                         <MapPin className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Joylashuv
                     </button>
                     <button onClick={() => { setOpen(false); setContactOpen(true); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-white">
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-[var(--nx-text)]">
                         <User className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Kontakt
                     </button>
@@ -233,31 +233,31 @@ export function NxChannelRichAttach({
                     <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto z-[501] p-5 rounded-3xl"
                         style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)" }}
                         onClick={e => e.stopPropagation()}>
-                        <h3 className="text-base font-black text-white mb-4 flex items-center gap-2">
+                        <h3 className="text-base font-black text-[var(--nx-text)] mb-4 flex items-center gap-2">
                             <User className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Kontakt ulashish
                         </h3>
                         <div className="space-y-2">
                             <input value={contactName} onChange={e => setContactName(e.target.value)}
                                 placeholder="Ism (majburiy)"
-                                className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+                                className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none"
                                 style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }} />
                             <input value={contactPhone} onChange={e => setContactPhone(e.target.value)}
                                 placeholder="Telefon (majburiy)" inputMode="tel"
-                                className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+                                className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none"
                                 style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }} />
                             <input value={contactUsername} onChange={e => setContactUsername(e.target.value)}
                                 placeholder="@username (ixtiyoriy — Humo hisobi)"
-                                className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+                                className="w-full rounded-xl px-3 py-2.5 text-sm text-[var(--nx-text)] outline-none"
                                 style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)" }} />
                         </div>
                         <div className="flex gap-2 mt-4">
                             <button onClick={() => setContactOpen(false)}
-                                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-[var(--nx-text)]"
                                 style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
                                 Bekor
                             </button>
                             <button onClick={sendContact} disabled={!contactName.trim() || !contactPhone.trim() || busy}
-                                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+                                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-[var(--nx-text)] disabled:opacity-50"
                                 style={{ background: "var(--nx-accent)" }}>
                                 {busy ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Yuborish"}
                             </button>

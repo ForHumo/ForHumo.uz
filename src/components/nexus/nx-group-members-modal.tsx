@@ -131,18 +131,18 @@ export function NxGroupMembersModal({
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white">A&apos;zolar · {members.length}</h3>
+                    <h3 className="text-base font-black text-[var(--nx-text)]">A&apos;zolar · {members.length}</h3>
                     <button onClick={onClose}
                         className="flex h-8 w-8 items-center justify-center rounded-full"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                        <X className="h-4 w-4 text-white" />
+                        <X className="h-4 w-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
                 <div className="px-4 pt-3 pb-2">
                     <input value={q} onChange={e => setQ(e.target.value)}
                         placeholder="A'zoni qidiring..."
-                        className="w-full rounded-xl px-3 py-2 text-sm text-white outline-none"
+                        className="w-full rounded-xl px-3 py-2 text-sm text-[var(--nx-text)] outline-none"
                         style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                 </div>
 
@@ -152,12 +152,12 @@ export function NxGroupMembersModal({
                             <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     ) : sorted.length === 0 ? (
-                        <p className="py-8 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>A&apos;zo topilmadi</p>
+                        <p className="py-8 text-center text-xs" style={{ color: "var(--nx-text-3)" }}>A&apos;zo topilmadi</p>
                     ) : (
                         sorted.map(m => (
                             <div key={m.profileId}
                                 className="flex items-center gap-3 rounded-2xl px-3 py-2.5 mb-1"
-                                style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                 <div className="relative flex-shrink-0">
                                     <img src={m.image ?? "/logos/forhumo.png"} alt=""
                                         className="w-10 h-10 rounded-full object-cover"
@@ -169,7 +169,7 @@ export function NxGroupMembersModal({
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
-                                        <p className="text-sm font-bold text-white truncate">
+                                        <p className="text-sm font-bold text-[var(--nx-text)] truncate">
                                             {m.name ?? m.username ?? "Foydalanuvchi"}
                                         </p>
                                         {m.isAnonymous && (
@@ -189,7 +189,7 @@ export function NxGroupMembersModal({
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-[11px]" style={{ color: "rgba(120,140,185,0.7)" }}>
+                                    <p className="text-[11px]" style={{ color: "var(--nx-text-3)" }}>
                                         {m.username ? `@${m.username}` : ""}
                                         {m.username && (m.online || m.lastSeenAt) ? " · " : ""}
                                         {m.online ? <span style={{ color: "#22C55E" }}>online</span> : timeAgo(m.lastSeenAt)}

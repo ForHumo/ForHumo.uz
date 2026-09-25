@@ -29,7 +29,7 @@ export function NxLiveBrowse() {
     const totalLive = cats.reduce((a, c) => a + c.liveCount, 0);
 
     return (
-        <div className="min-h-screen pb-24" style={{ background: "#050818" }}>
+        <div className="min-h-screen pb-24" style={{ background: "var(--nx-bg)" }}>
             {/* Header */}
             <div className="px-4 pt-4 md:pt-6 max-w-4xl mx-auto">
                 <Link href="/nexus" className="inline-flex items-center gap-1 text-[11px] font-black mb-3 hover:underline" style={{ color: "rgba(200,180,230,0.75)" }}>
@@ -40,10 +40,10 @@ export function NxLiveBrowse() {
                     <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(239,68,68,0.35), transparent 70%)" }} />
                     <div className="flex items-center gap-3 mb-2 relative">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
-                            <Radio className="w-5 h-5 text-white" />
+                            <Radio className="w-5 h-5 text-[var(--nx-text)]" />
                         </div>
                         <div>
-                            <h1 className="text-xl md:text-2xl font-black text-white leading-tight">Jonli efirlar hub</h1>
+                            <h1 className="text-xl md:text-2xl font-black text-[var(--nx-text)] leading-tight">Jonli efirlar hub</h1>
                             {totalLive > 0 && (
                                 <p className="text-[11px]" style={{ color: "rgba(220,200,220,0.75)" }}>
                                     Hozir <b style={{ color: "#F97316" }}>{totalLive}</b> ta efir jonli
@@ -57,7 +57,7 @@ export function NxLiveBrowse() {
                 <div className="mb-6">
                     <div className="flex items-center gap-2 mb-3">
                         <Hash className="w-4 h-4" style={{ color: "#8B5CF6" }} />
-                        <h2 className="text-sm font-black text-white">Kategoriyalar</h2>
+                        <h2 className="text-sm font-black text-[var(--nx-text)]">Kategoriyalar</h2>
                     </div>
                     {loading ? (
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -75,7 +75,7 @@ export function NxLiveBrowse() {
                                 <Link key={c.id} href={`/nexus/live/category/${c.id}`}
                                     className="p-3 rounded-2xl relative overflow-hidden hover:scale-[1.02] active:scale-95 transition"
                                     style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.25)" }}>
-                                    <p className="text-sm font-black text-white mb-1">#{c.label}</p>
+                                    <p className="text-sm font-black text-[var(--nx-text)] mb-1">#{c.label}</p>
                                     <div className="flex items-center gap-2 text-[10px]" style={{ color: "rgba(200,180,230,0.75)" }}>
                                         <span className="flex items-center gap-0.5"><Radio className="w-2.5 h-2.5" style={{ color: "#EF4444" }} />{c.liveCount}</span>
                                         <span className="flex items-center gap-0.5"><Eye className="w-2.5 h-2.5" />{c.totalViewers}</span>
@@ -91,7 +91,7 @@ export function NxLiveBrowse() {
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                             <TrendingUp className="w-4 h-4" style={{ color: "#F59E0B" }} />
-                            <h2 className="text-sm font-black text-white">Top streamerlar</h2>
+                            <h2 className="text-sm font-black text-[var(--nx-text)]">Top streamerlar</h2>
                         </div>
                         <div className="flex gap-1">
                             {([7, 14, 30] as const).map(d => (
@@ -129,7 +129,7 @@ export function NxLiveBrowse() {
                                     </div>
                                     <img src={avatarOf(s.author)} alt="" className="w-9 h-9 rounded-full object-cover bg-white flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-black text-white truncate flex items-center gap-1">
+                                        <p className="text-sm font-black text-[var(--nx-text)] truncate flex items-center gap-1">
                                             {s.author?.name || s.author?.username || "Streamer"}
                                             {s.author?.verified && <NxVerifiedBadge category={s.author.verifiedCategory} size={12} />}
                                         </p>
@@ -150,7 +150,7 @@ export function NxLiveBrowse() {
                     <div className="mt-6">
                         <div className="flex items-center gap-2 mb-2">
                             <CalendarClock className="w-4 h-4" style={{ color: "#10B981" }} />
-                            <h2 className="text-sm font-black text-white">
+                            <h2 className="text-sm font-black text-[var(--nx-text)]">
                                 <span style={{ color: "rgba(200,240,215,0.75)" }}>@{top[0].author.username}</span> jadvali
                             </h2>
                         </div>
@@ -159,7 +159,7 @@ export function NxLiveBrowse() {
                 )}
 
                 {/* Follow all btn */}
-                <Link href="/nexus" className="mt-6 w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black text-white transition active:scale-95"
+                <Link href="/nexus" className="mt-6 w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black text-[var(--nx-text)] transition active:scale-95"
                     style={{ background: "linear-gradient(135deg,#EF4444,#F97316)", boxShadow: "0 4px 20px rgba(239,68,68,0.35)" }}>
                     <Users className="w-4 h-4" />Barcha efirlar
                 </Link>

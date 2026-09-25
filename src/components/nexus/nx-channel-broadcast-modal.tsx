@@ -65,12 +65,12 @@ export function NxChannelBroadcastModal({
                 style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.30)" }}>
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <h3 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Megaphone className="w-4 h-4" style={{ color: "#F5B301" }} /> Muhim e&apos;lon
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -81,7 +81,7 @@ export function NxChannelBroadcastModal({
                                 style={{ background: "rgba(0,206,200,0.14)" }}>
                                 <Check className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
                             </div>
-                            <p className="text-sm font-black text-white">E&apos;lon yuborildi</p>
+                            <p className="text-sm font-black text-[var(--nx-text)]">E&apos;lon yuborildi</p>
                             <p className="text-xs mt-1" style={{ color: "rgba(160,176,224,0.7)" }}>
                                 Barcha a&apos;zolar push xabar oldi
                             </p>
@@ -108,7 +108,7 @@ export function NxChannelBroadcastModal({
                                     rows={5}
                                     placeholder="Muhim xabarni yozing..."
                                     className="w-full rounded-xl p-3 text-sm resize-none focus:outline-none"
-                                    style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }}
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.30)", color: "white" }}
                                 />
                                 <div className="mt-1 flex items-center justify-between text-[10px]"
                                     style={{ color: "rgba(140,160,210,0.7)" }}>
@@ -119,8 +119,8 @@ export function NxChannelBroadcastModal({
 
                             {status && (
                                 <div className="p-3 rounded-xl text-xs"
-                                    style={{ background: "rgba(11,18,40,0.50)", border: "1px solid rgba(43,62,232,0.14)" }}>
-                                    <p className="text-white">
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.14)" }}>
+                                    <p className="text-[var(--nx-text)]">
                                         <b>{status.memberCount}</b> a&apos;zoga push yuboriladi
                                     </p>
                                     <p className="mt-1" style={{ color: "rgba(160,176,224,0.7)" }}>
@@ -138,14 +138,14 @@ export function NxChannelBroadcastModal({
                                     </button>
                                     <button onClick={send} disabled={busy}
                                         className="flex-1 h-11 rounded-full font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                                        style={{ background: "#F5B301", color: "#050818" }}>
+                                        style={{ background: "#F5B301", color: "var(--nx-bg)" }}>
                                         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : `HAQIQATAN yuborilsin`}
                                     </button>
                                 </div>
                             ) : (
                                 <button onClick={() => setConfirmStage(true)} disabled={!canSend}
                                     className="w-full h-11 rounded-full font-black text-sm disabled:opacity-50"
-                                    style={{ background: canSend ? "linear-gradient(135deg, #F5B301, #F97316)" : "rgba(43,62,232,0.20)", color: canSend ? "#050818" : "white" }}>
+                                    style={{ background: canSend ? "linear-gradient(135deg, #F5B301, #F97316)" : "rgba(43,62,232,0.20)", color: canSend ? "var(--nx-bg)" : "white" }}>
                                     {remaining <= 0 ? "Kunlik limit tugadi" : "Yuborishga tayyorlash"}
                                 </button>
                             )}

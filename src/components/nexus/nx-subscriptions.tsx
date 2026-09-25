@@ -84,13 +84,13 @@ export function NxSubscriptions() {
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h2 className="text-base font-black text-white flex items-center gap-2">
+                    <h2 className="text-base font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Users className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Aloqalar
                     </h2>
                     <button onClick={() => setSubsOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
 
@@ -116,7 +116,7 @@ export function NxSubscriptions() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgba(43,62,232,0.55)" }} />
                         <input value={query} onChange={e => setQuery(e.target.value)}
                             placeholder="Ism yoki @username..."
-                            className="w-full h-9 rounded-xl pl-9 pr-9 text-sm text-white outline-none"
+                            className="w-full h-9 rounded-xl pl-9 pr-9 text-sm text-[var(--nx-text)] outline-none"
                             style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.20)", caretColor: "var(--nx-accent)" }} />
                         {query && (
                             <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -147,12 +147,12 @@ export function NxSubscriptions() {
                     ) : (
                         <div className="flex flex-col gap-2">
                             {filtered.map(u => (
-                                <div key={u.username ?? u.name ?? ""} className="flex items-center gap-3 p-3 rounded-2xl" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.16)" }}>
+                                <div key={u.username ?? u.name ?? ""} className="flex items-center gap-3 p-3 rounded-2xl" style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.16)" }}>
                                     <Link href={u.username ? `/nexus/u/${u.username}` : "/nexus"} onClick={() => setSubsOpen(false)}
                                         className="flex items-center gap-3 flex-1 min-w-0">
                                         <img src={avatarOf(u)} alt="" className="w-10 h-10 rounded-xl object-cover bg-white flex-shrink-0" style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
                                         <div className="min-w-0">
-                                            <p className="text-sm font-bold text-white truncate flex items-center gap-1">
+                                            <p className="text-sm font-bold text-[var(--nx-text)] truncate flex items-center gap-1">
                                                 {u.name || u.username || "Foydalanuvchi"}
                                                 {u.verified && <NxVerifiedBadge category={u.verifiedCategory} size={13} />}
                                             </p>
@@ -162,14 +162,14 @@ export function NxSubscriptions() {
                                     {tab === "following" ? (
                                         <button onClick={() => toggleFollow(u)} disabled={busy === u.username}
                                             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-black flex-shrink-0 disabled:opacity-50"
-                                            style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)", color: "rgba(150,170,220,0.9)" }}>
+                                            style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)", color: "var(--nx-text-2)" }}>
                                             {busy === u.username ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserMinus className="w-3 h-3" />}
                                             Bekor
                                         </button>
                                     ) : u.isFollowing ? (
                                         <button onClick={() => toggleFollow(u)} disabled={busy === u.username}
                                             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-black flex-shrink-0 disabled:opacity-50"
-                                            style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)", color: "rgba(150,170,220,0.9)" }}>
+                                            style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)", color: "var(--nx-text-2)" }}>
                                             {busy === u.username ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserCheck className="w-3 h-3" />}
                                             Kuzatilmoqda
                                         </button>
@@ -193,7 +193,7 @@ export function NxSubscriptions() {
 
 function UserSkeleton() {
     return (
-        <div className="flex items-center gap-3 p-3 rounded-2xl animate-pulse" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.12)" }}>
+        <div className="flex items-center gap-3 p-3 rounded-2xl animate-pulse" style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.12)" }}>
             <div className="w-10 h-10 rounded-xl flex-shrink-0" style={{ background: "rgba(43,62,232,0.15)" }} />
             <div className="flex-1 space-y-1.5">
                 <div className="h-2.5 rounded" style={{ background: "rgba(43,62,232,0.15)", width: "50%" }} />

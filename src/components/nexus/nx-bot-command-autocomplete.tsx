@@ -51,11 +51,11 @@ export function NxBotCommandAutocomplete({
                         <img src={c.botImage ?? "/logos/forhumo.png"} alt=""
                             className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white truncate">
+                            <p className="text-sm text-[var(--nx-text)] truncate">
                                 <span style={{ color: "var(--nx-accent)" }}>{c.cmd}</span>
                                 {c.botHandle && <span className="text-[11px] ml-1" style={{ color: "rgba(140,160,210,0.6)" }}>@{c.botHandle}</span>}
                             </p>
-                            {c.description && <p className="text-[11px] truncate" style={{ color: "rgba(180,195,235,0.75)" }}>{c.description}</p>}
+                            {c.description && <p className="text-[11px] truncate" style={{ color: "var(--nx-text-2)" }}>{c.description}</p>}
                         </div>
                     </button>
                 ))

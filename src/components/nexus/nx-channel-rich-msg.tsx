@@ -48,7 +48,7 @@ export function NxChannelRichMsg(props: Props) {
                 <button onClick={toggle}
                     className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{ background: "var(--nx-accent)" }}>
-                    {playing ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
+                    {playing ? <Pause className="w-4 h-4 text-[var(--nx-text)]" /> : <Play className="w-4 h-4 text-[var(--nx-text)] ml-0.5" />}
                 </button>
                 <div className="flex-1 min-w-0">
                     <div className="h-1 rounded-full overflow-hidden mb-1"
@@ -56,7 +56,7 @@ export function NxChannelRichMsg(props: Props) {
                         <div className="h-full transition-all"
                             style={{ width: `${progress}%`, background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))" }} />
                     </div>
-                    <p className="text-[10px]" style={{ color: "rgba(180,195,235,0.8)" }}>
+                    <p className="text-[10px]" style={{ color: "var(--nx-text-2)" }}>
                         {durationMs ? formatDuration(durationMs) : "0:00"}
                     </p>
                 </div>
@@ -89,10 +89,10 @@ export function NxChannelRichMsg(props: Props) {
         const gmapsUrl = `https://www.google.com/maps?q=${locLat},${locLng}`;
         return (
             <div className="rounded-2xl overflow-hidden w-64 max-w-full"
-                style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.22)" }}>
+                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.22)" }}>
                 <iframe src={mapUrl} className="w-full h-40 border-0" title="Xarita" />
                 <a href={gmapsUrl} target="_blank" rel="noopener"
-                    className="flex items-center gap-2 px-3 py-2.5 text-sm text-white hover:bg-white/5">
+                    className="flex items-center gap-2 px-3 py-2.5 text-sm text-[var(--nx-text)] hover:bg-white/5">
                     <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                     <span className="flex-1">Xaritada ochish</span>
                     <ExternalLink className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.7)" }} />
@@ -108,10 +108,10 @@ export function NxChannelRichMsg(props: Props) {
                 style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}>
                 <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{ background: "var(--nx-accent)" }}>
-                    <User className="w-5 h-5 text-white" />
+                    <User className="w-5 h-5 text-[var(--nx-text)]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-white truncate">{contactName}</p>
+                    <p className="text-sm font-bold text-[var(--nx-text)] truncate">{contactName}</p>
                     {contactPhone && (
                         <a href={`tel:${contactPhone}`}
                             className="flex items-center gap-1 text-xs" style={{ color: "var(--nx-accent)" }}>

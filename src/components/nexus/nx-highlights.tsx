@@ -145,7 +145,7 @@ function NxHighlightViewer({ highlightId, onClose }: { highlightId: string; onCl
                     <>
                         {isText ? (
                             <div className="w-full h-full flex items-center justify-center px-6" style={{ background: slide.bgColor || "var(--nx-accent)" }}>
-                                <p className="text-2xl sm:text-3xl font-black text-white text-center leading-tight">
+                                <p className="text-2xl sm:text-3xl font-black text-[var(--nx-text)] text-center leading-tight">
                                     {slide.caption || "..."}
                                 </p>
                             </div>
@@ -168,13 +168,13 @@ function NxHighlightViewer({ highlightId, onClose }: { highlightId: string; onCl
                     ))}
                 </div>
                 <div className="absolute top-8 left-3 z-10">
-                    <p className="text-sm font-black text-white flex items-center gap-2" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                    <p className="text-sm font-black text-[var(--nx-text)] flex items-center gap-2" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
                         <Star className="w-3.5 h-3.5" style={{ color: "#EAB308" }} />
                         {data.highlight.title}
                     </p>
                 </div>
                 <button onClick={onClose} className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full z-20" style={{ background: "rgba(0,0,0,0.5)" }}>
-                    <span className="text-xl text-white">×</span>
+                    <span className="text-xl text-[var(--nx-text)]">×</span>
                 </button>
                 <div className="absolute inset-y-0 left-0 w-1/3 z-[5]" onClick={prev} />
                 <div className="absolute inset-y-0 right-0 w-1/3 z-[5]" onClick={next} />

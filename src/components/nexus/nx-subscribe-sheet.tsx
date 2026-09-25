@@ -72,7 +72,7 @@ export function NxSubscribeSheet({
                         <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.4)" }}>
                             <Check className="w-8 h-8" style={{ color: "#8B5CF6" }} />
                         </div>
-                        <p className="text-lg font-black text-white">{alreadyActive ? "Obuna uzaytirildi!" : "Obuna bo'ldingiz!"}</p>
+                        <p className="text-lg font-black text-[var(--nx-text)]">{alreadyActive ? "Obuna uzaytirildi!" : "Obuna bo'ldingiz!"}</p>
                         <p className="text-sm mt-1" style={{ color: "rgba(180,200,240,0.8)" }}>{displayName}ning maxsus kontenti ochildi</p>
                     </div>
                 ) : (
@@ -82,11 +82,11 @@ export function NxSubscribeSheet({
                                 <Star className="w-5 h-5" style={{ color: "#8B5CF6" }} />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <h3 className="text-base font-black text-white truncate">{alreadyActive ? "Obunani uzaytirish" : "Pullik obuna"}</h3>
-                                <p className="text-[11px] truncate" style={{ color: "rgba(120,140,185,0.8)" }}>{displayName}</p>
+                                <h3 className="text-base font-black text-[var(--nx-text)] truncate">{alreadyActive ? "Obunani uzaytirish" : "Pullik obuna"}</h3>
+                                <p className="text-[11px] truncate" style={{ color: "var(--nx-text-3)" }}>{displayName}</p>
                             </div>
                             <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: "rgba(43,62,232,0.10)" }}>
-                                <X className="w-4 h-4 text-white" />
+                                <X className="w-4 h-4 text-[var(--nx-text)]" />
                             </button>
                         </div>
 
@@ -94,7 +94,7 @@ export function NxSubscribeSheet({
                             {/* Narx */}
                             <div className="flex items-baseline justify-center gap-1.5 py-2">
                                 <span className="text-3xl font-black" style={{ color: "#8B5CF6" }}>{formatMoney(price, currency)}</span>
-                                <span className="text-sm font-bold" style={{ color: "rgba(120,140,185,0.8)" }}>/ oy</span>
+                                <span className="text-sm font-bold" style={{ color: "var(--nx-text-3)" }}>/ oy</span>
                             </div>
 
                             {/* Imtiyozlar */}
@@ -111,21 +111,21 @@ export function NxSubscribeSheet({
                             </div>
 
                             {balance !== null && (
-                                <div className="mt-4 flex items-center gap-1.5 text-[11px]" style={{ color: "rgba(120,140,185,0.85)" }}>
-                                    <Wallet className="w-3.5 h-3.5" /> Hamyon: <span className="font-bold text-white">{formatMoney(balance, myCurrency)}</span>
+                                <div className="mt-4 flex items-center gap-1.5 text-[11px]" style={{ color: "var(--nx-text-3)" }}>
+                                    <Wallet className="w-3.5 h-3.5" /> Hamyon: <span className="font-bold text-[var(--nx-text)]">{formatMoney(balance, myCurrency)}</span>
                                 </div>
                             )}
                             {error && <p className="mt-2 text-xs font-bold" style={{ color: "#EF4444" }}>{error}</p>}
 
                             {insufficient ? (
                                 <Link href="/pay" onClick={onClose}
-                                    className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-white"
+                                    className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-[var(--nx-text)]"
                                     style={{ background: "var(--nx-accent)" }}>
                                     <Wallet className="w-4 h-4" /> Hamyonni to&apos;ldirish
                                 </Link>
                             ) : (
                                 <button onClick={subscribe} disabled={busy}
-                                    className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-white disabled:opacity-50 active:scale-[0.99] transition"
+                                    className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-[var(--nx-text)] disabled:opacity-50 active:scale-[0.99] transition"
                                     style={{ background: "linear-gradient(135deg,#8B5CF6,var(--nx-accent))", boxShadow: "0 6px 24px rgba(139,92,246,0.35)" }}>
                                     {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                                     {formatMoney(price, currency)} — {alreadyActive ? "Uzaytirish" : "Obuna bo'lish"}

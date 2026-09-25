@@ -85,7 +85,7 @@ export function NxReport() {
     };
 
     return (
-        <div className="fixed inset-0 z-[120] flex flex-col" style={{ background: "#050818" }}>
+        <div className="fixed inset-0 z-[120] flex flex-col" style={{ background: "var(--nx-bg)" }}>
             {/* Header */}
             <div className="flex items-center gap-3 px-4 h-[56px] flex-shrink-0"
                 style={{ borderBottom: "1px solid rgba(43,62,232,0.18)" }}>
@@ -93,16 +93,16 @@ export function NxReport() {
                     ? <button onClick={() => step === "detail" ? setStep("category") : reset()}
                         className="w-9 h-9 flex items-center justify-center rounded-xl"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                        <ChevronLeft className="w-5 h-5 text-white" />
+                        <ChevronLeft className="w-5 h-5 text-[var(--nx-text)]" />
                     </button>
                     : <button onClick={() => { setReportOpen(false); reset(); }}
                         className="w-9 h-9 flex items-center justify-center rounded-xl"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                        <X className="w-5 h-5 text-white" />
+                        <X className="w-5 h-5 text-[var(--nx-text)]" />
                     </button>
                 }
                 <div className="flex-1">
-                    <p className="text-sm font-black text-white">Shikoyat</p>
+                    <p className="text-sm font-black text-[var(--nx-text)]">Shikoyat</p>
                     <p className="text-[10px]" style={{ color: "rgba(100,120,170,0.70)" }}>Buzilishni xabar qiling</p>
                 </div>
                 <ShieldAlert className="w-5 h-5" style={{ color: "#EF4444" }} />
@@ -142,7 +142,7 @@ export function NxReport() {
                                         className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all active:scale-[0.98]"
                                         style={{ background: "rgba(8,12,32,0.95)", border: "1px solid rgba(43,62,232,0.15)" }}>
                                         <div className="flex-1">
-                                            <p className="text-[12px] font-bold text-white">{c.label}</p>
+                                            <p className="text-[12px] font-bold text-[var(--nx-text)]">{c.label}</p>
                                             <p className="text-[10px]" style={{ color: "rgba(100,120,170,0.60)" }}>{c.description}</p>
                                         </div>
                                         <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(100,120,170,0.40)" }} />
@@ -156,7 +156,7 @@ export function NxReport() {
                             <div className="flex flex-col gap-4">
                                 <div className="p-3 rounded-2xl"
                                     style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.20)" }}>
-                                    <p className="text-[11px] font-black text-white">
+                                    <p className="text-[11px] font-black text-[var(--nx-text)]">
                                         {CATEGORIES.find(c => c.id === selectedCat)?.label}
                                     </p>
                                     <p className="text-[10px] mt-0.5" style={{ color: "rgba(140,160,210,0.70)" }}>
@@ -174,21 +174,21 @@ export function NxReport() {
                                         onChange={e => setDetail(e.target.value)}
                                         rows={5}
                                         placeholder="Muammoni batafsil tushuntiring..."
-                                        className="w-full bg-transparent text-sm text-white outline-none px-3 py-3 rounded-xl resize-none"
+                                        className="w-full bg-transparent text-sm text-[var(--nx-text)] outline-none px-3 py-3 rounded-xl resize-none"
                                         style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}
                                     />
                                 </div>
 
                                 <div className="p-3 rounded-2xl"
                                     style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.15)" }}>
-                                    <p className="text-[10px] leading-relaxed" style={{ color: "rgba(120,140,190,0.70)" }}>
+                                    <p className="text-[10px] leading-relaxed" style={{ color: "var(--nx-text-3)" }}>
                                         Moderatorlarimiz 24 soat ichida ko'rib chiqadi. Anonim bo'ladi —
                                         shikoyatingiz kim ekanligingiz aytilmaydi.
                                     </p>
                                 </div>
 
                                 <button onClick={submit}
-                                    className="w-full py-3.5 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2"
+                                    className="w-full py-3.5 rounded-2xl text-sm font-black text-[var(--nx-text)] flex items-center justify-center gap-2"
                                     style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>
                                     <Flag className="w-4 h-4" />
                                     Shikoyat yuborish
@@ -203,12 +203,12 @@ export function NxReport() {
                                     style={{ background: "rgba(16,185,129,0.18)", border: "2px solid rgba(16,185,129,0.40)" }}>
                                     <Check className="w-8 h-8" style={{ color: "#10B981" }} />
                                 </div>
-                                <p className="text-base font-black text-white mb-1">Shikoyat yuborildi</p>
+                                <p className="text-base font-black text-[var(--nx-text)] mb-1">Shikoyat yuborildi</p>
                                 <p className="text-[11px] text-center mb-6" style={{ color: "rgba(140,160,210,0.75)" }}>
                                     Moderatorlar 24 soat ichida ko'rib chiqadi
                                 </p>
                                 <button onClick={() => { reset(); setTab("history"); }}
-                                    className="px-5 py-2.5 rounded-xl text-sm font-black text-white"
+                                    className="px-5 py-2.5 rounded-xl text-sm font-black text-[var(--nx-text)]"
                                     style={{ background: "rgba(43,62,232,0.22)", border: "1px solid rgba(43,62,232,0.35)" }}>
                                     Tarixni ko'rish
                                 </button>
@@ -233,7 +233,7 @@ export function NxReport() {
                                     style={{ background: "rgba(8,12,32,0.95)", border: "1px solid rgba(43,62,232,0.15)" }}>
                                     <div className="flex items-center gap-2 mb-2">
                                         <Flag className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#EF4444" }} />
-                                        <span className="text-[11px] font-bold text-white flex-1 truncate">{r.target}</span>
+                                        <span className="text-[11px] font-bold text-[var(--nx-text)] flex-1 truncate">{r.target}</span>
                                         <span className="text-[9px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
                                             style={{ background: s.bg, color: s.color }}>
                                             {s.label}

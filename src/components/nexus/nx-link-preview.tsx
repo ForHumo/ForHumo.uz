@@ -62,14 +62,14 @@ export function NxLinkPreview({ text, compact = false }: { text: string; compact
         return (
             <a href={meta.url} target="_blank" rel="noopener noreferrer"
                 className="mt-2 flex items-center gap-2 p-2 rounded-lg hover:bg-white/[0.03]"
-                style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.18)" }}
+                style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.18)" }}
                 onClick={e => e.stopPropagation()}>
                 {meta.image && (
                     <img src={meta.image} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0"
                         style={{ background: "rgba(43,62,232,0.10)" }} />
                 )}
                 <div className="flex-1 min-w-0">
-                    {meta.title && <p className="text-xs font-bold text-white truncate">{meta.title}</p>}
+                    {meta.title && <p className="text-xs font-bold text-[var(--nx-text)] truncate">{meta.title}</p>}
                     <p className="text-[10px] truncate" style={{ color: "rgba(140,160,210,0.7)" }}>{host}</p>
                 </div>
                 <ExternalLink className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(160,176,224,0.6)" }} />
@@ -80,7 +80,7 @@ export function NxLinkPreview({ text, compact = false }: { text: string; compact
     return (
         <a href={meta.url} target="_blank" rel="noopener noreferrer"
             className="mt-2 block rounded-xl overflow-hidden hover:opacity-95 transition"
-            style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.18)" }}
+            style={{ background: "var(--nx-surface)", border: "1px solid rgba(43,62,232,0.18)" }}
             onClick={e => e.stopPropagation()}>
             {meta.image && (
                 <div className="relative w-full aspect-[1.91/1] overflow-hidden"
@@ -93,9 +93,9 @@ export function NxLinkPreview({ text, compact = false }: { text: string; compact
                     style={{ color: "var(--nx-accent)" }}>
                     {meta.site ?? host}
                 </p>
-                {meta.title && <p className="text-sm font-bold text-white line-clamp-2 mb-0.5">{meta.title}</p>}
+                {meta.title && <p className="text-sm font-bold text-[var(--nx-text)] line-clamp-2 mb-0.5">{meta.title}</p>}
                 {meta.description && (
-                    <p className="text-xs line-clamp-2" style={{ color: "rgba(180,195,235,0.75)" }}>
+                    <p className="text-xs line-clamp-2" style={{ color: "var(--nx-text-2)" }}>
                         {meta.description}
                     </p>
                 )}

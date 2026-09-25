@@ -131,7 +131,7 @@ export function NxNearbyPage() {
                         <span>Ixtiyoriy. Istalgan vaqt "O'chirish" bilan koordinatalarni server'dan olib tashlash mumkin.</span>
                     </div>
                     {error && <div className="text-xs text-red-500 mb-3">{error}</div>}
-                    <button onClick={enable} className="w-full h-11 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold flex items-center justify-center gap-2">
+                    <button onClick={enable} className="w-full h-11 rounded-xl bg-teal-600 hover:bg-teal-700 text-[var(--nx-text)] text-sm font-bold flex items-center justify-center gap-2">
                         <MapPin className="w-4 h-4" /> Joyimni ulashish
                     </button>
                 </div>

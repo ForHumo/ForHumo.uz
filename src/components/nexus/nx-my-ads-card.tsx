@@ -71,7 +71,7 @@ export function NxMyAdsCard() {
 
     return (
         <>
-            <div className="rounded-3xl p-5 text-white" style={{ background: "#0a0f1e", border: `1px solid ${NX_BORDER}` }}>
+            <div className="rounded-3xl p-5 text-[var(--nx-text)]" style={{ background: "#0a0f1e", border: `1px solid ${NX_BORDER}` }}>
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                         <Sparkles className="w-5 h-5" style={{ color: "#EC4899" }} />
@@ -81,7 +81,7 @@ export function NxMyAdsCard() {
                     </div>
                     <button
                         onClick={() => setBuyOpen(true)}
-                        className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl text-[13px] font-black text-white"
+                        className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl text-[13px] font-black text-[var(--nx-text)]"
                         style={{
                             background: NX_GRADIENT,
                             boxShadow: "0 6px 18px rgba(109,40,217,0.35)",
@@ -119,7 +119,7 @@ export function NxMyAdsCard() {
                             className="w-16 h-16 rounded-2xl grid place-items-center mx-auto mb-3"
                             style={{ background: NX_GRADIENT }}
                         >
-                            <Sparkles className="w-8 h-8 text-white" />
+                            <Sparkles className="w-8 h-8 text-[var(--nx-text)]" />
                         </span>
                         <p className="text-[14px] font-black mb-1">
                             {t("Hali reklamangiz yo'q", "У вас пока нет реклам", "You have no ads yet")}
@@ -182,7 +182,7 @@ export function NxMyAdsCard() {
                                         <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{a.impressions.toLocaleString()}</span>
                                         <span className="flex items-center gap-1"><MousePointerClick className="w-3 h-3" />{a.clicks.toLocaleString()}</span>
                                         <span>CTR {a.impressions > 0 ? ((a.clicks / a.impressions) * 100).toFixed(1) : "0"}%</span>
-                                        <span className="ml-auto tabular-nums text-white">{formatMoney(a.paidAmountUzs, "UZS")}</span>
+                                        <span className="ml-auto tabular-nums text-[var(--nx-text)]">{formatMoney(a.paidAmountUzs, "UZS")}</span>
                                     </div>
                                     <div className="mt-0.5 text-[10px] text-white/40 flex items-center gap-2">
                                         <span>
@@ -194,7 +194,7 @@ export function NxMyAdsCard() {
                                             href={a.ctaUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-0.5 text-white/60 hover:text-white truncate"
+                                            className="inline-flex items-center gap-0.5 text-white/60 hover:text-[var(--nx-text)] truncate"
                                         >
                                             <ExternalLink className="w-3 h-3 flex-shrink-0" />
                                             <span className="truncate max-w-[140px]">{a.ctaUrl.replace(/^https?:\/\//, "")}</span>

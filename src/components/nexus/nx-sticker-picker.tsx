@@ -35,11 +35,11 @@ export function NxStickerPicker({
                 onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-4 py-3"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
-                    <h3 className="text-sm font-black text-white flex items-center gap-2">
+                    <h3 className="text-sm font-black text-[var(--nx-text)] flex items-center gap-2">
                         <Sticker className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Stikerlar
                     </h3>
                     <button onClick={onClose} className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/5">
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-4 h-4 text-[var(--nx-text)]" />
                     </button>
                 </div>
                 <div className="grid grid-cols-4 gap-2 p-3 max-h-[280px] overflow-y-auto" style={{ scrollbarWidth: "none" }}>

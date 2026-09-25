@@ -123,7 +123,7 @@ export function NxGroupRecord({ callId }: Props) {
         <>
             <button onClick={recording ? stop : start} disabled={uploading}
                 title={recording ? "Yozib olishni to'xtatish" : "Yozib olish"}
-                className={`flex h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black text-white shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 ${recording ? "bg-rose-600" : "bg-white/10 backdrop-blur-sm"}`}>
+                className={`flex h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black text-[var(--nx-text)] shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 ${recording ? "bg-rose-600" : "bg-white/10 backdrop-blur-sm"}`}>
                 {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     : recording ? <Square className="h-3.5 w-3.5 fill-current" />
                     : <Circle className="h-3.5 w-3.5" />}
