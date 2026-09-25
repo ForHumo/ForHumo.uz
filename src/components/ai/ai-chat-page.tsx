@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { moduleTheme } from "@/lib/module-theme";
+import { AiStarfield } from "@/components/ai/ai-starfield";
 
 interface ConvSummary {
     id: string; title: string; topic: string | null; moduleOrigin: string | null;
@@ -391,16 +392,18 @@ export function AiChatPage() {
 
     if (status === "loading") {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin" style={{ color: T.primary }} />
+            <div className="dark relative min-h-screen flex items-center justify-center text-[var(--foreground)]" style={{ background: "transparent" }}>
+                <AiStarfield />
+                <Loader2 className="relative z-10 w-6 h-6 animate-spin" style={{ color: T.primary }} />
             </div>
         );
     }
 
     if (status === "unauthenticated") {
         return (
-            <div className="min-h-screen flex items-center justify-center px-4">
-                <div className="max-w-sm w-full text-center rounded-3xl p-8 border" style={{ borderColor: T.border }}>
+            <div className="dark relative min-h-screen flex items-center justify-center px-4 text-[var(--foreground)]" style={{ background: "transparent" }}>
+                <AiStarfield />
+                <div className="relative z-10 max-w-sm w-full text-center rounded-3xl p-8 border" style={{ borderColor: T.border, background: "rgba(9,11,20,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     <span className="w-14 h-14 rounded-2xl grid place-items-center mx-auto mb-4"
                         style={{ background: T.gradient, color: T.onPrimary }}>
                         <Brain className="w-7 h-7" />
@@ -420,7 +423,10 @@ export function AiChatPage() {
     }
 
     return (
-        <div className="min-h-screen flex" style={{ background: "var(--background)" }}>
+        <div className="dark relative min-h-screen flex text-[var(--foreground)]" style={{ background: "transparent" }}>
+            {/* Qora cosmic fon + uchib yuruvchi yulduzlar (eski AI'dagi sevimli fon) */}
+            <AiStarfield />
+
             {/* Mobile sidebar overlay */}
             {sidebarOpen && (
                 <button className="md:hidden fixed inset-0 bg-black/50 z-30"
@@ -428,9 +434,9 @@ export function AiChatPage() {
             )}
 
             {/* Sidebar — suhbatlar */}
-            <aside className={`w-72 flex-shrink-0 border-r flex flex-col
+            <aside className={`w-72 flex-shrink-0 border-r flex flex-col md:relative md:z-10
                 ${sidebarOpen ? "fixed inset-y-0 left-0 z-40" : "hidden md:flex"}`}
-                style={{ borderColor: T.border, background: "var(--background)" }}>
+                style={{ borderColor: T.border, background: "rgba(9,11,20,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                 <div className="p-3 border-b flex items-center gap-2" style={{ borderColor: T.border }}>
                     <button onClick={newChat}
                         className="flex-1 flex items-center gap-2 h-10 px-3 rounded-xl text-sm font-black"
@@ -512,9 +518,9 @@ export function AiChatPage() {
             </aside>
 
             {/* Main — chat */}
-            <main className="flex-1 flex flex-col min-w-0">
+            <main className="relative z-10 flex-1 flex flex-col min-w-0">
                 <header className="h-14 border-b flex items-center gap-2 px-4 flex-shrink-0"
-                    style={{ borderColor: T.border }}>
+                    style={{ borderColor: T.border, background: "rgba(9,11,20,0.6)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2">
                         <Menu className="w-5 h-5" />
                     </button>
@@ -624,8 +630,9 @@ export function AiChatPage() {
                             <div key={m.id} className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
                                 <div className="max-w-[75%] px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words"
                                     style={{
-                                        background: isUser ? T.gradient : "var(--card, rgba(0,0,0,0.04))",
+                                        background: isUser ? T.gradient : "rgba(18,22,36,0.78)",
                                         color: isUser ? T.onPrimary : "var(--foreground)",
+                                        border: isUser ? "none" : "1px solid rgba(255,255,255,0.06)",
                                         borderRadius: isUser ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
                                     }}>
                                     {m.attachmentType === "image" && m.attachmentUrl && (
@@ -696,7 +703,7 @@ export function AiChatPage() {
                     </div>
                 )}
 
-                <form onSubmit={sendMessage} className="border-t p-3 flex gap-2 items-end" style={{ borderColor: T.border }}>
+                <form onSubmit={sendMessage} className="border-t p-3 flex gap-2 items-end" style={{ borderColor: T.border, background: "rgba(9,11,20,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                     {/* Attachment button */}
                     <input ref={fileInputRef} type="file" accept="image/*,application/pdf" hidden
                         onChange={e => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); e.target.value = ""; }} />
@@ -713,7 +720,7 @@ export function AiChatPage() {
                         onChange={e => setInput(e.target.value.slice(0, 4000))}
                         placeholder={recording ? "Tinglayapman..." : "Humo AI'ga xabar yozing..."}
                         className="flex-1 h-11 px-4 rounded-xl border text-sm focus:outline-none focus:ring-2"
-                        style={{ borderColor: recording ? T.primary : T.border, ["--tw-ring-color" as string]: T.primary + "50" }}
+                        style={{ borderColor: recording ? T.primary : T.border, background: "rgba(18,22,36,0.6)", ["--tw-ring-color" as string]: T.primary + "50" }}
                         disabled={sending}
                     />
 
