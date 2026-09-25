@@ -101,7 +101,7 @@ export function NxHighlightCreate({ onClose, onCreated }: Props) {
                             <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                         ) : stories.length === 0 ? (
                             <div className="text-center py-8">
-                                <p className="text-sm font-bold text-white/70">Aktiv story'lar yo'q</p>
+                                <p className="text-sm font-bold text-[var(--nx-text-2)]">Aktiv story'lar yo'q</p>
                                 <p className="text-[11px] mt-1" style={{ color: "rgba(140,160,210,0.65)" }}>Avval story qo'shing, keyin highlight yarating</p>
                             </div>
                         ) : (

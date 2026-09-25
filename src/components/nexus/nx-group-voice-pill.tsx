@@ -65,7 +65,7 @@ export function NxGroupVoicePill({
                     <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-ping" style={{ background: "#FF3250" }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-xs font-black text-white flex items-center gap-1.5">
+                    <p className="text-xs font-black text-[var(--nx-text)] flex items-center gap-1.5">
                         Voice chat faol
                         <span className="text-[10px] font-normal" style={{ color: "rgb(var(--nx-text-rgb)/0.7)" }}>
                             · {active.participantCount} kishi

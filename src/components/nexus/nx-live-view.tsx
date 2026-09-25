@@ -373,7 +373,7 @@ function StreamCard({ s, onOpen, badge, meta, dim, corner }: {
                     <span className="px-3 py-1.5 rounded-xl text-xs font-black text-[var(--nx-text)]" style={{ background: "linear-gradient(135deg,#EF4444,#F97316)" }}>Kirish</span>
                 </div>
                 {corner}
-                {s.category && !corner && <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-[var(--nx-text)] pointer-events-none" style={{ background: "rgba(5,8,24,0.75)" }}>#{s.category}</span>}
+                {s.category && !corner && <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-white pointer-events-none" style={{ background: "rgba(5,8,24,0.75)" }}>#{s.category}</span>}
             </div>
             <div className="flex gap-2.5">
                 {s.author?.username ? (

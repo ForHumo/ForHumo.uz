@@ -68,7 +68,7 @@ export function NexusVerify() {
     return (
         <div className="h-full overflow-y-auto text-[var(--nx-text)]" style={{ background: "var(--nx-bg)" }}>
             <header className="sticky top-0 z-20 flex items-center gap-3 px-3 h-14 backdrop-blur-xl"
-                style={{ background: "rgba(5,8,24,0.80)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
+                style={{ background: "var(--nx-bg)", borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.18)" }}>
                 <button onClick={() => router.back()} className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
                     <ArrowLeft className="w-4 h-4 text-[var(--nx-text)]" />
                 </button>
@@ -82,7 +82,7 @@ export function NexusVerify() {
                 <div className="flex justify-center py-24"><Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
             ) : !data ? (
                 <div className="flex flex-col items-center py-24 px-6 text-center">
-                    <p className="text-sm font-bold text-white/70">Ma&apos;lumot yuklanmadi</p>
+                    <p className="text-sm font-bold text-[var(--nx-text-2)]">Ma&apos;lumot yuklanmadi</p>
                     <Link href="/nexus" className="mt-4 px-5 py-2.5 rounded-xl text-xs font-black text-[var(--nx-text)]" style={{ background: "var(--nx-accent)" }}>Nexus&apos;ga qaytish</Link>
                 </div>
             ) : (

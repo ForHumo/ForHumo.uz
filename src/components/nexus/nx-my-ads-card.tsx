@@ -55,7 +55,7 @@ export function NxMyAdsCard() {
     if (loading) {
         return (
             <div className="rounded-3xl p-8 text-center" style={{ background: NX_BG, border: `1px solid ${NX_BORDER}` }}>
-                <Loader2 className="w-6 h-6 animate-spin inline text-white/60" />
+                <Loader2 className="w-6 h-6 animate-spin inline text-[var(--nx-text-2)]" />
             </div>
         );
     }
@@ -124,7 +124,7 @@ export function NxMyAdsCard() {
                         <p className="text-[14px] font-black mb-1">
                             {t("Hali reklamangiz yo'q", "У вас пока нет реклам", "You have no ads yet")}
                         </p>
-                        <p className="text-[12px] text-white/50 max-w-sm mx-auto">
+                        <p className="text-[12px] text-[var(--nx-text-2)] max-w-sm mx-auto">
                             {t(
                                 "Feed'da 3 slot bor. Har 15 postdan keyin ko'rinadi.",
                                 "В ленте 3 слота. Показывается каждые 15 постов.",
@@ -178,13 +178,13 @@ export function NxMyAdsCard() {
                                             </span>
                                         )}
                                     </div>
-                                    <div className="mt-1 flex items-center gap-3 text-[11px] text-white/55">
+                                    <div className="mt-1 flex items-center gap-3 text-[11px] text-[var(--nx-text-2)]">
                                         <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{a.impressions.toLocaleString()}</span>
                                         <span className="flex items-center gap-1"><MousePointerClick className="w-3 h-3" />{a.clicks.toLocaleString()}</span>
                                         <span>CTR {a.impressions > 0 ? ((a.clicks / a.impressions) * 100).toFixed(1) : "0"}%</span>
                                         <span className="ml-auto tabular-nums text-[var(--nx-text)]">{formatMoney(a.paidAmountUzs, "UZS")}</span>
                                     </div>
-                                    <div className="mt-0.5 text-[10px] text-white/40 flex items-center gap-2">
+                                    <div className="mt-0.5 text-[10px] text-[var(--nx-text-3)] flex items-center gap-2">
                                         <span>
                                             {new Date(a.startsAt).toLocaleDateString(locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : "uz-UZ")}
                                             {" — "}
@@ -194,7 +194,7 @@ export function NxMyAdsCard() {
                                             href={a.ctaUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-0.5 text-white/60 hover:text-[var(--nx-text)] truncate"
+                                            className="inline-flex items-center gap-0.5 text-[var(--nx-text-2)] hover:text-[var(--nx-text)] truncate"
                                         >
                                             <ExternalLink className="w-3 h-3 flex-shrink-0" />
                                             <span className="truncate max-w-[140px]">{a.ctaUrl.replace(/^https?:\/\//, "")}</span>
@@ -224,7 +224,7 @@ export function NxMyAdsCard() {
 function StatCell({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color?: string }) {
     return (
         <div className="rounded-xl p-3" style={{ background: NX_BG, border: `1px solid ${NX_BORDER}` }}>
-            <div className="flex items-center gap-1 text-[11px] text-white/55">
+            <div className="flex items-center gap-1 text-[11px] text-[var(--nx-text-2)]">
                 {icon}
                 {label}
             </div>

@@ -120,7 +120,7 @@ export function NxChatLockModal({
                         <p className="text-sm font-black text-[var(--nx-text)]">{title}</p>
                     </div>
                     <button onClick={onClose} className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
-                        <X className="w-4 h-4 text-white/70" />
+                        <X className="w-4 h-4 text-[var(--nx-text-2)]" />
                     </button>
                 </div>
 

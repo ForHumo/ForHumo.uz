@@ -30,7 +30,7 @@ export function NxAdBanner() {
                         <h3 className="text-lg sm:text-2xl font-black text-[var(--nx-text)] leading-tight mb-1">
                             For Pay hamyoni
                         </h3>
-                        <p className="text-xs sm:text-sm text-white/85 leading-relaxed">
+                        <p className="text-xs sm:text-sm text-[var(--nx-text-2)] leading-relaxed">
                             Nexus ijodkorlariga tip yuboring, pullik postlarni sotib oling
                         </p>
                         <div className="inline-flex items-center gap-1 mt-2 px-3 py-1.5 rounded-xl text-xs font-black text-[var(--nx-text)]"

@@ -256,7 +256,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                                     className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full" style={{ background: "rgba(0,0,0,0.6)" }}>
                                     <Trash2 className="w-4 h-4 text-[var(--nx-text)]" />
                                 </button>
-                                {durationSec > 0 && <span className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(0,0,0,0.7)" }}>{Math.floor(durationSec / 60)}:{String(durationSec % 60).padStart(2, "0")}</span>}
+                                {durationSec > 0 && <span className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: "rgba(0,0,0,0.7)" }}>{Math.floor(durationSec / 60)}:{String(durationSec % 60).padStart(2, "0")}</span>}
                             </div>
 
                             {/* Muqova rasmi tugmasi */}

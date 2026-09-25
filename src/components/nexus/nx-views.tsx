@@ -393,7 +393,7 @@ function AgentsTab() {
 
             {/* List */}
             {loading ? (
-                <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-white/30" /></div>
+                <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-[var(--nx-text-3)]" /></div>
             ) : filtered.length === 0 ? (
                 <div className="p-8 rounded-2xl text-center"
                     style={{ background: "var(--nx-surface)", border: "1px dashed rgb(var(--nx-accent-rgb) / 0.20)" }}>
@@ -448,7 +448,7 @@ function AgentCard({
             <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0"
                     style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
-                    {agent.image ? <img src={agent.image} alt="" className="w-full h-full object-cover" /> : <Bot className="w-5 h-5 text-white/50" />}
+                    {agent.image ? <img src={agent.image} alt="" className="w-full h-full object-cover" /> : <Bot className="w-5 h-5 text-[var(--nx-text-2)]" />}
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -797,9 +797,9 @@ export function ProfileView() {
                                     <img src={v.image} alt={v.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                                         style={{ background: "rgba(5,8,24,0.50)" }}>
-                                        <Play className="w-5 h-5 text-[var(--nx-text)] fill-white" />
+                                        <Play className="w-5 h-5 text-white fill-white" />
                                     </div>
-                                    <div className="absolute bottom-1 right-1 px-1 py-0.5 rounded text-[8px] font-bold"
+                                    <div className="absolute bottom-1 right-1 px-1 py-0.5 rounded text-[8px] font-bold text-white"
                                         style={{ background: "rgba(5,8,24,0.80)" }}>{v.duration}</div>
                                 </div>
                                 <p className="text-[10px] font-bold text-[var(--nx-text)] line-clamp-2 leading-snug group-hover:text-[var(--nx-accent)] transition-colors">{v.title}</p>
@@ -820,7 +820,7 @@ export function ProfileView() {
                 <div className="space-y-2">
                     <Link href="/id"
                         className="flex items-center justify-between p-3 rounded-xl text-sm font-medium transition-colors duration-150"
-                        style={{ background: "rgba(5,8,24,0.50)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.12)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
+                        style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.12)", color: "rgb(var(--nx-text-2-rgb)/0.85)" }}>
                         <span>Humo ID sozlamalari</span>
                         <ExternalLink className="w-4 h-4" style={{ color: "rgb(var(--nx-accent-rgb) / 0.6)" }} />
                     </Link>
@@ -879,7 +879,7 @@ export function ProfileView() {
                                         placeholder="Ism"
                                         className="w-full h-10 px-3 rounded-xl text-sm text-[var(--nx-text)] outline-none"
                                         style={{
-                                            background: "rgba(5,8,24,0.70)",
+                                            background: "var(--nx-surface)",
                                             border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)",
                                             caretColor: "var(--nx-accent)",
                                         }}
@@ -896,7 +896,7 @@ export function ProfileView() {
                                         placeholder="Familiya"
                                         className="w-full h-10 px-3 rounded-xl text-sm text-[var(--nx-text)] outline-none"
                                         style={{
-                                            background: "rgba(5,8,24,0.70)",
+                                            background: "var(--nx-surface)",
                                             border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)",
                                             caretColor: "var(--nx-accent)",
                                         }}
@@ -916,7 +916,7 @@ export function ProfileView() {
                                     rows={3}
                                     className="w-full px-3 py-2.5 rounded-xl text-sm text-[var(--nx-text)] outline-none resize-none"
                                     style={{
-                                        background: "rgba(5,8,24,0.70)",
+                                        background: "var(--nx-surface)",
                                         border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)",
                                         caretColor: "var(--nx-accent)",
                                     }}

@@ -171,7 +171,7 @@ export function NxPlaylist() {
                                     onKeyDown={e => e.key === "Enter" && createPlaylist()}
                                     placeholder="Playlist nomi..."
                                     className="flex-1 h-9 rounded-xl px-3 text-sm text-[var(--nx-text)] outline-none"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
+                                    style={{ background: "var(--nx-surface)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.22)", caretColor: "var(--nx-accent)" }} />
                                 <button onClick={createPlaylist}
                                     className="px-3 py-2 rounded-xl text-xs font-black text-[var(--nx-text)]"
                                     style={{ background: "var(--nx-accent)" }}>
@@ -276,7 +276,7 @@ export function NxPlaylist() {
                             {selected.tracks.length === 0 ? (
                                 <div className="flex flex-col items-center py-10">
                                     <Music2 className="w-12 h-12 mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.25)" }} />
-                                    <p className="text-sm text-white/40">Bu playlist bo'sh</p>
+                                    <p className="text-sm text-[var(--nx-text-3)]">Bu playlist bo'sh</p>
                                     <p className="text-xs mt-1" style={{ color: "var(--nx-text-2)" }}>Yuqoridan trek qo'shing</p>
                                 </div>
                             ) : (

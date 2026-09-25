@@ -87,7 +87,7 @@ function KaraokePageInner() {
                 ) : items.length === 0 ? (
                     <div className="text-center py-16">
                         <Trophy className="w-12 h-12 mx-auto mb-3" style={{ color: "rgba(236,72,153,0.30)" }} />
-                        <p className="text-sm font-black text-white/70 mb-1">
+                        <p className="text-sm font-black text-[var(--nx-text-2)] mb-1">
                             {scope === "mine" ? "Hali karaoke qilmadingiz" : "Hozircha ijrolar yo'q"}
                         </p>
                         <p className="text-xs" style={{ color: "rgba(180,150,220,0.65)" }}>

@@ -118,13 +118,13 @@ export function NxAdminAds() {
 
             {loading && (
                 <div className="flex items-center justify-center py-10">
-                    <Loader2 className="w-6 h-6 animate-spin text-white/60" />
+                    <Loader2 className="w-6 h-6 animate-spin text-[var(--nx-text-2)]" />
                 </div>
             )}
 
             {!loading && rows.length === 0 && (
                 <div
-                    className="p-8 rounded-3xl text-center text-[13px] text-white/60"
+                    className="p-8 rounded-3xl text-center text-[13px] text-[var(--nx-text-2)]"
                     style={{ background: NX_BG, border: `1px solid ${NX_BORDER}` }}
                 >
                     <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-40" />
@@ -200,18 +200,18 @@ function AdCard({ b, busy, onHide, onUnhide }: {
                             </span>
                         )}
                         {!isExpired && !b.hidden && (
-                            <span className="text-[11px] flex items-center gap-1 text-white/50">
+                            <span className="text-[11px] flex items-center gap-1 text-[var(--nx-text-2)]">
                                 <Clock className="w-3 h-3" /> {daysLeft} kun qoldi
                             </span>
                         )}
                     </div>
                     <p className="text-[13.5px] font-black line-clamp-1">{b.title}</p>
-                    {b.body && <p className="text-[11.5px] text-white/60 line-clamp-1 mt-0.5">{b.body}</p>}
+                    {b.body && <p className="text-[11.5px] text-[var(--nx-text-2)] line-clamp-1 mt-0.5">{b.body}</p>}
                     <a
                         href={b.ctaUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[11px] flex items-center gap-1 mt-1 truncate text-white/60 hover:text-[var(--nx-text)]"
+                        className="text-[11px] flex items-center gap-1 mt-1 truncate text-[var(--nx-text-2)] hover:text-[var(--nx-text)]"
                     >
                         <ExternalLink className="w-3 h-3" /> {b.ctaUrl}
                     </a>
@@ -225,7 +225,7 @@ function AdCard({ b, busy, onHide, onUnhide }: {
             </div>
 
             <div
-                className="p-2.5 rounded-lg mb-3 text-[11.5px] flex items-center justify-between text-white/70"
+                className="p-2.5 rounded-lg mb-3 text-[11.5px] flex items-center justify-between text-[var(--nx-text-2)]"
                 style={{ background: "rgba(255,255,255,0.03)" }}
             >
                 <span>
@@ -274,7 +274,7 @@ function AdCard({ b, busy, onHide, onUnhide }: {
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
         <div className="p-2 rounded-lg" style={{ background: "rgba(255,255,255,0.03)" }}>
-            <p className="text-[10px] flex items-center gap-1 mb-0.5 text-white/55">
+            <p className="text-[10px] flex items-center gap-1 mb-0.5 text-[var(--nx-text-2)]">
                 {icon} {label}
             </p>
             <p className="text-[13px] font-black tabular-nums">{value}</p>
@@ -305,7 +305,7 @@ function HideModal({ banner, note, setNote, onClose, onConfirm, busy }: {
                     <Sparkles className="w-4 h-4" style={{ color: "#EC4899" }} />
                     <p className="text-[15px] font-black">Reklamani yashirish</p>
                 </div>
-                <p className="text-[12.5px] mb-4 text-white/60">
+                <p className="text-[12.5px] mb-4 text-[var(--nx-text-2)]">
                     Reklama darhol o&apos;chiriladi (3 slotdan biri bo&apos;shaydi). Qolgan kunlar uchun to&apos;lov qaytariladi.
                 </p>
                 <textarea
@@ -319,7 +319,7 @@ function HideModal({ banner, note, setNote, onClose, onConfirm, busy }: {
                         border: `1px solid ${NX_BORDER}`,
                     }}
                 />
-                <p className="text-[10.5px] mt-1 text-right tabular-nums text-white/40">
+                <p className="text-[10.5px] mt-1 text-right tabular-nums text-[var(--nx-text-3)]">
                     {note.length}/300
                 </p>
 
@@ -340,7 +340,7 @@ function HideModal({ banner, note, setNote, onClose, onConfirm, busy }: {
                         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><EyeOff className="w-4 h-4" /> Yashirish</>}
                     </button>
                 </div>
-                <p className="text-[10.5px] mt-3 text-center text-white/40">
+                <p className="text-[10.5px] mt-3 text-center text-[var(--nx-text-3)]">
                     #{banner.id.slice(0, 8)} · {banner.title.slice(0, 40)}
                 </p>
             </div>

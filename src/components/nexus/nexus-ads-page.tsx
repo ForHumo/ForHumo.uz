@@ -240,7 +240,7 @@ function Feature({ icon, label }: { icon: React.ReactNode; label: string }) {
             <div className="w-8 h-8 rounded-xl grid place-items-center mx-auto mb-1.5 text-[var(--nx-text)]" style={{ background: NX_GRADIENT }}>
                 {icon}
             </div>
-            <p className="text-[11px] font-bold text-white/80">{label}</p>
+            <p className="text-[11px] font-bold text-[var(--nx-text-2)]">{label}</p>
         </div>
     );
 }
@@ -249,7 +249,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
     return (
         <div>
             <p className="font-black mb-1">{q}</p>
-            <p className="text-white/60 leading-relaxed">{a}</p>
+            <p className="text-[var(--nx-text-2)] leading-relaxed">{a}</p>
         </div>
     );
 }

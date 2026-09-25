@@ -260,7 +260,7 @@ export function MediaView() {
                                         <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--nx-accent)" }}><Play className="w-5 h-5 text-[var(--nx-text)] fill-white ml-0.5" /></div>
                                     </div>
                                     {v.price > 0 && <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-black text-[var(--nx-text)]" style={{ background: "var(--nx-accent)" }}>{formatMoney(v.price, v.priceCurrency ?? "UZS")}</span>}
-                                    {v.durationSec > 0 && <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
+                                    {v.durationSec > 0 && <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                 </div>
                                 <h4 className="text-sm font-bold text-[var(--nx-text)] leading-snug line-clamp-2 group-hover:text-[var(--nx-accent)] transition-colors">{v.title}</h4>
                                 <p className="text-[11px] mt-1 flex items-center gap-1.5" style={{ color: "rgba(100,120,170,0.8)" }}>
@@ -348,7 +348,7 @@ function TrackRow({ title, accent, items, onPlay, onLike, onKaraoke, empty, hide
                                         <Mic2 className="w-2.5 h-2.5" /> KARAOKE
                                     </button>
                                 )}
-                                <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)] flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.80)" }}>
+                                <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-bold text-white flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.80)" }}>
                                     <Clock className="w-2.5 h-2.5" />{fmtDur(t.durationSec)}
                                 </span>
                             </div>

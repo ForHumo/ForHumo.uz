@@ -51,7 +51,7 @@ export function NexusFollowList({ username, type, onClose }: {
                 <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                     <h3 className="text-sm font-black text-[var(--nx-text)]">{title}</h3>
                     <button onClick={onClose} className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
-                        <X className="w-3.5 h-3.5 text-white/60" />
+                        <X className="w-3.5 h-3.5 text-[var(--nx-text-2)]" />
                     </button>
                 </div>
                 <div className="overflow-y-auto p-2">

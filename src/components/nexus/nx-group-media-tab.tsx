@@ -111,7 +111,7 @@ export function NxGroupMediaTab({
                                     className="aspect-video rounded-lg overflow-hidden bg-black/40 flex items-center justify-center relative">
                                     <video src={it.url} className="w-full h-full object-cover" preload="metadata" />
                                     <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                        <Film className="w-8 h-8 text-white/80" />
+                                        <Film className="w-8 h-8 text-[var(--nx-text-2)]" />
                                     </div>
                                 </a>
                             ))}

@@ -51,7 +51,7 @@ function PermalinkInner({ id }: { id: string }) {
                     </div>
                 ) : notFound || !perf ? (
                     <div className="text-center py-16">
-                        <p className="text-sm font-black text-white/70 mb-1">Ijro topilmadi</p>
+                        <p className="text-sm font-black text-[var(--nx-text-2)] mb-1">Ijro topilmadi</p>
                         <p className="text-xs" style={{ color: "rgba(180,150,220,0.65)" }}>
                             Ehtimol egasi o&apos;chirgan yoki maxfiy qilingan
                         </p>

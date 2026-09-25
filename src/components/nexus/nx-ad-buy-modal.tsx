@@ -185,7 +185,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
                         <div className="text-[16px] font-black">
                             {t("Reklama joylandi!", "Реклама размещена!", "Ad placed!")}
                         </div>
-                        <p className="text-[12px] text-white/60 text-center max-w-sm">
+                        <p className="text-[12px] text-[var(--nx-text-2)] text-center max-w-sm">
                             {t(
                                 "Reklamangiz feed'da bir necha daqiqada ko'rina boshlaydi.",
                                 "Реклама появится в ленте через несколько минут.",
@@ -198,7 +198,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
                         <div className="p-5 space-y-4">
                             {/* Image upload */}
                             <div>
-                                <label className="text-[12px] font-bold text-white/80">
+                                <label className="text-[12px] font-bold text-[var(--nx-text-2)]">
                                     {t("Rasm (post uslub, 1:1 tavsiya)", "Изображение (1:1)", "Image (1:1 recommended)")}
                                 </label>
                                 <input
@@ -239,7 +239,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
 
                             {/* Title */}
                             <div>
-                                <label className="text-[12px] font-bold text-white/80">
+                                <label className="text-[12px] font-bold text-[var(--nx-text-2)]">
                                     {t("Sarlavha", "Заголовок", "Title")} <span className="opacity-50">({title.length}/100)</span>
                                 </label>
                                 <input
@@ -253,7 +253,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
 
                             {/* Body (optional) */}
                             <div>
-                                <label className="text-[12px] font-bold text-white/80">
+                                <label className="text-[12px] font-bold text-[var(--nx-text-2)]">
                                     {t("Qisqa tavsif", "Описание", "Description")} <span className="opacity-50">({body.length}/280)</span>
                                 </label>
                                 <textarea
@@ -269,7 +269,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
                             {/* CTA text + URL */}
                             <div className="grid grid-cols-[110px_1fr] gap-2">
                                 <div>
-                                    <label className="text-[12px] font-bold text-white/80">
+                                    <label className="text-[12px] font-bold text-[var(--nx-text-2)]">
                                         {t("Tugma", "Кнопка", "Button")}
                                     </label>
                                     <input
@@ -281,7 +281,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[12px] font-bold text-white/80 flex items-center gap-1">
+                                    <label className="text-[12px] font-bold text-[var(--nx-text-2)] flex items-center gap-1">
                                         <ExternalLink className="w-3 h-3" /> {t("Havola", "Ссылка", "URL")}
                                     </label>
                                     <input
@@ -297,7 +297,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
 
                             {/* Days */}
                             <div>
-                                <label className="text-[12px] font-bold text-white/80">
+                                <label className="text-[12px] font-bold text-[var(--nx-text-2)]">
                                     {t("Kunlar", "Дней", "Days")}
                                 </label>
                                 <div className="mt-2 flex gap-2 flex-wrap">
@@ -343,7 +343,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
                                             {formatMoney(price.grossUzsTotal, "UZS")}
                                         </span>
                                     </div>
-                                    <div className="text-[11px] space-y-1 text-white/60">
+                                    <div className="text-[11px] space-y-1 text-[var(--nx-text-2)]">
                                         <div className="flex justify-between">
                                             <span>{t("Kunlik", "В день", "Per day")}:</span>
                                             <span>{formatMoney(price.grossUzsPerDay, "UZS")} (~${price.grossUsdPerDay.toFixed(2)})</span>
@@ -353,7 +353,7 @@ export function NxAdBuyModal({ open, onClose, onSuccess }: Props) {
                                             <span>{price.usdUzsRate.toLocaleString()} so&apos;m</span>
                                         </div>
                                         <div
-                                            className="flex items-center gap-1 mt-2 pt-2 text-white/50"
+                                            className="flex items-center gap-1 mt-2 pt-2 text-[var(--nx-text-2)]"
                                             style={{ borderTop: `1px dashed ${NX_GLASS_BORDER}` }}
                                         >
                                             <Info className="w-3 h-3" />

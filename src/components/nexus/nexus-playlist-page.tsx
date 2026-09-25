@@ -97,7 +97,7 @@ export function NexusPlaylistPage({ id }: { id: string }) {
                             <img src={data.coverUrl} alt="" className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full grid place-items-center">
-                                <Music className="w-16 h-16 text-white/70" />
+                                <Music className="w-16 h-16 text-[var(--nx-text-2)]" />
                             </div>
                         )}
                     </div>

@@ -102,7 +102,7 @@ export function NxChannelCreateModal({ initialType, onClose, onCreated }: Props)
                     <div>
                         <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>Handle (ixtiyoriy)</label>
                         <div className="flex items-center mt-1 rounded-lg" style={{ border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)" }}>
-                            <span className="pl-3 pr-1 text-white/60 text-sm">@</span>
+                            <span className="pl-3 pr-1 text-[var(--nx-text-2)] text-sm">@</span>
                             <input value={handle} onChange={e => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 30))}
                                 placeholder="mening_kanalim"
                                 className="flex-1 h-10 pr-3 bg-transparent text-[var(--nx-text)] text-sm focus:outline-none" />

@@ -95,14 +95,14 @@ export function NxFolderModal({
                     <button onClick={() => !busy && onClose()} disabled={busy}
                         className="w-7 h-7 rounded-full flex items-center justify-center disabled:opacity-40"
                         style={{ background: "rgb(var(--nx-accent-rgb) / 0.12)" }}>
-                        <X className="w-3.5 h-3.5 text-white/60" />
+                        <X className="w-3.5 h-3.5 text-[var(--nx-text-2)]" />
                     </button>
                 </div>
 
                 <div className="p-5 space-y-4 overflow-y-auto">
                     {/* Nom */}
                     <div>
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Nom</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--nx-text-2)]">Nom</label>
                         <input value={name} onChange={e => setName(e.target.value)}
                             placeholder="Ish, IT, Do'stlar..."
                             maxLength={30} autoFocus
@@ -112,7 +112,7 @@ export function NxFolderModal({
 
                     {/* Emoji */}
                     <div>
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Emoji</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--nx-text-2)]">Emoji</label>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                             {EMOJI_OPTIONS.map(e => (
                                 <button key={e} onClick={() => setEmoji(emoji === e ? "" : e)}
@@ -128,7 +128,7 @@ export function NxFolderModal({
 
                     {/* Rang */}
                     <div>
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Rang</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--nx-text-2)]">Rang</label>
                         <div className="mt-2 flex flex-wrap gap-2">
                             {COLOR_OPTIONS.map(c => (
                                 <button key={c.id} onClick={() => setColor(color === c.id ? "" : c.id)}
@@ -143,7 +143,7 @@ export function NxFolderModal({
 
                     {/* Turlar */}
                     <div>
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Chat turlari</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--nx-text-2)]">Chat turlari</label>
                         <div className="mt-2 space-y-1.5">
                             {TYPE_OPTIONS.map(t => (
                                 <label key={t.id} className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer"
@@ -174,7 +174,7 @@ export function NxFolderModal({
 
                 <div className="p-3 flex gap-2 flex-shrink-0" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
                     <button onClick={() => !busy && onClose()} disabled={busy}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white/70"
+                        className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[var(--nx-text-2)]"
                         style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)" }}>Bekor</button>
                     <button onClick={save} disabled={busy || !name.trim()}
                         className="flex-1 py-2.5 rounded-xl text-xs font-black text-[var(--nx-text)] disabled:opacity-40 flex items-center justify-center gap-2"

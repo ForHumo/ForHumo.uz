@@ -57,7 +57,7 @@ export function NxPushPrompt() {
                 <Bell className="w-4 h-4 text-[var(--nx-text)]" />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-[var(--nx-text)] leading-tight">Bildirishnomalarni yoqing</p>
+                <p className="text-white text-sm font-black leading-tight">Bildirishnomalarni yoqing</p>
                 <p className="text-[11px] text-white/85 leading-tight mt-0.5">Yangi xabar va chaqiruvlarni o&apos;tkazib yubormang</p>
             </div>
             <button onClick={enable} disabled={busy}

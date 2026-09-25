@@ -132,7 +132,7 @@ function NxHighlightViewer({ highlightId, onClose }: { highlightId: string; onCl
     if (!data) {
         return (
             <div className="fixed inset-0 z-[75] flex items-center justify-center" style={{ background: "rgba(0,0,0,0.95)" }}>
-                <Loader2 className="w-8 h-8 animate-spin text-white/70" />
+                <Loader2 className="w-8 h-8 animate-spin text-[var(--nx-text-2)]" />
             </div>
         );
     }

@@ -52,7 +52,7 @@ function Inner({ id }: { id: string }) {
 
     return (
         <div className="h-full overflow-y-auto text-[var(--nx-text)]" style={{ background: "var(--nx-bg)" }}>
-            <header className="sticky top-0 z-20 flex items-center gap-3 px-3 h-14 backdrop-blur-xl" style={{ background: "rgba(5,8,24,0.80)", borderBottom: "1px solid rgba(16,185,129,0.18)" }}>
+            <header className="sticky top-0 z-20 flex items-center gap-3 px-3 h-14 backdrop-blur-xl" style={{ background: "var(--nx-bg)", borderBottom: "1px solid rgba(16,185,129,0.18)" }}>
                 <button onClick={() => router.push("/nexus")} className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(16,185,129,0.12)" }}>
                     <ArrowLeft className="w-4 h-4 text-[var(--nx-text)]" />
                 </button>
@@ -62,7 +62,7 @@ function Inner({ id }: { id: string }) {
             {loading ? (
                 <div className="flex justify-center py-24"><Loader2 className="w-8 h-8 animate-spin" style={{ color: "#10B981" }} /></div>
             ) : !t ? (
-                <div className="text-center py-24 px-6"><Headphones className="w-12 h-12 mx-auto mb-3" style={{ color: "rgba(16,185,129,0.3)" }} /><p className="text-sm font-bold text-white/60">Trek topilmadi yoki o&apos;chirilgan</p></div>
+                <div className="text-center py-24 px-6"><Headphones className="w-12 h-12 mx-auto mb-3" style={{ color: "rgba(16,185,129,0.3)" }} /><p className="text-sm font-bold text-[var(--nx-text-2)]">Trek topilmadi yoki o&apos;chirilgan</p></div>
             ) : (
                 <div className="max-w-md mx-auto px-6 pt-8 pb-28 flex flex-col items-center text-center">
                     <div className="w-56 h-56 rounded-3xl overflow-hidden mb-6" style={{ border: "1px solid rgba(16,185,129,0.25)", boxShadow: "0 16px 48px rgba(16,185,129,0.18)" }}>
