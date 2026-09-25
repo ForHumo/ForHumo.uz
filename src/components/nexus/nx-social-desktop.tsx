@@ -2733,7 +2733,7 @@ export function NxSocialDesktop() {
         <div className="flex w-full h-full min-h-0 pb-[88px]" style={{ background: "var(--nx-bg)" }}>
             {/* ── COL 1: Chat list ─────────────────────────────────────── */}
             <div className="w-[380px] flex-shrink-0 flex flex-col border-r"
-                style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "rgba(8,12,32,0.55)" }}>
+                style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "var(--nx-surface)" }}>
                 {/* Tab bar (6 majburiy tab: All/Unread/DM/Groups/Channels/Agents) — 6-ustunli grid, swipe kerak emas */}
                 <div className="p-2 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)" }}>
@@ -3127,7 +3127,7 @@ export function NxSocialDesktop() {
                         // Agents ro'yxati
                         loadingAgents ? (
                             <div className="flex justify-center py-10">
-                                <Loader2 className="w-5 h-5 animate-spin text-white/30" />
+                                <Loader2 className="w-5 h-5 animate-spin text-[var(--nx-text-3)]" />
                             </div>
                         ) : (
                             <>
@@ -3187,7 +3187,7 @@ export function NxSocialDesktop() {
                         // Groups/Channels ro'yxati
                         loadingChannels ? (
                             <div className="flex justify-center py-10">
-                                <Loader2 className="w-5 h-5 animate-spin text-white/30" />
+                                <Loader2 className="w-5 h-5 animate-spin text-[var(--nx-text-3)]" />
                             </div>
                         ) : channels.length === 0 ? (
                             <div className="text-center py-10 px-4 text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
@@ -3205,7 +3205,7 @@ export function NxSocialDesktop() {
                                     style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                     {c.avatarUrl
                                         ? <img src={c.avatarUrl} alt="" className="w-full h-full object-cover" />
-                                        : (c.type === "CHANNEL" ? <Megaphone className="w-5 h-5 text-white/50" /> : <Users className="w-5 h-5 text-white/50" />)
+                                        : (c.type === "CHANNEL" ? <Megaphone className="w-5 h-5 text-[var(--nx-text-2)]" /> : <Users className="w-5 h-5 text-[var(--nx-text-2)]" />)
                                     }
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -3225,7 +3225,7 @@ export function NxSocialDesktop() {
                         ))
                     ) : loadingConvs && convs.length === 0 ? (
                         <div className="flex justify-center py-10">
-                            <Loader2 className="w-5 h-5 animate-spin text-white/30" />
+                            <Loader2 className="w-5 h-5 animate-spin text-[var(--nx-text-3)]" />
                         </div>
                     ) : filteredConvs.length === 0 && !(listTab === "all" && (agents.length > 0 || channels.length > 0)) ? (
                         <div className="text-center py-10 text-xs" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
@@ -3470,7 +3470,7 @@ export function NxSocialDesktop() {
                                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.15)" }}>
                                                 {c.avatarUrl
                                                     ? <img src={c.avatarUrl} alt="" className="w-full h-full object-cover" />
-                                                    : (c.type === "CHANNEL" ? <Megaphone className="w-4 h-4 text-white/50" /> : <Users className="w-4 h-4 text-white/50" />)}
+                                                    : (c.type === "CHANNEL" ? <Megaphone className="w-4 h-4 text-[var(--nx-text-2)]" /> : <Users className="w-4 h-4 text-[var(--nx-text-2)]" />)}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-1">
@@ -3607,7 +3607,7 @@ export function NxSocialDesktop() {
                             </div>
                         ) : (
                         <div className="px-4 py-3 flex items-center gap-3 flex-shrink-0"
-                            style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", background: "rgba(8,12,32,0.55)" }}>
+                            style={{ borderBottom: "1px solid rgb(var(--nx-accent-rgb) / 0.14)", background: "var(--nx-surface)" }}>
                             {/* Telegram uslub — avatar+nom bosilsa info paneli ochiladi/yopiladi */}
                             <button
                                 type="button"
@@ -3980,12 +3980,12 @@ export function NxSocialDesktop() {
                             {/* Pagination load-more ko'rsatkichi (yuqoriga scroll qilinganda avtomatik yuklanadi) */}
                             {hasMore && messages.length > 0 && (
                                 <div className="flex justify-center py-2">
-                                    <Loader2 className="w-4 h-4 animate-spin text-white/30" />
+                                    <Loader2 className="w-4 h-4 animate-spin text-[var(--nx-text-3)]" />
                                 </div>
                             )}
                             {loadingMsgs && messages.length === 0 ? (
                                 <div className="flex justify-center py-10">
-                                    <Loader2 className="w-5 h-5 animate-spin text-white/30" />
+                                    <Loader2 className="w-5 h-5 animate-spin text-[var(--nx-text-3)]" />
                                 </div>
                             ) : messages.length === 0 && !loadingMsgs ? (
                                 <NxEmptyChat
@@ -5106,7 +5106,7 @@ export function NxSocialDesktop() {
 
                         {/* Composer — Telegram uslubi */}
                         <div className="p-3 flex items-end gap-2 flex-shrink-0 relative"
-                            style={{ borderTop: (replyTo || editingId) ? "none" : "1px solid rgb(var(--nx-accent-rgb) / 0.14)", background: "rgba(8,12,32,0.55)" }}>
+                            style={{ borderTop: (replyTo || editingId) ? "none" : "1px solid rgb(var(--nx-accent-rgb) / 0.14)", background: "var(--nx-surface)" }}>
                             <input ref={fileInputRef} type="file" multiple
                                 accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.zip,.txt"
                                 onChange={e => {
@@ -5352,7 +5352,7 @@ export function NxSocialDesktop() {
                                                         <span className="text-xs font-mono font-bold flex-shrink-0" style={{ color: "var(--nx-accent)" }}>
                                                             /{c.cmd}
                                                         </span>
-                                                        <span className="text-xs text-white/70 flex-1 min-w-0">{c.description}</span>
+                                                        <span className="text-xs text-[var(--nx-text-2)] flex-1 min-w-0">{c.description}</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -5648,7 +5648,7 @@ export function NxSocialDesktop() {
             )}
             {selectedId && !selectedChannel && showInfo && !infoView && (
                 <div className="w-[320px] flex-shrink-0 flex flex-col border-l overflow-y-auto nx-scrollbar"
-                    style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "rgba(8,12,32,0.65)" }}>
+                    style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "var(--nx-surface)" }}>
                     <div className="p-5 text-center border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                         <div className="w-24 h-24 rounded-3xl overflow-hidden mx-auto mb-3 flex items-center justify-center"
                             style={{ background: "var(--nx-accent)" }}>
@@ -6508,7 +6508,7 @@ export function NxSocialDesktop() {
                         </div>
                         <div className="flex-1 overflow-y-auto nx-scrollbar">
                             {chatBookmarksLoading ? (
-                                <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-white/30" /></div>
+                                <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-[var(--nx-text-3)]" /></div>
                             ) : !chatBookmarksList || chatBookmarksList.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
                                     <BookmarkCheck className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.35)" }} />
@@ -6633,7 +6633,7 @@ export function NxSocialDesktop() {
                             )}
                             <p className="text-[13.5px] leading-relaxed" style={{ color: "rgb(var(--nx-text-rgb)/0.90)" }}>{confirmDlg.message}</p>
                         </div>
-                        <div className="p-3 flex gap-2 justify-end" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", background: "rgba(3,5,15,0.40)" }}>
+                        <div className="p-3 flex gap-2 justify-end" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", background: "var(--nx-surface-2)" }}>
                             <button onClick={() => { confirmDlg.resolve(false); setConfirmDlg(null); }}
                                 className="px-4 py-2 rounded-lg text-xs font-bold transition hover:brightness-125 active:scale-95"
                                 style={{ background: "rgb(var(--nx-accent-rgb) / 0.10)", color: "rgb(var(--nx-text-2-rgb)/0.85)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.25)" }}>
@@ -6664,7 +6664,7 @@ export function NxSocialDesktop() {
                             )}
                             <p className="text-[13.5px] leading-relaxed" style={{ color: "rgb(var(--nx-text-rgb)/0.90)" }}>{alertDlg.message}</p>
                         </div>
-                        <div className="p-3 flex justify-end" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", background: "rgba(3,5,15,0.40)" }}>
+                        <div className="p-3 flex justify-end" style={{ borderTop: "1px solid rgb(var(--nx-accent-rgb) / 0.20)", background: "var(--nx-surface-2)" }}>
                             <button onClick={() => { alertDlg.resolve(); setAlertDlg(null); }}
                                 className="px-5 py-2 rounded-lg text-xs font-black transition hover:brightness-110 active:scale-95"
                                 style={{ background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 16px rgb(var(--nx-accent-rgb) / 0.35)" }}>
@@ -6813,7 +6813,7 @@ function NxChannelInfoPanel({ id }: { id: string }) {
     if (loading) {
         return (
             <div className="w-[320px] flex-shrink-0 flex items-center justify-center border-l"
-                style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "rgba(8,12,32,0.65)" }}>
+                style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "var(--nx-surface)" }}>
                 <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} />
             </div>
         );
@@ -6826,7 +6826,7 @@ function NxChannelInfoPanel({ id }: { id: string }) {
 
     return (
         <div className="w-[320px] flex-shrink-0 flex flex-col border-l overflow-y-auto"
-            style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "rgba(8,12,32,0.65)" }}>
+            style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "var(--nx-surface)" }}>
             <div className="p-5 text-center border-b" style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
                 <img src={avatar} alt="" className="w-24 h-24 rounded-3xl object-cover mx-auto mb-3 bg-white" />
                 <p className="text-base font-black text-[var(--nx-text)] truncate">{info.name}</p>
@@ -7258,7 +7258,7 @@ function MediaDetailPanel({ type, messages, onBack, onOpenImage }: {
 
     return (
         <div className="w-[320px] flex-shrink-0 flex flex-col border-l overflow-hidden"
-            style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "rgba(8,12,32,0.65)" }}>
+            style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "var(--nx-surface)" }}>
             {/* Header */}
             <div className="px-4 py-3 flex items-center gap-3 border-b flex-shrink-0"
                 style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.14)" }}>
@@ -9272,7 +9272,7 @@ function NxFoldersModal({ folders: initialFolders, convs, onClose, onSaved, askC
                 <div className="flex-1 flex min-h-0">
                     {/* Chap: papkalar ro'yhati */}
                     <div className="w-[260px] flex-shrink-0 flex flex-col border-r overflow-y-auto nx-scrollbar"
-                        style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "rgba(8,12,32,0.35)" }}>
+                        style={{ borderColor: "rgb(var(--nx-accent-rgb) / 0.15)", background: "var(--nx-surface)" }}>
                         <button onClick={createFolder} disabled={savingBusy || folders.length >= 20}
                             className="m-2 flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-black transition hover:brightness-125 disabled:opacity-50"
                             style={{ background: "var(--nx-accent)", color: "white", boxShadow: "0 4px 12px rgb(var(--nx-accent-rgb) / 0.35)" }}>
@@ -9628,7 +9628,7 @@ function NxFolderChatPicker({ mode, folder, convs, onClose, onSave }: {
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img src={c.other.image} alt="" className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-xs font-black text-white/70">
+                                        <div className="w-full h-full flex items-center justify-center text-xs font-black text-[var(--nx-text-2)]">
                                             {(c.other?.name ?? c.other?.username ?? "?").slice(0, 1).toUpperCase()}
                                         </div>
                                     )}
@@ -9730,7 +9730,7 @@ function NxDiscoverModal({ type, onClose, onJoined, onSelect }: {
                 </div>
                 <div className="flex-1 overflow-y-auto nx-scrollbar">
                     {loading ? (
-                        <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-white/30" /></div>
+                        <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-[var(--nx-text-3)]" /></div>
                     ) : filtered.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
                             {type === "CHANNEL" ? <Megaphone className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.35)" }} /> : <Users className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.35)" }} />}
@@ -9850,7 +9850,7 @@ function NxAgentDiscoverModal({ onClose, onSelect }: {
                 </div>
                 <div className="flex-1 overflow-y-auto nx-scrollbar">
                     {loading ? (
-                        <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-white/30" /></div>
+                        <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-[var(--nx-text-3)]" /></div>
                     ) : filtered.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
                             <BotIcon className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-text-2-rgb)/0.35)" }} />
