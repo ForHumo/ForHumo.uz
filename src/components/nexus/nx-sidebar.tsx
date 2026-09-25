@@ -39,7 +39,7 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
             <div
                 className="fixed inset-0 z-[52] transition-opacity duration-300"
                 style={{
-                    background: "rgba(5,8,24,0.70)", backdropFilter: "blur(4px)",
+                    background: "var(--nx-surface)", backdropFilter: "blur(4px)",
                     opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none",
                 }}
                 onClick={onClose}
@@ -76,14 +76,14 @@ export function NxSidebar({ open, onClose, onOpenSettings, onNavigate }: Props) 
                         <button onClick={() => { onClose(); onNavigate?.("profile"); }}
                             className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all duration-150 active:scale-[0.99]"
                             style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)" }}>
-                            <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center text-base font-black text-white"
+                            <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center text-base font-black text-[var(--nx-text)]"
                                 style={{ background: image ? "transparent" : "var(--nx-accent)", border: "2px solid rgba(43,62,232,0.35)" }}>
                                 {image
                                     ? <img src={image} alt={name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                     : letter}
                             </div>
                             <div className="min-w-0 flex-1">
-                                <p className="text-sm font-bold text-white truncate">{name}</p>
+                                <p className="text-sm font-bold text-[var(--nx-text)] truncate">{name}</p>
                                 <p className="text-[10px] truncate mt-0.5" style={{ color: "rgba(100,120,170,0.80)" }}>{email}</p>
                             </div>
                         </button>

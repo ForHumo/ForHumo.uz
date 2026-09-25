@@ -23,7 +23,7 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
         <header
             className="relative z-30 flex-shrink-0 flex items-center gap-3 px-4 md:px-6 h-[60px]"
             style={{
-                background: "rgba(5,8,24,0.82)",
+                background: "var(--nx-surface)",
                 backdropFilter: "blur(20px)",
                 WebkitBackdropFilter: "blur(20px)",
                 borderBottom: "1px solid rgba(43,62,232,0.18)",
@@ -83,7 +83,7 @@ export function NxHeader({ onMenuOpen, onSettingsOpen: _onSettingsOpen }: NxHead
                     type="text"
                     readOnly
                     placeholder="Kontent, kreator, kanal..."
-                    className="w-full h-9 rounded-xl pl-9 pr-4 text-sm outline-none text-white cursor-pointer transition-all duration-200"
+                    className="w-full h-9 rounded-xl pl-9 pr-4 text-sm outline-none text-[var(--nx-text)] cursor-pointer transition-all duration-200"
                     style={{
                         background: "rgba(43,62,232,0.08)",
                         border: "1px solid rgba(43,62,232,0.18)",
@@ -307,7 +307,7 @@ function BellButton({ onOpen }: { onOpen: () => void }) {
             />
             {unread > 0 && (
                 <span
-                    className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-black text-white"
+                    className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-black text-[var(--nx-text)]"
                     style={{ background: "var(--nx-accent)", boxShadow: "0 0 6px rgba(0,206,200,0.8)" }}
                 >
                     {unread > 9 ? "9+" : unread}
@@ -368,7 +368,7 @@ function MessagesButton({ onOpen }: { onOpen: () => void }) {
         >
             <MessageCircle ref={iconRef as React.Ref<SVGSVGElement>} className="w-4 h-4" style={{ color: "rgba(160,176,224,0.80)" }} />
             {unread > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-black text-white"
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-black text-[var(--nx-text)]"
                     style={{ background: "#10B981", boxShadow: "0 0 6px rgba(16,185,129,0.8)" }}>
                     {unread > 99 ? "99+" : unread}
                 </span>
@@ -404,7 +404,7 @@ function ProfileButton({ session }: { session: ReturnType<typeof useSession>["da
         >
             {/* Avatar */}
             <div
-                className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0 text-xs font-black text-white"
+                className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0 text-xs font-black text-[var(--nx-text)]"
                 style={{
                     background: image
                         ? "transparent"
