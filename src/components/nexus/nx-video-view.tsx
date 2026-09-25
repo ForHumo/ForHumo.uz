@@ -162,7 +162,7 @@ export function VideoView() {
                         <button key={s.id} onClick={() => { setSection(s.id); setCat(""); }}
                             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black flex-shrink-0 transition active:scale-95"
                             style={section === s.id
-                                ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff", boxShadow: "0 2px 12px rgba(43,62,232,0.35)" }
+                                ? { background: "var(--nx-accent)", color: "#fff", boxShadow: "0 2px 12px rgba(43,62,232,0.35)" }
                                 : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(150,168,215,0.85)" }}>
                             <s.icon className="w-3.5 h-3.5" />{s.label}
                         </button>
@@ -175,22 +175,22 @@ export function VideoView() {
                 <div className="mx-4 mt-4 mb-3 p-5 rounded-2xl relative overflow-hidden" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.22)" }}>
                     <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(43,62,232,0.22) 0%, transparent 70%)" }} />
                     <div className="flex items-center justify-between gap-3 mb-4 relative">
-                        <h2 className="text-2xl md:text-3xl font-black text-white">Video <span style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Dunyo</span></h2>
-                        <button onClick={() => setUploadOpen(true)} className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-white flex-shrink-0" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 16px rgba(43,62,232,0.4)" }}>
+                        <h2 className="text-2xl md:text-3xl font-black text-white">Video <span style={{ background: "var(--nx-accent)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Dunyo</span></h2>
+                        <button onClick={() => setUploadOpen(true)} className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-white flex-shrink-0" style={{ background: "var(--nx-accent)", boxShadow: "0 4px 16px rgba(43,62,232,0.4)" }}>
                             <Plus className="w-4 h-4" /> Video yuklash
                         </button>
                     </div>
                     <div className="relative mb-3">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "rgba(43,62,232,0.55)" }} />
                         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Video qidiring..."
-                            className="w-full h-11 rounded-xl pl-11 pr-4 text-sm text-white outline-none" style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
+                            className="w-full h-11 rounded-xl pl-11 pr-4 text-sm text-white outline-none" style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                     </div>
                     <div className="flex gap-2 overflow-x-auto pb-1 relative" style={{ scrollbarWidth: "none" }}>
                         {SORTS.map(f => (
                             <button key={f.id} onClick={() => setSort(f.id)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold flex-shrink-0 transition active:scale-95"
                                 style={sort === f.id
-                                    ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }
+                                    ? { background: "var(--nx-accent)", color: "#fff" }
                                     : { background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(140,160,210,0.85)" }}>
                                 <f.icon className="w-3 h-3" />{f.label}
                             </button>
@@ -199,7 +199,7 @@ export function VideoView() {
                             <button key={c.id} onClick={() => setCat(p => p === c.id ? "" : c.id)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold flex-shrink-0 transition active:scale-95"
                                 style={cat === c.id
-                                    ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }
+                                    ? { background: "var(--nx-accent)", color: "#fff" }
                                     : { background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)", color: "rgba(140,160,210,0.85)" }}>
                                 <Hash className="w-3 h-3" />{c.label}
                             </button>
@@ -211,13 +211,13 @@ export function VideoView() {
             {/* ── Mening videolarim ── */}
             {section === "mine" ? (
                 loading ? (
-                    <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                    <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                 ) : libErr ? (
                     <EmptyState icon={LogIn} title="Kirish kerak" hint="Mening videolarim uchun hisobingizga kiring" />
                 ) : lib && (
                     <div className="mt-4 space-y-6">
                         <LibRow icon={CloudUpload} title="Yuklagan videolarim" items={lib.mine} onOpen={v => openItem(v, lib.mine)} onSave={toggleSave}
-                            empty="Hali video yuklamagansiz" action={<button onClick={() => setUploadOpen(true)} className="px-4 py-2 rounded-xl text-xs font-black text-white" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>Video yuklash</button>} />
+                            empty="Hali video yuklamagansiz" action={<button onClick={() => setUploadOpen(true)} className="px-4 py-2 rounded-xl text-xs font-black text-white" style={{ background: "var(--nx-accent)" }}>Video yuklash</button>} />
                         <LibRow icon={Bookmark} title="Keyinroq ko'rish" items={lib.watchLater} onOpen={v => openItem(v, lib.watchLater)} onSave={toggleSave} empty="Belgilangan video yo'q — kartadagi belgilash tugmasini bosing" />
                         <LibRow icon={History} title="So'nggi ko'rilgan" items={lib.history} onOpen={v => openItem(v, lib.history)} onSave={toggleSave} empty="Hali video ko'rmadingiz" />
                     </div>
@@ -251,7 +251,7 @@ export function VideoView() {
                         <EmptyState icon={Film}
                             title={query ? "Video topilmadi" : section === "subs" ? "Obunalaringizda video yo'q" : "Hali video yo'q"}
                             hint={section === "subs" ? "Kanallarga obuna bo'ling — videolari shu yerda chiqadi" : undefined}
-                            action={!query && section === "all" ? <button onClick={() => setUploadOpen(true)} className="mt-1 px-4 py-2 rounded-xl text-xs font-black text-white" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>Birinchi videoni yuklang</button> : undefined} />
+                            action={!query && section === "all" ? <button onClick={() => setUploadOpen(true)} className="mt-1 px-4 py-2 rounded-xl text-xs font-black text-white" style={{ background: "var(--nx-accent)" }}>Birinchi videoni yuklang</button> : undefined} />
                     ) : (
                         <>
                             {section === "vvideo" ? (
@@ -267,7 +267,7 @@ export function VideoView() {
                                 <div className="flex justify-center mt-6 px-4">
                                     <button onClick={loadMore} disabled={loadingMore}
                                         className="px-6 py-2.5 rounded-xl text-xs font-black text-white active:scale-95 transition disabled:opacity-50"
-                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 16px rgba(43,62,232,0.35)" }}>
+                                        style={{ background: "var(--nx-accent)", boxShadow: "0 4px 16px rgba(43,62,232,0.35)" }}>
                                         {loadingMore ? <><Loader2 className="w-3.5 h-3.5 animate-spin inline mr-1.5" />Yuklanmoqda</> : "Ko'proq video"}
                                     </button>
                                 </div>
@@ -289,7 +289,7 @@ function Badges({ v }: { v: Vid }) {
     return (
         <div className="absolute top-2 left-2 flex gap-1">
             {v.price > 0 && (
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>{formatMoney(v.price, v.priceCurrency ?? "UZS")}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "var(--nx-accent)" }}>{formatMoney(v.price, v.priceCurrency ?? "UZS")}</span>
             )}
             {v.isMature && (
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-black text-white" style={{ background: "rgba(239,68,68,0.92)" }}>18+</span>
@@ -304,7 +304,7 @@ function SaveBtn({ v, onSave }: { v: Vid; onSave: () => void }) {
             title={v.isSaved ? "Keyinroq ko'rishdan olib tashlash" : "Keyinroq ko'rish"}
             className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
             style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(6px)" }}>
-            <Bookmark className="w-3.5 h-3.5" style={{ color: v.isSaved ? "#00CEC8" : "#fff", fill: v.isSaved ? "#00CEC8" : "none" }} />
+            <Bookmark className="w-3.5 h-3.5" style={{ color: v.isSaved ? "var(--nx-accent)" : "#fff", fill: v.isSaved ? "var(--nx-accent)" : "none" }} />
         </button>
     );
 }
@@ -319,7 +319,7 @@ function HCard({ v, onOpen, onSave, w }: { v: Vid; onOpen: () => void; onSave: (
                     ? <img src={v.thumbUrl} alt={v.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     : <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg,#1a2a8a,#0a3d3a)" }}><Film className="w-8 h-8 text-white/40" /></div>}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ background: "rgba(5,8,24,0.35)" }}>
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}><Play className="w-5 h-5 text-white fill-white ml-0.5" /></div>
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--nx-accent)" }}><Play className="w-5 h-5 text-white fill-white ml-0.5" /></div>
                 </div>
                 <Badges v={v} />
                 <SaveBtn v={v} onSave={onSave} />
@@ -328,9 +328,9 @@ function HCard({ v, onOpen, onSave, w }: { v: Vid; onOpen: () => void; onSave: (
             <div className="flex gap-2.5">
                 <img src={avatarOf(v.author)} alt="" className="w-8 h-8 rounded-full flex-shrink-0 object-cover bg-white" style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
                 <div className="min-w-0">
-                    <h4 className="text-sm font-bold text-white leading-snug line-clamp-2 group-hover:text-[#00CEC8] transition-colors">{v.title}</h4>
+                    <h4 className="text-sm font-bold text-white leading-snug line-clamp-2 group-hover:text-[var(--nx-accent)] transition-colors">{v.title}</h4>
                     <p className="text-[11px] mt-1 flex items-center gap-1.5" style={{ color: "rgba(100,120,170,0.8)" }}>
-                        <span className="truncate inline-flex items-center gap-0.5">{v.author?.name || v.author?.username || "Foydalanuvchi"}{v.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}</span>
+                        <span className="truncate inline-flex items-center gap-0.5">{v.author?.name || v.author?.username || "Foydalanuvchi"}{v.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />}</span>
                         <span>·</span>
                         <span className="flex items-center gap-0.5 flex-shrink-0"><Eye className="w-2.5 h-2.5" />{fmtViews(v.views)}</span>
                     </p>
@@ -368,7 +368,7 @@ function LibRow({ icon: Icon, title, items, onOpen, onSave, empty, action }: {
     return (
         <div>
             <div className="px-4 mb-2 flex items-center gap-2">
-                <Icon className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                <Icon className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                 <span className="text-sm font-black text-white">{title}</span>
                 <span className="text-[11px] font-bold" style={{ color: "rgba(100,120,170,0.7)" }}>{items.length}</span>
             </div>

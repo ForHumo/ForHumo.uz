@@ -168,7 +168,7 @@ export function NxVideoPlayer() {
                     <div className="relative w-full h-full flex items-center justify-center p-4">
                         {data.thumbUrl && <img src={data.thumbUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" style={{ filter: "blur(20px)" }} />}
                         <div className="relative z-10 flex flex-col items-center gap-4 p-8 rounded-2xl text-center w-full" style={{ background: "rgba(8,12,32,0.92)", border: "1px solid rgba(43,62,232,0.30)", maxWidth: 380 }}>
-                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "var(--nx-accent)" }}>
                                 <Lock className="w-7 h-7 text-white" />
                             </div>
                             <div>
@@ -177,7 +177,7 @@ export function NxVideoPlayer() {
                             </div>
                             <button onClick={buy} disabled={buying}
                                 className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-60"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                style={{ background: "var(--nx-accent)" }}>
                                 {buying ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Coins className="w-4 h-4" /> Sotib olish — {formatMoney(data.price, data.priceCurrency ?? "UZS")}</>}
                             </button>
                             {buyErr && <p className="text-xs text-red-400 font-bold">{buyErr}</p>}
@@ -202,7 +202,7 @@ export function NxVideoPlayer() {
                                         {[0.5, 0.75, 1, 1.25, 1.5, 2].map(s => (
                                             <button key={s} onClick={() => { setSpeed(s); setSpeedOpen(false); }}
                                                 className="block w-full px-4 py-1.5 text-[11px] font-bold text-left whitespace-nowrap"
-                                                style={{ color: s === speed ? "#00CEC8" : "#fff",
+                                                style={{ color: s === speed ? "var(--nx-accent)" : "#fff",
                                                     background: s === speed ? "rgba(0,206,200,0.10)" : "transparent" }}>
                                                 {s}x{s === speed ? " ✓" : ""}
                                             </button>
@@ -244,14 +244,14 @@ export function NxVideoPlayer() {
                                 <img src={avatarOf(author)} alt="" className="w-9 h-9 rounded-full object-cover bg-white" style={{ border: "1px solid rgba(43,62,232,0.25)" }} />
                                 <div className="min-w-0 flex items-center gap-1">
                                     <span className="text-sm font-bold text-white truncate">{author.name || author.username || "Foydalanuvchi"}</span>
-                                    {author.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                    {author.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                 </div>
                             </Link>
                             {!data?.isMine && (
                                 <button onClick={toggleSub} className="px-3.5 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1 flex-shrink-0"
                                     style={subscribed
                                         ? { background: "rgba(43,62,232,0.15)", border: "1px solid rgba(43,62,232,0.35)", color: "rgba(160,180,240,0.9)" }
-                                        : { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" }}>
+                                        : { background: "var(--nx-accent)", color: "#fff" }}>
                                     {subscribed ? <><UserCheck className="w-3.5 h-3.5" /> Obunada</> : <><UserPlus className="w-3.5 h-3.5" /> Obuna</>}
                                 </button>
                             )}
@@ -261,8 +261,8 @@ export function NxVideoPlayer() {
                     {/* Amallar */}
                     <div className="flex items-center gap-2">
                         <button onClick={toggleLike} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold"
-                            style={{ background: liked ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)", border: `1px solid ${liked ? "rgba(43,62,232,0.40)" : "rgba(43,62,232,0.14)"}`, color: liked ? "#00CEC8" : "rgba(160,176,224,0.85)" }}>
-                            <ThumbsUp className="w-3.5 h-3.5" style={{ fill: liked ? "#00CEC8" : "none" }} /> {fmtViews(likeCount)}
+                            style={{ background: liked ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)", border: `1px solid ${liked ? "rgba(43,62,232,0.40)" : "rgba(43,62,232,0.14)"}`, color: liked ? "var(--nx-accent)" : "rgba(160,176,224,0.85)" }}>
+                            <ThumbsUp className="w-3.5 h-3.5" style={{ fill: liked ? "var(--nx-accent)" : "none" }} /> {fmtViews(likeCount)}
                         </button>
                         <button onClick={() => setShowComments(s => !s)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold"
                             style={{ background: showComments ? "rgba(43,62,232,0.20)" : "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(160,176,224,0.85)" }}>
@@ -287,7 +287,7 @@ export function NxVideoPlayer() {
                                     onClick={() => openVideo({ id: part.id, title: part.title, image: part.thumbUrl || "", author: data?.author?.name || data?.author?.username || "", avatar: avatarOf(data?.author ?? null), views: fmtViews(part.views), duration: fmtDur(part.durationSec) })}
                                     className="flex-1 flex items-center gap-2 p-2 rounded-xl text-left min-w-0"
                                     style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}>
-                                    {key === "prev" && <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                    {key === "prev" && <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                     <div className="w-12 h-7 rounded overflow-hidden flex-shrink-0" style={{ background: "rgba(43,62,232,0.15)" }}>
                                         {part.thumbUrl && <img src={part.thumbUrl} alt="" className="w-full h-full object-cover" />}
                                     </div>
@@ -295,7 +295,7 @@ export function NxVideoPlayer() {
                                         <p className="text-[9px] font-black uppercase tracking-wide" style={{ color: "rgba(0,206,200,0.8)" }}>{label}</p>
                                         <p className="text-[11px] font-bold text-white truncate">{part.title}</p>
                                     </div>
-                                    {key === "next" && <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                    {key === "next" && <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                 </button>
                             ))}
                         </div>
@@ -310,8 +310,8 @@ export function NxVideoPlayer() {
                         <div className="flex gap-2 mb-3">
                             <input value={cInput} onChange={e => setCInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendComment()}
                                 placeholder="Izoh yozing..." className="flex-1 h-9 rounded-xl px-3 text-sm text-white outline-none"
-                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "#00CEC8" }} />
-                            <button onClick={sendComment} disabled={cBusy || !cInput.trim()} className="w-9 h-9 flex items-center justify-center rounded-xl text-white disabled:opacity-40" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "var(--nx-accent)" }} />
+                            <button onClick={sendComment} disabled={cBusy || !cInput.trim()} className="w-9 h-9 flex items-center justify-center rounded-xl text-white disabled:opacity-40" style={{ background: "var(--nx-accent)" }}>
                                 {cBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                             </button>
                         </div>
@@ -323,7 +323,7 @@ export function NxVideoPlayer() {
                                 <div className="min-w-0">
                                     <div className="flex items-center gap-1">
                                         <span className="text-xs font-bold text-white">{c.author?.name || c.author?.username || "Foydalanuvchi"}</span>
-                                        {c.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
+                                        {c.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />}
                                         <span className="text-[9px]" style={{ color: "rgba(80,100,150,0.7)" }}>{timeAgo(c.createdAt)}</span>
                                     </div>
                                     <p className="text-xs mt-0.5" style={{ color: "rgba(200,215,245,0.85)" }}>{c.text}</p>
@@ -345,7 +345,7 @@ export function NxVideoPlayer() {
                                     {r.durationSec > 0 && <span className="absolute bottom-1 right-1 px-1 rounded text-[8px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(r.durationSec)}</span>}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-bold text-white leading-snug line-clamp-2 group-hover:text-[#00CEC8] transition-colors">{r.title}</p>
+                                    <p className="text-[11px] font-bold text-white leading-snug line-clamp-2 group-hover:text-[var(--nx-accent)] transition-colors">{r.title}</p>
                                     <p className="text-[9px] mt-1" style={{ color: "rgba(100,120,170,0.7)" }}>{r.author?.name || r.author?.username || ""} · {fmtViews(r.views)} ko&apos;rish</p>
                                 </div>
                             </button>

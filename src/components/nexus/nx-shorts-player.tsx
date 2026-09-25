@@ -223,7 +223,7 @@ export function NxShortsPlayer() {
                         className="h-full"
                         style={{
                             width: `${progress}%`,
-                            background: "linear-gradient(90deg,#2B3EE8,#00CEC8)",
+                            background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))",
                             transition: "width 0.25s linear",
                         }}
                     />
@@ -279,7 +279,7 @@ export function NxShortsPlayer() {
                         </div>
                         <div
                             className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full flex items-center justify-center"
-                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}
+                            style={{ background: "var(--nx-accent)" }}
                         >
                             <span className="text-white text-[10px] font-black leading-none">+</span>
                         </div>
@@ -294,7 +294,7 @@ export function NxShortsPlayer() {
                     <ActionBtn icon={Share2} label="Ulash" onClick={() => openShareSheet(short.author, short.id ? `${typeof window !== "undefined" ? window.location.origin : "https://forhumo.uz"}/nexus/v/${short.id}` : undefined)} />
                     <ActionBtn
                         icon={Bookmark} label="Saqlash"
-                        active={isSaved} activeColor="#00CEC8" fill={isSaved}
+                        active={isSaved} activeColor="var(--nx-accent)" fill={isSaved}
                         onClick={() => setSaved(p => ({ ...p, [shortIndex]: !p[shortIndex] }))}
                     />
                 </div>
@@ -321,7 +321,7 @@ export function NxShortsPlayer() {
                         </div>
                         <div className="flex-1 overflow-y-auto px-4 py-2" style={{ scrollbarWidth: "none" }}>
                             {cLoading ? (
-                                <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                                <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                             ) : comments.length === 0 ? (
                                 <p className="text-xs text-center py-6" style={{ color: "rgba(120,140,185,0.6)" }}>Birinchi izohni qoldiring</p>
                             ) : comments.map(c => (
@@ -331,7 +331,7 @@ export function NxShortsPlayer() {
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-1">
                                             <span className="text-xs font-bold text-white">{c.author?.name || c.author?.username || "Foydalanuvchi"}</span>
-                                            {c.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
+                                            {c.author?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />}
                                         </div>
                                         <p className="text-xs mt-0.5" style={{ color: "rgba(200,215,245,0.85)" }}>{c.text}</p>
                                     </div>
@@ -341,10 +341,10 @@ export function NxShortsPlayer() {
                         <div className="flex gap-2 px-4 py-3 flex-shrink-0" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
                             <input value={cInput} onChange={e => setCInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendComment()}
                                 placeholder="Izoh yozing..." className="flex-1 h-9 rounded-xl px-3 text-sm text-white outline-none"
-                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "#00CEC8" }} />
+                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "var(--nx-accent)" }} />
                             <button onClick={sendComment} disabled={cBusy || !cInput.trim()}
                                 className="w-9 h-9 flex items-center justify-center rounded-xl text-white disabled:opacity-40"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                style={{ background: "var(--nx-accent)" }}>
                                 {cBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                             </button>
                         </div>
@@ -362,7 +362,7 @@ export function NxShortsPlayer() {
                             width:   i === shortIndex ? "3px" : "2px",
                             height:  i === shortIndex ? "24px" : "8px",
                             background: i === shortIndex
-                                ? "linear-gradient(180deg,#2B3EE8,#00CEC8)"
+                                ? "linear-gradient(180deg,var(--nx-accent),var(--nx-accent))"
                                 : "rgba(255,255,255,0.25)",
                         }}
                     />
@@ -394,7 +394,7 @@ export function NxShortsPlayer() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 function ActionBtn({
-    icon: Icon, label, active = false, activeColor = "#00CEC8",
+    icon: Icon, label, active = false, activeColor = "var(--nx-accent)",
     onClick, fill = false,
 }: {
     icon: React.ElementType; label?: string; active?: boolean;

@@ -228,15 +228,15 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                             style={{ borderColor: "rgba(43,62,232,0.35)", background: "rgba(43,62,232,0.05)" }}>
                             {uploading ? (
                                 <>
-                                    <Loader2 className="w-10 h-10 animate-spin" style={{ color: "#00CEC8" }} />
+                                    <Loader2 className="w-10 h-10 animate-spin" style={{ color: "var(--nx-accent)" }} />
                                     <span className="text-xs font-bold" style={{ color: "rgba(120,140,185,0.9)" }}>Yuklanmoqda... {uploadPct}%</span>
                                     <div className="w-48 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(43,62,232,0.15)" }}>
-                                        <div className="h-full" style={{ width: `${uploadPct}%`, background: "linear-gradient(90deg,#2B3EE8,#00CEC8)", transition: "width 0.2s" }} />
+                                        <div className="h-full" style={{ width: `${uploadPct}%`, background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))", transition: "width 0.2s" }} />
                                     </div>
                                 </>
                             ) : (
                                 <>
-                                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "var(--nx-accent)" }}>
                                         <Film className="w-8 h-8 text-white" />
                                     </div>
                                     <span className="text-sm font-bold text-white">Video tanlang</span>
@@ -275,7 +275,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                                 <div className="flex gap-2">
                                     {([["HORIZONTAL", "Gorizontal (G.Video)", RectangleHorizontal], ["VERTICAL", "Vertikal (V.Video)", RectangleVertical]] as const).map(([id, label, Icon]) => (
                                         <button key={id} onClick={() => setOrientation(id)} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black transition"
-                                            style={orientation === id ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" } : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", color: "rgba(140,160,210,0.8)" }}>
+                                            style={orientation === id ? { background: "var(--nx-accent)", color: "#fff" } : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", color: "rgba(140,160,210,0.8)" }}>
                                             <Icon className="w-4 h-4" />{label}
                                         </button>
                                     ))}
@@ -285,16 +285,16 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                             {/* Sarlavha (cheksiz) */}
                             <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Sarlavha *"
                                 className="w-full h-11 px-3 rounded-xl text-sm text-white outline-none"
-                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", caretColor: "#00CEC8" }} />
+                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", caretColor: "var(--nx-accent)" }} />
 
                             {/* Tavsif (cheksiz) */}
                             <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Tavsif — cheksiz uzunlikda yozishingiz mumkin" rows={4}
                                 className="w-full px-3 py-2.5 rounded-xl text-sm text-white outline-none resize-y"
-                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", caretColor: "#00CEC8", minHeight: 90 }} />
+                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", caretColor: "var(--nx-accent)", minHeight: 90 }} />
 
                             {/* AI yordam (Humo AI) — sarlavhadan tavsif/teglar */}
                             <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="inline-flex items-center gap-1 text-[10px] font-black mr-0.5" style={{ color: "#00CEC8" }}><Sparkles className="w-3 h-3" />AI</span>
+                                <span className="inline-flex items-center gap-1 text-[10px] font-black mr-0.5" style={{ color: "var(--nx-accent)" }}><Sparkles className="w-3 h-3" />AI</span>
                                 <button onClick={() => aiAssist("caption")} disabled={!!aiBusy}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition active:scale-95 disabled:opacity-50"
                                     style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.25)", color: "rgba(150,230,225,0.95)" }}>
@@ -320,7 +320,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                                         </div>
                                     ))}
                                     <label className="w-16 h-16 flex items-center justify-center rounded-lg cursor-pointer" style={{ background: "rgba(43,62,232,0.08)", border: "1px dashed rgba(43,62,232,0.3)" }}>
-                                        {descBusy ? <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#00CEC8" }} /> : <Plus className="w-5 h-5" style={{ color: "rgba(140,160,210,0.8)" }} />}
+                                        {descBusy ? <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} /> : <Plus className="w-5 h-5" style={{ color: "rgba(140,160,210,0.8)" }} />}
                                         <input ref={descImgRef} type="file" accept="image/*" multiple onChange={e => addDescImages(e.target.files)} className="sr-only" />
                                     </label>
                                 </div>
@@ -342,7 +342,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                                     onKeyDown={e => { if (e.key === "Enter" || e.key === "," || e.key === " ") { e.preventDefault(); commitTag(); } }}
                                     onBlur={commitTag} placeholder="Teg yozing va Enter bosing"
                                     className="w-full h-10 px-3 rounded-xl text-sm text-white outline-none"
-                                    style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", caretColor: "#00CEC8" }} />
+                                    style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", caretColor: "var(--nx-accent)" }} />
                             </div>
 
                             {/* Kategoriya */}
@@ -351,7 +351,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                                 <div className="flex flex-wrap gap-1.5">
                                     {CATEGORIES.map(c => (
                                         <button key={c.id} onClick={() => setCategory(c.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold transition"
-                                            style={category === c.id ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" } : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", color: "rgba(140,160,210,0.8)" }}>
+                                            style={category === c.id ? { background: "var(--nx-accent)", color: "#fff" } : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", color: "rgba(140,160,210,0.8)" }}>
                                             {c.label}
                                         </button>
                                     ))}
@@ -363,17 +363,17 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                                 <p className="text-[11px] font-bold mb-1.5 flex items-center gap-1" style={{ color: "rgba(140,160,210,0.7)" }}><Coins className="w-3 h-3" />Narx</p>
                                 <div className="flex gap-2">
                                     <button onClick={() => setIsPaid(false)} className="flex-1 py-2.5 rounded-xl text-xs font-black transition"
-                                        style={!isPaid ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" } : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", color: "rgba(140,160,210,0.8)" }}>Bepul</button>
+                                        style={!isPaid ? { background: "var(--nx-accent)", color: "#fff" } : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", color: "rgba(140,160,210,0.8)" }}>Bepul</button>
                                     <button onClick={() => setIsPaid(true)} className="flex-1 py-2.5 rounded-xl text-xs font-black transition"
-                                        style={isPaid ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff" } : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", color: "rgba(140,160,210,0.8)" }}>Pullik</button>
+                                        style={isPaid ? { background: "var(--nx-accent)", color: "#fff" } : { background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", color: "rgba(140,160,210,0.8)" }}>Pullik</button>
                                 </div>
                                 {isPaid && (
                                     <div className="mt-2">
                                         <div className="relative">
                                             <input type="number" min={0} value={price || ""} onChange={e => setPrice(Number(e.target.value))} placeholder="Summa"
                                                 className="w-full h-10 px-3 pr-10 rounded-xl text-sm text-white outline-none"
-                                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", caretColor: "#00CEC8" }} />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black" style={{ color: "#00CEC8" }}>{currencySymbol(myCurrency)}</span>
+                                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.18)", caretColor: "var(--nx-accent)" }} />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black" style={{ color: "var(--nx-accent)" }}>{currencySymbol(myCurrency)}</span>
                                         </div>
                                         <p className="text-[10px] mt-1" style={{ color: "rgba(120,140,185,0.7)" }}>Sotib olingach pul For Pay hisobingizga tushadi.</p>
                                     </div>
@@ -394,14 +394,14 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
                                             <div className="fixed inset-0 z-10" onClick={() => setSeriesOpen(false)} />
                                             <div className="absolute z-20 mt-1 left-0 right-0 rounded-xl overflow-hidden max-h-60 overflow-y-auto" style={{ background: "rgba(12,16,38,0.99)", border: "1px solid rgba(43,62,232,0.3)", scrollbarWidth: "none" }}>
                                                 <button onClick={() => { setPrevVideoId(""); setSeriesOpen(false); }} className="w-full px-3 py-2.5 text-left text-xs font-bold flex items-center justify-between hover:bg-white/5" style={{ color: "rgba(160,180,230,0.9)" }}>
-                                                    Yo&apos;q {!prevVideoId && <Check className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />}
+                                                    Yo&apos;q {!prevVideoId && <Check className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />}
                                                 </button>
                                                 {myVids.length === 0 && <p className="px-3 py-3 text-[11px]" style={{ color: "rgba(120,140,185,0.6)" }}>Sizda hali video yo&apos;q</p>}
                                                 {myVids.map(v => (
                                                     <button key={v.id} onClick={() => { setPrevVideoId(v.id); setSeriesOpen(false); }} className="w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-white/5">
                                                         <div className="w-10 h-6 rounded overflow-hidden flex-shrink-0" style={{ background: "rgba(43,62,232,0.15)" }}>{v.thumbUrl && <img src={v.thumbUrl} alt="" className="w-full h-full object-cover" />}</div>
                                                         <span className="text-xs font-bold text-white truncate flex-1">{v.title}</span>
-                                                        {prevVideoId === v.id && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                                        {prevVideoId === v.id && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                                     </button>
                                                 ))}
                                             </div>
@@ -428,7 +428,7 @@ export function NxVideoCreate({ open, onClose, onCreated, kind: defaultKind = "L
 
                             <button onClick={publish} disabled={posting || !title.trim() || coverBusy || descBusy}
                                 className="w-full h-11 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-50"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                style={{ background: "var(--nx-accent)" }}>
                                 {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4" /> Joylash</>}
                             </button>
                         </div>
