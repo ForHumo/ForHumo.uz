@@ -28,8 +28,16 @@ export async function POST(req: Request) {
         profileId = p?.id;
     }
 
+    // Dastlabki xabarni SupportMessage sifatida ham yozamiz — aks holda anonim
+    // contact-forma tiketi admin thread'ida BO'SH ko'rinardi (thread faqat
+    // SupportMessage'lardan quriladi; ticket.message ko'rsatilmaydi). tickets-API naqshi.
     await prisma.supportTicket.create({
-        data: { email, subject, message, profileId: profileId ?? null },
+        data: {
+            email, subject, message, profileId: profileId ?? null,
+            messages: {
+                create: { authorRole: "USER", authorId: profileId ?? null, body: message },
+            },
+        },
     });
 
     return NextResponse.json({ ok: true });
