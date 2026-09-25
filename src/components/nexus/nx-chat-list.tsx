@@ -90,7 +90,7 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                         <MessageCircle className="w-5 h-5" style={{ color: "rgb(var(--nx-accent-rgb) / 0.45)" }} />
                     </div>
-                    <p className="text-sm font-bold text-white/60 mb-1">
+                    <p className="text-sm font-bold text-[var(--nx-text-2)] mb-1">
                         {filterUnread ? "O'qilmagan suhbat yo'q" : "Hali suhbat yo'q"}
                     </p>
                     <p className="text-xs" style={{ color: "var(--nx-text-3)" }}>

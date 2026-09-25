@@ -366,7 +366,7 @@ export function NxNotifications() {
                     ) : filtered.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
                             <Bell className="w-12 h-12 mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.25)" }} />
-                            <p className="text-sm font-bold text-white/50 mb-1">
+                            <p className="text-sm font-bold text-[var(--nx-text-2)] mb-1">
                                 {filter === "unread" ? "O'qilmagan bildirishnoma yo'q" : "Bildirishnoma yo'q"}
                             </p>
                             <p className="text-xs" style={{ color: "rgb(var(--nx-text-3-rgb)/0.60)" }}>

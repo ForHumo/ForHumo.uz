@@ -1779,7 +1779,7 @@ function AgentReviewCard({
                 <div className="w-14 h-14 rounded-xl overflow-hidden bg-white/10 flex-shrink-0">
                     {p.image
                         ? <Image src={p.image} alt={p.title || ""} width={56} height={56} className="w-full h-full object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center"><ShoppingBag className="w-6 h-6 text-white/40" /></div>
+                        : <div className="w-full h-full flex items-center justify-center"><ShoppingBag className="w-6 h-6 text-[var(--nx-text-3)]" /></div>
                     }
                 </div>
                 <div className="flex-1 min-w-0">
@@ -1791,7 +1791,7 @@ function AgentReviewCard({
             </div>
 
             {/* Matn */}
-            <p className="text-xs text-white/70 mb-3 leading-relaxed">
+            <p className="text-xs text-[var(--nx-text-2)] mb-3 leading-relaxed">
                 {p.body || "Sotib olganingiz uchun rahmat! Fikringizni bildiring:"}
             </p>
 
@@ -1809,13 +1809,13 @@ function AgentReviewCard({
                     >
                         <Star
                             size={26}
-                            className={n <= showStars ? "text-yellow-400" : "text-white/25"}
+                            className={n <= showStars ? "text-yellow-400" : "text-[var(--nx-text-3)]"}
                             fill={n <= showStars ? "#facc15" : "none"}
                             strokeWidth={2}
                         />
                     </button>
                 ))}
-                {busy && <Loader2 size={14} className="animate-spin text-white/50 ml-2" />}
+                {busy && <Loader2 size={14} className="animate-spin text-[var(--nx-text-3)] ml-2" />}
             </div>
 
             {confirmed && (

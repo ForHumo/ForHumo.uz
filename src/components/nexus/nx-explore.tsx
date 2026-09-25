@@ -197,7 +197,7 @@ export function NxExplore() {
                                                     <span className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black text-[var(--nx-text)]" style={{ background: "#EF4444" }}>
                                                         <span className="w-1 h-1 rounded-full bg-white animate-pulse" />LIVE
                                                     </span>
-                                                    <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.8)" }}>
+                                                    <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.8)" }}>
                                                         <Eye className="w-2.5 h-2.5" />{fmtN(l.viewers)}
                                                     </span>
                                                 </div>
@@ -271,7 +271,7 @@ export function NxExplore() {
                                                     {v.thumbUrl
                                                         ? <img src={v.thumbUrl} alt={v.title} className="w-full h-full object-cover" />
                                                         : <div className="w-full h-full flex items-center justify-center"><Play className="w-6 h-6" style={{ color: "rgba(139,92,246,0.4)" }} /></div>}
-                                                    {v.durationSec > 0 && <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
+                                                    {v.durationSec > 0 && <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                                 </div>
                                                 <div className="px-2 py-1.5">
                                                     <p className="text-[11px] font-bold text-[var(--nx-text)] line-clamp-2 leading-snug">{v.title}</p>
@@ -367,7 +367,7 @@ export function NxExplore() {
                             {tags.length === 0 && users.length === 0 && videos.length === 0 && tracks.length === 0 && lives.length === 0 && posts.length === 0 && (
                                 <div className="text-center py-16 px-6">
                                     <Sparkles className="w-10 h-10 mx-auto mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.25)" }} />
-                                    <p className="text-sm font-black text-white/60 mb-1">Kashfiyot hozircha bo&apos;sh</p>
+                                    <p className="text-sm font-black text-[var(--nx-text-2)] mb-1">Kashfiyot hozircha bo&apos;sh</p>
                                     <p className="text-xs" style={{ color: "var(--nx-text-2)" }}>Birinchi bo&apos;lib kontent qo&apos;shing yoki keyinroq qayta tekshiring.</p>
                                 </div>
                             )}

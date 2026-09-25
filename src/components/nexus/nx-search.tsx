@@ -295,7 +295,7 @@ export function NxSearch() {
                     ) : !hasAny ? (
                         <div className="flex flex-col items-center justify-center py-14">
                             <Search className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.25)" }} />
-                            <p className="text-sm font-bold text-white/40">Natija topilmadi</p>
+                            <p className="text-sm font-bold text-[var(--nx-text-2)]">Natija topilmadi</p>
                             <p className="text-xs mt-1" style={{ color: "rgb(var(--nx-text-3-rgb)/0.50)" }}>&ldquo;{query}&rdquo; bo&apos;yicha hech narsa yo&apos;q</p>
                         </div>
                     ) : (
@@ -349,7 +349,7 @@ export function NxSearch() {
                                                 {v.thumbUrl ? <img src={v.thumbUrl} alt="" className="w-full h-full object-cover" />
                                                     : <div className="w-full h-full flex items-center justify-center"><Play className="w-4 h-4" style={{ color: "var(--nx-text-3)" }} /></div>}
                                                 {v.price > 0 && <span className="absolute top-0.5 left-0.5 flex items-center gap-0.5 px-1 rounded text-[8px] font-black text-[var(--nx-text)]" style={{ background: "rgb(var(--nx-accent-rgb) / 0.9)" }}><Lock className="w-2 h-2" />{fmtN(v.price)}</span>}
-                                                <span className="absolute bottom-0.5 right-0.5 px-1 rounded text-[8px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.85)" }}>{v.duration}</span>
+                                                <span className="absolute bottom-0.5 right-0.5 px-1 rounded text-[8px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{v.duration}</span>
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-xs font-bold text-[var(--nx-text)] line-clamp-2 leading-snug">{v.title}</p>

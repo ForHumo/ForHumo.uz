@@ -433,7 +433,7 @@ export function NxCreatePost() {
                                 onChange={e => setPrice(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
                                 placeholder="Narx (0 = bepul)"
                                 className="flex-1 h-9 px-3 rounded-xl text-sm text-[var(--nx-text)] outline-none"
-                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(245,179,1,0.25)", caretColor: "#F5B301" }} />
+                                style={{ background: "var(--nx-surface)", border: "1px solid rgba(245,179,1,0.25)", caretColor: "#F5B301" }} />
                             <div className="flex gap-1">
                                 {[0, 5000, 10000, 25000].map(v => (
                                     <button key={v} type="button" onClick={() => setPrice(v)}

@@ -230,7 +230,7 @@ export function NxSaved() {
                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(5,8,24,0.40)" }}>
                                                     <Play className="w-6 h-6 text-[var(--nx-text)] fill-white" />
                                                 </div>
-                                                {v.durationSec > 0 && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
+                                                {v.durationSec > 0 && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                             </div>
                                             <p className="text-[11px] font-bold text-[var(--nx-text)] line-clamp-2 leading-snug text-left">{v.title}</p>
                                             <p className="text-[9px] mt-0.5 text-left" style={{ color: "rgb(var(--nx-text-3-rgb)/0.75)" }}>{v.author?.name || v.author?.username || "Foydalanuvchi"}</p>
@@ -238,7 +238,7 @@ export function NxSaved() {
                                         <button onClick={() => unsaveVideo(v.id)} title="Belgilashdan olib tashlash"
                                             className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 md:hover:opacity-100 transition-opacity"
                                             style={{ background: "rgba(5,8,24,0.75)", backdropFilter: "blur(6px)" }}>
-                                            <X className="w-3 h-3 text-[var(--nx-text)]" />
+                                            <X className="w-3 h-3 text-white" />
                                         </button>
                                     </div>
                                 ))}
@@ -263,7 +263,7 @@ export function NxSaved() {
                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(5,8,24,0.45)" }}>
                                                     <Play className="w-6 h-6 text-[var(--nx-text)] fill-white" />
                                                 </div>
-                                                {v.duration && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)] flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.85)" }}><Clock className="w-2.5 h-2.5" />{v.duration}</span>}
+                                                {v.duration && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.85)" }}><Clock className="w-2.5 h-2.5" />{v.duration}</span>}
                                             </div>
                                             <p className="text-[11px] font-bold text-[var(--nx-text)] line-clamp-2 leading-snug group-hover:text-[var(--nx-accent)] transition-colors">{v.title}</p>
                                             <p className="text-[9px] mt-0.5" style={{ color: "rgb(var(--nx-text-3-rgb)/0.75)" }}>{v.author}</p>

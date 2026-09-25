@@ -360,7 +360,7 @@ function PrivacyPanel() {
     }
 
     if (loading || !state) {
-        return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-white/40" /></div>;
+        return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-[var(--nx-text-3)]" /></div>;
     }
 
     return (
@@ -405,7 +405,7 @@ function PrivacyPanel() {
                                 Xabar kelganda telefonda nima ko'rinadi
                             </p>
                         </div>
-                        {saving === "privacyPushPreview" && <Loader2 className="w-3.5 h-3.5 animate-spin text-white/40" />}
+                        {saving === "privacyPushPreview" && <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--nx-text-3)]" />}
                     </div>
                     <div className="flex gap-1 pl-11">
                         {(["full", "name", "hidden"] as PushPreviewValue[]).map(opt => (
@@ -433,7 +433,7 @@ function PrivacyPanel() {
                 <SettingsRow icon={Lock}   label="Chat qulflari" description="Biometric/PIN bilan yashirilgan" right={<ArrowRight />} />
             </SettingsGroup>
 
-            <p className="text-[10px] text-white/40 px-4 mt-2">
+            <p className="text-[10px] text-[var(--nx-text-3)] px-4 mt-2">
                 &quot;Kontaktlar&quot; = siz kuzatgan va sizni kuzatgan foydalanuvchilar.
             </p>
         </>
@@ -460,7 +460,7 @@ function PrivacyRow({ icon: Icon, label, description, value, onChange, saving }:
                     <p className="text-xs font-bold text-[var(--nx-text)]">{label}</p>
                     <p className="text-[10px]" style={{ color: "rgb(var(--nx-text-2-rgb)/0.65)" }}>{description}</p>
                 </div>
-                {saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-white/40" />}
+                {saving && <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--nx-text-3)]" />}
             </div>
             <div className="flex gap-1 pl-11">
                 {options.map(opt => (

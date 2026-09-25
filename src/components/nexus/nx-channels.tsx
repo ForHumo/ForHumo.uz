@@ -171,7 +171,7 @@ export function NxChannels({ type }: { type: ChType }) {
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgb(var(--nx-accent-rgb) / 0.08)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.15)" }}>
                         {type === "CHANNEL" ? <Hash className="w-5 h-5" style={{ color: "rgb(var(--nx-accent-rgb) / 0.5)" }} /> : <Users className="w-5 h-5" style={{ color: "rgb(var(--nx-accent-rgb) / 0.5)" }} />}
                     </div>
-                    <p className="text-sm font-bold text-white/60">{scope === "mine" ? `Hali ${label.toLowerCase()} yo'q` : "Kashf qilish uchun yo'q"}</p>
+                    <p className="text-sm font-bold text-[var(--nx-text-2)]">{scope === "mine" ? `Hali ${label.toLowerCase()} yo'q` : "Kashf qilish uchun yo'q"}</p>
                     <p className="text-xs mt-1" style={{ color: "var(--nx-text-3)" }}>{scope === "mine" ? `Yangi ${label.toLowerCase()} yarating` : "Birinchi bo'lib yarating"}</p>
                 </div>
             ) : (
@@ -1005,7 +1005,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
     const canManage = ch?.isOwner || ch?.role === "ADMIN";
 
     if (loading) return <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>;
-    if (!ch) return <div className="px-4 py-10 text-center text-sm text-white/60">Topilmadi <button onClick={onBack} className="block mx-auto mt-3 text-xs underline">Orqaga</button></div>;
+    if (!ch) return <div className="px-4 py-10 text-center text-sm text-[var(--nx-text-2)]">Topilmadi <button onClick={onBack} className="block mx-auto mt-3 text-xs underline">Orqaga</button></div>;
 
     return (
         <div className="flex flex-col" style={{ height: "calc(100vh - 180px)" }}>
@@ -1708,7 +1708,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                             style={{ background: "rgb(var(--nx-accent-rgb) / 0.06)", border: "1px solid rgb(var(--nx-accent-rgb) / 0.20)" }}>
                                             {loadingComments && comments.length === 0 ? (
                                                 <div className="flex justify-center py-2">
-                                                    <Loader2 className="w-4 h-4 animate-spin text-white/40" />
+                                                    <Loader2 className="w-4 h-4 animate-spin text-[var(--nx-text-3)]" />
                                                 </div>
                                             ) : comments.length === 0 ? (
                                                 <p className="text-[10px] text-center py-2" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
@@ -1734,7 +1734,7 @@ export function NxChannelRoom({ id, onBack }: { id: string; onBack: () => void }
                                                                 <span className="text-[9px] ml-1.5" style={{ color: "rgb(var(--nx-text-2-rgb)/0.60)" }}>
                                                                     {timeAgo(c.createdAt)}
                                                                 </span>
-                                                                <p className="text-xs mt-0.5 text-white/90 break-words">{c.text}</p>
+                                                                <p className="text-xs mt-0.5 text-[var(--nx-text)] break-words">{c.text}</p>
                                                             </div>
                                                         </div>
                                                     ))}

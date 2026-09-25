@@ -134,7 +134,7 @@ export function NxSubscriptions() {
                     ) : filtered.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
                             <Users className="w-10 h-10 mb-3" style={{ color: "rgb(var(--nx-accent-rgb) / 0.40)" }} />
-                            <p className="text-sm font-bold text-white/60 mb-1">
+                            <p className="text-sm font-bold text-[var(--nx-text-2)] mb-1">
                                 {q ? `"${query}" bo'yicha topilmadi`
                                    : tab === "following" ? "Hali hech kimni kuzatmaysiz"
                                    : "Hozircha kuzatuvchi yo'q"}

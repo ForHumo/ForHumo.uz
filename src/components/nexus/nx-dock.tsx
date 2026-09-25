@@ -61,7 +61,7 @@ export function NxDock({ active, onChange }: Props) {
             <nav
                 className="flex items-center px-2 py-2 gap-0.5"
                 style={{
-                    background: "rgba(5,8,24,0.92)",
+                    background: "var(--nx-elevated)",
                     backdropFilter: "blur(28px)",
                     WebkitBackdropFilter: "blur(28px)",
                     border: "1px solid rgb(var(--nx-accent-rgb) / 0.30)",

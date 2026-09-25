@@ -181,7 +181,7 @@ export function NxHomeRows() {
                                             </div>
                                         </div>
                                     )}
-                                    <span className="absolute bottom-1.5 right-1.5 px-1 py-0.5 rounded text-[8px] font-bold text-[var(--nx-text)] flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.8)" }}>
+                                    <span className="absolute bottom-1.5 right-1.5 px-1 py-0.5 rounded text-[8px] font-bold text-white flex items-center gap-0.5" style={{ background: "rgba(5,8,24,0.8)" }}>
                                         <Clock className="w-2 h-2" />{fmtDur(t.durationSec)}
                                     </span>
                                 </div>
@@ -235,7 +235,7 @@ export function NxHomeRows() {
                                 <span className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black text-[var(--nx-text)]" style={{ background: "#EF4444" }}>
                                     <span className="w-1 h-1 rounded-full bg-white animate-pulse" />LIVE
                                 </span>
-                                <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.8)" }}>
+                                <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.8)" }}>
                                     <Eye className="w-2.5 h-2.5" />{fmtN(s.viewers)}
                                 </span>
                             </div>
@@ -279,7 +279,7 @@ export function NxHomeRows() {
                                 <span className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black text-[var(--nx-text)]" style={{ background: "linear-gradient(135deg,#8B5CF6,#EC4899)" }}>
                                     <Scissors className="w-2.5 h-2.5" />CLIP
                                 </span>
-                                <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.8)" }}>
+                                <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.8)" }}>
                                     {fmtDur(c.endSec - c.startSec)}
                                 </span>
                                 <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1.5 text-[9px] font-bold text-[var(--nx-text)]">
@@ -390,7 +390,7 @@ function VidCard({ v, onOpen, accent, badge }: { v: HVid; onOpen: () => void; ac
                 {badge && (
                     <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-black text-[var(--nx-text)] uppercase" style={{ background: accent }}>{badge}</span>
                 )}
-                {v.durationSec > 0 && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-[var(--nx-text)]" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
+                {v.durationSec > 0 && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
             </div>
             <p className="text-[11px] font-bold text-[var(--nx-text)] line-clamp-2 leading-snug">{v.title}</p>
             <p className="text-[9px] flex items-center gap-1" style={{ color: "rgb(var(--nx-text-3-rgb)/0.75)" }}>
