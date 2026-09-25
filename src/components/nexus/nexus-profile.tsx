@@ -38,7 +38,7 @@ function ProfileOnlineBadge({ profileId }: { profileId: string }) {
     if (!isOnline(profileId)) return null;
     return (
         <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 z-10"
-            style={{ background: "#10B981", borderColor: "#050818" }} title="Onlayn" />
+            style={{ background: "#10B981", borderColor: "var(--nx-bg)" }} title="Onlayn" />
     );
 }
 
@@ -118,35 +118,35 @@ export function NexusProfile({ username }: { username: string }) {
         <NxPlayerProvider>
             {/* Presence keepalive — bu profil ochilishi bilan foydalanuvchi ham onlayn deb hisoblanadi */}
             <ProfilePresenceKeepalive />
-            <div className="h-full overflow-y-auto text-white" style={{ background: "#050818" }}>
+            <div className="h-full overflow-y-auto" style={{ background: "var(--nx-bg)", color: "var(--nx-text)" }}>
                 {/* Top bar */}
                 <header className="sticky top-0 z-20 flex items-center gap-3 px-3 h-14 backdrop-blur-xl"
-                    style={{ background: "rgba(5,8,24,0.80)", borderBottom: "1px solid rgba(43,62,232,0.18)" }}>
+                    style={{ background: "var(--nx-surface)", borderBottom: "1px solid var(--nx-border)" }}>
                     <button onClick={() => router.back()} className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
                         <ArrowLeft className="w-4 h-4 text-white" />
                     </button>
                     <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-black text-white truncate">{displayName}</span>
+                            <span className="text-sm font-black truncate">{displayName}</span>
                             {p?.verified && <NxVerifiedBadge category={(p as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={14} />}
                             {p?.username?.toLowerCase().endsWith("_agent") && (
                                 <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded flex-shrink-0"
-                                    style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>BOT</span>
+                                    style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>BOT</span>
                             )}
                         </div>
-                        {!loading && data && <span className="text-[10px]" style={{ color: "rgba(120,140,185,0.7)" }}>{fzNum(data.stats.posts)} post</span>}
+                        {!loading && data && <span className="text-[10px]" style={{ color: "var(--nx-text-3)" }}>{fzNum(data.stats.posts)} post</span>}
                     </div>
                 </header>
 
                 {loading ? (
-                    <div className="flex justify-center py-24"><Loader2 className="w-8 h-8 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                    <div className="flex justify-center py-24"><Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                 ) : notFound || !data ? (
                     <div className="flex flex-col items-center py-24 px-6 text-center">
-                        <UserX className="w-12 h-12 mb-3" style={{ color: "rgba(120,140,185,0.4)" }} />
+                        <UserX className="w-12 h-12 mb-3" style={{ color: "var(--nx-text-3)" }} />
                         <p className="text-sm font-bold text-white/80">Foydalanuvchi topilmadi</p>
                         <Link href="/nexus" className="mt-4 px-5 py-2.5 rounded-xl text-xs font-black text-white"
-                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>Nexus&apos;ga qaytish</Link>
+                            style={{ background: "var(--nx-accent)" }}>Nexus&apos;ga qaytish</Link>
                     </div>
                 ) : (
                     <>
@@ -155,22 +155,22 @@ export function NexusProfile({ username }: { username: string }) {
                             {data.profile.coverImage
                                 ? <img src={data.profile.coverImage} alt="" className="w-full h-full object-cover" />
                                 : <div className="w-full h-full" style={{ background: "linear-gradient(135deg,#1a2a8a,#0a3d3a)" }} />}
-                            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent, #050818)" }} />
+                            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent, var(--nx-bg))" }} />
                         </div>
 
                         {/* Profil ma'lumoti */}
                         <div className="px-4 -mt-12 relative">
                             <div className="flex items-end justify-between">
                                 <div className="relative">
-                                    <div className="w-24 h-24 rounded-3xl p-[3px]" style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 8px 32px rgba(43,62,232,0.4)" }}>
-                                        <img src={avatar} alt={displayName} className="w-full h-full rounded-[20px] object-cover bg-[#050818]" referrerPolicy="no-referrer" />
+                                    <div className="w-24 h-24 rounded-3xl p-[3px]" style={{ background: "var(--nx-accent)" }}>
+                                        <img src={avatar} alt={displayName} className="w-full h-full rounded-[20px] object-cover bg-[var(--nx-bg)]" referrerPolicy="no-referrer" />
                                     </div>
                                     <ProfileOnlineBadge profileId={data.profile.id} />
                                 </div>
                                 {/* Tugma */}
                                 {data.isMe ? (
                                     <Link href="/id/edit" className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-black mb-1"
-                                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)", color: "rgba(180,195,235,0.95)" }}>
+                                        style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)", color: "var(--nx-text-2)" }}>
                                         <Edit3 className="w-3.5 h-3.5" /> Tahrirlash
                                     </Link>
                                 ) : (
@@ -186,7 +186,7 @@ export function NexusProfile({ username }: { username: string }) {
                                                 className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-black active:scale-95 transition disabled:opacity-60"
                                                 style={following
                                                     ? { background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.30)", color: "rgba(140,160,210,0.9)" }
-                                                    : { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "#fff", boxShadow: "0 4px 18px rgba(43,62,232,0.4)" }}>
+                                                    : { background: "var(--nx-accent)", color: "#fff", boxShadow: "0 4px 18px rgba(43,62,232,0.4)" }}>
                                                 {following ? <><UserCheck className="w-4 h-4" /> Kuzatilmoqda</> : <><UserPlus className="w-4 h-4" /> Kuzatish</>}
                                             </button>
                                         )}
@@ -200,7 +200,7 @@ export function NexusProfile({ username }: { username: string }) {
                                                 <Link href={`/nexus?dm=${username}`} title="Xabar"
                                                     className="flex items-center justify-center w-11 h-11 rounded-xl active:scale-95 transition"
                                                     style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
-                                                    <MessageCircle className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} />
+                                                    <MessageCircle className="w-4 h-4" style={{ color: "var(--nx-text-2)" }} />
                                                 </Link>
                                             </>
                                         )}
@@ -209,7 +209,7 @@ export function NexusProfile({ username }: { username: string }) {
                                             <button onClick={() => setMenuOpen(o => !o)} title="Ko'proq"
                                                 className="flex items-center justify-center w-11 h-11 rounded-xl active:scale-95 transition"
                                                 style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.30)" }}>
-                                                <MoreHorizontal className="w-4 h-4" style={{ color: "rgba(180,195,235,0.95)" }} />
+                                                <MoreHorizontal className="w-4 h-4" style={{ color: "var(--nx-text-2)" }} />
                                             </button>
                                             {menuOpen && (
                                                 <>
@@ -219,13 +219,13 @@ export function NexusProfile({ username }: { username: string }) {
                                                         {!iBlocked && (
                                                             <button onClick={toggleMute} disabled={busy}
                                                                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-white active:bg-white/5 transition">
-                                                                {iMuted ? <Volume2 className="w-4 h-4" style={{ color: "#00CEC8" }} /> : <VolumeX className="w-4 h-4" style={{ color: "rgba(180,195,235,0.9)" }} />}
+                                                                {iMuted ? <Volume2 className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> : <VolumeX className="w-4 h-4" style={{ color: "var(--nx-text-2)" }} />}
                                                                 {iMuted ? "Ovozni qaytarish" : "Ovozsizlantirish"}
                                                             </button>
                                                         )}
                                                         <button onClick={toggleBlock} disabled={busy}
                                                             className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold active:bg-white/5 transition"
-                                                            style={{ color: iBlocked ? "rgba(180,195,235,0.9)" : "#ff8a96" }}>
+                                                            style={{ color: iBlocked ? "var(--nx-text-2)" : "#ff8a96" }}>
                                                             <Ban className="w-4 h-4" /> {iBlocked ? "Blokdan chiqarish" : "Bloklash"}
                                                         </button>
                                                     </div>
@@ -238,15 +238,15 @@ export function NexusProfile({ username }: { username: string }) {
 
                             <div className="mt-3">
                                 <div className="flex items-center gap-1.5">
-                                    <h1 className="text-xl font-black text-white">{displayName}</h1>
+                                    <h1 className="text-xl font-black">{displayName}</h1>
                                     {data.profile.verified && <NxVerifiedBadge category={(data.profile as unknown as { verifiedCategory?: string | null })?.verifiedCategory} size={20} />}
                                     {data.profile.username?.toLowerCase().endsWith("_agent") && (
                                         <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded"
-                                            style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>BOT</span>
+                                            style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>BOT</span>
                                     )}
                                 </div>
-                                {data.profile.username && <p className="text-sm font-mono" style={{ color: "#00CEC8" }}>@{data.profile.username}</p>}
-                                {data.profile.bio && <p className="text-sm mt-2 leading-relaxed" style={{ color: "rgba(180,195,235,0.8)" }}>{data.profile.bio}</p>}
+                                {data.profile.username && <p className="text-sm font-mono" style={{ color: "var(--nx-accent)" }}>@{data.profile.username}</p>}
+                                {data.profile.bio && <p className="text-sm mt-2 leading-relaxed" style={{ color: "var(--nx-text-2)" }}>{data.profile.bio}</p>}
                             </div>
 
                             {/* Business banner (agar profil business bo'lsa) */}
@@ -255,16 +255,16 @@ export function NexusProfile({ username }: { username: string }) {
                             {/* Statistika */}
                             <div className="flex gap-6 mt-4">
                                 <div className="text-center">
-                                    <p className="text-lg font-black text-white leading-tight">{fzNum(data.stats.posts)}</p>
-                                    <p className="text-[10px] font-bold" style={{ color: "rgba(120,140,185,0.75)" }}>Postlar</p>
+                                    <p className="text-lg font-black leading-tight">{fzNum(data.stats.posts)}</p>
+                                    <p className="text-[10px] font-bold" style={{ color: "var(--nx-text-3)" }}>Postlar</p>
                                 </div>
                                 <button onClick={() => setListType("followers")} className="text-center active:scale-95 transition">
-                                    <p className="text-lg font-black text-white leading-tight">{fzNum(followerCount)}</p>
-                                    <p className="text-[10px] font-bold" style={{ color: "rgba(120,140,185,0.75)" }}>Kuzatuvchilar</p>
+                                    <p className="text-lg font-black leading-tight">{fzNum(followerCount)}</p>
+                                    <p className="text-[10px] font-bold" style={{ color: "var(--nx-text-3)" }}>Kuzatuvchilar</p>
                                 </button>
                                 <button onClick={() => setListType("following")} className="text-center active:scale-95 transition">
-                                    <p className="text-lg font-black text-white leading-tight">{fzNum(data.stats.following)}</p>
-                                    <p className="text-[10px] font-bold" style={{ color: "rgba(120,140,185,0.75)" }}>Kuzatilmoqda</p>
+                                    <p className="text-lg font-black leading-tight">{fzNum(data.stats.following)}</p>
+                                    <p className="text-[10px] font-bold" style={{ color: "var(--nx-text-3)" }}>Kuzatilmoqda</p>
                                 </button>
                             </div>
 
@@ -280,7 +280,7 @@ export function NexusProfile({ username }: { username: string }) {
                                 ) : (
                                     <button onClick={() => setSubOpen(true)}
                                         className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black text-white active:scale-[0.99] transition"
-                                        style={{ background: "linear-gradient(135deg,#8B5CF6,#2B3EE8)", boxShadow: "0 4px 18px rgba(139,92,246,0.35)" }}>
+                                        style={{ background: "linear-gradient(135deg,#8B5CF6,var(--nx-accent))", boxShadow: "0 4px 18px rgba(139,92,246,0.35)" }}>
                                         <Star className="w-4 h-4" /> Obuna · {formatMoney(data.profile.subPrice, data.profile.subCurrency)}/oy
                                     </button>
                                 )
@@ -298,7 +298,7 @@ export function NexusProfile({ username }: { username: string }) {
                                     <Link href="/nexus/analytics"
                                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black active:scale-[0.99] transition"
                                         style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.30)", color: "rgba(150,230,225,0.95)" }}>
-                                        <TrendingUp className="w-4 h-4" style={{ color: "#00CEC8" }} /> Analitika
+                                        <TrendingUp className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Analitika
                                     </Link>
                                 </div>
                             )}
@@ -306,7 +306,7 @@ export function NexusProfile({ username }: { username: string }) {
                                 <Link href="/nexus/verify"
                                     className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-bold active:scale-[0.99] transition"
                                     style={{ background: "rgba(43,62,232,0.06)", border: "1px solid rgba(43,62,232,0.18)", color: "rgba(150,170,210,0.9)" }}>
-                                    <BadgeCheck className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} /> Ko&apos;k belgi uchun ariza
+                                    <BadgeCheck className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} /> Ko&apos;k belgi uchun ariza
                                 </Link>
                             )}
                             {data.isMe && (
@@ -331,7 +331,7 @@ export function NexusProfile({ username }: { username: string }) {
                                 <p className="text-sm font-black text-white/85">
                                     {iBlocked ? "Siz bu foydalanuvchini bloklagansiz" : "Kontent mavjud emas"}
                                 </p>
-                                <p className="text-xs mt-1.5 max-w-xs" style={{ color: "rgba(120,140,185,0.75)" }}>
+                                <p className="text-xs mt-1.5 max-w-xs" style={{ color: "var(--nx-text-3)" }}>
                                     {iBlocked
                                         ? "Postlari, xabarlari va profili sizga ko'rinmaydi. Blokdan chiqarsangiz qaytadan ko'rinadi."
                                         : "Bu foydalanuvchining postlarini ko'ra olmaysiz."}

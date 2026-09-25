@@ -19,7 +19,7 @@ const TIER_COLORS: Record<string, { fg: string; bg: string; border: string }> = 
     bronze:   { fg: "#B08D57", bg: "rgba(176,141,87,0.10)",  border: "rgba(176,141,87,0.30)" },
     silver:   { fg: "#C0C0C0", bg: "rgba(192,192,192,0.10)", border: "rgba(192,192,192,0.30)" },
     gold:     { fg: "#F5B301", bg: "rgba(245,179,1,0.10)",   border: "rgba(245,179,1,0.35)" },
-    platinum: { fg: "#00CEC8", bg: "rgba(0,206,200,0.10)",   border: "rgba(0,206,200,0.35)" },
+    platinum: { fg: "var(--nx-accent)", bg: "rgba(0,206,200,0.10)",   border: "rgba(0,206,200,0.35)" },
 };
 
 interface Ach {
@@ -158,7 +158,7 @@ export function NxProfileActivity() {
     return (
         <div className="mx-4 mt-3 rounded-2xl p-5" style={{ background: "rgba(11,18,40,0.60)", border: "1px solid rgba(43,62,232,0.18)" }}>
             <h3 className="text-sm font-black text-white mb-3 flex items-center gap-2">
-                <Sparkles className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                <Sparkles className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                 So&apos;nggi faoliyat
             </h3>
 
@@ -178,9 +178,9 @@ export function NxProfileActivity() {
                                 <p className="text-xs text-white line-clamp-1 flex-1" style={{ color: "rgba(200,215,245,0.85)" }}>
                                     {p.text || "(media post)"}
                                 </p>
-                                <div className="flex items-center gap-2 flex-shrink-0 text-[10px]" style={{ color: "rgba(120,140,185,0.75)" }}>
+                                <div className="flex items-center gap-2 flex-shrink-0 text-[10px]" style={{ color: "var(--nx-text-3)" }}>
                                     <span className="flex items-center gap-0.5"><Heart className="w-3 h-3" style={{ color: "#EF4444" }} />{p.likes}</span>
-                                    <span className="flex items-center gap-0.5"><MessageCircle className="w-3 h-3" style={{ color: "#00CEC8" }} />{p.comments}</span>
+                                    <span className="flex items-center gap-0.5"><MessageCircle className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />{p.comments}</span>
                                 </div>
                             </Link>
                         ))}
@@ -201,7 +201,7 @@ export function NxProfileActivity() {
                                     {v.durationSec > 0 && <span className="absolute bottom-1 right-1 px-1 rounded text-[8px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                 </div>
                                 <p className="text-[10px] font-bold text-white line-clamp-1">{v.title}</p>
-                                <p className="text-[9px] flex items-center gap-0.5" style={{ color: "rgba(120,140,185,0.75)" }}>
+                                <p className="text-[9px] flex items-center gap-0.5" style={{ color: "var(--nx-text-3)" }}>
                                     <Eye className="w-2.5 h-2.5" />{fmtN(v.views)}
                                 </p>
                             </Link>
@@ -249,7 +249,7 @@ export function NxProfileQrModal({ username, open, onClose }: { username: string
 
     useEffect(() => {
         if (!open || !url) return;
-        QRCode.toDataURL(url, { width: 260, margin: 2, color: { dark: "#050818", light: "#ffffff" } })
+        QRCode.toDataURL(url, { width: 260, margin: 2, color: { dark: "var(--nx-bg)", light: "#ffffff" } })
             .then(setDataUrl)
             .catch(() => { });
     }, [open, url]);
@@ -288,7 +288,7 @@ export function NxProfileQrModal({ username, open, onClose }: { username: string
                         </div>
                     ) : (
                         <div className="w-56 h-56 flex items-center justify-center mb-4">
-                            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#00CEC8" }} />
+                            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     )}
                     <p className="text-sm font-black text-white mb-1">@{username}</p>
@@ -299,7 +299,7 @@ export function NxProfileQrModal({ username, open, onClose }: { username: string
                         className="w-full py-2.5 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 active:scale-95"
                         style={{ background: copied
                             ? "linear-gradient(135deg,#10B981,#0D9488)"
-                            : "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            : "var(--nx-accent)" }}>
                         {copied ? <><Check className="w-4 h-4" />Nusxa olindi</> : <><Copy className="w-4 h-4" />Havolani nusxalash</>}
                     </button>
                 </div>

@@ -99,11 +99,11 @@ export function NexusProfileContent({ username, counts }: { username: string; co
                     return (
                         <button key={t.key} onClick={() => setTab(t.key)}
                             className="relative flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-black transition-colors"
-                            style={{ color: active ? "#fff" : "rgba(120,140,185,0.7)" }}>
+                            style={{ color: active ? "#fff" : "var(--nx-text-3)" }}>
                             <t.icon className="w-3.5 h-3.5" />
                             <span>{t.label}</span>
-                            {t.count > 0 && <span className="text-[10px] font-bold" style={{ color: active ? "#00CEC8" : "rgba(100,120,170,0.6)" }}>{fmtN(t.count)}</span>}
-                            {active && <span className="absolute bottom-0 left-1/4 right-1/4 h-[2px] rounded-full" style={{ background: "linear-gradient(90deg,#2B3EE8,#00CEC8)" }} />}
+                            {t.count > 0 && <span className="text-[10px] font-bold" style={{ color: active ? "var(--nx-accent)" : "rgba(100,120,170,0.6)" }}>{fmtN(t.count)}</span>}
+                            {active && <span className="absolute bottom-0 left-1/4 right-1/4 h-[2px] rounded-full" style={{ background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))" }} />}
                         </button>
                     );
                 })}
@@ -121,12 +121,12 @@ export function NexusProfileContent({ username, counts }: { username: string; co
                                         <div className="relative aspect-video rounded-xl overflow-hidden mb-1.5" style={{ background: "rgba(11,18,40,0.7)", border: "1px solid rgba(43,62,232,0.18)" }}>
                                             {v.thumbUrl
                                                 ? <img src={v.thumbUrl} alt="" className="w-full h-full object-cover" />
-                                                : <div className="w-full h-full flex items-center justify-center"><Play className="w-7 h-7" style={{ color: "rgba(120,140,185,0.4)" }} /></div>}
+                                                : <div className="w-full h-full flex items-center justify-center"><Play className="w-7 h-7" style={{ color: "var(--nx-text-3)" }} /></div>}
                                             {v.locked && <span className="absolute top-1.5 left-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-black text-white" style={{ background: "rgba(43,62,232,0.9)" }}><Lock className="w-2.5 h-2.5" />{formatMoney(v.price, v.priceCurrency ?? "UZS")}</span>}
                                             {v.durationSec > 0 && <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white" style={{ background: "rgba(5,8,24,0.85)" }}>{fmtDur(v.durationSec)}</span>}
                                         </div>
                                         <p className="text-xs font-bold text-white line-clamp-2 leading-snug group-hover:text-[#8B5CF6] transition-colors">{v.title}</p>
-                                        <p className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: "rgba(120,140,185,0.7)" }}><Eye className="w-2.5 h-2.5" />{fmtN(v.views)}</p>
+                                        <p className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: "var(--nx-text-3)" }}><Eye className="w-2.5 h-2.5" />{fmtN(v.views)}</p>
                                     </button>
                                 ))}
                             </div>
@@ -141,12 +141,12 @@ export function NexusProfileContent({ username, counts }: { username: string; co
                                         <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "rgba(43,62,232,0.15)" }}>
                                             {t.coverUrl
                                                 ? <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
-                                                : <div className="w-full h-full flex items-center justify-center"><Music2 className="w-5 h-5" style={{ color: "rgba(120,140,185,0.5)" }} /></div>}
+                                                : <div className="w-full h-full flex items-center justify-center"><Music2 className="w-5 h-5" style={{ color: "var(--nx-text-3)" }} /></div>}
                                             <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition" style={{ background: "rgba(5,8,24,0.5)" }}><Play className="w-5 h-5 text-white" /></div>
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-bold text-white truncate">{t.title}</p>
-                                            <p className="text-[11px] truncate" style={{ color: "rgba(120,140,185,0.75)" }}>{t.artist || t.uploader?.name || "Noma'lum"}</p>
+                                            <p className="text-[11px] truncate" style={{ color: "var(--nx-text-3)" }}>{t.artist || t.uploader?.name || "Noma'lum"}</p>
                                         </div>
                                         <span className="text-[10px] flex items-center gap-1 flex-shrink-0" style={{ color: "rgba(100,120,170,0.7)" }}><Play className="w-2.5 h-2.5" />{fmtN(t.plays)}</span>
                                     </button>
@@ -168,7 +168,7 @@ export function NexusProfileContent({ username, counts }: { username: string; co
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-bold text-white truncate">{s.title}</p>
-                                                <p className="text-[11px] mt-0.5 flex items-center gap-1.5" style={{ color: "rgba(120,140,185,0.75)" }}>
+                                                <p className="text-[11px] mt-0.5 flex items-center gap-1.5" style={{ color: "var(--nx-text-3)" }}>
                                                     {isLive
                                                         ? <><Eye className="w-2.5 h-2.5" />{fmtN(s.viewers)} ko&apos;rmoqda</>
                                                         : s.status === "UPCOMING" ? "Tez orada" : "Tugagan"}
@@ -187,13 +187,13 @@ export function NexusProfileContent({ username, counts }: { username: string; co
 }
 
 function Spinner() {
-    return <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>;
+    return <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>;
 }
 function Empty({ icon: Icon, text }: { icon: typeof FileText; text: string }) {
     return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.15)" }}>
-                <Icon className="w-5 h-5" style={{ color: "rgba(120,140,185,0.45)" }} />
+                <Icon className="w-5 h-5" style={{ color: "var(--nx-text-3)" }} />
             </div>
             <p className="text-sm font-bold text-white/55">{text}</p>
         </div>
