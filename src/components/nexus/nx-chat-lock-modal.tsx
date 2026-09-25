@@ -115,8 +115,8 @@ export function NxChatLockModal({
                 style={{ background: "#0B1228", border: "1px solid rgba(43,62,232,0.30)" }}>
                 <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
                     <div className="flex items-center gap-2">
-                        {mode === "unlock" ? <Unlock className="w-4 h-4" style={{ color: "#00CEC8" }} />
-                            : <Lock className="w-4 h-4" style={{ color: "#00CEC8" }} />}
+                        {mode === "unlock" ? <Unlock className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
+                            : <Lock className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />}
                         <p className="text-sm font-black text-white">{title}</p>
                     </div>
                     <button onClick={onClose} className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.06]">
@@ -135,7 +135,7 @@ export function NxChatLockModal({
                                 style={{
                                     background: kind === "pin" ? "rgba(0,206,200,0.15)" : "rgba(43,62,232,0.08)",
                                     border: `1px solid ${kind === "pin" ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.20)"}`,
-                                    color: kind === "pin" ? "#00CEC8" : "rgba(220,230,255,0.85)",
+                                    color: kind === "pin" ? "var(--nx-accent)" : "rgba(220,230,255,0.85)",
                                 }}>
                                 <Lock className="w-3.5 h-3.5" /> PIN
                             </button>
@@ -145,7 +145,7 @@ export function NxChatLockModal({
                                 style={{
                                     background: kind === "biometric" ? "rgba(0,206,200,0.15)" : "rgba(43,62,232,0.08)",
                                     border: `1px solid ${kind === "biometric" ? "rgba(0,206,200,0.50)" : "rgba(43,62,232,0.20)"}`,
-                                    color: kind === "biometric" ? "#00CEC8" : "rgba(220,230,255,0.85)",
+                                    color: kind === "biometric" ? "var(--nx-accent)" : "rgba(220,230,255,0.85)",
                                 }}>
                                 <Fingerprint className="w-3.5 h-3.5" /> Biometrik
                             </button>
@@ -159,7 +159,7 @@ export function NxChatLockModal({
                                 {Array.from({ length: 6 }).map((_, i) => (
                                     <div key={i} className="w-3 h-3 rounded-full transition-colors"
                                         style={{
-                                            background: i < pin.length ? "#00CEC8" : "rgba(43,62,232,0.30)",
+                                            background: i < pin.length ? "var(--nx-accent)" : "rgba(43,62,232,0.30)",
                                             boxShadow: i < pin.length ? "0 0 8px rgba(0,206,200,0.6)" : "none",
                                         }} />
                                 ))}
@@ -201,7 +201,7 @@ export function NxChatLockModal({
                         <div className="flex flex-col items-center py-6 gap-2">
                             <div className="w-16 h-16 rounded-full flex items-center justify-center"
                                 style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.30)" }}>
-                                <Fingerprint className="w-8 h-8" style={{ color: "#00CEC8" }} />
+                                <Fingerprint className="w-8 h-8" style={{ color: "var(--nx-accent)" }} />
                             </div>
                             <p className="text-[11px] text-center" style={{ color: "rgba(140,160,210,0.75)" }}>
                                 Qurilma biometric prompt'i ochiladi
@@ -217,7 +217,7 @@ export function NxChatLockModal({
 
                     <button onClick={submit} disabled={busy || (kind === "pin" && pin.length < 4)}
                         className="w-full py-3 rounded-xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-40"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        style={{ background: "var(--nx-accent)" }}>
                         {busy && <Loader2 className="w-4 h-4 animate-spin" />}
                         {mode === "setup" && step === 1 && "Keyingi"}
                         {mode === "setup" && step === 2 && "Qulflash"}

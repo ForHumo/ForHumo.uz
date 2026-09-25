@@ -12,7 +12,7 @@ interface LiveMsg {
     color: string; badge?: string;
 }
 
-const COLORS = ["#2B3EE8", "#00CEC8", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444", "#F97316"];
+const COLORS = ["var(--nx-accent)", "var(--nx-accent)", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444", "#F97316"];
 const BADGE_COLORS: Record<string, string> = {
     "Moderator": "rgba(16,185,129,0.20)",
     "VIP": "rgba(245,158,11,0.20)",
@@ -89,7 +89,7 @@ export function NxLiveChat() {
         const msg: LiveMsg = {
             id: counterRef.current++,
             user: "Siz", text: input.trim(),
-            color: "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+            color: "var(--nx-accent)",
             badge: "Pro",
         };
         setMsgs(prev => [...prev.slice(-80), msg]);
@@ -152,7 +152,7 @@ export function NxLiveChat() {
                                         </span>
                                     )}
                                     <span className="text-[11px] font-bold flex-shrink-0"
-                                        style={{ color: m.color.startsWith("linear") ? "#00CEC8" : m.color }}>
+                                        style={{ color: m.color.startsWith("linear") ? "var(--nx-accent)" : m.color }}>
                                         {m.user}:
                                     </span>
                                     <span className="text-[11px] leading-relaxed" style={{ color: "rgba(200,215,245,0.85)" }}>
@@ -189,7 +189,7 @@ export function NxLiveChat() {
                                 onKeyDown={e => e.key === "Enter" && send()}
                                 placeholder="Chat..."
                                 className="flex-1 h-7 rounded-lg px-2.5 text-xs text-white outline-none"
-                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "#00CEC8" }}
+                                style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.16)", caretColor: "var(--nx-accent)" }}
                             />
                             <button onClick={send}
                                 className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0 transition-all duration-150 active:scale-95"

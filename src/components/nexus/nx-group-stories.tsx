@@ -44,7 +44,7 @@ export function NxGroupStoriesBar({
                     className="flex-shrink-0 flex flex-col items-center gap-1 min-w-[60px]">
                     <div className="w-14 h-14 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.10)", border: "1px dashed rgba(0,206,200,0.35)" }}>
-                        <Camera className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                        <Camera className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                     </div>
                     <span className="text-[10px] font-bold" style={{ color: "rgba(180,195,235,0.85)" }}>Hikoya</span>
                 </button>
@@ -61,7 +61,7 @@ export function NxGroupStoriesBar({
                     className="flex-shrink-0 flex flex-col items-center gap-1 min-w-[60px]">
                     <div className="w-14 h-14 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.10)", border: "1px dashed rgba(0,206,200,0.35)" }}>
-                        <Camera className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                        <Camera className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                     </div>
                     <span className="text-[10px] font-bold truncate max-w-[60px]" style={{ color: "rgba(180,195,235,0.85)" }}>Siz</span>
                 </button>
@@ -72,7 +72,7 @@ export function NxGroupStoriesBar({
                             style={{
                                 background: s.seen
                                     ? "rgba(120,140,185,0.35)"
-                                    : "linear-gradient(135deg,#2B3EE8,#00CEC8)",
+                                    : "var(--nx-accent)",
                             }}>
                             <img src={s.author?.image ?? "/logos/forhumo.png"} alt=""
                                 className="w-full h-full rounded-full object-cover"
@@ -306,7 +306,7 @@ function NxGroupStoryCreate({
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <Camera className="w-4 h-4" style={{ color: "#00CEC8" }} /> Yangi hikoya (24 soat)
+                        <Camera className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Yangi hikoya (24 soat)
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
@@ -320,7 +320,7 @@ function NxGroupStoryCreate({
                                 onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
                             <div className="border-2 border-dashed rounded-2xl py-16 flex flex-col items-center gap-2 cursor-pointer"
                                 style={{ borderColor: "rgba(0,206,200,0.35)" }}>
-                                <Upload className="w-8 h-8" style={{ color: "#00CEC8" }} />
+                                <Upload className="w-8 h-8" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm font-bold text-white">Rasm yoki video tanlang</p>
                                 <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>24 soatga jonli bo&apos;ladi</p>
                             </div>
@@ -351,7 +351,7 @@ function NxGroupStoryCreate({
                     <div className="flex-shrink-0 px-5 py-4" style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }}>
                         <button onClick={upload} disabled={busy}
                             className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 disabled:opacity-60"
-                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            style={{ background: "var(--nx-accent)" }}>
                             {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> Yuklanmoqda...</> : <><Play className="w-4 h-4" /> Hikoya qo&apos;shish</>}
                         </button>
                     </div>

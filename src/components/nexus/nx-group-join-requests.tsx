@@ -57,7 +57,7 @@ export function NxGroupJoinRequestsModal({
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <UserPlus className="w-4 h-4" style={{ color: "#00CEC8" }} /> Kirish so&apos;rovlari · {items.length}
+                        <UserPlus className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Kirish so&apos;rovlari · {items.length}
                     </h3>
                     <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
@@ -67,7 +67,7 @@ export function NxGroupJoinRequestsModal({
                 <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
                     {loading ? (
                         <div className="flex justify-center py-12">
-                            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} />
+                            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     ) : items.length === 0 ? (
                         <p className="py-8 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>Kutayotgan so&apos;rov yo&apos;q</p>
@@ -88,7 +88,7 @@ export function NxGroupJoinRequestsModal({
                                     title="Qabul qilish"
                                     className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"
                                     style={{ background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.3)" }}>
-                                    <Check className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                    <Check className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                 </button>
                                 <button disabled={busy === r.id} onClick={() => decide(r.id, "REJECT")}
                                     title="Rad etish"

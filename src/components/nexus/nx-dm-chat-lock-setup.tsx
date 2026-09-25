@@ -86,7 +86,7 @@ export function NxDmChatLockSetup({
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <Lock className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <Lock className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Yopiq chatlar (PIN)
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -105,7 +105,7 @@ export function NxDmChatLockSetup({
                                     </p>
                                     <button onClick={() => setMode("create")}
                                         className="w-full h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2"
-                                        style={{ background: "linear-gradient(135deg, #2B3EE8, #00CEC8)", color: "white" }}>
+                                        style={{ background: "linear-gradient(135deg, var(--nx-accent), var(--nx-accent))", color: "white" }}>
                                         <KeyRound className="w-4 h-4" />
                                         PIN sozlash
                                     </button>
@@ -114,7 +114,7 @@ export function NxDmChatLockSetup({
                                 <>
                                     <div className="p-4 rounded-2xl flex items-center gap-3"
                                         style={{ background: "rgba(0,206,200,0.08)", border: "1px solid rgba(0,206,200,0.30)" }}>
-                                        <Lock className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                                        <Lock className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-black text-white">PIN yoqilgan</p>
                                             {status.hintText && (
@@ -163,7 +163,7 @@ export function NxDmChatLockSetup({
                                 </button>
                                 <button onClick={create} disabled={busy}
                                     className="flex-1 h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2"
-                                    style={{ background: "linear-gradient(135deg, #2B3EE8, #00CEC8)", color: "white" }}>
+                                    style={{ background: "linear-gradient(135deg, var(--nx-accent), var(--nx-accent))", color: "white" }}>
                                     {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                                     Saqlash
                                 </button>
@@ -185,7 +185,7 @@ export function NxDmChatLockSetup({
                                 </button>
                                 <button onClick={change} disabled={busy}
                                     className="flex-1 h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2"
-                                    style={{ background: "linear-gradient(135deg, #2B3EE8, #00CEC8)", color: "white" }}>
+                                    style={{ background: "linear-gradient(135deg, var(--nx-accent), var(--nx-accent))", color: "white" }}>
                                     {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                                     O&apos;zgartirish
                                 </button>

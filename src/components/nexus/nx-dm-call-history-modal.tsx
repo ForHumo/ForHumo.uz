@@ -68,7 +68,7 @@ export function NxDmCallHistoryModal({
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <Phone className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <Phone className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Chaqiruvlar · {peerName}
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -79,10 +79,10 @@ export function NxDmCallHistoryModal({
 
                 <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
                     {loading ? (
-                        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     ) : items.length === 0 ? (
                         <div className="text-center py-12">
-                            <PhoneOff className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "#00CEC8" }} />
+                            <PhoneOff className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "var(--nx-accent)" }} />
                             <p className="text-sm" style={{ color: "rgba(160,176,224,0.7)" }}>Chaqiruv tarixi yo&apos;q</p>
                         </div>
                     ) : (
@@ -93,7 +93,7 @@ export function NxDmCallHistoryModal({
                                     ? PhoneMissed
                                     : c.outgoing ? PhoneOutgoing : PhoneIncoming;
                                 const iconColor = c.missed ? "#EF4444"
-                                    : c.outgoing ? "#00CEC8" : "#10B981";
+                                    : c.outgoing ? "var(--nx-accent)" : "#10B981";
                                 return (
                                     <div key={c.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
                                         style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>

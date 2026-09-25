@@ -156,7 +156,7 @@ export function NxDmE2eSetupModal({
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <KeyRound className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <KeyRound className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         E2E shifrlash kalitlari
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -168,7 +168,7 @@ export function NxDmE2eSetupModal({
                 <div className="flex-1 overflow-y-auto p-5 space-y-4" style={{ scrollbarWidth: "none" }}>
                     <div className="p-3 rounded-xl flex items-start gap-2"
                         style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.25)" }}>
-                        <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#00CEC8" }} />
+                        <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--nx-accent)" }} />
                         <p className="text-[11px] leading-snug" style={{ color: "rgba(220,230,250,0.92)" }}>
                             <b>End-to-End shifrlash</b> — xabarlar faqat sizda va boshqa peer qurilmasida ochiladi.
                             Server ham, hech kim ham matnini ko&apos;ra olmaydi. <b>Private kalit</b> shu brauzer'da qoladi.
@@ -185,14 +185,14 @@ export function NxDmE2eSetupModal({
                     {success && (
                         <div className="p-3 rounded-xl flex items-start gap-2"
                             style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.30)" }}>
-                            <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#00CEC8" }} />
+                            <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--nx-accent)" }} />
                             <p className="text-[11px] leading-snug" style={{ color: "rgba(200,240,235,0.95)" }}>{success}</p>
                         </div>
                     )}
 
                     <button onClick={generateNew} disabled={generating}
                         className="w-full h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                        style={{ background: "linear-gradient(135deg, #2B3EE8, #00CEC8)", color: "white" }}>
+                        style={{ background: "linear-gradient(135deg, var(--nx-accent), var(--nx-accent))", color: "white" }}>
                         {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                         Yangi kalit yaratish (shu qurilma)
                     </button>
@@ -204,12 +204,12 @@ export function NxDmE2eSetupModal({
                         </p>
                         {loading ? (
                             <div className="flex justify-center py-8">
-                                <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#2B3EE8" }} />
+                                <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} />
                             </div>
                         ) : serverKeysWithStatus.length === 0 ? (
                             <div className="p-6 rounded-xl text-center"
                                 style={{ background: "rgba(11,18,40,0.55)", border: "1px dashed rgba(43,62,232,0.20)" }}>
-                                <KeyRound className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "#00CEC8" }} />
+                                <KeyRound className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
                                 <p className="text-sm" style={{ color: "rgba(160,176,224,0.75)" }}>
                                     Kalit yo&apos;q. Yuqoridagi tugma bilan yarating.
                                 </p>
@@ -220,10 +220,10 @@ export function NxDmE2eSetupModal({
                                     <div key={k.id} className="p-3 rounded-xl"
                                         style={{
                                             background: "rgba(11,18,40,0.55)",
-                                            border: `1px solid ${k.isActive ? "#00CEC8" : "rgba(43,62,232,0.14)"}`,
+                                            border: `1px solid ${k.isActive ? "var(--nx-accent)" : "rgba(43,62,232,0.14)"}`,
                                         }}>
                                         <div className="flex items-center gap-2 mb-1.5">
-                                            <KeyRound className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                            <KeyRound className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             <span className="text-[10px] font-black uppercase tracking-widest"
                                                 style={{ color: "rgba(160,176,224,0.85)" }}>
                                                 {k.keyAlgorithm}
@@ -231,8 +231,8 @@ export function NxDmE2eSetupModal({
                                             <div className="flex-1" />
                                             {k.isActive && (
                                                 <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase px-1.5 py-0.5 rounded"
-                                                    style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>
-                                                    <Star className="w-2.5 h-2.5" fill="#00CEC8" /> Faol
+                                                    style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>
+                                                    <Star className="w-2.5 h-2.5" fill="var(--nx-accent)" /> Faol
                                                 </span>
                                             )}
                                             {!k.hasPrivate && (
@@ -259,7 +259,7 @@ export function NxDmE2eSetupModal({
                                             {k.hasPrivate && !k.isActive && (
                                                 <button onClick={() => activate(k.id)}
                                                     className="flex-1 h-8 rounded-lg text-[11px] font-black"
-                                                    style={{ background: "rgba(0,206,200,0.14)", border: "1px solid rgba(0,206,200,0.35)", color: "#00CEC8" }}>
+                                                    style={{ background: "rgba(0,206,200,0.14)", border: "1px solid rgba(0,206,200,0.35)", color: "var(--nx-accent)" }}>
                                                     Faollashtirish
                                                 </button>
                                             )}
@@ -283,11 +283,11 @@ export function NxDmE2eSetupModal({
                         </p>
                         <ul className="text-[11px] space-y-1.5" style={{ color: "rgba(180,195,235,0.85)" }}>
                             <li className="flex items-start gap-1.5">
-                                <ShieldCheck className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                <ShieldCheck className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                 <span>Private kalit brauzer'ning shifrlangan IndexedDB'da saqlanadi</span>
                             </li>
                             <li className="flex items-start gap-1.5">
-                                <ShieldCheck className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                <ShieldCheck className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                 <span>Har qurilma alohida kalit yaratadi (multi-device)</span>
                             </li>
                             <li className="flex items-start gap-1.5">

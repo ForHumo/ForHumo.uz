@@ -82,7 +82,7 @@ export function NxGroupMuteButton({ channelId }: { channelId: string }) {
                             <div style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }} />
                             <button onClick={() => setMute("off")}
                                 className="w-full text-left px-3 py-2 text-sm hover:bg-white/5"
-                                style={{ color: "#00CEC8" }}>
+                                style={{ color: "var(--nx-accent)" }}>
                                 Xabarnoma yoqish
                             </button>
                         </>

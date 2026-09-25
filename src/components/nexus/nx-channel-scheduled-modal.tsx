@@ -86,7 +86,7 @@ export function NxChannelScheduledModal({
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <Calendar className="w-4 h-4" style={{ color: "#00CEC8" }} /> Rejadagi postlar · {items.length}
+                        <Calendar className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Rejadagi postlar · {items.length}
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
@@ -95,10 +95,10 @@ export function NxChannelScheduledModal({
                 </div>
                 <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
                     {loading ? (
-                        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     ) : items.length === 0 ? (
                         <div className="text-center py-12">
-                            <Calendar className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "#00CEC8" }} />
+                            <Calendar className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "var(--nx-accent)" }} />
                             <p className="text-sm" style={{ color: "rgba(160,176,224,0.7)" }}>
                                 Rejalashtirilgan post yo&apos;q
                             </p>
@@ -113,7 +113,7 @@ export function NxChannelScheduledModal({
                                     style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black"
-                                            style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>
+                                            style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>
                                             <Calendar className="w-3 h-3" />
                                             {new Date(item.scheduledFor).toLocaleString("uz-UZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                                         </span>
@@ -127,12 +127,12 @@ export function NxChannelScheduledModal({
                                                 style={{ background: "rgba(43,62,232,0.10)" }} />
                                         ) : item.hasMedia ? (
                                             <div className="w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0"
-                                                style={{ background: "rgba(43,62,232,0.14)", color: "#00CEC8" }}>
+                                                style={{ background: "rgba(43,62,232,0.14)", color: "var(--nx-accent)" }}>
                                                 <MediaIcon type={item.mediaType} />
                                             </div>
                                         ) : item.isPoll ? (
                                             <div className="w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0"
-                                                style={{ background: "rgba(43,62,232,0.14)", color: "#00CEC8" }}>
+                                                style={{ background: "rgba(43,62,232,0.14)", color: "var(--nx-accent)" }}>
                                                 <BarChart2 className="w-4 h-4" />
                                             </div>
                                         ) : null}

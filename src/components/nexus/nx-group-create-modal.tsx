@@ -142,7 +142,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                 {/* Header */}
                 <div className="p-4 flex items-center justify-between border-b" style={{ borderColor: "rgba(43,62,232,0.20)" }}>
                     <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <Users className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         <p className="text-sm font-black" style={{ color: "rgba(220,230,255,0.95)" }}>
                             Yangi guruh suhbati
                         </p>
@@ -175,7 +175,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                                     className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex-shrink-0 transition"
                                     style={folderId === null ? {
                                         background: "rgba(0,206,200,0.14)",
-                                        color: "#00CEC8",
+                                        color: "var(--nx-accent)",
                                         border: "1px solid rgba(0,206,200,0.35)",
                                     } : {
                                         background: "rgba(43,62,232,0.06)",
@@ -191,7 +191,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                                             className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex-shrink-0 transition flex items-center gap-1"
                                             style={sel ? {
                                                 background: "rgba(0,206,200,0.14)",
-                                                color: "#00CEC8",
+                                                color: "var(--nx-accent)",
                                                 border: "1px solid rgba(0,206,200,0.35)",
                                             } : {
                                                 background: "rgba(43,62,232,0.06)",
@@ -214,14 +214,14 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                         <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(140,160,210,0.65)" }}>
                             A&apos;zolarni tanlang
                         </span>
-                        <span className="text-[10px] font-bold" style={{ color: "#00CEC8" }}>
+                        <span className="text-[10px] font-bold" style={{ color: "var(--nx-accent)" }}>
                             {selectedIds.size} / 499 tanlandi
                         </span>
                     </div>
 
                     {loadingContacts ? (
                         <div className="flex justify-center py-8">
-                            <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#00CEC8" }} />
+                            <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     ) : contacts.length === 0 ? (
                         <p className="text-xs text-center py-6" style={{ color: "rgba(140,160,210,0.60)" }}>
@@ -263,8 +263,8 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                                         <div
                                             className="w-5 h-5 rounded-md flex items-center justify-center transition"
                                             style={{
-                                                background: isSelected ? "#00CEC8" : "rgba(43,62,232,0.20)",
-                                                border: `1px solid ${isSelected ? "#00CEC8" : "rgba(43,62,232,0.40)"}`,
+                                                background: isSelected ? "var(--nx-accent)" : "rgba(43,62,232,0.20)",
+                                                border: `1px solid ${isSelected ? "var(--nx-accent)" : "rgba(43,62,232,0.40)"}`,
                                             }}
                                         >
                                             {isSelected && <Check className="w-3 h-3 text-black font-black" />}
@@ -298,7 +298,7 @@ export function NxGroupCreateModal({ onClose, onCreated }: Props) {
                         onClick={submit}
                         disabled={busy || !title.trim() || selectedIds.size < 1}
                         className="flex-1 py-2.5 rounded-xl text-xs font-black text-white transition disabled:opacity-40 flex items-center justify-center gap-2"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}
+                        style={{ background: "var(--nx-accent)" }}
                     >
                         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
                         Guruh yaratish

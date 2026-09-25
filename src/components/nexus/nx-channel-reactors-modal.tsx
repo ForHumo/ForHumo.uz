@@ -49,7 +49,7 @@ export function NxChannelReactorsModal({
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <Smile className="w-4 h-4" style={{ color: "#00CEC8" }} /> Reaksiya berganlar
+                        <Smile className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Reaksiya berganlar
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
@@ -58,10 +58,10 @@ export function NxChannelReactorsModal({
                 </div>
 
                 {loading ? (
-                    <div className="flex justify-center py-12 flex-1"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                    <div className="flex justify-center py-12 flex-1"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                 ) : groups.length === 0 ? (
                     <div className="text-center py-12">
-                        <Smile className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "#00CEC8" }} />
+                        <Smile className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "var(--nx-accent)" }} />
                         <p className="text-sm" style={{ color: "rgba(160,176,224,0.7)" }}>Hali reaksiya yo&apos;q</p>
                     </div>
                 ) : (
@@ -72,7 +72,7 @@ export function NxChannelReactorsModal({
                                     <button key={g.emoji} onClick={() => setActiveEmoji(g.emoji)}
                                         className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full flex-shrink-0"
                                         style={activeEmoji === g.emoji
-                                            ? { background: "rgba(0,206,200,0.20)", border: "1px solid #00CEC8", color: "white" }
+                                            ? { background: "rgba(0,206,200,0.20)", border: "1px solid var(--nx-accent)", color: "white" }
                                             : { background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(200,214,247,0.9)" }}>
                                         <span className="text-lg leading-none">{g.emoji}</span>
                                         <span className="text-xs font-bold">{g.count}</span>

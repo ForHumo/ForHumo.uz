@@ -148,7 +148,7 @@ export function NxGroupSettingsModal({
 
                 {loading || !data ? (
                     <div className="flex justify-center py-16">
-                        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} />
+                        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} />
                     </div>
                 ) : (
                     <>
@@ -160,7 +160,7 @@ export function NxGroupSettingsModal({
                                     style={{ background: "linear-gradient(90deg,rgba(43,62,232,0.15),rgba(0,206,200,0.15))", border: "1px solid rgba(0,206,200,0.35)" }}>
                                     <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                                         style={{ background: "rgba(0,206,200,0.15)" }}>
-                                        <Info className="w-5 h-5" style={{ color: "#00CEC8" }} />
+                                        <Info className="w-5 h-5" style={{ color: "var(--nx-accent)" }} />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-bold text-white">Humo eSport tomonidan boshqariladi</p>
@@ -237,7 +237,7 @@ export function NxGroupSettingsModal({
                                 <input disabled={!canEdit} value={data.name}
                                     onChange={e => setData({ ...data, name: e.target.value })}
                                     className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none disabled:opacity-60"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
+                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                             </div>
 
                             {/* Tavsif */}
@@ -249,7 +249,7 @@ export function NxGroupSettingsModal({
                                     onChange={e => setData({ ...data, description: e.target.value })}
                                     rows={3}
                                     className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none resize-none disabled:opacity-60"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
+                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                             </div>
 
                             {/* Qoidalar */}
@@ -262,7 +262,7 @@ export function NxGroupSettingsModal({
                                     rows={4}
                                     placeholder="Guruh qoidalarini yozing..."
                                     className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none resize-none disabled:opacity-60"
-                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
+                                    style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                             </div>
 
                             {/* Slow mode */}
@@ -305,7 +305,7 @@ export function NxGroupSettingsModal({
                                         onChange={e => setData({ ...data, restrictForwarding: e.target.checked })} />
                                     <div className="flex-1">
                                         <p className="text-sm font-bold text-white flex items-center gap-1.5">
-                                            <ShieldOff className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                            <ShieldOff className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             Forward taqiqi
                                         </p>
                                         <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
@@ -322,7 +322,7 @@ export function NxGroupSettingsModal({
                                         onChange={e => setData({ ...data, aiModerator: e.target.checked })} />
                                     <div className="flex-1">
                                         <p className="text-sm font-bold text-white flex items-center gap-1.5">
-                                            <Sparkles className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                            <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             AI moderator
                                         </p>
                                         <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
@@ -339,7 +339,7 @@ export function NxGroupSettingsModal({
                                         onChange={e => setData({ ...data, signaturesEnabled: e.target.checked })} />
                                     <div className="flex-1">
                                         <p className="text-sm font-bold text-white flex items-center gap-1.5">
-                                            <SignatureIcon className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                            <SignatureIcon className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             Post imzosi
                                         </p>
                                         <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
@@ -387,7 +387,7 @@ export function NxGroupSettingsModal({
                                         onChange={e => setData({ ...data, autoTranslate: e.target.checked })} />
                                     <div className="flex-1">
                                         <p className="text-sm font-bold text-white flex items-center gap-1.5">
-                                            <Languages className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                            <Languages className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             Avto-tarjima
                                         </p>
                                         <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>
@@ -427,7 +427,7 @@ export function NxGroupSettingsModal({
                             {canEdit && (
                                 <button onClick={save} disabled={saving}
                                     className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-60"
-                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    style={{ background: "var(--nx-accent)" }}>
                                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     Saqlash
                                 </button>
@@ -471,7 +471,7 @@ function DiscussionGroupPicker({
         <div className="rounded-xl px-3 py-3"
             style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
             <p className="text-sm font-bold text-white flex items-center gap-1.5 mb-1">
-                <MessageSquare className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                <MessageSquare className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                 Muhokama guruhi
             </p>
             <p className="text-[11px] mb-2" style={{ color: "rgba(140,160,210,0.7)" }}>
@@ -518,7 +518,7 @@ function AllowedReactionsEditor({
         <div className="rounded-xl px-3 py-3"
             style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
             <div className="flex items-center gap-2 mb-2">
-                <Smile className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                <Smile className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                 <p className="text-sm font-bold text-white flex-1">Ruxsat etilgan reaksiyalar</p>
                 {active && (
                     <button type="button" onClick={() => onChange([])}
@@ -540,7 +540,7 @@ function AllowedReactionsEditor({
                         <button key={e} type="button" onClick={() => toggle(e)}
                             className="w-9 h-9 rounded-lg flex items-center justify-center text-xl transition"
                             style={on
-                                ? { background: "rgba(0,206,200,0.20)", border: "1px solid #00CEC8" }
+                                ? { background: "rgba(0,206,200,0.20)", border: "1px solid var(--nx-accent)" }
                                 : { background: "rgba(11,18,40,0.30)", border: "1px solid rgba(43,62,232,0.14)" }}>
                             {e}
                         </button>

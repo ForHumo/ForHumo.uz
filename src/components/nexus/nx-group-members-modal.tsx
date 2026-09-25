@@ -143,13 +143,13 @@ export function NxGroupMembersModal({
                     <input value={q} onChange={e => setQ(e.target.value)}
                         placeholder="A'zoni qidiring..."
                         className="w-full rounded-xl px-3 py-2 text-sm text-white outline-none"
-                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
+                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-3 py-2" style={{ scrollbarWidth: "none" }}>
                     {loading ? (
                         <div className="flex justify-center py-12">
-                            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} />
+                            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     ) : sorted.length === 0 ? (
                         <p className="py-8 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>A&apos;zo topilmadi</p>
@@ -175,7 +175,7 @@ export function NxGroupMembersModal({
                                         {m.isAnonymous && (
                                             <EyeOff className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(140,160,210,0.7)" }} />
                                         )}
-                                        {m.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                        {m.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                         {m.role === "OWNER" && (
                                             <span className="text-[9px] font-black px-1.5 py-0.5 rounded"
                                                 style={{ background: "rgba(255,193,7,0.15)", color: "#FFC107" }}>
@@ -184,7 +184,7 @@ export function NxGroupMembersModal({
                                         )}
                                         {m.role === "ADMIN" && (
                                             <span className="text-[9px] font-black px-1.5 py-0.5 rounded"
-                                                style={{ background: "rgba(0,206,200,0.15)", color: "#00CEC8" }}>
+                                                style={{ background: "rgba(0,206,200,0.15)", color: "var(--nx-accent)" }}>
                                                 <Shield className="w-3 h-3 inline mr-0.5" />ADMIN
                                             </span>
                                         )}
@@ -214,7 +214,7 @@ export function NxGroupMembersModal({
                                                 title="Admin qilish"
                                                 className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"
                                                 style={{ background: "rgba(0,206,200,0.1)", border: "1px solid rgba(0,206,200,0.3)" }}>
-                                                <UserCheck className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                                <UserCheck className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                             </button>
                                         ) : (
                                             <button disabled={busy === m.profileId}

@@ -8,15 +8,15 @@ import { X, Loader2, ScrollText, UserMinus, UserPlus, Shield, ShieldOff, Pin, Pi
 const ACTION_META: Record<string, { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; color: string }> = {
     "kick":       { icon: UserMinus, label: "chiqarildi",  color: "#FF8E5B" },
     "ban":        { icon: ShieldOff, label: "bloklandi",   color: "#FF505A" },
-    "unban":      { icon: Shield,    label: "blokdan chiqarildi", color: "#00CEC8" },
-    "promote":    { icon: UserPlus,  label: "admin qilindi", color: "#00CEC8" },
+    "unban":      { icon: Shield,    label: "blokdan chiqarildi", color: "var(--nx-accent)" },
+    "promote":    { icon: UserPlus,  label: "admin qilindi", color: "var(--nx-accent)" },
     "demote":     { icon: UserMinus, label: "adminlikdan olindi", color: "#FFC107" },
-    "pin":        { icon: Pin,       label: "pinlandi",     color: "#00CEC8" },
+    "pin":        { icon: Pin,       label: "pinlandi",     color: "var(--nx-accent)" },
     "unpin":      { icon: PinOff,    label: "pindan olindi",color: "#FFC107" },
     "delete-msg": { icon: Trash2,    label: "xabar o'chirildi", color: "#FF505A" },
     "delete-msg-everyone": { icon: Trash2, label: "hamma uchun o'chirildi", color: "#FF505A" },
-    "change-info":{ icon: Edit3,     label: "sozlamalar o'zgardi", color: "#00CEC8" },
-    "approve-join":{ icon: Check,    label: "kirish qabul qilindi", color: "#00CEC8" },
+    "change-info":{ icon: Edit3,     label: "sozlamalar o'zgardi", color: "var(--nx-accent)" },
+    "approve-join":{ icon: Check,    label: "kirish qabul qilindi", color: "var(--nx-accent)" },
     "reject-join": { icon: XCircle,  label: "kirish rad etildi", color: "#FF505A" },
     "slow-mode":  { icon: Clock,     label: "slow mode",    color: "#FFC107" },
     "auto-delete":{ icon: Trash2,    label: "auto-delete",  color: "#FFC107" },
@@ -67,7 +67,7 @@ export function NxGroupAuditLog({
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <ScrollText className="w-4 h-4" style={{ color: "#00CEC8" }} /> Admin jurnali
+                        <ScrollText className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Admin jurnali
                     </h3>
                     <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
@@ -77,7 +77,7 @@ export function NxGroupAuditLog({
                 <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
                     {loading ? (
                         <div className="flex justify-center py-12">
-                            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} />
+                            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     ) : items.length === 0 ? (
                         <p className="py-8 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>Hozircha voqea yo&apos;q</p>

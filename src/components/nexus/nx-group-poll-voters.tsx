@@ -49,7 +49,7 @@ export function NxGroupPollVoters({
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <BarChart2 className="w-4 h-4" style={{ color: "#00CEC8" }} /> Ovoz beruvchilar · {total}
+                        <BarChart2 className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Ovoz beruvchilar · {total}
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
@@ -61,10 +61,10 @@ export function NxGroupPollVoters({
                 </div>
                 <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
                     {loading ? (
-                        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     ) : groups.map(g => (
                         <div key={g.optionIndex} className="mb-3">
-                            <p className="text-xs font-black mb-2 px-1" style={{ color: "#00CEC8" }}>
+                            <p className="text-xs font-black mb-2 px-1" style={{ color: "var(--nx-accent)" }}>
                                 {g.optionText} · {g.voters.length}
                             </p>
                             {g.voters.length === 0 ? (

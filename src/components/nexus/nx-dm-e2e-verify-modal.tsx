@@ -67,7 +67,7 @@ export function NxDmE2eVerifyModal({
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <ShieldCheck className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         E2E verify · {peerName}
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -85,11 +85,11 @@ export function NxDmE2eVerifyModal({
 
                     {loading ? (
                         <div className="flex justify-center py-8">
-                            <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#2B3EE8" }} />
+                            <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     ) : keys.length === 0 ? (
                         <div className="text-center py-8">
-                            <KeyRound className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "#00CEC8" }} />
+                            <KeyRound className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "var(--nx-accent)" }} />
                             <p className="text-sm" style={{ color: "rgba(160,176,224,0.75)" }}>
                                 Peer'da hali E2E kaliti yo&apos;q
                             </p>
@@ -102,10 +102,10 @@ export function NxDmE2eVerifyModal({
                                     <div key={k.id} className="p-3 rounded-xl"
                                         style={{
                                             background: "rgba(11,18,40,0.55)",
-                                            border: `1px solid ${verified ? "#00CEC8" : "rgba(43,62,232,0.14)"}`,
+                                            border: `1px solid ${verified ? "var(--nx-accent)" : "rgba(43,62,232,0.14)"}`,
                                         }}>
                                         <div className="flex items-center gap-2 mb-2">
-                                            <KeyRound className="w-3.5 h-3.5" style={{ color: "#00CEC8" }} />
+                                            <KeyRound className="w-3.5 h-3.5" style={{ color: "var(--nx-accent)" }} />
                                             <span className="text-[10px] font-black uppercase tracking-widest"
                                                 style={{ color: "rgba(160,176,224,0.8)" }}>
                                                 {k.keyAlgorithm}
@@ -118,7 +118,7 @@ export function NxDmE2eVerifyModal({
                                             <div className="flex-1" />
                                             {verified && (
                                                 <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase px-1.5 py-0.5 rounded"
-                                                    style={{ background: "rgba(0,206,200,0.14)", color: "#00CEC8" }}>
+                                                    style={{ background: "rgba(0,206,200,0.14)", color: "var(--nx-accent)" }}>
                                                     <ShieldCheck className="w-2.5 h-2.5" /> Tasdiqlangan
                                                 </span>
                                             )}
@@ -134,7 +134,7 @@ export function NxDmE2eVerifyModal({
                                             className="w-full h-8 rounded-lg text-[11px] font-black"
                                             style={verified
                                                 ? { background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.30)", color: "#EF4444" }
-                                                : { background: "rgba(0,206,200,0.14)", border: "1px solid rgba(0,206,200,0.35)", color: "#00CEC8" }}>
+                                                : { background: "rgba(0,206,200,0.14)", border: "1px solid rgba(0,206,200,0.35)", color: "var(--nx-accent)" }}>
                                             {verified ? "Tasdiqlashni bekor qilish" : "Tasdiqlash"}
                                         </button>
                                     </div>

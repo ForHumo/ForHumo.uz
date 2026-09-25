@@ -47,14 +47,14 @@ export function NxChannelRichMsg(props: Props) {
                 style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}>
                 <button onClick={toggle}
                     className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                    style={{ background: "var(--nx-accent)" }}>
                     {playing ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
                 </button>
                 <div className="flex-1 min-w-0">
                     <div className="h-1 rounded-full overflow-hidden mb-1"
                         style={{ background: "rgba(0,206,200,0.15)" }}>
                         <div className="h-full transition-all"
-                            style={{ width: `${progress}%`, background: "linear-gradient(90deg,#2B3EE8,#00CEC8)" }} />
+                            style={{ width: `${progress}%`, background: "linear-gradient(90deg,var(--nx-accent),var(--nx-accent))" }} />
                     </div>
                     <p className="text-[10px]" style={{ color: "rgba(180,195,235,0.8)" }}>
                         {durationMs ? formatDuration(durationMs) : "0:00"}
@@ -93,7 +93,7 @@ export function NxChannelRichMsg(props: Props) {
                 <iframe src={mapUrl} className="w-full h-40 border-0" title="Xarita" />
                 <a href={gmapsUrl} target="_blank" rel="noopener"
                     className="flex items-center gap-2 px-3 py-2.5 text-sm text-white hover:bg-white/5">
-                    <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                    <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                     <span className="flex-1">Xaritada ochish</span>
                     <ExternalLink className="w-3.5 h-3.5" style={{ color: "rgba(140,160,210,0.7)" }} />
                 </a>
@@ -107,14 +107,14 @@ export function NxChannelRichMsg(props: Props) {
             <div className="flex items-center gap-3 min-w-[220px] max-w-[300px] p-3 rounded-2xl"
                 style={{ background: "rgba(43,62,232,0.10)", border: "1px solid rgba(43,62,232,0.22)" }}>
                 <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                    style={{ background: "var(--nx-accent)" }}>
                     <User className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-white truncate">{contactName}</p>
                     {contactPhone && (
                         <a href={`tel:${contactPhone}`}
-                            className="flex items-center gap-1 text-xs" style={{ color: "#00CEC8" }}>
+                            className="flex items-center gap-1 text-xs" style={{ color: "var(--nx-accent)" }}>
                             <Phone className="w-3 h-3" /> {contactPhone}
                         </a>
                     )}

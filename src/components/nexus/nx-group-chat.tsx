@@ -36,7 +36,7 @@ export function NxGroupChat({ open, onClose }: { open: boolean; onClose: () => v
                 onClick={e => e.stopPropagation()}>
                 <div className="flex flex-shrink-0 items-center justify-between px-5 pt-5 pb-3">
                     <h3 className="flex items-center gap-2 text-base font-black text-white">
-                        <MessageSquare className="h-4 w-4" style={{ color: "#00CEC8" }} /> Chat
+                        <MessageSquare className="h-4 w-4" style={{ color: "var(--nx-accent)" }} /> Chat
                     </h3>
                     <button onClick={onClose}
                         className="flex h-8 w-8 items-center justify-center rounded-full"
@@ -60,7 +60,7 @@ export function NxGroupChat({ open, onClose }: { open: boolean; onClose: () => v
                                     )}
                                     <div className={`rounded-2xl px-3 py-2 text-sm ${mine ? "text-white" : "text-white"}`}
                                         style={mine
-                                            ? { background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }
+                                            ? { background: "var(--nx-accent)" }
                                             : { background: "rgba(43,62,232,0.15)" }}>
                                         {m.message}
                                     </div>
@@ -76,10 +76,10 @@ export function NxGroupChat({ open, onClose }: { open: boolean; onClose: () => v
                     <input value={text} onChange={e => setText(e.target.value)}
                         placeholder="Xabar yozing..."
                         className="flex-1 rounded-xl px-3 py-2 text-sm text-white outline-none"
-                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
+                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                     <button type="submit" disabled={isSending || !text.trim()}
                         className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-lg disabled:opacity-40"
-                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                        style={{ background: "var(--nx-accent)" }}>
                         <Send className="h-4 w-4" />
                     </button>
                 </form>

@@ -65,7 +65,7 @@ export function NxChannelShareModal({
                         Xususiy kanal handle&apos;siz. Sozlamalardan @handle qo&apos;shing.
                     </p>
                     <button onClick={onClose} className="w-full h-11 rounded-full font-black text-sm"
-                        style={{ background: "#2B3EE8", color: "white" }}>
+                        style={{ background: "var(--nx-accent)", color: "white" }}>
                         Yopish
                     </button>
                 </div>
@@ -81,7 +81,7 @@ export function NxChannelShareModal({
                 <div className="flex items-center justify-between px-5 py-4"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <QrCode className="w-4 h-4" style={{ color: "#00CEC8" }} /> Kanal ulash
+                        <QrCode className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Kanal ulash
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
@@ -115,7 +115,7 @@ export function NxChannelShareModal({
                             <button onClick={copy} className="h-11 px-3 flex-shrink-0"
                                 style={{ background: copied ? "rgba(0,206,200,0.20)" : "rgba(43,62,232,0.20)" }}>
                                 {copied
-                                    ? <Check className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                    ? <Check className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                     : <Copy className="w-4 h-4" style={{ color: "white" }} />}
                             </button>
                         </div>

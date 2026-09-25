@@ -109,13 +109,13 @@ export function NxChannelFullscreenComposer({
                     <button onClick={() => setPreview(p => !p)}
                         className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={preview
-                            ? { background: "rgba(0,206,200,0.20)", border: "1px solid #00CEC8" }
+                            ? { background: "rgba(0,206,200,0.20)", border: "1px solid var(--nx-accent)" }
                             : { background: "rgba(43,62,232,0.12)" }}>
                         {preview ? <Edit3 className="w-4 h-4 text-white" /> : <Eye className="w-4 h-4 text-white" />}
                     </button>
                     <button onClick={send} disabled={!canSend}
                         className="h-8 px-4 rounded-full text-sm font-black flex items-center gap-1.5 disabled:opacity-40"
-                        style={{ background: "linear-gradient(135deg, #2B3EE8, #00CEC8)", color: "white" }}>
+                        style={{ background: "linear-gradient(135deg, var(--nx-accent), var(--nx-accent))", color: "white" }}>
                         {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                         Yuborish
                     </button>

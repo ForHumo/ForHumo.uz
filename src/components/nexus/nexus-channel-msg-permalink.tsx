@@ -56,7 +56,7 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
 
                 {loading && (
                     <div className="flex justify-center py-20">
-                        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#00CEC8" }} />
+                        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--nx-accent)" }} />
                     </div>
                 )}
                 {error && (
@@ -79,7 +79,7 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
                             <div className="flex-1 min-w-0">
                                 <p className="text-base font-black text-white truncate">{data.channel.name}</p>
                                 <div className="mt-0.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider"
-                                    style={{ color: "#00CEC8" }}>
+                                    style={{ color: "var(--nx-accent)" }}>
                                     {data.channel.type === "GROUP" ? <Users className="w-3 h-3" /> : <Megaphone className="w-3 h-3" />}
                                     {data.channel.type === "GROUP" ? "Guruh" : "Kanal"} · @{data.channel.handle} · {data.channel.memberCount} a&apos;zo
                                 </div>
@@ -95,7 +95,7 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
                                 <div>
                                     <p className="text-xs font-black flex items-center gap-1" style={{ color: "rgba(220,230,255,0.95)" }}>
                                         {data.message.sender?.name ?? data.message.sender?.username ?? "Foydalanuvchi"}
-                                        {data.message.sender?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "#00CEC8" }} />}
+                                        {data.message.sender?.verified && <BadgeCheck className="w-3 h-3" style={{ color: "var(--nx-accent)" }} />}
                                     </p>
                                     <p className="text-[10px]" style={{ color: "rgba(140,160,210,0.65)" }}>
                                         {new Date(data.message.createdAt).toLocaleString("uz-UZ", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
@@ -144,7 +144,7 @@ export function NexusChannelMessagePermalink({ handle, messageId }: { handle: st
                             </button>
                             <Link href={`/nexus?channel=${data.channel.handle}`}
                                 className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 text-xs font-black text-white"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                style={{ background: "var(--nx-accent)" }}>
                                 <ExternalLink className="w-3.5 h-3.5" /> Kanalni ochish
                             </Link>
                         </div>

@@ -60,7 +60,7 @@ export function JoinChannelClient({ code }: { code: string }) {
                 style={{ background: "rgba(11,18,40,0.85)", border: "1px solid rgba(43,62,232,0.30)" }}>
                 {loading ? (
                     <div className="flex justify-center py-12">
-                        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#00CEC8" }} />
+                        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--nx-accent)" }} />
                     </div>
                 ) : error ? (
                     <div className="text-center py-6">
@@ -80,7 +80,7 @@ export function JoinChannelClient({ code }: { code: string }) {
                                     className="w-20 h-20 rounded-3xl object-cover mb-3" unoptimized />
                             ) : (
                                 <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-3"
-                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    style={{ background: "var(--nx-accent)" }}>
                                     {ch.type === "GROUP"
                                         ? <Users className="w-8 h-8 text-white" />
                                         : <Hash className="w-8 h-8 text-white" />
@@ -88,7 +88,7 @@ export function JoinChannelClient({ code }: { code: string }) {
                                 </div>
                             )}
                             <p className="text-[10px] font-black uppercase tracking-wider mb-1"
-                                style={{ color: "#00CEC8" }}>
+                                style={{ color: "var(--nx-accent)" }}>
                                 {ch.type === "GROUP" ? "Guruh" : "Kanal"}
                             </p>
                             <h1 className="text-lg font-black text-white mb-1">{ch.name}</h1>
@@ -108,7 +108,7 @@ export function JoinChannelClient({ code }: { code: string }) {
 
                         <button onClick={join} disabled={joining}
                             className="mt-6 w-full py-3 rounded-2xl text-sm font-black text-white flex items-center justify-center gap-2 disabled:opacity-40"
-                            style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                            style={{ background: "var(--nx-accent)" }}>
                             {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : status !== "authenticated" ? <LogIn className="w-4 h-4" /> : <Check className="w-4 h-4" />}
                             {status !== "authenticated" ? "Kirish va qo'shilish" : "Qo'shilish"}
                             <ArrowRight className="w-4 h-4" />

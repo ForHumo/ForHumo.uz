@@ -73,7 +73,7 @@ export function NxGroupTopicsModal({
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <Hash className="w-4 h-4" style={{ color: "#00CEC8" }} /> Mavzular
+                        <Hash className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Mavzular
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
@@ -94,7 +94,7 @@ export function NxGroupTopicsModal({
                     </button>
 
                     {loading && (
-                        <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                        <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     )}
 
                     {topics.map(t => (
@@ -129,7 +129,7 @@ export function NxGroupTopicsModal({
                         {!createOpen ? (
                             <button onClick={() => setCreateOpen(true)}
                                 className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white" }}>
+                                style={{ background: "var(--nx-accent)", color: "white" }}>
                                 <Plus className="w-4 h-4" /> Yangi mavzu
                             </button>
                         ) : (
@@ -155,7 +155,7 @@ export function NxGroupTopicsModal({
                                         style={{ background: "rgba(43,62,232,0.12)", color: "white" }}>Bekor</button>
                                     <button onClick={create} disabled={busy || !newName.trim()}
                                         className="flex-1 py-2 rounded-xl text-xs font-bold text-white disabled:opacity-50"
-                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                        style={{ background: "var(--nx-accent)" }}>
                                         {busy ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Yaratish"}
                                     </button>
                                 </div>

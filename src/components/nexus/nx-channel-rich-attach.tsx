@@ -180,7 +180,7 @@ export function NxChannelRichAttach({
                 <button onClick={() => stopRecording(false)}
                     title="Yuborish"
                     className="w-7 h-7 rounded-lg flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                    style={{ background: "var(--nx-accent)" }}>
                     <Square className="w-3.5 h-3.5 text-white" />
                 </button>
             </div>
@@ -200,29 +200,29 @@ export function NxChannelRichAttach({
                     style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)", boxShadow: "0 12px 32px rgba(0,0,0,0.4)" }}>
                     <button onClick={() => startRecording("voice")}
                         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-white">
-                        <Mic className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <Mic className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Ovoz xabar
                     </button>
                     <button onClick={() => startRecording("video")}
                         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-white">
-                        <Video className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <Video className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Video-doira
                     </button>
                     <button onClick={shareLocation}
                         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-white">
-                        <MapPin className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <MapPin className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Joylashuv
                     </button>
                     <button onClick={() => { setOpen(false); setContactOpen(true); }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm text-white">
-                        <User className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <User className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Kontakt
                     </button>
                     <div style={{ borderTop: "1px solid rgba(43,62,232,0.14)" }} />
                     <button onClick={() => setViewOnceMode(v => !v)}
                         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 text-sm"
                         style={{ color: viewOnceMode ? "#FFC107" : "white" }}>
-                        <EyeOff className="w-4 h-4" style={{ color: viewOnceMode ? "#FFC107" : "#00CEC8" }} />
+                        <EyeOff className="w-4 h-4" style={{ color: viewOnceMode ? "#FFC107" : "var(--nx-accent)" }} />
                         Bir marta ko&apos;rish {viewOnceMode ? "· yoqilgan" : ""}
                     </button>
                 </div>
@@ -234,7 +234,7 @@ export function NxChannelRichAttach({
                         style={{ background: "rgba(8,12,32,0.99)", border: "1px solid rgba(43,62,232,0.3)" }}
                         onClick={e => e.stopPropagation()}>
                         <h3 className="text-base font-black text-white mb-4 flex items-center gap-2">
-                            <User className="w-4 h-4" style={{ color: "#00CEC8" }} /> Kontakt ulashish
+                            <User className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Kontakt ulashish
                         </h3>
                         <div className="space-y-2">
                             <input value={contactName} onChange={e => setContactName(e.target.value)}
@@ -258,7 +258,7 @@ export function NxChannelRichAttach({
                             </button>
                             <button onClick={sendContact} disabled={!contactName.trim() || !contactPhone.trim() || busy}
                                 className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                style={{ background: "var(--nx-accent)" }}>
                                 {busy ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Yuborish"}
                             </button>
                         </div>

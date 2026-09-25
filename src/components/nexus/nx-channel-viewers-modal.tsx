@@ -52,7 +52,7 @@ export function NxChannelViewersModal({
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <Eye className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                        <Eye className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                         Ko&apos;rganlar · {total}
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -62,10 +62,10 @@ export function NxChannelViewersModal({
                 </div>
 
                 {loading ? (
-                    <div className="flex justify-center py-12 flex-1"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                    <div className="flex justify-center py-12 flex-1"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                 ) : viewers.length === 0 ? (
                     <div className="text-center py-12">
-                        <Eye className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "#00CEC8" }} />
+                        <Eye className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: "var(--nx-accent)" }} />
                         <p className="text-sm" style={{ color: "rgba(160,176,224,0.7)" }}>Hali hech kim ko&apos;rmagan</p>
                     </div>
                 ) : (

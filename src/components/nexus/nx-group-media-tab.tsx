@@ -91,7 +91,7 @@ export function NxGroupMediaTab({
                 <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
                     {loading ? (
                         <div className="flex justify-center py-12">
-                            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} />
+                            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     ) : items.length === 0 ? (
                         <p className="py-8 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>Hech narsa yo&apos;q</p>
@@ -122,7 +122,7 @@ export function NxGroupMediaTab({
                                 <a key={i} href={it.url} target="_blank" rel="noopener"
                                     className="flex items-center gap-3 rounded-xl px-3 py-2.5"
                                     style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
-                                    <FileText className="w-8 h-8 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                    <FileText className="w-8 h-8 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm text-white truncate">{it.name || it.url.split("/").pop()}</p>
                                         {it.size && <p className="text-[11px]" style={{ color: "rgba(140,160,210,0.7)" }}>{formatSize(it.size)}</p>}
@@ -137,7 +137,7 @@ export function NxGroupMediaTab({
                                 <a key={i} href={it.url} target="_blank" rel="noopener"
                                     className="flex items-center gap-3 rounded-xl px-3 py-2.5"
                                     style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
-                                    <LinkIcon className="w-5 h-5 flex-shrink-0" style={{ color: "#00CEC8" }} />
+                                    <LinkIcon className="w-5 h-5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />
                                     <p className="text-xs text-white flex-1 truncate">{it.url}</p>
                                     <ExternalLink className="w-4 h-4 flex-shrink-0" style={{ color: "rgba(140,160,210,0.6)" }} />
                                 </a>

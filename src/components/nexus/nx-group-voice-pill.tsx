@@ -60,7 +60,7 @@ export function NxGroupVoicePill({
                 style={{ background: "linear-gradient(90deg,rgba(43,62,232,0.15),rgba(0,206,200,0.15))", border: "1px solid rgba(0,206,200,0.35)" }}>
                 <div className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{ background: "rgba(0,206,200,0.25)" }}>
-                    <Radio className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                    <Radio className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                     <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-ping" style={{ background: "#FF3250" }} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -81,7 +81,7 @@ export function NxGroupVoicePill({
                     window.location.href = url.toString();
                 }}
                     className="px-3 py-1.5 rounded-lg text-xs font-bold text-white flex items-center gap-1"
-                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                    style={{ background: "var(--nx-accent)" }}>
                     <Phone className="w-3.5 h-3.5" /> Qo&apos;shilish
                 </button>
                 {canEnd && (
@@ -103,7 +103,7 @@ export function NxGroupVoicePill({
             <div className="mx-2 mb-2">
                 <button onClick={start} disabled={busy}
                     className="w-full py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:brightness-110 transition disabled:opacity-60"
-                    style={{ background: "rgba(43,62,232,0.10)", border: "1px dashed rgba(0,206,200,0.35)", color: "#00CEC8" }}>
+                    style={{ background: "rgba(43,62,232,0.10)", border: "1px dashed rgba(0,206,200,0.35)", color: "var(--nx-accent)" }}>
                     {busy ? <Loader2 className="w-4 h-4 animate-spin" />
                         : <><Mic className="w-3.5 h-3.5" /> Voice chat boshlash</>}
                 </button>

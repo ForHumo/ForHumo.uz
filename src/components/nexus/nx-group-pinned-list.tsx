@@ -41,7 +41,7 @@ export function NxGroupPinnedList({
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <Pin className="w-4 h-4" style={{ color: "#00CEC8" }} /> Pinlangan · {items.length}
+                        <Pin className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Pinlangan · {items.length}
                     </h3>
                     <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full"
                         style={{ background: "rgba(43,62,232,0.12)", border: "1px solid rgba(43,62,232,0.22)" }}>
@@ -51,7 +51,7 @@ export function NxGroupPinnedList({
                 <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
                     {loading ? (
                         <div className="flex justify-center py-12">
-                            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} />
+                            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} />
                         </div>
                     ) : items.length === 0 ? (
                         <p className="py-8 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>Pinlangan xabar yo&apos;q</p>
@@ -61,7 +61,7 @@ export function NxGroupPinnedList({
                             style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
                             <div className="flex items-center gap-2 mb-1">
                                 {m.author?.image && <img src={m.author.image} alt="" className="w-5 h-5 rounded-full object-cover" />}
-                                <p className="text-[11px] font-bold" style={{ color: "#00CEC8" }}>
+                                <p className="text-[11px] font-bold" style={{ color: "var(--nx-accent)" }}>
                                     {m.author?.name ?? m.author?.username ?? "Anonim"}
                                 </p>
                             </div>

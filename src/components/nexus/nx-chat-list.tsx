@@ -79,12 +79,12 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
         <div className="px-4">
             <button onClick={() => setMessagesOpen(true)}
                 className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl text-sm font-bold text-white mb-3 transition-all duration-150 active:scale-[0.99]"
-                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", boxShadow: "0 4px 20px rgba(43,62,232,0.35)" }}>
+                style={{ background: "var(--nx-accent)", boxShadow: "0 4px 20px rgba(43,62,232,0.35)" }}>
                 <Pencil className="w-4 h-4" /> Yangi suhbat
             </button>
 
             {loading ? (
-                <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
             ) : displayed.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "rgba(43,62,232,0.08)", border: "1px solid rgba(43,62,232,0.15)" }}>
@@ -113,7 +113,7 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
                                 style={{ background: c.unread ? "rgba(43,62,232,0.10)" : "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)" }}>
                                 {isSelf ? (
                                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                                        style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", border: "1px solid rgba(43,62,232,0.25)" }}>
+                                        style={{ background: "var(--nx-accent)", border: "1px solid rgba(43,62,232,0.25)" }}>
                                         <Bookmark className="w-5 h-5 text-white" />
                                     </div>
                                 ) : (
@@ -122,7 +122,7 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
                                         <span className="text-sm font-bold text-white truncate">{name}</span>
-                                        {c.other?.verified && !isSelf && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#00CEC8" }} />}
+                                        {c.other?.verified && !isSelf && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                         {c.pinned && <Pin className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(140,160,210,0.7)" }} />}
                                         {c.muted && <VolumeX className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(140,160,210,0.7)" }} />}
                                         <span className="ml-auto text-[10px] flex-shrink-0" style={{ color: "rgba(100,120,170,0.7)" }}>{timeAgo(c.lastMessageAt)}</span>
@@ -136,7 +136,7 @@ export function NxChatList({ filterUnread = false }: { filterUnread?: boolean } 
                                     </p>
                                 </div>
                                 {c.unread && (
-                                    <div className="min-w-[10px] h-2.5 rounded-full flex-shrink-0" style={{ background: c.muted ? "rgba(140,160,210,0.6)" : "linear-gradient(135deg,#2B3EE8,#00CEC8)" }} />
+                                    <div className="min-w-[10px] h-2.5 rounded-full flex-shrink-0" style={{ background: c.muted ? "rgba(140,160,210,0.6)" : "var(--nx-accent)" }} />
                                 )}
                             </button>
                         );

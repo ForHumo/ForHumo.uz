@@ -275,7 +275,7 @@ export function NxGroupCall() {
                             onClick={e => e.stopPropagation()}>
                             <div className="flex items-center justify-between px-5 pt-5 pb-3">
                                 <h3 className="flex items-center gap-2 text-base font-black text-white">
-                                    <UserPlus className="h-4 w-4" style={{ color: "#00CEC8" }} /> Taklif qilish
+                                    <UserPlus className="h-4 w-4" style={{ color: "var(--nx-accent)" }} /> Taklif qilish
                                 </h3>
                                 <button onClick={() => setInviteOpen(false)}
                                     className="flex h-8 w-8 items-center justify-center rounded-full"
@@ -290,7 +290,7 @@ export function NxGroupCall() {
                                     <input value={inviteQuery} onChange={e => setInviteQuery(e.target.value)}
                                         placeholder="Ism yoki username..."
                                         className="w-full rounded-xl pl-9 pr-4 py-2.5 text-sm font-semibold text-white outline-none"
-                                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
+                                        style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                                 </div>
                             </div>
                             <div className="flex-1 overflow-y-auto px-3 pb-5" style={{ maxHeight: "calc(70vh - 130px)", scrollbarWidth: "none" }}>
@@ -311,14 +311,14 @@ export function NxGroupCall() {
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-1">
                                                     <p className="truncate text-sm font-bold text-white">{label}</p>
-                                                    {u.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0" style={{ color: "#00CEC8" }} />}
+                                                    {u.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--nx-accent)" }} />}
                                                 </div>
                                                 {u.username && <p className="truncate text-[10px]" style={{ color: "rgba(80,100,150,0.85)" }}>@{u.username}</p>}
                                             </div>
                                             {sent
-                                                ? <Check className="h-4 w-4 shrink-0" style={{ color: "#00CEC8" }} />
+                                                ? <Check className="h-4 w-4 shrink-0" style={{ color: "var(--nx-accent)" }} />
                                                 : <span className="rounded-lg px-2.5 py-1 text-[10px] font-black text-white shadow"
-                                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>Taklif</span>}
+                                                    style={{ background: "var(--nx-accent)" }}>Taklif</span>}
                                         </button>
                                     );
                                 })}
@@ -343,7 +343,7 @@ export function NxGroupCall() {
                 <div className="flex flex-shrink-0 items-center justify-between px-5 pt-5 pb-3">
                     <div>
                         <h2 className="flex items-center gap-2 text-lg font-black text-white">
-                            <Users className="h-4 w-4" style={{ color: "#00CEC8" }} /> Guruh chaqiruv
+                            <Users className="h-4 w-4" style={{ color: "var(--nx-accent)" }} /> Guruh chaqiruv
                         </h2>
                         <p className="mt-0.5 text-[10px]" style={{ color: "rgba(80,100,150,0.80)" }}>
                             3+ odam bilan video (LiveKit SFU)
@@ -363,7 +363,7 @@ export function NxGroupCall() {
                         <>
                             <button onClick={() => { setTitle(""); setView("create"); }}
                                 className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-black text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-95"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                style={{ background: "var(--nx-accent)" }}>
                                 <Plus className="h-4 w-4" /> Yangi guruh chaqiruv
                             </button>
 
@@ -381,19 +381,19 @@ export function NxGroupCall() {
                                         <div key={c.id} className="flex items-center gap-3 rounded-2xl p-3 transition-colors hover:bg-white/[0.03]"
                                             style={{ border: "1px solid rgba(43,62,232,0.15)" }}>
                                             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
-                                                style={{ background: c.status === "ACTIVE" ? "linear-gradient(135deg,#2B3EE8,#00CEC8)" : "rgba(43,62,232,0.15)" }}>
+                                                style={{ background: c.status === "ACTIVE" ? "var(--nx-accent)" : "rgba(43,62,232,0.15)" }}>
                                                 <Users className="h-5 w-5 text-white" />
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <p className="truncate text-sm font-bold text-white">{c.title || "Nomsiz"}</p>
-                                                <p className="mt-0.5 text-[10px]" style={{ color: c.status === "ACTIVE" ? "#00CEC8" : "rgba(80,100,150,0.85)" }}>
+                                                <p className="mt-0.5 text-[10px]" style={{ color: c.status === "ACTIVE" ? "var(--nx-accent)" : "rgba(80,100,150,0.85)" }}>
                                                     {c.status === "ACTIVE" ? "Faol" : "Tugagan"} · {c.participantCount} ishtirokchi{c.isHost ? " · Host" : ""}
                                                 </p>
                                             </div>
                                             {c.status === "ACTIVE" ? (
                                                 <button onClick={() => joinCall(c.id)}
                                                     className="rounded-xl px-3 py-1.5 text-xs font-black text-white shadow-lg"
-                                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                                    style={{ background: "var(--nx-accent)" }}>
                                                     Kirish
                                                 </button>
                                             ) : (
@@ -416,7 +416,7 @@ export function NxGroupCall() {
                             <input value={title} onChange={e => setTitle(e.target.value)} maxLength={80}
                                 placeholder="masalan: Jamoa yig'ilishi"
                                 className="rounded-xl px-3 py-2.5 text-sm font-semibold text-white outline-none"
-                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "#00CEC8" }} />
+                                style={{ background: "rgba(5,8,24,0.60)", border: "1px solid rgba(43,62,232,0.22)", caretColor: "var(--nx-accent)" }} />
                             <div className="flex gap-2 pt-2">
                                 <button onClick={() => setView("list")}
                                     className="flex-1 rounded-xl py-2.5 text-sm font-bold text-white"
@@ -425,7 +425,7 @@ export function NxGroupCall() {
                                 </button>
                                 <button onClick={createCall} disabled={creating}
                                     className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-black text-white shadow-lg disabled:opacity-50"
-                                    style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)" }}>
+                                    style={{ background: "var(--nx-accent)" }}>
                                     {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                                     Yaratish va kirish
                                 </button>

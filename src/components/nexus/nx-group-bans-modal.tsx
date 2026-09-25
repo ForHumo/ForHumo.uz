@@ -72,7 +72,7 @@ export function NxGroupBansModal({
                 </div>
                 <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
                     {loading ? (
-                        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     ) : bans.length === 0 ? (
                         <p className="py-8 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>Bloklangan a&apos;zo yo&apos;q</p>
                     ) : bans.map(b => (
@@ -101,7 +101,7 @@ export function NxGroupBansModal({
                                 className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"
                                 style={{ background: "rgba(0,206,200,0.10)", border: "1px solid rgba(0,206,200,0.3)" }}>
                                 {busy === b.profileId ? <Loader2 className="w-4 h-4 animate-spin text-white" />
-                                    : <ShieldCheck className="w-4 h-4" style={{ color: "#00CEC8" }} />}
+                                    : <ShieldCheck className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />}
                             </button>
                         </div>
                     ))}

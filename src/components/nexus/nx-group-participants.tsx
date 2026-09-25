@@ -46,7 +46,7 @@ export function NxGroupParticipants({ open, onClose, callId, isHost }: Props) {
                 onClick={e => e.stopPropagation()}>
                 <div className="flex flex-shrink-0 items-center justify-between px-5 pt-5 pb-3">
                     <h3 className="flex items-center gap-2 text-base font-black text-white">
-                        <Users className="h-4 w-4" style={{ color: "#00CEC8" }} /> Ishtirokchilar ({participants.length})
+                        <Users className="h-4 w-4" style={{ color: "var(--nx-accent)" }} /> Ishtirokchilar ({participants.length})
                     </h3>
                     <button onClick={onClose}
                         className="flex h-8 w-8 items-center justify-center rounded-full"
@@ -69,9 +69,9 @@ export function NxGroupParticipants({ open, onClose, callId, isHost }: Props) {
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-1.5">
                                         <p className="truncate text-sm font-bold text-white">{label}</p>
-                                        {isMe && <span className="rounded-md px-1.5 py-0.5 text-[9px] font-black text-white" style={{ background: "rgba(0,206,200,0.25)", color: "#00CEC8" }}>Siz</span>}
+                                        {isMe && <span className="rounded-md px-1.5 py-0.5 text-[9px] font-black text-white" style={{ background: "rgba(0,206,200,0.25)", color: "var(--nx-accent)" }}>Siz</span>}
                                     </div>
-                                    <p className="mt-0.5 text-[10px]" style={{ color: p.isSpeaking ? "#00CEC8" : "rgba(80,100,150,0.85)" }}>
+                                    <p className="mt-0.5 text-[10px]" style={{ color: p.isSpeaking ? "var(--nx-accent)" : "rgba(80,100,150,0.85)" }}>
                                         {p.isSpeaking ? "Gapiryapti" : (p.isMicrophoneEnabled ? "Mikrofon yoniq" : "Mikrofon o'chiq")}
                                     </p>
                                 </div>
@@ -94,7 +94,7 @@ export function NxGroupParticipants({ open, onClose, callId, isHost }: Props) {
                                     </div>
                                 )}
                                 {isMe && isHost && (
-                                    <ShieldCheck className="h-4 w-4 shrink-0" style={{ color: "#00CEC8" }} />
+                                    <ShieldCheck className="h-4 w-4 shrink-0" style={{ color: "var(--nx-accent)" }} />
                                 )}
                             </div>
                         );

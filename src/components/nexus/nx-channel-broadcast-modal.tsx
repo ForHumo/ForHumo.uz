@@ -79,7 +79,7 @@ export function NxChannelBroadcastModal({
                         <div className="flex flex-col items-center py-6">
                             <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3"
                                 style={{ background: "rgba(0,206,200,0.14)" }}>
-                                <Check className="w-7 h-7" style={{ color: "#00CEC8" }} />
+                                <Check className="w-7 h-7" style={{ color: "var(--nx-accent)" }} />
                             </div>
                             <p className="text-sm font-black text-white">E&apos;lon yuborildi</p>
                             <p className="text-xs mt-1" style={{ color: "rgba(160,176,224,0.7)" }}>
@@ -113,7 +113,7 @@ export function NxChannelBroadcastModal({
                                 <div className="mt-1 flex items-center justify-between text-[10px]"
                                     style={{ color: "rgba(140,160,210,0.7)" }}>
                                     <span>{text.length}/2000</span>
-                                    {status && <span>Bugun qolgan: <b style={{ color: remaining > 0 ? "#00CEC8" : "#EF4444" }}>{remaining}/3</b></span>}
+                                    {status && <span>Bugun qolgan: <b style={{ color: remaining > 0 ? "var(--nx-accent)" : "#EF4444" }}>{remaining}/3</b></span>}
                                 </div>
                             </div>
 
@@ -124,7 +124,7 @@ export function NxChannelBroadcastModal({
                                         <b>{status.memberCount}</b> a&apos;zoga push yuboriladi
                                     </p>
                                     <p className="mt-1" style={{ color: "rgba(160,176,224,0.7)" }}>
-                                        Kanal: <b style={{ color: "#00CEC8" }}>{channelName}</b>
+                                        Kanal: <b style={{ color: "var(--nx-accent)" }}>{channelName}</b>
                                     </p>
                                 </div>
                             )}

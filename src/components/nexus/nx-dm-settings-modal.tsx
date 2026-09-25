@@ -27,7 +27,7 @@ const COLOR_PRESETS = [
     { key: "green",  label: "Yashil",   hex: "#10B981" },
     { key: "blue",   label: "Ko'k",     hex: "#3B82F6" },
     { key: "purple", label: "Binafsha", hex: "#A855F7" },
-    { key: "teal",   label: "Turkuaz",  hex: "#00CEC8" },
+    { key: "teal",   label: "Turkuaz",  hex: "var(--nx-accent)" },
     { key: "pink",   label: "Pushti",   hex: "#EC4899" },
     { key: "gray",   label: "Kulrang",  hex: "#94A3B8" },
 ];
@@ -264,7 +264,7 @@ export function NxDmSettingsModal({
 
                             <button onClick={saveLabel} disabled={busy}
                                 className="w-full h-11 rounded-xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                                style={{ background: "linear-gradient(135deg, #2B3EE8, #00CEC8)", color: "white" }}>
+                                style={{ background: "linear-gradient(135deg, var(--nx-accent), var(--nx-accent))", color: "white" }}>
                                 {busy ? <Loader2 className="w-4 h-4 animate-spin" />
                                     : saved ? <Check className="w-4 h-4" />
                                     : <Save className="w-4 h-4" />}
@@ -295,7 +295,7 @@ export function NxDmSettingsModal({
                                             className="w-full h-10 rounded-xl text-sm font-bold text-left px-3 flex items-center justify-between"
                                             style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(220,230,250,0.92)" }}>
                                             {opt.label}
-                                            {opt.seconds === 0 && !muted && <Check className="w-4 h-4" style={{ color: "#00CEC8" }} />}
+                                            {opt.seconds === 0 && !muted && <Check className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />}
                                         </button>
                                     ))}
                                 </div>
@@ -318,7 +318,7 @@ export function NxDmSettingsModal({
                                         <button key={opt.seconds} onClick={() => saveAutoDelete(opt.seconds)}
                                             className="h-11 rounded-xl text-xs font-bold px-3 flex items-center justify-center gap-1.5"
                                             style={autoDelete === opt.seconds
-                                                ? { background: "rgba(0,206,200,0.20)", border: "1px solid #00CEC8", color: "white" }
+                                                ? { background: "rgba(0,206,200,0.20)", border: "1px solid var(--nx-accent)", color: "white" }
                                                 : { background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(160,176,224,0.85)" }}>
                                             {autoDelete === opt.seconds && <Check className="w-3 h-3" />}
                                             {opt.label}
@@ -359,7 +359,7 @@ export function NxDmSettingsModal({
                                     className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
                                     style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(220,230,250,0.92)" }}>
                                     <span className="flex items-center gap-2">
-                                        <Phone className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                        <Phone className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                         Chaqiruvlar tarixi
                                     </span>
                                 </button>
@@ -367,7 +367,7 @@ export function NxDmSettingsModal({
                                     className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
                                     style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(220,230,250,0.92)" }}>
                                     <span className="flex items-center gap-2">
-                                        <ShieldCheck className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                        <ShieldCheck className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                         E2E kalitni tekshirish
                                     </span>
                                 </button>
@@ -391,7 +391,7 @@ export function NxDmSettingsModal({
                                     className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
                                     style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(220,230,250,0.92)" }}>
                                     <span className="flex items-center gap-2">
-                                        <Users className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                        <Users className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                         Broadcast ro&apos;yxatlar
                                     </span>
                                 </button>
@@ -399,7 +399,7 @@ export function NxDmSettingsModal({
                                     className="w-full h-11 rounded-xl text-sm font-bold px-3 flex items-center justify-between"
                                     style={{ background: "rgba(11,18,40,0.55)", border: "1px solid rgba(43,62,232,0.14)", color: "rgba(220,230,250,0.92)" }}>
                                     <span className="flex items-center gap-2">
-                                        <KeyRound className="w-4 h-4" style={{ color: "#00CEC8" }} />
+                                        <KeyRound className="w-4 h-4" style={{ color: "var(--nx-accent)" }} />
                                         E2E kalitlarim
                                     </span>
                                 </button>
@@ -424,7 +424,7 @@ function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
         <button onClick={onClick}
             className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-lg text-[11px] font-black"
             style={active
-                ? { background: "rgba(0,206,200,0.20)", color: "white", border: "1px solid #00CEC8" }
+                ? { background: "rgba(0,206,200,0.20)", color: "white", border: "1px solid var(--nx-accent)" }
                 : { background: "rgba(11,18,40,0.55)", color: "rgba(160,176,224,0.85)", border: "1px solid rgba(43,62,232,0.14)" }}>
             {icon} {label}
         </button>

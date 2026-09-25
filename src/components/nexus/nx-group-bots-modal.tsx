@@ -82,7 +82,7 @@ export function NxGroupBotsModal({
                 <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
                     style={{ borderBottom: "1px solid rgba(43,62,232,0.14)" }}>
                     <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <Bot className="w-4 h-4" style={{ color: "#00CEC8" }} /> Botlar
+                        <Bot className="w-4 h-4" style={{ color: "var(--nx-accent)" }} /> Botlar
                     </h3>
                     <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ background: "rgba(43,62,232,0.12)" }}>
@@ -92,7 +92,7 @@ export function NxGroupBotsModal({
 
                 <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "none" }}>
                     {loading ? (
-                        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2B3EE8" }} /></div>
+                        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--nx-accent)" }} /></div>
                     ) : bots.length === 0 ? (
                         <p className="py-8 text-center text-xs" style={{ color: "rgba(120,140,185,0.6)" }}>Bot qo&apos;shilmagan</p>
                     ) : bots.map(b => (
@@ -112,7 +112,7 @@ export function NxGroupBotsModal({
                                         style={b.autoListen
                                             ? { background: "rgba(0,206,200,0.15)", border: "1px solid rgba(0,206,200,0.35)" }
                                             : { background: "rgba(140,160,210,0.10)" }}>
-                                        <Radio className="w-3.5 h-3.5" style={{ color: b.autoListen ? "#00CEC8" : "rgba(140,160,210,0.7)" }} />
+                                        <Radio className="w-3.5 h-3.5" style={{ color: b.autoListen ? "var(--nx-accent)" : "rgba(140,160,210,0.7)" }} />
                                     </button>
                                     <button onClick={() => remove(b.agentId)}
                                         className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -130,7 +130,7 @@ export function NxGroupBotsModal({
                         {!addOpen ? (
                             <button onClick={() => setAddOpen(true)}
                                 className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
-                                style={{ background: "linear-gradient(135deg,#2B3EE8,#00CEC8)", color: "white" }}>
+                                style={{ background: "var(--nx-accent)", color: "white" }}>
                                 <Plus className="w-4 h-4" /> Bot qo&apos;shish
                             </button>
                         ) : (
