@@ -3,9 +3,10 @@
 //
 //   bozornarxida.uz (+www)            → Bozor Narxida TWA
 //     TWA_PACKAGE_NAME, TWA_SHA256_FINGERPRINTS
-//   forhumo.uz (+www) / humoesport.uz → Humo eSport VA Humo Nexus TWA (BIR host, IKKALA ilova)
-//     eSport: TWA_ESPORT_PACKAGE_NAME, TWA_ESPORT_SHA256_FINGERPRINTS
-//     Nexus:  TWA_NEXUS_PACKAGE_NAME,  TWA_NEXUS_SHA256_FINGERPRINTS
+//   forhumo.uz (+www) / humoesport.uz → For Humo (super-app) + eSport + Nexus TWA
+//     For Humo: TWA_FORHUMO_PACKAGE_NAME, TWA_FORHUMO_SHA256_FINGERPRINTS  (scope "/" — hammasi)
+//     eSport:   TWA_ESPORT_PACKAGE_NAME,  TWA_ESPORT_SHA256_FINGERPRINTS   (path /esport)
+//     Nexus:    TWA_NEXUS_PACKAGE_NAME,   TWA_NEXUS_SHA256_FINGERPRINTS    (path /nexus)
 //   Bir host bir nechta TWA'ni tasdiqlashi mumkin — javob statement MASSIVI (har ilova bitta).
 //
 // TO'LDIRISH (Bubblewrap build'dan KEYIN — KOD O'ZGARTIRMASDAN, Vercel env orqali):
@@ -40,8 +41,9 @@ export async function GET() {
 
     const entries = isBn
         ? [entry(process.env.TWA_PACKAGE_NAME, process.env.TWA_SHA256_FINGERPRINTS)]
-        // forhumo.uz (+www) / humoesport.uz → Humo eSport VA Humo Nexus (bir host, ikkala TWA)
+        // forhumo.uz (+www) / humoesport.uz → For Humo super-app + eSport + Nexus (bir host, uch TWA)
         : [
+            entry(process.env.TWA_FORHUMO_PACKAGE_NAME, process.env.TWA_FORHUMO_SHA256_FINGERPRINTS),
             entry(process.env.TWA_ESPORT_PACKAGE_NAME, process.env.TWA_ESPORT_SHA256_FINGERPRINTS),
             entry(process.env.TWA_NEXUS_PACKAGE_NAME, process.env.TWA_NEXUS_SHA256_FINGERPRINTS),
         ];

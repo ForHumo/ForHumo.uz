@@ -11,6 +11,7 @@ import { Providers } from "@/app/providers";
 import { BackgroundEffects } from "@/components/background-effects";
 import { AuthBarrier } from "@/components/auth/auth-barrier";
 import { SupportDock } from "@/components/support/support-dock";
+import { ForHumoServiceWorker } from "@/components/forhumo-service-worker";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BnAttributionCapture } from "@/components/analytics/bn-attribution-capture";
@@ -143,6 +144,7 @@ export default async function LocaleLayout({
                             {!publicHost && <Footer />}
                         </AuthBarrier>
                         <SupportDock />
+                        <ForHumoServiceWorker />
                         <BnAttributionCapture />
                         <BnToastHost />
                         <BnDialogHost />

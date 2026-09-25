@@ -40,17 +40,30 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
         };
     }
 
+    // For Humo super-app — TWA (Google Play) tayyor. scope "/" — butun ekotizim
+    // (ID, Esport, Market, Nexus, Pay, AI, Support, Bozor Narxida) ilova ichida ochiladi.
+    // Bir host'da eSport/Nexus TWA'lari ham bor (path-scoped) — bular alohida ilova; bu esa
+    // "hammasi bitta" super-app. assetlinks uchalasini ham tasdiqlaydi.
     return {
+        // id "/" — barqaror PWA/TWA identligi (start_url o'zgarsa ham "bir xil ilova").
+        id: "/",
         name: "For Humo",
         short_name: "For Humo",
-        description: "Yagona Humo ID bilan barcha modullar: ID, Esport, Market, Nexus, Pay, AI, Bozor Narxida.",
+        description: "Yagona Humo ID bilan barcha modullar: ID, Esport, Market, Nexus, Pay, AI, Support, Bozor Narxida.",
         start_url: "/",
+        scope: "/",
         display: "standalone",
-        background_color: "#0a0a0a",
-        theme_color: "#0a0a0a",
+        orientation: "portrait",
+        background_color: "#0A0E1A",
+        theme_color: "#0A0E1A",
         lang: "uz",
         icons: [
-            { src: "/logo.png", sizes: "512x512", type: "image/png", purpose: "any" },
+            { src: "/forhumo/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+            { src: "/forhumo/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+            // Maskable ALOHIDA — "F" belgisi safe-zone (markaziy ~62%) ichida, dark fon
+            // (Android adaptiv niqob burchaklarini kesmasin). Bubblewrap shuni launcher ikonasiga oladi.
+            { src: "/forhumo/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
+        categories: ["social", "lifestyle", "productivity"],
     };
 }
